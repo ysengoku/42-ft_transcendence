@@ -1,0 +1,37 @@
+# Ignore files related to version control
+.git
+.gitignore
+
+# Ignore environment files containing sensitive information
+.env
+
+# Ignore temporary and backup files
+*.bak
+*.swp
+*.swo
+*.tmp
+
+# Ignore node_modules or other dependencies (for non-production images)
+node_modules/
+
+# Ignore IDE and editor configurations
+.vscode/
+.idea/
+*.iml
+
+# Ignore Docker-related files (optional, if you don't want to include Dockerfile etc.)
+Dockerfile
+docker-compose.yml
+docker-compose.dev.yaml
+docker-compose.prod.yaml
+
+# Ignore logs
+*.log
+
+# Ignore build output (for frontend, backend, or other compiled files)
+build/
+dist/
+*.tar.gz
+
+# Ignore local configuration files
+*.env.local

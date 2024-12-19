@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  front:
+    build:
+      context: .
+      dockerfile: ./front/Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./front:/usr/share/nginx/html:ro  # Bind mount pour les fichiers front-end
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - back_end
+
+  back_end:
+    build:
+      context: .
+      dockerfile: ./back_end/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./back_end:/app  # Bind mount pour les fichiers back-end
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - database
+
+  database:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - transcendance_network
+
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Configuration NGINX
+      - ./front:/usr/share/nginx/html  # Bind mount pour le front-end
+    ports:
+      - "80:80"
+    depends_on:
+      - front
+    networks:
+      - transcendance_network
+
+volumes:
+  db_data:
+
+networks:
+  transcendance_network:
+    driver: bridge
