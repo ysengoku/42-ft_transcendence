@@ -3,21 +3,28 @@ DEV_DOCKER_COMPOSE = docker-compose.dev.yaml
 PROD_DOCKER_COMPOSE = docker-compose.prod.yaml
 
 # Define the name of the services (for convenience)
-FRONTEND_SERVICE = js-front
-BACKEND_SERVICE = django-back-end
-DATABASE_SERVICE = postgres
+FRONTEND_SERVICE = front
+BACKEND_SERVICE = back
+DATABASE_SERVICE = db
+
+# Ensure that the .env file exists before running docker-compose
+check-env:
+	@if [ ! -f .env ]; then \
+		echo ".env file not found, copying from .env.example"; \
+		cp .env.example .env; \
+	fi
 
 # Build all Docker images
-build:
+build: check-env
 	docker-compose -f $(DEV_DOCKER_COMPOSE) build
 	docker-compose -f $(PROD_DOCKER_COMPOSE) build
 
 # Start the development containers (bind mounts for volumes)
-up:
+up: check-env
 	docker-compose -f $(DEV_DOCKER_COMPOSE) up -d
 
 # Start the production containers
-up-prod:
+up-prod: check-env
 	docker-compose -f $(PROD_DOCKER_COMPOSE) up -d
 
 # Stop all containers
@@ -25,7 +32,7 @@ down:
 	docker-compose down
 
 # Rebuild the containers (useful when dependencies or code change)
-rebuild:
+rebuild: check-env
 	docker-compose -f $(DEV_DOCKER_COMPOSE) up --build -d
 	docker-compose -f $(PROD_DOCKER_COMPOSE) up --build -d
 
