@@ -10,8 +10,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy the static files into the appropriate directory for Nginx
 COPY ./dist /usr/share/nginx/html
 
-# Expose port 80
-EXPOSE 80
+# Expose port 1026
+EXPOSE 1026
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]

@@ -2,51 +2,77 @@ version: "3.8"
 
 services:
   front:
+    container_name: frontend-container
     build:
-      context: .
-      dockerfile: ./front/Dockerfile
+      context: ./front  # Contexte de la construction (répertoire contenant le Dockerfile de front)
+      dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
+      args:
+        FRONTEND_API_URL: ${FRONTEND_API_URL}
     ports:
-      - "80:80"
-    volumes:
-      - ./front:/usr/share/nginx/html:ro  # Bind mount pour les fichiers front-end
+      - "1025:1025"
+    expose:
+      - "1025"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
+    env_file:
+      - .env
     depends_on:
-      - back_end
+      - back
 
-  back_end:
+  back:
+    container_name: backend-container
     build:
-      context: .
-      dockerfile: ./back_end/Dockerfile
+      context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
+      dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
+      args:
+        BACKEND_API_URL: ${BACKEND_API_URL}
+        DATABASE_URL: ${DATABASE_URL}
     ports:
       - "8000:8000"
-    volumes:
-      - ./back_end:/app  # Bind mount pour les fichiers back-end
+    expose:
+      - "8000"
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
+    env_file:
+      - .env
     depends_on:
       - database
 
   database:
+    container_name: database-container
     image: postgres:13
+    build:
+      context: ./db  # Contexte de la construction (répertoire contenant le Dockerfile pour la base de données)
+      dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
+      args:
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_DB: ${POSTGRES_DB}
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - .env
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    expose:
+      - "5432"
     networks:
       - transcendance_network
 
   nginx:
+    container_name: nginx-container
     image: nginx:alpine
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf  # Configuration NGINX
-      - ./front:/usr/share/nginx/html  # Bind mount pour le front-end
+      - ./servers/nginx/nginx.conf:/etc/nginx/nginx.conf #Permet de personnaliser ou de surcharger certaines parties de la configuration sans avoir à toucher à l'image Docker elle-même. Cela permet par exemple de modifier la configuration de Nginx ou d'ajouter des fichiers à la volée, ce qui est très pratique pendant le développement, où les fichiers de configuration peuvent changer fréquemment.
+      - ./front:/usr/share/nginx/html # Dossier contenant les fichiers statiques de l'application
     ports:
-      - "80:80"
+      - "1026:1026"
+    expose:
+      - "1026"
     depends_on:
       - front
     networks:
