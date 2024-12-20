@@ -5,7 +5,7 @@ FROM nginx:alpine
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy the static files into the appropriate directory for Nginx
-COPY ./front /usr/share/nginx/html
+COPY ./ /usr/share/nginx/html
 
 # Expose port 1026
 EXPOSE 1026

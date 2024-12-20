@@ -12,8 +12,6 @@ services:
       - "1025:1025"
     expose:
       - "1025"
-    environment:
-      - NODE_ENV=production
     env_file:
       - .env
     depends_on:
