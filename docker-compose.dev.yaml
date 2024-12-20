@@ -1,4 +1,4 @@
-version: "3.8"
+#version is obsolete in 2024
 
 services:
   front:
@@ -20,8 +20,6 @@ services:
     build:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
-      args:
-        DATABASE_URL: ${DATABASE_URL}
     ports:
       - "8000:8000"
     expose:
@@ -39,10 +37,6 @@ services:
     build:
       context: ./db  # Contexte de la construction (répertoire contenant le Dockerfile pour la base de données)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
-      args:
-        POSTGRES_USER: ${POSTGRES_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-        POSTGRES_DB: ${POSTGRES_DB}
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
