@@ -6,8 +6,6 @@ services:
     build:
       context: ./front  # Contexte de la construction (répertoire contenant le Dockerfile de front)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
-      args:
-        FRONTEND_API_URL: ${FRONTEND_API_URL}
     ports:
       - "1025:1025"
     expose:
@@ -23,7 +21,6 @@ services:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
       args:
-        BACKEND_API_URL: ${BACKEND_API_URL}
         DATABASE_URL: ${DATABASE_URL}
     ports:
       - "8000:8000"
