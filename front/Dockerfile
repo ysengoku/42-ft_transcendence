@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm cache clean --force && npm install
 
 # Installer Bootstrap
-RUN npm install bootstrap
+RUN npm install bootstrap vite
 
 # Copier le reste des fichiers du frontend dans le conteneur
 COPY . .
