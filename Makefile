@@ -1,5 +1,5 @@
 # Define the Docker Compose files for development and production
-DEV_DOCKER_COMPOSE = docker-compose.dev.yaml
+DEV_DOCKER_COMPOSE = docker-compose.yaml
 PROD_DOCKER_COMPOSE = docker-compose.prod.yaml
 
 # Define the name of the services (for convenience)
@@ -29,7 +29,10 @@ up-prod: check-env
 
 # Stop all containers
 down:
-	docker-compose down
+	docker-compose -f $(DEV_DOCKER_COMPOSE) down
+
+down-prod:
+	docker-compose -f $(PROD_DOCKER_COMPOSE) down
 
 # Rebuild the containers (useful when dependencies or code change)
 rebuild: check-env
