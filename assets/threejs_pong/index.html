@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Yipeee</title>
+		<div id="divA">P1 0 </div><div id="divB">P2 0 </div>
+		<style>
+			body { margin: 0; }
+			#divA {
+			position: absolute;
+			top: 10px;
+			padding: 0px 0;
+			width: 100%;
+			text-align: center;
+			color: white;
+			z-index: 10;
+			display:block;
+			}
+			#divB {
+			position: absolute;
+			top: 10px;
+			padding: 20px 0;
+			width: 100%;
+			text-align: center;
+			color: white;
+			z-index: 10;
+			display:block;
+			}
+		</style>
+		<script type="importmap">
+			{
+				"imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js",
+				"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<script type="module" src="./srcs/main.js"></script>
+	</body>
+</html>
