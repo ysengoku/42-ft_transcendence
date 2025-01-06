@@ -10,12 +10,12 @@ document.addEventListener("DOMContentLoaded", function () {
 		app.innerHTML = `
 		<div class="container">
 			<div class="text-center">
-			<img src="/app/assets/img/sample-logo.svg" alt="logo">
+			<img src="assets/img/sample-logo.svg" alt="logo">
 		</div>
 
 		<div class="d-flex flex-column align-items-center">
 			<div class="mb-3">
-				<a class="btn btn-primary" href="#" role="button">Login</a>
+				<a class="btn btn-primary" href="#" role="button">login</a>
 			</div>
 			<div class="mb-3">
 				<a class="btn btn-primary" href="#" role="button">Sign up</a>
