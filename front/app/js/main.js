@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
 		app.innerHTML = `
 		<div class="container">
 			<div class="text-center">
-			<img src="../assets/img/sample-logo.svg" alt="logo">
+			<img src="/app/assets/img/sample-logo.svg" alt="logo">
 		</div>
 
 		<div class="d-flex flex-column align-items-center">
@@ -32,6 +32,15 @@ document.addEventListener("DOMContentLoaded", function () {
 		</div>
 		`;
 	}
+
+	// function rendergame() {
+	// 	app.innerHTML = `
+	// 	<div class="container">
+	// 		<div class="text-center">
+	// 		<h1>Welcome to the main view</h1>
+	// 	</div>
+	// 	`;
+	// }
 });
 
 
