@@ -105,14 +105,14 @@ const world = new CANNON.World()
 world.gravity.set(0, -9.82, 0)
 
 
-const sphereGeometry = new THREE.SphereGeometry()
+const sphereGeometry = new THREE.SphereGeometry(0.5)
 const SM = new THREE.Mesh(sphereGeometry, normalMaterial)
 SM.position.x = 0;
 SM.position.y = 3;
 SM.position.z = 0;
 SM.castShadow = true
 scene.add(SM)
-const sphereShape = new CANNON.Sphere(1)
+const sphereShape = new CANNON.Sphere(0.5)
 const sphereBody = new CANNON.Body({ mass: 1 , velocity: new CANNON.Vec3(0, 0, -10)})
 sphereBody.addShape(sphereShape)
 sphereBody.position.x = SM.position.x
@@ -275,7 +275,21 @@ window.addEventListener('mousemove', function(e) {
 const objects = [];
 let z_value = -10;
 let x_value = 10;
-// console.log(sphereBody)
+let	p1_score = 0;
+let	p2_score = 0;
+
+function reset()
+{
+	SM.position.x = 0;
+	SM.position.y = 0.5;
+	SM.position.z = 0;
+	sphereBody.position.x = SM.position.x;
+	sphereBody.position.y = SM.position.y;
+	sphereBody.position.z = SM.position.z;
+	document.getElementById("divA").textContent ="P1 " + p1_score;
+	document.getElementById("divB").textContent ="P2 " + p2_score;
+	z_value *= -1;
+}
 
 function animate2()
 {
@@ -283,7 +297,18 @@ function animate2()
 	collided_wall = false
 	
 	requestAnimationFrame(animate2)
-
+	if (sphereBody.position.z >= 10)
+	{
+		p1_score++;
+		reset();
+	}
+	if (sphereBody.position.z <= -10)
+	{
+		p2_score++;
+		reset();
+	}
+	console.log(p1_score);
+	console.log(p2_score);
 	//delta = clock.getDelta()
 	delta = Math.min(clock.getDelta(), 0.1)
 	world.step(delta)
@@ -325,7 +350,8 @@ function input_manager2(event)
 			break;
 		default:
 			return; // Quit when this doesn't handle the key event.
-		}
+	}
+
 	event.preventDefault();
 }
 
@@ -334,26 +360,7 @@ function input_manager(event)
 	if (event.defaultPrevented) {
 		return; // Do nothing if the event was already processed
 	}
-	// switch (event.key) {
-	// 	case "Q":
-	// 		cubeBody.position.x += 0.5
-	// 		// code for "left arrow" key press.
-	// 		break;
-	// 	case "D":
-	// 		cubeBody.position.x -= 0.5
-	// 		// code for "right arrow" key press.
-	// 		break;
-	// 	default:
-	// 		return; // Quit when this doesn't handle the key event.
-	// 	}
 	switch (event.key) {
-		// case "ArrowDown":
-			
-		// 	// code for "down arrow" key press.
-		// 	break;
-		// case "ArrowUp":
-		// 	// code for "up arrow" key press.
-		// 	break;
 		case "ArrowLeft":
 			cubeBody.position.x += 0.5
 			// code for "left arrow" key press.
@@ -366,7 +373,6 @@ function input_manager(event)
 			return; // Quit when this doesn't handle the key event.
 		}
 	
-		// Cancel the default action to avoid it being handled twice
 		event.preventDefault();
 }
 
