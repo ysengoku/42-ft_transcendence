@@ -4,73 +4,6 @@ import * as CANNON from '/node_modules/cannon-es/dist/cannon-es.js';
 import Stats from '/node_modules/three/examples/jsm/libs/stats.module.js'
 import { GUI } from '/node_modules/dat.gui/build/dat.gui.module.js'
 
-// const scene = new THREE.Scene();
-// const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-window.addEventListener("keydown", input_manager, true);
-window.addEventListener("keydown", input_manager2, true);
-// const renderer = new THREE.WebGLRenderer();
-// renderer.setSize( window.innerWidth, window.innerHeight );
-// renderer.setAnimationLoop( animate );
-// // const orbit = new OrbitControls(camera, renderer.domElement);
-// // camera.position.set(10, 15, -22);
-// document.body.appendChild( renderer.domElement );
-// // orbit.update();
-
-// const geometry = new THREE.BoxGeometry( 3, 0.5, 0 );
-// const geometry2 = new THREE.CircleGeometry(0.3, 32, 0, Math.PI * 2);
-// const material = new THREE.MeshBasicMaterial( { color: 0xFFFFFF } );
-// const ax = new THREE.AxesHelper(1);
-// const gridHelper = new THREE.GridHelper( 10, 10 );
-// scene.add( gridHelper );
-// gridHelper.rotateX(90);
-// const cube = new THREE.Mesh( geometry, material );
-// scene.add(ax);
-// scene.add( cube );
-// const cube2 = new THREE.Mesh( geometry, material );
-// const circle1 = new THREE.Mesh( geometry2, material );
-
-// scene.add( cube2 );
-// scene.add( circle1 );
-
-// camera.position.z = 5;
-
-// cube.position.y = 3.5;
-// cube2.position.y = -3.5;
-// // circle1.position.y = 0.5;
-
-
-
-// gridHelper.rotateX(Math.PI);
-// let i = 0.01;
-
-// function animate() {
-
-// 	// cube.rotation.x += 0.01;
-// 	// cube.rotation.y += 0.01;
-// 	let wall_normal = new THREE.Vector2(0, 0);
-// 	if (!(circle1.position.x > (7.4) || circle1.position.x < -(7.4)))
-// 		circle1.position.x += 0.1;
-// 	else
-// 	{
-// 		wall_normal = circle1.position;
-
-// 	}
-// 	if (!(circle1.position.y > (3.2) || circle1.position.y < -(3.2)))
-// 		circle1.position.y += 0.01;
-// 	else
-// 	{
-		
-// 	}
-// 	//		0,6.4 -> 0,-6.4
-// 	// if (!(circle1.position.y > (3.5) || circle1.position.y < -(3.5)))
-// 	// 	circle1.position.y += 0.01;
-
-// 	renderer.render( scene, camera );
-
-
-// }
-
-
 const renderer = new THREE.WebGLRenderer()
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.shadowMap.enabled = true
@@ -128,7 +61,7 @@ cubeMesh2.position.z = 9;
 cubeMesh2.castShadow = true
 scene.add(cubeMesh2)
 const cubeShape2 = new CANNON.Box(new CANNON.Vec3(2.5, 0.5, 0.5))
-const cubeBody2 = new CANNON.Body({ mass: 1000 })
+const cubeBody2 = new CANNON.Body({ mass: 0  })
 cubeBody2.addShape(cubeShape2)
 cubeBody2.position.x = cubeMesh2.position.x
 cubeBody2.position.y = cubeMesh2.position.y
@@ -143,12 +76,15 @@ cubeMesh.position.z = -9;
 cubeMesh.castShadow = true
 scene.add(cubeMesh)
 const cubeShape = new CANNON.Box(new CANNON.Vec3(2.5, 0.5, 0.5))
-const cubeBody = new CANNON.Body({ mass: 1000 })
+const cubeBody = new CANNON.Body({ mass: 0 })
 cubeBody.addShape(cubeShape)
 cubeBody.position.x = cubeMesh.position.x
 cubeBody.position.y = cubeMesh.position.y
 cubeBody.position.z = cubeMesh.position.z
 world.addBody(cubeBody)
+
+window.addEventListener("keydown", input_manager);
+window.addEventListener("keydown", input_manager2);
 
 var axis = new CANNON.Vec3(0,1,0);
 var angle = -Math.PI / 2;
@@ -236,10 +172,20 @@ let intersects;
 
 let collided_cube = false
 let collided_wall = false
+let	collided_wall_p1 = false;
+let	collided_wall_p2 = false;
 
 sphereBody.addEventListener("collide",function(e){
 	collided_cube = e.body.id == cubeBody.id || e.body.id == cubeBody2.id
 	collided_wall = e.body.id == wallBody.id || e.body.id == wall2Body.id
+});
+
+cubeBody.addEventListener("collide",function(e){
+	collided_wall_p1 = e.body.id == wallBody.id || e.body.id == wall2Body.id
+});
+
+cubeBody2.addEventListener("collide",function(e){
+	collided_wall_p2 = e.body.id == wallBody.id || e.body.id == wall2Body.id
 });
 
 window.addEventListener('mousemove', function(e) {
@@ -264,14 +210,6 @@ window.addEventListener('mousemove', function(e) {
 	}
 });
 
-// const sphereMesh = new THREE.Mesh(
-// 	new THREE.SphereGeometry(0.4, 4, 2),
-// 	new THREE.MeshBasicMaterial({
-// 		wireframe: true,
-// 		color: 0xFFEA00
-// 	})
-// );
-
 const objects = [];
 let z_value = -10;
 let x_value = 10;
@@ -293,8 +231,10 @@ function reset()
 
 function animate2()
 {
-	collided_cube = false
-	collided_wall = false
+	collided_cube = false;
+	collided_wall = false;
+	collided_wall_p2 = false;
+	collided_wall_p1 = false;
 	
 	requestAnimationFrame(animate2)
 	if (sphereBody.position.z >= 10)
@@ -307,11 +247,9 @@ function animate2()
 		p2_score++;
 		reset();
 	}
-	console.log(p1_score);
-	console.log(p2_score);
-	//delta = clock.getDelta()
 	delta = Math.min(clock.getDelta(), 0.1)
 	world.step(delta)
+	console.log(cubeBody.position)
 	if (collided_cube == true)
 	{
 		z_value *= -1;
@@ -319,6 +257,26 @@ function animate2()
 	if (collided_wall == true)
 	{
 		x_value *= -1;
+	}
+	if (cubeBody.position.x > 7)
+	{
+		cubeBody.position.x = 7;
+		cubeMesh.position.x = 7;
+	}
+	if (cubeBody.position.x < -7)
+	{
+		cubeBody.position.x = -7;
+		cubeMesh.position.x = -7;
+	}
+	if (cubeBody2.position.x > 7)
+	{
+		cubeBody2.position.x = 7;
+		cubeMesh2.position.x = 7;
+	}
+	if (cubeBody2.position.x < -7)
+	{
+		cubeBody2.position.x = -7;
+		cubeMesh2.position.x = -7;
 	}
 	sphereBody.velocity.set(x_value * 0.1, -9, z_value)
 
