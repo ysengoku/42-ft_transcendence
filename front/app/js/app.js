@@ -1,4 +1,21 @@
-<div class="container">
+document.addEventListener("DOMContentLoaded", function () {
+	const app = document.getElementById("app");
+
+	renderLandingPage();
+
+	function renderLandingPage() {
+		app.innerHTML = 
+		<><div>
+			<h1>Welcome</h1>
+			<p>This is landing page</p>
+			<button>Login</button>
+		</div></>;
+ }
+
+});
+
+
+{/* <div class="container">
 	<div class="text-center">
 		<img src="./static/img/sample-logo.svg" alt="logo">
 	</div>
@@ -11,4 +28,4 @@
 			<a class="btn btn-primary" href="#" role="button">Sign up</a>
 		</div>
 	</div>
-</div>
+</div> */}
