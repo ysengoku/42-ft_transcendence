@@ -1,6 +1,5 @@
 # Define the Docker Compose files for development and production
-DEV_DOCKER_COMPOSE = docker-compose.yaml
-PROD_DOCKER_COMPOSE = docker-compose.prod.yaml
+DOCKER_COMPOSE = docker-compose.yaml
 
 # Define the name of the services (for convenience)
 FRONTEND_SERVICE = front
@@ -16,28 +15,19 @@ check-env:
 
 # Build all Docker images
 build: check-env
-	docker-compose -f $(DEV_DOCKER_COMPOSE) build
-	docker-compose -f $(PROD_DOCKER_COMPOSE) build
+	docker-compose -f $(DOCKER_COMPOSE) build
 
-# Start the development containers (bind mounts for volumes)
 up: check-env
-	docker-compose -f $(DEV_DOCKER_COMPOSE) up -d
-
-# Start the production containers
-up-prod: check-env
-	docker-compose -f $(PROD_DOCKER_COMPOSE) up -d
+	docker-compose -f $(DOCKER_COMPOSE) up -d
 
 # Stop all containers
 down:
-	docker-compose -f $(DEV_DOCKER_COMPOSE) down
+	docker-compose -f $(DOCKER_COMPOSE) down
 
-down-prod:
-	docker-compose -f $(PROD_DOCKER_COMPOSE) down
 
 # Rebuild the containers (useful when dependencies or code change)
 rebuild: check-env
-	docker-compose -f $(DEV_DOCKER_COMPOSE) up --build -d
-	docker-compose -f $(PROD_DOCKER_COMPOSE) up --build -d
+	docker-compose -f $(DOCKER_COMPOSE) up --build -d
 
 # Run migrations for the backend (Django)
 migrate:
@@ -50,11 +40,3 @@ bash-backend:
 # Open a bash shell inside the frontend container
 bash-frontend:
 	docker-compose exec $(FRONTEND_SERVICE) bash
-
-# Build the production image with inotify-tools for automatic rebuilds
-build-prod:
-	docker build -f ./production/Dockerfile -t transcendance-prod .
-
-# Run the production containers with automatic rebuild (via inotify)
-prod-reload:
-	docker-compose -f $(PROD_DOCKER_COMPOSE) up -d --build

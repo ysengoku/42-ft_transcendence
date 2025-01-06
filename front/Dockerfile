@@ -1,23 +1,20 @@
-# Utiliser une image de base Node.js pour le frontend
-FROM node:16-slim
+# Utilisation de l'image officielle Node.js
+FROM node:18-alpine
 
 # Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
-# Copier package.json et package-lock.json (si présent)
-COPY package*.json ./
+# Copier le package.json et le package-lock.json (si il existe)
+COPY ./app/package.json ./app/package-lock.json* ./
 
-# Nettoyer le cache npm et installer les dépendances
-RUN npm cache clean --force && npm install
+# Installer les dépendances
+RUN npm install
 
-# Installer Bootstrap
-RUN npm install bootstrap vite
+# Copier tout le reste de l'application dans le conteneur
+COPY ./app /app
 
-# Copier le reste des fichiers du frontend dans le conteneur
-COPY . .
+# Exposer le port de l'application front-end (port 5173 par défaut pour un projet Vite)
+EXPOSE 5173
 
-# Exposer le port 1025 pour le frontend
-EXPOSE 1025
-
-# Commande pour démarrer le frontend
-CMD ["npm", "start"]
+# Lancer l'application en mode développement
+CMD ["npm", "run", "dev"]

@@ -12,3 +12,6 @@ EXPOSE 1026
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
+
+
+
