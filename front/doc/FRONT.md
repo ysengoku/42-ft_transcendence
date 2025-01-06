@@ -6,12 +6,12 @@ ft_transcendence
 ├── front/
 │   ├── docker/
 │   │   ├── Dockerfile
-│   │   ├── package.json
-│   │   ├── vite.config.js
 │   │   └── docker-compose.yml
 │   │
 │   ├── app/
 │   │   ├── index.html          # Single entry point for the SPA
+│   │   ├── package.json
+│   │   ├── vite.config.js
 │   │   │
 │   │   ├── assets/
 │   │   │   ├── images/         # Static images (logos, icons, etc.)
@@ -26,7 +26,7 @@ ft_transcendence
 │   │   │       └── ...
 │   │   │
 │   │   ├── js/
-│   │   │   ├── app.js           # Main entry point for JavaScript
+│   │   │   ├── main.js           # Main entry point for JavaScript
 │   │   │   ├── router.js        # Manages client-side routing for SPA
 │   │   │   ├── api/
 │   │   │   │   ├── user.js        # API calls for user management
