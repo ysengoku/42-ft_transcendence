@@ -1,19 +1,19 @@
-// import { renderNavbar } from './shared_components/navbar.js';
+import { renderNavbar } from './shared_components/navbar.js';
 
 document.addEventListener("DOMContentLoaded", function () {
 	const app = document.getElementById("app");
 
-	// app.innerHTML = renderNavbar();
+	app.innerHTML = renderNavbar();
 	renderLandingPage();
 
 	function renderLandingPage() {
-		app.innerHTML = `
+		const landingPageHTML =  `
 		<div class="container">
 			<div class="text-center">
-			<img src="../assets/img/sample-logo.svg" alt="logo">
+			<img src="/assets/img/sample-logo.svg" alt="logo" class="img-fluid">
 		</div>
 
-		<div class="d-flex flex-column align-items-center">
+		<div class="d-flex flex-column align-items-center py-10">
 			<div class="mb-3">
 				<a class="btn btn-primary" href="#" role="button">Login</a>
 			</div>
@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
 			</div>
 		</div>
 		`;
+		app.innerHTML += landingPageHTML;
 	}
 
 	function renderMainView() {
