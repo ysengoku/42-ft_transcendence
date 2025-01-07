@@ -14,14 +14,18 @@
 
 	<body>
 		<!-- SPA content will be loaded here -->
-		<div id="app"></div>
+		<div id="app" class="d-flex flex-column min-vh-100">
+			<header><!--navbar--></header>
+			<div id="content" class="flex-grow-1"><!-- Dynamic views --></div>
 
-		<!-- Static footer -->
-		<footer class="footer bg-dark text-white text-center py-2">
-			<div class="container">
-				<p class="mb-0">&copy; 2025 Transcendancing. All rights reserved.</p>
-			</div>
-		</footer>
+			<!-- Static footer -->
+			<footer class="footer bg-dark text-white text-center py-2">
+				<div class="container">
+					<p class="mb-0">&copy; 2025 Transcendancing. All rights reserved.</p>
+				</div>
+			</footer>
+		</div>
+
 		
 		<!-- Bootstrap -->
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -30,7 +34,7 @@
 	</body>
 </html>
  
-<!-- To test before Django integration
+<!-- To test before Server integration
 1. In front/app/ directory: python3 -m http.server 8000 (Mount temporary server to use JS's fetch)
 2. Access from Chrome browser: http://localhost:8000/front/ 
 -->

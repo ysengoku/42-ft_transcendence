@@ -1,4 +1,6 @@
-function renderLoginForm() {
+import { simulateLogin } from '../mock/auth.js';
+
+export function renderLoginForm() {
 	const loginFormHTML = `
 	<div class="container vh-100 d-flex flex-column justify-content-center align-items-center">
 		<form class="w-25">
@@ -11,7 +13,7 @@ function renderLoginForm() {
     			<input type="password" class="form-control" id="inputPassword">
   			</div>
 			<div class="mb-3 py-3">
-				<button type="submit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
+				<button type="submit" id="loginSubmit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
 			</div>
 			<div class="mb-3">
 				<a href="#register" style="text-decoration: none;">Forgot password?</a>
@@ -35,6 +37,17 @@ function renderLoginForm() {
 
 	const contentContainer = document.getElementById('content');
 	contentContainer.innerHTML = loginFormHTML;
-}
 
-export { renderLoginForm };
+	// ------- Login simulation using mock -----------------------
+	function setupLoginButton() {
+		const loginButton = document.getElementById('loginSubmit');
+		if (loginButton) {
+		  loginButton.addEventListener('click', function(event) {
+			event.preventDefault();
+			simulateLogin(event);
+		  });
+		}
+	  }
+	setupLoginButton();
+	// ------------------------------------------------------------
+}
