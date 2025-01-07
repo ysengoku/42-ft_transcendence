@@ -1,5 +1,6 @@
 import { renderNavbar } from "../shared_components/navbar.js";
 import { renderLandingPage } from "../shared_components/landing.js";
+import { renderUserProfile } from "../user/userProfile.js";
 
 export function simulateLogin(event) {
 	event.preventDefault();
@@ -10,6 +11,7 @@ export function simulateLogin(event) {
 		localStorage.setItem('isLoggedIn', 'true');
 		alert('Login successful');
 		renderNavbar();
+		renderUserProfile();
 	} else {
 		alert('Login failed');
 	}
