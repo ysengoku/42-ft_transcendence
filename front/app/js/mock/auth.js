@@ -9,7 +9,7 @@ export function simulateLogin(event) {
 	
 	if (inputUsername.value === 'test' && inputPassword.value === 'password') {
 		localStorage.setItem('isLoggedIn', 'true');
-		alert('Login successful');
+		// alert('Login successful');
 		renderNavbar();
 		renderUserProfile();
 	} else {
@@ -20,7 +20,7 @@ export function simulateLogin(event) {
 export function simulateLogout(event) {
 	event.preventDefault();
 	localStorage.removeItem('isLoggedIn');
-	alert('Logout successful');
+	// alert('Logout successful');
 	renderNavbar();
 	renderLandingPage();
 }
