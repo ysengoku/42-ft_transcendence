@@ -38,6 +38,8 @@ ft_transcendence
 │   │   │   ├── user/              # User-related components
 │   │   │   │   ├── userProfile.js  # User profile component
 │   │   │   │   ├── login.js
+│   │   │   │   ├── register.js
+│   │   │   │   ├── resetPassword.js
 │   │   │   │   └── ...
 │   │   │   ├── tournament/
 │   │   │   │   └── ...

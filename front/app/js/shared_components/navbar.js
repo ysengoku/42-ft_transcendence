@@ -17,7 +17,6 @@ function renderNavbar() {
 							<a class="dropdown-item" href="#" id="dropdown-item-logged1">Your profile</a>
 							<a class="dropdown-item" href="#" id="dropdown-item-logged2">Settings</a>
 							<div class="dropdown-divider"></div>
-							<a class="dropdown-item" href="#" id="dropdown-item-nologged3">Forgot password</a>
 							<a class="dropdown-item" href="#" id="dropdown-item-logged3">Logout</a>
 						</div>
 					</li>
