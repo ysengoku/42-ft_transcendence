@@ -2,7 +2,7 @@ import { simulateLogin } from '../mock/auth.js';
 
 export function renderLoginForm() {
 	const loginFormHTML = `
-	<div class="container vh-100 d-flex flex-column justify-content-center align-items-center">
+	<div class="container d-flex flex-column justify-content-center align-items-center">
 		<form class="w-25">
   			<div class="mb-3">
     			<label for="inputUsername" class="form-label">Username</label>
