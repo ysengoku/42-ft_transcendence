@@ -1,5 +1,5 @@
 import { renderNavbar } from "../shared_components/navbar.js";
-import { renderLandingPage } from "../shared_components/landing.js";
+import { renderLandingView } from "../shared_components/landing.js";
 import { renderUserProfile } from "../user/userProfile.js";
 
 export function simulateLogin(event) {
@@ -22,5 +22,5 @@ export function simulateLogout(event) {
 	localStorage.removeItem('isLoggedIn');
 	// alert('Logout successful');
 	renderNavbar();
-	renderLandingPage();
+	renderLandingView();
 }

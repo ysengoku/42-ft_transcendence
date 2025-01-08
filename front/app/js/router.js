@@ -1,9 +1,9 @@
-import { renderLandingPage } from './shared_components/landing.js';
+import { renderLandingView } from './shared_components/landing.js';
 import { renderLoginForm } from './user/login.js';
 import { renderUserProfile } from './user/userProfile.js';
 
 const routes = {
-	'/': renderLandingPage,
+	'/': renderLandingView,
 	'/login': renderLoginForm,
 	'/profile': renderUserProfile
 };
