@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
 	document.addEventListener('click', function (event) {
 		if (event.target && event.target.matches('a[href="#login"]')) {
 			renderLoginForm();
-		} else if (event.target && event.target.matches('a[href="#register"]')) {
+		} else if (event.target && event.target.matches('a[href="/register"]')) {
 			renderSignUpForm();
 		}
 	}); 
