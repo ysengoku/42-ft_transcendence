@@ -9,13 +9,13 @@ export function renderNavbar() {
 		</a>
 		<div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 			${!isLoggedIn ? `
-				<a class="dropdown-item" href="#login" id="dropdown-item-login">Login</a>
-				<a class="dropdown-item" href="#register" id="dropdown-item-register">Sign up</a>
+				<a class="dropdown-item" href="/login" id="dropdown-item-login">Login</a>
+				<a class="dropdown-item" href="/register" id="dropdown-item-register">Sign up</a>
 			` : `
-				<a class="dropdown-item" href="#">Your profile</a>
-				<a class="dropdown-item" href="#">Settings</a>
+				<a class="dropdown-item" href="/profile">Your profile</a>
+				<a class="dropdown-item" href="/">Settings</a>
 				<div class="dropdown-divider"></div>
-				<a class="dropdown-item" href="#" id="dropdown-item-logout">Logout</a>
+				<a class="dropdown-item" href="/" id="dropdown-item-logout">Logout</a>
 			`}
 		</div>
 	`;
