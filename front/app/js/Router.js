@@ -1,6 +1,4 @@
-import { renderLandingView } from './shared_components/landing.js';
-import { renderLoginForm } from './user/login.js';
-import { renderUserProfile } from './user/userProfile.js';
+import { renderUserProfile } from './components/pages/Profile.js';
 
 const routes = {
 	'/': renderLandingView,

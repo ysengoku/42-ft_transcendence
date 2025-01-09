@@ -1,9 +1,19 @@
-import { simulateLogin } from '../mock/auth.js';
+import { simulateLogin } from '../../mock/auth.js';
 
-export function renderLoginForm() {
-	const loginFormHTML = `
+export class LoginComponent extends HTMLElement {
+	constructor() {
+		super(); 
+	}
+	
+	connectedCallback() {
+		this.render();
+		this.setupLoginButton();
+	}
+
+	render() {
+	this.innerHTML = `
 	<div class="container d-flex flex-column justify-content-center align-items-center">
-		<form class="w-25">
+		<form class="w-100">
   			<div class="mb-3">
     			<label for="inputUsername" class="form-label">Username</label>
    				<input type="username" class="form-control" id="inputUsername">
@@ -34,20 +44,19 @@ export function renderLoginForm() {
 		</form>
 	</div>
 	`;
-
-	const contentContainer = document.getElementById('content');
-	contentContainer.innerHTML = loginFormHTML;
+	}
 
 	// ------- Login simulation using mock -----------------------
-	function setupLoginButton() {
-		const loginButton = document.getElementById('loginSubmit');
-		if (loginButton) {
-		  loginButton.addEventListener('click', function(event) {
-			event.preventDefault();
-			simulateLogin(event);
-		  });
-		}
-	  }
-	setupLoginButton();
+  	setupLoginButton() {
+    	const loginButton = this.querySelector('#loginSubmit');
+    	if (loginButton) {
+      		loginButton.addEventListener('click', (event) => {
+        		event.preventDefault();
+        		simulateLogin(event);
+      		});
+    	}
+	}
 	// ------------------------------------------------------------
 }
+
+customElements.define('login-form', LoginComponent);

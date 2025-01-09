@@ -1,11 +1,22 @@
 // import { navigateTo } from './router.js';
-import { renderNavbar } from './shared_components/navbar.js';
-import { renderLandingView } from './shared_components/landing.js';
-import { renderLoginForm } from './user/login.js';
+import './components/pages/Landing.js';
+import './components/pages/Login.js';
+import './components/navbar/DropdownMenu.js';
 
 document.addEventListener("DOMContentLoaded", function () {
-	renderNavbar();
-	renderLandingView();
+	const navbarDropdown = document.getElementById('user-menu');
+	navbarDropdown.innerHTML = '<dropdown-menu></dropdown-menu>';
+	const contentContainer = document.getElementById('content');
+	contentContainer.innerHTML = '<landing-component></landing-component>';
+
+	document.addEventListener('click', function (event) {
+		if (event.target && event.target.matches('a[href="#login"]')) {
+			contentContainer.innerHTML = '<login-form></login-form>';
+		} else if (event.target && event.target.matches('a[href="/register"]')) {
+			renderSignUpForm();
+		}
+	}); 
+});
 
 // 	document.addEventListener('click', function (event) {
 // 		const target = event.target;
@@ -21,12 +32,3 @@ document.addEventListener("DOMContentLoaded", function () {
 // 		}
 // 	  }); 
 // });
-
-	document.addEventListener('click', function (event) {
-		if (event.target && event.target.matches('a[href="#login"]')) {
-			renderLoginForm();
-		} else if (event.target && event.target.matches('a[href="/register"]')) {
-			renderSignUpForm();
-		}
-	}); 
-});
