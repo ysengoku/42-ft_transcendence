@@ -1,60 +1,41 @@
-// import { renderNavbar } from './shared_components/navbar.js';
+// import { Router } from './Router.js';
+import './components/pages/Landing.js';
+import './components/pages/Login.js';
+import './components/navbar/DropdownMenu.js';
+
+// const router = new Router();
+
+// router.addRoute('/', 'landing-component'); //Uncaught ReferenceError: isDynamic is not defined
+// router.addRoute('/login', 'login-component');
 
 document.addEventListener("DOMContentLoaded", function () {
-	const app = document.getElementById("app");
+	const navbarDropdown = document.getElementById('user-menu');
+	navbarDropdown.innerHTML = '<dropdown-menu></dropdown-menu>';
+	const contentContainer = document.getElementById('content');
+	contentContainer.innerHTML = '<landing-component></landing-component>';
+	
+	// router.navigate();
 
-	// app.innerHTML = renderNavbar();
-	renderLandingPage();
-
-	function renderLandingPage() {
-		app.innerHTML = `
-		<div class="container">
-			<div class="text-center">
-			<img src="assets/img/sample-logo.svg" alt="logo">
-		</div>
-
-		<div class="d-flex flex-column align-items-center">
-			<div class="mb-3">
-				<a class="btn btn-primary" href="#" role="button">login</a>
-			</div>
-			<div class="mb-3">
-				<a class="btn btn-primary" href="#" role="button">Sign up</a>
-			</div>
-		</div>
-		`;
-	}
-
-	function renderMainView() {
-		app.innerHTML = `
-		<div class="container">
-			<div class="text-center">
-			<h1>Welcome to the main view</h1>
-		</div>
-		`;
-	}
-
-	// function rendergame() {
-	// 	app.innerHTML = `
-	// 	<div class="container">
-	// 		<div class="text-center">
-	// 		<h1>Welcome to the main view</h1>
-	// 	</div>
-	// 	`;
-	// }
+	document.addEventListener('click', function (event) {
+		if (event.target && event.target.matches('a[href="#login"]')) {
+			contentContainer.innerHTML = '<login-form></login-form>';
+		} else if (event.target && event.target.matches('a[href="/register"]')) {
+			renderSignUpForm();
+		}
+	}); 
 });
 
+// 	document.addEventListener('click', function (event) {
+// 		const target = event.target;
 
-/* <div class="container">
-	<div class="text-center">
-		<img src="./static/img/sample-logo.svg" alt="logo">
-	</div>
-
-	<div class="d-flex flex-column align-items-center">
-		<div class="mb-3">
-			<a class="btn btn-primary" href="#" role="button">Login</a>
-		</div>
-		<div class="mb-3">
-			<a class="btn btn-primary" href="#" role="button">Sign up</a>
-		</div>
-	</div>
-</div> */
+// 		if (target && target.matches('a[href^="/"]')) {
+// 		  const path = target.getAttribute('href');
+// 		  event.preventDefault();
+// 		  navigateTo(path);
+	
+// 		  if (routes[path]) {
+// 			routes[path]();
+// 		  }
+// 		}
+// 	  }); 
+// });

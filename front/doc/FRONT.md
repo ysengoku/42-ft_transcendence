@@ -1,17 +1,11 @@
-# Frontend
+# Frontend structure
 Serves static assets (HTML, CSS, JavaScript).
 Handles UI interactions and API calls to backend services.
 
 ft_transcendence
 ├── front/
-│   ├── docker/
-│   │   ├── Dockerfile
-│   │   └── docker-compose.yml
-│   │
 │   ├── app/
 │   │   ├── index.html          # Single entry point for the SPA
-│   │   ├── package.json
-│   │   ├── vite.config.js
 │   │   │
 │   │   ├── assets/
 │   │   │   ├── images/         # Static images (logos, icons, etc.)
@@ -26,32 +20,33 @@ ft_transcendence
 │   │   │       └── ...
 │   │   │
 │   │   ├── js/
-│   │   │   ├── main.js           # Main entry point for JavaScript
-│   │   │   ├── router.js        # Manages client-side routing for SPA
-│   │   │   ├── api/
-│   │   │   │   ├── user.js        # API calls for user management
-│   │   │   │   └── ...
-│   │   │   ├── shared_components/          # Reusable UI components
-│   │   │   │   ├── header.js       # Dynamic header logic
-│   │   │   │   ├── footer.js       # Footer rendering logic
-│   │   │   │   └── ...
-│   │   │   ├── user/              # User-related components
-│   │   │   │   ├── userProfile.js  # User profile component
-│   │   │   │   ├── login.js
-│   │   │   │   └── ...
-│   │   │   ├── tournament/
-│   │   │   │   └── ...
-│   │   │   ├── .../
-│   │   │   │   └── ...
+│   │   │   ├── main.js          # Main entry point for JavaScript
+│   │   │   ├── Router.js        # Manages client-side routing for SPA
 │   │   │   │
-│   │   │   └── utils/
+│   │   │   ├── components/
+│   │   │   │   ├── navbar/
+│   │   │   │   │   ├── DropdownMenu.js
+│   │   │   │   │   └── ...
+│   │   │   │   │── pages/
+│   │   │   │   │   ├── Landing.js
+│   │   │   │   │   ├── Login.js
+│   │   │   │   │   └── ...
+│   │   │   │   │
+│   │   │   │   └── .../
+│   │   │   │       ├── ...
+│   │   │   │       └── ...
+│   │   │   │
+│   │   │   └── api/
 │   │   │       ├── ...
 │   │   │       └── ...
 │   │   │
-│   │   └── templates/
-│   │       ├── header.html      # Optional: Fallback for header
-│   │       ├── footer.html      # Static footer template
-│   │       └── ...
+│   │   │── package.json
+│   │   └── vite.config.js
+│   │
+│   ├── docker/
+│   │   ├── Dockerfile
+│   │   └── docker-compose.yml
+│   │
 │   └── doc/
 │       ├── FRONT.md
 │       └── ...
