@@ -1,17 +1,21 @@
-# Use official Nginx image as the base
 FROM nginx:alpine
 
-# Copy the custom nginx.conf into the container
+# Install OpenSSL, create SSL directory, and generate certificates
+RUN apk add --no-cache openssl && \
+    mkdir -p /etc/nginx/ssl && \
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/nginx/ssl/transcendance.key \
+    -out /etc/nginx/ssl/transcendance.crt \
+    -subj "/C=FR/ST=RA/L=Lyon/O=42/OU=faboussa/CN=localhost" \
+    && chmod 644 /etc/nginx/ssl/transcendance.crt \
+    && chmod 644 /etc/nginx/ssl/transcendance.key
+
+# Copy the custom nginx.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy the static files into the appropriate directory for Nginx
+# Copy the static files
 COPY ./ /usr/share/nginx/html
 
-# Expose port 1026
 EXPOSE 1026
 
-# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
-
-
-
