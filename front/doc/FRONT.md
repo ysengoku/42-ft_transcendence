@@ -1,4 +1,4 @@
-# Frontend
+# Frontend structure
 Serves static assets (HTML, CSS, JavaScript).
 Handles UI interactions and API calls to backend services.
 
