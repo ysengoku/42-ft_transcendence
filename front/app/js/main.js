@@ -7,7 +7,8 @@ const router = new Router();
 
 router.addRoute('/', 'landing-component');
 router.addRoute('/login', 'login-form');
-router.addRoute('/profile', 'user-profile');  // This is temporary, should be '/profile/:id'
+router.addRoute('/profile', 'user-profile');  // This is temporary
+// router.addRoute('/profile/:id', 'user-profile');
 // Add all routes here
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,4 +18,4 @@ document.addEventListener('DOMContentLoaded', () => {
 	router.navigate(window.location.pathname);
 });
 
-// export { router };
+export { router };

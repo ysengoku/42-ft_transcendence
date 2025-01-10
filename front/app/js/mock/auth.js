@@ -1,4 +1,4 @@
-// import { router } from './main.js'; 
+import { router } from '../main.js'; 
 import '../components/navbar/DropdownMenu.js';
 import '../components/pages/Profile.js';
 import '../components/pages/Landing.js';
@@ -12,9 +12,7 @@ export function simulateLogin(event) {
 		localStorage.setItem('isLoggedIn', 'true');
 		const navbarDropdown = document.getElementById('user-menu');
 		navbarDropdown.innerHTML = '<dropdown-menu></dropdown-menu>';
-		const contentContainer = document.getElementById('content');
-		contentContainer.innerHTML = '<user-profile></user-profile>';
-		// router.navigate('/profile');
+		router.navigate('/profile');
 	} else {
 		alert('Login failed');
 	}
@@ -25,7 +23,5 @@ export function simulateLogout(event) {
 	localStorage.removeItem('isLoggedIn');
 	const navbarDropdown = document.getElementById('user-menu');
 	navbarDropdown.innerHTML = '<dropdown-menu></dropdown-menu>';
-	const contentContainer = document.getElementById('content');
-	contentContainer.innerHTML = '<landing-component></landing-component>';
-	// router.navigate('/');
+	router.navigate('/');
 }
