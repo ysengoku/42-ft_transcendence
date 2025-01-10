@@ -34,12 +34,12 @@ addRoute(path, componentTag) {
 }
 ```
 
+This line determines if the path contains dynamic segments.
+- `/regular expression/.test(path)` : 'test' methode tests if the regular expression matches any part of the string `path`   
+- `\w+` : This means one or more characters(letters, digits and underscores).   
 ```js
 const isDynamic = /:\w+/.test(path);
 ```
-This line determines if the path contains dynamic segments.
-`/regular expression/.test(path)` : 'test' methode tests if the regular expression matches any part of the string `path`   
-`\w+` : This means one or more characters(letters, digits and underscores).   
 
 Example usage:
 ```js
