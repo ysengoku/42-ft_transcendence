@@ -29,7 +29,7 @@ export class LoginForm extends HTMLElement {
 				<button type="submit" id="loginSubmit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
 			</div>
 			<div class="mb-3">
-				<a href="#register" style="text-decoration: none;">Forgot password?</a>
+				<a href="/register" style="text-decoration: none;">Forgot password?</a>
 			</div>
 			<div class="mb-3 text-center py-3">
       			<div class="d-flex align-items-center">
@@ -39,10 +39,10 @@ export class LoginForm extends HTMLElement {
       			</div>
 			</div>
 			<div class="mb-3">
-  				<button class="btn btn-link w-100 py-2" style="text-decoration: none;" onclick="window.location.href='/register';">Not registered yet? <strong>Sign up now</strong></button>
+  				<a class="btn btn-link w-100 py-2" style="text-decoration: none;" href="/register" role="button">Not registered yet? <strong>Sign up now</strong></a>
 			</div>
 			<div class="mb-3">
-  				<button class="btn btn-outline-primary w-100 py-2 my-2" onclick="window.location.href='/';">Login with 42</button>
+  				<a class="btn btn-outline-primary w-100 py-2 my-2" onclick="window.location.href='/';">Login with 42</a>
 			</div>
 		</form>
 	</div>
