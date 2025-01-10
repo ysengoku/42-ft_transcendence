@@ -11,9 +11,7 @@ export class Router {
 
 	handleRoute() {
 		const path = window.location.pathname;
-		// console.log("Current path:", path);
 		const route = this.routes.get(path) || this.matchDynamicRoute(path);
-		// console.log("Matched route:", route);
 
 		if (route) {
 			const { componentTag, isDynamic, param } = route;
