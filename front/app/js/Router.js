@@ -80,6 +80,7 @@ export class Router {
 	}
 
 	navigate(path = window.location.pathname) {
+		console.log('Navigating to:', path);
 		window.history.pushState({}, '', path);
 		this.handleRoute();
 	}
