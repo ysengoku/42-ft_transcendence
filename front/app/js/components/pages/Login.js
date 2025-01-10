@@ -1,13 +1,16 @@
-import { simulateLogin } from '../../mock/auth.js';
+import { router } from '../../main.js';
+import { simulateApiLogin } from '../../mock/mockApiLogin.js';
+// import { simulateLogin } from '../../mock/auth.js';
 
-export class LoginComponent extends HTMLElement {
+export class LoginForm extends HTMLElement {
 	constructor() {
 		super(); 
 	}
 	
 	connectedCallback() {
 		this.render();
-		this.setupLoginButton();
+		// this.setupLoginButton();
+		this.setupLoginHandler();
 	}
 
 	render() {
@@ -36,27 +39,58 @@ export class LoginComponent extends HTMLElement {
       			</div>
 			</div>
 			<div class="mb-3">
-  				<button class="btn btn-link w-100 py-2" style="text-decoration: none;" onclick="window.location.href='#register';">Not registered yet? <strong>Sign up now</strong></button>
+  				<button class="btn btn-link w-100 py-2" style="text-decoration: none;" onclick="window.location.href='/register';">Not registered yet? <strong>Sign up now</strong></button>
 			</div>
 			<div class="mb-3">
-  				<button class="btn btn-outline-primary w-100 py-2 my-2" onclick="window.location.href='#';">Login with 42</button>
+  				<button class="btn btn-outline-primary w-100 py-2 my-2" onclick="window.location.href='/';">Login with 42</button>
 			</div>
 		</form>
 	</div>
 	`;
 	}
 
-	// ------- Login simulation using mock -----------------------
-  	setupLoginButton() {
-    	const loginButton = this.querySelector('#loginSubmit');
-    	if (loginButton) {
-      		loginButton.addEventListener('click', (event) => {
-        		event.preventDefault();
-        		simulateLogin(event);
-      		});
-    	}
+	setupLoginHandler() {
+		const form = this.querySelector('#loginForm');
+		form.addEventListener('submit', (event) => {
+			event.preventDefault();
+			this.handleLogin();
+		});
 	}
+
+	// This function should be changed after back-end integration
+	async handleLogin() {
+		// If the user is already logged in, redirect to profile page
+
+		const inputUsername = this.querySelector('#inputUsername').value;
+		const inputPassword = this.querySelector('#inputPassword').value;
+
+		const response = await simulateApiLogin({ inputUsername, inputPassword });
+
+		if (response.success) {
+			localStorage.setItem('isLoggedIn', 'true');
+			const profilePage = document.querySelector('user-profile');
+			if (profilePage) {
+				profilePage.user = response.user;
+			}
+			const navbarDropdown = document.getElementById('user-menu');
+			navbarDropdown.innerHTML = '<dropdown-menu></dropdown-menu>';
+			router.navigate('/profile');
+		} else {
+			alert('Login failed');
+		}
+	}
+
+	// ------- Login simulation using mock -----------------------
+  	// setupLoginHandler() {
+    // 	const loginButton = this.querySelector('#loginSubmit');
+    // 	if (loginButton) {
+    //   		loginButton.addEventListener('click', (event) => {
+    //     		event.preventDefault();
+    //     		simulateLogin(event);
+    //   		});
+    // 	}
+	// }
 	// ------------------------------------------------------------
 }
 
-customElements.define('login-form', LoginComponent);
+customElements.define('login-form', LoginForm);

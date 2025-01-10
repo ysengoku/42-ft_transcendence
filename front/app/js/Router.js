@@ -2,16 +2,18 @@ export class Router {
 	constructor() {
 		this.routes = new Map();
 		this.currentComponent = null;
-		this.init();
 	}
 
 	addRoute(path, componentTag) {
-		this.routes.set(path, { componentTag, isDynamic });
+		const isDynamic = /:\w+/.test(path);
+        this.routes.set(path, { componentTag, isDynamic });
 	}
 
 	handleRoute() {
 		const path = window.location.pathname;
+		// console.log("Current path:", path);
 		const route = this.routes.get(path) || this.matchDynamicRoute(path);
+		// console.log("Matched route:", route);
 
 		if (route) {
 			const { componentTag, isDynamic, param } = route;
@@ -45,6 +47,7 @@ export class Router {
 		if (routePathParts.length !== pathParts.length) {
 			return null;
 		}
+		const param = {};
 		for (let i = 0; i < routePathParts.length; i++) {
 			if (routePathParts[i].startsWith(':')) {
 				param[routePathParts[i].slice(1)] = pathParts[i];  
@@ -59,7 +62,12 @@ export class Router {
 		if (this.currentComponent) {
 			this.currentComponent.remove();
 		}
-		document.getElementById('content').innerHTML = `<${componentTag}></${componentTag}>`;
+		// document.getElementById('content').innerHTML = `<${componentTag}></${componentTag}>`;
+		const component = document.createElement(componentTag);
+		const contentElement = document.getElementById('content');
+		contentElement.innerHTML = '';
+		contentElement.appendChild(component);
+		this.currentComponent = component;
 	}
 
 	renderDynamicComponent(componentTag, param) {
@@ -73,16 +81,21 @@ export class Router {
 		this.currentComponent = component;
 	}
 
-	init() {
-		window.addEventListener('popstate', () => this.navigate());
-		document.addEventListener('DOMContentLoaded', () => this.navigate());
-
-		document.addEventListener('click', (event) => {
-			if (event.target && event.target.matches('a[href^="/"]')) {
-				event.preventDefault();
-				const path = event.target.getAttribute('href');
-				this.navigate();
-			}
-		});
+	navigate(path = window.location.pathname) {
+		window.history.pushState({}, '', path);
+		this.handleRoute();
 	}
+
+    init() {
+        window.addEventListener('popstate', () => this.handleRoute());
+        document.addEventListener('click', (event) => this.handleLinkClick(event));
+    }
+
+    handleLinkClick(event) {
+        if (event.target && event.target.matches('a[href^="/"]')) {
+            event.preventDefault();
+            const path = event.target.getAttribute('href');
+            this.navigate(path);
+        }
+    }
 }
