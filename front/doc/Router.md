@@ -1,5 +1,28 @@
 # Router class
 
+`Router` class is a simple front-end router that handles navigation in a single-page application (SPA), defining routes (URLs) and associating them with specific components (custom HTML tags), dynamically rendering content based on the current URL.
+
+## Key Features
+
+### Routes Management (addRoute):
+Routes can be registered by specifying a URL path and the component to render for that path.
+Supports both static routes (e.g., `/home`) and dynamic routes (e.g., `/user/:id`).   
+
+### Dynamic Route Matching (matchDynamicRoute and extractParam):
+Dynamic routes include placeholders like `:id` that match parts of the URL dynamically.
+Extracts dynamic parameters (e.g., id=123 from /user/123) and passes them to components.   
+
+### Rendering Components (renderComponent and renderDynamicComponent):
+Replaces the content of a `<div>` with `id="content"` with the specified component.
+For dynamic routes, extracted parameters are passed to the component.   
+
+### Navigation (navigate):
+Updates the browser's URL without reloading the page and renders the appropriate component.   
+
+### History and Link Handling (init and handleLinkClick):
+Listens for popstate events (triggered by the browser's back/forward buttons) to handle navigation changes.   
+Captures clicks on internal `<a>` links (hrefs starting with /) to navigate without reloading the page.   
+
 ## Define routes
 ```js
 // This function adds all routes to Map (collections of key-value pairs) named 'routes' in this class
@@ -13,15 +36,28 @@ this.addRoute('/login', 'login-form')  // key: '/login', value: { 'login-form', 
 this.addRoute('/profile/:id', 'profile-page')  // key: '/profile/:id', value: { 'profile-page', true }
 ```
 
-## Static URL
-
-## Dynamic URL
-
-Example URL: `profile/123`
-
-
 ## Functions
-### extractParam function
+
+### addRoute
+
+Registers a route by specifying a path and its associated component.
+
+```js
+addRoute(path, componentTag) {
+	const isDynamic = /:\w+/.test(path);
+    this.routes.set(path, { componentTag, isDynamic });
+}
+```
+
+```js
+const isDynamic = /:\w+/.test(path);
+```
+This line determines if the path contains dynamic segments.
+`/regular expression/.test(path)` : 'test' methode tests if the regular expression matches any part of the string `path`   
+`\w+` : This means one or more characters(letters, digits and underscores).   
+
+
+### extractParam
 ```js
 extractParam(routePath, path) {
 	
@@ -49,7 +85,7 @@ extractParam(routePath, path) {
 	}
 ```
 
-### renderDynamicComponent function
+### renderDynamicComponent
 
 ```js
 renderDynamicComponent(componentTag, param) {
