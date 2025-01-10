@@ -23,24 +23,9 @@ Updates the browser's URL without reloading the page and renders the appropriate
 Listens for popstate events (triggered by the browser's back/forward buttons) to handle navigation changes.   
 Captures clicks on internal `<a>` links (hrefs starting with /) to navigate without reloading the page.   
 
-## Define routes
-```js
-// This function adds all routes to Map (collections of key-value pairs) named 'routes' in this class
-// 'routes': key = path, value = { componentTag, isDynamic }
-addRoute(path, componentTag)
-
-// Static URL
-this.addRoute('/login', 'login-form')  // key: '/login', value: { 'login-form', false }
-
-// Dynamic URL
-this.addRoute('/profile/:id', 'profile-page')  // key: '/profile/:id', value: { 'profile-page', true }
-```
-
-## Functions
-
 ### addRoute
-
-Registers a route by specifying a path and its associated component.
+This function adds all routes to Map (collections of key-value pairs) named 'routes' in this class
+`'routes': key = path, value = { componentTag, isDynamic }`
 
 ```js
 addRoute(path, componentTag) {
@@ -56,6 +41,16 @@ This line determines if the path contains dynamic segments.
 `/regular expression/.test(path)` : 'test' methode tests if the regular expression matches any part of the string `path`   
 `\w+` : This means one or more characters(letters, digits and underscores).   
 
+Example usage:
+```js
+const router = new Router();
+
+// Static URL
+router.addRoute('/login', 'login-form')  // key: '/login', value: { 'login-form', false }
+
+// Dynamic URL
+router.addRoute('/profile/:id', 'profile-page')  // key: '/profile/:id', value: { 'profile-page', true }
+```
 
 ### extractParam
 ```js
