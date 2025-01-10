@@ -1,13 +1,21 @@
 export class UserProfile extends HTMLElement {
 	constructor() {
 		super();
+		// this.user = null;
 	}
 
 	connectedCallback() {
 		this.render();
 	}
 
+	// set user(userData) {
+	// 	this.user = userData;
+	// 	this.render();
+	// }
+
 	render() {
+		// If user is not logged in, redirect to login page
+
 		this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
 			<h1>This is Profile page</h1>
