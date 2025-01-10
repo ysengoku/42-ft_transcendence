@@ -1,41 +1,21 @@
-// import { Router } from './Router.js';
+import { Router } from './Router.js';
 import './components/pages/Landing.js';
 import './components/pages/Login.js';
 import './components/navbar/DropdownMenu.js';
 
-// const router = new Router();
+const router = new Router();
 
-// router.addRoute('/', 'landing-component'); //Uncaught ReferenceError: isDynamic is not defined
-// router.addRoute('/login', 'login-component');
+router.addRoute('/', 'landing-component');
+router.addRoute('/login', 'login-form');
+router.addRoute('/profile', 'user-profile');  // This is temporary
+// router.addRoute('/profile/:id', 'user-profile');
+// Add all routes here
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener('DOMContentLoaded', () => {
 	const navbarDropdown = document.getElementById('user-menu');
 	navbarDropdown.innerHTML = '<dropdown-menu></dropdown-menu>';
-	const contentContainer = document.getElementById('content');
-	contentContainer.innerHTML = '<landing-component></landing-component>';
-	
-	// router.navigate();
-
-	document.addEventListener('click', function (event) {
-		if (event.target && event.target.matches('a[href="#login"]')) {
-			contentContainer.innerHTML = '<login-form></login-form>';
-		} else if (event.target && event.target.matches('a[href="/register"]')) {
-			renderSignUpForm();
-		}
-	}); 
+	router.init();
+	router.navigate(window.location.pathname);
 });
 
-// 	document.addEventListener('click', function (event) {
-// 		const target = event.target;
-
-// 		if (target && target.matches('a[href^="/"]')) {
-// 		  const path = target.getAttribute('href');
-// 		  event.preventDefault();
-// 		  navigateTo(path);
-	
-// 		  if (routes[path]) {
-// 			routes[path]();
-// 		  }
-// 		}
-// 	  }); 
-// });
+export { router };
