@@ -4,17 +4,16 @@ export class Router {
 		this.currentComponent = null;
 	}
 
-	addRoute(path, componentTag) {
-		const isDynamic = /:\w+/.test(path);
+	addRoute(path, componentTag, isDynamic = false) {
         this.routes.set(path, { componentTag, isDynamic });
 	}
 
-	handleRoute() {
+	handleRoute(param) {
 		const path = window.location.pathname;
 		const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
 		if (route) {
-			const { componentTag, isDynamic, param } = route;
+			const { componentTag, isDynamic } = route;
 
 			if (isDynamic) {
 				this.renderDynamicComponent(componentTag, param);
@@ -35,8 +34,8 @@ export class Router {
 					return { ...routeData, param };
 				}
 			}
-			return null;
 		}
+		return null;
 	}
 
 	extractParam(routePath, path) {
@@ -60,7 +59,6 @@ export class Router {
 		if (this.currentComponent) {
 			this.currentComponent.remove();
 		}
-		// document.getElementById('content').innerHTML = `<${componentTag}></${componentTag}>`;
 		const component = document.createElement(componentTag);
 		const contentElement = document.getElementById('content');
 		contentElement.innerHTML = '';
@@ -72,17 +70,20 @@ export class Router {
 		if (this.currentComponent) {
 			this.currentComponent.remove();
 		}
+
 		const component = document.createElement(componentTag);
-		component.param = param;
+		if (typeof component.setParam === 'function') {
+			component.setParam(param);
+		}
 
 		document.getElementById('content').appendChild(component);
 		this.currentComponent = component;
 	}
 
-	navigate(path = window.location.pathname) {
+	navigate(path = window.location.pathname, param = null) {
 		console.log('Navigating to:', path);
 		window.history.pushState({}, '', path);
-		this.handleRoute();
+		this.handleRoute(param);
 	}
 
     init() {

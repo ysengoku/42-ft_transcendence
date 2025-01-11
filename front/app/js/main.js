@@ -9,8 +9,9 @@ const router = new Router();
 router.addRoute('/', 'landing-component');
 router.addRoute('/login', 'login-form');
 router.addRoute('/register', 'register-form');
+router.addRoute('/home', 'user-home', true);
 // router.addRoute('/profile', 'user-profile');  // This is temporary
-router.addRoute('/profile/:id', 'user-profile');
+router.addRoute('/profile/:id', 'user-profile', true);
 // Add all routes here
 
 document.addEventListener('DOMContentLoaded', () => {

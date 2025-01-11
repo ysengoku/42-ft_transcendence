@@ -1,4 +1,4 @@
-import { simulateLogout } from '../../mock/auth.js';
+import { handleLogout } from '../../utils/handleLogout.js';
 
 export class DropdownMenu extends HTMLElement {
 	constructor() {
@@ -11,9 +11,13 @@ export class DropdownMenu extends HTMLElement {
 
 	render() {
 		const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'; // Simulation using mock
+
+		const avatarSrc = isLoggedIn 
+			? `/assets/img/sample_avatar.jpg`
+    		: `/assets/img/default_avatar.svg`;
 		this.innerHTML = `
 		<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			<img id="avatar-img" src="${isLoggedIn ? 'assets/img/sample_avatar.jpg' : 'assets/img/default_avatar.svg'}" height="40" alt="user" class="d-inline-block align-top rounded-circle">
+			<img id="avatar-img" src="${avatarSrc}" height="40" alt="user" class="d-inline-block align-top rounded-circle">
 		</a>
 		<div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 			${!isLoggedIn ? `
@@ -30,7 +34,7 @@ export class DropdownMenu extends HTMLElement {
 
 		// ------- Logout simulation using mock -----------------------------
 		if (isLoggedIn) {
-			document.getElementById('dropdown-item-logout')?.addEventListener('click', simulateLogout);
+			document.getElementById('dropdown-item-logout')?.addEventListener('click', handleLogout);
 		}
 		// -----------------------------------------------------------------
 	}

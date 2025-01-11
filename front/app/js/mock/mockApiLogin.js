@@ -10,6 +10,7 @@ export async function simulateApiLogin(credentials) {
 					user: {
 						id: '12345',
 						name: 'John Doe',
+						avatar: './assets/img/sample_avatar.jpg'
 					},
 				});
 			} else {

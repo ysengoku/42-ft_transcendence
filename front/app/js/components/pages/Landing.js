@@ -1,6 +1,6 @@
 export class Landing extends HTMLElement {
 	constructor() {
-		super();
+		super();  // Call the constructor of the parent class (HTMLElement)
 	}
 
 	connectedCallback() {
