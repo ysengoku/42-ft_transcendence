@@ -1,7 +1,6 @@
 import { router } from '../../main.js';
-import './Profile.js';
+import './Home.js';
 import { simulateApiLogin } from '../../mock/mockApiLogin.js';
-// import { simulateLogin } from '../../mock/auth.js';
 
 export class LoginForm extends HTMLElement {
 	constructor() {
@@ -10,7 +9,6 @@ export class LoginForm extends HTMLElement {
 	
 	connectedCallback() {
 		this.render();
-		// this.setupLoginButton();
 		this.setupLoginHandler();
 	}
 
@@ -60,40 +58,29 @@ export class LoginForm extends HTMLElement {
 
 	// This function should be changed after back-end integration
 	async handleLogin() {
-		// If the user is already logged in, redirect to profile page
+		// If the user is already logged in, redirect to home
+		// Add after implementing user information handling
 
 		const username = this.querySelector('#inputUsername').value;
 		const password = this.querySelector('#inputPassword').value;
 
+		// Simulation with mock
 		const response = await simulateApiLogin({ username, password });
 
 		if (response.success) {
+			// Temporary solution
 			localStorage.setItem('isLoggedIn', 'true');
-			const profilePage = document.querySelector('user-profile');
-			if (profilePage) {
-				profilePage.user = response.user;
-			}
+			localStorage.setItem('user', JSON.stringify(response.user));
+			
 			const navbarDropdown = document.getElementById('user-menu');
 			navbarDropdown.innerHTML = '<dropdown-menu></dropdown-menu>';
-			router.navigate(`/profile/${response.user.id}`);
+			// router.navigate(`/home/${response.user.id}`, response.user);
+			router.navigate(`/home`, response.user);
 		} else {
 			alert('Login failed', response.message);
-			// Render 
+			// Render login-form with red framed ones
 		}
 	}
-
 }
 
 customElements.define('login-form', LoginForm);
-
-// ------- Login simulation using mock -----------------------
-  // setupLoginHandler() {
-// 	const loginButton = this.querySelector('#loginSubmit');
-// 	if (loginButton) {
-//   		loginButton.addEventListener('click', (event) => {
-//     		event.preventDefault();
-//     		simulateLogin(event);
-//   		});
-// 	}
-// }
-// ------------------------------------------------------------
