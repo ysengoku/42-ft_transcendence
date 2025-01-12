@@ -2,6 +2,9 @@ import { Router } from './Router.js';
 import './components/navbar/index.js';
 import './components/pages/index.js';
 
+const savedTheme = localStorage.getItem("theme") || "light";
+document.documentElement.setAttribute("data-bs-theme", savedTheme);
+
 const router = new Router();
 
 router.addRoute('/', 'landing-component');
