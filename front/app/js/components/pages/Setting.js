@@ -3,8 +3,9 @@ export class Setting extends HTMLElement {
 		super();
 	}
 
-	connectedCallback() {
-		this.render();
+	setParam(param) {
+		const userId = param.id;
+		this.fetchUserData(userId);
 	}
 
 	render() {
@@ -12,4 +13,4 @@ export class Setting extends HTMLElement {
 	}
 }
 
-customElements.define('setting-component', Setting);
+customElements.define('user-setting', Setting);

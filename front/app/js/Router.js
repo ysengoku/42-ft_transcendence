@@ -4,17 +4,21 @@ export class Router {
 		this.currentComponent = null;
 	}
 
-	addRoute(path, componentTag, isDynamic = false) {
-        this.routes.set(path, { componentTag, isDynamic });
+	addRoute(path, componentTag, isDynamic = false, requiresAuth = false) {
+        this.routes.set(path, { componentTag, isDynamic, requiresAuth });
 	}
 
-	handleRoute(param) {
+	handleRoute() {
 		const path = window.location.pathname;
 		const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
 		if (route) {
-			const { componentTag, isDynamic, param } = route;
+			const { componentTag, isDynamic, param, requiresAuth } = route;
 
+			if (requiresAuth && !this.isLoggedIn()) {
+				this.navigate('/login');
+				return;				
+			}
 			if (isDynamic) {
 				this.renderDynamicComponent(componentTag, param);
 			} else {
@@ -37,6 +41,10 @@ export class Router {
 		}
 		return null;
 	}
+
+	isLoggedIn() {
+        return localStorage.getItem('isLoggedIn') === 'true';  // This is temoporay simulation
+    }
 
 	extractParam(routePath, path) {
 		const routePathParts = routePath.split('/');
@@ -78,18 +86,13 @@ export class Router {
 		this.currentComponent = component;
 	}
 
-	navigate(path = window.location.pathname, param = null) {
+	navigate(path = window.location.pathname) {
 		console.log('Navigating to:', path);
 		window.history.pushState({}, '', path);
-		// window.history.pushState({ path, param }, '', path);
-		this.handleRoute(param);
+		this.handleRoute();
 	}
 
     init() {
-		// window.addEventListener('popstate', (event) => {
-		// 	const { path, param } = event.state || { path: window.location.pathname, param: null };
-		// 	this.handleRoute(param);
-		// });
         window.addEventListener('popstate', () => this.handleRoute());
         document.addEventListener('click', (event) => this.handleLinkClick(event));
     }
