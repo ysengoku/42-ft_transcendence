@@ -1,9 +1,6 @@
 import { Router } from './Router.js';
-import './components/pages/Landing.js';
-import './components/pages/Login.js';
-import './components/pages/Register.js';
-import './components/pages/Profile.js'
-import './components/navbar/DropdownMenu.js';
+import './components/navbar/index.js';
+import './components/pages/index.js';
 
 const router = new Router();
 
@@ -17,8 +14,11 @@ router.addRoute('/profile/:id', 'user-profile', true);
 document.addEventListener('DOMContentLoaded', () => {
 	const navbarDropdown = document.getElementById('user-menu');
 	navbarDropdown.innerHTML = '<dropdown-menu></dropdown-menu>';
+	const navbarBrand = document.getElementById('navbar-brand-container');
+	navbarBrand.innerHTML = '<navbar-brand-component></navbar-brand-component>';
 	router.init();
-	router.navigate(window.location.pathname);
+	const currentPath = window.location.pathname || '/';
+	router.navigate(currentPath);
 });
 
 export { router };
