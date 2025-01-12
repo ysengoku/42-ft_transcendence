@@ -13,7 +13,7 @@ export class Router {
 		const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
 		if (route) {
-			const { componentTag, isDynamic } = route;
+			const { componentTag, isDynamic, param } = route;
 
 			if (isDynamic) {
 				this.renderDynamicComponent(componentTag, param);
@@ -70,12 +70,10 @@ export class Router {
 		if (this.currentComponent) {
 			this.currentComponent.remove();
 		}
-
 		const component = document.createElement(componentTag);
 		if (typeof component.setParam === 'function') {
 			component.setParam(param);
 		}
-
 		document.getElementById('content').appendChild(component);
 		this.currentComponent = component;
 	}
@@ -83,19 +81,24 @@ export class Router {
 	navigate(path = window.location.pathname, param = null) {
 		console.log('Navigating to:', path);
 		window.history.pushState({}, '', path);
+		// window.history.pushState({ path, param }, '', path);
 		this.handleRoute(param);
 	}
 
     init() {
+		// window.addEventListener('popstate', (event) => {
+		// 	const { path, param } = event.state || { path: window.location.pathname, param: null };
+		// 	this.handleRoute(param);
+		// });
         window.addEventListener('popstate', () => this.handleRoute());
         document.addEventListener('click', (event) => this.handleLinkClick(event));
     }
 
-    handleLinkClick(event) {
-        if (event.target && event.target.matches('a[href^="/"]')) {
-            event.preventDefault();
-            const path = event.target.getAttribute('href');
-            this.navigate(path);
-        }
-    }
+	handleLinkClick(event) {
+		if (event.target && event.target.matches('a[href^="/"]')) {
+			event.preventDefault();
+			const path = event.target.getAttribute('href');
+			this.navigate(path);
+		}
+	}
 }

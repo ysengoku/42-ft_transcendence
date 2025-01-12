@@ -10,7 +10,14 @@ export class DropdownMenu extends HTMLElement {
 	}
 
 	render() {
-		const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'; // Simulation using mock
+		// Simulation using mock
+		const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+		const storedUser = localStorage.getItem('user');
+		let userId = null;
+		if (storedUser) {
+		  const user = JSON.parse(storedUser);
+		  userId = user.id;
+		}
 
 		const avatarSrc = isLoggedIn 
 			? `/assets/img/sample_avatar.jpg`
@@ -24,7 +31,7 @@ export class DropdownMenu extends HTMLElement {
 				<a class="dropdown-item" href="/login" id="dropdown-item-login">Login</a>
 				<a class="dropdown-item" href="/register" id="dropdown-item-register">Sign up</a>
 			` : `
-				<a class="dropdown-item" href="/profile">Your profile</a>
+				<a class="dropdown-item" href="/profile/${userId}">Your profile</a>
 				<a class="dropdown-item" href="/setting">Settings</a>
 				<div class="dropdown-divider"></div>
 				<a class="dropdown-item" id="dropdown-item-logout">Logout</a>
@@ -32,11 +39,9 @@ export class DropdownMenu extends HTMLElement {
 		</div>
 		`;
 
-		// ------- Logout simulation using mock -----------------------------
 		if (isLoggedIn) {
 			document.getElementById('dropdown-item-logout')?.addEventListener('click', handleLogout);
 		}
-		// -----------------------------------------------------------------
 	}
 }
 
