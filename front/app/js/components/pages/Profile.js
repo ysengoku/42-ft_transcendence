@@ -24,13 +24,6 @@ export class UserProfile extends HTMLElement {
   	}
 
 	render() {	
-		// If user is not logged in, redirect to login page
-		const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';  // This is temoporay solution
-		if (!isLoggedIn) {
-			router.navigate('/login');
-			return;
-		}
-
 		if (!this.user) {
             console.log('User data is missing');
             return;

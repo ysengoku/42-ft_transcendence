@@ -7,8 +7,9 @@ const router = new Router();
 router.addRoute('/', 'landing-component');
 router.addRoute('/login', 'login-form');
 router.addRoute('/register', 'register-form');
-router.addRoute('/home', 'user-home', true);
-router.addRoute('/profile/:id', 'user-profile', true);
+router.addRoute('/home', 'user-home', false, true);
+router.addRoute('/profile/:id', 'user-profile', true, true);
+router.addRoute('setting/:id', 'user-setting', true, true);
 // Add all routes here
 
 document.addEventListener('DOMContentLoaded', () => {
