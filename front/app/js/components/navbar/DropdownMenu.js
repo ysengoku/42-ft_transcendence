@@ -10,18 +10,18 @@ export class DropdownMenu extends HTMLElement {
 	}
 
 	render() {
-		// Simulation using mock
+		// Temporary solution with localStorage
 		const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 		const storedUser = localStorage.getItem('user');
+
 		let userId = null;
+		let avatarSrc = `/assets/img/default_avatar.svg`;
 		if (storedUser) {
-		  const user = JSON.parse(storedUser);
-		  userId = user.id;
+			const user = JSON.parse(storedUser);
+			userId = user.id;
+			avatarSrc = `${user.avatar}`;
 		}
 
-		const avatarSrc = isLoggedIn 
-			? `/assets/img/sample_avatar.jpg`
-    		: `/assets/img/default_avatar.svg`;
 		this.innerHTML = `
 		<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 			<img id="avatar-img" src="${avatarSrc}" height="40" alt="user" class="d-inline-block align-top rounded-circle">
