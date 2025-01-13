@@ -21,3 +21,8 @@ html, body {
     margin-top: auto;
     font-size: 0.8em;
 }
+
+/* Profile */
+#avatar-container img {
+   width: 25%;
+}
