@@ -1,3 +1,6 @@
+import { router } from '../../main.js';
+import { simulateApiLogin } from '../../mock/mockApiLogin.js';
+
 export class Register extends HTMLElement {
   constructor() {
     super();
@@ -5,6 +8,7 @@ export class Register extends HTMLElement {
 
   connectedCallback() {
     this.render();
+	this.setupRegisterHandler();
   }
 
   render() {
@@ -34,6 +38,23 @@ export class Register extends HTMLElement {
 	</div>
 	`;
   }
+
+setupRegisterHandler() {
+	  const form = this.querySelector("form");
+  form.addEventListener("submit", (event) => {
+	event.preventDefault();
+	this.handleRegister();
+  });
+}
+
+async handleRegister() {
+	  const username = this.querySelector("#inputUsername").value;
+  const email = this.querySelector("#inputEmail").value;
+  const password = this.querySelector("#inputPassword").value;
+  const confirmPassword = this.querySelector("#inputConfirmPassword").value;
+
+	window.location.href = "/login";
+};
 }
 
 customElements.define("register-form", Register);
