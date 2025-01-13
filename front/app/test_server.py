@@ -10,8 +10,14 @@ class SPAHandler(SimpleHTTPRequestHandler):
 def run(server_class=HTTPServer, handler_class=SPAHandler):
     server_address = ('', 8888)
     httpd = server_class(server_address, handler_class)
-    print('Starting server at http://localhost:8888...')
-    httpd.serve_forever()
+    try:
+        print('Starting server at http://localhost:8888...')
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print('\nServer is shutting down...')
+    finally:
+        httpd.server_close()
+        print('Server stopped.')
 
 if __name__ == '__main__':
     run()
