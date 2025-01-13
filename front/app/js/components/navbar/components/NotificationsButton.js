@@ -9,7 +9,7 @@ export class NotificationsButton extends HTMLElement {
 
 	render() {
 		this.innerHTML = `
-			<button class="btn btn-secondary me-2">
+			<button class="btn btn-secondary me-2 rounded-circle">
 				<i class="bi bi-bell"></i>
 			</button>
 		`;
