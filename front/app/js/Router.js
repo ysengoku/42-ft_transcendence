@@ -4,9 +4,8 @@ export class Router {
 		this.currentComponent = null;
 	}
 
-	addRoute(path, componentTag) {
-		const isDynamic = /:\w+/.test(path);
-        this.routes.set(path, { componentTag, isDynamic });
+	addRoute(path, componentTag, isDynamic = false, requiresAuth = false) {
+        this.routes.set(path, { componentTag, isDynamic, requiresAuth });
 	}
 
 	handleRoute() {
@@ -14,8 +13,12 @@ export class Router {
 		const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
 		if (route) {
-			const { componentTag, isDynamic, param } = route;
+			const { componentTag, isDynamic, param, requiresAuth } = route;
 
+			if (requiresAuth && !this.isLoggedIn()) {
+				this.navigate('/login');
+				return;				
+			}
 			if (isDynamic) {
 				this.renderDynamicComponent(componentTag, param);
 			} else {
@@ -35,9 +38,13 @@ export class Router {
 					return { ...routeData, param };
 				}
 			}
-			return null;
 		}
+		return null;
 	}
+
+	isLoggedIn() {
+        return localStorage.getItem('isLoggedIn') === 'true';  // This is temoporay simulation
+    }
 
 	extractParam(routePath, path) {
 		const routePathParts = routePath.split('/');
@@ -60,7 +67,6 @@ export class Router {
 		if (this.currentComponent) {
 			this.currentComponent.remove();
 		}
-		// document.getElementById('content').innerHTML = `<${componentTag}></${componentTag}>`;
 		const component = document.createElement(componentTag);
 		const contentElement = document.getElementById('content');
 		contentElement.innerHTML = '';
@@ -73,13 +79,15 @@ export class Router {
 			this.currentComponent.remove();
 		}
 		const component = document.createElement(componentTag);
-		component.param = param;
-
+		if (typeof component.setParam === 'function') {
+			component.setParam(param);
+		}
 		document.getElementById('content').appendChild(component);
 		this.currentComponent = component;
 	}
 
 	navigate(path = window.location.pathname) {
+		console.log('Navigating to:', path);
 		window.history.pushState({}, '', path);
 		this.handleRoute();
 	}
@@ -89,11 +97,11 @@ export class Router {
         document.addEventListener('click', (event) => this.handleLinkClick(event));
     }
 
-    handleLinkClick(event) {
-        if (event.target && event.target.matches('a[href^="/"]')) {
-            event.preventDefault();
-            const path = event.target.getAttribute('href');
-            this.navigate(path);
-        }
-    }
+	handleLinkClick(event) {
+		if (event.target && event.target.matches('a[href^="/"]')) {
+			event.preventDefault();
+			const path = event.target.getAttribute('href');
+			this.navigate(path);
+		}
+	}
 }
