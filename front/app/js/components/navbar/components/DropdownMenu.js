@@ -1,5 +1,5 @@
-import { ThemeController } from '../../utils/ThemeController.js';
-import { handleLogout } from '../../utils/handleLogout.js';
+import { ThemeController } from '../../../utils/ThemeController.js';
+import { handleLogout } from '../../../utils/handleLogout.js';
 
 export class DropdownMenu extends HTMLElement {
 	constructor() {
