@@ -26,9 +26,9 @@ services:
       args:
         DATABASE_URL: ${DATABASE_URL}
     ports:
-      - "8888:8888"
+      - "8000:8000"
     expose:
-      - "8888"
+      - "8000"
     env_file:
       - .env
     depends_on:
