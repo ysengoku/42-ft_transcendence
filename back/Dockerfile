@@ -15,8 +15,8 @@ COPY . /app
 # Installer les dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Exposer le port 8000 pour Django
-EXPOSE 8000
+# Exposer le port 8888 pour Django
+EXPOSE 8888
 
 # Commande pour démarrer Django en mode développement
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8888"]
