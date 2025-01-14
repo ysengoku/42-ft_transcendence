@@ -1,11 +1,36 @@
+import { simulateFetchFriendsList } from '../../../mock/simulateFetchFriendsList.js';
+
 export class FriendsListModal extends HTMLElement {
 	constructor() {
 		super();
 		this.modal = null;
+		this.friendsList = [];
 	}
 	
 	connectedCallback() {
 		this.render();
+		this.fetchFriendsData();
+	}
+
+	// Simulation with mock
+	async fetchFriendsData() {
+		this.friendsList = await simulateFetchFriendsList();
+		// console.log(JSON.stringify(this.friendsList, null, 2));
+		this.renderFriendsList()
+	}
+
+	renderFriendsList() {
+		const listContainer = this.querySelector('.friends-list');
+		listContainer.innerHTML = '';
+		this.friendsList.forEach(friend => {
+			console.log(`Rendering friend:`, friend);
+			const listItem = document.createElement('friends-list-item');
+			listItem.setAttribute('name', friend.name);
+			listItem.setAttribute('avatar', friend.avatar);
+			listItem.setAttribute('online', friend.online);
+			listContainer.appendChild(listItem);
+			console.log('avatarSrc from property:', listItem.avatar);
+		});
 	}
 
 	render() {
@@ -18,38 +43,7 @@ export class FriendsListModal extends HTMLElement {
         				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       				</div>
 					<div class="modal-body">
-						<ul class="list-group">
-							<li class="list-group-item d-flex align-items-center">
-								<img src="/assets/img/sample_avatar.jpg" alt="Avatar" class="rounded-circle me-3" style="width: 40px; height: 40px;">
-								John
-								<span class="status-indicator online ms-3"></span>
-							</li>
-							<li class="list-group-item d-flex align-items-center">
-								<img src="/assets/img/sample_avatar.jpg" alt="Avatar" class="rounded-circle me-3" style="width: 40px; height: 40px;">
-								Jane
-								<span class="status-indicator ms-3"></span>
-							</li>
-							<li class="list-group-item d-flex align-items-center">
-								<img src="/assets/img/sample_avatar.jpg" alt="Avatar" class="rounded-circle me-3" style="width: 40px; height: 40px;">
-								George
-								<span class="status-indicator online ms-3"></span>
-							</li>
-							<li class="list-group-item d-flex align-items-center">
-								<img src="/assets/img/sample_avatar.jpg" alt="Avatar" class="rounded-circle me-3" style="width: 40px; height: 40px;">
-								George
-								<span class="status-indicator online ms-3"></span>
-							</li>
-							<li class="list-group-item d-flex align-items-center">
-								<img src="/assets/img/sample_avatar.jpg" alt="Avatar" class="rounded-circle me-3" style="width: 40px; height: 40px;">
-								George
-								<span class="status-indicator online ms-3"></span>
-							</li>
-							<li class="list-group-item d-flex align-items-center">
-								<img src="/assets/img/sample_avatar.jpg" alt="Avatar" class="rounded-circle me-3" style="width: 40px; height: 40px;">
-								George
-								<span class="status-indicator online ms-3"></span>
-							</li>
-						</ul>
+						<ul class="list-group friends-list"></ul>
 					</div>
 				</div>
 			</div>
