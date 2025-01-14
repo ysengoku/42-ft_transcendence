@@ -38,8 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'users.apps.UsersConfig',
-    'rest_framework',
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -119,11 +118,22 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# project additions
+# ################# #
+# project additions #
+# ################# #
+# CUSTOM USER MODEL
 AUTH_USER_MODEL = 'users.User'
+
+# PATH FOR UPLOADING OF USER IMAGES
+# https://docs.djangoproject.com/en/5.1/topics/security/#user-uploaded-content-security
+# absolute system path to dir that stores media
+MEDIA_ROOT = BASE_DIR / 'media'
+# public url for accesing media in a browser
+MEDIA_URL = 'media/'

@@ -1,0 +1,6 @@
+- [ ] User profiles with their information
+- [ ] JWT auth on the backend
+- [ ] Friends list
+- [ ] Realtime online status
+- [ ] Basic userstats
+- [ ] Elo system
