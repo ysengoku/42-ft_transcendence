@@ -22,7 +22,41 @@ html, body {
     font-size: 0.8em;
 }
 
-/* Profile */
+/* ----- Profile ------------------------------------------------------------ */
 #avatar-container img {
    width: 25%;
+}
+
+/* ----- Modals ------------------------------------------------------------- */
+.friends-modal .modal-dialog {
+    position: fixed;
+    top: var(--navbar-height, 72px);
+    right: 0;
+    height: calc(100vh - var(--navbar-height, 72px));
+    margin: 0;
+    border-radius: 0;
+}
+
+.friends-modal .list-group-item {
+    border: none;
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: 16px 32px;
+    position: relative;
+}
+
+.friends-modal .list-group-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: red;
+}
+  
+.status-indicator.online {
+    background-color: green;
 }

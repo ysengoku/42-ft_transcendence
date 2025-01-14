@@ -25,7 +25,7 @@ export class Home extends HTMLElement {
 			<p>This is futur Home page ("hub?")</p>
 			<p>ID: ${this.user.id}</p>
 			<div class="mb-3 pt-5">
-			<a class="btn btn-outline-primary" href="#game" role="button">Go to Game</a>
+			<a class="btn btn-outline-primary" href="/profile/${this.user.id}" role="button">Profile</a>
 			</div>
 		</div>
 		`;
