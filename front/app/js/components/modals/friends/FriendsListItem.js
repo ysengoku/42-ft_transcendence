@@ -1,17 +1,20 @@
 export class FriendsListItem extends HTMLElement {
 	constructor() {
 		super();
+		this.userid = '';
 		this.name = '';
 		this.avatar = '';
 		this.online = false;
 	}
 
 	static get observedAttributes() {
-		return ['name', 'avatar', 'online'];
+		return ['userid', 'name', 'avatar', 'online'];
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
-		if (name === 'name') {
+		if (name === 'userid') {
+			this.userid = newValue;
+		} else if (name === 'name') {
 			this.name = newValue;
 		} else if (name === 'avatar') {
 			this.avatar = newValue;
@@ -19,10 +22,16 @@ export class FriendsListItem extends HTMLElement {
 			this.online = newValue === 'true';
 		}
 		this.render();
+		this.addEventListener('click', () => {
+			window.location.href = `/profile/${this.userid}`;
+		});
 	}
 
 	connectedCallback() {
 		this.render();
+		this.addEventListener('click', () => {
+			window.location.href = `/profile/${this.userid}`;
+		});
 	}
 
 	render() {

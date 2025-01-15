@@ -23,9 +23,9 @@ export class Home extends HTMLElement {
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
 			<h1>Welcome, ${this.user.name}</h1>
 			<p>This is futur Home page ("hub?")</p>
-			<p>ID: ${this.user.id}</p>
+			<p>ID: ${this.user.userid}</p>
 			<div class="mb-3 pt-5">
-			<a class="btn btn-outline-primary" href="/profile/${this.user.id}" role="button">Profile</a>
+			<a class="btn btn-outline-primary" href="/profile/${this.user.userid}" role="button">Profile</a>
 			</div>
 		</div>
 		`;
