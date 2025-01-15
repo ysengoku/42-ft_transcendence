@@ -13,7 +13,11 @@ router.addRoute('/login', 'login-form');
 router.addRoute('/register', 'register-form');
 router.addRoute('/home', 'user-home', false, true);
 router.addRoute('/profile/:id', 'user-profile', true, true);
-router.addRoute('setting/:id', 'user-setting', true, true);
+router.addRoute('/setting/:id', 'user-setting', true, true);
+router.addRoute('/dual-menu', 'dual-menu', false, true);
+router.addRoute('/dual/:id', 'dual', true, true);
+router.addRoute('/tournament-menu', 'tournament-menu', false, true);
+router.addRoute('/tournament/:id', 'tournament', true, true);
 // Add all routes here
 
 document.addEventListener('DOMContentLoaded', () => {

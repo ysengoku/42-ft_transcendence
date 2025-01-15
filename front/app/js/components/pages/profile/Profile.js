@@ -1,5 +1,4 @@
-import { router } from '../../main.js';
-import { simulateFetchUserData } from '../../mock/simulateFetchUserData.js'
+import { simulateFetchUserData } from '../../../mock/simulateFetchUserData.js'
 
 export class UserProfile extends HTMLElement {
 	constructor() {
@@ -39,7 +38,7 @@ export class UserProfile extends HTMLElement {
         		<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">
     		</div>
 			<div class="mb-3 pt-5">
-			<a class="btn btn-outline-primary" href="/" role="button">Button</a>
+			<a class="btn btn-outline-primary" href="/home" role="button">Back to Home</a>
 			</div>
 		</div>
 		`;
