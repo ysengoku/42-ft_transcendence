@@ -23,6 +23,8 @@ export class FriendsListItem extends HTMLElement {
 		}
 		this.render();
 		this.addEventListener('click', () => {
+			const modal = document.querySelector('#friendsModal');
+			modal.setAttribute('data-bs-dismiss', 'modal');
 			window.location.href = `/profile/${this.userid}`;
 		});
 	}
@@ -30,16 +32,20 @@ export class FriendsListItem extends HTMLElement {
 	connectedCallback() {
 		this.render();
 		this.addEventListener('click', () => {
+			const modal = document.querySelector('#friendsModal');
+			modal.setAttribute('data-bs-dismiss', 'modal');
 			window.location.href = `/profile/${this.userid}`;
 		});
 	}
 
 	render() {
 		this.innerHTML = `
-		<li class="list-group-item d-flex align-items-center" id="friends-list-item">
-			<img src="${this.avatar}" alt="Avatar" class="rounded-circle me-3" id="friends-list-avatar">
+		<li class="list-group-item friends-list-item">
+			<div class="avatar-container">
+				<img src="${this.avatar}" alt="Avatar" class="rounded-circle me-3 friends-list-avatar">
+				<span class="status-indicator ${this.online ? 'online' : ''} ms-3"></span>
+			</div>
 			${this.name}
-			<span class="status-indicator ${this.online ? 'online' : ''} ms-3"></span>
 		</li>
 	`;
 	}
