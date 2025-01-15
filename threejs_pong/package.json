@@ -1,9 +1,0 @@
-{
-  "devDependencies": {
-    "cannon-es": "^0.20.0"
-  },
-  "dependencies": {
-    "dat.gui": "^0.7.9",
-    "three-orbitcontrols": "^2.110.3"
-  }
-}
