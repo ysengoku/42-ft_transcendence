@@ -20,7 +20,7 @@ export class FriendsListModal extends HTMLElement {
 	}
 
 	renderFriendsList() {
-		const listContainer = this.querySelector('.friends-list');
+		const listContainer = this.querySelector('#friends-list');
 		listContainer.innerHTML = '';
 		this.friendsList.forEach(friend => {
 			console.log(`Rendering friend:`, friend);
@@ -43,7 +43,7 @@ export class FriendsListModal extends HTMLElement {
         				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       				</div>
 					<div class="modal-body">
-						<ul class="list-group friends-list"></ul>
+						<ul class="list-group" id="friends-list"></ul>
 					</div>
 				</div>
 			</div>

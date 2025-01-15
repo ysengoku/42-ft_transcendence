@@ -35,7 +35,7 @@ export class UserProfile extends HTMLElement {
 			<h1>${this.user.name}'s Profile page</h1>
 			<p>ID: ${this.user.userid}</p>
 
-    		<div id="avatar-container" class="d-flex justify-content-center align-items-center">
+    		<div class="d-flex justify-content-center align-items-center profile-avatar-container">
         		<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">
     		</div>
 			<div class="mb-3 pt-5">

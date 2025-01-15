@@ -16,11 +16,11 @@ export class DropdownMenu extends HTMLElement {
 		const storedUser = localStorage.getItem('user');
 		const isDarkMode = ThemeController.getTheme() === 'dark';
 
-		let userId = null;
+		let userid = null;
 		let avatarSrc = `/assets/img/default_avatar.svg`;
 		if (storedUser) {
 			const user = JSON.parse(storedUser);
-			userId = user.id;
+			userid = user.userid;
 			avatarSrc = `${user.avatar}`;
 		}
 
@@ -30,7 +30,7 @@ export class DropdownMenu extends HTMLElement {
 		</a>
 		<div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 			${isLoggedIn ? `
-				<a class="dropdown-item" href="/profile/${userId}">Your profile</a>
+				<a class="dropdown-item" href="/profile/${userid}">Your profile</a>
 				<a class="dropdown-item" href="/setting">Settings</a>
 			` : `
 				<a class="dropdown-item" href="/login" id="dropdown-item-login">Login</a>
