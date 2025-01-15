@@ -7,3 +7,4 @@ pydantic_core==2.27.2
 sqlparse==0.5.3
 typing_extensions==4.12.2
 django-silk==5.3.2
+pillow==11.1.0
