@@ -3,3 +3,12 @@ Django==4.1.7
 
 # Django Rest Framework (DRF) is used to create RESTful APIs with Django.
 djangorestframework==3.14.0
+
+# allauth for OAuth2 authentication
+# django-allauth
+
+# Django Channels for handling WebSockets and background tasks
+channels==3.0.5
+
+# Django Ninja for creating fast APIs with Django
+django-ninja==0.14.0
