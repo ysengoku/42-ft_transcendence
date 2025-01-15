@@ -1,19 +1,20 @@
 from ninja import NinjaAPI
+from typing import List
+from .schemas import UserSchema
+from .models import User
 
 api = NinjaAPI()
 
 
-@api.get("add/")
-def add(request, a: int, b: int):
-    return {"result": a + b}
+@api.get("users/", response=List[UserSchema])
+def get_users(request):
+    return User.objects.all()
 
 
-weapons = ["Ninjato", "Shuriken", "Katana", "Kama", "Kunai", "Naginata", "Yari"]
-
-
-@api.get("/weapons")
-def list_weapons(request, limit: int = 10, offset: int = 0):
-    return weapons[offset: offset + limit]
+@api.post("users/", response=UserSchema)
+def register_user(request):
+    user = User.create.create_user()
+    return user
 
 # from django.core.exceptions import ValidationError
 #
