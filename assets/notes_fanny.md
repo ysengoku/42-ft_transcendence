@@ -1,4 +1,10 @@
-HTTPS Protocol:
+## Docker ##
+
+## docker-compose ##
+
+we enter the args if we want to pass arguments to the dockerfile. if they are not defined in the dockerfile and not used at build time, they are not useful. if arguments are defined and congifured at runtime (in environment), we dont need to specify the args at the build phase.
+
+## HTTPS Protocol:
 
 API = Application Programming Interface
 REST API = A set of rules that developers follow when creating their API.
@@ -168,3 +174,21 @@ make all dockers up
 admin:
 login: admin
 password: password
+
+
+## daily report ##
+Good evening ! 
+
+dev:
+- today I ve finished the django tutorial , at the end chatgpt was translating me the tutorial cause I could not focus more on it XD . 
+- it helped me to review the basics of https protocol between js and django (or to just "view" because I did not know). If you need a refresh, I've written a summary on the Ressources channels.
+- part 5 from the tutorial is about the tests scripting. that was interesting and I'll see how to link it with github actions to make a proper CI/CD, if it makes sense to do it. We might want to use selenium,  which is a popular open-source framework for automating web browsers. It is used primarily for automating interactions with web pages, such as filling out forms, clicking buttons, and navigating between pages. Selenium is commonly used for:
+- Automated Testing: Testing web applications by simulating real user interactions with a browser.
+- Web Scraping: Extracting data from websites.
+- Browser Automation: Performing repetitive tasks on a website, like data entry or checking availability.
+
+organization:
+I have completed the mandatory check points to fulfill in the workload excel (for eg : user mut be able to invite other users for the tournament, it cannot be a simple automatic matchmaking).  I have reread the PDF file and I've tried to make it as exhaustive as possible.
+
+docker:
+
