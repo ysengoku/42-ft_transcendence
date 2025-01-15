@@ -56,7 +56,7 @@ html, body {
 
 friends-list-item:last-of-type .friends-list-item {
     border-bottom: none;
-    padding-bottom: 0;
+    padding-bottom: 8px;
 }
 
 .avatar-container {

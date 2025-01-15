@@ -17,6 +17,11 @@ export class FriendsListModal extends HTMLElement {
 		this.friendsList = await simulateFetchFriendsList();
 		// console.log(JSON.stringify(this.friendsList, null, 2));
 		this.renderFriendsList()
+		const mainView = document.getElementById('content');
+		mainView.addEventListener('click', () => {
+			const modal = document.querySelector('#friendsModal');
+			modal.setAttribute('data-bs-dismiss', 'modal');
+		});
 	}
 
 	renderFriendsList() {
