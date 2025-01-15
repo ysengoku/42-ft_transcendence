@@ -33,13 +33,13 @@ export class UserProfile extends HTMLElement {
 		this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
 			<h1>${this.user.name}'s Profile page</h1>
-			<p>ID: ${this.user.id}</p>
+			<p>ID: ${this.user.userid}</p>
 
     		<div id="avatar-container" class="d-flex justify-content-center align-items-center">
-        		<img src="${this.user.avatar}" alt="User Avatar" class="img-fluid rounded-circle">
+        		<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">
     		</div>
 			<div class="mb-3 pt-5">
-			<a class="btn btn-outline-primary" href="#game" role="button">Go to Game</a>
+			<a class="btn btn-outline-primary" href="/" role="button">Button</a>
 			</div>
 		</div>
 		`;
