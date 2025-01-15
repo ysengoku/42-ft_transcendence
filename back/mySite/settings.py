@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'your-secret-key'
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1'] #to be updated with the IP of the VM
 
 INSTALLED_APPS = [
     # Autres applications Django
@@ -35,10 +35,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.oauth2',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
+    # 'allauth.socialaccount.providers.oauth2',
 ]
 
 MIDDLEWARE = [
@@ -51,7 +51,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'your_project_name.urls'
+ROOT_URLCONF = 'mySite.urls'
 
 TEMPLATES = [
     {
@@ -69,14 +69,19 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'your_project_name.wsgi.application'
+WSGI_APPLICATION = 'mySite.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'database',  # Nom du service Docker
+        'PORT': '5432',
     }
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -105,7 +110,7 @@ SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    # 'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 # URL après connexion réussie
@@ -113,12 +118,14 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Configuration OAuth 42
-SOCIALACCOUNT_PROVIDERS = {
-    'oauth2': {
-        'APP': {
-            'client_id': 'YOUR_CLIENT_ID',
-            'secret': 'YOUR_CLIENT_SECRET',
-            'key': ''
-        }
-    }
-}
+
+# SOCIALACCOUNT_PROVIDERS = {
+#     'oauth2': {
+#         'APP': {
+#             'client_id': my_id,
+#             'secret': mysecret,
+#             'key': ''
+#         }
+#     }
+# }
+
