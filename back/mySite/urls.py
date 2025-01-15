@@ -17,9 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
-from django.conf.urls.static import static
+from ninja import NinjaAPI
+from users.api import router as users_router
+
+# Create an instance of NinjaAPI
+api = NinjaAPI()
+
+# Add the users router to the API
+api.add_router("/users/", users_router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-     path('accounts/', include('allauth.urls')),
+    path("api/", api.urls),  # Adding Django Ninja API routes
 ]
