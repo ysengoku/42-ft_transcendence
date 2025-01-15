@@ -8,7 +8,7 @@ export async function simulateApiLogin(credentials) {
 				resolve({
 					success: true,
 					user: {
-						id: '12345',
+						userid: '12345',
 						name: 'John Doe',
 						avatar: './assets/img/sample_avatar.jpg'
 					},
