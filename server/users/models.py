@@ -14,6 +14,7 @@ class Profile(models.Model):
     )
     elo = models.PositiveIntegerField(default=1000)
     friends = models.ManyToManyField(User, related_name='friends', blank=True)
+    is_online = models.BooleanField(default=True)
 
     @property
     def avatar(self):

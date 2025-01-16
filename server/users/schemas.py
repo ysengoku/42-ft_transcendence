@@ -1,14 +1,25 @@
-from ninja import ModelSchema
+from ninja import ModelSchema, Schema
 from .models import User
 
 
+class ErrorSchema(Schema):
+    message: str
+
+
 class UserSchema(ModelSchema):
-    number: int
+    avatar: str
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ['username', 'date_joined', 'email', 'password']
 
     @staticmethod
-    def resolve_number(obj):
-        return 1
+    def resolve_avatar(obj):
+        return obj.profile.avatar
+
+
+class SignUpSchema(Schema):
+    username: str
+    email: str
+    password: str
+    password_repeat: str
