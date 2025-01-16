@@ -16,15 +16,6 @@ COPY requirements.txt /app/
 # Installer les dépendances Python
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-
-##################################3
-
-#faire les migration ?
-
-RUN python manage.py makemigrations
-
-##################################3
-
 # Copier tout le reste du projet
 COPY . /app
 
