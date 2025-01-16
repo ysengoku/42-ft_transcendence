@@ -13,7 +13,7 @@ RUN npm install
 # Copier tout le reste de l'application dans le conteneur
 COPY ./app /app
 
-# Exposer le port de l'application front-end (port 5173 par défaut pour un projet Vite)
+# Exposer le port de l'application front-end (port  par défaut pour un projet Vite)
 EXPOSE 5173
 
 # Lancer l'application en mode développement
