@@ -1,4 +1,2 @@
 #!/bin/bash
-
-# Vérifier si PostgreSQL est en cours d'exécution
-pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h $DATABASE_HOST -p $DATABASE_PORT
+PGPASSWORD=$POSTGRES_PASSWORD psql -h database -U $POSTGRES_USER -d $POSTGRES_DB -c "SELECT 1" > /dev/null
