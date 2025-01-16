@@ -149,3 +149,7 @@ CHANNEL_LAYERS = {
 # Configuration Django Ninja
 NINJA_DOCS_URL = "/api/docs"
 NINJA_OPENAPI_URL = "/api/openapi.json"
+
+CSRF_TRUSTED_ORIGINS = ['https://localhost:1026']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
