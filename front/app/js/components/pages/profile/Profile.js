@@ -1,4 +1,3 @@
-import { simulateFetchUserData } from '../../../mock/simulateFetchUserData.js'
 
 export class UserProfile extends HTMLElement {
 	constructor() {
@@ -12,15 +11,20 @@ export class UserProfile extends HTMLElement {
 	}
 
 	async fetchUserData(userId) {
-    	try {
-      		const userData = await simulateFetchUserData(userId);
-      		this.user = userData;
-      		this.render();
-    	} catch (error) {
-      		console.error('Error fetching user data:', error);
-			// Show "User not exists Page"?
-    	}
-  	}
+		try {
+			const response = await fetch(`/api/users/${userId}/`);  // Appel réel à l'API
+			if (!response.ok) {
+				throw new Error('User not found');
+			}
+			const userData = await response.json();
+			this.user = userData;
+			this.render();
+		} catch (error) {
+			console.error('Error fetching user data:', error);
+			this.innerHTML = `<p>User not found.</p>`;  // Gestion d'erreur
+		}
+	}
+	
 
 	render() {	
 		if (!this.user) {

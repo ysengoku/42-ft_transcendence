@@ -3,7 +3,6 @@
 services:
   front:
     container_name: frontend
-    image: trans_front
     build:
       context: ./front  # Contexte de la construction (répertoire contenant le Dockerfile de front)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
@@ -21,7 +20,6 @@ services:
 
   back:
     container_name: backend
-    image: trans_back
     build:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
@@ -37,10 +35,11 @@ services:
       - database
     volumes:
       - ./back:/app
+    networks:
+      - transcendance_network
 
-  database:
+  database: 
     container_name: database
-    image: trans_postgres:13
     build:
       context: ./database  # Contexte de la construction (répertoire contenant le Dockerfile pour la base de données)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
@@ -52,7 +51,7 @@ services:
       - .env
     volumes:
       - db_data:/var/lib/postgresql/data
-    ports:
+    ports: # non exposé en prod, connecté par Django via postgres://user:password@db:5432/dbname
       - "5432:5432"
     expose:
       - "5432"
@@ -61,7 +60,6 @@ services:
 
   nginx:
     container_name: server
-    image: trans_server
     build:
       context: ./nginx
     volumes:

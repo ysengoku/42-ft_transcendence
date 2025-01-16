@@ -4,6 +4,16 @@
 
 we enter the args if we want to pass arguments to the dockerfile. if they are not defined in the dockerfile and not used at build time, they are not useful. if arguments are defined and congifured at runtime (in environment), we dont need to specify the args at the build phase.
 
+commandes:
+
+docker volume rm $(docker volume ls -q) = remove all the volumes
+docker system prune -a = remove all the images, containers, networks and volumes
+docker rmi $(docker images -q) = remove all the images
+
+good practice: 
+
+- error  ! nginx Warning pull access denied for trans_server, repository does not exist =>  use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.
+
 ## HTTPS Protocol:
 
 API = Application Programming Interface
@@ -177,18 +187,66 @@ password: password
 
 
 ## daily report ##
-Good evening ! 
 
-dev:
-- today I ve finished the django tutorial , at the end chatgpt was translating me the tutorial cause I could not focus more on it XD . 
-- it helped me to review the basics of https protocol between js and django (or to just "view" because I did not know). If you need a refresh, I've written a summary on the Ressources channels.
-- part 5 from the tutorial is about the tests scripting. that was interesting and I'll see how to link it with github actions to make a proper CI/CD, if it makes sense to do it. We might want to use selenium,  which is a popular open-source framework for automating web browsers. It is used primarily for automating interactions with web pages, such as filling out forms, clicking buttons, and navigating between pages. Selenium is commonly used for:
-- Automated Testing: Testing web applications by simulating real user interactions with a browser.
-- Web Scraping: Extracting data from websites.
-- Browser Automation: Performing repetitive tasks on a website, like data entry or checking availability.
+import { simulateFetchUserData } from '../../../mock/simulateFetchUserData.js'
+AND
+	async fetchUserData(userId) {
+    	try {
+      		const userData = await simulateFetchUserData(userId);
+      		this.user = userData;
+      		this.render();
+    	} catch (error) {
+      		console.error('Error fetching user data:', error);
+			// Show "User not exists Page"?
+    	}
+  	}
 
-organization:
-I have completed the mandatory check points to fulfill in the workload excel (for eg : user mut be able to invite other users for the tournament, it cannot be a simple automatic matchmaking).  I have reread the PDF file and I've tried to make it as exhaustive as possible.
+replaced to:
+async fetchUserData(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}/`);  // Appel réel à l'API
+        if (!response.ok) {
+            throw new Error('User not found');
+        }
+        const userData = await response.json();
+        this.user = userData;
+        this.render();
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        this.innerHTML = `<p>User not found.</p>`;  // Gestion d'erreur
+    }
+}
 
-docker:
 
+## docker:
+
+Service	Port Docker	Port Exposé	Rôle
+Nginx	80	8080	Proxy inverse vers frontend/API
+Django	8000	Non exposé	API backend (via Nginx)
+Vite.js	Non exposé	Servi par Nginx	Frontend (build statique)
+PostgreSQL	5432	Non exposé	Base de données (backend only)
+
+
+Si des services qui ne devraient pas être exposés le sont, cela crée plusieurs risques de sécurité importants :
+
+Pour Django (8000) si exposé :
+
+
+Accès direct à l'API en contournant le proxy Nginx
+Contournement potentiel des règles de sécurité (CORS, rate limiting, etc.)
+Risque d'attaques directes sur le framework Django
+
+
+Pour PostgreSQL (5432) si exposé :
+
+
+Tentatives de connexion directes à la base de données
+Risques de brute force sur les mots de passe
+Possibilité d'exfiltration de données
+Vulnérabilité aux attaques par déni de service
+
+Dans une architecture sécurisée :
+
+Seul le port 80/443 de Nginx devrait être exposé
+Tous les autres services devraient communiquer uniquement via le réseau Docker interne
+Les connexions externes passent obligatoirement par Nginx qui agit comme point d'entrée unique et sécurisé
