@@ -16,18 +16,20 @@ COPY requirements.txt /app/
 # Installer les dépendances Python
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
+
+##################################3
+
+#faire les migration ?
+
+RUN python manage.py makemigrations
+
+##################################3
+
 # Copier tout le reste du projet
 COPY . /app
 
-# Copier et ajuster les permissions du script d'entrée
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
 # Exposer le port 8000 pour Django
 EXPOSE 8000
-
-# Utiliser le script d'entrée
-ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Commande pour démarrer Django en mode développement
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
