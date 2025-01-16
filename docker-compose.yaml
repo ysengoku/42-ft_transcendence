@@ -17,6 +17,8 @@ services:
       - .env
     depends_on:
       - back
+    networks:
+      - transcendance_network
 
   back:
     container_name: backend

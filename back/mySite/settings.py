@@ -24,7 +24,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'your-secret-key'
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1'] #to be updated with the IP of the VM
+ALLOWED_HOSTS = ['*']  # En développement seulement (à changer en production par l ip de votre serveur)
+CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
 INSTALLED_APPS = [
     # Autres applications Django
@@ -36,10 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'rest_framework',  # Django Rest Framework
-    'allauth',  # django-allauth
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.oauth2',
     'channels',  # Django Channels
     'ninja',  # Django Ninja
 
@@ -51,7 +48,6 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -81,13 +77,15 @@ ASGI_APPLICATION = 'mySite.asgi.application'  # Pour Django Channels
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'database',  # Nom du service Docker
-        'PORT': '5432',
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('DATABASE_HOST'),  # Nom du service Docker
+        'PORT': os.environ.get('DATABASE_PORT'),
     }
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -147,3 +145,7 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
+
+# Configuration Django Ninja
+NINJA_DOCS_URL = "/api/docs"
+NINJA_OPENAPI_URL = "/api/openapi.json"
