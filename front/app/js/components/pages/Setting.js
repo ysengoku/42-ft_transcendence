@@ -17,9 +17,37 @@ export class Setting extends HTMLElement {
       		this.render();
     	} catch (error) {
       		console.error('Error fetching user data:', error);
-			// Show "User not exists Page"?
     	}
   	}
+
+	async handleAvatarUpload(event) {
+		event.preventDefault();
+
+		const formData = new FormData();
+		const fileInput = document.querySelector('#avatar-upload');
+		const file = fileInput.files[0];
+
+		if (file) {
+			formData.append('avatar', file);
+
+			try {
+				// Remplacer ceci par une requête pour votre API backend
+				const response = await fetch('/api/upload-avatar/', {
+					method: 'POST',
+					body: formData,
+				});
+				const data = await response.json();
+
+				// Mettre à jour l'avatar de l'utilisateur avec la nouvelle image
+				if (data.avatar_url) {
+					this.user.avatar = data.avatar_url;
+					this.render();
+				}
+			} catch (error) {
+				console.error('Error uploading avatar:', error);
+			}
+		}
+	}
 
 	render() {
 		this.innerHTML = `
@@ -28,14 +56,24 @@ export class Setting extends HTMLElement {
 			<p>Name: ${this.user.name}</p>
 			<p>ID: ${this.user.userid}</p>
 
-    		<div class="d-flex justify-content-center align-items-center profile-avatar-container">
-        		<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">
-    		</div>
+			<div class="d-flex justify-content-center align-items-center profile-avatar-container">
+				<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">
+			</div>
+
+			<!-- Formulaire pour uploader un nouvel avatar -->
+			<form id="avatar-upload-form" class="mt-3">
+				<input type="file" id="avatar-upload" name="avatar" accept="image/*" class="form-control">
+				<button type="submit" class="btn btn-primary mt-2">Upload Avatar</button>
+			</form>
+
 			<div class="mb-3 pt-5">
 				<a class="btn btn-primary" href="/home" role="button">Back to Home</a>
 			</div>
 		</div>
 		`;
+
+		// Ajouter un événement de soumission pour l'upload
+		document.querySelector('#avatar-upload-form').addEventListener('submit', this.handleAvatarUpload.bind(this));
 	}
 }
 

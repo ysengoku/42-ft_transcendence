@@ -23,6 +23,9 @@ services:
     build:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     expose:
