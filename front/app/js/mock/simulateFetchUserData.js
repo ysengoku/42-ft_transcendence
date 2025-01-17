@@ -1,17 +1,17 @@
-export async function simulateFetchUserData(userId) {
+export async function simulateFetchUserData(username) {
 	const mockUserData = [
-		{ userid: '12345', name: 'JohnDoe', avatar: '/assets/img/sample_avatar.jpg', online: true },
-		{ userid: '123', name: 'Alice', avatar: '/assets/img/sample_avatar2.jpg', online: true },
-		{ userid: '234', name: 'Jane', avatar: '/assets/img/sample_avatar3.jpg', online: false },
-		{ userid: '345', name: 'George', avatar: '/assets/img/sample_avatar.jpg', online: true },
-		{ userid: '456', name: 'Lucas', avatar: '/assets/img/sample_avatar.jpg', online: false },
-		{ userid: '789', name: 'Emily', avatar: '/assets/img/sample_avatar.jpg', online: true },
+		{ username: 'JohnDoe', avatar: '/assets/img/avatars/sample_avatar.jpg', online: true },
+		{ username: 'Alice', avatar: '/assets/img/avatars/sample_avatar2.jpg', online: true },
+		{ username: 'Jane', avatar: '/assets/img/avatars/sample_avatar3.jpg', online: false },
+		{ username: 'George', avatar: '/assets/img/avatars/sample_avatar.jpg', online: true },
+		{ username: 'Lucas', avatar: '/assets/img/avatars/sample_avatar.jpg', online: false },
+		{ username: 'Emily', avatar: '/assets/img/avatars/sample_avatar.jpg', online: true },
 	  ];
 
-	const user = mockUserData.find((user) => user.userid === userId);
+	const user = mockUserData.find((user) => user.username === username);
 
 	if (!user) {
-		return { userid: userId, name: 'Unknown User', avatar: '/assets/img/sample_avatar.jpg', online: false };
+		return { username: 'Unknown User', avatar: '/assets/img/avatars/sample_avatar.jpg', online: false };
 	}
 	return user;
 }

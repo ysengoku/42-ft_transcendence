@@ -7,13 +7,13 @@ export class UserProfile extends HTMLElement {
 	}
 
 	setParam(param) {
-		const userId = param.id;
-		this.fetchUserData(userId);
+		const username = param.username;
+		this.fetchUserData(username);
 	}
 
-	async fetchUserData(userId) {
+	async fetchUserData(username) {
     	try {
-      		const userData = await simulateFetchUserData(userId);
+      		const userData = await simulateFetchUserData(username);
       		this.user = userData;
       		this.render();
     	} catch (error) {
@@ -31,9 +31,7 @@ export class UserProfile extends HTMLElement {
 		// Temporary content
 		this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
-			<h1>${this.user.name}'s Profile page</h1>
-			<p>ID: ${this.user.userid}</p>
-
+			<h1>${this.user.username}'s Profile page</h1>
     		<div class="d-flex justify-content-center align-items-center profile-avatar-container">
         		<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">
     		</div>

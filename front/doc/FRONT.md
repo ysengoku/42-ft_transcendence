@@ -8,9 +8,17 @@ ft_transcendence
 │   │   ├── index.html          # Single entry point for the SPA
 │   │   │
 │   │   ├── assets/
-│   │   │   ├── images/         # Static images (logos, icons, etc.)
-│   │   │   ├── fonts/
-│   │   │   └── favicon.ico
+│   │   │   ├── img/         
+│   │   │   │   ├── header.css
+│   │   │   │   ├── footer.css
+│   │   │   │   └── ...
+│   │   │   │   
+│   │   │   └── static/  
+│   │   │       └── img         # Static images (logos, icons, etc.)
+│   │   │           ├── logo
+│   │   │           ├── default_avatar
+│   │   │           ├── favicon.ico
+│   │   │           └── ...
 │   │   │
 │   │   ├── css/
 │   │   │   ├── style.css       # Main stylesheet
@@ -25,18 +33,26 @@ ft_transcendence
 │   │   │   │
 │   │   │   ├── components/
 │   │   │   │   ├── navbar/
-│   │   │   │   │   ├── DropdownMenu.js
+│   │   │   │   │   ├── Navbar.js
 │   │   │   │   │   └── ...
 │   │   │   │   │── pages/
 │   │   │   │   │   ├── Landing.js
 │   │   │   │   │   ├── Login.js
 │   │   │   │   │   └── ...
+│   │   │   │   │── modals/
+│   │   │   │   │   ├── chat/
+│   │   │   │   │   └── friends/
 │   │   │   │   │
 │   │   │   │   └── .../
 │   │   │   │       ├── ...
 │   │   │   │       └── ...
 │   │   │   │
-│   │   │   └── api/
+│   │   │   ├── api/
+│   │   │   │   ├── 
+│   │   │   │   ├── 
+│   │   │   │   └── ...
+│   │   │   │
+│   │   │   └── utils/
 │   │   │       ├── ...
 │   │   │       └── ...
 │   │   │

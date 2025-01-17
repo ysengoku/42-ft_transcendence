@@ -12,7 +12,7 @@ export class Landing extends HTMLElement {
 		
 		this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
-			<img src="/assets/img/sample-logo.svg" alt="logo" class="img-fluid w-100 mb-2">
+			<img src="/assets/static/img/sample-logo.svg" alt="logo" class="img-fluid w-100 mb-2">
 			
 			<div class="d-flex flex-column align-items-center"> 
 			${isLoggedIn ? `

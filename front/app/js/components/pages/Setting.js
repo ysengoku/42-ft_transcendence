@@ -6,13 +6,13 @@ export class Setting extends HTMLElement {
 	}
 
 	setParam(param) {
-		const userId = param.id;
-		this.fetchUserData(userId);
+		const username = param.username;
+		this.fetchUserData(username);
 	}
 
-	async fetchUserData(userId) {
+	async fetchUserData(username) {
     	try {
-      		const userData = await simulateFetchUserData(userId);
+      		const userData = await simulateFetchUserData(username);
       		this.user = userData;
       		this.render();
     	} catch (error) {
@@ -25,8 +25,7 @@ export class Setting extends HTMLElement {
 		this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
 			<h1>This is Setting page</h1>
-			<p>Name: ${this.user.name}</p>
-			<p>ID: ${this.user.userid}</p>
+			<p>Name: ${this.user.username}</p>
 
     		<div class="d-flex justify-content-center align-items-center profile-avatar-container">
         		<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">

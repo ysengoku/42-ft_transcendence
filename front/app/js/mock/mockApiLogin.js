@@ -8,9 +8,8 @@ export async function simulateApiLogin(credentials) {
 				resolve({
 					success: true,
 					user: {
-						userid: '12345',
-						name: 'John Doe',
-						avatar: './assets/img/sample_avatar.jpg'
+						username: 'JohnDoe',
+						avatar: '/assets/img/avatars/sample_avatar.jpg'
 					},
 				});
 			} else {
