@@ -1,10 +1,11 @@
 # Django is the main framework for the back-end of the web application.
-Django>=4.0,<5.0
+Django==4.2.7
 
 # Django Rest Framework (DRF) is used to create RESTful APIs with Django.
 djangorestframework==3.14.0
 
 # Django Channels for handling WebSockets and background tasks
+
 channels==4.0.0
 django-eventstream==4.5.1
 daphne==3.0.1
