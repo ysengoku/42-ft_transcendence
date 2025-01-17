@@ -1,21 +1,31 @@
-from ninja import Router
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
+from ninja import Router, File, Form
+from django.shortcuts import get_object_or_404
+from .schemas import UserResponse
 from .models import User
-from .schemas import UserAvatarSchema
 
 router = Router()
 
-@router.post("/upload-avatar/")
-def upload_avatar(request, data: UserAvatarSchema):
-    # Récupérer l'utilisateur
-    user = User.objects.get(id=request.user.id)
+@router.put("/avatar", response=UserResponse)
+def update_avatar(request, file: File(...)):
+    if not request.user.is_authenticated:
+        return {"error": "Authentication required"}, 401
 
-    if 'avatar' in request.FILES:
-        avatar_file = request.FILES['avatar']
-        file_name = default_storage.save(f'avatars/{avatar_file.name}', ContentFile(avatar_file.read()))
-        user.avatar = f'avatars/{file_name}'
-        user.save()
-        
-        return {"avatar_url": user.avatar.url}
-    return {"error": "No file uploaded"}
+    request.user.avatar.save(file.name, file)
+    request.user.save()
+
+    return {
+        "id": request.user.id,
+        "username": request.user.username,
+        "avatar": request.user.avatar.url if request.user.avatar else None
+    }
+
+@router.get("/me", response=UserResponse)
+def get_current_user(request):
+    if not request.user.is_authenticated:
+        return {"error": "Authentication required"}, 401
+    
+    return {
+        "id": request.user.id,
+        "username": request.user.username,
+        "avatar": request.user.avatar.url if request.user.avatar else None
+    }

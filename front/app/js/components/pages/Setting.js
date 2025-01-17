@@ -1,80 +1,89 @@
-import { simulateFetchUserData } from '../../mock/simulateFetchUserData.js'
+import './profile/AvatarUpload.js'; 
 
-export class Setting extends HTMLElement {
-	constructor() {
-		super();
-	}
 
-	setParam(param) {
-		const userId = param.id;
-		this.fetchUserData(userId);
-	}
+export class UserSetting extends HTMLElement {
+    constructor() {
+        super();
+        this.user = null;
+    }
 
-	async fetchUserData(userId) {
-    	try {
-      		const userData = await simulateFetchUserData(userId);
-      		this.user = userData;
-      		this.render();
-    	} catch (error) {
-      		console.error('Error fetching user data:', error);
-    	}
-  	}
+    setParam(param) {
+        this.fetchUserData(param.id);
+    }
 
-	async handleAvatarUpload(event) {
-		event.preventDefault();
+    async fetchUserData(userId) {
+        try {
+            const response = await fetch(`/api/users/${userId}/`, { credentials: 'include' });
+            if (!response.ok) throw new Error('Failed to fetch user data');
+            this.user = await response.json();
+            this.render();
+        } catch (error) {
+            console.error('Error:', error);
+            this.innerHTML = '<p>Failed to load user settings.</p>';
+        }
+    }
 
-		const formData = new FormData();
-		const fileInput = document.querySelector('#avatar-upload');
-		const file = fileInput.files[0];
+    async updateUserSettings(formData) {
+        try {
+            const response = await fetch(`/api/users/${this.user.userid}/`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(formData)),
+                credentials: 'include'
+            });
+            if (!response.ok) throw new Error('Failed to update settings');
+            this.user = await response.json();
+            this.showMessage('Settings updated successfully!', 'success');
+        } catch (error) {
+            console.error('Error:', error);
+            this.showMessage('Failed to update settings.', 'error');
+        }
+    }
 
-		if (file) {
-			formData.append('avatar', file);
+    showMessage(message, type) {
+        const messageDiv = this.querySelector('.message');
+        messageDiv.textContent = message;
+        messageDiv.className = `message alert alert-${type === 'success' ? 'success' : 'danger'}`;
+        setTimeout(() => messageDiv.textContent = '', 3000);
+    }
 
-			try {
-				// Remplacer ceci par une requête pour votre API backend
-				const response = await fetch('/api/upload-avatar/', {
-					method: 'POST',
-					body: formData,
-				});
-				const data = await response.json();
+    handleSubmit(event) {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        this.updateUserSettings(formData);
+    }
 
-				// Mettre à jour l'avatar de l'utilisateur avec la nouvelle image
-				if (data.avatar_url) {
-					this.user.avatar = data.avatar_url;
-					this.render();
-				}
-			} catch (error) {
-				console.error('Error uploading avatar:', error);
-			}
-		}
-	}
+    handleAvatarUpdate(event) {
+        this.user.avatar = event.detail.avatar;
+        this.render();
+    }
 
-	render() {
-		this.innerHTML = `
-		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
-			<h1>This is Setting page</h1>
-			<p>Name: ${this.user.name}</p>
-			<p>ID: ${this.user.userid}</p>
-
-			<div class="d-flex justify-content-center align-items-center profile-avatar-container">
-				<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">
-			</div>
-
-			<!-- Formulaire pour uploader un nouvel avatar -->
-			<form id="avatar-upload-form" class="mt-3">
-				<input type="file" id="avatar-upload" name="avatar" accept="image/*" class="form-control">
-				<button type="submit" class="btn btn-primary mt-2">Upload Avatar</button>
-			</form>
-
-			<div class="mb-3 pt-5">
-				<a class="btn btn-primary" href="/home" role="button">Back to Home</a>
-			</div>
-		</div>
-		`;
-
-		// Ajouter un événement de soumission pour l'upload
-		document.querySelector('#avatar-upload-form').addEventListener('submit', this.handleAvatarUpload.bind(this));
-	}
+    render() {
+        if (!this.user) return;
+        this.innerHTML = `
+            <div class="container">
+                <h2>User Settings</h2>
+                <div class="text-center">
+                    <img src="${this.user.avatar}" alt="Avatar" class="rounded-circle" style="width: 150px;">
+                    <avatar-upload></avatar-upload>
+                </div>
+                <form id="settings-form">
+                    <div class="mb-3">
+                        <label>Username</label>
+                        <input type="text" class="form-control" name="username" value="${this.user.name}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control" name="email" value="${this.user.email || ''}" required>
+                    </div>
+                    <div class="message"></div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            </div>
+        `;
+        this.querySelector('#settings-form').addEventListener('submit', (e) => this.handleSubmit(e));
+        this.addEventListener('avatarUpdated', (e) => this.handleAvatarUpdate(e));
+    }
 }
 
-customElements.define('user-setting', Setting);
+customElements.define('user-setting', UserSetting);

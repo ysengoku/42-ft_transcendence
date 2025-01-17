@@ -1,5 +1,11 @@
-from pydantic import BaseModel
+from ninja import Schema, File
+from django.core.files import File as DjangoFile
 from typing import Optional
 
-class UserAvatarSchema(BaseModel):
-    avatar: Optional[str] = None  # Champ pour l'upload d'avatar
+class UserAvatarUpdate(Schema):
+    avatar: Optional[str] = None
+
+class UserResponse(Schema):
+    id: int
+    username: str
+    avatar: str
