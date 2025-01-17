@@ -153,3 +153,7 @@ NINJA_OPENAPI_URL = "/api/openapi.json"
 CSRF_TRUSTED_ORIGINS = ['https://localhost:1026']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
+
+# Configuration for picture
+# MEDIA_URL = '/media/'
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))
