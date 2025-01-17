@@ -81,8 +81,8 @@ DATABASES = {
         'NAME': os.environ.get('POSTGRES_DB'),
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': os.environ.get('DATABASE_HOST'),  # Nom du service Docker
-        'PORT': os.environ.get('DATABASE_PORT'),
+        'HOST': os.environ.get('DATABASE_HOST', 'database'),  # Nom du service Docker
+        'PORT': os.environ.get('DATABASE_PORT', 5432),
     }
 }
 
