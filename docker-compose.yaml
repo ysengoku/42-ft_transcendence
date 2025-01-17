@@ -24,11 +24,12 @@ services:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "
+            python manage.py makemigrations &&            
+            python manage.py migrate &&
             python manage.py collectstatic --noinput &&
             python manage.py createsuperuser --noinput || echo 'Superuser already exists' &&
             python manage.py runserver 0.0.0.0:8000"
-
     ports:
       - "8000:8000"
     expose:
