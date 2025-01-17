@@ -22,5 +22,5 @@ COPY . /app
 # Exposer le port 8000 pour Django
 EXPOSE 8000
 
-# Commande pour démarrer Django en mode développement
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Utiliser daphne pour démarrer l'application
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "mySite.asgi:application"]
