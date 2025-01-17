@@ -85,3 +85,18 @@ friends-list-item:last-of-type .friends-list-item {
 .status-indicator.online {
     background-color: green;
 }
+
+.profile-avatar-container img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 2px solid #ddd;
+}
+
+.profile-avatar-container label.btn {
+    transition: all 0.3s ease;
+}
+
+.profile-avatar-container label.btn:hover {
+    background-color: #e9ecef;
+}
