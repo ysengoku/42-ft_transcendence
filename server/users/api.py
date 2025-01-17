@@ -1,33 +1,34 @@
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 from ninja import NinjaAPI
-from ninja.errors import ValidationError as NinjaValidationError
 from typing import List
-from .schemas import UserSchema, SignUpSchema
-from .models import User
+from .schemas import ProfilePreviewSchema, ProfileFullSchema, SignUpSchema
+from .models import User, Profile
 
 api = NinjaAPI()
 
 
-@api.get("users/", response=List[UserSchema])
+@api.get("users/", response=List[ProfilePreviewSchema])
 def get_users(request):
-    return User.objects.prefetch_related('profile').all()
+    return Profile.objects.prefetch_related('user').all()
 
 
-@api.get("users/{username}", response=UserSchema)
+@api.get("users/{username}", response=ProfileFullSchema)
 def get_user(request, username: str):
-    return get_object_or_404(User, username=username)
+    return get_object_or_404(Profile, user__username=username)
 
 
-@api.post("users/", response={201: UserSchema})
+@api.post("users/", response={201: ProfilePreviewSchema})
 def register_user(request, data: SignUpSchema):
     if data.password != data.password_repeat:
         raise ValidationError({"msg": "Passwords do not match."})
+    if User.objects.filter(username__iexact=data.username).exists():
+        raise ValidationError({"msg": "A user with that username already exists."})
     user = User(username=data.username, email=data.email)
     user.set_password(data.password)
     user.full_clean()
     user.save()
-    return 201, user
+    return 201, user.profile
 
 
 @api.exception_handler(ValidationError)
