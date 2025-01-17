@@ -9,6 +9,79 @@ Rôle : En production, Nginx prend le rôle de proxy inverse (reverse proxy) pou
 Comment ça marche ? : Les requêtes vers /api sont redirigées vers le backend Django (par exemple, http://backend:8000), et les requêtes restantes sont envoyées vers le frontend (par exemple, http://frontend:5173 ou vers des fichiers statiques).
 Avantage : Nginx est optimisé pour servir des fichiers statiques et gérer des requêtes en production, offrant ainsi une meilleure performance et sécurité.
 
+
+Application principale (Frontend) :
+
+Copyhttps://localhost:1026
+
+C'est votre point d'entrée principal via Nginx qui sert votre application frontend
+Toutes les routes frontend seront accessibles via cette URL de base
+
+
+API Backend (via Nginx proxy) :
+
+Copyhttps://localhost:1026/api/[vos-routes]
+
+Vos endpoints d'API seront accessibles via ce préfixe
+Nginx fait suivre ces requêtes vers http://back:8000/
+
+
+Admin Django :
+
+Copyhttps://localhost:1026/admin/
+
+Interface d'administration Django
+
+
+Accès directs aux services (développement) :
+
+
+Frontend Vite : http://localhost:5173
+Backend Django : http://localhost:8000
+PostgreSQL : localhost:5432
+
+Connexion via : postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}
+Note : Cet accès direct à la base de données n'est recommandé qu'en développement
+
+
+
+
+Fichiers statiques et média :
+
+Copyhttps://localhost:1026/static/[nom-fichier]
+https://localhost:1026/media/[nom-fichier]
+Points importants à noter :
+
+L'accès principal à l'application se fait via le port 1026 en HTTPS (SSL)
+Les autres ports (5173, 8000, 5432) sont exposés principalement pour le développement
+À l'intérieur du réseau Docker, les services communiquent via leurs noms de conteneur (back, front, database)
+
+
+ERROR: 
+
+ProgrammingError at /admin/
+
+relation "django_session" does not exist
+LINE 1: ...ession_data", "django_session"."expire_date" FROM "django_se...
+                                                             ^
+
+Request Method:GETRequest URL:https://localhost/admin/Django Version:4.2.7Exception Type:ProgrammingErrorException Value:
+
+relation "django_session" does not exist
+LINE 1: ...ession_data", "django_session"."expire_date" FROM "django_se...
+                                                             ^
+
+Exception Location:/usr/local/lib/python3.10/site-packages/psycopg/cursor.py, line 723, in executeRaised during:django.contrib.admin.sites.indexPython Executable:/usr/local/bin/python3.10Python Version:3.10.16Python Path:
+
+['.',
+ '/usr/local/bin',
+ '/usr/local/lib/python310.zip',
+ '/usr/local/lib/python3.10',
+ '/usr/local/lib/python3.10/lib-dynload',
+ '/usr/local/lib/python3.10/site-packages']
+
+Server time:Fri, 17 Jan 2025 11:37:28 +0000
+
 ## Docker ##
 
 ## docker-compose ##
