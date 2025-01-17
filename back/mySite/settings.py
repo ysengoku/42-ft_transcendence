@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    # 'django.contrib.staticfiles',
     'django.contrib.sites',
     'rest_framework',  # Django Rest Framework
     'channels',  # Django Channels
@@ -115,7 +115,7 @@ SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    # 'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 # ################# #
@@ -153,7 +153,7 @@ NINJA_OPENAPI_URL = "/api/openapi.json"
 
 CSRF_TRUSTED_ORIGINS = ['https://localhost:1026']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False
 
 # Configuration for picture
 BASE_DIR = Path(__file__).resolve().parent.parent

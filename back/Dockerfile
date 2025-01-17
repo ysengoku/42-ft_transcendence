@@ -1,5 +1,9 @@
 # Utiliser l'image de base Python
 FROM python:3.10-slim
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SUPERUSER_USERNAME=myusername
+ENV DJANGO_SUPERUSER_EMAIL=myemail@example.com
+ENV DJANGO_SUPERUSER_PASSWORD=mypassword
 
 # Installer les dépendances système
 RUN apt-get update && apt-get install -y \
@@ -25,3 +29,9 @@ EXPOSE 8000
 
 # Utiliser daphne pour démarrer l'application
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "mySite.asgi:application"]
+
+#Django avec runserver ne prend pas en charge les WebSockets.
+# Daphne, en revanche, est conçu pour gérer les protocoles HTTP et WebSocket
+
+# [ Utilisateur ] ⇄ [ Nginx (SSL, Proxy) ] ⇄ [ Daphne (ASGI) ] ⇄ [ Django ]
+ #                                       ⇄ [ PostgreSQL / Redis (gestion du cache) ]

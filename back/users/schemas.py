@@ -1,14 +1,5 @@
-from ninja import ModelSchema
-from .models import User
+from pydantic import BaseModel
+from typing import Optional
 
-
-class UserSchema(ModelSchema):
-    number: int
-
-    class Meta:
-        model = User
-        fields = '__all__'
-
-    @staticmethod
-    def resolve_number(obj):
-        return 1
+class UserAvatarSchema(BaseModel):
+    avatar: Optional[str] = None  # Champ pour l'upload d'avatar

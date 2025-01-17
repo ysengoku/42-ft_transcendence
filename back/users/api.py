@@ -1,17 +1,21 @@
-from ninja import NinjaAPI
-from typing import List
-from .schemas import UserSchema
+from ninja import Router
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
 from .models import User
+from .schemas import UserAvatarSchema
 
-api = NinjaAPI()
+router = Router()
 
+@router.post("/upload-avatar/")
+def upload_avatar(request, data: UserAvatarSchema):
+    # Récupérer l'utilisateur
+    user = User.objects.get(id=request.user.id)
 
-@api.get("users/", response=List[UserSchema])
-def get_users(request):
-    return User.objects.all()
-
-
-@api.post("users/", response=UserSchema)
-def register_user(request):
-    user = User.create.create_user()
-    return user
+    if 'avatar' in request.FILES:
+        avatar_file = request.FILES['avatar']
+        file_name = default_storage.save(f'avatars/{avatar_file.name}', ContentFile(avatar_file.read()))
+        user.avatar = f'avatars/{file_name}'
+        user.save()
+        
+        return {"avatar_url": user.avatar.url}
+    return {"error": "No file uploaded"}
