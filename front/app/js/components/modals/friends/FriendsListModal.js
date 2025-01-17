@@ -30,8 +30,7 @@ export class FriendsListModal extends HTMLElement {
 		this.friendsList.forEach(friend => {
 			console.log(`Rendering friend:`, friend);
 			const listItem = document.createElement('friends-list-item');
-			listItem.setAttribute('userid', friend.userid);
-			listItem.setAttribute('name', friend.name);
+			listItem.setAttribute('username', friend.username);
 			listItem.setAttribute('avatar', friend.avatar);
 			listItem.setAttribute('online', friend.online);
 			listContainer.appendChild(listItem);
