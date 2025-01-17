@@ -25,7 +25,9 @@ services:
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+            python manage.py createsuperuser --noinput || echo 'Superuser already exists' &&
+            python manage.py runserver 0.0.0.0:8000"
+
     ports:
       - "8000:8000"
     expose:
@@ -35,6 +37,9 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: mySite.settings
       DATABASE_URL: ${DATABASE_URL}
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
     depends_on:
       - database
     volumes:

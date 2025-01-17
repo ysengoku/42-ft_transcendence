@@ -1,9 +1,5 @@
 # Utiliser l'image de base Python
 FROM python:3.10-slim
-ENV PYTHONUNBUFFERED=1
-ENV DJANGO_SUPERUSER_USERNAME=myusername
-ENV DJANGO_SUPERUSER_EMAIL=myemail@example.com
-ENV DJANGO_SUPERUSER_PASSWORD=mypassword
 
 # Installer les dépendances système
 RUN apt-get update && apt-get install -y \

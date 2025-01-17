@@ -249,7 +249,7 @@ Méthode d'instance	self	✅ Oui	Manipuler les attributs de l'objet
 Méthode de classe	cls	❌ Objet non, ✅ Classe	Travailler avec les attributs de classe
 Méthode statique	Aucun	❌ Non	Fonction indépendante, organisée dans la classe
 
-
+En Django, un manager est un objet qui gère les requêtes au niveau de la classe de modèle (c'est-à-dire au niveau de la table en base de données), tandis que les opérations sur les instances (lignes dans la table) se font via les méthodes sur ces instances.
 
 ## summary vmt model ##
 1. View: a function that handle the http request, interacts with the model and send a response http, usually rendered with a template
