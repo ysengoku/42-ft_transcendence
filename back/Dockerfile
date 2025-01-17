@@ -8,13 +8,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Définir le répertoire de travail
+RUN mkdir /app
 WORKDIR /app
 
 # Copier les fichiers requirements.txt d'abord pour optimiser le cache
 COPY requirements.txt /app/
 
 # Installer les dépendances Python
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copier tout le reste du projet
 COPY . /app

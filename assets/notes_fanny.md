@@ -1,3 +1,14 @@
+## nginx ##
+
+1. Vite pendant le développement :
+Rôle : Durant le développement, Vite fonctionne comme un serveur de développement local pour le frontend. Il sert ton application Vue.js, React, ou autre, et permet de gérer des requêtes API vers le backend (Django) via un proxy.
+Comment ça marche ? : Lorsque tu fais des requêtes à /api sur le frontend, Vite redirige ces requêtes vers le backend (généralement via un proxy configuré dans vite.config.js).
+Avantage : Cela te permet de travailler localement sans t'inquiéter de configurer un serveur complet, et c'est rapide à mettre en place.
+2. Nginx en production :
+Rôle : En production, Nginx prend le rôle de proxy inverse (reverse proxy) pour les requêtes HTTP. Il reçoit les requêtes sur le port 80 (ou 443 pour HTTPS) et les redirige vers le frontend ou le backend, selon le chemin demandé.
+Comment ça marche ? : Les requêtes vers /api sont redirigées vers le backend Django (par exemple, http://backend:8000), et les requêtes restantes sont envoyées vers le frontend (par exemple, http://frontend:5173 ou vers des fichiers statiques).
+Avantage : Nginx est optimisé pour servir des fichiers statiques et gérer des requêtes en production, offrant ainsi une meilleure performance et sécurité.
+
 ## Docker ##
 
 ## docker-compose ##
@@ -9,6 +20,8 @@ commandes:
 docker volume rm $(docker volume ls -q) = remove all the volumes
 docker system prune -a = remove all the images, containers, networks and volumes
 docker rmi $(docker images -q) = remove all the images
+
+docker exec -it backend python manage.py makemigration = faire les migrations a partir du docker
 
 good practice: 
 

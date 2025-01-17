@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
+from pathlib import Path
 
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mySite.settings')
@@ -71,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'mySite.wsgi.application'
+# WSGI_APPLICATION = 'mySite.wsgi.application'
 ASGI_APPLICATION = 'mySite.asgi.application'  # Pour Django Channels
 
 DATABASES = {
@@ -155,5 +156,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 
 # Configuration for picture
-# MEDIA_URL = '/media/'
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
