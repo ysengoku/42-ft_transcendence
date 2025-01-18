@@ -74,8 +74,9 @@ services:
     build:
       context: ./nginx
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf # Permet de personnaliser ou de surcharger certaines parties de la configuration sans avoir à toucher à l'image Docker elle-même. Cela permet par exemple de modifier la configuration de Nginx ou d'ajouter des fichiers à la volée, ce qui est très pratique pendant le développement, où les fichiers de configuration peuvent changer fréquemment.
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./front:/usr/share/nginx/html # Dossier contenant les fichiers statiques de l'application
+      - ./back/users/media:/usr/share/nginx/media # Dossier contenant les fichiers médias de l'application
     ports:
       - "1026:1026"
     expose:

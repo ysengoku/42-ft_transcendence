@@ -19,8 +19,7 @@ from django.urls import path, include
 from ninja import NinjaAPI
 from django.conf import settings
 from django.conf.urls.static import static 
-
-api = NinjaAPI()
+from users.api import api
 
 # Exemple de vue racine pour /api/
 @api.get("/", response=dict)
