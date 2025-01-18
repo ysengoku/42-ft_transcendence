@@ -20,14 +20,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copier tout le reste du projet
 COPY . /app
 
-# Exposer le port 8000 pour Django
+# Exposer le port 8000 pour Gunicorn
 EXPOSE 8000
 
-# Utiliser daphne pour démarrer l'application
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "mySite.asgi:application"]
+# Utiliser Gunicorn pour démarrer l'application
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "mySite.asgi:application"]
 
-#Django avec runserver ne prend pas en charge les WebSockets.
-# Daphne, en revanche, est conçu pour gérer les protocoles HTTP et WebSocket
-
-# [ Utilisateur ] ⇄ [ Nginx (SSL, Proxy) ] ⇄ [ Daphne (ASGI) ] ⇄ [ Django ]
- #                                       ⇄ [ PostgreSQL / Redis (gestion du cache) ]
+# [ Utilisateur ] ⇄ [ Nginx (SSL, Proxy) ] ⇄ [ Gunicorn (ASGI) ] ⇄ [ Django ]
+#                                        ⇄ [ PostgreSQL / Redis (gestion du cache) ]

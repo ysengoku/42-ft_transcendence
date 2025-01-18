@@ -23,9 +23,8 @@ if __name__ == '__main__':
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = 'your-secret-key'
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']  # En développement seulement (à changer en production par l ip de votre serveur)
+DEBUG = int(os.environ.get('DEBUG', default=0))
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
 INSTALLED_APPS = [
