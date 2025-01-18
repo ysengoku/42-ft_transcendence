@@ -44,8 +44,8 @@ services:
       - database
     volumes:
       - ./back:/app
-      - static_volume:/app/staticfiles
-      - media_volume:/app/users/media
+      - static_volume:/app/static
+      - media_volume:/app/media
     networks:
       - transcendance_network
 
@@ -76,9 +76,9 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./front:/usr/share/nginx/html # Dossier contenant les fichiers statiques de l'application
-      - media_volume:/usr/share/nginx/media # Dossier contenant les fichiers médias de l'application
-      - static_volume:/usr/share/nginx/static # Dossier contenant les fichiers statiques de l'application
-      - db_data:/usr/share/nginx/db_data # Dossier contenant les fichiers de la base de données
+      - media_volume:/usr/share/nginx/html/app/media # Dossier contenant les fichiers médias de l'application
+      - static_volume:/usr/share/nginx/html/app/static # Dossier contenant les fichiers statiques de l'application
+      - db_data:/usr/share/nginx/html/db_data # Dossier contenant les fichiers de la base de données
     ports:
       - "1026:1026"
     expose:

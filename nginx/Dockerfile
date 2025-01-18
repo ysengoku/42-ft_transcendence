@@ -13,9 +13,6 @@ RUN apk add --no-cache openssl && \
 # Copy the custom nginx.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy the static files
-COPY ./ /usr/share/nginx/html
-
 EXPOSE 1026
 
 CMD ["nginx", "-g", "daemon off;"]
