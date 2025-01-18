@@ -62,13 +62,14 @@ services:
       - .env
     restart: always
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_volume:/var/lib/postgresql/data
     ports: # non exposé en prod, connecté par Django via postgres://user:password@db:5432/dbname
       - "5432:5432"
     expose:
       - "5432"
     networks:
       - transcendance_network
+
   nginx:
     container_name: server
     build:
@@ -78,7 +79,7 @@ services:
       - ./front:/usr/share/nginx/html # Dossier contenant les fichiers statiques de l'application
       - media_volume:/usr/share/nginx/html/app/media # Dossier contenant les fichiers médias de l'application
       - static_volume:/usr/share/nginx/html/app/static # Dossier contenant les fichiers statiques de l'application
-      - db_data:/usr/share/nginx/html/db_data # Dossier contenant les fichiers de la base de données
+      - db_volume:/usr/share/nginx/html/db_volume # Dossier contenant les fichiers de la base de données
     ports:
       - "1026:1026"
     expose:
@@ -91,9 +92,25 @@ services:
 
 # shared volumes ?? 
 volumes:
-  db_data:
+  db_volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/db_volume
+      o: bind
   static_volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/static_volume
+      o: bind
   media_volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./volumes/media_volume
+      o: bind
+  
 networks:
   transcendance_network:
     driver: bridge
