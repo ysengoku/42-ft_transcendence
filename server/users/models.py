@@ -37,12 +37,7 @@ class Profile(models.Model):
 
     @property
     def winrate(self):
-        wins = self.wins
-        loses = self.loses
-        total = wins + loses
-        if total == 0:
-            return 100
-        return wins / (total) * 100
+        return self.calculate_winrate(self.wins, self.loses)
 
     @property
     def scored_balls(self):
@@ -57,9 +52,9 @@ class Profile(models.Model):
     def best_enemy(self):
         best_enemy = self.won_matches.values('loser') \
             .annotate(wins=Count('loser')) \
-            .order_by('-wins')
-        best_enemy = best_enemy.first()
-        if not best_enemy:
+            .order_by('-wins') \
+            .first()
+        if not best_enemy or not best_enemy.get('loser', None):
             return None
         res = Profile.objects.get(id=best_enemy["loser"])
         return res
@@ -68,12 +63,30 @@ class Profile(models.Model):
     def worst_enemy(self):
         worst_enemy = self.lost_matches.values('winner') \
             .annotate(losses=Count('winner')) \
-            .order_by('-losses')
-        worst_enemy = worst_enemy.first()
-        if not worst_enemy:
+            .order_by('-losses') \
+            .first()
+        if not worst_enemy or not worst_enemy.get('winner', None):
             return None
         res = Profile.objects.get(id=worst_enemy["winner"])
         return res
+
+    def calculate_winrate(self, wins: int, loses: int):
+        total = wins + loses
+        if total == 0:
+            return None
+        return wins / (total) * 100
+
+    def get_stats_against_player(self, profile):
+        wins = self.won_matches.filter(loser=profile).count()
+        loses = self.lost_matches.filter(winner=profile).count()
+        return {
+            'username': profile.user.username,
+            'avatar': profile.avatar,
+            'elo': profile.elo,
+            'wins': wins,
+            'loses': loses,
+            'winrate': self.calculate_winrate(wins, loses),
+        }
 
     def get_elo_data_points(self):
         elo_data_points = self.matches.annotate(

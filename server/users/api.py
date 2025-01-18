@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
-from ninja import NinjaAPI, Schema
+from ninja import NinjaAPI
 from typing import List
 from .schemas import ProfileMinimalSchema, ProfileFullSchema, SignUpSchema
 from .models import User, Profile
