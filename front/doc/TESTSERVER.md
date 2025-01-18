@@ -14,3 +14,27 @@ Activate
 
 Desactivate .venv
 `desactivate`
+
+To accept the connection from Front-end dev server (localhost:8080)
+
+In .venv
+`pip install django-cors-headers`
+Add this in settings.py
+
+```python
+INSTALLED_APPS = [
+	... other apps
+    'corsheaders',
+]
+
+MIDDLEWARE = [
+    ...Other settings
+    'corsheaders.middleware.CorsMiddleware',
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8080',
+]
+```

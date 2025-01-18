@@ -5,11 +5,13 @@ export async function apiRequest(method, endpoint, data=null) {
 		headers: {
 			'Content-Type': 'application/json',
 		},
+		credentials: "include",  // Need after JWT integration
 	};
 
 	if (data) {
 		options.body = JSON.stringify(data);
 	}
+	console.log('Data before API request:', options);
 
 	try {
 		const response = await fetch(url, options);

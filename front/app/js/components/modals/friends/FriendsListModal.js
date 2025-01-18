@@ -28,7 +28,7 @@ export class FriendsListModal extends HTMLElement {
 		const listContainer = this.querySelector('#friends-list');
 		listContainer.innerHTML = '';
 		this.friendsList.forEach(friend => {
-			console.log(`Rendering friend:`, friend);
+			// console.log(`Rendering friend:`, friend);
 			const listItem = document.createElement('friends-list-item');
 			listItem.setAttribute('username', friend.username);
 			listItem.setAttribute('avatar', friend.avatar);
