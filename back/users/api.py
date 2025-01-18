@@ -1,4 +1,4 @@
-from ninja import NinjaAPI, Schema
+from ninja import NinjaAPI, Schema, File, UploadedFile
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from .models import User
@@ -20,17 +20,17 @@ def get_current_user(request):
         "avatar": avatar_url
     }
 
-# @api.post("/upload-avatar/")
-# def upload_avatar(request, avatar: UploadedFile = File(...)):
-#     if not request.user.is_authenticated:
-#         return {"error": "Authentication required"}, 401
+@api.post("/upload-avatar/")
+def upload_avatar(request, avatar: UploadedFile = File(...)):
+    if not request.user.is_authenticated:
+        return {"error": "Authentication required"}, 401
 
-#     # Mise à jour directe de l'avatar
-#     request.user.avatar.save(avatar.name, avatar)
-#     request.user.save()
+    # Mise à jour directe de l'avatar
+    request.user.avatar.save(avatar.name, avatar)
+    request.user.save()
 
-#     return {
-#         "id": request.user.id,
-#         "username": request.user.username,
-#         "avatar": request.build_absolute_uri(request.user.avatar.url)
-#     }
+    return {
+        "id": request.user.id,
+        "username": request.user.username,
+        "avatar": request.build_absolute_uri(request.user.avatar.url)
+    }
