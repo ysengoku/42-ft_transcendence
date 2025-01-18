@@ -24,11 +24,10 @@ services:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "wait-for-it database:5432 -- python manage.py migrate &&
             python manage.py collectstatic --noinput &&
-            python manage.py createsuperuser --noinput || echo 'Superuser already exists' &&
+            python manage.py createsuperuser --noinput || echo 'Superuser creation skipped' &&
             python manage.py runserver 0.0.0.0:8000"
-
     ports:
       - "8000:8000"
     expose:
@@ -45,6 +44,7 @@ services:
       - database
     volumes:
       - ./back:/app
+      - static_volume:/app/staticfiles
     networks:
       - transcendance_network
 
@@ -68,7 +68,6 @@ services:
       - "5432"
     networks:
       - transcendance_network
-
   nginx:
     container_name: server
     build:
@@ -77,6 +76,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./front:/usr/share/nginx/html # Dossier contenant les fichiers statiques de l'application
       - ./back/users/media:/usr/share/nginx/media # Dossier contenant les fichiers médias de l'application
+      - static_volume:/usr/share/nginx/static # Dossier contenant les fichiers statiques de l'application
+      - db_data:/usr/share/nginx/db_data # Dossier contenant les fichiers de la base de données
     ports:
       - "1026:1026"
     expose:
@@ -87,9 +88,10 @@ services:
     networks:
       - transcendance_network
 
+# shared volumes ?? 
 volumes:
   db_data:
-
+  static_volume:
 networks:
   transcendance_network:
     driver: bridge
