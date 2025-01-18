@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.templatetags.static import static
-from django.db.models import F, When, Case
+from django.db.models import F, When, Case, Sum, Count
 
 
 class User(AbstractUser):
@@ -26,6 +26,54 @@ class Profile(models.Model):
     @property
     def matches(self):
         return self.won_matches.all() | self.lost_matches.all()
+
+    @property
+    def wins(self):
+        return self.won_matches.count()
+
+    @property
+    def loses(self):
+        return self.lost_matches.count()
+
+    @property
+    def winrate(self):
+        wins = self.wins
+        loses = self.loses
+        total = wins + loses
+        if total == 0:
+            return 100
+        return wins / (total) * 100
+
+    @property
+    def scored_balls(self):
+        scored_when_lost = self.lost_matches.aggregate(
+                scored_when_lost=Sum('loser_score'))['scored_when_lost'] or 0
+        scored_when_won = self.won_matches.aggregate(
+                scored_when_won=Sum('winner_score'))['scored_when_won'] or 0
+        scored_balls = scored_when_won + scored_when_lost
+        return scored_balls
+
+    @property
+    def best_enemy(self):
+        best_enemy = self.won_matches.values('loser') \
+            .annotate(wins=Count('loser')) \
+            .order_by('-wins')
+        best_enemy = best_enemy.first()
+        if not best_enemy:
+            return None
+        res = Profile.objects.get(id=best_enemy["loser"])
+        return res
+
+    @property
+    def worst_enemy(self):
+        worst_enemy = self.lost_matches.values('winner') \
+            .annotate(losses=Count('winner')) \
+            .order_by('-losses')
+        worst_enemy = worst_enemy.first()
+        if not worst_enemy:
+            return None
+        res = Profile.objects.get(id=worst_enemy["winner"])
+        return res
 
     def get_elo_data_points(self):
         elo_data_points = self.matches.annotate(

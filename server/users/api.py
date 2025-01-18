@@ -1,14 +1,14 @@
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
-from ninja import NinjaAPI
+from ninja import NinjaAPI, Schema
 from typing import List
-from .schemas import ProfilePreviewSchema, ProfileFullSchema, SignUpSchema
+from .schemas import ProfileMinimalSchema, ProfileFullSchema, SignUpSchema
 from .models import User, Profile
 
 api = NinjaAPI()
 
 
-@api.get("users/", response=List[ProfilePreviewSchema])
+@api.get("users/", response=List[ProfileMinimalSchema])
 def get_users(request):
     return Profile.objects.prefetch_related('user').all()
 
@@ -18,7 +18,7 @@ def get_user(request, username: str):
     return get_object_or_404(Profile, user__username=username)
 
 
-@api.post("users/", response={201: ProfilePreviewSchema})
+@api.post("users/", response={201: ProfileMinimalSchema})
 def register_user(request, data: SignUpSchema):
     if data.password != data.password_repeat:
         raise ValidationError({"msg": "Passwords do not match."})
