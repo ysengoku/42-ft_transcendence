@@ -24,7 +24,7 @@ COPY . /app
 EXPOSE 8000
 
 # Utiliser Gunicorn pour démarrer l'application
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "mySite.asgi:application"]
+CMD ["gunicorn", "-b", "0.0.0.0:8000", "mySite.wsgi:application"]
 
 # [ Utilisateur ] ⇄ [ Nginx (SSL, Proxy) ] ⇄ [ Gunicorn (ASGI) ] ⇄ [ Django ]
 #                                        ⇄ [ PostgreSQL / Redis (gestion du cache) ]

@@ -274,35 +274,13 @@ password: password
 
 ## daily report ##
 
-import { simulateFetchUserData } from '../../../mock/simulateFetchUserData.js'
-AND
-	async fetchUserData(userId) {
-    	try {
-      		const userData = await simulateFetchUserData(userId);
-      		this.user = userData;
-      		this.render();
-    	} catch (error) {
-      		console.error('Error fetching user data:', error);
-			// Show "User not exists Page"?
-    	}
-  	}
+change to gunicorn instead of daphne so that we can use the django admin interface on localhost:8000/admin
 
-replaced to:
-async fetchUserData(userId) {
-    try {
-        const response = await fetch(`/api/users/${userId}/`);  // Appel réel à l'API
-        if (!response.ok) {
-            throw new Error('User not found');
-        }
-        const userData = await response.json();
-        this.user = userData;
-        this.render();
-    } catch (error) {
-        console.error('Error fetching user data:', error);
-        this.innerHTML = `<p>User not found.</p>`;  // Gestion d'erreur
-    }
-}
+info from settings.py is linked to the .env file to avoid hardcoding the values
 
+DEBUG = int(os.environ.get('DEBUG', default=0))
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
+CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
 ## docker:
 
