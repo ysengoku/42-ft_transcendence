@@ -282,6 +282,30 @@ DEBUG = int(os.environ.get('DEBUG', default=0))
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
+
+serving static and media files from the back end:
+- in settings.py, I specify the path to the static and media files, from the local location.
+from static files to static
+from media to media
+- in docker compose,
+    - I specify the volumes "named volumes" to store the static and media files
+      - "static_volume":/app/static
+      - "media_volume":/app/media
+    - I specify where to put these static and media files in the nginx container
+    - I specify them in volumes to say that they are shared between the containers
+- in nginx.conf, I specify the location of the static and media files
+        location /static/ {
+            alias /usr/share/nginx/html/app/static/;
+        }
+
+#/media/ pointe vers /app/media/ dans le conteneur, qui est lié au dossier ./back/media via le volume.
+        location /media/ {
+            alias /usr/share/nginx/html/app/media/;
+        }
+
+this allows to acces to the media files from the url:
+http://localhost:1026/media/avatars/avatar.jpg
+
 ## docker:
 
 Service	Port Docker	Port Exposé	Rôle

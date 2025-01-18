@@ -14,7 +14,7 @@ check-env:
 	fi
 
 # Build all Docker images
-build: check-env
+build: check-env $(VOLUME_PATH) $(DATABASE_VOLUME_PATH) $(MEDIA_VOLUME_PATH) $(STATIC_VOLUME_PATH)
 	docker-compose -f $(DOCKER_COMPOSE) build
 
 up: check-env
@@ -40,3 +40,15 @@ bash-backend:
 # Open a bash shell inside the frontend container
 bash-frontend:
 	docker-compose exec $(FRONTEND_SERVICE) bash
+
+$(VOLUME_PATH):
+	mkdir -p $(VOLUME_PATH)
+
+$(DATABASE_VOLUME_PATH):
+	mkdir -p $(DATABASE_VOLUME_PATH)
+
+$(MEDIA_VOLUME_PATH):
+	mkdir -p $(MEDIA_VOLUME_PATH)
+
+$(STATIC_VOLUME_PATH):
+	mkdir -p $(STATIC_VOLUME_PATH)
