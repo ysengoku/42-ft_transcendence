@@ -82,23 +82,11 @@ Exception Location:/usr/local/lib/python3.10/site-packages/psycopg/cursor.py, li
 
 Server time:Fri, 17 Jan 2025 11:37:28 +0000
 
-## Docker ##
 
 ## docker-compose ##
 
 we enter the args if we want to pass arguments to the dockerfile. if they are not defined in the dockerfile and not used at build time, they are not useful. if arguments are defined and congifured at runtime (in environment), we dont need to specify the args at the build phase.
 
-commandes:
-
-docker volume rm $(docker volume ls -q) = remove all the volumes
-docker system prune -a = remove all the images, containers, networks and volumes
-docker rmi $(docker images -q) = remove all the images
-
-docker exec -it backend python manage.py makemigration = faire les migrations a partir du docker
-
-good practice: 
-
-- error  ! nginx Warning pull access denied for trans_server, repository does not exist =>  use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.
 
 ## HTTPS Protocol:
 
@@ -338,3 +326,43 @@ Dans une architecture sécurisée :
 Seul le port 80/443 de Nginx devrait être exposé
 Tous les autres services devraient communiquer uniquement via le réseau Docker interne
 Les connexions externes passent obligatoirement par Nginx qui agit comme point d'entrée unique et sécurisé
+
+
+2 categories of docker:
+- stateful: database mysql
+- stateless: https protocol: same actions are realized
+
+docker images -a  = see all images present on the machine
+docker ps = check if containers are active
+docker pull = have the latest official image
+docker system prune = clean all including images, caches, network, containers
+--detach (-d) = the service is not attached to the container and so
+ other containers can be launched 
+docker volume rm $(docker volume ls -q) = remove all the volumes
+docker system prune -a = remove all the images, containers, networks and volumes
+docker rmi $(docker images -q) = remove all the images
+
+docker run -d openclassrooms/star_wars tail -f /dev/null = maintient le conteneur en veille
+ sans se terminer 
+
+ -----------------------------------------------
+
+ docker-compose up -d = demarrer lensemble des conteneurs. -d pour les faire tourner en tache de front_dist_volume
+ docker-compose ps => affiche le retour ADD CONTENT
+ docker-compose stop
+ docker-compose down
+
+ docker-compose config => permet de valider la syntaxe du fichier
+
+COPY ./requirements.txt /app/requirements.txt =>
+
+À gauche (./requirements.txt) :fichier local que vous souhaitez copier. Le ./ indique qu'il se trouve dans le répertoire courant où le Dockerfile est situé.
+
+À droite (/app/requirements.txt) : l emplacement où vous voulez que le fichier soit copié dans l'image Docker.
+
+
+docker exec -it backend python manage.py makemigration = faire les migrations a partir du docker
+
+good practice: 
+
+- error  ! nginx Warning pull access denied for trans_server, repository does not exist =>  use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.

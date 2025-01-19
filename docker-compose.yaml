@@ -24,7 +24,8 @@ services:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
     command: >
-      sh -c "wait-for-it database:5432 -- python manage.py migrate &&
+      sh -c " python manage.py makemigrations &&
+            python manage.py migrate &&
             python manage.py collectstatic --noinput &&
             python manage.py createsuperuser --noinput || echo 'Superuser creation skipped' &&
             python manage.py runserver 0.0.0.0:8000"
@@ -77,8 +78,8 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./front:/usr/share/nginx/html # Dossier contenant les fichiers statiques de l'application
-      - media_volume:/usr/share/nginx/html/app/media # Dossier contenant les fichiers médias de l'application
-      - static_volume:/usr/share/nginx/html/app/static # Dossier contenant les fichiers statiques de l'application
+      - media_volume:/usr/share/nginx/html/media # Dossier contenant les fichiers médias de l'application
+      - static_volume:/usr/share/nginx/html/static # Dossier contenant les fichiers statiques de l'application
       - db_volume:/usr/share/nginx/html/db_volume # Dossier contenant les fichiers de la base de données
     ports:
       - "1026:1026"
@@ -94,22 +95,10 @@ services:
 volumes:
   db_volume:
     driver: local
-    driver_opts:
-      type: none
-      device: ./volumes/db_volume
-      o: bind
   static_volume:
     driver: local
-    driver_opts:
-      type: none
-      device: ./volumes/static_volume
-      o: bind
   media_volume:
     driver: local
-    driver_opts:
-      type: none
-      device: ./volumes/media_volume
-      o: bind
   
 networks:
   transcendance_network:
