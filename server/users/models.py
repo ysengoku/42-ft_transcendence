@@ -1,7 +1,7 @@
-from django.db import models
+from django.db import models, connection
 from django.contrib.auth.models import AbstractUser
-from django.templatetags.static import static
-from django.db.models import F, When, Case, Sum, Count
+from django.db.models import F, When, Case, Sum, Count, Value, IntegerField, Q
+from .stats_calc import calculate_winrate, calculate_elo_change
 
 
 class User(AbstractUser):
@@ -14,14 +14,14 @@ class Profile(models.Model):
         upload_to="avatars/", null=True, blank=True
     )
     elo = models.IntegerField(default=1000)
-    friends = models.ManyToManyField(User, related_name='friends', blank=True)
+    friends = models.ManyToManyField('self')
     is_online = models.BooleanField(default=True)
 
     @property
     def avatar(self):
         if self.profile_picture:
             return self.profile_picture.url
-        return static("images/default.svg")
+        return "/media/avatars/default_avatar.png"
 
     @property
     def matches(self):
@@ -37,15 +37,15 @@ class Profile(models.Model):
 
     @property
     def winrate(self):
-        return self.calculate_winrate(self.wins, self.loses)
+        return calculate_winrate(self.wins, self.loses)
 
     @property
     def scored_balls(self):
-        scored_when_lost = self.lost_matches.aggregate(
-                scored_when_lost=Sum('loser_score'))['scored_when_lost'] or 0
-        scored_when_won = self.won_matches.aggregate(
-                scored_when_won=Sum('winner_score'))['scored_when_won'] or 0
-        scored_balls = scored_when_won + scored_when_lost
+        scored_balls_stats = self.matches.aggregate(
+            lscore=Sum('losers_score', filter=Q(loser=self)),
+            wscore=Sum('winners_score', filter=Q(winner=self)),
+        )
+        scored_balls = (scored_balls_stats["lscore"] or 0) + (scored_balls_stats["wscore"] or 0)
         return scored_balls
 
     @property
@@ -70,50 +70,75 @@ class Profile(models.Model):
         res = Profile.objects.get(id=worst_enemy["winner"])
         return res
 
-    def calculate_winrate(self, wins: int, loses: int):
-        total = wins + loses
-        if total == 0:
-            return None
-        return wins / (total) * 100
-
     def get_stats_against_player(self, profile):
-        wins = self.won_matches.filter(loser=profile).count()
-        loses = self.lost_matches.filter(winner=profile).count()
+        res = self.matches.aggregate(
+            wins=Count("pk", filter=Q(winner=self) & Q(loser=profile)),
+            loses=Count("pk", filter=Q(winner=profile) & Q(loser=self))
+        )
         return {
             'username': profile.user.username,
             'avatar': profile.avatar,
             'elo': profile.elo,
-            'wins': wins,
-            'loses': loses,
-            'winrate': self.calculate_winrate(wins, loses),
+            'wins': res["wins"],
+            'loses': res["loses"],
+            'winrate': calculate_winrate(res["wins"], res["loses"]),
         }
 
-    def get_elo_data_points(self):
-        elo_data_points = self.matches.annotate(
+    def annotate_elo_data_points(self):
+        return self.matches.annotate(
             elo_change_signed=Case(
                 When(winner=self, then=F('elo_change')),
-                When(loser=self, then=-F('elo_change')),
+                When(loser=self, then=-F('elo_change'))
             ),
             elo_result=Case(
                 When(winner=self, then=F('winners_elo')),
-                When(loser=self, then=F('losers_elo')),
+                When(loser=self, then=F('losers_elo'))
             ),
-        ).values('date', 'elo_change_signed', 'elo_result')
-        return elo_data_points
+        )
 
     def __str__(self):
         return self.user.username
 
 
+class MatchManager(models.Manager):
+    MINUMUM_ELO = 100
+    K_FACTOR = 32
+    WIN = 1
+    DRAW = 0.5
+    LOSS = 0
+
+    def resolve(self, winner: Profile, loser: Profile, winners_score: int, losers_score: int):
+        """
+        Resolves all elo calculations, updates profiles of players,
+        creates a new match record and saves everything into the database.
+        """
+        elo_change = calculate_elo_change(winner.elo, loser.elo, MatchManager.WIN, MatchManager.K_FACTOR)
+        if (loser.elo - elo_change) < MatchManager.MINUMUM_ELO:
+            elo_change = loser.elo - MatchManager.MINUMUM_ELO
+        winner.elo += elo_change
+        loser.elo -= elo_change
+        resolved_match = Match(
+            winner=winner, loser=loser, winners_score=winners_score, losers_score=losers_score, elo_change=elo_change, winners_elo=winner.elo, losers_elo=loser.elo)
+        resolved_match.save()
+        winner.save()
+        loser.save()
+        return resolved_match
+
+
 class Match(models.Model):
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True)
     loser = models.ForeignKey(Profile, related_name="lost_matches", on_delete=models.SET_NULL, null=True)
-    winner_score = models.IntegerField()
-    loser_score = models.IntegerField()
+    winners_score = models.IntegerField()
+    losers_score = models.IntegerField()
     elo_change = models.IntegerField()
     winners_elo = models.IntegerField(default=1000)
     losers_elo = models.IntegerField(default=1000)
     date = models.DateTimeField(auto_now_add=True)
 
+    objects = MatchManager()
+
     def __str__(self):
         return f'{self.winner.user.username} - {self.loser.user.username}'
+
+    class Meta:
+        verbose_name_plural = "matches"

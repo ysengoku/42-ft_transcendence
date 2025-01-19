@@ -19,7 +19,7 @@ class ProfileMinimalSchema(Schema):
     is_online: bool
 
 
-class OpponentProfileAndStatsSchema(TypedDict):
+class OpponentProfileAndStatsSchema(Schema):
     """
     Stats of the current user against some other player and the minimal representation of the player.
     Wins, loses and winrate are against this specific player.
@@ -29,7 +29,7 @@ class OpponentProfileAndStatsSchema(TypedDict):
     elo: int
     wins: int
     loses: int
-    winrate: int | None
+    winrate: int
 
 
 class EloDataPointSchema(Schema):
@@ -45,7 +45,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
     """
     Represents all the data for the full user's profile page.
     """
-    date_joined: datetime
+    date_joined: datetime = Field(alias="user.date_joined")
     wins: int
     loses: int
     winrate: int | None = Field(description="null if the player didn't play any games yet.")
@@ -53,7 +53,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
     best_enemy: OpponentProfileAndStatsSchema | None = Field(description="Player who lost the most against current user.")
     scored_balls: int = Field(description="How many balls player scored overall.")
     elo_history: List[EloDataPointSchema] = Field(description="List of data points for elo changes of the last 10 games.")
-    friends: List[ProfileMinimalSchema]
+    friends: List[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -71,7 +71,11 @@ class ProfileFullSchema(ProfileMinimalSchema):
 
     @staticmethod
     def resolve_elo_history(obj: Profile):
-        return obj.get_elo_data_points()[:10]
+        return obj.annotate_elo_data_points()[:10]
+
+    @staticmethod
+    def resolve_friends(obj: Profile):
+        return obj.friends.all()[:10]
 
 
 class SignUpSchema(Schema):
