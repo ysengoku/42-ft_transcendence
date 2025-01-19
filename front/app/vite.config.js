@@ -1,17 +1,33 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  root: './app', // Set the root folder for Vite
+  base: './', // Ensures relative paths in the built index.html
   server: {
-    port: 5173,   // Change the port to 5173
-    open: false,  // Disable automatic opening of the browser
-    host: '0.0.0.0',   // Expose the server to the network
-    strictPort: true,  // Ensure the server fails if the port is already in use
+    port: 5173,
+    open: false,
+    host: '0.0.0.0',
+    strictPort: true,
     watch: {
-      usePolling: true, // Use polling to watch for file changes
+      usePolling: true,
     },
   },
   build: {
-    outDir: '../dist', // Output directory after build
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: './index.html',
+      },
+      output: {
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash][extname]'
+      }
+    }
   },
+  resolve: {
+    alias: {
+      '@': '/js',  // This allows you to import from '@/components' etc.
+    }
+  }
 });
