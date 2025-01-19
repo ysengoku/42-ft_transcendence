@@ -91,7 +91,7 @@ services:
     networks:
       - transcendance_network
 
-# shared volumes ?? 
+# shared volumes
 volumes:
   db_volume:
     driver: local
