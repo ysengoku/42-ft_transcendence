@@ -7,13 +7,13 @@ from .schemas import UserAvatarSchema, UserResponse
 
 api = NinjaAPI()
 
-@api.post("/upload-avatar/", Response=UserResponse)
+@api.post("/upload-avatar/", response=UserResponse)
 def upload_avatar(
     request, 
     avatar_new_image: UploadedFile = File(...)
 ):
-    # if not request.user.is_authenticated:
-    #     return Response({"error": "Authentication required"}, status=401)
+    if not request.user.is_authenticated:
+        return Response({"error": "Authentication required"}, status=401)
     
     try:
         # Si un avatar existe déjà (autre que celui par défaut), on le supprime
