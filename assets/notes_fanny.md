@@ -94,8 +94,8 @@ docker volume rm $(docker volume ls -q) = remove all the volumes
 docker system prune -a = remove all the images, containers, networks and volumes
 docker rmi $(docker images -q) = remove all the images
 
-docker exec -it backend python manage.py makemigration = faire les migrations a partir du docker
-
+docker exec -it backend python manage.py makemigrations = faire les migrations a partir du docker
+docker exec -it backend python manage.py migrate 
 good practice: 
 
 - error  ! nginx Warning pull access denied for trans_server, repository does not exist =>  use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.
@@ -295,12 +295,12 @@ from media to media
     - I specify them in volumes to say that they are shared between the containers
 - in nginx.conf, I specify the location of the static and media files
         location /static/ {
-            alias /usr/share/nginx/html/app/static/;
+            alias /app/static/;
         }
 
 #/media/ pointe vers /app/media/ dans le conteneur, qui est lié au dossier ./back/media via le volume.
         location /media/ {
-            alias /usr/share/nginx/html/app/media/;
+            alias /app/media/;
         }
 
 this allows to acces to the media files from the url:
