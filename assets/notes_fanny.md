@@ -366,3 +366,7 @@ docker exec -it backend python manage.py makemigration = faire les migrations a 
 good practice: 
 
 - error  ! nginx Warning pull access denied for trans_server, repository does not exist =>  use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.
+
+upload a file from the frontend to the backend with django ninja and javascript:
+1. your frontend is sending a multipart/form-data request: To upload a file, you need to use multipart/form-data encoding. Ensure your fetch request is sending the file properly in the formData object:
+
