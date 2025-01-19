@@ -52,7 +52,7 @@ export class Setting extends HTMLElement {
 	render() {
 		this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
-			<h1>This is Setting page</h1>
+			<h1>This is Setting</h1>
 			<p>Name: ${this.user.name}</p>
 			<p>ID: ${this.user.userid}</p>
 

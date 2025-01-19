@@ -7,6 +7,7 @@ services:
     volumes:
       - ./front/app:/app  # Monte le dossier front/app de l'hôte dans /app du conteneur
       - /app/node_modules   # Volume pour node_modules (cela permet de ne pas écraser le dossier node_modules)
+      - ./front/app/dist:/app/dist
     ports:
       - "5173:5173"
     expose:
@@ -24,10 +25,12 @@ services:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
     command: >
-      sh -c "wait-for-it database:5432 -- python manage.py migrate &&
+      sh -c "wait-for-it database:5432 -- python manage.py makemigrations &&
+            python manage.py migrate &&
             python manage.py collectstatic --noinput &&
             python manage.py createsuperuser --noinput || echo 'Superuser creation skipped' &&
             python manage.py runserver 0.0.0.0:8000"
+
     ports:
       - "8000:8000"
     expose:
@@ -75,11 +78,10 @@ services:
     build:
       context: ./nginx
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./front:/usr/share/nginx/html # Dossier contenant les fichiers statiques de l'application
-      - media_volume:/usr/share/nginx/html/app/media # Dossier contenant les fichiers médias de l'application
-      - static_volume:/usr/share/nginx/html/app/static # Dossier contenant les fichiers statiques de l'application
-      - db_volume:/usr/share/nginx/html/db_volume # Dossier contenant les fichiers de la base de données
+      - ./front/app/dist:/app/dist
+      - media_volume:/app/media # Dossier contenant les fichiers médias de l'application
+      - static_volume:/app/static # Dossier contenant les fichiers statiques de l'application
+      - db_volume:/var/lib/postgresql/data # Dossier contenant les fichiers de la base de données
     ports:
       - "1026:1026"
     expose:
@@ -90,7 +92,7 @@ services:
     networks:
       - transcendance_network
 
-# shared volumes ?? 
+# shared volumes for all services, and between host and containers
 volumes:
   db_volume:
     driver: local

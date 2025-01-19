@@ -1,20 +1,20 @@
-# Utilisation de l'image officielle Node.js
 FROM node:18-alpine
 
-# Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
-# Copier le package.json et le package-lock.json (si il existe)
-COPY ./app/package.json ./
+# Copy package files
+COPY ./app/package*.json ./
 
-# Installer les dépendances
+# Install dependencies
 RUN npm install
 
-# Copier tout le reste de l'application dans le conteneur
-COPY ./app /app
+# Copy the rest of the application
+COPY ./app ./app
 
-# Exposer le port de l'application front-end (port  par défaut pour un projet Vite)
+# Build the application first
+RUN npm run build
+
 EXPOSE 5173
 
-# Lancer l'application en mode développement
-CMD ["npm", "run", "dev"]
+# Use a shell form to run both the build and dev server
+CMD npm run build && npm run dev -- --host 0.0.0.0
