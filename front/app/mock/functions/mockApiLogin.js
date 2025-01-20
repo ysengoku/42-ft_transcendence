@@ -9,7 +9,7 @@ export async function simulateApiLogin(credentials) {
 					success: true,
 					user: {
 						username: 'JohnDoe',
-						avatar: '/assets/img/avatars/sample_avatar.jpg'
+						avatar: '/mock/img/avatars/sample_avatar.jpg'
 					},
 				});
 			} else {

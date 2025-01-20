@@ -7,18 +7,12 @@ ft_transcendence
 │   ├── app/
 │   │   ├── index.html          # Single entry point for the SPA
 │   │   │
-│   │   ├── assets/
-│   │   │   ├── img/         
-│   │   │   │   ├── header.css
-│   │   │   │   ├── footer.css
-│   │   │   │   └── ...
-│   │   │   │   
-│   │   │   └── static/  
-│   │   │       └── img         # Static images (logos, icons, etc.)
-│   │   │           ├── logo
-│   │   │           ├── default_avatar
-│   │   │           ├── favicon.ico
-│   │   │           └── ...
+│   │   ├── assets/             # Static images (logos, icons, etc.)
+│   │   │   └── img/        
+│   │   │       ├── logo
+│   │   │       ├── anonymous_avatar.svg
+│   │   │       ├── favicon.ico
+│   │   │       └── ...
 │   │   │
 │   │   ├── css/
 │   │   │   ├── style.css       # Main stylesheet
@@ -57,7 +51,18 @@ ft_transcendence
 │   │   │       └── ...
 │   │   │
 │   │   │── package.json
-│   │   └── vite.config.js
+│   │   │── vite.config.js
+│   │   │
+│   │   └── mock/
+│   │       ├── img/         
+│   │       |   ├── sample_avatar1.jpg
+│   │       |   ├── sample_avatar1.jpg
+│   │       |   └── ...
+│   │      	└── js/
+│   │           ├── mockApiLogin.js
+│   │           ├── simulateFetchFriendsList.js
+│   │           ├── simulateFetchUserData.js
+│   │           └── ...
 │   │
 │   ├── docker/
 │   │   ├── Dockerfile
