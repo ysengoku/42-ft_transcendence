@@ -1,110 +1,81 @@
-from django.db.models import F, Q, Sum, Count, When, Case
-from ninja import ModelSchema, Schema
+from ninja import Schema, Field
 from datetime import datetime
-from .models import User, Profile, Match
 from typing import List
+from typing_extensions import TypedDict
+from .models import Profile
 
 
 class ErrorSchema(Schema):
     message: str
 
 
-class ProfilePreviewSchema(ModelSchema):
+class ProfileMinimalSchema(Schema):
     """
-    Schema for displaying brief preview of the user profile for displaying in
-    context where it needs to be short (like match history).
+    Represents the bare minimum information about the user for preview in searches, friend lists etc.
+    """
+    username: str = Field(alias="user.username")
+    avatar: str
+    elo: int
+    is_online: bool
+
+
+class OpponentProfileAndStatsSchema(Schema):
+    """
+    Stats of the current user against some other player and the minimal representation of the player.
+    Wins, loses and winrate are against this specific player.
     """
     username: str
     avatar: str
-
-    class Meta:
-        model = Profile
-        fields = ['elo']
-
-    @staticmethod
-    def resolve_username(obj):
-        return obj.user.username
-
-    @staticmethod
-    def resolve_avatar(obj):
-        return obj.avatar
+    elo: int
+    wins: int
+    loses: int
+    winrate: int
 
 
 class EloDataPointSchema(Schema):
+    """
+    Represents a single point on the graph of the user's elo history.
+    """
     date: datetime
-    elo_change_signed: int
-    elo_result: int
+    elo_change_signed: int = Field(description="How much elo user gained or lost from this match.")
+    elo_result: int = Field(description="Resulting elo after elo gain or loss from this match.")
 
 
-class ProfileFullSchema(ModelSchema):
+class ProfileFullSchema(ProfileMinimalSchema):
     """
-    Schema for displaying all the data for the user profile page.
+    Represents all the data for the full user's profile page.
     """
-    username: str
-    avatar: str
-    date_joined: datetime
-    winrate: int
-    worst_enemy: ProfilePreviewSchema | None = None
-    best_enemy: ProfilePreviewSchema | None = None
-    scored_balls: int
-    elo_history: List[EloDataPointSchema]
-
-    class Meta:
-        model = Profile
-        fields = ['is_online', 'elo', 'friends']
-
-    @staticmethod
-    def resolve_username(obj: Profile):
-        return obj.user.username
-
-    @staticmethod
-    def resolve_avatar(obj: Profile):
-        return obj.avatar
-
-    @staticmethod
-    def resolve_date_joined(obj: Profile):
-        return obj.user.date_joined
-
-    @staticmethod
-    def resolve_winrate(obj: Profile):
-        wins = obj.won_matches.count()
-        loses = obj.lost_matches.count()
-        if loses == 0:
-            return 100
-        return wins / (wins + loses) * 100
+    date_joined: datetime = Field(alias="user.date_joined")
+    wins: int
+    loses: int
+    winrate: int | None = Field(description="null if the player didn't play any games yet.")
+    worst_enemy: OpponentProfileAndStatsSchema | None = Field(description="Player who won the most against current user.")
+    best_enemy: OpponentProfileAndStatsSchema | None = Field(description="Player who lost the most against current user.")
+    scored_balls: int = Field(description="How many balls player scored overall.")
+    elo_history: List[EloDataPointSchema] = Field(description="List of data points for elo changes of the last 10 games.")
+    friends: List[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
-        if obj.matches.count() == 0:
+        worst_enemy: Profile = obj.worst_enemy
+        if not worst_enemy:
             return None
-        worst_enemy = obj.lost_matches.values('winner') \
-            .annotate(losses=Count('winner')) \
-            .order_by('-losses') \
-            .first()
-        if worst_enemy:
-            res = Profile.objects.get(user__id=worst_enemy["winner"])
-        print(res)
-        print(worst_enemy)
-        return res
+        return obj.get_stats_against_player(worst_enemy)
 
     @staticmethod
     def resolve_best_enemy(obj: Profile):
-        if obj.matches.count() == 0:
+        best_enemy: Profile = obj.best_enemy
+        if not best_enemy:
             return None
-        return None
-
-    @staticmethod
-    def resolve_scored_balls(obj: Profile):
-        scored_when_lost = obj.lost_matches.aggregate(
-            scored_when_lost=Sum('loser_score'))['scored_when_lost'] or 0
-        scored_when_won = obj.won_matches.aggregate(
-            scored_when_won=Sum('winner_score'))['scored_when_won'] or 0
-        scored_balls = scored_when_won + scored_when_lost
-        return scored_balls
+        return obj.get_stats_against_player(best_enemy)
 
     @staticmethod
     def resolve_elo_history(obj: Profile):
-        return obj.get_elo_data_points()
+        return obj.annotate_elo_data_points()[:10]
+
+    @staticmethod
+    def resolve_friends(obj: Profile):
+        return obj.friends.all()[:10]
 
 
 class SignUpSchema(Schema):
