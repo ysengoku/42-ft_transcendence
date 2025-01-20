@@ -2,12 +2,12 @@
 DOCKER_COMPOSE = docker-compose.yaml
 
 # Define the name of the services (for convenience)
-FRONTEND_SERVICE = front
-BACKEND_SERVICE = back
-DATABASE_SERVICE = db
+FRONTEND_SERVICE = frontend
+BACKEND_SERVICE = backend
+DATABASE_SERVICE = database
 
 # Définit le mode par défaut (prod)
-NODE_ENV ?= production
+NODE_ENV ?= development
 
 # Ensure that the .env file exists before running docker-compose
 check-env:
@@ -43,7 +43,15 @@ down:
 restart: down up
 
 logs:
-	docker-compose -f $(DOCKER_COMPOSE) logs -f
+	@echo "Logs du conteneur $(FRONTEND_SERVICE):"
+	@docker logs $(FRONTEND_SERVICE)
+	@echo "--------------------"
+	@echo "Logs du conteneur $(BACKEND_SERVICE):"
+	@docker logs $(BACKEND_SERVICE)
+	@echo "--------------------"
+	@echo "Logs du conteneur $(DATABASE_SERVICE):"
+	@docker logs $(DATABASE_SERVICE)
+
 
 
 # Rebuild the containers (useful when dependencies or code change)
@@ -56,11 +64,11 @@ migrate:
 
 # Open a bash shell inside the backend container
 bash-backend:
-	docker-compose exec $(BACKEND_SERVICE) bash
+	docker-compose exec -it $(BACKEND_SERVICE) bash
 
 # Open a bash shell inside the frontend container
 bash-frontend:
-	docker-compose exec $(FRONTEND_SERVICE) bash
+	docker-compose exec -it $(FRONTEND_SERVICE) bash
 
 $(VOLUME_PATH):
 	mkdir -p $(VOLUME_PATH)
