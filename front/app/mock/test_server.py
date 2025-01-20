@@ -4,7 +4,7 @@ import os
 class SPAHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if not os.path.exists(self.path[1:]):
-            self.path = '/index.html'
+            self.path = '../index.html'
         return super().do_GET()
 
 def run(server_class=HTTPServer, handler_class=SPAHandler):
