@@ -6,6 +6,9 @@ FRONTEND_SERVICE = front
 BACKEND_SERVICE = back
 DATABASE_SERVICE = db
 
+# Définit le mode par défaut (prod)
+NODE_ENV ?= production
+
 # Ensure that the .env file exists before running docker-compose
 check-env:
 	@if [ ! -f .env ]; then \
@@ -15,14 +18,32 @@ check-env:
 
 # Build all Docker images
 build: check-env $(VOLUME_PATH) $(DATABASE_VOLUME_PATH) $(MEDIA_VOLUME_PATH) $(STATIC_VOLUME_PATH)
-	docker-compose -f $(DOCKER_COMPOSE) build
+	NODE_ENV=$(NODE_ENV) docker-compose -f $(DOCKER_COMPOSE) build
 
 up: check-env
-	docker-compose -f $(DOCKER_COMPOSE) up -d
+	NODE_ENV=$(NODE_ENV) docker-compose -f $(DOCKER_COMPOSE) up -d --build
+
+# Start containers in development mode with logs
+dev: export NODE_ENV=development
+dev: check-env
+	$(MAKE) down
+	NODE_ENV=development docker-compose -f $(DOCKER_COMPOSE) up --build
+
+# Start containers in production mode
+prod: export NODE_ENV=production
+prod: check-env
+	$(MAKE) down
+	$(MAKE) up
 
 # Stop all containers
 down:
 	docker-compose -f $(DOCKER_COMPOSE) down
+
+# Restart containers
+restart: down up
+
+logs:
+	docker-compose -f $(DOCKER_COMPOSE) logs -f
 
 
 # Rebuild the containers (useful when dependencies or code change)

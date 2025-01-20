@@ -2,12 +2,12 @@ services:
   front:
     container_name: frontend
     build:
-      context: ./front  # Contexte de la construction (répertoire contenant le Dockerfile de front)
-      dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
+      context: ./front
+      dockerfile: Dockerfile
+      target: ${NODE_ENV:-development}  # Utilise le stage 'dev' par défaut, ou 'build' en prod
     volumes:
-      - ./front/app:/app  # Monte le dossier front/app de l'hôte dans /app du conteneur
-      - /app/node_modules   # Volume pour node_modules (cela permet de ne pas écraser le dossier node_modules)
-      # - ./front/app/dist:/app/dist
+      - ./front/app:/app
+      - /app/node_modules
     ports:
       - "5173:5173"
     expose:
@@ -18,6 +18,8 @@ services:
       - back
     networks:
       - transcendance_network
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
 
   back:
     container_name: backend
