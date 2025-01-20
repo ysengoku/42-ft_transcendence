@@ -21,7 +21,7 @@ class Profile(models.Model):
     def avatar(self):
         if self.profile_picture:
             return self.profile_picture.url
-        return "/media/avatars/default_avatar.png"
+        return "/static/images/default_avatar.png"
 
     @property
     def matches(self):
@@ -142,3 +142,4 @@ class Match(models.Model):
 
     class Meta:
         verbose_name_plural = "matches"
+        ordering = ["-date"]
