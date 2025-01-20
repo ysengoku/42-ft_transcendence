@@ -28,7 +28,7 @@ export class Home extends HTMLElement {
 				<a class="btn btn-primary btn-lg" href="/tournament-menu" role="button">Tournament</a>
 				<div class="btn-group d-flex justify-content-center grid gap-4">
 					<a class="btn btn-outline-primary" href="/profile/${this.user.username}" role="button">Profile</a>
-					<a class="btn btn-outline-primary" href="/setting/${this.user.username}" role="button">Setting</a>
+					<a class="btn btn-outline-primary" href="/settings/${this.user.username}" role="button">Setting</a>
 				</div>
 			</div>
 		</div>
