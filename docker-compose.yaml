@@ -96,25 +96,25 @@ services:
 volumes:
   db_volume:
     name: db_volume
-    driver: local
-    driver_opts:
-      type: none
-      device: ./volumes/db_volume
-      o: bind
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: ./volumes/db_volume
+    #   o: bind
   static_volume:
     name: static_volume
-    driver: local
-    driver_opts:
-      type: none
-      device: ./volumes/static_volume
-      o: bind
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     device: ./volumes/static_volume
+  #     o: bind
   media_volume:
     name: media_volume
-    driver: local
-    driver_opts:
-      type: none
-      device: ./volumes/media_volume
-      o: bind
+    # driver: local
+    # driver_opts:
+    #   type: none
+    #   device: ./volumes/media_volume
+    #   o: bind
   
 networks:
   transcendance_network:
