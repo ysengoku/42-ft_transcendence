@@ -28,7 +28,7 @@ export class Setting extends HTMLElement {
 		const file = fileInput.files[0];
 
 		if (file) {
-			formData.append('avatar', file);
+			formData.append('avatar_new_image', file);
 
 			try {
 				// Remplacer ceci par une requête pour votre API backend
