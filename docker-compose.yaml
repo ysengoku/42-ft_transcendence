@@ -8,6 +8,7 @@ services:
       - ./front/app:/app  # Monte le dossier front/app de l'hôte dans /app du conteneur
       - /app/node_modules   # Volume pour node_modules (cela permet de ne pas écraser le dossier node_modules)
       - ./front/app/dist:/app/dist
+      - static_front_volume:/app/static
     ports:
       - "5173:5173"
     expose:
@@ -47,7 +48,7 @@ services:
       - database
     volumes:
       - ./back:/app
-      - static_volume:/app/static
+      - static_back_volume:/app/staticfiles
       - media_volume:/app/media
     networks:
       - transcendance_network
@@ -80,7 +81,8 @@ services:
     volumes:
       - ./front/app/dist:/app/dist
       - media_volume:/app/media # Dossier contenant les fichiers médias de l'application
-      - static_volume:/app/static # Dossier contenant les fichiers statiques de l'application
+      - static_back_volume:/app/static/back # Dossier contenant les fichiers statiques de l'application
+      - static_front_volume:/app/static/front  # Fichiers statiques du front
       - db_volume:/var/lib/postgresql/data # Dossier contenant les fichiers de la base de données
     ports:
       - "1026:1026"
@@ -92,29 +94,19 @@ services:
     networks:
       - transcendance_network
 
-# shared volumes for all services, and between host and containers
+# shared volumes for all services, and between host and containers. better to mount volumes without bind: docker managed the persistence
 volumes:
   db_volume:
     name: db_volume
-    # driver: local
-    # driver_opts:
-    #   type: none
-    #   device: ./volumes/db_volume
-    #   o: bind
-  static_volume:
-    name: static_volume
-  #   driver: local
-  #   driver_opts:
-  #     type: none
-  #     device: ./volumes/static_volume
-  #     o: bind
+
+  static_back_volume:
+    name: static_back_volume
+
+  static_front_volume:
+    name: static_front_volume
+
   media_volume:
     name: media_volume
-    # driver: local
-    # driver_opts:
-    #   type: none
-    #   device: ./volumes/media_volume
-    #   o: bind
   
 networks:
   transcendance_network:
