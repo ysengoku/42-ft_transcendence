@@ -36,6 +36,18 @@ html, body {
     object-fit: cover;
 }
 
+.profile-status-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: gray;
+}
+
+.profile-status-indicator.online {
+    background-color: green;
+}
+
+
 /* ----- Modals ------------------------------------------------------------- */
 
 .friends-modal .modal-dialog {

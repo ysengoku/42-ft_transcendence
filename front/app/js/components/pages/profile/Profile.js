@@ -1,6 +1,7 @@
-import { simulateFetchUserData } from '../../../../mock/functions/simulateFetchUserData.js'
-// import { apiRequest } from '../../api/apiRequest.js'
-// import { API_ENDPOINTS } from '../../api/endpoints.js';
+// import { simulateFetchUserData } from '../../../../mock/functions/simulateFetchUserData.js'
+import './components/index.js';
+import { apiRequest } from '../../../api/apiRequest.js';
+import { API_ENDPOINTS } from '../../../api/endpoints.js';
 
 export class UserProfile extends HTMLElement {
 	constructor() {
@@ -13,29 +14,30 @@ export class UserProfile extends HTMLElement {
 		this.fetchUserData(username);
 	}
 
-	// Simulation with mock data
-	async fetchUserData(username) {
-    	try {
-      		const userData = await simulateFetchUserData(username);
-      		this.user = userData;
-      		this.render();
-    	} catch (error) {
-      		console.error('Error fetching user data:', error);
-			// Show "User not exists Page"?
-    	}
-  	}
-
+	// // Simulation with mock data
 	// async fetchUserData(username) {
     // 	try {
-	// 		const response = await apiRequest('GET', API_ENDPOINTS.GET_USER_DATA(username));
-	// 		const userData = await response.json();
-	// 		this.user = userData;
-	// 		this.render();
-	// 	} catch (error) {
-	// 		console.error('Error', error);
-	// 		// Error handling
-	// 	}
-	// }
+    //   		const userData = await simulateFetchUserData(username);
+    //   		this.user = userData;
+    //   		this.render();
+    // 	} catch (error) {
+    //   		console.error('Error fetching user data:', error);
+	// 		// Show "User not exists Page"?
+    // 	}
+  	// }
+
+	async fetchUserData(username) {
+    	try {
+			const userData = await apiRequest('GET', API_ENDPOINTS.GET_USER_DATA(username));
+			// const userData = await apiRequest('GET', 'https://run.mocky.io/v3/25d2e1f9-7994-4792-b3e6-478f23855b68');
+
+			this.user = userData;
+			this.render();
+		} catch (error) {
+			console.error('Error', error);
+			// Error handling
+		}
+	}
 
 	render() {	
 		if (!this.user) {
@@ -43,6 +45,16 @@ export class UserProfile extends HTMLElement {
             return;
         }
 		console.log('User data:', this.user);
+
+		const onlineStatus = document.createElement('online-status');
+		onlineStatus.setAttribute('online', this.user.is_online);
+
+		const date = new Date(this.user.date_joined);
+		const formatedDate = new Intl.DateTimeFormat('en-US', {
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric'
+		}).format(date);
 		const friendsCount = this.user.friends.length;
 
 		// Temporary content
@@ -55,10 +67,15 @@ export class UserProfile extends HTMLElement {
 			<h2>This field is to check response to API request</h2>
 			<h3>Basic information:</h3>
 			<p>Username: ${this.user.username}</p>
+
+			<div style="display: inline-block; position: relative;">
+				${onlineStatus.outerHTML}
+			</div>
+
 			<p>Avatar path: ${this.user.avatar}</p>
 			<p>Elo: ${this.user.elo}</p>
-			<p>Online: ${this.user.is_online ? 'Yes' : 'No'}</p>
-			<p>Member since: ${this.user.date_joined}</p>
+
+			<p>Member since: ${formatedDate}</p>
 			<p>Wins: ${this.user.wins}</p>
 			<p>Loses: ${this.user.loses}</p>
 			<p>Win rate: ${this.user.winrate}</p>
