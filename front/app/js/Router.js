@@ -20,6 +20,7 @@ export class Router {
 				return;				
 			}
 			if (isDynamic) {
+				// console.log('param: ', param);
 				this.renderDynamicComponent(componentTag, param);
 			} else {
 				this.renderComponent(componentTag);
@@ -60,6 +61,7 @@ export class Router {
 				return null;
 			}
 		}
+		console.log('param: ', param);
 		return param;
 	}
 

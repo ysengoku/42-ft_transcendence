@@ -7,10 +7,12 @@ ft_transcendence
 │   ├── app/
 │   │   ├── index.html          # Single entry point for the SPA
 │   │   │
-│   │   ├── assets/
-│   │   │   ├── images/         # Static images (logos, icons, etc.)
-│   │   │   ├── fonts/
-│   │   │   └── favicon.ico
+│   │   ├── assets/             # Static images (logos, icons, etc.)
+│   │   │   └── img/        
+│   │   │       ├── logo
+│   │   │       ├── anonymous_avatar.svg
+│   │   │       ├── favicon.ico
+│   │   │       └── ...
 │   │   │
 │   │   ├── css/
 │   │   │   ├── style.css       # Main stylesheet
@@ -25,23 +27,42 @@ ft_transcendence
 │   │   │   │
 │   │   │   ├── components/
 │   │   │   │   ├── navbar/
-│   │   │   │   │   ├── DropdownMenu.js
+│   │   │   │   │   ├── Navbar.js
 │   │   │   │   │   └── ...
 │   │   │   │   │── pages/
 │   │   │   │   │   ├── Landing.js
 │   │   │   │   │   ├── Login.js
 │   │   │   │   │   └── ...
+│   │   │   │   │── modals/
+│   │   │   │   │   ├── chat/
+│   │   │   │   │   └── friends/
 │   │   │   │   │
 │   │   │   │   └── .../
 │   │   │   │       ├── ...
 │   │   │   │       └── ...
 │   │   │   │
-│   │   │   └── api/
+│   │   │   ├── api/
+│   │   │   │   ├── 
+│   │   │   │   ├── 
+│   │   │   │   └── ...
+│   │   │   │
+│   │   │   └── utils/
 │   │   │       ├── ...
 │   │   │       └── ...
 │   │   │
 │   │   │── package.json
-│   │   └── vite.config.js
+│   │   │── vite.config.js
+│   │   │
+│   │   └── mock/
+│   │       ├── img/         
+│   │       |   ├── sample_avatar1.jpg
+│   │       |   ├── sample_avatar1.jpg
+│   │       |   └── ...
+│   │      	└── js/
+│   │           ├── mockApiLogin.js
+│   │           ├── simulateFetchFriendsList.js
+│   │           ├── simulateFetchUserData.js
+│   │           └── ...
 │   │
 │   ├── docker/
 │   │   ├── Dockerfile
