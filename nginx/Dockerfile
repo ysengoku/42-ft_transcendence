@@ -1,6 +1,6 @@
 FROM nginx:alpine
 
-# Install OpenSSL, create SSL directory, and generate certificates
+# Install OpenSSL and generate certificates
 RUN apk add --no-cache openssl && \
     mkdir -p /etc/nginx/ssl && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -10,9 +10,9 @@ RUN apk add --no-cache openssl && \
     && chmod 644 /etc/nginx/ssl/transcendance.crt \
     && chmod 644 /etc/nginx/ssl/transcendance.key
 
-# Copy the custom nginx.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 1026
+# Créer le répertoire pour les fichiers statiques
+RUN mkdir -p /app/dist
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 1026

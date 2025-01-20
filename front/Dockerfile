@@ -1,20 +1,23 @@
-FROM node:18-alpine
+FROM node:18-alpine AS production
 
 WORKDIR /app
 
-# Copy package files
 COPY ./app/package*.json ./
-
-# Install dependencies
 RUN npm install
-
-# Copy the rest of the application
 COPY ./app ./app
 
-# Build the application first
+# Construire les fichiers statiques
 RUN npm run build
+
+# Stage de développement
+FROM node:18-alpine AS development
+
+WORKDIR /app
+
+COPY ./app/package*.json ./
+RUN npm install
+COPY ./app ./app
 
 EXPOSE 5173
 
-# Use a shell form to run both the build and dev server
-CMD npm run build && npm run dev -- --host 0.0.0.0
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
