@@ -1,15 +1,22 @@
-export async function apiRequest(method, endpoint, data=null) {
+export async function apiRequest(method, endpoint, data=null, isFileUpload=false) {
 	const url = `${endpoint}`;
 	const options = {
 		method,
 		headers: {
-			'Content-Type': 'application/json',
+			// 'Content-Type': 'application/json',
+			...(isFileUpload ? {} : { 'Content-Type': 'application/json' }),
 		},
 		credentials: "include",  // Need after JWT integration
 	};
 
 	if (data) {
-		options.body = JSON.stringify(data);
+		if (isFileUpload) {
+			const formData = new FormData();
+			formData.append('file', data);
+			options.body = formData;
+		} else {
+			options.body = JSON.stringify(data);
+		}
 	}
 	console.log('Data before API request:', options);
 

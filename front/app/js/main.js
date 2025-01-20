@@ -13,7 +13,7 @@ router.addRoute('/login', 'login-form');
 router.addRoute('/register', 'register-form');
 router.addRoute('/home', 'user-home', false, true);
 router.addRoute('/profile/:username', 'user-profile', true, true);
-router.addRoute('/setting/:username', 'user-setting', true, true);
+router.addRoute('/settings/:username', 'user-settings', true, true);
 router.addRoute('/dual-menu', 'dual-menu', false, true);
 router.addRoute('/dual/:id', 'dual', true, true);
 router.addRoute('/tournament-menu', 'tournament-menu', false, true);

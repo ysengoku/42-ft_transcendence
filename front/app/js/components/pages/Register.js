@@ -6,7 +6,6 @@ import { API_ENDPOINTS } from '../../api/endpoints.js';
 export class Register extends HTMLElement {
 	constructor() {
 		super();
-		// this.isFormValid = true;
 	}
 
 	connectedCallback() {
@@ -18,14 +17,13 @@ export class Register extends HTMLElement {
 			field.addEventListener('input', () => {
 				field.classList.remove('is-invalid');
 				document.querySelector('#username-feedback').textContent = '';
-				// this.isFormValid = false;
 			} )
 		})
 	}
 
 	render() {
 		this.innerHTML = `
-    		<div class='container d-flex flex-column justify-content-center align-items-center'>
+    		<div class='container-fluid d-flex flex-column justify-content-center align-items-center'>
       			<form class='w-100'>
         			<div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
