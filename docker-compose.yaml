@@ -25,7 +25,7 @@ services:
       context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
     command: >
-      sh -c "wait-for-it database:5432 -- python manage.py makemigrations &&
+      sh -c "python manage.py makemigrations &&
             python manage.py migrate &&
             python manage.py collectstatic --noinput &&
             python manage.py createsuperuser --noinput || echo 'Superuser creation skipped' &&
