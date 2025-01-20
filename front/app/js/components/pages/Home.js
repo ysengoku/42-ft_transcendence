@@ -22,7 +22,7 @@ export class Home extends HTMLElement {
 		this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
 			<h1>Welcome, ${this.user.username}</h1>
-			<p>This is futur Home page ("hub?")</p>
+			<p>This is futur Home  ("hub?")</p>
 			<div class="d-flex flex-column justify-content-center align-items-center grid gap-4 row-gap-4">
 				<a class="btn btn-primary btn-lg" href="/dual-menu" role="button">Dual</a>
 				<a class="btn btn-primary btn-lg" href="/tournament-menu" role="button">Tournament</a>
