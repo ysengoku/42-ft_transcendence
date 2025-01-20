@@ -1,4 +1,4 @@
-import { simulateFetchFriendsList } from '../../../mock/simulateFetchFriendsList.js';
+import { simulateFetchFriendsList } from '../../../../mock/functions/simulateFetchFriendsList.js';
 
 export class FriendsListModal extends HTMLElement {
 	constructor() {
@@ -28,10 +28,9 @@ export class FriendsListModal extends HTMLElement {
 		const listContainer = this.querySelector('#friends-list');
 		listContainer.innerHTML = '';
 		this.friendsList.forEach(friend => {
-			console.log(`Rendering friend:`, friend);
+			// console.log(`Rendering friend:`, friend);
 			const listItem = document.createElement('friends-list-item');
-			listItem.setAttribute('userid', friend.userid);
-			listItem.setAttribute('name', friend.name);
+			listItem.setAttribute('username', friend.username);
 			listItem.setAttribute('avatar', friend.avatar);
 			listItem.setAttribute('online', friend.online);
 			listContainer.appendChild(listItem);

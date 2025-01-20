@@ -7,8 +7,7 @@ services:
     volumes:
       - ./front/app:/app  # Monte le dossier front/app de l'hôte dans /app du conteneur
       - /app/node_modules   # Volume pour node_modules (cela permet de ne pas écraser le dossier node_modules)
-      - ./front/app/dist:/app/dist
-      - static_front_volume:/app/static
+      # - ./front/app/dist:/app/dist
     ports:
       - "5173:5173"
     expose:
@@ -48,7 +47,7 @@ services:
       - database
     volumes:
       - ./back:/app
-      - static_back_volume:/app/staticfiles
+      - static_volume:/app/staticfiles
       - media_volume:/app/media
     networks:
       - transcendance_network
@@ -80,9 +79,10 @@ services:
       context: ./nginx
     volumes:
       - ./front/app/dist:/app/dist
+      - ./front/app/assets:/app/static/front  # Montage direct des assets
+      - ./front/app/css:/app/static/front/css 
       - media_volume:/app/media # Dossier contenant les fichiers médias de l'application
-      - static_back_volume:/app/static/back # Dossier contenant les fichiers statiques de l'application
-      - static_front_volume:/app/static/front  # Fichiers statiques du front
+      - static_volume:/app/static/back # Dossier contenant les fichiers statiques de l'application
       - db_volume:/var/lib/postgresql/data # Dossier contenant les fichiers de la base de données
     ports:
       - "1026:1026"
@@ -99,11 +99,8 @@ volumes:
   db_volume:
     name: db_volume
 
-  static_back_volume:
-    name: static_back_volume
-
-  static_front_volume:
-    name: static_front_volume
+  static_volume:
+    name: static_volume
 
   media_volume:
     name: media_volume
@@ -111,3 +108,25 @@ volumes:
 networks:
   transcendance_network:
     driver: bridge
+
+
+#Pour static_volume :
+
+# Django collecte ses fichiers statiques dans ce volume via collectstatic
+# Ces fichiers sont générés dynamiquement à partir de différentes applications Django
+# Nginx a besoin d'accéder à ces fichiers pour les servir
+# Le volume partagé permet à Django et Nginx d'accéder aux mêmes fichiers
+
+# Pour media_volume :
+
+# Les fichiers médias sont uploadés par les utilisateurs
+# Django stocke ces fichiers dans ce volume
+# Nginx doit pouvoir les servir
+# Le volume est partagé car il est modifié dynamiquement (nouveaux uploads, suppressions, etc.)
+
+# En contraste, pour les fichiers front :
+
+# Ils sont statiques (définis à l'avance)
+# Ne changent pas dynamiquement
+# Peuvent être montés directement depuis le système de fichiers
+# C'est pourquoi le montage direct suffit pour le front, mais les volumes partagés sont nécessaires pour le back et les médias.
