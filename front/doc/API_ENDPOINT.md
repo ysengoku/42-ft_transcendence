@@ -4,6 +4,21 @@
 
 ### Endpoint: /api/users/
 
+#### GET
+
+##### Response
+200 (OK)
+```json
+[
+  {
+    "username": "string",
+    "avatar": "string",
+    "elo": 0,
+    "is_online": true
+  }
+]
+```
+
 #### POST
 
 ##### Request body
@@ -25,6 +40,7 @@
 	"elo": 1000
 }
 ```
+
 ---
 ### Endpoint: /api/users/{username}
 
