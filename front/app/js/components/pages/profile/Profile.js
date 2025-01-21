@@ -1,4 +1,4 @@
-// import { simulateFetchUserData } from '../../../../mock/functions/simulateFetchUserData.js'
+// import { simulateFetchUserProfile } from '../../../../mock/functions/simulateFetchUserProfile.js'
 import './components/index.js';
 import { apiRequest } from '../../../api/apiRequest.js';
 import { API_ENDPOINTS } from '../../../api/endpoints.js';
@@ -17,7 +17,7 @@ export class UserProfile extends HTMLElement {
 	// // Simulation with mock data
 	// async fetchUserData(username) {
     // 	try {
-    //   		const userData = await simulateFetchUserData(username);
+    //   		const userData = await simulateFetchUserProfile(username);
     //   		this.user = userData;
     //   		this.render();
     // 	} catch (error) {
@@ -28,7 +28,7 @@ export class UserProfile extends HTMLElement {
 
 	async fetchUserData(username) {
     	try {
-			const userData = await apiRequest('GET', API_ENDPOINTS.GET_USER_DATA(username));
+			const userData = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
 			// const userData = await apiRequest('GET', 'https://run.mocky.io/v3/25d2e1f9-7994-4792-b3e6-478f23855b68');
 
 			this.user = userData;
@@ -46,9 +46,11 @@ export class UserProfile extends HTMLElement {
         }
 		console.log('User data:', this.user);
 
+		// Online status
 		const onlineStatus = document.createElement('online-status');
 		onlineStatus.setAttribute('online', this.user.is_online);
 
+		// Member since - Date formatting
 		const date = new Date(this.user.date_joined);
 		const formatedDate = new Intl.DateTimeFormat('en-US', {
 			month: 'long',
@@ -56,6 +58,7 @@ export class UserProfile extends HTMLElement {
 			year: 'numeric'
 		}).format(date);
 		const friendsCount = this.user.friends.length;
+
 
 		// Temporary content
 		this.innerHTML = `
