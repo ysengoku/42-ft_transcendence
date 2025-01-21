@@ -46,6 +46,14 @@ html, body {
     background-color: green;
 }
 
+/* ----- Settings ----------------------------------------------------------- */
+
+#avatar-upload-preview {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+}
+
 
 /* ----- Modals ------------------------------------------------------------- */
 
