@@ -2,11 +2,14 @@ export class AvatarUploadModal extends HTMLElement {
 	constructor() {
 		super();
 		this.modal = null;
+		this.selectedFile = null;
+		this.onConfirm = null;
 	}
 
 	connectedCallback() {
 		this.render();
 		this.setupPreview();
+		this.setupConfirmHandler();
 	}
 
 	render() {
@@ -19,47 +22,72 @@ export class AvatarUploadModal extends HTMLElement {
 					</div>
 					<div class="modal-body">
 						<div class="mb-3">
-							<img id="avatar-preview" src="" alt="" class="img-fluid rounded mx-auto d-block">
+							<img id="avatar-upload-preview" src="" alt="" class="img-fluid rounded-circle mx-auto d-block">
 						</div>
 						<div class="mb-3">
   							<label for="upload" class="form-label">Select file</label>
-  							<input class="form-control" type="file" id="upload-input" accept="image/*" readonly>
+  							<input class="form-control" type="file" id="avatar-upload-input" accept="image/*" readonly>
+							<div class='invalid-feedback' id='avatar-feedback'></div>
 						</div>
 					</div>
 					<div class="modal-footer">
         				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        				<button type="button" class="btn btn-primary">Save changes</button>
+        				<button type="button" class="btn btn-primary" id="confirm-avatar-button">Confirm</button>
       				</div>
 				</div>
 			</div>
 		</div>
 		`;
 		this.modal = new bootstrap.Modal(this.querySelector('#avatar-upload-modal'));
-	};
+	}
 
-	showModal() {
+	showModal(onConfirmCallback) {
+		this.onConfirm = onConfirmCallback;
 		if (this.modal) {
 			this.modal.show();
 		}
 	}
 
 	setupPreview() {
-		const uploadInput = this.querySelector('#upload-input');
+		const uploadInput = this.querySelector('#avatar-upload-input');
+		uploadInput.addEventListener('click', () => {
+			uploadInput.classList.remove('is-invalid');
+			document.querySelector('#avatar-feedback').textContent = '';
+		} )
 		uploadInput.addEventListener('change', (event) => this.readURL(event));
 	}
 
 	readURL(event) {
 		const input = event.target;
 		const file = input.files[0];
-		const preview = this.querySelector('#avatar-preview');
+		const preview = this.querySelector('#avatar-upload-preview');
 
 		if (file) {
+			this.selectedFile = file;
 			const reader = new FileReader();
 			reader.onload = (e) => {
 				preview.src = e.target.result;
 			};
 			reader.readAsDataURL(file);
 		}
+	}
+
+	setupConfirmHandler () {
+		const confirmButton = this.querySelector('#confirm-avatar-button');
+		confirmButton.addEventListener('click', () => this.handleConfirm());
+	}
+
+	handleConfirm() {
+		if (!this.selectedFile) {
+			const avatarField = this.querySelector('#avatar-upload-input');
+			avatarField.classList.add('is-invalid');
+			this.querySelector('#avatar-feedback').textContent = 'No file is selected.';
+			return;
+		}
+		if (this.onConfirm) {
+			this.onConfirm(this.selectedFile);
+		}
+		this.modal.hide();
 	}
 }
 
