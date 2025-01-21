@@ -13,6 +13,7 @@ export class Settings extends HTMLElement {
 
 	async fetchUserData(username) {
     	try {
+			// Temporary fetch function with mock
       		const userData = await simulateFetchUserData(username);
       		this.user = userData;
       		this.render();
@@ -80,18 +81,29 @@ export class Settings extends HTMLElement {
 	}
 
 	async handleSubmit() {
+		const avatarUploadInput = this.querySelector('#upload-input');
 		const usernameField = this.querySelector('#username');
 		const emailField = this.querySelector('#email');
 		const passwordField = this.querySelector('#password');
 		const password_repeatField = this.querySelector('#password_repeat');
 
-		const userData = {
+		const formData = {
 			username: usernameField.value,
 			email: emailField.value,
 			password: passwordField.value,
 			password_repeat: password_repeatField.value
 		};	
-
+		if (avatarUploadInput.files.length > 0) {
+			formData.append('avatar', avatarUploadInput.files[0]);
+		}
+		console.log(formData);
+		try {
+			// const response = await apiRequest('POST', 'endpoint', formData, true);
+			// handle response
+		} catch(error) {
+			console.error('Error upload user settings: ', error);
+		}
+		
 	}
 }
 
