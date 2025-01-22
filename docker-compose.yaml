@@ -15,22 +15,21 @@ services:
     env_file:
       - .env
     depends_on:
-      - back
+      - server
     networks:
       - transcendance_network
     environment:
       - NODE_ENV=${NODE_ENV:-development}
 
-  back:
+  server:
     container_name: backend
     build:
-      context: ./back  # Contexte de la construction (répertoire contenant le Dockerfile de back)
+      context: ./server  # Contexte de la construction (répertoire contenant le Dockerfile de server)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
     command: >
       sh -c "python manage.py makemigrations &&
             python manage.py migrate &&
             python manage.py collectstatic --noinput &&
-            python manage.py createsuperuser --noinput || echo 'Superuser creation skipped' &&
             python manage.py runserver 0.0.0.0:8000"
 
     ports:
@@ -40,7 +39,7 @@ services:
     env_file:
       - .env
     environment:
-      DJANGO_SETTINGS_MODULE: mySite.settings
+      DJANGO_SETTINGS_MODULE: server.settings
       DATABASE_URL: ${DATABASE_URL}
       DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
       DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
@@ -48,7 +47,7 @@ services:
     depends_on:
       - database
     volumes:
-      - ./back:/app
+      - ./server:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     networks:
@@ -84,7 +83,7 @@ services:
       - ./front/app/assets:/app/static/front  # Montage direct des assets
       - ./front/app/css:/app/static/front/css 
       - media_volume:/app/media # Dossier contenant les fichiers médias de l'application
-      - static_volume:/app/static/back # Dossier contenant les fichiers statiques de l'application
+      - static_volume:/app/static/server # Dossier contenant les fichiers statiques de l'application
       - db_volume:/var/lib/postgresql/data # Dossier contenant les fichiers de la base de données
     ports:
       - "1026:1026"
@@ -92,7 +91,7 @@ services:
       - "1026"
     depends_on:
       - front
-      - back
+      - server
     networks:
       - transcendance_network
 
@@ -131,4 +130,4 @@ networks:
 # Ils sont statiques (définis à l'avance)
 # Ne changent pas dynamiquement
 # Peuvent être montés directement depuis le système de fichiers
-# C'est pourquoi le montage direct suffit pour le front, mais les volumes partagés sont nécessaires pour le back et les médias.
+# C'est pourquoi le montage direct suffit pour le front, mais les volumes partagés sont nécessaires pour le server et les médias.
