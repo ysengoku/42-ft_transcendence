@@ -18,10 +18,18 @@ class Command(BaseCommand):
         eldar = User.objects.create_user(username="Eldar", password="123").profile
         sad_hampter = User.objects.create_user(username="SadHampter", password="123").profile
         User.objects.create_user(username="User0", password="123")
-        for i in range(100):
+        for i in range(30):
             user = User.objects.create_user(username=f"JohnDoe{i}", password="123")
             life_enjoyer.friends.add(user.profile)
         life_enjoyer.save()
+
+        users = yuko, celia, fanny, eldar
+        for user in users:
+            for friend in users:
+                if user == friend:
+                    continue
+                user.friends.add(friend)
+            user.save()
 
         Match.objects.resolve(celia, yuko, 2, 1)
         Match.objects.resolve(celia, yuko, 3, 1)
