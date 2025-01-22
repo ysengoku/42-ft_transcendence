@@ -41,6 +41,17 @@ INSTALLED_APPS = [
     'ninja',  # Django Ninja
 
     'users',  # Application users
+    'silk', # Application for profiling
+    'corsheaders', # Application for CORS if two ports are different. must be removed for production
+]
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
 ]
 
 MIDDLEWARE = [
@@ -51,7 +62,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', #  must be removed for production
+
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ORIGINS = [ 'http://localhost:1573','https://localhost:1026',]
 
 ROOT_URLCONF = 'mySite.urls'
 
