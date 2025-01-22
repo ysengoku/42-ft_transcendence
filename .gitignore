@@ -165,8 +165,5 @@ cython_debug/
 #.idea/
 
 .vscode/
-<<<<<<< HEAD
 
-=======
->>>>>>> origin/front
 node_modules/

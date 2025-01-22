@@ -1,7 +1,7 @@
 export async function simulateFetchUserData(username) {
 	const user1 = {
 		username: 'JohnDoe', 
-		avatar: '/media/default_avatar.png',
+		avatar: '/assets/img/avatar-placeholder.svg',
 		hasOwnAvatar: true,
 		email: 'johndoe@example.com'
 	  };
