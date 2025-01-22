@@ -161,8 +161,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/back/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static', 'back')
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 AUTH_SETTINGS = {
     "password_min_len": 8,
