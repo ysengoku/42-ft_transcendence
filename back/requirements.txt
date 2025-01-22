@@ -31,3 +31,4 @@ django-silk==5.3.2
 
 # Gunicorn is a Python WSGI HTTP Server for UNIX
 gunicorn==20.1.0
+django-cors-headers==4.6.0
