@@ -81,22 +81,25 @@ export class Settings extends HTMLElement {
 	}
 
 	async handleSubmit() {
-		const avatarUploadInput = this.querySelector('#avatar-upload-preview');
 		const usernameField = this.querySelector('#username');
 		const emailField = this.querySelector('#email');
 		const passwordField = this.querySelector('#password');
 		const password_repeatField = this.querySelector('#password_repeat');
 
-		const formData = {
-			username: usernameField.value,
-			email: emailField.value,
-			password: passwordField.value,
-			password_repeat: password_repeatField.value
-		};	
-		if (avatarUploadInput.files && avatarUploadInput.files.length > 0) {
-			formData.append('avatar', avatarUploadInput.files[0]);
+		const avatarUploadField = this.querySelector('avatar-upload');
+		const selectedFile = avatarUploadField.selectedFile;
+
+		const formData = new FormData();
+		formData.append('username', usernameField.value);
+		formData.append('email', emailField.value);
+		formData.append('password', passwordField.value);
+		formData.append('password_repeat', password_repeatField.value);
+		if (selectedFile) {
+			formData.append('avatar', selectedFile);
 		}
-		console.log(formData);
+		// for (let [key, value] of formData.entries()) {
+		// 	console.log(key, value);
+		// }
 		try {
 			// const response = await apiRequest('POST', 'endpoint', formData, true);
 			// handle response
