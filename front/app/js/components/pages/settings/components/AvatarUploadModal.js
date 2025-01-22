@@ -21,17 +21,19 @@ export class AvatarUploadModal extends HTMLElement {
 						<h5 class="modal-title">Upload Avatar</h5>
 					</div>
 					<div class="modal-body">
+        				<div class="avatar-preview-container">
+         					<div class="avatar-wrapper">
+            					<img id="avatar-upload-preview" src="/assets/img/avatar-placeholder.svg" alt="Avatar Preview" class="avatar-preview">
+        					</div>
+        				</div>
 						<div class="mb-3">
-							<img id="avatar-upload-preview" src="" alt="" class="img-fluid rounded-circle mx-auto d-block">
-						</div>
-						<div class="mb-3">
-  							<label for="upload" class="form-label">Select file</label>
+  							<label for="avatar-upload-input" class="form-label">Select file</label>
   							<input class="form-control" type="file" id="avatar-upload-input" accept="image/*" readonly>
 							<div class='invalid-feedback' id='avatar-feedback'></div>
 						</div>
 					</div>
 					<div class="modal-footer">
-        				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-avatar-upload">Close</button>
         				<button type="button" class="btn btn-primary" id="confirm-avatar-button">Confirm</button>
       				</div>
 				</div>
@@ -53,22 +55,31 @@ export class AvatarUploadModal extends HTMLElement {
 		uploadInput.addEventListener('click', () => {
 			uploadInput.classList.remove('is-invalid');
 			document.querySelector('#avatar-feedback').textContent = '';
-		} )
+		});
+		const cancelButton = this.querySelector('#cancel-avatar-upload');
+		cancelButton.addEventListener('click', () => {
+			uploadInput.classList.remove('is-invalid');
+			uploadInput.value = '';
+			this.selectedFile = null;
+			this.querySelector('#avatar-upload-preview').src = '/assets/img/avatar-placeholder.svg';
+		});
 		uploadInput.addEventListener('change', (event) => this.readURL(event));
 	}
 
 	readURL(event) {
-		const input = event.target;
-		const file = input.files[0];
 		const preview = this.querySelector('#avatar-upload-preview');
+		const input = event.target;
 
-		if (file) {
-			this.selectedFile = file;
-			const reader = new FileReader();
-			reader.onload = (e) => {
-				preview.src = e.target.result;
-			};
-			reader.readAsDataURL(file);
+		if (input && input.files && input.files.length > 0) {
+			const file = input.files[0];
+			if (file) {
+				this.selectedFile = file;
+				const reader = new FileReader();
+				reader.onload = (e) => {
+					preview.src = e.target.result;
+				};
+				reader.readAsDataURL(file);
+			}
 		}
 	}
 
