@@ -81,7 +81,7 @@ export class Settings extends HTMLElement {
 	}
 
 	async handleSubmit() {
-		const avatarUploadInput = this.querySelector('#upload-input');
+		const avatarUploadInput = this.querySelector('#avatar-upload-preview');
 		const usernameField = this.querySelector('#username');
 		const emailField = this.querySelector('#email');
 		const passwordField = this.querySelector('#password');
@@ -93,7 +93,7 @@ export class Settings extends HTMLElement {
 			password: passwordField.value,
 			password_repeat: password_repeatField.value
 		};	
-		if (avatarUploadInput.files.length > 0) {
+		if (avatarUploadInput.files && avatarUploadInput.files.length > 0) {
 			formData.append('avatar', avatarUploadInput.files[0]);
 		}
 		console.log(formData);
