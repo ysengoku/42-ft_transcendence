@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 def main():
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mySite.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
 
     try:
         from django.core.management import execute_from_command_line
@@ -19,16 +19,29 @@ def main():
 if __name__ == '__main__':
     main()
 
-# Django settings
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# TODO: Change the secret key in production 
 SECRET_KEY = 'your-secret-key'
+
+# Environment variables
 DEBUG = int(os.environ.get('DEBUG', default=0))
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('DATABASE_HOST', 'database'),  # Nom du service Docker
+        'PORT': os.environ.get('DATABASE_PORT', 5432),
+    }
+}
+
 INSTALLED_APPS = [
-    # Autres applications Django
+    # Default Django applications
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -36,12 +49,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'rest_framework',  # Django Rest Framework
-    'channels',  # Django Channels
-    'ninja',  # Django Ninja
 
-    'users',  # Application users
-    'silk',  # Application Silk Profiler
+    # Third-party applications
+    'silk', # Application for profiling
+    'corsheaders', # Application for CORS if two ports are different. must be removed for production
+    'channels',  # Django Channels
+
+    # Our applications
+    'users',
 ]
 
 MIDDLEWARE = [
@@ -52,10 +67,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # Third party middleware
     'silk.middleware.SilkyMiddleware',
+    'corsheaders.middleware.CorsMiddleware', #  must be removed for production.
 ]
 
-ROOT_URLCONF = 'mySite.urls'
+
+ROOT_URLCONF = 'server.urls'
 
 TEMPLATES = [
     {
@@ -73,36 +92,12 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'mySite.wsgi.application'
-ASGI_APPLICATION = 'mySite.asgi.application'  # Pour Django Channels
+# WSGI_APPLICATION = 'server.wsgi.application'
+ASGI_APPLICATION = 'server.asgi.application'  # Pour Django Channels
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB'),
-        'USER': os.environ.get('POSTGRES_USER'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': os.environ.get('DATABASE_HOST', 'database'),  # Nom du service Docker
-        'PORT': os.environ.get('DATABASE_PORT', 5432),
-    }
-}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
@@ -115,7 +110,6 @@ SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    # 'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 # ################# #
@@ -147,13 +141,20 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Configuration Django Ninja
-NINJA_DOCS_URL = "/api/docs"
-NINJA_OPENAPI_URL = "/api/openapi.json"
-
 CSRF_TRUSTED_ORIGINS = ['https://localhost:1026']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = False
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ORIGINS = [ 'http://localhost:5173','https://localhost:1026',]
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+]
 
 # Configuration for picture
 BASE_DIR = Path(__file__).resolve().parent.parent
