@@ -134,6 +134,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # CUSTOM USER MODEL
 AUTH_USER_MODEL = 'users.User'
 
+AUTH_SETTINGS = {
+    "password_min_len": 8,
+    "check_attribute_similarity": True,
+}
+
 # PATH FOR UPLOADING OF USER IMAGES
 # https://docs.djangoproject.com/en/5.1/topics/security/#user-uploaded-content-security
 # absolute system path to dir that stores media
