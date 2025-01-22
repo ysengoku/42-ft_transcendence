@@ -86,7 +86,7 @@ export class Register extends HTMLElement {
 		};
 
     	try {
-        	const response = await apiRequest('POST', API_ENDPOINTS.REGISTER, userData);
+        	const response = await apiRequest('POST', API_ENDPOINTS.USERS, userData);
 			// const response = await apiRequest('POST', "https://run.mocky.io/v3/5567d4b4-2918-4ebc-9b1a-9fbace08419a", userData);
         	console.log('Registration successful:', response);
 			//----- Temporary ------------------------------------------
