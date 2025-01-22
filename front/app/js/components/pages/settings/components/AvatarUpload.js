@@ -2,6 +2,7 @@ export class AvatarUpload extends HTMLElement {
 	constructor() {
 		super();
 		this._user = '';
+		this.selectedFile = null;
 	}
 
 	setAvatar(user) {
@@ -27,7 +28,10 @@ export class AvatarUpload extends HTMLElement {
 		const avatarUploadButton = this.querySelector('#avatar-upload-button');
 		avatarUploadButton.addEventListener('click', () => {
 			const modal = document.querySelector('avatar-upload-modal');
-			modal.showModal();
+			modal.showModal((file) => {
+				console.log('File selected:', file);
+				this.selectedFile = file;
+			});
 		});
 	}
 
