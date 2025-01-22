@@ -13,9 +13,9 @@ class Command(BaseCommand):
         User.objects.create_superuser(username="admin", password="123")
         life_enjoyer = User.objects.create_user(username="LifeEnjoyer", password="123").profile
         yuko = User.objects.create_user(username="Yuko", password="123").profile
-        celia = User.objects.create_user(username="Celia", password="123").profile
-        fanny = User.objects.create_user(username="Fanny", password="123").profile
-        eldar = User.objects.create_user(username="Eldar", password="123").profile
+        celia = User.objects.create_user(username="celiastral", password="123").profile
+        fanny = User.objects.create_user(username="Fannybooboo", password="123").profile
+        eldar = User.objects.create_user(username="emuminov", password="123").profile
         sad_hampter = User.objects.create_user(username="SadHampter", password="123").profile
         User.objects.create_user(username="User0", password="123")
         for i in range(30):

@@ -11,7 +11,9 @@ export class AvatarUpload extends HTMLElement {
 	}
 
 	render() {
-		const avatarUploadMessage = this._user.hasOwnAvatar ? 'Change Avatar' : 'Upload Avatar';
+		const default_avatar = import.meta.env.VITE_DEFAULT_AVATAR;
+		// const avatarUploadMessage = this._user.hasOwnAvatar ? 'Change Avatar' : 'Upload Avatar';
+		const avatarUploadMessage = this._user.avatar === default_avatar ? 'Change Avatar' : 'Upload Avatar';
 
 		this.innerHTML = `		
 		<div class="d-flex align-items-start mb-5 pb-4 border-bottom">
