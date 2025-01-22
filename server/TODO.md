@@ -1,0 +1,8 @@
+- [~] User profiles with their information
+    - [x] Implement match history and resolution
+    - [x] Implement misc stats like the scored balls or best/worst enemy
+    - [ ] Implement tournament history
+- [ ] JWT auth on the backend
+- [ ] Friends list
+- [ ] Realtime online status
+- [x] Elo system

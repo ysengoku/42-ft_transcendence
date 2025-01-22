@@ -168,7 +168,7 @@ The __init__.py files are required to make Python treat directories containing t
 __all__ : if defined, all submodules will be imported from the parent packaging when douin from package import *
 
 1. Create a project: 
-django-admin startproject mysite
+django-admin startproject server
 
 2. Create an app:
 python manage.py startapp polls
@@ -381,3 +381,6 @@ good practice:
 upload a file from the frontend to the backend with django ninja and javascript:
 1. your frontend is sending a multipart/form-data request: To upload a file, you need to use multipart/form-data encoding. Ensure your fetch request is sending the file properly in the formData object:
 
+TODO
+
+Faire le bind mount sur sgoinfre
