@@ -78,9 +78,7 @@ services:
     build:
       context: ./nginx
     volumes:
-      - ./front/app/dist:/app/dist/
-      - ./front/app/assets/img:/app/static/img  # Montage direct des assets
-      - ./front/app/css:/app/static/css/ 
+      - ./front/app:/app/
       - media_volume:/app/media/ # Dossier contenant les fichiers médias de l'application
       - static_volume:/app/static/ # Dossier contenant les fichiers statiques de l'application
       - db_volume:/var/lib/postgresql/data/ # Dossier contenant les fichiers de la base de données
