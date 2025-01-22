@@ -1,4 +1,5 @@
 import { simulateFetchUserData } from '../../../../mock/functions/simulateFetchUserData.js'
+import './components/index.js';
 
 export class Settings extends HTMLElement {
 	constructor() {
@@ -12,6 +13,7 @@ export class Settings extends HTMLElement {
 
 	async fetchUserData(username) {
     	try {
+			// Temporary fetch function with mock
       		const userData = await simulateFetchUserData(username);
       		this.user = userData;
       		this.render();
@@ -22,54 +24,89 @@ export class Settings extends HTMLElement {
   	}
 
 	render() {
-		// Temporay to test
-		this.user.hasOwnAvatar = true;
-
-		const avatarUploadMessage = this.user.hasOwnAvatar ? 'Change Avatar' : 'Upload Avatar';
-
 		this.innerHTML = `
-		<div class='container-fluid d-flex flex-column justify-content-center align-items-center'>
-			<p>Name: ${this.user.username}</p>
-
-			<form class='w-100'>
-			<div class="d-flex justify-content-center align-items-center profile-avatar-container">
-				<img src="${this.user.avatar}" alt="User Avatar" class="rounded-circle">
-				<div class="mb-3 pt-5">
-					<button class="btn btn-primary" id="avatar-upload-button">${avatarUploadMessage}</button>
+		<div class="container">
+			<form>
+				<legend class="mb-5 border-bottom">Settings</legend>
+				<div>
+					<avatar-upload></avatar-upload>
 				</div>
-			</div>
 
-        		<div class='mb-3'>
-          			<label for='username' class='form-label'>Username</label>
-          			<input type='username' class='form-control' id='username' placeholder='${this.user.username}'>
-          			<div class='invalid-feedback' id='username-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
-          				<label for='email' class='form-label'>Email</label>
-          				<input type='email' class='form-control' id='email' placeholder='${this.user.username}'>
-          				<div class='invalid-feedback' id='email-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
-          				<label for='password' class='form-label'>Password</label>
-        				<input type='password' class='form-control' id='password' placeholder='new password'>
-        				<div class='invalid-feedback' id='password-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
-        				<label for='password_repeat' class='form-label'>Confirm Password</label>
-        				<input type='password' class='form-control' id='password_repeat' placeholder='new password'>
-        				<div class='invalid-feedback' id='password_repeat-feedback'></div>
-        			</div>
-        			<div class='mb-3 py-3'>
-        				<button type='submit' id='settingsSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Register</button>
-        			</div>
-      			</form>
+				<div class="mb-3 pb-3">
+					<label for="username" class="form-label">Username</label>
+					<input type="username" class="form-control" id="username" placeholder="${this.user.username}">
+				</div>
+				<div class="mb-3 pb-3">
+					<label for="email" class="form-label">Email</label>
+					<input type="email" class="form-control" id="email" placeholder="${this.user.email}">
+				</div>
+				<div class="mb-3 pb-3">
+					<label for="password" class="form-label">Password</label>
+					<input type="password" class="form-control" id="password" placeholder="new password">
+					<div class="invalid-feedback" id="password-feedback"></div>
+				</div>
+				<div class="mb-3 pb-3">
+					<label for="password_repeat" class="form-label">Confirm Password</label>
+					<input type="password" class="form-control" id="password_repeat" placeholder="new password">
+					<div class="invalid-feedback" id="password_repeat-feedback"></div>
+				</div>
 
-			<div class="mb-3 pt-5">
-				<a class="btn btn-primary" href="/home" role="button">Back to Home</a>
-			</div>
+				<div class="mb-5 py-5 border-bottom">
+					<a class="btn btn-outline-primary" href="/profile/${this.user.username}" role="button">Cancel</a>
+					<button type="submit" id="settingsSubmit" class="btn btn-primary mx-2">Save changes</button>
+				</div>
+
+				<delete-account-button></delete-account-button>
+			</form>
+	
 			<avatar-upload-modal></avatar-upload-modal>
 		</div>
 		`;
+
+		const avatarUploadButton = this.querySelector('avatar-upload');
+		avatarUploadButton.setAvatar(this.user);
+
+		const deleteAccountButton = this.querySelector('delete-account-button');
+		deleteAccountButton.setUsername(this.user.username);
+
+		this.setupSubmitHandler();
+	}
+
+	setupSubmitHandler() {
+		const form = this.querySelector('form');
+		form.addEventListener('submit', (event) => {
+	  		event.preventDefault();  // Prevent the default behavior of browser (page reload)
+	  		this.handleSubmit();
+		});
+	}
+
+	async handleSubmit() {
+		const usernameField = this.querySelector('#username');
+		const emailField = this.querySelector('#email');
+		const passwordField = this.querySelector('#password');
+		const password_repeatField = this.querySelector('#password_repeat');
+
+		const avatarUploadField = this.querySelector('avatar-upload');
+		const selectedFile = avatarUploadField.selectedFile;
+
+		const formData = new FormData();
+		formData.append('username', usernameField.value);
+		formData.append('email', emailField.value);
+		formData.append('password', passwordField.value);
+		formData.append('password_repeat', password_repeatField.value);
+		if (selectedFile) {
+			formData.append('avatar', selectedFile);
+		}
+		// for (let [key, value] of formData.entries()) {
+		// 	console.log(key, value);
+		// }
+		try {
+			// const response = await apiRequest('POST', 'endpoint', formData, true);
+			// handle response
+		} catch(error) {
+			console.error('Error upload user settings: ', error);
+		}
+		
 	}
 }
 
