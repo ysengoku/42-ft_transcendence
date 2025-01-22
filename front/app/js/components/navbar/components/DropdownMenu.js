@@ -17,7 +17,7 @@ export class DropdownMenu extends HTMLElement {
 		const isDarkMode = ThemeController.getTheme() === 'dark';
 
 		let username = null;
-		let avatarSrc = `/assets/img/anonymous_avatar.svg`;
+		let avatarSrc = `/assets/img/anonymous-avatar.svg`;
 		if (storedUser) {
 			const user = JSON.parse(storedUser);
 			username = user.username;
