@@ -21,11 +21,6 @@ from django.conf import settings
 from django.conf.urls.static import static 
 from users.api import api
 
-# Exemple de vue racine pour /api/
-@api.get("/", response=dict)
-def api_root(request):
-    return {"message": "Welcome to the API"}
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', api.urls),
