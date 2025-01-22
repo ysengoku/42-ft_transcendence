@@ -14,5 +14,4 @@ def create_profile(sender, instance: User, created: bool, **kwargs):
 
 @receiver(post_delete, sender=Profile)
 def delete_avatar(sender, instance: Profile, **kwargs):
-    if instance.profile_picture and os.path.isfile(instance.profile_picture.path):
-        os.remove(instance.profile_picture.path)
+    instance.delete_avatar()
