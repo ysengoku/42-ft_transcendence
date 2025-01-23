@@ -1,4 +1,4 @@
-export class NotFoundComponent extends HTMLElement {
+export class Chat extends HTMLElement {
 	constructor() {
 		super();
 	}
@@ -16,4 +16,4 @@ export class NotFoundComponent extends HTMLElement {
 	}
 }
 
-customElements.define('not-found', NotFoundComponent);
+customElements.define('chat', NotFoundComponent);

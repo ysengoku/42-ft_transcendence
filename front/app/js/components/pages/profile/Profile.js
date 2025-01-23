@@ -1,4 +1,3 @@
-// import { simulateFetchUserProfile } from '../../../../mock/functions/simulateFetchUserProfile.js'
 import './components/index.js';
 import { apiRequest } from '../../../api/apiRequest.js';
 import { API_ENDPOINTS } from '../../../api/endpoints.js';
@@ -14,22 +13,10 @@ export class UserProfile extends HTMLElement {
 		this.fetchUserData(username);
 	}
 
-	// // Simulation with mock data
-	// async fetchUserData(username) {
-    // 	try {
-    //   		const userData = await simulateFetchUserProfile(username);
-    //   		this.user = userData;
-    //   		this.render();
-    // 	} catch (error) {
-    //   		console.error('Error fetching user data:', error);
-	// 		// Show "User not exists Page"?
-    // 	}
-  	// }
-
 	async fetchUserData(username) {
     	try {
+			console.log('username:', username);
 			const userData = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
-			// const userData = await apiRequest('GET', 'https://run.mocky.io/v3/25d2e1f9-7994-4792-b3e6-478f23855b68');
 
 			this.user = userData;
 			this.render();
@@ -41,24 +28,27 @@ export class UserProfile extends HTMLElement {
 
 	render() {	
 		if (!this.user) {
-            console.log('User data is missing');
+            console.log('User data is not available');
             return;
         }
 		console.log('User data:', this.user);
 
 		// Online status
-		const onlineStatus = document.createElement('online-status');
-		onlineStatus.setAttribute('online', this.user.is_online);
+		// const onlineStatus = document.createElement('online-status');
+		// onlineStatus.setAttribute('online', this.user.is_online);
 
 		// Member since - Date formatting
-		const date = new Date(this.user.date_joined);
-		const formatedDate = new Intl.DateTimeFormat('en-US', {
-			month: 'long',
-			day: 'numeric',
-			year: 'numeric'
-		}).format(date);
+		// const date = new Date(this.user.date_joined);
+		// const formatedDate = new Intl.DateTimeFormat('en-US', {
+		// 	month: 'long',
+		// 	day: 'numeric',
+		// 	year: 'numeric'
+		// }).format(date);
 		const friendsCount = this.user.friends.length;
 
+		const formatedDate = new Date(this.user.date_joined).toLocaleDateString();
+		const onlineStatus = document.createElement('div');
+		onlineStatus.className = this.user.is_online ? 'online' : 'offline';
 
 		// Temporary content
 		this.innerHTML = `
@@ -85,20 +75,10 @@ export class UserProfile extends HTMLElement {
 			<p>Total score: ${this.user.scored_balls}</p>
 
 			<h3>Best enemy</h3>
-			<p>Username: ${this.user.best_enemy.username}</p>
-			<p>Avatars: ${this.user.best_enemy.avatar}</p>
-			<p>Wins: ${this.user.best_enemy.wins}</p>
-			<p>Loses: ${this.user.best_enemy.loses}</p>
-			<p>Win rate: ${this.user.best_enemy.winrate}</p>
-			<p>Elo: ${this.user.best_enemy.elo}</p>
+			<best-enemy></best-enemy>
 
 			<h3>Worst enemy</h3>
-			<p>Username: ${this.user.worst_enemy.username}</p>
-			<p>Avatars: ${this.user.worst_enemy.avatar}</p>
-			<p>Wins: ${this.user.worst_enemy.wins}</p>
-			<p>Loses: ${this.user.worst_enemy.loses}</p>
-			<p>Win rate: ${this.user.worst_enemy.winrate}</p>
-			<p>Elo: ${this.user.worst_enemy.elo}</p>
+			<worst-enemy></worst-enemy>
 
 			<h3>Friends</h3>
 			<p>Friends count: ${friendsCount}</p>
