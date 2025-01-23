@@ -1,5 +1,7 @@
 import { ThemeController } from '../../../utils/ThemeController.js';
 import { handleLogout } from '../../../utils/handleLogout.js';
+import anonymousavatar from '../../../../assets/img/anonymous-avatar.svg'
+import { simulateFetchUserData } from '../../../../mock/functions/simulateFetchUserData.js';
 
 export class DropdownMenu extends HTMLElement {
 	constructor() {
@@ -10,18 +12,27 @@ export class DropdownMenu extends HTMLElement {
 		this.render();
 	}
 
-	render() {
+	async render() {
 		// Temporary solution with localStorage
 		const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-		const storedUser = localStorage.getItem('user');
 		const isDarkMode = ThemeController.getTheme() === 'dark';
-
+		// const storedUser = localStorage.getItem('user');
+		// let username = null;
+		// let avatarSrc = `${anonymousavatar}`;
+		// if (user) {
+		// 	const user = JSON.parse(storedUser);
+		// 	username = user.username;
+		// 	avatarSrc = `${user.avatar}`;
+		// }
 		let username = null;
-		let avatarSrc = `/assets/img/anonymous-avatar.svg`;
+		let avatarSrc = `${anonymousavatar}`;
+		const storedUser = localStorage.getItem('user');
 		if (storedUser) {
-			const user = JSON.parse(storedUser);
-			username = user.username;
-			avatarSrc = `${user.avatar}`;
+			const user = await simulateFetchUserData('JohnDoe');
+			if (user) {
+				username = user.username;
+				avatarSrc = `${user.avatar}`;
+			}
 		}
 
 		this.innerHTML = `
@@ -31,7 +42,7 @@ export class DropdownMenu extends HTMLElement {
 		<div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 			${isLoggedIn ? `
 				<a class="dropdown-item" href="/profile/${username}">Your profile</a>
-				<a class="dropdown-item" href="/setting">Settings</a>
+				<a class="dropdown-item" href="/settings/${username}">Settings</a>
 			` : `
 				<a class="dropdown-item" href="/login" id="dropdown-item-login">Login</a>
 				<a class="dropdown-item" href="/register" id="dropdown-item-register">Sign up</a>

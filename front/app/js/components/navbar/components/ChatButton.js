@@ -1,3 +1,5 @@
+import { router } from "../../../main.js";
+
 export class ChatButton extends HTMLElement {
 	constructor() {
 		super();
@@ -14,7 +16,9 @@ export class ChatButton extends HTMLElement {
 			</button>
 		`;
 		
-		// Implement modal trigger here
+		this.querySelector('button').addEventListener('click', () => {
+			router.navigate('/chat');  // Need to add username to path?
+		});
 	}
 }
 customElements.define('chat-button', ChatButton);
