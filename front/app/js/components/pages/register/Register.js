@@ -1,7 +1,7 @@
-import { router } from '../../main.js';
+import { router } from '../../../main.js';
 // import '../../api/index.js';
-import { apiRequest } from '../../api/apiRequest.js'
-import { API_ENDPOINTS } from '../../api/endpoints.js';
+import { apiRequest } from '../../../api/apiRequest.js'
+import { API_ENDPOINTS } from '../../../api/endpoints.js';
 
 export class Register extends HTMLElement {
   constructor() {
@@ -87,8 +87,9 @@ export class Register extends HTMLElement {
 
     	try {
         	const response = await apiRequest('POST', API_ENDPOINTS.USERS, userData);
-			// const response = await apiRequest('POST', "https://run.mocky.io/v3/5567d4b4-2918-4ebc-9b1a-9fbace08419a", userData);
-        	console.log('Registration successful:', response);
+        	// console.log('Registration successful:', response);
+			// TO DO: Save Token somewhere
+
 			//----- Temporary ------------------------------------------
 			localStorage.setItem('isLoggedIn', 'true');
 			const { elo, ...filteredResponse } = response;
@@ -99,7 +100,14 @@ export class Register extends HTMLElement {
 			router.navigate(`/home`, response.user);
    		} catch (error) {
         	// Error handling
-			console.error('Error registering user:', error);
+			console.error('Error status:', error.status);
+			if (error.status === 422) {
+				// Show reison for validation error
+				const errorMsg = error.response[0]?.msg || 'Validation error';
+                console.error(errorMsg);
+			} else {
+				// Show another error message
+			}
     	}
 	}
 
@@ -125,15 +133,5 @@ export class Register extends HTMLElement {
 		}
 	}
 }
-
-// async handleRegister() {
-// 	  const username = this.querySelector("#inputUsername").value;
-//   const email = this.querySelector("#inputEmail").value;
-//   const password = this.querySelector("#inputPassword").value;
-//   const confirmPassword = this.querySelector("#inputConfirmPassword").value;
-
-// 	window.location.href = "/login";
-// };
-// }
 
 customElements.define("register-form", Register);

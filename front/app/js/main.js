@@ -18,6 +18,7 @@ router.addRoute("/dual-menu", "dual-menu", false, true);
 router.addRoute("/dual/:id", "dual", true, true);
 router.addRoute("/tournament-menu", "tournament-menu", false, true);
 router.addRoute("/tournament/:id", "tournament", true, true);
+router.addRoute("/chat", "chat-page", false, true);
 // Add all routes here
 
 document.addEventListener("DOMContentLoaded", () => {
