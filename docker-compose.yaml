@@ -1,6 +1,6 @@
 services:
   front:
-    container_name: frontend
+    container_name: front
     build:
       context: ./front
       dockerfile: Dockerfile
@@ -22,7 +22,7 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
 
   server:
-    container_name: backend
+    container_name: server
     build:
       context: ./server  # Contexte de la construction (répertoire contenant le Dockerfile de server)
       dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
@@ -74,7 +74,7 @@ services:
       - transcendance_network
 
   nginx:
-    container_name: server
+    container_name: nginx
     build:
       context: ./nginx
     volumes:
