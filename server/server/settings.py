@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings')
 
@@ -16,12 +17,13 @@ def main():
 
     execute_from_command_line(sys.argv)
 
+
 if __name__ == '__main__':
     main()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# TODO: Change the secret key in production 
+# TODO: Change the secret key in production
 SECRET_KEY = 'your-secret-key'
 
 # Environment variables
@@ -35,7 +37,7 @@ DATABASES = {
         'NAME': os.environ.get('POSTGRES_DB'),
         'USER': os.environ.get('POSTGRES_USER'),
         'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-        'HOST': os.environ.get('DATABASE_HOST', 'database'),  # Nom du service Docker
+        'HOST': os.environ.get('DATABASE_HOST', 'database'),  # Name of the docker service
         'PORT': os.environ.get('DATABASE_PORT', 5432),
     }
 }
@@ -168,5 +170,3 @@ AUTH_SETTINGS = {
     "password_min_len": 8,
     "check_attribute_similarity": True,
 }
-
-
