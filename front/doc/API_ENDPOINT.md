@@ -57,7 +57,7 @@
   "wins": 0,
   "loses": 0,
   "winrate": 0,
-  "worst_enemy": {
+  "worst_enemy": {  // can be null
     "username": "string",
     "avatar": "string",
     "elo": 0,
@@ -65,7 +65,7 @@
     "loses": 0,
     "winrate": 0
   },
-  "best_enemy": {
+  "best_enemy": {  // can be null
     "username": "string",
     "avatar": "string",
     "elo": 0,
