@@ -14,8 +14,8 @@ STATIC_VOLUME_PATH := ./volumes/static
 DOCKER_COMPOSE = docker-compose.yaml
 
 # Define the name of the services
-FRONTEND_SERVICE = frontend
-BACKEND_SERVICE = backend
+FRONTEND_SERVICE = front
+BACKEND_SERVICE = server
 DATABASE_SERVICE = database
 
 # Default to production mode
@@ -90,6 +90,9 @@ bash-backend:
 # Open a bash shell inside the frontend container
 bash-frontend:
 	docker-compose exec -it $(FRONTEND_SERVICE) bash
+
+fclean:
+	docker system prune -a
 
 # backup-volumes: create-backup-dirs
 # 	@echo "Starting unified backup of all volumes..."
