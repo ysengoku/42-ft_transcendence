@@ -1,33 +1,27 @@
 export class WorstEnemy extends HTMLElement {
 	constructor() {
 		super();
-		this.data = null;
+		this._data = null;
 	}
 
 	set data(value) {
-		this.data = value;
+		this._data = value;
 		this.render();
 	}
 
-	get data() {
-		return this.data;
-	}
-
 	connectedCallback() {
-		if (!this.data) {
-			this.render();
-		}
+		this.render();
 	}
 
 	render() {
-		if (this.data) {
+		if (this._data) {
 			this.innerHTML = `
-			<p>Username: ${this.data.username}</p>
-			<p>Avatars: ${this.data.avatar}</p>
-			<p>Wins: ${this.data.wins}</p>
-			<p>Loses: ${this.data.loses}</p>
-			<p>Win rate: ${this.data.winrate}</p>
-			<p>Elo: ${this.data.elo}</p>
+			<p>Username: ${this._data.username}</p>
+			<p>Avatars: ${this._data.avatar}</p>
+			<p>Wins: ${this._data.wins}</p>
+			<p>Loses: ${this._data.loses}</p>
+			<p>Win rate: ${this._data.winrate}</p>
+			<p>Elo: ${this._data.elo}</p>
 			`;
 		} else {
 			this.innerHTML = `

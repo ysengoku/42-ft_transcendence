@@ -2,7 +2,7 @@ import './components/index.js';
 import { apiRequest } from '../../../api/apiRequest.js';
 import { API_ENDPOINTS } from '../../../api/endpoints.js';
 
-export class UserProfile extends HTML {
+export class UserProfile extends HTMLElement {
 	constructor() {
 		super();
 		this.user = null;
@@ -47,7 +47,7 @@ export class UserProfile extends HTML {
 		const friendsCount = this.user.friends.length;
 
 		const formatedDate = new Date(this.user.date_joined).toLocaleDateString();
-		const onlineStatus = document.create('div');
+		const onlineStatus = document.createElement('div');
 		onlineStatus.className = this.user.is_online ? 'online' : 'offline';
 
 		// Temporary content
@@ -75,10 +75,10 @@ export class UserProfile extends HTML {
 			<p>Total score: ${this.user.scored_balls}</p>
 
 			<h3>Best enemy</h3>
-			<best-enemy user='${JSON.stringify(this.user)}'></best-enemy>
+			<best-enemy></best-enemy>
 
 			<h3>Worst enemy</h3>
-			<worst-enemy user='${JSON.stringify(this.user)}'></worst-enemy>
+			<worst-enemy></worst-enemy>
 
 			<h3>Friends</h3>
 			<p>Friends count: ${friendsCount}</p>
@@ -94,7 +94,12 @@ export class UserProfile extends HTML {
 		if (worstEnemy) {
 			worstEnemy.data = this.user.worst_enemy;
 		}
+
+		const bestEnemy = this.querySelector('best-enemy');
+		if (bestEnemy) {
+			bestEnemy.data = this.user.best_enemy;
+		}
 	}
 }
 
-customs.define('user-profile', UserProfile);
+customElements.define('user-profile', UserProfile);
