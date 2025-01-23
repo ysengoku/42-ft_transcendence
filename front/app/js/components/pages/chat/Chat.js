@@ -10,10 +10,10 @@ export class Chat extends HTMLElement {
 	render() {
 		this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
-			<h1>404 Page not found</h1>
+			<h1>Chat page</h1>
 		</div>
 		`;
 	}
 }
 
-customElements.define('chat', NotFoundComponent);
+customElements.define('chat-page', Chat);

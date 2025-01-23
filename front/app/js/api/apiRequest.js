@@ -25,9 +25,13 @@ export async function apiRequest(method, endpoint, data=null, isFileUpload=false
 		if (response.ok) {
 			return await response.json();
 		}
-		throw new Error(`Request failed: ${response.status}`);
+		console.error('Response:', response);
+		const errorData = await response.json();
+		const error = new Error(`Request failed: ${response.status}`);
+		error.response = errorData;
+		error.status = response.status;
+		throw error;
 	} catch (error) {
-		console.error('Error:', error);
 		throw error;
 	}
 }
