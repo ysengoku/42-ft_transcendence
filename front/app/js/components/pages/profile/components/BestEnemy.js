@@ -1,6 +1,12 @@
 export class BestEnemy extends HTMLElement {
 	constructor() {
 		super();
+		this._data = null;
+	}
+
+	set data(value) {
+		this._data = value;
+		this.render();
 	}
 
 	connectedCallback() {
@@ -8,14 +14,14 @@ export class BestEnemy extends HTMLElement {
 	}
 
 	render() {
-		if (this.user.best_enemy) {
+		if (this._data) {
 			this.innerHTML = `
-			<p>Username: ${this.user.best_enemy.username}</p>
-			<p>Avatars: ${this.user.best_enemy.avatar}</p>
-			<p>Wins: ${this.user.best_enemy.wins}</p>
-			<p>Loses: ${this.user.best_enemy.loses}</p>
-			<p>Win rate: ${this.user.best_enemy.winrate}</p>
-			<p>Elo: ${this.user.best_enemy.elo}</p>
+			<p>Username: ${this._data.username}</p>
+			<p>Avatars: ${this._data.avatar}</p>
+			<p>Wins: ${this._data.wins}</p>
+			<p>Loses: ${this._data.loses}</p>
+			<p>Win rate: ${this._data.winrate}</p>
+			<p>Elo: ${this._data.elo}</p>
 			`;
 		} else {
 			this.innerHTML = `
