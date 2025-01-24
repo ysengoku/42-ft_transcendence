@@ -1,32 +1,30 @@
-from django.shortcuts import get_object_or_404
-from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
-from django.http import Http404
-from ninja import NinjaAPI, File, UploadedFile, Form
-from ninja.files import UploadedFile
+from django.core.exceptions import ValidationError
+from django.http import HttpRequest
+from ninja import File, Form, NinjaAPI
 from ninja.errors import ValidationError as NinjaValidationError
-from typing import List, Optional, Dict, Annotated
+from ninja.files import UploadedFile
+
+from .models import Profile, User
 from .schemas import (
-    ProfileMinimalSchema,
+    Message,
     ProfileFullSchema,
+    ProfileMinimalSchema,
     SignUpSchema,
     UpdateUserChema,
-    Message,
     ValidationErrorMessageSchema,
 )
-from .models import User, Profile
-from pydantic import Field
 
 api = NinjaAPI()
 
 
-@api.get("users/", response=List[ProfileMinimalSchema])
-def get_users(request):
+@api.get("users/", response=list[ProfileMinimalSchema])
+def get_users(request: HttpRequest):
     return Profile.objects.prefetch_related("user").all()
 
 
 @api.get("users/{username}", response={200: ProfileFullSchema, 404: Message})
-def get_user(request, username: str):
+def get_user(request: HttpRequest, username: str):
     try:
         profile = Profile.objects.get(user__username=username)
         return 200, profile
@@ -34,8 +32,8 @@ def get_user(request, username: str):
         return 404, {"msg": f"User {username} not found."}
 
 
-@api.post("users/", response={201: ProfileMinimalSchema, 422: List[ValidationErrorMessageSchema]})
-def register_user(request, data: SignUpSchema):
+@api.post("users/", response={201: ProfileMinimalSchema, 422: list[ValidationErrorMessageSchema]})
+def register_user(request: HttpRequest, data: SignUpSchema):
     user = User(username=data.username, email=data.email)
     user.set_password(data.password)
     user.full_clean()
@@ -46,9 +44,14 @@ def register_user(request, data: SignUpSchema):
 # TODO: add authorization to settings change
 @api.post(
     "users/{username}",
-    response={200: ProfileMinimalSchema, 401: Message, 404: Message, 422: List[ValidationErrorMessageSchema]},
+    response={200: ProfileMinimalSchema, 401: Message, 404: Message, 422: list[ValidationErrorMessageSchema]},
 )
-def update_user(request, username: str, data: Form[UpdateUserChema], avatar_file: UploadedFile = File(description="User profile picture.", default=None)):
+def update_user(
+    request: HttpRequest,
+    username: str,
+    data: Form[UpdateUserChema],
+    avatar_file: UploadedFile = File(description="User profile picture.", default=None),
+):
     try:
         user = User.objects.get(username=username)
     except User.DoesNotExist:
@@ -67,17 +70,17 @@ def update_user(request, username: str, data: Form[UpdateUserChema], avatar_file
 
 
 @api.exception_handler(ValidationError)
-def handle_django_validation_error(request, exc: ValidationError):
+def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
     err_response = []
     for key in exc.message_dict:
-        for msg in exc.message_dict[key]:
-            err_response.append(
-                {
-                    "type": "validation_error",
-                    "loc": ["body", "payload", key],
-                    "msg": msg,
-                }
-            )
+        err_response = [
+            {
+                "type": "validation_error",
+                "loc": ["body", "payload", key],
+                "msg": msg,
+            }
+            for msg in exc.message_dict[key]
+        ]
 
     return api.create_response(
         request,
@@ -87,7 +90,7 @@ def handle_django_validation_error(request, exc: ValidationError):
 
 
 @api.exception_handler(NinjaValidationError)
-def handle_ninja_validation_error(request, exc: NinjaValidationError):
+def handle_ninja_validation_error(request: HttpRequest, exc: NinjaValidationError):
     return api.create_response(
         request,
         exc.errors,
