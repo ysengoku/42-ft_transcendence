@@ -1,4 +1,4 @@
-import logo from '../../../assets/img/sample-logo.svg';
+import logo from '/img/sample-logo.svg?url';
 
 export class Landing extends HTMLElement {
 	constructor() {
