@@ -1,7 +1,7 @@
-import { router } from '../../../main.js';
+import { router } from '@router';
 // import '../../api/index.js';
-import { apiRequest } from '../../../api/apiRequest.js'
-import { API_ENDPOINTS } from '../../../api/endpoints.js';
+import { apiRequest } from '@api/apiRequest.js'
+import { API_ENDPOINTS } from '@api/endpoints.js';
 
 export class Register extends HTMLElement {
   constructor() {

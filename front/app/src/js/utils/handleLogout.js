@@ -1,5 +1,5 @@
-import { router } from '../main.js'; 
-import '../components/navbar/components/DropdownMenu.js';
+import { router } from '@router'; 
+import '@components/navbar/components/DropdownMenu.js';
 
 export function handleLogout(event) {
 	event.preventDefault();

@@ -1,4 +1,4 @@
-import { router } from "../../../main.js";
+import { router } from "@router";
 
 export class ChatButton extends HTMLElement {
 	constructor() {

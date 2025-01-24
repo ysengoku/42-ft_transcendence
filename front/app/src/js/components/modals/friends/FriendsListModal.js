@@ -1,4 +1,4 @@
-import { simulateFetchFriendsList } from '../../../../mock/functions/simulateFetchFriendsList.js';
+import { simulateFetchFriendsList } from '@mock/functions/simulateFetchFriendsList.js';
 
 export class FriendsListModal extends HTMLElement {
 	constructor() {
