@@ -1,7 +1,7 @@
-import { ThemeController } from '../../../utils/ThemeController.js';
-import { handleLogout } from '../../../utils/handleLogout.js';
-import anonymousavatar from '../../../../assets/img/anonymous-avatar.svg'
-import { simulateFetchUserData } from '../../../../mock/functions/simulateFetchUserData.js';
+import { ThemeController } from '@utils/ThemeController.js';
+import { handleLogout } from '@utils/handleLogout.js';
+import anonymousavatar from '/img/anonymous-avatar.svg?url'
+import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
 export class DropdownMenu extends HTMLElement {
 	constructor() {

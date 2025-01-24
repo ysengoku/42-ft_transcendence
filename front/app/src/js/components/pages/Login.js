@@ -1,6 +1,6 @@
-import { router } from '../../main.js';
+import { router } from '@router';
 import './Home.js';
-import { simulateApiLogin } from '../../../mock/functions/mockApiLogin.js';
+import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
 
 export class LoginForm extends HTMLElement {
 	constructor() {
