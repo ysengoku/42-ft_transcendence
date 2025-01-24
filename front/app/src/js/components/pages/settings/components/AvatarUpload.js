@@ -16,7 +16,7 @@ export class AvatarUpload extends HTMLElement {
 		const avatarUploadMessage = this._user.avatar === default_avatar ? 'Change Avatar' : 'Upload Avatar';
 
 		this.innerHTML = `		
-		<div class="d-flex align-items-start mb-5 pb-4 border-bottom">
+		<div class="d-flex align-items-start pb-4 border-bottom">
 			<div class="col-7 profile-avatar-container me-3">
 				<img src="${this._user.avatar}" alt="User Avatar" class="rounded-circle">
 			</div>

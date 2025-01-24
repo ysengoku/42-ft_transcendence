@@ -1,12 +1,11 @@
 import { router } from '@router';
-import './Home.js';
 import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
 
 export class LoginForm extends HTMLElement {
 	constructor() {
 		super(); 
 	}
-	
+
 	connectedCallback() {
 		this.render();
 		this.setupLoginHandler();
@@ -19,7 +18,7 @@ export class LoginForm extends HTMLElement {
 		}
 
 		this.innerHTML = `
-		<div class="container d-flex flex-column justify-content-center align-items-center">
+		<div class="container d-flex flex-column justify-content-center align-items-center ">
 			<form class="w-100" id="loginForm">
   				<div class="mb-3">
     				<label for="inputUsername" class="form-label">Username</label>
@@ -31,22 +30,6 @@ export class LoginForm extends HTMLElement {
   				</div>
 				<div class="mb-3 py-3">
 					<button type="submit" id="loginSubmit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
-				</div>
-				<div class="mb-3">
-					<a href="/register" style="text-decoration: none;">Forgot password?</a>
-				</div>
-				<div class="mb-3 text-center py-3">
-      				<div class="d-flex align-items-center">
-        				<hr class="flex-grow-1">
-        				<span class="mx-2">OR</span>
-        				<hr class="flex-grow-1">
-      				</div>
-				</div>
-				<div class="mb-3">
-  					<a class="btn btn-link w-100 py-2" style="text-decoration: none;" href="/register" role="button">Not registered yet? <strong>Sign up now</strong></a>
-				</div>
-				<div class="mb-3">
-  					<a class="btn btn-outline-primary w-100 py-2 my-2" onclick="window.location.href='/';">Login with 42</a>
 				</div>
 			</form>
 		</div>
