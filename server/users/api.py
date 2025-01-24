@@ -25,9 +25,13 @@ def get_users(request):
     return Profile.objects.prefetch_related("user").all()
 
 
-@api.get("users/{username}", response=ProfileFullSchema)
+@api.get("users/{username}", response={200: ProfileFullSchema, 404: Message})
 def get_user(request, username: str):
-    return get_object_or_404(Profile, user__username=username)
+    try:
+        profile = Profile.objects.get(user__username=username)
+        return 200, profile
+    except Profile.DoesNotExist:
+        return 404, {"msg": f"User {username} not found."}
 
 
 @api.post("users/", response={201: ProfileMinimalSchema, 422: List[ValidationErrorMessageSchema]})
