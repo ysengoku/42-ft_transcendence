@@ -43,6 +43,10 @@ class Profile(models.Model):
         return calculate_winrate(self.wins, self.loses)
 
     @property
+    def total_matches(self):
+        return self.matches.count()
+
+    @property
     def scored_balls(self):
         scored_balls = (
             self.matches.aggregate(
