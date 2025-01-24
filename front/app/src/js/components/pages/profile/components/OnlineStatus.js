@@ -3,7 +3,6 @@ export class OnlineStatus extends HTMLElement {
 		super();
 		this.isOnline = false;
 		this.statusIndicator = null;
-        this.statusText = null;
 	}
 
 	static get observedAttributes() {
@@ -20,18 +19,17 @@ export class OnlineStatus extends HTMLElement {
 	connectedCallback() {
         this.statusIndicator = document.createElement('span');
         this.statusIndicator.className = 'profile-status-indicator ms-3';
-        this.statusText = document.createElement('span');
-        this.statusText.className = 'status-text ms-2';
 
         this.appendChild(this.statusIndicator);
-        this.appendChild(this.statusText);
         this.updateStatus();
 	}
 
 	updateStatus() {
+        if (!this.statusIndicator) {
+            return;
+        }
 		console.log('Is Online: ', this.isOnline);
 		this.statusIndicator.className = `status-indicator ms-3 ${this.isOnline ? 'online' : 'offline'}`;
-		this.statusText.textContent = this.isOnline ? 'online' : 'offline'; 
 	}
 
 	setStatus(isOnline) {

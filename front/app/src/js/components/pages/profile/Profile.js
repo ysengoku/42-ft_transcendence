@@ -1,6 +1,6 @@
 import './components/index.js';
-import { apiRequest } from '../../../api/apiRequest.js';
-import { API_ENDPOINTS } from '../../../api/endpoints.js';
+import { apiRequest } from '@api/apiRequest.js';
+import { API_ENDPOINTS } from '@api/endpoints.js';
 
 export class UserProfile extends HTMLElement {
 	constructor() {
@@ -33,22 +33,19 @@ export class UserProfile extends HTMLElement {
         }
 		console.log('User data:', this.user);
 
-		// Online status
-		// const onlineStatus = document.create('online-status');
-		// onlineStatus.setAttribute('online', this.user.is_online);
-
 		// Member since - Date formatting
-		// const date = new Date(this.user.date_joined);
-		// const formatedDate = new Intl.DateTimeFormat('en-US', {
-		// 	month: 'long',
-		// 	day: 'numeric',
-		// 	year: 'numeric'
-		// }).format(date);
+		const date = new Date(this.user.date_joined);
+		const formatedDate = new Intl.DateTimeFormat('en-US', {
+			month: 'long',
+			day: 'numeric',
+			year: 'numeric'
+		}).format(date);
+		
 		const friendsCount = this.user.friends.length;
-
-		const formatedDate = new Date(this.user.date_joined).toLocaleDateString();
-		const onlineStatus = document.createElement('div');
-		onlineStatus.className = this.user.is_online ? 'online' : 'offline';
+		
+		// Online status
+		const onlineStatus = document.createElement('online-status');
+		onlineStatus.setAttribute('online', this.user.is_online);
 
 		// Temporary content
 		this.innerHTML = `
@@ -68,7 +65,7 @@ export class UserProfile extends HTMLElement {
 			<p>Avatar path: ${this.user.avatar}</p>
 			<p>Elo: ${this.user.elo}</p>
 
-			<p>Member since: ${formatedDate}</p>
+			<p>Joined on: ${formatedDate}</p>
 			<p>Wins: ${this.user.wins}</p>
 			<p>Loses: ${this.user.loses}</p>
 			<p>Win rate: ${this.user.winrate}</p>
