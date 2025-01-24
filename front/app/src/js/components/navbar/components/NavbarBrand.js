@@ -1,3 +1,5 @@
+import navbarBrand from '../../../../../public/img/sample-logo.svg';
+
 export class NavbarBrand extends HTMLElement {
 	constructor() {
 		super();
@@ -17,7 +19,7 @@ export class NavbarBrand extends HTMLElement {
 		link.href = href;
 
 		const img = document.createElement('img');
-		img.src = '/assets/img/sample-logo.svg';
+		img.src = navbarBrand;
 		img.height = 40;
 		img.alt = 'transcendence';
 		img.classList.add('d-inline-block', 'align-top');
