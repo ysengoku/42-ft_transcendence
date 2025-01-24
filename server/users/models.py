@@ -1,12 +1,16 @@
 from django.db import models, connection
 from django.contrib.auth.models import AbstractUser
 from django.db.models import F, When, Case, Sum, Count, Value, IntegerField, Q
+from django.core.exceptions import ValidationError
 from .stats_calc import calculate_winrate, calculate_elo_change
 import os
 
 
 class User(AbstractUser):
-    pass
+    def validate_unique(self, *args, **kwargs):
+        if User.objects.filter(username__iexact=self.username).exists():
+            raise ValidationError({"msg": "A user with that username already exists."})
+        super().validate_unique(*args, **kwargs)
 
 
 class Profile(models.Model):
@@ -107,6 +111,7 @@ class Profile(models.Model):
         )
 
     def delete_avatar(self):
+        self.profile_picture.delete()
         if self.profile_picture and os.path.isfile(self.profile_picture.path):
             os.remove(self.profile_picture.path)
 
