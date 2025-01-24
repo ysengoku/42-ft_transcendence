@@ -1,4 +1,5 @@
 from ninja import Schema, Field
+from ninja.errors import ValidationError as NinjaValidationError
 from datetime import datetime
 from typing import List, Optional, Dict
 from .models import Profile
@@ -67,6 +68,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
     date_joined: datetime = Field(alias="user.date_joined")
     wins: int
     loses: int
+    total_matches: int
     winrate: int | None = Field(
         description="null if the player didn't play any games yet."
     )
@@ -107,32 +109,33 @@ class ProfileFullSchema(ProfileMinimalSchema):
         return obj.friends.all()[:10]
 
 
-def _validate_password(data) -> List[Dict]:
-    err_list = []
-    if data.password != data.password_repeat:
-        err_list.append({"msg": "Passwords do not match."})
-    if len(data.password) < settings.AUTH_SETTINGS["password_min_len"]:
-        err_list.append({"msg": "Password should have at least 8 characters."})
-    if settings.AUTH_SETTINGS["check_attribute_similarity"] and getattr(data, "username", False) and data.username in data.password:
-        err_list.append({"msg": "Password should not contain username."})
-
-    return err_list
-
-
-class SignUpSchema(Schema):
-    username: str
-    email: str
+class PasswordValidationSchema(Schema):
     password: str
     password_repeat: str
 
-    @model_validator(mode="before")
-    @staticmethod
-    def validate_new_user_data(data):
-        err_list = _validate_password(data)
+    def validate_password(self) -> List[Dict]:
+        err_list = []
+        if self.password != self.password_repeat:
+            err_list.append({"msg": "Passwords do not match."})
+        if len(self.password) < settings.AUTH_SETTINGS["password_min_len"]:
+            err_list.append({"msg": "Password should have at least 8 characters."})
+        if settings.AUTH_SETTINGS["check_attribute_similarity"] and self.username and self.username in self.password:
+            err_list.append({"msg": "Password should not contain username."})
+
+        return err_list
+
+
+class SignUpSchema(PasswordValidationSchema):
+    username: str
+    email: str
+
+    @model_validator(mode="after")
+    def validate_new_user_data(self):
+        err_list = self.validate_password()
 
         if err_list:
             raise ValidationError({"msg": err_list})
-        return data
+        return self
 
 
 class UpdateUserChema(Schema):
@@ -142,14 +145,11 @@ class UpdateUserChema(Schema):
     password: Optional[str] = None
     password_repeat: Optional[str] = None
 
-    @model_validator(mode="before")
-    @staticmethod
-    def validate_updated_user_data(data):
-        if not getattr(data, "password", None) and not getattr(data, "password_repeat", None):
-            return data
-
-        err_list = _validate_password(data)
+    @model_validator(mode="after")
+    def validate_updated_user_data(self):
+        if self.password and self.password_repeat:
+            err_list = self.validate_password()
 
         if err_list:
             raise ValidationError({"msg": err_list})
-        return data
+        return self
