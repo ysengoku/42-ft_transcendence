@@ -1,11 +1,11 @@
-from ninja import Schema, Field
-from ninja.errors import ValidationError as NinjaValidationError
 from datetime import datetime
-from typing import List, Optional, Dict
-from .models import Profile
-from django.core.exceptions import ValidationError
-from pydantic import model_validator
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from ninja import Field, Schema
+from pydantic import model_validator
+
+from .models import Profile
 
 
 class Message(Schema):
@@ -13,11 +13,10 @@ class Message(Schema):
 
 
 class ValidationErrorMessageSchema(Message):
-    type: str = Field(
-        description="Type of the error. can be missing, validation_error or some kind of type error."
-    )
-    loc: List[str] = Field(
-        description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in the list is the name of failed field."
+    type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
+    loc: list[str] = Field(
+        description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
+        "the list is the name of failed field.",
     )
 
 
@@ -52,12 +51,8 @@ class EloDataPointSchema(Schema):
     """
 
     date: datetime
-    elo_change_signed: int = Field(
-        description="How much elo user gained or lost from this match."
-    )
-    elo_result: int = Field(
-        description="Resulting elo after elo gain or loss from this match."
-    )
+    elo_change_signed: int = Field(description="How much elo user gained or lost from this match.")
+    elo_result: int = Field(description="Resulting elo after elo gain or loss from this match.")
 
 
 class ProfileFullSchema(ProfileMinimalSchema):
@@ -69,22 +64,18 @@ class ProfileFullSchema(ProfileMinimalSchema):
     wins: int
     loses: int
     total_matches: int
-    winrate: int | None = Field(
-        description="null if the player didn't play any games yet."
-    )
+    winrate: int | None = Field(description="null if the player didn't play any games yet.")
     worst_enemy: OpponentProfileAndStatsSchema | None = Field(
-        description="Player who won the most against current user."
+        description="Player who won the most against current user.",
     )
     best_enemy: OpponentProfileAndStatsSchema | None = Field(
-        description="Player who lost the most against current user."
+        description="Player who lost the most against current user.",
     )
     scored_balls: int = Field(description="How many balls player scored overall.")
-    elo_history: List[EloDataPointSchema] = Field(
-        description="List of data points for elo changes of the last 10 games."
+    elo_history: list[EloDataPointSchema] = Field(
+        description="List of data points for elo changes of the last 10 games.",
     )
-    friends: List[ProfileMinimalSchema] = Field(
-        description="List of first ten friends.", max_length=10
-    )
+    friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -113,7 +104,7 @@ class PasswordValidationSchema(Schema):
     password: str
     password_repeat: str
 
-    def validate_password(self) -> List[Dict]:
+    def validate_password(self) -> list[dict]:
         err_list = []
         if self.password != self.password_repeat:
             err_list.append({"msg": "Passwords do not match."})
@@ -139,11 +130,11 @@ class SignUpSchema(PasswordValidationSchema):
 
 
 class UpdateUserChema(Schema):
-    username: Optional[str] = None
-    email: Optional[str] = None
-    old_password: Optional[str] = None
-    password: Optional[str] = None
-    password_repeat: Optional[str] = None
+    username: str | None = None
+    email: str | None = None
+    old_password: str | None = None
+    password: str | None = None
+    password_repeat: str | None = None
 
     @model_validator(mode="after")
     def validate_updated_user_data(self):
