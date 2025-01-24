@@ -1,13 +1,14 @@
 from django.core.management.base import BaseCommand
-from users.models import User, Match, Profile
+
+from users.models import Match, Profile, User
 
 
+# ruff: noqa: S106
 class Command(BaseCommand):
-    help = 'Populates db with a dummy data'
+    help = "Populates db with a dummy data"
 
-    def handle(self, **kwargs):
+    def handle(self, **kwargs) -> None:
         if User.objects.count() != 0:
-            print("Database is not empty.")
             return
 
         User.objects.create_superuser(username="admin", password="123")
@@ -74,7 +75,7 @@ class Command(BaseCommand):
         Match.objects.resolve(yuko, eldar, 5, 4)
         Match.objects.resolve(yuko, eldar, 2, 1)
 
-        for i in range(10):
+        for _i in range(10):
             Match.objects.resolve(yuko, sad_hampter, 5, 1)
             Match.objects.resolve(eldar, sad_hampter, 6, 1)
             Match.objects.resolve(celia, sad_hampter, 11, 1)
