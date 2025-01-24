@@ -1,3 +1,5 @@
+import avatarPlaceholder from '../../../../../../public/img/avatar-placeholder.svg';
+
 export class AvatarUploadModal extends HTMLElement {
 	constructor() {
 		super();
@@ -23,7 +25,7 @@ export class AvatarUploadModal extends HTMLElement {
 					<div class="modal-body">
         				<div class="avatar-preview-container">
          					<div class="avatar-wrapper">
-            					<img id="avatar-upload-preview" src="/assets/img/avatar-placeholder.svg" alt="Avatar Preview" class="avatar-preview">
+            					<img id="avatar-upload-preview" src="${avatarPlaceholder}" alt="Avatar Preview" class="avatar-preview">
         					</div>
         				</div>
 						<div class="mb-3">

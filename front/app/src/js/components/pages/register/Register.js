@@ -23,7 +23,7 @@ export class Register extends HTMLElement {
 
 	render() {
 		this.innerHTML = `
-    		<div class='container-fluid d-flex flex-column justify-content-center align-items-center'>
+    		<div class='container d-flex flex-column justify-content-center align-items-center'>
       			<form class='w-100'>
         			<div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
