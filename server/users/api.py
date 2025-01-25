@@ -73,14 +73,11 @@ def update_user(
 def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
     err_response = []
     for key in exc.message_dict:
-        err_response = [
-            {
-                "type": "validation_error",
-                "loc": ["body", "payload", key],
-                "msg": msg,
-            }
-            for msg in exc.message_dict[key]
-        ]
+        err_response.extend({
+            "type": "validation_error",
+            "loc": ["body", "payload", key],
+            "msg": msg,
+        } for msg in exc.message_dict[key])
 
     return api.create_response(
         request,
