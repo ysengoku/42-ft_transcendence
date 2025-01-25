@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import magic
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -11,7 +12,7 @@ from .stats_calc import calculate_elo_change, calculate_winrate
 class User(AbstractUser):
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
         if User.objects.filter(username__iexact=self.username).exists():
-            raise ValidationError({"msg": "A user with that username already exists."})
+            raise ValidationError({"username": "A user with that username already exists."})
         kwargs["exclude"] = {"username"}
         super().validate_unique(*args, **kwargs)
 
