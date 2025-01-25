@@ -1,5 +1,4 @@
-from django.contrib.auth import authenticate
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.http import HttpRequest
 from ninja import File, Form, NinjaAPI
 from ninja.errors import ValidationError as NinjaValidationError
@@ -50,22 +49,18 @@ def update_user(
     request: HttpRequest,
     username: str,
     data: Form[UpdateUserChema],
-    avatar_file: UploadedFile = File(description="User profile picture.", default=None),
+    new_profile_picture: UploadedFile | None = File(description="User profile picture.", default=None),
 ):
     try:
         user = User.objects.get(username=username)
     except User.DoesNotExist:
         return 404, {"msg": f"User {username} not found."}
-    if data.password and data.password_repeat:
-        is_old_password_valid = authenticate(request, username=user.username, password=data.old_password)
-        if not is_old_password_valid:
-            return 401, {"msg": "Old password is not correct."}
 
-    user_as_dict = user.__dict__
-    for attr in data:
-        if attr in user_as_dict:
-            user_as_dict[attr] = data[attr]
-    user.full_clean()
+    try:
+        user.update_user(data, new_profile_picture)
+    except PermissionDenied:
+        return 401, {"msg": "Old password is invalid."}
+
     return user.profile
 
 
@@ -73,11 +68,14 @@ def update_user(
 def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
     err_response = []
     for key in exc.message_dict:
-        err_response.extend({
-            "type": "validation_error",
-            "loc": ["body", "payload", key],
-            "msg": msg,
-        } for msg in exc.message_dict[key])
+        err_response.extend(
+            {
+                "type": "validation_error",
+                "loc": ["body", "payload", key],
+                "msg": msg,
+            }
+            for msg in exc.message_dict[key]
+        )
 
     return api.create_response(
         request,
