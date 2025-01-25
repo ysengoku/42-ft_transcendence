@@ -12,7 +12,7 @@ class User(AbstractUser):
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
         if User.objects.filter(username__iexact=self.username).exists():
             raise ValidationError({"msg": "A user with that username already exists."})
-
+        kwargs["exclude"] = {"username"}
         super().validate_unique(*args, **kwargs)
 
 
