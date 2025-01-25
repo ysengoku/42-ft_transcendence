@@ -1,20 +1,68 @@
 from pathlib import Path
 
 import magic
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
 from django.db.models import Case, Count, F, Q, Sum, When
+from ninja.files import UploadedFile
 
 from .stats_calc import calculate_elo_change, calculate_winrate
+from .utils import merge_err_dicts
 
 
 class User(AbstractUser):
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
-        if User.objects.filter(username__iexact=self.username).exists():
-            raise ValidationError({"username": "A user with that username already exists."})
+        if "username" not in kwargs["exclude"] and User.objects.filter(username__iexact=self.username).exists():
+            raise ValidationError({"username": ["A user with that username already exists."]})
         kwargs["exclude"] = {"username"}
         super().validate_unique(*args, **kwargs)
+
+    def update_user(self, data, new_profile_picture: UploadedFile | None):
+        err_dict = {}
+
+        if new_profile_picture:
+            try:
+                self.profile.update_avatar(new_profile_picture)
+            except ValidationError as exc:
+                err_dict = merge_err_dicts(err_dict, exc.error_dict)
+
+        if data.old_password and not data.password:
+            err_dict = merge_err_dicts(err_dict, {"password": ["Please enter your new password."]})
+
+        if data.password and data.password_repeat:
+            is_old_password_valid = authenticate(username=self.username, password=data.old_password)
+            if not is_old_password_valid:
+                raise PermissionDenied
+            if data.old_password == data.password:
+                err_dict = merge_err_dicts(
+                    err_dict,
+                    {"password": ["New password cannot be the same as the old password."]},
+                )
+            self.set_password(data.password)
+            data.password = ""
+
+        if data.username == self.username:
+            err_dict = merge_err_dicts(err_dict, {"username": ["New username cannot be the same as the old username."]})
+
+        for key, val in data:
+            if val and hasattr(self, key):
+                setattr(self, key, val)
+
+        try:
+            if data.username and data.username != self.username:
+                self.full_clean()
+            else:
+                self.full_clean(exclude={"username"})
+        except ValidationError as exc:
+            err_dict = merge_err_dicts(err_dict, exc.error_dict)
+
+        if err_dict:
+            raise ValidationError(err_dict)
+        self.save()
+        self.profile.save()
+        return self
 
 
 class Profile(models.Model):
@@ -112,8 +160,38 @@ class Profile(models.Model):
         if self.profile_picture and Path.is_file(self.profile_picture.path):
             Path.unlink(self.profile_picture.path)
 
-    def update_avatar(self, new_profile_picture) -> None:
+    def update_avatar(self, new_avatar) -> None:
+        self.validate_avatar(new_avatar)
         self.delete_avatar()
+        self.profile_picture = new_avatar
+
+    def validate_avatar(self, file: UploadedFile) -> None:
+        """
+        Validates uploaded avatar for having a correct extension being a valid image.
+        Supported file types: png, jpg, webp.
+        Maximum size of the file is 10mb.
+        """
+        max_file_size = 10_000_000
+
+        err_dict = {}
+        invalid_file_type_msg = {"avatar": ["Invalid file type. Supported file types: .png, .jpg, .webp."]}
+        file_is_too_big_msg = {"avatar": ["File is too big. Please upload a file that weights less than 10mb."]}
+
+        accepted_file_extensions = [".png", ".jpg", ".jpeg", ".webp"]
+        accepted_mime_types = ["image/png", "image/jpeg", "image/webp"]
+        file_mime_type = magic.from_buffer(file.read(1024), mime=True)
+        if (
+            Path(file.name).suffix not in accepted_file_extensions
+            or file.content_type not in accepted_mime_types
+            or file_mime_type not in accepted_mime_types
+        ):
+            merge_err_dicts(err_dict, invalid_file_type_msg)
+
+        if file.size >= max_file_size:
+            merge_err_dicts(err_dict, file_is_too_big_msg)
+
+        if err_dict:
+            raise ValidationError(err_dict)
 
 
 class MatchManager(models.Manager):
