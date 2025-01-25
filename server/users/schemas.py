@@ -7,6 +7,7 @@ from pydantic import model_validator
 
 from .models import Profile
 
+# ruff: noqa: S105
 
 class Message(Schema):
     msg: str
@@ -105,15 +106,16 @@ class PasswordValidationSchema(Schema):
     password_repeat: str
 
     def validate_password(self) -> list[dict]:
-        err_list = []
+        err_dict = {}
+        err_dict["password"] = []
+        err_dict["password_repeat"] = []
         if self.password != self.password_repeat:
-            err_list.append({"msg": "Passwords do not match."})
+            err_dict["password_repeat"].append("Passwords do not match.")
         if len(self.password) < settings.AUTH_SETTINGS["password_min_len"]:
-            err_list.append({"msg": "Password should have at least 8 characters."})
+            err_dict["password"].append("Password should have at least 8 characters.")
         if settings.AUTH_SETTINGS["check_attribute_similarity"] and self.username and self.username in self.password:
-            err_list.append({"msg": "Password should not contain username."})
-
-        return err_list
+            err_dict["password"].append("Password should not contain username.")
+        return {k: v for k, v in err_dict.items() if v}
 
 
 class SignUpSchema(PasswordValidationSchema):
@@ -122,10 +124,10 @@ class SignUpSchema(PasswordValidationSchema):
 
     @model_validator(mode="after")
     def validate_new_user_data(self):
-        err_list = self.validate_password()
+        err_dict = self.validate_password()
 
-        if err_list:
-            raise ValidationError({"msg": err_list})
+        if err_dict:
+            raise ValidationError(err_dict)
         return self
 
 
@@ -138,9 +140,10 @@ class UpdateUserChema(Schema):
 
     @model_validator(mode="after")
     def validate_updated_user_data(self):
+        err_dict = {}
         if self.password and self.password_repeat:
-            err_list = self.validate_password()
+            err_dict = self.validate_password()
 
-        if err_list:
-            raise ValidationError({"msg": err_list})
+        if err_dict:
+            raise ValidationError(err_dict)
         return self
