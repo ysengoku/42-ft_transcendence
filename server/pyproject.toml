@@ -10,17 +10,17 @@ select = ["ALL"]
 fixable = ["ALL"]
 ignore = [
     #### modules
-    "ANN",   # obligatory annotations
-    "C90",   # complexity check
-    "EXE",   # executable, we don't use them
-    "RUF",   # ruff-specific rules
-    "EM",    # errmsg formatting
-    "ARG",   # unused-arguments
-    "FBT",   # boolean trap
-    "TRY",   # try-catch block rules
+    "ANN",  # obligatory annotations
+    "C90",  # complexity check
+    "EXE",  # executable, we don't use them
+    "RUF",  # ruff-specific rules
+    "EM",   # errmsg formatting
+    "ARG",  # unused-arguments
+    "FBT",  # boolean trap
+    "TRY",  # try-catch block rules
 
     #### specific rules
-    "D100",   # ignore missing docs
+    "D100",     # ignore missing docs
     "D101",
     "D102",
     "D103",
@@ -34,11 +34,12 @@ ignore = [
     "D400",
     "D401",
     "D415",
-    "E402",   # false positives for local imports
-    "TRY003", # external messages in exceptions are too verbose
+    "E402",    # false positives for local imports
+    "TRY003",  # external messages in exceptions are too verbose
     "TD002",
     "TD003",
-    "FIX002", # too verbose descriptions of todos
+    "FIX002",  # too verbose descriptions of todos
+    "PLR0912", # limit for conditions inside of one function
     "B008",
     "B018",
 ]
