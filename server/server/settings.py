@@ -155,5 +155,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 AUTH_SETTINGS = {
     "password_min_len": 8,
+    "repeats_allowed": 3,
     "check_attribute_similarity": True,
+    "check_is_diverse": True,
 }

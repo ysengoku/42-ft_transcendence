@@ -1,8 +1,9 @@
 # Django is the main framework for the back-end of the web application.
 Django==5.1.4
 
-# Pillow is a Python Imaging Library that adds image processing capabilities to your Python interpreter.
+# Pillow for image processing, python-magic for file identification.
 pillow==11.1.0
+python-magic==0.4.27
 
 # Django Channels for handling WebSockets and background tasks
 channels==4.0.0
