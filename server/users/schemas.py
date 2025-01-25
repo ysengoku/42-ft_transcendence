@@ -131,7 +131,7 @@ class SignUpSchema(PasswordValidationSchema):
         return self
 
 
-class UpdateUserChema(Schema):
+class UpdateUserChema(PasswordValidationSchema):
     username: str | None = None
     email: str | None = None
     old_password: str | None = None
@@ -141,7 +141,7 @@ class UpdateUserChema(Schema):
     @model_validator(mode="after")
     def validate_updated_user_data(self):
         err_dict = {}
-        if self.password and self.password_repeat:
+        if self.password or self.password_repeat:
             err_dict = self.validate_password()
 
         if err_dict:
