@@ -1,23 +1,16 @@
 export class ProfileUserInfo extends HTMLElement {
 	constructor() {
 		super();
-		this._username = null;
-		this._join_date = null;
-		this._titre = null;
+		this._data = {
+			username: null,
+			join_date: null,
+			titre: null
+		}
+
 	}
 
-	set username(username) {
-		this._username = username;
-		this.render();
-	}
-
-	set join_date(join_date) {
-		this._join_date = join_date;
-		this.render();
-	}
-
-	set titre(titre) {
-		this._titre = titre;
+	set data(value) {
+		this._data = value;
 		this.render();
 	}
 
@@ -26,14 +19,14 @@ export class ProfileUserInfo extends HTMLElement {
 	}
 
 	render() {
-		const username = this._username;
-		const date = new Date(this._join_date);
+		const username = this._data.username;
+		const date = new Date(this._data.join_date);
 		const formatedDate = new Intl.DateTimeFormat('en-US', {
 			month: 'short',
 			day: 'numeric',
 			year: 'numeric'
 		}).format(date);
-		// const titre = this._titre;
+		// const titre = this._data.titre;
 		const titre = 'titre';
 
 		this.innerHTML = `
