@@ -167,3 +167,4 @@ cython_debug/
 .vscode/
 
 node_modules/
+/front/app/static/
