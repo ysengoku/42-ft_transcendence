@@ -171,7 +171,7 @@ class Profile(models.Model):
         Supported file types: png, jpg, webp.
         Maximum size of the file is 10mb.
         """
-        max_file_size = 10_000_000
+        max_file_size = 1024 * 1024 * 10
 
         err_dict = {}
         invalid_file_type_msg = {"avatar": ["Invalid file type. Supported file types: .png, .jpg, .webp."]}
@@ -185,10 +185,10 @@ class Profile(models.Model):
             or file.content_type not in accepted_mime_types
             or file_mime_type not in accepted_mime_types
         ):
-            merge_err_dicts(err_dict, invalid_file_type_msg)
+            err_dict = merge_err_dicts(err_dict, invalid_file_type_msg)
 
         if file.size >= max_file_size:
-            merge_err_dicts(err_dict, file_is_too_big_msg)
+            err_dict = merge_err_dicts(err_dict, file_is_too_big_msg)
 
         if err_dict:
             raise ValidationError(err_dict)
