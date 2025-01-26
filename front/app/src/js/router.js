@@ -18,7 +18,7 @@ const router = (() => {
 
                 if (requiresAuth && !this.isLoggedIn()) {
                     this.navigate('/login');
-                    return;				
+                    return;
                 }
                 if (isDynamic) {
                     // console.log('param: ', param);
@@ -26,7 +26,8 @@ const router = (() => {
                 } else {
                     this.renderComponent(componentTag);
                 }
-            } else { console.error(`Route not found for path: ${path}`);
+            } else {
+                console.error(`Route not found for path: ${path}`);
                 this.renderComponent('not-found');
             }
         }
@@ -56,7 +57,7 @@ const router = (() => {
             const param = {};
             for (let i = 0; i < routePathParts.length; i++) {
                 if (routePathParts[i].startsWith(':')) {
-                    param[routePathParts[i].slice(1)] = pathParts[i];  
+                    param[routePathParts[i].slice(1)] = pathParts[i];
                 } else if (routePathParts[i] !== pathParts[i]) {
                     return null;
                 }
@@ -107,7 +108,6 @@ const router = (() => {
             }
         }
     }
-
     return new Router()
 })();
 
@@ -125,15 +125,15 @@ router.addRoute("/chat", "chat-page", false, true);
 // Add all routes here
 
 document.addEventListener("DOMContentLoaded", () => {
-  const navbarContainer = document.getElementById("navbar-container");
-  if (navbarContainer) {
-    navbarContainer.innerHTML = "<navbar-component></navbar-component>";
-  } else {
-    console.log("Error");
-  }
-  router.init();
-  const currentPath = window.location.pathname || "/";
-  router.navigate(currentPath);
+    const navbarContainer = document.getElementById("navbar-container");
+    if (navbarContainer) {
+        navbarContainer.innerHTML = "<navbar-component></navbar-component>";
+    } else {
+        console.log("Error");
+    }
+    router.init();
+    const currentPath = window.location.pathname || "/";
+    router.navigate(currentPath);
 });
 
 export { router };
