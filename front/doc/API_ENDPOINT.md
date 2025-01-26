@@ -5,7 +5,6 @@
 ### Endpoint: /api/users/
 
 #### GET
-
 ##### Response
 200 (OK)
 ```json
@@ -20,7 +19,6 @@
 ```
 
 #### POST
-
 ##### Request body
 ```json
 {
@@ -32,13 +30,26 @@
 ```
 
 ##### Response
-201(Created)
+201 (Created)
 ```json
 {
 	"username": "string",
 	"avatar": "string",
 	"elo": 1000
 }
+```
+
+422	(Unprocessable Entity)
+```json
+[
+  {
+    "msg": "string",  // Reason why registration failed
+    "type": "string",
+    "loc": [
+      "string"
+    ]
+  }
+]
 ```
 
 ---
@@ -90,4 +101,61 @@
     }
   ]
 }
+```
+
+404	(Not Found)
+```json
+{
+  "msg": "string"
+}
+```
+
+#### POST
+##### Request body
+```
+# DataForm
+password (string)
+password_repeat (string)
+username (string)
+email (string)
+old_password (string)
+new_profile_picture (string($binary))
+```
+
+##### Response
+200 (OK)
+```json
+{
+  "username": "string",
+  "avatar": "string",
+  "elo": 0,
+  "is_online": true
+}
+```
+
+401 (Unauthorized)
+```json
+{
+  "msg": "string"
+}
+```
+
+404 (Not Found)
+```json
+{
+  "msg": "string"
+}
+```
+
+422 (Unprocessable Entity)
+```json
+[
+  {
+    "msg": "string",
+    "type": "string",
+    "loc": [
+      "string"
+    ]
+  }
+]
 ```

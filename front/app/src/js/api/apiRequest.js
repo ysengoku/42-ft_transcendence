@@ -3,7 +3,6 @@ export async function apiRequest(method, endpoint, data=null, isFileUpload=false
 	const options = {
 		method,
 		headers: {
-			// 'Content-Type': 'application/json',
 			...(isFileUpload ? {} : { 'Content-Type': 'application/json' }),
 		},
 		credentials: "include",  // Need after JWT integration
