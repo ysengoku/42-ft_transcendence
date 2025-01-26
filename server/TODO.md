@@ -7,15 +7,15 @@
     - [x] Implement misc stats like the scored balls or best/worst enemy.
     - [ ] Implement tournament history.
     - [ ] Implement user settings update.
-    - [ ] Implement validation for the images of user avatars.
-        - [ ] Images should not be too big, bigger than 10mb.
-        - [ ] Accepted formats should be: .png, .jpg, .webp.
-            - [ ] Both filenames and their contents should be checked.
-            - [ ] Frontend should have `accept` attribue with the list of those file types.
+        - [ ] Implement validation for the images of user avatars.
+            - [x] Images should not be too big, bigger than 10mb.
+            - [~] Accepted formats should be: .png, .jpg, .webp.
+                - [x] Both filenames and their contents should be checked.
+                - [ ] Frontend should have `accept` attribue with the list of those file types.
 - [ ] User creation.
     - [x] User email should be valid.
         - [ ] OPTIONAL: send a validation email to a user.
-    - [ ] Implement validation of passwords on their security.
+    - [~] Implement validation of passwords on their security.
         - [x] Passwords should have min len.
         - [x] Passwords should not contain username.
         - [ ] Passwords should have at least 1 digit and 1 letter.
