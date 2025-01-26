@@ -61,6 +61,16 @@ export class UserProfile extends HTMLElement {
     			background-color: gray;
     			display: inline-block;
 			}
+			hr {
+  				height: 0;
+  				margin: 0;
+  				padding: 0;
+  				border: 0;
+			}
+  			.line {
+  				border-top: 4px double #594639;
+				opacity: 1;
+  			}
 			.online-status-indicator.online {
     			background-color: green;
 			}
@@ -87,35 +97,34 @@ export class UserProfile extends HTMLElement {
 		<div class="container-fluid d-grid gap-3">
 			<div class="row h-100 no-gutters">
 
-			<!-- Container Left -->
-			<div class="d-flex col-12 col-md-6">
-				<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2">
+				<!-- Container Left -->
+				<div class="d-flex col-12 col-md-6">
+					<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2">
 
-				<!-- Container Top -->
-				<div class="flex-grow-1">
-					<div class="text-center">
-						<div class="mb-3 w-100 text-center pt-3">
-							<div class="d-flex flex-row align-items-center">
-								<hr class="flex-grow-1">	
-								${onlineStatus.outerHTML}
-								<hr class="flex-grow-1">
+						<!-- Container Top -->
+						<div class="flex-grow-1">
+							<div class="mb-3 w-100 text-center px-2 pt-3">
+								<div class="d-flex flex-row align-items-center">
+									<hr class="line flex-grow-1">	
+									${onlineStatus.outerHTML}
+									<hr class="line flex-grow-1">
+								</div>
+								<h1>WANTED</h1>
+								<hr class="line">
 							</div>
-							<h1>WANTED</h1>
-							<hr>
+						
+							<profile-avatar></profile-avatar>
+							<profile-user-info></profile-user-info>
 						</div>
-					</div>
-					<profile-avatar></profile-avatar>
-					<profile-user-info></profile-user-info>
-				</div>
 
-				<!-- Container Bottom -->
-				<div class="flex-grow-1">
-					<!-- Buttons -->
-					<div class="d-flex flex-row justify-content-center my-2">
-						<button class="btn btn-primary mx-1">Edit Profile</button>
-						<button class="btn btn-primary mx-1">Edit Profile</button>
-						<button class="btn btn-primary mx-1">Edit Profile</button>
-					</div>
+					<!-- Container Bottom -->
+					<div class="flex-grow-1">
+						<!-- Buttons -->
+						<div class="d-flex flex-row justify-content-center my-2">
+							<button class="btn btn-primary mx-1">Edit Profile</button>
+							<button class="btn btn-primary mx-1">Edit Profile</button>
+							<button class="btn btn-primary mx-1">Edit Profile</button>
+						</div>
 
 					<!-- Stats -->
 					<div class="d-flex flex-row justify-content-around mt-5">
@@ -159,54 +168,54 @@ export class UserProfile extends HTMLElement {
 		</div>
 
 		<!-- Container Right -->
-					<div class="d-flex col-12 col-md-6">
-						<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2">
+		<div class="d-flex col-12 col-md-6">
+			<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2">
 
-							<!-- Container Top -->
-							<div class="d-grid">
-								<div class="row no-gutters no-margin py-3">
-									<div class="col-6">
-										<div class="d-flex flex-column p-3" style="background-color:darkolivegreen">
-											<p class="no-margin ms-1">Best enemy</p>
-											<div class="d-flex flex-row justify-content-around">
-												<div class="text-center enemy-avatar-container">
-													<img src="/media/avatars/sample_avatar.jpg" alt="User Avatar" class="rounded-circle">
-												</div>
-												<div class="mb-1">
-													<p class="lh-1 fs-5">GeorgeLucas</p>
-													<p class="no-margin fs-6">Elo: 1555</p>
-													<p class="no-margin fs-6">Win rate: 50%</p>
-													<small>win 25 - losses 25</small>
-												</div>
-											</div>
-										</div>
+				<!-- Container Top -->
+				<div class="d-grid">
+					<div class="row no-gutters no-margin py-3">
+						<div class="col-6">
+							<div class="d-flex flex-column p-3" style="background-color:darkolivegreen">
+								<p class="no-margin ms-1">Best enemy</p>
+								<div class="d-flex flex-row justify-content-around">
+									<div class="text-center enemy-avatar-container">
+										<img src="/media/avatars/sample_avatar.jpg" alt="User Avatar" class="rounded-circle">
 									</div>
-									<div class="col-6">
-										<div class="d-flex flex-column p-3" style="background-color: darkcyan;">
-											<p class="no-margin ms-1">Worst enemy</p>
-											<div class="d-flex flex-row justify-content-around">
-												<div class="text-center enemy-avatar-container">
-													<img src="/media/avatars/sample_avatar2.jpg" alt="User Avatar" class="rounded-circle">
-												</div>
-												<div class="mb-1">
-													<p class="lh-1 fs-5">GeorgeLucas</p>
-													<p class="no-margin fs-6">Elo: 1555</p>
-													<p class="no-margin fs-6">Win rate: 50%</p>
-													<small>win 25 - losses 25</small>
-												</div>
-											</div>
-										</div>
+									<div class="mb-1">
+										<p class="lh-1 fs-5">GeorgeLucas</p>
+										<p class="no-margin fs-6">Elo: 1555</p>
+										<p class="no-margin fs-6">Win rate: 50%</p>
+										<small>win 25 - losses 25</small>
 									</div>
 								</div>
 							</div>
-
-							<!-- Container Bottom -->
-							<div class="flex-grow-1 d-flex flex-column p-3" style="background-color:chocolate;">
-								<p>Match History</p>
+						</div>
+						<div class="col-6">
+							<div class="d-flex flex-column p-3" style="background-color: darkcyan;">
+								<p class="no-margin ms-1">Worst enemy</p>
+								<div class="d-flex flex-row justify-content-around">
+									<div class="text-center enemy-avatar-container">
+										<img src="/media/avatars/sample_avatar2.jpg" alt="User Avatar" class="rounded-circle">
+									</div>
+									<div class="mb-1">
+										<p class="lh-1 fs-5">GeorgeLucas</p>
+										<p class="no-margin fs-6">Elo: 1555</p>
+										<p class="no-margin fs-6">Win rate: 50%</p>
+										<small>win 25 - losses 25</small>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
+
+				<!-- Container Bottom -->
+				<div class="flex-grow-1 d-flex flex-column p-3" style="background-color:chocolate;">
+					<p>Match History</p>
+				</div>
+			</div>
+		</div>
+	</div>
 			</div>`;
 
 		const profileAvatar = this.querySelector('profile-avatar');
@@ -216,9 +225,12 @@ export class UserProfile extends HTMLElement {
 
 		const profileUserInfo = this.querySelector('profile-user-info');
 		if (profileUserInfo) {
-			profileUserInfo.username = this.user.username;
-			profileUserInfo.join_date = this.user.date_joined;
-			profileUserInfo.titre = this.user.titre;
+			profileUserInfo.data = 
+			{
+				username:  this.user.username,
+				join_date: this.user.date_joined,
+				titre: this.user.titre
+			}
 		}
 
 		const worstEnemy = this.querySelector('worst-enemy');
