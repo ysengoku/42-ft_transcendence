@@ -1,23 +1,23 @@
-import { router } from '@router';
-import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
+import {router} from '@router';
+import {simulateApiLogin} from '@mock/functions/mockApiLogin.js';
 
 export class LoginForm extends HTMLElement {
-	constructor() {
-		super(); 
-	}
+  constructor() {
+    super();
+  }
 
-	connectedCallback() {
-		this.render();
-		this.setupLoginHandler();
-	}
+  connectedCallback() {
+    this.render();
+    this.setupLoginHandler();
+  }
 
-	render() {
-		const isLoggedIn = localStorage.getItem('isLoggedin') === 'true';  // Temporary solution
-		if (isLoggedIn) {
-			router.navigate('/home');
-		}
+  render() {
+    const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
+    if (isLoggedIn) {
+      router.navigate('/home');
+    }
 
-		this.innerHTML = `
+    this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center ">
 			<form class="w-100" id="loginForm">
   				<div class="mb-3">
@@ -34,37 +34,37 @@ export class LoginForm extends HTMLElement {
 			</form>
 		</div>
 		`;
-	}
+  }
 
-	setupLoginHandler() {
-		const form = this.querySelector('#loginForm');
-		form.addEventListener('submit', (event) => {
-			event.preventDefault();
-			this.handleLogin();
-		});
-	}
+  setupLoginHandler() {
+    const form = this.querySelector('#loginForm');
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      this.handleLogin();
+    });
+  }
 
-	// This function should be changed after back-end integration
-	async handleLogin() {
-		const username = this.querySelector('#inputUsername').value;
-		const password = this.querySelector('#inputPassword').value;
+  // This function should be changed after back-end integration
+  async handleLogin() {
+    const username = this.querySelector('#inputUsername').value;
+    const password = this.querySelector('#inputPassword').value;
 
-		// Simulation with mock
-		const response = await simulateApiLogin({ username, password });
+    // Simulation with mock
+    const response = await simulateApiLogin({username, password});
 
-		if (response.success) {
-			// Temporary solution
-			localStorage.setItem('isLoggedIn', 'true');
-			localStorage.setItem('user', JSON.stringify(response.user));
+    if (response.success) {
+      // Temporary solution
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('user', JSON.stringify(response.user));
 
-			const navBar = document.getElementById('navbar-container');
-			navBar.innerHTML = '<navbar-component></navbar-component>';
-			router.navigate(`/home`, response.user);
-		} else {
-			alert('Login failed', response.message);
-			// Render login-form with red framed ones
-		}
-	}
+      const navBar = document.getElementById('navbar-container');
+      navBar.innerHTML = '<navbar-component></navbar-component>';
+      router.navigate(`/home`, response.user);
+    } else {
+      alert('Login failed', response.message);
+      // Render login-form with red framed ones
+    }
+  }
 }
 
 customElements.define('login-form', LoginForm);

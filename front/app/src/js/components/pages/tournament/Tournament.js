@@ -1,8 +1,7 @@
 export class Tournament extends HTMLElement {
-	constructor() {
-		super();
-	}
-
+  constructor() {
+    super();
+  }
 }
 
 customElements.define('tournament', Tournament);
