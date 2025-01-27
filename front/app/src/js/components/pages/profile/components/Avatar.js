@@ -30,7 +30,7 @@ export class ProfileAvatar extends HTMLElement {
                     background-color: rgba(89, 70, 57, 0.4);
                 }
                 .profile-avatar-container img {
-                    width: 144px;
+                    width: 240px;
                     aspect-ratio: 1;
                     object-fit: cover;
                     border-radius: 50%;
