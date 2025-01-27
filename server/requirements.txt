@@ -19,9 +19,9 @@ pydantic_core==2.27.2
 typing_extensions==4.12.2
 sqlparse==0.5.3
 
-# psycopg2 is a PostgreSQL adapter for Python
-psycopg==3.1.8
-psycopg-binary==3.1.8
+# psycopg2 is a PostgreSQL adapter for Python. this version is compatible with Django 5.1.4 + act (to test github actions)
+psycopg2==2.9.6
+
 
 # Database profiling
 django-silk==5.3.2

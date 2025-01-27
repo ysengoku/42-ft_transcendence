@@ -392,3 +392,33 @@ Faire le bind mount sur sgoinfre
 `ruff format <directory>` = format the directory
 
 `ruff format` is different from `ruff check --fix` because it only formats the code and does not fix any styling errors.
+
+## ACT to test github actions
+
+Configurer Act :
+
+Crée un fichier .secrets à la racine de ton projet pour y définir les secrets utilisés dans ton workflow :
+
+DB_NAME=mydatabase
+DB_USER=myusername
+DB_PASSWORD=mypassword
+DATABASE_URL=postgresql://myusername:mypassword@localhost:5432/mydatabase
+
+Assure-toi que ton fichier .env est présent dans le dossier server ou à la racine selon ta configuration.
+
+Lancer le workflow :
+
+À la racine de ton projet, exécute :
+
+
+act -j backend
+
+-j backend correspond au nom de ton job dans le fichier YAML (ici, backend).
+
+Si tu veux tester un événement spécifique (comme push), utilise :
+
+act push -j backend
+
+Vérifier les résultats :
+
+Act va exécuter le workflow comme GitHub Actions, et tu verras les logs directement dans le terminal.
