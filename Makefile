@@ -101,7 +101,7 @@ rebuild: check-env
 
 # Run Django migrations
 migrate:
-	docker-compose exec $(BACKEND_SERVICE) python manage.py migrate
+	docker exec $(BACKEND_SERVICE) python ./manage.py makemigrations && docker exec $(BACKEND_SERVICE) python ./manage.py migrate
 
 # Open a bash shell inside the backend container
 bash-backend:
@@ -115,8 +115,8 @@ fclean:
 	docker system prune -a
 
 # RUN WITH MAKE -i
-reload-nginx-conf:
-	docker cp nginx/nginx.conf nginx:/etc/nginx/nginx.conf
+update-nginx:
+	docker cp ./nginx/nginx.conf nginx:/etc/nginx/
 	docker exec nginx nginx -s reload
 
 populate-db:
