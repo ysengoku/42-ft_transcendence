@@ -13,9 +13,9 @@ Avantage : Nginx est optimisé pour servir des fichiers statiques et gérer des 
 Application principale (Frontend) :
 
 Copyhttps://localhost:1026
-
+<!-- 
 C'est votre point d'entrée principal via Nginx qui sert votre application frontend
-Toutes les routes frontend seront accessibles via cette URL de base
+Toutes les routes frontend seront accessibles via cette URL de base -->
 
 
 API Backend (via Nginx proxy) :
