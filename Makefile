@@ -4,6 +4,13 @@ DATABASE_VOLUME_PATH := ./volumes/database
 MEDIA_VOLUME_PATH := ./volumes/media
 STATIC_VOLUME_PATH := ./volumes/static
 
+# Couleurs
+GREEN=\033[0;32m
+YELLOW=\033[0;33m
+RED=\033[0;31m
+MAGENTA=\033[0;35m
+RESET=\033[0m
+
 # Define backup directories for each volume type
 # BACKUP_DIR := ./backups
 # DB_BACKUP_DIR := $(BACKUP_DIR)/database
@@ -66,14 +73,18 @@ restart: down up
 
 # Logs for each service
 logs:
-	@echo "Logs du conteneur $(FRONTEND_SERVICE):"
+	@printf "${MAGENTA}--------------------${RESET}\n"
+	docker ps -a
+	@printf "${MAGENTA}--------------------${RESET}\n"
+	@printf "${YELLOW} $(FRONTEND_SERVICE) logs:${RESET}\n"
 	@docker logs $(FRONTEND_SERVICE)
-	@echo "--------------------"
-	@echo "Logs du conteneur $(BACKEND_SERVICE):"
+	@printf "${YELLOW}--------------------${RESET}\n"
+	@printf "${GREEN} $(BACKEND_SERVICE) logs:${RESET}\n"
 	@docker logs $(BACKEND_SERVICE)
-	@echo "--------------------"
-	@echo "Logs du conteneur $(DATABASE_SERVICE):"
+	@printf "${GREEN}--------------------${RESET}\n"
+	@printf "${RED} $(DATABASE_SERVICE) logs:${RESET}\n"
 	@docker logs $(DATABASE_SERVICE)
+	@printf "${RED}--------------------${RESET}\n"
 
 # Rebuild containers
 rebuild: check-env
