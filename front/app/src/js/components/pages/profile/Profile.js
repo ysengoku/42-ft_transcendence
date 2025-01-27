@@ -1,7 +1,7 @@
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
 import './components/index.js';
-import poster from '../../../../../public/img/sample-background.png';
+import poster from '/img/sample-background.png?url';
 
 
 export class UserProfile extends HTMLElement {
@@ -74,16 +74,8 @@ export class UserProfile extends HTMLElement {
 			.online-status-indicator.online {
     			background-color: green;
 			}
-			.enemy-avatar-container {
-			    display: flex;
-    			justify-content: center;
-    			align-items: center;
-    			height: auto;
-			}
-			.enemy-avatar-container img {
-    			width: 88px;
-    			aspect-ratio: 1;
-    			object-fit: cover;
+			.enemies-container {
+				height: 224px;
 			}
 			.no-margin {
     			margin: 0;
@@ -94,12 +86,12 @@ export class UserProfile extends HTMLElement {
 			}
 		</style>
 
-		<div class="container-fluid d-grid gap-3">
+		<div class="container-fluid flex-grow-1 d-grid gap-3 h-100">
 			<div class="row h-100 no-gutters">
 
 				<!-- Container Left -->
 				<div class="d-flex col-12 col-md-6">
-					<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2">
+					<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2 h-100">
 
 						<!-- Container Top -->
 						<div class="flex-grow-1">
@@ -117,100 +109,71 @@ export class UserProfile extends HTMLElement {
 							<profile-user-info></profile-user-info>
 						</div>
 
-					<!-- Container Bottom -->
-					<div class="flex-grow-1">
-						<!-- Buttons -->
-						<div class="d-flex flex-row justify-content-center my-2">
-							<button class="btn btn-primary mx-1">Edit Profile</button>
-							<button class="btn btn-primary mx-1">Edit Profile</button>
-							<button class="btn btn-primary mx-1">Edit Profile</button>
+						<!-- Container Bottom -->
+						<div class="flex-grow-1">
+							<profile-user-actions></profile-user-actions>
+
+							<!-- Stats -->
+							<div class="d-flex flex-row justify-content-around mt-5">
+							<div class="row w-100">
+								<div class="col-3 text-center">
+									<p>Elo</p>
+									<p>1555</p>
+								</div>
+								<div class="col-3 text-center">
+									<p>Total score</p>
+									<p>623</p>
+								</div>
+								<div class="col-3 text-center">
+									<p>Total duals</p>
+									<p>35</p>
+								</div>
+								<div class="col-3 text-center">
+									<p>Friends</p>
+									<p>11</p>
+								</div>
+							</div>
 						</div>
 
-					<!-- Stats -->
-					<div class="d-flex flex-row justify-content-around mt-5">
-						<div class="row w-100">
-							<div class="col-3 text-center">
-								<p>Elo</p>
-								<p>1555</p>
-							</div>
-							<div class="col-3 text-center">
-								<p>Total score</p>
-								<p>623</p>
-							</div>
-							<div class="col-3 text-center">
-								<p>Total duals</p>
-								<p>35</p>
-							</div>
-							<div class="col-3 text-center">
-								<p>Friends</p>
-								<p>11</p>
-							</div>
-						</div>
-					</div>
+						<!-- Graphs -->
+						<div class="d-flex flex-row justify-content-around align-items-top">
+							<div class="row h-100 m-3 p-2">
+								<div class="col-md-6">
+									<p>Win Rate</p>
+									<canvas id="winRateChart">
 
-					<!-- Graphs -->
-					<div class="d-flex flex-row justify-content-around align-items-top">
-						<div class="row h-100 m-3 p-2">
-							<div class="col-md-6">
-								<p>Win Rate</p>
-								<canvas id="winRateChart">
-
-								</canvas>
-							</div>
-							<div class="col-md-6">
-								<p>Elo progression</p>
-								<canvas id="eloProgressionChart"></canvas>
+									</canvas>
+								</div>
+								<div class="col-md-6">
+									<p>Elo progression</p>
+									<canvas id="eloProgressionChart"></canvas>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-		</div>
 
-		<!-- Container Right -->
-		<div class="d-flex col-12 col-md-6">
-			<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2">
+				<!-- Container Right -->
+				<div class="d-flex col-12 col-md-6">
+				<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2 h-100">
 
 				<!-- Container Top -->
-				<div class="d-grid">
-					<div class="row no-gutters no-margin py-3">
-						<div class="col-6">
-							<div class="d-flex flex-column p-3" style="background-color:darkolivegreen">
-								<p class="no-margin ms-1">Best enemy</p>
-								<div class="d-flex flex-row justify-content-around">
-									<div class="text-center enemy-avatar-container">
-										<img src="/media/avatars/sample_avatar.jpg" alt="User Avatar" class="rounded-circle">
-									</div>
-									<div class="mb-1">
-										<p class="lh-1 fs-5">GeorgeLucas</p>
-										<p class="no-margin fs-6">Elo: 1555</p>
-										<p class="no-margin fs-6">Win rate: 50%</p>
-										<small>win 25 - losses 25</small>
-									</div>
-								</div>
-							</div>
+				<div class="enemies-container d-grid">
+					<div class="row no-gutters no-margin py-3 h-100">
+						<div class="col-6 d-flex flex-column h-100">
+							<p class="ms-3">Best Enemy</p>
+							<profile-enemy-component type="best"></profile-enemy-component>
 						</div>
-						<div class="col-6">
-							<div class="d-flex flex-column p-3" style="background-color: darkcyan;">
-								<p class="no-margin ms-1">Worst enemy</p>
-								<div class="d-flex flex-row justify-content-around">
-									<div class="text-center enemy-avatar-container">
-										<img src="/media/avatars/sample_avatar2.jpg" alt="User Avatar" class="rounded-circle">
-									</div>
-									<div class="mb-1">
-										<p class="lh-1 fs-5">GeorgeLucas</p>
-										<p class="no-margin fs-6">Elo: 1555</p>
-										<p class="no-margin fs-6">Win rate: 50%</p>
-										<small>win 25 - losses 25</small>
-									</div>
-								</div>
-							</div>
+						<div class="col-6 d-flex flex-column h-100">
+							<p class="ms-3">Worst Enemy</p>
+							<profile-enemy-component type="worst"></profile-enemy-component>
 						</div>
 					</div>
 				</div>
 
 				<!-- Container Bottom -->
-				<div class="flex-grow-1 d-flex flex-column p-3" style="background-color:chocolate;">
+				<div class="flex-grow-1 d-flex flex-column p-3">
 					<p>Match History</p>
 				</div>
 			</div>
@@ -233,14 +196,21 @@ export class UserProfile extends HTMLElement {
 			}
 		}
 
-		const worstEnemy = this.querySelector('worst-enemy');
-		if (worstEnemy) {
-			worstEnemy.data = this.user.worst_enemy;
+		const profileUserActions = this.querySelector('profile-user-actions');
+		if (profileUserActions) {
+			profileUserActions.data = {
+				username: this.user.username,
+				friends: this.user.friends
+			};
 		}
 
-		const bestEnemy = this.querySelector('best-enemy');
-		if (bestEnemy) {
-			bestEnemy.data = this.user.best_enemy;
+		const bestEnemyComponent = document.querySelector('profile-enemy-component[type="best"]');
+		const worstEnemyComponent = document.querySelector('profile-enemy-component[type="worst"]');
+		if (bestEnemyComponent) {
+			bestEnemyComponent.data = this.user.best_enemy;
+		}
+		if (worstEnemyComponent) {
+			worstEnemyComponent.data = this.user.worst_enemy;
 		}
 	}
 }
