@@ -94,9 +94,13 @@ bash-frontend:
 fclean:
 	docker system prune -a
 
-update-nginx:
-	@docker cp ./nginx/nginx.conf nginx:/etc/nginx/
+# RUN WITH MAKE -i
+reload-nginx-conf:
+	docker cp nginx/nginx.conf nginx:/etc/nginx/nginx.conf
 	docker exec nginx nginx -s reload
+
+populate-db:
+	docker exec server ./manage.py populate_db
 
 # backup-volumes: create-backup-dirs
 # 	@echo "Starting unified backup of all volumes..."
