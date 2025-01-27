@@ -31,7 +31,7 @@ DEBUG = int(os.environ.get("DEBUG", default=1))
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
-IS_GITHUB_ACTIONS = os.environ.get('GITHUB_ACTIONS') == 'true'
+IS_GITHUB_ACTIONS = os.environ.get("GITHUB_ACTIONS") == "true"
 
 DATABASES = {
     "default": {
@@ -39,7 +39,9 @@ DATABASES = {
         "NAME": os.environ.get("POSTGRES_DB"),
         "USER": os.environ.get("POSTGRES_USER"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-        "HOST": os.environ.get("DATABASE_HOST", "database" if not IS_GITHUB_ACTIONS else 'localhost'),
+        "HOST": os.environ.get(
+            "DATABASE_HOST", "database" if not IS_GITHUB_ACTIONS else "localhost"
+        ),
         "PORT": os.environ.get("DATABASE_PORT", 5432),
     },
 }
@@ -123,7 +125,13 @@ AUTH_USER_MODEL = "users.User"
 
 # Configuration OAuth 42
 SOCIALACCOUNT_PROVIDERS = {
-    "oauth2": {"APP": {"client_id": "YOUR_CLIENT_ID", "secret": "YOUR_CLIENT_SECRET", "key": ""}},
+    "oauth2": {
+        "APP": {
+            "client_id": "YOUR_CLIENT_ID",
+            "secret": "YOUR_CLIENT_SECRET",
+            "key": "",
+        }
+    },
 }
 
 # Configuration Django Channels
