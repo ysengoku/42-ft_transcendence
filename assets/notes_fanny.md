@@ -384,3 +384,11 @@ upload a file from the frontend to the backend with django ninja and javascript:
 TODO
 
 Faire le bind mount sur sgoinfre
+
+## Ruff
+`ruff check <directory>` = lint the directory for any styling errors
+`ruff check --fix <directory>` = fix style errors that can be fixed
+
+`ruff format <directory>` = format the directory
+
+`ruff format` is different from `ruff check --fix` because it only formats the code and does not fix any styling errors.

@@ -21,4 +21,3 @@ def calculate_elo_change(a: int, b: int, outcome: float, k_factor: int = 32) -> 
     expected_score = calculate_expected_score(a, b)
 
     return round(k_factor * (outcome - expected_score))
-
