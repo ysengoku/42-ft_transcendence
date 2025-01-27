@@ -1,4 +1,4 @@
-import avatarPlaceholder from '../../../../../../public/img/avatar-placeholder.svg';
+import avatarPlaceholder from '/img/avatar-placeholder.svg?url';
 
 export class AvatarUploadModal extends HTMLElement {
 	constructor() {
