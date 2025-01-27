@@ -1,4 +1,4 @@
-import navbarBrand from '../../../../../public/img/sample-logo.svg';
+import navbarBrand from '/img/sample-logo.svg?url';
 
 export class NavbarBrand extends HTMLElement {
 	constructor() {
