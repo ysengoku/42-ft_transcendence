@@ -1,6 +1,7 @@
 import { OnlineStatusIndicator } from './OnlineStatusIndicator.js';
 import { ProfileAvatar } from './Avatar.js';
 import { ProfileUserInfo } from './UserInfo.js';
+import { ProfileUserActions } from './UserActions.js';
 import { ProfileEnemy } from './Enemy.js';
 
-export { OnlineStatusIndicator, ProfileAvatar, ProfileUserInfo, ProfileEnemy };
+export { OnlineStatusIndicator, ProfileAvatar, ProfileUserInfo, ProfileUserActions, ProfileEnemy };
