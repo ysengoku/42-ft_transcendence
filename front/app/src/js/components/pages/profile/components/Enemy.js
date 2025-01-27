@@ -34,7 +34,7 @@ export class ProfileEnemy extends HTMLElement {
 		// -------------------------------------------------------------------------------
 		if (this._data) {
 			const enemy = this._data;
-			console.log('Enemy:', enemy);
+			// console.log('Enemy:', enemy);
 			this.innerHTML = `
 			<style>
 				.enemy-avatar-container img {

@@ -14,7 +14,7 @@ export class ProfileAvatar extends HTMLElement {
     }
 	
     render() {
-		console.log('Avatar URL:', this._avatarUrl);
+		// console.log('Avatar URL:', this._avatarUrl);
         const avatarUrl = this._avatarUrl;
         this.innerHTML = `
             <style>
