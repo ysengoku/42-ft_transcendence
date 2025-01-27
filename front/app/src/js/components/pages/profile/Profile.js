@@ -1,7 +1,7 @@
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
 import './components/index.js';
-import poster from '../../../../../public/img/sample-background.png';
+import poster from '/img/sample-background.png?url';
 
 
 export class UserProfile extends HTMLElement {
@@ -111,12 +111,7 @@ export class UserProfile extends HTMLElement {
 
 						<!-- Container Bottom -->
 						<div class="flex-grow-1">
-							<!-- Buttons -->
-							<div class="d-flex flex-row justify-content-center my-2">
-								<button class="btn btn-primary mx-1">Edit Profile</button>
-								<button class="btn btn-primary mx-1">Edit Profile</button>
-								<button class="btn btn-primary mx-1">Edit Profile</button>
-							</div>
+							<profile-user-actions></profile-user-actions>
 
 							<!-- Stats -->
 							<div class="d-flex flex-row justify-content-around mt-5">
@@ -199,6 +194,14 @@ export class UserProfile extends HTMLElement {
 				join_date: this.user.date_joined,
 				titre: this.user.titre
 			}
+		}
+
+		const profileUserActions = this.querySelector('profile-user-actions');
+		if (profileUserActions) {
+			profileUserActions.data = {
+				username: this.user.username,
+				friends: this.user.friends
+			};
 		}
 
 		const bestEnemyComponent = document.querySelector('profile-enemy-component[type="best"]');
