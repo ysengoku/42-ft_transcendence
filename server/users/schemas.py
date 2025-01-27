@@ -14,6 +14,14 @@ class Message(Schema):
     msg: str
 
 
+class UsernameSchema(Schema):
+    """
+    For payloads where certain action is performed on user.
+    """
+
+    username: str
+
+
 class ValidationErrorMessageSchema(Message):
     type: str = Field(
         description="Type of the error. can be missing, validation_error or some kind of type error."
