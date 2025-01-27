@@ -11,6 +11,7 @@
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "eslint": "^8.0.0" 
   }
 }
