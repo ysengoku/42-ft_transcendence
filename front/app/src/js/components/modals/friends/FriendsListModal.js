@@ -1,44 +1,44 @@
-import { simulateFetchFriendsList } from '@mock/functions/simulateFetchFriendsList.js';
+import {simulateFetchFriendsList} from '@mock/functions/simulateFetchFriendsList.js';
 
 export class FriendsListModal extends HTMLElement {
-	constructor() {
-		super();
-		this.modal = null;
-		this.friendsList = [];
-	}
-	
-	connectedCallback() {
-		this.render();
-		this.fetchFriendsData();
-	}
+  constructor() {
+    super();
+    this.modal = null;
+    this.friendsList = [];
+  }
 
-	// Simulation with mock
-	async fetchFriendsData() {
-		this.friendsList = await simulateFetchFriendsList();
-		// console.log(JSON.stringify(this.friendsList, null, 2));
-		this.renderFriendsList()
-		const mainView = document.getElementById('content');
-		mainView.addEventListener('click', () => {
-			const modal = document.querySelector('#friendsModal');
-			modal.setAttribute('data-bs-dismiss', 'modal');
-		});
-	}
+  connectedCallback() {
+    this.render();
+    this.fetchFriendsData();
+  }
 
-	renderFriendsList() {
-		const listContainer = this.querySelector('#friends-list');
-		listContainer.innerHTML = '';
-		this.friendsList.forEach(friend => {
-			// console.log(`Rendering friend:`, friend);
-			const listItem = document.createElement('friends-list-item');
-			listItem.setAttribute('username', friend.username);
-			listItem.setAttribute('avatar', friend.avatar);
-			listItem.setAttribute('online', friend.online);
-			listContainer.appendChild(listItem);
-		});
-	}
+  // Simulation with mock
+  async fetchFriendsData() {
+    this.friendsList = await simulateFetchFriendsList();
+    // console.log(JSON.stringify(this.friendsList, null, 2));
+    this.renderFriendsList();
+    const mainView = document.getElementById('content');
+    mainView.addEventListener('click', () => {
+      const modal = document.querySelector('#friendsModal');
+      modal.setAttribute('data-bs-dismiss', 'modal');
+    });
+  }
 
-	render() {
-		this.innerHTML = `
+  renderFriendsList() {
+    const listContainer = this.querySelector('#friends-list');
+    listContainer.innerHTML = '';
+    this.friendsList.forEach((friend) => {
+      // console.log(`Rendering friend:`, friend);
+      const listItem = document.createElement('friends-list-item');
+      listItem.setAttribute('username', friend.username);
+      listItem.setAttribute('avatar', friend.avatar);
+      listItem.setAttribute('online', friend.online);
+      listContainer.appendChild(listItem);
+    });
+  }
+
+  render() {
+    this.innerHTML = `
 		<div class="modal fade friends-modal" id="friendsModal" tabindex="-1" aria-labelledby="friendsModalLabel" aria-hidden="true">
 			<div class="modal-dialog modal-dialog-scrollable">
    				<div class="modal-content">
@@ -54,14 +54,14 @@ export class FriendsListModal extends HTMLElement {
 		</div>
 		`;
 
-		this.modal = new bootstrap.Modal(this.querySelector('#friendsModal'));
-	}
+    this.modal = new bootstrap.Modal(this.querySelector('#friendsModal'));
+  }
 
-	showModal() {
-		if (this.modal) {
-			this.modal.show();
-		}
-	}
+  showModal() {
+    if (this.modal) {
+      this.modal.show();
+    }
+  }
 }
 
 customElements.define('friends-list-modal', FriendsListModal);

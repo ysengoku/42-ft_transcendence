@@ -1,41 +1,47 @@
 export class ProfileEnemy extends HTMLElement {
-	constructor() {
-		super();
-		this._data = null,
-		this._type = null;
-	}
+  constructor() {
+    super()
+    ;(this._data = null), (this._type = null);
+  }
 
-	static get observedAttributes() {
-        return ['type'];
+  static get observedAttributes() {
+    return ['type'];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'type') {
+      this._type = newValue;
+      this.render();
     }
+  }
 
-    attributeChangedCallback(name, oldValue, newValue) {
-        if (name === 'type') {
-            this._type = newValue;
-            this.render();
-        }
+  set data(value) {
+    this._data = value;
+    this.render();
+  }
+
+  connectedCallback() {
+    this.render();
+  }
+
+  render() {
+    const type = this._type === 'best' ? 'Best Enemy' : 'Worst Enemy';
+    // Test data --------------------------------------------------------------------
+    if (type === 'Best Enemy') {
+      this._data = {
+        username: 'Alice',
+        avatar: '/media/avatars/sample_avatar2.jpg',
+        wins: 20,
+        loses: 10,
+        winrate: 67,
+        elo: 1100,
+      };
     }
-
-	set data(value) {
-		this._data = value;
-		this.render();
-	}
-
-	connectedCallback() {
-		this.render();
-	}
-
-	render() {
-		const type = this._type === 'best' ? 'Best Enemy' : 'Worst Enemy';
-		// Test data --------------------------------------------------------------------
-		if (type === 'Best Enemy') {
-			this._data = { username: 'Alice', avatar: '/media/avatars/sample_avatar2.jpg', wins: 20, loses: 10, winrate: 67, elo: 1100 };
-		}
-		// -------------------------------------------------------------------------------
-		if (this._data) {
-			const enemy = this._data;
-			// console.log('Enemy:', enemy);
-			this.innerHTML = `
+    // -------------------------------------------------------------------------------
+    if (this._data) {
+      const enemy = this._data;
+      // console.log('Enemy:', enemy);
+      this.innerHTML = `
 			<style>
 				.enemy-avatar-container img {
 					width: 88px;
@@ -57,14 +63,14 @@ export class ProfileEnemy extends HTMLElement {
 				</div>
 			</div>
 			`;
-		} else {
-			this.innerHTML = `
+    } else {
+      this.innerHTML = `
 			<div class="flex-grow-1 px-3 h-100">
 				<p class="text-center pt-3">No ${type.toLowerCase()}</p>
 			</div>
 			`;
-		}
-	}
+    }
+  }
 }
 
 customElements.define('profile-enemy-component', ProfileEnemy);

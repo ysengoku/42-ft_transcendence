@@ -1,25 +1,25 @@
-import { router } from '@router';
+import {router} from '@router';
 
 export class Home extends HTMLElement {
-	constructor() {
-		super();
-		this.user = null;
-	}
+  constructor() {
+    super();
+    this.user = null;
+  }
 
-	connectedCallback() {
-		this.render();
-	}
+  connectedCallback() {
+    this.render();
+  }
 
-	render() {	
-		const storedUser = localStorage.getItem('user');
-		if (!storedUser) {
-			console.error('Missing user information.');
-			router.navigate('/login');
-		}
-		this.user = JSON.parse(storedUser);
+  render() {
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      console.error('Missing user information.');
+      router.navigate('/login');
+    }
+    this.user = JSON.parse(storedUser);
 
-		// Temporary content
-		this.innerHTML = `
+    // Temporary content
+    this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
 			<h1>Welcome, ${this.user.username}</h1>
 			<p>This is futur Home  ("hub?")</p>
@@ -33,7 +33,7 @@ export class Home extends HTMLElement {
 			</div>
 		</div>
 		`;
-	}
+  }
 }
 
 customElements.define('user-home', Home);

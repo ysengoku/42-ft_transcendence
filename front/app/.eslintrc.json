@@ -1,0 +1,19 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": ["google"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "require-jsdoc": "off",
+    "max-len": ["error", { "code": 120, "ignoreTemplateLiterals": true }],
+    "no-tabs": "off",
+    "semi": ["error", "never"],
+    "object-curly-spacing": ["error", "always"]
+  },
+  "ignorePatterns": ["node_modules/", "dist/", "server/static/"]
+}

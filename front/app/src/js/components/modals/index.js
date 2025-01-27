@@ -1,4 +1,4 @@
-import { FriendsListModal } from "./friends/FriendsListModal.js";
-import { FriendsListItem } from "./friends/FriendsListItem.js";
+import {FriendsListModal} from './friends/FriendsListModal.js';
+import {FriendsListItem} from './friends/FriendsListItem.js';
 
-export { FriendsListModal, FriendsListItem };
+export {FriendsListModal, FriendsListItem};
