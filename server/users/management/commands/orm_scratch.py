@@ -9,7 +9,4 @@ class Command(BaseCommand):
 
     def handle(self, **kwargs) -> None:
         p = Profile.objects.filter(user__username="celiastral")
-        p.annotate(
-            winss=Count("won_matches", distinct=True),
-            losess=Count("lost_matches", distinct=True),
-        )
+        p.annotate(winss=Count("won_matches", distinct=True), losess=Count("lost_matches", distinct=True))

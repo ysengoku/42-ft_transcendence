@@ -69,25 +69,12 @@ def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
     err_response = []
     for key in exc.message_dict:
         err_response.extend(
-            {
-                "type": "validation_error",
-                "loc": ["body", "payload", key],
-                "msg": msg,
-            }
-            for msg in exc.message_dict[key]
+            {"type": "validation_error", "loc": ["body", "payload", key], "msg": msg} for msg in exc.message_dict[key]
         )
 
-    return api.create_response(
-        request,
-        err_response,
-        status=422,
-    )
+    return api.create_response(request, err_response, status=422)
 
 
 @api.exception_handler(NinjaValidationError)
 def handle_ninja_validation_error(request: HttpRequest, exc: NinjaValidationError):
-    return api.create_response(
-        request,
-        exc.errors,
-        status=422,
-    )
+    return api.create_response(request, exc.errors, status=422)
