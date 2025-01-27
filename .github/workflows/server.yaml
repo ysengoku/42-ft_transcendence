@@ -1,15 +1,3 @@
-name: Backend Tests
-
-on:
-  push:
-    branches:
-      - main
-      - dev
-  pull_request:
-    branches:
-      - main
-      - dev
-
 jobs:
   backend:
     runs-on: ubuntu-22.04
@@ -21,7 +9,6 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          # POSTGRES_HOST_AUTH_METHOD: trust  # Use this only for testing
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -40,6 +27,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff
           pip install -r server/requirements.txt
+
+      - name: Verify PostgreSQL secrets
+        run: |
+          if [[ -z "${{ secrets.POSTGRES_PASSWORD }}" || -z "${{ secrets.POSTGRES_USER }}" || -z "${{ secrets.POSTGRES_DB }}" ]]; then
+            echo "One or more PostgreSQL secrets are missing!"
+            exit 1
+          else
+            echo "PostgreSQL secrets are set correctly."
+          fi
 
       - name: Check and fix style errors
         working-directory: server/
