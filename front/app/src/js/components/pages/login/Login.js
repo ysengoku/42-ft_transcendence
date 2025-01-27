@@ -1,26 +1,26 @@
-import { router } from '@router';
+import {router} from '@router';
 import '../home/Home.js';
-import { LoginForm } from './components/LoginForm.js';
-import { OAuth } from './components/OAuth.js';
+import {LoginForm} from './components/LoginForm.js';
+import {OAuth} from './components/OAuth.js';
 // import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
 
 export class Login extends HTMLElement {
-	constructor() {
-		super(); 
-	}
-	
-	connectedCallback() {
-		this.render();
-		// this.setupLoginHandler();
-	}
+  constructor() {
+    super();
+  }
 
-	render() {
-		const isLoggedIn = localStorage.getItem('isLoggedin') === 'true';  // Temporary solution
-		if (isLoggedIn) {
-			router.navigate('/home');
-		}
+  connectedCallback() {
+    this.render();
+    // this.setupLoginHandler();
+  }
 
-		this.innerHTML = `
+  render() {
+    const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
+    if (isLoggedIn) {
+      router.navigate('/home');
+    }
+
+    this.innerHTML = `
 		<div>
 			<login-form></login-form>
 			<div class="container d-flex flex-column justify-content-center align-items-center ">
@@ -41,37 +41,37 @@ export class Login extends HTMLElement {
 			<oauth-component></oauth-component>
 		</div>
 		`;
-	}
+  }
 
-// 	setupLoginHandler() {
-// 		const form = this.querySelector('#loginForm');
-// 		form.addEventListener('submit', (event) => {
-// 			event.preventDefault();
-// 			this.handleLogin();
-// 		});
-// 	}
+  // 	setupLoginHandler() {
+  // 		const form = this.querySelector('#loginForm');
+  // 		form.addEventListener('submit', (event) => {
+  // 			event.preventDefault();
+  // 			this.handleLogin();
+  // 		});
+  // 	}
 
-// 	// This function should be changed after back-end integration
-// 	async handleLogin() {
-// 		const username = this.querySelector('#inputUsername').value;
-// 		const password = this.querySelector('#inputPassword').value;
+  // 	// This function should be changed after back-end integration
+  // 	async handleLogin() {
+  // 		const username = this.querySelector('#inputUsername').value;
+  // 		const password = this.querySelector('#inputPassword').value;
 
-// 		// Simulation with mock
-// 		const response = await simulateApiLogin({ username, password });
+  // 		// Simulation with mock
+  // 		const response = await simulateApiLogin({ username, password });
 
-// 		if (response.success) {
-// 			// Temporary solution
-// 			localStorage.setItem('isLoggedIn', 'true');
-// 			localStorage.setItem('user', JSON.stringify(response.user));
+  // 		if (response.success) {
+  // 			// Temporary solution
+  // 			localStorage.setItem('isLoggedIn', 'true');
+  // 			localStorage.setItem('user', JSON.stringify(response.user));
 
-// 			const navBar = document.getElementById('navbar-container');
-// 			navBar.innerHTML = '<navbar-component></navbar-component>';
-// 			router.navigate(`/home`, response.user);
-// 		} else {
-// 			alert('Login failed', response.message);
-// 			// Render login-form with red framed ones
-// 		}
-// 	}
+  // 			const navBar = document.getElementById('navbar-container');
+  // 			navBar.innerHTML = '<navbar-component></navbar-component>';
+  // 			router.navigate(`/home`, response.user);
+  // 		} else {
+  // 			alert('Login failed', response.message);
+  // 			// Render login-form with red framed ones
+  // 		}
+  // 	}
 }
 
 customElements.define('login-view', Login);
