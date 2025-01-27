@@ -15,7 +15,9 @@ class Message(Schema):
 
 
 class ValidationErrorMessageSchema(Message):
-    type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
+    type: str = Field(
+        description="Type of the error. can be missing, validation_error or some kind of type error."
+    )
     loc: list[str] = Field(
         description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
         "the list is the name of failed field."
@@ -53,8 +55,12 @@ class EloDataPointSchema(Schema):
     """
 
     date: datetime
-    elo_change_signed: int = Field(description="How much elo user gained or lost from this match.")
-    elo_result: int = Field(description="Resulting elo after elo gain or loss from this match.")
+    elo_change_signed: int = Field(
+        description="How much elo user gained or lost from this match."
+    )
+    elo_result: int = Field(
+        description="Resulting elo after elo gain or loss from this match."
+    )
 
 
 class ProfileFullSchema(ProfileMinimalSchema):
@@ -66,7 +72,9 @@ class ProfileFullSchema(ProfileMinimalSchema):
     wins: int
     loses: int
     total_matches: int
-    winrate: int | None = Field(description="null if the player didn't play any games yet.")
+    winrate: int | None = Field(
+        description="null if the player didn't play any games yet."
+    )
     worst_enemy: OpponentProfileAndStatsSchema | None = Field(
         description="Player who won the most against current user."
     )
@@ -77,7 +85,9 @@ class ProfileFullSchema(ProfileMinimalSchema):
     elo_history: list[EloDataPointSchema] = Field(
         description="List of data points for elo changes of the last 10 games."
     )
-    friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
+    friends: list[ProfileMinimalSchema] = Field(
+        description="List of first ten friends.", max_length=10
+    )
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -114,7 +124,11 @@ class PasswordValidationSchema(Schema):
             err_dict["password_repeat"].append("Passwords do not match.")
         if len(self.password) < settings.AUTH_SETTINGS["password_min_len"]:
             err_dict["password"].append("Password should have at least 8 characters.")
-        if settings.AUTH_SETTINGS["check_attribute_similarity"] and self.username and self.username in self.password:
+        if (
+            settings.AUTH_SETTINGS["check_attribute_similarity"]
+            and self.username
+            and self.username in self.password
+        ):
             err_dict["password"].append("Password should not contain username.")
         return {k: v for k, v in err_dict.items() if v}
 

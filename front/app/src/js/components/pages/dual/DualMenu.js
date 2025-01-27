@@ -1,14 +1,14 @@
 export class DualMenu extends HTMLElement {
-	constructor() {
-		super();
-	}
+  constructor() {
+    super();
+  }
 
-	connectedCallback() {
-		this.render();
-	}
+  connectedCallback() {
+    this.render();
+  }
 
-	render() {
-		this.innerHTML = `
+  render() {
+    this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
 			<h1>This is Dual Menu</h1>
 			<div class="mb-3 pt-5">
@@ -16,7 +16,7 @@ export class DualMenu extends HTMLElement {
 			</div>
 		</div>
 		`;
-	}
+  }
 }
 
 customElements.define('dual-menu', DualMenu);

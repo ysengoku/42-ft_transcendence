@@ -1,51 +1,50 @@
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import {apiRequest} from '@api/apiRequest.js';
+import {API_ENDPOINTS} from '@api/endpoints.js';
 import './components/index.js';
 import poster from '/img/sample-background.png?url';
 
-
 export class UserProfile extends HTMLElement {
-	constructor() {
-		super();
-		this.user = null;
-	}
+  constructor() {
+    super();
+    this.user = null;
+  }
 
-	setParam(param) {
-		const username = param.username;
-		this.fetchUserData(username);
-	}
+  setParam(param) {
+    const username = param.username;
+    this.fetchUserData(username);
+  }
 
-	async fetchUserData(username) {
-    	try {
-			console.log('username:', username);
-			const userData = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
+  async fetchUserData(username) {
+    try {
+      console.log('username:', username);
+      const userData = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
 
-			this.user = userData;
-			this.render();
-		} catch (error) {
-			// Error handling
-			if (error.status === 404) {
-				// 404 page & message
-			} else {
-				// Something went wrong page & message
-			}
-		}
-	}
+      this.user = userData;
+      this.render();
+    } catch (error) {
+      // Error handling
+      if (error.status === 404) {
+        // 404 page & message
+      } else {
+        // Something went wrong page & message
+      }
+    }
+  }
 
-	render() {	
-		if (!this.user) {
-            console.log('User data is not available');
-            return;
-        }
-		console.log('User data:', this.user);
+  render() {
+    if (!this.user) {
+      console.log('User data is not available');
+      return;
+    }
+    console.log('User data:', this.user);
 
-		const friendsCount = this.user.friends.length;
-		
-		// Online status
-		const onlineStatus = document.createElement('profile-online-status');
-		onlineStatus.setAttribute('online', this.user.is_online);
+    const friendsCount = this.user.friends.length;
 
-		this.innerHTML = `
+    // Online status
+    const onlineStatus = document.createElement('profile-online-status');
+    onlineStatus.setAttribute('online', this.user.is_online);
+
+    this.innerHTML = `
 		<style>
 			.poster {
 				background-image: url(${poster});
@@ -181,38 +180,37 @@ export class UserProfile extends HTMLElement {
 	</div>
 			</div>`;
 
-		const profileAvatar = this.querySelector('profile-avatar');
-		if (profileAvatar) {
-			profileAvatar.avatarUrl = this.user.avatar;
-		}
+    const profileAvatar = this.querySelector('profile-avatar');
+    if (profileAvatar) {
+      profileAvatar.avatarUrl = this.user.avatar;
+    }
 
-		const profileUserInfo = this.querySelector('profile-user-info');
-		if (profileUserInfo) {
-			profileUserInfo.data = 
-			{
-				username:  this.user.username,
-				join_date: this.user.date_joined,
-				titre: this.user.titre
-			}
-		}
+    const profileUserInfo = this.querySelector('profile-user-info');
+    if (profileUserInfo) {
+      profileUserInfo.data = {
+        username: this.user.username,
+        join_date: this.user.date_joined,
+        titre: this.user.titre,
+      };
+    }
 
-		const profileUserActions = this.querySelector('profile-user-actions');
-		if (profileUserActions) {
-			profileUserActions.data = {
-				username: this.user.username,
-				friends: this.user.friends
-			};
-		}
+    const profileUserActions = this.querySelector('profile-user-actions');
+    if (profileUserActions) {
+      profileUserActions.data = {
+        username: this.user.username,
+        friends: this.user.friends,
+      };
+    }
 
-		const bestEnemyComponent = document.querySelector('profile-enemy-component[type="best"]');
-		const worstEnemyComponent = document.querySelector('profile-enemy-component[type="worst"]');
-		if (bestEnemyComponent) {
-			bestEnemyComponent.data = this.user.best_enemy;
-		}
-		if (worstEnemyComponent) {
-			worstEnemyComponent.data = this.user.worst_enemy;
-		}
-	}
+    const bestEnemyComponent = document.querySelector('profile-enemy-component[type="best"]');
+    const worstEnemyComponent = document.querySelector('profile-enemy-component[type="worst"]');
+    if (bestEnemyComponent) {
+      bestEnemyComponent.data = this.user.best_enemy;
+    }
+    if (worstEnemyComponent) {
+      worstEnemyComponent.data = this.user.worst_enemy;
+    }
+  }
 }
 
 customElements.define('user-profile', UserProfile);
