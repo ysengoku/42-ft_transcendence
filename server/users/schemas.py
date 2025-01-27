@@ -9,6 +9,7 @@ from .models import Profile
 
 # ruff: noqa: S105
 
+
 class Message(Schema):
     msg: str
 
@@ -17,7 +18,7 @@ class ValidationErrorMessageSchema(Message):
     type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
     loc: list[str] = Field(
         description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
-        "the list is the name of failed field.",
+        "the list is the name of failed field."
     )
 
 
@@ -67,14 +68,14 @@ class ProfileFullSchema(ProfileMinimalSchema):
     total_matches: int
     winrate: int | None = Field(description="null if the player didn't play any games yet.")
     worst_enemy: OpponentProfileAndStatsSchema | None = Field(
-        description="Player who won the most against current user.",
+        description="Player who won the most against current user."
     )
     best_enemy: OpponentProfileAndStatsSchema | None = Field(
-        description="Player who lost the most against current user.",
+        description="Player who lost the most against current user."
     )
     scored_balls: int = Field(description="How many balls player scored overall.")
     elo_history: list[EloDataPointSchema] = Field(
-        description="List of data points for elo changes of the last 10 games.",
+        description="List of data points for elo changes of the last 10 games."
     )
     friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
 

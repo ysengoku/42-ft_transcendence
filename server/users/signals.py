@@ -7,9 +7,7 @@ from .models import Profile, User
 @receiver(post_save, sender=User)
 def create_profile(sender, instance: User, created: bool, **kwargs) -> None:
     if created:
-        Profile.objects.create(
-            user=instance,
-        )
+        Profile.objects.create(user=instance)
 
 
 @receiver(post_delete, sender=Profile)
