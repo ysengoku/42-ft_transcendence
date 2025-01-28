@@ -1,3 +1,13 @@
+## what I did
+
+- a docker which work for development and production with django, vite and nginx
+- a docker compose that applies the migrations
+- a makefile that has emhanced features like showing the logs, make dev, make prod, reload nginx
+- a nginx .conf that created aliases so all is at the same level : app. the static and media files are served by nginx
+a nginx conf that prevents ddos attacks
+- the nginx cache
+- github actions that test the code and deploy it. and test can be done by installing act. 
+
 ## nginx
 
 1. Vite pendant le développement :
