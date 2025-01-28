@@ -9,6 +9,7 @@ GREEN=\033[0;32m
 YELLOW=\033[0;33m
 RED=\033[0;31m
 MAGENTA=\033[0;35m
+BLUE=\033[0;34m
 RESET=\033[0m
 
 # Define backup directories for each volume type
@@ -24,6 +25,7 @@ DOCKER_COMPOSE = docker-compose.yaml
 FRONTEND_SERVICE = front
 BACKEND_SERVICE = server
 DATABASE_SERVICE = database
+NGINX_SERVICE = nginx
 
 # Default to production mode
 NODE_ENV ?= development
@@ -72,19 +74,26 @@ down:
 restart: down up
 
 # Logs for each service
+# Logs for each service
 logs:
 	@printf "${MAGENTA}--------------------${RESET}\n"
 	docker ps -a
 	@printf "${MAGENTA}--------------------${RESET}\n"
-	@printf "${YELLOW} $(FRONTEND_SERVICE) logs:${RESET}\n"
+	@printf "${YELLOW}$(FRONTEND_SERVICE) logs:${RESET}\n"
 	@docker logs $(FRONTEND_SERVICE)
 	@printf "${YELLOW}--------------------${RESET}\n"
-	@printf "${GREEN} $(BACKEND_SERVICE) logs:${RESET}\n"
+	@printf "${GREEN}$(BACKEND_SERVICE) logs:${RESET}\n"
 	@docker logs $(BACKEND_SERVICE)
 	@printf "${GREEN}--------------------${RESET}\n"
-	@printf "${RED} $(DATABASE_SERVICE) logs:${RESET}\n"
+
+	@printf "${RED}$(DATABASE_SERVICE) logs:${RESET}\n"
 	@docker logs $(DATABASE_SERVICE)
 	@printf "${RED}--------------------${RESET}\n"
+
+	@printf "${BLUE}$(NGINX_SERVICE) logs:${RESET}\n"
+	@docker logs $(NGINX_SERVICE)
+	@printf "${BLUE}--------------------${RESET}\n"
+
 
 # Rebuild containers
 rebuild: check-env
