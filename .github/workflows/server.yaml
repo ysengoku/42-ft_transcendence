@@ -28,6 +28,7 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -66,6 +67,5 @@ jobs:
           POSTGRES_USER: 'test_user'
           POSTGRES_PASSWORD: 'test_password'
           HOST: 'localhost'
-
         run: |
           python manage.py test
