@@ -86,7 +86,7 @@ export class Settings extends HTMLElement {
     const usernameField = this.querySelector('#username');
     const emailField = this.querySelector('#email');
     const passwordField = this.querySelector('#password');
-    const password_repeatField = this.querySelector('#password_repeat');
+    const passwordRepeatField = this.querySelector('#password_repeat');
 
     const avatarUploadField = this.querySelector('avatar-upload');
     const selectedFile = avatarUploadField.selectedFile;
@@ -95,7 +95,7 @@ export class Settings extends HTMLElement {
     formData.append('username', usernameField.value);
     formData.append('email', emailField.value);
     formData.append('password', passwordField.value);
-    formData.append('password_repeat', password_repeatField.value);
+    formData.append('password_repeat', passwordRepeatField.value);
     if (selectedFile) {
       formData.append('avatar', selectedFile);
     }
