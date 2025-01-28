@@ -3,11 +3,11 @@ name: Backend Tests
 on:
   push:
     branches:
-      - main
+      - master
       - dev
   pull_request:
     branches:
-      - main
+      - master
       - dev
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         ports:
           - 5432:5432
-        options: --health-cmd "pg_isready -U $POSTGRES_USER" --health-interval 15s --health-timeout 5s --health-retries 10
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Verify PostgreSQL secrets
