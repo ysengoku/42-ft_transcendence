@@ -59,14 +59,15 @@ export class UserDuelHistory extends HTMLElement {
     this.innerHTML = `
 	  <style>
 	    .user-game-history-table {
-		  font-size: 12px;
-          txt-decoration: none;
-		}
-		.user-game-history-table td {
-          vertical-align: middle;
-		  background-color: transparent;
-		  color: black;
-        }
+		    font-size: 14px;
+        txt-decoration: none;
+		  }
+		  .user-game-history-table td {
+        vertical-align: middle;
+		    background-color: transparent;
+		    color: black;
+        padding: 1rem 0 1rem 0.5rem;
+      }
 	  </style>
 	  <table class="table table-hover user-game-history-table">
 		<thead>
