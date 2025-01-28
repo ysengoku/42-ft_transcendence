@@ -27,6 +27,11 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
+
+      - name: Debug environment variables
+        run: |
+          echo "GITHUB_ACTIONS=$GITHUB_ACTIONS"
+          echo "DB_NAME"
       - name: Verify PostgreSQL secrets
         run: |
           if [[ -z "${{ secrets.DB_PASSWORD }}" || -z "${{ secrets.DB_USER }}" || -z "${{ secrets.DB_NAME }}" ]]; then

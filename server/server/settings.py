@@ -3,7 +3,6 @@ import os
 import sys
 from pathlib import Path
 
-
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 
