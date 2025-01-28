@@ -26,6 +26,7 @@ def get_users(request: HttpRequest):
     """
     WARNING: temporary endpoint. At the moment in returns a list of all users for the testing purposes.
     """
+    print(request.session.__dict__)
     return Profile.objects.prefetch_related("user").all()
 
 
@@ -91,7 +92,7 @@ def get_friends(request: HttpRequest, username: str):
     """
     Gets friends of specific user.
     Paginated by the `limit` and `offset` settings.
-    For example, `/users/{username}/friends?limit=10&offset=0` will get 10 friends string from the very first friend.
+    For example, `/users/{username}/friends?limit=10&offset=0` will get 10 friends from the very first one.
     """
     try:
         user = User.objects.get_by_natural_key(username)
@@ -114,15 +115,15 @@ def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema)
     try:
         friend = User.objects.get_by_natural_key(user_to_add.username).profile
     except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+        raise HttpError(404, f"User {user_to_add.username} not found.") from exc
 
     user.profile.friends.add(friend)
     return 201, friend
 
 
 # TODO: add auth
-@api.delete("users/{username}/friends/{friend_username}", response={204: None, 404: Message})
-def delete_friend(request: HttpRequest, username: str, friend_to_delete: str):
+@api.delete("users/{username}/friends/{friend_to_remove}", response={204: None, 404: Message})
+def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: str):
     """
     Deletes user from a friendlist.
     """
@@ -132,11 +133,66 @@ def delete_friend(request: HttpRequest, username: str, friend_to_delete: str):
         raise HttpError(404, f"User {username} not found.") from exc
 
     try:
-        friend = User.objects.get_by_natural_key(friend_to_delete).profile
+        friend = User.objects.get_by_natural_key(friend_to_remove).profile
+    except User.DoesNotExist as exc:
+        raise HttpError(404, f"User {friend_to_remove} not found.") from exc
+
+    user.profile.friends.remove(friend)
+    return 204, None
+
+
+@api.get("users/{username}/blocked_users", response={200: list[ProfileMinimalSchema], 404: Message})
+@paginate
+def get_blocked_users(request: HttpRequest, username: str):
+    """
+    Gets blocked users of specific user.
+    Paginated by the `limit` and `offset` settings.
+    For example, `/users/{username}/blocked_users?limit=10&offset=0` will get 10 blocked users from the very first one.
+    """
+    try:
+        user = User.objects.get_by_natural_key(username)
+        return user.profile.blocked_users.all()
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {username} not found.") from exc
 
-    user.profile.friends.remove(friend)
+
+# TODO: add auth
+@api.post("users/{username}/blocked_users", response={201: ProfileMinimalSchema, 404: Message})
+def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: UsernameSchema):
+    """
+    Adds user to the blocklist.
+    """
+    try:
+        user = User.objects.get_by_natural_key(username)
+    except User.DoesNotExist as exc:
+        raise HttpError(404, f"User {username} not found.") from exc
+
+    try:
+        blocked_user = User.objects.get_by_natural_key(user_to_add.username).profile
+    except User.DoesNotExist as exc:
+        raise HttpError(404, f"User {user_to_add.username} not found.") from exc
+
+    user.profile.blocked_users.add(blocked_user)
+    return 201, blocked_user
+
+
+# TODO: add auth
+@api.delete("users/{username}/blocked_users/{blocked_user_to_remove}", response={204: None, 404: Message})
+def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_to_remove: str):
+    """
+    Deletes user from a blocklist.
+    """
+    try:
+        user = User.objects.get_by_natural_key(username)
+    except User.DoesNotExist as exc:
+        raise HttpError(404, f"User {username} not found.") from exc
+
+    try:
+        blocked_user = User.objects.get_by_natural_key(blocked_user_to_remove).profile
+    except User.DoesNotExist as exc:
+        raise HttpError(404, f"User {blocked_user_to_remove} not found.") from exc
+
+    user.profile.blocked_users.remove(blocked_user)
     return 204, None
 
 
