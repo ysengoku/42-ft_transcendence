@@ -56,7 +56,6 @@ CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 #     }
 
 
-IS_GITHUB_ACTIONS = os.environ.get("GITHUB_ACTIONS") == "true"
 
 DATABASES = {
     "default": {
@@ -64,7 +63,7 @@ DATABASES = {
         "NAME": os.environ.get("POSTGRES_DB"),
         "USER": os.environ.get("POSTGRES_USER"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-        "HOST": 'localhost',
+        "HOST": os.environ.get("DATABASE_HOST"),
         "PORT": os.environ.get("DATABASE_PORT", 5432),
     },
 }
