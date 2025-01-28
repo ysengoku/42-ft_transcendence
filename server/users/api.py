@@ -26,7 +26,6 @@ def get_users(request: HttpRequest):
     """
     WARNING: temporary endpoint. At the moment in returns a list of all users for the testing purposes.
     """
-    print(request.session.__dict__)
     return Profile.objects.prefetch_related("user").all()
 
 
