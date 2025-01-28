@@ -65,7 +65,7 @@ export class Register extends HTMLElement {
     const usernameField = this.querySelector('#username');
     const emailField = this.querySelector('#email');
     const passwordField = this.querySelector('#password');
-    const password_repeatField = this.querySelector('#password_repeat');
+    const passwordRepeatField = this.querySelector('#password_repeat');
 
     // Input validation at Front-end
     let isFormValid = true;
@@ -73,8 +73,8 @@ export class Register extends HTMLElement {
     isFormValid = this.checkInput(emailField, '#email-feedback', 'Email is required') && isFormValid;
     isFormValid = this.checkInput(passwordField, '#password-feedback', 'Password is required') && isFormValid;
     isFormValid =
-      this.checkInput(password_repeatField, '#password_repeat-feedback', 'Please confirm your password') && isFormValid;
-    isFormValid = this.checkPasswordDiff(passwordField, password_repeatField) && isFormValid;
+      this.checkInput(passwordRepeatField, '#password_repeat-feedback', 'Please confirm your password') && isFormValid;
+    isFormValid = this.checkPasswordDiff(passwordField, passwordRepeatField) && isFormValid;
     if (!isFormValid) {
       return;
     }
@@ -83,7 +83,7 @@ export class Register extends HTMLElement {
       username: usernameField.value,
       email: emailField.value,
       password: passwordField.value,
-      password_repeat: password_repeatField.value,
+      password_repeat: passwordRepeatField.value,
     };
 
     try {
