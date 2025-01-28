@@ -34,9 +34,9 @@ if "GITHUB_ACTIONS" in os.environ:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("DB_NAME"),
-            "USER": os.environ.get("DB_USER"),
-            "PASSWORD": os.environ.get("DB_PASSWORD"),
+            "NAME": "test_db",
+            "USER": "test_user",
+            "PASSWORD": "test_password",
             "HOST": "localhost",
             "PORT": "5432",
         }
