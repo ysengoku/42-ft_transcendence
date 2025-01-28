@@ -31,29 +31,44 @@ DEBUG = int(os.environ.get("DEBUG", default=1))
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
-if "GITHUB_ACTIONS" in os.environ:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("DB_NAME"),
-            "USER": os.environ.get("DB_USER"),
-            "PASSWORD": os.environ.get("DB_PASSWORD"),
-            "HOST": "localhost",
-            "PORT": "5432",
-        }
-    }
-# PostgreSQL for production
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB"),
-            "USER": os.environ.get("POSTGRES_USER"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-            "HOST": os.environ.get("DATABASE_HOST"),
-            "PORT": os.environ.get("DATABASE_PORT"),
-        }
-    }
+# if "GITHUB_ACTIONS" in os.environ:
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": os.environ.get("DB_NAME"),
+#             "USER": os.environ.get("DB_USER"),
+#             "PASSWORD": os.environ.get("DB_PASSWORD"),
+#             "HOST": "localhost",
+#             "PORT": "5432",
+#         }
+#     }
+# # PostgreSQL for production
+# else:
+#     DATABASES = {
+#         "default": {
+#             "ENGINE": "django.db.backends.postgresql",
+#             "NAME": os.environ.get("POSTGRES_DB"),
+#             "USER": os.environ.get("POSTGRES_USER"),
+#             "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+#             "HOST": os.environ.get("DATABASE_HOST"),
+#             "PORT": os.environ.get("DATABASE_PORT"),
+#         }
+#     }
+
+
+IS_GITHUB_ACTIONS = os.environ.get("GITHUB_ACTIONS") == "true"
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("POSTGRES_DB"),
+        "USER": os.environ.get("POSTGRES_USER"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "HOST": 'localhost',
+        "PORT": os.environ.get("DATABASE_PORT", 5432),
+    },
+}
+
 
 INSTALLED_APPS = [
     # Default Django applications
