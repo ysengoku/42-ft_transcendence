@@ -45,140 +45,128 @@ export class UserProfile extends HTMLElement {
     onlineStatus.setAttribute('online', this.user.is_online);
 
     this.innerHTML = `
-		<style>
-			.poster {
-				background-image: url(${poster});
-    			background-size: cover;
-    			background-position: center;
-    			background-repeat: no-repeat;
-				color: black;
-			}
-			.online-status-indicator {
-    			width: 16px;
-    			height: 16px;
-    			border-radius: 50%;
-    			background-color: gray;
-    			display: inline-block;
-			}
-			hr {
-  				height: 0;
-  				margin: 0;
-  				padding: 0;
-  				border: 0;
-			}
-  			.line {
-  				border-top: 4px double #594639;
-				opacity: 1;
-  			}
-			.online-status-indicator.online {
-    			background-color: green;
-			}
-			.enemies-container {
-				height: 224px;
-			}
-			.no-margin {
-    			margin: 0;
-			}
-			.row.no-gutters > [class*='col-'] {
-   				padding-right: 0;
-    			padding-left: 0;
-			}
-		</style>
+    <style>
+      .poster {
+        background-image: url(${poster});
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+        color: black;
+      }
+      .online-status-indicator {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background-color: gray;
+          display: inline-block;
+      }
+      hr {
+          height: 0;
+          margin: 0;
+          padding: 0;
+          border: 0;
+      }
+        .line {
+          border-top: 4px double #594639;
+        opacity: 1;
+        }
+      .online-status-indicator.online {
+          background-color: green;
+      }
+      .enemies-container {
+        height: 224px;
+      }
+      .no-margin {
+          margin: 0;
+      }
+      .row.no-gutters > [class*='col-'] {
+           padding-right: 0;
+          padding-left: 0;
+      }
+    </style>
 
-		<div class="container-fluid flex-grow-1 d-grid gap-3 h-100">
-			<div class="row h-100 no-gutters">
+    <div class="container-fluid flex-grow-1 d-grid gap-3 h-100">
+      <div class="row h-100 no-gutters">
 
-				<!-- Container Left -->
-				<div class="d-flex col-12 col-md-6">
-					<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2 h-100">
+        <!-- Container Left -->
+        <div class="d-flex col-12 col-md-6">
+          <div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2 h-100">
 
-						<!-- Container Top -->
-						<div class="flex-grow-1">
-							<div class="mb-3 w-100 text-center px-2 pt-3">
-								<div class="d-flex flex-row align-items-center">
-									<hr class="line flex-grow-1">	
-									${onlineStatus.outerHTML}
-									<hr class="line flex-grow-1">
-								</div>
-								<h1>WANTED</h1>
-								<hr class="line">
-							</div>
-						
-							<profile-avatar></profile-avatar>
-							<profile-user-info></profile-user-info>
-						</div>
+            <!-- Container Top -->
+            <div class="flex-grow-1">
+              <div class="mb-3 w-100 text-center px-2 pt-3">
+                <div class="d-flex flex-row align-items-center">
+                  <hr class="line flex-grow-1">  
+                  ${onlineStatus.outerHTML}
+                  <hr class="line flex-grow-1">
+                </div>
+                <h1>WANTED</h1>
+                <hr class="line">
+              </div>
+            
+              <profile-avatar></profile-avatar>
+              <profile-user-info></profile-user-info>
+            </div>
 
-						<!-- Container Bottom -->
-						<div class="flex-grow-1">
-							<profile-user-actions></profile-user-actions>
+            <!-- Container Bottom -->
+            <div class="flex-grow-1">
+              <profile-user-actions></profile-user-actions>
 
-							<!-- Stats -->
-							<div class="d-flex flex-row justify-content-around mt-5">
-							<div class="row w-100">
-								<div class="col-3 text-center">
-									<p>Elo</p>
-									<p>1555</p>
-								</div>
-								<div class="col-3 text-center">
-									<p>Total score</p>
-									<p>623</p>
-								</div>
-								<div class="col-3 text-center">
-									<p>Total duals</p>
-									<p>35</p>
-								</div>
-								<div class="col-3 text-center">
-									<p>Friends</p>
-									<p>11</p>
-								</div>
-							</div>
-						</div>
+              <!-- Stats -->
+            <div class="d-flex flex-row justify-content-around mt-5">
+              <div class="row px-2 w-100">
+                <profile-stat-card class="col-3" title="Elo" value="${this.user.elo}"></profile-stat-card>
+                <profile-stat-card class="col-3" title="Total score" value="${this.user.scored_balls}"></profile-stat-card>
+                <profile-stat-card class="col-3" title="total duels" value="${this.user.total_matches}"></profile-stat-card>  
+                <profile-stat-card class="col-3" title="Friends" value="${friendsCount}"></profile-stat-card>
+              </div>
+            </div>
 
-						<!-- Graphs -->
-						<div class="d-flex flex-row justify-content-around align-items-top">
-							<div class="row h-100 m-3 p-2">
-								<div class="col-md-6">
-									<p>Win Rate</p>
-									<canvas id="winRateChart">
+            <!-- Graphs -->
+            <div class="d-flex flex-row justify-content-around align-items-top">
+              <div class="row h-100 m-3 p-2">
+                <div class="col-md-6">
+                  <p>Win Rate</p>
+                  <canvas id="winRateChart">
 
-									</canvas>
-								</div>
-								<div class="col-md-6">
-									<p>Elo progression</p>
-									<canvas id="eloProgressionChart"></canvas>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
+                  </canvas>
+                </div>
+                <div class="col-md-6">
+                  <p>Elo progression</p>
+                  <canvas id="eloProgressionChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-				<!-- Container Right -->
-				<div class="d-flex col-12 col-md-6">
-				<div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2 h-100">
+        <!-- Container Right -->
+        <div class="d-flex col-12 col-md-6">
+        <div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2 h-100">
 
-				<!-- Container Top -->
-				<div class="enemies-container d-grid">
-					<div class="row no-gutters no-margin py-3 h-100">
-						<div class="col-6 d-flex flex-column h-100">
-							<p class="ms-3">Best Enemy</p>
-							<profile-enemy-component type="best"></profile-enemy-component>
-						</div>
-						<div class="col-6 d-flex flex-column h-100">
-							<p class="ms-3">Worst Enemy</p>
-							<profile-enemy-component type="worst"></profile-enemy-component>
-						</div>
-					</div>
-				</div>
+        <!-- Container Top -->
+        <div class="enemies-container d-grid">
+          <div class="row no-gutters no-margin py-3 h-100">
+            <div class="col-6 d-flex flex-column h-100">
+              <p class="ms-3">Best Enemy</p>
+              <profile-enemy-component type="best"></profile-enemy-component>
+            </div>
+            <div class="col-6 d-flex flex-column h-100">
+              <p class="ms-3">Worst Enemy</p>
+              <profile-enemy-component type="worst"></profile-enemy-component>
+            </div>
+          </div>
+        </div>
 
-				<!-- Container Bottom -->
-				<div class="flex-grow-1 d-flex flex-column p-3">
-					<p>Match History</p>
-				</div>
-			</div>
-		</div>
-	</div>
-			</div>`;
+        <!-- Container Bottom -->
+        <div class="flex-grow-1 d-flex flex-column p-3">
+          <p>Match History</p>
+        </div>
+      </div>
+    </div>
+  </div>
+      </div>`;
 
     const profileAvatar = this.querySelector('profile-avatar');
     if (profileAvatar) {
