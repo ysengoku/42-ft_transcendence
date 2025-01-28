@@ -178,3 +178,5 @@ AUTH_SETTINGS = {
     "check_attribute_similarity": True,
     "check_is_diverse": True,
 }
+
+NINJA_PAGINATION_PER_PAGE = 10
