@@ -160,9 +160,9 @@ export class UserProfile extends HTMLElement {
         </div>
 
         <!-- Container Bottom -->
-        <div class="flex-grow-1 d-flex flex-column p-3">
-          <p>Match History</p>
-        </div>
+          <div class="flex-grow-1 d-flex flex-column px-1 py-3">
+            <user-game-history class="flex-grow-1"></user-game-history>
+          </div>
       </div>
     </div>
   </div>
@@ -197,6 +197,14 @@ export class UserProfile extends HTMLElement {
     }
     if (worstEnemyComponent) {
       worstEnemyComponent.data = this.user.worst_enemy;
+    }
+
+    const gameHistory = this.querySelector("user-game-history");
+    if (gameHistory) {
+      gameHistory.data = {
+        matches: this.user.match_history,
+        // tournaments: = this.user.tournament_history
+      }
     }
   }
 }
