@@ -18,9 +18,10 @@ jobs:
       postgres:
         image: postgres:16.0-bookworm
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: localhost
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -28,7 +29,7 @@ jobs:
     steps:
       - name: Verify PostgreSQL secrets
         run: |
-          if [[ -z "${{ secrets.POSTGRES_PASSWORD }}" || -z "${{ secrets.POSTGRES_USER }}" || -z "${{ secrets.POSTGRES_DB }}" ]]; then
+          if [[ -z "${{ secrets.DB_PASSWORD }}" || -z "${{ secrets.DB_USER }}" || -z "${{ secrets.DB_NAME }}" ]]; then
             echo "One or more PostgreSQL secrets are missing!"
             exit 1
           else
@@ -58,10 +59,9 @@ jobs:
       - name: Run Django migrations
         working-directory: server/
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          DATABASE_URL: postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$DB_HOST:$DB_PORT/$POSTGRES_DB
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_HOST: localhost
           DB_PORT: 5432
         run: |
@@ -71,9 +71,9 @@ jobs:
       - name: Run Django unit tests
         working-directory: server/
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_HOST: localhost
           DB_PORT: 5432
         run: |
