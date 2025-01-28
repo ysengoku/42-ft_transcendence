@@ -160,7 +160,7 @@ export class UserProfile extends HTMLElement {
         </div>
 
         <!-- Container Bottom -->
-        <div class="flex-grow-1 d-flex flex-column p-3">
+        <div class="flex-grow-1 d-flex flex-column p-1">
           <p>Match History</p>
         </div>
       </div>
