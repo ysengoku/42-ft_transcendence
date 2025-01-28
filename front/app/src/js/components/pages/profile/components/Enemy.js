@@ -25,11 +25,10 @@ export class ProfileEnemy extends HTMLElement {
   }
 
   render() {
-    const type = this._type === 'best' ? 'Best Enemy' : 'Worst Enemy';
-    // Test data --------------------------------------------------------------------
-    if (type === 'Best Enemy') {
+    // Test data ---------------------------------------
+    if (this._type === 'best') {
       this._data = {
-        username: 'Alice',
+        username: 'George',
         avatar: '/media/avatars/sample_avatar2.jpg',
         wins: 20,
         loses: 10,
@@ -37,10 +36,11 @@ export class ProfileEnemy extends HTMLElement {
         elo: 1100,
       };
     }
-    // -------------------------------------------------------------------------------
+    // -------------------------------------------------
+
+    const type = this._type === 'best' ? 'Best Enemy' : 'Worst Enemy';
     if (this._data) {
       const enemy = this._data;
-      // console.log('Enemy:', enemy);
       this.innerHTML = `
 			<style>
 				.enemy-avatar-container img {
