@@ -14,8 +14,98 @@ from .schemas import (
     ValidationErrorMessageSchema,
 )
 
+import hashlib
+import json
+import os
+import webbrowser
+import requests
+from pathlib import Path
+from urllib.parse import urlencode, urlparse, parse_qsl
+from ninja import Router
+from django.conf import settings
+from django.http import JsonResponse
+
+SCOPES_GITHUB = ["user"]
+SCOPES_42 = ["public", "profile"]
+
 api = NinjaAPI()
 
+# Function to get OAuth secrets and scopes
+def param(platform: str) -> dict:
+    secrets_file = json.loads(Path(settings.BASE_DIR / "secrets.json").read_text())  # Adjust path as needed
+    if platform == "github":
+        secrets = secrets_file["github"]
+        SCOPES = SCOPES_GITHUB
+    elif platform == "42":
+        secrets = secrets_file["42"]
+        SCOPES = SCOPES_42
+    else:
+        raise ValueError(f"Unsupported platform: {platform}")
+
+    return secrets, SCOPES
+
+# Function to handle OAuth authorization
+def authorize(secrets: dict, SCOPES: list) -> dict:
+    redirect_uri = secrets["redirect_uris"][0]
+    params = {
+        "response_type": "code",
+        "client_id": secrets["client_id"],
+        "redirect_uri": redirect_uri,
+        "scope": " ".join(SCOPES),
+        "state": hashlib.sha256(os.urandom(1024)).hexdigest(),
+    }
+
+    # Create the authorization URL
+    url = f"{secrets['auth_uri']}?{urlencode(params)}"
+    if not webbrowser.open(url):
+        raise RuntimeError("Failed to open browser")
+
+    return url
+
+
+@api.get("/oauth/authorize")
+def oauth_authorize(request, platform: str):
+    try:
+        secrets, SCOPES = param(platform)
+    except ValueError as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+    # Call the authorize function to initiate the OAuth flow
+    try:
+        auth_url = authorize(secrets, SCOPES)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"auth_url": auth_url})
+
+# Django view to handle the OAuth callback
+@api.get("/oauth/callback")
+def oauth_callback(request):
+    code = request.GET.get("code")
+    state = request.GET.get("state")
+    if not code or not state:
+        return JsonResponse({"error": "Invalid callback parameters"}, status=400)
+
+    # Exchange the code for an access token
+    secrets, _ = param('github')  # Choose the platform dynamically as needed
+    redirect_uri = secrets["redirect_uris"][0]
+    params = {
+        "client_id": secrets["client_id"],
+        "client_secret": secrets["client_secret"],
+        "code": code,
+        "redirect_uri": redirect_uri,
+    }
+
+    response = requests.post(
+        secrets["token_uri"],
+        data=params,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+
+    if response.status_code != 200:
+        return JsonResponse({"error": "Failed to get access token"}, status=500)
+
+    return JsonResponse(response.json())
 
 @api.get("users/", response=list[ProfileMinimalSchema])
 def get_users(request: HttpRequest):
