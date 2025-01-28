@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - workflows
       - dev
   pull_request:
     branches:
+      - workflows
       - main
       - dev
 
@@ -18,23 +20,15 @@ jobs:
       postgres:
         image: postgres:16.0-bookworm
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: 'test_db'
+          POSTGRES_USER: 'test_user'
+          POSTGRES_PASSWORD: 'test_password'
+          HOST: 'localhost'
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-      - name: Verify PostgreSQL secrets
-        run: |
-          if [[ -z "${{ secrets.POSTGRES_PASSWORD }}" || -z "${{ secrets.POSTGRES_USER }}" || -z "${{ secrets.POSTGRES_DB }}" ]]; then
-            echo "One or more PostgreSQL secrets are missing!"
-            exit 1
-          else
-            echo "PostgreSQL secrets are set correctly."
-          fi
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -58,12 +52,10 @@ jobs:
       - name: Run Django migrations
         working-directory: server/
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          DATABASE_URL: postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$DB_HOST:$DB_PORT/$POSTGRES_DB
-          DB_HOST: localhost
-          DB_PORT: 5432
+          POSTGRES_DB: 'test_db'
+          POSTGRES_USER: 'test_user'
+          POSTGRES_PASSWORD: 'test_password'
+          HOST: 'localhost'
         run: |
           python manage.py makemigrations
           python manage.py migrate
@@ -71,10 +63,9 @@ jobs:
       - name: Run Django unit tests
         working-directory: server/
         env:
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          DB_HOST: localhost
-          DB_PORT: 5432
+          POSTGRES_DB: 'test_db'
+          POSTGRES_USER: 'test_user'
+          POSTGRES_PASSWORD: 'test_password'
+          HOST: 'localhost'
         run: |
           python manage.py test
