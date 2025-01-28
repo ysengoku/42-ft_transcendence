@@ -21,7 +21,6 @@ jobs:
           POSTGRES_DB: ${{ secrets.DB_NAME }}
           POSTGRES_USER: ${{ secrets.DB_USER }}
           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_HOST: localhost
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
@@ -31,7 +30,10 @@ jobs:
       - name: Debug environment variables
         run: |
           echo "GITHUB_ACTIONS=$GITHUB_ACTIONS"
-          echo "DB_NAME"
+          echo "DB_NAME=$DB_NAME"
+          echo "DB_USER=$DB_USER"
+          echo "DB_PASSWORD=$DB_PASSWORD"
+
       - name: Verify PostgreSQL secrets
         run: |
           if [[ -z "${{ secrets.DB_PASSWORD }}" || -z "${{ secrets.DB_USER }}" || -z "${{ secrets.DB_NAME }}" ]]; then
@@ -67,8 +69,6 @@ jobs:
           POSTGRES_DB: ${{ secrets.DB_NAME }}
           POSTGRES_USER: ${{ secrets.DB_USER }}
           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_HOST: localhost
-          DB_PORT: 5432
         run: |
           python manage.py makemigrations
           python manage.py migrate
@@ -79,7 +79,5 @@ jobs:
           POSTGRES_DB: ${{ secrets.DB_NAME }}
           POSTGRES_USER: ${{ secrets.DB_USER }}
           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_HOST: localhost
-          DB_PORT: 5432
         run: |
           python manage.py test
