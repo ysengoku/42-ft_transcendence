@@ -9,6 +9,13 @@ const router = (() => {
       this.routes.set(path, {componentTag, isDynamic, requiresAuth});
     }
 
+    getRoutes() {
+      return Array.from(this.routes.entries()).map(([path, data]) => ({
+        path,
+        ...data
+      }));
+    }
+
     handleRoute() {
       const path = window.location.pathname;
       const route = this.routes.get(path) || this.matchDynamicRoute(path);

@@ -1,6 +1,4 @@
-import router from '../../src/js/router.js';  // Adjust the relative path as needed
-
-
+import {router} from '@router';  // Adjust the relative path as needed
 
 // describe('Router tests', () => {
 //   it('should define all necessary routes', () => {
@@ -39,3 +37,7 @@ describe('Router tests', () => {
     });
   });
   
+
+// getRoutes() method added to the Router class
+// Dyanamic url
+// Pages requiring authentication
