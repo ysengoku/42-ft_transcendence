@@ -44,7 +44,8 @@ class User(AbstractUser):
                 raise PermissionDenied
             if data.old_password == data.password:
                 err_dict = merge_err_dicts(
-                    err_dict, {"password": ["New password cannot be the same as the old password."]}
+                    err_dict,
+                    {"password": ["New password cannot be the same as the old password."]},
                 )
             self.set_password(data.password)
             data.password = ""
@@ -112,7 +113,7 @@ class Profile(models.Model):
     def scored_balls(self):
         return (
             self.matches.aggregate(
-                scored_balls=Sum(Case(When(loser=self, then="losers_score"), When(winner=self, then="winners_score")))
+                scored_balls=Sum(Case(When(loser=self, then="losers_score"), When(winner=self, then="winners_score"))),
             )["scored_balls"]
             or 0
         )
@@ -161,7 +162,6 @@ class Profile(models.Model):
         self.delete_avatar()
         self.profile_picture = new_avatar
 
-# avatar.png
     def validate_avatar(self, file: UploadedFile) -> None:
         """
         Validates uploaded avatar for having a correct extension being a valid image.
