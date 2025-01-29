@@ -1,11 +1,15 @@
+from django.conf import settings
 from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
 from django.http import HttpRequest, HttpResponse
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import File, Form, NinjaAPI
 from ninja.errors import HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
+from ninja.security import APIKeyCookie
 
+from .jwt import create_jwt, verify_jwt
 from .models import Profile, User
 from .schemas import (
     LoginSchema,
@@ -18,17 +22,29 @@ from .schemas import (
     ValidationErrorMessageSchema,
 )
 
-api = NinjaAPI()
+
+class CookieKey(APIKeyCookie):
+    param_name = "access_token"
+
+    def authenticate(self, request, access_token: str):
+        if verify_jwt(access_token):
+            return True
+        return None
 
 
-@api.get("/cookiekey", auth=None)
+api = NinjaAPI(auth=CookieKey(), csrf=True)
+
+
+@api.get("/cookiekey")
 def apikey(request, response: HttpResponse):
-    response.set_cookie("key", "supersecret")
-    return True
+    return "asd"
 
 
+# TODO: added secure options for the cookie
 @api.post("login/", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
-def login(request: HttpRequest, response: HttpResponse, credentials: LoginSchema):
+@ensure_csrf_cookie
+@csrf_exempt
+def login(request: HttpRequest, credentials: LoginSchema):
     try:
         user = User.objects.get_by_natural_key(credentials.username)
     except User.DoesNotExist as exc:
@@ -39,9 +55,9 @@ def login(request: HttpRequest, response: HttpResponse, credentials: LoginSchema
         raise HttpError(401, "Username or password are not correct.")
 
     token = create_jwt(user.username)
+    response = HttpResponse("Success")
     response.set_cookie("access_token", token)
-    return user.profile
-
+    return response
 
 
 # TODO: delete endpoint
