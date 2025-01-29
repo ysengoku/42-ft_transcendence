@@ -1,4 +1,4 @@
-import {simulateFetchUserData} from '@mock/functions/simulateFetchUserData.js';
+import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 import './components/index.js';
 
 export class Settings extends HTMLElement {
