@@ -1,6 +1,6 @@
 import sheriff from '../../../../../../public/img/sheriff.png';
 
-export class ProfileStatCard extends HTMLElement {
+export class UserStatCard extends HTMLElement {
   constructor() {
     super();
     this._title = null;
@@ -48,4 +48,4 @@ export class ProfileStatCard extends HTMLElement {
   }
 }
 
-customElements.define('profile-stat-card', ProfileStatCard);
+customElements.define('user-stat-card', UserStatCard);
