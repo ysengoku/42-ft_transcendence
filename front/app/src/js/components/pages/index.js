@@ -2,7 +2,7 @@ import { Home } from './home/Home.js';
 import { Landing } from './Landing.js';
 import { Login } from './login//Login.js';
 import { UserProfile } from './profile/Profile.js';
-import { UserNotFound } from './profile/userNotFound.js';
+import { UserNotFound } from './profile/UserNotFound.js';
 import { Register } from './register/Register.js';
 import { Settings } from './settings/Settings.js';
 import { DualMenu } from './dual/DualMenu.js';
