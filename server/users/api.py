@@ -18,48 +18,24 @@ from .schemas import (
 )
 
 ##### OAuth #####
-from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
-from ninja import NinjaAPI, Router
-from pathlib import Path
+from ninja import Router
 import hashlib
-import json
 import os
 import requests
 from urllib.parse import urlencode
 from django.conf import settings
+import logging
 
-# Configuration des scopes OAuth
-OAUTH_CONFIG = {
-    "github": {
-        "scopes": ["user"],
-        "user_endpoint": "https://api.github.com/user",
-    },
-    "42": {
-        "scopes": ["public", "profile"],
-        "user_endpoint": "https://api.intra.42.fr/v2/me",
-    },
-}
-
-api = NinjaAPI()
+logger = logging.getLogger(__name__)
 oauth_router = Router()
 
 
 def get_oauth_config(platform: str) -> dict:
-    """Get OAuth configuration for the specified platform"""
-    if platform not in OAUTH_CONFIG:
+    """Retrieve OAuth config for a specific platform"""
+    if platform not in settings.OAUTH_CONFIG:
         raise ValueError(f"Unsupported platform: {platform}")
-
-    secrets_file = json.loads(Path(settings.BASE_DIR / "secrets.json").read_text())
-    if platform not in secrets_file:
-        raise ValueError(f"No secrets configured for platform: {platform}")
-
-    return {**secrets_file[platform], **OAUTH_CONFIG[platform]}
-
-
-import logging
-
-logger = logging.getLogger(__name__)
+    return settings.OAUTH_CONFIG[platform]
 
 
 @oauth_router.get("/authorize/{platform}")
@@ -68,15 +44,9 @@ def oauth_authorize(request, platform: str):
         logger.info(f"Starting OAuth authorization for platform: {platform}")
 
         config = get_oauth_config(platform)
-        logger.info("Got OAuth config")
-
-        # Générer l'état pour la sécurité CSRF
         state = hashlib.sha256(os.urandom(1024)).hexdigest()
-        logger.info(f"Generated state: {state}")
-
         request.session["oauth_state"] = state
         request.session["oauth_platform"] = platform
-        logger.info("Saved state and platform to session")
 
         params = {
             "response_type": "code",
@@ -85,11 +55,8 @@ def oauth_authorize(request, platform: str):
             "scope": " ".join(config["scopes"]),
             "state": state,
         }
-        logger.info(f"Built params: {params}")
 
         auth_url = f"{config['auth_uri']}?{urlencode(params)}"
-        logger.info(f"Generated auth URL: {auth_url}")
-
         return JsonResponse({"auth_url": auth_url})
 
     except Exception as e:
@@ -97,7 +64,50 @@ def oauth_authorize(request, platform: str):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-##### END OAuth #####
+@oauth_router.get("/callback")
+def oauth_callback(request):
+    code = request.GET.get("code")
+    state = request.GET.get("state")
+
+    if not state or state != request.session.get("oauth_state"):
+        return JsonResponse({"error": "Invalid state parameter"}, status=400)
+
+    platform = request.session.get("oauth_platform")
+    if not platform:
+        return JsonResponse({"error": "No platform specified"}, status=400)
+
+    try:
+        config = get_oauth_config(platform)
+
+        token_response = requests.post(
+            config["token_uri"],
+            data={
+                "client_id": config["client_id"],
+                "client_secret": config["client_secret"],
+                "code": code,
+                "redirect_uri": config["redirect_uris"][0],
+                "grant_type": "authorization_code",
+            },
+            headers={"Accept": "application/json"},
+        )
+
+        token_data = token_response.json()
+
+        if "access_token" not in token_data:
+            return JsonResponse({"error": "Failed to get access token"}, status=500)
+
+        user_response = requests.get(
+            config["user_endpoint"],
+            headers={"Authorization": f"Bearer {token_data['access_token']}", "Accept": "application/json"},
+        )
+        user_data = user_response.json()
+
+        return JsonResponse({"status": "success", "user": user_data})
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
 
 
 @oauth_router.get("/callback")
@@ -141,7 +151,6 @@ def oauth_callback(request):
         user_data = user_response.json()
 
         # TODO: Créer ou mettre à jour l'utilisateur dans la base de données
-        # Cette partie dépendra de votre modèle User
 
         return JsonResponse({"status": "success", "user": user_data})
 
@@ -151,6 +160,8 @@ def oauth_callback(request):
 
 # Enregistrer le router
 api.add_router("/oauth", oauth_router)
+
+##### END OAuth #####
 
 
 # TODO: delete endpoint
