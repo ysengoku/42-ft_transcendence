@@ -200,6 +200,6 @@ export function mockFetchDuelHistory() {
       score: '1 - 14',
       is_winner: false,
     },
-  ]
-  return mockDuelHistory
+  ];
+  return mockDuelHistory;
 }

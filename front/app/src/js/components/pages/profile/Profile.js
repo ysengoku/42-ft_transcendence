@@ -1,7 +1,8 @@
-import {apiRequest} from '@api/apiRequest.js';
-import {API_ENDPOINTS} from '@api/endpoints.js';
+import { router } from '@router';
+import { apiRequest } from '@api/apiRequest.js';
+import { API_ENDPOINTS } from '@api/endpoints.js';
 import './components/index.js';
-import poster from '/img/sample-background.png?url';
+// import poster from '/img/sample-background.png?url';
 
 export class UserProfile extends HTMLElement {
   constructor() {
@@ -16,15 +17,15 @@ export class UserProfile extends HTMLElement {
 
   async fetchUserData(username) {
     try {
-      console.log('username:', username);
+      // console.log('username:', username);
+      /* eslint-disable-next-line new-cap */
       const userData = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
 
       this.user = userData;
       this.render();
     } catch (error) {
-      // Error handling
       if (error.status === 404) {
-        // 404 page & message
+        router.navigate('/user-not-found');
       } else {
         // Something went wrong page & message
       }
@@ -32,13 +33,15 @@ export class UserProfile extends HTMLElement {
   }
 
   render() {
-    if (!this.user) {
-      console.log('User data is not available');
-      return;
-    }
+    const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
+    // if (!this.user) {
+    //   console.log('User data is not available');
+    //   return;
+    // }
     console.log('User data:', this.user);
 
     const friendsCount = this.user.friends.length;
+    // const friendsCount = this.user.friends_count;
 
     // Online status
     const onlineStatus = document.createElement('profile-online-status');
@@ -72,6 +75,9 @@ export class UserProfile extends HTMLElement {
       .line {
         border-top: 4px double #594639;
         opacity: 1;
+      }
+      .graph-container {
+       background-color:rgba(0, 0,0, 0.1);
       }
       .enemies-container {
         height: 224px;
@@ -126,18 +132,14 @@ export class UserProfile extends HTMLElement {
               </div>
 
               <!-- Graphs -->
-              <div class="d-flex flex-row justify-content-around align-items-top">
-                <div class="row h-100 m-3 p-2">
-                  <div class="col-md-6">
-                    <p>Win Rate</p>
-                    <canvas id="winRateChart">
-
-                    </canvas>
-                  </div>
-                  <div class="col-md-6">
-                    <p>Elo progression</p>
+              <div class="d-flex flex-row justify-content-around align-items-top px-2 py-3">
+                <div class="graph-container me-2 px-4 py-2">
+                  <p>Win Rate</p>
+                  <user-win-rate-pie-graph></user-win-rate-pie-graph>
+                </div>               
+                <div class="graph-container flex-grow-1 ms-1 px-4 py-2">
+                  <p>Elo progression</p>
                     <canvas id="eloProgressionChart"></canvas>
-                  </div>
                 </div>
               </div>
             </div>
@@ -191,12 +193,17 @@ export class UserProfile extends HTMLElement {
       };
     }
 
-    const bestEnemyComponent = document.querySelector(
-      'user-enemy-component[type="best"]'
-    );
-    const worstEnemyComponent = document.querySelector(
-      'user-enemy-component[type="worst"]'
-    );
+    const userWinRatePieGraph = this.querySelector('user-win-rate-pie-graph');
+    if (userWinRatePieGraph) {
+      userWinRatePieGraph.data = {
+        rate: this.user.winrate,
+        wins: this.user.wins,
+        losses: this.user.loses,
+      };
+    }
+
+    const bestEnemyComponent = document.querySelector('user-enemy-component[type="best"]');
+    const worstEnemyComponent = document.querySelector('user-enemy-component[type="worst"]');
     if (bestEnemyComponent) {
       bestEnemyComponent.data = this.user.best_enemy;
     }
@@ -204,12 +211,12 @@ export class UserProfile extends HTMLElement {
       worstEnemyComponent.data = this.user.worst_enemy;
     }
 
-    const gameHistory = this.querySelector("user-game-history");
+    const gameHistory = this.querySelector('user-game-history');
     if (gameHistory) {
       gameHistory.data = {
         matches: this.user.match_history,
         // tournaments: = this.user.tournament_history
-      }
+      };
     }
   }
 }
