@@ -5,19 +5,32 @@ export class OAuth extends HTMLElement {
 
   async handleOAuthClick(platform) {
     try {
-      const response = await fetch(`/api/oauth/authorize/${platform}`);
-      const data = await response.json();
-      
-      if (data.auth_url) {
-        window.location.href = data.auth_url;
-      } else {
-        console.error('Authorization URL not received');
-      }
+        console.log(`Starting OAuth flow for ${platform}`);
+        const response = await fetch(`/api/oauth/authorize/${platform}`);
+        
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.error) {
+            console.error('OAuth error:', data.error);
+            // Optionnel : afficher l'erreur à l'utilisateur
+            alert(`OAuth error: ${data.error}`);
+            return;
+        }
+        
+        if (data.auth_url) {
+            console.log('Redirecting to:', data.auth_url);
+            window.location.href = data.auth_url;
+        } else {
+            console.error('No auth_url in response');
+        }
     } catch (error) {
-      console.error('OAuth authorization failed:', error);
+        console.error('OAuth authorization failed:', error);
+        // Optionnel : afficher l'erreur à l'utilisateur
+        alert('OAuth authorization failed. Check the console for details.');
     }
-  }
-
+}
   connectedCallback() {
     this.render();
     this.querySelector('.btn-42').addEventListener('click', () => this.handleOAuthClick('42'));

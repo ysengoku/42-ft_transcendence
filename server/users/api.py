@@ -57,15 +57,26 @@ def get_oauth_config(platform: str) -> dict:
     return {**secrets_file[platform], **OAUTH_CONFIG[platform]}
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 @oauth_router.get("/authorize/{platform}")
 def oauth_authorize(request, platform: str):
     try:
+        logger.info(f"Starting OAuth authorization for platform: {platform}")
+
         config = get_oauth_config(platform)
+        logger.info("Got OAuth config")
 
         # Générer l'état pour la sécurité CSRF
         state = hashlib.sha256(os.urandom(1024)).hexdigest()
+        logger.info(f"Generated state: {state}")
+
         request.session["oauth_state"] = state
         request.session["oauth_platform"] = platform
+        logger.info("Saved state and platform to session")
 
         params = {
             "response_type": "code",
@@ -74,14 +85,19 @@ def oauth_authorize(request, platform: str):
             "scope": " ".join(config["scopes"]),
             "state": state,
         }
+        logger.info(f"Built params: {params}")
 
         auth_url = f"{config['auth_uri']}?{urlencode(params)}"
+        logger.info(f"Generated auth URL: {auth_url}")
+
         return JsonResponse({"auth_url": auth_url})
 
-    except ValueError as e:
-        return JsonResponse({"error": str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({"error": "Authorization failed"}, status=500)
+        logger.error(f"Error in OAuth authorization: {str(e)}", exc_info=True)
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+##### END OAuth #####
 
 
 @oauth_router.get("/callback")
