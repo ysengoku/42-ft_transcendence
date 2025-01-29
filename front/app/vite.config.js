@@ -1,33 +1,21 @@
-import { defineConfig } from 'vite';
+import {defineConfig} from 'vite';
+import path from 'path';
 
 export default defineConfig({
-  base: './', // Ensures relative paths in the built index.html
   server: {
-    port: 5173,
-    open: false,
-    host: '0.0.0.0',
-    strictPort: true,
     watch: {
       usePolling: true,
     },
   },
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        main: './index.html',
-      },
-      output: {
-        entryFileNames: 'assets/[name].[hash].js',
-        chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash][extname]'
-      }
-    }
-  },
   resolve: {
     alias: {
-      '@': '/js',  // This allows you to import from '@/components' etc.
-    }
-  }
+      '@main': path.resolve(__dirname, 'src/main.js'),
+      '@router': path.resolve(__dirname, 'src/js/router.js'),
+      '@api': path.resolve(__dirname, 'src/js/api/'),
+      '@components': path.resolve(__dirname, 'src/js/components/'),
+      '@mock': path.resolve(__dirname, 'src/js/mock/'),
+      '@utils': path.resolve(__dirname, 'src/js/utils/'),
+      '@css': path.resolve(__dirname, 'src/css/'),
+    },
+  },
 });

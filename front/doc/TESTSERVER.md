@@ -4,7 +4,7 @@
 4. `pip install -r requirements.txt`
 5. go the server directory and run `./manage.py makemigrations && ./manage.py migrate`
 6. Create an admin `./manage.py createsuperuser`
-7.  `./manage.py runserver`. Server should run on localhost:8000
+7. `./manage.py runserver`. Server should run on localhost:8000
 
 Add dummy data as admin
 GO to `localhost:8000/admin`
