@@ -1,7 +1,7 @@
-import {ThemeController} from '@utils/ThemeController.js';
-import {handleLogout} from '@utils/handleLogout.js';
+import { ThemeController } from '@utils/ThemeController.js';
+import { handleLogout } from '@utils/handleLogout.js';
 import anonymousavatar from '/img/anonymous-avatar.svg?url';
-import {simulateFetchUserData} from '@mock/functions/simulateFetchUserData.js';
+import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
 export class DropdownMenu extends HTMLElement {
   constructor() {
@@ -41,28 +41,22 @@ export class DropdownMenu extends HTMLElement {
 		</a>
 		<div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 			${
-        isLoggedIn ?
-          `
+        isLoggedIn ? `
 				<a class="dropdown-item" href="/profile/${username}">Your profile</a>
 				<a class="dropdown-item" href="/settings/${username}">Settings</a>
-			` :
-          `
+			` : `
 				<a class="dropdown-item" href="/login" id="dropdown-item-login">Login</a>
 				<a class="dropdown-item" href="/register" id="dropdown-item-register">Sign up</a>
-			`
-}
+			`}
 			<div class="dropdown-divider"></div>
 			<button class="dropdown-item" id="theme-toggle">
 				<span id="theme-label">${isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
 		  	</button>
 			${
-        isLoggedIn ?
-          `
+        isLoggedIn ? `
 				<div class="dropdown-divider"></div>
 				<a class="dropdown-item" id="dropdown-item-logout">Logout</a>
-			` :
-          ``
-}
+			`: ``}
 		</div>
 		`;
 
