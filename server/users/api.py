@@ -67,6 +67,8 @@ def oauth_authorize(request, platform: str):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+# Backend: oauth_router.py
+
 @oauth_router.get("/callback")
 def oauth_callback(request):
     code = request.GET.get("code")
@@ -74,11 +76,17 @@ def oauth_callback(request):
 
     # Vérifier le paramètre "state" pour la sécurité
     if not state or state != request.session.get("oauth_state"):
-        return JsonResponse({"error": "Invalid state parameter"}, status=400)
+        return JsonResponse({
+            "status": "error",
+            "error": "Invalid state parameter"
+        }, status=400)
 
     platform = request.session.get("oauth_platform")
     if not platform:
-        return JsonResponse({"error": "No platform specified"}, status=400)
+        return JsonResponse({
+            "status": "error",
+            "error": "No platform specified"
+        }, status=400)
 
     try:
         config = get_oauth_config(platform)
@@ -98,15 +106,25 @@ def oauth_callback(request):
 
         token_data = token_response.json()
 
-        # Vérifier que l'accès au token a été réussi
         if "access_token" not in token_data:
-            return JsonResponse({"error": "Failed to get access token"}, status=500)
+            return JsonResponse({
+                "status": "error",
+                "error": "Failed to get access token"
+            }, status=500)
 
-        # Utilisez l'auth_url pour rediriger l'utilisateur vers la plateforme OAuth si nécessaire.
-        return JsonResponse({"status": "success", "auth_url": config["redirect_uris"][0]})
+        # Pour l'instant, on renvoie juste success
+        # Plus tard, vous pourrez ajouter ici la logique pour sauvegarder l'utilisateur
+        return JsonResponse({
+            "status": "success",
+            "message": "Authentication successful"
+        })
 
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.error(f"Error in OAuth callback: {str(e)}", exc_info=True)
+        return JsonResponse({
+            "status": "error",
+            "error": str(e)
+        }, status=500)
 
 
 # Enregistrer le router
