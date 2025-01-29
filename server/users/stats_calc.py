@@ -20,6 +20,4 @@ def calculate_elo_change(a: int, b: int, outcome: float, k_factor: int = 32) -> 
     """
     expected_score = calculate_expected_score(a, b)
 
-    elo_diff = round(k_factor * (outcome - expected_score))
-
-    return elo_diff
+    return round(k_factor * (outcome - expected_score))
