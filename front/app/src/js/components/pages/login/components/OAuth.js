@@ -20,12 +20,12 @@ export class OAuth extends HTMLElement {
         return;
       }
 
-      if (data.status === "success" && data.user) {
-        console.log('User authenticated:', data.user);
+      if (data.auth_url) {
 
         // ✅ Stocker les infos utilisateur (et token si utilisé)
         // localStorage.setItem('user', JSON.stringify(data.user));
-        router.navigate('/home');
+        // router.navigate('/home');
+        window.location.href = data.auth_url;  // redirection to the OAuth provider. has to be changed later when we have savec the user info
       } else {
         console.error('Invalid response structure:', data);
       }

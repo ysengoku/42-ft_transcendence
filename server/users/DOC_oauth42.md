@@ -3,13 +3,20 @@
 
 ## 42 API
 
+Create an app on 42 intra to get the client ID and secret.:
+https://profile.intra.42.fr/oauth/applications/new
+
+
+
 https://api.intra.42.fr/apidoc/guides/web_application_flow
 
 1. The app redirects the user to https://api.intra.42.fr/oauth/authorize with client_id, redirect_uri, scope, state.
 
 2. The user logs in and authorizes access.
 
-3. 42 redirects the user to redirect_uri which is the app's URL (http://localhost:8000/callback") with a code and state query parameter.
+3. 42 redirects the user to redirect_uri which is the app's URL (http://localhost:1026/...callback") with a code and state query parameter.
+
+5. The app retrieves the code and state.
 
 4. The app verifies state to prevent CSRF attacks.
 
@@ -37,3 +44,8 @@ GITHUB_CLIENT_SECRET=xxx
 # https://localhost:1026/user/oauth/callback/42api/
 API42_CLIENT_ID=xxx
 API42_CLIENT_SECRET=xxx
+
+## Github API
+Creae an app on github to get the client ID and secret.:
+website adress: 
+github.com/settings/applications/new
