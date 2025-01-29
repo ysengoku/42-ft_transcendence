@@ -1,4 +1,6 @@
 // oauth.js
+import { router } from '@router';
+
 export class OAuth extends HTMLElement {
   constructor() {
     super();
@@ -20,12 +22,12 @@ export class OAuth extends HTMLElement {
       }
 
       if (data.auth_url) {
-        // Stocker l'état de l'authentification
+        // Stocker la plateforme pour le callback
         sessionStorage.setItem('oauth_pending', 'true');
         sessionStorage.setItem('oauth_platform', platform);
-        sessionStorage.setItem('return_to', '/home'); // Page de redirection après auth
         
         // Redirection vers le provider OAuth
+        console.log('Redirecting to OAuth provider:', data.auth_url);
         window.location.href = data.auth_url;
       } else {
         console.error('Invalid response structure:', data);
@@ -65,7 +67,7 @@ export class OAuthCallback extends HTMLElement {
   }
 
   async connectedCallback() {
-    this.render(); // Afficher le spinner de chargement
+    this.render();
     await this.handleCallback();
   }
 
@@ -74,6 +76,10 @@ export class OAuthCallback extends HTMLElement {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const state = urlParams.get('state');
+      
+      // Extraire la plateforme de l'URL
+      const platform = window.location.pathname.split('/').pop(); // Récupère '42api' ou 'github'
+      console.log('OAuth callback for platform:', platform);
 
       if (!code || !state) {
         console.error('Missing code or state');
@@ -81,25 +87,26 @@ export class OAuthCallback extends HTMLElement {
         return;
       }
 
-      const response = await fetch(`/api/oauth/callback?code=${code}&state=${state}`);
+      // Appeler le endpoint de callback approprié
+      const response = await fetch(`/api/oauth/callback?code=${code}&state=${state}&platform=${platform}`);
       const data = await response.json();
 
+      console.log('Callback response:', data);
+
       if (data.status === 'success') {
-        // Nettoyer les données de session OAuth
-        const returnTo = sessionStorage.getItem('return_to') || '/home';
+        // Nettoyer les données de session
         sessionStorage.removeItem('oauth_pending');
         sessionStorage.removeItem('oauth_platform');
-        sessionStorage.removeItem('return_to');
-
+        
         // Simuler la connexion pour le router
         localStorage.setItem('isLoggedIn', 'true');
         
-        // Redirection vers la page d'accueil
-        router.navigate(returnTo);
+        router.navigate('/home');
       } else {
         console.error('Authentication failed:', data.error);
         router.navigate('/login');
       }
+
     } catch (error) {
       console.error('Callback handling failed:', error);
       router.navigate('/login');
@@ -112,12 +119,11 @@ export class OAuthCallback extends HTMLElement {
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="mt-3">Finalizing authentication...</p>
+        <p class="mt-3">Processing authentication...</p>
       </div>
     `;
   }
 }
 
-// Définir les composants
 customElements.define('oauth-component', OAuth);
 customElements.define('oauth-callback', OAuthCallback);
