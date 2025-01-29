@@ -189,4 +189,6 @@ AUTH_SETTINGS = {
     "check_is_diverse": True,
 }
 
+JWT_SECRET_KEY = "secret"
+
 NINJA_PAGINATION_PER_PAGE = 10

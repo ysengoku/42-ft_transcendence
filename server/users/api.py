@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from ninja import File, Form, NinjaAPI
 from ninja.errors import HttpError
 from ninja.errors import ValidationError as NinjaValidationError
@@ -8,6 +8,7 @@ from ninja.pagination import paginate
 
 from .models import Profile, User
 from .schemas import (
+    LoginSchema,
     Message,
     ProfileFullSchema,
     ProfileMinimalSchema,
@@ -18,6 +19,29 @@ from .schemas import (
 )
 
 api = NinjaAPI()
+
+
+@api.get("/cookiekey", auth=None)
+def apikey(request, response: HttpResponse):
+    response.set_cookie("key", "supersecret")
+    return True
+
+
+@api.post("login/", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
+def login(request: HttpRequest, response: HttpResponse, credentials: LoginSchema):
+    try:
+        user = User.objects.get_by_natural_key(credentials.username)
+    except User.DoesNotExist as exc:
+        raise HttpError(401, "Username or password are not correct.") from exc
+
+    is_password_correct = user.check_password(credentials.password)
+    if not is_password_correct:
+        raise HttpError(401, "Username or password are not correct.")
+
+    token = create_jwt(user.username)
+    response.set_cookie("access_token", token)
+    return user.profile
+
 
 
 # TODO: delete endpoint
