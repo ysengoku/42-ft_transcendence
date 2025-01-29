@@ -1,5 +1,4 @@
-import { router } from '@router';
-
+// oauth.js
 export class OAuth extends HTMLElement {
   constructor() {
     super();
@@ -9,7 +8,7 @@ export class OAuth extends HTMLElement {
     try {
       console.log(`Starting OAuth flow for ${platform}`);
       const response = await fetch(`/api/oauth/authorize/${platform}`);
-
+      
       console.log('Response status:', response.status);
       const data = await response.json();
       console.log('Response data:', data);
@@ -21,11 +20,13 @@ export class OAuth extends HTMLElement {
       }
 
       if (data.auth_url) {
-
-        // ✅ Stocker les infos utilisateur (et token si utilisé)
-        // localStorage.setItem('user', JSON.stringify(data.user));
-        // router.navigate('/home');
-        window.location.href = data.auth_url;  // redirection to the OAuth provider. has to be changed later when we have savec the user info
+        // Stocker l'état de l'authentification
+        sessionStorage.setItem('oauth_pending', 'true');
+        sessionStorage.setItem('oauth_platform', platform);
+        sessionStorage.setItem('return_to', '/home'); // Page de redirection après auth
+        
+        // Redirection vers le provider OAuth
+        window.location.href = data.auth_url;
       } else {
         console.error('Invalid response structure:', data);
       }
@@ -57,4 +58,66 @@ export class OAuth extends HTMLElement {
   }
 }
 
+// oauth-callback.js
+export class OAuthCallback extends HTMLElement {
+  constructor() {
+    super();
+  }
+
+  async connectedCallback() {
+    this.render(); // Afficher le spinner de chargement
+    await this.handleCallback();
+  }
+
+  async handleCallback() {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+
+      if (!code || !state) {
+        console.error('Missing code or state');
+        router.navigate('/login');
+        return;
+      }
+
+      const response = await fetch(`/api/oauth/callback?code=${code}&state=${state}`);
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        // Nettoyer les données de session OAuth
+        const returnTo = sessionStorage.getItem('return_to') || '/home';
+        sessionStorage.removeItem('oauth_pending');
+        sessionStorage.removeItem('oauth_platform');
+        sessionStorage.removeItem('return_to');
+
+        // Simuler la connexion pour le router
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        // Redirection vers la page d'accueil
+        router.navigate(returnTo);
+      } else {
+        console.error('Authentication failed:', data.error);
+        router.navigate('/login');
+      }
+    } catch (error) {
+      console.error('Callback handling failed:', error);
+      router.navigate('/login');
+    }
+  }
+
+  render() {
+    this.innerHTML = `
+      <div class="container text-center mt-5">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Finalizing authentication...</p>
+      </div>
+    `;
+  }
+}
+
+// Définir les composants
 customElements.define('oauth-component', OAuth);
+customElements.define('oauth-callback', OAuthCallback);
