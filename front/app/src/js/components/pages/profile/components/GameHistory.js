@@ -23,24 +23,31 @@ export class UserGameHistory extends HTMLElement {
 	  // console.log(this._data.matches);
     this.innerHTML = `
 	  <style>
-      .card {
-        background-color: rgba(0, 0,0, 0.1);
-        color: black;
-      }
-	  	.nav-link {
+		  .card {
+		    background-color: rgba(0, 0,0, 0.1);
+		    color: black;
+		  }
+	    .nav-link {
 		    color: black;
 		    font-size: 0.8rem;
 		  }
+		  .card-header-tabs .nav-link.active {
+        color: black;
+        background-color: transparent !important;
+        border: none;
+        border-bottom: 4px solid black;
+  	  }
 		  .nav-link:hover{
 		    color: black;
   	  }
-		  .user-game-history-avatar {
+	    .user-game-history-avatar {
 		    width: 24px;
-			  aspect-ratio: 1;
+		  	aspect-ratio: 1;
         object-fit: cover;
         border-radius: 50%;
+        background-color: grey;
 			  margin-right: 8px;
-        }
+      }
 		  .bi-arrow-up-right {
 		    color: green;
 		  }
@@ -62,10 +69,10 @@ export class UserGameHistory extends HTMLElement {
         background: grey;
       }
       .table-container::-webkit-scrollbar-thumb {
-        background: black;
-        border-radius: 4px;
+          background: black;
+          border-radius: 4px;
       }
-      </style>
+    </style>
       <div class="card text-center px-2">
 	      <div class="card-header">
 	        <p class="text-start">Game History</p>

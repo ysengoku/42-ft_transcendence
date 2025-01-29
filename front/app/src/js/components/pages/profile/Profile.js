@@ -118,10 +118,10 @@ export class UserProfile extends HTMLElement {
               <!-- Stats -->
               <div class="d-flex flex-row justify-content-around mt-4">
                 <div class="row px-2 w-100">
-                  <profile-stat-card class="col-3" title="Elo" value="${this.user.elo}"></profile-stat-card>
-                  <profile-stat-card class="col-3" title="Total score" value="${this.user.scored_balls}"></profile-stat-card>
-                  <profile-stat-card class="col-3" title="total duels" value="${this.user.total_matches}"></profile-stat-card>  
-                  <profile-stat-card class="col-3" title="Friends" value="${friendsCount}"></profile-stat-card>
+                  <user-stat-card class="col-3" title="Elo" value="${this.user.elo}"></user-stat-card>
+                  <user-stat-card class="col-3" title="Total score" value="${this.user.scored_balls}"></user-stat-card>
+                  <user-stat-card class="col-3" title="total duels" value="${this.user.total_matches}"></user-stat-card>  
+                  <user-stat-card class="col-3" title="Friends" value="${friendsCount}"></user-stat-card>
                 </div>
               </div>
 
@@ -152,10 +152,10 @@ export class UserProfile extends HTMLElement {
             <div class="d-grid">
               <div class="row no-gutters no-margin mt-4">
                 <div class="col-6 d-flex flex-column px-2 pb-1">              
-                  <profile-enemy-component type="best"></profile-enemy-component>
+                  <user-enemy-component type="best"></user-enemy-component>
                 </div>
                 <div class="col-6 d-flex flex-column px-2 pb-1">
-                  <profile-enemy-component type="worst"></profile-enemy-component>
+                  <user-enemy-component type="worst"></user-enemy-component>
                 </div>
               </div>
             </div>
@@ -192,10 +192,10 @@ export class UserProfile extends HTMLElement {
     }
 
     const bestEnemyComponent = document.querySelector(
-      'profile-enemy-component[type="best"]'
+      'user-enemy-component[type="best"]'
     );
     const worstEnemyComponent = document.querySelector(
-      'profile-enemy-component[type="worst"]'
+      'user-enemy-component[type="worst"]'
     );
     if (bestEnemyComponent) {
       bestEnemyComponent.data = this.user.best_enemy;
