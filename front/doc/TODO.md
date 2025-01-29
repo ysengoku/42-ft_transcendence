@@ -1,17 +1,20 @@
 # Components
 
 ## Landing
+- [] JWT (check login status)
 
 ## Login
-- [] Set max-width and marging(x) auto
+- [X] Adjust width
 - [] JWT handling
+- [] Error handling
 
 ## Register
-- [] Set max-width and marging(x) auto
+- [X] Adjust width
 - [] 422 handling
 - [] Password length check
 
 ## Settings
+- [X] Adjust width
 - [] Restrict other users to access to the page
 - [] Add old password input
 - [] New avatar upload settings (new_profile_picture)

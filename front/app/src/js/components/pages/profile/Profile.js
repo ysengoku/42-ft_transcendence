@@ -2,7 +2,7 @@ import { router } from '@router';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
 import './components/index.js';
-import poster from '/img/sample-background.png?url';
+// import poster from '/img/sample-background.png?url';
 
 export class UserProfile extends HTMLElement {
   constructor() {
@@ -33,6 +33,7 @@ export class UserProfile extends HTMLElement {
   }
 
   render() {
+    const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
     // if (!this.user) {
     //   console.log('User data is not available');
     //   return;
@@ -40,6 +41,7 @@ export class UserProfile extends HTMLElement {
     console.log('User data:', this.user);
 
     const friendsCount = this.user.friends.length;
+    // const friendsCount = this.user.friends_count;
 
     // Online status
     const onlineStatus = document.createElement('profile-online-status');
