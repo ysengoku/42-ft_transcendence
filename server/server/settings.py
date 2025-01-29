@@ -30,6 +30,51 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
+
+# OAuth
+
+# OAUTH_STATE_MAX_LENGTH = 256
+# OAUTH_STATE_RANDOM_STRING_LENGTH = 16
+# OAUTH_SOURCE_MAX_LENGTH = 100
+
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
+GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
+GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")  # Défini dans le .env
+GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
+
+# OAuth 42
+API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
+API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
+FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
+FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
+FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
+FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
+
+# OAUTH Configuration
+OAUTH_CONFIG = {
+    "github": {
+        "client_id": GITHUB_CLIENT_ID,
+        "client_secret": GITHUB_CLIENT_SECRET,
+        "auth_uri": GITHUB_AUTHORIZE_URL,
+        "token_uri": GITHUB_ACCESS_TOKEN_URL,
+        "redirect_uris": [GITHUB_REDIRECT_URI],
+        "scopes": ["user"],
+        "user_endpoint": GITHUB_USER_PROFILE_URL,
+    },
+    "42": {
+        "client_id": API42_CLIENT_ID,
+        "client_secret": API42_CLIENT_SECRET,
+        "auth_uri": FT_API_AUTHORIZE_URL,
+        "token_uri": FT_API_ACCESS_TOKEN_URL,
+        "redirect_uris": [FT_API_REDIRECT_URI],
+        "scopes": ["public", "profile"],
+        "user_endpoint": FT_API_USER_PROFILE_URL,
+    },
+}
+
+
 if "GITHUB_ACTIONS" in os.environ:
     DATABASES = {
         "default": {
