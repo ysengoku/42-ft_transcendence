@@ -52,19 +52,9 @@ export class UserDuelHistory extends HTMLElement {
   }
 
   render() {
+    const noHistory = this._data.length === 0;
+
     this.innerHTML = `
-	  <style>
-	    .user-game-history-table {
-		    font-size: 14px;
-        txt-decoration: none;
-		  }
-		  .user-game-history-table td {
-        vertical-align: middle;
-		    background-color: transparent;
-		    color: black;
-        padding: 1rem 0 1rem 0.5rem;
-      }
-	  </style>
 	  <table class="table table-hover user-game-history-table">
 		<thead>
 		  <tr>
@@ -76,7 +66,9 @@ export class UserDuelHistory extends HTMLElement {
 		  </tr>
 		</thead>
 		<tbody>
-          ${this._data.map((item) => this.createRow(item)).join('')}
+      ${noHistory ?
+      '<tr><td colspan="5" class="text-center">No duel participations yet</td></tr>' :
+      this._data.map((item) => this.createRow(item)).join('')}
 		</tbody>
 	  </table>
 	`;
