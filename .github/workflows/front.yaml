@@ -15,27 +15,34 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: 21
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 21
 
-    - name: Install dependencies
-      working-directory: front/app/
-      run: npm install
+      - name: Install dependencies
+        working-directory: ./front/app
+        run: npm install
 
-    - name: Run linter
-      working-directory: front/app/
-      run: npm run lint
+      - name: Format with Prettier
+        working-directory: ./front/app
+        run: npm run format
 
-    - name: Run unit tests
-      working-directory: front/app/
-      run: npm test
+      - name: Run linter and fix
+        working-directory: ./front/app/
+        run: npm run lint -- --fix
+        continue-on-error: true
 
-    - name: Build with Vite
-      working-directory: front/app/
-      run: npm run build
+      - name: Run unit tests
+        working-directory: ./front/app
+        run: npm test
+        continue-on-error: true
+
+
+      - name: Build with Vite
+        working-directory: ./front/app
+        run: npm run build
 

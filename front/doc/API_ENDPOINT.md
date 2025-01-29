@@ -7,7 +7,9 @@
 #### GET
 
 ##### Response
+
 200 (OK)
+
 ```json
 [
   {
@@ -22,6 +24,7 @@
 #### POST
 
 ##### Request body
+
 ```json
 {
   "username": "string",
@@ -32,21 +35,39 @@
 ```
 
 ##### Response
-201(Created)
+
+201 (Created)
+
 ```json
 {
-	"username": "string",
-	"avatar": "string",
-	"elo": 1000
+  "username": "string",
+  "avatar": "string",
+  "elo": 1000
 }
 ```
 
+422 (Unprocessable Entity)
+
+```json
+[
+  {
+    "msg": "string", // Reason why registration failed
+    "type": "string",
+    "loc": ["string"]
+  }
+]
+```
+
 ---
+
 ### Endpoint: /api/users/{username}
 
 #### GET
+
 ##### Response
+
 200 (OK)
+
 ```json
 {
   "username": "string",
@@ -58,6 +79,7 @@
   "loses": 0,
   "winrate": 0,
   "worst_enemy": {
+    // can be null
     "username": "string",
     "avatar": "string",
     "elo": 0,
@@ -66,6 +88,7 @@
     "winrate": 0
   },
   "best_enemy": {
+    // can be null
     "username": "string",
     "avatar": "string",
     "elo": 0,
@@ -90,4 +113,67 @@
     }
   ]
 }
+```
+
+404 (Not Found)
+
+```json
+{
+  "msg": "string"
+}
+```
+
+#### POST
+
+##### Request body
+
+```
+# DataForm
+password (string)
+password_repeat (string)
+username (string)
+email (string)
+old_password (string)
+new_profile_picture (string($binary))
+```
+
+##### Response
+
+200 (OK)
+
+```json
+{
+  "username": "string",
+  "avatar": "string",
+  "elo": 0,
+  "is_online": true
+}
+```
+
+401 (Unauthorized)
+
+```json
+{
+  "msg": "string"
+}
+```
+
+404 (Not Found)
+
+```json
+{
+  "msg": "string"
+}
+```
+
+422 (Unprocessable Entity)
+
+```json
+[
+  {
+    "msg": "string",
+    "type": "string",
+    "loc": ["string"]
+  }
+]
 ```

@@ -4,7 +4,7 @@ services:
     build:
       context: ./front
       dockerfile: Dockerfile
-      target: ${NODE_ENV:-development}  # Utilise le stage 'dev' par défaut, ou 'build' en prod
+      target: ${NODE_ENV:-development} # Utilise le stage 'dev' par défaut, ou 'build' en prod
     volumes:
       - ./front/app:/app
       - /app/node_modules
@@ -24,8 +24,8 @@ services:
   server:
     container_name: server
     build:
-      context: ./server  # Contexte de la construction (répertoire contenant le Dockerfile de server)
-      dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
+      context: ./server # Contexte de la construction (répertoire contenant le Dockerfile de server)
+      dockerfile: Dockerfile # Fichier Dockerfile pour ce service
     command: >
       sh -c "python manage.py makemigrations &&
             python manage.py migrate &&
@@ -52,11 +52,11 @@ services:
     networks:
       - transcendance_network
 
-  database: 
+  database:
     container_name: database
     build:
-      context: ./database  # Contexte de la construction (répertoire contenant le Dockerfile pour la base de données)
-      dockerfile: Dockerfile  # Fichier Dockerfile pour ce service
+      context: ./database # Contexte de la construction (répertoire contenant le Dockerfile pour la base de données)
+      dockerfile: Dockerfile # Fichier Dockerfile pour ce service
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -102,12 +102,10 @@ volumes:
 
   media_volume:
     name: media_volume
-  
+
 networks:
   transcendance_network:
     driver: bridge
-
-
 #Pour static_volume :
 
 # Django collecte ses fichiers statiques dans ce volume via collectstatic

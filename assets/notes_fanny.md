@@ -1,22 +1,31 @@
-## nginx ##
+## what I did
+
+- a docker which work for development and production with django, vite and nginx
+- a docker compose that applies the migrations
+- a makefile that has emhanced features like showing the logs, make dev, make prod, reload nginx
+- a nginx .conf that created aliases so all is at the same level : app. the static and media files are served by nginx
+a nginx conf that prevents ddos attacks
+- the nginx cache
+- github actions that test the code and deploy it. and test can be done by installing act. 
+
+## nginx
 
 1. Vite pendant le développement :
-Rôle : Durant le développement, Vite fonctionne comme un serveur de développement local pour le frontend. Il sert ton application Vue.js, React, ou autre, et permet de gérer des requêtes API vers le backend (Django) via un proxy.
-Comment ça marche ? : Lorsque tu fais des requêtes à /api sur le frontend, Vite redirige ces requêtes vers le backend (généralement via un proxy configuré dans vite.config.js).
-Avantage : Cela te permet de travailler localement sans t'inquiéter de configurer un serveur complet, et c'est rapide à mettre en place.
+   Rôle : Durant le développement, Vite fonctionne comme un serveur de développement local pour le frontend. Il sert ton application Vue.js, React, ou autre, et permet de gérer des requêtes API vers le backend (Django) via un proxy.
+   Comment ça marche ? : Lorsque tu fais des requêtes à /api sur le frontend, Vite redirige ces requêtes vers le backend (généralement via un proxy configuré dans vite.config.js).
+   Avantage : Cela te permet de travailler localement sans t'inquiéter de configurer un serveur complet, et c'est rapide à mettre en place.
 2. Nginx en production :
-Rôle : En production, Nginx prend le rôle de proxy inverse (reverse proxy) pour les requêtes HTTP. Il reçoit les requêtes sur le port 80 (ou 443 pour HTTPS) et les redirige vers le frontend ou le backend, selon le chemin demandé.
-Comment ça marche ? : Les requêtes vers /api sont redirigées vers le backend Django (par exemple, http://backend:8000), et les requêtes restantes sont envoyées vers le frontend (par exemple, http://frontend:5173 ou vers des fichiers statiques).
-Avantage : Nginx est optimisé pour servir des fichiers statiques et gérer des requêtes en production, offrant ainsi une meilleure performance et sécurité.
-
+   Rôle : En production, Nginx prend le rôle de proxy inverse (reverse proxy) pour les requêtes HTTP. Il reçoit les requêtes sur le port 80 (ou 443 pour HTTPS) et les redirige vers le frontend ou le backend, selon le chemin demandé.
+   Comment ça marche ? : Les requêtes vers /api sont redirigées vers le backend Django (par exemple, http://backend:8000), et les requêtes restantes sont envoyées vers le frontend (par exemple, http://frontend:5173 ou vers des fichiers statiques).
+   Avantage : Nginx est optimisé pour servir des fichiers statiques et gérer des requêtes en production, offrant ainsi une meilleure performance et sécurité.
 
 Application principale (Frontend) :
 
 Copyhttps://localhost:1026
 
+<!--
 C'est votre point d'entrée principal via Nginx qui sert votre application frontend
-Toutes les routes frontend seront accessibles via cette URL de base
-
+Toutes les routes frontend seront accessibles via cette URL de base -->
 
 API Backend (via Nginx proxy) :
 
@@ -25,16 +34,13 @@ Copyhttps://localhost:1026/api/[vos-routes]
 Vos endpoints d'API seront accessibles via ce préfixe
 Nginx fait suivre ces requêtes vers http://back:8000/
 
-
 Admin Django :
 
 Copyhttps://localhost:1026/admin/
 
 Interface d'administration Django
 
-
 Accès directs aux services (développement) :
-
 
 Frontend Vite : http://localhost:5173
 Backend Django : http://localhost:8000
@@ -42,9 +48,6 @@ PostgreSQL : localhost:5432
 
 Connexion via : postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}
 Note : Cet accès direct à la base de données n'est recommandé qu'en développement
-
-
-
 
 Fichiers statiques et média :
 
@@ -56,34 +59,32 @@ L'accès principal à l'application se fait via le port 1026 en HTTPS (SSL)
 Les autres ports (5173, 8000, 5432) sont exposés principalement pour le développement
 À l'intérieur du réseau Docker, les services communiquent via leurs noms de conteneur (back, front, database)
 
-
-ERROR: 
+ERROR:
 
 ProgrammingError at /admin/
 
 relation "django_session" does not exist
 LINE 1: ...ession_data", "django_session"."expire_date" FROM "django_se...
-                                                             ^
+^
 
 Request Method:GETRequest URL:https://localhost/admin/Django Version:4.2.7Exception Type:ProgrammingErrorException Value:
 
 relation "django_session" does not exist
 LINE 1: ...ession_data", "django_session"."expire_date" FROM "django_se...
-                                                             ^
+^
 
 Exception Location:/usr/local/lib/python3.10/site-packages/psycopg/cursor.py, line 723, in executeRaised during:django.contrib.admin.sites.indexPython Executable:/usr/local/bin/python3.10Python Version:3.10.16Python Path:
 
 ['.',
- '/usr/local/bin',
- '/usr/local/lib/python310.zip',
- '/usr/local/lib/python3.10',
- '/usr/local/lib/python3.10/lib-dynload',
- '/usr/local/lib/python3.10/site-packages']
+'/usr/local/bin',
+'/usr/local/lib/python310.zip',
+'/usr/local/lib/python3.10',
+'/usr/local/lib/python3.10/lib-dynload',
+'/usr/local/lib/python3.10/site-packages']
 
 Server time:Fri, 17 Jan 2025 11:37:28 +0000
 
-
-## docker-compose ##
+## docker-compose
 
 we enter the args if we want to pass arguments to the dockerfile. if they are not defined in the dockerfile and not used at build time, they are not useful. if arguments are defined and congifured at runtime (in environment), we dont need to specify the args at the build phase.
 
@@ -94,10 +95,10 @@ docker system prune -a = remove all the images, containers, networks and volumes
 docker rmi $(docker images -q) = remove all the images
 
 docker exec -it backend python manage.py makemigrations = faire les migrations a partir du docker
-docker exec -it backend python manage.py migrate 
-good practice: 
+docker exec -it backend python manage.py migrate
+good practice:
 
-- error  ! nginx Warning pull access denied for trans_server, repository does not exist =>  use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.
+- error ! nginx Warning pull access denied for trans_server, repository does not exist => use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.
 
 ## HTTPS Protocol:
 
@@ -137,22 +138,22 @@ Example (POST request with Fetch):
 
 javascript
 Copy code
-const formData = new FormData();  // Create a new FormData object
-formData.append('choice', '1');   // Add data to the form
+const formData = new FormData(); // Create a new FormData object
+formData.append('choice', '1'); // Add data to the form
 
 fetch('/polls/vote/', {
-    method: 'POST',  // Specify the HTTP method (POST in this case)
-    body: formData,  // Send the data in the body of the request
-    headers: {
-        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,  // For CSRF security (if Django)
-    }
+method: 'POST', // Specify the HTTP method (POST in this case)
+body: formData, // Send the data in the body of the request
+headers: {
+'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, // For CSRF security (if Django)
+}
 })
 .then(response => response.json())
 .then(data => {
-    console.log('Success:', data);  // Display the server response
+console.log('Success:', data); // Display the server response
 })
 .catch(error => {
-    console.error('Error:', error);  // Handle errors
+console.error('Error:', error); // Handle errors
 });
 
 On the Server-Side:
@@ -161,17 +162,17 @@ The Ninja framework will serve the client requests by picking the correct view a
 python packages:
 https://docs.python.org/3/tutorial/modules.html#tut-packages
 
-a module is a file containing Python definitions and statements. The file name is the module name with the suffix .py appended. Within a module, the module’s name (as a string) is available as the value of the global variable __name__.
+a module is a file containing Python definitions and statements. The file name is the module name with the suffix .py appended. Within a module, the module’s name (as a string) is available as the value of the global variable **name**.
 
-The __init__.py files are required to make Python treat directories containing the file as packages 
+The **init**.py files are required to make Python treat directories containing the file as packages
 
-__all__ : if defined, all submodules will be imported from the parent packaging when douin from package import *
+**all** : if defined, all submodules will be imported from the parent packaging when douin from package import \*
 
-1. Create a project: 
-django-admin startproject server
+1. Create a project:
+   django-admin startproject server
 
 2. Create an app:
-python manage.py startapp polls
+   python manage.py startapp polls
 
 3. Add the view with the name (the endpoint).if "" as first argument, it is the default view
 
@@ -179,7 +180,7 @@ python manage.py startapp polls
 
 5. Add the url to the project
 
-6. create and migrate  all the apps with database (list in installed apps in settings.py) with the command python manage.py migrate
+6. create and migrate all the apps with database (list in installed apps in settings.py) with the command python manage.py migrate
 
 7. check the database. if SQLite, use the command python manage.py dbshell
 
@@ -188,20 +189,19 @@ python manage.py startapp polls
 9. create a model in the app
 
 10. create the migration file with the command
-' python manage.py makemigrations polls (makemigration = update)'
+    ' python manage.py makemigrations polls (makemigration = update)'
 
 Other commands:
- 'python manage.py check' = check for problems in the project without making migrations'
- 'python manage.py sqlmigrate polls 0001' = check the SQL code that will be executed
- 'python manage.py shell' = open the python shell
+'python manage.py check' = check for problems in the project without making migrations'
+'python manage.py sqlmigrate polls 0001' = check the SQL code that will be executed
+'python manage.py shell' = open the python shell
 
 11. create an admin superuser
-'python manage.py createsuperuser'
+    'python manage.py createsuperuser'
 
 12. add the model to the admin interface (in the app admin.py)
 
-
-## Django Template Language (DTL): ##
+## Django Template Language (DTL):
 
 Tags¶
 Tags provide arbitrary logic in the rendering process.
@@ -238,19 +238,19 @@ foreignKey : a field that allows to create a relationship between two models
 ## Python ## :
 
 Methods types:
-instance : a method that is called on an instance of a class. use of self as first argument. 
+instance : a method that is called on an instance of a class. use of self as first argument.
 class : a method that is called on a class. use of cls as first argument.
 static : a method that is called on a class but does not have access to the class or instance. no first argument.
 
-
-Type de méthode	Premier paramètre	Accès à l'objet	Quand l'utiliser
-Méthode d'instance	self	✅ Oui	Manipuler les attributs de l'objet
-Méthode de classe	cls	❌ Objet non, ✅ Classe	Travailler avec les attributs de classe
-Méthode statique	Aucun	❌ Non	Fonction indépendante, organisée dans la classe
+Type de méthode Premier paramètre Accès à l'objet Quand l'utiliser
+Méthode d'instance self ✅ Oui Manipuler les attributs de l'objet
+Méthode de classe cls ❌ Objet non, ✅ Classe Travailler avec les attributs de classe
+Méthode statique Aucun ❌ Non Fonction indépendante, organisée dans la classe
 
 En Django, un manager est un objet qui gère les requêtes au niveau de la classe de modèle (c'est-à-dire au niveau de la table en base de données), tandis que les opérations sur les instances (lignes dans la table) se font via les méthodes sur ces instances.
 
-## summary vmt model ##
+## summary vmt model
+
 1. View: a function that handle the http request, interacts with the model and send a response http, usually rendered with a template
 
 2. model: a representation of a table in a database. it defines the database structure that we want to stock and manipulate
@@ -260,8 +260,6 @@ En Django, un manager est un objet qui gère les requêtes au niveau de la class
 use the PRG (Post/Redirect/Get) pattern:
 use httpresponseRedirect to avoid the form to be sent twice if the user refresh the page after submitting the form (the browser will send the form again)
 
-
-
 todo:
 migration when mouting the docker
 make all dockers up
@@ -270,8 +268,7 @@ admin:
 login: admin
 password: password
 
-
-## daily report ##
+## daily report
 
 change to gunicorn instead of daphne so that we can use the django admin interface on localhost:8000/admin
 
@@ -279,53 +276,49 @@ info from settings.py is linked to the .env file to avoid hardcoding the values
 
 DEBUG = int(os.environ.get('DEBUG', default=0))
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
-CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
-
+CORS_ALLOW_ALL_ORIGINS = True # En développement seulement
 
 serving static and media files from the back end:
+
 - in settings.py, I specify the path to the static and media files, from the local location.
-from static files to static
-from media to media
+  from static files to static
+  from media to media
 - in docker compose,
-    - I specify the volumes "named volumes" to store the static and media files
-      - "static_volume":/app/static
-      - "media_volume":/app/media
-    - I specify where to put these static and media files in the nginx container
-    - I specify them in volumes to say that they are shared between the containers
+  - I specify the volumes "named volumes" to store the static and media files
+    - "static_volume":/app/static
+    - "media_volume":/app/media
+  - I specify where to put these static and media files in the nginx container
+  - I specify them in volumes to say that they are shared between the containers
 - in nginx.conf, I specify the location of the static and media files
-        location /static/ {
-            alias /app/static/;
-        }
+  location /static/ {
+  alias /app/static/;
+  }
 
 #/media/ pointe vers /app/media/ dans le conteneur, qui est lié au dossier ./back/media via le volume.
-        location /media/ {
-            alias /app/media/;
-        }
+location /media/ {
+alias /app/media/;
+}
 
 this allows to acces to the media files from the url:
 http://localhost:1026/media/avatars/avatar.jpg
 
 ## docker:
 
-Service	Port Docker	Port Exposé	Rôle
-Nginx	80	8080	Proxy inverse vers frontend/API
-Django	8000	Non exposé	API backend (via Nginx)
-Vite.js	Non exposé	Servi par Nginx	Frontend (build statique)
-PostgreSQL	5432	Non exposé	Base de données (backend only)
-
+Service Port Docker Port Exposé Rôle
+Nginx 80 8080 Proxy inverse vers frontend/API
+Django 8000 Non exposé API backend (via Nginx)
+Vite.js Non exposé Servi par Nginx Frontend (build statique)
+PostgreSQL 5432 Non exposé Base de données (backend only)
 
 Si des services qui ne devraient pas être exposés le sont, cela crée plusieurs risques de sécurité importants :
 
 Pour Django (8000) si exposé :
 
-
 Accès direct à l'API en contournant le proxy Nginx
 Contournement potentiel des règles de sécurité (CORS, rate limiting, etc.)
 Risque d'attaques directes sur le framework Django
 
-
 Pour PostgreSQL (5432) si exposé :
-
 
 Tentatives de connexion directes à la base de données
 Risques de brute force sur les mots de passe
@@ -338,32 +331,32 @@ Seul le port 80/443 de Nginx devrait être exposé
 Tous les autres services devraient communiquer uniquement via le réseau Docker interne
 Les connexions externes passent obligatoirement par Nginx qui agit comme point d'entrée unique et sécurisé
 
-
 2 categories of docker:
+
 - stateful: database mysql
 - stateless: https protocol: same actions are realized
 
-docker images -a  = see all images present on the machine
+docker images -a = see all images present on the machine
 docker ps = check if containers are active
 docker pull = have the latest official image
 docker system prune = clean all including images, caches, network, containers
 --detach (-d) = the service is not attached to the container and so
- other containers can be launched 
+other containers can be launched
 docker volume rm $(docker volume ls -q) = remove all the volumes
 docker system prune -a = remove all the images, containers, networks and volumes
 docker rmi $(docker images -q) = remove all the images
 
 docker run -d openclassrooms/star_wars tail -f /dev/null = maintient le conteneur en veille
- sans se terminer 
+sans se terminer 
 
- -----------------------------------------------
+---
 
- docker-compose up -d = demarrer lensemble des conteneurs. -d pour les faire tourner en tache de front_dist_volume
- docker-compose ps => affiche le retour ADD CONTENT
- docker-compose stop
- docker-compose down
+docker-compose up -d = demarrer lensemble des conteneurs. -d pour les faire tourner en tache de front_dist_volume
+docker-compose ps => affiche le retour ADD CONTENT
+docker-compose stop
+docker-compose down
 
- docker-compose config => permet de valider la syntaxe du fichier
+docker-compose config => permet de valider la syntaxe du fichier
 
 COPY ./requirements.txt /app/requirements.txt =>
 
@@ -371,16 +364,56 @@ COPY ./requirements.txt /app/requirements.txt =>
 
 À droite (/app/requirements.txt) : l emplacement où vous voulez que le fichier soit copié dans l'image Docker.
 
-
 docker exec -it backend python manage.py makemigration = faire les migrations a partir du docker
 
-good practice: 
+good practice:
 
-- error  ! nginx Warning pull access denied for trans_server, repository does not exist =>  use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.
+- error ! nginx Warning pull access denied for trans_server, repository does not exist => use the same version of the image in the dockerfile and in the docker-compose file. do not rename the image in the docker-compose file.
 
 upload a file from the frontend to the backend with django ninja and javascript:
+
 1. your frontend is sending a multipart/form-data request: To upload a file, you need to use multipart/form-data encoding. Ensure your fetch request is sending the file properly in the formData object:
 
 TODO
 
 Faire le bind mount sur sgoinfre
+
+## Ruff
+
+`ruff check <directory>` = lint the directory for any styling errors
+`ruff check --fix <directory>` = fix style errors that can be fixed
+
+`ruff format <directory>` = format the directory
+
+`ruff format` is different from `ruff check --fix` because it only formats the code and does not fix any styling errors.
+
+## ACT to test github actions
+
+Configurer Act :
+
+Crée un fichier .secrets à la racine de ton projet pour y définir les secrets utilisés dans ton workflow :
+
+DB_NAME=mydatabase
+DB_USER=myusername
+DB_PASSWORD=mypassword
+DATABASE_URL=postgresql://myusername:mypassword@localhost:5432/mydatabase
+
+Assure-toi que ton fichier .env est présent dans le dossier server ou à la racine selon ta configuration.
+
+Lancer le workflow :
+
+workflow back:
+
+act -j backend
+
+workflow front:
+act -j build -W ./github/workflows/front.yaml
+
+-W permet de spécifier le chemin du fichier YAML du workflow à exécuter.
+
+-j backend correspond au nom de ton job dans le fichier YAML (ici, backend).
+
+## Formatter
+
+Prettier : C'est un formatter qui s'assure que le code est formaté de manière cohérente (espaces, indentation, sauts de ligne, etc.). Il ne se soucie pas de la logique du code, mais uniquement de son apparence.
+ESLint : C'est un linter qui analyse le code pour détecter les erreurs, les mauvaises pratiques, les incohérences, et appliquer des règles de style plus strictes (comme l'interdiction d'utiliser des variables non utilisées ou des fonctions mal nommées).
