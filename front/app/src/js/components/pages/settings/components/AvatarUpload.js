@@ -11,11 +11,23 @@ export class AvatarUpload extends HTMLElement {
   }
 
   render() {
-    const default_avatar = import.meta.env.VITE_DEFAULT_AVATAR;
+    const defaultAvatar = import.meta.env.VITE_DEFAULT_AVATAR;
     // const avatarUploadMessage = this._user.hasOwnAvatar ? 'Change Avatar' : 'Upload Avatar';
-    const avatarUploadMessage = this._user.avatar === default_avatar ? 'Change Avatar' : 'Upload Avatar';
+    const avatarUploadMessage = this._user.avatar === defaultAvatar ? 'Change Avatar' : 'Upload Avatar';
 
-    this.innerHTML = `		
+    this.innerHTML = `
+      <style>
+        .profile-avatar-container {
+          width: 160px;
+          height: 160px;
+        }
+        .profile-avatar-container img {
+          width: 100%;
+          height: 100%;
+          aspect-ratio: 1;
+          object-fit: cover;
+        }
+      </style>	
 		<div class="d-flex align-items-start pb-4 border-bottom">
 			<div class="col-7 profile-avatar-container me-3">
 				<img src="${this._user.avatar}" alt="User Avatar" class="rounded-circle">
