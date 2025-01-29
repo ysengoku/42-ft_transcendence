@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 
@@ -20,17 +21,26 @@ def main():
 if __name__ == "__main__":
     main()
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # TODO: Change the secret key in production
 SECRET_KEY = "your-secret-key"
 
 # Environment variables
 DEBUG = int(os.environ.get("DEBUG", default=1))
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-if "GITHUB_ACTIONS" in os.environ:
+
+if not IN_CONTAINER:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        },
+    }
+elif "GITHUB_ACTIONS" in os.environ:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -39,7 +49,7 @@ if "GITHUB_ACTIONS" in os.environ:
             "PASSWORD": "test_password",
             "HOST": "localhost",
             "PORT": "5432",
-        }
+        },
     }
 # PostgreSQL for production
 else:
@@ -51,7 +61,7 @@ else:
             "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
             "HOST": os.environ.get("DATABASE_HOST", "database"),
             "PORT": os.environ.get("DATABASE_PORT", "5432"),
-        }
+        },
     }
 
 
@@ -91,7 +101,7 @@ ROOT_URLCONF = "server.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -139,7 +149,7 @@ SOCIALACCOUNT_PROVIDERS = {
             "client_id": "YOUR_CLIENT_ID",
             "secret": "YOUR_CLIENT_SECRET",
             "key": "",
-        }
+        },
     },
 }
 
@@ -166,11 +176,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # for dynamic images (uploaded by user)
 MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_ROOT = BASE_DIR / "static"
 
 AUTH_SETTINGS = {
     "password_min_len": 8,
