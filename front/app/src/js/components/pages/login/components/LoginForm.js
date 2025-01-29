@@ -1,5 +1,5 @@
-import {router} from '@router';
-import {simulateApiLogin} from '@mock/functions/mockApiLogin.js';
+import { router } from '@router';
+import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
 
 export class LoginForm extends HTMLElement {
   constructor() {
@@ -18,7 +18,7 @@ export class LoginForm extends HTMLElement {
     }
 
     this.innerHTML = `
-		<div class="container d-flex flex-column justify-content-center align-items-center ">
+		<div class="container d-flex flex-column justify-content-center align-items-center">
 			<form class="w-100" id="loginForm">
   				<div class="mb-3">
     				<label for="inputUsername" class="form-label">Username</label>
@@ -50,7 +50,7 @@ export class LoginForm extends HTMLElement {
     const password = this.querySelector('#inputPassword').value;
 
     // Simulation with mock
-    const response = await simulateApiLogin({username, password});
+    const response = await simulateApiLogin({ username, password });
 
     if (response.success) {
       // Temporary solution

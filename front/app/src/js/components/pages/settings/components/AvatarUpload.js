@@ -11,10 +11,10 @@ export class AvatarUpload extends HTMLElement {
   }
 
   render() {
-    const defaultAvatar = import.meta.env.VITE_DEFAULT_AVATAR;
-    // const avatarUploadMessage = this._user.hasOwnAvatar ? 'Change Avatar' : 'Upload Avatar';
-    const avatarUploadMessage = this._user.avatar === defaultAvatar ? 'Change Avatar' : 'Upload Avatar';
-
+    console.log('User:', this._user);
+    const defaultAvatar = import.meta.env.VITE_DEFAULT_AVATAR; // Need to set in .env file
+    console.log('Default Avatar:', defaultAvatar);
+    const avatarUploadMessage = this._user.avatar === defaultAvatar ? 'Upload Avatar' : 'Change Avatar';
     this.innerHTML = `
       <style>
         .profile-avatar-container {
