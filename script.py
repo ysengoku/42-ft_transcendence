@@ -8,6 +8,7 @@ import requests
 from pathlib import Path
 
 SCOPES = ['user']  # Exemple de scope, vous pouvez ajouter d'autres permissions selon ce que vous voulez faire
+SCOPES = ['public', 'profile']  # Liste des scopes valides pour l'API 42
 
 HOST = "localhost"
 PORT = 8080
@@ -68,7 +69,16 @@ def authorize(secrets: dict) -> dict:
     return response.json()
 
 if __name__ == "__main__":
-    secrets = json.loads(Path("secrets.json").read_text())["installed"]
+    # Charger le fichier secrets
+    secrets_file = json.loads(Path("secrets.json").read_text())
 
+    # Sélectionner la plateforme
+    platform = "42"  # Change à "github" pour utiliser GitHub
+    secrets = secrets_file[platform]  # Récupérer uniquement les secrets pour la plateforme sélectionnée
+
+    # Debug : Vérifie le contenu
+    print(f"Secrets for platform '{platform}': {secrets}")
+
+    # Autoriser et obtenir les tokens
     tokens = authorize(secrets)
-    print(f"Tokens: {tokens}")
+    print(f"Tokens for {platform}: {tokens}")

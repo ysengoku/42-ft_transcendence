@@ -1,10 +1,13 @@
-from ninja import Schema, Field
 from datetime import datetime
-from typing import List, Optional, Dict
-from .models import Profile
-from django.core.exceptions import ValidationError
-from pydantic import model_validator
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from ninja import Field, Schema
+from pydantic import model_validator
+
+from .models import Profile
+
+# ruff: noqa: S105
 
 
 class Message(Schema):
@@ -15,8 +18,9 @@ class ValidationErrorMessageSchema(Message):
     type: str = Field(
         description="Type of the error. can be missing, validation_error or some kind of type error."
     )
-    loc: List[str] = Field(
-        description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in the list is the name of failed field."
+    loc: list[str] = Field(
+        description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
+        "the list is the name of failed field."
     )
 
 
@@ -67,6 +71,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
     date_joined: datetime = Field(alias="user.date_joined")
     wins: int
     loses: int
+    total_matches: int
     winrate: int | None = Field(
         description="null if the player didn't play any games yet."
     )
@@ -77,10 +82,10 @@ class ProfileFullSchema(ProfileMinimalSchema):
         description="Player who lost the most against current user."
     )
     scored_balls: int = Field(description="How many balls player scored overall.")
-    elo_history: List[EloDataPointSchema] = Field(
+    elo_history: list[EloDataPointSchema] = Field(
         description="List of data points for elo changes of the last 10 games."
     )
-    friends: List[ProfileMinimalSchema] = Field(
+    friends: list[ProfileMinimalSchema] = Field(
         description="List of first ten friends.", max_length=10
     )
 
@@ -107,49 +112,53 @@ class ProfileFullSchema(ProfileMinimalSchema):
         return obj.friends.all()[:10]
 
 
-def _validate_password(data) -> List[Dict]:
-    err_list = []
-    if data.password != data.password_repeat:
-        err_list.append({"msg": "Passwords do not match."})
-    if len(data.password) < settings.AUTH_SETTINGS["password_min_len"]:
-        err_list.append({"msg": "Password should have at least 8 characters."})
-    if settings.AUTH_SETTINGS["check_attribute_similarity"] and getattr(data, "username", False) and data.username in data.password:
-        err_list.append({"msg": "Password should not contain username."})
-
-    return err_list
-
-
-class SignUpSchema(Schema):
-    username: str
-    email: str
+class PasswordValidationSchema(Schema):
     password: str
     password_repeat: str
 
-    @model_validator(mode="before")
-    @staticmethod
-    def validate_new_user_data(data):
-        err_list = _validate_password(data)
+    def validate_password(self) -> list[dict]:
+        err_dict = {}
+        err_dict["password"] = []
+        err_dict["password_repeat"] = []
+        if self.password != self.password_repeat:
+            err_dict["password_repeat"].append("Passwords do not match.")
+        if len(self.password) < settings.AUTH_SETTINGS["password_min_len"]:
+            err_dict["password"].append("Password should have at least 8 characters.")
+        if (
+            settings.AUTH_SETTINGS["check_attribute_similarity"]
+            and self.username
+            and self.username in self.password
+        ):
+            err_dict["password"].append("Password should not contain username.")
+        return {k: v for k, v in err_dict.items() if v}
 
-        if err_list:
-            raise ValidationError({"msg": err_list})
-        return data
+
+class SignUpSchema(PasswordValidationSchema):
+    username: str
+    email: str
+
+    @model_validator(mode="after")
+    def validate_new_user_data(self):
+        err_dict = self.validate_password()
+
+        if err_dict:
+            raise ValidationError(err_dict)
+        return self
 
 
-class UpdateUserChema(Schema):
-    username: Optional[str] = None
-    email: Optional[str] = None
-    old_password: Optional[str] = None
-    password: Optional[str] = None
-    password_repeat: Optional[str] = None
+class UpdateUserChema(PasswordValidationSchema):
+    username: str | None = None
+    email: str | None = None
+    old_password: str | None = None
+    password: str | None = None
+    password_repeat: str | None = None
 
-    @model_validator(mode="before")
-    @staticmethod
-    def validate_updated_user_data(data):
-        if not getattr(data, "password", None) and not getattr(data, "password_repeat", None):
-            return data
+    @model_validator(mode="after")
+    def validate_updated_user_data(self):
+        err_dict = {}
+        if self.password or self.password_repeat:
+            err_dict = self.validate_password()
 
-        err_list = _validate_password(data)
-
-        if err_list:
-            raise ValidationError({"msg": err_list})
-        return data
+        if err_dict:
+            raise ValidationError(err_dict)
+        return self

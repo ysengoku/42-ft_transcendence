@@ -1,13 +1,14 @@
 from django.core.management.base import BaseCommand
-from users.models import User, Match, Profile
+
+from users.models import Match, Profile, User
 
 
+# ruff: noqa: S106
 class Command(BaseCommand):
-    help = 'Populates db with a dummy data'
+    help = "Populates db with a dummy data"
 
-    def handle(self, **kwargs):
+    def handle(self, **kwargs) -> None:
         if User.objects.count() != 0:
-            print("Database is not empty.")
             return
 
         User.objects.create_superuser(username="admin", password="123")
@@ -19,10 +20,11 @@ class Command(BaseCommand):
         sad_hampter = User.objects.create_user(username="SadHampter", password="123").profile
         User.objects.create_user(username="User0", password="123")
         for i in range(30):
-            user = User.objects.create_user(username=f"JohnDoe{i}", password="123")
+            user = User.objects.create_user(username=f"Pedro{i}", password="123")
             life_enjoyer.friends.add(user.profile)
         life_enjoyer.save()
 
+        celia.friends.add(sad_hampter)
         users = yuko, celia, fanny, eldar
         for user in users:
             for friend in users:
@@ -73,13 +75,13 @@ class Command(BaseCommand):
         Match.objects.resolve(yuko, eldar, 5, 4)
         Match.objects.resolve(yuko, eldar, 2, 1)
 
-        for i in range(10):
+        for _i in range(10):
             Match.objects.resolve(yuko, sad_hampter, 5, 1)
             Match.objects.resolve(eldar, sad_hampter, 6, 1)
             Match.objects.resolve(celia, sad_hampter, 11, 1)
             Match.objects.resolve(fanny, sad_hampter, 5, 1)
 
-        user1 = Profile.objects.get(user__username="JohnDoe1")
+        user1 = Profile.objects.get(user__username="Pedro1")
         Match.objects.resolve(sad_hampter, user1, 5, 3)
         Match.objects.resolve(sad_hampter, user1, 6, 2)
         Match.objects.resolve(sad_hampter, user1, 2, 1)

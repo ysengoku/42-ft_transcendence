@@ -4,6 +4,14 @@ DATABASE_VOLUME_PATH := ./volumes/database
 MEDIA_VOLUME_PATH := ./volumes/media
 STATIC_VOLUME_PATH := ./volumes/static
 
+# Couleurs
+GREEN=\033[0;32m
+YELLOW=\033[0;33m
+RED=\033[0;31m
+MAGENTA=\033[0;35m
+BLUE=\033[0;34m
+RESET=\033[0m
+
 # Define backup directories for each volume type
 # BACKUP_DIR := ./backups
 # DB_BACKUP_DIR := $(BACKUP_DIR)/database
@@ -17,6 +25,7 @@ DOCKER_COMPOSE = docker-compose.yaml
 FRONTEND_SERVICE = front
 BACKEND_SERVICE = server
 DATABASE_SERVICE = database
+NGINX_SERVICE = nginx
 
 # Default to production mode
 NODE_ENV ?= development
@@ -65,15 +74,26 @@ down:
 restart: down up
 
 # Logs for each service
+# Logs for each service
 logs:
-	@echo "Logs du conteneur $(FRONTEND_SERVICE):"
+	@printf "${MAGENTA}--------------------${RESET}\n"
+	docker ps -a
+	@printf "${MAGENTA}--------------------${RESET}\n"
+	@printf "${YELLOW}$(FRONTEND_SERVICE) logs:${RESET}\n"
 	@docker logs $(FRONTEND_SERVICE)
-	@echo "--------------------"
-	@echo "Logs du conteneur $(BACKEND_SERVICE):"
+	@printf "${YELLOW}--------------------${RESET}\n"
+	@printf "${GREEN}$(BACKEND_SERVICE) logs:${RESET}\n"
 	@docker logs $(BACKEND_SERVICE)
-	@echo "--------------------"
-	@echo "Logs du conteneur $(DATABASE_SERVICE):"
+	@printf "${GREEN}--------------------${RESET}\n"
+
+	@printf "${RED}$(DATABASE_SERVICE) logs:${RESET}\n"
 	@docker logs $(DATABASE_SERVICE)
+	@printf "${RED}--------------------${RESET}\n"
+
+	@printf "${BLUE}$(NGINX_SERVICE) logs:${RESET}\n"
+	@docker logs $(NGINX_SERVICE)
+	@printf "${BLUE}--------------------${RESET}\n"
+
 
 # Rebuild containers
 rebuild: check-env
@@ -93,6 +113,14 @@ bash-frontend:
 
 fclean:
 	docker system prune -a
+
+# RUN WITH MAKE -i
+reload-nginx-conf:
+	docker cp nginx/nginx.conf nginx:/etc/nginx/nginx.conf
+	docker exec nginx nginx -s reload
+
+populate-db:
+	docker exec server ./manage.py populate_db
 
 # backup-volumes: create-backup-dirs
 # 	@echo "Starting unified backup of all volumes..."
