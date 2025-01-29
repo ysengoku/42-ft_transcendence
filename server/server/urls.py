@@ -14,17 +14,20 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
-from ninja import NinjaAPI
 from django.conf import settings
-from django.conf.urls.static import static 
+from django.conf.urls.static import static
+from ninja import NinjaAPI
 from users.api import api
+from users.oauth import oauth_router  # Import du router OAuth
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', api.urls),
-    path('silk/', include('silk.urls', namespace='silk')),
+    path("admin/", admin.site.urls),
+    path("api/", api.urls),
+    path("oauth/", oauth_router.urls),  # Ajout du router OAuth
+    path("silk/", include("silk.urls", namespace="silk")),
 ]
 
 if settings.DEBUG:
