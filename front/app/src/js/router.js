@@ -120,6 +120,7 @@ const router = (() => {
 
 router.addRoute('/', 'landing-component');
 router.addRoute('/login', 'login-view');
+router.addRoute('/oauth/callback', 'oauth-callback');
 router.addRoute('/register', 'register-form');
 router.addRoute('/home', 'user-home', false, true);
 router.addRoute('/profile/:username', 'user-profile', true, true);
