@@ -26,7 +26,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = "your-secret-key"
 
 # Environment variables
-DEBUG = int(os.environ.get("DEBUG", default=1))
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
@@ -180,3 +180,24 @@ AUTH_SETTINGS = {
 }
 
 NINJA_PAGINATION_PER_PAGE = 10
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'users': {  # remplace par le nom de ton app
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
