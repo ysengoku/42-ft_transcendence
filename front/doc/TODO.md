@@ -3,10 +3,11 @@
 ## Landing
 
 ## Login
-- [] Set max-width
+- [] Set max-width and marging(x) auto
 - [] JWT handling
 
 ## Register
+- [] Set max-width and marging(x) auto
 - [] 422 handling
 - [] Password length check
 
@@ -32,7 +33,7 @@
 - [] Send message
 
 ### Stat
-- [] Pie Graph
+- [x] Pie Graph
 - [] Line graph
 
 ### Game History

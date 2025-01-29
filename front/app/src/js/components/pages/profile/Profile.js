@@ -73,6 +73,9 @@ export class UserProfile extends HTMLElement {
         border-top: 4px double #594639;
         opacity: 1;
       }
+      .graph-container {
+       background-color:rgba(0, 0,0, 0.1);
+      }
       .enemies-container {
         height: 224px;
       }
@@ -126,18 +129,14 @@ export class UserProfile extends HTMLElement {
               </div>
 
               <!-- Graphs -->
-              <div class="d-flex flex-row justify-content-around align-items-top">
-                <div class="row h-100 m-3 p-2">
-                  <div class="col-md-6">
-                    <p>Win Rate</p>
-                    <canvas id="winRateChart">
-
-                    </canvas>
-                  </div>
-                  <div class="col-md-6">
-                    <p>Elo progression</p>
+              <div class="d-flex flex-row justify-content-around align-items-top px-2 py-3">
+                <div class="graph-container me-2 px-4 py-2">
+                  <p>Win Rate</p>
+                  <user-win-rate-pie-graph></user-win-rate-pie-graph>
+                </div>               
+                <div class="graph-container flex-grow-1 ms-1 px-4 py-2">
+                  <p>Elo progression</p>
                     <canvas id="eloProgressionChart"></canvas>
-                  </div>
                 </div>
               </div>
             </div>
@@ -188,6 +187,15 @@ export class UserProfile extends HTMLElement {
       profileUserActions.data = {
         username: this.user.username,
         friends: this.user.friends,
+      };
+    }
+
+    const userWinRatePieGraph = this.querySelector("user-win-rate-pie-graph");
+    if (userWinRatePieGraph) {
+      userWinRatePieGraph.data = {
+        rate: this.user.winrate,
+        wins: this.user.wins,
+        losses: this.user.loses,
       };
     }
 
