@@ -1,5 +1,6 @@
-import {apiRequest} from '@api/apiRequest.js';
-import {API_ENDPOINTS} from '@api/endpoints.js';
+import { router } from '@router';
+import { apiRequest } from '@api/apiRequest.js';
+import { API_ENDPOINTS } from '@api/endpoints.js';
 import './components/index.js';
 import poster from '/img/sample-background.png?url';
 
@@ -16,15 +17,15 @@ export class UserProfile extends HTMLElement {
 
   async fetchUserData(username) {
     try {
-      console.log('username:', username);
+      // console.log('username:', username);
+      /* eslint-disable-next-line new-cap */
       const userData = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
 
       this.user = userData;
       this.render();
     } catch (error) {
-      // Error handling
       if (error.status === 404) {
-        // 404 page & message
+        router.navigate('/user-not-found');
       } else {
         // Something went wrong page & message
       }
@@ -32,10 +33,10 @@ export class UserProfile extends HTMLElement {
   }
 
   render() {
-    if (!this.user) {
-      console.log('User data is not available');
-      return;
-    }
+    // if (!this.user) {
+    //   console.log('User data is not available');
+    //   return;
+    // }
     console.log('User data:', this.user);
 
     const friendsCount = this.user.friends.length;
@@ -190,7 +191,7 @@ export class UserProfile extends HTMLElement {
       };
     }
 
-    const userWinRatePieGraph = this.querySelector("user-win-rate-pie-graph");
+    const userWinRatePieGraph = this.querySelector('user-win-rate-pie-graph');
     if (userWinRatePieGraph) {
       userWinRatePieGraph.data = {
         rate: this.user.winrate,
@@ -199,12 +200,8 @@ export class UserProfile extends HTMLElement {
       };
     }
 
-    const bestEnemyComponent = document.querySelector(
-      'user-enemy-component[type="best"]'
-    );
-    const worstEnemyComponent = document.querySelector(
-      'user-enemy-component[type="worst"]'
-    );
+    const bestEnemyComponent = document.querySelector('user-enemy-component[type="best"]');
+    const worstEnemyComponent = document.querySelector('user-enemy-component[type="worst"]');
     if (bestEnemyComponent) {
       bestEnemyComponent.data = this.user.best_enemy;
     }
@@ -212,12 +209,12 @@ export class UserProfile extends HTMLElement {
       worstEnemyComponent.data = this.user.worst_enemy;
     }
 
-    const gameHistory = this.querySelector("user-game-history");
+    const gameHistory = this.querySelector('user-game-history');
     if (gameHistory) {
       gameHistory.data = {
         matches: this.user.match_history,
         // tournaments: = this.user.tournament_history
-      }
+      };
     }
   }
 }
