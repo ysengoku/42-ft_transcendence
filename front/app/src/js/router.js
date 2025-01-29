@@ -6,13 +6,13 @@ const router = (() => {
     }
 
     addRoute(path, componentTag, isDynamic = false, requiresAuth = false) {
-      this.routes.set(path, {componentTag, isDynamic, requiresAuth});
+      this.routes.set(path, { componentTag, isDynamic, requiresAuth });
     }
 
     getRoutes() {
       return Array.from(this.routes.entries()).map(([path, data]) => ({
         path,
-        ...data
+        ...data,
       }));
     }
 
@@ -21,7 +21,7 @@ const router = (() => {
       const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
       if (route) {
-        const {componentTag, isDynamic, param, requiresAuth} = route;
+        const { componentTag, isDynamic, param, requiresAuth } = route;
 
         if (requiresAuth && !this.isLoggedIn()) {
           this.navigate('/login');
@@ -44,7 +44,7 @@ const router = (() => {
         if (routeData.isDynamic) {
           const param = this.extractParam(routePath, path);
           if (param) {
-            return {...routeData, param};
+            return { ...routeData, param };
           }
         }
       }
@@ -123,6 +123,7 @@ router.addRoute('/login', 'login-view');
 router.addRoute('/register', 'register-form');
 router.addRoute('/home', 'user-home', false, true);
 router.addRoute('/profile/:username', 'user-profile', true, true);
+router.addRoute('/user-not-found', 'user-not-found', true, true);
 router.addRoute('/settings/:username', 'user-settings', true, true);
 router.addRoute('/dual-menu', 'dual-menu', false, true);
 router.addRoute('/dual/:id', 'dual', true, true);
@@ -143,4 +144,4 @@ document.addEventListener('DOMContentLoaded', () => {
   router.navigate(currentPath);
 });
 
-export {router};
+export { router };

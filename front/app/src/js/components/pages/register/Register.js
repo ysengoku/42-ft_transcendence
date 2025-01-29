@@ -1,7 +1,6 @@
-import {router} from '@router';
-// import '../../api/index.js';
-import {apiRequest} from '@api/apiRequest.js';
-import {API_ENDPOINTS} from '@api/endpoints.js';
+import { router } from '@router';
+import { apiRequest } from '@api/apiRequest.js';
+import { API_ENDPOINTS } from '@api/endpoints.js';
 
 export class Register extends HTMLElement {
   constructor() {
@@ -23,33 +22,39 @@ export class Register extends HTMLElement {
 
   render() {
     this.innerHTML = `
-    		<div class='container d-flex flex-column justify-content-center align-items-center'>
-      			<form class='w-100'>
-        			<div class='mb-3'>
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-12 col-md-4"> 
+    		    <div class='container d-flex flex-column justify-content-center align-items-center'>
+      			  <form class='w-100'>
+        			  <div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
           				<input type='username' class='form-control' id='username' placeholder='username'>
           				<div class='invalid-feedback' id='username-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
+        			  </div>
+        			  <div class='mb-3'>
           				<label for='email' class='form-label'>Email</label>
           				<input type='email' class='form-control' id='email' placeholder='email'>
           				<div class='invalid-feedback' id='email-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
+        			  </div>
+        			  <div class='mb-3'>
           				<label for='password' class='form-label'>Password</label>
-        				<input type='password' class='form-control' id='password' placeholder='password'>
-        				<div class='invalid-feedback' id='password-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
-        				<label for='password_repeat' class='form-label'>Confirm Password</label>
-        				<input type='password' class='form-control' id='password_repeat' placeholder='password'>
-        				<div class='invalid-feedback' id='password_repeat-feedback'></div>
-        			</div>
-        			<div class='mb-3 py-3'>
-        				<button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Register</button>
-        			</div>
-      			</form>
-    		</div>
+        				 <input type='password' class='form-control' id='password' placeholder='password'>
+        				 <div class='invalid-feedback' id='password-feedback'></div>
+        			  </div>
+        			  <div class='mb-3'>
+        				  <label for='password_repeat' class='form-label'>Confirm Password</label>
+        				  <input type='password' class='form-control' id='password_repeat' placeholder='password'>
+        				  <div class='invalid-feedback' id='password_repeat-feedback'></div>
+        			  </div>
+        			  <div class='mb-3 py-3'>
+        				  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Register</button>
+        			  </div>
+      			  </form>
+    		    </div>
+          </div>
+        </div>
+      </div>
   		`;
   }
 
@@ -93,7 +98,7 @@ export class Register extends HTMLElement {
 
       // ----- Temporary ------------------------------------------
       localStorage.setItem('isLoggedIn', 'true');
-      const {elo, ...filteredResponse} = response;
+      const { elo, ...filteredResponse } = response;
       localStorage.setItem('user', JSON.stringify(filteredResponse));
       // ----------------------------------------------------------
       const navBar = document.getElementById('navbar-container');
@@ -122,10 +127,10 @@ export class Register extends HTMLElement {
     }
   }
 
-  checkPasswordDiff(passwordField, password_repeatField) {
-    if (passwordField.value != password_repeatField.value) {
+  checkPasswordDiff(passwordField, passwordRepeatField) {
+    if (passwordField.value != passwordRepeatField.value) {
       passwordField.classList.add('is-invalid');
-      password_repeatField.classList.add('is-invalid');
+      passwordRepeatField.classList.add('is-invalid');
       document.querySelector('#password-feedback').textContent = 'Passwords do not match';
       document.querySelector('#password_repeat-feedback').textContent = 'Passwords do not match';
       return false;
