@@ -21,12 +21,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from ninja import NinjaAPI
 from users.api import api
-from users.oauth import oauth_router  # Import du router OAuth
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", api.urls),
-    path("oauth/", oauth_router.urls),  # Ajout du router OAuth
     path("silk/", include("silk.urls", namespace="silk")),
 ]
 
