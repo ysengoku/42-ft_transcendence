@@ -27,7 +27,7 @@ export class ProfileAvatar extends HTMLElement {
                 }
                 .profile-avatar-frame {
                     width: 90%;
-                    background-color: rgba(89, 70, 57, 0.4);
+                    background-color: rgba(0, 0, 0, 0.1);
                 }
                 .profile-avatar-container img {
                     width: 240px;
