@@ -1,7 +1,6 @@
-import {router} from '@router';
-// import '../../api/index.js';
-import {apiRequest} from '@api/apiRequest.js';
-import {API_ENDPOINTS} from '@api/endpoints.js';
+import { router } from '@router';
+import { apiRequest } from '@api/apiRequest.js';
+import { API_ENDPOINTS } from '@api/endpoints.js';
 
 export class Register extends HTMLElement {
   constructor() {
@@ -93,7 +92,7 @@ export class Register extends HTMLElement {
 
       // ----- Temporary ------------------------------------------
       localStorage.setItem('isLoggedIn', 'true');
-      const {elo, ...filteredResponse} = response;
+      const { elo, ...filteredResponse } = response;
       localStorage.setItem('user', JSON.stringify(filteredResponse));
       // ----------------------------------------------------------
       const navBar = document.getElementById('navbar-container');
@@ -122,10 +121,10 @@ export class Register extends HTMLElement {
     }
   }
 
-  checkPasswordDiff(passwordField, password_repeatField) {
-    if (passwordField.value != password_repeatField.value) {
+  checkPasswordDiff(passwordField, passwordRepeatField) {
+    if (passwordField.value != passwordRepeatField.value) {
       passwordField.classList.add('is-invalid');
-      password_repeatField.classList.add('is-invalid');
+      passwordRepeatField.classList.add('is-invalid');
       document.querySelector('#password-feedback').textContent = 'Passwords do not match';
       document.querySelector('#password_repeat-feedback').textContent = 'Passwords do not match';
       return false;

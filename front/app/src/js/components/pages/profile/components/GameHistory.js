@@ -39,6 +39,16 @@ export class UserGameHistory extends HTMLElement {
         .nav-link:hover{
           color: black;
         }
+        .user-game-history-table {
+          font-size: 14px;
+          txt-decoration: none;
+        }
+        .user-game-history-table td {
+          vertical-align: middle;
+          background-color: transparent;
+          color: black;
+          padding: 1rem 0 1rem 0.5rem;
+        }
         .user-game-history-avatar {
           width: 24px;
           aspect-ratio: 1;
