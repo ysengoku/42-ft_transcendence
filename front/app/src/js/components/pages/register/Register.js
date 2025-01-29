@@ -22,33 +22,39 @@ export class Register extends HTMLElement {
 
   render() {
     this.innerHTML = `
-    		<div class='container d-flex flex-column justify-content-center align-items-center'>
-      			<form class='w-100'>
-        			<div class='mb-3'>
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-12 col-md-4"> 
+    		    <div class='container d-flex flex-column justify-content-center align-items-center'>
+      			  <form class='w-100'>
+        			  <div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
           				<input type='username' class='form-control' id='username' placeholder='username'>
           				<div class='invalid-feedback' id='username-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
+        			  </div>
+        			  <div class='mb-3'>
           				<label for='email' class='form-label'>Email</label>
           				<input type='email' class='form-control' id='email' placeholder='email'>
           				<div class='invalid-feedback' id='email-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
+        			  </div>
+        			  <div class='mb-3'>
           				<label for='password' class='form-label'>Password</label>
-        				<input type='password' class='form-control' id='password' placeholder='password'>
-        				<div class='invalid-feedback' id='password-feedback'></div>
-        			</div>
-        			<div class='mb-3'>
-        				<label for='password_repeat' class='form-label'>Confirm Password</label>
-        				<input type='password' class='form-control' id='password_repeat' placeholder='password'>
-        				<div class='invalid-feedback' id='password_repeat-feedback'></div>
-        			</div>
-        			<div class='mb-3 py-3'>
-        				<button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Register</button>
-        			</div>
-      			</form>
-    		</div>
+        				 <input type='password' class='form-control' id='password' placeholder='password'>
+        				 <div class='invalid-feedback' id='password-feedback'></div>
+        			  </div>
+        			  <div class='mb-3'>
+        				  <label for='password_repeat' class='form-label'>Confirm Password</label>
+        				  <input type='password' class='form-control' id='password_repeat' placeholder='password'>
+        				  <div class='invalid-feedback' id='password_repeat-feedback'></div>
+        			  </div>
+        			  <div class='mb-3 py-3'>
+        				  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Register</button>
+        			  </div>
+      			  </form>
+    		    </div>
+          </div>
+        </div>
+      </div>
   		`;
   }
 
