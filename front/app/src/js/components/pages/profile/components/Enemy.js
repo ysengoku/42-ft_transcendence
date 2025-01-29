@@ -1,4 +1,4 @@
-export class ProfileEnemy extends HTMLElement {
+export class UserEnemy extends HTMLElement {
   constructor() {
     super();
     this._data = null;
@@ -83,4 +83,4 @@ export class ProfileEnemy extends HTMLElement {
   }
 }
 
-customElements.define('profile-enemy-component', ProfileEnemy);
+customElements.define('user-enemy-component', UserEnemy);
