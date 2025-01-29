@@ -95,7 +95,8 @@ class ProfileFullSchema(ProfileMinimalSchema):
     )
     friends: list[ProfileMinimalSchema] = Field(
         description="List of first ten friends.", max_length=10
-    )
+    ),
+    friends_count: int
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -119,6 +120,9 @@ class ProfileFullSchema(ProfileMinimalSchema):
     def resolve_friends(obj: Profile):
         return obj.friends.all()[:10]
 
+    @staticmethod
+    def resolve_friends_count(obj: Profile):
+        return obj.friends.count()
 
 class PasswordValidationSchema(Schema):
     password: str
