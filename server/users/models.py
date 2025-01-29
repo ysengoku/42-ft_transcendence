@@ -3,7 +3,8 @@ from pathlib import Path
 import magic
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.contrib.auth.models import UserManager as BaseUserManager
+from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
 from django.db import models
 from django.db.models import Case, Count, F, Q, Sum, When
 from ninja.files import UploadedFile
@@ -12,9 +13,15 @@ from .stats_calc import calculate_elo_change, calculate_winrate
 from .utils import merge_err_dicts
 
 
+class UserManager(BaseUserManager):
+    pass
+
+
 class User(AbstractUser):
+    objects = UserManager()
+
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
-        if "username" not in kwargs["exclude"] and User.objects.filter(username__iexact=self.username).exists():
+        if "username" not in kwargs["exclude"] and User.objects.username_occupied:
             raise ValidationError({"username": ["A user with that username already exists."]})
         kwargs["exclude"] = {"username"}
         super().validate_unique(*args, **kwargs)
@@ -37,7 +44,8 @@ class User(AbstractUser):
                 raise PermissionDenied
             if data.old_password == data.password:
                 err_dict = merge_err_dicts(
-                    err_dict, {"password": ["New password cannot be the same as the old password."]}
+                    err_dict,
+                    {"password": ["New password cannot be the same as the old password."]},
                 )
             self.set_password(data.password)
             data.password = ""
@@ -69,6 +77,7 @@ class Profile(models.Model):
     profile_picture = models.ImageField(upload_to="avatars/", null=True, blank=True)
     elo = models.IntegerField(default=1000)
     friends = models.ManyToManyField("self")
+    blocked_users = models.ManyToManyField("self")
     is_online = models.BooleanField(default=True)
 
     def __str__(self) -> str:
@@ -104,7 +113,7 @@ class Profile(models.Model):
     def scored_balls(self):
         return (
             self.matches.aggregate(
-                scored_balls=Sum(Case(When(loser=self, then="losers_score"), When(winner=self, then="winners_score")))
+                scored_balls=Sum(Case(When(loser=self, then="losers_score"), When(winner=self, then="winners_score"))),
             )["scored_balls"]
             or 0
         )
@@ -153,7 +162,6 @@ class Profile(models.Model):
         self.delete_avatar()
         self.profile_picture = new_avatar
 
-# avatar.png
     def validate_avatar(self, file: UploadedFile) -> None:
         """
         Validates uploaded avatar for having a correct extension being a valid image.
@@ -162,10 +170,11 @@ class Profile(models.Model):
         """
         max_file_size = 1024 * 1024 * 10
 
+        if file.size >= max_file_size:
+            raise RequestDataTooBig
+
         err_dict = {}
         invalid_file_type_msg = {"avatar": ["Invalid file type. Supported file types: .png, .jpg, .webp."]}
-        file_is_too_big_msg = {"avatar": ["File is too big. Please upload a file that weights less than 10mb."]}
-
         accepted_file_extensions = [".png", ".jpg", ".jpeg", ".webp"]
         accepted_mime_types = ["image/png", "image/jpeg", "image/webp"]
         file_mime_type = magic.from_buffer(file.read(1024), mime=True)
@@ -175,9 +184,6 @@ class Profile(models.Model):
             or file_mime_type not in accepted_mime_types
         ):
             err_dict = merge_err_dicts(err_dict, invalid_file_type_msg)
-
-        if file.size >= max_file_size:
-            err_dict = merge_err_dicts(err_dict, file_is_too_big_msg)
 
         if err_dict:
             raise ValidationError(err_dict)

@@ -1,19 +1,20 @@
 ## Architecture
-
 - [ ] Change views to explicitely return status codes and error messages.
+- [ ] Delete get all users endpoint.
+- [ ] Look into DATA_UPLOAD_MAX_DATA_MEMORY_SIZE setting and its exception.
+    - [ ] Do it specifically for the `validate_avatar` function.
 
 ## Features
-
-- [~] User profiles with their information.
-  - [x] Implement match history and resolution.
-  - [x] Implement misc stats like the scored balls or best/worst enemy.
-  - [ ] Implement tournament history.
-  - [ ] Implement user settings update.
-    - [ ] Implement validation for the images of user avatars.
-      - [x] Images should not be too big, bigger than 10mb.
-      - [~] Accepted formats should be: .png, .jpg, .webp.
-        - [x] Both filenames and their contents should be checked.
-        - [ ] Frontend should have `accept` attribue with the list of those file types.
+- [~] User profiles.
+    - [ ] Implement tournament history.
+    - [x] Implement match history and resolution.
+    - [x] Implement misc stats like the scored balls or best/worst enemy.
+    - [~] Implement user settings update endpoint.
+        - [x] Implement validation for the images of user avatars.
+            - [x] Images should not be too big, bigger than 10mb.
+            - [x] Accepted formats should be: .png, .jpg, .webp.
+                - [x] Both filenames and their contents should be checked.
+    - [ ] Online status tracking.
 - [ ] User creation.
   - [x] User email should be valid.
     - [ ] OPTIONAL: send a validation email to a user.
@@ -23,6 +24,11 @@
     - [ ] Passwords should have at least 1 digit and 1 letter.
     - [ ] Passwords should not have X amount of repeated characters.
 - [ ] JWT auth on the backend.
-- [ ] Friends list.
+- [ ] Friendship system.
+    - [x] Addition and deletion operations for friends.
+    - [ ] Notifications for the other side on friend request.
+- [ ] User blocking system.
+    - [ ] Addition and deletion operations for blocked user list.
+- [ ] Create CRUD for blocked users.
 - [ ] Realtime online status.
 - [x] Elo system.
