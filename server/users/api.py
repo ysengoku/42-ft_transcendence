@@ -18,6 +18,7 @@ from .schemas import (
 )
 
 ##### OAuth #####
+
 from django.http import JsonResponse
 from ninja import Router
 import hashlib
@@ -26,7 +27,9 @@ import requests
 from urllib.parse import urlencode
 from django.conf import settings
 import logging
+from django.shortcuts import redirect
 
+api = NinjaAPI()
 logger = logging.getLogger(__name__)
 oauth_router = Router()
 
@@ -104,59 +107,9 @@ def oauth_callback(request):
 
         return JsonResponse({"status": "success", "user": user_data})
 
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-
-
-
-
-@oauth_router.get("/callback")
-def oauth_callback(request):
-    code = request.GET.get("code")
-    state = request.GET.get("state")
-
-    # Vérifier l'état pour la sécurité CSRF
-    if not state or state != request.session.get("oauth_state"):
-        return JsonResponse({"error": "Invalid state parameter"}, status=400)
-
-    platform = request.session.get("oauth_platform")
-    if not platform:
-        return JsonResponse({"error": "No platform specified"}, status=400)
-
-    try:
-        config = get_oauth_config(platform)
-
-        # Échanger le code contre un token
-        token_response = requests.post(
-            config["token_uri"],
-            data={
-                "client_id": config["client_id"],
-                "client_secret": config["client_secret"],
-                "code": code,
-                "redirect_uri": config["redirect_uris"][0],
-                "grant_type": "authorization_code",
-            },
-            headers={"Accept": "application/json"},
-        )
-        token_data = token_response.json()
-
-        if "access_token" not in token_data:
-            return JsonResponse({"error": "Failed to get access token"}, status=500)
-
-        # Récupérer les informations de l'utilisateur
-        user_response = requests.get(
-            config["user_endpoint"],
-            headers={"Authorization": f"Bearer {token_data['access_token']}", "Accept": "application/json"},
-        )
-        user_data = user_response.json()
-
-        # TODO: Créer ou mettre à jour l'utilisateur dans la base de données
-
-        return JsonResponse({"status": "success", "user": user_data})
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
 
 # Enregistrer le router
 api.add_router("/oauth", oauth_router)
