@@ -72,6 +72,7 @@ def oauth_callback(request):
     code = request.GET.get("code")
     state = request.GET.get("state")
 
+    # Vérifier le paramètre "state" pour la sécurité
     if not state or state != request.session.get("oauth_state"):
         return JsonResponse({"error": "Invalid state parameter"}, status=400)
 
@@ -82,6 +83,7 @@ def oauth_callback(request):
     try:
         config = get_oauth_config(platform)
 
+        # Échanger le code d'autorisation contre un token d'accès
         token_response = requests.post(
             config["token_uri"],
             data={
@@ -96,20 +98,16 @@ def oauth_callback(request):
 
         token_data = token_response.json()
 
+        # Vérifier que l'accès au token a été réussi
         if "access_token" not in token_data:
             return JsonResponse({"error": "Failed to get access token"}, status=500)
 
-        user_response = requests.get(
-            config["user_endpoint"],
-            headers={"Authorization": f"Bearer {token_data['access_token']}", "Accept": "application/json"},
-        )
-        user_data = user_response.json()
-
-        return JsonResponse({"status": "success", "user": user_data})
-
+        # Utilisez l'auth_url pour rediriger l'utilisateur vers la plateforme OAuth si nécessaire.
+        return JsonResponse({"status": "success", "auth_url": config["redirect_uris"][0]})
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
 
 # Enregistrer le router
 api.add_router("/oauth", oauth_router)
