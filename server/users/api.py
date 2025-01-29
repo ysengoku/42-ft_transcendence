@@ -69,7 +69,7 @@ def oauth_authorize(request, platform: str):
 
 # Backend: oauth_router.py
 
-@oauth_router.get("/callback")
+@oauth_router.get("/callback/{platform}")
 def oauth_callback(request):
     code = request.GET.get("code")
     state = request.GET.get("state")
