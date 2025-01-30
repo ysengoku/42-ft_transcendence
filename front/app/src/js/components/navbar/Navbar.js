@@ -19,7 +19,7 @@ export class Navbar extends HTMLElement {
   }
 
   renderNavbarActions() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';  // Temporary solution
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
 
