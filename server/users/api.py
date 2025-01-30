@@ -150,8 +150,9 @@ def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema)
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {user_to_add.username} not found.") from exc
 
-    if not user.profile.add_friend(friend):
-        raise HttpError(422, f"{user_to_add.username} can't be added as a friend.")
+    err_msg = user.profile.add_friend(friend)
+    if err_msg:
+        raise HttpError(422, err_msg)
     return 201, friend
 
 
@@ -171,8 +172,9 @@ def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: s
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {friend_to_remove} not found.") from exc
 
-    if not user.profile.remove_friend(friend):
-        raise HttpError(422, f"User {friend_to_remove} is not user's friend.")
+    err_msg = user.profile.remove_friend(friend)
+    if err_msg:
+        raise HttpError(422, err_msg)
     return 204, None
 
 
@@ -192,7 +194,7 @@ def get_blocked_users(request: HttpRequest, username: str):
 
 
 # TODO: add auth
-@api.post("users/{username}/blocked_users", response={201: ProfileMinimalSchema, 404: Message})
+@api.post("users/{username}/blocked_users", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
 def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: UsernameSchema):
     """
     Adds user to the blocklist.
@@ -207,12 +209,16 @@ def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: Usern
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {user_to_add.username} not found.") from exc
 
-    user.profile.blocked_users.add(blocked_user)
+    err_msg = user.profile.block_user(blocked_user)
+    if err_msg:
+        raise HttpError(422, err_msg)
     return 201, blocked_user
 
 
 # TODO: add auth
-@api.delete("users/{username}/blocked_users/{blocked_user_to_remove}", response={204: None, 404: Message})
+@api.delete(
+    "users/{username}/blocked_users/{blocked_user_to_remove}", response={204: None, frozenset({404, 422}): Message},
+)
 def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_to_remove: str):
     """
     Deletes user from a blocklist.
@@ -227,7 +233,9 @@ def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {blocked_user_to_remove} not found.") from exc
 
-    user.profile.blocked_users.remove(blocked_user)
+    err_msg = user.profile.unblock_user(blocked_user)
+    if err_msg:
+        raise HttpError(422, err_msg)
     return 204, None
 
 
