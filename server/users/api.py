@@ -75,7 +75,7 @@ def oauth_callback(request):
     code = request.GET.get("code")
     state = request.GET.get("state")
 
-    # Vérifier le paramètre "state" pour la sécurité
+    # Verify the state parameter for security
     if not state or state != request.session.get("oauth_state"):
         return JsonResponse({"status": "error", "error": "Invalid state parameter"}, status=400)
 
@@ -86,7 +86,7 @@ def oauth_callback(request):
     try:
         config = get_oauth_config(platform)
 
-        # Échanger le code d'autorisation contre un token d'accès
+        # Exchange the authorization code for an access token
         token_response = requests.post(
             config["token_uri"],
             data={
@@ -104,25 +104,36 @@ def oauth_callback(request):
         if "access_token" not in token_data:
             return JsonResponse({"status": "error", "error": "Failed to get access token"}, status=500)
 
-        # Récupérer les informations de l'utilisateur avec le token d'accès
+        # Fetch user information using the access token
         user_info_response = requests.get(
             config["user_info_uri"],
             headers={"Authorization": f"Bearer {token_data['access_token']}"},
         )
 
         user_info = user_info_response.json()
-        print("User Info:", user_info)  # Just print the user info for now
 
-        # Pour l'instant, on renvoie juste success
+        # Extract only the required fields based on the platform
+        if platform == "github":
+            simplified_user_info = {
+                "login": user_info.get("login"),
+            }
+        elif platform == "42":
+            simplified_user_info = {
+                "login": user_info.get("login"),
+            }
+        else:
+            simplified_user_info = {}
+
         return JsonResponse(
             {
                 "status": "success",
                 "message": "Authentication successful",
-                "user_info": user_info,  # Optionnel: renvoyer les infos utilisateur au front
+                "user_info": simplified_user_info,
             }
         )
 
     except Exception as e:
+        print(f"Error during OAuth callback: {e}")
         return JsonResponse({"status": "error", "error": "Internal server error"}, status=500)
 
 
