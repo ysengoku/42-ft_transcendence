@@ -2,8 +2,10 @@ from pathlib import Path
 
 import magic
 from django.contrib.auth import authenticate
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as BaseUserManager
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
 from django.db import models
 from django.db.models import Case, Count, F, Q, Sum, When
@@ -14,16 +16,56 @@ from .utils import merge_err_dicts
 
 
 class UserManager(BaseUserManager):
-    pass
+    def find_user(self, username: str, connection_type: str) -> object | None:
+        return self.filter(username=username, connection_type=connection_type).first()
+
+    def create_user(self, username: str, connection_type: str, email: str, **extra_fields):
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+
+        email = self.normalize_email(email)
+        username = self.model.normalize_username(username)
+        user = self.model(username=username, email=email, **extra_fields)
+        if extra_fields.get("password"):
+            user.password = make_password(extra_fields["password"])
+        user.save()
+        return user
 
 
 class User(AbstractUser):
+    username_validator = UnicodeUsernameValidator()
+    CONNECTION_TYPES_CHOICES = (
+        ("42", "42 School API"),
+        ("github", "Github API"),
+        ("regular", "Our Own Auth"),
+    )
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ()
+
+    username = models.CharField(
+        max_length=150,
+        help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+        validators=[username_validator],
+        error_messages={
+            "unique": "A user with that username already exists.",
+        },
+    )
+    email = models.EmailField(unique=True)
+    connection_type = models.CharField(max_length=15, choices=CONNECTION_TYPES_CHOICES, default="regular")
+    password = models.CharField(max_length=128, default="")
+
+    class Meta:
+        unique_together = ("username", "connection_type")
+
     objects = UserManager()
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
-        if "username" not in kwargs["exclude"] and User.objects.filter(username__iexact=self.username).exists():
+        if (
+            "username" not in kwargs["exclude"] or "connection_type" not in kwargs["exclude"]
+            and User.objects.filter(username__iexact=self.username, connection_type=self.connection_type).exists()
+        ):
             raise ValidationError({"username": ["A user with that username already exists."]})
-        kwargs["exclude"] = {"username"}
+        kwargs["exclude"] = {"username", "connection_type"}
         super().validate_unique(*args, **kwargs)
 
     def update_user(self, data, new_profile_picture: UploadedFile | None):
@@ -70,6 +112,9 @@ class User(AbstractUser):
         self.save()
         self.profile.save()
         return self
+
+    def __str__(self):
+        return f"{self.connection_type}: {self.username}"
 
 
 class Profile(models.Model):

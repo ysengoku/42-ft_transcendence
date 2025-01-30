@@ -42,3 +42,6 @@
 - [ ] Create CRUD for blocked users.
 - [ ] Realtime online status.
 - [x] Elo system.
+- [ ] Redo the User model to make it compatible with OAuth.
+     - [ ] Change the validation for the User in all places.
+     - [ ] Change the API views so they could be able to find and return different types of users.

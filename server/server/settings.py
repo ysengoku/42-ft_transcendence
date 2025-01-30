@@ -29,8 +29,6 @@ SECRET_KEY = "your-secret-key"
 # Environment variables
 DEBUG = int(os.environ.get("DEBUG", default=1))
 IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
-CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 
 if not IN_CONTAINER:
@@ -76,7 +74,6 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Third-party applications
     "silk",  # Application for profiling
-    "corsheaders",  # Application for CORS if two ports are different. must be removed for production
     "channels",  # Django Channels
     # Our applications
     "users",
@@ -85,7 +82,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -162,13 +158,6 @@ CHANNEL_LAYERS = {
 CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ORIGINS = [
-    "http://localhost:5173",
-    "https://localhost:1026",
-]
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 
 # Configuration for picture
 BASE_DIR = Path(__file__).resolve().parent.parent
