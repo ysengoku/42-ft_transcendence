@@ -1,11 +1,30 @@
-export async function apiRequest(method, endpoint, data = null, isFileUpload = false) {
+export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
+  function getCSRFTokenfromCookies() {
+    const name = 'csrftoken';
+    let token = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.startsWith(name)) {
+          token = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return token;
+  }
+
   const url = `${endpoint}`;
+  const csrfToken = getCSRFTokenfromCookies();
+  const needCSRF = needToken && ['POST', 'DELETE'].includes(method) && csrfToken;
   const options = {
     method,
     headers: {
-      ...(isFileUpload ? {} : {'Content-Type': 'application/json'}),
+      ...(needCSRF ? { 'X-CSRFToken': csrfToken } : {}),
+      ...(isFileUpload ? {} : { 'Content-Type': 'application/json' }),
     },
-    credentials: 'include', // Need after JWT integration
+    credentials: 'include',
   };
 
   if (data) {
@@ -17,18 +36,24 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       options.body = JSON.stringify(data);
     }
   }
-  console.log('Data before API request:', options);
+  console.log('Sending API request:', options);
 
   try {
     const response = await fetch(url, options);
     if (response.ok) {
       return await response.json();
     }
-    console.error('Response:', response);
-    const errorData = await response.json();
-    const error = new Error(`Request failed: ${response.status}`);
-    error.response = errorData;
+    console.error('Request failed:', response);
+    const error = new Error();
     error.status = response.status;
+    let errorData = null;
+    try {
+      console.log('Error response:', response);
+      errorData = await response.json();
+      error.response = errorData;
+    } catch (jsonError) {
+      console.error('Failed to parse JSON:', jsonError);
+    }
     throw error;
   } catch (error) {
     throw error;
