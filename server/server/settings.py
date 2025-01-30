@@ -85,14 +85,13 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Third party middleware
     "silk.middleware.SilkyMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  #  must be removed for production.
 ]
 
 
@@ -160,7 +159,7 @@ CHANNEL_LAYERS = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = ["https://localhost:1026"]
+CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
 
@@ -192,3 +191,4 @@ AUTH_SETTINGS = {
 JWT_SECRET_KEY = "secret"
 
 NINJA_PAGINATION_PER_PAGE = 10
+APPEND_SLASH = False
