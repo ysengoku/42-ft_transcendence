@@ -21,7 +21,7 @@ class User(AbstractUser):
     objects = UserManager()
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
-        if "username" not in kwargs["exclude"] and User.objects.username_occupied:
+        if "username" not in kwargs["exclude"] and User.objects.filter(username__iexact=self.username).exists():
             raise ValidationError({"username": ["A user with that username already exists."]})
         kwargs["exclude"] = {"username"}
         super().validate_unique(*args, **kwargs)
@@ -76,12 +76,12 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to="avatars/", null=True, blank=True)
     elo = models.IntegerField(default=1000)
-    friends = models.ManyToManyField("self")
-    blocked_users = models.ManyToManyField("self")
+    friends = models.ManyToManyField("self", symmetrical=False, through="Friendship", related_name="friends_of")
+    blocked_users = models.ManyToManyField("self", symmetrical=False, related_name="blocked_users_of")
     is_online = models.BooleanField(default=True)
 
     def __str__(self) -> str:
-        return self.user.username
+        return f"Profile of {self.user.username}"
 
     @property
     def avatar(self) -> str:
@@ -187,6 +187,53 @@ class Profile(models.Model):
 
         if err_dict:
             raise ValidationError(err_dict)
+
+    def add_friend(self, new_friend):
+        if new_friend == self:
+            return "Can't add yourself to the friendlist."
+        if self.friends.filter(pk=new_friend.pk).exists():
+            return f"User {new_friend.user.username} is already in the friendlist."
+        if self.blocked_users.filter(pk=new_friend.pk).exists():
+            return f"User {new_friend.user.username} is in the blocklist."
+        self.friends.add(new_friend)
+        return None
+
+    def remove_friend(self, removed_friend):
+        if not self.friends.filter(pk=removed_friend.pk).exists():
+            return f"User {removed_friend.user.username} is not in the friendlist."
+        self.friends.remove(removed_friend)
+        return None
+
+    def block_user(self, user_to_block):
+        if user_to_block == self:
+            return "Can't block self."
+        if self.blocked_users.filter(pk=user_to_block.pk).exists():
+            return f"User {user_to_block.user.username} is already blocked."
+        self.blocked_users.add(user_to_block)
+        self.remove_friend(user_to_block)
+        return None
+
+    def unblock_user(self, blocked_user_to_remove):
+        if not self.blocked_users.filter(pk=blocked_user_to_remove.pk).exists():
+            return f"User {blocked_user_to_remove.user.username} is not in your blocklist."
+        self.blocked_users.remove(blocked_user_to_remove)
+        return None
+
+
+class Friendship(models.Model):
+    from_profile = models.ForeignKey(Profile, related_name="from_profile", on_delete=models.CASCADE)
+    to_profile = models.ForeignKey(Profile, related_name="to_profile", on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            # Block self-friendship
+            models.CheckConstraint(check=~models.Q(from_profile=models.F("to_profile")), name="no_self_friendship"),
+            # Prevent duplicate entries (A→B can only exist once)
+            models.UniqueConstraint(fields=["from_profile", "to_profile"], name="unique_friendship"),
+        ]
+
+    def __str__(self):
+        return f"{self.from_profile.user.username} likes {self.to_profile.user.username}"
 
 
 class MatchManager(models.Manager):
