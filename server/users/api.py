@@ -54,7 +54,7 @@ def oauth_authorize(request, platform: str):
         params = {
             "response_type": "code",
             "client_id": config["client_id"],
-            "redirect_uri": config["redirect_uris"][0],
+            "redirect_uri": config["redirect_uris"][0],  # callback
             "scope": " ".join(config["scopes"]),
             "state": state,
         }
@@ -112,6 +112,9 @@ def oauth_callback(request):
                 "error": "Failed to get access token"
             }, status=500)
 
+        # recuperer les informations de l'utilisateur avec get request 
+         # verifier si l'utilisateur existe deja et sinon creer un compte
+        # printer les infos de l'utilisateur
         # Pour l'instant, on renvoie juste success
         # Plus tard, vous pourrez ajouter ici la logique pour sauvegarder l'utilisateur
         return JsonResponse({
