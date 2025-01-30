@@ -5,7 +5,8 @@ from ninja.errors import HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
-from .oauth42 import oauth_router
+from .oauth2 import oauth_router
+from .twofa import twofa_router
 from .models import Profile, User
 from .schemas import (
     Message,
@@ -21,6 +22,7 @@ from .schemas import (
 api = NinjaAPI()
 # Enregistrer le router
 api.add_router("/oauth", oauth_router)
+api.add_router("/twofa", twofa_router)
 
 
 # TODO: delete endpoint

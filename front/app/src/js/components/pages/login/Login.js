@@ -16,8 +16,18 @@ export class Login extends HTMLElement {
 
   render() {
     const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
-    if (isLoggedIn) {
+    if (isLoggedIn && !is2FACompleted) {
+      // If logged in but 2FA is not completed, show the 2FA component
+      this.innerHTML = `
+        <twofa-auth></twofa-auth>
+      `;
+      return;
+    }
+
+    if (isLoggedIn && is2FACompleted) {
+      // If logged in and 2FA is completed, redirect to home
       router.navigate('/home');
+      return;
     }
 
     this.innerHTML = `
