@@ -135,7 +135,7 @@ def get_friends(request: HttpRequest, username: str):
 
 
 # TODO: add auth
-@api.post("users/{username}/friends", response={201: ProfileMinimalSchema, 404: Message})
+@api.post("users/{username}/friends", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
 def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema):
     """
     Adds user as a friend.
@@ -150,12 +150,13 @@ def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema)
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {user_to_add.username} not found.") from exc
 
-    user.profile.friends.add(friend)
+    if not user.profile.add_friend(friend):
+        raise HttpError(422, f"{user_to_add.username} can't be added as a friend.")
     return 201, friend
 
 
 # TODO: add auth
-@api.delete("users/{username}/friends/{friend_to_remove}", response={204: None, 404: Message})
+@api.delete("users/{username}/friends/{friend_to_remove}", response={204: None, frozenset({404, 422}): Message})
 def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: str):
     """
     Deletes user from a friendlist.
@@ -170,7 +171,8 @@ def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: s
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {friend_to_remove} not found.") from exc
 
-    user.profile.friends.remove(friend)
+    if not user.profile.remove_friend(friend):
+        raise HttpError(422, f"User {friend_to_remove} is not user's friend.")
     return 204, None
 
 

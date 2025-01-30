@@ -76,8 +76,8 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to="avatars/", null=True, blank=True)
     elo = models.IntegerField(default=1000)
-    friends = models.ManyToManyField("self", symmetrical=False)
-    blocked_users = models.ManyToManyField("self")
+    friends = models.ManyToManyField("self", symmetrical=False, through="Friendship", related_name="friends_of")
+    blocked_users = models.ManyToManyField("self", symmetrical=False, related_name="blocked_users_of")
     is_online = models.BooleanField(default=True)
 
     def __str__(self) -> str:
@@ -187,6 +187,36 @@ class Profile(models.Model):
 
         if err_dict:
             raise ValidationError(err_dict)
+
+    def add_friend(self, new_friend):
+        if new_friend == self:
+            return None
+        if self.friends.filter(pk=new_friend.pk).exists():
+            return None
+        self.friends.add(new_friend)
+        return new_friend
+
+    def remove_friend(self, removed_friend):
+        if not self.friends.filter(pk=removed_friend.pk).exists():
+            return None
+        self.friends.remove(removed_friend)
+        return removed_friend
+
+
+class Friendship(models.Model):
+    from_profile = models.ForeignKey(Profile, related_name="from_profile", on_delete=models.CASCADE)
+    to_profile = models.ForeignKey(Profile, related_name="to_profile", on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            # Block self-friendship
+            models.CheckConstraint(check=~models.Q(from_profile=models.F("to_profile")), name="no_self_friendship"),
+            # Prevent duplicate entries (A→B can only exist once)
+            models.UniqueConstraint(fields=["from_profile", "to_profile"], name="unique_friendship"),
+        ]
+
+    def __str__(self):
+        return f"{self.from_profile.user.username} favorited {self.to_profile.user.username}"
 
 
 class MatchManager(models.Manager):
