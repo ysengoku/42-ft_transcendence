@@ -21,7 +21,7 @@ class User(AbstractUser):
     objects = UserManager()
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
-        if "username" not in kwargs["exclude"] and User.objects.username_occupied:
+        if "username" not in kwargs["exclude"] and User.objects.filter(username__iexact=self.username).exists():
             raise ValidationError({"username": ["A user with that username already exists."]})
         kwargs["exclude"] = {"username"}
         super().validate_unique(*args, **kwargs)

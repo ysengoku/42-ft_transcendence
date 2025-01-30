@@ -34,6 +34,7 @@ class CookieKey(APIKeyCookie):
 api = NinjaAPI(auth=CookieKey(), csrf=True)
 
 
+# TODO: check return values of verify_jwt and create_jwt
 # TODO: add secure options for the cookie
 @api.post("login", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
 @ensure_csrf_cookie
@@ -76,8 +77,11 @@ def get_user(request: HttpRequest, username: str):
 
 @api.post(
     "users",
-    response={201: ProfileMinimalSchema, 422: list[ValidationErrorMessageSchema]},
+    response={422: list[ValidationErrorMessageSchema]},
+    auth=None,
 )
+@ensure_csrf_cookie
+@csrf_exempt
 def register_user(request: HttpRequest, data: SignUpSchema):
     """
     Creates a new user.
@@ -86,7 +90,10 @@ def register_user(request: HttpRequest, data: SignUpSchema):
     user.set_password(data.password)
     user.full_clean()
     user.save()
-    return 201, user.profile
+    token = create_jwt(user.username)
+    response = HttpResponse("Success")
+    response.set_cookie("access_token", token)
+    return response
 
 
 # TODO: add authorization to settings change
