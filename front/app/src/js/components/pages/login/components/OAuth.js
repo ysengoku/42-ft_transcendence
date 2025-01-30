@@ -9,7 +9,7 @@ export class OAuth extends HTMLElement {
   async handleOAuthClick(platform) {
     try {
       console.log(`Starting OAuth flow for ${platform}`);
-      const response = await fetch(`/api/oauth/authorize/${platform}`); // when user clikcs on connect with 42, he is redirected to the API uri : authorize 
+      const response = await fetch(`/api/oauth/authorize/${platform}`);
       
       console.log('Response status:', response.status);
       const data = await response.json();
@@ -37,10 +37,43 @@ export class OAuth extends HTMLElement {
     }
   }
 
+  async checkOAuthCallback() {
+    const oauthPending = sessionStorage.getItem('oauth_pending');
+    if (oauthPending === 'true') {
+      const platform = sessionStorage.getItem('oauth_platform');
+      if (platform) {
+        try {
+          const response = await fetch(`/api/oauth/callback/${platform}`, {
+            method: 'GET',
+            credentials: 'include'
+          });
+
+          const data = await response.json();
+          console.log('OAuth callback data:', data);
+
+          if (data.status === 'success') {
+            console.log('User Info:', data.user_info);  // Print user info for the moment
+            // router.navigate(`/home`, response.user);
+          } else {
+            console.error('OAuth callback error:', data.error);
+          }
+        } catch (error) {
+          console.error('OAuth callback failed:', error);
+        } finally {
+          sessionStorage.removeItem('oauth_pending');
+          sessionStorage.removeItem('oauth_platform');
+        }
+      }
+    }
+  }
+
   connectedCallback() {
     this.render();
     this.querySelector('.btn-42').addEventListener('click', () => this.handleOAuthClick('42'));
     this.querySelector('.btn-github').addEventListener('click', () => this.handleOAuthClick('github'));
+
+    // Vérifier si on revient d'une redirection OAuth
+    this.checkOAuthCallback();
   }
 
   render() {
