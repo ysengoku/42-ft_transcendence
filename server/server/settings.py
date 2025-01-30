@@ -49,13 +49,13 @@ FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 
 # SendGrid Settings
-SENDGRID_API_KEY = 'your_sendgrid_api_key'  # Optional, if you're using SendGrid with their API
-DEFAULT_FROM_EMAIL = 'your-email@example.com'  # Email used to send emails
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.sendgrid.net'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is 'apikey'
+EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
 EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password
 
 
