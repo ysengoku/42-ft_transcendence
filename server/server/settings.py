@@ -33,10 +33,6 @@ CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
 # OAuth
 
-# OAUTH_STATE_MAX_LENGTH = 256
-# OAUTH_STATE_RANDOM_STRING_LENGTH = 16
-# OAUTH_SOURCE_MAX_LENGTH = 100
-
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
