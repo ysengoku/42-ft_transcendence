@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -35,13 +34,8 @@ class CookieKey(APIKeyCookie):
 api = NinjaAPI(auth=CookieKey(), csrf=True)
 
 
-@api.get("/cookiekey")
-def apikey(request, response: HttpResponse):
-    return "asd"
-
-
-# TODO: added secure options for the cookie
-@api.post("login/", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
+# TODO: add secure options for the cookie
+@api.post("login", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
@@ -61,7 +55,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
 
 
 # TODO: delete endpoint
-@api.get("users/", response=list[ProfileMinimalSchema])
+@api.get("users", response=list[ProfileMinimalSchema])
 def get_users(request: HttpRequest):
     """
     WARNING: temporary endpoint. At the moment in returns a list of all users for the testing purposes.
@@ -81,7 +75,7 @@ def get_user(request: HttpRequest, username: str):
 
 
 @api.post(
-    "users/",
+    "users",
     response={201: ProfileMinimalSchema, 422: list[ValidationErrorMessageSchema]},
 )
 def register_user(request: HttpRequest, data: SignUpSchema):
