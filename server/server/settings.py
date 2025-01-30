@@ -42,7 +42,7 @@ GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
 GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
 GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")  # Défini dans le .env
-# GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
+GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
 
 # OAuth 42
 API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
@@ -50,7 +50,7 @@ API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
 FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
 FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
 FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
-# FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
+FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
@@ -61,7 +61,7 @@ OAUTH_CONFIG = {
         "token_uri": GITHUB_ACCESS_TOKEN_URL,
         "redirect_uris": [GITHUB_REDIRECT_URI],
         "scopes": ["user"],
-        # "user_endpoint": GITHUB_USER_PROFILE_URL,
+        "user_info_uri": GITHUB_USER_PROFILE_URL,
     },
     "42": {
         "client_id": API42_CLIENT_ID,
@@ -70,7 +70,7 @@ OAUTH_CONFIG = {
         "token_uri": FT_API_ACCESS_TOKEN_URL,
         "redirect_uris": [FT_API_REDIRECT_URI],
         "scopes": ["public", "profile"],
-        # "user_endpoint": FT_API_USER_PROFILE_URL,
+        "user_info_uri": FT_API_USER_PROFILE_URL,
     },
 }
 

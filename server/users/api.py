@@ -69,6 +69,7 @@ def oauth_authorize(request, platform: str):
 
 # Backend: oauth_router.py
 
+
 @oauth_router.get("/callback/{platform}")
 def oauth_callback(request):
     code = request.GET.get("code")
@@ -76,17 +77,11 @@ def oauth_callback(request):
 
     # Vérifier le paramètre "state" pour la sécurité
     if not state or state != request.session.get("oauth_state"):
-        return JsonResponse({
-            "status": "error",
-            "error": "Invalid state parameter"
-        }, status=400)
+        return JsonResponse({"status": "error", "error": "Invalid state parameter"}, status=400)
 
     platform = request.session.get("oauth_platform")
     if not platform:
-        return JsonResponse({
-            "status": "error",
-            "error": "No platform specified"
-        }, status=400)
+        return JsonResponse({"status": "error", "error": "No platform specified"}, status=400)
 
     try:
         config = get_oauth_config(platform)
@@ -107,27 +102,28 @@ def oauth_callback(request):
         token_data = token_response.json()
 
         if "access_token" not in token_data:
-            return JsonResponse({
-                "status": "error",
-                "error": "Failed to get access token"
-            }, status=500)
+            return JsonResponse({"status": "error", "error": "Failed to get access token"}, status=500)
 
-        # recuperer les informations de l'utilisateur avec get request 
-         # verifier si l'utilisateur existe deja et sinon creer un compte
-        # printer les infos de l'utilisateur
+        # Récupérer les informations de l'utilisateur avec le token d'accès
+        user_info_response = requests.get(
+            config["user_info_uri"],
+            headers={"Authorization": f"Bearer {token_data['access_token']}"},
+        )
+
+        user_info = user_info_response.json()
+        print("User Info:", user_info)  # Just print the user info for now
+
         # Pour l'instant, on renvoie juste success
-        # Plus tard, vous pourrez ajouter ici la logique pour sauvegarder l'utilisateur
-        return JsonResponse({
-            "status": "success",
-            "message": "Authentication successful"
-        })
+        return JsonResponse(
+            {
+                "status": "success",
+                "message": "Authentication successful",
+                "user_info": user_info,  # Optionnel: renvoyer les infos utilisateur au front
+            }
+        )
 
     except Exception as e:
-        logger.error(f"Error in OAuth callback: {str(e)}", exc_info=True)
-        return JsonResponse({
-            "status": "error",
-            "error": str(e)
-        }, status=500)
+        return JsonResponse({"status": "error", "error": "Internal server error"}, status=500)
 
 
 # Enregistrer le router
