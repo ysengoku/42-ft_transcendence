@@ -1,5 +1,7 @@
 import { router } from '@router';
-import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
+import { apiRequest } from '@api/apiRequest.js';
+import { API_ENDPOINTS } from '@api/endpoints.js';
+// import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
 
 export class LoginForm extends HTMLElement {
   constructor() {
@@ -51,6 +53,7 @@ export class LoginForm extends HTMLElement {
 
     // Simulation with mock
     const response = await simulateApiLogin({ username, password });
+    // const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password });
 
     if (response.success) {
       // Temporary solution
@@ -61,7 +64,7 @@ export class LoginForm extends HTMLElement {
       navBar.innerHTML = '<navbar-component></navbar-component>';
       router.navigate(`/home`, response.user);
     } else {
-      alert('Login failed', response.message);
+      console.error('Login failed', response.message);
       // Render login-form with red framed ones
     }
   }
