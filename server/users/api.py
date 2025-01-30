@@ -5,8 +5,9 @@ from ninja.errors import HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
-from .oauth42 import oauth_router
+
 from .models import Profile, User
+from .oauth42 import oauth_router
 from .schemas import (
     Message,
     ProfileFullSchema,
@@ -16,7 +17,6 @@ from .schemas import (
     UsernameSchema,
     ValidationErrorMessageSchema,
 )
-
 
 api = NinjaAPI()
 # Enregistrer le router

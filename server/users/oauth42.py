@@ -1,19 +1,22 @@
-from django.http import JsonResponse
-from ninja import Router
 import hashlib
-import os
-import requests
-from urllib.parse import urlencode
-from django.conf import settings
 import logging
+import os
+from urllib.parse import urlencode
+
+import requests
+from django.conf import settings
+from django.http import JsonResponse
 from django.shortcuts import redirect
+from ninja import Router
 
 logger = logging.getLogger(__name__)
 oauth_router = Router()
 
 
 def get_oauth_config(platform: str) -> dict:
-    """Retrieve OAuth config for a specific platform"""
+    """
+    Retrieve OAuth config for a specific platform
+    """
     if platform not in settings.OAUTH_CONFIG:
         raise ValueError(f"Unsupported platform: {platform}")
     return settings.OAUTH_CONFIG[platform]
@@ -25,7 +28,7 @@ def oauth_authorize(request, platform: str):
         logger.info(f"Starting OAuth authorization for platform: {platform}")
 
         config = get_oauth_config(platform)
-        state = hashlib.sha256(os.urandom(1024)).hexdigest()
+        state = hashlib.sha256(os.urandom(1024)).hexdigest() # this is to prevent csrf attacks
         request.session["oauth_state"] = state
         request.session["oauth_platform"] = platform
 
@@ -91,16 +94,7 @@ def oauth_callback(request):
         user_info = user_info_response.json()
 
         # Extract only the required fields based on the platform
-        if platform == "github":
-            simplified_user_info = {
-                "login": user_info.get("login"),
-            }
-        elif platform == "42":
-            simplified_user_info = {
-                "login": user_info.get("login"),
-            }
-        else:
-            simplified_user_info = {}
+        simplified_user_info = {"login": user_info.get("login")} if platform in ("github", "42") else {}
 
         return JsonResponse(
             {
@@ -110,11 +104,11 @@ def oauth_callback(request):
             }
         )
 
+    # handle the refresh token and store it to database and see how to use it
+
     except Exception as e:
         print(f"Error during OAuth callback: {e}")
         return JsonResponse({"status": "error", "error": "Internal server error"}, status=500)
-
-
 
 
 ##### END OAuth #####
