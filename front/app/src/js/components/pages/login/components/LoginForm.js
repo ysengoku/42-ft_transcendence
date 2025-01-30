@@ -52,13 +52,19 @@ export class LoginForm extends HTMLElement {
     const password = this.querySelector('#inputPassword').value;
 
     // Simulation with mock
-    const response = await simulateApiLogin({ username, password });
-    // const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password });
+    // const response = await simulateApiLogin({ username, password });
+    const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
 
     if (response.success) {
       // Temporary solution
       localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('user', JSON.stringify(response.user));
+
+      // Add username and avatar to localStorage
+      const userInformation = {
+        username: response.user.username,
+        avatar: response.user.avatar,
+      };
+      localStorage.setItem('user', JSON.stringify(userInformation));
 
       const navBar = document.getElementById('navbar-container');
       navBar.innerHTML = '<navbar-component></navbar-component>';
