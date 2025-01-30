@@ -76,7 +76,7 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to="avatars/", null=True, blank=True)
     elo = models.IntegerField(default=1000)
-    friends = models.ManyToManyField("self")
+    friends = models.ManyToManyField("self", symmetrical=False)
     blocked_users = models.ManyToManyField("self")
     is_online = models.BooleanField(default=True)
 
