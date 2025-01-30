@@ -3,7 +3,7 @@ import '@components/navbar/components/DropdownMenu.js';
 
 export function handleLogout(event) {
   event.preventDefault();
-  localStorage.removeItem('isLoggedIn');
+  localStorage.removeItem('isLoggedIn'); // Need to delete later
   localStorage.removeItem('user');
 
   const navBar = document.getElementById('navbar-container');
