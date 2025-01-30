@@ -81,7 +81,7 @@ class Profile(models.Model):
     is_online = models.BooleanField(default=True)
 
     def __str__(self) -> str:
-        return self.user.username
+        return f"Profile of {self.user.username}"
 
     @property
     def avatar(self) -> str:
@@ -190,17 +190,34 @@ class Profile(models.Model):
 
     def add_friend(self, new_friend):
         if new_friend == self:
-            return None
+            return "Can't add yourself to the friendlist."
         if self.friends.filter(pk=new_friend.pk).exists():
-            return None
+            return f"User {new_friend.user.username} is already in the friendlist."
+        if self.blocked_users.filter(pk=new_friend.pk).exists():
+            return f"User {new_friend.user.username} is in the blocklist."
         self.friends.add(new_friend)
-        return new_friend
+        return None
 
     def remove_friend(self, removed_friend):
         if not self.friends.filter(pk=removed_friend.pk).exists():
-            return None
+            return f"User {removed_friend.user.username} is not in the friendlist."
         self.friends.remove(removed_friend)
-        return removed_friend
+        return None
+
+    def block_user(self, user_to_block):
+        if user_to_block == self:
+            return "Can't block self."
+        if self.blocked_users.filter(pk=user_to_block.pk).exists():
+            return f"User {user_to_block.user.username} is already blocked."
+        self.blocked_users.add(user_to_block)
+        self.remove_friend(user_to_block)
+        return None
+
+    def unblock_user(self, blocked_user_to_remove):
+        if not self.blocked_users.filter(pk=blocked_user_to_remove.pk).exists():
+            return f"User {blocked_user_to_remove.user.username} is not in your blocklist."
+        self.blocked_users.remove(blocked_user_to_remove)
+        return None
 
 
 class Friendship(models.Model):
@@ -216,7 +233,7 @@ class Friendship(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.from_profile.user.username} favorited {self.to_profile.user.username}"
+        return f"{self.from_profile.user.username} likes {self.to_profile.user.username}"
 
 
 class MatchManager(models.Manager):
