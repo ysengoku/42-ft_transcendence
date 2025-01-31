@@ -1,3 +1,5 @@
+from random import choice
+
 from django.core.management.base import BaseCommand
 
 from users.models import Match, Profile, User
@@ -22,6 +24,8 @@ class Command(BaseCommand):
         User.objects.create_user("User0", "regular", "user0@gmail.com", "123")
         for i in range(30):
             user = User.objects.create_user(f"Pedro{i}", "regular", f"pedro{i}@gmail.com", "123")
+            user.profile.is_online = choice([True, False])  # noqa: S311
+            user.profile.save()
             life_enjoyer.add_friend(user.profile)
         life_enjoyer.save()
 

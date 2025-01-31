@@ -22,7 +22,7 @@ def get_friends(request: HttpRequest, slug_id: str):
     For example, `/users/{slug_id}/friends?limit=10&offset=0` will get 10 friends from the very first one.
     """
     user = get_user_by_slug_id_or_404(slug_id)
-    return user.profile.friends.all()
+    return user.profile.friends.order_by("-is_online").all()
 
 
 # TODO: add auth
