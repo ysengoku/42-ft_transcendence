@@ -13,17 +13,9 @@ export class DropdownMenu extends HTMLElement {
   }
 
   async render() {
+    const isDarkMode = ThemeController.getTheme() === 'dark';
     // Temporary solution with localStorage
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const isDarkMode = ThemeController.getTheme() === 'dark';
-    // const storedUser = localStorage.getItem('user');
-    // let username = null;
-    // let avatarSrc = `${anonymousavatar}`;
-    // if (user) {
-    // 	const user = JSON.parse(storedUser);
-    // 	username = user.username;
-    // 	avatarSrc = `${user.avatar}`;
-    // }
     let username = null;
     let avatarSrc = `${anonymousavatar}`;
     const storedUser = localStorage.getItem('user');
