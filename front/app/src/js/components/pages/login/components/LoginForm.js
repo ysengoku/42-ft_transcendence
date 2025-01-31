@@ -12,6 +12,8 @@ export class LoginForm extends HTMLElement {
   connectedCallback() {
     this.render();
     this.setupLoginHandler();
+    this.setupInputToggle();
+    this.setUpRemoveFeedback();
   }
 
   render() {
@@ -24,15 +26,18 @@ export class LoginForm extends HTMLElement {
 		<div class="container d-flex flex-column justify-content-center align-items-center">
       <div id="login-failed-feedback"></div>
 			<form class="w-100" id="loginForm">
-  				<div class="mb-3">
-    				<label for="inputUsername" class="form-label">Username</label>
-   					<input type="username" class="form-control" id="inputUsername">
+  				<div class="d-flex flex-column mb-3 gap-2">
+    				<label for="inputLoginId" class="form-label">Login ID or Email</label>
+   					<input type="text" class="form-control" id="inputLoginId" placeholder="Login ID">
+   					<input type="text" class="form-control" id="inputEmail" placeholder="Email">
+            <div class='invalid-feedback' id='loginid-feedback'></div>
   				</div>
-				<div class="mb-3">
-					<label for="inputPassword" class="form-label">Password</label>
-    				<input type="password" class="form-control" id="inputPassword">
+				  <div class="mb-2">
+					  <label for="inputPassword" class="form-label">Password</label>
+    				<input type="password" class="form-control" id="inputPassword" placeholder="Password">
+            <div class='invalid-feedback' id='loginpassword-feedback'></div>
   				</div>
-				<div class="mb-3 py-3">
+				<div class="mb-2 py-3">
 					<button type="submit" id="loginSubmit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
 				</div>
 			</form>
@@ -48,20 +53,28 @@ export class LoginForm extends HTMLElement {
     });
   }
 
+  // TODO: Add email case handling
   async handleLogin() {
-    const username = this.querySelector('#inputUsername').value;
+    const username = this.querySelector('#inputLoginId').value;
+    // const slugId = this.querySelector('#inputLoginId').value;
+    // const email = this.querySelector('#inputEmail').value;
     const password = this.querySelector('#inputPassword').value;
 
-    // const response = await simulateApiLogin({ username, password });
+    if (!this.checkInputs()) {
+      return;
+    }
+
+    // TODO: Adjuust for API update
     try {
       const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
+      // const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { slugId, password }, false, false);
       console.log('Login response:', response);
       if (response.status == 200) {
         localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
 
-        // Add username and avatar to localStorage
+        // Add slugId and avatar to localStorage
         // const userInformation = {
-        //   username: response.user.username,
+        //   slugId: response.user.slugId,
         //   avatar: response.user.avatar,
         // };
         // localStorage.setItem('user', JSON.stringify(userInformation));
@@ -88,6 +101,73 @@ export class LoginForm extends HTMLElement {
       </div>
     `;
     }
+  }
+
+  setupInputToggle() {
+    const idInput = this.querySelector('#inputLoginId');
+    const emailInput = this.querySelector('#inputEmail');
+
+    idInput.addEventListener('input', this.toggleInputFields.bind(this));
+    emailInput.addEventListener('input', this.toggleInputFields.bind(this));
+  }
+
+  toggleInputFields() {
+    const idInput = this.querySelector('#inputLoginId');
+    const emailInput = this.querySelector('#inputEmail');
+
+    if (idInput.value) {
+      emailInput.disabled = true;
+      emailInput.value = '';
+    } else {
+      emailInput.disabled = false;
+    }
+    if (emailInput.value) {
+      idInput.disabled = true;
+      idInput.value = '';
+    } else {
+      idInput.disabled = false;
+    }
+  }
+
+  checkInputs() {
+    const loginIdField = this.querySelector('#inputLoginId');
+    const emailField = this.querySelector('#inputEmail');
+    const passwordField = this.querySelector('#inputPassword');
+
+    let isValid = true;
+    if (!loginIdField.value.trim() && !emailField.value.trim()) {
+      loginIdField.classList.add('is-invalid');
+      emailField.classList.add('is-invalid');
+      document.querySelector('#loginid-feedback').textContent = 'Login ID or email is required';
+      isValid = false;
+    }
+    if (!passwordField.value.trim()) {
+      passwordField.classList.add('is-invalid');
+      document.querySelector('#loginpassword-feedback').textContent = 'Password is required';
+      isValid = false;
+    }
+    return isValid;
+  }
+
+  setUpRemoveFeedback() {
+    const loginIdField = this.querySelector('#inputLoginId');
+    const emailField = this.querySelector('#inputEmail');
+    const passwordField = this.querySelector('#inputPassword');
+
+    loginIdField.addEventListener('input', () => {
+      loginIdField.classList.remove('is-invalid');
+      emailField.classList.remove('is-invalid');
+      document.querySelector('#loginid-feedback').textContent = '';
+    });
+    emailField.addEventListener('input', () => {
+      loginIdField.classList.remove('is-invalid');
+      emailField.classList.remove('is-invalid');
+      document.querySelector('#loginid-feedback').textContent = '';
+    });
+    passwordField.addEventListener('input', () => {
+      passwordField.classList.remove('is-invalid');
+      document.querySelector('#loginpassword-feedback').textContent = '';
+    });
   }
 }
 

@@ -5,7 +5,7 @@
 
 ## Login
 - [X] Adjust width
-- [] JWT handling
+- [] CSRF Token handling
 - [] Error handling
 
 ## Logout
