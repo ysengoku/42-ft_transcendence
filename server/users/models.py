@@ -31,10 +31,10 @@ class UserManager(BaseUserManager):
     ):
         email = self.normalize_email(email)
         username = self.model.normalize_username(username)
-        user = self.model(username=username, connection_type=connection_type, email=email)
+        user = self.model(username=username, connection_type=connection_type, email=email, **extra_fields)
         if password:
             user.password = make_password(password)
-        return self.model(username=username, connection_type=connection_type, email=email, **extra_fields)
+        return user
 
     def create_superuser(self, username: str, email: str, password: str, **extra_fields):
         extra_fields["is_staff"] = True
