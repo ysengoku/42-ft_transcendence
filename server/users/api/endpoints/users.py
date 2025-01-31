@@ -1,8 +1,10 @@
 from django.core.exceptions import PermissionDenied, RequestDataTooBig
+from django.db.models import Q
 from django.http import HttpRequest
 from ninja import File, Form, Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
+from ninja.pagination import paginate
 
 from users.api.common import get_user_by_slug_id_or_404
 from users.models import Profile
@@ -19,11 +21,23 @@ users_router = Router()
 
 # TODO: delete endpoint
 @users_router.get("", response=list[ProfileMinimalSchema])
-def get_users(request: HttpRequest):
+@paginate
+def get_users(request: HttpRequest, search: str | None = None):
     """
-    WARNING: temporary endpoint. At the moment in returns a list of all users for the testing purposes.
+    Gets users based on the `search` param.
+    The server will return users whose `slug_id` or `username` starts with `search`.
+    Users who are online will be shown first.
+    Paginated by the `limit` and `offset` settings.
+    For example, `/users?search=pe&limit=10&offset=0` will get 10 friends from the very first one, whose
+    `slug_id` or `username` starts with `pe`.
     """
-    return Profile.objects.prefetch_related("user").all()
+    if search:
+        return (
+            Profile.objects.prefetch_related("user")
+            .filter(Q(user__slug_id__istartswith=search) | Q(user__username__istartswith=search))
+            .order_by("-is_online")
+        )
+    return Profile.objects.prefetch_related("profile").all().order_by("-is_online")
 
 
 @users_router.get("{slug_id}", response={200: ProfileFullSchema, 404: Message})
