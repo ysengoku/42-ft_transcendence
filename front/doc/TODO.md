@@ -8,6 +8,11 @@
 - [] JWT handling
 - [] Error handling
 
+## Logout
+- [x] Clear CSRF token
+- [] Send request to clear JWT token
+- [] OAuth users logout handling
+
 ## Register
 - [X] Adjust width
 - [] 422 handling
@@ -17,6 +22,8 @@
 - [X] Adjust width
 - [] Restrict other users to access to the page
 - [] Add old password input
+- [] Hide password & email change for OAuth users
+- [] Add 2FA activate toggle
 - [] New avatar upload settings (new_profile_picture)
 - [] 401 handling
 - [] 404 handling
@@ -30,6 +37,7 @@
 - [] Rendering of user profile page who is blocking me
 
 ### User info
+- [] User id
 - [] Title
 
 ### User actions
@@ -46,5 +54,8 @@
 ### Game History
 - [] Better solution for Scroll thead sticky
 - [] Tournament history table
+
+## User list
+- [] User search by username
 
 ## Chat

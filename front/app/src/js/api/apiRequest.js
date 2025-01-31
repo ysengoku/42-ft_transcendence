@@ -1,11 +1,57 @@
-export async function apiRequest(method, endpoint, data = null, isFileUpload = false) {
+/**
+ * Makes an API request with the specified method and endpoint.
+ *
+ * @async
+ * @function
+ * @param {string} method - The HTTP method (GET, POST, DELETE, etc.).
+ * @param {string} endpoint - The API endpoint to make the request to.
+ * @param {object|null} [data=null] - The data to be sent with the request, for POST or PUT requests. Defaults to null.
+ * @param {boolean} [isFileUpload=false] - Whether the request involves file uploading. Defaults to false.
+ * @param {boolean} [needToken=true] - Whether a CSRF token is needed for the request. Defaults to true.
+ * @returns {Promise<Response>} The response object from the fetch request if successful.
+ * @throws {Error} Throws an error with the status and response data if the request fails.
+ *
+ * @example
+ * // Example usage: Sending a GET request to fetch user data
+ * try {
+ *   const response = await apiRequest('GET', '/api/user/data');
+ *   const data = await response.json();
+ *   console.log('User Data:', data);
+ * } catch (error) {
+ *   console.error('Error fetching user data:', error.message);
+ *   if (error.response) {
+ *     console.error('Response Data:', error.response);
+ *   }
+ * }
+ */
+
+export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
+  function getCSRFTokenfromCookies() {
+    const name = 'csrftoken';
+    let token = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name)) {
+          token = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return token;
+  }
+
   const url = `${endpoint}`;
+  const csrfToken = getCSRFTokenfromCookies();
+  const needCSRF = needToken && ['POST', 'DELETE'].includes(method) && csrfToken;
   const options = {
     method,
     headers: {
-      ...(isFileUpload ? {} : {'Content-Type': 'application/json'}),
+      ...(needCSRF ? { 'X-CSRFToken': csrfToken } : {}),
+      ...(isFileUpload ? {} : { 'Content-Type': 'application/json' }),
     },
-    credentials: 'include', // Need after JWT integration
+    credentials: 'include',
   };
 
   if (data) {
@@ -17,30 +63,27 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       options.body = JSON.stringify(data);
     }
   }
-  console.log('Data before API request:', options);
+  console.log('Sending API request:', options);
 
   try {
     const response = await fetch(url, options);
     if (response.ok) {
-      return await response.json();
+      console.log('Request successful:', response);
+      return response;
     }
-    console.error('Response:', response);
-    const errorData = await response.json();
-    const error = new Error(`Request failed: ${response.status}`);
-    error.response = errorData;
+    const error = new Error('Request failed');
     error.status = response.status;
+    let errorData = null;
+    const contentType = response.headers.get('Content-Type');
+    if (contentType && contentType.includes('application/json')) {
+      errorData = await response.json();
+    } else if (contentType && contentType.includes('text/html')) {
+      errorData = await response.text();
+    }
+    console.log('Error Data: ', errorData);
+    error.response = errorData;
     throw error;
   } catch (error) {
     throw error;
   }
 }
-
-// Example usage
-// async function getUserData(username) {
-//     try {
-//         const data = await apiRequest('GET', API_ENDPOINTS.GET_USER_DATA(username));
-//         console.log(data);
-//     } catch (error) {
-//         // Error handling
-//     }
-// }
