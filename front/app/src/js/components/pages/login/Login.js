@@ -24,10 +24,10 @@ export class Login extends HTMLElement {
           <div class="col-12 col-md-4"> 
 			      <login-form></login-form>
 			      <div class="container d-flex flex-column justify-content-center align-items-center">
-				      <div class="mb-3">
+				      <div class="mb-2">
 					      <a href="/register" style="text-decoration: none;">Forgot password?</a>
 				      </div>
-				      <div class="mb-3 w-100 text-center py-3">
+				      <div class="mb-2 w-100 text-center py-3">
       				  <div class="d-flex align-items-center">
         				  <hr class="flex-grow-1">
         				  <span class="mx-2">OR</span>
