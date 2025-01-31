@@ -1,12 +1,13 @@
 with import <nixpkgs> {};
 mkShell {
   venvDir = "./server/.venv";
-  buildInputs = with pkgs.python3Packages; [
-    python
-    venvShellHook
-    python3Packages.python-lsp-server
-    ruff
-    python3Packages.python-lsp-ruff
+  buildInputs = with pkgs; [
+    python310Packages.python
+    python310Packages.venvShellHook
+    python310Packages.python-lsp-server
+    python310Packages.ruff
+    python310Packages.python-lsp-ruff
+    python310Packages.magic
   ];
   postVenvCreation = ''
     unset SOURCE_DATE_EPOCH
