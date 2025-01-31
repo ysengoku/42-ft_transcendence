@@ -9,6 +9,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
 from django.db import models
 from django.db.models import Case, Count, F, Q, Sum, When
+from django.utils.text import slugify
 from ninja.files import UploadedFile
 
 from .stats_calc import calculate_elo_change, calculate_winrate
@@ -19,51 +20,75 @@ class UserManager(BaseUserManager):
     def find_user(self, username: str, connection_type: str) -> object | None:
         return self.filter(username=username, connection_type=connection_type).first()
 
-    def create_user(self, username: str, connection_type: str, email: str, **extra_fields):
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
+    def find_regular_user(self, username: str) -> object | None:
+        return self.find_user(username, connection_type=User.REGULAR)
 
+    def _generate_unique_slug(self, username: str):
+        base_slug = slugify(username)
+        counter = User.objects.filter(slug__startswith=base_slug).count()
+        if counter > 0:
+            return f"{base_slug}-{counter}"
+        return base_slug
+
+    def _create_user(
+        self, username: str, connection_type: str, email: str, password: str | None = None, **extra_fields
+    ):
+        if not username:
+            raise ValueError("The given username must be set")
+        if not password and connection_type == self.model.REGULAR:
+            raise ValueError("This connection type requires a password")
         email = self.normalize_email(email)
         username = self.model.normalize_username(username)
-        user = self.model(username=username, email=email, **extra_fields)
-        if extra_fields.get("password"):
-            user.password = make_password(extra_fields["password"])
+        extra_fields["slug"] = self._generate_unique_slug(username)
+        user = self.model(username=username, connection_type=connection_type, email=email, **extra_fields)
+        if password:
+            user.password = make_password(password)
         user.save()
         return user
 
+    def create_superuser(self, username: str, email: str, password: str, **extra_fields):
+        extra_fields["is_staff"] = True
+        extra_fields["is_superuser"] = True
+        return self._create_user(username, self.model.REGULAR, email, password, **extra_fields)
+
+    def create_user(self, username: str, connection_type: str, email: str, password: str | None = None, **extra_fields):
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(username, connection_type, email, password, **extra_fields)
+
 
 class User(AbstractUser):
-    username_validator = UnicodeUsernameValidator()
+    FT = "42"
+    GITHUB = "github"
+    REGULAR = "regular"
     CONNECTION_TYPES_CHOICES = (
         ("42", "42 School API"),
         ("github", "Github API"),
         ("regular", "Our Own Auth"),
     )
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ()
+    username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
-        max_length=150,
-        help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+        max_length=30,
         validators=[username_validator],
-        error_messages={
-            "unique": "A user with that username already exists.",
-        },
     )
+    slug = models.SlugField(max_length=32, unique=True)
     email = models.EmailField(unique=True)
     connection_type = models.CharField(max_length=15, choices=CONNECTION_TYPES_CHOICES, default="regular")
     password = models.CharField(max_length=128, default="")
 
+    objects = UserManager()
+
     class Meta:
         unique_together = ("username", "connection_type")
 
-    objects = UserManager()
-
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
-        if (
-            "username" not in kwargs["exclude"] or "connection_type" not in kwargs["exclude"]
-            and User.objects.filter(username__iexact=self.username, connection_type=self.connection_type).exists()
-        ):
+        if ("username" not in kwargs["exclude"] or "connection_type" not in kwargs["exclude"]) and User.objects.filter(
+            username__iexact=self.username, connection_type=self.connection_type
+        ).exists():
             raise ValidationError({"username": ["A user with that username already exists."]})
         kwargs["exclude"] = {"username", "connection_type"}
         super().validate_unique(*args, **kwargs)
@@ -114,7 +139,7 @@ class User(AbstractUser):
         return self
 
     def __str__(self):
-        return f"{self.connection_type}: {self.username}"
+        return f"{self.username} - {self.connection_type}"
 
 
 class Profile(models.Model):
