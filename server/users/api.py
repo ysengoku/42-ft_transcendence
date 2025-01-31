@@ -16,8 +16,8 @@ from .schemas import (
     ProfileFullSchema,
     ProfileMinimalSchema,
     SignUpSchema,
+    SlugIdSchema,
     UpdateUserChema,
-    UsernameSchema,
     ValidationErrorMessageSchema,
 )
 
@@ -33,6 +33,12 @@ class CookieKey(APIKeyCookie):
 
 api = NinjaAPI(auth=CookieKey(), csrf=True)
 
+
+def get_user_by_slug_id_or_404(slug_id: str):
+    user = User.objects.find_by_slug_id(slug_id)
+    if not user:
+        raise HttpError(404, f"User with id {slug_id} not found.")
+    return user
 
 # TODO: check return values of verify_jwt and create_jwt
 # TODO: add secure options for the cookie
@@ -52,7 +58,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
         raise HttpError(401, "Username or password are not correct.")
 
     token = create_jwt(user.username)
-    response = JsonResponse({"msg": "Success!"})
+    response = JsonResponse(user.profile.to_profile_minimal_schema())
     response.set_cookie("access_token", token)
     return response
 
@@ -71,15 +77,13 @@ def get_user(request: HttpRequest, slug_id: str):
     """
     Gets a specific user by slug_id.
     """
-    user = User.objects.filter(slug_id=slug_id).first()
-    if not user:
-        raise HttpError(404, f"User with id {slug_id} not found.")
+    user = get_user_by_slug_id_or_404(slug_id)
     return user.profile
 
 
 @api.post(
     "users",
-    response={422: list[ValidationErrorMessageSchema]},
+    response={201: ProfileMinimalSchema, 422: list[ValidationErrorMessageSchema]},
     auth=None,
 )
 @ensure_csrf_cookie
@@ -98,19 +102,19 @@ def register_user(request: HttpRequest, data: SignUpSchema):
     )
     user.save()
     token = create_jwt(user.username)
-    response = JsonResponse({"msg": "Success!"})
+    response = JsonResponse(user.profile.to_profile_minimal_schema())
     response.set_cookie("access_token", token)
     return response
 
 
 # TODO: add authorization to settings change
 @api.post(
-    "users/{username}",
+    "users/{slug_id}",
     response={200: ProfileMinimalSchema, frozenset({401, 404, 413}): Message, 422: list[ValidationErrorMessageSchema]},
 )
 def update_user(
     request: HttpRequest,
-    username: str,
+    slug_id: str,
     data: Form[UpdateUserChema],
     new_profile_picture: UploadedFile | None = File(description="User profile picture.", default=None),
 ):
@@ -118,10 +122,7 @@ def update_user(
     Udates settings of the user.
     Maximum size of the uploaded avatar is 10mb. Anything bigger will return 413 error.
     """
-    try:
-        user = User.objects.get_by_natural_key(username)
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+    user = get_user_by_slug_id_or_404(slug_id)
 
     try:
         user.update_user(data, new_profile_picture)
@@ -133,97 +134,73 @@ def update_user(
     return user.profile
 
 
-@api.get("users/{username}/friends", response={200: list[ProfileMinimalSchema], 404: Message})
+@api.get("users/{slug_id}/friends", response={200: list[ProfileMinimalSchema], 404: Message})
 @paginate
-def get_friends(request: HttpRequest, username: str):
+def get_friends(request: HttpRequest, slug_id: str):
     """
     Gets friends of specific user.
     Paginated by the `limit` and `offset` settings.
-    For example, `/users/{username}/friends?limit=10&offset=0` will get 10 friends from the very first one.
+    For example, `/users/{slug_id}/friends?limit=10&offset=0` will get 10 friends from the very first one.
     """
-    try:
-        user = User.objects.get_by_natural_key(username)
-        return user.profile.friends.all()
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+    user = get_user_by_slug_id_or_404(slug_id)
+    return user.profile.friends.all()
 
 
 # TODO: add auth
-@api.post("users/{username}/friends", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
-def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema):
+@api.post("users/{slug_id}/friends", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
+def add_friend(request: HttpRequest, slug_id: str, user_to_add: SlugIdSchema):
     """
     Adds user as a friend.
     """
-    try:
-        user = User.objects.get_by_natural_key(username)
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+    user = get_user_by_slug_id_or_404(slug_id)
 
-    try:
-        friend = User.objects.get_by_natural_key(user_to_add.username).profile
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {user_to_add.username} not found.") from exc
+    friend = get_user_by_slug_id_or_404(user_to_add.slug_id)
 
-    err_msg = user.profile.add_friend(friend)
+    err_msg = user.profile.add_friend(friend.profile)
     if err_msg:
         raise HttpError(422, err_msg)
     return 201, friend
 
 
 # TODO: add auth
-@api.delete("users/{username}/friends/{friend_to_remove}", response={204: None, frozenset({404, 422}): Message})
-def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: str):
+@api.delete("users/{slug_id}/friends/{friend_to_remove}", response={204: None, frozenset({404, 422}): Message})
+def remove_from_friends(request: HttpRequest, slug_id: str, friend_to_remove: str):
     """
     Deletes user from a friendlist.
     """
-    try:
-        user = User.objects.get_by_natural_key(username)
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+    user = get_user_by_slug_id_or_404(slug_id)
 
-    try:
-        friend = User.objects.get_by_natural_key(friend_to_remove).profile
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {friend_to_remove} not found.") from exc
+    friend = get_user_by_slug_id_or_404(friend_to_remove.slug_id)
 
-    err_msg = user.profile.remove_friend(friend)
+    err_msg = user.profile.remove_friend(friend.proile)
     if err_msg:
         raise HttpError(422, err_msg)
     return 204, None
 
 
-@api.get("users/{username}/blocked_users", response={200: list[ProfileMinimalSchema], 404: Message})
+@api.get("users/{slug_id}/blocked_users", response={200: list[ProfileMinimalSchema], 404: Message})
 @paginate
-def get_blocked_users(request: HttpRequest, username: str):
+def get_blocked_users(request: HttpRequest, slug_id: str):
     """
     Gets blocked users of specific user.
     Paginated by the `limit` and `offset` settings.
-    For example, `/users/{username}/blocked_users?limit=10&offset=0` will get 10 blocked users from the very first one.
+    For example, `/users/{slug_id}/blocked_users?limit=10&offset=0` will get 10 blocked users from the very first one.
     """
-    try:
-        user = User.objects.get_by_natural_key(username)
-        return user.profile.blocked_users.all()
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+    user = get_user_by_slug_id_or_404(slug_id)
+    return user.profile.blocked_users.all()
 
 
 # TODO: add auth
-@api.post("users/{username}/blocked_users", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
-def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: UsernameSchema):
+@api.post("users/{slug_id}/blocked_users", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
+def add_to_blocked_users(request: HttpRequest, slug_id: str, user_to_add: SlugIdSchema):
     """
     Adds user to the blocklist.
     """
-    try:
-        user = User.objects.get_by_natural_key(username)
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+    user = get_user_by_slug_id_or_404(slug_id)
 
-    try:
-        blocked_user = User.objects.get_by_natural_key(user_to_add.username).profile
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {user_to_add.username} not found.") from exc
+    blocked_user = get_user_by_slug_id_or_404(user_to_add.slug_id)
 
-    err_msg = user.profile.block_user(blocked_user)
+    err_msg = user.profile.block_user(blocked_user.profile)
     if err_msg:
         raise HttpError(422, err_msg)
     return 201, blocked_user
@@ -231,22 +208,16 @@ def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: Usern
 
 # TODO: add auth
 @api.delete(
-    "users/{username}/blocked_users/{blocked_user_to_remove}",
+    "users/{slug_id}/blocked_users/{blocked_user_to_remove}",
     response={204: None, frozenset({404, 422}): Message},
 )
-def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_to_remove: str):
+def remove_from_blocked_users(request: HttpRequest, slug_id: str, blocked_user_to_remove: str):
     """
     Deletes user from a blocklist.
     """
-    try:
-        user = User.objects.get_by_natural_key(username)
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+    user = get_user_by_slug_id_or_404(slug_id)
 
-    try:
-        blocked_user = User.objects.get_by_natural_key(blocked_user_to_remove).profile
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {blocked_user_to_remove} not found.") from exc
+    blocked_user = get_user_by_slug_id_or_404(blocked_user_to_remove.slug_id)
 
     err_msg = user.profile.unblock_user(blocked_user)
     if err_msg:
