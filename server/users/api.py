@@ -1,13 +1,17 @@
 from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import File, Form, NinjaAPI
 from ninja.errors import HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
+from ninja.security import APIKeyCookie
 
+from .jwt import create_jwt, verify_jwt
 from .models import Profile, User
 from .schemas import (
+    LoginSchema,
     Message,
     ProfileFullSchema,
     ProfileMinimalSchema,
@@ -17,11 +21,42 @@ from .schemas import (
     ValidationErrorMessageSchema,
 )
 
-api = NinjaAPI()
+
+class CookieKey(APIKeyCookie):
+    param_name = "access_token"
+
+    def authenticate(self, request, access_token: str):
+        if verify_jwt(access_token):
+            return True
+        return None
+
+
+api = NinjaAPI(auth=CookieKey(), csrf=True)
+
+
+# TODO: check return values of verify_jwt and create_jwt
+# TODO: add secure options for the cookie
+@api.post("login", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
+@ensure_csrf_cookie
+@csrf_exempt
+def login(request: HttpRequest, credentials: LoginSchema):
+    try:
+        user = User.objects.get_by_natural_key(credentials.username)
+    except User.DoesNotExist as exc:
+        raise HttpError(401, "Username or password are not correct.") from exc
+
+    is_password_correct = user.check_password(credentials.password)
+    if not is_password_correct:
+        raise HttpError(401, "Username or password are not correct.")
+
+    token = create_jwt(user.username)
+    response = HttpResponse("Success")
+    response.set_cookie("access_token", token)
+    return response
 
 
 # TODO: delete endpoint
-@api.get("users/", response=list[ProfileMinimalSchema])
+@api.get("users", response=list[ProfileMinimalSchema])
 def get_users(request: HttpRequest):
     """
     WARNING: temporary endpoint. At the moment in returns a list of all users for the testing purposes.
@@ -41,9 +76,12 @@ def get_user(request: HttpRequest, username: str):
 
 
 @api.post(
-    "users/",
-    response={201: ProfileMinimalSchema, 422: list[ValidationErrorMessageSchema]},
+    "users",
+    response={422: list[ValidationErrorMessageSchema]},
+    auth=None,
 )
+@ensure_csrf_cookie
+@csrf_exempt
 def register_user(request: HttpRequest, data: SignUpSchema):
     """
     Creates a new user.
@@ -52,7 +90,10 @@ def register_user(request: HttpRequest, data: SignUpSchema):
     user.set_password(data.password)
     user.full_clean()
     user.save()
-    return 201, user.profile
+    token = create_jwt(user.username)
+    response = HttpResponse("Success")
+    response.set_cookie("access_token", token)
+    return response
 
 
 # TODO: add authorization to settings change
@@ -101,7 +142,7 @@ def get_friends(request: HttpRequest, username: str):
 
 
 # TODO: add auth
-@api.post("users/{username}/friends", response={201: ProfileMinimalSchema, 404: Message})
+@api.post("users/{username}/friends", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
 def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema):
     """
     Adds user as a friend.
@@ -116,12 +157,14 @@ def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema)
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {user_to_add.username} not found.") from exc
 
-    user.profile.friends.add(friend)
+    err_msg = user.profile.add_friend(friend)
+    if err_msg:
+        raise HttpError(422, err_msg)
     return 201, friend
 
 
 # TODO: add auth
-@api.delete("users/{username}/friends/{friend_to_remove}", response={204: None, 404: Message})
+@api.delete("users/{username}/friends/{friend_to_remove}", response={204: None, frozenset({404, 422}): Message})
 def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: str):
     """
     Deletes user from a friendlist.
@@ -136,7 +179,9 @@ def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: s
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {friend_to_remove} not found.") from exc
 
-    user.profile.friends.remove(friend)
+    err_msg = user.profile.remove_friend(friend)
+    if err_msg:
+        raise HttpError(422, err_msg)
     return 204, None
 
 
@@ -156,7 +201,7 @@ def get_blocked_users(request: HttpRequest, username: str):
 
 
 # TODO: add auth
-@api.post("users/{username}/blocked_users", response={201: ProfileMinimalSchema, 404: Message})
+@api.post("users/{username}/blocked_users", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
 def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: UsernameSchema):
     """
     Adds user to the blocklist.
@@ -171,12 +216,16 @@ def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: Usern
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {user_to_add.username} not found.") from exc
 
-    user.profile.blocked_users.add(blocked_user)
+    err_msg = user.profile.block_user(blocked_user)
+    if err_msg:
+        raise HttpError(422, err_msg)
     return 201, blocked_user
 
 
 # TODO: add auth
-@api.delete("users/{username}/blocked_users/{blocked_user_to_remove}", response={204: None, 404: Message})
+@api.delete(
+    "users/{username}/blocked_users/{blocked_user_to_remove}", response={204: None, frozenset({404, 422}): Message},
+)
 def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_to_remove: str):
     """
     Deletes user from a blocklist.
@@ -191,7 +240,9 @@ def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_
     except User.DoesNotExist as exc:
         raise HttpError(404, f"User {blocked_user_to_remove} not found.") from exc
 
-    user.profile.blocked_users.remove(blocked_user)
+    err_msg = user.profile.unblock_user(blocked_user)
+    if err_msg:
+        raise HttpError(422, err_msg)
     return 204, None
 
 
