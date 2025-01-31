@@ -9,6 +9,13 @@ class Command(BaseCommand):
     help = "Creates application data"
 
     def handle(self, **kwargs) -> None:
-        user1 = Profile.objects.get(user__username="Pedro1")
-        user1.friends.add(user1)
-        print(user1.friends.all())
+        u1 = User.objects.create_user(
+            username="Pedro", password="123", email="pedro1@gmail.com", connection_type=User.REGULAR
+        )
+        print(u1.connection_type)
+        u2 = User.objects.create_user(
+            username="Pedro", password="123", email="pedro2@gmail.com", connection_type=User.FT
+        )
+        print(u2.connection_type)
+        print(u1.slug)
+        print(u2.slug)
