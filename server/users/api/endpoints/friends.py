@@ -18,6 +18,7 @@ friends_router = Router()
 def get_friends(request: HttpRequest, slug_id: str):
     """
     Gets friends of specific user.
+    Friends who are online will be shown first.
     Paginated by the `limit` and `offset` settings.
     For example, `/users/{slug_id}/friends?limit=10&offset=0` will get 10 friends from the very first one.
     """
