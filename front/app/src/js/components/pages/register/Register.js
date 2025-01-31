@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
+import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
 
 export class Register extends HTMLElement {
   constructor() {
@@ -95,18 +96,28 @@ export class Register extends HTMLElement {
       const response = await apiRequest('POST', API_ENDPOINTS.USERS, userData, false, false);
       // console.log('Registration successful:', response);
 
-      // Temporary solution
-      localStorage.setItem('isLoggedIn', 'true');
+      if (response.status === 200) {
+        localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
 
-      const userInformation = {
-        username: response.user.username,
-        avatar: response.user.avatar,
-      };
-      localStorage.setItem('user', JSON.stringify(userInformation));
+        // const userInformation = {
+        //   username: response.user.username,
+        //   avatar: response.user.avatar,
+        // };
+        // localStorage.setItem('user', JSON.stringify(userInformation));
+        // ----- Temporary solution -------------------------------------
+        const mockUserData = mockRegisterSuccessResponse();
+        const userInformation = {
+          username: mockUserData.username,
+          avatar: mockUserData.avatar,
+        };
+        localStorage.setItem('user', JSON.stringify(userInformation));
+        // --------------------------------------------------------------
 
-      const navBar = document.getElementById('navbar-container');
-      navBar.innerHTML = '<navbar-component></navbar-component>';
-      router.navigate(`/home`, response.user);
+        const navBar = document.getElementById('navbar-container');
+        navBar.innerHTML = '<navbar-component></navbar-component>';
+        // router.navigate(`/home`, response.user);
+        router.navigate(`/home`, mockUserData); // ----- Temporary solution
+      }
     } catch (error) {
       // Error handling
       console.error('Error status:', error.status);
