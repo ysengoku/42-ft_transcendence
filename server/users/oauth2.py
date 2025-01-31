@@ -67,15 +67,15 @@ def oauth_callback(request):
     try:
         config = get_oauth_config(platform)
 
-        # Exchange the authorization code for an access token
-        token_response = requests.post(
+        # Exchange the authorization code for an access token, all through the backend, nothing is exposed to the frontend
+        token_response = requests.post( # request to the auth server to get the access token
             config["token_uri"],
             data={
                 "client_id": config["client_id"],
                 "client_secret": config["client_secret"],
                 "code": code,
                 "redirect_uri": config["redirect_uris"][0],
-                "grant_type": "authorization_code",
+                "grant_type": "authorization_code", # this is the type of oauth2 grant
             },
             headers={"Accept": "application/json"},
         )
@@ -112,3 +112,6 @@ def oauth_callback(request):
 
 
 ##### END OAuth #####
+
+# need to secure the callback endpoint. check that the callback is coming from the same domain and is the same one that was sent to the auth server
+# need to store the access token in the database in an encrypted form, that way it avoids multiple calls to the api , where there is always a risk of the token being stolen
