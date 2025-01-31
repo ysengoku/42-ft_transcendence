@@ -40,10 +40,9 @@ api = NinjaAPI(auth=CookieKey(), csrf=True)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
-    try:
-        user = User.objects.get_by_natural_key(credentials.username)
-    except User.DoesNotExist as exc:
-        raise HttpError(401, "Username or password are not correct.") from exc
+    user = User.objects.find_regular_user(credentials.username)
+    if not user:
+        raise HttpError(401, "Username or password are not correct.")
 
     is_password_correct = user.check_password(credentials.password)
     if not is_password_correct:
