@@ -1,7 +1,6 @@
 import { router } from '@router';
 import '../home/Home.js';
 import './components/index.js';
-// import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
 
 export class Login extends HTMLElement {
   constructor() {

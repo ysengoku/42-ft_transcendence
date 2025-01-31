@@ -3,6 +3,11 @@
 - [ ] Delete get all users endpoint.
 - [ ] Look into DATA_UPLOAD_MAX_DATA_MEMORY_SIZE setting and its exception.
     - [ ] Do it specifically for the `validate_avatar` function.
+- [ ] Resolve trailing slash situation.
+
+## Fixes
+- [ ] Fix friends and blocked users: they shouldn't be able to add themselves.
+- [ ] Friends should be added on both sides.
 
 ## Features
 - [~] User profiles.
@@ -24,8 +29,13 @@
     - [ ] Passwords should have at least 1 digit and 1 letter.
     - [ ] Passwords should not have X amount of repeated characters.
 - [ ] JWT auth on the backend.
+    - [ ] Implement login endpoint.
+    - [ ] Implement CSRF protection.
+    - [ ] Implement JWT verifications on each of the endpoints, except login and user creation endpoints.
+    - [ ] Implement refresh tokens.
 - [ ] Friendship system.
     - [x] Addition and deletion operations for friends.
+    - [ ] Friends should be added only if the other side will accept request.
     - [ ] Notifications for the other side on friend request.
 - [ ] User blocking system.
     - [ ] Addition and deletion operations for blocked user list.
