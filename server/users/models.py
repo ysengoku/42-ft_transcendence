@@ -17,18 +17,28 @@ from .utils import merge_err_dicts
 
 
 class UserManager(BaseUserManager):
-    def find_user(self, username: str, connection_type: str) -> object | None:
-        return self.filter(username=username, connection_type=connection_type).first()
-
-    def find_regular_user(self, username: str) -> object | None:
-        return self.find_user(username, connection_type=User.REGULAR)
+    def find_by_identifier(self, identifier: str, connection_type: str) -> object | None:
+        return self.filter(
+            Q(username__iexact=identifier) | Q(email=identifier) | Q(slug_id=identifier),
+            connection_type=connection_type,
+        ).first()
 
     def _generate_unique_slug(self, username: str):
         base_slug = slugify(username)
-        counter = User.objects.filter(slug__startswith=base_slug).count()
+        counter = User.objects.filter(slug_id__startswith=base_slug).count()
         if counter > 0:
             return f"{base_slug}-{counter}"
         return base_slug
+
+    def fill_user_data(
+        self, username: str, connection_type: str, email: str, password: str | None = None, **extra_fields
+    ):
+        email = self.normalize_email(email)
+        username = self.model.normalize_username(username)
+        user = self.model(username=username, connection_type=connection_type, email=email)
+        if password:
+            user.password = make_password(password)
+        return self.model(username=username, connection_type=connection_type, email=email, **extra_fields)
 
     def _create_user(
         self, username: str, connection_type: str, email: str, password: str | None = None, **extra_fields
@@ -37,12 +47,8 @@ class UserManager(BaseUserManager):
             raise ValueError("The given username must be set")
         if not password and connection_type == self.model.REGULAR:
             raise ValueError("This connection type requires a password")
-        email = self.normalize_email(email)
-        username = self.model.normalize_username(username)
-        extra_fields["slug"] = self._generate_unique_slug(username)
-        user = self.model(username=username, connection_type=connection_type, email=email, **extra_fields)
-        if password:
-            user.password = make_password(password)
+        extra_fields["slug_id"] = self._generate_unique_slug(username)
+        user = self.fill_user_data(username, connection_type, email, password, **extra_fields)
         user.save()
         return user
 
@@ -75,7 +81,7 @@ class User(AbstractUser):
         max_length=30,
         validators=[username_validator],
     )
-    slug = models.SlugField(max_length=32, unique=True)
+    slug_id = models.SlugField(max_length=32, unique=True)
     email = models.EmailField(unique=True)
     connection_type = models.CharField(max_length=15, choices=CONNECTION_TYPES_CHOICES, default="regular")
     password = models.CharField(max_length=128, default="")
@@ -90,7 +96,7 @@ class User(AbstractUser):
             username__iexact=self.username, connection_type=self.connection_type
         ).exists():
             raise ValidationError({"username": ["A user with that username already exists."]})
-        kwargs["exclude"] = {"username", "connection_type"}
+        kwargs["exclude"] |= {"username", "connection_type"}
         super().validate_unique(*args, **kwargs)
 
     def update_user(self, data, new_profile_picture: UploadedFile | None):

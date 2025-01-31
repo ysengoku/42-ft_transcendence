@@ -36,6 +36,7 @@ class ProfileMinimalSchema(Schema):
     """
 
     username: str = Field(alias="user.username")
+    slug_id: str = Field(alias="user.slug_id")
     avatar: str
     elo: int
     is_online: bool

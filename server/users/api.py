@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import File, Form, NinjaAPI
 from ninja.errors import HttpError
@@ -40,7 +40,10 @@ api = NinjaAPI(auth=CookieKey(), csrf=True)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
-    user = User.objects.find_by_username(credentials.username, User.REGULAR)
+    """
+    Logs in user. Can login by username, email or slug_id.
+    """
+    user = User.objects.find_by_identifier(credentials.username, User.REGULAR)
     if not user:
         raise HttpError(401, "Username or password are not correct.")
 
@@ -49,7 +52,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
         raise HttpError(401, "Username or password are not correct.")
 
     token = create_jwt(user.username)
-    response = HttpResponse("Success")
+    response = JsonResponse({"msg": "Success!"})
     response.set_cookie("access_token", token)
     return response
 
@@ -63,15 +66,15 @@ def get_users(request: HttpRequest):
     return Profile.objects.prefetch_related("user").all()
 
 
-@api.get("users/{username}", response={200: ProfileFullSchema, 404: Message})
+@api.get("users/{slug_id}", response={200: ProfileFullSchema, 404: Message})
 def get_user(request: HttpRequest, slug_id: str):
     """
-    Gets a specific user by username.
+    Gets a specific user by slug_id.
     """
-    user = User.objects.find_regular_user(slug_id).profile
+    user = User.objects.filter(slug_id=slug_id).first()
     if not user:
-        raise HttpError(404, f"User {slug_id} not found.")
-    return user
+        raise HttpError(404, f"User with id {slug_id} not found.")
+    return user.profile
 
 
 @api.post(
@@ -85,12 +88,17 @@ def register_user(request: HttpRequest, data: SignUpSchema):
     """
     Creates a new user.
     """
-    user = User(username=data.username, email=data.email)
+    user = User.objects.fill_user_data(
+        username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password
+    )
     user.set_password(data.password)
-    user.full_clean()
+    user.full_clean(exclude={"slug_id"})
+    user = User.objects.create_user(
+        username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password
+    )
     user.save()
     token = create_jwt(user.username)
-    response = HttpResponse("Success")
+    response = JsonResponse({"msg": "Success!"})
     response.set_cookie("access_token", token)
     return response
 
@@ -223,7 +231,8 @@ def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: Usern
 
 # TODO: add auth
 @api.delete(
-    "users/{username}/blocked_users/{blocked_user_to_remove}", response={204: None, frozenset({404, 422}): Message},
+    "users/{username}/blocked_users/{blocked_user_to_remove}",
+    response={204: None, frozenset({404, 422}): Message},
 )
 def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_to_remove: str):
     """
