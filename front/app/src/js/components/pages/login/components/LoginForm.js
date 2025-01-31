@@ -2,6 +2,7 @@ import { router } from '@router';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
 // import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
+import { simulateLoginSuccessResponse } from '@mock/functions/mockLogin.js';
 
 export class LoginForm extends HTMLElement {
   constructor() {
@@ -21,6 +22,7 @@ export class LoginForm extends HTMLElement {
 
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center">
+      <div id="login-failed-feedback"></div>
 			<form class="w-100" id="loginForm">
   				<div class="mb-3">
     				<label for="inputUsername" class="form-label">Username</label>
@@ -46,32 +48,45 @@ export class LoginForm extends HTMLElement {
     });
   }
 
-  // This function should be changed after back-end integration
   async handleLogin() {
     const username = this.querySelector('#inputUsername').value;
     const password = this.querySelector('#inputPassword').value;
 
-    // Simulation with mock
     // const response = await simulateApiLogin({ username, password });
-    const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
+    try {
+      const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
+      console.log('Login response:', response);
+      if (response.status == 200) {
+        localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
 
-    if (response.success) {
-      // Temporary solution
-      localStorage.setItem('isLoggedIn', 'true');
+        // Add username and avatar to localStorage
+        // const userInformation = {
+        //   username: response.user.username,
+        //   avatar: response.user.avatar,
+        // };
+        // localStorage.setItem('user', JSON.stringify(userInformation));
+        // ----- Temporary solution -------------------------------------
+        const mockUserData = await simulateLoginSuccessResponse();
+        const userInformation = {
+          username: mockUserData.user.username,
+          avatar: mockUserData.user.avatar,
+        };
+        localStorage.setItem('user', JSON.stringify(userInformation));
+        // --------------------------------------------------------------
 
-      // Add username and avatar to localStorage
-      const userInformation = {
-        username: response.user.username,
-        avatar: response.user.avatar,
-      };
-      localStorage.setItem('user', JSON.stringify(userInformation));
-
-      const navBar = document.getElementById('navbar-container');
-      navBar.innerHTML = '<navbar-component></navbar-component>';
-      router.navigate(`/home`, response.user);
-    } else {
-      console.error('Login failed', response.message);
-      // Render login-form with red framed ones
+        const navBar = document.getElementById('navbar-container');
+        navBar.innerHTML = '<navbar-component></navbar-component>';
+        // router.navigate(`/home`, response.user);
+        router.navigate(`/home`, mockUserData); // ----- Temporary solution
+      }
+    } catch (error) {
+      const feedback = this.querySelector('#login-failed-feedback');
+      feedback.innerHTML = `
+      <div class="alert alert-danger alert-dismissible" role="alert">
+        ${error.response.msg}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    `;
     }
   }
 }
