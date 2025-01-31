@@ -11,6 +11,10 @@ from .models import Profile
 
 
 class Message(Schema):
+    """
+    Generic response from the server with user-friendly message.
+    """
+
     msg: str
 
 
