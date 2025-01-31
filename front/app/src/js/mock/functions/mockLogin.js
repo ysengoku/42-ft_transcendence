@@ -2,13 +2,12 @@ export async function simulateLoginSuccessResponse() {
   return {
     user: {
       username: 'JohnDoe',
-      avatar: '/mock/img/avatars/sample_avatar.jpg',
+      avatar: '/media/avatars/sample_avatar.jpg',
       elo: 1000,
       is_online: true,
     },
   };
 }
-
 
 // export async function simulateApiLogin(credentials) {
 //   console.log('inputUsername:', credentials.username);
