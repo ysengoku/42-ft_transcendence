@@ -40,7 +40,7 @@ api = NinjaAPI(auth=CookieKey(), csrf=True)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
-    user = User.objects.find_regular_user(credentials.username)
+    user = User.objects.find_by_username(credentials.username, User.REGULAR)
     if not user:
         raise HttpError(401, "Username or password are not correct.")
 
@@ -64,14 +64,14 @@ def get_users(request: HttpRequest):
 
 
 @api.get("users/{username}", response={200: ProfileFullSchema, 404: Message})
-def get_user(request: HttpRequest, username: str):
+def get_user(request: HttpRequest, slug_id: str):
     """
     Gets a specific user by username.
     """
-    try:
-        return User.objects.get_by_natural_key(username).profile
-    except User.DoesNotExist as exc:
-        raise HttpError(404, f"User {username} not found.") from exc
+    user = User.objects.find_regular_user(slug_id).profile
+    if not user:
+        raise HttpError(404, f"User {slug_id} not found.")
+    return user
 
 
 @api.post(
