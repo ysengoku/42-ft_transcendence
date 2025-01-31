@@ -17,18 +17,14 @@ from .utils import merge_err_dicts
 
 
 class UserManager(BaseUserManager):
+    def find_by_slug_id(self, slug_id: str):
+        return User.objects.filter(slug_id__iexact=slug_id).first()
+
     def find_by_identifier(self, identifier: str, connection_type: str) -> object | None:
         return self.filter(
             Q(username__iexact=identifier) | Q(email=identifier) | Q(slug_id=identifier),
             connection_type=connection_type,
         ).first()
-
-    def _generate_unique_slug(self, username: str):
-        base_slug = slugify(username)
-        counter = User.objects.filter(slug_id__startswith=base_slug).count()
-        if counter > 0:
-            return f"{base_slug}-{counter}"
-        return base_slug
 
     def fill_user_data(
         self, username: str, connection_type: str, email: str, password: str | None = None, **extra_fields
@@ -39,6 +35,23 @@ class UserManager(BaseUserManager):
         if password:
             user.password = make_password(password)
         return self.model(username=username, connection_type=connection_type, email=email, **extra_fields)
+
+    def create_superuser(self, username: str, email: str, password: str, **extra_fields):
+        extra_fields["is_staff"] = True
+        extra_fields["is_superuser"] = True
+        return self._create_user(username, self.model.REGULAR, email, password, **extra_fields)
+
+    def create_user(self, username: str, connection_type: str, email: str, password: str | None = None, **extra_fields):
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(username, connection_type, email, password, **extra_fields)
+
+    def _generate_unique_slug(self, username: str):
+        base_slug = slugify(username)
+        counter = User.objects.filter(username__iexact=username).count()
+        if counter > 0:
+            return f"{base_slug}-{counter}"
+        return base_slug
 
     def _create_user(
         self, username: str, connection_type: str, email: str, password: str | None = None, **extra_fields
@@ -51,16 +64,6 @@ class UserManager(BaseUserManager):
         user = self.fill_user_data(username, connection_type, email, password, **extra_fields)
         user.save()
         return user
-
-    def create_superuser(self, username: str, email: str, password: str, **extra_fields):
-        extra_fields["is_staff"] = True
-        extra_fields["is_superuser"] = True
-        return self._create_user(username, self.model.REGULAR, email, password, **extra_fields)
-
-    def create_user(self, username: str, connection_type: str, email: str, password: str | None = None, **extra_fields):
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
-        return self._create_user(username, connection_type, email, password, **extra_fields)
 
 
 class User(AbstractUser):
@@ -125,6 +128,9 @@ class User(AbstractUser):
 
         if data.username == self.username:
             err_dict = merge_err_dicts(err_dict, {"username": ["New username cannot be the same as the old username."]})
+
+        if data.email == self.email:
+            err_dict = merge_err_dicts(err_dict, {"email": ["New email cannot be the same as the old email."]})
 
         for key, val in data:
             if val and hasattr(self, key):
@@ -294,6 +300,15 @@ class Profile(models.Model):
             return f"User {blocked_user_to_remove.user.username} is not in your blocklist."
         self.blocked_users.remove(blocked_user_to_remove)
         return None
+
+    def to_profile_minimal_schema(self):
+        return {
+            "username": self.user.username,
+            "slug_id": self.user.slug_id,
+            "avatar": self.avatar,
+            "elo": self.elo,
+            "is_online": self.is_online,
+        }
 
 
 class Friendship(models.Model):
