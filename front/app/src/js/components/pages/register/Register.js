@@ -92,15 +92,18 @@ export class Register extends HTMLElement {
     };
 
     try {
-      const response = await apiRequest('POST', API_ENDPOINTS.USERS, userData);
+      const response = await apiRequest('POST', API_ENDPOINTS.USERS, userData, false, false);
       // console.log('Registration successful:', response);
-      // TO DO: Save Token somewhere
 
-      // ----- Temporary ------------------------------------------
+      // Temporary solution
       localStorage.setItem('isLoggedIn', 'true');
-      const { elo, ...filteredResponse } = response;
-      localStorage.setItem('user', JSON.stringify(filteredResponse));
-      // ----------------------------------------------------------
+
+      const userInformation = {
+        username: response.user.username,
+        avatar: response.user.avatar,
+      };
+      localStorage.setItem('user', JSON.stringify(userInformation));
+
       const navBar = document.getElementById('navbar-container');
       navBar.innerHTML = '<navbar-component></navbar-component>';
       router.navigate(`/home`, response.user);
@@ -113,6 +116,7 @@ export class Register extends HTMLElement {
         console.error(errorMsg);
       } else {
         // Show another error message
+        console.error('Error status:', error.status);
       }
     }
   }
