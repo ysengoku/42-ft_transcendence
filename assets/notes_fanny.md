@@ -428,3 +428,6 @@ Eldar asked me to research if github api was providing refresh tokens (the 42 ap
  in fact, github api offers 2 type of oauth2 flows : the traditionnal oauth one, and a github one, more complex, dedicated to complex CI. 
 
 cf picture :  i have created a traditionnal oauth connection with github. in the traditionnal one it is no question of refresh token. 
+
+# 2FA:
+TOTP app = Time-based One-Time Password
