@@ -14,12 +14,12 @@ class Message(Schema):
     msg: str
 
 
-class UsernameSchema(Schema):
+class SlugIdSchema(Schema):
     """
     For payloads where certain action is performed on user.
     """
 
-    username: str
+    slug_id: str
 
 
 class ValidationErrorMessageSchema(Message):
