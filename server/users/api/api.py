@@ -15,14 +15,16 @@ from .endpoints.users import users_router
 from .jwt import verify_jwt
 
 
-class CookieKey(APIKeyCookie):
+class JwtCookieAuth(APIKeyCookie):
     param_name = "access_token"
 
     def authenticate(self, request, access_token: str):
         try:
             payload = verify_jwt(access_token)
-        except jwt.InvalidSignatureError:
-            return None
+        except jwt.InvalidSignatureError as  exc:
+            raise AuthenticationError from exc
+        except jwt.ExpiredSignatureError as exc:
+            raise AuthenticationError("Session is expired. Please login again.") from exc
 
         user = User.objects.find_by_username(payload["sub"])
         if not user:
@@ -30,7 +32,7 @@ class CookieKey(APIKeyCookie):
         return user
 
 
-api_root = NinjaAPI(auth=CookieKey(), csrf=True)
+api_root = NinjaAPI(auth=JwtCookieAuth(), csrf=True)
 api_root.add_router("users", users_router)
 api_root.add_router("", auth_router)
 users_router.add_router("", blocked_users_router)
@@ -46,20 +48,12 @@ def handle_http_error_error(request: HttpRequest, exc: HttpError):
     )
 
 
-@api_root.exception_handler(jwt.ExpiredSignatureError)
-def handle_expired_signature_error(request: HttpRequest, exc: jwt.ExpiredSignatureError):
-    return api_root.create_response(
-        request,
-        {"msg": "Session is expired. Please login again."},
-        status=401,
-    )
-
-
 @api_root.exception_handler(AuthenticationError)
 def handle_authentication_error(request: HttpRequest, exc: AuthenticationError):
+    message = str(exc) if str(exc) else "Unauthorized."
     return api_root.create_response(
         request,
-        {"msg": "Unauthorized."},
+        {"msg": message},
         status=401,
     )
 
