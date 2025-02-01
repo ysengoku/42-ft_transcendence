@@ -1,12 +1,11 @@
 from django.core.exceptions import PermissionDenied, RequestDataTooBig
-from django.db.models import Q
+from django.db.models import Exists, Q
 from django.http import HttpRequest
 from ninja import File, Form, Router
 from ninja.errors import AuthenticationError, HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
-from users.api.common import get_user_by_username_or_404
 from users.models import Profile
 from users.schemas import (
     Message,
@@ -46,8 +45,14 @@ def get_user(request: HttpRequest, username: str):
     """
     Gets a specific user by username.
     """
-    user = get_user_by_username_or_404(username)
-    return user.profile
+    curr_user = request.auth
+    return (
+        Profile.objects.filter(user__username=username)
+        .annotate(is_friend=Exists(curr_user.profile.friends.filter(user__username=username)))
+        .annotate(is_blocked_user=Exists(curr_user.profile.blocked_users.filter(user__username=username)))
+        .annotate(is_blocked_by_user=Exists(curr_user.profile.blocked_users_of.filter(user__username=username)))
+        .first()
+    )
 
 
 # TODO: add authorization to settings change
