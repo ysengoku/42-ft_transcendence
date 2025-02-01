@@ -177,3 +177,119 @@ new_profile_picture (string($binary))
   }
 ]
 ```
+
+### Endpoint: /api/users/{username}/friends
+
+#### GET 
+200 (OK)
+```JSON
+{
+  "items": [
+    {
+      "username": "string",
+      "avatar": "string",
+      "elo": 0,
+      "is_online": true
+    }
+  ],
+  "count": 0
+}
+```
+
+404 (Not found)
+```json
+{
+  "msg": "string"
+}
+```
+
+#### POST
+```json
+{
+  "username": "string"
+}
+```
+
+201 (created)
+```json
+{
+  "username": "string",
+  "avatar": "string",
+  "elo": 0,
+  "is_online": true
+}
+```
+
+404 (Not found)
+```json
+{
+  "msg": "string"
+}
+```
+
+### Endpoint: /api/users/{username}/friends/{friend_to_remove}
+
+#### DELETE
+username
+friend_to_remove 
+
+204	(No Content)
+404	(Not Found)
+
+```json
+{
+  "msg": "string"
+}
+```
+
+### Endpoint: /api/users/{username}/blocked_users
+#### GET
+
+200 (OK)
+```json
+{
+  "items": [
+    {
+      "username": "string",
+      "avatar": "string",
+      "elo": 0,
+      "is_online": true
+    }
+  ],
+  "count": 0
+}
+```
+404 (Not found)
+```json
+{
+  "msg": "string"
+}
+```
+
+#### POST
+201 (Created)
+```json
+{
+  "username": "string",
+  "avatar": "string",
+  "elo": 0,
+  "is_online": true
+}
+```
+404 (Not found)
+```json
+{
+  "msg": "string"
+}
+```
+
+### Endpoint: /api/users/{username}/blocked_users/{blocked_user_to_remove}
+
+204	(No Content)
+404	(Not Found)
+
+```json
+{
+  "msg": "string"
+}
+```

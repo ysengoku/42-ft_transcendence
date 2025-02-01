@@ -1,102 +1,145 @@
-# users/twofa.py
-
 from ninja import Router
-from django.core.mail import send_mail
-from users.models import User
-from django.conf import settings
-import random
-import string
 from ninja.errors import HttpError
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 import pyotp
 import qrcode
 import base64
 from io import BytesIO
-from .models import TwoFactorAuth
+from typing import Dict
 
+from .models import User, TwoFactorAuth
 
 twofa_router = Router()
 
 
-def generate_secret_key():
+def generate_secret_key() -> str:
+    """Generate a random secret key for 2FA"""
     return pyotp.random_base32()
 
+
 @twofa_router.post("/2fa/setup")
-def setup_2fa(request, user_id: str): # pk request ? expliquer
-    user = User.objects.get(id=user_id) # remplacer par fanny
-    secret = generate_secret_key()
+def setup_2fa(request, slug_id: str) -> Dict[str, str]:
+    """Setup 2FA for a user"""
+    try:
+        user = User.objects.find_by_slug_id(slug_id)
+        if not user:
+            raise HttpError(404, "User not found")
 
-    TwoFactorAuth.objects.create(user=user, defaults={"secret": secret, "is enabled": False})
+        # Check if 2FA already exists
+        existing_2fa = TwoFactorAuth.objects.filter(user=user).first()
+        if existing_2fa:
+            if existing_2fa.is_enabled:
+                raise HttpError(400, "2FA is already enabled")
+            # If exists but not enabled, update the secret
+            secret = generate_secret_key()
+            existing_2fa.secret = secret
+            existing_2fa.save()
+        else:
+            # Create new 2FA entry
+            secret = generate_secret_key()
+            TwoFactorAuth.objects.create(user=user, secret=secret, is_enabled=False)
 
-    totp = pyotp.TOTP(secret)
-    uri = totp.provisioning_uri(name=user.username, issuer_name="Transcendence")
+        # Generate QR code
+        totp = pyotp.TOTP(secret)
+        uri = totp.provisioning_uri(name=user.username, issuer_name="Transcendence")
 
-    qr = qrcode.make(uri)
-    buffer = BytesIO()
-    qr.save(buffer, "PNG")
-    qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        # Create QR code
+        qr = qrcode.make(uri)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
 
-    return {"qr_code": qr_base64, "secret": secret} # retourne secret ? cest pas safe
+        return {
+            "status": "success",
+            "qr_code": qr_base64,
+            "secret": secret,  # Send secret for manual entry if needed
+        }
 
-def verify_2fa(request, user_id: int, token: str): # pk id ici et str plus haut 
-    user = User.objects.get(id=user_id)
-    twofa = TwoFactorAuth.objects.get(user=user) # je vois pas enquoi on repere le secret ?
+    except Exception as e:
+        raise HttpError(500, str(e))
 
-    totp = pyotp.TOTP(twofa.secret)
-    if not totp.verify(token):
-        raise HttpError(400, "Invalid 2FA token") # oas besoin de return ici  ?
-    else:
+
+@twofa_router.post("/2fa/verify")
+def verify_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
+    """Verify and enable 2FA for a user"""
+    try:
+        user = User.objects.find_by_slug_id(slug_id)
+        if not user:
+            raise HttpError(404, "User not found")
+
+        twofa = TwoFactorAuth.objects.filter(user=user).first()
+        if not twofa:
+            raise HttpError(404, "2FA not setup for this user")
+
+        totp = pyotp.TOTP(twofa.secret)
+        if not totp.verify(token):
+            raise HttpError(400, "Invalid 2FA token")
+
         twofa.is_enabled = True
         twofa.save()
+
         return {"status": "success", "message": "2FA enabled successfully"}
-    
 
-def login_2fa(request, user_id: int, password: str, token: str):
-    user = User.objects.get(id=user_id)
-
-    if not user.check_password(password):
-        raise HttpError(400, "Invalid password")
-
-    totp = pyotp.TOTP(twofa.secret)
-    if not totp.verify(token):
-        raise HttpError(400, "Invalid 2FA token")
-
-    return {"status": "success", "message": "Login successful"}
-
-##############################################################
+    except ObjectDoesNotExist:
+        raise HttpError(404, "User or 2FA configuration not found")
+    except Exception as e:
+        raise HttpError(500, str(e))
 
 
-# Send 2FA Code to the user via email
+@twofa_router.post("/2fa/verify-login")
+def verify_2fa_login(request, slug_id: str, token: str) -> Dict[str, str]:
+    """Verify 2FA token during login"""
+    try:
+        user = User.objects.find_by_slug_id(slug_id)
+        if not user:
+            raise HttpError(404, "User not found")
 
-# @twofa_router.post("/send")
-# def send_2fa_code(request, user_id: str):
-#     try:
-#         user = "fanny"   # Simulate the user lookup for now
-#         # user = User.objects.get(id=user_id)
-#     except User.DoesNotExist:
-#         raise HttpError(404, "User not found")
+        twofa = TwoFactorAuth.objects.filter(user=user).first()
+        if not twofa or not twofa.is_enabled:
+            raise HttpError(400, "2FA is not enabled for this user")
 
-#     code = generate_2fa_code()
-#     # Here you'd store the code in a session or database tied to the user for verification later
+        totp = pyotp.TOTP(twofa.secret)
+        if not totp.verify(token):
+            raise HttpError(400, "Invalid 2FA token")
 
-#     # Send email using SendGrid or Django's built-in mail system
-#     send_mail(
-#         "Your 2FA Code",
-#         f"Your 2FA code is: {code}",
-#         settings.DEFAULT_FROM_EMAIL,  # Make sure your settings.py has a default email
-#         # [user.email],
-#         fail_silently=False,  # fail silently = False to raise an exception if the email fails to send
-#     )
+        return {"status": "success", "message": "2FA verification successful"}
 
-#     return {"status": "success", "message": "2FA code sent successfully"}
+    except ObjectDoesNotExist:
+        raise HttpError(404, "User or 2FA configuration not found")
+    except Exception as e:
+        raise HttpError(500, str(e))
 
 
-# # Verify the 2FA Code
-# @twofa_router.post("/verify")
-# def verify_2fa_code(request, user_id: str, code: str):
-#     # In a real-world scenario, the code would be stored and verified here.
-#     # This is a mock, so we're just simulating the process.
-#     stored_code = "123456"  # For testing purposes, replace with actual stored code logic
-#     if code != stored_code:
-#         raise HttpError(400, "Invalid 2FA code")
+@twofa_router.delete("/2fa/disable")
+def disable_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
+    """Disable 2FA for a user"""
+    try:
+        user = User.objects.find_by_slug_id(slug_id)
+        if not user:
+            raise HttpError(404, "User not found")
 
-#     return {"status": "success", "message": "2FA verified successfully"}
+        twofa = TwoFactorAuth.objects.filter(user=user).first()
+        if not twofa:
+            raise HttpError(404, "2FA not setup for this user")
+        if not twofa.is_enabled:
+            raise HttpError(400, "2FA is already disabled")
+
+        # Verify token before disabling
+        totp = pyotp.TOTP(twofa.secret)
+        if not totp.verify(token):
+            raise HttpError(400, "Invalid 2FA token")
+
+        # Option 1: Completely delete the 2FA configuration
+        twofa.delete()
+
+        # Option 2: Just disable it (uncomment if you prefer this)
+        # twofa.is_enabled = False
+        # twofa.save()
+
+        return {"status": "success", "message": "2FA disabled successfully"}
+
+    except ObjectDoesNotExist:
+        raise HttpError(404, "User or 2FA configuration not found")
+    except Exception as e:
+        raise HttpError(500, str(e))
