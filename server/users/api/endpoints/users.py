@@ -2,7 +2,7 @@ from django.core.exceptions import PermissionDenied, RequestDataTooBig
 from django.db.models import Q
 from django.http import HttpRequest
 from ninja import File, Form, Router
-from ninja.errors import HttpError
+from ninja.errors import AuthenticationError, HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
@@ -65,12 +65,14 @@ def update_user(
     Udates settings of the user.
     Maximum size of the uploaded avatar is 10mb. Anything bigger will return 413 error.
     """
-    user = get_user_by_username_or_404(username)
+    user = request.auth
 
+    if user.username != username:
+        raise AuthenticationError
     try:
         user.update_user(data, new_profile_picture)
     except PermissionDenied as exc:
-        raise HttpError(401, "Old password is invalid.") from exc
+        raise AuthenticationError("Old password is invalid.") from exc
     except RequestDataTooBig as exc:
         raise HttpError(413, "File is too big. Please upload a file that weights less than 10mb.") from exc
 
