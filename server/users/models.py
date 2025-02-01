@@ -239,3 +239,8 @@ class Match(models.Model):
 
     def __str__(self) -> str:
         return f"{self.winner.user.username} - {self.loser.user.username}"
+
+class TwoFactorAuth(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    secret = models.charField(max_length=32) # secret key for the user
+    is_enabled = models.BooleanField(default=False)
