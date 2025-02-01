@@ -1,15 +1,18 @@
 from django.core.management.base import BaseCommand
+from django.db.models import Count
 
-from users.models import User
+from users.jwt import create_jwt, verify_jwt
+from users.models import Profile, User
 
 
 class Command(BaseCommand):
     help = "Creates application data"
 
     def handle(self, **kwargs) -> None:
-        User.objects.create_user(
-            username="Pedro", password="123", email="pedro1@gmail.com", connection_type=User.REGULAR  # noqa: S106
+        u1 = User.objects.create_user(
+            username="Pedro", password="123", email="pedro1@gmail.com", connection_type=User.REGULAR
         )
-        User.objects.create_user(
-            username="Pedro", password="123", email="pedro2@gmail.com", connection_type=User.FT  # noqa: S106
+        print(u1.connection_type)
+        u2 = User.objects.create_user(
+            username="Pedro", password="123", email="pedro2@gmail.com", connection_type=User.FT
         )
