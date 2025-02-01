@@ -5,8 +5,9 @@
 
 ## Login
 - [X] Adjust width
-- [] CSRF Token handling
-- [] Error handling
+- [x] CSRF Token handling
+- [x] Error handling
+- [] Forgot password
 
 ## Logout
 - [x] Clear CSRF token
@@ -15,12 +16,14 @@
 
 ## Register
 - [X] Adjust width
-- [] 422 handling
-- [] Password length check
+- [x] 422 handling
+- [x] Password length check
+- [x] 422 Error message check
+- [] Nickname input
 
 ## Settings
 - [X] Adjust width
-- [] Restrict other users to access to the page
+- [] Restrict other users to access to the page (remove username from url)
 - [] Add old password input
 - [] Hide password & email change for OAuth users
 - [] Add 2FA activate toggle
@@ -34,6 +37,7 @@
 
 ### Error handling
 - [x] 404 handling
+- [] Check 404 server response (it returns 500 now)
 - [] Rendering of user profile page who is blocking me
 
 ### User info
