@@ -128,11 +128,15 @@ class User(AbstractUser):
             if val and hasattr(self, key):
                 setattr(self, key, val)
 
+        exclude = set()
+        if not data.email:
+            exclude.add("email")
+        if not data.username:
+            exclude.add("username")
+
         try:
-            if data.username and data.username != self.username:
-                self.full_clean()
-            else:
-                self.full_clean(exclude={"username"})
+            self.validate_unique(exclude=exclude)
+            self.full_clean(validate_unique=False)
         except ValidationError as exc:
             err_dict = merge_err_dicts(err_dict, exc.error_dict)
 
