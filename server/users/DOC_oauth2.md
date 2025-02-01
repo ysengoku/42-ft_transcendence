@@ -22,7 +22,7 @@ https://api.intra.42.fr/apidoc/guides/web_application_flow
 
 5. The app sends a POST request to https://api.intra.42.fr/oauth/token with client_id, client_secret, code, and redirect_uri.
 
-6. The 42 API responds with access_token and refresh_token.
+6. The 42 API responds with access_token.
 
 7. The app uses access_token to make authenticated requests.
 It sends a GET request to https://api.intra.42.fr/v2/me with Authorization: Bearer access_token.
