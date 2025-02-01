@@ -22,9 +22,9 @@ auth_router = Router()
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
     """
-    Logs in user. Can login by username, email or slug_id.
+    Logs in user. Can login by username, email or username.
     """
-    user = User.objects.find_by_identifier(credentials.username, User.REGULAR)
+    user = User.objects.find_by_identifier(credentials.username)
     if not user:
         raise HttpError(401, "Username or password are not correct.")
 
@@ -53,7 +53,7 @@ def register_user(request: HttpRequest, data: SignUpSchema):
         username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password
     )
     user.set_password(data.password)
-    user.full_clean(exclude={"slug_id"})
+    user.full_clean()
     user = User.objects.create_user(
         username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password
     )

@@ -18,12 +18,12 @@ class Message(Schema):
     msg: str
 
 
-class SlugIdSchema(Schema):
+class UsernameSchema(Schema):
     """
     For payloads where certain action is performed on user.
     """
 
-    slug_id: str
+    username: str
 
 
 class ValidationErrorMessageSchema(Message):
@@ -40,7 +40,7 @@ class ProfileMinimalSchema(Schema):
     """
 
     username: str = Field(alias="user.username")
-    slug_id: str = Field(alias="user.slug_id")
+    nickname: str = Field(alias="user.nickname")
     avatar: str
     elo: int
     is_online: bool
