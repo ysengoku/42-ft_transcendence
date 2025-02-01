@@ -17,11 +17,9 @@ export class UserProfile extends HTMLElement {
 
   async fetchUserData(username) {
     try {
-      // console.log('username:', username);
       /* eslint-disable-next-line new-cap */
-      const userData = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
-
-      this.user = userData;
+      const response = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
+      this.user = response.data;
       this.render();
     } catch (error) {
       if (error.status === 404) {
