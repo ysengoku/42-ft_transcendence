@@ -1,6 +1,6 @@
 from django.http import HttpRequest
 from ninja import Router
-from ninja.errors import HttpError
+from ninja.errors import AuthenticationError, HttpError
 from ninja.pagination import paginate
 
 from users.api.common import get_user_by_username_or_404
@@ -21,11 +21,13 @@ def get_blocked_users(request: HttpRequest, username: str):
     Paginated by the `limit` and `offset` settings.
     For example, `/users/{username}/blocked_users?limit=10&offset=0` will get 10 blocked users from the very first one.
     """
-    user = get_user_by_username_or_404(username)
+    user = request.auth
+
+    if user.username != username:
+        raise AuthenticationError
     return user.profile.blocked_users.all()
 
 
-# TODO: add auth
 @blocked_users_router.post(
     "{username}/blocked_users", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message}
 )
@@ -33,7 +35,10 @@ def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: Usern
     """
     Adds user to the blocklist.
     """
-    user = get_user_by_username_or_404(username)
+    user = request.auth
+
+    if user.username != username:
+        raise AuthenticationError
 
     blocked_user = get_user_by_username_or_404(user_to_add.username)
 
@@ -43,7 +48,6 @@ def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: Usern
     return 201, blocked_user.profile
 
 
-# TODO: add auth
 @blocked_users_router.delete(
     "{username}/blocked_users/{blocked_user_to_remove}",
     response={204: None, frozenset({404, 422}): Message},
@@ -52,7 +56,10 @@ def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_
     """
     Deletes user from a blocklist.
     """
-    user = get_user_by_username_or_404(username)
+    user = request.auth
+
+    if user.username != username:
+        raise AuthenticationError
 
     blocked_user = get_user_by_username_or_404(blocked_user_to_remove)
 
