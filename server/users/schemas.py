@@ -11,6 +11,10 @@ from .models import Profile
 
 
 class Message(Schema):
+    """
+    Generic response from the server with user-friendly message.
+    """
+
     msg: str
 
 
@@ -36,6 +40,7 @@ class ProfileMinimalSchema(Schema):
     """
 
     username: str = Field(alias="user.username")
+    nickname: str = Field(alias="user.nickname")
     avatar: str
     elo: int
     is_online: bool
@@ -87,6 +92,10 @@ class ProfileFullSchema(ProfileMinimalSchema):
     )
     friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
     friends_count: int
+    is_blocked_user: bool
+    is_blocked_by_user: bool
+    is_friend: bool
+
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -153,6 +162,7 @@ class LoginSchema(Schema):
 class UpdateUserChema(PasswordValidationSchema):
     username: str | None = None
     email: str | None = None
+    nickname: str | None = None
     old_password: str | None = None
     password: str | None = None
     password_repeat: str | None = None
