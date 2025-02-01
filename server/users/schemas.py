@@ -92,6 +92,10 @@ class ProfileFullSchema(ProfileMinimalSchema):
     )
     friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
     friends_count: int
+    is_blocked_user: bool
+    is_blocked_by_user: bool
+    is_friend: bool
+
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
