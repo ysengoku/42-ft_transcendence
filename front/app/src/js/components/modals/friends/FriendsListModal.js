@@ -1,4 +1,4 @@
-import {simulateFetchFriendsList} from '@mock/functions/simulateFetchFriendsList.js';
+import { simulateFetchFriendsList } from '@mock/functions/simulateFetchFriendsList.js';
 
 export class FriendsListModal extends HTMLElement {
   constructor() {
@@ -39,13 +39,28 @@ export class FriendsListModal extends HTMLElement {
 
   render() {
     this.innerHTML = `
-		<div class="modal fade friends-modal" id="friendsModal" tabindex="-1" aria-labelledby="friendsModalLabel" aria-hidden="true">
+    <style>
+      .friends-modal .modal-dialog {
+      position: fixed;
+      top: var(--navbar-height, 72px);
+      right: 0;
+      height: calc(100vh - var(--navbar-height, 72px));
+      margin: 0;
+      border-radius: 0;
+    }
+    </style>
+		<div class="modal fade friends-modal" id="friendsModal" tabindex="-1" aria-hidden="true">
 			<div class="modal-dialog modal-dialog-scrollable">
-   				<div class="modal-content">
-    				<div class="modal-header">
-        				<h5 class="modal-title" id="friendsModalLabel">Friends</h5>
-        				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      				</div>
+   			<div class="modal-content">
+          <div class="modal-header d-flex flex-column align-items-start">
+    				<div class="d-flex justify-content-between w-100">
+        			<h5 class="modal-title">Friends</h5>
+        			<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="ps-2 pe-3 pt-3">
+              <friend-search-bar></friend-search-bar>
+      			</div>
+          </div>
 					<div class="modal-body">
 						<ul class="list-group" id="friends-list"></ul>
 					</div>
@@ -60,6 +75,14 @@ export class FriendsListModal extends HTMLElement {
   showModal() {
     if (this.modal) {
       this.modal.show();
+    }
+    this.renderSearchBar();
+  }
+
+  renderSearchBar() {
+    const friendSearchBar = this.querySelector('friend-search-bar');
+    if (friendSearchBar) {
+      friendSearchBar.render(); // もしrenderが必要なら
     }
   }
 }
