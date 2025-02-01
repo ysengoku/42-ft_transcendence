@@ -69,6 +69,7 @@ def update_user(
 
     if user.username != username:
         raise AuthenticationError
+
     try:
         user.update_user(data, new_profile_picture)
     except PermissionDenied as exc:
