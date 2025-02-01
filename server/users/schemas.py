@@ -158,6 +158,7 @@ class LoginSchema(Schema):
 class UpdateUserChema(PasswordValidationSchema):
     username: str | None = None
     email: str | None = None
+    nickname: str | None = None
     old_password: str | None = None
     password: str | None = None
     password_repeat: str | None = None
