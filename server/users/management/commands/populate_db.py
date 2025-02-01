@@ -1,3 +1,5 @@
+from random import choice
+
 from django.core.management.base import BaseCommand
 
 from users.models import Match, Profile, User
@@ -9,28 +11,31 @@ class Command(BaseCommand):
 
     def handle(self, **kwargs) -> None:
         if User.objects.count() != 0:
+            print("DB is not empty.")  # noqa: T201
             return
 
-        User.objects.create_superuser(username="admin", password="123")
-        life_enjoyer = User.objects.create_user(username="LifeEnjoyer", password="123").profile
-        yuko = User.objects.create_user(username="Yuko", password="123").profile
-        celia = User.objects.create_user(username="celiastral", password="123").profile
-        fanny = User.objects.create_user(username="Fannybooboo", password="123").profile
-        eldar = User.objects.create_user(username="emuminov", password="123").profile
-        sad_hampter = User.objects.create_user(username="SadHampter", password="123").profile
-        User.objects.create_user(username="User0", password="123")
+        User.objects.create_superuser("admin", "admin@gmail.com", "123")
+        life_enjoyer = User.objects.create_user("LifeEnjoyer", "regular", "lifeenjoyer@gmail.com", "123").profile
+        yuko = User.objects.create_user("Yuko", "regular", "yuko@gmail.com", "123").profile
+        celia = User.objects.create_user("celiastral", "regular", "celiastral@gmail.com", "123").profile
+        fanny = User.objects.create_user("Fannybooboo", "regular", "fannybooboo@gmail.com", "123").profile
+        eldar = User.objects.create_user("emuminov", "regular", "emuminov@gmail.com", "123").profile
+        sad_hampter = User.objects.create_user("SadHampter", "regular", "sadhampter@gmail.com", "123").profile
+        User.objects.create_user("User0", "regular", "user0@gmail.com", "123")
         for i in range(30):
-            user = User.objects.create_user(username=f"Pedro{i}", password="123")
-            life_enjoyer.friends.add(user.profile)
+            user = User.objects.create_user(f"Pedro{i}", "regular", f"pedro{i}@gmail.com", "123")
+            user.profile.is_online = choice([True, False])  # noqa: S311
+            user.profile.save()
+            life_enjoyer.add_friend(user.profile)
         life_enjoyer.save()
 
-        celia.friends.add(sad_hampter)
+        celia.add_friend(sad_hampter)
         users = yuko, celia, fanny, eldar
         for user in users:
             for friend in users:
                 if user == friend:
                     continue
-                user.friends.add(friend)
+                user.add_friend(friend)
             user.save()
 
         Match.objects.resolve(celia, yuko, 2, 1)
@@ -91,3 +96,5 @@ class Command(BaseCommand):
         Match.objects.resolve(sad_hampter, user1, 3, 1)
         Match.objects.resolve(sad_hampter, user1, 6, 2)
         Match.objects.resolve(sad_hampter, user1, 5, 2)
+
+        print("\033[92mDB was successefully populated!\033[0m")  # noqa: T201

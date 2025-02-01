@@ -3,6 +3,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 
@@ -20,13 +21,12 @@ def main():
 if __name__ == "__main__":
     main()
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # TODO: Change the secret key in production
 SECRET_KEY = "your-secret-key"
 
 # Environment variables
-
 
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 # DEBUG = int(os.environ.get("DEBUG", default=1))
@@ -34,59 +34,16 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
+IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
-# OAuth
-
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
-GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
-GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
-GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")  # Défini dans le .env
-GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
-
-# OAuth 42
-API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
-API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
-FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
-FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
-FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
-FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
-
-# SendGrid Settings
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
-EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password
-
-
-# OAUTH Configuration
-OAUTH_CONFIG = {
-    "github": {
-        "client_id": GITHUB_CLIENT_ID,
-        "client_secret": GITHUB_CLIENT_SECRET,
-        "auth_uri": GITHUB_AUTHORIZE_URL,
-        "token_uri": GITHUB_ACCESS_TOKEN_URL,
-        "redirect_uris": [GITHUB_REDIRECT_URI],
-        "scopes": ["user"],
-        "user_info_uri": GITHUB_USER_PROFILE_URL,
-    },
-    "42": {
-        "client_id": API42_CLIENT_ID,
-        "client_secret": API42_CLIENT_SECRET,
-        "auth_uri": FT_API_AUTHORIZE_URL,
-        "token_uri": FT_API_ACCESS_TOKEN_URL,
-        "redirect_uris": [FT_API_REDIRECT_URI],
-        "scopes": ["public", "profile"],
-        "user_info_uri": FT_API_USER_PROFILE_URL,
-    },
-}
-
-
-if "GITHUB_ACTIONS" in os.environ:
+if not IN_CONTAINER:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        },
+    }
+elif "GITHUB_ACTIONS" in os.environ:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -95,7 +52,7 @@ if "GITHUB_ACTIONS" in os.environ:
             "PASSWORD": "test_password",
             "HOST": "localhost",
             "PORT": "5432",
-        }
+        },
     }
 # PostgreSQL for production
 else:
@@ -107,7 +64,7 @@ else:
             "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
             "HOST": os.environ.get("DATABASE_HOST", "database"),
             "PORT": os.environ.get("DATABASE_PORT", "5432"),
-        }
+        },
     }
 
 
@@ -122,7 +79,6 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Third-party applications
     "silk",  # Application for profiling
-    "corsheaders",  # Application for CORS if two ports are different. must be removed for production
     "channels",  # Django Channels
     # Our applications
     "users",
@@ -136,9 +92,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Third party middleware
     "silk.middleware.SilkyMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  #  must be removed for production.
 ]
 
 
@@ -147,7 +101,7 @@ ROOT_URLCONF = "server.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -195,7 +149,7 @@ SOCIALACCOUNT_PROVIDERS = {
             "client_id": "YOUR_CLIENT_ID",
             "secret": "YOUR_CLIENT_SECRET",
             "key": "",
-        }
+        },
     },
 }
 
@@ -206,27 +160,20 @@ CHANNEL_LAYERS = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = ["https://localhost:1026"]
+CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ORIGINS = [
-    "http://localhost:5173",
-    "https://localhost:1026",
-]
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 
 # Configuration for picture
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # for dynamic images (uploaded by user)
 MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_ROOT = BASE_DIR / "static"
 
 AUTH_SETTINGS = {
     "password_min_len": 8,
@@ -234,6 +181,8 @@ AUTH_SETTINGS = {
     "check_attribute_similarity": True,
     "check_is_diverse": True,
 }
+
+JWT_SECRET_KEY = "secret"
 
 NINJA_PAGINATION_PER_PAGE = 10
 
@@ -250,10 +199,62 @@ LOGGING = {
         'level': 'INFO',
     },
     'loggers': {
-        'users': {  # remplace par le nom de ton app
+        'users': {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,
         },
     },
 }
+APPEND_SLASH = False
+
+# OAuth
+
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
+GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
+GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")  # Défini dans le .env
+GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
+
+# OAuth 42
+API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
+API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
+FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
+FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
+FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
+FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
+
+
+# OAUTH Configuration
+OAUTH_CONFIG = {
+    "github": {
+        "client_id": GITHUB_CLIENT_ID,
+        "client_secret": GITHUB_CLIENT_SECRET,
+        "auth_uri": GITHUB_AUTHORIZE_URL,
+        "token_uri": GITHUB_ACCESS_TOKEN_URL,
+        "redirect_uris": [GITHUB_REDIRECT_URI],
+        "scopes": ["user"],
+        "user_info_uri": GITHUB_USER_PROFILE_URL,
+    },
+    "42": {
+        "client_id": API42_CLIENT_ID,
+        "client_secret": API42_CLIENT_SECRET,
+        "auth_uri": FT_API_AUTHORIZE_URL,
+        "token_uri": FT_API_ACCESS_TOKEN_URL,
+        "redirect_uris": [FT_API_REDIRECT_URI],
+        "scopes": ["public", "profile"],
+        "user_info_uri": FT_API_USER_PROFILE_URL,
+    },
+}
+
+
+# SendGrid Settings
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
+EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password

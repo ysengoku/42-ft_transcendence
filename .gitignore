@@ -124,6 +124,8 @@ celerybeat.pid
 # Environments and secrets
 .env
 .venv
+.envrc
+.direnv/
 env/
 venv/
 ENV/
@@ -169,5 +171,6 @@ cython_debug/
 node_modules/
 /front/app/static/
 /server/static/
+/server/media/
 
 /.vscode/
