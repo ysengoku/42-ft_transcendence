@@ -1,6 +1,8 @@
+from random import choice
+
 from django.core.management.base import BaseCommand
 
-from users.models import Match, Profile, User
+from users.models import Match, User
 
 
 # ruff: noqa: S106
@@ -12,16 +14,39 @@ class Command(BaseCommand):
             print("DB is not empty.")  # noqa: T201
             return
 
-        User.objects.create_superuser(username="admin", password="123")
-        life_enjoyer = User.objects.create_user(username="LifeEnjoyer", password="123").profile
-        yuko = User.objects.create_user(username="Yuko", password="123").profile
-        celia = User.objects.create_user(username="celiastral", password="123").profile
-        fanny = User.objects.create_user(username="Fannybooboo", password="123").profile
-        eldar = User.objects.create_user(username="emuminov", password="123").profile
-        sad_hampter = User.objects.create_user(username="SadHampter", password="123").profile
-        User.objects.create_user(username="User0", password="123")
-        for i in range(30):
-            user = User.objects.create_user(username=f"Pedro{i}", password="123")
+        User.objects.create_superuser("admin", "admin@gmail.com", "123")
+        life_enjoyer = User.objects.create_user(
+            "LifeEnjoyer", "regular", email="lifeenjoyer@gmail.com", password="123"
+        ).profile
+        yuko = User.objects.create_user("Yuko", "regular", email="yuko@gmail.com", password="123").profile
+        celia = User.objects.create_user("celiastral", "regular", email="celiastral@gmail.com", password="123").profile
+        fanny = User.objects.create_user(
+            "Fannybooboo", "regular", email="fannybooboo@gmail.com", password="123"
+        ).profile
+        eldar = User.objects.create_user("emuminov", "regular", email="emuminov@gmail.com", password="123").profile
+        sad_hampter = User.objects.create_user(
+            "SadHampter", "regular", email="sadhampter@gmail.com", password="123"
+        ).profile
+        User.objects.create_user("User0", "regular", email="user0@gmail.com", password="123")
+
+        regular_users = []
+        names = [
+            "Pedro",
+            "Juan",
+            "Anya",
+            "Juanita",
+            "John",
+            "Joe_The_Uncatchable",
+            "Alex",
+            "alice",
+            "menaco",
+            "evil_sherif",
+            "TheBall",
+            "warhawk",
+        ]
+        for name in names:
+            user = User.objects.create_user(f"{name}", "regular", email=f"{name}@gmail.com", password="123")
+            regular_users.append(user)
             life_enjoyer.add_friend(user.profile)
         life_enjoyer.save()
 
@@ -82,15 +107,14 @@ class Command(BaseCommand):
             Match.objects.resolve(celia, sad_hampter, 11, 1)
             Match.objects.resolve(fanny, sad_hampter, 5, 1)
 
-        user1 = Profile.objects.get(user__username="Pedro1")
-        Match.objects.resolve(sad_hampter, user1, 5, 3)
-        Match.objects.resolve(sad_hampter, user1, 6, 2)
-        Match.objects.resolve(sad_hampter, user1, 2, 1)
-        Match.objects.resolve(sad_hampter, user1, 5, 4)
-        Match.objects.resolve(sad_hampter, user1, 2, 1)
-        Match.objects.resolve(sad_hampter, user1, 5, 0)
-        Match.objects.resolve(sad_hampter, user1, 3, 1)
-        Match.objects.resolve(sad_hampter, user1, 6, 2)
-        Match.objects.resolve(sad_hampter, user1, 5, 2)
+        for user in regular_users:
+            opponents = regular_users.copy()
+            opponents.remove(user)
+            opponent = choice(opponents)  # noqa: S311
+            players = [user, opponent]
+            winner = choice(players)  # noqa: S311
+            players.remove(winner)
+            loser = players[0]
+            Match.objects.resolve(winner.profile, loser.profile, choice(range(3, 6)), choice(range(3)))  # noqa: S311
 
         print("\033[92mDB was successefully populated!\033[0m")  # noqa: T201
