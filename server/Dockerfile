@@ -15,6 +15,9 @@ WORKDIR /app
 # Copier les fichiers requirements.txt d'abord pour optimiser le cache
 COPY requirements.txt /app/
 
+# psycopg2 is a PostgreSQL adapter for Python. this version is compatible with Django 5.1.4 + act (to test github actions)
+RUN echo "psycopg2==2.9.6" >> requirements.txt
+
 # Installer les dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
 

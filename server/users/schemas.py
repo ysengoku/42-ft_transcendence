@@ -11,24 +11,26 @@ from .models import Profile
 
 
 class Message(Schema):
+    """
+    Generic response from the server with user-friendly message.
+    """
+
     msg: str
 
 
-class UsernameSchema(Schema):
+class SlugIdSchema(Schema):
     """
     For payloads where certain action is performed on user.
     """
 
-    username: str
+    slug_id: str
 
 
 class ValidationErrorMessageSchema(Message):
-    type: str = Field(
-        description="Type of the error. can be missing, validation_error or some kind of type error."
-    )
+    type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
     loc: list[str] = Field(
         description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
-        "the list is the name of failed field."
+        "the list is the name of failed field.",
     )
 
 
@@ -38,6 +40,7 @@ class ProfileMinimalSchema(Schema):
     """
 
     username: str = Field(alias="user.username")
+    slug_id: str = Field(alias="user.slug_id")
     avatar: str
     elo: int
     is_online: bool
@@ -63,12 +66,8 @@ class EloDataPointSchema(Schema):
     """
 
     date: datetime
-    elo_change_signed: int = Field(
-        description="How much elo user gained or lost from this match."
-    )
-    elo_result: int = Field(
-        description="Resulting elo after elo gain or loss from this match."
-    )
+    elo_change_signed: int = Field(description="How much elo user gained or lost from this match.")
+    elo_result: int = Field(description="Resulting elo after elo gain or loss from this match.")
 
 
 class ProfileFullSchema(ProfileMinimalSchema):
@@ -80,22 +79,19 @@ class ProfileFullSchema(ProfileMinimalSchema):
     wins: int
     loses: int
     total_matches: int
-    winrate: int | None = Field(
-        description="null if the player didn't play any games yet."
-    )
+    winrate: int | None = Field(description="null if the player didn't play any games yet.")
     worst_enemy: OpponentProfileAndStatsSchema | None = Field(
-        description="Player who won the most against current user."
+        description="Player who won the most against current user.",
     )
     best_enemy: OpponentProfileAndStatsSchema | None = Field(
-        description="Player who lost the most against current user."
+        description="Player who lost the most against current user.",
     )
     scored_balls: int = Field(description="How many balls player scored overall.")
     elo_history: list[EloDataPointSchema] = Field(
-        description="List of data points for elo changes of the last 10 games."
+        description="List of data points for elo changes of the last 10 games.",
     )
-    friends: list[ProfileMinimalSchema] = Field(
-        description="List of first ten friends.", max_length=10
-    )
+    friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
+    friends_count: int
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -119,6 +115,10 @@ class ProfileFullSchema(ProfileMinimalSchema):
     def resolve_friends(obj: Profile):
         return obj.friends.all()[:10]
 
+    @staticmethod
+    def resolve_friends_count(obj: Profile):
+        return obj.friends.count()
+
 
 class PasswordValidationSchema(Schema):
     password: str
@@ -132,11 +132,7 @@ class PasswordValidationSchema(Schema):
             err_dict["password_repeat"].append("Passwords do not match.")
         if len(self.password) < settings.AUTH_SETTINGS["password_min_len"]:
             err_dict["password"].append("Password should have at least 8 characters.")
-        if (
-            settings.AUTH_SETTINGS["check_attribute_similarity"]
-            and self.username
-            and self.username in self.password
-        ):
+        if settings.AUTH_SETTINGS["check_attribute_similarity"] and self.username and self.username in self.password:
             err_dict["password"].append("Password should not contain username.")
         return {k: v for k, v in err_dict.items() if v}
 
@@ -152,6 +148,11 @@ class SignUpSchema(PasswordValidationSchema):
         if err_dict:
             raise ValidationError(err_dict)
         return self
+
+
+class LoginSchema(Schema):
+    username: str
+    password: str
 
 
 class UpdateUserChema(PasswordValidationSchema):
