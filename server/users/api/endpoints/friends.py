@@ -1,6 +1,6 @@
 from django.http import HttpRequest
 from ninja import Router
-from ninja.errors import HttpError
+from ninja.errors import AuthenticationError, HttpError
 from ninja.pagination import paginate
 
 from users.api.common import get_user_by_username_or_404
@@ -22,17 +22,22 @@ def get_friends(request: HttpRequest, username: str):
     Paginated by the `limit` and `offset` settings.
     For example, `/users/{username}/friends?limit=10&offset=0` will get 10 friends from the very first one.
     """
-    user = get_user_by_username_or_404(username)
+    user = request.auth
+
+    if user.username != username:
+        raise AuthenticationError
     return user.profile.friends.order_by("-is_online").all()
 
 
-# TODO: add auth
 @friends_router.post("{username}/friends", response={201: ProfileMinimalSchema, frozenset({404, 422}): Message})
 def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema):
     """
     Adds user as a friend.
     """
-    user = get_user_by_username_or_404(username)
+    user = request.auth
+
+    if user.username != username:
+        raise AuthenticationError
 
     friend = get_user_by_username_or_404(user_to_add.username)
 
@@ -43,14 +48,15 @@ def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema)
 
 
 # TODO: add auth
-@friends_router.delete(
-    "{username}/friends/{friend_to_remove}", response={204: None, frozenset({404, 422}): Message}
-)
+@friends_router.delete("{username}/friends/{friend_to_remove}", response={204: None, frozenset({404, 422}): Message})
 def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: str):
     """
     Deletes user from a friendlist.
     """
-    user = get_user_by_username_or_404(username)
+    user = request.auth
+
+    if user.username != username:
+        raise AuthenticationError
 
     friend = get_user_by_username_or_404(friend_to_remove)
 
