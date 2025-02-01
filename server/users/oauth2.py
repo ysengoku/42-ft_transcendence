@@ -1,19 +1,22 @@
-from django.http import JsonResponse
-from ninja import Router
 import hashlib
-import os
-import requests
-from urllib.parse import urlencode
-from django.conf import settings
 import logging
+import os
+from urllib.parse import urlencode
+
+import requests
+from django.conf import settings
+from django.http import JsonResponse
 from django.shortcuts import redirect
+from ninja import Router
 
 logger = logging.getLogger(__name__)
 oauth_router = Router()
 
 
 def get_oauth_config(platform: str) -> dict:
-    """Retrieve OAuth config for a specific platform"""
+    """
+    Retrieve OAuth config for a specific platform
+    """
     if platform not in settings.OAUTH_CONFIG:
         raise ValueError(f"Unsupported platform: {platform}")
     return settings.OAUTH_CONFIG[platform]
@@ -25,7 +28,7 @@ def oauth_authorize(request, platform: str):
         logger.info(f"Starting OAuth authorization for platform: {platform}")
 
         config = get_oauth_config(platform)
-        state = hashlib.sha256(os.urandom(1024)).hexdigest()
+        state = hashlib.sha256(os.urandom(1024)).hexdigest() # this is to prevent csrf attacks
         request.session["oauth_state"] = state
         request.session["oauth_platform"] = platform
 
@@ -64,15 +67,15 @@ def oauth_callback(request):
     try:
         config = get_oauth_config(platform)
 
-        # Exchange the authorization code for an access token
-        token_response = requests.post(
+        # Exchange the authorization code for an access token, all through the backend, nothing is exposed to the frontend
+        token_response = requests.post( # request to the auth server to get the access token
             config["token_uri"],
             data={
                 "client_id": config["client_id"],
                 "client_secret": config["client_secret"],
                 "code": code,
                 "redirect_uri": config["redirect_uris"][0],
-                "grant_type": "authorization_code",
+                "grant_type": "authorization_code", # this is the type of oauth2 grant
             },
             headers={"Accept": "application/json"},
         )
@@ -91,16 +94,7 @@ def oauth_callback(request):
         user_info = user_info_response.json()
 
         # Extract only the required fields based on the platform
-        if platform == "github":
-            simplified_user_info = {
-                "login": user_info.get("login"),
-            }
-        elif platform == "42":
-            simplified_user_info = {
-                "login": user_info.get("login"),
-            }
-        else:
-            simplified_user_info = {}
+        simplified_user_info = {"login": user_info.get("login")} if platform in ("github", "42") else {}
 
         return JsonResponse(
             {
@@ -110,11 +104,14 @@ def oauth_callback(request):
             }
         )
 
+    # handle the refresh token and store it to database and see how to use it
+
     except Exception as e:
         print(f"Error during OAuth callback: {e}")
         return JsonResponse({"status": "error", "error": "Internal server error"}, status=500)
 
 
-
-
 ##### END OAuth #####
+
+# need to secure the callback endpoint. check that the callback is coming from the same domain and is the same one that was sent to the auth server
+# need to store the access token in the database in an encrypted form, that way it avoids multiple calls to the api , where there is always a risk of the token being stolen
