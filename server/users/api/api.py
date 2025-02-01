@@ -1,9 +1,12 @@
+import jwt
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from ninja import NinjaAPI
-from ninja.errors import HttpError
+from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 from ninja.security import APIKeyCookie
+
+from users.models import User
 
 from .endpoints.auth import auth_router
 from .endpoints.blocked_users import blocked_users_router
@@ -16,9 +19,15 @@ class CookieKey(APIKeyCookie):
     param_name = "access_token"
 
     def authenticate(self, request, access_token: str):
-        if verify_jwt(access_token):
-            return True
-        return None
+        try:
+            payload = verify_jwt(access_token)
+        except jwt.InvalidSignatureError:
+            return None
+
+        user = User.objects.find_by_username(payload["sub"])
+        if not user:
+            return None
+        return user
 
 
 api_root = NinjaAPI(auth=CookieKey(), csrf=True)
@@ -34,6 +43,24 @@ def handle_http_error_error(request: HttpRequest, exc: HttpError):
         request,
         {"msg": exc.message},
         status=exc.status_code,
+    )
+
+
+@api_root.exception_handler(jwt.ExpiredSignatureError)
+def handle_expired_signature_error(request: HttpRequest, exc: jwt.ExpiredSignatureError):
+    return api_root.create_response(
+        request,
+        {"msg": "Session is expired. Please login again."},
+        status=401,
+    )
+
+
+@api_root.exception_handler(AuthenticationError)
+def handle_authentication_error(request: HttpRequest, exc: AuthenticationError):
+    return api_root.create_response(
+        request,
+        {"msg": "Unauthorized."},
+        status=401,
     )
 
 
