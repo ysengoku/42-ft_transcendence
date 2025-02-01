@@ -12,11 +12,9 @@ from .models import User, TwoFactorAuth
 
 twofa_router = Router()
 
-
 def generate_secret_key() -> str:
     """Generate a random secret key for 2FA"""
     return pyotp.random_base32()
-
 
 @twofa_router.post("/2fa/setup")
 def setup_2fa(request, slug_id: str) -> Dict[str, str]:
@@ -38,11 +36,18 @@ def setup_2fa(request, slug_id: str) -> Dict[str, str]:
         else:
             # Create new 2FA entry
             secret = generate_secret_key()
-            TwoFactorAuth.objects.create(user=user, secret=secret, is_enabled=False)
+            TwoFactorAuth.objects.create(
+                user=user,
+                secret=secret,
+                is_enabled=False
+            )
 
         # Generate QR code
         totp = pyotp.TOTP(secret)
-        uri = totp.provisioning_uri(name=user.username, issuer_name="Transcendence")
+        uri = totp.provisioning_uri(
+            name=user.username,
+            issuer_name="Transcendence"
+        )
 
         # Create QR code
         qr = qrcode.make(uri)
@@ -53,12 +58,11 @@ def setup_2fa(request, slug_id: str) -> Dict[str, str]:
         return {
             "status": "success",
             "qr_code": qr_base64,
-            "secret": secret,  # Send secret for manual entry if needed
+            "secret": secret  # Send secret for manual entry if needed
         }
 
     except Exception as e:
         raise HttpError(500, str(e))
-
 
 @twofa_router.post("/2fa/verify")
 def verify_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
@@ -79,13 +83,15 @@ def verify_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
         twofa.is_enabled = True
         twofa.save()
 
-        return {"status": "success", "message": "2FA enabled successfully"}
+        return {
+            "status": "success",
+            "message": "2FA enabled successfully"
+        }
 
     except ObjectDoesNotExist:
         raise HttpError(404, "User or 2FA configuration not found")
     except Exception as e:
         raise HttpError(500, str(e))
-
 
 @twofa_router.post("/2fa/verify-login")
 def verify_2fa_login(request, slug_id: str, token: str) -> Dict[str, str]:
@@ -103,13 +109,15 @@ def verify_2fa_login(request, slug_id: str, token: str) -> Dict[str, str]:
         if not totp.verify(token):
             raise HttpError(400, "Invalid 2FA token")
 
-        return {"status": "success", "message": "2FA verification successful"}
+        return {
+            "status": "success",
+            "message": "2FA verification successful"
+        }
 
     except ObjectDoesNotExist:
         raise HttpError(404, "User or 2FA configuration not found")
     except Exception as e:
         raise HttpError(500, str(e))
-
 
 @twofa_router.delete("/2fa/disable")
 def disable_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
@@ -132,12 +140,15 @@ def disable_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
 
         # Option 1: Completely delete the 2FA configuration
         twofa.delete()
-
+        
         # Option 2: Just disable it (uncomment if you prefer this)
         # twofa.is_enabled = False
         # twofa.save()
 
-        return {"status": "success", "message": "2FA disabled successfully"}
+        return {
+            "status": "success",
+            "message": "2FA disabled successfully"
+        }
 
     except ObjectDoesNotExist:
         raise HttpError(404, "User or 2FA configuration not found")
