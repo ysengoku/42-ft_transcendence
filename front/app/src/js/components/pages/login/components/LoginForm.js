@@ -1,8 +1,8 @@
 import { router } from '@router';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
-// import { simulateApiLogin } from '@mock/functions/mockApiLogin.js';
-import { simulateLoginSuccessResponse } from '@mock/functions/mockLogin.js';
+// import { simulateApiLogin } from '@mock/functions/mockLogin.js';
+// import { simulateLoginSuccessResponse } from '@mock/functions/mockLogin.js';
 
 export class LoginForm extends HTMLElement {
   constructor() {
@@ -27,9 +27,9 @@ export class LoginForm extends HTMLElement {
       <div id="login-failed-feedback"></div>
 			<form class="w-100" id="loginForm">
   				<div class="d-flex flex-column mb-3 gap-2">
-    				<label for="inputLoginId" class="form-label">Login ID or Email</label>
-   					<input type="text" class="form-control" id="inputLoginId" placeholder="Login ID">
-   					<input type="text" class="form-control" id="inputEmail" placeholder="Email">
+    				<label for="inputUsername" class="form-label">Username or Email</label>
+   					<input type="text" class="form-control" id="inputUsername" placeholder="username">
+   					<input type="text" class="form-control" id="inputEmail" placeholder="email">
             <div class='invalid-feedback' id='loginid-feedback'></div>
   				</div>
 				  <div class="mb-2">
@@ -55,8 +55,7 @@ export class LoginForm extends HTMLElement {
 
   // TODO: Add email case handling
   async handleLogin() {
-    const username = this.querySelector('#inputLoginId').value;
-    // const slugId = this.querySelector('#inputLoginId').value;
+    const username = this.querySelector('#inputUsername').value;
     // const email = this.querySelector('#inputEmail').value;
     const password = this.querySelector('#inputPassword').value;
 
@@ -64,33 +63,38 @@ export class LoginForm extends HTMLElement {
       return;
     }
 
-    // TODO: Adjuust for API update
+    // TODO: Adjust for API update
     try {
       const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
-      // const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { slugId, password }, false, false);
+      // ----- Temporary solution -------------------------------------
+      // const credentials = {
+      //   username: username,
+      //   password: password,
+      // };
+      // const response = await simulateApiLogin(credentials);
+      // --------------------------------------------------------------
       console.log('Login response:', response);
       if (response.status == 200) {
         localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
 
-        // Add slugId and avatar to localStorage
-        // const userInformation = {
-        //   slugId: response.user.slugId,
-        //   avatar: response.user.avatar,
-        // };
-        // localStorage.setItem('user', JSON.stringify(userInformation));
-        // ----- Temporary solution -------------------------------------
-        const mockUserData = await simulateLoginSuccessResponse();
         const userInformation = {
-          username: mockUserData.user.username,
-          avatar: mockUserData.user.avatar,
+          username: response.data.username,
+          avatar: response.data.avatar,
         };
         localStorage.setItem('user', JSON.stringify(userInformation));
-        // --------------------------------------------------------------
+        // // ----- Temporary solution -------------------------------------
+        // const mockUserData = await simulateLoginSuccessResponse();
+        // const userInformation = {
+        //   username: mockUserData.user.username,
+        //   avatar: mockUserData.user.avatar,
+        // };
+        // localStorage.setItem('user', JSON.stringify(userInformation));
+        // // --------------------------------------------------------------
 
         const navBar = document.getElementById('navbar-container');
         navBar.innerHTML = '<navbar-component></navbar-component>';
-        // router.navigate(`/home`, response.user);
-        router.navigate(`/home`, mockUserData); // ----- Temporary solution
+        router.navigate(`/home`, response.user);
+        // router.navigate(`/home`, mockUserData); // ----- Temporary solution
       }
     } catch (error) {
       const feedback = this.querySelector('#login-failed-feedback');
@@ -104,7 +108,7 @@ export class LoginForm extends HTMLElement {
   }
 
   setupInputToggle() {
-    const idInput = this.querySelector('#inputLoginId');
+    const idInput = this.querySelector('#inputUsername');
     const emailInput = this.querySelector('#inputEmail');
 
     idInput.addEventListener('input', this.toggleInputFields.bind(this));
@@ -112,7 +116,7 @@ export class LoginForm extends HTMLElement {
   }
 
   toggleInputFields() {
-    const idInput = this.querySelector('#inputLoginId');
+    const idInput = this.querySelector('#inputUsername');
     const emailInput = this.querySelector('#inputEmail');
 
     if (idInput.value) {
@@ -130,7 +134,7 @@ export class LoginForm extends HTMLElement {
   }
 
   checkInputs() {
-    const loginIdField = this.querySelector('#inputLoginId');
+    const loginIdField = this.querySelector('#inputUsername');
     const emailField = this.querySelector('#inputEmail');
     const passwordField = this.querySelector('#inputPassword');
 
@@ -150,7 +154,7 @@ export class LoginForm extends HTMLElement {
   }
 
   setUpRemoveFeedback() {
-    const loginIdField = this.querySelector('#inputLoginId');
+    const loginIdField = this.querySelector('#inputUsername');
     const emailField = this.querySelector('#inputEmail');
     const passwordField = this.querySelector('#inputPassword');
 
