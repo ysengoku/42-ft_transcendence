@@ -92,28 +92,32 @@ class ProfileFullSchema(ProfileMinimalSchema):
     )
     friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
     friends_count: int
+    is_friend: bool
     is_blocked_user: bool
     is_blocked_by_user: bool
-    is_friend: bool
 
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
-        worst_enemy: Profile = obj.worst_enemy
+        worst_enemy: Profile = obj.get_worst_enemy()
         if not worst_enemy:
             return None
         return obj.get_stats_against_player(worst_enemy)
 
     @staticmethod
     def resolve_best_enemy(obj: Profile):
-        best_enemy: Profile = obj.best_enemy
+        best_enemy: Profile = obj.get_best_enemy()
         if not best_enemy:
             return None
         return obj.get_stats_against_player(best_enemy)
 
     @staticmethod
+    def resolve_scored_balls(obj: Profile):
+        return obj.get_scored_balls()
+
+    @staticmethod
     def resolve_elo_history(obj: Profile):
-        return obj.annotate_elo_data_points()[:10]
+        return obj.get_elo_data_points()
 
     @staticmethod
     def resolve_friends(obj: Profile):

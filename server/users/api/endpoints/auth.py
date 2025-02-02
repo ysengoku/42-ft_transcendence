@@ -24,7 +24,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
     """
     Logs in user. Can login by username, email or username.
     """
-    user = User.objects.find_by_identifier(credentials.username)
+    user = User.objects.for_username_or_email(credentials.username).first()
     if not user:
         raise HttpError(401, "Username or password are not correct.")
 
