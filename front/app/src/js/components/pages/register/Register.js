@@ -128,13 +128,18 @@ export class Register extends HTMLElement {
   }
 
   checkInputFields(usernameField, emailField, passwordField, passwordRepeatField) {
+    const emptyUsername = 'Username is required';
+    const emptyEmail = 'Email is required';
+    const emptyPassword = 'Password is required';
+    const emptyPasswordRepeat = 'Please confirm your password';
+
     let isFormValid = true;
-    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', 'Username is required');
-    isFormValid = this.isFieldFilled(emailField, '#email-feedback', 'Email is required') && isFormValid;
-    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', 'Password is required') && isFormValid;
+    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', emptyUsername);
+    isFormValid = this.isFieldFilled(emailField, '#email-feedback', emptyEmail) && isFormValid;
+    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', emptyPassword) && isFormValid;
     isFormValid =
       this.isFieldFilled(
-          passwordRepeatField, '#password_repeat-feedback', 'Please confirm your password') && isFormValid;
+          passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
     isFormValid =
       this.checkPasswordLength(passwordField) &&
       this.checkPasswordDiff(passwordField, passwordRepeatField) && isFormValid;
@@ -152,9 +157,10 @@ export class Register extends HTMLElement {
   }
 
   checkPasswordLength(passwordField) {
+    const shortPassword = 'Password must be at least 8 characters';
     if (passwordField.value.length < 8) {
       passwordField.classList.add('is-invalid');
-      document.querySelector('#password-feedback').textContent = 'Password must be at least 8 characters';
+      document.querySelector('#password-feedback').textContent = shortPassword;
       return false;
     } else {
       return true;
@@ -162,11 +168,12 @@ export class Register extends HTMLElement {
   }
 
   checkPasswordDiff(passwordField, passwordRepeatField) {
+    const passwordsDoNotMatch = 'Passwords do not match';
     if (passwordField.value != passwordRepeatField.value) {
       passwordField.classList.add('is-invalid');
       passwordRepeatField.classList.add('is-invalid');
-      document.querySelector('#password-feedback').textContent = 'Passwords do not match';
-      document.querySelector('#password_repeat-feedback').textContent = 'Passwords do not match';
+      document.querySelector('#password-feedback').textContent = passwordsDoNotMatch;
+      document.querySelector('#password_repeat-feedback').textContent = passwordsDoNotMatch;
       return false;
     } else {
       return true;
