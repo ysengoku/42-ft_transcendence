@@ -1,78 +1,86 @@
-# Frontend structure
+# Frontend
 
 Serves static assets (HTML, CSS, JavaScript).
 Handles UI interactions and API calls to backend services.
 
-ft_transcendence
-├── front/
-│ ├── app/
-│ │ ├── index.html # Single entry point for the SPA
-│ │ │
-│ │ ├── assets/ # Static images (logos, icons, etc.)
-│ │ │ └── img/  
-│ │ │ ├── logo
-│ │ │ ├── anonymous_avatar.svg
-│ │ │ ├── favicon.ico
-│ │ │ └── ...
-│ │ │
-│ │ ├── css/
-│ │ │ ├── style.css # Main stylesheet
-│ │ │ └── components/
-│ │ │ ├── header.css
-│ │ │ ├── footer.css
-│ │ │ └── ...
-│ │ │
-│ │ ├── js/
-│ │ │ ├── main.js # Main entry point for JavaScript
-│ │ │ ├── Router.js # Manages client-side routing for SPA
-│ │ │ │
-│ │ │ ├── components/
-│ │ │ │ ├── navbar/
-│ │ │ │ │ ├── Navbar.js
-│ │ │ │ │ └── ...
-│ │ │ │ │── pages/
-│ │ │ │ │ ├── Landing.js
-│ │ │ │ │ ├── Login.js
-│ │ │ │ │ └── ...
-│ │ │ │ │── modals/
-│ │ │ │ │ ├── chat/
-│ │ │ │ │ └── friends/
-│ │ │ │ │
-│ │ │ │ └── .../
-│ │ │ │ ├── ...
-│ │ │ │ └── ...
-│ │ │ │
-│ │ │ ├── api/
-│ │ │ │ ├──
-│ │ │ │ ├──
-│ │ │ │ └── ...
-│ │ │ │
-│ │ │ └── utils/
-│ │ │ ├── ...
-│ │ │ └── ...
-│ │ │
-│ │ │── package.json
-│ │ │── vite.config.js
-│ │ │
-│ │ └── mock/
-│ │ ├── img/  
-│ │ | ├── sample_avatar1.jpg
-│ │ | ├── sample_avatar1.jpg
-│ │ | └── ...
-│ │ └── js/
-│ │ ├── mockApiLogin.js
-│ │ ├── simulateFetchFriendsList.js
-│ │ ├── simulateFetchUserData.js
-│ │ └── ...
-│ │
-│ ├── docker/
-│ │ ├── Dockerfile
-│ │ └── docker-compose.yml
-│ │
-│ └── doc/
-│ ├── FRONT.md
-│ └── ...
-│
-├── user-management/
-├── game/
-├── database/
+## Directory structure
+
+front/
+├── app
+│   ├── index.html
+│   ├── src
+│   │   └── main.js
+│   │   ├── css
+│   │   │   └── style.css
+│   │   ├── js
+│   │   │   ├── api
+│   │   │   │   ├── apiRequest.js
+│   │   │   │   ├── endpoints.js
+│   │   │   │   └── index.js
+│   │   │   ├── components
+│   │   │   │   ├── modals
+│   │   │   │   │   ├── friends
+│   │   │   │   │   │   ├── FriendSearch.js
+│   │   │   │   │   │   ├── FriendsListItem.js
+│   │   │   │   │   │   └── FriendsListModal.js
+│   │   │   │   │   └── index.js
+│   │   │   │   ├── navbar
+│   │   │   │   │   ├── Navbar.js
+│   │   │   │   │   ├── components/
+│   │   │   │   │   └── index.js
+│   │   │   │   └── pages
+│   │   │   │       ├── index.js
+│   │   │   │       ├── Landing.js
+│   │   │   │       ├── home
+│   │   │   │       │   ├── Home.js
+│   │   │   │       │   └── components/
+│   │   │   │       ├── login
+│   │   │   │       │   ├── Login.js
+│   │   │   │       │   └── components/
+│   │   │   │       ├── profile
+│   │   │   │       │   ├── Profile.js
+│   │   │   │       │   ├── UserNotFound.js
+│   │   │   │       │   └── components/
+│   │   │   │       ├── register
+│   │   │   │       │   └── Register.js
+│   │   │   │       ├── settings
+│   │   │   │       │   ├── Settings.js
+│   │   │   │       │   ├── components/
+│   │   │   │       │   └── index.js
+│   │   │   │       ├── chat
+│   │   │   │       │   └── Chat.js
+│   │   │   │       ├── dual
+│   │   │   │       │   ├── Dual.js
+│   │   │   │       │   └── DualMenu.js
+│   │   │   │       |── tournament/
+│   │   │   │       |   ├── Tournament.js
+│   │   │   │       |   └── TournamentMenu.js
+│   │   │   │       ├── NotFound.js
+│   │   │   │       └── ResetPassword.js
+│   |   │   |
+│   │   │   ├── router.js
+│   │   │   |── utils
+│   │   │   |   ├── ThemeController.js
+│   │   │   |   └── handleLogout.js
+│   │   │   └── mock
+│   │   │
+│   |   └── public
+│   |       |── img/
+│   │       └── fonts/
+|   |
+│   ├── __tests__
+│   ├── babel.config.cjs
+│   ├── jest.config.js
+│   ├── package-lock.json
+│   ├── package.json
+│   └── vite.config.js
+|
+├── Dockerfile
+└── doc
+
+## Unit tests
+
+```bash
+# From app directory
+npm test
+```

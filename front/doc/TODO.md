@@ -8,6 +8,7 @@
 - [x] CSRF Token handling
 - [x] Error handling
 - [] Forgot password
+- [] Unit test (input validation)
 
 ## Logout
 - [x] Clear CSRF token
@@ -20,6 +21,7 @@
 - [x] Password length check
 - [x] 422 Error message check
 - [] Nickname input
+- [x] Unit test (input validation)
 
 ## Settings
 - [X] Adjust width
@@ -32,16 +34,17 @@
 - [] 404 handling
 - [] 413 handling
 - [] 422 handling
+- [] Unit test (input validation)
 
 ## Profile
 
 ### Error handling
 - [x] 404 handling
-- [] Check 404 server response (it returns 500 now)
+- [x] Check 404 server response (it returns 500 now)
 - [] Rendering of user profile page who is blocking me
 
 ### User info
-- [] User id
+- [] username & nickname
 - [] Title
 
 ### User actions
