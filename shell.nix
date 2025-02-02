@@ -7,7 +7,7 @@ mkShell {
     python310Packages.python-lsp-server
     python310Packages.ruff
     python310Packages.python-lsp-ruff
-    python310Packages.magic
+    python310Packages.python-magic
   ];
   postVenvCreation = ''
     unset SOURCE_DATE_EPOCH
