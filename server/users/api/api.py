@@ -26,7 +26,7 @@ class JwtCookieAuth(APIKeyCookie):
         except jwt.ExpiredSignatureError as exc:
             raise AuthenticationError("Session is expired. Please login again.") from exc
 
-        user = User.objects.find_by_username(payload["sub"])
+        user = User.objects.for_username(payload["sub"]).first()
         if not user:
             return None
         return user
