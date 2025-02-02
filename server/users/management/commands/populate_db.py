@@ -1,4 +1,4 @@
-from random import choice
+from random import choice, randint
 
 from django.core.management.base import BaseCommand
 
@@ -49,6 +49,11 @@ class Command(BaseCommand):
             regular_users.append(user)
             life_enjoyer.add_friend(user.profile)
         life_enjoyer.save()
+
+        for i in range(30):
+            user = User.objects.create_user(f"Pedro{i}", "regular", email=f"Pedro{i}@gmail.com", password="123")
+            life_enjoyer.block_user(user.profile)
+
 
         celia.add_friend(sad_hampter)
         users = yuko, celia, fanny, eldar
@@ -107,14 +112,21 @@ class Command(BaseCommand):
             Match.objects.resolve(celia, sad_hampter, 11, 1)
             Match.objects.resolve(fanny, sad_hampter, 5, 1)
 
-        for user in regular_users:
-            opponents = regular_users.copy()
-            opponents.remove(user)
-            opponent = choice(opponents)  # noqa: S311
-            players = [user, opponent]
-            winner = choice(players)  # noqa: S311
-            players.remove(winner)
-            loser = players[0]
-            Match.objects.resolve(winner.profile, loser.profile, choice(range(3, 6)), choice(range(3)))  # noqa: S311
+        for _i in range(5):
+            for user in regular_users:
+                opponents = regular_users.copy()
+                opponents.remove(user)
+                opponent = choice(opponents)  # noqa: S311
+                players = [user, opponent]
+                winner = choice(players)  # noqa: S311
+                players.remove(winner)
+                loser = players[0]
+                Match.objects.resolve(winner.profile, loser.profile, choice(range(3, 6)), choice(range(3)))  # noqa: S311
+                Match.objects.resolve(life_enjoyer, loser.profile, choice(range(3, 6)), choice(range(3)))  # noqa: S311
+                Match.objects.resolve(life_enjoyer, winner.profile, choice(range(3, 6)), choice(range(3)))  # noqa: S311
+                if randint(0, 10) > 6:  # noqa: S311,PLR2004
+                    Match.objects.resolve(winner.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)))  # noqa: S311
+                if randint(0, 10) > 7:  # noqa: S311,PLR2004
+                    Match.objects.resolve(loser.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)))  # noqa: S311
 
         print("\033[92mDB was successefully populated!\033[0m")  # noqa: T201

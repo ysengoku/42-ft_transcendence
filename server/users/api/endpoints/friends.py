@@ -3,7 +3,7 @@ from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 from ninja.pagination import paginate
 
-from users.api.common import get_user_by_username_or_404
+from users.api.common import get_user_queryset_by_username_or_404
 from users.schemas import (
     Message,
     ProfileMinimalSchema,
@@ -39,7 +39,7 @@ def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema)
     if user.username != username:
         raise AuthenticationError
 
-    friend = get_user_by_username_or_404(user_to_add.username)
+    friend = get_user_queryset_by_username_or_404(user_to_add.username).first()
 
     err_msg = user.profile.add_friend(friend.profile)
     if err_msg:
@@ -58,7 +58,7 @@ def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: s
     if user.username != username:
         raise AuthenticationError
 
-    friend = get_user_by_username_or_404(friend_to_remove)
+    friend = get_user_queryset_by_username_or_404(friend_to_remove).first()
 
     err_msg = user.profile.remove_friend(friend.profile)
     if err_msg:

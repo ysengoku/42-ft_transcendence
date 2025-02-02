@@ -7,7 +7,8 @@ from django.contrib.auth.models import UserManager as BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import PermissionDenied, RequestDataTooBig, ValidationError
 from django.db import models
-from django.db.models import Case, Count, F, Q, Sum, When
+from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
+from django.db.models.lookups import Exact
 from ninja.files import UploadedFile
 
 from .stats_calc import calculate_elo_change, calculate_winrate
@@ -15,11 +16,11 @@ from .utils import merge_err_dicts
 
 
 class UserManager(BaseUserManager):
-    def find_by_identifier(self, identifier: str):
-        return self.filter(Q(username=identifier) | Q(email=identifier)).first()
+    def for_username_or_email(self, identifier: str):
+        return self.filter(Q(username__iexact=identifier) | Q(email=identifier))
 
-    def find_by_username(self, username: str):
-        return self.filter(username__iexact=username).first()
+    def for_username(self, username: str):
+        return self.filter(username__iexact=username)
 
     def fill_user_data(self, username: str, connection_type: str, **extra_fields):
         username = AbstractUser.normalize_username(username)
@@ -55,6 +56,10 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+    """
+    Contains information that is related to authentication and authorization of one single user.
+    """
+
     FT = "42"
     GITHUB = "github"
     REGULAR = "regular"
@@ -150,13 +155,70 @@ class User(AbstractUser):
         return f"{self.username} - {self.connection_type}"
 
 
+class ProfileQuerySet(models.QuerySet):
+    def for_username(self, username: str):
+        return self.filter(user__username=username)
+
+    def with_friendship_and_block_status(self, curr_user, username: str):
+        """
+        Annotates friendship and block status regarding user <username>.
+        """
+        return self.annotate(
+            is_friend=Exists(curr_user.profile.friends.filter(user__username=username)),
+            is_blocked_user=Exists(curr_user.profile.blocked_users.filter(user__username=username)),
+            is_blocked_by_user=Exists(curr_user.profile.blocked_users_of.filter(user__username=username)),
+        )
+
+    def with_wins_and_loses_and_total_matches(self):
+        """
+        Annotates wins, loses and calculated winrate, using ORM queries.
+        """
+
+        class Round(Func):
+            function = "ROUND"
+            template = "%(function)s(%(expressions)s, 0)"
+
+        return (
+            # count loses and wins as distinct for correct values
+            self.annotate(wins=Count("won_matches", distinct=True), loses=Count("lost_matches", distinct=True))
+            # calculate total = wins + loses
+            .annotate(total_matches=F("wins") + F("loses"))
+            # calculate winrate
+            .annotate(
+                winrate=Case(
+                    # if no games, return null
+                    When(Exact(F("total_matches"), Value(0)), then=Value(None)),
+                    # otherwise return rounded result of wins / total_matches * 100
+                    # multiplies by 1.0 to force floating point conversion, as 'wins' and 'loses' are ints
+                    default=ExpressionWrapper(
+                        Round(F("wins") * 1.0 / F("total_matches") * Value(100)), output_field=IntegerField()
+                    ),
+                )
+            )
+        )
+
+    def with_full_profile(self, curr_user, username: str):
+        return (
+            self.prefetch_related("friends__user")
+            .select_related("user")
+            .with_friendship_and_block_status(curr_user, username)
+            .with_wins_and_loses_and_total_matches()
+        )
+
+
 class Profile(models.Model):
+    """
+    Contains user information to the application logic itself.
+    """
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to="avatars/", null=True, blank=True)
     elo = models.IntegerField(default=1000)
     friends = models.ManyToManyField("self", symmetrical=False, through="Friendship", related_name="friends_of")
     blocked_users = models.ManyToManyField("self", symmetrical=False, related_name="blocked_users_of")
     is_online = models.BooleanField(default=True)
+
+    objects = ProfileQuerySet.as_manager()
 
     def __str__(self) -> str:
         return f"Profile of {self.user.username}"
@@ -171,24 +233,7 @@ class Profile(models.Model):
     def matches(self):
         return self.won_matches.all() | self.lost_matches.all()
 
-    @property
-    def wins(self):
-        return self.won_matches.count()
-
-    @property
-    def loses(self):
-        return self.lost_matches.count()
-
-    @property
-    def winrate(self):
-        return calculate_winrate(self.wins, self.loses)
-
-    @property
-    def total_matches(self):
-        return self.matches.count()
-
-    @property
-    def scored_balls(self):
+    def get_scored_balls(self):
         return (
             self.matches.aggregate(
                 scored_balls=Sum(Case(When(loser=self, then="losers_score"), When(winner=self, then="winners_score"))),
@@ -196,15 +241,13 @@ class Profile(models.Model):
             or 0
         )
 
-    @property
-    def best_enemy(self):
+    def get_best_enemy(self):
         best_enemy = self.won_matches.values("loser").annotate(wins=Count("loser")).order_by("-wins").first()
         if not best_enemy or not best_enemy.get("loser", None):
             return None
         return Profile.objects.get(id=best_enemy["loser"])
 
-    @property
-    def worst_enemy(self):
+    def get_worst_enemy(self):
         worst_enemy = self.lost_matches.values("winner").annotate(losses=Count("winner")).order_by("-losses").first()
         if not worst_enemy or not worst_enemy.get("winner", None):
             return None
@@ -224,11 +267,11 @@ class Profile(models.Model):
             "winrate": calculate_winrate(res["wins"], res["loses"]),
         }
 
-    def annotate_elo_data_points(self):
+    def get_elo_data_points(self):
         return self.matches.annotate(
             elo_change_signed=Case(When(winner=self, then=F("elo_change")), When(loser=self, then=-F("elo_change"))),
             elo_result=Case(When(winner=self, then=F("winners_elo")), When(loser=self, then=F("losers_elo"))),
-        )
+        )[:10]
 
     def delete_avatar(self) -> None:
         self.profile_picture.delete()

@@ -3,7 +3,7 @@ from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 from ninja.pagination import paginate
 
-from users.api.common import get_user_by_username_or_404
+from users.api.common import get_user_queryset_by_username_or_404
 from users.schemas import (
     Message,
     ProfileMinimalSchema,
@@ -40,7 +40,7 @@ def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: Usern
     if user.username != username:
         raise AuthenticationError
 
-    blocked_user = get_user_by_username_or_404(user_to_add.username)
+    blocked_user = get_user_queryset_by_username_or_404(user_to_add.username).first()
 
     err_msg = user.profile.block_user(blocked_user.profile)
     if err_msg:
@@ -61,7 +61,7 @@ def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_
     if user.username != username:
         raise AuthenticationError
 
-    blocked_user = get_user_by_username_or_404(blocked_user_to_remove)
+    blocked_user = get_user_queryset_by_username_or_404(blocked_user_to_remove).first()
 
     err_msg = user.profile.unblock_user(blocked_user.profile)
     if err_msg:
