@@ -271,7 +271,7 @@ class Profile(models.Model):
         return self.matches.annotate(
             elo_change_signed=Case(When(winner=self, then=F("elo_change")), When(loser=self, then=-F("elo_change"))),
             elo_result=Case(When(winner=self, then=F("winners_elo")), When(loser=self, then=F("losers_elo"))),
-        )[:10]
+        ).values("elo_change_signed", "elo_result", "date")
 
     def delete_avatar(self) -> None:
         self.profile_picture.delete()

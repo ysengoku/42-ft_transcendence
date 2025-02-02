@@ -117,7 +117,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
 
     @staticmethod
     def resolve_elo_history(obj: Profile):
-        return obj.get_elo_data_points()
+        return obj.get_elo_data_points()[:10]
 
     @staticmethod
     def resolve_friends(obj: Profile):
