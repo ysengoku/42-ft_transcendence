@@ -17,17 +17,23 @@ export class UserNotFound extends HTMLElement {
 	  }
 	  .image-container {
 	    width: 300px;
-		height: auto;
-      }
+		  height: auto;
+    }
     </style>
-	<div class="d-flex flex-row justify-content-center align-items-center gap-3">
-	  <div class="image-container mx-2">
+	  <div class="d-flex flex-row justify-content-center align-items-stretch gap-3">
+	    <div class="image-container mx-2">
 	    <img src="${userNotFoundImage}" alt="404" class="img-fluid">
+	    </div>
+	    <div class="d-flex flex-column justify-content-around" mx-2">
+        <div class="pt-6">
+          <h2>Oops!</h2>
+          <p>Looks like the user you're searching for doesn't exist.</p>
+        </div>
+        <div class="pb-6">
+          <a class="btn btn-primary" href="/home" role="button">Go back to Home</a>
+        </div>
+      </div>
 	  </div>
-	  <div class="mx-2">
-        <h2>Oops!</h2>
-        <p>Looks like the user you're searching for doesn't exist.</p>
-	</div>
   `;
   }
 }
