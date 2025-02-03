@@ -27,7 +27,7 @@ export class Settings extends HTMLElement {
     this.innerHTML = `
 		<div class="container">
       <div class="row justify-content-center">
-        <div class="col-12 col-md-6"> 
+        <div class="col-12 col-md-6">
 			    <form class="w-100">
 				    <legend class="mt-4 mb-3 border-bottom">Settings</legend>
 				    <div class="mt-3">

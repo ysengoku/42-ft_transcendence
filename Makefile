@@ -112,7 +112,9 @@ bash-frontend:
 	docker-compose exec -it $(FRONTEND_SERVICE) bash
 
 fclean:
+	docker compose down --volumes
 	docker system prune -a
+	docker volume prune -a
 
 # RUN WITH MAKE -i
 update-nginx:

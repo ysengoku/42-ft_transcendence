@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
-from .models import Profile
+from .models.profile import Profile
 
 # ruff: noqa: S105
 
@@ -18,12 +18,12 @@ class Message(Schema):
     msg: str
 
 
-class SlugIdSchema(Schema):
+class UsernameSchema(Schema):
     """
     For payloads where certain action is performed on user.
     """
 
-    slug_id: str
+    username: str
 
 
 class ValidationErrorMessageSchema(Message):
@@ -40,7 +40,7 @@ class ProfileMinimalSchema(Schema):
     """
 
     username: str = Field(alias="user.username")
-    slug_id: str = Field(alias="user.slug_id")
+    nickname: str = Field(alias="user.nickname")
     avatar: str
     elo: int
     is_online: bool
@@ -92,24 +92,32 @@ class ProfileFullSchema(ProfileMinimalSchema):
     )
     friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
     friends_count: int
+    is_friend: bool
+    is_blocked_user: bool
+    is_blocked_by_user: bool
+
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
-        worst_enemy: Profile = obj.worst_enemy
+        worst_enemy: Profile = obj.get_worst_enemy()
         if not worst_enemy:
             return None
         return obj.get_stats_against_player(worst_enemy)
 
     @staticmethod
     def resolve_best_enemy(obj: Profile):
-        best_enemy: Profile = obj.best_enemy
+        best_enemy: Profile = obj.get_best_enemy()
         if not best_enemy:
             return None
         return obj.get_stats_against_player(best_enemy)
 
     @staticmethod
+    def resolve_scored_balls(obj: Profile):
+        return obj.get_scored_balls()
+
+    @staticmethod
     def resolve_elo_history(obj: Profile):
-        return obj.annotate_elo_data_points()[:10]
+        return obj.get_elo_data_points()[:10]
 
     @staticmethod
     def resolve_friends(obj: Profile):
@@ -158,6 +166,7 @@ class LoginSchema(Schema):
 class UpdateUserChema(PasswordValidationSchema):
     username: str | None = None
     email: str | None = None
+    nickname: str | None = None
     old_password: str | None = None
     password: str | None = None
     password_repeat: str | None = None
