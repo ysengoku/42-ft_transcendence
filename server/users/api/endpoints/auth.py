@@ -4,7 +4,7 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from users.api.jwt import create_jwt
-from users.models import User
+from users.models.user import User
 from users.schemas import (
     LoginSchema,
     Message,

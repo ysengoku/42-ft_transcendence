@@ -7,7 +7,7 @@ from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
 from users.api.common import get_profile_queryset_by_username_or_404
-from users.models import Profile
+from users.models.profile import Profile
 from users.schemas import (
     Message,
     ProfileFullSchema,

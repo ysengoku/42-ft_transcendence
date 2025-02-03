@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
-from .models import Profile
+from .models.profile import Profile
 
 # ruff: noqa: S105
 
