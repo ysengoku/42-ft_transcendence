@@ -17,10 +17,12 @@ from .schemas import (
     UsernameSchema,
     ValidationErrorMessageSchema,
 )
+# from .twofa import twofa_router
 
 api = NinjaAPI()
 # Enregistrer le router
 api.add_router("/oauth", oauth_router)
+# api.add_router("/twofa", twofa_router)
 
 
 # TODO: delete endpoint
