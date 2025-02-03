@@ -1,5 +1,8 @@
 # Components
 
+## Router
+- [] Update navigation to pages that need authentication
+
 ## Landing
 - [] JWT (check login status)
 
