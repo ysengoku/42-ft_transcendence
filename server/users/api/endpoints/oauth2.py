@@ -132,7 +132,7 @@ def oauth_callback(request):
      # Create session or token for authenticated user
         login(request, user) # this is to authenticate the user, maintain the session and create the token. if use of JWT, this line has to be removed
 
-        return JsonResponse({"status": "success", "message": "Authentication successful", "user_info":{"slug_id": user.slug_id, "username": user.username}})
+        return JsonResponse({"status": "success", "message": "Authentication successful", "user_info":{"username": user.username}})
     
 
     except Exception as e:
@@ -142,5 +142,5 @@ def oauth_callback(request):
 
 ##### END OAuth #####
 
-TODO: #need to secure the callback endpoint. check that the callback is coming from the same domain and is the same one that was sent to the auth server
-TODO: # need to store the access token in the database in an encrypted form, that way it avoids multiple calls to the api , where there is always a risk of the token being stolen
+# TODO: #need to secure the callback endpoint. check that the callback is coming from the same domain and is the same one that was sent to the auth server
+# TODO: # need to store the access token in the database in an encrypted form, that way it avoids multiple calls to the api , where there is always a risk of the token being stolen
