@@ -23,16 +23,16 @@
 - [x] 422 handling
 - [x] Password length check
 - [x] 422 Error message check
-- [] Nickname input
+- [~] Nickname input
 - [x] Unit test (input validation)
 
 ## Settings
 - [X] Adjust width
-- [] Restrict other users to access to the page (remove username from url)
+- [X] Restrict other users to access to the page (remove username from url)
 - [X] Add nickname input
 - [X] Add old password input
-- [] Hide password & email change for OAuth users
-- [] Add 2FA activate toggle
+- [X] Hide password & email change for OAuth users
+- [~] Add 2FA activate toggle
 - [] New avatar upload settings (new_profile_picture)
 - [] 401 handling
 - [] 404 handling
