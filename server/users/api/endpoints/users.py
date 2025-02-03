@@ -2,12 +2,12 @@ from django.core.exceptions import PermissionDenied, RequestDataTooBig
 from django.db.models import Q
 from django.http import HttpRequest
 from ninja import File, Form, Router
-from ninja.errors import HttpError
+from ninja.errors import AuthenticationError, HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
-from users.api.common import get_user_by_slug_id_or_404
-from users.models import Profile
+from users.api.common import get_profile_queryset_by_username_or_404
+from users.models.profile import Profile
 from users.schemas import (
     Message,
     ProfileFullSchema,
@@ -24,39 +24,41 @@ users_router = Router()
 @paginate
 def get_users(request: HttpRequest, search: str | None = None):
     """
-    Gets users based on the `search` param.
-    The server will return users whose `slug_id` or `username` starts with `search`.
+    Gets users.
+    Without `search` param gets paginated amount of users.
+    With `search` param the server will return users whose `nickname` or `username` starts with `search`.
     Users who are online will be shown first.
     Paginated by the `limit` and `offset` settings.
     For example, `/users?search=pe&limit=10&offset=0` will get 10 friends from the very first one, whose
-    `slug_id` or `username` starts with `pe`.
+    `nickname` or `username` starts with `pe`.
     """
     if search:
         return (
             Profile.objects.prefetch_related("user")
-            .filter(Q(user__slug_id__istartswith=search) | Q(user__username__istartswith=search))
+            .filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
             .order_by("-is_online")
         )
-    return Profile.objects.prefetch_related("profile").all().order_by("-is_online")
+    return Profile.objects.prefetch_related("user").all().order_by("-is_online")
 
 
-@users_router.get("{slug_id}", response={200: ProfileFullSchema, 404: Message})
-def get_user(request: HttpRequest, slug_id: str):
+@users_router.get("{username}", response={200: ProfileFullSchema, 404: Message})
+def get_user(request: HttpRequest, username: str):
     """
-    Gets a specific user by slug_id.
+    Gets a specific user by username.
     """
-    user = get_user_by_slug_id_or_404(slug_id)
-    return user.profile
+    curr_user = request.auth
+    user_profile = get_profile_queryset_by_username_or_404(username)
+    return user_profile.with_full_profile(curr_user, username).first()
 
 
 # TODO: add authorization to settings change
 @users_router.post(
-    "{slug_id}",
+    "{username}",
     response={200: ProfileMinimalSchema, frozenset({401, 404, 413}): Message, 422: list[ValidationErrorMessageSchema]},
 )
 def update_user(
     request: HttpRequest,
-    slug_id: str,
+    username: str,
     data: Form[UpdateUserChema],
     new_profile_picture: UploadedFile | None = File(description="User profile picture.", default=None),
 ):
@@ -64,12 +66,15 @@ def update_user(
     Udates settings of the user.
     Maximum size of the uploaded avatar is 10mb. Anything bigger will return 413 error.
     """
-    user = get_user_by_slug_id_or_404(slug_id)
+    user = request.auth
+
+    if user.username != username:
+        raise AuthenticationError
 
     try:
         user.update_user(data, new_profile_picture)
     except PermissionDenied as exc:
-        raise HttpError(401, "Old password is invalid.") from exc
+        raise AuthenticationError("Old password is invalid.") from exc
     except RequestDataTooBig as exc:
         raise HttpError(413, "File is too big. Please upload a file that weights less than 10mb.") from exc
 

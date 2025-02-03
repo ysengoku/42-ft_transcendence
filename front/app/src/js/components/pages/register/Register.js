@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
-import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
+// import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
 
 export class Register extends HTMLElement {
   constructor() {
@@ -27,6 +27,7 @@ export class Register extends HTMLElement {
         <div class="row justify-content-center">
           <div class="col-12 col-md-4"> 
     		    <div class='container d-flex flex-column justify-content-center align-items-center'>
+              <div id="signup-failed-feedback"></div>
       			  <form class='w-100'>
         			  <div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
@@ -72,19 +73,9 @@ export class Register extends HTMLElement {
     const emailField = this.querySelector('#email');
     const passwordField = this.querySelector('#password');
     const passwordRepeatField = this.querySelector('#password_repeat');
-
-    // Input validation at Front-end
-    let isFormValid = true;
-    isFormValid = this.checkInput(usernameField, '#username-feedback', 'Username is required');
-    isFormValid = this.checkInput(emailField, '#email-feedback', 'Email is required') && isFormValid;
-    isFormValid = this.checkInput(passwordField, '#password-feedback', 'Password is required') && isFormValid;
-    isFormValid =
-      this.checkInput(passwordRepeatField, '#password_repeat-feedback', 'Please confirm your password') && isFormValid;
-    isFormValid = this.checkPasswordDiff(passwordField, passwordRepeatField) && isFormValid;
-    if (!isFormValid) {
+    if (!this.checkInputFields(usernameField, emailField, passwordField, passwordRepeatField)) {
       return;
     }
-
     const userData = {
       username: usernameField.value,
       email: emailField.value,
@@ -93,49 +84,77 @@ export class Register extends HTMLElement {
     };
 
     try {
-      const response = await apiRequest('POST', API_ENDPOINTS.USERS, userData, false, false);
-      // console.log('Registration successful:', response);
+      const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
+      console.log('Registration successful:', response);
 
       if (response.status === 200) {
         localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
 
-        // const userInformation = {
-        //   username: response.user.username,
-        //   avatar: response.user.avatar,
-        // };
-        // localStorage.setItem('user', JSON.stringify(userInformation));
-        // ----- Temporary solution -------------------------------------
-        const mockUserData = mockRegisterSuccessResponse();
         const userInformation = {
-          username: mockUserData.username,
-          avatar: mockUserData.avatar,
+          username: response.data.username,
+          avatar: response.data.avatar,
         };
         localStorage.setItem('user', JSON.stringify(userInformation));
+        // ----- Temporary solution -------------------------------------
+        // const mockUserData = mockRegisterSuccessResponse();
+        // const userInformation = {
+        //   username: mockUserData.username,
+        //   avatar: mockUserData.avatar,
+        // };
+        // localStorage.setItem('user', JSON.stringify(userInformation));
         // --------------------------------------------------------------
 
         const navBar = document.getElementById('navbar-container');
         navBar.innerHTML = '<navbar-component></navbar-component>';
-        // router.navigate(`/home`, response.user);
-        router.navigate(`/home`, mockUserData); // ----- Temporary solution
+        router.navigate(`/home`, response.user);
+        // router.navigate(`/home`, mockUserData); // ----- Temporary solution
       }
     } catch (error) {
-      // Error handling
       console.error('Error status:', error.status);
+      let errorMessages = '';
       if (error.status === 422) {
-        // Show reison for validation error
-        const errorMsg = error.response[0]?.msg || 'Validation error';
-        console.error(errorMsg);
+        errorMessages = error.response.msg;
       } else {
-        // Show another error message
-        console.error('Error status:', error.status);
+        errorMessages = 'An unexpected error occurred. Please try again later.';
       }
+      const feedback = this.querySelector('#signup-failed-feedback');
+      feedback.innerHTML = `
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          ${errorMessages}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
     }
   }
 
-  checkInput(field, feedbackSelector, errorMessage) {
+  checkInputFields(usernameField, emailField, passwordField, passwordRepeatField) {
+    let isFormValid = true;
+    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', 'Username is required');
+    isFormValid = this.isFieldFilled(emailField, '#email-feedback', 'Email is required') && isFormValid;
+    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', 'Password is required') && isFormValid;
+    isFormValid =
+      this.isFieldFilled(
+          passwordRepeatField, '#password_repeat-feedback', 'Please confirm your password') && isFormValid;
+    isFormValid =
+      this.checkPasswordLength(passwordField) &&
+      this.checkPasswordDiff(passwordField, passwordRepeatField) && isFormValid;
+    return isFormValid;
+  }
+
+  isFieldFilled(field, feedbackSelector, errorMessage) {
     if (!field.value.trim()) {
       field.classList.add('is-invalid');
       document.querySelector(feedbackSelector).textContent = errorMessage;
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  checkPasswordLength(passwordField) {
+    if (passwordField.value.length < 8) {
+      passwordField.classList.add('is-invalid');
+      document.querySelector('#password-feedback').textContent = 'Password must be at least 8 characters';
       return false;
     } else {
       return true;
