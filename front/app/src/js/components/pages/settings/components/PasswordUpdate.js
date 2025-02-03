@@ -3,13 +3,18 @@ import { INPUT_FEEDBACK } from "@utils/inputFeedback";
 export class PasswordUpdate extends HTMLElement {
   constructor() {
 	super();
+	// this.registrationType = '';
   }
 
-  connectedCallback() {
+  setParam(value) {
+	this.registrationType = value;
     this.render();
   }
 
   render() {
+	if (this.registrationType !== 'regular') {
+		return;
+	}
     this.innerHTML = `
       <div class="mt-3">
 		<label for="old-password" class="form-label">Current password (if you would like to change your password)</label>
