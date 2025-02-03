@@ -6,7 +6,7 @@ from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 from ninja.security import APIKeyCookie
 
-from users.models.user import User
+from users.models import User
 
 from .endpoints.auth import auth_router
 from .endpoints.blocked_users import blocked_users_router
