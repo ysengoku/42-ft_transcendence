@@ -1,18 +1,24 @@
-import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
+import { router } from '@router';
 import './components/index.js';
-import { INPUT_FEEDBACK } from '@utils/inputFeedback.js';
+import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
 export class Settings extends HTMLElement {
   constructor() {
     super();
+    this.user = null;
   }
 
-  setParam(param) {
-    const username = param.username;
-    this.fetchUserData(username);
+  connectedCallback() {
+    this.fetchUserData();
   }
 
-  async fetchUserData(username) {
+  async fetchUserData() {
+    const user = localStorage.getItem('user');
+    if (!user) {
+      // Show a messages to user
+      router.navigate('/login');
+    }
+    const username = JSON.parse(user).username;
     try {
       // Temporary fetch function with mock
       const userData = await simulateFetchUserData(username);
@@ -20,7 +26,7 @@ export class Settings extends HTMLElement {
       this.render();
     } catch (error) {
       console.error('Error fetching user data:', error);
-      // Show "User not exists Page"?
+      // Show a message to user
     }
   }
 
