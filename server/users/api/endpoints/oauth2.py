@@ -9,11 +9,11 @@ from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from ninja import Router
-from .models import User
+from ...models import User
 from django.contrib.auth import login
 
 logger = logging.getLogger(__name__)
-oauth_router = Router()
+oauth2_router = Router()
 
 
 def get_oauth_config(platform: str) -> dict:
@@ -25,7 +25,7 @@ def get_oauth_config(platform: str) -> dict:
     return settings.OAUTH_CONFIG[platform]
 
 
-@oauth_router.get("/authorize/{platform}")
+@oauth2_router.get("/authorize/{platform}")
 def oauth_authorize(request, platform: str):
     try:
         logger.info(f"Starting OAuth authorization for platform: {platform}")
@@ -51,10 +51,10 @@ def oauth_authorize(request, platform: str):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-# Backend: oauth_router.py
+# Backend: oauth2_router.py
 
 
-@oauth_router.get("/callback/{platform}")
+@oauth2_router.get("/callback/{platform}")
 def oauth_callback(request):
     code = request.GET.get("code")
     state = request.GET.get("state")
