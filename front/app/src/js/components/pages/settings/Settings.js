@@ -43,6 +43,8 @@ export class Settings extends HTMLElement {
 				    <div>
               <settings-user-info></settings-user-info>
 				    </div>
+            <div>
+              <settings-email-update></settings-email-update></div>
 				    <div>
               <settings-password-update></settings-password-update>
 				    </div>
@@ -68,10 +70,14 @@ export class Settings extends HTMLElement {
     
     const avatarUploadButton = this.querySelector('avatar-upload');
     avatarUploadButton.setAvatar(this.user);
-    const userInfo = this.querySelector('settings-user-info');
-    userInfo.setUserInfo(this.user);
+    const userNames = this.querySelector('settings-user-info');
+    userNames.setParams(this.user);
+    const emailField = this.querySelector('settings-email-update');
+    emailField.setParams(this.user);
+    const passwordField = this.querySelector('settings-password-update');
+    passwordField.setParam(this.user.registration_type);
     const mfaEnable = this.querySelector('mfa-enable-update');
-    mfaEnable.setParam(this.user.mfa_enabled);
+    mfaEnable.setParams(this.user);
 
     const deleteAccountButton = this.querySelector('delete-account-button');
     deleteAccountButton.setUsername(this.user.username);
@@ -90,6 +96,8 @@ export class Settings extends HTMLElement {
   async handleSubmit() {
     const userInfoField = this.querySelector('settings-user-info');
     const userInfo = userInfoField.newUserInfo;
+    const emailField = this.querySelector('settings-email-update');
+    const newEmail = emailField.newEmail;
 
     const passwordField = this.querySelector('settings-password-update');
     if (!passwordField.checkPasswordInput()) {
@@ -107,8 +115,8 @@ export class Settings extends HTMLElement {
     if (userInfo.nickname) {
       formData.append('nickname', userInfo.nickname);
     }
-    if (userInfo.email) {
-      formData.append('email', emailField.value);
+    if (newEmail) {
+      formData.append('email', newEmail);
     }
     // If there is password change request, append to formData
     const oldPassword = this.querySelector('#old-password');
