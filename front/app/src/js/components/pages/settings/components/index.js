@@ -1,15 +1,17 @@
-import { UserInfoUpdate } from './UserInfoUpdate.js';
+import { UserNamesUpdate } from './UserNamesUpdate.js';
+import { EmailUpdate } from './EmailUpdate.js';
 import { PasswordUpdate } from './PasswordUpdate.js';
 import { AvatarUpload } from './AvatarUpload.js';
 import { AvatarUploadModal } from './AvatarUploadModal.js';
 import { MfaEnableUpdate } from './MfaEnableUpdate.js';
 import { DeleteAccountButton } from './DeleteAccountButton.js';
 
-export { 
-  UserInfoUpdate,
+export {
+  UserNamesUpdate as UserInfoUpdate,
+  EmailUpdate,
   PasswordUpdate,
   AvatarUpload,
   AvatarUploadModal,
   MfaEnableUpdate,
-  DeleteAccountButton 
+  DeleteAccountButton,
 };
