@@ -19,10 +19,10 @@ def generate_secret_key() -> str:
 
 
 @twofa_router.post("/2fa/setup")
-def setup_2fa(request, slug_id: str) -> Dict[str, Any]:
+def setup_2fa(request, username: str) -> Dict[str, Any]:
     """Setup 2FA for a user"""
     try:
-        user = User.objects.find_by_slug_id(slug_id)
+        user = User.objects.find_by_username(username)
         if not user:
             raise HttpError(404, "User not found")
 
@@ -43,7 +43,7 @@ def setup_2fa(request, slug_id: str) -> Dict[str, Any]:
         # Generate QR code
         totp = pyotp.TOTP(secret)
         uri = totp.provisioning_uri(
-            name=user.email,  # Utiliser l'email plutôt que le username pour plus de clarté
+            name=user.username,
             issuer_name="Transcendence",
         )
 
@@ -72,13 +72,13 @@ def setup_2fa(request, slug_id: str) -> Dict[str, Any]:
 
 
 @twofa_router.post("/2fa/verify")
-def verify_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
+def verify_2fa(request, username: str, token: str) -> Dict[str, str]:
     """Verify and enable 2FA for a user"""
     if not token or len(token) != 6 or not token.isdigit():
         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
 
     try:
-        user = User.objects.find_by_slug_id(slug_id)
+        user = User.objects.find_by_username(username)
         if not user:
             raise HttpError(404, "User not found")
 
@@ -102,13 +102,13 @@ def verify_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
 
 
 @twofa_router.post("/2fa/verify-login")
-def verify_2fa_login(request, slug_id: str, token: str) -> Dict[str, str]:
+def verify_2fa_login(request, username: str, token: str) -> Dict[str, str]:
     """Verify 2FA token during login"""
     if not token or len(token) != 6 or not token.isdigit():
         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
 
     try:
-        user = User.objects.find_by_slug_id(slug_id)
+        user = User.objects.find_by_username(username)
         if not user:
             raise HttpError(404, "User not found")
 
@@ -127,13 +127,13 @@ def verify_2fa_login(request, slug_id: str, token: str) -> Dict[str, str]:
 
 
 @twofa_router.delete("/2fa/disable")
-def disable_2fa(request, slug_id: str, token: str) -> Dict[str, str]:
+def disable_2fa(request, username: str, token: str) -> Dict[str, str]:
     """Disable 2FA for a user"""
     if not token or len(token) != 6 or not token.isdigit():
         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
 
     try:
-        user = User.objects.find_by_slug_id(slug_id)
+        user = User.objects.find_by_username(username)
         if not user:
             raise HttpError(404, "User not found")
 

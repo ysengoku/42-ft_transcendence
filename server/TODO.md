@@ -47,7 +47,7 @@
     - [ ] Change the API views so they could be able to find and return different types of users.
 
 # Reworks
-- [x] `username`'s are not slugified, like `slug_id`
+- [x] `username`'s are not slugified, like `username`
 - [x] Postfixes to colliding `username`'s are still added, but only in the case oauth connection. If non-oauth user tries to register an account with the `username` that already exists, it's always an error, even if the username exists on oauth account.
 - [x] We add non-unique `nickname`.
 - [x] On user creation, user may provide `nickname`. If not, the default  `nickname` is `username`.
