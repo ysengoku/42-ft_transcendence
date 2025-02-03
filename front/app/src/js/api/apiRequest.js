@@ -69,18 +69,20 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     const response = await fetch(url, options);
     if (response.ok) {
       console.log('Request successful:', response);
-      return response;
+      // return await response.json();
+      const responseData = await response.json();
+      return { status: response.status, data: responseData };
     }
     const error = new Error('Request failed');
     error.status = response.status;
     let errorData = null;
-    const contentType = response.headers.get('Content-Type');
-    if (contentType && contentType.includes('application/json')) {
-      errorData = await response.json();
-    } else if (contentType && contentType.includes('text/html')) {
-      errorData = await response.text();
-    }
-    console.log('Error Data: ', errorData);
+    // const contentType = response.headers.get('Content-Type');
+    // if (contentType && contentType.includes('application/json')) {
+    errorData = await response.json();
+    // } else if (contentType && contentType.includes('text/html')) {
+    //   errorData = await response.text();
+    // }
+    // console.log('Error Data: ', errorData);
     error.response = errorData;
     throw error;
   } catch (error) {
