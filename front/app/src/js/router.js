@@ -174,7 +174,7 @@ router.addRoute('/register', 'register-form');
 router.addRoute('/home', 'user-home', false, true);
 router.addRoute('/profile/:username', 'user-profile', true, true);
 router.addRoute('/user-not-found', 'user-not-found', true, true);
-router.addRoute('/settings/:username', 'user-settings', true, true);
+router.addRoute('/settings', 'user-settings', false, true);
 router.addRoute('/dual-menu', 'dual-menu', false, true);
 router.addRoute('/dual/:id', 'dual', true, true);
 router.addRoute('/tournament-menu', 'tournament-menu', false, true);

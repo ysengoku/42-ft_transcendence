@@ -35,7 +35,7 @@ export class DropdownMenu extends HTMLElement {
 			${
         isLoggedIn ? `
 				<a class="dropdown-item" href="/profile/${username}">Your profile</a>
-				<a class="dropdown-item" href="/settings/${username}">Settings</a>
+				<a class="dropdown-item" href="/settings">Settings</a>
 			` : `
 				<a class="dropdown-item" href="/login" id="dropdown-item-login">Login</a>
 				<a class="dropdown-item" href="/register" id="dropdown-item-register">Sign up</a>
