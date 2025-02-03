@@ -29,7 +29,8 @@
 ## Settings
 - [X] Adjust width
 - [] Restrict other users to access to the page (remove username from url)
-- [] Add old password input
+- [X] Add nickname input
+- [X] Add old password input
 - [] Hide password & email change for OAuth users
 - [] Add 2FA activate toggle
 - [] New avatar upload settings (new_profile_picture)
