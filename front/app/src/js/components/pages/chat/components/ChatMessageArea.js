@@ -1,15 +1,15 @@
-import { mockChatMessagesData } from "@mock/functions/mockChatMessages";
+import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 
 export class ChatMessageArea extends HTMLElement {
   constructor() {
-	  super();
+    super();
     this.id = -1;
     this._data = {
       username: '',
       nickname: '',
       avatar: '',
       is_online: false,
-      message: [],
+      messages: [],
     };
   }
 
@@ -23,25 +23,56 @@ export class ChatMessageArea extends HTMLElement {
     this.id = value;
     this.fetchMessages();
   }
-  
+
   async fetchMessages() {
     // Fetch messages from the server
-    
+
     // temporary mock data
     const data = await mockChatMessagesData(this.id);
     this._data = data;
-    console.log('Chat messages:', this._data);
+    // console.log('Chat messages:', this._data);
     this.render();
   }
 
+  renderMessages() {
+    const chatMessages = this.querySelector('#chat-messages');
+    chatMessages.innerHTML = '';
+    for (const message of this._data.messages) {
+      const messageElement = document.createElement('div');
+      if (message.sender === this._data.username) {
+        messageElement.classList.add(
+            'left-align-message', 'd-flex', 'flex-row', 'justify-content-start',
+            'align-items-center', 'gap-3',
+        );
+        messageElement.innerHTML = `
+          <img src="${this._data.avatar}" class="chat-message-avatar rounded-circle" alt="User" />
+          <div class="message">
+            <div class="bubble">
+              ${message.message}
+            </div>
+          </div>
+        `;
+      } else {
+        messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
+            'align-items-center');
+        messageElement.innerHTML = `
+          <div class="bubble">
+            ${message.message}
+          </div>
+        `;
+      }
+      chatMessages.appendChild(messageElement);
+    }
+  }
+
   render() {
-    console.log('Data:', this._data);
+    // console.log('Data:', this._data);
     this.innerHTML = `
 	  <style>
       #chat-messages {
         min-height: 0;
       }
-      #message-area-header {
+      #chat-message-header-avatar {
         width: 52px;
         height: 52px;
         object-fit: cover;
@@ -55,13 +86,13 @@ export class ChatMessageArea extends HTMLElement {
       .online-status.online {
         background-color: green;
       }
-	    .message {
-          display: flex;
-          justify-content: flex-start;
-          margin-bottom: 10px;
+      .left-align-message {
+        padding-right: 32px;
+        margin-bottom: 24px;
       }
-      .message.text-end {
-          justify-content: flex-end;
+      .right-align-message {
+        margin-left: 80px;
+        margin-bottom: 24px;
       }
       .bubble {
           display: inline-block;
@@ -71,7 +102,7 @@ export class ChatMessageArea extends HTMLElement {
           box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
           color: black;
       }
-      .message.text-end .bubble {
+      .right-align-message .bubble {
           background-color: #007bff;
           color: white;
       }
@@ -82,8 +113,8 @@ export class ChatMessageArea extends HTMLElement {
         border-radius: 50%;
       }
 	  </style>
-    <div class="d-flex flex-row justify-content-start align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
-      <img src="${this._data.avatar}" class="rounded-circle" alt="User" id="message-area-header"/>
+    <div class="d-flex flex-row justify-content-start align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top">
+      <img src="${this._data.avatar}" class="rounded-circle" alt="User" id="chat-message-header-avatar"/>
       <div class="d-flex flex-column text-start">
         <div class="d-flex flex-row align-items-center gap-3">
           <h5>${this._data.nickname}</h5>
@@ -95,27 +126,10 @@ export class ChatMessageArea extends HTMLElement {
           </div>
       </div>
     </div>
-    
-    <div class="overflow-auto" id="chat-messages">
-	    <div class="p-3" id="chat-messages">
 
-        <div class="d-flex flex-row align-items-center text-start mb-2 gap-3">
-          <img src="/media/avatars/sample_avatar.jpg" class="chat-message-avatar rounded-circle" alt="User" />
-
-          <div class="message">
-            <div class="bubble">
-              Hello!
-            </div>
-          </div>
-        </div>
-
-        <div class="message text-end mb-2">
-          <div class="bubble">
-            Hi! How are you?
-        </div>
-      </div>
-    </div>
-	`;
+    <div class="overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
+	  `;
+    this.renderMessages();
   }
 }
 
