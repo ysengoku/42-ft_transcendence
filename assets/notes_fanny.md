@@ -1,3 +1,9 @@
+# TODO:
+mettre le register avec oauth2 et 2fa - corriger register.js
+mettre le login avec oauth2 et 2fa - corriger login.js
+
+
+
 ## what I did
 
 - a docker which work for development and production with django, vite and nginx
