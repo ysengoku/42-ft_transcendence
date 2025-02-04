@@ -1,16 +1,23 @@
 // oauth.js
 import { router } from '@router';
+import { API_ENDPOINTS } from '@api'; 
 
 export class OAuth extends HTMLElement {
   constructor() {
     super();
   }
 
+
   async handleOAuthClick(platform) {
     try {
+      // fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform))
+      // .then((response) => response.json())
+      // .then((data) => console.log(data))
+      // .catch((error) => console.error('OAuth aaaaaa failed:', error));
       console.log(`Starting OAuth flow for ${platform}`);
-      const response = await fetch(`/api/oauth/authorize/${platform}`);
-      
+
+      const response = await fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform));
+
       console.log('Response status:', response.status);
       const data = await response.json();
       console.log('Response data:', data);
@@ -24,7 +31,7 @@ export class OAuth extends HTMLElement {
       if (data.auth_url) {
         // Stocker la plateforme pour le callback
         sessionStorage.setItem('oauth_pending', 'true');
-        sessionStorage.setItem('oauth_platform', platform); 
+        sessionStorage.setItem('oauth_platform', platform);
         // Redirection vers le provider OAuth
         console.log('Redirecting to OAuth provider:', data.auth_url);
         window.location.href = data.auth_url;
@@ -41,19 +48,27 @@ export class OAuth extends HTMLElement {
     const oauthPending = sessionStorage.getItem('oauth_pending');
     if (oauthPending === 'true') {
       const platform = sessionStorage.getItem('oauth_platform');
+      if (!platform) {
+        console.error('No OAuth platform found');
+        return;
+      }
+
       if (platform) {
         try {
-          const response = await fetch(`/api/oauth/callback/${platform}`, {
+          const response = await fetch(API_ENDPOINTS.OAUTH_CALLBACK(platform), {
             method: 'GET',
-            credentials: 'include'
+            credentials: 'include',
           });
 
           const data = await response.json();
           console.log('OAuth callback data:', data);
 
           if (data.status === 'success') {
-            console.log('User Info:', data.user_info);  // Print user info for the moment
-            // router.navigate(`/home`, response.user);
+            console.log('User Info:', data.user_info); // Print user info for the moment
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('auth_token', data.auth_token);
+            localStorage.setItem('userID', data.user_info.username); ///// verf id
+            router.navigate(`/home`, response.user);
           } else {
             console.error('OAuth callback error:', data.error);
           }
