@@ -1,5 +1,8 @@
 # Components
 
+## Router
+- [] Update navigation to pages that need authentication
+
 ## Landing
 - [] JWT (check login status)
 
@@ -8,6 +11,7 @@
 - [x] CSRF Token handling
 - [x] Error handling
 - [] Forgot password
+- [] Unit test (input validation)
 
 ## Logout
 - [x] Clear CSRF token
@@ -19,29 +23,32 @@
 - [x] 422 handling
 - [x] Password length check
 - [x] 422 Error message check
-- [] Nickname input
+- [~] Nickname input
+- [x] Unit test (input validation)
 
 ## Settings
 - [X] Adjust width
-- [] Restrict other users to access to the page (remove username from url)
-- [] Add old password input
-- [] Hide password & email change for OAuth users
-- [] Add 2FA activate toggle
+- [X] Restrict other users to access to the page (remove username from url)
+- [X] Add nickname input
+- [X] Add old password input
+- [X] Hide password & email change for OAuth users
+- [~] Add 2FA activate toggle
 - [] New avatar upload settings (new_profile_picture)
 - [] 401 handling
 - [] 404 handling
 - [] 413 handling
 - [] 422 handling
+- [] Unit test (input validation)
 
 ## Profile
 
 ### Error handling
 - [x] 404 handling
-- [] Check 404 server response (it returns 500 now)
+- [x] Check 404 server response (it returns 500 now)
 - [] Rendering of user profile page who is blocking me
 
 ### User info
-- [] User id
+- [] username & nickname
 - [] Title
 
 ### User actions

@@ -6,11 +6,11 @@ from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 from ninja.security import APIKeyCookie
 
-from users.models.user import User, Profile
+from users.models.user import User
 
 from .endpoints.auth import auth_router
 from .endpoints.oauth2 import oauth2_router
-from .endpoints.twofa import twofa_router
+from .endpoints.twoFa import twofa_router
 from .endpoints.blocked_users import blocked_users_router
 from .endpoints.friends import friends_router
 from .endpoints.users import users_router
@@ -34,35 +34,35 @@ class JwtCookieAuth(APIKeyCookie):
         return user
 
 
-api_root = NinjaAPI(auth=JwtCookieAuth(), csrf=True)
-api_root.add_router("users", users_router)
-api_root.add_router("", auth_router)
-api_root.add_router("", oauth2_router)
-api_root.add_router("", twofa_router)
+api = NinjaAPI(auth=JwtCookieAuth(), csrf=True)
+api.add_router("users", users_router)
+api.add_router("", auth_router)
+api.add_router("", oauth2_router)
+api.add_router("", twofa_router)
 users_router.add_router("", blocked_users_router)
 users_router.add_router("", friends_router)
 
 
-@api_root.exception_handler(HttpError)
+@api.exception_handler(HttpError)
 def handle_http_error_error(request: HttpRequest, exc: HttpError):
-    return api_root.create_response(
+    return api.create_response(
         request,
         {"msg": exc.message},
         status=exc.status_code,
     )
 
 
-@api_root.exception_handler(AuthenticationError)
+@api.exception_handler(AuthenticationError)
 def handle_authentication_error(request: HttpRequest, exc: AuthenticationError):
     message = str(exc) if str(exc) else "Unauthorized."
-    return api_root.create_response(
+    return api.create_response(
         request,
         {"msg": message},
         status=401,
     )
 
 
-@api_root.exception_handler(ValidationError)
+@api.exception_handler(ValidationError)
 def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
     err_response = []
     for key in exc.message_dict:
@@ -70,9 +70,9 @@ def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
             {"type": "validation_error", "loc": ["body", "payload", key], "msg": msg} for msg in exc.message_dict[key]
         )
 
-    return api_root.create_response(request, err_response, status=422)
+    return api.create_response(request, err_response, status=422)
 
 
-@api_root.exception_handler(NinjaValidationError)
+@api.exception_handler(NinjaValidationError)
 def handle_ninja_validation_error(request: HttpRequest, exc: NinjaValidationError):
-    return api_root.create_response(request, exc.errors, status=422)
+    return api.create_response(request, exc.errors, status=422)

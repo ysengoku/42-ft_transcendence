@@ -3,14 +3,15 @@ import logging
 import os
 from urllib.parse import urlencode
 
-from jsonschema import ValidationError
 import requests
 from django.conf import settings
+from django.contrib.auth import login
 from django.http import JsonResponse
 from django.shortcuts import redirect
+from django.core.exceptions import ValidationError
 from ninja import Router
-from ...models import User
-from django.contrib.auth import login
+
+from users.models import User
 
 logger = logging.getLogger(__name__)
 oauth2_router = Router()
@@ -55,7 +56,7 @@ def oauth_authorize(request, platform: str):
 
 
 @oauth2_router.get("/callback/{platform}")
-def oauth_callback(request):
+def oauth_callback(request, platform: str):
     code = request.GET.get("code")
     state = request.GET.get("state")
 
