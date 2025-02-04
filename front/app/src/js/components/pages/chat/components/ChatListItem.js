@@ -13,7 +13,7 @@ export class ChatListItem extends HTMLElement {
 
   setData(data) {
 	this._data = data;
-	console.log('Data: ', this._data);
+	// console.log('Data: ', this._data);
 	this.render();
   }
 
@@ -44,7 +44,7 @@ export class ChatListItem extends HTMLElement {
         inline-height: 1;
        }
     </style>
-	  <li class="list-group-item">
+	  <li class="list-group-item" id="chat-list-item">
         <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
           <img src="${this._data.avatar}" class="rounded-circle" alt="User" />
 
@@ -64,6 +64,12 @@ export class ChatListItem extends HTMLElement {
       </li>
 	`;
 	// TODO: Add click event listener
+	const listItem = this.querySelector('#chat-list-item');
+	const chatMessages = document.querySelector('chat-message-area');
+	listItem.addEventListener('click', () => {
+      console.log('Chat ID: ', Number(this._data.id));
+      chatMessages.setId(Number(this._data.id));
+	});
   }
 
   setLastMessageTime(time) {
@@ -80,4 +86,4 @@ export class ChatListItem extends HTMLElement {
   }
 }
 
-customElements.define('chat-list-item', ChatListItem);
+customElements.define('chat-list-item-component', ChatListItem);
