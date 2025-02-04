@@ -37,7 +37,7 @@ class JwtCookieAuth(APIKeyCookie):
 api = NinjaAPI(auth=JwtCookieAuth(), csrf=True)
 api.add_router("users", users_router)
 api.add_router("", auth_router)
-api.add_router("", oauth2_router)
+api.add_router("oauth", oauth2_router)
 api.add_router("", twofa_router)
 users_router.add_router("", blocked_users_router)
 users_router.add_router("", friends_router)
