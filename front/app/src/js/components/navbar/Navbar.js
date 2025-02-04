@@ -9,7 +9,12 @@ export class Navbar extends HTMLElement {
 
   render() {
     this.innerHTML = `
-			<nav class="navbar navbar-expand navbar-dark bg-dark px-3">
+      <style>
+        .navbar {
+          background-color: #3b3b3b;
+        }
+      </style>
+			<nav class="navbar navbar-expand navbar-dark px-3">
 				<navbar-brand-component></navbar-brand-component>
 				<div class="ms-auto d-flex align-items-center" id="navbar-actions-content">
 				</div>

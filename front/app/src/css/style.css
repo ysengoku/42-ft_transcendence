@@ -12,8 +12,10 @@ body {
 }
 
 .footer {
-  margin-top: auto;
-  font-size: 0.8em;
+  height: 48px;
+  background-color: #3b3b3b;
+  /* margin-top: auto; */
+  /* font-size: 0.8em; */
 }
 
 /* ----- Settings ----------------------------------------------------------- */
