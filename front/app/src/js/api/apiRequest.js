@@ -68,8 +68,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
   try {
     const response = await fetch(url, options);
     if (response.ok) {
-      console.log('Request successful:', response);
-      // return await response.json();
+      // console.log('Request successful:', response);
       const responseData = await response.json();
       return { status: response.status, data: responseData };
     }

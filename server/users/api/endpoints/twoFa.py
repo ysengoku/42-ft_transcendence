@@ -1,14 +1,14 @@
-from ninja import Router
-from ninja.errors import HttpError
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-import pyotp
-import qrcode
 import base64
 from io import BytesIO
-from typing import Dict, Any
+from typing import Any, Dict
+import pyotp
+import qrcode
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from ninja import Router
+from ninja.errors import HttpError
 
-from ...models import User, TwoFactorAuth
+from users.models import twoFa, User
 
 twofa_router = Router()
 
@@ -29,7 +29,7 @@ def setup_2fa(request, username: str) -> Dict[str, Any]:
         secret = generate_secret_key()
 
         # Check if 2FA already exists
-        existing_2fa = TwoFactorAuth.objects.filter(user=user).first()
+        existing_2fa = twoFa.objects.filter(user=user).first()
         if existing_2fa:
             if existing_2fa.is_enabled:
                 raise HttpError(400, "2FA is already enabled for this account")
@@ -38,7 +38,7 @@ def setup_2fa(request, username: str) -> Dict[str, Any]:
             existing_2fa.save()
         else:
             # Create new 2FA entry
-            TwoFactorAuth.objects.create(user=user, secret=secret, is_enabled=False)
+            twoFa.objects.create(user=user, secret=secret, is_enabled=False)
 
         # Generate QR code
         totp = pyotp.TOTP(secret)
@@ -82,7 +82,7 @@ def verify_2fa(request, username: str, token: str) -> Dict[str, str]:
         if not user:
             raise HttpError(404, "User not found")
 
-        twofa = TwoFactorAuth.objects.filter(user=user).first()
+        twofa = twoFa.objects.filter(user=user).first()
         if not twofa:
             raise HttpError(404, "Please set up 2FA before verifying")
 
@@ -112,7 +112,7 @@ def verify_2fa_login(request, username: str, token: str) -> Dict[str, str]:
         if not user:
             raise HttpError(404, "User not found")
 
-        twofa = TwoFactorAuth.objects.filter(user=user).first()
+        twofa = twoFa.objects.filter(user=user).first()
         if not twofa or not twofa.is_enabled:
             raise HttpError(400, "2FA is not enabled for this account")
 
@@ -137,7 +137,7 @@ def disable_2fa(request, username: str, token: str) -> Dict[str, str]:
         if not user:
             raise HttpError(404, "User not found")
 
-        twofa = TwoFactorAuth.objects.filter(user=user).first()
+        twofa = twoFa.objects.filter(user=user).first()
         if not twofa:
             raise HttpError(404, "2FA is not set up for this account")
         if not twofa.is_enabled:

@@ -1,10 +1,9 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
-
 
 class TwoFactorAuth(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    secret = models.CharField(max_length=32)  # secret key for the user
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    secret = models.CharField(max_length=32)
     is_enabled = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

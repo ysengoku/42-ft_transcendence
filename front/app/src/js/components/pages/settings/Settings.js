@@ -1,17 +1,24 @@
-import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
+import { router } from '@router';
 import './components/index.js';
+import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
 export class Settings extends HTMLElement {
   constructor() {
     super();
+    this.user = null;
   }
 
-  setParam(param) {
-    const username = param.username;
-    this.fetchUserData(username);
+  connectedCallback() {
+    this.fetchUserData();
   }
 
-  async fetchUserData(username) {
+  async fetchUserData() {
+    const user = localStorage.getItem('user');
+    if (!user) {
+      // Show a messages to user
+      router.navigate('/login');
+    }
+    const username = JSON.parse(user).username;
     try {
       // Temporary fetch function with mock
       const userData = await simulateFetchUserData(username);
@@ -19,7 +26,7 @@ export class Settings extends HTMLElement {
       this.render();
     } catch (error) {
       console.error('Error fetching user data:', error);
-      // Show "User not exists Page"?
+      // Show a message to user
     }
   }
 
@@ -33,26 +40,18 @@ export class Settings extends HTMLElement {
 				    <div class="mt-3">
 					    <avatar-upload></avatar-upload>
 				    </div>
-
-				    <div class="mt-3">
-					    <label for="username" class="form-label">Username</label>
-					    <input type="username" class="form-control" id="username" placeholder="${this.user.username}">
+				    <div>
+              <settings-user-info></settings-user-info>
 				    </div>
-				    <div class="mt-3">
-					    <label for="email" class="form-label">Email</label>
-					    <input type="email" class="form-control" id="email" placeholder="${this.user.email}">
+            <div>
+              <settings-email-update></settings-email-update></div>
+				    <div>
+              <settings-password-update></settings-password-update>
 				    </div>
-				    <div class="mt-3">
-					    <label for="password" class="form-label">Password</label>
-					    <input type="password" class="form-control" id="password" placeholder="new password">
-					    <div class="invalid-feedback" id="password-feedback"></div>
+				    <div>
+              <mfa-enable-update></mfa-enable-update>
 				    </div>
-				    <div class="mt-3">
-					    <label for="password_repeat" class="form-label">Confirm Password</label>
-					    <input type="password" class="form-control" id="password_repeat" placeholder="new password">
-					    <div class="invalid-feedback" id="password_repeat-feedback"></div>
-				    </div>
-
+            
 				    <div class="mt-5 pb-5 border-bottom">
 					    <a class="btn btn-outline-primary" href="/profile/${this.user.username}" role="button">Cancel</a>
 					    <button type="submit" id="settingsSubmit" class="btn btn-primary mx-2">Save changes</button>
@@ -68,9 +67,17 @@ export class Settings extends HTMLElement {
       </div>
     </div>
 		`;
-
+    
     const avatarUploadButton = this.querySelector('avatar-upload');
     avatarUploadButton.setAvatar(this.user);
+    const userNames = this.querySelector('settings-user-info');
+    userNames.setParams(this.user);
+    const emailField = this.querySelector('settings-email-update');
+    emailField.setParams(this.user);
+    const passwordField = this.querySelector('settings-password-update');
+    passwordField.setParam(this.user.registration_type);
+    const mfaEnable = this.querySelector('mfa-enable-update');
+    mfaEnable.setParams(this.user);
 
     const deleteAccountButton = this.querySelector('delete-account-button');
     deleteAccountButton.setUsername(this.user.username);
@@ -87,28 +94,52 @@ export class Settings extends HTMLElement {
   }
 
   async handleSubmit() {
-    const usernameField = this.querySelector('#username');
-    const emailField = this.querySelector('#email');
-    const passwordField = this.querySelector('#password');
-    const passwordRepeatField = this.querySelector('#password_repeat');
+    const userInfoField = this.querySelector('settings-user-info');
+    const userInfo = userInfoField.newUserInfo;
+    const emailField = this.querySelector('settings-email-update');
+    const newEmail = emailField.newEmail;
 
-    const avatarUploadField = this.querySelector('avatar-upload');
-    const selectedFile = avatarUploadField.selectedFile;
-
-    const formData = new FormData();
-    formData.append('username', usernameField.value);
-    formData.append('email', emailField.value);
-    formData.append('password', passwordField.value);
-    formData.append('password_repeat', passwordRepeatField.value);
-    if (selectedFile) {
-      formData.append('avatar', selectedFile);
+    const passwordField = this.querySelector('settings-password-update');
+    if (!passwordField.checkPasswordInput()) {
+      return;
     }
-    // for (let [key, value] of formData.entries()) {
-    // 	console.log(key, value);
-    // }
+    
+    const avatarUploadField = this.querySelector('avatar-upload');
+    const avatarField = avatarUploadField.selectedFile;
+    
+    const formData = new FormData();
+    // If there are any changes, append to formData
+    if (userInfo.username) {
+      formData.append('username', userInfo.username);
+    }
+    if (userInfo.nickname) {
+      formData.append('nickname', userInfo.nickname);
+    }
+    if (newEmail) {
+      formData.append('email', newEmail);
+    }
+    // If there is password change request, append to formData
+    const oldPassword = this.querySelector('#old-password');
+    const newPassword = this.querySelector('#new-password');
+    const newPasswordRepeat = this.querySelector('#new-password-repeat');
+    if (oldPassword.value && newPassword.value && newPasswordRepeat.value) {
+      formData.append('old-password', oldPassword);
+      formData.append('password', newPassword);
+      formData.append('password-repeat', newPasswordRepeat);
+    }
+
+    // TODO: Check if 2FA enabled status changed, if yes append to formData
+    // formData.append('mfa-enabled', this.querySelector('#mfa-switch-check').checked);
+
+    if (avatarField) {
+      formData.append('avatar', avatarField);
+    }
     try {
-      // const response = await apiRequest('POST', 'endpoint', formData, true);
-      // handle response
+      for (let [key, value] of formData.entries()) {
+      	console.log(key, value);
+        // const response = await apiRequest('POST', 'endpoint', formData, true);
+        // handle response
+      }
     } catch (error) {
       console.error('Error upload user settings: ', error);
     }
