@@ -41,13 +41,13 @@ export class FriendsListModal extends HTMLElement {
     this.innerHTML = `
     <style>
       .friends-modal .modal-dialog {
-      position: fixed;
-      top: var(--navbar-height, 72px);
-      right: 0;
-      height: calc(100vh - var(--navbar-height, 72px));
-      margin: 0;
-      border-radius: 0;
-    }
+        position: fixed;
+        top: var(--navbar-height, 72px);
+        right: 0;
+        height: calc(100vh - var(--navbar-height, 72px));
+        margin: 0;
+        border-radius: 0;
+      }
     </style>
 		<div class="modal fade friends-modal" id="friendsModal" tabindex="-1" aria-hidden="true">
 			<div class="modal-dialog modal-dialog-scrollable">
