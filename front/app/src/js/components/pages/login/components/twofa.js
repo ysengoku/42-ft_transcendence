@@ -1,6 +1,7 @@
 // twofa.js
 
 import { router } from '@router';
+import { API_ENDPOINTS } from '@api';
 
 export class TwoFactorAuth extends HTMLElement {
   constructor() {
@@ -9,7 +10,7 @@ export class TwoFactorAuth extends HTMLElement {
 
   async send2FACode() {
     try {
-      const response = await fetch('/api/2fa/send', {
+      const response = await fetch(API_ENDPOINTS.TWOFA_SEND, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,7 +38,7 @@ export class TwoFactorAuth extends HTMLElement {
 
   async verify2FACode(code) {
     try {
-      const response = await fetch('/api/2fa/verify', {
+      const response = await fetch(API_ENDPOINTS.TWOFA_VERIFY, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
