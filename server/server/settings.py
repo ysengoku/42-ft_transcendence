@@ -84,7 +84,11 @@ INSTALLED_APPS = [
     "users",
 ]
 
+CORS_ALLOW_ALL_ORIGINS = True # to be removed _fanny addition
+
+
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware", # to be removed _fanny addition
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
