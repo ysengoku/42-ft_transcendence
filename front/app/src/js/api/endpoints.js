@@ -10,4 +10,9 @@ export const API_ENDPOINTS = {
   USER_BLOCKED_USERS: (username) => `${API_BASE_URL}users/${username}/blocked_users`,
   USER_UNBLOCK_USER: (username, blockedUser) => `${API_BASE_URL}users/${username}/blocked_users/${blockedUser}`,
   // LOGOUT: ,
+  OAUTH_AUTHORIZE: (platform) => `${API_BASE_URL}oauth/authorize/${platform}`,
+  OAUTH_CALLBACK: (platform) => `${API_BASE_URL}oauth/callback/${platform}`,
+  TWOFA_SETUP: `${API_BASE_URL}2fa/setup`,
+  TWOFA_VERIFY: `${API_BASE_URL}2fa/verify`,
+  TWOFA_SEND: `${API_BASE_URL}2fa/send`,
 };
