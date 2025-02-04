@@ -5,6 +5,7 @@ import './components/index.js';
 export class Login extends HTMLElement {
   constructor() {
     super();
+    this.is2FACompleted = localStorage.getItem('2faCompleted') === 'true';
   }
 
   connectedCallback() {
@@ -14,17 +15,15 @@ export class Login extends HTMLElement {
 
   render() {
     const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
+    
+    // if (isLoggedIn) {
+    //   router.navigate('/home');
+    // }
+    
     if (isLoggedIn && !is2FACompleted) {
-      // If logged in but 2FA is not completed, show the 2FA component
       this.innerHTML = `
         <twofa-auth></twofa-auth>
       `;
-      return;
-    }
-
-    if (isLoggedIn && is2FACompleted) {
-      // If logged in and 2FA is completed, redirect to home
-      router.navigate('/home');
       return;
     }
 
