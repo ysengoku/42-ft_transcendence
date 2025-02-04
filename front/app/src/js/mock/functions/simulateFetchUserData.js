@@ -1,4 +1,4 @@
-export async function simulateFetchUserData(username) {
+export function simulateFetchUserData(username) {
   const user1 = {
     username: 'JohnDoe',
     nickname: 'Joooooooohn',   
@@ -10,7 +10,7 @@ export async function simulateFetchUserData(username) {
 
   const user2 = {
     username: 'JohnDoe2',
-    nickname: 'JohnDoe nickname',
+    nickname: 'Joooooooohn',
     avatar: '/media/avatars/sample_avatar.jpg',
     email: 'bbb@example.com',
     registration_type: 'regular',
