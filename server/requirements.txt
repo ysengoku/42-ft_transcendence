@@ -29,3 +29,6 @@ daphne==3.0.1
 
 # pyotp is a Python library for generating and verifying one-time passwords
 pyotp==2.6.0
+
+# qrcode is a Python library for generating QR codes. [pil] is an optional dependency for image generation.
+qrcode[pil]
