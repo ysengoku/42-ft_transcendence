@@ -37,9 +37,6 @@ export class Chat extends HTMLElement {
         #chat-component-container {
           height: calc(100vh - 104px);
         }
-        #chat-messages {
-          min-height: 0;
-        }
       </style>
       <div class="container-fluid d-flex flex-row flex-grow-1 py-4" id="chat-component-container">
         <div class="col-md-3">
@@ -47,8 +44,7 @@ export class Chat extends HTMLElement {
         </div>
 
         <div class="col-md-9 chat-messages-area d-flex flex-column h-100 overflow-auto">
-          <chat-message-header></chat-message-header>
-          <div class="flex-grow-1 overflow-auto" id="chat-messages">
+          <div class="flex-grow-1">
             <chat-message-area></chat-message-area>
           </div>
           <chat-message-input></chat-message-input>
