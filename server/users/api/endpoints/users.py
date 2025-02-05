@@ -13,6 +13,7 @@ from users.schemas import (
     ProfileFullSchema,
     ProfileMinimalSchema,
     UpdateUserChema,
+    UserSettingsSchema,
     ValidationErrorMessageSchema,
 )
 
@@ -51,12 +52,22 @@ def get_user(request: HttpRequest, username: str):
     return user_profile.with_full_profile(curr_user, username).first()
 
 
-# TODO: add authorization to settings change
+@users_router.get("{username}/settings", response={200: UserSettingsSchema, 401: Message})
+def get_user_settings(request: HttpRequest, username: str):
+    """
+    Gets settings of a specific user by username.
+    """
+    curr_user = request.auth
+    if curr_user.username != username:
+        raise AuthenticationError
+    return request.auth
+
+
 @users_router.post(
-    "{username}",
+    "{username}/settings",
     response={200: ProfileMinimalSchema, frozenset({401, 404, 413}): Message, 422: list[ValidationErrorMessageSchema]},
 )
-def update_user(
+def update_user_settings(
     request: HttpRequest,
     username: str,
     data: Form[UpdateUserChema],

@@ -7,7 +7,6 @@ Create an app on 42 intra to get the client ID and secret.:
 https://profile.intra.42.fr/oauth/applications/new
 
 
-
 https://api.intra.42.fr/apidoc/guides/web_application_flow
 
 1. The app redirects the user to https://api.intra.42.fr/oauth/authorize with client_id, redirect_uri, scope, state.
@@ -32,6 +31,21 @@ It sends a GET request to https://api.intra.42.fr/v2/me with Authorization: Bear
 9. The app processes and stores the user information as needed.
 
 10. the app directs the user to the home page in case of success.
+
+## Github API
+
+There are 2 types of github apps: OAuth Apps and GitHub Apps. We will use OAuth Apps.
+Create an app on github to get the client ID and secret.
+
+https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/
+
+Github OAuth flow works the same way as 42 API, with some other optionnal parameters (for multiple github account for eg.)
+TODO: test the flow with a multiple account. 
+
+
+# DATA TO BE STORED IN DATABASE
+
+the access_token is hashed with make password ()
 
 
 #To receive a github client ID + secret, you need to log in to github and then register your app here: github.com/settings/applications/new
