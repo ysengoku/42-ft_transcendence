@@ -177,7 +177,8 @@ AUTH_SETTINGS = {
     "check_is_diverse": True,
 }
 
-JWT_SECRET_KEY = "secret"
+ACCESS_TOKEN_SECRET_KEY = "secret"
+REFRESH_TOKEN_SECRET_KEY = "refresh_secret"
 
 NINJA_PAGINATION_PER_PAGE = 10
 APPEND_SLASH = False
