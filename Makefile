@@ -19,7 +19,7 @@ RESET=\033[0m
 # STATIC_BACKUP_DIR := $(BACKUP_DIR)/static
 
 # Define the Docker Compose files for development and production
-DOCKER_COMPOSE = docker-compose.yaml
+DOCKER_COMPOSE = docker compose.yaml
 
 # Define the name of the services
 FRONTEND_SERVICE = front
@@ -46,18 +46,18 @@ check-env:
 
 # Build Docker images
 build: check-env
-	NODE_ENV=$(NODE_ENV) docker-compose -f $(DOCKER_COMPOSE) build
+	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) build
 
 # Start containers with backup option
 up: check-env #  ensure-volumes
 #	$(MAKE) backup-volumes
-	NODE_ENV=$(NODE_ENV) docker-compose -f $(DOCKER_COMPOSE) up -d --build
+	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up -d --build
 
 # Development mode
 dev: export NODE_ENV=development
 dev: check-env # ensure-volumes
 #	$(MAKE) backup-volumes
-	NODE_ENV=development docker-compose -f $(DOCKER_COMPOSE) up --build
+	NODE_ENV=development docker compose -f $(DOCKER_COMPOSE) up --build
 
 # Production mode
 prod: export NODE_ENV=production
@@ -68,7 +68,7 @@ prod: check-env # ensure-volumes
 # Stop containers with backup
 down:
 #	$(MAKE) backup-volumes
-	docker-compose -f $(DOCKER_COMPOSE) down
+	docker compose -f $(DOCKER_COMPOSE) down
 
 # Restart containers
 restart: down up
@@ -97,7 +97,7 @@ logs:
 
 # Rebuild containers
 rebuild: check-env
-	docker-compose -f $(DOCKER_COMPOSE) up --build -d
+	docker compose -f $(DOCKER_COMPOSE) up --build -d
 
 # Run Django migrations
 migrate:
@@ -105,11 +105,11 @@ migrate:
 
 # Open a bash shell inside the backend container
 bash-backend:
-	docker-compose exec -it $(BACKEND_SERVICE) bash
+	docker compose exec -it $(BACKEND_SERVICE) bash
 
 # Open a bash shell inside the frontend container
 bash-frontend:
-	docker-compose exec -it $(FRONTEND_SERVICE) bash
+	docker compose exec -it $(FRONTEND_SERVICE) bash
 
 fclean:
 	docker compose down --volumes
