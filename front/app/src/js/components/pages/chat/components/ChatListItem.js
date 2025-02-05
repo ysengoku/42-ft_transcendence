@@ -1,20 +1,20 @@
 export class ChatListItem extends HTMLElement {
   constructor() {
     super();
-	this._data = {
-		id: null,
-		nickname: '',
-		avatar: '',
-		last_message: '',
-		last_message_time: '',
-		unread_messages: 0,
-	};
+    this._data = {
+      id: null,
+      nickname: '',
+      avatar: '',
+      last_message: '',
+      last_message_time: '',
+      unread_messages: 0,
+    };
   }
 
   setData(data) {
-	this._data = data;
-	// console.log('Data: ', this._data);
-	this.render();
+    this._data = data;
+    // console.log('Data: ', this._data);
+    this.render();
   }
 
   render() {
@@ -31,20 +31,20 @@ export class ChatListItem extends HTMLElement {
         height: 52px;
         object-fit: cover;
       }
-	  .circle-number {
+      .circle-number {
         background-color: red;
-		color: white;
-		border-radius: 50%;
-		width: 24px;
-		height: 24px;
-		font-size: 0.8rem;
-		display: flex;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        display: flex;
         align-items: center;
         justify-content: center;
         inline-height: 1;
        }
     </style>
-	  <li class="list-group-item" id="chat-list-item">
+      <li class="list-group-item" id="chat-list-item">
         <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
           <img src="${this._data.avatar}" class="rounded-circle" alt="User" />
 
@@ -55,21 +55,31 @@ export class ChatListItem extends HTMLElement {
             </div>
             <small>${this._data.last_message}</small>
           </div>
-		  ${this._data.unread_messages > 0 ?
-			`<div class="circle-number">${this._data.unread_messages > 9 ?
-			  '9+' : 
-			  this._data.unread_messages}</div>` 
-			: ''}
-		</div>
+          ${this._data.unread_messages > 0 ?
+            `<div class="circle-number">${this._data.unread_messages > 9 ?
+              '9+' :
+              this._data.unread_messages}</div>` :
+            ''}
+        </div>
       </li>
-	`;
-	// TODO: Add click event listener
-	const listItem = this.querySelector('#chat-list-item');
-	const chatMessages = document.querySelector('chat-message-area');
-	listItem.addEventListener('click', () => {
-      console.log('Chat ID: ', Number(this._data.id));
+    `;
+
+    const listItem = this.querySelector('#chat-list-item');
+    if (this._data.id === 1) { // TODO: The latest element should be active by default
+      listItem.classList.add('active');
+    }
+    const chatMessages = document.querySelector('chat-message-area');
+    listItem.addEventListener('click', () => {
       chatMessages.setId(Number(this._data.id));
-	});
+      listItem.classList.add('active');
+      for (const item of document.querySelectorAll('.list-group-item')) {
+        if (item !== listItem) {
+          item.classList.remove('active');
+        }
+      }
+      const event = new CustomEvent('chatItemSelected', { detail: this._data, bubbles: true });
+      this.dispatchEvent(event);
+    });
   }
 
   setLastMessageTime(time) {
@@ -78,9 +88,9 @@ export class ChatListItem extends HTMLElement {
     const formatedDate = new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
-	  hour: 'numeric',
-	  minute: '2-digit',
-	  hour12: false,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: false,
     }).format(date);
     return formatedDate;
   }
