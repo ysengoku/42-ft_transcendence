@@ -21,6 +21,9 @@ class UserManager(BaseUserManager):
     def for_username(self, username: str):
         return self.filter(username__iexact=username)
 
+    def for_oauth_id(self, oauth_id: str):
+        return self.filter(oauth_id=oauth_id)
+
     def fill_user_data(self, username: str, connection_type: str, **extra_fields):
         username = AbstractUser.normalize_username(username)
         if connection_type != self.model.REGULAR:
@@ -35,7 +38,6 @@ class UserManager(BaseUserManager):
     def create_user(self, username: str, connection_type: str, **extra_fields):
         extra_fields["is_superuser"] = False
         user = self.fill_user_data(username, connection_type, **extra_fields)
-        user.full_clean()
         user.save()
         return user
 
@@ -76,30 +78,47 @@ class User(AbstractUser):
     nickname = models.CharField(max_length=50, validators=[username_validator])
     email = models.EmailField(default="")
     connection_type = models.CharField(max_length=10, choices=CONNECTION_TYPES_CHOICES, default="regular")
+    oauth_id = models.IntegerField(blank=True, null=True)
     password = models.CharField(max_length=128, default="")
-    twofa_secret = models.CharField(max_length=128, default="")
+    mfa_secret = models.CharField(max_length=128, blank=True)
+    mfa_enabled = models.BooleanField(default=False)
 
     objects = UserManager()
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
-        if "username" not in kwargs["exclude"] and User.objects.filter(username__iexact=self.username).exists():
+        """
+        Called during full_clean().
+        Additional logic for validation of unique fields.
+        **kwargs have a default parameter exclude, which excludes certain fields from being validated.
+        """
+        if "username" not in kwargs.get("exclude") and User.objects.filter(username__iexact=self.username).exists():
             raise ValidationError({"username": ["A user with that username already exists."]})
+
         if (
             "email" not in kwargs["exclude"]
             and self.connection_type == User.REGULAR
             and User.objects.filter(email=self.email).exists()
         ):
             raise ValidationError({"email": ["A user with that email already exists."]})
+
         kwargs["exclude"] |= {"username", "email"}
         super().validate_unique(*args, **kwargs)
 
     def clean(self):
+        """
+        Additional validation logic on the entire model that is not related to uniqueness.
+        """
         if not self.password and self.connection_type == User.REGULAR:
             raise ValidationError({"password": ["This connection type requires a password."]})
         if not self.email and self.connection_type == User.REGULAR:
             raise ValidationError({"password": ["Email is required."]})
 
     def update_user(self, data, new_profile_picture: UploadedFile | None):
+        """
+        Updates the user depending on the non-empty fields of `data`.
+        Only the provided fields are updated.
+        Possible fields for update: `username`, `nickname`, `email`, `profile_picture` and `password`.
+        """
         err_dict = {}
 
         if new_profile_picture:
@@ -153,5 +172,3 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} - {self.connection_type}"
-
-

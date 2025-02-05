@@ -10,13 +10,17 @@ from users.models import RefreshToken, User
 
 from .endpoints.auth import auth_router
 from .endpoints.oauth2 import oauth2_router
-from .endpoints.mfa import mfa_router
+# from .endpoints.mfa import mfa_router
 from .endpoints.blocked_users import blocked_users_router
 from .endpoints.friends import friends_router
 from .endpoints.users import users_router
 
 
 class JwtCookieAuth(APIKeyCookie):
+    """
+    What is returned from `authenticate` method of this class is going to be located on `request.auth`.
+    """
+
     param_name = "access_token"
 
     def authenticate(self, request, access_token: str):
@@ -37,7 +41,7 @@ api = NinjaAPI(auth=JwtCookieAuth(), csrf=True)
 api.add_router("users", users_router)
 api.add_router("", auth_router)
 api.add_router("oauth", oauth2_router)
-api.add_router("", mfa_router)
+# api.add_router("", mfa_router)
 users_router.add_router("", blocked_users_router)
 users_router.add_router("", friends_router)
 
