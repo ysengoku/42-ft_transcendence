@@ -6,7 +6,7 @@ from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 from ninja.security import APIKeyCookie
 
-from users.models.user import User
+from users.models import RefreshToken, User
 
 from .endpoints.auth import auth_router
 from .endpoints.oauth2 import oauth2_router
@@ -14,7 +14,6 @@ from .endpoints.twoFa import twofa_router
 from .endpoints.blocked_users import blocked_users_router
 from .endpoints.friends import friends_router
 from .endpoints.users import users_router
-from .jwt import verify_jwt
 
 
 class JwtCookieAuth(APIKeyCookie):
@@ -22,8 +21,8 @@ class JwtCookieAuth(APIKeyCookie):
 
     def authenticate(self, request, access_token: str):
         try:
-            payload = verify_jwt(access_token)
-        except jwt.InvalidSignatureError as  exc:
+            payload = RefreshToken.objects.verify_access_token(access_token)
+        except jwt.InvalidSignatureError as exc:
             raise AuthenticationError from exc
         except jwt.ExpiredSignatureError as exc:
             raise AuthenticationError("Session is expired. Please login again.") from exc

@@ -17,7 +17,7 @@ export class Chat extends HTMLElement {
     // };
     // this.socket.onmessage = this.handleSocketMessage.bind(this);
 
-    this.chatData = await mockChatListData(); // Temporary mock data 
+    this.chatData = await mockChatListData(); // Temporary mock data
     this.render();
   }
 
@@ -39,21 +39,50 @@ export class Chat extends HTMLElement {
         }
       </style>
       <div class="container-fluid d-flex flex-row flex-grow-1 py-4" id="chat-component-container">
-        <div class="col-md-3">
+        <div class="col-12 col-md-4" id="chat-list-area">
           <chat-list-component></chat-list-component>
         </div>
 
-        <div class="col-md-9 chat-messages-area d-flex flex-column h-100 overflow-auto">
-          <div class="flex-grow-1">
-            <chat-message-area></chat-message-area>
+        <div class="col-12 col-md-8 d-none d-md-block" id="chat-messages-container">
+          <div class="d-flex flex-column h-100 overflow-auto">
+            <button class="btn btn-secondry mt-2 text-start d-md-none mb-3" id="back-to-chat-list">
+              <i class="bi bi-arrow-left"></i>
+               Back
+            </button>
+            <div class="flex-grow-1">
+              <chat-message-area></chat-message-area>
+            </div>
+            <chat-message-input></chat-message-input>
           </div>
-          <chat-message-input></chat-message-input>
         </div>
       </div>
     `;
 
     const chatList = this.querySelector('chat-list-component');
     chatList.setData(this.chatData);
+
+    const chatListArea = this.querySelector('#chat-list-area');
+    const chatMessageArea = this.querySelector('#chat-messages-container');
+    const backButton = this.querySelector('#back-to-chat-list');
+    document.addEventListener('chatItemSelected', (event) => {
+      if (window.innerWidth < 768) {
+        chatListArea.classList.add('d-none');
+        chatMessageArea.classList.remove('d-none', 'd-md-block');
+      }
+    });
+    backButton.addEventListener('click', () => {
+      chatListArea.classList.remove('d-none');
+      chatMessageArea.classList.add('d-none');
+    });
+
+    // TODO: Resize event seems to be not working
+    document.addEventListener('resize', () => {
+      console.log('Resize event');
+      if (window.innerWidth >= 768) {
+        chatListArea.classList.remove('d-none');
+        chatMessageArea.classList.remove('d-none');
+      }
+    });
   }
 }
 
