@@ -19,7 +19,7 @@ RESET=\033[0m
 # STATIC_BACKUP_DIR := $(BACKUP_DIR)/static
 
 # Define the Docker Compose files for development and production
-DOCKER_COMPOSE = docker compose.yaml
+DOCKER_COMPOSE = docker-compose.yaml
 
 # Define the name of the services
 FRONTEND_SERVICE = front

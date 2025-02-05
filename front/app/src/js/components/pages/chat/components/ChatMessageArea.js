@@ -37,6 +37,8 @@ export class ChatMessageArea extends HTMLElement {
         `;
       }
       chatMessages.appendChild(messageElement);
+      // Scroll to the bottom of the chat messages
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
   }
 
