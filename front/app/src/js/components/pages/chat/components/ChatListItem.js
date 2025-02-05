@@ -64,14 +64,18 @@ export class ChatListItem extends HTMLElement {
     `;
 
     const listItem = this.querySelector('#chat-list-item');
-    const chatMessages = document.querySelector('chat-message-area');
     listItem.addEventListener('click', () => {
       listItem.classList.add('active');
-      for (const item of document.querySelectorAll('.list-group-item')) {
+      const circleNumber = listItem.querySelector('.circle-number');
+      if (circleNumber) {
+        circleNumber.remove();
+      }
+      const chatListItems = document.querySelectorAll('.list-group-item');
+      chatListItems.forEach((item) => {
         if (item !== listItem) {
           item.classList.remove('active');
         }
-      }
+      });
       const event = new CustomEvent('chatItemSelected', { detail: this._data.id, bubbles: true });
       this.dispatchEvent(event);
     });
