@@ -3,20 +3,29 @@
 ## Router
 - [] Update navigation to pages that need authentication
 
+---------------------------------------------------------------------
+
 ## Landing
 - [] JWT (check login status)
+
+---------------------------------------------------------------------
 
 ## Login
 - [X] Adjust width
 - [x] CSRF Token handling
 - [x] Error handling
+- [] email login
 - [] Forgot password
 - [] Unit test (input validation)
+
+---------------------------------------------------------------------
 
 ## Logout
 - [x] Clear CSRF token
 - [] Send request to clear JWT token
 - [] OAuth users logout handling
+
+---------------------------------------------------------------------
 
 ## Register
 - [X] Adjust width
@@ -25,7 +34,9 @@
 - [x] 422 Error message check
 - [~] Nickname input
 - [x] Unit test (input validation)
+- [] (Check) error message from server (not implemented yet on server)
 
+---------------------------------------------------------------------
 ## Settings
 - [X] Adjust width
 - [X] Restrict other users to access to the page (remove username from url)
@@ -39,6 +50,8 @@
 - [] 413 handling
 - [] 422 handling
 - [] Unit test (input validation)
+
+---------------------------------------------------------------------
 
 ## Profile
 
@@ -66,7 +79,16 @@
 - [] Better solution for Scroll thead sticky
 - [] Tournament history table
 
-## User list
+---------------------------------------------------------------------
+
+## Friends list
 - [] User search by username
 
+---------------------------------------------------------------------
+
 ## Chat
+
+- [] Websocket
+- [] Add new chat (user search ?)
+- [] Block user on chat
+- [] Resize event listner

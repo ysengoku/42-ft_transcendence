@@ -3,34 +3,11 @@ import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 export class ChatMessageArea extends HTMLElement {
   constructor() {
     super();
-    this.id = -1;
-    this._data = {
-      username: '',
-      nickname: '',
-      avatar: '',
-      is_online: false,
-      messages: [],
-    };
+    this._data = [];
   }
 
-  connectedCallback() {
-    // TODO: Show the latest messages
-    this.id = 1;
-    this.fetchMessages();
-  }
-
-  setId(value) {
-    this.id = value;
-    this.fetchMessages();
-  }
-
-  async fetchMessages() {
-    // Fetch messages from the server
-
-    // temporary mock data
-    const data = await mockChatMessagesData(this.id);
+  setData(data) {
     this._data = data;
-    // console.log('Chat messages:', this._data);
     this.render();
   }
 
@@ -66,7 +43,6 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   render() {
-    // console.log('Data:', this._data);
     this.innerHTML = `
 	  <style>
       #chat-messages {
@@ -113,21 +89,31 @@ export class ChatMessageArea extends HTMLElement {
         border-radius: 50%;
       }
 	  </style>
-    <div class="d-flex flex-row justify-content-start align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top">
-      <img src="${this._data.avatar}" class="rounded-circle" alt="User" id="chat-message-header-avatar"/>
-      <div class="d-flex flex-column text-start">
-        <div class="d-flex flex-row align-items-center gap-3">
-          <h5>${this._data.nickname}</h5>
-          <small>@${this._data.username}</small>
-        </div>
+    <div class="d-flex flex-column h-100">
+
+      <!-- Header -->
+      <div class="d-flex flex-row justify-content-start align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top">
+        <img src="${this._data.avatar}" class="rounded-circle" alt="User" id="chat-message-header-avatar"/>
+        <div class="d-flex flex-column text-start">
+          <div class="d-flex flex-row align-items-center gap-3">
+            <h5>${this._data.nickname}</h5>
+            <small>@${this._data.username}</small>
+          </div>
           <div class="d-flex flex-row align-items-center gap-2">
             <span class="online-status ${this._data.is_online ? 'online' : ''}"></span>
             ${this._data.is_online ? 'online' : 'offline'}
           </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
+
+      <!-- Input -->
+      <div>
+        <chat-message-input></chat-message-input>
       </div>
     </div>
-
-    <div class="overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
 	  `;
     this.renderMessages();
   }
