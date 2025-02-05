@@ -1,10 +1,9 @@
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
-from ninja.errors import HttpError
+from ninja.errors import AuthenticationError, HttpError
 
-from users.api.jwt import create_jwt
-from users.models import User
+from users.models import RefreshToken, User
 from users.schemas import (
     LoginSchema,
     Message,
@@ -14,6 +13,17 @@ from users.schemas import (
 )
 
 auth_router = Router()
+
+
+def _create_json_response_with_tokens(user: User, json: dict):
+    access_token, refresh_token_instance = RefreshToken.objects.create(user)
+
+    response = JsonResponse(json)
+    response.set_cookie("access_token", access_token)
+    response.set_cookie("refresh_token", refresh_token_instance.token)
+
+    return response
+
 
 # TODO: check return values of verify_jwt and create_jwt
 # TODO: add secure options for the cookie
@@ -32,10 +42,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if not is_password_correct:
         raise HttpError(401, "Username or password are not correct.")
 
-    token = create_jwt(user.username)
-    response = JsonResponse(user.profile.to_profile_minimal_schema())
-    response.set_cookie("access_token", token)
-    return response
+    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
 
 
 @auth_router.post(
@@ -45,7 +52,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
 )
 @ensure_csrf_cookie
 @csrf_exempt
-def register_user(request: HttpRequest, data: SignUpSchema):
+def signup(request: HttpRequest, data: SignUpSchema):
     """
     Creates a new user.
     """
@@ -58,7 +65,47 @@ def register_user(request: HttpRequest, data: SignUpSchema):
         username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password
     )
     user.save()
-    token = create_jwt(user.username)
-    response = JsonResponse(user.profile.to_profile_minimal_schema())
-    response.set_cookie("access_token", token)
+
+    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+
+
+@auth_router.post(
+    "refresh",
+    response={frozenset({201, 401}): Message},
+    auth=None,
+)
+def refresh(request: HttpRequest):
+    """
+    Rotates the refresh token. Issues a new refresh token and a new access token.
+    """
+    old_refresh_token = request.COOKIES.get("refresh_token")
+    if not old_refresh_token:
+        raise AuthenticationError
+
+    new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
+
+    response = JsonResponse({"msg": "Ok!"})
+    response.set_cookie("access_token", new_access_token)
+    response.set_cookie("refresh_token", new_refresh_token_instance.token)
+    return response
+
+
+# TODO: check of the signout route is protected
+@auth_router.delete(
+    "logout",
+    response={204: None},
+)
+def logout(request: HttpRequest):
+    """
+    Logs out the user. Clears the tokens from the cookies.
+    """
+    old_refresh_token = request.COOKIES.get("refresh_token")
+    if not old_refresh_token:
+        raise AuthenticationError
+
+    new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
+
+    response = JsonResponse({"msg": "Ok!"})
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
     return response
