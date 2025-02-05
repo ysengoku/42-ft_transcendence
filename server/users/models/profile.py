@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path  # noqa: A005
 
 import magic
 from django.core.exceptions import RequestDataTooBig, ValidationError
@@ -55,9 +55,10 @@ class ProfileQuerySet(models.QuerySet):
                     # otherwise return rounded result of wins / total_matches * 100
                     # multiplies by 1.0 to force floating point conversion, as 'wins' and 'loses' are ints
                     default=ExpressionWrapper(
-                        Round(F("wins") * 1.0 / F("total_matches") * Value(100)), output_field=IntegerField()
+                        Round(F("wins") * 1.0 / F("total_matches") * Value(100)),
+                        output_field=IntegerField(),
                     ),
-                )
+                ),
             )
         )
 

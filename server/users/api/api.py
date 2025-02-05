@@ -15,6 +15,10 @@ from .endpoints.users import users_router
 
 
 class JwtCookieAuth(APIKeyCookie):
+    """
+    What is returned from `authenticate` method of this class is going to be located on `request.auth`.
+    """
+
     param_name = "access_token"
 
     def authenticate(self, request, access_token: str):
