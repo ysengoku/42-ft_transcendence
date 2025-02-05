@@ -77,6 +77,7 @@ class User(AbstractUser):
     email = models.EmailField(default="")
     connection_type = models.CharField(max_length=10, choices=CONNECTION_TYPES_CHOICES, default="regular")
     password = models.CharField(max_length=128, default="")
+    twofa_secret = models.CharField(max_length=128, default="")
 
     objects = UserManager()
 
