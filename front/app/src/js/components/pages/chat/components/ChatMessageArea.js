@@ -1,5 +1,3 @@
-import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
-
 export class ChatMessageArea extends HTMLElement {
   constructor() {
     super();
