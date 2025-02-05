@@ -46,6 +46,15 @@ class ProfileMinimalSchema(Schema):
     is_online: bool
 
 
+class UserSettingsSchema(Schema):
+    username: str
+    nickname: str
+    email: str | None
+    connection_type: str
+    mfa_enabled: bool
+    avatar: str = Field(alias="profile.avatar")
+
+
 class OpponentProfileAndStatsSchema(Schema):
     """
     Stats of the current user against some other player and the minimal representation of the player.
@@ -95,7 +104,6 @@ class ProfileFullSchema(ProfileMinimalSchema):
     is_friend: bool
     is_blocked_user: bool
     is_blocked_by_user: bool
-
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -156,6 +164,11 @@ class SignUpSchema(PasswordValidationSchema):
         if err_dict:
             raise ValidationError(err_dict)
         return self
+
+    # @field_validator('username')
+    # @classmethod
+    # def validate_username():
+    #     pass
 
 
 class LoginSchema(Schema):
