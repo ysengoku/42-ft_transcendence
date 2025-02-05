@@ -9,6 +9,10 @@ from ninja.files import UploadedFile
 
 from users.utils import merge_err_dicts
 
+"""
+Models related to authentication and authorization.
+"""
+
 
 class UserManager(BaseUserManager):
     def for_username_or_email(self, identifier: str):
@@ -148,3 +152,5 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.username} - {self.connection_type}"
+
+
