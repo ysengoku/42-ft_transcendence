@@ -26,17 +26,16 @@ def get_oauth_config(platform: str) -> dict:
     return settings.OAUTH_CONFIG[platform]
 
 
-@oauth2_router.get("/authorize/{platform}")
+@oauth2_router.get("/authorize/{platform}", auth=None)
 def oauth_authorize(request, platform: str):
     """
     This endpoint is called when the user clicks on the login button for the platform
     t will redirect the user to the auth server to authenticate
     """
     try:
-        logger.info(f"Starting OAuth authorization for platform: {platform}")
-
         config = get_oauth_config(platform)
         state = hashlib.sha256(os.urandom(1024)).hexdigest()  # this is to prevent csrf attacks
+        print(f"print : AUTHORIZE Generated state: {state}")
         request.session["oauth_state"] = state
         request.session["oauth_platform"] = platform
 
@@ -60,14 +59,13 @@ def oauth_authorize(request, platform: str):
 
 
 # TODO: refactor in two functions
-@oauth2_router.get("/callback/{platform}")
-def oauth_callback(request, platform: str):
+@oauth2_router.get("/callback/{platform}", auth=None)
+def oauth_callback(request, platform: str, code: str, state: str):
     """
     this is the callback endpoint that the auth server will redirect to after the user has authenticated.
     the code and state will be checked and then the access token will be retrieved
     """
-    code = request.GET.get("code")
-    state = request.GET.get("state")
+    print(f"print IN CALLBACK : Generated state: {request.session.get('oauth_state')}")
 
     # Verify the state parameter for security
     if not state or state != request.session.get("oauth_state"):
@@ -113,39 +111,41 @@ def oauth_callback(request, platform: str):
             "github": User.GITHUB,
         }
 
-        connection_type = connection_type_map.get(platform)
+        # TODO: create a function to create user in the database
 
-        if not connection_type:
-            return JsonResponse({"status": "error", "error": "Invalid platform"}, status=400)
+        # connection_type = connection_type_map.get(platform)
 
-        login_name = user_info.get("login")
-        if not login_name:
-            return JsonResponse({"status": "error", "error": "Failed to get user info"}, status=500)
+        # if not connection_type:
+        #     return JsonResponse({"status": "error", "error": "Invalid platform"}, status=400)
 
-        user = User.objects.find_by_identifier(login_name, connection_type)
+        # login_name = user_info.get("login")
+        # if not login_name:
+        #     return JsonResponse({"status": "error", "error": "Failed to get user info"}, status=500)
 
-        if not user:
-            try:
-                email = user_info.get("email", "")  # email is optional because github api does not return email
-                user = User.objects.create_user(
-                    username=login_name,
-                    connection_type=connection_type,
-                    email=email,
-                )
-            except ValidationError as e:
-                return JsonResponse(
-                    {"status": "error", "error": "Validation error", "details": e.message_dict}, status=400
-                )
-            except Exception as e:
-                return JsonResponse({"status": "error", "error": str(e)}, status=400)
+        # user = User.objects.find_by_identifier(login_name, connection_type)
 
-        # Create session or token for authenticated user
-        login(
-            request, user
-        )  # this is to authenticate the user, maintain the session and create the token. if use of JWT, this line has to be removed
+        # if not user:
+        #     try:
+        #         email = user_info.get("email", "")  # email is optional because github api does not return email
+        #         user = User.objects.create_user(
+        #             username=login_name,
+        #             connection_type=connection_type,
+        #             email=email,
+        #         )
+        #     except ValidationError as e:
+        #         return JsonResponse(
+        #             {"status": "error", "error": "Validation error", "details": e.message_dict}, status=400
+        #         )
+        #     except Exception as e:
+        #         return JsonResponse({"status": "error", "error": str(e)}, status=400)
+
+        # # Create session or token for authenticated user
+        # login(
+        #     request, user
+        # )  # this is to authenticate the user, maintain the session and create the token. if use of JWT, this line has to be removed
 
         return JsonResponse(
-            {"status": "success", "message": "Authentication successful", "user_info": {"username": user.username}}
+            {"status": "success", "message": "Authentication successful", "user_info": {"username": user_info["login"]}}
         )
 
     except Exception as e:
