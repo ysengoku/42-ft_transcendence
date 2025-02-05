@@ -56,13 +56,8 @@ def signup(request: HttpRequest, data: SignUpSchema):
     """
     Creates a new user.
     """
-    user = User.objects.fill_user_data(
-        username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password
-    )
-    user.set_password(data.password)
-    user.full_clean()
-    user = User.objects.create_user(
-        username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password
+    user = User.objects.validate_and_create_user(
+        username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password,
     )
     user.save()
 
