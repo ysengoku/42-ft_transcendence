@@ -31,10 +31,6 @@ export class ChatList extends HTMLElement {
       <h5 class="py-3">Conversations</h5>
       <ul class="list-group flex-grow-1 overflow-auto" id="chat-list">
           <chat-list-item-component></chat-list-item-component>
-          <chat-list-item-component></chat-list-item-component>
-          <chat-list-item-component></chat-list-item-component>
-          <chat-list-item-component></chat-list-item-component>
-          <chat-list-item-component></chat-list-item-component>
         </ul>
       </div>
 	  `;

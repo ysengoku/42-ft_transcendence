@@ -65,19 +65,16 @@ export class ChatListItem extends HTMLElement {
     `;
 
     const listItem = this.querySelector('#chat-list-item');
-    if (this._data.id === 1) { // TODO: The latest element should be active by default
-      listItem.classList.add('active');
-    }
     const chatMessages = document.querySelector('chat-message-area');
     listItem.addEventListener('click', () => {
-      chatMessages.setId(Number(this._data.id));
+      // chatMessages.setId(Number(this._data.id));
       listItem.classList.add('active');
       for (const item of document.querySelectorAll('.list-group-item')) {
         if (item !== listItem) {
           item.classList.remove('active');
         }
       }
-      const event = new CustomEvent('chatItemSelected', { detail: this._data, bubbles: true });
+      const event = new CustomEvent('chatItemSelected', { detail: this._data.id, bubbles: true });
       this.dispatchEvent(event);
     });
   }

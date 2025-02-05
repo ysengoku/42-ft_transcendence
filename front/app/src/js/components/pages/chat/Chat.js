@@ -1,12 +1,14 @@
 import { mockChatListData } from '@mock/functions/mockChatListData.js';
+import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 import './components/index.js';
 
 export class Chat extends HTMLElement {
   constructor() {
     super();
-    this.chatData = [];
-    this.selectedChatId = null;
     this.socket = null;
+    this.chatListData = [];
+    this.currentChatId = null;
+    this.currentChat = [];
   }
 
   async connectedCallback() {
@@ -17,8 +19,16 @@ export class Chat extends HTMLElement {
     // };
     // this.socket.onmessage = this.handleSocketMessage.bind(this);
 
-    this.chatData = await mockChatListData(); // Temporary mock data
+    this.chatListData = await mockChatListData(); // Temporary mock data
+    this.currentChatId = this.chatListData[0].id;
     this.render();
+  }
+
+  async updateCurrentChat() {
+    const chatMessages = document.querySelector('chat-message-area');
+    const data = await mockChatMessagesData(this.currentChatId);
+    this.currentChat = data;
+    chatMessages.setData(this.currentChat);
   }
 
   // ----- TODO --------------------------------
@@ -30,6 +40,9 @@ export class Chat extends HTMLElement {
   updateChatData(newMessage) {
   }
   // -------------------------------------------
+
+  setEventListeners() {
+  }
 
   render() {
     this.innerHTML = `
@@ -52,27 +65,31 @@ export class Chat extends HTMLElement {
             <div class="flex-grow-1">
               <chat-message-area></chat-message-area>
             </div>
-            <chat-message-input></chat-message-input>
           </div>
         </div>
       </div>
     `;
 
     const chatList = this.querySelector('chat-list-component');
-    chatList.setData(this.chatData);
+    chatList.setData(this.chatListData);
+    this.updateCurrentChat();
 
     const chatListArea = this.querySelector('#chat-list-area');
-    const chatMessageArea = this.querySelector('#chat-messages-container');
+    const chatMessageContainer = this.querySelector('#chat-messages-container');
     const backButton = this.querySelector('#back-to-chat-list');
     document.addEventListener('chatItemSelected', (event) => {
+      this.currentChatId = event.detail;
+      console.log('Chat ID:', this.currentChatId);
+      this.updateCurrentChat();
+
       if (window.innerWidth < 768) {
         chatListArea.classList.add('d-none');
-        chatMessageArea.classList.remove('d-none', 'd-md-block');
+        chatMessageContainer.classList.remove('d-none', 'd-md-block');
       }
     });
     backButton.addEventListener('click', () => {
       chatListArea.classList.remove('d-none');
-      chatMessageArea.classList.add('d-none');
+      chatMessageContainer.classList.add('d-none');
     });
 
     // TODO: Resize event seems to be not working
@@ -80,7 +97,7 @@ export class Chat extends HTMLElement {
       console.log('Resize event');
       if (window.innerWidth >= 768) {
         chatListArea.classList.remove('d-none');
-        chatMessageArea.classList.remove('d-none');
+        chatMessageContainer.classList.remove('d-none');
       }
     });
   }
