@@ -1,14 +1,14 @@
 export class ChatMessageInput extends HTMLElement {
-	constructor() {
-	  super();
-	}
-  
-	connectedCallback() {
-	  this.render();
-	}
-  
-	render() {
-	  this.innerHTML = `
+  constructor() {
+    super();
+  }
+
+  connectedCallback() {
+    this.render();
+  }
+
+  render() {
+    this.innerHTML = `
         <div class="chat-input m-4">
           <div class="input-group">
             <input type="text" id="messageInput" class="form-control" placeholder="Type a message...">
@@ -16,9 +16,9 @@ export class ChatMessageInput extends HTMLElement {
               <i class="bi bi-send"></i>
             </button>
           </div>
-		</div>
-	  `;
-	}
+    </div>
+    `;
   }
+}
 
 customElements.define('chat-message-input', ChatMessageInput);
