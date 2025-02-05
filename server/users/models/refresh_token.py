@@ -6,47 +6,64 @@ from django.db import models
 from ninja.errors import AuthenticationError
 
 
+# TODO: tweak access and refresh tokens lifetime
 class RefreshTokenManager(models.Manager):
-    def create(self, user) -> tuple:
+    def create(self, user, old_refresh_token_instance=None) -> tuple:
+        """
+        Creates a new refresh token.
+        To avoid collisions, if old refresh token is identical to the new one, deletes the old refresh token.
+        """
         now = datetime.now(timezone.utc)
         payload = {
             "sub": user.username,
             "iat": now,
-            "exp": now + timedelta(minutes=30),
+            "exp": now + timedelta(seconds=10),
         }
 
-        encoded_access_token = jwt.encode(payload, settings.ACCESS_TOKEN_SECRET_KEY, algorithm="HS256")
-        payload["exp"] = now + timedelta(days=182)
-        encoded_refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
+        access_token = jwt.encode(payload, settings.ACCESS_TOKEN_SECRET_KEY, algorithm="HS256")
+        payload["exp"] = now + timedelta(minutes=2)
+        refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
 
-        refresh_token = self.model(
-            user=user, token=encoded_refresh_token, issued_at=payload["iat"], expires_at=payload["exp"]
+        refresh_token_instance = self.model(
+            user=user,
+            token=refresh_token,
+            issued_at=payload["iat"],
+            expires_at=payload["exp"],
         )
-        refresh_token.save()
-        return encoded_access_token, refresh_token
+
+        if not old_refresh_token_instance:
+            old_refresh_token_instance = self.filter(token=refresh_token_instance.token).first()
+
+        if old_refresh_token_instance and old_refresh_token_instance.token == refresh_token_instance.token:
+            old_refresh_token_instance.delete()
+
+        refresh_token_instance.save()
+        return access_token, refresh_token_instance
 
     def rotate(self, refresh_token_raw: str) -> tuple:
-        refresh_token = self.select_related("user").filter(token=refresh_token_raw).first()
-        if not refresh_token:
+        refresh_token_instance = self.select_related("user").filter(token=refresh_token_raw).first()
+        if not refresh_token_instance:
             raise AuthenticationError
 
         try:
-            decoded_refresh_token = self._verify_refresh_token(refresh_token.token)
+            decoded_refresh_token = self._verify_refresh_token(refresh_token_instance.token)
         except jwt.ExpiredSignatureError as exc:
             raise AuthenticationError("Token is expired.") from exc
         except jwt.InvalidSignatureError as exc:
             raise AuthenticationError from exc
 
         now = datetime.now(timezone.utc)
-        if now > refresh_token.expires_at:
+        if now > refresh_token_instance.expires_at:
             raise AuthenticationError("Token is expired.")
-        if refresh_token.is_revoked or refresh_token.user.username != decoded_refresh_token.get("sub"):
+        if refresh_token_instance.is_revoked or refresh_token_instance.user.username != decoded_refresh_token.get(
+            "sub",
+        ):
             raise AuthenticationError
 
-        refresh_token.is_revoked = True
-        refresh_token.save()
+        refresh_token_instance.is_revoked = True
+        refresh_token_instance.save()
 
-        return self.create(refresh_token.user)
+        return self.create(refresh_token_instance.user, refresh_token_instance)
 
     def _verify_jwt(self, token: str, key: str) -> dict:
         """
