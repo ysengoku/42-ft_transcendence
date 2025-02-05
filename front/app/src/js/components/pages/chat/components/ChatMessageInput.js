@@ -9,7 +9,7 @@ export class ChatMessageInput extends HTMLElement {
 
   render() {
     this.innerHTML = `
-      <div class="chat-input m-4">
+      <div class="chat-input mx-4 mt-3">
         <div class="input-group">
           <input type="text" id="chatMessageInput" class="form-control" placeholder="Type a message...">
           <button class="btn btn-secondary" id="sendMessage">

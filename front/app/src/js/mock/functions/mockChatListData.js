@@ -6,8 +6,8 @@ export async function mockChatListData() {
       username: 'alice123',
       nickname: 'Alice',
       last_message_time: '2025-02-05T08:00:00Z',
-      last_message: "Hey, how's it going?",
-      unread_messages: 100,
+      last_message: 'Nope. See you tomorrow, snackless one! 😆',
+      unread_messages: 5,
     },
     {
       id: 2,
@@ -16,7 +16,7 @@ export async function mockChatListData() {
       nickname: 'JohnDoe',
       last_message_time: '2025-02-04T09:00:00Z',
       last_message: 'See you tomorrow!',
-      unread_messages: 0,
+      unread_messages: 100,
     },
     {
       id: 3,
