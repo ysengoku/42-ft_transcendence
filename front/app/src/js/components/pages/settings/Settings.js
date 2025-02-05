@@ -67,7 +67,7 @@ export class Settings extends HTMLElement {
       </div>
     </div>
 		`;
-    
+
     const avatarUploadButton = this.querySelector('avatar-upload');
     avatarUploadButton.setAvatar(this.user);
     const userNames = this.querySelector('settings-user-info');
@@ -75,7 +75,7 @@ export class Settings extends HTMLElement {
     const emailField = this.querySelector('settings-email-update');
     emailField.setParams(this.user);
     const passwordField = this.querySelector('settings-password-update');
-    passwordField.setParam(this.user.registration_type);
+    passwordField.setParam(this.user.connection_type);
     const mfaEnable = this.querySelector('mfa-enable-update');
     mfaEnable.setParams(this.user);
 
@@ -103,10 +103,10 @@ export class Settings extends HTMLElement {
     if (!passwordField.checkPasswordInput()) {
       return;
     }
-    
+
     const avatarUploadField = this.querySelector('avatar-upload');
     const avatarField = avatarUploadField.selectedFile;
-    
+
     const formData = new FormData();
     // If there are any changes, append to formData
     if (userInfo.username) {
@@ -136,7 +136,7 @@ export class Settings extends HTMLElement {
     }
     try {
       for (let [key, value] of formData.entries()) {
-      	console.log(key, value);
+        console.log(key, value);
         // const response = await apiRequest('POST', 'endpoint', formData, true);
         // handle response
       }

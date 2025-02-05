@@ -5,6 +5,14 @@
 
 ---------------------------------------------------------------------
 
+## API
+- [] Refresh Token handling
+
+## Navbar
+- [] Dropdown menu is hidden by Chat message header on Chat page
+
+---------------------------------------------------------------------
+
 ## Landing
 - [] JWT (check login status)
 
@@ -22,8 +30,7 @@
 
 ## Logout
 - [x] Clear CSRF token
-- [] Send request to clear JWT token
-- [] OAuth users logout handling
+- [] logout API request
 
 ---------------------------------------------------------------------
 
@@ -34,9 +41,10 @@
 - [x] 422 Error message check
 - [~] Nickname input
 - [x] Unit test (input validation)
-- [] (Check) error message from server (not implemented yet on server)
+- [] Error message from server parsing
 
 ---------------------------------------------------------------------
+
 ## Settings
 - [X] Adjust width
 - [X] Restrict other users to access to the page (remove username from url)
