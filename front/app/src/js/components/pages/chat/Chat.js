@@ -1,6 +1,7 @@
+import { socket } from '@socket';
+import './components/index.js';
 import { mockChatListData } from '@mock/functions/mockChatListData.js';
 import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
-import './components/index.js';
 
 export class Chat extends HTMLElement {
   constructor() {
@@ -12,13 +13,6 @@ export class Chat extends HTMLElement {
   }
 
   async connectedCallback() {
-    // TODO: WebSocket connection
-    // this.socket = new WebSocket('url');
-    // this.socket.onopen = () => {
-    //   console.log('WebSocket connection established');
-    // };
-    // this.socket.onmessage = this.handleSocketMessage.bind(this);
-
     this.chatListData = await mockChatListData(); // Temporary mock data
     this.currentChatId = this.chatListData[0].id;
     this.render();
@@ -31,15 +25,17 @@ export class Chat extends HTMLElement {
     chatMessages.setData(this.currentChat);
   }
 
-  // ----- TODO --------------------------------
-  handleSocketMessage(event) {
-    const newMessage = JSON.parse(event.data);
-    this.updateChatData(newMessage);
+  handleNewMessage(message) {
+    console.log('New message:', message);
+    const newMessage = message;
+    if (newMessage.id === this.currentChatId) {
+      this.currentChat.messages.push(newMessage.message);
+      const chatMessages = document.querySelector('chat-message-area');
+      chatMessages.setData(this.currentChat);
+    }
+    const chatList = document.querySelector('chat-list-component');
+    chatList.updateChatList(newMessage);
   }
-
-  updateChatData(newMessage) {
-  }
-  // -------------------------------------------
 
   setEventListeners() {
     const chatListArea = this.querySelector('#chat-list-area');
@@ -74,18 +70,28 @@ export class Chat extends HTMLElement {
     document.addEventListener('sendMessage', (event) => {
       console.log('Send message event:', event.detail);
       const storedUser = localStorage.getItem('user');
+      const senderUsername = JSON.parse(storedUser).username;
 
       // Send message to the server
-      // ----- Temporary message sending handler -----------------------------
+      // TODO: Adjust data to our server
       const messageData = {
-        id: 0, 
-        sender: storedUser.username,
-        message: event.detail,
-        timestamp: new Date().toISOString(),
+        type: 'chat',
+        data: {
+          id: this.currentChatId,
+          message: {
+            id: this.currentChat.messages.length + 1,
+            sender: senderUsername,
+            message: event.detail,
+            timestamp: new Date().toISOString(),
+          },
+        }
       };
-      this.currentChat.messages.push(messageData);
+      console.log('Message data:', messageData);
+      // ----- Temporary message sending handler -----------------------------
+      this.currentChat.messages.push(messageData.data.message);
       const chatMessages = document.querySelector('chat-message-area');
       chatMessages.setData(this.currentChat);
+      socket.socket.send(JSON.stringify(messageData));
       // ---------------------------------------------------------------------
     });
   }
@@ -120,6 +126,7 @@ export class Chat extends HTMLElement {
     chatList.setData(this.chatListData);
     this.updateCurrentChat();
     this.setEventListeners();
+    socket.addListener('chat', (message) => this.handleNewMessage(message));
   }
 }
 
