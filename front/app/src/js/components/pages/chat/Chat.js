@@ -42,6 +42,52 @@ export class Chat extends HTMLElement {
   // -------------------------------------------
 
   setEventListeners() {
+    const chatListArea = this.querySelector('#chat-list-area');
+    const chatMessageContainer = this.querySelector('#chat-messages-container');
+    const backButton = this.querySelector('#back-to-chat-list');
+
+    document.addEventListener('chatItemSelected', (event) => {
+      this.currentChatId = event.detail;
+      console.log('Chat ID:', this.currentChatId);
+      this.updateCurrentChat();
+
+      if (window.innerWidth < 768) {
+        chatListArea.classList.add('d-none');
+        chatMessageContainer.classList.remove('d-none', 'd-md-block');
+      }
+    });
+    backButton.addEventListener('click', () => {
+      chatListArea.classList.remove('d-none');
+      chatMessageContainer.classList.add('d-none');
+    });
+
+    // TODO: Resize event seems to be not working
+    document.addEventListener('resize', () => {
+      console.log('Resize event');
+      if (window.innerWidth >= 768) {
+        chatListArea.classList.remove('d-none');
+        chatMessageContainer.classList.remove('d-none');
+      }
+    });
+
+    // TODO: Send message event
+    document.addEventListener('sendMessage', (event) => {
+      console.log('Send message event:', event.detail);
+      const storedUser = localStorage.getItem('user');
+
+      // Send message to the server
+      // ----- Temporary message sending handler -----------------------------
+      const messageData = {
+        id: 0, 
+        sender: storedUser.username,
+        message: event.detail,
+        timestamp: new Date().toISOString(),
+      };
+      this.currentChat.messages.push(messageData);
+      const chatMessages = document.querySelector('chat-message-area');
+      chatMessages.setData(this.currentChat);
+      // ---------------------------------------------------------------------
+    });
   }
 
   render() {
@@ -73,33 +119,7 @@ export class Chat extends HTMLElement {
     const chatList = this.querySelector('chat-list-component');
     chatList.setData(this.chatListData);
     this.updateCurrentChat();
-
-    const chatListArea = this.querySelector('#chat-list-area');
-    const chatMessageContainer = this.querySelector('#chat-messages-container');
-    const backButton = this.querySelector('#back-to-chat-list');
-    document.addEventListener('chatItemSelected', (event) => {
-      this.currentChatId = event.detail;
-      console.log('Chat ID:', this.currentChatId);
-      this.updateCurrentChat();
-
-      if (window.innerWidth < 768) {
-        chatListArea.classList.add('d-none');
-        chatMessageContainer.classList.remove('d-none', 'd-md-block');
-      }
-    });
-    backButton.addEventListener('click', () => {
-      chatListArea.classList.remove('d-none');
-      chatMessageContainer.classList.add('d-none');
-    });
-
-    // TODO: Resize event seems to be not working
-    document.addEventListener('resize', () => {
-      console.log('Resize event');
-      if (window.innerWidth >= 768) {
-        chatListArea.classList.remove('d-none');
-        chatMessageContainer.classList.remove('d-none');
-      }
-    });
+    this.setEventListeners();
   }
 }
 
