@@ -8,9 +8,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router
 from ninja.errors import HttpError
 
-from users.models import twoFa, User
+from users.models import mfa, User
 
-twofa_router = Router()
+mfa_router = Router()
 
 
 def generate_secret_key() -> str:
@@ -18,7 +18,7 @@ def generate_secret_key() -> str:
     return pyotp.random_base32()
 
 
-@twofa_router.post("/2fa/setup")
+@mfa_router.post("/2fa/setup")
 def setup_2fa(request, username: str) -> Dict[str, Any]:
     """Setup 2FA for a user"""
     try:
@@ -29,7 +29,7 @@ def setup_2fa(request, username: str) -> Dict[str, Any]:
         secret = generate_secret_key()
 
         # Check if 2FA already exists
-        existing_2fa = twoFa.objects.filter(user=user).first()
+        existing_2fa = mfa.objects.filter(user=user).first()
         if existing_2fa:
             if existing_2fa.is_enabled:
                 raise HttpError(400, "2FA is already enabled for this account")
@@ -38,7 +38,7 @@ def setup_2fa(request, username: str) -> Dict[str, Any]:
             existing_2fa.save()
         else:
             # Create new 2FA entry
-            twoFa.objects.create(user=user, secret=secret, is_enabled=False)
+            mfa.objects.create(user=user, secret=secret, is_enabled=False)
 
         # Generate QR code
         totp = pyotp.TOTP(secret)
@@ -71,7 +71,7 @@ def setup_2fa(request, username: str) -> Dict[str, Any]:
         raise HttpError(500, f"Error setting up 2FA: {str(e)}")
 
 
-@twofa_router.post("/2fa/verify")
+@mfa_router.post("/2fa/verify")
 def verify_2fa(request, username: str, token: str) -> Dict[str, str]:
     """Verify and enable 2FA for a user"""
     if not token or len(token) != 6 or not token.isdigit():
@@ -82,16 +82,16 @@ def verify_2fa(request, username: str, token: str) -> Dict[str, str]:
         if not user:
             raise HttpError(404, "User not found")
 
-        twofa = twoFa.objects.filter(user=user).first()
-        if not twofa:
+        mfa = mfa.objects.filter(user=user).first()
+        if not mfa:
             raise HttpError(404, "Please set up 2FA before verifying")
 
-        totp = pyotp.TOTP(twofa.secret)
+        totp = pyotp.TOTP(mfa.secret)
         if not totp.verify(token):
             raise HttpError(400, "Invalid code. Please try again with a new code from your authenticator app.")
 
-        twofa.is_enabled = True
-        twofa.save()
+        mfa.is_enabled = True
+        mfa.save()
 
         return {"status": "success", "message": "2FA has been successfully enabled for your account"}
 
@@ -101,7 +101,7 @@ def verify_2fa(request, username: str, token: str) -> Dict[str, str]:
         raise HttpError(500, f"Error verifying 2FA: {str(e)}")
 
 
-@twofa_router.post("/2fa/verify-login")
+@mfa_router.post("/2fa/verify-login")
 def verify_2fa_login(request, username: str, token: str) -> Dict[str, str]:
     """Verify 2FA token during login"""
     if not token or len(token) != 6 or not token.isdigit():
@@ -112,11 +112,11 @@ def verify_2fa_login(request, username: str, token: str) -> Dict[str, str]:
         if not user:
             raise HttpError(404, "User not found")
 
-        twofa = twoFa.objects.filter(user=user).first()
-        if not twofa or not twofa.is_enabled:
+        mfa = mfa.objects.filter(user=user).first()
+        if not mfa or not mfa.is_enabled:
             raise HttpError(400, "2FA is not enabled for this account")
 
-        totp = pyotp.TOTP(twofa.secret)
+        totp = pyotp.TOTP(mfa.secret)
         if not totp.verify(token):
             raise HttpError(400, "Invalid code. Please try again with a new code from your authenticator app.")
 
@@ -126,7 +126,7 @@ def verify_2fa_login(request, username: str, token: str) -> Dict[str, str]:
         raise HttpError(500, f"Error verifying 2FA: {str(e)}")
 
 
-@twofa_router.delete("/2fa/disable")
+@mfa_router.delete("/2fa/disable")
 def disable_2fa(request, username: str, token: str) -> Dict[str, str]:
     """Disable 2FA for a user"""
     if not token or len(token) != 6 or not token.isdigit():
@@ -137,18 +137,18 @@ def disable_2fa(request, username: str, token: str) -> Dict[str, str]:
         if not user:
             raise HttpError(404, "User not found")
 
-        twofa = twoFa.objects.filter(user=user).first()
-        if not twofa:
+        mfa = mfa.objects.filter(user=user).first()
+        if not mfa:
             raise HttpError(404, "2FA is not set up for this account")
-        if not twofa.is_enabled:
+        if not mfa.is_enabled:
             raise HttpError(400, "2FA is already disabled")
 
-        totp = pyotp.TOTP(twofa.secret)
+        totp = pyotp.TOTP(mfa.secret)
         if not totp.verify(token):
             raise HttpError(400, "Invalid code. Please enter a valid code from your authenticator app.")
 
         # Completely delete the 2FA configuration
-        twofa.delete()
+        mfa.delete()
 
         return {"status": "success", "message": "2FA has been successfully disabled"}
 
