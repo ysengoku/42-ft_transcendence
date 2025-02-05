@@ -30,10 +30,18 @@
     - [ ] Passwords should have at least 1 digit and 1 letter.
     - [ ] Passwords should not have X amount of repeated characters.
 - [~] JWT auth on the backend.
+    - [x] Implement signup endpoint.
     - [x] Implement login endpoint.
     - [x] Implement CSRF protection.
     - [x] Implement JWT verifications on each of the endpoints, except login and user creation endpoints.
     - [ ] Implement refresh tokens.
+        - [ ] Issue refresh tokens on user creation.
+        - [ ] Issue refresh tokens on login.
+        - [ ] Rotate refresh tokens on refresh.
+        - [ ] Revoke refresh tokens on signout.
+    - [ ] Add to cookies `HTTP-only`, `Secure`, `SameSite=Strict`.
+    - [ ] Add expiration date to the cookies.
+    - [ ] Implement signout endpoint.
 - [x] Friendship system.
     - [x] Addition and deletion operations for friends.
     - [x] Friends should be sorted by their online status.
@@ -44,7 +52,6 @@
 - [x] Elo system.
 - [~] Redo the User model to make it compatible with OAuth.
     - [x] Change the validation for the User in all places.
-    - [ ] Change the API views so they could be able to find and return different types of users.
 
 # Reworks
 - [x] `username`'s are not slugified, like `username`
