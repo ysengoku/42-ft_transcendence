@@ -20,7 +20,7 @@ export class DropdownMenu extends HTMLElement {
     let avatarSrc = `${anonymousavatar}`;
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      const user = await simulateFetchUserData('JohnDoe');
+      const user = await simulateFetchUserData('JohnDoe2'); // Temporary solution
       if (user) {
         username = user.username;
         avatarSrc = `${user.avatar}`;
