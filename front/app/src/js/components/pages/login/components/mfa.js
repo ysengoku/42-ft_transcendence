@@ -1,22 +1,22 @@
-// twofa.js
+// mfa.js
 
 import { router } from '@router';
 import { API_ENDPOINTS } from '@api';
 
-export class TwoFactorAuth extends HTMLElement {
+export class mfactorAuth extends HTMLElement {
   constructor() {
     super();
   }
 
   async send2FACode() {
     try {
-      const response = await fetch(API_ENDPOINTS.TWOFA_SEND, {
+      const response = await fetch(API_ENDPOINTS.MFA_SEND, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: "fanny"
+          user_id: 'fanny',
           //'Authorization': `Bearer ${localStorage.getItem('auth_token')}`, // when JWT is implemented
         }),
       });
@@ -38,7 +38,7 @@ export class TwoFactorAuth extends HTMLElement {
 
   async verify2FACode(code) {
     try {
-      const response = await fetch(API_ENDPOINTS.TWOFA_VERIFY, {
+      const response = await fetch(API_ENDPOINTS.MFA_VERIFY, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,4 +93,4 @@ export class TwoFactorAuth extends HTMLElement {
   }
 }
 
-customElements.define('twofa-auth', TwoFactorAuth);
+customElements.define('mfa-auth', mfactorAuth);

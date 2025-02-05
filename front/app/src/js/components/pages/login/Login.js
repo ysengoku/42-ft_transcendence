@@ -15,14 +15,14 @@ export class Login extends HTMLElement {
 
   render() {
     const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
-    
+
     // if (isLoggedIn) {
     //   router.navigate('/home');
     // }
-    
+
     if (isLoggedIn && !is2FACompleted) {
       this.innerHTML = `
-        <twofa-auth></twofa-auth>
+        <mfa-auth></mfa-auth>
       `;
       return;
     }
