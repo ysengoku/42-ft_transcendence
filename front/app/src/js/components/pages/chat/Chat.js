@@ -1,4 +1,4 @@
-import { socket } from '@socket';
+import { socketManager } from '@socket';
 import './components/index.js';
 import { mockChatListData } from '@mock/functions/mockChatListData.js';
 import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
@@ -6,7 +6,6 @@ import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 export class Chat extends HTMLElement {
   constructor() {
     super();
-    this.socket = null;
     this.chatListData = [];
     this.currentChatId = null;
     this.currentChat = [];
@@ -15,6 +14,7 @@ export class Chat extends HTMLElement {
   async connectedCallback() {
     this.chatListData = await mockChatListData(); // Temporary mock data
     this.currentChatId = this.chatListData[0].id;
+    this.chatListData[0].unread_messages = 0;
     this.render();
   }
 
@@ -22,6 +22,8 @@ export class Chat extends HTMLElement {
     const chatMessages = document.querySelector('chat-message-area');
     const data = await mockChatMessagesData(this.currentChatId);
     this.currentChat = data;
+    this.currentChat.unread_messages = 0;
+    console.log('Current chat:', this.currentChat);
     chatMessages.setData(this.currentChat);
   }
 
@@ -84,14 +86,14 @@ export class Chat extends HTMLElement {
             message: event.detail,
             timestamp: new Date().toISOString(),
           },
-        }
+        },
       };
       console.log('Message data:', messageData);
       // ----- Temporary message sending handler -----------------------------
       this.currentChat.messages.push(messageData.data.message);
       const chatMessages = document.querySelector('chat-message-area');
       chatMessages.setData(this.currentChat);
-      socket.socket.send(JSON.stringify(messageData));
+      socketManager.socket.send(JSON.stringify(messageData));
       // ---------------------------------------------------------------------
     });
   }
@@ -109,12 +111,12 @@ export class Chat extends HTMLElement {
         </div>
 
         <div class="col-12 col-md-8 d-none d-md-block" id="chat-messages-container">
-          <div class="d-flex flex-column h-100 overflow-auto">
+          <div class="d-flex flex-column h-100">
             <button class="btn btn-secondry mt-2 text-start d-md-none mb-3" id="back-to-chat-list">
               <i class="bi bi-arrow-left"></i>
                Back
             </button>
-            <div class="flex-grow-1">
+            <div class="flex-grow-1 overflow-auto">
               <chat-message-area></chat-message-area>
             </div>
           </div>
@@ -126,7 +128,7 @@ export class Chat extends HTMLElement {
     chatList.setData(this.chatListData);
     this.updateCurrentChat();
     this.setEventListeners();
-    socket.addListener('chat', (message) => this.handleNewMessage(message));
+    socketManager.addListener('chat', (message) => this.handleNewMessage(message));
   }
 }
 
