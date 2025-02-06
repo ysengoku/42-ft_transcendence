@@ -3,15 +3,22 @@ import navbarBrand from '/img/sample-logo.svg?url';
 export class NavbarBrand extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
   }
 
   connectedCallback() {
     this.render();
   }
 
+  setLoginStatus(value) {
+    this.isLoggedIn = value;
+    this.render();
+  }
+
   render() {
     // Temporary solution
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    // const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const isLoggedIn = this.isLoggedIn;
 
     const href = isLoggedIn ? '/home' : '/';
     const link = document.createElement('a');

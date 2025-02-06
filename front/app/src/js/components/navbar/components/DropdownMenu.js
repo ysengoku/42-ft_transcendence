@@ -6,16 +6,23 @@ import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js'
 export class DropdownMenu extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
   }
 
-  connectedCallback() {
+  // connectedCallback() {
+  //   this.render();
+  // }
+
+  setLoginStatus(value) {
+    this.isLoggedIn = value;
     this.render();
   }
 
   async render() {
     const isDarkMode = ThemeController.getTheme() === 'dark';
     // Temporary solution with localStorage
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    // const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const isLoggedIn = this.isLoggedIn;
     let username = null;
     let avatarSrc = `${anonymousavatar}`;
     const storedUser = localStorage.getItem('user');
@@ -53,14 +60,15 @@ export class DropdownMenu extends HTMLElement {
 		`;
 
     const themeToggleButton = document.getElementById('theme-toggle');
-    themeToggleButton.addEventListener('click', () => {
-      const newTheme = ThemeController.toggleTheme();
-      const themeLabel = document.getElementById('theme-label');
-      if (themeLabel) {
-        themeLabel.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
-      }
-    });
-
+    if (themeToggleButton) {
+      themeToggleButton.addEventListener('click', () => {
+        const newTheme = ThemeController.toggleTheme();
+        const themeLabel = document.getElementById('theme-label');
+        if (themeLabel) {
+          themeLabel.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+        }
+      });
+    }
     if (isLoggedIn) {
       document.getElementById('dropdown-item-logout')?.addEventListener('click', handleLogout);
     }

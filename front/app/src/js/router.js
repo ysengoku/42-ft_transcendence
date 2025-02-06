@@ -70,7 +70,8 @@ const router = (() => {
     }
 
     isLoggedIn() {
-      return localStorage.getItem('isLoggedIn') === 'true'; // This is temoporay simulation
+      // return localStorage.getItem('isLoggedIn') === 'true'; 
+      return true;// This is temoporay simulation
     }
 
     /**
