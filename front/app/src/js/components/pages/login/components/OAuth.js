@@ -63,14 +63,14 @@ export class OAuth extends HTMLElement {
           const data = await response.json();
           console.log('OAuth callback data:', data);
 
-          if (data.status === 'success') {
-            console.log('User Info:', data.user_info); // Print user info for the moment
+          if (response.status === 200) {  // Modifie cette ligne
+            console.log('User Info:', data);
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('auth_token', data.auth_token);
-            localStorage.setItem('userID', data.user_info.username); ///// verf id
-            router.navigate(`/home`, response.user);
+            localStorage.setItem('auth_token', data.auth_token || 'dummy_token'); // Vérifie si auth_token existe
+            localStorage.setItem('userID', data.username); 
+            router.navigate('/home');
           } else {
-            console.error('OAuth callback error:', data.error);
+            console.error('OAuth callback error:', data.msg);
           }
         } catch (error) {
           console.error('OAuth callback failed:', error);
