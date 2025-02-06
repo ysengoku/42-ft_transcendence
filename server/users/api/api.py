@@ -23,7 +23,7 @@ class JwtCookieAuth(APIKeyCookie):
     def authenticate(self, request, access_token: str):
         payload = RefreshToken.objects.verify_access_token(access_token)
 
-        user = User.objects.for_username(payload["sub"]).first()
+        user = User.objects.for_id(payload["sub"]).first()
         if not user:
             return None
         return user
