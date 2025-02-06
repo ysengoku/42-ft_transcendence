@@ -25,6 +25,9 @@
  * }
  */
 
+import { autoLogout } from '@utils/autoLogout.js';
+import { API_ENDPOINTS } from './endpoints';
+
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   function getCSRFTokenfromCookies() {
     const name = 'csrftoken';
@@ -40,6 +43,42 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       }
     }
     return token;
+  }
+
+  function getRefreshTokenfromCookies() {
+    const name = 'refresh_token';
+    let token = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name)) {
+          token = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return token
+  }
+
+  async function refreshAccessToken(csrfToken) {
+    console.log('Refreshing access token');
+    const refreshToken = getRefreshTokenfromCookies();
+    if (refreshToken && csrfToken) {
+      const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+      if (refreshResponse.ok) {
+        return true;
+      }
+      return false;
+    }
   }
 
   const url = `${endpoint}`;
@@ -72,16 +111,25 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       const responseData = await response.json();
       return { status: response.status, data: responseData };
     }
+    if (response.status === 401) {
+      console.log('Unauthorized request:', response);
+      try {
+        const refreshResponse = await refreshAccessToken(csrfToken);
+        if (refreshResponse) {
+          console.log('Refresh successful');
+          return apiRequest(method, endpoint, data, isFileUpload, needToken);
+        }
+        console.log('Refresh failed');
+        autoLogout();
+      } catch (error) {
+        console.error('Error during refreshing token:', error);
+        autoLogout();
+      } 
+    }
     const error = new Error('Request failed');
     error.status = response.status;
     let errorData = null;
-    // const contentType = response.headers.get('Content-Type');
-    // if (contentType && contentType.includes('application/json')) {
     errorData = await response.json();
-    // } else if (contentType && contentType.includes('text/html')) {
-    //   errorData = await response.text();
-    // }
-    // console.log('Error Data: ', errorData);
     error.response = errorData;
     throw error;
   } catch (error) {
