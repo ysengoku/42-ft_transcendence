@@ -7,7 +7,17 @@ from ninja.errors import AuthenticationError
 
 
 # TODO: tweak access and refresh tokens lifetime
-class RefreshTokenManager(models.Manager):
+class RefreshTokenQuerySet(models.QuerySet):
+    """
+    Manages access and refresh JWT's. Handles PyJWT exceptions and throws AuthenticationError in case of any JWT error.
+    """
+
+    def for_token(self, token: str):
+        return self.filter(token=token)
+
+    def set_revoked(self):
+        return self.update(is_revoked=True)
+
     def create(self, user, old_refresh_token_instance=None) -> tuple:
         """
         Creates a new refresh token.
@@ -15,7 +25,7 @@ class RefreshTokenManager(models.Manager):
         """
         now = datetime.now(timezone.utc)
         payload = {
-            "sub": user.username,
+            "sub": str(user.id),
             "iat": now,
             "exp": now + timedelta(seconds=10),
         }
@@ -27,8 +37,6 @@ class RefreshTokenManager(models.Manager):
         refresh_token_instance = self.model(
             user=user,
             token=refresh_token,
-            issued_at=payload["iat"],
-            expires_at=payload["exp"],
         )
 
         if not old_refresh_token_instance:
@@ -45,17 +53,9 @@ class RefreshTokenManager(models.Manager):
         if not refresh_token_instance:
             raise AuthenticationError
 
-        try:
-            decoded_refresh_token = self._verify_refresh_token(refresh_token_instance.token)
-        except jwt.ExpiredSignatureError as exc:
-            raise AuthenticationError("Token is expired.") from exc
-        except jwt.InvalidSignatureError as exc:
-            raise AuthenticationError from exc
+        decoded_refresh_token = self._verify_refresh_token(refresh_token_instance.token)
 
-        now = datetime.now(timezone.utc)
-        if now > refresh_token_instance.expires_at:
-            raise AuthenticationError("Token is expired.")
-        if refresh_token_instance.is_revoked or refresh_token_instance.user.username != decoded_refresh_token.get(
+        if refresh_token_instance.is_revoked or str(refresh_token_instance.user.id) != decoded_refresh_token.get(
             "sub",
         ):
             raise AuthenticationError
@@ -66,10 +66,12 @@ class RefreshTokenManager(models.Manager):
         return self.create(refresh_token_instance.user, refresh_token_instance)
 
     def _verify_jwt(self, token: str, key: str) -> dict:
-        """
-        May throw `jwt.InvalidSignatureError` or `jwt.ExpiredSignatureError`.
-        """
-        return jwt.decode(token, key, algorithms=["HS256"])
+        try:
+            return jwt.decode(token, key, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError as exc:
+            raise AuthenticationError("Session is expired. Please login again.") from exc
+        except jwt.PyJWTError as exc:
+            raise AuthenticationError from exc
 
     def _verify_refresh_token(self, token: str) -> dict:
         return self._verify_jwt(token, settings.REFRESH_TOKEN_SECRET_KEY)
@@ -81,11 +83,9 @@ class RefreshTokenManager(models.Manager):
 class RefreshToken(models.Model):
     user = models.ForeignKey("users.User", related_name="refresh_tokens", on_delete=models.CASCADE)
     token = models.CharField(max_length=255, unique=True)
-    issued_at = models.DateTimeField()
-    expires_at = models.DateTimeField()
     is_revoked = models.BooleanField(default=False)
 
-    objects = RefreshTokenManager()
+    objects = RefreshTokenQuerySet.as_manager()
 
     def __str__(self):
         return f"Refresh token of {self.user.username}"

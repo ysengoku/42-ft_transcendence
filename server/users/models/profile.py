@@ -70,6 +70,18 @@ class ProfileQuerySet(models.QuerySet):
             .with_wins_and_loses_and_total_matches()
         )
 
+    def with_search(self, search: str):
+        """
+        Searches users based on the given context.
+        """
+        if search:
+            return (
+                self.prefetch_related("user")
+                .filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
+                .order_by("-is_online")
+            )
+        return Profile.objects.prefetch_related("user").all().order_by("-is_online")
+
 
 class Profile(models.Model):
     """
