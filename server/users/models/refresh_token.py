@@ -25,7 +25,7 @@ class RefreshTokenQuerySet(models.QuerySet):
         """
         now = datetime.now(timezone.utc)
         payload = {
-            "sub": user.username,
+            "sub": str(user.id),
             "iat": now,
             "exp": now + timedelta(seconds=10),
         }
@@ -55,7 +55,7 @@ class RefreshTokenQuerySet(models.QuerySet):
 
         decoded_refresh_token = self._verify_refresh_token(refresh_token_instance.token)
 
-        if refresh_token_instance.is_revoked or refresh_token_instance.user.username != decoded_refresh_token.get(
+        if refresh_token_instance.is_revoked or refresh_token_instance.user.id != decoded_refresh_token.get(
             "sub",
         ):
             raise AuthenticationError
