@@ -85,7 +85,6 @@ def refresh(request: HttpRequest):
     return response
 
 
-# TODO: check of the signout route is protected
 @auth_router.delete(
     "logout",
     response={204: None},
@@ -98,7 +97,7 @@ def logout(request: HttpRequest):
     if not old_refresh_token:
         raise AuthenticationError
 
-    new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
+    RefreshToken.objects.for_token(old_refresh_token).set_revoked()
 
     response = JsonResponse({"msg": "Ok!"})
     response.delete_cookie("access_token")
