@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
+from users.api.common import allow_only_for_self
 from users.models import RefreshToken, User
 from users.schemas import (
     LoginSchema,
@@ -98,7 +99,13 @@ def logout(request: HttpRequest, response: HttpResponse):
     if not old_refresh_token:
         raise AuthenticationError
 
-    RefreshToken.objects.for_token(old_refresh_token).set_revoked()
+    refresh_token_qs = RefreshToken.objects.for_token(old_refresh_token)
+
+    refresh_token_instance = refresh_token_qs.first()
+    if refresh_token_instance:
+        allow_only_for_self(request, refresh_token_instance.user.username)
+
+    refresh_token_qs.set_revoked()
 
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
