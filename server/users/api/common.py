@@ -3,12 +3,11 @@ from ninja.errors import HttpError
 from users.models import Profile, User
 
 
-def allow_only_for_self(func):
-    def wrapper(request, username, *args, **kwargs):
-        if request.auth.username != username:
-            raise HttpError(403, "Forbidden.")
-        return func(request, username, *args, **kwargs)
-    return wrapper
+def allow_only_for_self(request, username: str):
+    user: User = request.auth
+    if user.username != username:
+        raise HttpError(403, "Forbidden.")
+    return request.auth
 
 
 def get_queryset_by_username_or_404(model, username: str):

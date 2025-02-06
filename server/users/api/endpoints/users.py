@@ -45,12 +45,11 @@ def get_user(request: HttpRequest, username: str):
 
 
 @users_router.get("{username}/settings", response={200: UserSettingsSchema, frozenset({401, 403}): Message})
-@allow_only_for_self
 def get_user_settings(request: HttpRequest, username: str):
     """
     Gets settings of a specific user by username.
     """
-    return request.auth
+    return allow_only_for_self(request, username)
 
 
 @users_router.post(
@@ -61,7 +60,6 @@ def get_user_settings(request: HttpRequest, username: str):
         422: list[ValidationErrorMessageSchema],
     },
 )
-@allow_only_for_self
 def update_user_settings(
     request: HttpRequest,
     username: str,
@@ -72,7 +70,7 @@ def update_user_settings(
     Udates settings of the user.
     Maximum size of the uploaded avatar is 10mb. Anything bigger will return 413 error.
     """
-    user = request.auth
+    user = allow_only_for_self(request, username)
 
     try:
         user.update_user(data, new_profile_picture)
