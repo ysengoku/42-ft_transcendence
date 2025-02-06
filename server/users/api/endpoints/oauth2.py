@@ -1,5 +1,4 @@
 import hashlib
-import logging
 import os
 from urllib.parse import urlencode
 
@@ -13,7 +12,6 @@ from ninja import Router
 
 from users.models import User
 
-logger = logging.getLogger(__name__)
 oauth2_router = Router()
 
 
@@ -48,10 +46,10 @@ def oauth_authorize(request, platform: str):
         }
 
         auth_url = f"{config['auth_uri']}?{urlencode(params)}"
+        print(f"print : AUTHORIZE auth_url: {auth_url}")
         return JsonResponse({"auth_url": auth_url})
 
     except Exception as e:
-        logger.error(f"Error in OAuth authorization: {str(e)}", exc_info=True)
         return JsonResponse({"error": str(e)}, status=500)
 
 
