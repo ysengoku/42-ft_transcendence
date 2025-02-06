@@ -58,7 +58,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
         }
       }
     }
-    return token
+    return token;
   }
 
   async function refreshAccessToken(csrfToken) {
@@ -111,7 +111,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       const responseData = await response.json();
       return { status: response.status, data: responseData };
     }
-    if (response.status === 401) {
+    if (needToken && response.status === 401) {
       console.log('Unauthorized request:', response);
       try {
         const refreshResponse = await refreshAccessToken(csrfToken);
@@ -124,7 +124,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       } catch (error) {
         console.error('Error during refreshing token:', error);
         autoLogout();
-      } 
+      }
     }
     const error = new Error('Request failed');
     error.status = response.status;
