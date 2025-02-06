@@ -1,3 +1,5 @@
+import { auth } from '@auth/authManager.js';
+
 export class Navbar extends HTMLElement {
   constructor() {
     super();
@@ -5,24 +7,19 @@ export class Navbar extends HTMLElement {
   }
 
   connectedCallback() {
-    // this.checkLoginStatus();
     this.render();
   }
 
-  setLoginStatus(value) {
-    this.isLoggedIn = value;
-    this.renderNavbarActions();
-    const navbarBrand = this.querySelector('navbar-brand-component');
-    navbarBrand.setLoginStatus(this.isLoggedIn);
-  }
-
-  // TODO: Implement this method after the endpoint is ready
-  checkLoginStatus() {
-    // Send request to the server to check if the user is logged in
-    // If the user is logged in, set this.isLoggedIn to true
-  }
+  // setLoginStatus(value) {
+  //   console.log('<Navbar> Set login stauts: ', value);
+  //   this.isLoggedIn = value;
+  //   this.renderNavbarActions();
+  //   const navbarBrand = this.querySelector('navbar-brand-component');
+  //   navbarBrand.setLoginStatus(this.isLoggedIn);
+  // }
 
   render() {
+    this.isLoggedIn = auth.isLoggedIn();
     this.innerHTML = `
       <style>
         .navbar {
@@ -42,13 +39,10 @@ export class Navbar extends HTMLElement {
   }
 
   renderNavbarActions() {
-    // const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';  // Temporary solution
-    console.log('Logged in:', this.isLoggedIn);
-    const isLoggedIn = this.isLoggedIn
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
 
-    if (isLoggedIn) {
+    if (this.isLoggedIn) {
       const friendsButton = document.createElement('friends-button');
       const chatButton = document.createElement('chat-button');
       const notificationsButton = document.createElement('notifications-button');
@@ -59,7 +53,7 @@ export class Navbar extends HTMLElement {
     }
 
     const dropdownMenu = document.createElement('dropdown-menu');
-    dropdownMenu.setLoginStatus(isLoggedIn);
+    dropdownMenu.setLoginStatus(this.isLoggedIn);
     navbarActions.appendChild(dropdownMenu);
   }
 }

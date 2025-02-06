@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth/authManager.js';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
 // import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
@@ -92,7 +93,7 @@ export class Register extends HTMLElement {
           username: response.data.username,
           avatar: response.data.avatar,
         };
-        localStorage.setItem('user', JSON.stringify(userInformation));
+        auth.setUser(userInformation);
 
         const navbar = document.querySelector('navbar-component');
         navbar.setLoginStatus(true);

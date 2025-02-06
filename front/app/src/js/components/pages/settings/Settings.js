@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth/authManager.js';
 import './components/index.js';
 import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
@@ -13,7 +14,7 @@ export class Settings extends HTMLElement {
   }
 
   async fetchUserData() {
-    const user = localStorage.getItem('user');
+    const user = auth.getUser();
     if (!user) {
       // Show a messages to user
       router.navigate('/login');
