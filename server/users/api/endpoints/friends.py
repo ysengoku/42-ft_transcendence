@@ -18,7 +18,6 @@ friends_router = Router()
     response={200: list[ProfileMinimalSchema], frozenset({401, 403, 404}): Message},
 )
 @paginate
-@allow_only_for_self
 def get_friends(request: HttpRequest, username: str):
     """
     Gets friends of specific user.
@@ -26,38 +25,40 @@ def get_friends(request: HttpRequest, username: str):
     Paginated by the `limit` and `offset` settings.
     For example, `/users/{username}/friends?limit=10&offset=0` will get 10 friends from the very first one.
     """
-    return request.auth.profile.friends.order_by("-is_online").all()
+    user = allow_only_for_self(request, username)
+    return user.profile.friends.order_by("-is_online").all()
 
 
 @friends_router.post(
     "{username}/friends", response={201: ProfileMinimalSchema, frozenset({401, 403, 404, 422}): Message},
 )
-@allow_only_for_self
 def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema):
     """
     Adds user as a friend.
     """
+    user = allow_only_for_self(request, username)
+
     friend = get_user_queryset_by_username_or_404(user_to_add.username).first()
 
-    err_msg = request.auth.profile.add_friend(friend.profile)
+    err_msg = user.profile.add_friend(friend.profile)
     if err_msg:
         raise HttpError(422, err_msg)
     return 201, friend.profile
 
 
-# TODO: add auth
 @friends_router.delete(
     "{username}/friends/{friend_to_remove}",
     response={204: None, frozenset({401, 403, 404, 422}): Message},
 )
-@allow_only_for_self
 def remove_from_friends(request: HttpRequest, username: str, friend_to_remove: str):
     """
     Deletes user from a friendlist.
     """
+    user = allow_only_for_self(request, username)
+
     friend = get_user_queryset_by_username_or_404(friend_to_remove).first()
 
-    err_msg = request.auth.profile.remove_friend(friend.profile)
+    err_msg = user.profile.remove_friend(friend.profile)
     if err_msg:
         raise HttpError(422, err_msg)
     return 204, None
