@@ -7,6 +7,7 @@
 
 ## API
 - [X] Refresh Token handling
+- [] Remove reflesh token sending from login and register
 
 ---------------------------------------------------------------------
 
