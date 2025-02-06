@@ -55,7 +55,7 @@ class RefreshTokenQuerySet(models.QuerySet):
 
         decoded_refresh_token = self._verify_refresh_token(refresh_token_instance.token)
 
-        if refresh_token_instance.is_revoked or refresh_token_instance.user.id != decoded_refresh_token.get(
+        if refresh_token_instance.is_revoked or str(refresh_token_instance.user.id) != decoded_refresh_token.get(
             "sub",
         ):
             raise AuthenticationError

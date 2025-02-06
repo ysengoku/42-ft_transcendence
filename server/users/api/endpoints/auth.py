@@ -1,4 +1,4 @@
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
@@ -56,7 +56,10 @@ def signup(request: HttpRequest, data: SignUpSchema):
     Creates a new user.
     """
     user = User.objects.validate_and_create_user(
-        username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password,
+        username=data.username,
+        connection_type=User.REGULAR,
+        email=data.email,
+        password=data.password,
     )
     user.save()
 
@@ -65,10 +68,10 @@ def signup(request: HttpRequest, data: SignUpSchema):
 
 @auth_router.post(
     "refresh",
-    response={frozenset({201, 401}): Message},
+    response={204: None, 401: Message},
     auth=None,
 )
-def refresh(request: HttpRequest):
+def refresh(request: HttpRequest, response: HttpResponse):
     """
     Rotates the refresh token. Issues a new refresh token and a new access token.
     """
@@ -78,17 +81,16 @@ def refresh(request: HttpRequest):
 
     new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
 
-    response = JsonResponse({"msg": "Ok!"})
     response.set_cookie("access_token", new_access_token)
     response.set_cookie("refresh_token", new_refresh_token_instance.token)
-    return response
+    return 204, None
 
 
 @auth_router.delete(
     "logout",
-    response={204: None},
+    response={204: None, 401: Message},
 )
-def logout(request: HttpRequest):
+def logout(request: HttpRequest, response: HttpResponse):
     """
     Logs out the user. Clears the tokens from the cookies.
     """
@@ -98,7 +100,6 @@ def logout(request: HttpRequest):
 
     RefreshToken.objects.for_token(old_refresh_token).set_revoked()
 
-    response = JsonResponse({"msg": "Ok!"})
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
-    return response
+    return 204, None
