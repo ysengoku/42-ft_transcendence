@@ -77,21 +77,11 @@ export class LoginForm extends HTMLElement {
           avatar: response.data.avatar,
         };
         localStorage.setItem('user', JSON.stringify(userInformation));
-        // // ----- Temporary solution -------------------------------------
-        // const mockUserData = await simulateLoginSuccessResponse();
-        // const userInformation = {
-        //   username: mockUserData.user.username,
-        //   avatar: mockUserData.user.avatar,
-        // };
-        // localStorage.setItem('user', JSON.stringify(userInformation));
-        // // --------------------------------------------------------------
-
         // const navBar = document.getElementById('navbar-container');
         // navBar.innerHTML = '<navbar-component></navbar-component>';
         const navbar = document.querySelector('navbar-component');
         navbar.setLoginStatus(true);
         router.navigate(`/home`, response.user);
-        // router.navigate(`/home`, mockUserData); // ----- Temporary solution
       }
     } catch (error) {
       const feedback = this.querySelector('#login-failed-feedback');
