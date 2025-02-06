@@ -9,10 +9,6 @@ export class OAuth extends HTMLElement {
 
   async handleOAuthClick(platform) {
     try {
-      // fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform))
-      // .then((response) => response.json())
-      // .then((data) => console.log(data))
-      // .catch((error) => console.error('OAuth aaaaaa failed:', error));
       console.log(`Starting OAuth flow for ${platform}`);
 
       const response = await fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform));
@@ -52,16 +48,23 @@ export class OAuth extends HTMLElement {
         return;
       }
 
+      // debug
+      console.log('Current URL:', window.location.href);
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      console.log('Code:', code, 'State:', state);
+
       if (platform) {
         try {
-            const response = await fetch(API_ENDPOINTS.OAUTH_CALLBACK(platform), {
+            const response_callback = await fetch(API_ENDPOINTS.OAUTH_CALLBACK(platform), {
                 method: 'GET',
                 credentials: 'include',
             });
-    
+            console.log('HEYY', data);
             const data = await response.json();
             console.log('OAuth callback data:', data);
-    
+            console.log('Login response:', response_callback);
             if (data.status === 200) {
                 // Grouper toutes les opérations liées au localStorage ensemble
                 localStorage.setItem('isLoggedIn', 'true');
@@ -93,11 +96,12 @@ export class OAuth extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    this.checkOAuthCallback();
+
     this.querySelector('.btn-42').addEventListener('click', () => this.handleOAuthClick('42'));
     this.querySelector('.btn-github').addEventListener('click', () => this.handleOAuthClick('github'));
 
     // Vérifier si on revient d'une redirection OAuth
-    this.checkOAuthCallback();
   }
 
   render() {
