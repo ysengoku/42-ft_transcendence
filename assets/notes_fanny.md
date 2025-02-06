@@ -437,3 +437,8 @@ cf picture :  i have created a traditionnal oauth connection with github. in the
 
 # 2FA:
 TOTP app = Time-based One-Time Password
+
+
+vite prod:
+rm -rf node_modules/.vite
+npm run build
