@@ -12,6 +12,8 @@ export class Navbar extends HTMLElement {
   setLoginStatus(value) {
     this.isLoggedIn = value;
     this.renderNavbarActions();
+    const navbarBrand = this.querySelector('navbar-brand-component');
+    navbarBrand.setLoginStatus(this.isLoggedIn);
   }
 
   // TODO: Implement this method after the endpoint is ready
@@ -41,6 +43,7 @@ export class Navbar extends HTMLElement {
 
   renderNavbarActions() {
     // const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';  // Temporary solution
+    console.log('Logged in:', this.isLoggedIn);
     const isLoggedIn = this.isLoggedIn
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
