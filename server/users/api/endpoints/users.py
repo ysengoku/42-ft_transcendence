@@ -1,5 +1,4 @@
 from django.core.exceptions import PermissionDenied, RequestDataTooBig
-from django.db.models import Q
 from django.http import HttpRequest
 from ninja import File, Form, Router
 from ninja.errors import AuthenticationError, HttpError
@@ -33,13 +32,7 @@ def get_users(request: HttpRequest, search: str | None = None):
     For example, `/users?search=pe&limit=10&offset=0` will get 10 friends from the very first one, whose
     `nickname` or `username` starts with `pe`.
     """
-    if search:
-        return (
-            Profile.objects.prefetch_related("user")
-            .filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
-            .order_by("-is_online")
-        )
-    return Profile.objects.prefetch_related("user").all().order_by("-is_online")
+    return Profile.objects.with_search(search)
 
 
 @users_router.get("{username}", response={200: ProfileFullSchema, 404: Message})
