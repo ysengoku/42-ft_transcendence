@@ -20,7 +20,7 @@ ignore = [
     "TRY",  # try-catch block rules
 
     #### specific rules
-    "D100",    # ignore missing docs
+    "D100",     # ignore missing docs
     "D101",     # Missing docstring in public class
     "D102",     # Missing docstring in public method
     "D103",     # Missing docstring in public function
@@ -29,19 +29,18 @@ ignore = [
     "D106",     # Missing docstring in public nested class
     "D107",     # Missing docstring in __init__ method
     "D200",     # One-line docstring should fit on one line with quotes
-    "D205",    # 1 blank line required between summary line and description
+    "D205",     # 1 blank line required between summary line and description
     "D212",     # Multi-line docstring summary should start at the first line
     "D400",     # First line should end with a period
     "D401",     # First line should be in imperative mood
-    "D415",    # First line should end with a period, question mark, or exclamation point
-    "E402",    # false positives for local imports
-    "TRY003",  # external messages in exceptions are too verbose
+    "D415",     # First line should end with a period, question mark, or exclamation point
+    "E402",     # false positives for local imports
+    "TRY003",   # external messages in exceptions are too verbose
     "TD002",    # Use of explicit pass is discouraged
     "TD003",    # Comments like 'TODO' or 'FIXME' are too vague
-    "FIX002",  # too verbose descriptions of todos
-    "PLR0912", # limit for conditions inside of one function
+    "FIX002",   # too verbose descriptions of todos
+    "PLR0912",  # limit for conditions inside of one function
     "B008",     # Do not assign a lambda expression, use a def
     "B018",     # Useless expression used as an assignment target
     "D203",     # One blank line required before class docstring (conflicts with D211)
-    "COM812",   # Commented-out code detected
 ]
