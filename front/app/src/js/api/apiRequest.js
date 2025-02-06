@@ -25,7 +25,7 @@
  * }
  */
 
-import { autoLogout } from '@utils/autoLogout.js';
+import { autoLogout } from '@auth/autoLogout.js';
 import { API_ENDPOINTS } from './endpoints';
 
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {

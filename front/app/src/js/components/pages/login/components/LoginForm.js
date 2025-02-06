@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth/authManager.js';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
 // import { simulateApiLogin } from '@mock/functions/mockLogin.js';
@@ -70,17 +71,17 @@ export class LoginForm extends HTMLElement {
       // --------------------------------------------------------------
       console.log('Login response:', response);
       if (response.status == 200) {
-        // localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
-
         const userInformation = {
           username: response.data.username,
+          nickname: response.data.nickname,
           avatar: response.data.avatar,
         };
-        localStorage.setItem('user', JSON.stringify(userInformation));
-        // const navBar = document.getElementById('navbar-container');
-        // navBar.innerHTML = '<navbar-component></navbar-component>';
-        const navbar = document.querySelector('navbar-component');
-        navbar.setLoginStatus(true);
+        auth.setUser(userInformation);
+        // localStorage.setItem('user', JSON.stringify(userInformation));
+        const navBar = document.getElementById('navbar-container');
+        navBar.innerHTML = '<navbar-component></navbar-component>';
+        // const navbar = document.querySelector('navbar-component');
+        // navbar.setLoginStatus(true);
         router.navigate(`/home`, response.user);
       }
     } catch (error) {

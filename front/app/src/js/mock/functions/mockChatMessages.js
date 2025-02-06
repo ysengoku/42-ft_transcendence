@@ -1,6 +1,7 @@
+import { auth } from '@auth/authManager.js';
+
 export async function mockChatMessagesData(id) {
-  const storedUser = localStorage.getItem('user');
-  const myUsername = JSON.parse(storedUser).username;
+  const myUsername = auth.user.username;
   const chatMessages = [
     {
       id: 1,

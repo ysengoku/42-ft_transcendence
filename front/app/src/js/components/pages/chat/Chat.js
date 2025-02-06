@@ -1,3 +1,4 @@
+import { auth } from '@auth/authManager.js';
 import { socketManager } from '@socket';
 import './components/index.js';
 import { mockChatListData } from '@mock/functions/mockChatListData.js';
@@ -6,6 +7,7 @@ import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 export class Chat extends HTMLElement {
   constructor() {
     super();
+    this.user = auth.getUser();
     this.chatListData = [];
     this.currentChatId = null;
     this.currentChat = [];
@@ -71,8 +73,6 @@ export class Chat extends HTMLElement {
     // TODO: Send message event
     document.addEventListener('sendMessage', (event) => {
       console.log('Send message event:', event.detail);
-      const storedUser = localStorage.getItem('user');
-      const senderUsername = JSON.parse(storedUser).username;
 
       // Send message to the server
       // TODO: Adjust data to our server
@@ -82,7 +82,7 @@ export class Chat extends HTMLElement {
           id: this.currentChatId,
           message: {
             id: this.currentChat.messages.length + 1,
-            sender: senderUsername,
+            sender: this.user.username,
             message: event.detail,
             timestamp: new Date().toISOString(),
           },
