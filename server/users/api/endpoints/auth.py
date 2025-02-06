@@ -25,7 +25,6 @@ def _create_json_response_with_tokens(user: User, json: dict):
     return response
 
 
-# TODO: check return values of verify_jwt and create_jwt
 # TODO: add secure options for the cookie
 @auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
 @ensure_csrf_cookie
