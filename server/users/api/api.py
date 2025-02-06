@@ -1,4 +1,3 @@
-import jwt
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from ninja import NinjaAPI
@@ -22,12 +21,7 @@ class JwtCookieAuth(APIKeyCookie):
     param_name = "access_token"
 
     def authenticate(self, request, access_token: str):
-        try:
-            payload = RefreshToken.objects.verify_access_token(access_token)
-        except jwt.InvalidSignatureError as exc:
-            raise AuthenticationError from exc
-        except jwt.ExpiredSignatureError as exc:
-            raise AuthenticationError("Session is expired. Please login again.") from exc
+        payload = RefreshToken.objects.verify_access_token(access_token)
 
         user = User.objects.for_username(payload["sub"]).first()
         if not user:
