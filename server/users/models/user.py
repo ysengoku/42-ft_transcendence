@@ -76,12 +76,14 @@ class User(AbstractUser):
 
     username = models.CharField(max_length=50, validators=[username_validator], unique=True)
     nickname = models.CharField(max_length=50, validators=[username_validator])
-    email = models.EmailField(default="")
+    email = models.EmailField(blank=True, default="")
     connection_type = models.CharField(max_length=10, choices=CONNECTION_TYPES_CHOICES, default="regular")
     oauth_id = models.IntegerField(blank=True, null=True)
     password = models.CharField(max_length=128, default="")
     mfa_secret = models.CharField(max_length=128, blank=True)
     mfa_enabled = models.BooleanField(default=False)
+    password = models.CharField(max_length=128, blank=True, default="")
+    mfa_secret = models.CharField(max_length=128, blank=True, default="")
 
     objects = UserManager()
 
