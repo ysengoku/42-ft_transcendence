@@ -37,8 +37,6 @@ class RefreshTokenQuerySet(models.QuerySet):
         refresh_token_instance = self.model(
             user=user,
             token=refresh_token,
-            issued_at=payload["iat"],
-            expires_at=payload["exp"],
         )
 
         if not old_refresh_token_instance:
@@ -56,10 +54,6 @@ class RefreshTokenQuerySet(models.QuerySet):
             raise AuthenticationError
 
         decoded_refresh_token = self._verify_refresh_token(refresh_token_instance.token)
-
-        now = datetime.now(timezone.utc)
-        if now > refresh_token_instance.expires_at:
-            raise AuthenticationError("Token is expired.")
 
         if refresh_token_instance.is_revoked or refresh_token_instance.user.username != decoded_refresh_token.get(
             "sub",
@@ -89,8 +83,6 @@ class RefreshTokenQuerySet(models.QuerySet):
 class RefreshToken(models.Model):
     user = models.ForeignKey("users.User", related_name="refresh_tokens", on_delete=models.CASCADE)
     token = models.CharField(max_length=255, unique=True)
-    issued_at = models.DateTimeField()
-    expires_at = models.DateTimeField()
     is_revoked = models.BooleanField(default=False)
 
     objects = RefreshTokenQuerySet.as_manager()
