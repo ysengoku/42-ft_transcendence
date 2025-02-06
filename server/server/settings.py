@@ -191,26 +191,6 @@ REFRESH_TOKEN_SECRET_KEY = "refresh_secret"
 
 NINJA_PAGINATION_PER_PAGE = 10
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'users': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-    },
-}
 APPEND_SLASH = False
 
 # OAuth
