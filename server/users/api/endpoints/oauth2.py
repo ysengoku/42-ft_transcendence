@@ -72,6 +72,10 @@ def create_user_oauth(user_info: dict, connection_type: str) -> User:
 @oauth2_router.get("/callback/{platform}", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
 @csrf_exempt
 def oauth_callback(request: HttpRequest, platform: str, code: str, state: str):
+    """
+    This endpoint is called by the auth server after the user has authenticated on the platform
+    It will exchange the code for an access token and get the user info
+    """
     if not state or state != request.session.get("oauth_state"):
         return JsonResponse({"status": "error", "error": "Invalid state parameter"}, status=400)
 
@@ -120,8 +124,7 @@ def oauth_callback(request: HttpRequest, platform: str, code: str, state: str):
             print(f"print : USER CREATED: {user.username}, {connection_type}, {user_info['id']}")
 
         # Return JSON response with tokens
-        response = _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
-        return response
+        return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
 
     except Exception as e:
         return JsonResponse({"msg": str(e)}, status=500)
