@@ -26,6 +26,15 @@ def _create_json_response_with_tokens(user: User, json: dict):
     return response
 
 
+@auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
+def check_self(request: HttpRequest):
+    """
+    Checks authentication status of the user.
+    If the user has valid access token, returns minimal information of user's profile.
+    """
+    return request.auth.profile
+
+
 # TODO: add secure options for the cookie
 @auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
 @ensure_csrf_cookie
