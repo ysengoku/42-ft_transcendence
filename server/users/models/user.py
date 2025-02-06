@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as BaseUserManager
@@ -15,14 +17,17 @@ Models related to authentication and authorization.
 
 
 class UserManager(BaseUserManager):
+    def for_id(self, user_id: str):
+        return self.filter(id=user_id)
+
+    def for_oauth_id(self, oauth_id: str):
+        return self.filter(oauth_id=oauth_id)
+
     def for_username_or_email(self, identifier: str):
         return self.filter(Q(username__iexact=identifier) | Q(email=identifier))
 
     def for_username(self, username: str):
         return self.filter(username__iexact=username)
-
-    def for_oauth_id(self, oauth_id: str):
-        return self.filter(oauth_id=oauth_id)
 
     def fill_user_data(self, username: str, connection_type: str, **extra_fields):
         username = AbstractUser.normalize_username(username)
@@ -74,6 +79,7 @@ class User(AbstractUser):
 
     username_validator = UnicodeUsernameValidator()
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=50, validators=[username_validator], unique=True)
     nickname = models.CharField(max_length=50, validators=[username_validator])
     email = models.EmailField(blank=True, default="")
