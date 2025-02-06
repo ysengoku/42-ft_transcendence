@@ -7,7 +7,6 @@ export class OAuth extends HTMLElement {
     super();
   }
 
-
   async handleOAuthClick(platform) {
     try {
       // fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform))
@@ -55,30 +54,40 @@ export class OAuth extends HTMLElement {
 
       if (platform) {
         try {
-          const response = await fetch(API_ENDPOINTS.OAUTH_CALLBACK(platform), {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const data = await response.json();
-          console.log('OAuth callback data:', data);
-
-          if (response.status === 200) {  // Modifie cette ligne
-            console.log('User Info:', data);
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('auth_token', data.auth_token || 'dummy_token'); // Vérifie si auth_token existe
-            localStorage.setItem('userID', data.username); 
-            router.navigate('/home');
-          } else {
-            console.error('OAuth callback error:', data.msg);
-          }
+            const response = await fetch(API_ENDPOINTS.OAUTH_CALLBACK(platform), {
+                method: 'GET',
+                credentials: 'include',
+            });
+    
+            const data = await response.json();
+            console.log('OAuth callback data:', data);
+    
+            if (data.status === 200) {
+                // Grouper toutes les opérations liées au localStorage ensemble
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('auth_token', data.auth_token);
+                const userInformation = {
+                  username: data.username,
+                  avatar: data.avatar,
+                };
+                localStorage.setItem('user', JSON.stringify(
+                  userInformation));
+    
+                // Mettre à jour la navbar
+                const navBar = document.getElementById('navbar-container');
+                navBar.innerHTML = '<navbar-component></navbar-component>';
+                
+                router.navigate('/home', data.user);
+            } else {
+                throw new Error(data.msg);
+            }
         } catch (error) {
-          console.error('OAuth callback failed:', error);
+            console.error('OAuth callback failed:', error);
         } finally {
-          sessionStorage.removeItem('oauth_pending');
-          sessionStorage.removeItem('oauth_platform');
+            sessionStorage.removeItem('oauth_pending');
+            sessionStorage.removeItem('oauth_platform');
         }
-      }
+    }
     }
   }
 
@@ -92,6 +101,10 @@ export class OAuth extends HTMLElement {
   }
 
   render() {
+    const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
+    if (isLoggedIn) {
+      router.navigate('/home');
+    }
     this.innerHTML = `
       <div class='container d-flex flex-column justify-content-center align-items-center'>
         <div class="mb-3 w-100">
