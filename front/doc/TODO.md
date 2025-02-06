@@ -6,10 +6,13 @@
 ---------------------------------------------------------------------
 
 ## API
-- [] Refresh Token handling
+- [X] Refresh Token handling
+
+---------------------------------------------------------------------
 
 ## Navbar
-- [] Dropdown menu is hidden by Chat message header on Chat page
+- [X] Dropdown menu is hidden by Chat message header on Chat page
+- [] Update login stauts depending on login status
 
 ---------------------------------------------------------------------
 
@@ -24,13 +27,14 @@
 - [x] Error handling
 - [] email login
 - [] Forgot password
+- [] Fix parsing of Error message from server
 - [] Unit test (input validation)
 
 ---------------------------------------------------------------------
 
 ## Logout
 - [x] Clear CSRF token
-- [] logout API request
+- [x] logout API request
 
 ---------------------------------------------------------------------
 
@@ -41,7 +45,7 @@
 - [x] 422 Error message check
 - [~] Nickname input
 - [x] Unit test (input validation)
-- [] Error message from server parsing
+- [] Fix parsing of Error message from server
 
 ---------------------------------------------------------------------
 
@@ -96,7 +100,7 @@
 
 ## Chat
 
-- [] Websocket
+- [x] Websocket
 - [] Add new chat (user search ?)
 - [] Block user on chat
 - [] Resize event listner

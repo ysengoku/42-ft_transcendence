@@ -1,10 +1,23 @@
 export class Navbar extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
   }
 
   connectedCallback() {
+    // this.checkLoginStatus();
     this.render();
+  }
+
+  setLoginStatus(value) {
+    this.isLoggedIn = value;
+    this.renderNavbarActions();
+  }
+
+  // TODO: Implement this method after the endpoint is ready
+  checkLoginStatus() {
+    // Send request to the server to check if the user is logged in
+    // If the user is logged in, set this.isLoggedIn to true
   }
 
   render() {
@@ -20,11 +33,15 @@ export class Navbar extends HTMLElement {
 				</div>
 			</nav>
 		`;
+
+    const navbarBrand = this.querySelector('navbar-brand-component');
+    navbarBrand.setLoginStatus(this.isLoggedIn);
     this.renderNavbarActions();
   }
 
   renderNavbarActions() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';  // Temporary solution
+    // const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';  // Temporary solution
+    const isLoggedIn = this.isLoggedIn
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
 
@@ -39,6 +56,7 @@ export class Navbar extends HTMLElement {
     }
 
     const dropdownMenu = document.createElement('dropdown-menu');
+    dropdownMenu.setLoginStatus(isLoggedIn);
     navbarActions.appendChild(dropdownMenu);
   }
 }

@@ -3,6 +3,7 @@ import logo from '/img/sample-logo.svg?url';
 export class Landing extends HTMLElement {
   constructor() {
     super(); // Call the constructor of the parent class (HTMLElement)
+	this.isLoggedIn = false;
   }
 
   connectedCallback() {
@@ -10,7 +11,8 @@ export class Landing extends HTMLElement {
   }
 
   render() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    // const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+	const isLoggedIn = this.isLoggedIn;
 
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">

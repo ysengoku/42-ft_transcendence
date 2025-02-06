@@ -9,14 +9,15 @@ export class Login extends HTMLElement {
 
   connectedCallback() {
     this.render();
-    // this.setupLoginHandler();
   }
 
   render() {
-    const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
-    if (isLoggedIn) {
-      router.navigate('/home');
-    }
+	// Temporary solution -------------------------------------------
+    // const isLoggedIn = localStorage.getItem('isLoggedin') === 'true';
+    // if (isLoggedIn) {
+    //   router.navigate('/home');
+    // }
+	//----------------------------------------------------------------
 
     this.innerHTML = `
       <div class="container">
