@@ -1,4 +1,3 @@
-import { router } from '@router';
 import '../home/Home.js';
 import './components/index.js';
 
@@ -12,12 +11,12 @@ export class Login extends HTMLElement {
   }
 
   render() {
-	// Temporary solution -------------------------------------------
+    // Temporary solution -------------------------------------------
     // const isLoggedIn = localStorage.getItem('isLoggedin') === 'true';
     // if (isLoggedIn) {
     //   router.navigate('/home');
     // }
-	//----------------------------------------------------------------
+    // ----------------------------------------------------------------
 
     this.innerHTML = `
       <div class="container">
