@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from '@api/endpoints';
+import { API_ENDPOINTS } from '@api';
 
 export async function refreshAccessToken(csrfToken) {
 	function getRefreshTokenfromCookies() {
