@@ -25,7 +25,7 @@
  * }
  */
 
-import { autoLogout } from '@auth/autoLogout.js';
+import { auth } from '@auth/authManager.js';
 import { refreshAccessToken } from '@auth/refreshToken.js';
 
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
@@ -84,10 +84,10 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
           return apiRequest(method, endpoint, data, isFileUpload, needToken);
         }
         console.log('Refresh failed');
-        autoLogout();
+        auth.clearSession();
       } catch (error) {
         console.error('Error during refreshing token:', error);
-        autoLogout();
+        auth.clearSession();
       }
     }
     const error = new Error('Request failed');
