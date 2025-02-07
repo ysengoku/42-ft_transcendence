@@ -26,7 +26,7 @@
  */
 
 import { autoLogout } from '@auth/autoLogout.js';
-import { API_ENDPOINTS } from './endpoints';
+import { refreshAccessToken } from '@auth/refreshToken.js';
 
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   function getCSRFTokenfromCookies() {
@@ -43,42 +43,6 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       }
     }
     return token;
-  }
-
-  function getRefreshTokenfromCookies() {
-    const name = 'refresh_token';
-    let token = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.startsWith(name)) {
-          token = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return token;
-  }
-
-  async function refreshAccessToken(csrfToken) {
-    console.log('Refreshing access token');
-    const refreshToken = getRefreshTokenfromCookies();
-    if (refreshToken && csrfToken) {
-      const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
-        },
-        credentials: 'include',
-        body: JSON.stringify({ refresh: refreshToken }),
-      });
-      if (refreshResponse.ok) {
-        return true;
-      }
-      return false;
-    }
   }
 
   const url = `${endpoint}`;
@@ -107,7 +71,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
   try {
     const response = await fetch(url, options);
     if (response.ok) {
-      // console.log('Request successful:', response);
+      console.log('Request successful:', response);
       const responseData = await response.json();
       return { status: response.status, data: responseData };
     }
