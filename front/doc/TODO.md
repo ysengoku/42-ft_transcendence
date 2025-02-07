@@ -105,3 +105,7 @@
 - [] Add new chat (user search ?)
 - [] Block user on chat
 - [] Resize event listner
+
+## WebSocket
+
+-[] Handle auto close

@@ -69,13 +69,6 @@ const router = (() => {
       }
     }
 
-    // isLoggedIn() {
-    //   if (auth.isLoggedIn()) {
-    //     return true;
-    //   }
-    //   return true;// This is temoporay simulation
-    // }
-
     /**
      * Matches dynamic routes by extracting parameters.
      * @param {string} path - The current URL path.
