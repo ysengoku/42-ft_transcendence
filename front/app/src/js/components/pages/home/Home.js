@@ -4,18 +4,25 @@ import { auth } from '@auth/authManager.js';
 export class Home extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedin = false;
     this.user = null;
   }
 
-  connectedCallback() {
-    this.user = auth.getUser();
+  async connectedCallback() {
+    this.isLoggedin = await auth.fetchAuthStatus();
     this.render();
   }
 
   render() {
+    // if (!this.isLoggedin) {
+    //   auth.autoLogout();
+    // }
+    this.user = auth.getUser();
     if (!this.user) {
       router.navigate('/login');
+      return;
     }
+
     // Temporary content
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">

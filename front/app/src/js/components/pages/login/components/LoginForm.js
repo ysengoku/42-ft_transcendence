@@ -76,11 +76,6 @@ export class LoginForm extends HTMLElement {
           avatar: response.data.avatar,
         };
         auth.setUser(userInformation);
-        // localStorage.setItem('user', JSON.stringify(userInformation));
-        const navbar = document.getElementById('navbar-container');
-        navbar.innerHTML = '<navbar-component></navbar-component>';
-        // const navbar = document.querySelector('navbar-component');
-        // navbar.setLoginStatus(true);
         router.navigate(`/home`, response.user);
       }
     } catch (error) {

@@ -19,7 +19,7 @@ export class Settings extends HTMLElement {
       // Show a messages to user
       router.navigate('/login');
     }
-    const username = JSON.parse(user).username;
+    const username = user.username;
     try {
       // Temporary fetch function with mock
       const userData = await simulateFetchUserData(username);
