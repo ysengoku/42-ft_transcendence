@@ -1,8 +1,9 @@
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
+from users.api.common import allow_only_for_self
 from users.models import RefreshToken, User
 from users.schemas import (
     LoginSchema,
@@ -25,7 +26,15 @@ def _create_json_response_with_tokens(user: User, json: dict):
     return response
 
 
-# TODO: check return values of verify_jwt and create_jwt
+@auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
+def check_self(request: HttpRequest):
+    """
+    Checks authentication status of the user.
+    If the user has valid access token, returns minimal information of user's profile.
+    """
+    return request.auth.profile
+
+
 # TODO: add secure options for the cookie
 @auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message, 429: Message}, auth=None)
 @ensure_csrf_cookie
@@ -57,7 +66,10 @@ def signup(request: HttpRequest, data: SignUpSchema):
     Creates a new user.
     """
     user = User.objects.validate_and_create_user(
-        username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password,
+        username=data.username,
+        connection_type=User.REGULAR,
+        email=data.email,
+        password=data.password,
     )
     user.save()
 
@@ -66,10 +78,10 @@ def signup(request: HttpRequest, data: SignUpSchema):
 
 @auth_router.post(
     "refresh",
-    response={frozenset({201, 401}): Message},
+    response={204: None, 401: Message},
     auth=None,
 )
-def refresh(request: HttpRequest):
+def refresh(request: HttpRequest, response: HttpResponse):
     """
     Rotates the refresh token. Issues a new refresh token and a new access token.
     """
@@ -79,18 +91,16 @@ def refresh(request: HttpRequest):
 
     new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
 
-    response = JsonResponse({"msg": "Ok!"})
     response.set_cookie("access_token", new_access_token)
     response.set_cookie("refresh_token", new_refresh_token_instance.token)
-    return response
+    return 204, None
 
 
-# TODO: check of the signout route is protected
 @auth_router.delete(
     "logout",
-    response={204: None},
+    response={204: None, 401: Message},
 )
-def logout(request: HttpRequest):
+def logout(request: HttpRequest, response: HttpResponse):
     """
     Logs out the user. Clears the tokens from the cookies.
     """
@@ -98,9 +108,14 @@ def logout(request: HttpRequest):
     if not old_refresh_token:
         raise AuthenticationError
 
-    new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
+    refresh_token_qs = RefreshToken.objects.for_token(old_refresh_token)
 
-    response = JsonResponse({"msg": "Ok!"})
+    refresh_token_instance = refresh_token_qs.first()
+    if refresh_token_instance:
+        allow_only_for_self(request, refresh_token_instance.user.username)
+
+    refresh_token_qs.set_revoked()
+
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
-    return response
+    return 204, None

@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth/authManager.js';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
 // import { simulateApiLogin } from '@mock/functions/mockLogin.js';
@@ -17,11 +18,6 @@ export class LoginForm extends HTMLElement {
   }
 
   render() {
-    const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
-    if (isLoggedIn) {
-      router.navigate('/home');
-    }
-
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center">
       <div id="login-failed-feedback"></div>
@@ -75,26 +71,18 @@ export class LoginForm extends HTMLElement {
       // --------------------------------------------------------------
       console.log('Login response:', response);
       if (response.status == 200) {
-        localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
-
         const userInformation = {
           username: response.data.username,
+          nickname: response.data.nickname,
           avatar: response.data.avatar,
         };
-        localStorage.setItem('user', JSON.stringify(userInformation));
-        // // ----- Temporary solution -------------------------------------
-        // const mockUserData = await simulateLoginSuccessResponse();
-        // const userInformation = {
-        //   username: mockUserData.user.username,
-        //   avatar: mockUserData.user.avatar,
-        // };
+        auth.setUser(userInformation);
         // localStorage.setItem('user', JSON.stringify(userInformation));
-        // // --------------------------------------------------------------
-
-        const navBar = document.getElementById('navbar-container');
-        navBar.innerHTML = '<navbar-component></navbar-component>';
+        const navbar = document.getElementById('navbar-container');
+        navbar.innerHTML = '<navbar-component></navbar-component>';
+        // const navbar = document.querySelector('navbar-component');
+        // navbar.setLoginStatus(true);
         router.navigate(`/home`, response.user);
-        // router.navigate(`/home`, mockUserData); // ----- Temporary solution
       }
     } catch (error) {
       const feedback = this.querySelector('#login-failed-feedback');

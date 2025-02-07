@@ -4,7 +4,7 @@ export function simulateFetchUserData(username) {
     nickname: 'Joooooooohn',   
     avatar: '/media/avatars/sample_avatar.jpg',
     email: 'aaa@example.com',
-    registration_type: 'regular',
+    connection_type: 'regular',
     mfa_enabled: true,
   };
 
@@ -13,7 +13,7 @@ export function simulateFetchUserData(username) {
     nickname: 'Joooooooohn',
     avatar: '/media/avatars/sample_avatar.jpg',
     email: 'bbb@example.com',
-    registration_type: 'regular',
+    connection_type: 'regular',
     mfa_enabled: false,
   };
 
