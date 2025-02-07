@@ -10,14 +10,6 @@ export class Navbar extends HTMLElement {
     this.render();
   }
 
-  // setLoginStatus(value) {
-  //   console.log('<Navbar> Set login stauts: ', value);
-  //   this.isLoggedIn = value;
-  //   this.renderNavbarActions();
-  //   const navbarBrand = this.querySelector('navbar-brand-component');
-  //   navbarBrand.setLoginStatus(this.isLoggedIn);
-  // }
-
   render() {
     this.isLoggedIn = auth.isLoggedIn();
     this.innerHTML = `
@@ -52,7 +44,7 @@ export class Navbar extends HTMLElement {
       navbarActions.appendChild(notificationsButton);
     }
 
-    const dropdownMenu = document.createElement('dropdown-menu');
+    const dropdownMenu = document.createElement('navbar-dropdown-menu');
     dropdownMenu.setLoginStatus(this.isLoggedIn);
     navbarActions.appendChild(dropdownMenu);
   }
