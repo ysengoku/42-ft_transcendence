@@ -1,6 +1,5 @@
 import { router } from '@router';
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import { apiRequest, API_ENDPOINTS } from '@api';
 import './components/index.js';
 // import poster from '/img/sample-background.png?url';
 

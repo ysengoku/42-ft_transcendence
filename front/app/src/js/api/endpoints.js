@@ -5,7 +5,7 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}login`,
   REFRESH: `${API_BASE_URL}refresh`,
   LOGOUT: `${API_BASE_URL}logout`,
-  // USERS: `${API_BASE_URL}users`,
+  SELF: `${API_BASE_URL}self`,
   USER_PROFILE: (username) => `${API_BASE_URL}users/${username}`,
   USER_SETTINGS: (username) => `${API_BASE_URL}users/${username}/settings`,
   USER_FRIENDS: (username) => `${API_BASE_URL}users/${username}friends`,
