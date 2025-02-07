@@ -12,13 +12,11 @@ export class NavbarBrand extends HTMLElement {
   }
 
   setLoginStatus(value) {
-    console.log('<Navbar brand> Set login status: ', value);
     this.isLoggedIn = value;
     this.render();
   }
 
   render() {
-    console.log('<Navbar brand> Logged in: ', this.isLoggedIn);
     const isLoggedIn = this.isLoggedIn;
     const href = isLoggedIn ? '/home' : '/';
 

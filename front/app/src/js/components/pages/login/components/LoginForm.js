@@ -78,8 +78,8 @@ export class LoginForm extends HTMLElement {
         };
         auth.setUser(userInformation);
         // localStorage.setItem('user', JSON.stringify(userInformation));
-        const navBar = document.getElementById('navbar-container');
-        navBar.innerHTML = '<navbar-component></navbar-component>';
+        const navbar = document.getElementById('navbar-container');
+        navbar.innerHTML = '<navbar-component></navbar-component>';
         // const navbar = document.querySelector('navbar-component');
         // navbar.setLoginStatus(true);
         router.navigate(`/home`, response.user);
