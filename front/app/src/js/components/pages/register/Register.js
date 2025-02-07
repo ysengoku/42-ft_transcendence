@@ -1,7 +1,6 @@
 import { router } from '@router';
 import { auth } from '@auth/authManager.js';
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import { apiRequest, API_ENDPOINTS } from '@api';
 // import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
 
 export class Register extends HTMLElement {
