@@ -5,6 +5,7 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}login`,
   REFRESH: `${API_BASE_URL}refresh`,
   LOGOUT: `${API_BASE_URL}logout`,
+  WELCOME: `${API_BASE_URL}welcome`,
   // USERS: `${API_BASE_URL}users`,
   USER_PROFILE: (username) => `${API_BASE_URL}users/${username}`,
   USER_SETTINGS: (username) => `${API_BASE_URL}users/${username}/settings`,

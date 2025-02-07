@@ -181,9 +181,8 @@ STATIC_ROOT = BASE_DIR / "static"
 
 AUTH_SETTINGS = {
     "password_min_len": 8,
-    "repeats_allowed": 3,
     "check_attribute_similarity": True,
-    "check_is_diverse": True,
+    "check_is_alphanumeric": True,
 }
 
 ACCESS_TOKEN_SECRET_KEY = "secret"

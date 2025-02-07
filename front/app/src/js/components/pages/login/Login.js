@@ -11,19 +11,12 @@ export class Login extends HTMLElement {
   }
 
   render() {
-    // Temporary solution -------------------------------------------
-    // const isLoggedIn = localStorage.getItem('isLoggedin') === 'true';
-    // if (isLoggedIn) {
-    //   router.navigate('/home');
-    // }
-    // ----------------------------------------------------------------
-
     this.innerHTML = `
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-12 col-md-4"> 
 			      <login-form></login-form>
-			      <div class="container d-flex flex-column justify-content-center align-items-center">
+			      <div class="container d-flex flex-column justify-content-center align-items-center">Pend
 				      <div class="mb-2">
 					      <a href="/register" style="text-decoration: none;">Forgot password?</a>
 				      </div>
