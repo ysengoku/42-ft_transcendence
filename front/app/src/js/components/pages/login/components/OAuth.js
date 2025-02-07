@@ -1,72 +1,109 @@
-// oauth.js
+import { API_ENDPOINTS } from '@api/endpoints.js';
 import { router } from '@router';
-import { API_ENDPOINTS } from '@api/endpoints.js'; 
+import { auth } from '@auth/authManager.js';
 
 export class OAuth extends HTMLElement {
   constructor() {
     super();
   }
 
-  async handleOAuthClick(platform) {
-    try {
-      console.log(`Starting OAuth flow for ${platform}`);
-
-      const response = await fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform));
-
-      console.log('Response status:', response.status);
-      const data = await response.json();
-      console.log('Response data:', data);
-
-      if (data.error) {
-        console.error('OAuth error:', data.error);
-        alert(`OAuth error: ${data.error}`);
-        return;
-      }
-
-      // le bakco renvoie vers github:welcome" => faire une reirection directe vers endpoint self, pour vérifier les tokens. 
-      // self retourne  ProfileMinimalSchema si valide,sinon 401. 
-      // si 401, on renvoie vers le endpoint de login.
-      // si valide, on renvoie vers le endpoint de home.
-
-
-      //enlever le code suivant : 
-
-    //   if (data.auth_url) {
-    //     // Stocker la plateforme pour le callback
-    //     sessionStorage.setItem('oauth_pending', 'true');
-    //     sessionStorage.setItem('oauth_platform', platform);
-    //     // Redirection vers le provider OAuth
-    //     console.log('Redirecting to OAuth provider:', data.auth_url);
-    //     window.location.href = data.auth_url;
-    //   } else {
-    //     console.error('Invalid response structure:', data);
-    //   }
-    } catch (error) {
-      console.error('OAuth authorization failed:', error);
-      alert('OAuth authorization failed. Check the console for details.');
+  connectedCallback() {
+    this.render();
+    this.setupEventListeners();
+    
+    // Vérifier si on arrive d'un callback OAuth
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    
+    if (code && state) {
+      this.handleOAuthCallback(code, state);
     }
   }
 
-  connectedCallback() {
-    this.render();
+  setupEventListeners() {
     this.querySelector('.btn-42').addEventListener('click', () => this.handleOAuthClick('42'));
     this.querySelector('.btn-github').addEventListener('click', () => this.handleOAuthClick('github'));
   }
 
-  render() {
-    const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
-    if (isLoggedIn) {
-      router.navigate('/home');
+  async handleOAuthClick(platform) {
+    try {
+      console.log(`Starting OAuth flow for ${platform}`);
+      window.location.href = API_ENDPOINTS.OAUTH_AUTHORIZE(platform);
+      console.log('Redirecting to OAuth provider');
+    } catch (error) {
+      this.showError(`OAuth failed: ${error.message}`);
     }
+  }
+
+  async handleOAuthCallback(code, state) {
+    try {
+      const platform = localStorage.getItem('oauth_platform');
+      const response = await fetch(`${API_ENDPOINTS.OAUTH_CALLBACK(platform)}?code=${code}&state=${state}`);
+      
+      if (!response.ok) {
+        throw new Error('Authentication failed');
+      }
+
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        // Stocker le token
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        
+        // Mettre à jour les informations utilisateur
+        auth.setUser({
+          username: data.user.username,
+          avatar: data.user.avatar
+        });
+
+        // Mettre à jour la navbar
+        const navbar = document.getElementById('navbar-container');
+        if (navbar) {
+          navbar.innerHTML = '<navbar-component></navbar-component>';
+        }
+
+        // Nettoyer le localStorage
+        localStorage.removeItem('oauth_platform');
+        
+        // Rediriger vers la page d'accueil
+        router.navigate('/home');
+      } else {
+        throw new Error(data.error || 'Authentication failed');
+      }
+    } catch (error) {
+      this.showError(`Authentication failed: ${error.message}`);
+      console.error('OAuth callback error:', error);
+      router.navigate('/login');
+    }
+  }
+
+  showError(message) {
+    const container = this.querySelector('.container');
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger mt-3';
+    errorDiv.textContent = message;
+    container.appendChild(errorDiv);
+    
+    setTimeout(() => errorDiv.remove(), 5000);
+  }
+
+  render() {
     this.innerHTML = `
-      <div class='container d-flex flex-column justify-content-center align-items-center'>
-        <div class="mb-3 w-100">
-          <button class="btn btn-outline-primary w-100 py-2 my-2 btn-42">
-            Login with 42
-          </button>
-          <button class="btn btn-outline-dark w-100 py-2 my-2 btn-github">
-            Login with GitHub
-          </button>
+      <div class='container'>
+        <div class="row justify-content-center">
+          <div class="col-md-6 text-center">
+            <h2 class="mb-4">Choose your login method</h2>
+            <div class="d-grid gap-3">
+              <button class="btn btn-outline-primary btn-lg btn-42">
+                Login with 42
+              </button>
+              <button class="btn btn-outline-dark btn-lg btn-github">
+                Login with GitHub
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     `;
