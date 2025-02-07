@@ -31,23 +31,21 @@ export class DropdownMenu extends HTMLElement {
 		  <img id="avatar-img" src="${avatarSrc}" height="40" alt="user" class="d-inline-block align-top rounded-circle">
 	  </div>
 		<div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-			${
-        this.isLoggedIn ? `
+			${ this.isLoggedIn ? `
 				<div class="dropdown-item" id="dropdown-item-profile">Your profile</div>
 				<div class="dropdown-item" id="dropdown-item-settings">Settings</div>
 			` : `
 				<div class="dropdown-item" id="dropdown-item-login">Login</div>
 				<div class="dropdown-item" id="dropdown-item-register">Sign up</div>
-			`}
+			` }
 			<div class="dropdown-divider"></div>
 			<button class="dropdown-item" id="theme-toggle">
 				<span id="theme-label">${isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
-		  	</button>
-			${
-        this.isLoggedIn ? `
+		  </button>
+			${ this.isLoggedIn ? `
 				<div class="dropdown-divider"></div>
 				<div class="dropdown-item" id="dropdown-item-logout">Logout</div>
-			`: ``}
+			` : `` }
 		</div>
 		`;
 
@@ -97,4 +95,4 @@ export class DropdownMenu extends HTMLElement {
   }
 }
 
-customElements.define('dropdown-menu', DropdownMenu);
+customElements.define('navbar-dropdown-menu', DropdownMenu);
