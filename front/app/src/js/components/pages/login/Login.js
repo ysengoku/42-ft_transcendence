@@ -1,31 +1,22 @@
-import { router } from '@router';
 import '../home/Home.js';
 import './components/index.js';
 
 export class Login extends HTMLElement {
   constructor() {
     super();
-    this.is2FACompleted = localStorage.getItem('2faCompleted') === 'true';
   }
 
   connectedCallback() {
     this.render();
-    // this.setupLoginHandler();
   }
 
   render() {
-    const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
-
-    if (isLoggedIn) {
-      router.navigate('/home');
-    }
-
-    // if (isLoggedIn && !is2FACompleted) {
-    //   this.innerHTML = `
-    //     <mfa-auth></mfa-auth>
-    //   `;
-    //   return;
+    // Temporary solution -------------------------------------------
+    // const isLoggedIn = localStorage.getItem('isLoggedin') === 'true';
+    // if (isLoggedIn) {
+    //   router.navigate('/home');
     // }
+    // ----------------------------------------------------------------
 
     this.innerHTML = `
       <div class="container">

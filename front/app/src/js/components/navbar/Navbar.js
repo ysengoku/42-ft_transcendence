@@ -1,6 +1,9 @@
+import { auth } from '@auth/authManager.js';
+
 export class Navbar extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
   }
 
   connectedCallback() {
@@ -8,6 +11,7 @@ export class Navbar extends HTMLElement {
   }
 
   render() {
+    this.isLoggedIn = auth.isLoggedIn();
     this.innerHTML = `
       <style>
         .navbar {
@@ -20,15 +24,17 @@ export class Navbar extends HTMLElement {
 				</div>
 			</nav>
 		`;
+
+    const navbarBrand = this.querySelector('navbar-brand-component');
+    navbarBrand.setLoginStatus(this.isLoggedIn);
     this.renderNavbarActions();
   }
 
   renderNavbarActions() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';  // Temporary solution
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
 
-    if (isLoggedIn) {
+    if (this.isLoggedIn) {
       const friendsButton = document.createElement('friends-button');
       const chatButton = document.createElement('chat-button');
       const notificationsButton = document.createElement('notifications-button');
@@ -38,7 +44,8 @@ export class Navbar extends HTMLElement {
       navbarActions.appendChild(notificationsButton);
     }
 
-    const dropdownMenu = document.createElement('dropdown-menu');
+    const dropdownMenu = document.createElement('navbar-dropdown-menu');
+    dropdownMenu.setLoginStatus(this.isLoggedIn);
     navbarActions.appendChild(dropdownMenu);
   }
 }

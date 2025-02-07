@@ -53,10 +53,10 @@ const router = (() => {
       if (route) {
         const { componentTag, isDynamic, param, requiresAuth } = route;
 
-        if (requiresAuth && !this.isLoggedIn()) {
-          this.navigate('/login');
-          return;
-        }
+        // if (requiresAuth && !this.isLoggedIn()) {
+        //   this.navigate('/login');
+        //   return;
+        // }
         if (isDynamic) {
           // console.log('param: ', param);
           this.renderDynamicUrlComponent(componentTag, param);
@@ -69,14 +69,17 @@ const router = (() => {
       }
     }
 
-    isLoggedIn() {
-      return localStorage.getItem('isLoggedIn') === 'true'; // This is temoporay simulation
-    }
+    // isLoggedIn() {
+    //   if (auth.isLoggedIn()) {
+    //     return true;
+    //   }
+    //   return true;// This is temoporay simulation
+    // }
 
     /**
      * Matches dynamic routes by extracting parameters.
      * @param {string} path - The current URL path.
-     * @returns {Object|null} The matched route data or null if no match found.
+     * @return {Object|null} The matched route data or null if no match found.
      */
     matchDynamicRoute(path) {
       for (const [routePath, routeData] of this.routes.entries()) {
@@ -94,7 +97,7 @@ const router = (() => {
      * Extracts parameters from a dynamic route.
      * @param {string} routePath - The defined route path.
      * @param {string} path - The current URL path.
-     * @returns {Object|null} The extracted parameters or null if no match.
+     * @return {Object|null} The extracted parameters or null if no match.
      */
     extractParam(routePath, path) {
       const routePathParts = routePath.split('/');
@@ -145,7 +148,7 @@ const router = (() => {
 
     /**
      * Initializes the router by setting up event listeners for clicks and popstate.
-     * @returns {void}
+     * @return {void}
      */
     init() {
       window.addEventListener('popstate', () => this.handleRoute());
