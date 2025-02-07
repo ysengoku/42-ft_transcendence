@@ -94,10 +94,9 @@ export class Register extends HTMLElement {
           avatar: response.data.avatar,
         };
         auth.setUser(userInformation);
-
-        const navbar = document.querySelector('navbar-component');
-        navbar.setLoginStatus(true);
         router.navigate(`/home`, response.user);
+        const navbar = document.getElementById('navbar-container');
+        navbar.innerHTML = '<navbar-component></navbar-component>';
       }
     } catch (error) {
       console.error('Error status:', error.status);
@@ -128,11 +127,11 @@ export class Register extends HTMLElement {
     isFormValid = this.isFieldFilled(emailField, '#email-feedback', emptyEmail) && isFormValid;
     isFormValid = this.isFieldFilled(passwordField, '#password-feedback', emptyPassword) && isFormValid;
     isFormValid =
-      this.isFieldFilled(
-          passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
+      this.isFieldFilled(passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
     isFormValid =
       this.checkPasswordLength(passwordField) &&
-      this.checkPasswordDiff(passwordField, passwordRepeatField) && isFormValid;
+      this.checkPasswordDiff(passwordField, passwordRepeatField) &&
+      isFormValid;
     return isFormValid;
   }
 

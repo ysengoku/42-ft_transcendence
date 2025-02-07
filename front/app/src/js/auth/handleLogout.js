@@ -18,16 +18,12 @@ export async function handleLogout(event) {
     }
   } catch (error) {
     console.error('Error:', error);
-    const navBar = document.getElementById('navbar-container');
-    navBar.innerHTML = '<navbar-component></navbar-component>';
-    // const navbar = document.querySelector('navbar-component');
-    // navbar.setLoginStatus(false);
+    const navbar = document.getElementById('navbar-container');
+    navbar.innerHTML = '<navbar-component></navbar-component>';
     router.navigate('/');
   }
   document.cookie = `csrftoken=; Max-Age=0; path=/;`;
-  const navBar = document.getElementById('navbar-container');
-  navBar.innerHTML = '<navbar-component></navbar-component>';
-  // const navbar = document.querySelector('navbar-component');
-  // navbar.setLoginStatus(false);
+  const navbar = document.getElementById('navbar-container');
+  navbar.innerHTML = '<navbar-component></navbar-component>';
   router.navigate('/');
 }
