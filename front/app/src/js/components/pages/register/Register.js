@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth/authManager.js';
 import { apiRequest } from '@api/apiRequest.js';
 import { API_ENDPOINTS } from '@api/endpoints.js';
 // import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
@@ -88,26 +89,14 @@ export class Register extends HTMLElement {
       console.log('Registration successful:', response);
 
       if (response.status === 200) {
-        localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
-
         const userInformation = {
           username: response.data.username,
           avatar: response.data.avatar,
         };
-        localStorage.setItem('user', JSON.stringify(userInformation));
-        // ----- Temporary solution -------------------------------------
-        // const mockUserData = mockRegisterSuccessResponse();
-        // const userInformation = {
-        //   username: mockUserData.username,
-        //   avatar: mockUserData.avatar,
-        // };
-        // localStorage.setItem('user', JSON.stringify(userInformation));
-        // --------------------------------------------------------------
-
-        const navBar = document.getElementById('navbar-container');
-        navBar.innerHTML = '<navbar-component></navbar-component>';
+        auth.setUser(userInformation);
         router.navigate(`/home`, response.user);
-        // router.navigate(`/home`, mockUserData); // ----- Temporary solution
+        const navbar = document.getElementById('navbar-container');
+        navbar.innerHTML = '<navbar-component></navbar-component>';
       }
     } catch (error) {
       console.error('Error status:', error.status);
@@ -138,11 +127,11 @@ export class Register extends HTMLElement {
     isFormValid = this.isFieldFilled(emailField, '#email-feedback', emptyEmail) && isFormValid;
     isFormValid = this.isFieldFilled(passwordField, '#password-feedback', emptyPassword) && isFormValid;
     isFormValid =
-      this.isFieldFilled(
-          passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
+      this.isFieldFilled(passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
     isFormValid =
       this.checkPasswordLength(passwordField) &&
-      this.checkPasswordDiff(passwordField, passwordRepeatField) && isFormValid;
+      this.checkPasswordDiff(passwordField, passwordRepeatField) &&
+      isFormValid;
     return isFormValid;
   }
 

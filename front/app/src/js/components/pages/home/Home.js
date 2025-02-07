@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth/authManager.js';
 
 export class Home extends HTMLElement {
   constructor() {
@@ -7,17 +8,14 @@ export class Home extends HTMLElement {
   }
 
   connectedCallback() {
+    this.user = auth.getUser();
     this.render();
   }
 
   render() {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      console.error('Missing user information.');
+    if (!this.user) {
       router.navigate('/login');
     }
-    this.user = JSON.parse(storedUser);
-
     // Temporary content
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
