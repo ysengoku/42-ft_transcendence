@@ -3,20 +3,41 @@
 ## Router
 - [] Update navigation to pages that need authentication
 
+---------------------------------------------------------------------
+
+## API
+- [X] Refresh Token handling
+- [] Remove reflesh token sending from login and register
+
+---------------------------------------------------------------------
+
+## Navbar
+- [X] Dropdown menu is hidden by Chat message header on Chat page
+- [] Update login stauts depending on login status
+
+---------------------------------------------------------------------
+
 ## Landing
 - [] JWT (check login status)
+
+---------------------------------------------------------------------
 
 ## Login
 - [X] Adjust width
 - [x] CSRF Token handling
 - [x] Error handling
+- [] email login
 - [] Forgot password
+- [] Fix parsing of Error message from server
 - [] Unit test (input validation)
+
+---------------------------------------------------------------------
 
 ## Logout
 - [x] Clear CSRF token
-- [] Send request to clear JWT token
-- [] OAuth users logout handling
+- [x] logout API request
+
+---------------------------------------------------------------------
 
 ## Register
 - [X] Adjust width
@@ -25,6 +46,9 @@
 - [x] 422 Error message check
 - [~] Nickname input
 - [x] Unit test (input validation)
+- [] Fix parsing of Error message from server
+
+---------------------------------------------------------------------
 
 ## Settings
 - [X] Adjust width
@@ -39,6 +63,8 @@
 - [] 413 handling
 - [] 422 handling
 - [] Unit test (input validation)
+
+---------------------------------------------------------------------
 
 ## Profile
 
@@ -66,7 +92,16 @@
 - [] Better solution for Scroll thead sticky
 - [] Tournament history table
 
-## User list
+---------------------------------------------------------------------
+
+## Friends list
 - [] User search by username
 
+---------------------------------------------------------------------
+
 ## Chat
+
+- [x] Websocket
+- [] Add new chat (user search ?)
+- [] Block user on chat
+- [] Resize event listner

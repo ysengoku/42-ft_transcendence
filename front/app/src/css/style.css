@@ -18,6 +18,10 @@ body {
   /* font-size: 0.8em; */
 }
 
+.navbar-dropdown-menu {
+  z-index: 1050 !important; /* Keep dropdown always on top */
+}
+
 /* ----- Settings ----------------------------------------------------------- */
 
 .avatar-preview-container {

@@ -25,6 +25,19 @@ def get_oauth_config(platform: str) -> dict:
         raise ValueError(f"Unsupported platform: {platform}")
     return settings.OAUTH_CONFIG[platform]
 
+def create_user_oauth(user_info: dict, connection_type: str) -> User:
+    """
+    Creates a new user from OAuth data.
+    """
+    user = User.objects.validate_and_create_user(
+        username=user_info.get("login"),
+        connection_type=connection_type,
+        email=user_info.get("email", ""),  # email might be optional for some platforms
+        oauth_id=user_info.get("id"),
+    )
+    user.save()
+    return user
+
 
 @oauth2_router.get("/authorize/{platform}", auth=None)
 def oauth_authorize(request, platform: str):
@@ -53,20 +66,6 @@ def oauth_authorize(request, platform: str):
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
-
-def create_user_oauth(user_info: dict, connection_type: str) -> User:
-    """
-    Creates a new user from OAuth data.
-    """
-    user = User.objects.validate_and_create_user(
-        username=user_info.get("login"),
-        connection_type=connection_type,
-        email=user_info.get("email", ""),  # email might be optional for some platforms
-        oauth_id=user_info.get("id"),
-    )
-    user.save()
-    return user
 
 
 @oauth2_router.get("/callback/{platform}", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
