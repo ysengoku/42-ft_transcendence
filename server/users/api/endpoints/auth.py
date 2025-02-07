@@ -3,6 +3,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
+from users.api.common import allow_only_for_self
 from users.models import RefreshToken, User
 from users.schemas import (
     LoginSchema,
@@ -23,6 +24,15 @@ def _create_json_response_with_tokens(user: User, json: dict):
     response.set_cookie("refresh_token", refresh_token_instance.token)
 
     return response
+
+
+@auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
+def check_self(request: HttpRequest):
+    """
+    Checks authentication status of the user.
+    If the user has valid access token, returns minimal information of user's profile.
+    """
+    return request.auth.profile
 
 
 # TODO: add secure options for the cookie
@@ -98,7 +108,13 @@ def logout(request: HttpRequest, response: HttpResponse):
     if not old_refresh_token:
         raise AuthenticationError
 
-    RefreshToken.objects.for_token(old_refresh_token).set_revoked()
+    refresh_token_qs = RefreshToken.objects.for_token(old_refresh_token)
+
+    refresh_token_instance = refresh_token_qs.first()
+    if refresh_token_instance:
+        allow_only_for_self(request, refresh_token_instance.user.username)
+
+    refresh_token_qs.set_revoked()
 
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
