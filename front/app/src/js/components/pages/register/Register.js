@@ -94,8 +94,8 @@ export class Register extends HTMLElement {
         };
         auth.setUser(userInformation);
         router.navigate(`/home`, response.user);
-        const navbar = document.getElementById('navbar-container');
-        navbar.innerHTML = '<navbar-component></navbar-component>';
+        // const navbar = document.getElementById('navbar-container');
+        // navbar.innerHTML = '<navbar-component></navbar-component>';
       }
     } catch (error) {
       console.error('Error status:', error.status);
