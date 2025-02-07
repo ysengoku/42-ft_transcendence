@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.http import HttpRequest
+from django.http import HttpRequest, JsonResponse
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
@@ -13,7 +13,6 @@ from .endpoints.oauth2 import oauth2_router
 from .endpoints.blocked_users import blocked_users_router
 from .endpoints.friends import friends_router
 from .endpoints.users import users_router
-
 
 class JwtCookieAuth(APIKeyCookie):
     """
@@ -38,6 +37,20 @@ api.add_router("oauth", oauth2_router)
 # api.add_router("", mfa_router)
 users_router.add_router("", blocked_users_router)
 users_router.add_router("", friends_router)
+
+from django.shortcuts import redirect
+
+@api.get("welcome", auth=None)
+def welcome(request):
+    """
+    Redirection from OAuth2 via the backend (httpResponseRedirect).
+    """
+    access_token = request.GET.get("access_token", None)
+
+    if access_token:
+        return JsonResponse({"message": "Welcome to the home page!", "token": access_token})
+    else:
+        return JsonResponse({"message": "You need to log in."})
 
 
 @api.exception_handler(HttpError)
@@ -73,3 +86,4 @@ def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
 @api.exception_handler(NinjaValidationError)
 def handle_ninja_validation_error(request: HttpRequest, exc: NinjaValidationError):
     return api.create_response(request, exc.errors, status=422)
+
