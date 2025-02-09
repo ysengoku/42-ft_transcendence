@@ -1,5 +1,5 @@
-import { router } from '@router';
-import { auth } from '@auth/authManager.js';
+// import { router } from '@router';
+import { auth, getCSRFTokenfromCookies } from '@auth';
 import { API_ENDPOINTS } from '@api';
 import '@components/navbar/components/DropdownMenu.js';
 
@@ -12,7 +12,7 @@ export async function handleLogout(event) {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': auth.getCSRFTokenfromCookies(),
+        'X-CSRFToken': getCSRFTokenfromCookies(),
       },
       credentials: 'include',
     });
