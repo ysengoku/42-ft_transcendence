@@ -27,21 +27,21 @@
   - [~] Implement validation of passwords on their security.
     - [x] Passwords should have min len.
     - [x] Passwords should not contain username.
-    - [ ] Passwords should have at least 1 digit and 1 letter.
-    - [ ] Passwords should not have X amount of repeated characters.
+    - [x] Passwords should have at least 1 digit and 1 letter.
 - [~] JWT auth on the backend.
     - [x] Implement signup endpoint.
     - [x] Implement login endpoint.
+    - [x] Implement logout endpoint.
     - [x] Implement CSRF protection.
     - [x] Implement JWT verifications on each of the endpoints, except login and user creation endpoints.
-    - [ ] Implement refresh tokens.
-        - [ ] Issue refresh tokens on user creation.
-        - [ ] Issue refresh tokens on login.
-        - [ ] Rotate refresh tokens on refresh.
-        - [ ] Revoke refresh tokens on signout.
+    - [x] Implement refresh tokens.
+        - [x] Issue refresh tokens on user creation.
+        - [x] Issue refresh tokens on login.
+        - [x] Rotate refresh tokens on refresh.
+        - [x] Revoke refresh tokens on logout.
+        - [x] Change JWT payload from `username` to `id` to make user identifier non-volatile.
     - [ ] Add to cookies `HTTP-only`, `Secure`, `SameSite=Strict`.
     - [ ] Add expiration date to the cookies.
-    - [ ] Implement signout endpoint.
 - [x] Friendship system.
     - [x] Addition and deletion operations for friends.
     - [x] Friends should be sorted by their online status.
@@ -53,7 +53,7 @@
 - [~] Redo the User model to make it compatible with OAuth.
     - [x] Change the validation for the User in all places.
 
-# Reworks
+## Reworks
 - [x] `username`'s are not slugified, like `slug_id`
 - [x] Postfixes to colliding `username`'s are still added, but only in the case oauth connection. If non-oauth user tries to register an account with the `username` that already exists, it's always an error, even if the username exists on oauth account.
 - [x] We add non-unique `nickname`.
