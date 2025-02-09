@@ -11,6 +11,7 @@
 - [x] Fix friends and blocked users: you can't add blocked user as a friend.
 
 ## Features
+### User Management & Auth
 - [~] User profiles.
     - [ ] Implement tournament history.
     - [x] Implement match history and resolution.
@@ -52,6 +53,9 @@
 - [x] Elo system.
 - [~] Redo the User model to make it compatible with OAuth.
     - [x] Change the validation for the User in all places.
+
+### Chat
+- [ ] Add authentication support to the consumers.
 
 ## Reworks
 - [x] `username`'s are not slugified, like `slug_id`
