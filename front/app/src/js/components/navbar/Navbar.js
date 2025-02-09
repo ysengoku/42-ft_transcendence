@@ -1,4 +1,4 @@
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 
 export class Navbar extends HTMLElement {
   constructor() {
