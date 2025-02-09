@@ -1,4 +1,4 @@
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 import { socketManager } from '@socket';
 import './components/index.js';
 import { mockChatListData } from '@mock/functions/mockChatListData.js';

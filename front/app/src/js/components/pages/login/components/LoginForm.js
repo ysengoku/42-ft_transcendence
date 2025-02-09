@@ -1,5 +1,5 @@
 import { router } from '@router';
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 // import { simulateApiLogin } from '@mock/functions/mockLogin.js';
 // import { simulateLoginSuccessResponse } from '@mock/functions/mockLogin.js';

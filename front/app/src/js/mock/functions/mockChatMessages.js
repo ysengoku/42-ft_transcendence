@@ -1,4 +1,4 @@
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 
 export async function mockChatMessagesData(id) {
   const myUsername = auth.getUser().username;
