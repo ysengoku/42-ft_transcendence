@@ -46,4 +46,4 @@ export class Login extends HTMLElement {
   }
 }
 
-customElements.define('login-view', Login);
+customElements.define('login-page', Login);

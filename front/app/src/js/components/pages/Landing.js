@@ -36,4 +36,4 @@ export class Landing extends HTMLElement {
   }
 }
 
-customElements.define('landing-component', Landing);
+customElements.define('landing-page', Landing);
