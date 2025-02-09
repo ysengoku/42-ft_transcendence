@@ -9,7 +9,7 @@
  * @param {boolean} [isFileUpload=false] - Whether the request involves file uploading. Defaults to false.
  * @param {boolean} [needToken=true] - Whether a CSRF token is needed for the request. Defaults to true.
  * @returns {Promise<Response>} The response object from the fetch request if successful.
- * @throws {Error} Throws an error with the status and response data if the request fails.
+ * @throws {Error} Throws an error with the status and error message if the request fails.
  *
  * @example
  * // Example usage: Sending a GET request to fetch user data
@@ -29,24 +29,8 @@ import { auth } from '@auth/authManager.js';
 import { refreshAccessToken } from '@auth/refreshToken.js';
 
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
-  function getCSRFTokenfromCookies() {
-    const name = 'csrftoken';
-    let token = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.startsWith(name)) {
-          token = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return token;
-  }
-
   const url = `${endpoint}`;
-  const csrfToken = getCSRFTokenfromCookies();
+  const csrfToken = auth.getCSRFTokenfromCookies();
   const needCSRF = needToken && ['POST', 'DELETE'].includes(method) && csrfToken;
   const options = {
     method,
@@ -70,9 +54,11 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
 
   try {
     const response = await fetch(url, options);
+    console.log('API response:', response);
     if (response.ok) {
       console.log('Request successful:', response);
       const responseData = await response.json();
+      console.log('Response data:', responseData);
       return { status: response.status, data: responseData };
     }
     if (needToken && response.status === 401) {
@@ -94,7 +80,14 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     error.status = response.status;
     let errorData = null;
     errorData = await response.json();
-    error.response = errorData;
+    if (Array.isArray(errorData)) {
+      const errorMsg = errorData.find((item) => item.msg);
+      error.msg = errorMsg ? errorMsg.msg : 'Request failed';
+    } else if (typeof errorData === 'object' && errorData.msg) {
+      error.msg = errorData.msg;
+    } else {
+      error.msg = 'An unexpected error occurred. Please try again later.';
+    }
     throw error;
   } catch (error) {
     throw error;
