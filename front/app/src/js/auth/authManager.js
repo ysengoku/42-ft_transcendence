@@ -44,6 +44,7 @@ const auth = (() => {
     clearSession() {
       this.clearUser();
       clearCSRFToken();
+      // Show message to user to login again
       router.navigate('/');
     }
 
@@ -65,8 +66,10 @@ const auth = (() => {
      * @return {Promise<boolean>} Resolves to true if authenticated, otherwise false
      */
     async fetchAuthStatus() {
+      console.log('Checking user login status...');
       const cSRFToken = getCSRFTokenfromCookies();
       if (!cSRFToken) {
+        console.log('User is not logged in');
         return false;
       }
       const request = {
@@ -77,7 +80,6 @@ const auth = (() => {
         },
         credentials: 'include',
       };
-      console.log('Checking user login status...');
       const response = await fetch(API_ENDPOINTS.SELF, request);
       if (response.ok) {
         const data = await response.json();
@@ -91,6 +93,7 @@ const auth = (() => {
         } else {
           console.log('User is not logged in');
           this.clearUser();
+          clearCSRFToken();
           return false;
         }
       }

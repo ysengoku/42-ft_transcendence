@@ -30,8 +30,10 @@ export async function refreshAccessToken(csrfToken) {
       body: JSON.stringify({ refresh: refreshToken }),
     });
     if (refreshResponse.ok) {
+      console.log('Refresh successful');
       return true;
     }
+    console.error('Refresh failed:', refreshResponse);
     return false;
   }
 }
