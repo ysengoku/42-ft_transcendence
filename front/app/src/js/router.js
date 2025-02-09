@@ -27,21 +27,13 @@ const router = (() => {
      * @param {string} componentTag - The custom HTML tag for the component to render.
      * @param {boolean} [isDynamic=false] - Whether the route is dynamic (contains a parameter).
      * @param {boolean} [requiresAuth=false] - Whether the route requires authentication.
-     * @returns {void}
+     * @return {void}
      * @example
      * router.addRoute('/home', 'user-home', false, true);
      */
-
-    addRoute(path, componentTag, isDynamic = false, requiresAuth = false) {
-      this.routes.set(path, { componentTag, isDynamic, requiresAuth });
+    addRoute(path, componentTag, isDynamic = false) {
+      this.routes.set(path, { componentTag, isDynamic });
     }
-
-    // getRoutes() {
-    //   return Array.from(this.routes.entries()).map(([path, data]) => ({
-    //     path,
-    //     ...data,
-    //   }));
-    // }
 
     /**
      * Handles route changes and renders the appropriate component.
@@ -51,12 +43,7 @@ const router = (() => {
       const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
       if (route) {
-        const { componentTag, isDynamic, param, requiresAuth } = route;
-
-        // if (requiresAuth && !this.isLoggedIn()) {
-        //   this.navigate('/login');
-        //   return;
-        // }
+        const { componentTag, isDynamic, param } = route;
         if (isDynamic) {
           // console.log('param: ', param);
           this.renderDynamicUrlComponent(componentTag, param);
@@ -167,15 +154,15 @@ const router = (() => {
 router.addRoute('/', 'landing-component');
 router.addRoute('/login', 'login-view');
 router.addRoute('/register', 'register-form');
-router.addRoute('/home', 'user-home', false, true);
-router.addRoute('/profile/:username', 'user-profile', true, true);
-router.addRoute('/user-not-found', 'user-not-found', true, true);
-router.addRoute('/settings', 'user-settings', false, true);
-router.addRoute('/dual-menu', 'dual-menu', false, true);
-router.addRoute('/dual/:id', 'dual', true, true);
-router.addRoute('/tournament-menu', 'tournament-menu', false, true);
-router.addRoute('/tournament/:id', 'tournament', true, true);
-router.addRoute('/chat', 'chat-page', false, true);
+router.addRoute('/home', 'user-home', false);
+router.addRoute('/profile/:username', 'user-profile', true);
+router.addRoute('/user-not-found', 'user-not-found', true);
+router.addRoute('/settings', 'user-settings', false);
+router.addRoute('/dual-menu', 'dual-menu', false);
+router.addRoute('/dual/:id', 'dual', true);
+router.addRoute('/tournament-menu', 'tournament-menu', false);
+router.addRoute('/tournament/:id', 'tournament', true);
+router.addRoute('/chat', 'chat-page', false);
 
 // Initialize the router on the initial HTML document load
 document.addEventListener('DOMContentLoaded', () => {
