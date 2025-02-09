@@ -61,13 +61,6 @@ export class LoginForm extends HTMLElement {
     // TODO: Adjust for API update
     try {
       const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
-      // ----- Temporary solution -------------------------------------
-      // const credentials = {
-      //   username: username,
-      //   password: password,
-      // };
-      // const response = await simulateApiLogin(credentials);
-      // --------------------------------------------------------------
       console.log('Login response:', response);
       if (response.status == 200) {
         const userInformation = {
@@ -82,7 +75,7 @@ export class LoginForm extends HTMLElement {
       const feedback = this.querySelector('#login-failed-feedback');
       feedback.innerHTML = `
       <div class="alert alert-danger alert-dismissible" role="alert">
-        ${error.response.msg}
+        ${error.msg}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     `;
