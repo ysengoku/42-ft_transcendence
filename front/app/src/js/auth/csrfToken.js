@@ -13,3 +13,7 @@ export function getCSRFTokenfromCookies() {
   }
   return token;
 }
+
+export function clearCSRFToken() {
+  document.cookie = `csrftoken=; Max-Age=0; path=/;`;
+}
