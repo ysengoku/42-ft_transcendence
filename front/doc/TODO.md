@@ -1,13 +1,19 @@
 # Components
 
 ## Router
-- [] Update navigation to pages that need authentication
+- [x] Update navigation to pages that need authentication
+
+---------------------------------------------------------------------
+
+## Auth manager
+-[] Add message to UI after refresh token failed
 
 ---------------------------------------------------------------------
 
 ## API
 - [X] Refresh Token handling
 - [] Remove reflesh token sending from login and register
+- [] 500 response handling
 
 ---------------------------------------------------------------------
 
@@ -69,6 +75,8 @@
 
 ## Profile
 
+- [] Add auth check before rendering
+
 ### Error handling
 - [x] 404 handling
 - [x] Check 404 server response (it returns 500 now)
@@ -102,6 +110,7 @@
 
 ## Chat
 
+- [] Add auth check before rendering
 - [x] Websocket
 - [] Add new chat (user search ?)
 - [] Block user on chat

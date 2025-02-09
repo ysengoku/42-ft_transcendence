@@ -65,14 +65,12 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       try {
         const refreshResponse = await refreshAccessToken(csrfToken);
         if (refreshResponse) {
-          console.log('Refresh successful');
           return apiRequest(method, endpoint, data, isFileUpload, needToken);
         }
-        console.log('Refresh failed');
         auth.clearSession();
       } catch (error) {
         console.error('Error during refreshing token:', error);
-        auth.clearSession();
+        // auth.clearSession();
       }
     }
     const error = new Error('Request failed');
