@@ -1,8 +1,8 @@
 /**
  * Router module for handling client-side navigation.
  * @module router
- * @requires module:landing-component
- * @requires module:login-view
+ * @requires module:landing-page
+ * @requires module:login-page
  * @requires module:register-form
  * @requires module:user-home
  * @requires module:user-profile
@@ -151,8 +151,8 @@ const router = (() => {
 })();
 
 // Define all routes
-router.addRoute('/', 'landing-component');
-router.addRoute('/login', 'login-view');
+router.addRoute('/', 'landing-page');
+router.addRoute('/login', 'login-page');
 router.addRoute('/register', 'register-form');
 router.addRoute('/home', 'user-home', false);
 router.addRoute('/profile/:username', 'user-profile', true);
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navbarContainer) {
     navbarContainer.innerHTML = '<navbar-component></navbar-component>';
   } else {
-    console.log('Error rendering navbar');
+    console.error('Error rendering navbar');
   }
   router.init();
   const currentPath = window.location.pathname || '/';
