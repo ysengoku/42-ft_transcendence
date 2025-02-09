@@ -25,16 +25,13 @@ export class UserProfile extends HTMLElement {
         router.navigate('/user-not-found');
       } else {
         // Something went wrong page & message
+        console.error('Unknown Error', error.status, error.message);
       }
     }
   }
 
   render() {
     const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
-    // if (!this.user) {
-    //   console.log('User data is not available');
-    //   return;
-    // }
     console.log('User data:', this.user);
 
     const friendsCount = this.user.friends.length;

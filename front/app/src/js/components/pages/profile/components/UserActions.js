@@ -44,7 +44,7 @@ export class ProfileUserActions extends HTMLElement {
 
   setProfileType(isMe) {
     // Temporary solution -------------------------------------
-    const storedUser = localStorage.getItem('user');
+    const storedUser = sessionStorage.getItem('user');
     const myInfo = storedUser ? JSON.parse(storedUser) : null;
     const myUsername = myInfo ? myInfo.username : null;
 
