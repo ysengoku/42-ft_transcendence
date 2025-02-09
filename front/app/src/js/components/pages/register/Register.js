@@ -90,25 +90,24 @@ export class Register extends HTMLElement {
       if (response.status === 200) {
         const userInformation = {
           username: response.data.username,
+          nickname: response.data.nickname,
           avatar: response.data.avatar,
         };
         auth.setUser(userInformation);
         router.navigate(`/home`, response.user);
-        // const navbar = document.getElementById('navbar-container');
-        // navbar.innerHTML = '<navbar-component></navbar-component>';
       }
     } catch (error) {
       console.error('Error status:', error.status);
-      let errorMessages = '';
+      let errorMessage = '';
       if (error.status === 422) {
-        errorMessages = error.response.msg;
+        errorMessage = error.msg;
       } else {
-        errorMessages = 'An unexpected error occurred. Please try again later.';
+        errorMessage = 'An unexpected error occurred. Please try again later.';
       }
       const feedback = this.querySelector('#signup-failed-feedback');
       feedback.innerHTML = `
         <div class="alert alert-danger alert-dismissible" role="alert">
-          ${errorMessages}
+          ${errorMessage}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       `;
