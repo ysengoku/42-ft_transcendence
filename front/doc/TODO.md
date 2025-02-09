@@ -18,18 +18,19 @@
 ---------------------------------------------------------------------
 
 ## Landing
-- [] JWT (check login status)
+- [x] JWT (check login status)
 
 ---------------------------------------------------------------------
 
 ## Login
-- [X] Adjust width
+- [x] Adjust width
 - [x] CSRF Token handling
 - [x] Error handling
-- [] email login
+- [x] email login
 - [] Forgot password
-- [] Fix parsing of Error message from server
+- [x] Fix parsing of Error message from server
 - [] Unit test (input validation)
+- [] Forbitten letters or format for username? (e.g. email format for username)
 
 ---------------------------------------------------------------------
 
@@ -46,7 +47,7 @@
 - [x] 422 Error message check
 - [~] Nickname input
 - [x] Unit test (input validation)
-- [] Fix parsing of Error message from server
+- [x] Fix parsing of Error message from server
 
 ---------------------------------------------------------------------
 
