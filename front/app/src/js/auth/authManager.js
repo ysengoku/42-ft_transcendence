@@ -8,7 +8,7 @@
 
 import { router } from '@router';
 import { API_ENDPOINTS } from '@api';
-import { getCSRFTokenfromCookies } from './csrfToken';
+import { getCSRFTokenfromCookies, clearCSRFToken } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
 
 const auth = (() => {
@@ -43,7 +43,7 @@ const auth = (() => {
      */
     clearSession() {
       this.clearUser();
-      document.cookie = `csrftoken=; Max-Age=0; path=/;`;
+      clearCSRFToken();
       router.navigate('/');
     }
 
@@ -77,9 +77,8 @@ const auth = (() => {
         },
         credentials: 'include',
       };
-      console.log('Sending API request:', request);
+      console.log('Checking user login status...');
       const response = await fetch(API_ENDPOINTS.SELF, request);
-      console.log('Auth status response:', response);
       if (response.ok) {
         const data = await response.json();
         console.log('User is logged in: ', data);
@@ -97,26 +96,6 @@ const auth = (() => {
       }
       return false;
     }
-
-    /**
-     * Retrieve the CSRF token from the cookies
-     * @return {string | null}
-     */
-    // getCSRFTokenfromCookies() {
-    //   const name = 'csrftoken';
-    //   let token = null;
-    //   if (document.cookie && document.cookie !== '') {
-    //     const cookies = document.cookie.split(';');
-    //     for (let i = 0; i < cookies.length; i++) {
-    //       const cookie = cookies[i].trim();
-    //       if (cookie.startsWith(name)) {
-    //         token = decodeURIComponent(cookie.substring(name.length + 1));
-    //         break;
-    //       }
-    //     }
-    //   }
-    //   return token;
-    // }
   }
   return new AuthManager();
 })();
