@@ -25,12 +25,11 @@
  * }
  */
 
-import { auth } from '@auth/authManager.js';
-import { refreshAccessToken } from '@auth/refreshToken.js';
+import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
 
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   const url = `${endpoint}`;
-  const csrfToken = auth.getCSRFTokenfromCookies();
+  const csrfToken = getCSRFTokenfromCookies();
   const needCSRF = needToken && ['POST', 'DELETE'].includes(method) && csrfToken;
   const options = {
     method,
