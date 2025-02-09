@@ -25,7 +25,7 @@ export class LoginForm extends HTMLElement {
     				<label for="inputUsername" class="form-label">Username or Email</label>
    					<input type="text" class="form-control" id="inputUsername" placeholder="username">
    					<input type="text" class="form-control" id="inputEmail" placeholder="email">
-            <div class='invalid-feedback' id='loginid-feedback'></div>
+            <div class='invalid-feedback' id='username-feedback'></div>
   				</div>
 				  <div class="mb-2">
 					  <label for="inputPassword" class="form-label">Password</label>
@@ -48,17 +48,21 @@ export class LoginForm extends HTMLElement {
     });
   }
 
-  // TODO: Add email case handling
   async handleLogin() {
-    const username = this.querySelector('#inputUsername').value;
-    // const email = this.querySelector('#inputEmail').value;
+    const usernameInput = this.querySelector('#inputUsername').value;
+    const emailInput = this.querySelector('#inputEmail').value;
+    let username = '';
+    if (usernameInput) {
+      username = usernameInput;
+    } else if (emailInput) {
+      username = emailInput;
+    }
     const password = this.querySelector('#inputPassword').value;
 
     if (!this.checkInputs()) {
       return;
     }
 
-    // TODO: Adjust for API update
     try {
       const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
       console.log('Login response:', response);
@@ -109,15 +113,15 @@ export class LoginForm extends HTMLElement {
   }
 
   checkInputs() {
-    const loginIdField = this.querySelector('#inputUsername');
+    const usernameField = this.querySelector('#inputUsername');
     const emailField = this.querySelector('#inputEmail');
     const passwordField = this.querySelector('#inputPassword');
 
     let isValid = true;
-    if (!loginIdField.value.trim() && !emailField.value.trim()) {
-      loginIdField.classList.add('is-invalid');
+    if (!usernameField.value.trim() && !emailField.value.trim()) {
+      usernameField.classList.add('is-invalid');
       emailField.classList.add('is-invalid');
-      document.querySelector('#loginid-feedback').textContent = 'Login ID or email is required';
+      document.querySelector('#username-feedback').textContent = 'Login ID or email is required';
       isValid = false;
     }
     if (!passwordField.value.trim()) {
@@ -129,19 +133,19 @@ export class LoginForm extends HTMLElement {
   }
 
   setUpRemoveFeedback() {
-    const loginIdField = this.querySelector('#inputUsername');
+    const usernameField = this.querySelector('#inputUsername');
     const emailField = this.querySelector('#inputEmail');
     const passwordField = this.querySelector('#inputPassword');
 
-    loginIdField.addEventListener('input', () => {
-      loginIdField.classList.remove('is-invalid');
+    usernameField.addEventListener('input', () => {
+      usernameField.classList.remove('is-invalid');
       emailField.classList.remove('is-invalid');
-      document.querySelector('#loginid-feedback').textContent = '';
+      document.querySelector('#username-feedback').textContent = '';
     });
     emailField.addEventListener('input', () => {
-      loginIdField.classList.remove('is-invalid');
+      usernameField.classList.remove('is-invalid');
       emailField.classList.remove('is-invalid');
-      document.querySelector('#loginid-feedback').textContent = '';
+      document.querySelector('#username-feedback').textContent = '';
     });
     passwordField.addEventListener('input', () => {
       passwordField.classList.remove('is-invalid');
