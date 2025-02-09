@@ -17,7 +17,7 @@ export class Settings extends HTMLElement {
     const user = auth.getUser();
     if (!user) {
       // Show a messages to user
-      router.navigate('/login');
+      router.navigate('/');
     }
     const username = user.username;
     try {

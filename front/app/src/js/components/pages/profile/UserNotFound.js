@@ -1,11 +1,19 @@
+import { auth } from '@auth';
 import userNotFoundImage from '../../../../../public/img/sample404.png';
 
 export class UserNotFound extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    this.isLoggedIn = await auth.fetchAuthStatus();
+    if (!this.isLoggedIn) {
+      // TODO: Show message to login
+      router.navigate('/');
+      return;
+    }
     this.render();
   }
 

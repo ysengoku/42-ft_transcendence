@@ -10,16 +10,14 @@ export class Home extends HTMLElement {
 
   async connectedCallback() {
     this.isLoggedin = await auth.fetchAuthStatus();
+    this.user = auth.getUser();
     this.render();
   }
 
   render() {
-    // if (!this.isLoggedin) {
-    //   auth.autoLogout();
-    // }
-    this.user = auth.getUser();
-    if (!this.user) {
-      router.navigate('/login');
+    if (!this.isLoggedin || !this.user) {
+      // TODO: Show message to login
+      router.navigate('/');
       return;
     }
 
