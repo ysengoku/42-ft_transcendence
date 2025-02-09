@@ -1,5 +1,5 @@
 import { router } from '@router';
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 import './components/index.js';
 import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 

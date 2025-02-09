@@ -14,7 +14,7 @@ export default defineConfig({
       '@socket': path.resolve(__dirname, 'src/js/socket.js'),
       '@api': path.resolve(__dirname, 'src/js/api/index.js'),
       '@components': path.resolve(__dirname, 'src/js/components/'),
-      '@auth': path.resolve(__dirname, 'src/js/auth/'),
+      '@auth': path.resolve(__dirname, 'src/js/auth/index.js'),
       '@utils': path.resolve(__dirname, 'src/js/utils/'),
       '@mock': path.resolve(__dirname, 'src/js/mock/'),
       '@css': path.resolve(__dirname, 'src/css/'),
