@@ -135,15 +135,11 @@ export class Settings extends HTMLElement {
     if (avatarField) {
       formData.append('avatar', avatarField);
     }
-    try {
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-        // const response = await apiRequest('POST', 'endpoint', formData, true);
-        // handle response
-      }
-    } catch (error) {
-      console.error('Error upload user settings: ', error);
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
     }
+    // const response = await apiRequest('POST', 'endpoint', formData, true);
+    // handle response
   }
 }
 
