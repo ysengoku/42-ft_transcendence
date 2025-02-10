@@ -21,12 +21,11 @@ export class FriendsListItem extends HTMLElement {
       this.online = newValue === 'true';
     }
     this.render();
-    this.addEventListener('click', () => {
-      const modal = document.querySelector('#friends-modal');
-      modal.setAttribute('data-bs-dismiss', 'modal');
-      // window.location.href = `/profile/${this.username}`;
-      router.navigate(`/profile/${this.username}`);
-    });
+    // this.addEventListener('click', () => {
+    //   const modal = document.querySelector('#friends-modal');
+    //   modal.setAttribute('data-bs-dismiss', 'modal');
+    //   router.navigate(`/profile/${this.username}`);
+    // });
   }
 
   connectedCallback() {
@@ -34,7 +33,10 @@ export class FriendsListItem extends HTMLElement {
     this.addEventListener('click', () => {
       const modal = document.querySelector('#friends-modal');
       modal.setAttribute('data-bs-dismiss', 'modal');
-      // window.location.href = `/profile/${this.username}`;
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      if (modalInstance) {
+        modalInstance.hide();
+      }
       router.navigate(`/profile/${this.username}`);
     });
   }
