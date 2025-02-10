@@ -11,8 +11,8 @@
 ---------------------------------------------------------------------
 
 ## API
-- [X] Refresh Token handling
-- [] Remove reflesh token sending from login and register
+- [x] Refresh Token handling
+- [x] Remove reflesh token sending from login and register
 - [] 500 response handling
 
 ---------------------------------------------------------------------
