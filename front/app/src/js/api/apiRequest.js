@@ -73,8 +73,6 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
         return { success: false, status: 500, msg: 'Server error' };
       }
     }
-    // const error = new Error('Request failed');
-    // error.status = response.status;
     const errorData = await response.json();
     let errorMsg = 'An unexpected error occurred. Please try again later.';
     if (Array.isArray(errorData)) {
