@@ -1,3 +1,7 @@
+export const ERROR_MESSAGES = {
+  SERVER_ERROR: 'An unexpected error occurred. Please try again later.',
+};
+
 export function showErrorMessage(message) {
   const errorContainer = document.getElementById('error-message-container');
   if (errorContainer) {
@@ -14,7 +18,7 @@ export function showErrorMessage(message) {
   }
 }
 
-function removeAlert() {
+export function removeAlert() {
   const errorContainer = document.getElementById('error-message-container');
   if (errorContainer) {
     errorContainer.innerHTML = '';
