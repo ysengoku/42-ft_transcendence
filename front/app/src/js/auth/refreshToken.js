@@ -20,20 +20,27 @@ export async function refreshAccessToken(csrfToken) {
   console.log('Refreshing access token');
   const refreshToken = getRefreshTokenfromCookies();
   if (refreshToken && csrfToken) {
-    const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken,
-      },
-      credentials: 'include',
-      body: JSON.stringify({ refresh: refreshToken }),
-    });
-    if (refreshResponse.ok) {
-      console.log('Refresh successful');
-      return true;
+    try {
+      const request = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ refresh: refreshToken }),
+      };
+      const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, request);
+      if (refreshResponse.ok) {
+        console.log('Refresh successful');
+        return { success: true };
+      }
+      console.error('Refresh failed:', refreshResponse);
+      return { success: false, status: refreshResponse.status };
+    } catch (error) {
+      console.error(error);
+      return { success: false, status: 0 };
     }
-    console.error('Refresh failed:', refreshResponse);
-    return false;
   }
+  return { success: false, status: 401 };
 }

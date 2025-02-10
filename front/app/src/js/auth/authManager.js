@@ -88,7 +88,7 @@ const auth = (() => {
         return true;
       } else if (response.status === 401) {
         const refreshToken = await refreshAccessToken(cSRFToken);
-        if (refreshToken) {
+        if (refreshToken.success) {
           return true;
         } else {
           console.log('User is not logged in');

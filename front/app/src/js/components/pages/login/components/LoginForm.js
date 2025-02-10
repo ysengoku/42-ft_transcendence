@@ -63,9 +63,9 @@ export class LoginForm extends HTMLElement {
       return;
     }
 
-    try {
-      const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
-      console.log('Login response:', response);
+    const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
+    console.log('Login response:', response);
+    if (response.success) {
       if (response.status == 200) {
         const userInformation = {
           username: response.data.username,
@@ -75,11 +75,11 @@ export class LoginForm extends HTMLElement {
         auth.setUser(userInformation);
         router.navigate(`/home`, response.user);
       }
-    } catch (error) {
+    } else {
       const feedback = this.querySelector('#login-failed-feedback');
       feedback.innerHTML = `
       <div class="alert alert-danger alert-dismissible" role="alert">
-        ${error.msg}
+        ${response.msg}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     `;
