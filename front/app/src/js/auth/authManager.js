@@ -10,6 +10,7 @@ import { router } from '@router';
 import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies, clearCSRFToken } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
+import { ERROR_MESSAGES, showErrorMessage, removeAlert } from '@utils';
 
 const auth = (() => {
   class AuthManager {
@@ -66,7 +67,7 @@ const auth = (() => {
      * @return {Promise<boolean>} Resolves to true if authenticated, otherwise false
      */
     async fetchAuthStatus() {
-      console.log('Checking user login status...');
+      console.log('Fetching user login status...');
       const cSRFToken = getCSRFTokenfromCookies();
       if (!cSRFToken) {
         console.log('User is not logged in: No CSRF token');
@@ -90,6 +91,12 @@ const auth = (() => {
         const refreshToken = await refreshAccessToken(cSRFToken);
         if (refreshToken.success) {
           return true;
+        } else if (refreshToken.status === 500) {
+          showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
+          setTimeout(() => {
+            removeAlert();
+          }, 3000);
+          // Server error handling
         } else {
           console.log('User is not logged in: ', response);
           this.clearUser();
