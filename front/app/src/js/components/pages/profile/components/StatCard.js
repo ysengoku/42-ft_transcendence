@@ -1,4 +1,4 @@
-import sheriff from '../../../../../../public/img/sheriff.png';
+import sheriff from '/img/sheriff.png?url';
 
 export class UserStatCard extends HTMLElement {
   constructor() {
