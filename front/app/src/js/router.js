@@ -166,6 +166,7 @@ router.addRoute('/chat', 'chat-page', false);
 
 // Initialize the router on the initial HTML document load
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded');
   const navbarContainer = document.getElementById('navbar-container');
   if (navbarContainer) {
     navbarContainer.innerHTML = '<navbar-component></navbar-component>';
