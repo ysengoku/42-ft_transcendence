@@ -15,6 +15,8 @@
  * @requires module:chat-page
  */
 
+import { addDissmissAlertListener } from "@utils";
+
 const router = (() => {
   class Router {
     constructor() {
@@ -174,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error('Error rendering navbar');
   }
   router.init();
+  addDissmissAlertListener();
   const currentPath = window.location.pathname || '/';
   router.navigate(currentPath);
 });

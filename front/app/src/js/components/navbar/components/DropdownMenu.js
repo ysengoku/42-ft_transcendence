@@ -1,6 +1,6 @@
 import { router } from '@router';
 import { auth, handleLogout } from '@auth';
-import { ThemeController } from '@utils/ThemeController.js';
+import { ThemeController } from '@utils';
 import anonymousavatar from '/img/anonymous-avatar.svg?url';
 // import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
