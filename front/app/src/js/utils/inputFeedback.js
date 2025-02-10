@@ -7,4 +7,4 @@ export const INPUT_FEEDBACK = {
   EMPTY_PASSWORD_REPEAT: `Please confirm your password`,
   PASSWORD_TOO_SHORT: `Password must be at least 8 characters`,
   PASSWORDS_NOT_MATCH: `Passwords do not match`,
-}
+};
