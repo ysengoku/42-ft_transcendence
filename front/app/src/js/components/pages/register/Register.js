@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { showErrorMessage } from '@utils';
 // import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
 
 export class Register extends HTMLElement {
@@ -27,7 +28,7 @@ export class Register extends HTMLElement {
         <div class="row justify-content-center">
           <div class="col-12 col-md-4"> 
     		    <div class='container d-flex flex-column justify-content-center align-items-center'>
-              <div id="signup-failed-feedback"></div>
+              <!-- <div id="signup-failed-feedback"></div> -->
       			  <form class='w-100'>
         			  <div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
@@ -98,13 +99,14 @@ export class Register extends HTMLElement {
       }
     } else {
       console.error('Registration failed:', response.msg);
+      showErrorMessage(response.msg);
       const feedback = this.querySelector('#signup-failed-feedback');
-      feedback.innerHTML = `
-        <div class="alert alert-danger alert-dismissible" role="alert">
-          ${response.msg}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
+      // feedback.innerHTML = `
+      //   <div class="alert alert-danger alert-dismissible" role="alert">
+      //     ${response.msg}
+      //     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      //   </div>
+      // `;
     }
   }
 

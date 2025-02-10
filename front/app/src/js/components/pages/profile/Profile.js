@@ -25,9 +25,12 @@ export class UserProfile extends HTMLElement {
     } else {
       if (response.status === 404) {
         router.navigate('/user-not-found');
+      } else if (response.status === 500) {
+        // Server error page
+        console.error('Server Error', response.status, response.msg);
       } else {
         // Something went wrong page & message
-        console.error('Unknown Error', error.status, error.message);
+        console.error('Unknown Error', response.status, response.msg);
       }
     }
   }
