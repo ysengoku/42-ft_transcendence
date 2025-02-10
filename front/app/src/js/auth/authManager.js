@@ -69,7 +69,7 @@ const auth = (() => {
       console.log('Checking user login status...');
       const cSRFToken = getCSRFTokenfromCookies();
       if (!cSRFToken) {
-        console.log('User is not logged in');
+        console.log('User is not logged in: No CSRF token');
         return false;
       }
       const request = {
@@ -91,7 +91,7 @@ const auth = (() => {
         if (refreshToken.success) {
           return true;
         } else {
-          console.log('User is not logged in');
+          console.log('User is not logged in: ', response);
           this.clearUser();
           clearCSRFToken();
           return false;
