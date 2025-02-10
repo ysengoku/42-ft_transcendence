@@ -83,10 +83,10 @@ export class Register extends HTMLElement {
       password_repeat: passwordRepeatField.value,
     };
 
-    try {
-      const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
+    const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
+    
+    if (response.success) {
       console.log('Registration successful:', response);
-
       if (response.status === 200) {
         const userInformation = {
           username: response.data.username,
@@ -96,18 +96,12 @@ export class Register extends HTMLElement {
         auth.setUser(userInformation);
         router.navigate(`/home`, response.user);
       }
-    } catch (error) {
-      console.error('Error status:', error.status);
-      let errorMessage = '';
-      if (error.status === 422) {
-        errorMessage = error.msg;
-      } else {
-        errorMessage = 'An unexpected error occurred. Please try again later.';
-      }
+    } else {
+      console.error('Registration failed:', response.msg);
       const feedback = this.querySelector('#signup-failed-feedback');
       feedback.innerHTML = `
         <div class="alert alert-danger alert-dismissible" role="alert">
-          ${errorMessage}
+          ${response.msg}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       `;
