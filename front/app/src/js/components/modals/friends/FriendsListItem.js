@@ -1,3 +1,5 @@
+import { router } from '@router';
+
 export class FriendsListItem extends HTMLElement {
   constructor() {
     super();
@@ -20,18 +22,20 @@ export class FriendsListItem extends HTMLElement {
     }
     this.render();
     this.addEventListener('click', () => {
-      const modal = document.querySelector('#friendsModal');
+      const modal = document.querySelector('#friends-modal');
       modal.setAttribute('data-bs-dismiss', 'modal');
-      window.location.href = `/profile/${this.username}`;
+      // window.location.href = `/profile/${this.username}`;
+      router.navigate(`/profile/${this.username}`);
     });
   }
 
   connectedCallback() {
     this.render();
     this.addEventListener('click', () => {
-      const modal = document.querySelector('#friendsModal');
+      const modal = document.querySelector('#friends-modal');
       modal.setAttribute('data-bs-dismiss', 'modal');
-      window.location.href = `/profile/${this.username}`;
+      // window.location.href = `/profile/${this.username}`;
+      router.navigate(`/profile/${this.username}`);
     });
   }
 

@@ -15,7 +15,7 @@
  * @requires module:chat-page
  */
 
-import { addDissmissAlertListener } from "@utils";
+import { addDissmissAlertListener } from '@utils';
 
 const router = (() => {
   class Router {
