@@ -49,7 +49,7 @@ export class FriendsListModal extends HTMLElement {
         border-radius: 0;
       }
     </style>
-		<div class="modal fade" id="friends-modal" tabindex="-1" aria-hidden="true">
+		<div class="modal fade" id="friends-modal" tabindex="-1" inert>
 			<div class="modal-dialog modal-dialog-scrollable">
    			<div class="modal-content">
           <div class="modal-header d-flex flex-column align-items-start">
@@ -75,7 +75,7 @@ export class FriendsListModal extends HTMLElement {
   showModal() {
     if (this.modal) {
       this.modal.show();
-      // this.querySelector('#friends-modal').removeAttribute('inert');
+      this.querySelector('#friends-modal').removeAttribute('inert');
     }
     this.renderSearchBar();
   }
