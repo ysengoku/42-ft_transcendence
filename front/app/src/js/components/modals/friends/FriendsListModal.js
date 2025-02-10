@@ -74,8 +74,8 @@ export class FriendsListModal extends HTMLElement {
 
   showModal() {
     if (this.modal) {
-      this.modal.show();
       this.querySelector('#friends-modal').removeAttribute('inert');
+      this.modal.show();
     }
     this.renderSearchBar();
   }

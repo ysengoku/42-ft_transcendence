@@ -6,6 +6,7 @@ import './components/index.js';
 export class UserProfile extends HTMLElement {
   constructor() {
     super();
+    this.loggedInUsername = '';
     this.user = null;
   }
 
@@ -39,8 +40,16 @@ export class UserProfile extends HTMLElement {
     const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
     console.log('User data:', this.user);
 
-    const friendsCount = this.user.friends.length;
-    // const friendsCount = this.user.friends_count;
+    // --- For rendering test ------
+    // this.user.is_blocked = true;
+    // -----------------------------
+    if (this.user.is_blocked) {
+      router.navigate('/user-not-found');
+      return;
+    }
+
+    const storedUser = sessionStorage.getItem('user');
+    this.loggedInUsername = JSON.parse(storedUser).username;
 
     // Online status
     const onlineStatus = document.createElement('profile-online-status');
@@ -126,7 +135,7 @@ export class UserProfile extends HTMLElement {
                   <user-stat-card class="col-3" title="Elo" value="${this.user.elo}"></user-stat-card>
                   <user-stat-card class="col-3" title="Total score" value="${this.user.scored_balls}"></user-stat-card>
                   <user-stat-card class="col-3" title="total duels" value="${this.user.total_matches}"></user-stat-card>  
-                  <user-stat-card class="col-3" title="Friends" value="${friendsCount}"></user-stat-card>
+                  <user-stat-card class="col-3" title="Friends" value="${this.user.friends_count}"></user-stat-card>
                 </div>
               </div>
 
@@ -187,8 +196,10 @@ export class UserProfile extends HTMLElement {
     const profileUserActions = this.querySelector('profile-user-actions');
     if (profileUserActions) {
       profileUserActions.data = {
+        isMyProfile: this.loggedInUsername === this.user.username,
         username: this.user.username,
-        friends: this.user.friends,
+        isFriend: this.user.is_friend,
+        isBlockedByUser: this.user.is_blocked_by_user,
       };
     }
 
