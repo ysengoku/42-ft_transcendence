@@ -58,35 +58,33 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       console.log('Request successful:', response);
       const responseData = await response.json();
       console.log('Response data:', responseData);
-      return { status: response.status, data: responseData };
+      return { success: true, status: response.status, data: responseData };
     }
     if (needToken && response.status === 401) {
       console.log('Unauthorized request:', response);
-      try {
-        const refreshResponse = await refreshAccessToken(csrfToken);
-        if (refreshResponse) {
-          return apiRequest(method, endpoint, data, isFileUpload, needToken);
-        }
+      const refreshResponse = await refreshAccessToken(csrfToken);
+      if (refreshResponse.success) {
+        return apiRequest(method, endpoint, data, isFileUpload, needToken);
+      } else if (refreshResponse.status === 401) {
         auth.clearSession();
-      } catch (error) {
-        console.error('Error during refreshing token:', error);
-        // auth.clearSession();
+        return { success: false, status: 401, msg: 'Session expired' };
+      } else if (refreshResponse.status === 500) {
+        // Show message to user
+        return { success: false, status: 500, msg: 'Server error' };
       }
     }
-    const error = new Error('Request failed');
-    error.status = response.status;
-    let errorData = null;
-    errorData = await response.json();
+    // const error = new Error('Request failed');
+    // error.status = response.status;
+    const errorData = await response.json();
+    let errorMsg = 'An unexpected error occurred. Please try again later.';
     if (Array.isArray(errorData)) {
-      const errorMsg = errorData.find((item) => item.msg);
-      error.msg = errorMsg ? errorMsg.msg : 'Request failed';
+      const foundErrorMsg = errorData.find((item) => item.msg);
+      errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;
     } else if (typeof errorData === 'object' && errorData.msg) {
-      error.msg = errorData.msg;
-    } else {
-      error.msg = 'An unexpected error occurred. Please try again later.';
+      errorMsg = errorData.msg;
     }
-    throw error;
+    return { success: false, status: response.status, msg: errorMsg };
   } catch (error) {
-    throw error;
+    return { success: false, status: 0, msg: error };
   }
 }

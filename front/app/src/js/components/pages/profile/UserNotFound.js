@@ -1,5 +1,6 @@
+import { router } from '@router';
 import { auth } from '@auth';
-import userNotFoundImage from '../../../../../public/img/sample404.png';
+import userNotFoundImage from '/img/sample404.png?url';
 
 export class UserNotFound extends HTMLElement {
   constructor() {
