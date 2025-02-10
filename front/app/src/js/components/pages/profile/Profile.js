@@ -15,13 +15,15 @@ export class UserProfile extends HTMLElement {
   }
 
   async fetchUserData(username) {
-    try {
-      /* eslint-disable-next-line new-cap */
-      const response = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
-      this.user = response.data;
-      this.render();
-    } catch (error) {
-      if (error.status === 404) {
+    /* eslint-disable-next-line new-cap */
+    const response = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
+    if (response.success) {
+      if (response.status === 200) {
+        this.user = response.data;
+        this.render();
+      }
+    } else {
+      if (response.status === 404) {
         router.navigate('/user-not-found');
       } else {
         // Something went wrong page & message
