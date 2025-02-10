@@ -1,4 +1,4 @@
-import { INPUT_FEEDBACK } from '@utils/inputFeedback';
+import { INPUT_FEEDBACK } from '@utils';
 
 export class PasswordUpdate extends HTMLElement {
   constructor() {
