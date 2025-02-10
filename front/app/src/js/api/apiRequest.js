@@ -26,6 +26,7 @@
  */
 
 import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
+import { ERROR_MESSAGES, showErrorMessage } from '@utils';
 
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   const url = `${endpoint}`;
@@ -69,12 +70,12 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
         auth.clearSession();
         return { success: false, status: 401, msg: 'Session expired' };
       } else if (refreshResponse.status === 500) {
-        // Show message to user
+        showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
         return { success: false, status: 500, msg: 'Server error' };
       }
     }
     const errorData = await response.json();
-    let errorMsg = 'An unexpected error occurred. Please try again later.';
+    let errorMsg = ERROR_MESSAGES.SERVER_ERROR;
     if (Array.isArray(errorData)) {
       const foundErrorMsg = errorData.find((item) => item.msg);
       errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;
