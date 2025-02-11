@@ -14,18 +14,18 @@ export class Settings extends HTMLElement {
   }
 
   async connectedCallback() {
-    const authStatus = await auth.fetchAuthStatus();
-    this.isLoggedIn = authStatus.success;
+    const user = auth.getCashedUser();
+    this.isLoggedIn = user ? true : false;
     if (!this.isLoggedIn) {
       // Show a messages to user
       router.navigate('/');
       return;
     }
+    this.username = user.username;
     this.fetchUserData();
   }
 
   async fetchUserData() {
-    this.username = auth.getUser().username;
     /* eslint-disable-next-line new-cap */
     const response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.username));
     if (response.success) {
@@ -149,9 +149,9 @@ export class Settings extends HTMLElement {
     if (avatarField) {
       formData.append('avatar', avatarField);
     }
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
+    // for (let [key, value] of formData.entries()) {
+    //   console.log(key, value);
+    // }
 
     // const response = await apiRequest('POST', 'endpoint', formData, true);
     // handle response
