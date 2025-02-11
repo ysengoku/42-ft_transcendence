@@ -1,5 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { showErrorMessage, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 // import poster from '/img/sample-background.png?url';
 
