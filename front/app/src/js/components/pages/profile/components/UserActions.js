@@ -72,9 +72,9 @@ export class ProfileUserActions extends HTMLElement {
     const blockUserButton = this.querySelector('#block-user-button');
     blockUserButton.style.display = 'block';
     if (this._data.isBlockedByUser) {
-    // Handle unblock user
+      blockUserButton.addEventListener('click', this.unblockUser.bind(this));
     } else {
-    // Handle block user
+      blockUserButton.addEventListener('click', this.blockUser.bind(this));
     }
   }
 
@@ -112,6 +112,36 @@ export class ProfileUserActions extends HTMLElement {
   }
 
   async blockUser() {
+    const request = { 'username': this._data.shownUsername };
+    const response = await apiRequest(
+        'POST',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_BLOCKED_USERS(this._data.loggedInUsername),
+        request,
+        false,
+        true,
+    );
+    if (response.success) {
+      this._data.isBlockedByUser = true;
+      this.render();
+    }
+    // Handle error
+  }
+
+  async unblockUser() {
+    const response = await apiRequest(
+        'DELETE',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_UNBLOCK_USER(this._data.loggedInUsername, this._data.shownUsername),
+        null,
+        false,
+        true,
+    );
+    if (response.success) {
+      this._data.isBlockedByUser = false;
+      this.render();
+    }
+  // Handle error
   }
 }
 
