@@ -17,7 +17,7 @@ export class DropdownMenu extends HTMLElement {
 
   setLoginStatus(value) {
     this.isLoggedIn = value;
-    this.user = auth.getUser();
+    this.user = auth.getCashedUser();
     this.render();
   }
 
