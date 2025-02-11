@@ -8,7 +8,7 @@
  * @param {object|null} [data=null] - The data to be sent with the request, for POST or PUT requests. Defaults to null.
  * @param {boolean} [isFileUpload=false] - Whether the request involves file uploading. Defaults to false.
  * @param {boolean} [needToken=true] - Whether a CSRF token is needed for the request. Defaults to true.
- * @returns {Promise<Response>} The response object from the fetch request if successful.
+ * @return {Promise<Response>} The response object from the fetch request if successful.
  * @throws {Error} Throws an error with the status and error message if the request fails.
  *
  * @example
@@ -57,8 +57,10 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     console.log('API response:', response);
     if (response.ok) {
       console.log('Request successful:', response);
-      const responseData = await response.json();
-      console.log('Response data:', responseData);
+      let responseData = null;
+      if (response.status !== 204) {
+        responseData = await response.json();
+      }
       return { success: true, status: response.status, data: responseData };
     }
     if (needToken && response.status === 401) {
