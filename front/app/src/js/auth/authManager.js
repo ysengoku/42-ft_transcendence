@@ -10,7 +10,7 @@ import { router } from '@router';
 import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies, clearCSRFToken } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
-import { ERROR_MESSAGES, showErrorMessage, removeAlert } from '@utils';
+import { ERROR_MESSAGES, showErrorMessage, showErrorMessageForDuration } from '@utils';
 
 const auth = (() => {
   class AuthManager {
@@ -89,28 +89,25 @@ const auth = (() => {
         return { success: true, response: data };
       } else if (response.status === 401) {
         const refreshTokenResponse = await refreshAccessToken(CSRFToken);
-        console.log('<fetchAuthStatus> Refresh token response:', refreshTokenResponse);
+        console.log('Refresh token response:', refreshTokenResponse);
         switch (refreshTokenResponse.status) {
           case 204:
-            console.log('<fetchAuthStatus> 204 - Token refreshed, user is logged in');
+            console.log('204 - Token refreshed, user is logged in');
             return this.fetchAuthStatus();
           case 401:
-            console.log('<fetchAuthStatus> 401 - Token expired, user is not logged in.');
+            console.log('401 - Token expired, user is not logged in.');
             this.clearUser();
-            clearCSRFToken();
+            // clearCSRFToken();
             return { success: false, status: refreshTokenResponse.status };
           case 500:
-            showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
-            setTimeout(() => {
-              removeAlert();
-            }, 3000);
+            showErrorMessageForDuration(ERROR_MESSAGES.SERVER_ERROR, 3000);
             // Server error handling
             break;
           default:
-            console.log('<fetchAuthStatus> Unknown error.');
+            console.log('Unknown error.');
             showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
             this.clearUser();
-            clearCSRFToken();
+            // clearCSRFToken();
             return { success: false, status: refreshTokenResponse.status };
         }
       }

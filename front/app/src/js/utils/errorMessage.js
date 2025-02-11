@@ -20,6 +20,13 @@ export function showErrorMessage(message) {
   }
 }
 
+export function showErrorMessageForDuration(message, duration) {
+  showErrorMessage(message);
+  setTimeout(() => {
+    removeAlert();
+  }, duration);
+}
+
 export function removeAlert() {
   const errorContainer = document.getElementById('error-message-container');
   if (errorContainer) {

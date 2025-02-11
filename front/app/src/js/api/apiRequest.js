@@ -28,6 +28,15 @@
 import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
 import { ERROR_MESSAGES, showErrorMessage } from '@utils';
 
+// const handlers = {
+//   ok: async (response) => {
+
+//   },
+//   404: async () => {
+//     return;
+//   }
+// };
+
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   const url = `${endpoint}`;
   const csrfToken = getCSRFTokenfromCookies();
