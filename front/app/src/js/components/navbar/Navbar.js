@@ -10,7 +10,8 @@ export class Navbar extends HTMLElement {
   async connectedCallback() {
     console.log('Navbar connected');
     document.addEventListener('loginStatusChange', this.loginStatusHandler);
-    this.isLoggedIn = await auth.fetchAuthStatus();
+    const authStatus = await auth.fetchAuthStatus();
+    this.isLoggedIn = authStatus.success;
     this.render();
   }
 
