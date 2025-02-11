@@ -19,7 +19,7 @@
 
 ## Navbar
 - [X] Dropdown menu is hidden by Chat message header on Chat page
-- [] Update login stauts depending on login status
+- [] Update login status depending on login status
 
 ---------------------------------------------------------------------
 
@@ -51,7 +51,7 @@
 - [x] 422 handling
 - [x] Password length check
 - [x] 422 Error message check
-- [~] Nickname input
+- [] Nickname input?
 - [x] Unit test (input validation)
 - [x] Fix parsing of Error message from server
 
