@@ -9,8 +9,7 @@ export class UserNotFound extends HTMLElement {
   }
 
   async connectedCallback() {
-    const authStatus = await auth.fetchAuthStatus();
-    this.isLoggedIn = authStatus.success;
+    this.isLoggedIn = auth.getCashedUser() ? true : false;
     if (!this.isLoggedIn) {
       // TODO: Show message to login
       router.navigate('/');
