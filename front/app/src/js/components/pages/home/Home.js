@@ -4,18 +4,19 @@ import { auth } from '@auth';
 export class Home extends HTMLElement {
   constructor() {
     super();
-    this.isLoggedin = false;
+    this.isLoggedIn = false;
     this.user = null;
   }
 
   async connectedCallback() {
-    this.isLoggedin = await auth.fetchAuthStatus();
+    const authStatus = await auth.fetchAuthStatus();
+    this.isLoggedIn = authStatus.success;
     this.user = auth.getUser();
     this.render();
   }
 
   render() {
-    if (!this.isLoggedin || !this.user) {
+    if (!this.isLoggedIn) {
       // TODO: Show message to login
       router.navigate('/');
       return;
