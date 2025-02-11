@@ -1,6 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessage, ERROR_MESSAGES } from '@utils';
+// import { showErrorMessage, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 // import poster from '/img/sample-background.png?url';
 
@@ -189,6 +189,7 @@ export class UserProfile extends HTMLElement {
     if (profileUserInfo) {
       profileUserInfo.data = {
         username: this.user.username,
+        nickname: this.user.nickname,
         join_date: this.user.date_joined,
         titre: this.user.titre,
       };
@@ -197,7 +198,6 @@ export class UserProfile extends HTMLElement {
     const profileUserActions = this.querySelector('profile-user-actions');
     if (profileUserActions) {
       profileUserActions.data = {
-        // isMyProfile: this.loggedInUsername === this.user.username,
         loggedInUsername: this.loggedInUsername,
         shownUsername: this.user.username,
         isFriend: this.user.is_friend,
