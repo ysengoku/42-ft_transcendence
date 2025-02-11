@@ -2,6 +2,7 @@
 
 ## Router
 - [x] Update navigation to pages that need authentication
+- [] Navbar and content rendering should not call refresh token twice (navbar --> async function? / promise?)
 
 ---------------------------------------------------------------------
 

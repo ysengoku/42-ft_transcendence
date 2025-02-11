@@ -39,7 +39,7 @@ export class UserEnemy extends HTMLElement {
     }
     // -------------------------------------------------
 
-    const type = this._type === "best" ? "Best Enemy" : "Worst Enemy";
+    const type = this._type === 'best' ? 'Best Enemy' : 'Worst Enemy';
     if (this._data) {
       const enemy = this._data;
       this.innerHTML = `
