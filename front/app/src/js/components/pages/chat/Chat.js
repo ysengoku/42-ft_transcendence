@@ -7,7 +7,7 @@ import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 export class Chat extends HTMLElement {
   constructor() {
     super();
-    this.user = auth.getUser();
+    this.user = auth.getCashedUser();
     this.chatListData = [];
     this.currentChatId = null;
     this.currentChat = [];
