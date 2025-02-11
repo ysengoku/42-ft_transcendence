@@ -8,7 +8,8 @@ export class Landing extends HTMLElement {
   }
 
   async connectedCallback() {
-    this.isLoggedIn = await auth.fetchAuthStatus();
+    const authStatus = await auth.fetchAuthStatus();
+    this.isLoggedIn = authStatus.success;
     this.render();
   }
 

@@ -33,10 +33,11 @@ export class FriendsListItem extends HTMLElement {
     this.addEventListener('click', () => {
       const modal = document.querySelector('#friends-modal');
       modal.setAttribute('data-bs-dismiss', 'modal');
-      const modalInstance = bootstrap.Modal.getInstance(modal);
-      if (modalInstance) {
-        modalInstance.hide();
-      }
+      modal.setAttribute('inert', true);
+      // const modalInstance = bootstrap.Modal.getInstance(modal);
+      // if (modalInstance) {
+      //   modalInstance.hide();
+      // }
       router.navigate(`/profile/${this.username}`);
     });
   }
