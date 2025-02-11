@@ -78,7 +78,9 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       if (refreshResponse.success) {
         return apiRequest(method, endpoint, data, isFileUpload, needToken);
       } else if (refreshResponse.status === 401) {
-        auth.clearSession();
+        auth.clearCashedUser();
+        router.navigate('/login');
+        // Show  message to user to login again
         return { success: false, status: 401, msg: 'Session expired' };
       }
     }
