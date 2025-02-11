@@ -1,14 +1,16 @@
 import { router } from '@router';
+import { apiRequest, API_ENDPOINTS } from '@api';
 
 export class ProfileUserActions extends HTMLElement {
   constructor() {
     super();
     this._data = {
-      'isMyProfile': false,
-      'username': '',
+      'loggedInUsername': '',
+      'shownUsername': '',
       'isFriend': false,
       'isBlockedByUser': false,
     };
+    this.isMyProfile = false;
   }
 
   set data(value) {
@@ -17,6 +19,7 @@ export class ProfileUserActions extends HTMLElement {
     // this._data.isFriend = true;
     // this._data.isBlockedByUser = true;
     // -------------------------------------
+    this.isMyProfile = this._data.loggedInUsername === this._data.shownUsername;
     this.render();
   }
 
@@ -41,26 +44,28 @@ export class ProfileUserActions extends HTMLElement {
   }
 
   setupButtons() {
-    if (this._data.isMyProfile) {
+    if (this.isMyProfile) {
       const editProfileButton = this.querySelector('#edit-profile-button');
       editProfileButton.style.display = 'block';
       editProfileButton.addEventListener('click', () => {
-        router.navigate(`/settings/${this._data.username}`);
+        router.navigate(`/settings/${this._data.loggedInUsername}`);
       });
       return;
     }
 
     if (!this._data.isBlockedByUser) {
+      // Send message
       const sendMessageButton = this.querySelector('#send-message-button');
       sendMessageButton.style.display = 'block';
       // Handle send message
 
+      // Add or Remove friend
       const addFriendButton = this.querySelector('#add-friend-button');
       addFriendButton.style.display = 'block';
       if (this._data.isFriend) {
-      // Handle remove friend
+        addFriendButton.addEventListener('click', this.removeFriend.bind(this));
       } else {
-      // Handle add friend
+        addFriendButton.addEventListener('click', this.addFriend.bind(this));
       }
     }
 
@@ -71,6 +76,42 @@ export class ProfileUserActions extends HTMLElement {
     } else {
     // Handle block user
     }
+  }
+
+  async addFriend() {
+    const request = { 'username': this._data.shownUsername };
+    const response = await apiRequest(
+        'POST',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_FRIENDS(this._data.loggedInUsername),
+        request,
+        false,
+        true,
+    );
+    if (response.success) {
+      this._data.isFriend = true;
+      this.render();
+    }
+    // Handle error
+  }
+
+  async removeFriend() {
+    const response = await apiRequest(
+        'DELETE',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_REMOVE_FRIEND(this._data.loggedInUsername, this._data.shownUsername),
+        null,
+        false,
+        true,
+    );
+    if (response.success) {
+      this._data.isFriend = false;
+      this.render();
+    }
+    // Handle error
+  }
+
+  async blockUser() {
   }
 }
 

@@ -196,8 +196,9 @@ export class UserProfile extends HTMLElement {
     const profileUserActions = this.querySelector('profile-user-actions');
     if (profileUserActions) {
       profileUserActions.data = {
-        isMyProfile: this.loggedInUsername === this.user.username,
-        username: this.user.username,
+        // isMyProfile: this.loggedInUsername === this.user.username,
+        loggedInUsername: this.loggedInUsername,
+        shownUsername: this.user.username,
         isFriend: this.user.is_friend,
         isBlockedByUser: this.user.is_blocked_by_user,
       };
