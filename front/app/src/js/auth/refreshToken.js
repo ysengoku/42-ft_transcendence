@@ -31,11 +31,12 @@ export async function refreshAccessToken(csrfToken) {
         body: JSON.stringify({ refresh: refreshToken }),
       };
       const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, request);
+      console.log('<refreshAccessToken> Refresh response:', refreshResponse);
       if (refreshResponse.ok) {
-        console.log('Refresh successful');
-        return { success: true };
+        console.log('<refreshAccessToken> Refresh successful');
+        return { success: true, status: 204 };
       }
-      console.error('Refresh failed:', refreshResponse);
+      console.error('<refreshAccessToken> Refresh failed:', refreshResponse);
       return { success: false, status: refreshResponse.status };
     } catch (error) {
       console.error(error);
