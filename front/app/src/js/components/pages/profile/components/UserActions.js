@@ -1,5 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { showErrorMessage, showErrorMessageForDuration } from '@utils';
 
 export class ProfileUserActions extends HTMLElement {
   constructor() {
@@ -41,6 +42,7 @@ export class ProfileUserActions extends HTMLElement {
 			</div>
 		`;
     this.setupButtons();
+    // showErrorMessage('Error message');
   }
 
   setupButtons() {
@@ -78,21 +80,37 @@ export class ProfileUserActions extends HTMLElement {
     }
   }
 
+  // --- For rendering test --------------
+  async testResponse() {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ success: false });
+      }, 500);
+    });
+  }
+  // -------------------------------------
+
   async addFriend() {
-    const request = { 'username': this._data.shownUsername };
-    const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_FRIENDS(this._data.loggedInUsername),
-        request,
-        false,
-        true,
-    );
+    // const request = { 'username': this._data.shownUsername };
+    const errorMessage = 'Failed to add friend. Please try again later.';
+    // const response = await apiRequest(
+    //     'POST',
+    //     /* eslint-disable-next-line new-cap */
+    //     API_ENDPOINTS.USER_FRIENDS(this._data.loggedInUsername),
+    //     request,
+    //     false,
+    //     true,
+    // );
+    // --- For rendering test --------------
+    const response = await this.testResponse();
+    // -------------------------------------
     if (response.success) {
       this._data.isFriend = true;
       this.render();
+    } else {
+      console.error('Error adding friend:', response);
+      showErrorMessageForDuration(errorMessage, 3000);
     }
-    // Handle error
   }
 
   async removeFriend() {
