@@ -67,6 +67,9 @@ else:
 
 
 INSTALLED_APPS = [
+    # ASGI server for working with websockets
+    "daphne",
+
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -75,10 +78,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    # Third-party applications
-    "silk",  # Application for profiling
-    "channels",  # Django Channels
-    # Our applications
+
+    # Profiling
+    "silk",
+
+    "channels",
+
     "users",
 ]
 
