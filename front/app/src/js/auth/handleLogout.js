@@ -22,7 +22,9 @@ export async function handleLogout(event) {
     }
   } catch (error) {
     console.error('Error:', error);
-    auth.clearSession();
+    auth.clearCashedUser();
+    router.navigate('/');
   }
-  auth.clearSession();
+  auth.clearCashedUser();
+  router.navigate('/');
 }
