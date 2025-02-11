@@ -1,6 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessage, showErrorMessageForDuration } from '@utils';
+import { showErrorMessageForDuration } from '@utils';
 
 export class ProfileUserActions extends HTMLElement {
   constructor() {
@@ -12,6 +12,12 @@ export class ProfileUserActions extends HTMLElement {
       'isBlockedByUser': false,
     };
     this.isMyProfile = false;
+    this.errorMessages = {
+      'addFriend': 'Failed to add friend. Please try again later.',
+      'removeFriend': 'Failed to remove friend. Please try again later.',
+      'blockUser': 'Failed to block user. Please try again later.',
+      'unblockUser': 'Failed to unblock user. Please try again later.',
+    };
   }
 
   set data(value) {
@@ -42,7 +48,6 @@ export class ProfileUserActions extends HTMLElement {
 			</div>
 		`;
     this.setupButtons();
-    // showErrorMessage('Error message');
   }
 
   setupButtons() {
@@ -56,12 +61,10 @@ export class ProfileUserActions extends HTMLElement {
     }
 
     if (!this._data.isBlockedByUser) {
-      // Send message
       const sendMessageButton = this.querySelector('#send-message-button');
       sendMessageButton.style.display = 'block';
       // Handle send message
 
-      // Add or Remove friend
       const addFriendButton = this.querySelector('#add-friend-button');
       addFriendButton.style.display = 'block';
       if (this._data.isFriend) {
@@ -91,25 +94,24 @@ export class ProfileUserActions extends HTMLElement {
   // -------------------------------------
 
   async addFriend() {
-    // const request = { 'username': this._data.shownUsername };
-    const errorMessage = 'Failed to add friend. Please try again later.';
-    // const response = await apiRequest(
-    //     'POST',
-    //     /* eslint-disable-next-line new-cap */
-    //     API_ENDPOINTS.USER_FRIENDS(this._data.loggedInUsername),
-    //     request,
-    //     false,
-    //     true,
-    // );
-    // --- For rendering test --------------
-    const response = await this.testResponse();
-    // -------------------------------------
+    const request = { 'username': this._data.shownUsername };
+    const response = await apiRequest(
+        'POST',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_FRIENDS(this._data.loggedInUsername),
+        request,
+        false,
+        true,
+    );
+    // --- For rendering test ---------------------
+    // const response = await this.testResponse();
+    // --------------------------------------------
     if (response.success) {
       this._data.isFriend = true;
       this.render();
     } else {
       console.error('Error adding friend:', response);
-      showErrorMessageForDuration(errorMessage, 3000);
+      showErrorMessageForDuration(this.errorMessages.addFriend, 3000);
     }
   }
 
@@ -122,11 +124,16 @@ export class ProfileUserActions extends HTMLElement {
         false,
         true,
     );
+    // --- For rendering test ---------------------
+    // const response = await this.testResponse();
+    // --------------------------------------------
     if (response.success) {
       this._data.isFriend = false;
       this.render();
+    } else {
+      console.error('Error removing friend:', response);
+      showErrorMessageForDuration(this.errorMessages.removeFriend, 3000);
     }
-    // Handle error
   }
 
   async blockUser() {
@@ -139,11 +146,16 @@ export class ProfileUserActions extends HTMLElement {
         false,
         true,
     );
+    // --- For rendering test ---------------------
+    // const response = await this.testResponse();
+    // --------------------------------------------
     if (response.success) {
       this._data.isBlockedByUser = true;
       this.render();
+    } else {
+      console.error('Error blocking user:', response);
+      showErrorMessageForDuration(this.errorMessages.blockUser, 3000);
     }
-    // Handle error
   }
 
   async unblockUser() {
@@ -155,11 +167,16 @@ export class ProfileUserActions extends HTMLElement {
         false,
         true,
     );
+    // --- For rendering test ---------------------
+    // const response = await this.testResponse();
+    // --------------------------------------------
     if (response.success) {
       this._data.isBlockedByUser = false;
       this.render();
+    } else {
+      console.error('Error unblocking:', response);
+      showErrorMessageForDuration(this.errorMessages.unblockUser, 3000);
     }
-  // Handle error
   }
 }
 
