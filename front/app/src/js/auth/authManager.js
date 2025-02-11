@@ -68,16 +68,16 @@ const auth = (() => {
      */
     async fetchAuthStatus() {
       console.log('Fetching user login status...');
-      const cSRFToken = getCSRFTokenfromCookies();
-      if (!cSRFToken) {
-        console.log('User is not logged in: No CSRF token');
-        return false;
-      }
+      const CSRFToken = getCSRFTokenfromCookies();
+      // if (!CSRFToken) {
+      //   console.log('User is not logged in: No CSRF token');
+      //   return false;
+      // }
       const request = {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRFToken': cSRFToken,
+          'X-CSRFToken': CSRFToken,
         },
         credentials: 'include',
       };
@@ -86,25 +86,35 @@ const auth = (() => {
         const data = await response.json();
         console.log('User is logged in: ', data);
         this.setUser(data);
-        return true;
+        return { success: true, response: data };
       } else if (response.status === 401) {
-        const refreshToken = await refreshAccessToken(cSRFToken);
-        if (refreshToken.success) {
-          return true;
-        } else if (refreshToken.status === 500) {
-          showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
-          setTimeout(() => {
-            removeAlert();
-          }, 3000);
-          // Server error handling
-        } else {
-          console.log('User is not logged in: ', response);
-          this.clearUser();
-          clearCSRFToken();
-          return false;
+        const refreshTokenResponse = await refreshAccessToken(CSRFToken);
+        console.log('<fetchAuthStatus> Refresh token response:', refreshTokenResponse);
+        switch (refreshTokenResponse.status) {
+          case 204:
+            console.log('<fetchAuthStatus> 204 - Token refreshed, user is logged in');
+            return this.fetchAuthStatus();
+            // return { success: true, status: refreshTokenResponse.status };
+          case 401:
+            console.log('<fetchAuthStatus> 401 - Token expired, user is not logged in.');
+            this.clearUser();
+            clearCSRFToken();
+            return { success: false, status: refreshTokenResponse.status };
+          case 500:
+            showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
+            setTimeout(() => {
+              removeAlert();
+            }, 3000);
+            // Server error handling
+            break;
+          default:
+            console.log('<fetchAuthStatus> Unknown error.');
+            showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
+            this.clearUser();
+            clearCSRFToken();
+            return { success: false, status: refreshTokenResponse.status };
         }
       }
-      return false;
     }
   }
   return new AuthManager();

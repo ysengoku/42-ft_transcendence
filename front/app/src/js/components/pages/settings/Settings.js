@@ -1,9 +1,9 @@
 import { router } from '@router';
 import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { showErrorMessage, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 // import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
-import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessage, ERROR_MESSAGES } from '../../../utils/errorMessage.js';
 
 export class Settings extends HTMLElement {
   constructor() {
@@ -14,7 +14,8 @@ export class Settings extends HTMLElement {
   }
 
   async connectedCallback() {
-    this.isLoggedIn = await auth.fetchAuthStatus();
+    const authStatus = await auth.fetchAuthStatus();
+    this.isLoggedIn = authStatus.success;
     if (!this.isLoggedIn) {
       // Show a messages to user
       router.navigate('/');

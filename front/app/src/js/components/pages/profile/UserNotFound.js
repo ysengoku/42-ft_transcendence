@@ -9,7 +9,8 @@ export class UserNotFound extends HTMLElement {
   }
 
   async connectedCallback() {
-    this.isLoggedIn = await auth.fetchAuthStatus();
+    const authStatus = await auth.fetchAuthStatus();
+    this.isLoggedIn = authStatus.success;
     if (!this.isLoggedIn) {
       // TODO: Show message to login
       router.navigate('/');
