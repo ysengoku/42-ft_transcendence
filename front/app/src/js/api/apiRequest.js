@@ -56,7 +56,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     const response = await fetch(url, options);
     console.log('API response:', response);
     if (response.ok) {
-      console.log('Request successful:', response);
+      console.log('Request successful');
       let responseData = null;
       if (response.status !== 204) {
         responseData = await response.json();
@@ -64,17 +64,30 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       return { success: true, status: response.status, data: responseData };
     }
     if (needToken && response.status === 401) {
-      console.log('Unauthorized request:', response);
+      console.log('Unauthorized request');
       const refreshResponse = await refreshAccessToken(csrfToken);
       if (refreshResponse.success) {
         return apiRequest(method, endpoint, data, isFileUpload, needToken);
       } else if (refreshResponse.status === 401) {
         auth.clearSession();
         return { success: false, status: 401, msg: 'Session expired' };
-      } else if (refreshResponse.status === 500) {
-        showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
-        return { success: false, status: 500, msg: 'Server error' };
       }
+    }
+    if (response.status === 500) {
+      showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
+      // Retry request
+      setTimeout(async () => {
+        const retryResponse = await fetch(url, options);
+        console.log('API response:', response);
+        if (retryResponse.ok) {
+          console.log('Request successful');
+          let responseData = null;
+          if (response.status !== 204) {
+            responseData = await response.json();
+          }
+          return { success: true, status: response.status, data: responseData };
+        }
+      }, 3000);
     }
     const errorData = await response.json();
     let errorMsg = ERROR_MESSAGES.SERVER_ERROR;
