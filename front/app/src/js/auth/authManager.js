@@ -64,7 +64,7 @@ const auth = (() => {
 
     /**
      * Fetch the user authentication status from the server
-     * @return {Promise<boolean>} Resolves to true if authenticated, otherwise false
+     * @return { Promise<Object> } Object including success: bool & user data on success or status code on failure
      */
     async fetchAuthStatus() {
       console.log('Fetching user login status...');
@@ -94,7 +94,6 @@ const auth = (() => {
           case 204:
             console.log('<fetchAuthStatus> 204 - Token refreshed, user is logged in');
             return this.fetchAuthStatus();
-            // return { success: true, status: refreshTokenResponse.status };
           case 401:
             console.log('<fetchAuthStatus> 401 - Token expired, user is not logged in.');
             this.clearUser();
