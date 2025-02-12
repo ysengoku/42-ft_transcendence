@@ -39,8 +39,6 @@ export class UserProfile extends HTMLElement {
 
   render() {
     const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
-    console.log('User data:', this.user);
-
     // --- For rendering test ------
     // this.user.is_blocked = true;
     // -----------------------------
