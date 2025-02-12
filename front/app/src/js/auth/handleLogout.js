@@ -1,3 +1,4 @@
+import { router } from '@router';
 import { auth, getCSRFTokenfromCookies } from '@auth';
 import { API_ENDPOINTS } from '@api';
 import '@components/navbar/components/DropdownMenu.js';
@@ -22,9 +23,9 @@ export async function handleLogout(event) {
     }
   } catch (error) {
     console.error('Error:', error);
-    auth.clearCashedUser();
+    auth.clearStoredUser();
     router.navigate('/');
   }
-  auth.clearCashedUser();
+  auth.clearStoredUser();
   router.navigate('/');
 }
