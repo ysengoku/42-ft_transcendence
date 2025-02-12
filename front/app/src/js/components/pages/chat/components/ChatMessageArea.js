@@ -9,11 +9,28 @@ export class ChatMessageArea extends HTMLElement {
     this.render();
   }
 
+  toggleLikeMessage(index) {
+    this._data.messages[index].liked = !this._data.messages[index].liked;
+    this.updateMessageElement(index);
+  }
+
+  updateMessageElement(index) {
+    const message = this._data.messages[index];
+    const messageElement = this.querySelector(`[dataIndex='${index}'] .bubble`);
+    if (messageElement) {
+      messageElement.innerHTML = `
+        ${message.message}
+        ${message.liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
+      `;
+    }
+  }
+
   renderMessages() {
     const chatMessages = this.querySelector('#chat-messages');
     chatMessages.innerHTML = '';
-    for (const message of this._data.messages) {
+    this._data.messages.forEach((message, index) => {
       const messageElement = document.createElement('div');
+      messageElement.setAttribute('dataIndex', index);
       if (message.sender === this._data.username) {
         messageElement.classList.add(
             'left-align-message', 'd-flex', 'flex-row', 'justify-content-start',
@@ -22,8 +39,9 @@ export class ChatMessageArea extends HTMLElement {
         messageElement.innerHTML = `
           <img src="${this._data.avatar}" class="chat-message-avatar rounded-circle" alt="User" />
           <div class="message">
-            <div class="bubble">
+            <div class="bubble me-5">
               ${message.message}
+              ${message.liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
             </div>
           </div>
         `;
@@ -31,15 +49,19 @@ export class ChatMessageArea extends HTMLElement {
         messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
             'align-items-center');
         messageElement.innerHTML = `
-          <div class="bubble">
+          <div class="bubble ms-5">
             ${message.message}
+            ${message.liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
           </div>
         `;
       }
+      const messageContent = messageElement.querySelector('.bubble');
+      messageContent.addEventListener('click', () => {
+        this.toggleLikeMessage(index);
+      });
       chatMessages.appendChild(messageElement);
-      // Scroll to the bottom of the chat messages
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+    });
+    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
   }
 
   render() {
@@ -71,22 +93,31 @@ export class ChatMessageArea extends HTMLElement {
         margin-bottom: 24px;
       }
       .bubble {
-          display: inline-block;
-          padding: 10px 15px;
-          border-radius: 20px;
-          background-color: #f1f1f1;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          color: black;
+        position: relative;
+        display: inline-block;
+        padding: 12px 20px 12px 16px;
+        border-radius: 16px;
+        background-color: #f1f1f1;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        color: black;
       }
       .right-align-message .bubble {
-          background-color: #007bff;
-          color: white;
+        background-color: #007bff;
+        color: white;
       }
       .chat-message-avatar {
         width: 36px;
         height: 36px;
         object-fit: cover;
         border-radius: 50%;
+      }
+      .bi-heart-fill {
+        position: absolute;
+        bottom: -20px;
+        right: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        border-radius: 50%;
+        color: red;
       }
 	  </style>
     <div class="d-flex flex-column h-100">
