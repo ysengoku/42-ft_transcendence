@@ -11,7 +11,7 @@ export class Home extends HTMLElement {
   async connectedCallback() {
     // const authStatus = await auth.fetchAuthStatus();
     // this.isLoggedIn = authStatus.success;
-    this.user = auth.getCashedUser();
+    this.user = auth.getStoredUser();
     this.isLoggedIn = this.user ? true : false;
     this.render();
   }

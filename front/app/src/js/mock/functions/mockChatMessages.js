@@ -1,7 +1,7 @@
 import { auth } from '@auth';
 
 export async function mockChatMessagesData(id) {
-  const myUsername = auth.getCashedUser().username;
+  const myUsername = auth.getStoredUser().username;
   const chatMessages = [
     {
       id: 1,
