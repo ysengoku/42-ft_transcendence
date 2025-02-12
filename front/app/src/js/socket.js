@@ -15,12 +15,12 @@ const socketManager = (() => {
     }
 
     handleMessage(event) {
-      console.log('Message received:', event.data);
+      // console.log('Message received:', event.data);
       let message = null;
       try {
         message = JSON.parse(event.data);
       } catch (error) {
-        console.error('Invalid JSON:', event.data);
+        // console.error('Invalid JSON:', event.data);
         return;
       }
       if (!message.type) {
