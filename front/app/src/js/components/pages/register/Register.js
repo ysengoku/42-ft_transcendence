@@ -1,7 +1,6 @@
 import { router } from '@router';
-import { auth } from '@auth/authManager.js';
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
 // import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
 
 export class Register extends HTMLElement {
@@ -84,32 +83,25 @@ export class Register extends HTMLElement {
       password_repeat: passwordRepeatField.value,
     };
 
-    try {
-      const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
-      console.log('Registration successful:', response);
+    const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
 
+    if (response.success) {
+      console.log('Registration successful:', response);
       if (response.status === 200) {
         const userInformation = {
           username: response.data.username,
+          nickname: response.data.nickname,
           avatar: response.data.avatar,
         };
-        auth.setUser(userInformation);
+        auth.storeUser(userInformation);
         router.navigate(`/home`, response.user);
-        const navbar = document.getElementById('navbar-container');
-        navbar.innerHTML = '<navbar-component></navbar-component>';
       }
-    } catch (error) {
-      console.error('Error status:', error.status);
-      let errorMessages = '';
-      if (error.status === 422) {
-        errorMessages = error.response.msg;
-      } else {
-        errorMessages = 'An unexpected error occurred. Please try again later.';
-      }
+    } else {
+      console.error('Registration failed:', response.msg);
       const feedback = this.querySelector('#signup-failed-feedback');
       feedback.innerHTML = `
         <div class="alert alert-danger alert-dismissible" role="alert">
-          ${errorMessages}
+          ${response.msg}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       `;

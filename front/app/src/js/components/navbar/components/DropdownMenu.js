@@ -1,7 +1,6 @@
 import { router } from '@router';
-import { auth } from '@auth/authManager';
-import { handleLogout } from '@auth/handleLogout.js';
-import { ThemeController } from '@utils/ThemeController.js';
+import { auth, handleLogout } from '@auth';
+import { ThemeController } from '@utils';
 import anonymousavatar from '/img/anonymous-avatar.svg?url';
 // import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
@@ -12,13 +11,9 @@ export class DropdownMenu extends HTMLElement {
     this.user = null;
   }
 
-  // connectedCallback() {
-  //   this.render();
-  // }
-
   setLoginStatus(value) {
     this.isLoggedIn = value;
-    this.user = auth.getUser();
+    this.user = auth.getStoredUser();
     this.render();
   }
 

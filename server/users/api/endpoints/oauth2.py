@@ -15,38 +15,34 @@ oauth2_router = Router()
 
 
 def get_oauth_config(platform: str) -> dict:
-    """
-    Retrieve OAuth configuration for the given platform (42 or GitHub).
-    """
     if platform not in settings.OAUTH_CONFIG:
         raise ValueError(f"Unsupported platform: {platform}")
     return settings.OAUTH_CONFIG[platform]
 
 
 def create_user_oauth(user_info: dict, connection_type: str) -> User:
-    """
-    Create a new user from OAuth data if they don't already exist.
-    """
-    user = User.objects.validate_and_create_user(
-        username=user_info.get("login"),
-        connection_type=connection_type,
-        email=user_info.get("email", ""),  # Email might be optional for some platforms
-        oauth_id=user_info.get("id"),
-    )
-    user.save()
-    return user
+    try:
+        user = User.objects.validate_and_create_user(
+            username=user_info.get["login"],
+            connection_type=connection_type,
+            email=user_info.get("email", ""),
+            oauth_id=user_info.get["id"],  # Convert id to string for consistency
+        )
+        return user
+    except Exception as e:
+        raise ValueError(f"Failed to create user: {str(e)}")
 
 
 @oauth2_router.get("/authorize/{platform}", auth=None)
-def oauth_authorize(request: HttpRequest, platform: str):
-    """
-    Initiates the OAuth2 authorization flow by redirecting the user directly to the provider's authorization page.
-    """
+def oauth_authorize(request, platform: str):
     try:
         config = get_oauth_config(platform)
-        state = hashlib.sha256(os.urandom(1024)).hexdigest()
+        state = hashlib.sha256(os.urandom(32)).hexdigest()  # 32 bytes is sufficient
+
+        # Store state in session with expiration
         request.session["oauth_state"] = state
         request.session["oauth_platform"] = platform
+        # request.session.set_expiry(300)  # 5 minutes expiry
 
         params = {
             "response_type": "code",
@@ -56,31 +52,32 @@ def oauth_authorize(request: HttpRequest, platform: str):
             "state": state,
         }
 
-        print(f"State in authorize: {state}")
         auth_url = f"{config['auth_uri']}?{urlencode(params)}"
-        print(f"Auth URL: {auth_url}")
-        return HttpResponseRedirect(auth_url)  # Redirection directe au lieu de JsonResponse
+        return HttpResponseRedirect(auth_url)
 
     except Exception as e:
-        print(f"Error in oauth_authorize: {str(e)}")
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@oauth2_router.get("/callback/{platform}", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
-@csrf_exempt
-def oauth_callback(request: HttpRequest, platform: str, code: str, state: str):
+@oauth2_router.get("/callback/{platform}", auth=None)
+def oauth_callback(request, platform: str, code: str, state: str):
     try:
-        print(f"State in callback: {state}")
-        print(f"Code in callback: {code}")
-        print(f"Platform in callback: {platform}")
+        stored_state = request.session.get("oauth_state")
+        stored_platform = request.session.get("oauth_platform")
 
-        if state != request.session.get("oauth_state"):
-            print("Invalid state parameter")
-            return JsonResponse({"status": "error", "error": "Invalid state parameter"}, status=400)
+        if not stored_state or not stored_platform:
+            return JsonResponse({"error": "Session expired"}, status=401)
+
+        if state != stored_state or platform != stored_platform:
+            return JsonResponse({"error": "Invalid state parameter"}, status=400)
+
+        # Clear session immediately
+        del request.session["oauth_state"]
+        del request.session["oauth_platform"]
 
         config = get_oauth_config(platform)
-        print(f"Config for {platform}: {config}")
 
+        # Exchange code for token
         token_response = requests.post(
             config["token_uri"],
             data={
@@ -91,46 +88,37 @@ def oauth_callback(request: HttpRequest, platform: str, code: str, state: str):
                 "grant_type": "authorization_code",
             },
             headers={"Accept": "application/json"},
+            timeout=10,  # Add timeout
         )
-        print(f"Token response status: {token_response.status_code}")
-        print(f"Token response text: {token_response.text}")
+
+        if not token_response.ok:
+            return JsonResponse({"error": "Failed to retrieve token"}, status=401)
 
         token_data = token_response.json()
-        print(f"Token data: {token_data}")
 
-        if "access_token" not in token_data:
-            print("Failed to retrieve access token")
-            return JsonResponse({"status": "error", "error": "Failed to retrieve access token"}, status=500)
-
-        user_info_response = requests.get(
+        # Get user info
+        user_response = requests.get(
             config["user_info_uri"],
             headers={"Authorization": f"Bearer {token_data['access_token']}"},
+            timeout=10,
         )
-        print(f"User info response status: {user_info_response.status_code}")
 
-        user_info = user_info_response.json()
+        if not user_response.ok:
+            return JsonResponse({"error": "Failed to retrieve user info"}, status=401)
 
-        connection_type_map = {"42": User.FT, "github": User.GITHUB}
-        connection_type = connection_type_map.get(platform)
-        print(f"Connection type: {connection_type}")
+        user_info = user_response.json()
 
+        # Map platforms to connection types
+        connection_type = {"42": User.FT, "github": User.GITHUB}.get(platform)
         if not connection_type:
-            print("Invalid platform")
-            return JsonResponse({"status": "error", "error": "Invalid platform"}, status=400)
+            return JsonResponse({"error": "Invalid platform"}, status=400)
 
-        user = User.objects.filter(oauth_id=user_info["id"]).first()
-        if not user:
-            print("Creating new user")
-            user = create_user_oauth(user_info, connection_type)
-        else:
-            print(f"User already exists: {user.username}")
+        # Get or create user
+        user = User.objects.for_oauth_id(user_info["id"]).first()
+        # if not user:
+        #     user = create_user_oauth(user_info, connection_type)
 
-        response_data = user.profile.to_profile_minimal_schema()
-        return _create_json_response_with_tokens(user, response_data)
+        return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
 
     except Exception as e:
-        import traceback
-
-        print(f"OAuth callback error: {str(e)}")
-        print(traceback.format_exc())
-        return JsonResponse({"msg": str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
