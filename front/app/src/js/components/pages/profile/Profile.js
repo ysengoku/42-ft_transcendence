@@ -1,12 +1,13 @@
 import { router } from '@router';
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import { apiRequest, API_ENDPOINTS } from '@api';
+// import { showErrorMessage, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 // import poster from '/img/sample-background.png?url';
 
 export class UserProfile extends HTMLElement {
   constructor() {
     super();
+    this.loggedInUsername = '';
     this.user = null;
   }
 
@@ -16,30 +17,40 @@ export class UserProfile extends HTMLElement {
   }
 
   async fetchUserData(username) {
-    try {
-      /* eslint-disable-next-line new-cap */
-      const response = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
-      this.user = response.data;
-      this.render();
-    } catch (error) {
-      if (error.status === 404) {
+    /* eslint-disable-next-line new-cap */
+    const response = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
+    if (response.success) {
+      if (response.status === 200) {
+        this.user = response.data;
+        this.render();
+      }
+    } else {
+      if (response.status === 404) {
         router.navigate('/user-not-found');
+      } else if (response.status === 500) {
+        // Server error page
+        console.error('Server Error', response.status, response.msg);
       } else {
         // Something went wrong page & message
+        console.error('Unknown Error', response.status, response.msg);
       }
     }
   }
 
   render() {
     const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
-    // if (!this.user) {
-    //   console.log('User data is not available');
-    //   return;
-    // }
     console.log('User data:', this.user);
 
-    const friendsCount = this.user.friends.length;
-    // const friendsCount = this.user.friends_count;
+    // --- For rendering test ------
+    // this.user.is_blocked = true;
+    // -----------------------------
+    if (this.user.is_blocked) {
+      router.navigate('/user-not-found');
+      return;
+    }
+
+    const storedUser = sessionStorage.getItem('user');
+    this.loggedInUsername = JSON.parse(storedUser).username;
 
     // Online status
     const onlineStatus = document.createElement('profile-online-status');
@@ -125,7 +136,7 @@ export class UserProfile extends HTMLElement {
                   <user-stat-card class="col-3" title="Elo" value="${this.user.elo}"></user-stat-card>
                   <user-stat-card class="col-3" title="Total score" value="${this.user.scored_balls}"></user-stat-card>
                   <user-stat-card class="col-3" title="total duels" value="${this.user.total_matches}"></user-stat-card>  
-                  <user-stat-card class="col-3" title="Friends" value="${friendsCount}"></user-stat-card>
+                  <user-stat-card class="col-3" title="Friends" value="${this.user.friends_count}"></user-stat-card>
                 </div>
               </div>
 
@@ -178,6 +189,7 @@ export class UserProfile extends HTMLElement {
     if (profileUserInfo) {
       profileUserInfo.data = {
         username: this.user.username,
+        nickname: this.user.nickname,
         join_date: this.user.date_joined,
         titre: this.user.titre,
       };
@@ -186,8 +198,10 @@ export class UserProfile extends HTMLElement {
     const profileUserActions = this.querySelector('profile-user-actions');
     if (profileUserActions) {
       profileUserActions.data = {
-        username: this.user.username,
-        friends: this.user.friends,
+        loggedInUsername: this.loggedInUsername,
+        shownUsername: this.user.username,
+        isFriend: this.user.is_friend,
+        isBlockedByUser: this.user.is_blocked_by_user,
       };
     }
 

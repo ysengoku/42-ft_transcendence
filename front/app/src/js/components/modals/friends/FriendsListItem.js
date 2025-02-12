@@ -1,3 +1,5 @@
+import { router } from '@router';
+
 export class FriendsListItem extends HTMLElement {
   constructor() {
     super();
@@ -19,19 +21,24 @@ export class FriendsListItem extends HTMLElement {
       this.online = newValue === 'true';
     }
     this.render();
-    this.addEventListener('click', () => {
-      const modal = document.querySelector('#friendsModal');
-      modal.setAttribute('data-bs-dismiss', 'modal');
-      window.location.href = `/profile/${this.username}`;
-    });
+    // this.addEventListener('click', () => {
+    //   const modal = document.querySelector('#friends-modal');
+    //   modal.setAttribute('data-bs-dismiss', 'modal');
+    //   router.navigate(`/profile/${this.username}`);
+    // });
   }
 
   connectedCallback() {
     this.render();
     this.addEventListener('click', () => {
-      const modal = document.querySelector('#friendsModal');
+      const modal = document.querySelector('#friends-modal');
       modal.setAttribute('data-bs-dismiss', 'modal');
-      window.location.href = `/profile/${this.username}`;
+      modal.setAttribute('inert', true);
+      // const modalInstance = bootstrap.Modal.getInstance(modal);
+      // if (modalInstance) {
+      //   modalInstance.hide();
+      // }
+      router.navigate(`/profile/${this.username}`);
     });
   }
 

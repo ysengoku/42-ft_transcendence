@@ -1,35 +1,43 @@
 # Components
 
 ## Router
-- [] Update navigation to pages that need authentication
+- [x] Update navigation to pages that need authentication
+- [] Navbar and content rendering should not call refresh token twice (navbar --> async function? / promise?)
+
+---------------------------------------------------------------------
+
+## Auth manager
+-[] Add message to UI after refresh token failed
 
 ---------------------------------------------------------------------
 
 ## API
-- [X] Refresh Token handling
-- [] Remove reflesh token sending from login and register
+- [x] Refresh Token handling
+- [x] Remove reflesh token sending from login and register
+- [] 500 response handling
 
 ---------------------------------------------------------------------
 
 ## Navbar
 - [X] Dropdown menu is hidden by Chat message header on Chat page
-- [] Update login stauts depending on login status
+- [] Update login status depending on login status
 
 ---------------------------------------------------------------------
 
 ## Landing
-- [] JWT (check login status)
+- [x] JWT (check login status)
 
 ---------------------------------------------------------------------
 
 ## Login
-- [X] Adjust width
+- [x] Adjust width
 - [x] CSRF Token handling
 - [x] Error handling
-- [] email login
+- [x] email login
 - [] Forgot password
-- [] Fix parsing of Error message from server
+- [x] Fix parsing of Error message from server
 - [] Unit test (input validation)
+- [] Forbitten letters or format for username? (e.g. email format for username)
 
 ---------------------------------------------------------------------
 
@@ -44,9 +52,9 @@
 - [x] 422 handling
 - [x] Password length check
 - [x] 422 Error message check
-- [~] Nickname input
+- [] Nickname input?
 - [x] Unit test (input validation)
-- [] Fix parsing of Error message from server
+- [x] Fix parsing of Error message from server
 
 ---------------------------------------------------------------------
 
@@ -67,6 +75,8 @@
 ---------------------------------------------------------------------
 
 ## Profile
+
+- [] Add auth check before rendering
 
 ### Error handling
 - [x] 404 handling
@@ -101,7 +111,12 @@
 
 ## Chat
 
+- [] Add auth check before rendering
 - [x] Websocket
 - [] Add new chat (user search ?)
 - [] Block user on chat
 - [] Resize event listner
+
+## WebSocket
+
+-[] Handle auto close
