@@ -29,6 +29,11 @@ export class Chat extends HTMLElement {
     chatMessages.setData(this.currentChat);
   }
 
+  async updateChatList(newMessage) {
+    // TODO
+    // fetch new chat list data and render
+  }
+
   handleNewMessage(message) {
     console.log('New message:', message);
     const newMessage = message;
@@ -37,8 +42,9 @@ export class Chat extends HTMLElement {
       const chatMessages = document.querySelector('chat-message-area');
       chatMessages.setData(this.currentChat);
     }
-    const chatList = document.querySelector('chat-list-component');
-    chatList.updateChatList(newMessage);
+    // const chatList = document.querySelector('chat-list-component');
+    // chatList.updateChatList(newMessage);
+    this.updateChatList(newMessage);
   }
 
   setEventListeners() {
