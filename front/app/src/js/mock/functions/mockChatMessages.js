@@ -1,7 +1,7 @@
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 
 export async function mockChatMessagesData(id) {
-  const myUsername = auth.user.username;
+  const myUsername = auth.getStoredUser().username;
   const chatMessages = [
     {
       id: 1,
@@ -13,7 +13,7 @@ export async function mockChatMessagesData(id) {
         {
           id: 1,
           sender: 'alice123',
-          message: 'Yo! What’s up?',
+          message: 'Yo! What\'s up?',
           timestamp: '2025-02-02T12:00:00Z',
         },
         {

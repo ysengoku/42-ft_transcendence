@@ -19,7 +19,7 @@ export class FriendsListModal extends HTMLElement {
     this.renderFriendsList();
     const mainView = document.getElementById('content');
     mainView.addEventListener('click', () => {
-      const modal = document.querySelector('#friendsModal');
+      const modal = document.querySelector('#friends-modal');
       modal.setAttribute('data-bs-dismiss', 'modal');
     });
   }
@@ -40,7 +40,7 @@ export class FriendsListModal extends HTMLElement {
   render() {
     this.innerHTML = `
     <style>
-      .friends-modal .modal-dialog {
+      #friends-modal .modal-dialog {
         position: fixed;
         top: var(--navbar-height, 72px);
         right: 0;
@@ -49,7 +49,7 @@ export class FriendsListModal extends HTMLElement {
         border-radius: 0;
       }
     </style>
-		<div class="modal fade friends-modal" id="friendsModal" tabindex="-1" aria-hidden="true">
+		<div class="modal fade" id="friends-modal" tabindex="-1" inert>
 			<div class="modal-dialog modal-dialog-scrollable">
    			<div class="modal-content">
           <div class="modal-header d-flex flex-column align-items-start">
@@ -69,11 +69,12 @@ export class FriendsListModal extends HTMLElement {
 		</div>
 		`;
 
-    this.modal = new bootstrap.Modal(this.querySelector('#friendsModal'));
+    this.modal = new bootstrap.Modal(this.querySelector('#friends-modal'));
   }
 
   showModal() {
     if (this.modal) {
+      this.querySelector('#friends-modal').removeAttribute('inert');
       this.modal.show();
     }
     this.renderSearchBar();
@@ -82,7 +83,7 @@ export class FriendsListModal extends HTMLElement {
   renderSearchBar() {
     const friendSearchBar = this.querySelector('friend-search-bar');
     if (friendSearchBar) {
-      friendSearchBar.render(); // もしrenderが必要なら
+      friendSearchBar.render();
     }
   }
 }

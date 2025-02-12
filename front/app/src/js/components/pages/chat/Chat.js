@@ -1,4 +1,4 @@
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 import { socketManager } from '@socket';
 import './components/index.js';
 import { mockChatListData } from '@mock/functions/mockChatListData.js';
@@ -7,7 +7,7 @@ import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 export class Chat extends HTMLElement {
   constructor() {
     super();
-    this.user = auth.getUser();
+    this.user = auth.getStoredUser();
     this.chatListData = [];
     this.currentChatId = null;
     this.currentChat = [];
