@@ -10,7 +10,7 @@ export class Landing extends HTMLElement {
   async connectedCallback() {
     // const authStatus = await auth.fetchAuthStatus();
     // this.isLoggedIn = authStatus.success;
-    this.isLoggedIn = auth.getCashedUser() ? true : false;
+    this.isLoggedIn = auth.getStoredUser() ? true : false;
     this.render();
   }
 
