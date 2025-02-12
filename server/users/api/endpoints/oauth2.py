@@ -1,17 +1,16 @@
 import hashlib
 import os
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
-from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
-from django.shortcuts import redirect
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 
-from users.api.endpoints.auth import _create_redirect_to_home_page_response_with_tokens
-from users.models import User
-from users.schemas import Message, ProfileMinimalSchema
+from users.api.endpoints.auth import create_redirect_to_home_page_response_with_tokens
+from users.models import OauthConnection, User
 
 oauth2_router = Router()
 
@@ -22,12 +21,13 @@ def get_oauth_config(platform: str) -> dict:
     return settings.OAUTH_CONFIG[platform]
 
 
-def create_user_oauth(user_info: dict, connection_type: str) -> User:
+def create_user_oauth(user_info: dict, oauth_connection: OauthConnection) -> User:
     user = User.objects.validate_and_create_user(
         username=user_info.get("login"),
-        connection_type=connection_type,
-        oauth_id=user_info.get("id"),  # Convert id to string for consistency
+        oauth_connection=oauth_connection,
     )
+
+    oauth_connection.set_connection_as_connected(user_info, user)
     return user
 
 
@@ -38,8 +38,7 @@ def oauth_authorize(request, platform: str):
     state = hashlib.sha256(os.urandom(32)).hexdigest()  # 32 bytes is sufficient
 
     # Store state in session with expiration
-    request.session["oauth_state"] = state
-    request.session["oauth_platform"] = platform
+    OauthConnection.objects.create_pending_connection(state, platform)
     # request.session.set_expiry(300)  # 5 minutes expiry
 
     params = {
@@ -59,18 +58,14 @@ def oauth_authorize(request, platform: str):
 @ensure_csrf_cookie
 @oauth2_router.get("/callback/{platform}", auth=None)
 def oauth_callback(request, platform: str, code: str, state: str):
-    stored_state = request.session.get("oauth_state")
-    stored_platform = request.session.get("oauth_platform")
+    oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
 
-    if not stored_state or not stored_platform:
-        return JsonResponse({"error": "Session expired"}, status=401)
+    now = datetime.now(timezone.utc)
+    if oauth_connection.date + timedelta(minutes=5) < now:
+        return JsonResponse({"msg": "Session expired"}, status=401)
 
-    if state != stored_state or platform != stored_platform:
-        return JsonResponse({"error": "Invalid state parameter"}, status=400)
-
-    # Clear session immediately
-    del request.session["oauth_state"]
-    del request.session["oauth_platform"]
+    if state != oauth_connection.state or platform != oauth_connection.connection_type:
+        return JsonResponse({"msg": "Invalid state parameter"}, status=400)
 
     config = get_oauth_config(platform)
 
@@ -89,7 +84,7 @@ def oauth_callback(request, platform: str, code: str, state: str):
     )
 
     if not token_response.ok:
-        return JsonResponse({"error": "Failed to retrieve token"}, status=401)
+        return JsonResponse({"msg": "Failed to retrieve token"}, status=401)
 
     token_data = token_response.json()
 
@@ -101,35 +96,17 @@ def oauth_callback(request, platform: str, code: str, state: str):
     )
 
     if not user_response.ok:
-        return JsonResponse({"error": "Failed to retrieve user info"}, status=401)
+        return JsonResponse({"msg": "Failed to retrieve user info"}, status=401)
 
     user_info = user_response.json()
 
     # Map platforms to connection types
-    connection_type = {"42": User.FT, "github": User.GITHUB}.get(platform)
-    if not connection_type:
-        return JsonResponse({"error": "Invalid platform"}, status=400)
+    if platform not in [OauthConnection.FT, OauthConnection.GITHUB]:
+        return JsonResponse({"msg": "Invalid platform"}, status=400)
 
     # Get or create user
     user = User.objects.for_oauth_id(user_info["id"]).first()
     if not user:
-        user = create_user_oauth(user_info, connection_type)
+        user = create_user_oauth(user_info, oauth_connection)
 
-    # user = {
-    #     "username": "faboussa",
-    #     "email": "fanny@example.com",
-    #     "id": "fanny_oauth_id",
-    #     "nickname": "fanny123",  # nickname
-    #     "avatar": "https://example.com/avatar.jpg",
-    # }
-
-    response = _create_redirect_to_home_page_response_with_tokens(user)
-
-    return response
-
-
-# creer le cookie csfr en plus de acces token et refresh token
-# il faut quil yait username, nickname, avatar
-# key = user.
-
-# return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+    return create_redirect_to_home_page_response_with_tokens(user)

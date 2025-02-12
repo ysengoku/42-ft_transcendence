@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import Q
 from ninja.files import UploadedFile
 
+from users.models import OauthConnection
 from users.utils import merge_err_dicts
 
 """
@@ -21,7 +22,7 @@ class UserManager(BaseUserManager):
         return self.filter(id=user_id)
 
     def for_oauth_id(self, oauth_id: str):
-        return self.filter(oauth_id=oauth_id)
+        return self.filter(oauth_connection__oauth_id=oauth_id)
 
     def for_username_or_email(self, identifier: str):
         return self.filter(Q(username__iexact=identifier) | Q(email=identifier))
@@ -29,33 +30,36 @@ class UserManager(BaseUserManager):
     def for_username(self, username: str):
         return self.filter(username__iexact=username)
 
-    def fill_user_data(self, username: str, connection_type: str, **extra_fields):
+    def fill_user_data(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         username = AbstractUser.normalize_username(username)
-        if connection_type != self.model.REGULAR:
+        if oauth_connection:
             username = self._generate_unique_username(username)
         if extra_fields.get("password"):
             extra_fields["password"] = make_password(extra_fields.get("password"))
         if extra_fields.get("email"):
             extra_fields["email"] = BaseUserManager.normalize_email(extra_fields.get("email"))
         extra_fields.setdefault("nickname", username)
-        return self.model(username=username, connection_type=connection_type, **extra_fields)
+        return self.model(username=username, **extra_fields)
 
-    def create_user(self, username: str, connection_type: str, **extra_fields):
+    def create_user(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         extra_fields["is_superuser"] = False
-        user = self.fill_user_data(username, connection_type, **extra_fields)
+        user = self.fill_user_data(username, oauth_connection, **extra_fields)
         user.save()
         return user
 
-    def validate_and_create_user(self, username: str, connection_type: str, **extra_fields):
+    def validate_and_create_user(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         extra_fields["is_superuser"] = False
-        user = self.fill_user_data(username, connection_type, **extra_fields)
+        user = self.fill_user_data(username, oauth_connection, **extra_fields)
         user.full_clean()
         user.save()
         return user
 
+# emuminov
+# emuminov-1 42
+# emuminov   GitHub
     def _generate_unique_username(self, username: str):
         base_username = username
-        counter = self.filter(username__iexact=username).count()
+        counter = self.filter(Q(username__iexact=username) | Q(username__iexact=username + "-1")).count()
         if counter > 0:
             return f"{base_username}-{counter}"
         return base_username
@@ -66,15 +70,6 @@ class User(AbstractUser):
     Contains information that is related to authentication and authorization of one single user.
     """
 
-    FT = "42"
-    GITHUB = "github"
-    REGULAR = "regular"
-    CONNECTION_TYPES_CHOICES = (
-        (FT, "42 School API"),
-        (GITHUB, "Github API"),
-        (REGULAR, "Our Own Auth"),
-    )
-
     REQUIRED_FIELDS = ()
 
     username_validator = UnicodeUsernameValidator()
@@ -83,10 +78,8 @@ class User(AbstractUser):
     username = models.CharField(max_length=50, validators=[username_validator], unique=True)
     nickname = models.CharField(max_length=50, validators=[username_validator])
     email = models.EmailField(blank=True, default="")
-    connection_type = models.CharField(max_length=10, choices=CONNECTION_TYPES_CHOICES, default="regular")
-    oauth_id = models.IntegerField(blank=True, null=True)
-    mfa_enabled = models.BooleanField(default=False)
     password = models.CharField(max_length=128, blank=True, default="")
+    mfa_enabled = models.BooleanField(default=False)
     mfa_secret = models.CharField(max_length=128, blank=True, default="")
 
     objects = UserManager()
@@ -102,7 +95,7 @@ class User(AbstractUser):
 
         if (
             "email" not in kwargs["exclude"]
-            and self.connection_type == User.REGULAR
+            and self.get_oauth_connection()
             and User.objects.filter(email=self.email).exists()
         ):
             raise ValidationError({"email": ["A user with that email already exists."]})
@@ -114,9 +107,9 @@ class User(AbstractUser):
         """
         Additional validation logic on the entire model that is not related to uniqueness.
         """
-        if not self.password and self.connection_type == User.REGULAR:
+        if not self.password and self.get_oauth_connection():
             raise ValidationError({"password": ["This connection type requires a password."]})
-        if not self.email and self.connection_type == User.REGULAR:
+        if not self.email and self.get_oauth_connection():
             raise ValidationError({"password": ["Email is required."]})
 
     def update_user(self, data, new_profile_picture: UploadedFile | None):
@@ -176,5 +169,12 @@ class User(AbstractUser):
         self.profile.save()
         return self
 
+    def get_oauth_connection(self):
+        try:
+            return self.oauth_connection
+        except OauthConnection.DoesNotExist:
+            return None
+
     def __str__(self):
-        return f"{self.username} - {self.connection_type}"
+        connection_type = "Regular" if not self.get_oauth_connection() else self.oauth_connection.connection_type
+        return f"{self.username} - {connection_type}"
