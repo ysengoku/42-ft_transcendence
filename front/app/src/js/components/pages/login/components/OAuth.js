@@ -24,15 +24,19 @@ export class OAuth extends HTMLElement {
   async handleOAuthClick(platform) {
     try {
        // faire un fetch, car on ne doit pas voir l url
-        window.location.href = API_ENDPOINTS.OAUTH_AUTHORIZE(platform);
-        localStorage.setItem('oauth_platform', platform);
+        const response = await fetch(`https://localhost:1026/api/oauth/authorize/${platform}`)
+        if (response.ok) {
+            const data = await response.json()
+            localStorage.setItem('oauth_platform', platform);
+            location.href = data.auth_url
+        }
     } catch (error) {
         console.error('OAuth initialization failed:', error);
         this.showError('Failed to start authentication process');
     }
 }
 
-  async 
+  
 
   // async handleOAuthCallback(code, state) {
   //     try {
