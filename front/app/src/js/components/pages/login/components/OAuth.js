@@ -38,6 +38,7 @@ export class OAuth extends HTMLElement {
 
   async handleOAuthCallback(code, state) {
     try {
+      
       const platform = localStorage.getItem('oauth_platform');
       const response = await fetch(`${API_ENDPOINTS.OAUTH_CALLBACK(platform)}?code=${code}&state=${state}`);
       
