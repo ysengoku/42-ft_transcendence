@@ -168,9 +168,9 @@ router.addRoute('/tournament/:id', 'tournament', true);
 router.addRoute('/chat', 'chat-page', false);
 
 // Initialize the router on the initial HTML document load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded');
-  auth.fetchAuthStatus();
+  await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');
   if (navbarContainer) {
     navbarContainer.innerHTML = '<navbar-component></navbar-component>';
