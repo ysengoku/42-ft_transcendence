@@ -12,7 +12,6 @@ export class LoginForm extends HTMLElement {
   connectedCallback() {
     this.render();
     this.setupLoginHandler();
-    this.setupInputToggle();
     this.setUpRemoveFeedback();
   }
 
@@ -20,17 +19,16 @@ export class LoginForm extends HTMLElement {
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center">
 			<form class="w-100" id="loginForm">
-  				<div class="d-flex flex-column mb-3 gap-2">
-    				<label for="inputUsername" class="form-label">Username or Email</label>
-   					<input type="text" class="form-control" id="inputUsername" placeholder="username">
-   					<input type="text" class="form-control" id="inputEmail" placeholder="email">
-            <div class='invalid-feedback' id='username-feedback'></div>
-  				</div>
-				  <div class="mb-2">
-					  <label for="inputPassword" class="form-label">Password</label>
-    				<input type="password" class="form-control" id="inputPassword" placeholder="Password">
-            <div class='invalid-feedback' id='loginpassword-feedback'></div>
-  				</div>
+  			<div class="d-flex flex-column mb-3 gap-2">
+    			<label for="inputUsername" class="form-label">Username or Email</label>
+   				<input type="text" class="form-control" id="inputUsername" placeholder="username or email">
+          <div class='invalid-feedback' id='username-feedback'></div>
+  			</div>
+				<div class="mb-3">
+					<label for="inputPassword" class="form-label">Password</label>
+    			<input type="password" class="form-control" id="inputPassword" placeholder="password">
+          <div class='invalid-feedback' id='loginpassword-feedback'></div>
+  			</div>
 				<div class="mb-2 py-3">
 					<button type="submit" id="loginSubmit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
 				</div>
@@ -49,13 +47,7 @@ export class LoginForm extends HTMLElement {
 
   async handleLogin() {
     const usernameInput = this.querySelector('#inputUsername').value;
-    const emailInput = this.querySelector('#inputEmail').value;
-    let username = '';
-    if (usernameInput) {
-      username = usernameInput;
-    } else if (emailInput) {
-      username = emailInput;
-    }
+    const username = usernameInput;
     const password = this.querySelector('#inputPassword').value;
 
     if (!this.checkInputs()) {
@@ -85,32 +77,6 @@ export class LoginForm extends HTMLElement {
     }
   }
 
-  setupInputToggle() {
-    const idInput = this.querySelector('#inputUsername');
-    const emailInput = this.querySelector('#inputEmail');
-
-    idInput.addEventListener('input', this.toggleInputFields.bind(this));
-    emailInput.addEventListener('input', this.toggleInputFields.bind(this));
-  }
-
-  toggleInputFields() {
-    const idInput = this.querySelector('#inputUsername');
-    const emailInput = this.querySelector('#inputEmail');
-
-    if (idInput.value) {
-      emailInput.disabled = true;
-      emailInput.value = '';
-    } else {
-      emailInput.disabled = false;
-    }
-    if (emailInput.value) {
-      idInput.disabled = true;
-      idInput.value = '';
-    } else {
-      idInput.disabled = false;
-    }
-  }
-
   checkInputs() {
     const usernameField = this.querySelector('#inputUsername');
     const emailField = this.querySelector('#inputEmail');
@@ -133,17 +99,10 @@ export class LoginForm extends HTMLElement {
 
   setUpRemoveFeedback() {
     const usernameField = this.querySelector('#inputUsername');
-    const emailField = this.querySelector('#inputEmail');
     const passwordField = this.querySelector('#inputPassword');
 
     usernameField.addEventListener('input', () => {
       usernameField.classList.remove('is-invalid');
-      emailField.classList.remove('is-invalid');
-      document.querySelector('#username-feedback').textContent = '';
-    });
-    emailField.addEventListener('input', () => {
-      usernameField.classList.remove('is-invalid');
-      emailField.classList.remove('is-invalid');
       document.querySelector('#username-feedback').textContent = '';
     });
     passwordField.addEventListener('input', () => {
