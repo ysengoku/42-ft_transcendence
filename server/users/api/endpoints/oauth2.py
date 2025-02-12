@@ -6,8 +6,8 @@ from django.conf import settings
 from django.http import HttpRequest, JsonResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from ninja import Router
-from django.views.decorators.csrf import csrf_exempt
-from users.api.endpoints.auth import _create_json_response_with_tokens
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from users.api.endpoints.auth import _create_redirect_to_home_page_response_with_tokens
 from users.schemas import Message, ProfileMinimalSchema
 from users.models import User
 
@@ -26,7 +26,7 @@ def create_user_oauth(user_info: dict, connection_type: str) -> User:
             username=user_info.get["login"],
             connection_type=connection_type,
             email=user_info.get("email", ""),
-            oauth_id=user_info.get["id"],  # Convert id to string for consistency
+            # oauth_id=user_info.get["id"],  # Convert id to string for consistency
         )
         return user
     except Exception as e:
@@ -59,6 +59,7 @@ def oauth_authorize(request, platform: str):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@ensure_csrf_cookie
 @oauth2_router.get("/callback/{platform}", auth=None)
 def oauth_callback(request, platform: str, code: str, state: str):
     try:
@@ -114,11 +115,27 @@ def oauth_callback(request, platform: str, code: str, state: str):
             return JsonResponse({"error": "Invalid platform"}, status=400)
 
         # Get or create user
-        user = User.objects.for_oauth_id(user_info["id"]).first()
+        # user = User.objects.for_oauth_id(user_info["id"]).first()
         # if not user:
-        #     user = create_user_oauth(user_info, connection_type)
+        user = User.objects.create_user("Fannybooboo", "regular", email="fannybooboo@gmail.com", password="123").profile
 
-        return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+        # user = {
+        #     "username": "faboussa",
+        #     "email": "fanny@example.com",
+        #     "id": "fanny_oauth_id",
+        #     "nickname": "fanny123",  # nickname
+        #     "avatar": "https://example.com/avatar.jpg",
+        # }
 
+        response = _create_redirect_to_home_page_response_with_tokens(user)
+
+        return response
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+# creer le cookie csfr en plus de acces token et refresh token
+# il faut quil yait username, nickname, avatar
+# key = user.
+
+# return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
