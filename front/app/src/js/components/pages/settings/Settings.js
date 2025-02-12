@@ -14,7 +14,7 @@ export class Settings extends HTMLElement {
   }
 
   async connectedCallback() {
-    const user = auth.getCashedUser();
+    const user = auth.getStoredUser();
     this.isLoggedIn = user ? true : false;
     if (!this.isLoggedIn) {
       // Show a messages to user

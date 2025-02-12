@@ -9,7 +9,7 @@ export class UserNotFound extends HTMLElement {
   }
 
   async connectedCallback() {
-    this.isLoggedIn = auth.getCashedUser() ? true : false;
+    this.isLoggedIn = auth.getStoredUser() ? true : false;
     if (!this.isLoggedIn) {
       // TODO: Show message to login
       router.navigate('/');

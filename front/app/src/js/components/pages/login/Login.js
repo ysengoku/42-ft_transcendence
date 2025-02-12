@@ -22,6 +22,7 @@ export class Login extends HTMLElement {
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-12 col-md-4"> 
+            <div id="login-failed-feedback"></div>
 			      <login-form></login-form>
 			      <div class="container d-flex flex-column justify-content-center align-items-center">
 				      <div class="mb-2">
