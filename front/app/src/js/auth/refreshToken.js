@@ -1,3 +1,4 @@
+import { auth } from '@auth';
 import { API_ENDPOINTS } from '@api';
 import { ERROR_MESSAGES, showErrorMessage } from '@utils';
 
@@ -28,7 +29,6 @@ export async function refreshAccessToken(csrfToken) {
         } else if (response.status === 500) {
           ++retries;
         } else {
-          console.error('Refresh failed:', refreshResponse);
           return { success: false, status: response.status };
         }
       }
@@ -52,7 +52,6 @@ export async function refreshAccessToken(csrfToken) {
         body: JSON.stringify({ refresh: refreshToken }),
       };
       const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, request);
-      console.log('Refresh response:', refreshResponse);
       if (refreshResponse.ok) {
         console.log('Refresh successful');
         return { success: true, status: 204 };
@@ -62,11 +61,14 @@ export async function refreshAccessToken(csrfToken) {
         return retryRefreshTokenRequest(request, 3000, 3);
       }
       console.error('Refresh failed:', refreshResponse);
+      auth.clearStoredUser();
       return { success: false, status: refreshResponse.status };
     } catch (error) {
       console.error(error);
+      auth.clearStoredUser();
       return { success: false, status: 0 };
     }
   }
+  auth.clearStoredUser();
   return { success: false, status: 401 };
 }

@@ -77,26 +77,21 @@ const auth = (() => {
         if (refreshTokenResponse.status) {
           switch (refreshTokenResponse.status) {
             case 204:
-              console.log('204 - Token refreshed, user is logged in');
               return this.fetchAuthStatus();
             case 401:
-              console.log('401 - Token expired, user is not logged in.');
-              this.clearStoredUser();
-              return { success: false, status: refreshTokenResponse.status };
+              return { success: false, status: 401 };
             case 500:
               showErrorMessageForDuration(ERROR_MESSAGES.SERVER_ERROR, 3000);
-              // Server error handling
               break;
             default:
               console.log('Unknown error.');
               showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
-              this.clearStoredUser();
               return { success: false, status: refreshTokenResponse.status };
           }
         }
         return { success: false, status: response.status };
       }
-      // check and handle 500 error
+      showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
     }
   }
   return new AuthManager();
