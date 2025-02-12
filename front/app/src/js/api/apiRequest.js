@@ -25,6 +25,7 @@
  * }
  */
 
+import { router } from '@router';
 import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
 import { ERROR_MESSAGES, showErrorMessage } from '@utils';
 
@@ -73,12 +74,11 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       return { success: true, status: response.status, data: responseData };
     }
     if (needToken && response.status === 401) {
-      console.log('Unauthorized request');
       const refreshResponse = await refreshAccessToken(csrfToken);
       if (refreshResponse.success) {
         return apiRequest(method, endpoint, data, isFileUpload, needToken);
       } else if (refreshResponse.status === 401) {
-        auth.clearCashedUser();
+        auth.clearStoredUser();
         router.navigate('/login');
         // Show  message to user to login again
         return { success: false, status: 401, msg: 'Session expired' };
