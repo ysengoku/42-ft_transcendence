@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
@@ -7,7 +8,7 @@ from ninja.security import APIKeyCookie
 
 from users.models import RefreshToken, User
 
-from .endpoints.auth import auth_router
+from .endpoints.auth import _create_json_response_with_tokens, auth_router, check_self
 from .endpoints.oauth2 import oauth2_router
 # from .endpoints.mfa import mfa_router
 from .endpoints.blocked_users import blocked_users_router
@@ -40,17 +41,19 @@ users_router.add_router("", friends_router)
 
 from django.shortcuts import redirect
 
+
+@ensure_csrf_cookie
 @api.get("welcome", auth=None)
 def welcome(request):
     """
     Redirection from OAuth2 via the backend (httpResponseRedirect).
     """
-    access_token = request.GET.get("access_token", None)
+    user_info = request.session.get("user_info")
 
-    if access_token:
-        return JsonResponse({"message": "Welcome to the home page!", "token": access_token})
-    else:
-        return JsonResponse({"message": "You need to log in."})
+    if not user_info:
+        return JsonResponse({"error": "User not authenticated"}, status=401)
+    user = check_self(request)
+    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
 
 
 @api.exception_handler(HttpError)

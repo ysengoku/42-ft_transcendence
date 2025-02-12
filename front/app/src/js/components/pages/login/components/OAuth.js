@@ -6,23 +6,11 @@ export class OAuth extends HTMLElement {
   constructor() {
       super();
       this.handleOAuthClick = this.handleOAuthClick.bind(this);
-      this.handleOAuthCallback = this.handleOAuthCallback.bind(this);
   }
 
   connectedCallback() {
       this.render();
       this.setupEventListeners();
-      this.checkCallback();
-  }
-
-  checkCallback() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
-      const state = urlParams.get('state');
-
-      if (code && state) {
-          this.handleOAuthCallback(code, state);
-      }
   }
 
   setupEventListeners() {
@@ -35,6 +23,7 @@ export class OAuth extends HTMLElement {
 
   async handleOAuthClick(platform) {
     try {
+       // faire un fetch, car on ne doit pas voir l url
         window.location.href = API_ENDPOINTS.OAUTH_AUTHORIZE(platform);
         localStorage.setItem('oauth_platform', platform);
     } catch (error) {
@@ -43,35 +32,37 @@ export class OAuth extends HTMLElement {
     }
 }
 
-  async handleOAuthCallback(code, state) {
-      try {
-          const platform = localStorage.getItem('oauth_platform');
-          if (!platform) throw new Error('No platform found in storage');
+  async 
 
-          const response = await fetch(
-              `${API_ENDPOINTS.OAUTH_CALLBACK(platform)}?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
-          );
+  // async handleOAuthCallback(code, state) {
+  //     try {
+  //         const platform = localStorage.getItem('oauth_platform');
+  //         if (!platform) throw new Error('No platform found in storage');
 
-          if (!response.ok) throw new Error('Authentication failed');
+  //         const response = await fetch(
+  //             `${API_ENDPOINTS.OAUTH_CALLBACK(platform)}?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
+  //         );
 
-          const data = await response.json();
+  //         if (!response.ok) throw new Error('Authentication failed');
+
+  //         const data = await response.json();
           
-          if (data.user) {
-              auth.storeUser({
-                  username: data.user.username,
-                  nickname: data.user.nickname,
-                  avatar: data.user.avatar,
-              });
-              localStorage.removeItem('oauth_platform');
-              router.navigate('/home');
-          } else {
-              throw new Error(data.error || 'Invalid response format');
-          }
-      } catch (error) {
-          console.error('OAuth callback failed:', error);
-          this.showError(error.message);
-      }
-  }
+  //         if (data.user) {
+  //             auth.storeUser({
+  //                 username: data.user.username,
+  //                 nickname: data.user.nickname,
+  //                 avatar: data.user.avatar,
+  //             });
+  //             localStorage.removeItem('oauth_platform');
+  //             router.navigate('/home');
+  //         } else {
+  //             throw new Error(data.error || 'Invalid response format');
+  //         }
+  //     } catch (error) {
+  //         console.error('OAuth callback failed:', error);
+  //         this.showError(error.message);
+  //     }
+  // }
 
   showError(message) {
       const feedback = this.querySelector('#login-failed-feedback');
