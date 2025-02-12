@@ -126,19 +126,11 @@ def oauth_callback(request: HttpRequest, platform: str, code: str, state: str):
             print(f"User already exists: {user.username}")
 
         response_data = user.profile.to_profile_minimal_schema()
-        tokens = _create_json_response_with_tokens(user, response_data)
-        print(f"Tokens generated: {tokens}")
-
-        # Retourner directement la réponse JSON avec les tokens et les données utilisateur
-        return JsonResponse({
-            "status": "success",
-            "access_token": tokens['access_token'],
-            "refresh_token": tokens['refresh_token'],
-            "user": response_data
-        })
+        return _create_json_response_with_tokens(user, response_data)
 
     except Exception as e:
         import traceback
+
         print(f"OAuth callback error: {str(e)}")
         print(traceback.format_exc())
         return JsonResponse({"msg": str(e)}, status=500)
