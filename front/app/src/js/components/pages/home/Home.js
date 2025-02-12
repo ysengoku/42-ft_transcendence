@@ -5,20 +5,18 @@ export class Home extends HTMLElement {
   constructor() {
     super();
     this.isLoggedIn = false;
-    this.user = null;
   }
 
   async connectedCallback() {
-    // const authStatus = await auth.fetchAuthStatus();
-    // this.isLoggedIn = authStatus.success;
-    this.user = auth.getStoredUser();
-    this.isLoggedIn = this.user ? true : false;
+    const authStatus = await auth.fetchAuthStatus();
+    this.isLoggedIn = authStatus.success;
     this.render();
   }
 
   render() {
     if (!this.isLoggedIn) {
       // TODO: Show message to login
+        console.log(this.isLoggedIn)
       router.navigate('/');
       return;
     }
