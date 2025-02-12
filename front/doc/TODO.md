@@ -19,7 +19,7 @@
 ---------------------------------------------------------------------
 
 ## Navbar
-- [X] Dropdown menu is hidden by Chat message header on Chat page
+- [] Dropdown menu is hidden by Chat message header on Chat page
 - [] Update login status depending on login status
 
 ---------------------------------------------------------------------
