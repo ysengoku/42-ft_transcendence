@@ -1,33 +1,47 @@
 import { router } from '@router';
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { showErrorMessage, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
-import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
+// import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
 export class Settings extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
+    this.username = '';
     this.user = null;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const user = auth.getStoredUser();
+    this.isLoggedIn = user ? true : false;
+    if (!this.isLoggedIn) {
+      // Show a messages to user
+      router.navigate('/');
+      return;
+    }
+    this.username = user.username;
     this.fetchUserData();
   }
 
   async fetchUserData() {
-    const user = auth.getUser();
-    if (!user) {
-      // Show a messages to user
-      router.navigate('/login');
-    }
-    const username = JSON.parse(user).username;
-    try {
-      // Temporary fetch function with mock
-      const userData = await simulateFetchUserData(username);
-      this.user = userData;
-      this.render();
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      // Show a message to user
+    /* eslint-disable-next-line new-cap */
+    const response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.username));
+    if (response.success) {
+      if (response.status === 200) {
+        this.user = response.data;
+        // this.user.connection_type = '42'; // mock data
+        this.render();
+      }
+    } else {
+      if (response.status === 401) {
+        showErrorMessage(ERROR_MESSAGES.SESSION_EXPIRED);
+        router.navigate('/');
+      } else if (response.status === 403) {
+        showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
+        router.navigate('/home');
+      }
     }
   }
 
@@ -135,15 +149,12 @@ export class Settings extends HTMLElement {
     if (avatarField) {
       formData.append('avatar', avatarField);
     }
-    try {
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-        // const response = await apiRequest('POST', 'endpoint', formData, true);
-        // handle response
-      }
-    } catch (error) {
-      console.error('Error upload user settings: ', error);
-    }
+    // for (let [key, value] of formData.entries()) {
+    //   console.log(key, value);
+    // }
+
+    // const response = await apiRequest('POST', 'endpoint', formData, true);
+    // handle response
   }
 }
 

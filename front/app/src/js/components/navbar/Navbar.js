@@ -1,17 +1,29 @@
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 
 export class Navbar extends HTMLElement {
   constructor() {
     super();
     this.isLoggedIn = false;
+    this.loginStatusHandler = this.updateNavbar.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    console.log('Navbar connected');
+    document.addEventListener('loginStatusChange', this.loginStatusHandler);
+    this.isLoggedIn = auth.getStoredUser() ? true : false;
+    this.render();
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener('loginStatusChange', this.loginStatusHandler);
+  }
+
+  updateNavbar(event) {
+    this.isLoggedIn = event.detail.user !== null;
     this.render();
   }
 
   render() {
-    this.isLoggedIn = auth.isLoggedIn();
     this.innerHTML = `
       <style>
         .navbar {
@@ -33,7 +45,6 @@ export class Navbar extends HTMLElement {
   renderNavbarActions() {
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
-
     if (this.isLoggedIn) {
       const friendsButton = document.createElement('friends-button');
       const chatButton = document.createElement('chat-button');
