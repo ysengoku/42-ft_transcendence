@@ -11,13 +11,9 @@ export class DropdownMenu extends HTMLElement {
     this.user = null;
   }
 
-  // connectedCallback() {
-  //   this.render();
-  // }
-
   setLoginStatus(value) {
     this.isLoggedIn = value;
-    this.user = auth.getCashedUser();
+    this.user = auth.getStoredUser();
     this.render();
   }
 

@@ -1,7 +1,6 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessage } from '@utils';
 // import { simulateApiLogin } from '@mock/functions/mockLogin.js';
 // import { simulateLoginSuccessResponse } from '@mock/functions/mockLogin.js';
 
@@ -20,7 +19,6 @@ export class LoginForm extends HTMLElement {
   render() {
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center">
-      <!-- <div id="login-failed-feedback"></div> -->
 			<form class="w-100" id="loginForm">
   				<div class="d-flex flex-column mb-3 gap-2">
     				<label for="inputUsername" class="form-label">Username or Email</label>
@@ -73,18 +71,17 @@ export class LoginForm extends HTMLElement {
           nickname: response.data.nickname,
           avatar: response.data.avatar,
         };
-        auth.setUser(userInformation);
+        auth.storeUser(userInformation);
         router.navigate(`/home`, response.user);
       }
     } else {
-      showErrorMessage(response.msg);
-    //   const feedback = this.querySelector('#login-failed-feedback');
-    //   feedback.innerHTML = `
-    //   <div class="alert alert-danger alert-dismissible" role="alert">
-    //     ${response.msg}
-    //     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    //   </div>
-    // `;
+      const feedback = document.querySelector('#login-failed-feedback');
+      feedback.innerHTML = `
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          ${response.msg}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
     }
   }
 

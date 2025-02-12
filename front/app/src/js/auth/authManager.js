@@ -19,7 +19,7 @@ const auth = (() => {
      * @param {Object} user - The user object to store in session storage
      * @return {void}
      */
-    setUser(user) {
+    storeUser(user) {
       sessionStorage.setItem('user', JSON.stringify(user));
       const event = new CustomEvent('loginStatusChange', { detail: user, bubbles: true });
       document.dispatchEvent(event);
@@ -29,7 +29,7 @@ const auth = (() => {
      * Clear the user object from session storage and dispatch a custom event to notify
      * @return {void}
      */
-    clearCashedUser() {
+    clearStoredUser() {
       sessionStorage.removeItem('user');
       const event = new CustomEvent('loginStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
@@ -39,7 +39,7 @@ const auth = (() => {
      * Retrieve the user object from session storage
      * @return { Object | null } The user object from session storage or null
      */
-    getCashedUser() {
+    getStoredUser() {
       const user = sessionStorage.getItem('user');
       if (!user) {
         return null;
@@ -53,7 +53,7 @@ const auth = (() => {
      */
     async fetchAuthStatus() {
       console.log('Fetching user login status...');
-      const user = this.getCashedUser();
+      const user = this.getStoredUser();
       if (user) {
         return { success: true, response: user };
       }
@@ -70,7 +70,7 @@ const auth = (() => {
       if (response.ok) {
         const data = await response.json();
         console.log('User is logged in: ', data);
-        this.setUser(data);
+        this.storeUser(data);
         return { success: true, response: data };
       } else if (response.status === 401) {
         const refreshTokenResponse = await refreshAccessToken(CSRFToken);
@@ -81,7 +81,7 @@ const auth = (() => {
               return this.fetchAuthStatus();
             case 401:
               console.log('401 - Token expired, user is not logged in.');
-              this.clearCashedUser();
+              this.clearStoredUser();
               return { success: false, status: refreshTokenResponse.status };
             case 500:
               showErrorMessageForDuration(ERROR_MESSAGES.SERVER_ERROR, 3000);
@@ -90,7 +90,7 @@ const auth = (() => {
             default:
               console.log('Unknown error.');
               showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
-              this.clearCashedUser();
+              this.clearStoredUser();
               return { success: false, status: refreshTokenResponse.status };
           }
         }
