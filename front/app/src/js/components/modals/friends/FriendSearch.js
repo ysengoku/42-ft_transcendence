@@ -11,10 +11,10 @@ export class FriendSearch extends HTMLElement {
   render() {
     this.innerHTML = `
       <form class="d-flex" role="search">
-	    <div class="input-group">
-		  <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
+	      <div class="input-group">
+		      <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
           <input class="form-control me-2" type="search" placeholder="Find friend(s)" aria-label="Search">
-		</div>
+		    </div>
         <button class="btn btn-primary" type="submit">Search</button>
       </form>
     `;
@@ -22,6 +22,10 @@ export class FriendSearch extends HTMLElement {
 
   setupSearchHandler() {
     const form = this.querySelector('form');
+    const input = form.querySelector('input');
+    input.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       const searchQuery = form.querySelector('input').value;
