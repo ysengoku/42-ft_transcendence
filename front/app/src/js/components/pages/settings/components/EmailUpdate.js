@@ -1,4 +1,4 @@
-import { INPUT_FEEDBACK } from '@utils/inputFeedback.js';
+import { INPUT_FEEDBACK } from '@utils';
 
 export class EmailUpdate extends HTMLElement {
   constructor() {

@@ -1,21 +1,28 @@
 import { router } from '@router';
-import { auth } from '@auth/authManager.js';
+import { auth } from '@auth';
 
 export class Home extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
     this.user = null;
   }
 
-  connectedCallback() {
-    this.user = auth.getUser();
+  async connectedCallback() {
+    // const authStatus = await auth.fetchAuthStatus();
+    // this.isLoggedIn = authStatus.success;
+    this.user = auth.getStoredUser();
+    this.isLoggedIn = this.user ? true : false;
     this.render();
   }
 
   render() {
-    if (!this.user) {
-      router.navigate('/login');
+    if (!this.isLoggedIn) {
+      // TODO: Show message to login
+      router.navigate('/');
+      return;
     }
+
     // Temporary content
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
