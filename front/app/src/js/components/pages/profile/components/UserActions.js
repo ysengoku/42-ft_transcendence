@@ -55,7 +55,7 @@ export class ProfileUserActions extends HTMLElement {
       const editProfileButton = this.querySelector('#edit-profile-button');
       editProfileButton.style.display = 'block';
       editProfileButton.addEventListener('click', () => {
-        router.navigate(`/settings/${this._data.loggedInUsername}`);
+        router.navigate(`/settings`);
       });
       return;
     }
