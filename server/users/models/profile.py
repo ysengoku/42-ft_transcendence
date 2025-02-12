@@ -9,8 +9,6 @@ from ninja.files import UploadedFile
 
 from users.utils import merge_err_dicts
 
-from .user import User
-
 
 def calculate_winrate(wins: int, loses: int) -> int | None:
     total = wins + loses
@@ -88,7 +86,7 @@ class Profile(models.Model):
     Contains user information to the application logic itself.
     """
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField("users.User", on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to="avatars/", null=True, blank=True)
     elo = models.IntegerField(default=1000)
     friends = models.ManyToManyField("self", symmetrical=False, through="Friendship", related_name="friends_of")

@@ -4,7 +4,7 @@ from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
 from users.api.common import allow_only_for_self
-from users.models import RefreshToken, User
+from users.models import OauthConnection, RefreshToken, User
 from users.schemas import (
     LoginSchema,
     Message,
@@ -26,7 +26,7 @@ def _create_json_response_with_tokens(user: User, json: dict):
     return response
 
 
-def _create_redirect_to_home_page_response_with_tokens(user: User):
+def create_redirect_to_home_page_response_with_tokens(user: User):
     access_token, refresh_token_instance = RefreshToken.objects.create(user)
 
     response = HttpResponseRedirect("https://localhost:1026/home")
@@ -34,7 +34,6 @@ def _create_redirect_to_home_page_response_with_tokens(user: User):
     response.set_cookie("refresh_token", refresh_token_instance.token)
 
     return response
-
 
 
 @auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
@@ -78,7 +77,7 @@ def signup(request: HttpRequest, data: SignUpSchema):
     """
     user = User.objects.validate_and_create_user(
         username=data.username,
-        connection_type=User.REGULAR,
+        connection_type=OauthConnection.REGULAR,
         email=data.email,
         password=data.password,
     )
