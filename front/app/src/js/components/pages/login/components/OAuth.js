@@ -23,7 +23,6 @@ export class OAuth extends HTMLElement {
 
   async handleOAuthClick(platform) {
     try {
-       // faire un fetch, car on ne doit pas voir l url
         const response = await fetch(`https://localhost:1026/api/oauth/authorize/${platform}`)
         if (response.ok) {
             const data = await response.json()
@@ -35,38 +34,6 @@ export class OAuth extends HTMLElement {
         this.showError('Failed to start authentication process');
     }
 }
-
-  
-
-  // async handleOAuthCallback(code, state) {
-  //     try {
-  //         const platform = localStorage.getItem('oauth_platform');
-  //         if (!platform) throw new Error('No platform found in storage');
-
-  //         const response = await fetch(
-  //             `${API_ENDPOINTS.OAUTH_CALLBACK(platform)}?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
-  //         );
-
-  //         if (!response.ok) throw new Error('Authentication failed');
-
-  //         const data = await response.json();
-          
-  //         if (data.user) {
-  //             auth.storeUser({
-  //                 username: data.user.username,
-  //                 nickname: data.user.nickname,
-  //                 avatar: data.user.avatar,
-  //             });
-  //             localStorage.removeItem('oauth_platform');
-  //             router.navigate('/home');
-  //         } else {
-  //             throw new Error(data.error || 'Invalid response format');
-  //         }
-  //     } catch (error) {
-  //         console.error('OAuth callback failed:', error);
-  //         this.showError(error.message);
-  //     }
-  // }
 
   showError(message) {
       const feedback = this.querySelector('#login-failed-feedback');
