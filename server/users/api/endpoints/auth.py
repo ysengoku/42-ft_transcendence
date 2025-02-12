@@ -1,4 +1,4 @@
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
@@ -24,6 +24,17 @@ def _create_json_response_with_tokens(user: User, json: dict):
     response.set_cookie("refresh_token", refresh_token_instance.token)
 
     return response
+
+
+def _create_redirect_to_home_page_response_with_tokens(user: User):
+    access_token, refresh_token_instance = RefreshToken.objects.create(user)
+
+    response = HttpResponseRedirect("https://localhost:1026/home")
+    response.set_cookie("access_token", access_token)
+    response.set_cookie("refresh_token", refresh_token_instance.token)
+
+    return response
+
 
 
 @auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
