@@ -32,7 +32,7 @@ export async function refreshAccessToken(csrfToken) {
           return { success: false, status: response.status };
         }
       }
-      console.error('Refresh failed:', refreshResponse);
+      console.error('Refresh failed');
       showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
       return { success: false, status: 500 };
     }, delay);
@@ -60,7 +60,7 @@ export async function refreshAccessToken(csrfToken) {
         console.log('Retrying refresh token request');
         return retryRefreshTokenRequest(request, 3000, 3);
       }
-      console.error('Refresh failed:', refreshResponse);
+      console.log('Refresh failed');
       auth.clearStoredUser();
       return { success: false, status: refreshResponse.status };
     } catch (error) {
