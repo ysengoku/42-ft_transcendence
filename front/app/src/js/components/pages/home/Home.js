@@ -1,6 +1,5 @@
 import { router } from '@router';
 import { auth } from '@auth';
-import { ERROR_MESSAGES, showErrorMessageForDuration } from '@utils';
 import './components/index.js';
 
 export class Home extends HTMLElement {
