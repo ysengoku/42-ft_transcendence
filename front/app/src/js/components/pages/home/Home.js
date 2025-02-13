@@ -19,7 +19,6 @@ export class Home extends HTMLElement {
 
   render() {
     if (!this.isLoggedIn) {
-      showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
       router.navigate('/');
       return;
     }
