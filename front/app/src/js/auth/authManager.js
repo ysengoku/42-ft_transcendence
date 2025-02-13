@@ -53,10 +53,10 @@ const auth = (() => {
      */
     async fetchAuthStatus() {
       console.log('Fetching user login status...');
-      const user = this.getStoredUser();
-      if (user) {
-        return { success: true, response: user };
-      }
+      // const user = this.getStoredUser();
+      // if (user) {
+      //   return { success: true, response: user };
+      // }
       const CSRFToken = getCSRFTokenfromCookies();
       const request = {
         method: 'GET',
