@@ -39,7 +39,7 @@ export class Settings extends HTMLElement {
         showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/');
       } else if (response.status === 403) {
-        showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
+        showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
         router.navigate('/home');
       }
     }

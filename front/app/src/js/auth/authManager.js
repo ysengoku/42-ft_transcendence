@@ -85,13 +85,13 @@ const auth = (() => {
               break;
             default:
               console.log('Unknown error.');
-              showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
+              showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
               return { success: false, status: refreshTokenResponse.status };
           }
         }
         return { success: false, status: response.status };
       }
-      showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
+      showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
     }
   }
   return new AuthManager();
