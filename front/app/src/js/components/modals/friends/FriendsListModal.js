@@ -10,6 +10,7 @@ export class FriendsListModal extends HTMLElement {
     this.modal = null;
     this.friendsList = [];
     this.username = '';
+    this.totalFriendsCount = 0; // TODO: Fetch from server
   }
 
   connectedCallback() {
@@ -44,6 +45,8 @@ export class FriendsListModal extends HTMLElement {
         null, false, true);
     if (response.success) {
       if (response.data) {
+        this.totalFriendsCount = response.data.count;
+        // this.totalFriendsCount = 12; // For rendering test
         this.friendsList.push(...response.data.items);
       }
       this.renderFriendsList();
@@ -85,7 +88,26 @@ export class FriendsListModal extends HTMLElement {
     listContainer.appendChild(noFriends);
   }
 
-  renderShowMoreButton() {
+  renderShowMoreButton(listContainer) {
+    const noFriends = document.createElement('li');
+    noFriends.innerHTML = `
+      <style>
+        #show-more-friends {
+          border: none;
+          position: relative;
+          border-top: 1px solid var(--bs-border-color);
+        }
+        li {
+          list-style-type: none;
+        }
+      </style>
+      <div class="list-group-item mt-4 p-3" id="show-more-friends">
+        <p class="text-center m-0">Show more friends</p>
+      </div>
+    `;
+    listContainer.appendChild(noFriends);
+
+    // TODO: Add event listener to show more friends
   }
 
   renderFriendsList() {
@@ -104,6 +126,9 @@ export class FriendsListModal extends HTMLElement {
       listItem.setAttribute('online', friend.is_online);
       listContainer.appendChild(listItem);
     });
+    if (this.friendsList.length < this.totalFriendsCount) {
+      this.renderShowMoreButton(listContainer);
+    }
     const mainView = document.getElementById('content');
     mainView.addEventListener('click', () => {
       this.hideModal();
