@@ -66,7 +66,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     }
     return handlers.failure(response);
   } catch (error) {
-    return { success: false, status: 0, msg: error };
+    return handlers.exception(error);
   }
 }
 
@@ -123,5 +123,9 @@ const handlers = {
       errorMsg = errorData.msg;
     }
     return { success: false, status: response.status, msg: errorMsg };
+  },
+  exception: (error) => {
+    console.error('API request failed:', error);
+    return { success: false, status: 0, msg: error };
   },
 };
