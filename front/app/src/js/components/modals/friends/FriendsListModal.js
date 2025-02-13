@@ -44,7 +44,7 @@ export class FriendsListModal extends HTMLElement {
         null, false, true);
     if (response.success) {
       if (response.data) {
-        this.friendsList = response.data.items;
+        this.friendsList.push(...response.data.items);
       }
       this.renderFriendsList();
     } else {
@@ -83,6 +83,9 @@ export class FriendsListModal extends HTMLElement {
       </div>
     `;
     listContainer.appendChild(noFriends);
+  }
+
+  renderShowMoreButton() {
   }
 
   renderFriendsList() {
