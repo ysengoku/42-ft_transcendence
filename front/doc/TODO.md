@@ -7,7 +7,7 @@
 ---------------------------------------------------------------------
 
 ## Auth manager
--[] Add message to UI after refresh token failed
+-[x] Add message to UI after refresh token failed
 
 ---------------------------------------------------------------------
 
@@ -19,8 +19,8 @@
 ---------------------------------------------------------------------
 
 ## Navbar
-- [] Dropdown menu is hidden by Chat message header on Chat page
-- [] Update login status depending on login status
+- [x] Dropdown menu is hidden by Chat message header on Chat page
+- [x] Update login status depending on login status
 
 ---------------------------------------------------------------------
 
@@ -76,7 +76,7 @@
 
 ## Profile
 
-- [] Add auth check before rendering
+- [x] Add auth check before rendering
 
 ### Error handling
 - [x] 404 handling
@@ -106,6 +106,12 @@
 
 ## Friends list
 - [] User search by username
+
+---------------------------------------------------------------------
+
+## Friends list
+- [] Get list from server
+- [] Handle see more making a new request (To show more than first 10 friends)
 
 ---------------------------------------------------------------------
 
