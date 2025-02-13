@@ -1,39 +1,109 @@
-import { simulateFetchFriendsList } from '@mock/functions/simulateFetchFriendsList.js';
+import { router } from '@router';
+import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { showErrorMessageForDuration, ERROR_MESSAGES } from '@utils';
+// import { simulateFetchFriendsList } from '@mock/functions/simulateFetchFriendsList.js';
 
 export class FriendsListModal extends HTMLElement {
   constructor() {
     super();
     this.modal = null;
     this.friendsList = [];
+    this.username = '';
   }
 
   connectedCallback() {
     this.render();
-    this.fetchFriendsData();
   }
 
-  // Simulation with mock
+  showModal() {
+    this.fetchFriendsData();
+    if (this.modal) {
+      this.modal.show();
+    }
+    this.renderSearchBar();
+  }
+
+  hideModal() {
+    const mainContent = document.querySelector('#content');
+    if (mainContent) {
+      mainContent.focus();
+    }
+    if (this.modal) {
+      this.modal.hide();
+    }
+  }
+
   async fetchFriendsData() {
-    this.friendsList = await simulateFetchFriendsList();
-    // console.log(JSON.stringify(this.friendsList, null, 2));
-    this.renderFriendsList();
-    const mainView = document.getElementById('content');
-    mainView.addEventListener('click', () => {
-      const modal = document.querySelector('#friends-modal');
-      modal.setAttribute('data-bs-dismiss', 'modal');
-    });
+    // this.friendsList = await simulateFetchFriendsList();
+    this.username = auth.getStoredUser().username;
+    const response = await apiRequest(
+        'GET',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_FRIENDS(this.username),
+        null, false, true);
+    if (response.success) {
+      if (response.data) {
+        this.friendsList = response.data.items;
+      }
+      this.renderFriendsList();
+    } else {
+      this.hideModal();
+      if (response.status === 401) {
+        showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+        router.navigate('/login');
+      } else {
+        showErrorMessageForDuration(ERROR_MESSAGES.UNKNOWN_ERROR, 5000);
+        router.navigate('/');
+      }
+    }
+  }
+
+  renderSearchBar() {
+    const friendSearchBar = this.querySelector('friend-search-bar');
+    if (friendSearchBar) {
+      friendSearchBar.render();
+    }
+  }
+
+  renderNoFriendsFound(listContainer) {
+    const noFriends = document.createElement('li');
+    noFriends.innerHTML = `
+      <style>
+        .list-group-item {
+          border: none;
+          position: relative;
+        }
+        li {
+          list-style-type: none;
+        }
+      </style>
+      <div class="list-group-item p-3">
+        <p class="text-center m-0">No friends found</p>
+      </div>
+    `;
+    listContainer.appendChild(noFriends);
   }
 
   renderFriendsList() {
     const listContainer = this.querySelector('#friends-list');
     listContainer.innerHTML = '';
+    if (this.friendsList.length === 0) {
+      this.renderNoFriendsFound(listContainer);
+      return;
+    }
     this.friendsList.forEach((friend) => {
       // console.log(`Rendering friend:`, friend);
       const listItem = document.createElement('friends-list-item');
       listItem.setAttribute('username', friend.username);
+      listItem.setAttribute('nickname', friend.nickname);
       listItem.setAttribute('avatar', friend.avatar);
-      listItem.setAttribute('online', friend.online);
+      listItem.setAttribute('online', friend.is_online);
       listContainer.appendChild(listItem);
+    });
+    const mainView = document.getElementById('content');
+    mainView.addEventListener('click', () => {
+      this.hideModal();
     });
   }
 
@@ -49,7 +119,7 @@ export class FriendsListModal extends HTMLElement {
         border-radius: 0;
       }
     </style>
-		<div class="modal fade" id="friends-modal" tabindex="-1" inert>
+		<div class="modal fade" id="friends-modal" tabindex="-1">
 			<div class="modal-dialog modal-dialog-scrollable">
    			<div class="modal-content">
           <div class="modal-header d-flex flex-column align-items-start">
@@ -70,21 +140,6 @@ export class FriendsListModal extends HTMLElement {
 		`;
 
     this.modal = new bootstrap.Modal(this.querySelector('#friends-modal'));
-  }
-
-  showModal() {
-    if (this.modal) {
-      this.querySelector('#friends-modal').removeAttribute('inert');
-      this.modal.show();
-    }
-    this.renderSearchBar();
-  }
-
-  renderSearchBar() {
-    const friendSearchBar = this.querySelector('friend-search-bar');
-    if (friendSearchBar) {
-      friendSearchBar.render();
-    }
   }
 }
 
