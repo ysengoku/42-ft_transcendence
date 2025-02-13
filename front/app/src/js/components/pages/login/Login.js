@@ -1,4 +1,3 @@
-import '../home/Home.js';
 import './components/index.js';
 
 export class Login extends HTMLElement {
@@ -11,22 +10,11 @@ export class Login extends HTMLElement {
   }
 
   render() {
-    // Temporary solution -------------------------------------------
-    // const isLoggedIn = localStorage.getItem('isLoggedin') === 'true';
-    // if (isLoggedIn) {
-    //   router.navigate('/home');
-    // }
-    // ----------------------------------------------------------------
-
     this.innerHTML = `
       <div class="container">
         <div class="row justify-content-center py-4">
           <div class="col-12 col-md-4"> 
             <div id="login-failed-feedback"></div>
-            <div class="d-flex flex-column ps-2 pb-3">
-              <h1>Login</h1>
-              <p>Please login to continue</p>
-            </div>
 			      <login-form></login-form>
 			      <div class="container d-flex flex-column justify-content-center align-items-center">
 				      <div class="mb-2">

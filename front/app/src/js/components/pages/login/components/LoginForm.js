@@ -19,6 +19,7 @@ export class LoginForm extends HTMLElement {
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center">
 			<form class="w-100" id="loginForm">
+      <legend class="mt-4 mb-5 border-bottom">Login</legend>
   			<div class="d-flex flex-column mb-3 gap-2">
     			<label for="inputUsername" class="form-label">Username or Email</label>
    				<input type="text" class="form-control" id="inputUsername" placeholder="username or email">
