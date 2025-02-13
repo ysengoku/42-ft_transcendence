@@ -23,6 +23,10 @@ export class Login extends HTMLElement {
         <div class="row justify-content-center py-4">
           <div class="col-12 col-md-4"> 
             <div id="login-failed-feedback"></div>
+            <div class="d-flex flex-column ps-2 pb-3">
+              <h1>Login</h1>
+              <p>Please login to continue</p>
+            </div>
 			      <login-form></login-form>
 			      <div class="container d-flex flex-column justify-content-center align-items-center">
 				      <div class="mb-2">
