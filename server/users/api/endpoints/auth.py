@@ -77,7 +77,6 @@ def signup(request: HttpRequest, data: SignUpSchema):
     """
     user = User.objects.validate_and_create_user(
         username=data.username,
-        connection_type=OauthConnection.REGULAR,
         email=data.email,
         password=data.password,
     )
