@@ -8,7 +8,7 @@ export class Login extends HTMLElement {
   }
 
   connectedCallback() {
-    const isLoggedIn = auth.fetchAuthStatus();
+    const isLoggedIn = auth.fetchAuthStatus().success;
     if (isLoggedIn) {
       router.navigate('/home');
     }
