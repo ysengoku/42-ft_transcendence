@@ -24,9 +24,12 @@ export class Register extends HTMLElement {
   render() {
     this.innerHTML = `
       <div class="container">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center py-4">
           <div class="col-12 col-md-4"> 
-    		    <div class='container d-flex flex-column justify-content-center align-items-center'>
+    		                <div class="d-flex flex-column ps-2 pb-3">
+              <h1>Sign Up</h1>
+              <p>Please create an account to continue</p>
+            </div>
               <div id="signup-failed-feedback"></div>
       			  <form class='w-100'>
         			  <div class='mb-3'>
@@ -54,6 +57,7 @@ export class Register extends HTMLElement {
         			  </div>
       			  </form>
     		    </div>
+            </div>
           </div>
         </div>
       </div>
