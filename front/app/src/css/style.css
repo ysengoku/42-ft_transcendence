@@ -23,7 +23,7 @@ a, button, div [role="button"], input[type="submit"], input[type="button"] {
   /* font-size: 0.8em; */
 }
 
-.navbar-dropdown-menu {
+.dropdown-menu {
   z-index: 1050 !important; /* Keep dropdown always on top */
 }
 
