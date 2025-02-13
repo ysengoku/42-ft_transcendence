@@ -54,9 +54,6 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-# emuminov
-# emuminov-1 42
-# emuminov   GitHub
     def _generate_unique_username(self, username: str):
         base_username = username
         counter = self.filter(Q(username__iexact=username) | Q(username__iexact=username + "-1")).count()
@@ -95,7 +92,7 @@ class User(AbstractUser):
 
         if (
             "email" not in kwargs["exclude"]
-            and self.get_oauth_connection()
+            and not self.get_oauth_connection()
             and User.objects.filter(email=self.email).exists()
         ):
             raise ValidationError({"email": ["A user with that email already exists."]})
