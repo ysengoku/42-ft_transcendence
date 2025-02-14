@@ -23,7 +23,7 @@ export class EmailUpdate extends HTMLElement {
     this.innerHTML = `
       <div class="mt-3">
         <label for="settings-email" class="form-label">Email</label>
-        <input type="email" class="form-control" id="settings-email" value="${this._user.email}">
+        <input type="email" class="form-control" id="settings-email" value="${this._user.email}" autocomplete="off">
         <div class="invalid-feedback" id="settings-email-feedback"></div>
       </div>    
     `;

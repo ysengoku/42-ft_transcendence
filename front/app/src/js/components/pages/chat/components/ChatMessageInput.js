@@ -11,7 +11,7 @@ export class ChatMessageInput extends HTMLElement {
     this.innerHTML = `
       <div class="chat-input mx-4 mt-3">
         <div class="input-group">
-          <input type="text" id="chatMessageInput" class="form-control" placeholder="Type a message...">
+          <input type="text" id="chatMessageInput" class="form-control" placeholder="Type a message..." autocomplete="off">
           <button class="btn btn-secondary" id="sendMessage">
             <i class="bi bi-send"></i>
           </button>

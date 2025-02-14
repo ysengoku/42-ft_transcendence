@@ -23,12 +23,12 @@ export class UserNamesUpdate extends HTMLElement {
     this.innerHTML = `
 	  <div class="mt-3">
 		<label for="settings-username" class="form-label">Username</label>
-		<input type="text" class="form-control" id="settings-username" value="${this._user.username}">
+		<input type="text" class="form-control" id="settings-username" value="${this._user.username}" autocomplete="off">
 		<div class="invalid-feedback" id="settings-username-feedback"></div>
 	  </div>
 	  <div class="mt-3">
 		<label for="settings-nickname" class="form-label">Nickrname</label>
-		<input type="text" class="form-control" id="settings-nickname" value="${this._user.nickname}">
+		<input type="text" class="form-control" id="settings-nickname" value="${this._user.nickname}" autocomplete="off">
 		<div class="invalid-feedback" id="settings-nickname-feedback"></div>
 	  </div>
 	 `;
