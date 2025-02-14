@@ -39,7 +39,7 @@ class UserManager(BaseUserManager):
         if extra_fields.get("email"):
             extra_fields["email"] = BaseUserManager.normalize_email(extra_fields.get("email"))
         extra_fields.setdefault("nickname", username)
-        return self.model(username=username, **extra_fields)
+        return self.model(username=username, oauth_connection=oauth_connection, **extra_fields)
 
     def create_user(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         extra_fields["is_superuser"] = False
@@ -104,9 +104,9 @@ class User(AbstractUser):
         """
         Additional validation logic on the entire model that is not related to uniqueness.
         """
-        if not self.password and self.get_oauth_connection():
+        if not self.password and not self.get_oauth_connection():
             raise ValidationError({"password": ["This connection type requires a password."]})
-        if not self.email and self.get_oauth_connection():
+        if not self.email and not self.get_oauth_connection():
             raise ValidationError({"password": ["Email is required."]})
 
     def update_user(self, data, new_profile_picture: UploadedFile | None):
