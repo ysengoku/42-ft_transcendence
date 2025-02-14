@@ -22,12 +22,12 @@ export class LoginForm extends HTMLElement {
       <legend class="mt-4 mb-5 border-bottom">Login</legend>
   			<div class="d-flex flex-column mb-3 gap-2">
     			<label for="inputUsername" class="form-label">Username or Email</label>
-   				<input type="text" class="form-control" id="inputUsername" placeholder="username or email">
+   				<input type="text" class="form-control" id="inputUsername" placeholder="username or email" autocomplete="off">
           <div class='invalid-feedback' id='username-feedback'></div>
   			</div>
 				<div class="mb-3">
 					<label for="inputPassword" class="form-label">Password</label>
-    			<input type="password" class="form-control" id="inputPassword" placeholder="password">
+    			<input type="password" class="form-control" id="inputPassword" placeholder="password" autocomplete="off">
           <div class='invalid-feedback' id='loginpassword-feedback'></div>
   			</div>
 				<div class="mb-2 py-3">
