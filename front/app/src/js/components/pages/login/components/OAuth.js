@@ -64,7 +64,7 @@ export class OAuth extends HTMLElement {
                     font-size: 1rem;
                 }
                 .btn-42:hover {
-                    background-color: #f8f9fa;
+                    background-color:rgb(160, 165, 171);
                     color: #000000;
                 }
                 .me-2 {
