@@ -46,10 +46,12 @@ export class Navbar extends HTMLElement {
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
     if (this.isLoggedIn) {
+      const searchUserButtotn = document.createElement('user-search-button');
       const friendsButton = document.createElement('friends-button');
       const chatButton = document.createElement('chat-button');
       const notificationsButton = document.createElement('notifications-button');
 
+      navbarActions.appendChild(searchUserButtotn);
       navbarActions.appendChild(friendsButton);
       navbarActions.appendChild(chatButton);
       navbarActions.appendChild(notificationsButton);

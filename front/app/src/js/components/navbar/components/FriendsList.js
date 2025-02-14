@@ -4,9 +4,8 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 export class FriendsList extends HTMLElement {
   constructor() {
     super();
-    this.modal = null;
-    this.friendsList = [];
     this.username = '';
+    this.friendsList = [];
     this.totalFriendsCount = 0;
   }
 
@@ -30,7 +29,6 @@ export class FriendsList extends HTMLElement {
       }
       this.renderFriendsList();
     } else {
-      this.hideModal();
       if (response.status === 401) {
         showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/login');
@@ -38,6 +36,56 @@ export class FriendsList extends HTMLElement {
         showErrorMessageForDuration(ERROR_MESSAGES.UNKNOWN_ERROR, 5000);
         router.navigate('/');
       }
+    }
+  }
+
+  render() {
+    this.innerHTML = `
+      <style>
+        #friends-list-header {
+          border-bottom: 1px solid var(--bs-border-color);
+		  position: sticky;
+		  top: 0;
+		  background-color: var(--bs-body-bg);
+		  z-index: 1;
+        }
+      </style>
+      <div class="ps-3 pe-4">
+        <h6 class="pt-2 pb-4" id="friends-list-header" sticky>Friends</h6>
+        <ul class="list-group mb-2" id="friends-list"></ul>
+      </div>
+    `;
+
+    const button = document.getElementById('navbarFriendsButton');
+    button.addEventListener('shown.bs.dropdown', async () => {
+      this.fetchFriendsData();
+    });
+    button.addEventListener('hidden.bs.dropdown', () => {
+      this.friendsList = [];
+      this.totalFriendsCount = 0;
+      const listContainer = this.querySelector('#friends-list');
+      listContainer.innerHTML = '';
+    });
+  }
+
+  renderFriendsList() {
+    const listContainer = this.querySelector('#friends-list');
+    listContainer.innerHTML = '';
+    if (this.friendsList.length === 0) {
+      this.renderNoFriendsFound(listContainer);
+      return;
+    }
+    this.friendsList.forEach((friend) => {
+      // console.log(`Rendering friend:`, friend);
+      const listItem = document.createElement('user-list-item');
+      listItem.setAttribute('username', friend.username);
+      listItem.setAttribute('nickname', friend.nickname);
+      listItem.setAttribute('avatar', friend.avatar);
+      listItem.setAttribute('online', friend.is_online);
+      listContainer.appendChild(listItem);
+    });
+    if (this.friendsList.length < this.totalFriendsCount) {
+      this.renderShowMoreButton(listContainer);
     }
   }
 
@@ -86,56 +134,6 @@ export class FriendsList extends HTMLElement {
         this.fetchFriendsData();
       });
     }
-  }
-
-  renderFriendsList() {
-    const listContainer = this.querySelector('#friends-list');
-    listContainer.innerHTML = '';
-    if (this.friendsList.length === 0) {
-      this.renderNoFriendsFound(listContainer);
-      return;
-    }
-    this.friendsList.forEach((friend) => {
-      // console.log(`Rendering friend:`, friend);
-      const listItem = document.createElement('friends-list-item');
-      listItem.setAttribute('username', friend.username);
-      listItem.setAttribute('nickname', friend.nickname);
-      listItem.setAttribute('avatar', friend.avatar);
-      listItem.setAttribute('online', friend.is_online);
-      listContainer.appendChild(listItem);
-    });
-    if (this.friendsList.length < this.totalFriendsCount) {
-      this.renderShowMoreButton(listContainer);
-    }
-  }
-
-  render() {
-    this.innerHTML = `
-      <style>
-        #friends-list-header {
-          border-bottom: 1px solid var(--bs-border-color);
-		  position: sticky;
-		  top: 0;
-		  background-color: var(--bs-body-bg);
-		  z-index: 1;
-        }
-      </style>
-      <div class="ps-3 pe-4">
-        <h6 class="pt-2 pb-4" id="friends-list-header" sticky>Friends</h6>
-        <ul class="list-group mb-2" id="friends-list"></ul>
-      </div>
-    `;
-
-    const button = document.getElementById('navbarFriendsButton');
-    button.addEventListener('shown.bs.dropdown', async () => {
-      this.fetchFriendsData();
-    });
-    button.addEventListener('hidden.bs.dropdown', () => {
-      this.friendsList = [];
-      this.totalFriendsCount = 0;
-      const listContainer = this.querySelector('#friends-list');
-      listContainer.innerHTML = '';
-    });
   }
 }
 
