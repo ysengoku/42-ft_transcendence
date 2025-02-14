@@ -1,3 +1,4 @@
+import { router } from '@router';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
 import './components/index.js';
@@ -14,6 +15,10 @@ export class Chat extends HTMLElement {
   }
 
   async connectedCallback() {
+    const isLoggedIn = this.user ? true : false;
+    if (!isLoggedIn) {
+      router.navigate('/login');
+    }
     this.chatListData = await mockChatListData(); // Temporary mock data
     this.currentChatId = this.chatListData[0].id;
     this.chatListData[0].unread_messages = 0;
