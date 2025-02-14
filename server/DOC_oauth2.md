@@ -1,36 +1,50 @@
-
 # OAuth 2.0
 
 ## 42 API
 
-Create an app on 42 intra to get the client ID and secret.:
-https://profile.intra.42.fr/oauth/applications/new
+1. **Create an app on 42 Intra**:  
+   Go to [42 Intra OAuth applications](https://profile.intra.42.fr/oauth/applications/new) to get the client ID and secret.
 
+2. **Redirect user to authorization URL**:  
+   The app redirects the user to `https://api.intra.42.fr/oauth/authorize` with the following parameters:  
+   - `client_id`: Provided by 42 Intra  
+   - `redirect_uri`: Chosen by us  
+   - `scope`: `profile`  
+   - `state`: A unique string, stored in the database to prevent CSRF attacks.
 
-https://api.intra.42.fr/apidoc/guides/web_application_flow
+3. **User logs in and authorizes access**:  
+   The user logs into their 42 account and grants the requested permissions.
 
-1. The app redirects the user to https://api.intra.42.fr/oauth/authorize with client_id, redirect_uri, scope, state.
+4. **42 redirects back to the app**:  
+   After authorization, 42 redirects the user to `redirect_uri` with these query parameters:  
+   - `code`: Authorization code  
+   - `state`: The same unique state string
 
-2. The user logs in and authorizes access.
+5. **Verify state to prevent CSRF**:  
+   The app verifies that the `state` parameter matches what was stored in the database to prevent CSRF attacks.
 
-3. 42 redirects the user to redirect_uri which is the app's URL (http://localhost:1026/...callback") with a code and state query parameter.
+6. **Exchange the code for tokens**:  
+   The app sends a POST request to `https://api.intra.42.fr/oauth/token` with:  
+   - `client_id`  
+   - `client_secret`  
+   - `code`: The authorization code  
+   - `redirect_uri`: Same as before
 
-5. The app retrieves the code and state.
+7. **Receive access token**:  
+   The API responds with an `access_token`.
 
-4. The app verifies state to prevent CSRF attacks.
+8. **Use the access token to retrieve user profile**:  
+   The app sends a GET request to `https://api.intra.42.fr/v2/me` with:  
+   - `Authorization: Bearer {access_token}`
 
-5. The app sends a POST request to https://api.intra.42.fr/oauth/token with client_id, client_secret, code, and redirect_uri.
+9. **Receive user profile data**:  
+   The API responds with the user's profile data.
 
-6. The 42 API responds with access_token.
+10. **Process and store user information**:  
+   The app processes the user's profile data and stores it as needed.
 
-7. The app uses access_token to make authenticated requests.
-It sends a GET request to https://api.intra.42.fr/v2/me with Authorization: Bearer access_token.
-
-8. The API responds with the user's profile data.
-
-9. The app processes and stores the user information as needed.
-
-10. the app directs the user to the home page in case of success.
+11. **Redirect user to home page**:  
+   After processing, the app redirects the user to the home page.
 
 ## Github API
 

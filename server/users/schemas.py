@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
-from .models import Profile, User
+from .models.profile import Profile
 
 # ruff: noqa: S105
 
@@ -53,11 +53,6 @@ class UserSettingsSchema(Schema):
     connection_type: str
     mfa_enabled: bool
     avatar: str = Field(alias="profile.avatar")
-
-    @staticmethod
-    def resolve_connection_type(obj: User):
-        connection_type = obj.get_oauth_connection()
-        return connection_type if connection_type else "regular"
 
 
 class OpponentProfileAndStatsSchema(Schema):
@@ -145,7 +140,7 @@ class PasswordValidationSchema(Schema):
     password: str
     password_repeat: str
 
-    def validate_password(self) -> list[dict]:
+    def validate_password(self) -> dict[str, list[str]]:
         err_dict = {}
         err_dict["password"] = []
         err_dict["password_repeat"] = []
