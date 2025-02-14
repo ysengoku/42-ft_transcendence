@@ -5,6 +5,13 @@ Django==5.1.4
 pillow==11.1.0
 python-magic==0.4.27
 
+# OpenCV for image processing (headless version for server environments)
+opencv-python-headless==4.8.0.76
+
+# numpy for numerical computing for image modification
+numpy==1.24.4
+
+
 # Django Channels for handling WebSockets and background tasks
 channels==4.0.0
 asgiref==3.8.1
