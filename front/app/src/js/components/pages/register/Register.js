@@ -24,11 +24,11 @@ export class Register extends HTMLElement {
   render() {
     this.innerHTML = `
       <div class="container">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center py-4">
           <div class="col-12 col-md-4"> 
-    		    <div class='container d-flex flex-column justify-content-center align-items-center'>
               <div id="signup-failed-feedback"></div>
       			  <form class='w-100'>
+                <legend class="mt-4 mb-5 border-bottom">Sign Up</legend>
         			  <div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
           				<input type='username' class='form-control' id='username' placeholder='username'>
@@ -50,10 +50,11 @@ export class Register extends HTMLElement {
         				  <div class='invalid-feedback' id='password_repeat-feedback'></div>
         			  </div>
         			  <div class='mb-3 py-3'>
-        				  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Register</button>
+        				  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Sign Up</button>
         			  </div>
       			  </form>
     		    </div>
+            </div>
           </div>
         </div>
       </div>
