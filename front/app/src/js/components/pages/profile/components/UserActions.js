@@ -151,6 +151,7 @@ export class ProfileUserActions extends HTMLElement {
     // --------------------------------------------
     if (response.success) {
       this._data.isBlockedByUser = true;
+      this._data.isFriend = false;
       this.render();
     } else {
       console.error('Error blocking user:', response);

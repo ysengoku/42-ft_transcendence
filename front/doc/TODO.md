@@ -2,12 +2,12 @@
 
 ## Router
 - [x] Update navigation to pages that need authentication
-- [] Navbar and content rendering should not call refresh token twice (navbar --> async function? / promise?)
+- [x] Navbar and content rendering should not call refresh token twice (navbar --> async function? / promise?)
 
 ---------------------------------------------------------------------
 
 ## Auth manager
--[] Add message to UI after refresh token failed
+-[x] Add message to UI after refresh token failed
 
 ---------------------------------------------------------------------
 
@@ -19,8 +19,8 @@
 ---------------------------------------------------------------------
 
 ## Navbar
-- [X] Dropdown menu is hidden by Chat message header on Chat page
-- [] Update login status depending on login status
+- [x] Dropdown menu is hidden by Chat message header on Chat page
+- [x] Update login status depending on login status
 
 ---------------------------------------------------------------------
 
@@ -34,10 +34,10 @@
 - [x] CSRF Token handling
 - [x] Error handling
 - [x] email login
-- [] Forgot password
 - [x] Fix parsing of Error message from server
+- [x] Forbitten letters or format for username? (e.g. email format for username)
+- [] Forgot password
 - [] Unit test (input validation)
-- [] Forbitten letters or format for username? (e.g. email format for username)
 
 ---------------------------------------------------------------------
 
@@ -76,22 +76,22 @@
 
 ## Profile
 
-- [] Add auth check before rendering
+- [x] Add auth check before rendering
 
 ### Error handling
 - [x] 404 handling
 - [x] Check 404 server response (it returns 500 now)
-- [] Rendering of user profile page who is blocking me
+- [x] Rendering of user profile page who is blocking me
 
 ### User info
-- [] username & nickname
+- [x] username & nickname
 - [] Title
 
 ### User actions
-- [] Add firend
-- [] Remove friend
-- [] Block friend
-- [] Unblock friend
+- [x] Add firend
+- [x] Remove friend
+- [x] Block friend
+- [x] Unblock friend
 - [] Send message
 
 ### Stat
@@ -106,6 +106,12 @@
 
 ## Friends list
 - [] User search by username
+
+---------------------------------------------------------------------
+
+## Friends list
+- [] Get list from server
+- [] Handle see more making a new request (To show more than first 10 friends)
 
 ---------------------------------------------------------------------
 
