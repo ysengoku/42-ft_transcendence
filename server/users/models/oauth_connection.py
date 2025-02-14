@@ -105,10 +105,11 @@ class OauthConnection(models.Model):
     def save_cartoon_avatar(avatar_url: str, user) -> None:
         """
         Downloads the avatar image, applies the cartoon effect, and saves it.
+        If an error occurs, no avatar is loaded, and the process is silently ignored.
         """
         try:
-            avatar_response = requests.get(avatar_url)
-            avatar_response.raise_for_status()  # Raise an exception for bad status codes
+            avatar_response = requests.get(avatar_url, timeout=5)
+            avatar_response.raise_for_status()
 
             avatar_image = Image.open(BytesIO(avatar_response.content))
             cartoon_image = OauthConnection.cartoonize_image(avatar_image)
@@ -122,7 +123,7 @@ class OauthConnection(models.Model):
                 ContentFile(avatar_io.read()),
                 save=True,
             )
-        except (OSError, requests.RequestException):
+        except (requests.RequestException, OSError):
             pass
 
     def set_connection_as_connected(self, user_info: dict, user) -> None:
