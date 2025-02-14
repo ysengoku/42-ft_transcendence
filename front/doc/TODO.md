@@ -1,5 +1,11 @@
 # Components
 
+## Pages
+- [] Loading
+- [] 404
+
+---------------------------------------------------------------------
+
 ## Router
 - [x] Update navigation to pages that need authentication
 - [x] Navbar and content rendering should not call refresh token twice (navbar --> async function? / promise?)
@@ -21,6 +27,18 @@
 ## Navbar
 - [x] Dropdown menu is hidden by Chat message header on Chat page
 - [x] Update login status depending on login status
+
+### Friends list
+- [x] Get list from server
+- [x] Handle see more making a new request (To show more than first 10 friends)
+- [] Delete modal
+
+### User search
+- [x] Add user search button and dropdown to Navbar
+- [x] User search function
+- [] Adjust style for search bar
+
+### Notification
 
 ---------------------------------------------------------------------
 
@@ -66,6 +84,7 @@
 - [X] Hide password & email change for OAuth users
 - [~] Add 2FA activate toggle
 - [] New avatar upload settings (new_profile_picture)
+- [] API request
 - [] 401 handling
 - [] 404 handling
 - [] 413 handling
@@ -104,24 +123,14 @@
 
 ---------------------------------------------------------------------
 
-## Friends list
-- [] User search by username
-
----------------------------------------------------------------------
-
-## Friends list
-- [] Get list from server
-- [] Handle see more making a new request (To show more than first 10 friends)
-
----------------------------------------------------------------------
-
 ## Chat
 
-- [] Add auth check before rendering
+- [x] Add auth check before rendering
 - [x] Websocket
-- [] Add new chat (user search ?)
 - [] Block user on chat
+- [] Invite to play game
 - [] Resize event listner
+- [x] Autocomplete off
 
 ## WebSocket
 
