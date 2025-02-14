@@ -17,7 +17,7 @@ export class Settings extends HTMLElement {
     const user = auth.getStoredUser();
     this.isLoggedIn = user ? true : false;
     if (!this.isLoggedIn) {
-      // Show a messages to user
+      showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
       router.navigate('/');
       return;
     }
@@ -36,10 +36,10 @@ export class Settings extends HTMLElement {
       }
     } else {
       if (response.status === 401) {
-        showErrorMessage(ERROR_MESSAGES.SESSION_EXPIRED);
+        showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/');
       } else if (response.status === 403) {
-        showErrorMessage(ERROR_MESSAGES.SOMETHING_WENT_WRONG);
+        showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
         router.navigate('/home');
       }
     }

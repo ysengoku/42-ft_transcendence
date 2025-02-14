@@ -9,7 +9,6 @@
  * @param {boolean} [isFileUpload=false] - Whether the request involves file uploading. Defaults to false.
  * @param {boolean} [needToken=true] - Whether a CSRF token is needed for the request. Defaults to true.
  * @return {Promise<Response>} The response object from the fetch request if successful.
- * @throws {Error} Throws an error with the status and error message if the request fails.
  *
  * @example
  * // Example usage: Sending a GET request to fetch user data
@@ -28,15 +27,6 @@
 import { router } from '@router';
 import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
 import { ERROR_MESSAGES, showErrorMessage } from '@utils';
-
-// const handlers = {
-//   ok: async (response) => {
-
-//   },
-//   404: async () => {
-//     return;
-//   }
-// };
 
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   const url = `${endpoint}`;
@@ -66,42 +56,66 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     const response = await fetch(url, options);
     console.log('API response:', response);
     if (response.ok) {
-      console.log('Request successful');
-      let responseData = null;
-      if (response.status !== 204) {
-        responseData = await response.json();
-      }
-      return { success: true, status: response.status, data: responseData };
+      return handlers.success(response);
     }
     if (needToken && response.status === 401) {
-      const refreshResponse = await refreshAccessToken(csrfToken);
-      if (refreshResponse.success) {
-        return apiRequest(method, endpoint, data, isFileUpload, needToken);
-      } else if (refreshResponse.status === 401) {
-        auth.clearStoredUser();
-        router.navigate('/login');
-        // Show  message to user to login again
-        return { success: false, status: 401, msg: 'Session expired' };
-      }
+      return handlers[401](method, endpoint, data, isFileUpload, needToken, csrfToken);
     }
     if (response.status === 500) {
-      showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
-      // Retry request
-      setTimeout(async () => {
-        const retryResponse = await fetch(url, options);
-        console.log('API response:', response);
-        if (retryResponse.ok) {
-          console.log('Request successful');
-          let responseData = null;
-          if (response.status !== 204) {
-            responseData = await response.json();
-          }
-          return { success: true, status: response.status, data: responseData };
-        }
-      }, 3000);
+      return handlers[500](url, options);
     }
+    return handlers.failure(response);
+  } catch (error) {
+    return handlers.exception(error);
+  }
+}
+
+const handlers = {
+  success: async (response) => {
+    console.log('Request successful');
+    let responseData = null;
+    if (response.status !== 204) {
+      responseData = await response.json();
+    }
+    return { success: true, status: response.status, data: responseData };
+  },
+  401: async (method, endpoint, data, isFileUpload, needToken, csrfToken) => {
+    const refreshResponse = await refreshAccessToken(csrfToken);
+    if (refreshResponse.success) {
+      return apiRequest(method, endpoint, data, isFileUpload, needToken);
+    }
+    if (refreshResponse.status === 401) {
+      router.navigate('/login');
+      showErrorMessage(ERROR_MESSAGES.SESSION_EXPIRED);
+      return { success: false, status: 401, msg: 'Session expired' };
+    }
+    auth.clearStoredUser();
+    router.navigate('/');
+    showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
+    return { success: false, status: refreshResponse.status };
+  },
+  500: async (url, options) => {
+    showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
+    // Retry request
+    setTimeout(async () => {
+      const retryResponse = await fetch(url, options);
+      console.log('API response:', retryResponse);
+      if (retryResponse.ok) {
+        console.log('Request successful');
+        let responseData = null;
+        if (retryResponse.status !== 204) {
+          responseData = await retryResponse.json();
+        }
+        return { success: true, status: response.status, data: responseData };
+      }
+    }, 3000);
+    auth.clearStoredUser();
+    router.navigate('/');
+    return { success: false, status: 500, msg: ERROR_MESSAGES.UNKNOWN_ERROR };
+  },
+  failure: async (response) => {
     const errorData = await response.json();
-    let errorMsg = ERROR_MESSAGES.SERVER_ERROR;
+    let errorMsg = ERROR_MESSAGES.UNKNOWN_ERROR;
     if (Array.isArray(errorData)) {
       const foundErrorMsg = errorData.find((item) => item.msg);
       errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;
@@ -109,7 +123,9 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       errorMsg = errorData.msg;
     }
     return { success: false, status: response.status, msg: errorMsg };
-  } catch (error) {
+  },
+  exception: (error) => {
+    console.error('API request failed:', error);
     return { success: false, status: 0, msg: error };
-  }
-}
+  },
+};
