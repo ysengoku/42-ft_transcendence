@@ -32,7 +32,6 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 # DEBUG = int(os.environ.get("DEBUG", default=1))
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
-# CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
 IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
