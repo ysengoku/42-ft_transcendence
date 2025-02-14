@@ -56,7 +56,9 @@ class UserSettingsSchema(Schema):
 
     @staticmethod
     def resolve_connection_type(obj: User):
-        return obj.get_oauth_connection() or "regular"
+        oauth_connection = obj.get_oauth_connection()
+        return oauth_connection.connection_type if oauth_connection else "regular"
+
 
 
 class OpponentProfileAndStatsSchema(Schema):
