@@ -18,19 +18,19 @@ export class PasswordUpdate extends HTMLElement {
     this.innerHTML = `
       <div class="mt-3">
         <label for="old-password" class="form-label">Current password (if you would like to change your password)</label>
-        <input type="password" class="form-control" id="old-password" placeholder="current password">
+        <input type="password" class="form-control" id="old-password" placeholder="current password" autocomplete="off">
         <div class="invalid-feedback" id="old-password-feedback"></div>
       </div>
 
       <div class="mt-3">
         <label for="new-password" class="form-label">Password</label>
-        <input type="password" class="form-control" id="new-password" placeholder="new password">
+        <input type="password" class="form-control" id="new-password" placeholder="new password" autocomplete="off">
         <div class="invalid-feedback" id="new-password-feedback"></div>
       </div>
 
       <div class="mt-3">
         <label for="new-password-repeat" class="form-label">Confirm Password</label>
-        <input type="password" class="form-control" id="new-password-repeat" placeholder="new password">
+        <input type="password" class="form-control" id="new-password-repeat" placeholder="new password" autocomplete="off">
         <div class="invalid-feedback" id="new-password-repeat-feedback"></div>
       </div>
     `;
