@@ -1,6 +1,6 @@
 import { router } from '@router';
 
-export class FriendsListItem extends HTMLElement {
+export class UserListItem extends HTMLElement {
   constructor() {
     super();
     this.username = '';
@@ -41,13 +41,13 @@ export class FriendsListItem extends HTMLElement {
   render() {
     this.innerHTML = `
     <style>
-      .friends-list-item {
+      .user-list-item {
         border: none;
         padding: 16px 32px;
         border-bottom: 1px solid var(--bs-border-color);
         position: relative;
       }
-      friends-list-item:last-of-type .friends-list-item {
+      user-list-item:last-of-type .user-list-item {
         border-bottom: none;
         padding-bottom: 8px;
       }
@@ -75,7 +75,7 @@ export class FriendsListItem extends HTMLElement {
         background-color: green;
       }
     </style>
-		<li class="list-group-item friends-list-item">
+		<li class="list-group-item user-list-item">
       <div class="d-flex flex-row align-items-center">
 			  <div class="avatar-container">
 				  <img src="${this.avatar}" alt="Avatar" class="rounded-circle me-3 friends-list-avatar">
@@ -91,4 +91,4 @@ export class FriendsListItem extends HTMLElement {
   }
 }
 
-customElements.define('friends-list-item', FriendsListItem);
+customElements.define('user-list-item', UserListItem);
