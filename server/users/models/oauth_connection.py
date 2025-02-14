@@ -102,7 +102,7 @@ class OauthConnection(models.Model):
         return Image.fromarray(cartoon)
 
     @staticmethod
-    def save_cartoon_avatar(avatar_url: str, user: "User") -> None:
+    def save_cartoon_avatar(avatar_url: str, user) -> None:
         """
         Downloads the avatar image, applies the cartoon effect, and saves it.
         """
@@ -125,7 +125,7 @@ class OauthConnection(models.Model):
         except (OSError, requests.RequestException):
             pass
 
-    def set_connection_as_connected(self, user_info: dict, user: "User") -> None:
+    def set_connection_as_connected(self, user_info: dict, user) -> None:
         """
         Marks connection as 'connected' and associates it with a user.
         """
