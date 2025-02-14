@@ -55,7 +55,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
     Logs in user. Can login by username, email or username.
     """
     user = User.objects.for_username_or_email(credentials.username).first()
-    if not user:
+    if not user or user.get_oauth_connection():
         raise HttpError(401, "Username or password are not correct.")
 
     is_password_correct = user.check_password(credentials.password)
