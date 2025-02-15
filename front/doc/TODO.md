@@ -27,6 +27,7 @@
 ## Navbar
 - [x] Dropdown menu is hidden by Chat message header on Chat page
 - [x] Update login status depending on login status
+- [] Rendering for mobile
 
 ### Friends list
 - [x] Get list from server
@@ -36,7 +37,7 @@
 ### User search
 - [x] Add user search button and dropdown to Navbar
 - [x] User search function
-- [] Adjust style for search bar
+- [x] Adjust style for search bar
 
 ### Notification
 
