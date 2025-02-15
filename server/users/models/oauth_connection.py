@@ -63,11 +63,6 @@ class OauthConnection(models.Model):
         connection_type = self.connection_type if self.connection_type else "No Connection Type"
         return f"{connection_type} of {username}"
 
-    def delete(self, *args, **kwargs):
-        with suppress(models.Model.DoesNotExist):
-            self.user.delete()
-        super().delete(*args, **kwargs)
-
     @staticmethod
     def get_avatar_url(user_info: dict, connection_type: str) -> str:
         """

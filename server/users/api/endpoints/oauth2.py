@@ -38,6 +38,7 @@ def create_user_oauth(user_info: dict, oauth_connection: OauthConnection) -> Use
         username=user_info.get("login"),
         oauth_connection=oauth_connection,
     )
+
     oauth_connection.set_connection_as_connected(user_info, user)
     return user
 
@@ -140,5 +141,10 @@ def oauth_callback(request, platform: str, code: str, state: str):
         user = create_user_oauth(user_info, oauth_connection)
         if not user:
             raise AuthenticationError("Failed to create user in database.")
+    else:
+        old_oauth_connection = user.get_oauth_connection()
+        if old_oauth_connection:
+            old_oauth_connection.delete()
+        oauth_connection.set_connection_as_connected(user_info, user)
 
     return create_redirect_to_home_page_response_with_tokens(user)
