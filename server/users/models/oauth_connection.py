@@ -1,4 +1,3 @@
-from contextlib import suppress
 from io import BytesIO
 
 import cv2
