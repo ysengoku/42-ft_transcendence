@@ -136,9 +136,7 @@ def oauth_callback(request, platform: str, code: str, state: str):
 
     # Get or create user
     user = User.objects.for_oauth_id(user_info["id"]).first()
-    print("HEEEY", user)
     if not user:
-        print("GOD ABANDONNED US", user)
         user = create_user_oauth(user_info, oauth_connection)
         if not user:
             raise AuthenticationError("Failed to create user in database.")
