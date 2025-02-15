@@ -73,7 +73,7 @@ export class Chat extends HTMLElement {
     });
 
     // TODO: Resize event seems to be not working
-    document.addEventListener('resize', () => {
+    window.addEventListener('resize', () => {
       console.log('Resize event');
       if (window.innerWidth >= 768) {
         chatListArea.classList.remove('d-none');

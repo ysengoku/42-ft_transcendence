@@ -130,7 +130,7 @@
 - [x] Websocket
 - [] Block user on chat
 - [] Invite to play game
-- [] Resize event listner
+- [x] Resize event listner
 - [x] Autocomplete off
 
 ## WebSocket
