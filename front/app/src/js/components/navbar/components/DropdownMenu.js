@@ -22,6 +22,13 @@ export class DropdownMenu extends HTMLElement {
     const avatarSrc = this.user ? this.user.avatar : `${anonymousavatar}`;
 
     this.innerHTML = `
+    <style>
+      #avatar-img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+      }
+    </style>
     <div class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       <img id="avatar-img" src="${avatarSrc}" height="40" alt="user" class="d-inline-block align-top rounded-circle">
     </div>
