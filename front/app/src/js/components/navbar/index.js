@@ -7,6 +7,7 @@ import { FriendsList } from './components/FriendsList.js';
 import { UserSearchButton } from './components/UserSearchButton.js';
 import { UserSearch } from './components/UserSearch.js';
 import { ChatButton } from './components/ChatButton.js';
+import { UserActionsMenu } from './components/UserActionsMenu.js';
 import { NotificationsButton } from './components/NotificationsButton.js';
 
 export {
@@ -19,5 +20,6 @@ export {
   UserSearchButton,
   UserSearch,
   ChatButton,
+  UserActionsMenu,
   NotificationsButton,
 };

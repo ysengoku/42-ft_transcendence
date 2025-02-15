@@ -18,7 +18,7 @@ export class UserSearch extends HTMLElement {
     input.addEventListener('click', (event) => {
       event.stopPropagation();
     });
-    input.addEventListener('input', (event) => {
+    input.addEventListener('input', () => {
       if (input.value === '') {
         this.userList = [];
         this.totalUserCount = 0;
@@ -35,8 +35,7 @@ export class UserSearch extends HTMLElement {
     form.addEventListener('click', (event) => {
       event.stopPropagation();
     });
-    const button = document.getElementById('navbarUserSearch');
-    button.addEventListener('hidden.bs.dropdown', () => {
+    document.addEventListener('hidden.bs.dropdown', () => {
       input.value = '';
     });
   }
@@ -79,8 +78,7 @@ export class UserSearch extends HTMLElement {
     </div>
     `;
 
-    const button = document.getElementById('navbarUserSearch');
-    button.addEventListener('hidden.bs.dropdown', () => {
+    document.addEventListener('hidden.bs.dropdown', () => {
       this.userList = [];
       this.totalUserCount = 0;
       const listContainer = this.querySelector('#navbar-uesr-list');
