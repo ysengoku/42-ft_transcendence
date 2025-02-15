@@ -59,7 +59,11 @@ class UserManager(BaseUserManager):
         user_with_colliding_username_exist = self.filter(username__iexact=username).exists()
         counter = 0
         if user_with_colliding_username_exist:
-            counter = self.filter(Q(username__iexact=username + "-1") | Q(username__iexact=username)).count()
+            counter = self.filter(
+                Q(username__iexact=username)
+                | Q(username__iexact=username + "-1")
+                | Q(username__iexact=username + "-2"),
+            ).count()
         if counter > 0:
             return f"{base_username}-{counter}"
         return base_username
