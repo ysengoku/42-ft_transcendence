@@ -18,6 +18,14 @@ export class UserSearch extends HTMLElement {
     input.addEventListener('click', (event) => {
       event.stopPropagation();
     });
+    input.addEventListener('input', (event) => {
+      if (input.value === '') {
+        this.userList = [];
+        this.totalUserCount = 0;
+        const listContainer = this.querySelector('#navbar-uesr-list');
+        listContainer.innerHTML = '';
+      }
+    });
     form.addEventListener('submit', async (event) => {
       event.stopPropagation();
       event.preventDefault();
@@ -59,16 +67,11 @@ export class UserSearch extends HTMLElement {
 
   render() {
     this.innerHTML = `
-    <style>
-      #user-search-form {
-        border-bottom: 1px solid var(--bs-border-color);
-      }
-    </style>
-    <form class="d-flex" role="search" id="user-search-form">
+    <form class="d-flex mx-3 mt-3 mb-2" role="search" id="user-search-form">
       <div class="input-group">
         <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-      <input class="form-control me-2" type="search" placeholder="Find user(s)" aria-label="Search">
-        </div>
+        <input class="form-control me-2" type="search" placeholder="Find user(s)" aria-label="Search">
+      </div>
       <button class="btn btn-primary" type="submit">Search</button>
     </form>
     <div class="ps-3 pe-4">
