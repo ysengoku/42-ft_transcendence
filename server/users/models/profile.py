@@ -86,7 +86,7 @@ class Profile(models.Model):
     Contains user information to the application logic itself.
     """
 
-    user = models.OneToOneField("users.User", on_delete=models.CASCADE)
+    user = models.OneToOneField("users.User", default=None, null=True, blank=True, on_delete=models.CASCADE)
     profile_picture = models.ImageField(upload_to="avatars/", null=True, blank=True)
     elo = models.IntegerField(default=1000)
     friends = models.ManyToManyField("self", symmetrical=False, through="Friendship", related_name="friends_of")
