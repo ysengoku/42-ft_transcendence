@@ -1,5 +1,7 @@
+import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { showErrorMessageForDuration, ERROR_MESSAGES } from '@utils';
 
 export class FriendsList extends HTMLElement {
   constructor() {
@@ -9,8 +11,9 @@ export class FriendsList extends HTMLElement {
     this.totalFriendsCount = 0;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     this.render();
+    await this.fetchFriendsData();
   }
 
   async fetchFriendsData() {
@@ -56,11 +59,10 @@ export class FriendsList extends HTMLElement {
       </div>
     `;
 
-    const button = document.getElementById('navbarFriendsButton');
-    button.addEventListener('shown.bs.dropdown', async () => {
+    document.addEventListener('shown.bs.dropdown', async () => {
       this.fetchFriendsData();
     });
-    button.addEventListener('hidden.bs.dropdown', () => {
+    document.addEventListener('hidden.bs.dropdown', () => {
       this.friendsList = [];
       this.totalFriendsCount = 0;
       const listContainer = this.querySelector('#friends-list');

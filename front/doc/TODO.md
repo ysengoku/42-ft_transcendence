@@ -27,7 +27,7 @@
 ## Navbar
 - [x] Dropdown menu is hidden by Chat message header on Chat page
 - [x] Update login status depending on login status
-- [] Rendering for mobile
+- [x] Rendering for mobile
 
 ### Friends list
 - [x] Get list from server
@@ -97,6 +97,7 @@
 ## Profile
 
 - [x] Add auth check before rendering
+- [] Layout for Mobile
 
 ### Error handling
 - [x] 404 handling

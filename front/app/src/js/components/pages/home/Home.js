@@ -5,19 +5,19 @@ import './components/index.js';
 export class Home extends HTMLElement {
   constructor() {
     super();
-    this.isLoggedIn = false;
+    this.isLoggedin = false;
     this.user = null;
   }
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    this.isLoggedIn = authStatus.success;
+    this.isLoggedin = authStatus.success;
     this.user = auth.getStoredUser();
     this.render();
   }
 
   render() {
-    if (!this.isLoggedIn) {
+    if (!this.isLoggedin) {
       router.navigate('/');
       return;
     }
