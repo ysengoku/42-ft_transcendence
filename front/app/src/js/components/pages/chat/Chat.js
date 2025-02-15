@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
+import { isMobile } from '@utils';
 import './components/index.js';
 import { mockChatListData } from '@mock/functions/mockChatListData.js';
 import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
@@ -62,7 +63,7 @@ export class Chat extends HTMLElement {
       console.log('Chat ID:', this.currentChatId);
       this.updateCurrentChat();
 
-      if (window.innerWidth < 768) {
+      if (isMobile()) {
         chatListArea.classList.add('d-none');
         chatMessageContainer.classList.remove('d-none', 'd-md-block');
       }
@@ -72,10 +73,9 @@ export class Chat extends HTMLElement {
       chatMessageContainer.classList.add('d-none');
     });
 
-    // TODO: Resize event seems to be not working
     window.addEventListener('resize', () => {
       console.log('Resize event');
-      if (window.innerWidth >= 768) {
+      if (!isMobile()) {
         chatListArea.classList.remove('d-none');
         chatMessageContainer.classList.remove('d-none');
       }

@@ -6,6 +6,7 @@ import { ERROR_MESSAGES,
   showErrorMessageForDuration,
   addDissmissAlertListener,
 } from './errorMessage';
+import { isMobile } from './viewPort';
 
 export {
   INPUT_FEEDBACK,
@@ -15,4 +16,5 @@ export {
   removeAlert,
   showErrorMessageForDuration,
   addDissmissAlertListener,
+  isMobile,
 };

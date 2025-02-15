@@ -5,17 +5,23 @@ import './components/index.js';
 export class Login extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedin = false;
   }
 
-  connectedCallback() {
-    const isLoggedIn = auth.fetchAuthStatus().success;
-    if (isLoggedIn) {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    console.log('authStatus:', authStatus);
+    this.isLoggedin = authStatus.success;
+    if (this.isLoggedin) {
       router.navigate('/home');
     }
     this.render();
   }
 
   render() {
+    // if (this.isLoggedin) {
+    //   router.navigate('/home');
+    // }
     this.innerHTML = `
       <div class="container">
         <div class="row justify-content-center py-4">
