@@ -33,6 +33,9 @@ export class Settings extends HTMLElement {
         this.user = response.data;
         // this.user.connection_type = '42'; // mock data
         this.render();
+        this.setParams(this.user);
+        this.setEventListener();
+        this.setupSubmitHandler();
       }
     } else {
       if (response.status === 401) {
@@ -68,8 +71,8 @@ export class Settings extends HTMLElement {
 				    </div>
             
 				    <div class="mt-5 pb-5 border-bottom">
-					    <a class="btn btn-outline-primary" href="/profile/${this.user.username}" role="button">Cancel</a>
-					    <button type="submit" id="settingsSubmit" class="btn btn-primary mx-2">Save changes</button>
+              <button type="reset" class="btn btn-outline-primary mx-2" id="settings-reset-button">Reset</button>
+					    <button type="submit" class="btn btn-primary mx-2">Save changes</button>
 				    </div>
 
 				    <div class="mt-4 mb-3">
@@ -82,22 +85,35 @@ export class Settings extends HTMLElement {
       </div>
     </div>
 		`;
+  }
 
+  setParams(user) {
     const avatarUploadButton = this.querySelector('avatar-upload');
     avatarUploadButton.setAvatar(this.user);
+
     const userNames = this.querySelector('settings-user-info');
     userNames.setParams(this.user);
+
     const emailField = this.querySelector('settings-email-update');
     emailField.setParams(this.user);
+
     const passwordField = this.querySelector('settings-password-update');
     passwordField.setParam(this.user.connection_type);
+
     const mfaEnable = this.querySelector('mfa-enable-update');
     mfaEnable.setParams(this.user);
 
     const deleteAccountButton = this.querySelector('delete-account-button');
     deleteAccountButton.setUsername(this.user.username);
+  }
 
-    this.setupSubmitHandler();
+  setEventListener() {
+    const resetButton = this.querySelector('#settings-reset-button');
+    resetButton.addEventListener('click', () => {
+      if (confirm('Do you really want to discard the changes?')) {
+        this.setParams(this._user);
+      }
+    });
   }
 
   setupSubmitHandler() {
