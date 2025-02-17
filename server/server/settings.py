@@ -66,6 +66,11 @@ else:
 INSTALLED_APPS = [
     # ASGI server for working with websockets
     "daphne",
+    "channels",
+
+    # Our apps
+    "users",
+    "chat",
 
     # Default Django applications
     "django.contrib.admin",
@@ -78,10 +83,6 @@ INSTALLED_APPS = [
 
     # Profiling
     "silk",
-
-    "channels",
-
-    "users",
 ]
 
 MIDDLEWARE = [
@@ -114,9 +115,7 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'server.wsgi.application'
-ASGI_APPLICATION = "server.asgi.application"  # Pour Django Channels
-
+ASGI_APPLICATION = "server.asgi.application"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
