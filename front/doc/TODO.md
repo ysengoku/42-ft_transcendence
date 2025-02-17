@@ -137,3 +137,6 @@
 ## WebSocket
 
 -[] Handle auto close
+
+## CSS
+- [] Add cursor for html: active and body:active
