@@ -6,17 +6,17 @@ export class ProfileUserActions extends HTMLElement {
   constructor() {
     super();
     this._data = {
-      'loggedInUsername': '',
-      'shownUsername': '',
-      'isFriend': false,
-      'isBlockedByUser': false,
+      loggedInUsername: '',
+      shownUsername: '',
+      isFriend: false,
+      isBlockedByUser: false,
     };
     this.isMyProfile = false;
     this.errorMessages = {
-      'addFriend': 'Failed to add friend. Please try again later.',
-      'removeFriend': 'Failed to remove friend. Please try again later.',
-      'blockUser': 'Failed to block user. Please try again later.',
-      'unblockUser': 'Failed to unblock user. Please try again later.',
+      addFriend: 'Failed to add friend. Please try again later.',
+      removeFriend: 'Failed to remove friend. Please try again later.',
+      blockUser: 'Failed to block user. Please try again later.',
+      unblockUser: 'Failed to unblock user. Please try again later.',
     };
   }
 
@@ -94,7 +94,7 @@ export class ProfileUserActions extends HTMLElement {
   // -------------------------------------
 
   async addFriend() {
-    const request = { 'username': this._data.shownUsername };
+    const request = { username: this._data.shownUsername };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
@@ -137,7 +137,7 @@ export class ProfileUserActions extends HTMLElement {
   }
 
   async blockUser() {
-    const request = { 'username': this._data.shownUsername };
+    const request = { username: this._data.shownUsername };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */

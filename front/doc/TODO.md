@@ -4,6 +4,9 @@
 - [] Loading
 - [] 404
 
+## Alert
+- [] Replace showErrorMessage to showAlertMessage
+
 ---------------------------------------------------------------------
 
 ## Router
@@ -83,9 +86,11 @@
 - [X] Add nickname input
 - [X] Add old password input
 - [X] Hide password & email change for OAuth users
-- [~] Add 2FA activate toggle
-- [] New avatar upload settings (new_profile_picture)
-- [] API request
+- [x] New avatar upload settings (new_profile_picture)
+- [x] API request
+- [] Page change after success?
+- [] Empty input case handling
+- [] Add 2FA activate toggle
 - [] 401 handling
 - [] 404 handling
 - [] 413 handling
