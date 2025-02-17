@@ -43,9 +43,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
 
   if (data) {
     if (isFileUpload) {
-      const formData = new FormData();
-      formData.append('file', data);
-      options.body = formData;
+      options.body = data;
     } else {
       options.body = JSON.stringify(data);
     }

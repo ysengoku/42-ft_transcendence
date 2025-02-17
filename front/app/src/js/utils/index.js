@@ -1,20 +1,31 @@
 import { INPUT_FEEDBACK } from './inputFeedback';
 import { ThemeController } from './ThemeController';
-import { ERROR_MESSAGES,
+import {
+  ERROR_MESSAGES,
   showErrorMessage,
   removeAlert,
   showErrorMessageForDuration,
   addDissmissAlertListener,
 } from './errorMessage';
+import {
+  ALERT_TYPE,
+  showAlertMessage,
+  showAlertMessageForDuration,
+  // removeAlert,
+  // addDissmissAlertListener,
+} from './alertMessage';
 import { isMobile } from './viewPort';
 
 export {
   INPUT_FEEDBACK,
   ThemeController,
   ERROR_MESSAGES,
-  showErrorMessage,
+  ALERT_TYPE,
+  showAlertMessage,
+  showAlertMessageForDuration,
   removeAlert,
-  showErrorMessageForDuration,
   addDissmissAlertListener,
   isMobile,
+  showErrorMessage,
+  showErrorMessageForDuration,
 };

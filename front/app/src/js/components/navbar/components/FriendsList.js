@@ -40,7 +40,10 @@ export class FriendsList extends HTMLElement {
         'GET',
         /* eslint-disable-next-line new-cap */
         API_ENDPOINTS.USER_FRIENDS_LIST(this.username, 10, listLength),
-        null, false, true);
+        null,
+        false,
+        true,
+    );
     if (response.success) {
       if (response.data) {
         this.totalFriendsCount = response.data.count;

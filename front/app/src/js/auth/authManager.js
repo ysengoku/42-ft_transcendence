@@ -21,7 +21,7 @@ const auth = (() => {
      */
     storeUser(user) {
       sessionStorage.setItem('user', JSON.stringify(user));
-      const event = new CustomEvent('loginStatusChange', { detail: user, bubbles: true });
+      const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
       document.dispatchEvent(event);
     }
 
@@ -31,7 +31,7 @@ const auth = (() => {
      */
     clearStoredUser() {
       sessionStorage.removeItem('user');
-      const event = new CustomEvent('loginStatusChange', { detail: { user: null }, bubbles: true });
+      const event = new CustomEvent('userStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
     }
 

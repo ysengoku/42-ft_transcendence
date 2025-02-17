@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessage, ERROR_MESSAGES } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 // import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
@@ -17,7 +17,7 @@ export class Settings extends HTMLElement {
     const user = auth.getStoredUser();
     this.isLoggedIn = user ? true : false;
     if (!this.isLoggedIn) {
-      showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
       router.navigate('/');
       return;
     }
@@ -36,10 +36,10 @@ export class Settings extends HTMLElement {
       }
     } else {
       if (response.status === 401) {
-        showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/');
       } else if (response.status === 403) {
-        showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
+        showErrorMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
         router.navigate('/home');
       }
     }
@@ -138,23 +138,34 @@ export class Settings extends HTMLElement {
     const newPassword = this.querySelector('#new-password');
     const newPasswordRepeat = this.querySelector('#new-password-repeat');
     if (oldPassword.value && newPassword.value && newPasswordRepeat.value) {
-      formData.append('old-password', oldPassword);
-      formData.append('password', newPassword);
-      formData.append('password-repeat', newPasswordRepeat);
+      formData.append('old-password', oldPassword.value);
+      formData.append('password', newPassword.value);
+      formData.append('password-repeat', newPasswordRepeat.value);
     }
 
     // TODO: Check if 2FA enabled status changed, if yes append to formData
     // formData.append('mfa-enabled', this.querySelector('#mfa-switch-check').checked);
 
     if (avatarField) {
-      formData.append('avatar', avatarField);
+      formData.append('new_profile_picture', avatarField);
     }
     // for (let [key, value] of formData.entries()) {
     //   console.log(key, value);
     // }
 
-    // const response = await apiRequest('POST', 'endpoint', formData, true);
-    // handle response
+    /* eslint-disable-next-line new-cap */
+    const response = await apiRequest('POST', API_ENDPOINTS.USER_SETTINGS(this.username), formData, true);
+    if (response.success) {
+      this.user = response.data;
+      this.user.username = response.data.username;
+      auth.storeUser(this.user);
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
+      // Redirect to profile page
+      // router.navigate(`/profile/${this.user.username}`); // This causes issue for avatar upload
+    } else {
+      // TODO: handle error
+      console.log('Error updating settings', response);
+    }
   }
 }
 
