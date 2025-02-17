@@ -56,6 +56,11 @@
 
 ### Chat
 - [ ] Add authentication support to the consumers.
+- [ ] It is possible to determine how the connection was closed based on the status code.
+    - `1001` is send automatically on closing or refreshing the browser tab.
+    - `1006` means that the connection was closed due to the network error or by any other abnormal means.
+    - `websocketInstance.close({status_code})` can be sent from the client.
+        - `1000` means `NORMAL_CLOSURE`, that the client intentionally closed the connection.
 
 ## Reworks
 - [x] `username`'s are not slugified, like `slug_id`
