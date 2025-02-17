@@ -9,6 +9,8 @@ export async function mockChatMessagesData(id) {
       username: 'alice123',
       nickname: 'Alice',
       is_online: true,
+      is_blocked: false,
+      is_blocked_by_user: false,
       messages: [
         {
           id: 1,
@@ -88,6 +90,8 @@ export async function mockChatMessagesData(id) {
       username: 'johndoe55',
       nickname: 'JohnDoe',
       is_online: false,
+      is_blocked: false,
+      is_blocked_by_user: false,
       messages: [
         {
           sender: myUsername,
@@ -115,6 +119,8 @@ export async function mockChatMessagesData(id) {
       username: 'george55',
       nickname: 'George',
       is_online: true,
+      is_blocked: false,
+      is_blocked_by_user: false,
       messages: [
         {
           sender: 'george55',

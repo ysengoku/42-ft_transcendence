@@ -72,15 +72,6 @@ export class UserActionsMenu extends HTMLElement {
 		  <div class="dropdown-item" id="dropdown-item-chat">Chat</div>
     `;
 
-    // const userSearchButton = document.getElementById('dropdown-item-user-search');
-    // userSearchButton.addEventListener('click', (event) => {
-    //   event.preventDefault();
-    //   event.stopPropagation();
-    //   const dropdown = document.querySelector('.dropdown-menu');
-    //   dropdown.innerHTML = '';
-    //   const userSearch = document.createElement('user-search');
-    //   dropdown.appendChild(userSearch);
-    // });
     this.setUserSearchButton();
     this.setFriendsListButton();
 
@@ -111,6 +102,8 @@ export class UserActionsMenu extends HTMLElement {
       dropdown.innerHTML = '';
       const friendsList = document.createElement('friends-list');
       dropdown.appendChild(friendsList);
+      const customEvent = new CustomEvent('clickOnFriendsList', { bubbles: true });
+      document.dispatchEvent(customEvent);
     });
   }
 }

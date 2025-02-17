@@ -11,9 +11,25 @@ export class FriendsList extends HTMLElement {
     this.totalFriendsCount = 0;
   }
 
-  async connectedCallback() {
+  connectedCallback() {
     this.render();
-    await this.fetchFriendsData();
+    this.setEventListeners();
+  }
+
+  setEventListeners() {
+    document.addEventListener('shown.bs.dropdown', async () => {
+      this.fetchFriendsData();
+    });
+    document.addEventListener('hidden.bs.dropdown', () => {
+      this.friendsList = [];
+      this.totalFriendsCount = 0;
+      const listContainer = this.querySelector('#friends-list');
+      listContainer.innerHTML = '';
+    });
+    document.addEventListener('clickOnFriendsList', async () => {
+      console.log('Custom event catched: clickOnFriendsList');
+      await this.fetchFriendsData();
+    });
   }
 
   async fetchFriendsData() {
@@ -58,16 +74,6 @@ export class FriendsList extends HTMLElement {
         <ul class="list-group mb-2" id="friends-list"></ul>
       </div>
     `;
-
-    document.addEventListener('shown.bs.dropdown', async () => {
-      this.fetchFriendsData();
-    });
-    document.addEventListener('hidden.bs.dropdown', () => {
-      this.friendsList = [];
-      this.totalFriendsCount = 0;
-      const listContainer = this.querySelector('#friends-list');
-      listContainer.innerHTML = '';
-    });
   }
 
   renderFriendsList() {
