@@ -17,7 +17,7 @@ export class PasswordUpdate extends HTMLElement {
     }
     this.innerHTML = `
       <div class="mt-3">
-        <label for="old-password" class="form-label">Current password (if you would like to change your password)</label>
+        <label for="old-password" class="form-label">Current password (if change password)</label>
         <input type="password" class="form-control" id="old-password" placeholder="current password" autocomplete="off">
         <div class="invalid-feedback" id="old-password-feedback"></div>
       </div>

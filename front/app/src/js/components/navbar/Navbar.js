@@ -10,7 +10,7 @@ export class Navbar extends HTMLElement {
 
   async connectedCallback() {
     console.log('Navbar connected');
-    document.addEventListener('loginStatusChange', this.loginStatusHandler);
+    document.addEventListener('userStatusChange', this.loginStatusHandler);
     this.isLoggedin = auth.getStoredUser() ? true : false;
     this.render();
     window.addEventListener('resize', () => {
@@ -19,7 +19,7 @@ export class Navbar extends HTMLElement {
   }
 
   disconnectedCallback() {
-    document.removeEventListener('loginStatusChange', this.loginStatusHandler);
+    document.removeEventListener('userStatusChange', this.loginStatusHandler);
   }
 
   updateNavbar(event) {
