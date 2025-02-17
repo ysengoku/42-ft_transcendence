@@ -6,6 +6,7 @@ export class Home extends HTMLElement {
   constructor() {
     super();
     this.isLoggedIn = false;
+    this.user = null;
   }
 
   async connectedCallback() {
