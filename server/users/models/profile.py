@@ -19,7 +19,7 @@ def calculate_winrate(wins: int, loses: int) -> int | None:
 
 class ProfileQuerySet(models.QuerySet):
     def for_username(self, username: str):
-        return self.filter(user__username=username)
+        return self.filter(user__username__iexact=username)
 
     def with_friendship_and_block_status(self, curr_user, username: str):
         """
