@@ -27,7 +27,7 @@ export class UserNamesUpdate extends HTMLElement {
 		<div class="invalid-feedback" id="settings-username-feedback"></div>
 	  </div>
 	  <div class="mt-3">
-		<label for="settings-nickname" class="form-label">Nickrname</label>
+		<label for="settings-nickname" class="form-label">Nickname</label>
 		<input type="text" class="form-control" id="settings-nickname" value="${this._user.nickname}" autocomplete="off">
 		<div class="invalid-feedback" id="settings-nickname-feedback"></div>
 	  </div>
