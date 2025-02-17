@@ -14,6 +14,33 @@ export class EmailUpdate extends HTMLElement {
     this._user.connectionType = user.connection_type;
     this._user.email = user.email;
     this.render();
+    this.setEventListeners();
+  }
+
+  setEventListeners() {
+    const emailInput = this.querySelector('#settings-email');
+
+    emailInput.addEventListener('input', (event) => {
+      const feedback = this.querySelector('#settings-email-feedback');
+      if (event.target.value.length < 1) {
+        feedback.textContent = INPUT_FEEDBACK.CANNOT_DELETE_EMAIL;
+        emailInput.classList.add('is-invalid');
+      } else {
+        feedback.textContent = '';
+        emailInput.classList.remove('is-invalid');
+      }
+      if (event.target.value !== this._user.email) {
+        this.newEmail = event.target.value;
+      }
+    });
+
+    emailInput.addEventListener('blur', (event) => {
+      if (event.target.value.length < 1) {
+        event.target.value = this._user.email;
+        emailInput.classList.remove('is-invalid');
+        this.querySelector('#settings-email-feedback').textContent = '';
+      }
+    });
   }
 
   render() {
@@ -27,21 +54,6 @@ export class EmailUpdate extends HTMLElement {
         <div class="invalid-feedback" id="settings-email-feedback"></div>
       </div>    
     `;
-
-    const emailInput = this.querySelector('#settings-email');
-    emailInput.addEventListener('input', (event) => {
-      const feedback = this.querySelector('#settings-email-feedback');
-      if (event.target.value.length < 1) {
-        feedback.textContent = INPUT_FEEDBACK.EMPTY_EMAIL;
-        emailInput.classList.add('is-invalid');
-      } else {
-        feedback.textContent = '';
-        emailInput.classList.remove('is-invalid');
-      }
-      if (event.target.value !== this._user.email) {
-        this.newEmail = event.target.value;
-      }
-    });
   }
 }
 

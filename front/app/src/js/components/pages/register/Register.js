@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { INPUT_FEEDBACK } from '@utils';
 // import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
 
 export class Register extends HTMLElement {
@@ -110,17 +111,18 @@ export class Register extends HTMLElement {
   }
 
   checkInputFields(usernameField, emailField, passwordField, passwordRepeatField) {
-    const emptyUsername = 'Username is required';
-    const emptyEmail = 'Email is required';
-    const emptyPassword = 'Password is required';
-    const emptyPasswordRepeat = 'Please confirm your password';
+    // const emptyUsername = 'Username is required';
+    // const emptyEmail = 'Email is required';
+    // const emptyPassword = 'Password is required';
+    // const emptyPasswordRepeat = 'Please confirm your password';
 
     let isFormValid = true;
-    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', emptyUsername);
-    isFormValid = this.isFieldFilled(emailField, '#email-feedback', emptyEmail) && isFormValid;
-    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', emptyPassword) && isFormValid;
+    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', INPUT_FEEDBACK.EMPTY_USERNAME);
+    isFormValid = this.isFieldFilled(emailField, '#email-feedback', INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
+    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', INPUT_FEEDBACK.EMPTY_PASSWORD) && isFormValid;
     isFormValid =
-      this.isFieldFilled(passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
+      isFormValid = this.isFieldFilled(
+          passwordRepeatField, '#password_repeat-feedback', INPUT_FEEDBACK.EMPTY_PASSWORD_REPEAT) && isFormValid;
     isFormValid =
       this.checkPasswordLength(passwordField) &&
       this.checkPasswordDiff(passwordField, passwordRepeatField) &&
