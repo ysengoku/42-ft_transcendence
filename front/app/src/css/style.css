@@ -2,11 +2,16 @@ html,
 body {
   height: 100%;
   margin: 0;
-  cursor: url('/img/sample-cursor.png') 16 16, auto;
+  cursor: url('/img/sample-cursor.png') 3 3, auto;
 }
 
+/* html:active,
+body:avtive {
+  cursor: url() 3 3, auto;
+} */
+
 a, button, div [role="button"], input[type="submit"], input[type="button"] {
-  cursor: url('/img/sample-cursor.png') 16 16, auto !important;
+  cursor: url('/img/sample-cursor.png') 3 3, auto !important;
 }
 
 #content {
