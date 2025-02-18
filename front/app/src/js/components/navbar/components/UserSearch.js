@@ -22,7 +22,7 @@ export class UserSearch extends HTMLElement {
       if (input.value === '') {
         this.userList = [];
         this.totalUserCount = 0;
-        const listContainer = this.querySelector('#navbar-uesr-list');
+        const listContainer = this.querySelector('#navbar-user-list');
         listContainer.innerHTML = '';
       }
     });
@@ -77,20 +77,20 @@ export class UserSearch extends HTMLElement {
       <button class="btn btn-primary" type="submit">Search</button>
     </form>
     <div class="ps-3 pe-4">
-        <ul class="list-group mb-2" id="navbar-uesr-list"></ul>
+        <ul class="list-group mb-2" id="navbar-user-list"></ul>
     </div>
     `;
 
     document.addEventListener('hidden.bs.dropdown', () => {
       this.userList = [];
       this.totalUserCount = 0;
-      const listContainer = this.querySelector('#navbar-uesr-list');
+      const listContainer = this.querySelector('#navbar-user-list');
       listContainer.innerHTML = '';
     });
   }
 
   renderUserList() {
-    const listContainer = this.querySelector('#navbar-uesr-list');
+    const listContainer = this.querySelector('#navbar-user-list');
     listContainer.innerHTML = '';
     if (this.userList.length === 0) {
       this.renderNoUserFound(listContainer);

@@ -10,13 +10,16 @@ export class UserActionsMenu extends HTMLElement {
 
   connectedCallback() {
     this.isLoggedin = auth.getStoredUser() ? true : false;
+    if (!isMobile() || !this.isLoggedin) {
+      return;
+    }
     this.render();
   }
 
   render() {
-    if (!isMobile() || !this.isLoggedin) {
-      return;
-    }
+    // if (!isMobile() || !this.isLoggedin) {
+    //   return;
+    // }
     this.innerHTML = `
       <style>
         #navbar-user-actions {
