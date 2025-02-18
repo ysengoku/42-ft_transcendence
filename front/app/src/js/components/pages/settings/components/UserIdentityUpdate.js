@@ -1,13 +1,13 @@
 import { INPUT_FEEDBACK } from '@utils';
 
-export class UserNamesUpdate extends HTMLElement {
+export class UserIdentityUpdate extends HTMLElement {
   constructor() {
     super();
     this._user = {
       username: '',
       nickname: '',
     };
-    this.newUserInfo = {
+    this.newUserIdentity = {
       username: '',
       nickname: '',
     };
@@ -33,7 +33,7 @@ export class UserNamesUpdate extends HTMLElement {
         usernameInput.classList.remove('is-invalid');
       }
       if (event.target.value !== this._user.username) {
-        this.newUserInfo.username = event.target.value;
+        this.newUserIdentity.username = event.target.value;
       }
     });
 
@@ -57,7 +57,7 @@ export class UserNamesUpdate extends HTMLElement {
         nicknameInput.classList.remove('is-invalid');
       }
       if (event.target.value !== this._user.nickname) {
-        this.newUserInfo.nickname = event.target.value;
+        this.newUserIdentity.nickname = event.target.value;
       }
     });
 
@@ -86,4 +86,4 @@ export class UserNamesUpdate extends HTMLElement {
   }
 }
 
-customElements.define('settings-user-info', UserNamesUpdate);
+customElements.define('settings-user-identity', UserIdentityUpdate);

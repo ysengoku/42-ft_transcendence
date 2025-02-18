@@ -3,22 +3,6 @@ import { API_ENDPOINTS } from '@api';
 import { ERROR_MESSAGES, showErrorMessage } from '@utils';
 
 export async function refreshAccessToken(csrfToken) {
-  // function getRefreshTokenfromCookies() {
-  //   const name = 'refresh_token';
-  //   let token = null;
-  //   if (document.cookie && document.cookie !== '') {
-  //     const cookies = document.cookie.split(';');
-  //     for (let i = 0; i < cookies.length; i++) {
-  //       const cookie = cookies[i].trim();
-  //       if (cookie.startsWith(name)) {
-  //         token = decodeURIComponent(cookie.substring(name.length + 1));
-  //         break;
-  //       }
-  //     }
-  //   }
-  //   return token;
-  // }
-
   async function retryRefreshTokenRequest(request, delay, maxRetries) {
     let retries = 0;
     setTimeout(async () => {
@@ -39,8 +23,6 @@ export async function refreshAccessToken(csrfToken) {
   }
 
   console.log('Refreshing access token');
-  // const refreshToken = getRefreshTokenfromCookies();
-  // if (refreshToken && csrfToken) {
   if (csrfToken) {
     try {
       const request = {
@@ -50,7 +32,6 @@ export async function refreshAccessToken(csrfToken) {
           'X-CSRFToken': csrfToken,
         },
         credentials: 'include',
-        // body: JSON.stringify({ refresh: refreshToken }),
       };
       const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, request);
       if (refreshResponse.ok) {
@@ -58,8 +39,8 @@ export async function refreshAccessToken(csrfToken) {
         return { success: true, status: 204 };
       } else if (refreshResponse.status === 500) {
         showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
-        console.log('Retrying refresh token request');
-        return retryRefreshTokenRequest(request, 3000, 3);
+        console.log('Server error, retrying refresh token request');
+        return retryRefreshTokenRequest(request, 3000, 2);
       }
       console.log('Refresh failed');
       auth.clearStoredUser();
