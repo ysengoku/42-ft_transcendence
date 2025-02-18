@@ -1,12 +1,13 @@
-// export const ERROR_MESSAGES = {
-//   SERVER_ERROR: 'An unexpected error occurred. Please wait or try again later.',
-//   UNKNOWN_ERROR: 'Something went wrong. Please try again later.',
-//   SESSION_EXPIRED: 'Your session has expired. Please log in again.',
-// };
+export const ALERT_MESSAGES = {
+  SERVER_ERROR: 'An unexpected error occurred. Please wait or try again later.',
+  UNKNOWN_ERROR: 'Something went wrong. Please try again later.',
+  SESSION_EXPIRED: 'Your session has expired. Please log in again.',
+};
 
 export const ALERT_TYPE = {
   SUCCESS: 'alert-success',
   ERROR: 'alert-danger',
+  LIGHT: 'alert-light',
 };
 
 export function showAlertMessage(type, message) {

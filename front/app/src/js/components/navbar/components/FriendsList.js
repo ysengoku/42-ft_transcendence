@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessageForDuration, ERROR_MESSAGES } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 
 export class FriendsList extends HTMLElement {
   constructor() {
@@ -63,10 +63,10 @@ export class FriendsList extends HTMLElement {
       this.renderFriendsList();
     } else {
       if (response.status === 401) {
-        showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/login');
       } else {
-        showErrorMessageForDuration(ERROR_MESSAGES.UNKNOWN_ERROR, 5000);
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR, 5000);
         router.navigate('/');
       }
     }
