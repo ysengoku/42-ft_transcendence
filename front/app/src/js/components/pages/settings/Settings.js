@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 import './components/index.js';
 // import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
@@ -17,7 +17,7 @@ export class Settings extends HTMLElement {
     const user = auth.getStoredUser();
     this.isLoggedIn = user ? true : false;
     if (!this.isLoggedIn) {
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+      showAlertMessageForDuration(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED, 5000);
       router.navigate('/');
       return;
     }
@@ -39,10 +39,10 @@ export class Settings extends HTMLElement {
       }
     } else {
       if (response.status === 401) {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/');
       } else if (response.status === 403) {
-        showErrorMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+        showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
         router.navigate('/home');
       }
     }
@@ -173,7 +173,7 @@ export class Settings extends HTMLElement {
     const response = await apiRequest('POST', API_ENDPOINTS.USER_SETTINGS(this.username), formData, true);
     if (response.success) {
       this.user = response.data;
-      this.user.username = response.data.username;
+      this.username = response.data.username;
       auth.storeUser(this.user);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
     } else {

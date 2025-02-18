@@ -5,7 +5,8 @@
 - [] 404
 
 ## Alert
-- [] Replace showErrorMessage to showAlertMessage
+- [x] Replace showErrorMessage to showAlertMessage
+- [] Delete errorMessage file
 
 ---------------------------------------------------------------------
 
