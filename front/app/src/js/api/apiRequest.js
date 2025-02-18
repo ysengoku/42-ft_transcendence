@@ -26,7 +26,7 @@
 
 import { router } from '@router';
 import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
-import { ERROR_MESSAGES, showErrorMessage } from '@utils';
+import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   const url = `${endpoint}`;
@@ -84,16 +84,16 @@ const handlers = {
     }
     if (refreshResponse.status === 401) {
       router.navigate('/login');
-      showErrorMessage(ERROR_MESSAGES.SESSION_EXPIRED);
+      showAlertMessage(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED);
       return { success: false, status: 401, msg: 'Session expired' };
     }
     auth.clearStoredUser();
     router.navigate('/');
-    showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
+    showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
     return { success: false, status: refreshResponse.status };
   },
   500: async (url, options) => {
-    showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
+    showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.SERVER_ERROR);
     // Retry request
     setTimeout(async () => {
       const retryResponse = await fetch(url, options);
@@ -109,11 +109,11 @@ const handlers = {
     }, 3000);
     auth.clearStoredUser();
     router.navigate('/');
-    return { success: false, status: 500, msg: ERROR_MESSAGES.UNKNOWN_ERROR };
+    return { success: false, status: 500, msg: ALERT_MESSAGES.UNKNOWN_ERROR };
   },
   failure: async (response) => {
     const errorData = await response.json();
-    let errorMsg = ERROR_MESSAGES.UNKNOWN_ERROR;
+    let errorMsg = ALERT_MESSAGES.UNKNOWN_ERROR;
     if (Array.isArray(errorData)) {
       const foundErrorMsg = errorData.find((item) => item.msg);
       errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;

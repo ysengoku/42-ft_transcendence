@@ -9,6 +9,7 @@ import {
 } from './errorMessage';
 import {
   ALERT_TYPE,
+  ALERT_MESSAGES,
   showAlertMessage,
   showAlertMessageForDuration,
   // removeAlert,
@@ -19,13 +20,14 @@ import { isMobile } from './viewPort';
 export {
   INPUT_FEEDBACK,
   ThemeController,
-  ERROR_MESSAGES,
+  ALERT_MESSAGES,
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
   removeAlert,
   addDissmissAlertListener,
   isMobile,
+  ERROR_MESSAGES,
   showErrorMessage,
   showErrorMessageForDuration,
 };
