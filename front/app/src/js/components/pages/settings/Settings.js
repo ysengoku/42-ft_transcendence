@@ -59,7 +59,7 @@ export class Settings extends HTMLElement {
 					    <avatar-upload></avatar-upload>
 				    </div>
 				    <div>
-              <settings-user-info></settings-user-info>
+              <settings-user-identity></settings-user-identity>
 				    </div>
             <div>
               <settings-email-update></settings-email-update></div>
@@ -91,8 +91,8 @@ export class Settings extends HTMLElement {
     const avatarUploadButton = this.querySelector('avatar-upload');
     avatarUploadButton.setAvatar(this.user);
 
-    const userNames = this.querySelector('settings-user-info');
-    userNames.setParams(this.user);
+    const userIdentity = this.querySelector('settings-user-identity');
+    userIdentity.setParams(this.user);
 
     const emailField = this.querySelector('settings-email-update');
     emailField.setParams(this.user);
@@ -125,8 +125,8 @@ export class Settings extends HTMLElement {
   }
 
   async handleSubmit() {
-    const userInfoField = this.querySelector('settings-user-info');
-    const userInfo = userInfoField.newUserInfo;
+    const userIdentityField = this.querySelector('settings-user-identity');
+    const userIdentity = userIdentityField.newUserIdentity;
     const emailField = this.querySelector('settings-email-update');
     const newEmail = emailField.newEmail;
 
@@ -140,11 +140,11 @@ export class Settings extends HTMLElement {
 
     const formData = new FormData();
     // If there are any changes, append to formData
-    if (userInfo.username) {
-      formData.append('username', userInfo.username);
+    if (userIdentity.username) {
+      formData.append('username', userIdentity.username);
     }
-    if (userInfo.nickname) {
-      formData.append('nickname', userInfo.nickname);
+    if (userIdentity.nickname) {
+      formData.append('nickname', userIdentity.nickname);
     }
     if (newEmail) {
       formData.append('email', newEmail);
@@ -176,8 +176,6 @@ export class Settings extends HTMLElement {
       this.user.username = response.data.username;
       auth.storeUser(this.user);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
-      // Redirect to profile page
-      // router.navigate(`/profile/${this.user.username}`); // This causes issue for avatar upload
     } else {
       // TODO: handle error
       console.log('Error updating settings', response);
