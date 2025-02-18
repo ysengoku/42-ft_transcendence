@@ -108,6 +108,10 @@ class Profile(models.Model):
     def matches(self):
         return self.won_matches.all() | self.lost_matches.all()
 
+    @property
+    def dialogues(self):
+        self.dialogues_as_user1 | self.dialogues_as_user2
+
     def get_scored_balls(self):
         return (
             self.matches.aggregate(
