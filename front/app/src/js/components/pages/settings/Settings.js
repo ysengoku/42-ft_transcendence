@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 import './components/index.js';
 // import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
@@ -165,9 +165,6 @@ export class Settings extends HTMLElement {
     if (avatarField) {
       formData.append('new_profile_picture', avatarField);
     }
-    // for (let [key, value] of formData.entries()) {
-    //   console.log(key, value);
-    // }
 
     /* eslint-disable-next-line new-cap */
     const response = await apiRequest('POST', API_ENDPOINTS.USER_SETTINGS(this.username), formData, true);
@@ -177,8 +174,15 @@ export class Settings extends HTMLElement {
       auth.storeUser(this.user);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
     } else {
-      // TODO: handle error
       console.log('Error updating settings', response);
+      if (response.status === 401) {
+        return;
+      }
+      let errorMsg = ALERT_MESSAGES.UNKNOWN_ERROR;
+      if (response.status === 413 || response.status === 422) {
+        errorMsg = response.msg + ' Cannot update.';
+      }
+      showAlertMessage(ALERT_TYPE.ERROR, errorMsg);
     }
   }
 }
