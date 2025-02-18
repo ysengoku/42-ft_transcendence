@@ -12,7 +12,11 @@ export const API_ENDPOINTS = {
   // LOGOUT: ,
   OAUTH_AUTHORIZE: (platform) => `${API_BASE_URL}oauth/authorize/${platform}`,
   OAUTH_CALLBACK: (platform) => `${API_BASE_URL}oauth/callback/${platform}`,
-  MFA_SETUP: `${API_BASE_URL}2fa/setup`,
-  MFA_VERIFY: `${API_BASE_URL}2fa/verify`,
-  MFA_SEND: `${API_BASE_URL}2fa/send`,
+  MFA_SETUP: `${API_BASE_URL}mfa/setup`,
+  MFA_VERIFY: `${API_BASE_URL}mfa/verify`,
+
+  MFA_VERIFY: '${API_BASE_URL}mfa/verify',
+  MFA_VERIFY_LOGIN: '${API_BASE_URL}mfa/verify_login',
+  MFA_DISABLE: '${API_BASE_URL}mfa/disable',
+  MFA_STATUS: '${API_BASE_URL}mfa/status',
 };
