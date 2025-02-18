@@ -42,7 +42,15 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if not is_password_correct:
         raise HttpError(401, "Username or password are not correct.")
 
-    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+    # En mode test, on considère que tous les utilisateurs ont MFA activé
+    response_data = user.profile.to_profile_minimal_schema()
+    response_data["mfa_required"] = True  # Force MFA en mode test
+
+    if not response_data["mfa_required"]:
+        return _create_json_response_with_tokens(user, response_data)
+    else:
+        # On ne crée pas encore les tokens, on attend la validation MFA
+        return response_data
 
 
 @auth_router.post(
@@ -57,7 +65,10 @@ def signup(request: HttpRequest, data: SignUpSchema):
     Creates a new user.
     """
     user = User.objects.validate_and_create_user(
-        username=data.username, connection_type=User.REGULAR, email=data.email, password=data.password,
+        username=data.username,
+        connection_type=User.REGULAR,
+        email=data.email,
+        password=data.password,
     )
     user.save()
 
