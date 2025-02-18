@@ -1,6 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessageForDuration } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ProfileUserActions extends HTMLElement {
   constructor() {
@@ -111,7 +111,7 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error adding friend:', response);
-      showErrorMessageForDuration(this.errorMessages.addFriend, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.addFriend, 3000);
     }
   }
 
@@ -132,7 +132,7 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error removing friend:', response);
-      showErrorMessageForDuration(this.errorMessages.removeFriend, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.removeFriend, 3000);
     }
   }
 
@@ -155,7 +155,7 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error blocking user:', response);
-      showErrorMessageForDuration(this.errorMessages.blockUser, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.blockUser, 3000);
     }
   }
 
@@ -176,7 +176,7 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error unblocking:', response);
-      showErrorMessageForDuration(this.errorMessages.unblockUser, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.unblockUser, 3000);
     }
   }
 }
