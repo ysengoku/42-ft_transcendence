@@ -2,7 +2,25 @@ import { auth } from '@auth';
 import { API_ENDPOINTS } from '@api';
 import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 
+/**
+ * Refreshes the access token using the provided CSRF token.
+ *
+ * @async
+ * @function
+ * @param {string} csrfToken - The CSRF token to be used for the refresh request.
+ * @return {Promise<Object>} An object containing the success status and response status.
+ */
 export async function refreshAccessToken(csrfToken) {
+  /**
+   * Retries the refresh token request in case of a server error.
+   *
+   * @async
+   * @function
+   * @param {Object} request - The request object for the fetch call.
+   * @param {number} delay - The delay (in milliseconds) before retrying the request.
+   * @param {number} maxRetries - The maximum number of retry attempts.
+   * @return {Promise<Object>} An object containing the success status and response status.
+   */
   async function retryRefreshTokenRequest(request, delay, maxRetries) {
     let retries = 0;
     setTimeout(async () => {

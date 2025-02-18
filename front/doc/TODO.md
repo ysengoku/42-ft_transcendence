@@ -89,13 +89,11 @@
 - [X] Hide password & email change for OAuth users
 - [x] New avatar upload settings (new_profile_picture)
 - [x] API request
-- [] Page change after success?
-- [] Empty input case handling
+- [x] Empty input case handling
 - [] Add 2FA activate toggle
-- [] 401 handling
-- [] 404 handling
-- [] 413 handling
-- [] 422 handling
+- [x] 413 handling
+- [x] 422 handling
+- [x] Error handling
 - [] Unit test (input validation)
 
 ---------------------------------------------------------------------
@@ -145,4 +143,4 @@
 -[] Handle auto close
 
 ## CSS
-- [] Add cursor for html: active and body:active
+- [x] Add cursor for html: active and body:active

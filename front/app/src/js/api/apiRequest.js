@@ -1,3 +1,7 @@
+import { router } from '@router';
+import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
+import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+
 /**
  * Makes an API request with the specified method and endpoint.
  *
@@ -9,25 +13,7 @@
  * @param {boolean} [isFileUpload=false] - Whether the request involves file uploading. Defaults to false.
  * @param {boolean} [needToken=true] - Whether a CSRF token is needed for the request. Defaults to true.
  * @return {Promise<Response>} The response object from the fetch request if successful.
- *
- * @example
- * // Example usage: Sending a GET request to fetch user data
- * try {
- *   const response = await apiRequest('GET', '/api/user/data');
- *   const data = await response.json();
- *   console.log('User Data:', data);
- * } catch (error) {
- *   console.error('Error fetching user data:', error.message);
- *   if (error.response) {
- *     console.error('Response Data:', error.response);
- *   }
- * }
  */
-
-import { router } from '@router';
-import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
-import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
-
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   const url = `${endpoint}`;
   const csrfToken = getCSRFTokenfromCookies();
@@ -68,7 +54,18 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
   }
 }
 
+/**
+ * Handlers for different API response statuses and exceptions.
+ */
 const handlers = {
+  /**
+   * Handles successful API responses.
+   *
+   * @async
+   * @function
+   * @param {Response} response - The response object from the fetch request.
+   * @return {Promise<Object>} An object containing the success status, response status, and response data.
+   */
   success: async (response) => {
     console.log('Request successful');
     let responseData = null;
@@ -77,6 +74,20 @@ const handlers = {
     }
     return { success: true, status: response.status, data: responseData };
   },
+
+  /**
+   * Handles 401 Unauthorized responses by attempting to refresh the access token.
+   *
+   * @async
+   * @function
+   * @param {string} method - The HTTP method (GET, POST, DELETE, etc.).
+   * @param {string} endpoint - The API endpoint to make the request to.
+   * @param {object|null} data - The data to be sent with the request, for POST or PUT requests.
+   * @param {boolean} isFileUpload - Whether the request involves file uploading.
+   * @param {boolean} needToken - Whether a CSRF token is needed for the request.
+   * @param {string} csrfToken - The CSRF token.
+   * @return {Promise<Object>} An object containing the success status, response status, and response message.
+   */
   401: async (method, endpoint, data, isFileUpload, needToken, csrfToken) => {
     const refreshResponse = await refreshAccessToken(csrfToken);
     if (refreshResponse.success) {
@@ -92,6 +103,16 @@ const handlers = {
     showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
     return { success: false, status: refreshResponse.status };
   },
+
+  /**
+   * Handles 500 Internal Server Error responses by retrying the request after a delay.
+   *
+   * @async
+   * @function
+   * @param {string} url - The URL of the API endpoint.
+   * @param {object} options - The options for the fetch request.
+   * @return {Promise<Object>} An object containing the success status, response status, and response message.
+   */
   500: async (url, options) => {
     showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.SERVER_ERROR);
     // Retry request
@@ -111,6 +132,15 @@ const handlers = {
     router.navigate('/');
     return { success: false, status: 500, msg: ALERT_MESSAGES.UNKNOWN_ERROR };
   },
+
+  /**
+   * Handles failed API responses.
+   *
+   * @async
+   * @function
+   * @param {Response} response - The response object from the fetch request.
+   * @return {Promise<Object>} An object containing the success status, response status, and error message.
+   */
   failure: async (response) => {
     const errorData = await response.json();
     let errorMsg = ALERT_MESSAGES.UNKNOWN_ERROR;
@@ -122,6 +152,14 @@ const handlers = {
     }
     return { success: false, status: response.status, msg: errorMsg };
   },
+
+  /**
+   * Handles exceptions that occur during the API request.
+   *
+   * @function
+   * @param {Error} error - The error object.
+   * @return {Object} An object containing the success status, response status, and error message.
+   */
   exception: (error) => {
     console.error('API request failed:', error);
     return { success: false, status: 0, msg: error };
