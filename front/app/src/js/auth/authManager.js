@@ -1,3 +1,8 @@
+import { API_ENDPOINTS } from '@api';
+import { getCSRFTokenfromCookies } from './csrfToken';
+import { refreshAccessToken } from './refreshToken';
+import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+
 /**
  * @module authManager
  * Authentication manager to handle user authentication state.
@@ -6,12 +11,6 @@
  * @requires module:refreshToken
  * @requires module:utils
  */
-
-import { API_ENDPOINTS } from '@api';
-import { getCSRFTokenfromCookies } from './csrfToken';
-import { refreshAccessToken } from './refreshToken';
-import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
-
 const auth = (() => {
   class AuthManager {
     /**
