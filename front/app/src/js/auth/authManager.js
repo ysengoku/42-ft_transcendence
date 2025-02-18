@@ -92,6 +92,7 @@ const auth = (() => {
         return { success: false, status: response.status };
       }
       showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
+      return { success: false, status: response.status };
     }
   }
   return new AuthManager();

@@ -17,17 +17,28 @@ export class FriendsList extends HTMLElement {
   }
 
   setEventListeners() {
-    document.addEventListener('shown.bs.dropdown', async () => {
-      this.fetchFriendsData();
-    });
-    document.addEventListener('hidden.bs.dropdown', () => {
-      this.friendsList = [];
-      this.totalFriendsCount = 0;
-      const listContainer = this.querySelector('#friends-list');
-      listContainer.innerHTML = '';
-    });
+    const button = document.getElementById('navbar-friends-button');
+    if (button) {
+      button.addEventListener('shown.bs.dropdown', async () => {
+        this.fetchFriendsData();
+      });
+      button.addEventListener('hidden.bs.dropdown', () => {
+        this.friendsList = [];
+        this.totalFriendsCount = 0;
+        const listContainer = this.querySelector('#friends-list');
+        listContainer.innerHTML = '';
+      });
+    }
+
+    // document.addEventListener('hidden.bs.dropdown', () => {
+    //   this.friendsList = [];
+    //   this.totalFriendsCount = 0;
+    //   const listContainer = this.querySelector('#friends-list');
+    //   listContainer.innerHTML = '';
+    // });
+
+    // For mobile
     document.addEventListener('clickOnFriendsList', async () => {
-      console.log('Custom event catched: clickOnFriendsList');
       await this.fetchFriendsData();
     });
   }

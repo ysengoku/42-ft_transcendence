@@ -5,13 +5,17 @@ body {
   cursor: url('/img/sample-cursor.png') 4 4, auto;
 }
 
+a, button, div [role="button"], input[type="submit"], input[type="button"] {
+  cursor: url('/img/sample-cursor.png') 4 4, auto !important;
+}
+
 /* html:active,
 body:active {
   cursor: url('/img/sample-cursor-active.png') 4 4, auto;
 } */
-
-a, button, div [role="button"], input[type="submit"], input[type="button"] {
-  cursor: url('/img/sample-cursor.png') 4 4, auto !important;
+a:active, button:active, 
+div [role="button"]:active, input[type="submit"]:active, input[type="button"]:active {
+  cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
 }
 
 #content {
