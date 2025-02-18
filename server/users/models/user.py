@@ -82,10 +82,11 @@ class User(AbstractUser):
     password = models.CharField(max_length=128, default="")
     mfa_secret = models.CharField(max_length=128, blank=True)
     mfa_enabled = models.BooleanField(default=False)
-    password = models.CharField(max_length=128, blank=True, default="")
-    mfa_secret = models.CharField(max_length=128, blank=True, default="")
 
     objects = UserManager()
+
+    def has_valid_mfa(self) -> bool:
+        return bool(self.mfa_secret and self.mfa_enabled)
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
         """
