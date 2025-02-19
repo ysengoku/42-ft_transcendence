@@ -111,11 +111,6 @@ export class Register extends HTMLElement {
   }
 
   checkInputFields(usernameField, emailField, passwordField, passwordRepeatField) {
-    // const emptyUsername = 'Username is required';
-    // const emptyEmail = 'Email is required';
-    // const emptyPassword = 'Password is required';
-    // const emptyPasswordRepeat = 'Please confirm your password';
-
     let isFormValid = true;
     isFormValid = this.isFieldFilled(usernameField, '#username-feedback', INPUT_FEEDBACK.EMPTY_USERNAME);
     isFormValid = this.isFieldFilled(emailField, '#email-feedback', INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
