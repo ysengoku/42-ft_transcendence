@@ -19,7 +19,9 @@ export class FriendsList extends HTMLElement {
   setEventListeners() {
     const button = document.getElementById('navbar-friends-button');
     if (button) {
+      console.log('Friends dropdown button found');
       button.addEventListener('shown.bs.dropdown', async () => {
+        console.log('Friends dropdown shown');
         this.fetchFriendsData();
       });
       button.addEventListener('hidden.bs.dropdown', () => {

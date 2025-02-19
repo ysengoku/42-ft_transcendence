@@ -15,12 +15,12 @@ export class FriendsButton extends HTMLElement {
           overflow: auto;
        }
       </style>
-      <div class="nav-link" id="navbarFriendsButton" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			  <button class="btn btn-secondary me-2 rounded-circle" id="friendsButton">
+      <div class="nav-link" id="navbar-friends-button" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  <button class="btn btn-secondary me-2 rounded-circle">
 				  <i class="bi bi-people"></i>
 			  </button>
       </div>
-	    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarFriendsButton px-5">
+	    <div class="dropdown-menu dropdown-menu-end px-3">
         <friends-list></friends-list>
 	    </div>
 		`;
