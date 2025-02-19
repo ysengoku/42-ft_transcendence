@@ -11,9 +11,7 @@ export class AvatarUpload extends HTMLElement {
   }
 
   render() {
-    console.log('User:', this._user);
     const defaultAvatar = import.meta.env.VITE_DEFAULT_AVATAR; // Need to set in .env file
-    console.log('Default Avatar:', defaultAvatar);
     const avatarUploadMessage = this._user.avatar === defaultAvatar ? 'Upload Avatar' : 'Change Avatar';
     this.innerHTML = `
       <style>

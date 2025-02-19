@@ -1,38 +1,43 @@
+import { router } from '@router';
+
 export class FriendsListItem extends HTMLElement {
   constructor() {
     super();
     this.username = '';
+    this.nickname = '';
     this.avatar = '';
     this.online = false;
   }
 
-  static get observedAttributes() {
-    return ['username', 'avatar', 'online'];
-  }
-
-  attributeChangedCallback(username, oldValue, newValue) {
-    if (username === 'username') {
-      this.username = newValue;
-    } else if (username === 'avatar') {
-      this.avatar = newValue;
-    } else if (username === 'online') {
-      this.online = newValue === 'true';
-    }
-    this.render();
-    this.addEventListener('click', () => {
-      const modal = document.querySelector('#friendsModal');
-      modal.setAttribute('data-bs-dismiss', 'modal');
-      window.location.href = `/profile/${this.username}`;
-    });
-  }
-
   connectedCallback() {
+    this.setAttributes();
     this.render();
     this.addEventListener('click', () => {
-      const modal = document.querySelector('#friendsModal');
-      modal.setAttribute('data-bs-dismiss', 'modal');
-      window.location.href = `/profile/${this.username}`;
+      const modal = document.querySelector('friends-list-modal');
+      modal.hideModal();
+      router.navigate(`/profile/${this.username}`);
     });
+  }
+
+  setAttributes() {
+    this.username = this.getAttribute('username');
+    this.nickname = this.getAttribute('nickname');
+    this.avatar = this.getAttribute('avatar');
+    this.online = this.getAttribute('online') === 'true';
+  }
+
+  static get observedAttributes() {
+    return ['online'];
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (name === 'online') {
+      this.online = newValue === 'true';
+      this.updateOnlineStatus();
+    }
+  }
+
+  updateOnlineStatus() {
   }
 
   render() {
@@ -73,11 +78,16 @@ export class FriendsListItem extends HTMLElement {
       }
     </style>
 		<li class="list-group-item friends-list-item">
-			<div class="avatar-container">
-				<img src="${this.avatar}" alt="Avatar" class="rounded-circle me-3 friends-list-avatar">
-				<span class="friends-list-status-indicator ${this.online ? 'online' : ''} ms-3"></span>
-			</div>
-			${this.username}
+      <div class="d-flex flex-row align-items-center">
+			  <div class="avatar-container">
+				  <img src="${this.avatar}" alt="Avatar" class="rounded-circle me-3 friends-list-avatar">
+				  <span class="friends-list-status-indicator ${this.online ? 'online' : ''} ms-3"></span>
+			  </div>
+        <div class="d-flex flex-column justify-content-center">
+          <p class="m-0 fs-5">${this.nickname}</P>
+			    <p class="m-0 fw-light">@${this.username}</p>
+        </div>
+      <div>
 		</li>
 	`;
   }

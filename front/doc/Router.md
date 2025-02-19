@@ -27,7 +27,7 @@ import { router } from '@router';
 Routes can be added using router.addRoute(path, componentTag, isDynamic, requiresAuth).   
 Example:
 ```js
-router.addRoute('/', 'landing-component');
+router.addRoute('/', 'landing-page');
 router.addRoute('/home', 'user-home', false, true);
 router.addRoute('/profile/:username', 'user-profile', true, true);
 ```

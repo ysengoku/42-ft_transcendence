@@ -1,7 +1,7 @@
 // login.js
 import { router } from '@router';
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import { apiRequest } from '@api';
+import { API_ENDPOINTS } from '@api';
 import './components/index.js';
 
 export class Login extends HTMLElement {
@@ -39,26 +39,18 @@ export class Login extends HTMLElement {
     const password = this.querySelector('#password').value;
 
     try {
-      const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, {
+      await apiRequest('POST', API_ENDPOINTS.LOGIN, {
         username,
         password
       });
-
-      if (response.mfa_required) {
-        this.setState({
-          showMfa: true,
-          username: username,
-          error: ''
-        });
-      } else {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('user', JSON.stringify(response));
-        const navBar = document.getElementById('navbar-container');
-        if (navBar) {
-          navBar.innerHTML = '<navbar-component></navbar-component>';
-        }
-        router.navigate('/home');
-      }
+      
+      // Force MFA display
+      this.setState({
+        showMfa: true,
+        username: username,
+        error: ''
+      });
+      
     } catch (error) {
       this.setState({
         error: error.response?.detail || 'An error occurred during login'
@@ -131,4 +123,4 @@ export class Login extends HTMLElement {
   }
 }
 
-customElements.define('login-view', Login);
+customElements.define('login-page', Login);

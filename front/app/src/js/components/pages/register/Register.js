@@ -1,6 +1,6 @@
 import { router } from '@router';
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
 // import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
 
 export class Register extends HTMLElement {
@@ -24,11 +24,11 @@ export class Register extends HTMLElement {
   render() {
     this.innerHTML = `
       <div class="container">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center py-4">
           <div class="col-12 col-md-4"> 
-    		    <div class='container d-flex flex-column justify-content-center align-items-center'>
               <div id="signup-failed-feedback"></div>
       			  <form class='w-100'>
+                <legend class="mt-4 mb-5 border-bottom">Sign Up</legend>
         			  <div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
           				<input type='username' class='form-control' id='username' placeholder='username'>
@@ -50,10 +50,11 @@ export class Register extends HTMLElement {
         				  <div class='invalid-feedback' id='password_repeat-feedback'></div>
         			  </div>
         			  <div class='mb-3 py-3'>
-        				  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Register</button>
+        				  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Sign Up</button>
         			  </div>
       			  </form>
     		    </div>
+            </div>
           </div>
         </div>
       </div>
@@ -83,44 +84,25 @@ export class Register extends HTMLElement {
       password_repeat: passwordRepeatField.value,
     };
 
-    try {
-      const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
+    const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
+
+    if (response.success) {
       console.log('Registration successful:', response);
-
       if (response.status === 200) {
-        localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
-
         const userInformation = {
           username: response.data.username,
+          nickname: response.data.nickname,
           avatar: response.data.avatar,
         };
-        localStorage.setItem('user', JSON.stringify(userInformation));
-        // ----- Temporary solution -------------------------------------
-        // const mockUserData = mockRegisterSuccessResponse();
-        // const userInformation = {
-        //   username: mockUserData.username,
-        //   avatar: mockUserData.avatar,
-        // };
-        // localStorage.setItem('user', JSON.stringify(userInformation));
-        // --------------------------------------------------------------
-
-        const navBar = document.getElementById('navbar-container');
-        navBar.innerHTML = '<navbar-component></navbar-component>';
+        auth.storeUser(userInformation);
         router.navigate(`/home`, response.user);
-        // router.navigate(`/home`, mockUserData); // ----- Temporary solution
       }
-    } catch (error) {
-      console.error('Error status:', error.status);
-      let errorMessages = '';
-      if (error.status === 422) {
-        errorMessages = error.response.msg;
-      } else {
-        errorMessages = 'An unexpected error occurred. Please try again later.';
-      }
+    } else {
+      console.error('Registration failed:', response.msg);
       const feedback = this.querySelector('#signup-failed-feedback');
       feedback.innerHTML = `
         <div class="alert alert-danger alert-dismissible" role="alert">
-          ${errorMessages}
+          ${response.msg}
           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
       `;
@@ -138,11 +120,11 @@ export class Register extends HTMLElement {
     isFormValid = this.isFieldFilled(emailField, '#email-feedback', emptyEmail) && isFormValid;
     isFormValid = this.isFieldFilled(passwordField, '#password-feedback', emptyPassword) && isFormValid;
     isFormValid =
-      this.isFieldFilled(
-          passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
+      this.isFieldFilled(passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
     isFormValid =
       this.checkPasswordLength(passwordField) &&
-      this.checkPasswordDiff(passwordField, passwordRepeatField) && isFormValid;
+      this.checkPasswordDiff(passwordField, passwordRepeatField) &&
+      isFormValid;
     return isFormValid;
   }
 

@@ -1,6 +1,6 @@
 import { router } from '@router';
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
 // import { simulateApiLogin } from '@mock/functions/mockLogin.js';
 // import { simulateLoginSuccessResponse } from '@mock/functions/mockLogin.js';
 
@@ -12,31 +12,24 @@ export class LoginForm extends HTMLElement {
   connectedCallback() {
     this.render();
     this.setupLoginHandler();
-    this.setupInputToggle();
     this.setUpRemoveFeedback();
   }
 
   render() {
-    const isLoggedIn = localStorage.getItem('isLoggedin') === 'true'; // Temporary solution
-    if (isLoggedIn) {
-      router.navigate('/home');
-    }
-
     this.innerHTML = `
 		<div class="container d-flex flex-column justify-content-center align-items-center">
-      <div id="login-failed-feedback"></div>
 			<form class="w-100" id="loginForm">
-  				<div class="d-flex flex-column mb-3 gap-2">
-    				<label for="inputUsername" class="form-label">Username or Email</label>
-   					<input type="text" class="form-control" id="inputUsername" placeholder="username">
-   					<input type="text" class="form-control" id="inputEmail" placeholder="email">
-            <div class='invalid-feedback' id='loginid-feedback'></div>
-  				</div>
-				  <div class="mb-2">
-					  <label for="inputPassword" class="form-label">Password</label>
-    				<input type="password" class="form-control" id="inputPassword" placeholder="Password">
-            <div class='invalid-feedback' id='loginpassword-feedback'></div>
-  				</div>
+      <legend class="mt-4 mb-5 border-bottom">Login</legend>
+  			<div class="d-flex flex-column mb-3 gap-2">
+    			<label for="inputUsername" class="form-label">Username or Email</label>
+   				<input type="text" class="form-control" id="inputUsername" placeholder="username or email">
+          <div class='invalid-feedback' id='username-feedback'></div>
+  			</div>
+				<div class="mb-3">
+					<label for="inputPassword" class="form-label">Password</label>
+    			<input type="password" class="form-control" id="inputPassword" placeholder="password">
+          <div class='invalid-feedback' id='loginpassword-feedback'></div>
+  			</div>
 				<div class="mb-2 py-3">
 					<button type="submit" id="loginSubmit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
 				</div>
@@ -53,96 +46,48 @@ export class LoginForm extends HTMLElement {
     });
   }
 
-  // TODO: Add email case handling
   async handleLogin() {
-    const username = this.querySelector('#inputUsername').value;
-    // const email = this.querySelector('#inputEmail').value;
+    const usernameInput = this.querySelector('#inputUsername').value;
+    const username = usernameInput;
     const password = this.querySelector('#inputPassword').value;
 
     if (!this.checkInputs()) {
       return;
     }
 
-    // TODO: Adjust for API update
-    try {
-      const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
-      // ----- Temporary solution -------------------------------------
-      // const credentials = {
-      //   username: username,
-      //   password: password,
-      // };
-      // const response = await simulateApiLogin(credentials);
-      // --------------------------------------------------------------
-      console.log('Login response:', response);
+    const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
+    console.log('Login response:', response);
+    if (response.success) {
       if (response.status == 200) {
-        localStorage.setItem('isLoggedIn', 'true'); // ----- Temporary solution
-
         const userInformation = {
           username: response.data.username,
+          nickname: response.data.nickname,
           avatar: response.data.avatar,
         };
-        localStorage.setItem('user', JSON.stringify(userInformation));
-        // // ----- Temporary solution -------------------------------------
-        // const mockUserData = await simulateLoginSuccessResponse();
-        // const userInformation = {
-        //   username: mockUserData.user.username,
-        //   avatar: mockUserData.user.avatar,
-        // };
-        // localStorage.setItem('user', JSON.stringify(userInformation));
-        // // --------------------------------------------------------------
-
-        const navBar = document.getElementById('navbar-container');
-        navBar.innerHTML = '<navbar-component></navbar-component>';
+        auth.storeUser(userInformation);
         router.navigate(`/home`, response.user);
-        // router.navigate(`/home`, mockUserData); // ----- Temporary solution
       }
-    } catch (error) {
-      const feedback = this.querySelector('#login-failed-feedback');
+    } else {
+      const feedback = document.querySelector('#login-failed-feedback');
       feedback.innerHTML = `
-      <div class="alert alert-danger alert-dismissible" role="alert">
-        ${error.response.msg}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    `;
-    }
-  }
-
-  setupInputToggle() {
-    const idInput = this.querySelector('#inputUsername');
-    const emailInput = this.querySelector('#inputEmail');
-
-    idInput.addEventListener('input', this.toggleInputFields.bind(this));
-    emailInput.addEventListener('input', this.toggleInputFields.bind(this));
-  }
-
-  toggleInputFields() {
-    const idInput = this.querySelector('#inputUsername');
-    const emailInput = this.querySelector('#inputEmail');
-
-    if (idInput.value) {
-      emailInput.disabled = true;
-      emailInput.value = '';
-    } else {
-      emailInput.disabled = false;
-    }
-    if (emailInput.value) {
-      idInput.disabled = true;
-      idInput.value = '';
-    } else {
-      idInput.disabled = false;
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          ${response.msg}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
     }
   }
 
   checkInputs() {
-    const loginIdField = this.querySelector('#inputUsername');
+    const usernameField = this.querySelector('#inputUsername');
     const emailField = this.querySelector('#inputEmail');
     const passwordField = this.querySelector('#inputPassword');
 
     let isValid = true;
-    if (!loginIdField.value.trim() && !emailField.value.trim()) {
-      loginIdField.classList.add('is-invalid');
+    if (!usernameField.value.trim() && !emailField.value.trim()) {
+      usernameField.classList.add('is-invalid');
       emailField.classList.add('is-invalid');
-      document.querySelector('#loginid-feedback').textContent = 'Login ID or email is required';
+      document.querySelector('#username-feedback').textContent = 'Login ID or email is required';
       isValid = false;
     }
     if (!passwordField.value.trim()) {
@@ -154,19 +99,12 @@ export class LoginForm extends HTMLElement {
   }
 
   setUpRemoveFeedback() {
-    const loginIdField = this.querySelector('#inputUsername');
-    const emailField = this.querySelector('#inputEmail');
+    const usernameField = this.querySelector('#inputUsername');
     const passwordField = this.querySelector('#inputPassword');
 
-    loginIdField.addEventListener('input', () => {
-      loginIdField.classList.remove('is-invalid');
-      emailField.classList.remove('is-invalid');
-      document.querySelector('#loginid-feedback').textContent = '';
-    });
-    emailField.addEventListener('input', () => {
-      loginIdField.classList.remove('is-invalid');
-      emailField.classList.remove('is-invalid');
-      document.querySelector('#loginid-feedback').textContent = '';
+    usernameField.addEventListener('input', () => {
+      usernameField.classList.remove('is-invalid');
+      document.querySelector('#username-feedback').textContent = '';
     });
     passwordField.addEventListener('input', () => {
       passwordField.classList.remove('is-invalid');

@@ -32,7 +32,6 @@ DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 # DEBUG = int(os.environ.get("DEBUG", default=1))
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
-CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
 
 IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
@@ -54,7 +53,6 @@ elif "GITHUB_ACTIONS" in os.environ:
             "PORT": "5432",
         },
     }
-# PostgreSQL for production
 else:
     DATABASES = {
         "default": {
@@ -84,11 +82,7 @@ INSTALLED_APPS = [
     "users",
 ]
 
-# CORS_ALLOW_ALL_ORIGINS = True # to be removed _fanny addition
-
-
 MIDDLEWARE = [
-    # "corsheaders.middleware.CorsMiddleware", # to be removed _fanny addition
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -181,9 +175,8 @@ STATIC_ROOT = BASE_DIR / "static"
 
 AUTH_SETTINGS = {
     "password_min_len": 8,
-    "repeats_allowed": 3,
     "check_attribute_similarity": True,
-    "check_is_diverse": True,
+    "check_is_alphanumeric": True,
 }
 
 ACCESS_TOKEN_SECRET_KEY = "secret"
@@ -210,6 +203,7 @@ FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
 FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 
+HOME_REDIRECT_URL = "https://localhost:1026/home"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
@@ -234,12 +228,12 @@ OAUTH_CONFIG = {
 }
 
 
-# SendGrid Settings
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.sendgrid.net'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
-EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password
+# # SendGrid Settings
+# SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+# SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.sendgrid.net'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
+# EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password
