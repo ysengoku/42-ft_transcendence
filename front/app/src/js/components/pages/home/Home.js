@@ -24,7 +24,7 @@ export class Home extends HTMLElement {
 
     // Temporary content
     this.innerHTML = `
-		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
+		<div class="container d-flex flex-column justify-content-center align-items-center text-center my-3">
 			<h1>Welcome, ${this.user.nickname}</h1>
 			<p>This is futur Home  ("hub?")</p>
 			<div class="d-flex flex-column justify-content-center align-items-center grid gap-4 row-gap-4">

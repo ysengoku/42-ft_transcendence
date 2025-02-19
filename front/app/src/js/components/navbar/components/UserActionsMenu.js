@@ -17,9 +17,6 @@ export class UserActionsMenu extends HTMLElement {
   }
 
   render() {
-    // if (!isMobile() || !this.isLoggedin) {
-    //   return;
-    // }
     this.innerHTML = `
       <style>
         #navbar-user-actions {
@@ -64,6 +61,7 @@ export class UserActionsMenu extends HTMLElement {
     userActionsButton.addEventListener('hidden.bs.dropdown', () => {
       const dropdown = document.querySelector('.dropdown-menu');
       dropdown.innerHTML = '';
+      // TODO: Remove all event listeners
     });
   }
 
@@ -99,7 +97,7 @@ export class UserActionsMenu extends HTMLElement {
   setFriendsListButton() {
     const friendsListButton = document.getElementById('dropdown-item-friends-list');
     friendsListButton.addEventListener('click', (event) => {
-      event.preventDefault();
+      // event.preventDefault();
       event.stopPropagation();
       const dropdown = document.querySelector('.dropdown-menu');
       dropdown.innerHTML = '';
