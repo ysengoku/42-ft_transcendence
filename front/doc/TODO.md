@@ -4,10 +4,6 @@
 - [] Loading
 - [] 404
 
-## Alert
-- [x] Replace showErrorMessage to showAlertMessage
-- [] Delete errorMessage file
-
 ---------------------------------------------------------------------
 
 ## Router
@@ -60,7 +56,7 @@
 - [x] Fix parsing of Error message from server
 - [x] Forbitten letters or format for username? (e.g. email format for username)
 - [] Forgot password
-- [] Unit test (input validation)
+- [x] Unit test (input validation)
 
 ---------------------------------------------------------------------
 
@@ -131,6 +127,12 @@
 
 ---------------------------------------------------------------------
 
+## Alert
+- [x] Replace showErrorMessage to showAlertMessage
+- [x] Delete errorMessage file
+
+---------------------------------------------------------------------
+
 ## WebSocket
 
 -[] Handle auto close
@@ -140,6 +142,7 @@
 - [x] Websocket
 - [] Block user on chat
 - [] Invite to play game
+- [] Add link to Profile of current chat user
 - [x] Resize event listner
 - [x] Autocomplete off
 
