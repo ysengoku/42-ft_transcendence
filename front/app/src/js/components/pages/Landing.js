@@ -48,12 +48,15 @@ export class Landing extends HTMLElement {
             background-position: 5440px;
           }
         }
+        #landinf-buttons {
+          z-index: 3;
+        }
       </style>
       <div class="cloud"></div>
       <div class="container d-flex flex-column justify-content-center align-items-center text-center">
         <img src="${logo}" alt="logo" class="img-fluid w-100 mb-2">
             
-        <div class="d-flex flex-column align-items-center"> 
+        <div class="d-flex flex-column align-items-center" id="landinf-buttons"> 
           ${ this.isLoggedIn ?
           `<div class="mb-3">
             <a class="btn btn-primary btn-lg" href="/home" role="button">Enter</a>
