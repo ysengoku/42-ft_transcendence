@@ -13,7 +13,6 @@ export class ChatListItem extends HTMLElement {
 
   setData(data) {
     this._data = data;
-    // console.log('Data: ', this._data);
     this.render();
   }
 
@@ -65,26 +64,44 @@ export class ChatListItem extends HTMLElement {
     `;
 
     const listItem = this.querySelector('#chat-list-item');
-    if (this._data.id === 1) { // TODO: The latest element should be active by default
-      listItem.classList.add('active');
-    }
-    const chatMessages = document.querySelector('chat-message-area');
     listItem.addEventListener('click', () => {
-      chatMessages.setId(Number(this._data.id));
       listItem.classList.add('active');
-      for (const item of document.querySelectorAll('.list-group-item')) {
+      const circleNumber = listItem.querySelector('.circle-number');
+      if (circleNumber) {
+        circleNumber.remove();
+      }
+      const chatListItems = document.querySelectorAll('.list-group-item');
+      chatListItems.forEach((item) => {
         if (item !== listItem) {
           item.classList.remove('active');
         }
-      }
-      const event = new CustomEvent('chatItemSelected', { detail: this._data, bubbles: true });
+      });
+      const event = new CustomEvent('chatItemSelected', { detail: this._data.id, bubbles: true });
       this.dispatchEvent(event);
     });
   }
 
   setLastMessageTime(time) {
+    console.log('Time:', time);
+    const now = new Date();
     const date = new Date(time);
-    // TODO: Add logic to format the date
+    const diff = now - date;
+
+    if (diff < 60000) {
+      return 'now';
+    }
+    if (diff < 3600000) {
+      return `${Math.floor(diff / 60000)}m ago`;
+    }
+    if (diff < 86400000) {
+      return `${Math.floor(diff / 3600000)}h ago`;
+    }
+    if (diff < 172800000) {
+      return 'yesterday';
+    }
+    if (diff < 604800000) {
+      return `${Math.floor(diff / 86400000)}days ago`;
+    }
     const formatedDate = new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',

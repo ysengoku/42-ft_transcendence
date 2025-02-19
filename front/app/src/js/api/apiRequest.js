@@ -8,8 +8,7 @@
  * @param {object|null} [data=null] - The data to be sent with the request, for POST or PUT requests. Defaults to null.
  * @param {boolean} [isFileUpload=false] - Whether the request involves file uploading. Defaults to false.
  * @param {boolean} [needToken=true] - Whether a CSRF token is needed for the request. Defaults to true.
- * @returns {Promise<Response>} The response object from the fetch request if successful.
- * @throws {Error} Throws an error with the status and response data if the request fails.
+ * @return {Promise<Response>} The response object from the fetch request if successful.
  *
  * @example
  * // Example usage: Sending a GET request to fetch user data
@@ -25,23 +24,11 @@
  * }
  */
 
-export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
-  function getCSRFTokenfromCookies() {
-    const name = 'csrftoken';
-    let token = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.startsWith(name)) {
-          token = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return token;
-  }
+import { router } from '@router';
+import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
+import { ERROR_MESSAGES, showErrorMessage } from '@utils';
 
+export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   const url = `${endpoint}`;
   const csrfToken = getCSRFTokenfromCookies();
   const needCSRF = needToken && ['POST', 'DELETE'].includes(method) && csrfToken;
@@ -67,24 +54,78 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
 
   try {
     const response = await fetch(url, options);
+    console.log('API response:', response);
     if (response.ok) {
-      // console.log('Request successful:', response);
-      const responseData = await response.json();
-      return { status: response.status, data: responseData };
+      return handlers.success(response);
     }
-    const error = new Error('Request failed');
-    error.status = response.status;
-    let errorData = null;
-    // const contentType = response.headers.get('Content-Type');
-    // if (contentType && contentType.includes('application/json')) {
-    errorData = await response.json();
-    // } else if (contentType && contentType.includes('text/html')) {
-    //   errorData = await response.text();
-    // }
-    // console.log('Error Data: ', errorData);
-    error.response = errorData;
-    throw error;
+    if (needToken && response.status === 401) {
+      return handlers[401](method, endpoint, data, isFileUpload, needToken, csrfToken);
+    }
+    if (response.status === 500) {
+      return handlers[500](url, options);
+    }
+    return handlers.failure(response);
   } catch (error) {
-    throw error;
+    return handlers.exception(error);
   }
 }
+
+const handlers = {
+  success: async (response) => {
+    console.log('Request successful');
+    let responseData = null;
+    if (response.status !== 204) {
+      responseData = await response.json();
+    }
+    return { success: true, status: response.status, data: responseData };
+  },
+  401: async (method, endpoint, data, isFileUpload, needToken, csrfToken) => {
+    const refreshResponse = await refreshAccessToken(csrfToken);
+    if (refreshResponse.success) {
+      return apiRequest(method, endpoint, data, isFileUpload, needToken);
+    }
+    if (refreshResponse.status === 401) {
+      router.navigate('/login');
+      showErrorMessage(ERROR_MESSAGES.SESSION_EXPIRED);
+      return { success: false, status: 401, msg: 'Session expired' };
+    }
+    auth.clearStoredUser();
+    router.navigate('/');
+    showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
+    return { success: false, status: refreshResponse.status };
+  },
+  500: async (url, options) => {
+    showErrorMessage(ERROR_MESSAGES.SERVER_ERROR);
+    // Retry request
+    setTimeout(async () => {
+      const retryResponse = await fetch(url, options);
+      console.log('API response:', retryResponse);
+      if (retryResponse.ok) {
+        console.log('Request successful');
+        let responseData = null;
+        if (retryResponse.status !== 204) {
+          responseData = await retryResponse.json();
+        }
+        return { success: true, status: response.status, data: responseData };
+      }
+    }, 3000);
+    auth.clearStoredUser();
+    router.navigate('/');
+    return { success: false, status: 500, msg: ERROR_MESSAGES.UNKNOWN_ERROR };
+  },
+  failure: async (response) => {
+    const errorData = await response.json();
+    let errorMsg = ERROR_MESSAGES.UNKNOWN_ERROR;
+    if (Array.isArray(errorData)) {
+      const foundErrorMsg = errorData.find((item) => item.msg);
+      errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;
+    } else if (typeof errorData === 'object' && errorData.msg) {
+      errorMsg = errorData.msg;
+    }
+    return { success: false, status: response.status, msg: errorMsg };
+  },
+  exception: (error) => {
+    console.error('API request failed:', error);
+    return { success: false, status: 0, msg: error };
+  },
+};

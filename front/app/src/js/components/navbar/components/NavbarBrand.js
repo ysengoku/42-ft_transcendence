@@ -1,20 +1,26 @@
+import { router } from '@router';
 import navbarBrand from '/img/sample-logo.svg?url';
 
 export class NavbarBrand extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
   }
 
   connectedCallback() {
     this.render();
   }
 
-  render() {
-    // Temporary solution
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  setLoginStatus(value) {
+    this.isLoggedIn = value;
+    this.render();
+  }
 
+  render() {
+    const isLoggedIn = this.isLoggedIn;
     const href = isLoggedIn ? '/home' : '/';
-    const link = document.createElement('a');
+
+    const link = document.createElement('div');
     link.classList.add('navbar-brand');
     link.href = href;
 
@@ -24,6 +30,11 @@ export class NavbarBrand extends HTMLElement {
     img.alt = 'transcendence';
     img.classList.add('d-inline-block', 'align-top');
 
+    img.addEventListener('click', (event) => {
+      event.preventDefault();
+      history.pushState({}, '', href);
+      router.navigate(href);
+    });
     link.appendChild(img);
     this.innerHTML = '';
     this.appendChild(link);
