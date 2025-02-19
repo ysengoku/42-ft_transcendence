@@ -29,6 +29,7 @@
 ---------------------------------------------------------------------
 
 ## Navbar
+
 - [x] Dropdown menu is hidden by Chat message header on Chat page
 - [x] Update login status depending on login status
 - [x] Rendering for mobile
@@ -43,8 +44,6 @@
 - [x] User search function
 - [x] Adjust style for search bar
 
-### Notification
-
 ---------------------------------------------------------------------
 
 ## Landing
@@ -53,6 +52,7 @@
 ---------------------------------------------------------------------
 
 ## Login
+
 - [x] Adjust width
 - [x] CSRF Token handling
 - [x] Error handling
@@ -71,6 +71,7 @@
 ---------------------------------------------------------------------
 
 ## Register
+
 - [X] Adjust width
 - [x] 422 handling
 - [x] Password length check
@@ -82,6 +83,7 @@
 ---------------------------------------------------------------------
 
 ## Settings
+
 - [X] Adjust width
 - [X] Restrict other users to access to the page (remove username from url)
 - [X] Add nickname input
@@ -129,8 +131,11 @@
 
 ---------------------------------------------------------------------
 
-## Chat
+## WebSocket
 
+-[] Handle auto close
+
+### Chat
 - [x] Add auth check before rendering
 - [x] Websocket
 - [] Block user on chat
@@ -138,9 +143,10 @@
 - [x] Resize event listner
 - [x] Autocomplete off
 
-## WebSocket
+### Notifications
+- [] Add dropdown
 
--[] Handle auto close
+---------------------------------------------------------------------
 
 ## CSS
 - [x] Add cursor for html: active and body:active
