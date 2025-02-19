@@ -1,32 +1,47 @@
 import { router } from '@router';
+import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { showErrorMessage, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
-import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
+// import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
 export class Settings extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
+    this.username = '';
     this.user = null;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const user = auth.getStoredUser();
+    this.isLoggedIn = user ? true : false;
+    if (!this.isLoggedIn) {
+      showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+      router.navigate('/');
+      return;
+    }
+    this.username = user.username;
     this.fetchUserData();
   }
 
   async fetchUserData() {
-    const user = localStorage.getItem('user');
-    if (!user) {
-      // Show a messages to user
-      router.navigate('/login');
-    }
-    const username = JSON.parse(user).username;
-    try {
-      // Temporary fetch function with mock
-      const userData = await simulateFetchUserData(username);
-      this.user = userData;
-      this.render();
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      // Show a message to user
+    /* eslint-disable-next-line new-cap */
+    const response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.username));
+    if (response.success) {
+      if (response.status === 200) {
+        this.user = response.data;
+        // this.user.connection_type = '42'; // mock data
+        this.render();
+      }
+    } else {
+      if (response.status === 401) {
+        showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+        router.navigate('/');
+      } else if (response.status === 403) {
+        showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
+        router.navigate('/home');
+      }
     }
   }
 
@@ -67,7 +82,7 @@ export class Settings extends HTMLElement {
       </div>
     </div>
 		`;
-    
+
     const avatarUploadButton = this.querySelector('avatar-upload');
     avatarUploadButton.setAvatar(this.user);
     const userNames = this.querySelector('settings-user-info');
@@ -75,7 +90,7 @@ export class Settings extends HTMLElement {
     const emailField = this.querySelector('settings-email-update');
     emailField.setParams(this.user);
     const passwordField = this.querySelector('settings-password-update');
-    passwordField.setParam(this.user.registration_type);
+    passwordField.setParam(this.user.connection_type);
     const mfaEnable = this.querySelector('mfa-enable-update');
     mfaEnable.setParams(this.user);
 
@@ -103,10 +118,10 @@ export class Settings extends HTMLElement {
     if (!passwordField.checkPasswordInput()) {
       return;
     }
-    
+
     const avatarUploadField = this.querySelector('avatar-upload');
     const avatarField = avatarUploadField.selectedFile;
-    
+
     const formData = new FormData();
     // If there are any changes, append to formData
     if (userInfo.username) {
@@ -134,15 +149,12 @@ export class Settings extends HTMLElement {
     if (avatarField) {
       formData.append('avatar', avatarField);
     }
-    try {
-      for (let [key, value] of formData.entries()) {
-      	console.log(key, value);
-        // const response = await apiRequest('POST', 'endpoint', formData, true);
-        // handle response
-      }
-    } catch (error) {
-      console.error('Error upload user settings: ', error);
-    }
+    // for (let [key, value] of formData.entries()) {
+    //   console.log(key, value);
+    // }
+
+    // const response = await apiRequest('POST', 'endpoint', formData, true);
+    // handle response
   }
 }
 

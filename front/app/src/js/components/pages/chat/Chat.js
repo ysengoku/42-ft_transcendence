@@ -1,35 +1,108 @@
-import { mockChatListData } from '@mock/functions/mockChatListData.js';
+import { auth } from '@auth';
+import { socketManager } from '@socket';
 import './components/index.js';
+import { mockChatListData } from '@mock/functions/mockChatListData.js';
+import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 
 export class Chat extends HTMLElement {
   constructor() {
     super();
-    this.chatData = [];
-    this.selectedChatId = null;
-    this.socket = null;
+    this.user = auth.getStoredUser();
+    this.chatListData = [];
+    this.currentChatId = null;
+    this.currentChat = [];
   }
 
   async connectedCallback() {
-    // TODO: WebSocket connection
-    // this.socket = new WebSocket('url');
-    // this.socket.onopen = () => {
-    //   console.log('WebSocket connection established');
-    // };
-    // this.socket.onmessage = this.handleSocketMessage.bind(this);
-
-    this.chatData = await mockChatListData(); // Temporary mock data
+    this.chatListData = await mockChatListData(); // Temporary mock data
+    this.currentChatId = this.chatListData[0].id;
+    this.chatListData[0].unread_messages = 0;
     this.render();
   }
 
-  // ----- TODO --------------------------------
-  handleSocketMessage(event) {
-    const newMessage = JSON.parse(event.data);
-    this.updateChatData(newMessage);
+  async updateCurrentChat() {
+    const chatMessages = document.querySelector('chat-message-area');
+    const data = await mockChatMessagesData(this.currentChatId);
+    this.currentChat = data;
+    this.currentChat.unread_messages = 0;
+    console.log('Current chat:', this.currentChat);
+    chatMessages.setData(this.currentChat);
   }
 
-  updateChatData(newMessage) {
+  async updateChatList(newMessage) {
+    // TODO
+    // fetch new chat list data and render
   }
-  // -------------------------------------------
+
+  handleNewMessage(message) {
+    console.log('New message:', message);
+    const newMessage = message;
+    if (newMessage.id === this.currentChatId) {
+      this.currentChat.messages.push(newMessage.message);
+      const chatMessages = document.querySelector('chat-message-area');
+      chatMessages.setData(this.currentChat);
+    }
+    // const chatList = document.querySelector('chat-list-component');
+    // chatList.updateChatList(newMessage);
+    this.updateChatList(newMessage);
+  }
+
+  setEventListeners() {
+    const chatListArea = this.querySelector('#chat-list-area');
+    const chatMessageContainer = this.querySelector('#chat-messages-container');
+    const backButton = this.querySelector('#back-to-chat-list');
+
+    document.addEventListener('chatItemSelected', (event) => {
+      this.currentChatId = event.detail;
+      console.log('Chat ID:', this.currentChatId);
+      this.updateCurrentChat();
+
+      if (window.innerWidth < 768) {
+        chatListArea.classList.add('d-none');
+        chatMessageContainer.classList.remove('d-none', 'd-md-block');
+      }
+    });
+    backButton.addEventListener('click', () => {
+      chatListArea.classList.remove('d-none');
+      chatMessageContainer.classList.add('d-none');
+    });
+
+    // TODO: Resize event seems to be not working
+    document.addEventListener('resize', () => {
+      console.log('Resize event');
+      if (window.innerWidth >= 768) {
+        chatListArea.classList.remove('d-none');
+        chatMessageContainer.classList.remove('d-none');
+      }
+    });
+
+    // TODO: Send message event
+    document.addEventListener('sendMessage', (event) => {
+      console.log('Send message event:', event.detail);
+
+      // Send message to the server
+      // TODO: Adjust data to our server
+      const messageData = {
+        type: 'chat',
+        data: {
+          id: this.currentChatId,
+          message: {
+            id: this.currentChat.messages.length + 1,
+            sender: this.user.username,
+            message: event.detail,
+            timestamp: new Date().toISOString(),
+          },
+        },
+      };
+      console.log('Message data:', messageData);
+      // ----- Temporary message sending handler -----------------------------
+      this.currentChat.messages.push(messageData.data.message);
+      const chatMessages = document.querySelector('chat-message-area');
+      chatMessages.setData(this.currentChat);
+      socketManager.socket.send(JSON.stringify(messageData));
+      // ---------------------------------------------------------------------
+    });
+  }
 
   render() {
     this.innerHTML = `
@@ -44,45 +117,24 @@ export class Chat extends HTMLElement {
         </div>
 
         <div class="col-12 col-md-8 d-none d-md-block" id="chat-messages-container">
-          <div class="d-flex flex-column h-100 overflow-auto">
+          <div class="d-flex flex-column h-100">
             <button class="btn btn-secondry mt-2 text-start d-md-none mb-3" id="back-to-chat-list">
               <i class="bi bi-arrow-left"></i>
                Back
             </button>
-            <div class="flex-grow-1">
+            <div class="flex-grow-1 overflow-auto">
               <chat-message-area></chat-message-area>
             </div>
-            <chat-message-input></chat-message-input>
           </div>
         </div>
       </div>
     `;
 
     const chatList = this.querySelector('chat-list-component');
-    chatList.setData(this.chatData);
-
-    const chatListArea = this.querySelector('#chat-list-area');
-    const chatMessageArea = this.querySelector('#chat-messages-container');
-    const backButton = this.querySelector('#back-to-chat-list');
-    document.addEventListener('chatItemSelected', (event) => {
-      if (window.innerWidth < 768) {
-        chatListArea.classList.add('d-none');
-        chatMessageArea.classList.remove('d-none', 'd-md-block');
-      }
-    });
-    backButton.addEventListener('click', () => {
-      chatListArea.classList.remove('d-none');
-      chatMessageArea.classList.add('d-none');
-    });
-
-    // TODO: Resize event seems to be not working
-    document.addEventListener('resize', () => {
-      console.log('Resize event');
-      if (window.innerWidth >= 768) {
-        chatListArea.classList.remove('d-none');
-        chatMessageArea.classList.remove('d-none');
-      }
-    });
+    chatList.setData(this.chatListData);
+    this.updateCurrentChat();
+    this.setEventListeners();
+    socketManager.addListener('chat', (message) => this.handleNewMessage(message));
   }
 }
 

@@ -15,10 +15,10 @@ export class FriendsButton extends HTMLElement {
 		`;
 
     const button = this.querySelector('#friendsButton');
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const modal = document.querySelector('friends-list-modal');
       if (modal) {
-        modal.showModal();
+        await modal.showModal();
       }
     });
   }

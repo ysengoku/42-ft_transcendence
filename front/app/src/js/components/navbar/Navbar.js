@@ -1,9 +1,25 @@
+import { auth } from '@auth';
+
 export class Navbar extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
+    this.loginStatusHandler = this.updateNavbar.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    console.log('Navbar connected');
+    document.addEventListener('loginStatusChange', this.loginStatusHandler);
+    this.isLoggedIn = auth.getStoredUser() ? true : false;
+    this.render();
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener('loginStatusChange', this.loginStatusHandler);
+  }
+
+  updateNavbar(event) {
+    this.isLoggedIn = event.detail.user !== null;
     this.render();
   }
 
@@ -20,15 +36,16 @@ export class Navbar extends HTMLElement {
 				</div>
 			</nav>
 		`;
+
+    const navbarBrand = this.querySelector('navbar-brand-component');
+    navbarBrand.setLoginStatus(this.isLoggedIn);
     this.renderNavbarActions();
   }
 
   renderNavbarActions() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';  // Temporary solution
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
-
-    if (isLoggedIn) {
+    if (this.isLoggedIn) {
       const friendsButton = document.createElement('friends-button');
       const chatButton = document.createElement('chat-button');
       const notificationsButton = document.createElement('notifications-button');
@@ -38,7 +55,8 @@ export class Navbar extends HTMLElement {
       navbarActions.appendChild(notificationsButton);
     }
 
-    const dropdownMenu = document.createElement('dropdown-menu');
+    const dropdownMenu = document.createElement('navbar-dropdown-menu');
+    dropdownMenu.setLoginStatus(this.isLoggedIn);
     navbarActions.appendChild(dropdownMenu);
   }
 }

@@ -1,25 +1,25 @@
-import { INPUT_FEEDBACK } from "@utils/inputFeedback";
+import { INPUT_FEEDBACK } from '@utils';
 
 export class PasswordUpdate extends HTMLElement {
   constructor() {
-	super();
-	// this.registrationType = '';
+    super();
+    this.connectionType = '';
   }
 
   setParam(value) {
-	this.registrationType = value;
+    this.connectionType = value;
     this.render();
   }
 
   render() {
-	if (this.registrationType !== 'regular') {
-		return;
-	}
+    if (this.connectionType !== 'regular') {
+      return;
+    }
     this.innerHTML = `
       <div class="mt-3">
-		<label for="old-password" class="form-label">Current password (if you would like to change your password)</label>
+        <label for="old-password" class="form-label">Current password (if you would like to change your password)</label>
         <input type="password" class="form-control" id="old-password" placeholder="current password">
-		<div class="invalid-feedback" id="old-password-feedback"></div>
+        <div class="invalid-feedback" id="old-password-feedback"></div>
       </div>
 
       <div class="mt-3">
@@ -33,27 +33,27 @@ export class PasswordUpdate extends HTMLElement {
         <input type="password" class="form-control" id="new-password-repeat" placeholder="new password">
         <div class="invalid-feedback" id="new-password-repeat-feedback"></div>
       </div>
-	`;
+    `;
 
-	const oldPasswordField = this.querySelector('#old-password');
-	const newPasswordField = this.querySelector('#new-password');
-	const newPasswordRepeatField = this.querySelector('#new-password-repeat');
+    const oldPasswordField = this.querySelector('#old-password');
+    const newPasswordField = this.querySelector('#new-password');
+    const newPasswordRepeatField = this.querySelector('#new-password-repeat');
 
     oldPasswordField.addEventListener('input', (event) => {
-	  const feedback = this.querySelector('#old-password-feedback');
-	  oldPasswordField.classList.remove('is-invalid');
+      const feedback = this.querySelector('#old-password-feedback');
+      oldPasswordField.classList.remove('is-invalid');
       feedback.textContent = '';
     });
     newPasswordField.addEventListener('input', (event) => {
-	  const feedback = this.querySelector('#new-password-feedback');
-		newPasswordField.classList.remove('is-invalid');
-		feedback.textContent = '';
+      const feedback = this.querySelector('#new-password-feedback');
+      newPasswordField.classList.remove('is-invalid');
+      feedback.textContent = '';
     });
-	newPasswordRepeatField.addEventListener('input', (event) => {
-	  const feedback = this.querySelector('#new-password-repeat-feedback');
-	  newPasswordRepeatField.classList.remove('is-invalid');
-	  feedback.textContent = '';
-	});
+    newPasswordRepeatField.addEventListener('input', (event) => {
+      const feedback = this.querySelector('#new-password-repeat-feedback');
+      newPasswordRepeatField.classList.remove('is-invalid');
+      feedback.textContent = '';
+    });
   }
 
   checkPasswordInput() {
@@ -69,31 +69,31 @@ export class PasswordUpdate extends HTMLElement {
     const newPasswordFeedback = this.querySelector('#new-password-feedback');
     const newPasswordRepeatFeedback = this.querySelector('#new-password-repeat-feedback');
 
-	let isValid = true;
-	// Check password length
-	isValid = this.checkPasswordLength(oldPasswordField, oldPasswordFeedback);
-	isValid = this.checkPasswordLength(newPasswordField, newPasswordFeedback) && isValid;
-	isValid = this.checkPasswordLength(newPasswordRepeatField, newPasswordRepeatFeedback) && isValid;
-	if (!isValid) {
-	  return false;
-	}
-	// Check if both new password fields are input
-	isValid = !this.isPasswordInputEmpty(newPasswordField, newPasswordFeedback);
-	isValid = !this.isPasswordInputEmpty(newPasswordRepeatField, newPasswordRepeatFeedback) && isValid;
-	if (!isValid) {
-	  return false;
-	}
-	// Check if old password is input when new password is input
-	if (newPasswordField.value && !oldPasswordField.value) {
-	  oldPasswordField.classList.add('is-invalid');
-	  oldPasswordFeedback.textContent = INPUT_FEEDBACK.EMPTY_OLD_PASSWORD;
-	  return false;
-	}
-	// isValid = !this.isPasswordInputEmpty(oldPasswordField, oldPasswordFeedback);
-	// Check if new passwords match
-	if (!this.newPasswordsMatch(newPasswordField, newPasswordRepeatField)) {
-	  return false;
-	}
+    let isValid = true;
+    // Check password length
+    isValid = this.checkPasswordLength(oldPasswordField, oldPasswordFeedback);
+    isValid = this.checkPasswordLength(newPasswordField, newPasswordFeedback) && isValid;
+    isValid = this.checkPasswordLength(newPasswordRepeatField, newPasswordRepeatFeedback) && isValid;
+    if (!isValid) {
+      return false;
+    }
+    // Check if both new password fields are input
+    isValid = !this.isPasswordInputEmpty(newPasswordField, newPasswordFeedback);
+    isValid = !this.isPasswordInputEmpty(newPasswordRepeatField, newPasswordRepeatFeedback) && isValid;
+    if (!isValid) {
+      return false;
+    }
+    // Check if old password is input when new password is input
+    if (newPasswordField.value && !oldPasswordField.value) {
+      oldPasswordField.classList.add('is-invalid');
+      oldPasswordFeedback.textContent = INPUT_FEEDBACK.EMPTY_OLD_PASSWORD;
+      return false;
+    }
+    // isValid = !this.isPasswordInputEmpty(oldPasswordField, oldPasswordFeedback);
+    // Check if new passwords match
+    if (!this.newPasswordsMatch(newPasswordField, newPasswordRepeatField)) {
+      return false;
+    }
     return true;
   }
 

@@ -1,8 +1,8 @@
 /**
  * Router module for handling client-side navigation.
  * @module router
- * @requires module:landing-component
- * @requires module:login-view
+ * @requires module:landing-page
+ * @requires module:login-page
  * @requires module:register-form
  * @requires module:user-home
  * @requires module:user-profile
@@ -14,6 +14,9 @@
  * @requires module:tournament
  * @requires module:chat-page
  */
+
+import { auth } from '@auth';
+import { addDissmissAlertListener } from '@utils';
 
 const router = (() => {
   class Router {
@@ -27,21 +30,13 @@ const router = (() => {
      * @param {string} componentTag - The custom HTML tag for the component to render.
      * @param {boolean} [isDynamic=false] - Whether the route is dynamic (contains a parameter).
      * @param {boolean} [requiresAuth=false] - Whether the route requires authentication.
-     * @returns {void}
+     * @return {void}
      * @example
      * router.addRoute('/home', 'user-home', false, true);
      */
-
-    addRoute(path, componentTag, isDynamic = false, requiresAuth = false) {
-      this.routes.set(path, { componentTag, isDynamic, requiresAuth });
+    addRoute(path, componentTag, isDynamic = false) {
+      this.routes.set(path, { componentTag, isDynamic });
     }
-
-    // getRoutes() {
-    //   return Array.from(this.routes.entries()).map(([path, data]) => ({
-    //     path,
-    //     ...data,
-    //   }));
-    // }
 
     /**
      * Handles route changes and renders the appropriate component.
@@ -51,12 +46,7 @@ const router = (() => {
       const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
       if (route) {
-        const { componentTag, isDynamic, param, requiresAuth } = route;
-
-        if (requiresAuth && !this.isLoggedIn()) {
-          this.navigate('/login');
-          return;
-        }
+        const { componentTag, isDynamic, param } = route;
         if (isDynamic) {
           // console.log('param: ', param);
           this.renderDynamicUrlComponent(componentTag, param);
@@ -69,14 +59,10 @@ const router = (() => {
       }
     }
 
-    isLoggedIn() {
-      return localStorage.getItem('isLoggedIn') === 'true'; // This is temoporay simulation
-    }
-
     /**
      * Matches dynamic routes by extracting parameters.
      * @param {string} path - The current URL path.
-     * @returns {Object|null} The matched route data or null if no match found.
+     * @return {Object|null} The matched route data or null if no match found.
      */
     matchDynamicRoute(path) {
       for (const [routePath, routeData] of this.routes.entries()) {
@@ -94,7 +80,7 @@ const router = (() => {
      * Extracts parameters from a dynamic route.
      * @param {string} routePath - The defined route path.
      * @param {string} path - The current URL path.
-     * @returns {Object|null} The extracted parameters or null if no match.
+     * @return {Object|null} The extracted parameters or null if no match.
      */
     extractParam(routePath, path) {
       const routePathParts = routePath.split('/');
@@ -145,7 +131,7 @@ const router = (() => {
 
     /**
      * Initializes the router by setting up event listeners for clicks and popstate.
-     * @returns {void}
+     * @return {void}
      */
     init() {
       window.addEventListener('popstate', () => this.handleRoute());
@@ -168,28 +154,31 @@ const router = (() => {
 })();
 
 // Define all routes
-router.addRoute('/', 'landing-component');
-router.addRoute('/login', 'login-view');
+router.addRoute('/', 'landing-page');
+router.addRoute('/login', 'login-page');
 router.addRoute('/register', 'register-form');
-router.addRoute('/home', 'user-home', false, true);
-router.addRoute('/profile/:username', 'user-profile', true, true);
-router.addRoute('/user-not-found', 'user-not-found', true, true);
-router.addRoute('/settings', 'user-settings', false, true);
-router.addRoute('/dual-menu', 'dual-menu', false, true);
-router.addRoute('/dual/:id', 'dual', true, true);
-router.addRoute('/tournament-menu', 'tournament-menu', false, true);
-router.addRoute('/tournament/:id', 'tournament', true, true);
-router.addRoute('/chat', 'chat-page', false, true);
+router.addRoute('/home', 'user-home', false);
+router.addRoute('/profile/:username', 'user-profile', true);
+router.addRoute('/user-not-found', 'user-not-found', true);
+router.addRoute('/settings', 'user-settings', false);
+router.addRoute('/dual-menu', 'dual-menu', false);
+router.addRoute('/dual/:id', 'dual', true);
+router.addRoute('/tournament-menu', 'tournament-menu', false);
+router.addRoute('/tournament/:id', 'tournament', true);
+router.addRoute('/chat', 'chat-page', false);
 
 // Initialize the router on the initial HTML document load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOM loaded');
+  await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');
   if (navbarContainer) {
     navbarContainer.innerHTML = '<navbar-component></navbar-component>';
   } else {
-    console.log('Error rendering navbar');
+    console.error('Error rendering navbar');
   }
   router.init();
+  addDissmissAlertListener();
   const currentPath = window.location.pathname || '/';
   router.navigate(currentPath);
 });
