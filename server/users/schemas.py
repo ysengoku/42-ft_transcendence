@@ -33,6 +33,10 @@ class ValidationErrorMessageSchema(Message):
         "the list is the name of failed field.",
     )
 
+class LoginResponseSchema(Schema):
+    mfa_required: bool
+    username: str  # ou les autres champs nécessaires du ProfileMinimalSchema
+
 
 class ProfileMinimalSchema(Schema):
     """
