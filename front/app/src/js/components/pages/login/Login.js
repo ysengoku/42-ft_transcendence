@@ -1,4 +1,4 @@
-// login.js
+// Login.js
 import { router } from '@router';
 import { apiRequest } from '@api';
 import { API_ENDPOINTS } from '@api';
@@ -8,8 +8,6 @@ export class Login extends HTMLElement {
   constructor() {
     super();
     this.state = {
-      showMfa: false,
-      username: '',
       error: ''
     };
   }
@@ -37,44 +35,59 @@ export class Login extends HTMLElement {
   async handleLogin() {
     const username = this.querySelector('#username').value;
     const password = this.querySelector('#password').value;
-
+  
     try {
-      await apiRequest('POST', API_ENDPOINTS.LOGIN, {
+      const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, {
         username,
         password
       });
-      
-      // Force MFA display
-      this.setState({
-        showMfa: true,
-        username: username,
-        error: ''
-      });
-      
+  
+      console.log('Login response full:', response);
+  
+      if (response && response.success === true) {
+        // Vérifier si MFA est requis
+        if (response.data && response.data.mfa_required === true) {
+          console.log('Login successful, switching to MFA');
+          const container = this.querySelector('.col-12.col-md-4');
+          if (container) {
+            console.log('Container found, replacing with MFA component');
+            container.innerHTML = `
+              <mfa-auth 
+                mode="login" 
+                data-username="${username}"
+              ></mfa-auth>
+            `;
+          } else {
+            console.error('Container not found');
+          }
+        } else {
+          // Pas de MFA requis, connecter l'utilisateur directement
+          console.log('Login successful, no MFA required');
+          
+          // Stocker les informations de l'utilisateur
+          if (response.data) {
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('user', JSON.stringify(response.data));
+          }
+          
+          // Redirection vers la page d'accueil
+          router.navigate('/home');
+        }
+      } else {
+        console.log('Login response not successful:', response);
+        this.setState({
+          error: response.msg || 'Invalid login credentials'
+        });
+      }
     } catch (error) {
+      console.error('Login error:', error);
       this.setState({
-        error: error.response?.detail || 'An error occurred during login'
+        error: error.msg || 'An error occurred during login'
       });
     }
   }
 
   render() {
-    if (this.state.showMfa) {
-      this.innerHTML = `
-        <div class="container">
-          <div class="row justify-content-center">
-            <div class="col-12 col-md-6">
-              <mfa-auth 
-                mode="login" 
-                data-username="${this.state.username}"
-              ></mfa-auth>
-            </div>
-          </div>
-        </div>
-      `;
-      return;
-    }
-
     this.innerHTML = `
       <div class="container">
         <div class="row justify-content-center">

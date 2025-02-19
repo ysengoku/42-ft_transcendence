@@ -112,7 +112,6 @@ def oauth_callback(request, platform: str, code: str, state: str):
     except RequestAborted as exc:
         raise HttpError(408, "The request timed out while retrieving the token.") from exc
 
-
     token_data = token_response.json()
 
     # Get user info

@@ -228,12 +228,14 @@ OAUTH_CONFIG = {
 }
 
 
-# # SendGrid Settings
-# SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-# SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.sendgrid.net'
+# email sending for 2fa and password reset
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
 # EMAIL_PORT = 587
 # EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
-# EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password
+# EMAIL_HOST_USER = 'your-gmail-account@gmail.com'  # Votre adresse Gmail
+# EMAIL_HOST_PASSWORD = 'your-app-password'  # Mot de passe d'application Gmail
+# DEFAULT_FROM_EMAIL = 'Transcendence App <your-gmail-account@gmail.com>'
