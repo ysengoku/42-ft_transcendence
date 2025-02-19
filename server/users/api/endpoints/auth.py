@@ -1,3 +1,4 @@
+from typing import Union
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -12,6 +13,7 @@ from users.schemas import (
     ProfileMinimalSchema,
     SignUpSchema,
     ValidationErrorMessageSchema,
+    LoginResponseSchema,
 )
 
 auth_router = Router()
@@ -47,13 +49,40 @@ def check_self(request: HttpRequest):
 
 
 # TODO: add secure options for the cookie
-@auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message, 429: Message}, auth=None)
+# @auth_router.post("login", response={200: Union[ProfileMinimalSchema, LoginResponseSchema],  401: Message, 429: Message}, auth=None)
+# @ensure_csrf_cookie
+# @csrf_exempt
+# def login(request: HttpRequest, credentials: LoginSchema):
+#     """
+#     Logs in user. Can login by username, email or username.
+#     """
+#     user = User.objects.for_username_or_email(credentials.username).first()
+#     if not user or user.get_oauth_connection():
+#         raise HttpError(401, "Username or password are not correct.")
+
+#     is_password_correct = user.check_password(credentials.password)
+#     if not is_password_correct:
+#         raise HttpError(401, "Username or password are not correct.")
+
+#     # En mode test, on considère que tous les utilisateurs ont MFA activé
+#     response_data = user.profile.to_profile_minimal_schema()
+#     response_data["mfa_required"] = True  # Force MFA en mode test
+
+#     if not response_data["mfa_required"]:
+#         return _create_json_response_with_tokens(user, response_data)
+#     else:
+#         # On ne crée pas encore les tokens, on attend la validation MFA
+#        return LoginResponseSchema(
+#             mfa_required=True,
+#             username=user.username,
+#             # autres champs nécessaires..
+#        )
+
+
+@auth_router.post("login", response={200: LoginResponseSchema, 401: Message, 429: Message}, auth=None)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
-    """
-    Logs in user. Can login by username, email or username.
-    """
     user = User.objects.for_username_or_email(credentials.username).first()
     if not user or user.get_oauth_connection():
         raise HttpError(401, "Username or password are not correct.")
@@ -63,14 +92,14 @@ def login(request: HttpRequest, credentials: LoginSchema):
         raise HttpError(401, "Username or password are not correct.")
 
     # En mode test, on considère que tous les utilisateurs ont MFA activé
-    response_data = user.profile.to_profile_minimal_schema()
-    response_data["mfa_required"] = True  # Force MFA en mode test
+    base_data = user.profile.to_profile_minimal_schema()
+    response_data = LoginResponseSchema(
+        mfa_required=True,
+        username=base_data["username"],
+    )
 
-    if not response_data["mfa_required"]:
-        return _create_json_response_with_tokens(user, response_data)
-    else:
-        # On ne crée pas encore les tokens, on attend la validation MFA
-        return response_data
+    # Convertir en dict et retourner comme JsonResponse
+    return JsonResponse(response_data.dict())
 
 
 @auth_router.post(

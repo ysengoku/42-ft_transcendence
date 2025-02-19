@@ -14,8 +14,6 @@ export const API_ENDPOINTS = {
   USER_UNBLOCK_USER: (username, blockedUser) => `${API_BASE_URL}users/${username}/blocked_users/${blockedUser}`,
   OAUTH_AUTHORIZE: (platform) => `${API_BASE_URL}oauth/authorize/${platform}`,
   OAUTH_CALLBACK: (platform) => `${API_BASE_URL}oauth/callback/${platform}`,
-  MFA_VERIFY: `${API_BASE_URL}mfa/verify`,
   MFA_VERIFY_LOGIN: `${API_BASE_URL}mfa/verify_login`,
-  MFA_DISABLE: `${API_BASE_URL}mfa/disable`,
-  MFA_STATUS: `${API_BASE_URL}mfa/status`,
+  MFA_SEND_CODE: `${API_BASE_URL}mfa/send_code`,
 };
