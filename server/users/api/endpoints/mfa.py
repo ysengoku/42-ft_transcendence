@@ -1,12 +1,17 @@
 from base64 import b64encode
 from io import BytesIO
-from typing import Any
+import random
+import string
+from typing import Any, Dict
+from datetime import datetime, timedelta
 
-import pyotp
-import qrcode
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router
 from ninja.errors import HttpError
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 
 from users.api.endpoints.auth import _create_json_response_with_tokens
 from users.models import User
@@ -14,158 +19,98 @@ from users.models import User
 mfa_router = Router()
 
 TOKEN_LENGTH = 6
-
-def generate_secret_key() -> str:
-    """Generate a random secret key for MFA"""
-    return pyotp.random_base32()
+TOKEN_EXPIRY = 10 * 60  # 10 minutes en secondes
 
 
-def generate_qr_code(uri: str) -> str:
-    """Generate a QR code image and return it as a base64 string"""
-    qr = qrcode.make(uri)
-    buffer = BytesIO()
-    qr.save(buffer, format="PNG")
-    return b64encode(buffer.getvalue()).decode("utf-8")
+def generate_verification_code() -> str:
+    """Generate a random 6-digit verification code"""
+    return "".join(random.choices(string.digits, k=TOKEN_LENGTH))
 
 
-@mfa_router.post("/setup")
-def setup_mfa(request, username: str) -> dict[str, Any]:
-    """Setup MFA for a user"""
+def get_cache_key(username: str) -> str:
+    """Create a unique cache key for storing the verification code"""
+    return f"mfa_email_code_{username}"
+
+
+@ensure_csrf_cookie
+@mfa_router.post("/send-code")
+def send_verification_code(request, username: str) -> dict[str, Any]:
+    """Send a verification code to the user's email (simulated in console)"""
     try:
         user = User.objects.filter(username=username).first()
         if not user:
             raise HttpError(404, "User not found")
 
-        # Don't allow re-enabling if already enabled
-        if user.mfa_enabled:
-            raise HttpError(400, "MFA is already enabled for this account")
+        # Générer un code de vérification
+        verification_code = generate_verification_code()
 
-        # Generate new secret
-        secret = generate_secret_key()
-        user.mfa_secret = secret
-        user.save()
+        # Stocker le code dans le cache avec une date d'expiration
+        cache_key = get_cache_key(username)
+        cache.set(cache_key, verification_code, TOKEN_EXPIRY)
 
-        # Generate QR code
-        totp = pyotp.TOTP(secret)
-        uri = totp.provisioning_uri(name=user.username, issuer_name="Transcendence")
-        qr_code = generate_qr_code(uri)
+        # En développement, on affiche le code dans la console
+        print("=" * 50)
+        print(f"VERIFICATION CODE for {username}: {verification_code}")
+        print("=" * 50)
 
         return {
             "status": "success",
-            "message": "MFA setup initiated",
-            "instructions": {
-                "step1": "Install an authenticator app (Google Authenticator, Microsoft Authenticator, or Authy)",
-                "step2": "Open your authenticator app and scan the QR code below",
-                "step3": "Enter the 6-digit code from your authenticator app to verify and enable MFA",
-                "manual_entry": "If you can't scan the QR code, manually enter this secret key in your authenticator app",
-            },
-            "qr_code": qr_code,
-            "secret": secret,
+            "message": "Verification code sent (check console)",
+            "debug_code": verification_code,  # Inclure le code en réponse pour faciliter les tests
         }
 
     except HttpError as e:
         raise e
     except Exception as e:
-        raise HttpError(500, f"Error setting up MFA: {str(e)}")
-
-
-@mfa_router.post("/verify")
-def verify_mfa(request, username: str, token: str) -> dict[str, str]:
-    """Verify and enable MFA for a user"""
-    if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
-        raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
-
-    try:
-        user = User.objects.filter(username=username).first()
-        if not user:
-            raise HttpError(404, "User not found")
-
-        if not user.mfa_secret:
-            raise HttpError(404, "Please set up MFA before verifying")
-
-        totp = pyotp.TOTP(user.mfa_secret)
-        if not totp.verify(token):
-            raise HttpError(400, "Invalid code. Please try again with a new code from your authenticator app.")
-
-        user.mfa_enabled = True
-        user.save()
-
-        return {"status": "success", "message": "MFA has been successfully enabled for your account"}
-
-    except HttpError as e:
-        raise e
-    except Exception as e:
-        raise HttpError(500, f"Error verifying MFA: {str(e)}")
+        raise HttpError(500, f"Error sending verification code: {str(e)}")
 
 
 @mfa_router.post("/verify-login")
-def verify_mfa_login(request, username: str, token: str) -> dict[str, Any]:
-    """Verify MFA token during login"""
+def verify_email_login(request, username: str, token: str) -> dict[str, Any]:
+    """Verify email verification code during login"""
     if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
-        raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
+        raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
 
     try:
         user = User.objects.filter(username=username).first()
         if not user:
             raise HttpError(404, "User not found")
 
-        if not user.mfa_enabled:
-            raise HttpError(400, "MFA is not enabled for this account")
+        # Récupérer le code stocké dans le cache
+        cache_key = get_cache_key(username)
+        stored_code = cache.get(cache_key)
 
-        totp = pyotp.TOTP(user.mfa_secret)
-        if not totp.verify(token):
-            raise HttpError(400, "Invalid code. Please try again with a new code from your authenticator app.")
+        if not stored_code:
+            raise HttpError(400, "Verification code has expired. Please request a new code.")
 
-        # MFA vérifié, on crée maintenant les tokens
+        if token != stored_code:
+            raise HttpError(400, "Invalid verification code. Please try again.")
+
+        # Supprimer le code du cache après utilisation
+        cache.delete(cache_key)
+
+        # Code vérifié, on crée maintenant les tokens
         response_data = user.profile.to_profile_minimal_schema()
         return _create_json_response_with_tokens(user, response_data)
-
-    except Exception as e:
-        raise HttpError(500, f"Error verifying MFA: {str(e)}")
-
-
-@mfa_router.delete("/disable")
-def disable_mfa(request, username: str, token: str) -> dict[str, str]:
-    """Disable MFA for a user"""
-    if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
-        raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
-
-    try:
-        user = User.objects.filter(username=username).first()
-        if not user:
-            raise HttpError(404, "User not found")
-
-        if not user.mfa_enabled:
-            raise HttpError(400, "MFA is already disabled")
-
-        totp = pyotp.TOTP(user.mfa_secret)
-        if not totp.verify(token):
-            raise HttpError(400, "Invalid code. Please enter a valid code from your authenticator app.")
-
-        # Disable MFA
-        user.mfa_enabled = False
-        user.mfa_secret = ""  # Clear the secret
-        user.save()
-
-        return {"status": "success", "message": "MFA has been successfully disabled"}
 
     except HttpError as e:
         raise e
     except Exception as e:
-        raise HttpError(500, f"Error disabling MFA: {str(e)}")
+        raise HttpError(500, f"Error verifying code: {str(e)}")
 
 
 @mfa_router.get("/status")
 def mfa_status(request, username: str) -> dict[str, bool]:
-    """Check if MFA is enabled for a user"""
+    """Check if user exists and can receive verification codes"""
     try:
         user = User.objects.filter(username=username).first()
         if not user:
             raise HttpError(404, "User not found")
 
-        return {"enabled": user.mfa_enabled}
+        # En mode développement, on suppose que tous les utilisateurs peuvent recevoir des codes
+        return {"enabled": True}
 
     except HttpError as e:
         raise e
     except Exception as e:
-        raise HttpError(500, f"Error checking MFA status: {str(e)}")
+        raise HttpError(500, f"Error checking status: {str(e)}")
