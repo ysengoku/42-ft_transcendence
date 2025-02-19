@@ -1,7 +1,7 @@
 // mfa.js
 import { router } from '@router';
-import { apiRequest } from '@api/apiRequest.js';
-import { API_ENDPOINTS } from '@api/endpoints.js';
+import { apiRequest } from '@api';
+import { API_ENDPOINTS } from '@api';
 
 export class MFAAuth extends HTMLElement {
   constructor() {

@@ -1,4 +1,4 @@
-import {apiRequest} from './apiRequest.js';
-import {API_ENDPOINTS} from './endpoints.js';
+import { apiRequest } from './apiRequest.js';
+import { API_ENDPOINTS } from './endpoints';
 
-export {apiRequest, API_ENDPOINTS};
+export { apiRequest, API_ENDPOINTS };

@@ -1,6 +1,7 @@
+import { auth } from '@auth';
+
 export async function mockChatMessagesData(id) {
-  const storedUser = localStorage.getItem('user');
-  const myUsername = JSON.parse(storedUser).username;
+  const myUsername = auth.getStoredUser().username;
   const chatMessages = [
     {
       id: 1,
@@ -12,62 +13,72 @@ export async function mockChatMessagesData(id) {
         {
           id: 1,
           sender: 'alice123',
-          message: 'Yo! What’s up?',
+          message: 'Yo! What\'s up?',
           timestamp: '2025-02-02T12:00:00Z',
+          liked: false,
         },
         {
           id: 2,
           sender: myUsername,
           message: 'Hey hey! Just surviving another day. You?',
           timestamp: '2025-02-02T12:01:00Z',
+          liked: false,
         },
         {
           id: 3,
           sender: 'alice123',
           message: 'Feeling like a rockstar today! 😎',
           timestamp: '2025-02-02T12:02:00Z',
+          liked: false,
         },
         {
           id: 4,
           sender: myUsername,
           message: 'Nice! Hope that energy lasts until tomorrow 😆',
           timestamp: '2025-02-02T12:03:00Z',
+          liked: false,
         },
         {
           id: 5,
           sender: 'alice123',
-          message: 'Haha, we’ll see! Catch you later!',
+          message: 'Haha, we\'ll see! Catch you later!',
           timestamp: '2025-02-02T12:04:00Z',
+          liked: false,
         },
         {
           id: 6,
           sender: myUsername,
-          message: 'Later! Don’t forget to bring snacks. 🤓',
+          message: 'Later! Don\'t forget to bring snacks. 🤓',
           timestamp: '2025-02-02T12:05:00Z',
+          liked: true,
         },
         {
           id: 7,
           sender: 'alice123',
           message: 'Of course! What kind of monster do you think I am?! 🍫',
           timestamp: '2025-02-02T12:06:00Z',
+          liked: false,
         },
         {
           id: 8,
           sender: myUsername,
-          message: 'Just making sure. Last time you showed up empty-handed. 👀',
+          message: 'Just making sure. Last time you showed up empty-handed. I don\'t want a repeat of that situation, so I need to confirm everything is in order. You know how important this is, and I can\'t afford any mistakes. If anything is missing again, we\'ll have a serious problem. 👀',
           timestamp: '2025-02-02T12:07:00Z',
+          liked: false,
         },
         {
           id: 9,
           sender: 'alice123',
           message: 'That was ONE TIME! Never letting that go, huh? 😂',
           timestamp: '2025-02-02T12:08:00Z',
+          liked: true,
         },
         {
           id: 10,
           sender: myUsername,
           message: 'Nope. See you tomorrow, snackless one! 😆',
           timestamp: '2025-02-02T12:09:00Z',
+          liked: false,
         },
       ],
     },
@@ -82,16 +93,19 @@ export async function mockChatMessagesData(id) {
           sender: myUsername,
           message: 'See you tomorrow!',
           timestamp: '2025-01-31T12:00:00Z',
+          liked: false,
         },
         {
           sender: 'johndoe55',
           message: 'See you!',
           timestamp: '2025-01-31T12:01:00Z',
+          liked: false,
         },
         {
           sender: myUsername,
           message: 'Bye!',
           timestamp: '2025-01-31T12:02:00Z',
+          liked: false,
         },
       ],
     },
@@ -106,16 +120,19 @@ export async function mockChatMessagesData(id) {
           sender: 'george55',
           message: 'Did you get my email?',
           timestamp: '2025-01-20T12:00:00Z',
+          liked: false,
         },
         {
           sender: myUsername,
           message: 'Yes, I did. I will reply soon.',
           timestamp: '2025-01-20T12:01:00Z',
+          liked: false,
         },
         {
           sender: 'george55',
           message: 'Great, thanks!',
           timestamp: '2025-01-20T12:02:00Z',
+          liked: false,
         },
       ],
     },
