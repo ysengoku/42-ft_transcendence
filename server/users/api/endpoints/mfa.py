@@ -1,6 +1,6 @@
 from base64 import b64encode
 from io import BytesIO
-from typing import Any, Dict
+from typing import Any
 
 import pyotp
 import qrcode
@@ -8,11 +8,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from ninja import Router
 from ninja.errors import HttpError
 
-from server.users.api.endpoints.auth import _create_json_response_with_tokens
+from users.api.endpoints.auth import _create_json_response_with_tokens
 from users.models import User
 
 mfa_router = Router()
 
+TOKEN_LENGTH = 6
 
 def generate_secret_key() -> str:
     """Generate a random secret key for MFA"""
@@ -28,7 +29,7 @@ def generate_qr_code(uri: str) -> str:
 
 
 @mfa_router.post("/setup")
-def setup_mfa(request, username: str) -> Dict[str, Any]:
+def setup_mfa(request, username: str) -> dict[str, Any]:
     """Setup MFA for a user"""
     try:
         user = User.objects.filter(username=username).first()
@@ -69,9 +70,9 @@ def setup_mfa(request, username: str) -> Dict[str, Any]:
 
 
 @mfa_router.post("/verify")
-def verify_mfa(request, username: str, token: str) -> Dict[str, str]:
+def verify_mfa(request, username: str, token: str) -> dict[str, str]:
     """Verify and enable MFA for a user"""
-    if not token or len(token) != 6 or not token.isdigit():
+    if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
 
     try:
@@ -98,9 +99,9 @@ def verify_mfa(request, username: str, token: str) -> Dict[str, str]:
 
 
 @mfa_router.post("/verify-login")
-def verify_mfa_login(request, username: str, token: str) -> Dict[str, Any]:
+def verify_mfa_login(request, username: str, token: str) -> dict[str, Any]:
     """Verify MFA token during login"""
-    if not token or len(token) != 6 or not token.isdigit():
+    if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
 
     try:
@@ -124,9 +125,9 @@ def verify_mfa_login(request, username: str, token: str) -> Dict[str, Any]:
 
 
 @mfa_router.delete("/disable")
-def disable_mfa(request, username: str, token: str) -> Dict[str, str]:
+def disable_mfa(request, username: str, token: str) -> dict[str, str]:
     """Disable MFA for a user"""
-    if not token or len(token) != 6 or not token.isdigit():
+    if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
 
     try:
@@ -155,7 +156,7 @@ def disable_mfa(request, username: str, token: str) -> Dict[str, str]:
 
 
 @mfa_router.get("/status")
-def mfa_status(request, username: str) -> Dict[str, bool]:
+def mfa_status(request, username: str) -> dict[str, bool]:
     """Check if MFA is enabled for a user"""
     try:
         user = User.objects.filter(username=username).first()
