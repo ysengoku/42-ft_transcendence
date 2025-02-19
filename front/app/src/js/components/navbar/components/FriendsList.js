@@ -31,18 +31,6 @@ export class FriendsList extends HTMLElement {
         listContainer.innerHTML = '';
       });
     }
-
-    // document.addEventListener('hidden.bs.dropdown', () => {
-    //   this.friendsList = [];
-    //   this.totalFriendsCount = 0;
-    //   const listContainer = this.querySelector('#friends-list');
-    //   listContainer.innerHTML = '';
-    // });
-
-    // For mobile
-    document.addEventListener('clickOnFriendsList', async () => {
-      await this.fetchFriendsData();
-    });
   }
 
   async fetchFriendsData() {
@@ -100,7 +88,6 @@ export class FriendsList extends HTMLElement {
       return;
     }
     this.friendsList.forEach((friend) => {
-      // console.log(`Rendering friend:`, friend);
       const listItem = document.createElement('user-list-item');
       listItem.setAttribute('username', friend.username);
       listItem.setAttribute('nickname', friend.nickname);

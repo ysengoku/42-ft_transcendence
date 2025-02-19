@@ -14,6 +14,7 @@ export class UserActionsMenu extends HTMLElement {
       return;
     }
     this.render();
+    this.setUserActionEventListeners();
   }
 
   render() {
@@ -38,11 +39,14 @@ export class UserActionsMenu extends HTMLElement {
           font-size: 20px !important;
         }
         .dropdown-menu {
+          position: absolute;
+          top: 100%;
+          left: 0;
           max-height: 75vh;
           overflow: auto;
         }
 	    </style>
-      <div class="nav-link me-2" id="navbar-user-actions" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <div class="nav-link me-2" id="navbar-user-actions" role="button" data-bs-toggle="dropdown" aria-expanded="false">
         <div class="navbar-icon">
           <i class="bi bi-list"></i>
           <span class="badge">
@@ -50,61 +54,70 @@ export class UserActionsMenu extends HTMLElement {
           </span>
         </div>
       </div>
-	    <div class="dropdown-menu p-3" aria-labelledby="navbar-user-actions" data-bs-auto-close="outside">
-	    </div>
-    `;
 
+      <!-- User actions -->
+      <div class="dropdown-menu p-3" aria-labelledby="navbar-user-actions" data-bs-auto-close="outside" id="dropdown-user-actions">
+        <div class="dropdown-item mb-2" id="dropdown-item-user-search">Find user</div>
+        <div class="dropdown-item mb-2" id="dropdown-item-friends-list">Friends list</div>
+        <div class="dropdown-item" id="dropdown-item-chat">Chat</div>
+      </div>
+
+      <!-- User search -->
+      <div class="dropdown-menu p-3" id="dropdown-user-search">
+        <user-search></user-search>
+      </div>
+
+      <!-- Friends list -->
+      <div class="dropdown-menu p-3" id="dropdown-friends-list">
+        <friends-list></friends-list>
+      </div>
+    `;
+  }
+
+  setUserActionEventListeners() {
+    const dropdownUserActions = document.getElementById('dropdown-user-actions');
+    const dropdownUserSearch = document.getElementById('dropdown-user-search');
+    const dropdownFriendsList = document.getElementById('dropdown-friends-list');
+
+    /* Set user actions dropdown */
     const userActionsButton = document.getElementById('navbar-user-actions');
     userActionsButton.addEventListener('shown.bs.dropdown', () => {
-      this.renderUserActions();
+      dropdownUserActions.classList.add('show');
+      dropdownUserSearch.classList.remove('show');
+      dropdownFriendsList.classList.remove('show');
     });
     userActionsButton.addEventListener('hidden.bs.dropdown', () => {
-      const dropdown = document.querySelector('.dropdown-menu');
-      dropdown.innerHTML = '';
-      // TODO: Remove all event listeners
+      dropdownUserActions.classList.remove('show');
+      dropdownUserSearch.classList.remove('show');
+      dropdownFriendsList.classList.remove('show');
     });
-  }
 
-  renderUserActions() {
-    const userActions = this.querySelector('.dropdown-menu');
-    userActions.innerHTML = `
-    	<div class="dropdown-item mb-2" id="dropdown-item-user-search">Find user</div>
-		  <div class="dropdown-item mb-2" id="dropdown-item-friends-list">Friends list</div>
-		  <div class="dropdown-item" id="dropdown-item-chat">Chat</div>
-    `;
-
-    this.setUserSearchButton();
-    this.setFriendsListButton();
-
-    const chatButton = document.getElementById('dropdown-item-chat');
-    chatButton.addEventListener('click', () => {
-      router.navigate('/chat');
-    });
-  }
-
-  setUserSearchButton() {
+    /* Set user serach */
     const userSearchButton = document.getElementById('dropdown-item-user-search');
     userSearchButton.addEventListener('click', (event) => {
-      event.preventDefault();
       event.stopPropagation();
-      const dropdown = document.querySelector('.dropdown-menu');
-      dropdown.innerHTML = '';
-      const userSearch = document.createElement('user-search');
-      dropdown.appendChild(userSearch);
+      dropdownUserSearch.classList.add('show');
+      dropdownFriendsList.classList.remove('show');
     });
-  }
 
-  setFriendsListButton() {
+    /* Set friends list */
     const friendsListButton = document.getElementById('dropdown-item-friends-list');
     friendsListButton.addEventListener('click', (event) => {
-      // event.preventDefault();
       event.stopPropagation();
-      const dropdown = document.querySelector('.dropdown-menu');
-      dropdown.innerHTML = '';
-      const friendsList = document.createElement('friends-list');
-      dropdown.appendChild(friendsList);
-      const customEvent = new CustomEvent('clickOnFriendsList', { bubbles: true });
-      document.dispatchEvent(customEvent);
+      dropdownUserSearch.classList.remove('show');
+      dropdownFriendsList.classList.add('show');
+
+      const friendList = document.querySelector('friends-list');
+      friendList.fetchFriendsData();
+    });
+
+    /* Set chat */
+    const chatButton = document.getElementById('dropdown-item-chat');
+    chatButton.addEventListener('click', () => {
+      dropdownUserActions.classList.remove('show');
+      dropdownUserSearch.classList.remove('show');
+      dropdownFriendsList.classList.remove('show');
+      router.navigate('/chat');
     });
   }
 }
