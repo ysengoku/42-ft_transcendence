@@ -1,7 +1,7 @@
 export function simulateFetchUserData(username) {
   const user1 = {
     username: 'JohnDoe',
-    nickname: 'Joooooooohn',   
+    nickname: 'Joooooooohn',
     avatar: '/media/avatars/sample_avatar.jpg',
     email: 'aaa@example.com',
     connection_type: 'regular',
