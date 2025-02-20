@@ -25,11 +25,9 @@ class ChatQuerySet(models.QuerySet):
     def order_by_last_message(self):
         """
         Attaches last message date and content to Chats and sorts them by the latest message date.
-        Messages are sorted by the date by default, so there is no need to call 'order_by'.
+        Chat messages are sorted by the date by default, so there is no need to call 'order_by'.
         """
-        latest_message_subquery = Message.objects.filter(
-            chat=OuterRef("pk"),
-        ).values("content")[:1]
+        latest_message_subquery = ChatMessage.objects.values("content")[:1]
 
         return self.annotate(
             last_message=Subquery(latest_message_subquery),
@@ -43,7 +41,7 @@ class Chat(models.Model):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    participants = models.ManyToManyField(Profile, related_name="dialogues")
+    participants = models.ManyToManyField(Profile, related_name="chat")
 
     objects = ChatQuerySet.as_manager()
 
@@ -56,7 +54,7 @@ class Chat(models.Model):
         return res
 
 
-class Message(models.Model):
+class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content = models.CharField(max_length=256)
     date = models.DateTimeField(auto_now_add=True)
