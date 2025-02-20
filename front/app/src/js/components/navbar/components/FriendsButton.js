@@ -9,18 +9,21 @@ export class FriendsButton extends HTMLElement {
 
   render() {
     this.innerHTML = `
-			<button class="btn btn-secondary me-2 rounded-circle" id="friendsButton">
-				<i class="bi bi-people"></i>
-			</button>
+      <style>
+        .dropdown-menu {
+          max-height: 75vh;
+          overflow: auto;
+       }
+      </style>
+      <div class="nav-link" id="navbar-friends-button" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  <button class="btn btn-secondary me-2 rounded-circle">
+				  <i class="bi bi-people"></i>
+			  </button>
+      </div>
+	    <div class="dropdown-menu dropdown-menu-end px-3">
+        <friends-list></friends-list>
+	    </div>
 		`;
-
-    const button = this.querySelector('#friendsButton');
-    button.addEventListener('click', async () => {
-      const modal = document.querySelector('friends-list-modal');
-      if (modal) {
-        await modal.showModal();
-      }
-    });
   }
 }
 customElements.define('friends-button', FriendsButton);

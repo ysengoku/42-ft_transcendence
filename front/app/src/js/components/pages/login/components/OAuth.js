@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from '@api';
-import { showErrorMessage } from '@utils';
+import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+
 
 export class OAuth extends HTMLElement {
   constructor() {
@@ -32,7 +33,7 @@ export class OAuth extends HTMLElement {
       }
       else {
         console.error('OAuth initialization failed:', response.statusText);
-        showErrorMessage(`Failed to initialize OAuth process (Status: ${response.status})`);
+        showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
         return { success: false, status: response.status };
       }
   }
