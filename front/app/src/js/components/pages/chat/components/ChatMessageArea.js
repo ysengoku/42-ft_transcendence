@@ -1,8 +1,12 @@
 import { router } from '@router';
+import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ChatMessageArea extends HTMLElement {
   constructor() {
     super();
+    this.user = auth.getStoredUser();
     this._data = [];
   }
 
@@ -17,6 +21,37 @@ export class ChatMessageArea extends HTMLElement {
     header.addEventListener('click', () => {
       router.navigate(`/profile/${this._data.username}`);
     });
+
+    const blockButoon = this.querySelector('#chat-block-user-button');
+    blockButoon.addEventListener('click', async () => {
+      const response = await this.blockUser();
+      if (response) {
+        // TODO: Update chat list and current chat
+        console.log('User blocked:', this._data.username);
+      }
+    });
+  }
+
+  async blockUser() {
+    const request = { username: this._data.username };
+    const response = await apiRequest(
+        'POST',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_BLOCKED_USERS(this.user.username),
+        request,
+        false,
+        true,
+    );
+    const successMessage = 'User blocked successfully.';
+    const errorMessage = 'Failed to block user. Please try again later.';
+    if (response.success) {
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
+      return true;
+    } else {
+      console.error('Error blocking user:', response);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
+      return false;
+    }
   }
 
   toggleLikeMessage(index) {
@@ -133,9 +168,9 @@ export class ChatMessageArea extends HTMLElement {
     <div class="d-flex flex-column h-100">
 
       <!-- Header -->
-      <div class="d-flex flex-row justify-content-between align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top" id="chat-header">
+      <div class="d-flex flex-row justify-content-between align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top">
   
-      <div class="d-flex flex-row">
+      <div class="d-flex flex-row" id="chat-header">
         <img src="${this._data.avatar}" class="rounded-circle me-3" alt="User" id="chat-message-header-avatar"/>
 
         <div class="d-flex flex-column text-start gap-1">
@@ -151,8 +186,8 @@ export class ChatMessageArea extends HTMLElement {
       </div>
 
       <div class="align-self-end">
-        <button class="btn">Invite to play</button>
-        <button class="btn">Block</button>
+        <button class="btn" id="chat-invite-play-button">Invite to play</button>
+        <button class="btn" id="chat-block-user-button">Block</button>
       </div>
 
       </div>
