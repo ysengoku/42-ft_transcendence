@@ -1,6 +1,5 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-// import { showErrorMessage, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 // import poster from '/img/sample-background.png?url';
 
@@ -57,11 +56,14 @@ export class UserProfile extends HTMLElement {
     this.innerHTML = `
     <style>
       .poster {
-        background-image: url(${poster});
+        color: black;
+        background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(222, 184, 135, 1) 100%);
+        filter: sepia(20%) contrast(90%) brightness(95%);
+        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.3);
+        /*background-image: url(${poster});
         background-size: cover;
         background-position: center;
-        background-repeat: no-repeat;
-        color: black;
+        background-repeat: no-repeat;*/
       }
       .online-status-indicator {
         width: 16px;
@@ -102,12 +104,12 @@ export class UserProfile extends HTMLElement {
       }
     </style>
 
-    <div class="container-fluid flex-grow-1 d-grid gap-3 h-100">
-      <div class="row h-100 no-gutters">
+    <div class="container-fluid flex-grow-1 d-grid">
+      <div class="row">
 
         <!-- Container Left -->
-        <div class="d-flex col-12 col-md-6">
-          <div class="poster container-fluid d-flex flex-column justify-content-center flex-grow-1 mx-1 my-3 p-3 gap-2 h-100">
+        <div class="d-flex col-12 col-lg-6">
+          <div class="poster container-fluid d-flex flex-column justify-content-center flex-grow-1 mx-1 my-3 p-3 gap-2">
 
             <!-- Online indicator & wanted -->
             <div class="mb-3 w-100 text-center px-2 pt-3">
@@ -140,11 +142,11 @@ export class UserProfile extends HTMLElement {
 
               <!-- Graphs -->
               <div class="d-flex flex-row justify-content-around align-items-top px-2 py-3">
-                <div class="graph-container me-2 px-4 py-2">
+                <div class="graph-container me-2 px-3 py-2">
                   <p>Win Rate</p>
                   <user-win-rate-pie-graph></user-win-rate-pie-graph>
                 </div>               
-                <div class="graph-container flex-grow-1 ms-1 px-4 py-2">
+                <div class="graph-container flex-grow-1 ms-1 px-1 py-2">
                   <p>Elo progression</p>
                     <canvas id="eloProgressionChart"></canvas>
                 </div>
@@ -154,8 +156,8 @@ export class UserProfile extends HTMLElement {
         </div>
 
         <!-- Container Right -->
-        <div class="d-flex col-12 col-md-6">
-          <div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2 h-100">
+        <div class="d-flex col-12 col-lg-6">
+          <div class="poster container-fluid d-flex flex-column flex-grow-1 mx-1 my-3 p-3 gap-2">
 
             <!-- Enemies -->
             <div class="d-grid">

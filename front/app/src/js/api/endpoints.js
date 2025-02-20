@@ -15,4 +15,6 @@ export const API_ENDPOINTS = {
   OAUTH_AUTHORIZE: (platform) => `${API_BASE_URL}oauth/authorize/${platform}`,
   MFA_SETUP: `${API_BASE_URL}2fa/setup`,
   MFA_VERIFY: `${API_BASE_URL}2fa/verify`,
+  USER_SEARCH: (query, limit, offset) => `${API_BASE_URL}users?search=${query}&limit=${limit}&offset=${offset}`,
+  USER_FRIENDS_LIST: (username, limit, offset) => `${API_BASE_URL}users/${username}/friends?limit=${limit}&offset=${offset}`,
 };
