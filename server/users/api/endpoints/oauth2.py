@@ -6,7 +6,7 @@ from django.conf import settings
 from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Query, Router
-from ninja.errors import AuthenticationError, HttpError
+from ninja.errors import HttpError
 
 from users.api.endpoints.auth import create_redirect_to_home_page_response_with_tokens
 from users.models import OauthConnection, User
@@ -67,7 +67,7 @@ def oauth_authorize(request, platform: str):
 
 @ensure_csrf_cookie
 @oauth2_router.get("/callback/{platform}", auth=None, response={200: dict, frozenset({408, 422, 500, 503}): Message})
-def oauth_callback(
+def oauth_callback(  # noqa: PLR0911
     request,
     platform: str,
     params: OAuthCallbackParams = Query(...),
