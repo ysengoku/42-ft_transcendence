@@ -23,10 +23,10 @@ oauth2_router = Router()
 def get_oauth_config(platform: str) -> dict:
     """
     Retrieves OAuth configuration for the platform.
-    Raises 400 if the platform is unsupported.
+    Raises 422 if the platform is unsupported.
     """
     if platform not in settings.OAUTH_CONFIG:
-        raise HttpError(400, f"Unsupported platform: {platform}")
+        raise HttpError(422, f"Unsupported platform: {platform}")
     return settings.OAUTH_CONFIG[platform]
 
 
@@ -44,16 +44,16 @@ def create_user_oauth(user_info: dict, oauth_connection: OauthConnection) -> Use
 
 
 @csrf_exempt
-@oauth2_router.get("/authorize/{platform}", auth=None, response={200: dict, 400: Message})
+@oauth2_router.get("/authorize/{platform}", auth=None, response={200: dict, 404: Message})
 def oauth_authorize(request, platform: str):
     """
     Starts the OAuth2 authorization process.
     Returns the authorization URL.
-    Raises 400 if the platform is unsupported.
+    Raises 404 if the platform is unsupported.
     """
     config = get_oauth_config(platform)
     if not config:
-        raise HttpError(400, "OAuth platform not supported")
+        raise HttpError(404, "OAuth platform not supported")
 
     state = hashlib.sha256(os.urandom(32)).hexdigest()
 
@@ -70,12 +70,12 @@ def oauth_authorize(request, platform: str):
 
 
 @ensure_csrf_cookie
-@oauth2_router.get("/callback/{platform}", auth=None, response={200: dict, 400: Message, 401: Message})
+@oauth2_router.get("/callback/{platform}", auth=None, response={200: dict, frozenset({408, 422}): Message})
 def oauth_callback(request, platform: str, code: str, state: str):
     """
     Handles the OAuth2 callback.
     Exchanges the code for tokens and retrieves user info.
-    Raises 400 for invalid state, 401 for expired sessions or failed token retrieval.
+    Raises 422 for invalid state, 422 for expired sessions or failed token retrieval.
     """
     oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
 
@@ -87,7 +87,7 @@ def oauth_callback(request, platform: str, code: str, state: str):
         raise AuthenticationError("Session expired")
 
     if state != oauth_connection.state or platform != oauth_connection.connection_type:
-        raise HttpError(400, "Invalid state parameter")
+        raise HttpError(422, "Invalid state parameter")
 
     # Request access token
     config = get_oauth_config(platform)
@@ -107,7 +107,7 @@ def oauth_callback(request, platform: str, code: str, state: str):
         )
 
         if "access_token" not in token_response.json():
-            raise AuthenticationError("Failed to retrieve the token.")
+            raise HttpError(422, "Failed to retrieve the token.")
 
     except RequestAborted as exc:
         raise HttpError(408, "The request timed out while retrieving the token.") from exc
@@ -126,14 +126,14 @@ def oauth_callback(request, platform: str, code: str, state: str):
     except RequestAborted as exc:
         raise HttpError(408, "The request timed out while retrieving user information.") from exc
     except requests.ConnectionError:
-        raise HttpError(503, "Failed to connect to the server while retrieving user information.") from None
+        raise HttpError(408, "Failed to connect to the server while retrieving user information.") from None
     except requests.RequestException as exc:
         raise AuthenticationError(f"An error occurred while retrieving user information: {str(exc)}") from None
 
     user_info = user_response.json()
 
     if platform not in [OauthConnection.FT, OauthConnection.GITHUB]:
-        raise HttpError(400, "Invalid platform")
+        raise HttpError(422, "Invalid platform")
 
     # Get or create user
     user = User.objects.for_oauth_id(user_info["id"]).first()
