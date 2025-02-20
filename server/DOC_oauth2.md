@@ -1,5 +1,7 @@
 # OAuth 2.0
 
+rfc6749: https://www.rfc-editor.org/rfc/rfc6749
+
 ## 42 API
 
 1. **Create an app on 42 Intra**:  
@@ -54,7 +56,12 @@ Create an app on github to get the client ID and secret.
 https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/
 
 Github OAuth flow works the same way as 42 API, with some other optionnal parameters (for multiple github account for eg.)
+
 TODO: test the flow with a multiple account. 
+
+# ERROR HANDLING
+
+the providers send error codes that are catched by the app, and converted in its own code and sent to a custom error page, which is displayed to the user.
 
 
 # DATA TO BE STORED IN DATABASE
