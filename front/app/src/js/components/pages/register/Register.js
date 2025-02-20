@@ -28,43 +28,43 @@ export class Register extends HTMLElement {
         <div class="row justify-content-center py-4">
           <div class="col-12 col-md-4"> 
               <div id="signup-failed-feedback"></div>
-      			  <form class='w-100'>
+              <form class='w-100'>
                 <legend class="mt-4 mb-5 border-bottom">Sign Up</legend>
 
-        			  <div class='mb-3'>
-          				<label for='username' class='form-label'>Username</label>
-          				<input type='username' class='form-control' id='username' placeholder='username' autocomplete="off">
-          				<div class='invalid-feedback' id='username-feedback'></div>
-        			  </div>
+                <div class='mb-3'>
+                  <label for='username' class='form-label'>Username</label>
+                  <input type='username' class='form-control' id='username' placeholder='username' autocomplete="off">
+                  <div class='invalid-feedback' id='username-feedback'></div>
+                </div>
 
-        			  <div class='mb-3'>
-          				<label for='email' class='form-label'>Email</label>
-          				<input type='email' class='form-control' id='email' placeholder='email' autocomplete="off">
-          				<div class='invalid-feedback' id='email-feedback'></div>
-        			  </div>
+                <div class='mb-3'>
+                  <label for='email' class='form-label'>Email</label>
+                  <input type='email' class='form-control' id='email' placeholder='email' autocomplete="off">
+                  <div class='invalid-feedback' id='email-feedback'></div>
+                </div>
 
-        			  <div class='mb-3'>
-          				<label for='password' class='form-label'>Password</label>
-        				 <input type='password' class='form-control' id='password' placeholder='password' autocomplete="off">
-        				 <div class='invalid-feedback' id='password-feedback'></div>
-        			  </div>
+                <div class='mb-3'>
+                  <label for='password' class='form-label'>Password</label>
+                 <input type='password' class='form-control' id='password' placeholder='password' autocomplete="off">
+                 <div class='invalid-feedback' id='password-feedback'></div>
+                </div>
 
-        			  <div class='mb-3'>
-        				  <label for='password_repeat' class='form-label'>Confirm Password</label>
-        				  <input type='password' class='form-control' id='password_repeat' placeholder='password' autocomplete="off">
-        				  <div class='invalid-feedback' id='password_repeat-feedback'></div>
-        			  </div>
+                <div class='mb-3'>
+                  <label for='password_repeat' class='form-label'>Confirm Password</label>
+                  <input type='password' class='form-control' id='password_repeat' placeholder='password' autocomplete="off">
+                  <div class='invalid-feedback' id='password_repeat-feedback'></div>
+                </div>
 
-        			  <div class='mb-3 py-3'>
-        				  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Sign Up</button>
-        			  </div>
-      			  </form>
-    		    </div>
+                <div class='mb-3 py-3'>
+                  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Sign Up</button>
+                </div>
+              </form>
+            </div>
             </div>
           </div>
         </div>
       </div>
-  		`;
+      `;
   }
 
   setupRegisterHandler() {
