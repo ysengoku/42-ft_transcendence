@@ -1,3 +1,6 @@
+import { auth } from '@auth';
+import { addDissmissAlertListener } from '@utils';
+
 /**
  * Router module for handling client-side navigation.
  * @module router
@@ -14,10 +17,6 @@
  * @requires module:tournament
  * @requires module:chat-page
  */
-
-import { auth } from '@auth';
-import { addDissmissAlertListener } from '@utils';
-
 const router = (() => {
   class Router {
     constructor() {
@@ -40,6 +39,7 @@ const router = (() => {
 
     /**
      * Handles route changes and renders the appropriate component.
+     * @return {void}
      */
     handleRoute() {
       const path = window.location.pathname;
@@ -100,6 +100,11 @@ const router = (() => {
       return param;
     }
 
+    /**
+     * Renders a static URL component.
+     * @param {string} componentTag - The custom HTML tag for the component to render.
+     * @return {void}
+     */
     renderStaticUrlComponent(componentTag) {
       if (this.currentComponent) {
         this.currentComponent.remove();
@@ -111,6 +116,12 @@ const router = (() => {
       this.currentComponent = component;
     }
 
+    /**
+     * Renders a dynamic URL component with parameters.
+     * @param {string} componentTag - The custom HTML tag for the component to render.
+     * @param {Object} param - The parameters extracted from the URL.
+     * @return {void}
+     */
     renderDynamicUrlComponent(componentTag, param) {
       if (this.currentComponent) {
         this.currentComponent.remove();
@@ -123,6 +134,11 @@ const router = (() => {
       this.currentComponent = component;
     }
 
+    /**
+     * Navigates to the specified path.
+     * @param {string} [path=window.location.pathname] - The path to navigate to.
+     * @return {void}
+     */
     navigate(path = window.location.pathname) {
       console.log('Navigating to:', path);
       window.history.pushState({}, '', path);
@@ -141,6 +157,7 @@ const router = (() => {
     /**
      * Handles navigation for internal links.
      * @param {Event} event - The click event.
+     * @return {void}
      */
     handleLinkClick(event) {
       if (event.target && event.target.matches('a[href^="/"]')) {
@@ -153,7 +170,9 @@ const router = (() => {
   return new Router();
 })();
 
-// Define all routes
+/**
+ * Define all routes
+ */
 router.addRoute('/', 'landing-page');
 router.addRoute('/login', 'login-page');
 router.addRoute('/register', 'register-form');
@@ -167,7 +186,9 @@ router.addRoute('/tournament-menu', 'tournament-menu', false);
 router.addRoute('/tournament/:id', 'tournament', true);
 router.addRoute('/chat', 'chat-page', false);
 
-// Initialize the router on the initial HTML document load
+/**
+ * Initialize the router on the initial HTML document load
+ */
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded');
   await auth.fetchAuthStatus();

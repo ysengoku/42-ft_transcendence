@@ -16,7 +16,7 @@ export default defineConfig({
       '@components': path.resolve(__dirname, 'src/js/components/'),
       '@auth': path.resolve(__dirname, 'src/js/auth/index.js'),
       '@utils': path.resolve(__dirname, 'src/js/utils/index.js'),
-      '@mock': path.resolve(__dirname, 'src/js/mock/'),
+      '@mock': path.resolve(__dirname, '__mock__/'),
       '@css': path.resolve(__dirname, 'src/css/'),
     },
   },
