@@ -9,7 +9,7 @@ export class ProfileUserActions extends HTMLElement {
       loggedInUsername: '',
       shownUsername: '',
       isFriend: false,
-      isBlockedByUser: false,
+      isBlocked: false,
     };
     this.isMyProfile = false;
     this.errorMessages = {
@@ -24,13 +24,15 @@ export class ProfileUserActions extends HTMLElement {
     this._data = value;
     // ----- For rendering test ------------
     // this._data.isFriend = true;
-    // this._data.isBlockedByUser = true;
+    // this._data.isBlocked = true;
     // -------------------------------------
     this.isMyProfile = this._data.loggedInUsername === this._data.shownUsername;
+    console.log('data: ', this._data);
     this.render();
   }
 
   render() {
+    console.log('data: ', this._data);
     this.innerHTML = `
 			<style>
 				.profile-user-action-button {
@@ -44,7 +46,7 @@ export class ProfileUserActions extends HTMLElement {
 
 				<button class="btn btn-primary mx-1 profile-user-action-button" id="send-message-button">Send Message</button>
 
-				<button class="btn btn-primary mx-1 profile-user-action-button" id="block-user-button">${this._data.isBlockedByUser ? 'Unblock user' : 'Block user'}</button>
+				<button class="btn btn-primary mx-1 profile-user-action-button" id="block-user-button">${this._data.isBlocked ? 'Unblock user' : 'Block user'}</button>
 			</div>
 		`;
     this.setupButtons();
@@ -60,7 +62,7 @@ export class ProfileUserActions extends HTMLElement {
       return;
     }
 
-    if (!this._data.isBlockedByUser) {
+    if (!this._data.isBlocked) {
       const sendMessageButton = this.querySelector('#send-message-button');
       sendMessageButton.style.display = 'block';
       // Handle send message
@@ -76,7 +78,7 @@ export class ProfileUserActions extends HTMLElement {
 
     const blockUserButton = this.querySelector('#block-user-button');
     blockUserButton.style.display = 'block';
-    if (this._data.isBlockedByUser) {
+    if (this._data.isBlocked) {
       blockUserButton.addEventListener('click', this.unblockUser.bind(this));
     } else {
       blockUserButton.addEventListener('click', this.blockUser.bind(this));
@@ -150,7 +152,7 @@ export class ProfileUserActions extends HTMLElement {
     // const response = await this.testResponse();
     // --------------------------------------------
     if (response.success) {
-      this._data.isBlockedByUser = true;
+      this._data.isBlocked = true;
       this._data.isFriend = false;
       this.render();
     } else {
@@ -172,7 +174,7 @@ export class ProfileUserActions extends HTMLElement {
     // const response = await this.testResponse();
     // --------------------------------------------
     if (response.success) {
-      this._data.isBlockedByUser = false;
+      this._data.isBlocked = false;
       this.render();
     } else {
       console.error('Error unblocking:', response);
