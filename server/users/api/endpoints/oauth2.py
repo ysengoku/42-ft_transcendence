@@ -1,9 +1,9 @@
 import hashlib
 import os
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Query, Router
 from ninja.errors import AuthenticationError, HttpError
@@ -83,26 +83,41 @@ def oauth_callback(
     state = params.get("state")
 
     if error:
-        raise HttpError(401, f"Provider error: {error} - {error_description or ''}")
+        error_message = quote(f"{error}: {error_description}")
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
 
     if not code or not state:
-        raise HttpError(422, "Invalid request: missing code or state parameter")
+        error_message = quote("Missing code or state.")
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
 
     oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
     if not oauth_connection:
-        raise AuthenticationError("Invalid OAuth connection.")
+        raise HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error=Invalid state&code=422")
 
-    oauth_connection.check_state_and_validity(platform, state)
+    state_error = oauth_connection.check_state_and_validity(platform, state)
+    if state_error:
+        error_message, status_code = state_error
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
     config = get_oauth_config(platform)
 
-    access_token = oauth_connection.request_access_token(config, code)
+    access_token, token_error = oauth_connection.request_access_token(config, code)
+    if token_error:
+        error_message, status_code = token_error
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
-    user_info = oauth_connection.get_user_info(config, access_token)
+    user_info, user_error = oauth_connection.get_user_info(config, access_token)
+    if user_error:
+        error_message, status_code = user_error
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
     if platform not in [OauthConnection.FT, OauthConnection.GITHUB]:
-        raise HttpError(422, "Invalid platform")
+        error_message = quote("Unsupported platform")
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
 
-    user = oauth_connection.create_or_update_user(user_info)
+    user, user_creation_error = oauth_connection.create_or_update_user(user_info)
+    if user_creation_error:
+        error_message, status_code = user_creation_error
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
     return create_redirect_to_home_page_response_with_tokens(user)
