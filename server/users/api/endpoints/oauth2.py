@@ -3,7 +3,7 @@ import os
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Query, Router
 from ninja.errors import AuthenticationError, HttpError
@@ -86,7 +86,7 @@ def oauth_callback(
         raise HttpError(401, f"Provider error: {error} - {error_description or ''}")
 
     if not code or not state:
-        return HttpResponseRedirect(settings.HOME_REDIRECT_URL)
+        raise HttpError(422, "Invalid request: missing code or state parameter")
 
     oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
     if not oauth_connection:
