@@ -1,4 +1,5 @@
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.conf import settings
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
@@ -26,6 +27,16 @@ def _create_json_response_with_tokens(user: User, json: dict):
     return response
 
 
+def create_redirect_to_home_page_response_with_tokens(user: User):
+    access_token, refresh_token_instance = RefreshToken.objects.create(user)
+
+    response = HttpResponseRedirect(settings.HOME_REDIRECT_URL)
+    response.set_cookie("access_token", access_token)
+    response.set_cookie("refresh_token", refresh_token_instance.token)
+
+    return response
+
+
 @auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
 def check_self(request: HttpRequest):
     """
@@ -36,7 +47,7 @@ def check_self(request: HttpRequest):
 
 
 # TODO: add secure options for the cookie
-@auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message}, auth=None)
+@auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message, 429: Message}, auth=None)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
@@ -44,7 +55,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
     Logs in user. Can login by username, email or username.
     """
     user = User.objects.for_username_or_email(credentials.username).first()
-    if not user:
+    if not user or user.get_oauth_connection():
         raise HttpError(401, "Username or password are not correct.")
 
     is_password_correct = user.check_password(credentials.password)
@@ -67,7 +78,6 @@ def signup(request: HttpRequest, data: SignUpSchema):
     """
     user = User.objects.validate_and_create_user(
         username=data.username,
-        connection_type=User.REGULAR,
         email=data.email,
         password=data.password,
     )

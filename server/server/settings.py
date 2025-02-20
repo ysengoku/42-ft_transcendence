@@ -27,9 +27,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "your-secret-key"
 
 # Environment variables
-DEBUG = int(os.environ.get("DEBUG", default=1))
-IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
+DEBUG = os.environ.get("DEBUG", True)
+# DEBUG = int(os.environ.get("DEBUG", default=1)) # special for fanny for working from home
+
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+
+IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
 if not IN_CONTAINER:
     DATABASES = {
@@ -49,7 +53,6 @@ elif "GITHUB_ACTIONS" in os.environ:
             "PORT": "5432",
         },
     }
-# PostgreSQL for production
 else:
     DATABASES = {
         "default": {
@@ -180,4 +183,57 @@ ACCESS_TOKEN_SECRET_KEY = "secret"
 REFRESH_TOKEN_SECRET_KEY = "refresh_secret"
 
 NINJA_PAGINATION_PER_PAGE = 10
+
 APPEND_SLASH = False
+
+# OAuth
+
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
+GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
+GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")  # Défini dans le .env
+GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
+
+# OAuth 42
+API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
+API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
+FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
+FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
+FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
+FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
+
+HOME_REDIRECT_URL = "https://localhost:1026/home"
+
+# OAUTH Configuration
+OAUTH_CONFIG = {
+    "github": {
+        "client_id": GITHUB_CLIENT_ID,
+        "client_secret": GITHUB_CLIENT_SECRET,
+        "auth_uri": GITHUB_AUTHORIZE_URL,
+        "token_uri": GITHUB_ACCESS_TOKEN_URL,
+        "redirect_uris": [GITHUB_REDIRECT_URI],
+        "scopes": ["user"],
+        "user_info_uri": GITHUB_USER_PROFILE_URL,
+    },
+    "42": {
+        "client_id": API42_CLIENT_ID,
+        "client_secret": API42_CLIENT_SECRET,
+        "auth_uri": FT_API_AUTHORIZE_URL,
+        "token_uri": FT_API_ACCESS_TOKEN_URL,
+        "redirect_uris": [FT_API_REDIRECT_URI],
+        "scopes": ["public", "profile"],
+        "user_info_uri": FT_API_USER_PROFILE_URL,
+    },
+}
+
+
+# # SendGrid Settings
+# SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+# SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.sendgrid.net'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
+# EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password
