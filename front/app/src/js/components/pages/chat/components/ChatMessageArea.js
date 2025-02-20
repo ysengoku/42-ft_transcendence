@@ -168,7 +168,7 @@ export class ChatMessageArea extends HTMLElement {
     <div class="d-flex flex-column h-100">
 
       <!-- Header -->
-      <div class="d-flex flex-row justify-content-between align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top">
+      <div class="d-flex flex-row justify-content-between align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
   
       <div class="d-flex flex-row" id="chat-header">
         <img src="${this._data.avatar}" class="rounded-circle me-3" alt="User" id="chat-message-header-avatar"/>
