@@ -19,7 +19,6 @@ def get_chats():
 
 
 @api.get("{username}", response={200: ChatSchema, frozenset({401}): ChatMessageSchema})
-@paginate
 def get_chat(username: str):
     """
     Gets a specific chat with first 30 messages.
