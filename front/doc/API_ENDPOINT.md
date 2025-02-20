@@ -243,6 +243,7 @@ friend_to_remove
 ```
 
 ### Endpoint: /api/users/{username}/blocked_users
+
 #### GET
 
 200 (OK)
@@ -293,3 +294,50 @@ friend_to_remove
   "msg": "string"
 }
 ```
+
+### Endpoint: api/oauth/authorize/{platform}
+
+#### GET
+
+200 (OK)
+```json
+{
+  "url": "string"
+}
+```
+
+404 (Not Found)
+```json
+{
+  "msg": "string"
+}
+```
+
+### Endpoint: api/oauth/callback/{platform}
+
+#### GET
+
+200 (OK)
+```json
+{
+  "username": "string",
+  "avatar": "string",
+  "elo": 0,
+  "is_online": true
+}
+```
+
+408 (Request Timeout)
+```json
+{
+  "msg": "string"
+}
+```
+
+422 (Unprocessable Entity)
+```json
+{
+  "msg": "string"
+}
+```
+

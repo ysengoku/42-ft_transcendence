@@ -21,7 +21,6 @@ export class OAuth extends HTMLElement {
   }
 
   async handleOAuthClick(platform) {
-    try {
       /* eslint-disable-next-line new-cap */
       const response = await fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform));
 
@@ -30,52 +29,16 @@ export class OAuth extends HTMLElement {
         localStorage.setItem('oauth_platform', platform);
         location.href = data.auth_url;
         return { success: true, status: 'redirecting' };
-      } else {
+      }
+      else {
         console.error('OAuth initialization failed:', response.statusText);
         showErrorMessage(`Failed to initialize OAuth process (Status: ${response.status})`);
         return { success: false, status: response.status };
       }
-    } catch (error) {
-      console.error('OAuth initialization failed:', error);
-      showErrorMessage('An unexpected error occurred.');
-      return { success: false, status: 'network_error' };
-    }
   }
 
   render() {
     this.innerHTML = `
-      <style>
-      /*
-        .btn-github {
-          background-color: #171717;
-          color: #ffffff;
-          border-color: #171717;
-          transition: all 0.3s ease;
-          font-size: 1rem;
-        }
-        .btn-github:hover {
-          background-color: #424242;
-          color: #ffffff;
-          border-color: #424242;
-        }
-        .btn-42 {
-          background-color: #ffffff;
-          color: #000000;
-          border: 1px solid #dee2e6;
-          transition: all 0.3s ease;
-          font-size: 1rem;
-        }
-        .btn-42:hover {
-          background-color:rgb(160, 165, 171);
-          color: #000000;
-        }
-        .me-2 {
-          margin-right: 0.5rem;
-        }
-        .btn {
-          font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
-        }
-      */
       </style>
       <div class="container">
         <div class="row justify-content-center">
