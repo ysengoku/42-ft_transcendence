@@ -11,7 +11,7 @@ export async function simulateFetchUserProfile(username) {
     date_joined: '2021-01-15',
     best_enemy: {
       username: 'Alice',
-      avatar: '/mock/img/avatars/sample_avatar2.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar2.jpg',
       wins: 20,
       loses: 10,
       winrate: 67,
@@ -19,7 +19,7 @@ export async function simulateFetchUserProfile(username) {
     },
     worst_enemy: {
       username: 'George',
-      avatar: '/mock/img/avatars/sample_avatar3.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar3.jpg',
       wins: 10,
       loses: 25,
       winrate: 28,
@@ -28,19 +28,19 @@ export async function simulateFetchUserProfile(username) {
     friends: [
       {
         username: 'Alice',
-        avatar: '/mock/img/avatars/sample_avatar2.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar2.jpg',
         elo: 1100,
         is_online: true,
       },
       {
         username: 'George',
-        avatar: '/mock/img/avatars/sample_avatar3.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar3.jpg',
         elo: 950,
         is_online: false,
       },
       {
         username: 'Lucas',
-        avatar: '/mock/img/avatars/sample_avatar4.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar4.jpg',
         elo: 1000,
         is_online: true,
       },
@@ -49,7 +49,7 @@ export async function simulateFetchUserProfile(username) {
 
   const user2 = {
     username: 'Alice',
-    avatar: '/mock/img/avatars/sample_avatar2.jpg',
+    avatar: '/__mock__/img/avatars/sample_avatar2.jpg',
     online: true,
     elo: 1100,
     wins: 30,
@@ -59,7 +59,7 @@ export async function simulateFetchUserProfile(username) {
     date_joined: '2020-03-10',
     best_enemy: {
       username: 'JohnDoe',
-      avatar: '/mock/img/avatars/sample_avatar.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar.jpg',
       wins: 15,
       loses: 10,
       winrate: 60,
@@ -67,7 +67,7 @@ export async function simulateFetchUserProfile(username) {
     },
     worst_enemy: {
       username: 'Emily',
-      avatar: '/mock/img/avatars/sample_avatar.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar.jpg',
       wins: 8,
       loses: 20,
       winrate: 30,
@@ -76,19 +76,19 @@ export async function simulateFetchUserProfile(username) {
     friends: [
       {
         username: 'JohnDoe',
-        avatar: '/mock/img/avatars/sample_avatar.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar.jpg',
         elo: 1200,
         is_online: true,
       },
       {
         username: 'George',
-        avatar: '/mock/img/avatars/sample_avatar3.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar3.jpg',
         elo: 950,
         is_online: false,
       },
       {
         username: 'Lucas',
-        avatar: '/mock/img/avatars/sample_avatar4.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar4.jpg',
         elo: 1000,
         is_online: true,
       },
@@ -97,7 +97,7 @@ export async function simulateFetchUserProfile(username) {
 
   const user3 = {
     username: 'Jane',
-    avatar: '/mock/img/avatars/sample_avatar3.jpg',
+    avatar: '/__mock__/img/avatars/sample_avatar3.jpg',
     online: false,
     elo: 1050,
     wins: 25,
@@ -107,7 +107,7 @@ export async function simulateFetchUserProfile(username) {
     date_joined: '2021-05-22',
     best_enemy: {
       username: 'Lucas',
-      avatar: '/mock/img/avatars/sample_avatar4.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar4.jpg',
       wins: 20,
       loses: 15,
       winrate: 57,
@@ -115,7 +115,7 @@ export async function simulateFetchUserProfile(username) {
     },
     worst_enemy: {
       username: 'Emily',
-      avatar: '/mock/img/avatars/sample_avatar.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar.jpg',
       wins: 10,
       loses: 25,
       winrate: 28,
@@ -124,19 +124,19 @@ export async function simulateFetchUserProfile(username) {
     friends: [
       {
         username: 'George',
-        avatar: '/mock/img/avatars/sample_avatar.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar.jpg',
         elo: 1100,
         is_online: true,
       },
       {
         username: 'Emily',
-        avatar: '/mock/img/avatars/sample_avatar.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar.jpg',
         elo: 950,
         is_online: true,
       },
       {
         username: 'Alice',
-        avatar: '/mock/img/avatars/sample_avatar2.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar2.jpg',
         elo: 1150,
         is_online: true,
       },
@@ -145,7 +145,7 @@ export async function simulateFetchUserProfile(username) {
 
   const user4 = {
     username: 'George',
-    avatar: '/mock/img/avatars/sample_avatar.jpg',
+    avatar: '/__mock__/img/avatars/sample_avatar.jpg',
     online: true,
     elo: 1100,
     wins: 40,
@@ -155,7 +155,7 @@ export async function simulateFetchUserProfile(username) {
     date_joined: '2019-07-13',
     best_enemy: {
       username: 'Lucas',
-      avatar: '/mock/img/avatars/sample_avatar4.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar4.jpg',
       wins: 25,
       loses: 15,
       winrate: 62,
@@ -163,7 +163,7 @@ export async function simulateFetchUserProfile(username) {
     },
     worst_enemy: {
       username: 'Jane',
-      avatar: '/mock/img/avatars/sample_avatar3.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar3.jpg',
       wins: 5,
       loses: 15,
       winrate: 25,
@@ -172,19 +172,19 @@ export async function simulateFetchUserProfile(username) {
     friends: [
       {
         username: 'Alice',
-        avatar: '/mock/img/avatars/sample_avatar2.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar2.jpg',
         elo: 1150,
         is_online: true,
       },
       {
         username: 'Emily',
-        avatar: '/mock/img/avatars/sample_avatar.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar.jpg',
         elo: 950,
         is_online: true,
       },
       {
         username: 'Jane',
-        avatar: '/mock/img/avatars/sample_avatar3.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar3.jpg',
         elo: 1050,
         is_online: false,
       },
@@ -193,7 +193,7 @@ export async function simulateFetchUserProfile(username) {
 
   const user5 = {
     username: 'Lucas',
-    avatar: '/mock/img/avatars/sample_avatar4.jpg',
+    avatar: '/__mock__/img/avatars/sample_avatar4.jpg',
     online: false,
     elo: 1000,
     wins: 20,
@@ -203,7 +203,7 @@ export async function simulateFetchUserProfile(username) {
     date_joined: '2022-02-17',
     best_enemy: {
       username: 'Jane',
-      avatar: '/mock/img/avatars/sample_avatar3.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar3.jpg',
       wins: 25,
       loses: 15,
       winrate: 57,
@@ -211,7 +211,7 @@ export async function simulateFetchUserProfile(username) {
     },
     worst_enemy: {
       username: 'Emily',
-      avatar: '/mock/img/avatars/sample_avatar.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar.jpg',
       wins: 10,
       loses: 20,
       winrate: 33,
@@ -220,19 +220,19 @@ export async function simulateFetchUserProfile(username) {
     friends: [
       {
         username: 'JohnDoe',
-        avatar: '/mock/img/avatars/sample_avatar.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar.jpg',
         elo: 1200,
         is_online: true,
       },
       {
         username: 'Emily',
-        avatar: '/mock/img/avatars/sample_avatar.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar.jpg',
         elo: 950,
         is_online: true,
       },
       {
         username: 'Alice',
-        avatar: '/mock/img/avatars/sample_avatar2.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar2.jpg',
         elo: 1150,
         is_online: false,
       },
@@ -241,7 +241,7 @@ export async function simulateFetchUserProfile(username) {
 
   const user6 = {
     username: 'Emily',
-    avatar: '/mock/img/avatars/sample_avatar.jpg',
+    avatar: '/__mock__/img/avatars/sample_avatar.jpg',
     online: true,
     elo: 950,
     wins: 30,
@@ -251,7 +251,7 @@ export async function simulateFetchUserProfile(username) {
     date_joined: '2020-09-05',
     best_enemy: {
       username: 'George',
-      avatar: '/mock/img/avatars/sample_avatar.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar.jpg',
       wins: 10,
       loses: 20,
       winrate: 33,
@@ -259,7 +259,7 @@ export async function simulateFetchUserProfile(username) {
     },
     worst_enemy: {
       username: 'Lucas',
-      avatar: '/mock/img/avatars/sample_avatar4.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar4.jpg',
       wins: 5,
       loses: 10,
       winrate: 33,
@@ -268,19 +268,19 @@ export async function simulateFetchUserProfile(username) {
     friends: [
       {
         username: 'JohnDoe',
-        avatar: '/mock/img/avatars/sample_avatar.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar.jpg',
         elo: 1200,
         is_online: true,
       },
       {
         username: 'Jane',
-        avatar: '/mock/img/avatars/sample_avatar3.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar3.jpg',
         elo: 1050,
         is_online: false,
       },
       {
         username: 'Alice',
-        avatar: '/mock/img/avatars/sample_avatar2.jpg',
+        avatar: '/__mock__/img/avatars/sample_avatar2.jpg',
         elo: 1150,
         is_online: true,
       },
@@ -294,7 +294,7 @@ export async function simulateFetchUserProfile(username) {
   if (!user) {
     return {
       username: 'Unknown User',
-      avatar: '/mock/img/avatars/sample_avatar.jpg',
+      avatar: '/__mock__/img/avatars/sample_avatar.jpg',
       online: false,
     };
   }
