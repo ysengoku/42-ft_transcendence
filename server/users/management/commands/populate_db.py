@@ -16,18 +16,18 @@ class Command(BaseCommand):
 
         User.objects.create_superuser("admin", "admin@gmail.com", "123")
         life_enjoyer = User.objects.create_user(
-            "LifeEnjoyer", "regular", email="lifeenjoyer@gmail.com", password="123"
+            "LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123"
         ).profile
-        yuko = User.objects.create_user("Yuko", "regular", email="yuko@gmail.com", password="123").profile
-        celia = User.objects.create_user("celiastral", "regular", email="celiastral@gmail.com", password="123").profile
+        yuko = User.objects.create_user("Yuko", email="yuko@gmail.com", password="123").profile
+        celia = User.objects.create_user("celiastral", email="celiastral@gmail.com", password="123").profile
         fanny = User.objects.create_user(
-            "Fannybooboo", "regular", email="fannybooboo@gmail.com", password="123"
+            "Fannybooboo", email="fannybooboo@gmail.com", password="123"
         ).profile
-        eldar = User.objects.create_user("emuminov", "regular", email="emuminov@gmail.com", password="123").profile
+        eldar = User.objects.create_user("emuminov", email="emuminov@gmail.com", password="123").profile
         sad_hampter = User.objects.create_user(
-            "SadHampter", "regular", email="sadhampter@gmail.com", password="123"
+            "SadHampter", email="sadhampter@gmail.com", password="123"
         ).profile
-        User.objects.create_user("User0", "regular", email="user0@gmail.com", password="123")
+        User.objects.create_user("User0", email="user0@gmail.com", password="123")
 
         regular_users = []
         names = [
@@ -45,13 +45,13 @@ class Command(BaseCommand):
             "warhawk",
         ]
         for name in names:
-            user = User.objects.create_user(f"{name}", "regular", email=f"{name}@gmail.com", password="123")
+            user = User.objects.create_user(f"{name}", email=f"{name}@gmail.com", password="123")
             regular_users.append(user)
             life_enjoyer.add_friend(user.profile)
         life_enjoyer.save()
 
         for i in range(30):
-            user = User.objects.create_user(f"Pedro{i}", "regular", email=f"Pedro{i}@gmail.com", password="123")
+            user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
             life_enjoyer.block_user(user.profile)
 
 

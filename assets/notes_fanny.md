@@ -1,3 +1,9 @@
+# TODO:
+mettre le register avec oauth2 et 2fa - corriger register.js
+mettre le login avec oauth2 et 2fa - corriger login.js
+
+
+
 ## what I did
 
 - a docker which work for development and production with django, vite and nginx
@@ -417,3 +423,22 @@ act -j build -W ./github/workflows/front.yaml
 
 Prettier : C'est un formatter qui s'assure que le code est formaté de manière cohérente (espaces, indentation, sauts de ligne, etc.). Il ne se soucie pas de la logique du code, mais uniquement de son apparence.
 ESLint : C'est un linter qui analyse le code pour détecter les erreurs, les mauvaises pratiques, les incohérences, et appliquer des règles de style plus strictes (comme l'interdiction d'utiliser des variables non utilisées ou des fonctions mal nommées).
+
+I everybody  ! 
+yesterday I presentented my work on oauth2,  with 42api (requested) and github (which i decided to add)
+
+Eldar will be changing the database a bit to create a new field for connection type (github, 42api, regular) and make the username no longer unique. (which is a bit of work because the username was unique, so some changes have to be done along). 
+
+Eldar asked me to research if github api was providing refresh tokens (the 42 api does not provide any).
+
+ in fact, github api offers 2 type of oauth2 flows : the traditionnal oauth one, and a github one, more complex, dedicated to complex CI. 
+
+cf picture :  i have created a traditionnal oauth connection with github. in the traditionnal one it is no question of refresh token. 
+
+# 2FA:
+TOTP app = Time-based One-Time Password
+
+
+vite prod:
+rm -rf node_modules/.vite
+npm run build
