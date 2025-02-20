@@ -14,25 +14,16 @@ export class EmailUpdate extends HTMLElement {
     this._user.connectionType = user.connection_type;
     this._user.email = user.email;
     this.render();
+    this.setEventListeners();
   }
 
-  render() {
-    if (this._user.connectionType !== 'regular') {
-      return;
-    }
-    this.innerHTML = `
-      <div class="mt-3">
-        <label for="settings-email" class="form-label">Email</label>
-        <input type="email" class="form-control" id="settings-email" value="${this._user.email}">
-        <div class="invalid-feedback" id="settings-email-feedback"></div>
-      </div>    
-    `;
-
+  setEventListeners() {
     const emailInput = this.querySelector('#settings-email');
+
     emailInput.addEventListener('input', (event) => {
       const feedback = this.querySelector('#settings-email-feedback');
       if (event.target.value.length < 1) {
-        feedback.textContent = INPUT_FEEDBACK.EMPTY_EMAIL;
+        feedback.textContent = INPUT_FEEDBACK.CANNOT_DELETE_EMAIL;
         emailInput.classList.add('is-invalid');
       } else {
         feedback.textContent = '';
@@ -42,6 +33,27 @@ export class EmailUpdate extends HTMLElement {
         this.newEmail = event.target.value;
       }
     });
+
+    emailInput.addEventListener('blur', (event) => {
+      if (event.target.value.length < 1) {
+        event.target.value = this._user.email;
+        emailInput.classList.remove('is-invalid');
+        this.querySelector('#settings-email-feedback').textContent = '';
+      }
+    });
+  }
+
+  render() {
+    if (this._user.connectionType !== 'regular') {
+      return;
+    }
+    this.innerHTML = `
+      <div class="mt-3">
+        <label for="settings-email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="settings-email" value="${this._user.email}" autocomplete="off">
+        <div class="invalid-feedback" id="settings-email-feedback"></div>
+      </div>    
+    `;
   }
 }
 
