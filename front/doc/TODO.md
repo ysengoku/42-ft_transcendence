@@ -4,6 +4,9 @@
 - [] Loading
 - [] 404
 
+## Static images
+- [] Path to static image sent by server
+
 ---------------------------------------------------------------------
 
 ## Router
@@ -56,6 +59,8 @@
 - [x] Fix parsing of Error message from server
 - [x] Forbitten letters or format for username? (e.g. email format for username)
 - [] Forgot password
+- [] Mfa steps (modal)
+
 - [x] Unit test (input validation)
 
 ---------------------------------------------------------------------
@@ -140,9 +145,10 @@
 ### Chat
 - [x] Add auth check before rendering
 - [x] Websocket
-- [] Block user on chat
+- [x] Block user on chat
+- [] Blocked user chat rerdering
 - [] Invite to play game
-- [] Add link to Profile of current chat user
+- [x] Add link to Profile of current chat user
 - [x] Resize event listner
 - [x] Autocomplete off
 
