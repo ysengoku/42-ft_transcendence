@@ -146,7 +146,7 @@
 - [x] Add auth check before rendering
 - [x] Websocket
 - [x] Block user on chat
-- [] Blocked user chat rerdering
+- [] Blocked user chat rendering
 - [] Invite to play game
 - [x] Add link to Profile of current chat user
 - [x] Resize event listner
