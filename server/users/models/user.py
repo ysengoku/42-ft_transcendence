@@ -21,6 +21,9 @@ class UserManager(BaseUserManager):
     def for_id(self, user_id: str):
         return self.filter(id=user_id)
 
+    def has_mfa_enabled(self):
+        return self.filter(mfa_enabled=True).exists()
+
     def for_oauth_id(self, oauth_id: str):
         return self.filter(oauth_connection__oauth_id=oauth_id)
 
@@ -84,7 +87,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, default="")
     password = models.CharField(max_length=128, blank=True, default="")
     mfa_enabled = models.BooleanField(default=False)
-    mfa_secret = models.CharField(max_length=128, blank=True, default="")
+    mfa_secret = models.CharField(max_length=128, blank=True, default="") # do we need it ?
 
     objects = UserManager()
 

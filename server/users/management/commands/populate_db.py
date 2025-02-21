@@ -10,11 +10,12 @@ class Command(BaseCommand):
     help = "Populates db with a dummy data"
 
     def handle(self, **kwargs) -> None:
-        # if User.objects.count() != 0:
-        #     print("DB is not empty.")  # noqa: T201
-        #     return
+        if User.objects.count() != 0:
+            print("DB is not empty.")  # noqa: T201
+            return
 
         User.objects.create_superuser("admin", "admin@gmail.com", "123")
+
         life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123").profile
         yuko = User.objects.create_user("Yuko", email="yuko@gmail.com", password="123").profile
         celia = User.objects.create_user("celiastral", email="celiastral@gmail.com", password="123").profile
@@ -121,6 +122,9 @@ class Command(BaseCommand):
                     Match.objects.resolve(winner.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)))  # noqa: S311
                 if randint(0, 10) > 7:  # noqa: S311,PLR2004
                     Match.objects.resolve(loser.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)))  # noqa: S311
+        
+        # Groupe 1: Utilisateurs avec MFA
+        
         mfa_users = [
             ("secure_bob", "secure_bob@gmail.com"),
             ("safe_alice", "safe_alice@gmail.com"),
@@ -129,33 +133,43 @@ class Command(BaseCommand):
         ]
         for username, email in mfa_users:
             user = User.objects.create_user(username, email=email, password="123")
-            user.profile.mfa_enabled = True
-            user.profile.save()
+            user.mfa_enabled = True
+            user.save()
 
-        # Groupe 2: Utilisateurs OAuth 42
+# 42 OAuth Users
         ft_users = [
             ("ft_user1", "ft1@student.42.fr"),
             ("ft_user2", "ft2@student.42.fr"),
             ("ft_cadet", "cadet@student.42.fr"),
             ("ft_champion", "champion@student.42.fr"),
         ]
-        for username, email in ft_users:
-            user = User.objects.create_user(username, email=email, password="123")
-            user.profile.oauth_provider = OauthConnection.FT
-            user.profile.oauth_id = f"42_id_{username}"
-            user.profile.save()
+        for i, (username, email) in enumerate(ft_users, start=1):
+            oauth_connection = OauthConnection.objects.create(
+                status=OauthConnection.CONNECTED,
+                connection_type=OauthConnection.FT,
+                oauth_id=420000 + i
+            )
+            User.objects.create_user(
+                username=username,
+                oauth_connection=oauth_connection,
+            )
 
-        # Groupe 3: Utilisateurs OAuth GitHub
+        # GitHub OAuth Users
         github_users = [
             ("github_dev", "dev@gmail.com"),
             ("github_coder", "coder@gmail.com"),
             ("open_source_pro", "opensource@gmail.com"),
             ("git_master", "gitmaster@gmail.com"),
         ]
-        for username, email in github_users:
-            user = User.objects.create_user(username, email=email, password="123")
-            user.profile.oauth_provider = OauthConnection.GITHUB
-            user.profile.oauth_id = f"github_id_{username}"
-            user.profile.save()
+        for i, (username, email) in enumerate(github_users, start=1):
+            oauth_connection = OauthConnection.objects.create(
+                status=OauthConnection.CONNECTED,
+                connection_type=OauthConnection.GITHUB,
+                oauth_id=430000 + i
+            )
+            User.objects.create_user(
+                username=username,
+                oauth_connection=oauth_connection,
+            )
 
         print("\033[92mDB was successefully populated!\033[0m")  # noqa: T201
