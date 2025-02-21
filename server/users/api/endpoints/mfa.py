@@ -45,6 +45,8 @@ def send_verification_code(request, username: str) -> dict[str, Any]:
         # Générer un code de vérification
         verification_code = generate_verification_code()
 
+        # ou est la partie send by email ????
+        
         # Stocker le code dans le cache avec une date d'expiration
         cache_key = get_cache_key(username)
         cache.set(cache_key, verification_code, TOKEN_EXPIRY)
@@ -100,20 +102,3 @@ def verify_email_login(request, username: str, token: str) -> dict[str, Any]:
     except Exception as e:
         raise HttpError(500, f"Error verifying code: {str(e)}")
 
-
-@mfa_router.get("/status")
-@ensure_csrf_cookie
-def mfa_status(request, username: str) -> dict[str, bool]:
-    """Check if user exists and can receive verification codes"""
-    try:
-        user = User.objects.filter(username=username).first()
-        if not user:
-            raise HttpError(404, "User not found")
-
-        # En mode développement, on suppose que tous les utilisateurs peuvent recevoir des codes
-        return {"enabled": True}
-
-    except HttpError as e:
-        raise e
-    except Exception as e:
-        raise HttpError(500, f"Error checking status: {str(e)}")
