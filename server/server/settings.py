@@ -224,17 +224,22 @@ OAUTH_CONFIG = {
     },
 }
 
-
 # email sending for 2fa and password reset
-# if DEBUG:
-#     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-# else:
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_HOST_USER = "peacemakers9999@gmail.com"  # Votre adresse Gmail
-EMAIL_HOST_PASSWORD = "wnig qcis jklp spcy"  # Mot de passe d'application Gmail
-DEFAULT_FROM_EMAIL = "peacemakers9999@gmail.com"
+# Email configuration
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
 
+print(EMAIL_BACKEND)
+print(EMAIL_HOST)
+print(EMAIL_PORT)
+print(EMAIL_USE_TLS)
+print(EMAIL_USE_SSL)
+print(EMAIL_HOST_USER)
+print(EMAIL_HOST_PASSWORD)
+print(DEFAULT_FROM_EMAIL)
