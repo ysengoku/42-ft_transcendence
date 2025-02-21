@@ -1,3 +1,5 @@
+import hashlib
+import os
 import uuid
 
 from django.contrib.auth.hashers import make_password
@@ -90,7 +92,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, default="")
     password = models.CharField(max_length=128, blank=True, default="")
     mfa_enabled = models.BooleanField(default=False)
-    mfa_secret = models.CharField(max_length=128, blank=True, default="") # do we need it ?
+    mfa_secret = models.CharField(max_length=128, blank=True, default="")  # do we need it ?
 
     objects = UserManager()
 
@@ -163,6 +165,12 @@ class User(AbstractUser):
         for key, val in data:
             if val and hasattr(self, key):
                 setattr(self, key, val)
+
+        if data.mfa_enabled:
+            self.mfa_secret = hashlib.sha256(os.urandom(32)).hexdigest()
+        elif data.mfa_enabled is False:
+            self.mfa_enabled = False
+            self.mfa_secret = ""
 
         exclude = set()
         if not data.email:
