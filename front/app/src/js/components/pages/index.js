@@ -11,6 +11,7 @@ import { DualMenu } from './dual/DualMenu.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
 import { Game } from './game/Game.js';
 import { Error } from './Error.js';
+import { NotFoundPage } from './NotFound.js';
 
 export {
   Landing,
@@ -26,4 +27,5 @@ export {
   TournamentMenu,
   Game,
   Error,
+  NotFoundPage,
 };

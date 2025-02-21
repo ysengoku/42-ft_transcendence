@@ -68,6 +68,7 @@
 ## Logout
 - [x] Clear CSRF token
 - [x] logout API request
+- [] Add refresh token if 401
 
 ---------------------------------------------------------------------
 
