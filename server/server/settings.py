@@ -112,12 +112,9 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'server.wsgi.application'
 ASGI_APPLICATION = "server.asgi.application"  # Pour Django Channels
 
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -229,13 +226,15 @@ OAUTH_CONFIG = {
 
 
 # email sending for 2fa and password reset
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+# if DEBUG:
+#     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# else:
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-gmail-account@gmail.com'  # Votre adresse Gmail
-EMAIL_HOST_PASSWORD = 'your-app-password'  # Mot de passe d'application Gmail
-DEFAULT_FROM_EMAIL = 'Transcendence App <your-gmail-account@gmail.com>'
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = "peacemakers9999@gmail.com"  # Votre adresse Gmail
+EMAIL_HOST_PASSWORD = "wnig qcis jklp spcy"  # Mot de passe d'application Gmail
+DEFAULT_FROM_EMAIL = "peacemakers9999@gmail.com"
+
