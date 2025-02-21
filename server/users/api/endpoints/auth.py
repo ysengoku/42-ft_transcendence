@@ -48,8 +48,7 @@ def check_self(request: HttpRequest):
     return request.auth.profile
 
 
-# TODO: add secure options for the cookie
-@auth_router.post("login", response={200: Union[ProfileMinimalSchema, LoginResponseSchema],  401: Message, 429: Message}, auth=None)
+@auth_router.post("login", response={200: ProfileMinimalSchema | LoginResponseSchema,  401: Message, 429: Message}, auth=None)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
@@ -64,7 +63,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if not is_password_correct:
         raise HttpError(401, "Username or password are not correct.")
 
-    is_mfa_enabled = User.objects.has_mfa_enabled()
+    is_mfa_enabled = User.objects.has_mfa_enabled(credentials.username)
     if is_mfa_enabled:
         return JsonResponse({
             "mfa_required": True,

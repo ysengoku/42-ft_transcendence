@@ -21,8 +21,11 @@ class UserManager(BaseUserManager):
     def for_id(self, user_id: str):
         return self.filter(id=user_id)
 
-    def has_mfa_enabled(self):
-        return self.filter(mfa_enabled=True).exists()
+    def has_mfa_enabled(self, identifier: str):
+        return self.filter(
+            Q(username__iexact=identifier) | Q(email=identifier),
+            mfa_enabled=True,
+        ).exists()
 
     def for_oauth_id(self, oauth_id: str):
         return self.filter(oauth_connection__oauth_id=oauth_id)
