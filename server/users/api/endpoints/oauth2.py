@@ -2,6 +2,7 @@ import hashlib
 import os
 from urllib.parse import quote, urlencode
 
+import requests
 from django.conf import settings
 from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -40,15 +41,33 @@ def create_user_oauth(user_info: dict, oauth_connection: OauthConnection) -> Use
     oauth_connection.set_connection_as_connected(user_info, user)
     return user
 
+def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
+    """
+    Quick health check for OAuth provider API using the OAuth endpoint
+    """
+    if platform == OauthConnection.FT:
+        try:
+            response = requests.get(config["oauth_uri"], timeout=2.0)
+            if response.status_code != 200:
+                return False, "42 API is temporarily unavailable"
+            return True, ""
+        except requests.RequestException:
+            return False, "Could not connect to 42 API"
+    return True, ""
 
 @csrf_exempt
-@oauth2_router.get("/authorize/{platform}", auth=None, response={200: dict, 404: Message})
+@oauth2_router.get("/authorize/{platform}", auth=None, response={200: dict, frozenset({404, 422}): Message})
 def oauth_authorize(request, platform: str):
     """
     Starts the OAuth2 authorization process.
     Returns the authorization URL.
     Raises 404 if the platform is unsupported (raised from def get_oauth_config).
+    Raises 422 if the platform is not available (raised from def check_api_availability).
     """
+    is_available, error_msg = check_api_availability(platform, get_oauth_config(platform))
+    if not is_available:
+        return JsonResponse({"error": error_msg}, status=422)
+
     config = get_oauth_config(platform)
 
     state = hashlib.sha256(os.urandom(32)).hexdigest()
@@ -76,6 +95,10 @@ def oauth_callback(  # noqa: PLR0911
     Handles the OAuth2 callback.
     Captures errors directly from the OAuth provider.
     """
+    is_available, error_msg = check_api_availability(platform, get_oauth_config(platform))
+    if not is_available:
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_msg)}&code=404")
+
     params = request.GET
     error = params.get("error")
     error_description = params.get("error_description")
