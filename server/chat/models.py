@@ -1,7 +1,7 @@
 import uuid
 
 from django.db import models
-from django.db.models import Max, OuterRef, Subquery
+from django.db.models import Max, Subquery
 
 from users.models import Profile
 
