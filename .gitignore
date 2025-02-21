@@ -174,10 +174,3 @@ node_modules/
 /server/media/
 
 /.vscode/
-
-node_modules/
-/front/app/static/
-/server/static/
-/server/media/
-
-/.vscode/
