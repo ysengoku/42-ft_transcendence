@@ -13,6 +13,10 @@ class Message(Schema):
 
 
 class ChatMessageSchema(Schema):
+    """
+    Represents a singular message from the chat.
+    """
+
     content: str
     date: datetime
     sender: str
@@ -23,6 +27,10 @@ class ChatMessageSchema(Schema):
 
 
 class BaseChatSchema(Schema):
+    """
+    Shared data that is present on all chat schemas.
+    """
+
     username: str
     nickname: str
     avatar: str
@@ -32,9 +40,17 @@ class BaseChatSchema(Schema):
 
 
 class ChatPreviewSchema(BaseChatSchema):
+    """
+    Preview for a not opened yet chat.
+    """
+
     unread_messages_count: int
     last_message: ChatMessageSchema
 
 
 class ChatSchema(BaseChatSchema):
+    """
+    Already opened chat, with messages.
+    """
+
     messages: list[ChatMessageSchema]
