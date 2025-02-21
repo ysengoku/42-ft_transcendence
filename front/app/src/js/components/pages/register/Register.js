@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { INPUT_FEEDBACK } from '@utils';
 // import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
 
 export class Register extends HTMLElement {
@@ -29,26 +30,31 @@ export class Register extends HTMLElement {
               <div id="signup-failed-feedback"></div>
       			  <form class='w-100'>
                 <legend class="mt-4 mb-5 border-bottom">Sign Up</legend>
+
         			  <div class='mb-3'>
           				<label for='username' class='form-label'>Username</label>
-          				<input type='username' class='form-control' id='username' placeholder='username'>
+          				<input type='username' class='form-control' id='username' placeholder='username' autocomplete="off">
           				<div class='invalid-feedback' id='username-feedback'></div>
         			  </div>
+
         			  <div class='mb-3'>
           				<label for='email' class='form-label'>Email</label>
-          				<input type='email' class='form-control' id='email' placeholder='email'>
+          				<input type='email' class='form-control' id='email' placeholder='email' autocomplete="off">
           				<div class='invalid-feedback' id='email-feedback'></div>
         			  </div>
+
         			  <div class='mb-3'>
           				<label for='password' class='form-label'>Password</label>
-        				 <input type='password' class='form-control' id='password' placeholder='password'>
+        				 <input type='password' class='form-control' id='password' placeholder='password' autocomplete="off">
         				 <div class='invalid-feedback' id='password-feedback'></div>
         			  </div>
+
         			  <div class='mb-3'>
         				  <label for='password_repeat' class='form-label'>Confirm Password</label>
-        				  <input type='password' class='form-control' id='password_repeat' placeholder='password'>
+        				  <input type='password' class='form-control' id='password_repeat' placeholder='password' autocomplete="off">
         				  <div class='invalid-feedback' id='password_repeat-feedback'></div>
         			  </div>
+
         			  <div class='mb-3 py-3'>
         				  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Sign Up</button>
         			  </div>
@@ -110,17 +116,13 @@ export class Register extends HTMLElement {
   }
 
   checkInputFields(usernameField, emailField, passwordField, passwordRepeatField) {
-    const emptyUsername = 'Username is required';
-    const emptyEmail = 'Email is required';
-    const emptyPassword = 'Password is required';
-    const emptyPasswordRepeat = 'Please confirm your password';
-
     let isFormValid = true;
-    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', emptyUsername);
-    isFormValid = this.isFieldFilled(emailField, '#email-feedback', emptyEmail) && isFormValid;
-    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', emptyPassword) && isFormValid;
+    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', INPUT_FEEDBACK.EMPTY_USERNAME);
+    isFormValid = this.isFieldFilled(emailField, '#email-feedback', INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
+    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', INPUT_FEEDBACK.EMPTY_PASSWORD) && isFormValid;
     isFormValid =
-      this.isFieldFilled(passwordRepeatField, '#password_repeat-feedback', emptyPasswordRepeat) && isFormValid;
+      isFormValid = this.isFieldFilled(
+          passwordRepeatField, '#password_repeat-feedback', INPUT_FEEDBACK.EMPTY_PASSWORD_REPEAT) && isFormValid;
     isFormValid =
       this.checkPasswordLength(passwordField) &&
       this.checkPasswordDiff(passwordField, passwordRepeatField) &&

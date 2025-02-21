@@ -28,8 +28,8 @@ SECRET_KEY = "your-secret-key"
 
 # Environment variables
 
-DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
-# DEBUG = int(os.environ.get("DEBUG", default=1))
+DEBUG = os.environ.get("DEBUG", True)
+# DEBUG = int(os.environ.get("DEBUG", default=1)) # special for fanny for working from home
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 

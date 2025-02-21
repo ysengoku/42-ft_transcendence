@@ -16,4 +16,8 @@ export const API_ENDPOINTS = {
   OAUTH_CALLBACK: (platform) => `${API_BASE_URL}oauth/callback/${platform}`,
   MFA_VERIFY_LOGIN: `${API_BASE_URL}mfa/verify_login`,
   MFA_SEND_CODE: `${API_BASE_URL}mfa/send_code`,
+  MFA_SETUP: `${API_BASE_URL}2fa/setup`,
+  MFA_VERIFY: `${API_BASE_URL}2fa/verify`,
+  USER_SEARCH: (query, limit, offset) => `${API_BASE_URL}users?search=${query}&limit=${limit}&offset=${offset}`,
+  USER_FRIENDS_LIST: (username, limit, offset) => `${API_BASE_URL}users/${username}/friends?limit=${limit}&offset=${offset}`,
 };

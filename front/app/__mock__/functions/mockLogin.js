@@ -20,7 +20,7 @@ export async function simulateLoginSuccessResponse() {
 //           success: true,
 //           user: {
 //             username: 'JohnDoe',
-//             avatar: '/mock/img/avatars/sample_avatar.jpg',
+//             avatar: '/__mock__/img/avatars/sample_avatar.jpg',
 //           },
 //         });
 //       } else {
