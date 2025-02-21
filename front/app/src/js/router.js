@@ -39,9 +39,10 @@ const router = (() => {
 
     /**
      * Handles route changes and renders the appropriate component.
+     * @param {string} [queryParams=''] - The query parameters included in the URL.
      * @return {void}
      */
-    handleRoute() {
+    handleRoute(queryParams = '') {
       const path = window.location.pathname;
       const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
@@ -51,11 +52,11 @@ const router = (() => {
           // console.log('param: ', param);
           this.renderDynamicUrlComponent(componentTag, param);
         } else {
-          this.renderStaticUrlComponent(componentTag);
+          this.renderStaticUrlComponent(componentTag, queryParams);
         }
       } else {
-        console.error(`Route not found for path: ${path}`);
-        this.renderStaticUrlComponent('not-found');
+        console.error(`Route not found for: ${path}`);
+        this.renderStaticUrlComponent('page-not-found');
       }
     }
 
@@ -103,13 +104,21 @@ const router = (() => {
     /**
      * Renders a static URL component.
      * @param {string} componentTag - The custom HTML tag for the component to render.
+     * @param {Object} [queryParams=''] - The query parameters included in the URL.
      * @return {void}
      */
-    renderStaticUrlComponent(componentTag) {
+    renderStaticUrlComponent(componentTag, queryParams = '') {
       if (this.currentComponent) {
         this.currentComponent.remove();
       }
       const component = document.createElement(componentTag);
+
+      if (queryParams.size > 0) {
+        for (const [key, value] of queryParams.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+        component.setQueryParam(queryParams);
+      }
       const contentElement = document.getElementById('content');
       contentElement.innerHTML = '';
       contentElement.appendChild(component);
@@ -137,12 +146,13 @@ const router = (() => {
     /**
      * Navigates to the specified path.
      * @param {string} [path=window.location.pathname] - The path to navigate to.
+     * @param {string} [queryParams=''] - The query parameters to include in the URL.
      * @return {void}
      */
-    navigate(path = window.location.pathname) {
+    navigate(path = window.location.pathname, queryParams = '') {
       console.log('Navigating to:', path);
       window.history.pushState({}, '', path);
-      this.handleRoute();
+      this.handleRoute(queryParams);
     }
 
     /**
@@ -204,15 +214,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   router.init();
   addDissmissAlertListener();
   const currentPath = window.location.pathname || '/';
-  router.navigate(currentPath);
+  const queryParams = new URLSearchParams(window.location.search);
+  router.navigate(currentPath, queryParams);
 });
 
 export { router };
-
-// ```
-// https://localhost:1026/error?error=Provider%20error%3A%20invalid_client&code=422
-// ```
-// - error=Provider%20error%3A%20invalid_client
-// - code=422"
-
-// error = Provider error: invalid client
