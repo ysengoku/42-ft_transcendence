@@ -1,11 +1,12 @@
 from datetime import datetime
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
-from .models.profile import Profile
+from .models import Profile, User
 
 # ruff: noqa: S105
 
@@ -53,6 +54,17 @@ class UserSettingsSchema(Schema):
     connection_type: str
     mfa_enabled: bool
     avatar: str = Field(alias="profile.avatar")
+
+    @staticmethod
+    def resolve_connection_type(obj: User):
+        oauth_connection = obj.get_oauth_connection()
+        return oauth_connection.connection_type if oauth_connection else "regular"
+
+class OAuthCallbackParams(Schema):
+    code: str | None = None  # Plutôt que Optional[str]
+    state: str | None = None
+    error: str | None = None
+    error_description: str | None = None
 
 
 class OpponentProfileAndStatsSchema(Schema):
@@ -140,7 +152,7 @@ class PasswordValidationSchema(Schema):
     password: str
     password_repeat: str
 
-    def validate_password(self) -> list[dict]:
+    def validate_password(self) -> dict[str, list[str]]:
         err_dict = {}
         err_dict["password"] = []
         err_dict["password_repeat"] = []

@@ -7,7 +7,7 @@ from users.models import Profile, User
 
 def allow_only_for_self(request: HttpRequest, username: str):
     user: User = request.auth
-    if user.username != username:
+    if user.username.lower() != username.lower():
         raise HttpError(403, "Forbidden.")
     return request.auth
 
