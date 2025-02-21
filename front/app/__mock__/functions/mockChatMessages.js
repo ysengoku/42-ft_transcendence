@@ -5,10 +5,12 @@ export async function mockChatMessagesData(id) {
   const chatMessages = [
     {
       id: 1,
-      avatar: '/media/avatars/sample_avatar.jpg',
+      avatar: '/__mock__/img/sample-pic1.jpg',
       username: 'alice123',
       nickname: 'Alice',
       is_online: true,
+      is_blocked: false,
+      is_blocked_by_user: false,
       messages: [
         {
           id: 1,
@@ -84,10 +86,12 @@ export async function mockChatMessagesData(id) {
     },
     {
       id: 2,
-      avatar: '/media/avatars/sample_avatar2.jpg',
+      avatar: '/__mock__/img/sample-pic2.png',
       username: 'johndoe55',
       nickname: 'JohnDoe',
       is_online: false,
+      is_blocked: false,
+      is_blocked_by_user: false,
       messages: [
         {
           sender: myUsername,
@@ -111,10 +115,12 @@ export async function mockChatMessagesData(id) {
     },
     {
       id: 3,
-      avatar: '/media/avatars/sample_avatar3.jpg',
+      avatar: '/__mock__/img/sample-pic3.png',
       username: 'george55',
       nickname: 'George',
       is_online: true,
+      is_blocked: false,
+      is_blocked_by_user: false,
       messages: [
         {
           sender: 'george55',

@@ -1,3 +1,5 @@
+import { router } from '@router';
+
 export class ChatMessageArea extends HTMLElement {
   constructor() {
     super();
@@ -7,6 +9,14 @@ export class ChatMessageArea extends HTMLElement {
   setData(data) {
     this._data = data;
     this.render();
+    this.setEventListeners();
+  }
+
+  setEventListeners() {
+    const header = this.querySelector('#chat-header');
+    header.addEventListener('click', () => {
+      router.navigate(`/profile/${this._data.username}`);
+    });
   }
 
   toggleLikeMessage(index) {
@@ -123,18 +133,28 @@ export class ChatMessageArea extends HTMLElement {
     <div class="d-flex flex-column h-100">
 
       <!-- Header -->
-      <div class="d-flex flex-row justify-content-start align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top">
-        <img src="${this._data.avatar}" class="rounded-circle" alt="User" id="chat-message-header-avatar"/>
-        <div class="d-flex flex-column text-start">
-          <div class="d-flex flex-row align-items-center gap-3">
-            <h5>${this._data.nickname}</h5>
-            <small>@${this._data.username}</small>
+      <div class="d-flex flex-row justify-content-between align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top" id="chat-header">
+  
+      <div class="d-flex flex-row">
+        <img src="${this._data.avatar}" class="rounded-circle me-3" alt="User" id="chat-message-header-avatar"/>
+
+        <div class="d-flex flex-column text-start gap-1">
+          <div class="d-flex flex-row gap-3">
+            <h5 class="mb-0">${this._data.nickname}</h5>
+            <p class="mb-0 fs-6">@${this._data.username}</p>
           </div>
           <div class="d-flex flex-row align-items-center gap-2">
             <span class="online-status ${this._data.is_online ? 'online' : ''}"></span>
             ${this._data.is_online ? 'online' : 'offline'}
           </div>
         </div>
+      </div>
+
+      <div class="align-self-end">
+        <button class="btn">Invite to play</button>
+        <button class="btn">Block</button>
+      </div>
+
       </div>
 
       <!-- Messages -->

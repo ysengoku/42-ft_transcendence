@@ -32,8 +32,8 @@ def get_cache_key(username: str) -> str:
     return f"mfa_email_code_{username}"
 
 
-@ensure_csrf_cookie
 @mfa_router.post("/send-code")
+@ensure_csrf_cookie
 def send_verification_code(request, username: str) -> dict[str, Any]:
     """Send a verification code to the user's email (simulated in console)"""
     try:
@@ -66,6 +66,7 @@ def send_verification_code(request, username: str) -> dict[str, Any]:
 
 
 @mfa_router.post("/verify-login")
+@ensure_csrf_cookie
 def verify_email_login(request, username: str, token: str) -> dict[str, Any]:
     """Verify email verification code during login"""
     if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
@@ -100,6 +101,7 @@ def verify_email_login(request, username: str, token: str) -> dict[str, Any]:
 
 
 @mfa_router.get("/status")
+@ensure_csrf_cookie
 def mfa_status(request, username: str) -> dict[str, bool]:
     """Check if user exists and can receive verification codes"""
     try:
