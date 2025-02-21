@@ -20,7 +20,7 @@
         - [x] Images should not be too big, bigger than 10mb.
         - [x] Accepted formats should be: .png, .jpg, .webp.
             - [x] Both filenames and their contents should be checked.
-    - [x] Add `is_blocked`, `is_blocked_by` and `is_friend` data on FullProfileSchema.
+    - [x] Add `is_blocked`, `is_blocked_by` and `is_friend` data on `FullProfileSchema`.
 - [ ] User creation.
     - [x] User email should be valid.
       - [ ] OPTIONAL: send a validation email to a user.

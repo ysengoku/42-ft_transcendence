@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - workflows
       - dev
   pull_request:
     branches:
-      - workflows
       - main
       - dev
 
@@ -48,7 +46,7 @@ jobs:
         run: |
           ruff check --fix ./users
           ruff format ./users
-
+          
       - name: Run Django migrations
         working-directory: server/
         env:
