@@ -1,123 +1,51 @@
-// Login.js
 import { router } from '@router';
-import { apiRequest } from '@api';
-import { API_ENDPOINTS } from '@api';
+import { auth } from '@auth';
 import './components/index.js';
 
 export class Login extends HTMLElement {
   constructor() {
     super();
-    this.state = {
-      error: ''
-    };
+    this.isLoggedin = false;
   }
 
-  setState(newState) {
-    this.state = { ...this.state, ...newState };
-    this.render();
-  }
-
-  connectedCallback() {
-    this.render();
-    this.setupLoginHandler();
-  }
-
-  setupLoginHandler() {
-    const form = this.querySelector('form');
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await this.handleLogin();
-      });
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    console.log('authStatus:', authStatus);
+    this.isLoggedin = authStatus.success;
+    if (this.isLoggedin) {
+      router.navigate('/home');
     }
+    this.render();
+    this.setEventListeners();
   }
 
-  async handleLogin() {
-    const username = this.querySelector('#username').value;
-    const password = this.querySelector('#password').value;
-  
-    try {
-      const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, {
-        username,
-        password
-      });
-  
-      console.log('Login response full:', response);
-  
-      if (response && response.success === true) {
-        // Vérifier si MFA est requis
-        if (response.data && response.data.mfa_required === true) {
-          console.log('Login successful, switching to MFA');
-          const container = this.querySelector('.col-12.col-md-4');
-          if (container) {
-            console.log('Container found, replacing with MFA component');
-            container.innerHTML = `
-              <mfa-auth 
-                mode="login" 
-                data-username="${username}"
-              ></mfa-auth>
-            `;
-          } else {
-            console.error('Container not found');
-          }
-        } else {
-          // Pas de MFA requis, connecter l'utilisateur directement
-          console.log('Login successful, no MFA required');
-          
-          // Stocker les informations de l'utilisateur
-          if (response.data) {
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('user', JSON.stringify(response.data));
-          }
-          
-          // Redirection vers la page d'accueil
-          router.navigate('/home');
-        }
-      } else {
-        console.log('Login response not successful:', response);
-        this.setState({
-          error: response.msg || 'Invalid login credentials'
-        });
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      this.setState({
-        error: error.msg || 'An error occurred during login'
-      });
-    }
+  setEventListeners() {
+    const forgotPasswordButton = this.querySelector('#forgot-password-button');
+    forgotPasswordButton.addEventListener('click', () => {
+      console.log('forgot password button clicked');
+      router.navigate('/forgot-password');
+    });
+
+    const registerButton = this.querySelector('#link-to-register');
+    registerButton.addEventListener('click', () => {
+      router.navigate('/register');
+    });
   }
 
   render() {
-    // if (this.isLoggedin) {
-    //   router.navigate('/home');
-    // }
     this.innerHTML = `
-      <div class="container">
-        <div class="row justify-content-center">
-          <div class="col-12 col-md-4">
-            ${this.state.error ? `
-              <div class="alert alert-danger alert-dismissible" role="alert">
-                ${this.state.error}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            ` : ''}
-            <form>
-              <div class="mb-3">
-                <label for="username" class="form-label">Username or Email</label>
-                <input type="text" class="form-control" id="username" required>
-              </div>
-              <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" required>
-              </div>
-              <div class="mb-3 py-3">
-                <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
-              </div>
-            </form>
+      <div class="container my-3">
+        <div class="row justify-content-center py-4">
+          <div class="col-12 col-md-4"> 
+            <div id="login-failed-feedback"></div>
+
+            <login-form></login-form>
+
             <div class="container d-flex flex-column justify-content-center align-items-center">
-              <div class="mb-2">
-                <a href="/forgot-password" style="text-decoration: none;">Forgot password?</a>
-              </div>
+              <button class="btn w-100 py-2 mb-2" type="button" id="forgot-password-button">
+                Forgot password?
+              </button>
+
               <div class="mb-2 w-100 text-center py-3">
                 <div class="d-flex align-items-center">
                   <hr class="flex-grow-1">
@@ -125,12 +53,14 @@ export class Login extends HTMLElement {
                   <hr class="flex-grow-1">
                 </div>
               </div>
+
               <div class="mb-3">
-                <a class="btn btn-link w-100 py-2" style="text-decoration: none;" href="/register" role="button">
-                  Not registered yet? <strong>Sign up now</strong>
-                </a>
+                <button class="btn w-100 py-2" type="button" id="link-to-register">
+                  Not registered yet?  <strong>Sign up now</strong>
+                </button>
               </div>
             </div>
+
             <oauth-component></oauth-component>
           </div>
         </div>
