@@ -46,7 +46,6 @@ def check_self(request: HttpRequest):
     return request.auth.profile
 
 
-# TODO: add secure options for the cookie
 @auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message, 429: Message}, auth=None)
 @ensure_csrf_cookie
 @csrf_exempt
