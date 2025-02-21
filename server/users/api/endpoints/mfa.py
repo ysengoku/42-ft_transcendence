@@ -19,7 +19,7 @@ from users.models import User
 mfa_router = Router()
 
 TOKEN_LENGTH = 6
-TOKEN_EXPIRY = 10 * 60  # 10 minutes en secondes
+TOKEN_EXPIRY = 10 * 60
 
 
 def generate_verification_code() -> str:
@@ -32,10 +32,11 @@ def get_cache_key(username: str) -> str:
     return f"mfa_email_code_{username}"
 
 
-@mfa_router.post("/send-code")
+@mfa_router.post("/send-code", auth=None)
 @ensure_csrf_cookie
 def send_verification_code(request, username: str) -> dict[str, Any]:
     """Send a verification code to the user's email (simulated in console)"""
+    print(f"Sending verification code to {username}")
     try:
         user = User.objects.filter(username=username).first()
         if not user:
@@ -65,7 +66,7 @@ def send_verification_code(request, username: str) -> dict[str, Any]:
         raise HttpError(500, f"Error sending verification code: {str(e)}")
 
 
-@mfa_router.post("/verify-login")
+@mfa_router.post("/verify-login", auth=None)
 @ensure_csrf_cookie
 def verify_email_login(request, username: str, token: str) -> dict[str, Any]:
     """Verify email verification code during login"""

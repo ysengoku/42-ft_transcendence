@@ -1,10 +1,12 @@
+import { getCSRFTokenfromCookies } from '../../../../auth/csrfToken.js';
+
 export class MFAAuth extends HTMLElement {
   constructor() {
     super();
     this.state = {
       error: '',
       message: '',
-      codeSent: false
+      codeSent: false,
     };
   }
 
@@ -22,6 +24,7 @@ export class MFAAuth extends HTMLElement {
 
   async sendVerificationCode() {
     try {
+      const CSRFToken = getCSRFTokenfromCookies();
       const username = this.getAttribute('data-username');
       console.log('Sending verification code to:', username);
 
@@ -29,23 +32,23 @@ export class MFAAuth extends HTMLElement {
       const response = await fetch('/api/mfa/send-code', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': CSRFToken,
         },
-        credentials: 'include',  // Pour inclure les cookies
-        body: JSON.stringify({ username })
+        credentials: 'include', // Pour inclure les cookies
+        // body: JSON.stringify({ username }),
       });
 
       if (response.ok) {
         const data = await response.json();
         console.log('Code send response:', data);
-        
+
         this.setState({
           codeSent: true,
           message: 'A verification code has been sent. Check console for test code.',
-          error: ''
+          error: '',
         });
-        
-        // Si en mode développement, afficher le code
+
         if (data.debug_code) {
           console.log('DEBUG CODE:', data.debug_code);
         }
@@ -56,41 +59,43 @@ export class MFAAuth extends HTMLElement {
     } catch (error) {
       console.error('Error sending code:', error);
       this.setState({
-        error: error.message || 'Failed to send verification code'
+        error: error.message || 'Failed to send verification code',
       });
     }
   }
 
   async verifyCode(token) {
     try {
+      const CSRFToken = getCSRFTokenfromCookies();
       const username = this.getAttribute('data-username');
       console.log('Verifying token for:', username);
 
       const response = await fetch('/api/mfa/verify-login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRFToken': CSRFToken,
         },
-        credentials: 'include',  // Pour inclure les cookies (incluant le CSRF)
-        body: JSON.stringify({ username, token })
+        credentials: 'include',
+        body: JSON.stringify({ username, token }),
       });
 
       if (response.ok) {
         const data = await response.json();
         console.log('Verification response:', data);
-        
+
         // Stockage des données utilisateur
         localStorage.setItem('isLoggedIn', 'true');
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
-        
+
         // Mise à jour de la navbar
         const navBar = document.getElementById('navbar-container');
         if (navBar) {
           navBar.innerHTML = '<navbar-component></navbar-component>';
         }
-        
+
         router.navigate('/home');
       } else {
         const errorData = await response.json();
@@ -99,7 +104,7 @@ export class MFAAuth extends HTMLElement {
     } catch (error) {
       console.error('Error verifying code:', error);
       this.setState({
-        error: error.message || 'Failed to verify code'
+        error: error.message || 'Failed to verify code',
       });
     }
   }
@@ -112,22 +117,28 @@ export class MFAAuth extends HTMLElement {
         <div class="card-body">
           <h3 class="card-title text-center mb-4">Two-Factor Authentication</h3>
           
-          ${error ? `
+          ${
+            error
+              ? `
             <div class="alert alert-danger" role="alert">
               ${error}
             </div>
-          ` : ''}
+          `
+              : ''
+          }
           
-          ${message ? `
+          ${
+            message
+              ? `
             <div class="alert alert-info" role="alert">
               ${message}
             </div>
-          ` : ''}
+          `
+              : ''
+          }
           
           <p class="text-center mb-4">
-            ${codeSent 
-              ? 'Enter the verification code sent to your email' 
-              : 'Sending verification code...'}
+            ${codeSent ? 'Enter the verification code sent to your email' : 'Sending verification code...'}
           </p>
           
           <form onsubmit="return false;">
@@ -152,7 +163,9 @@ export class MFAAuth extends HTMLElement {
             >
               Verify Code
             </button>
-            ${codeSent ? `
+            ${
+              codeSent
+                ? `
               <button 
                 onclick="this.getRootNode().host.resendCode(event)"
                 class="btn btn-link mt-2 w-100"
@@ -160,7 +173,9 @@ export class MFAAuth extends HTMLElement {
               >
                 Didn't receive the code? Resend
               </button>
-            ` : ''}
+            `
+                : ''
+            }
           </form>
         </div>
       </div>
@@ -172,7 +187,7 @@ export class MFAAuth extends HTMLElement {
     this.setState({
       codeSent: false,
       message: '',
-      error: ''
+      error: '',
     });
     this.sendVerificationCode();
   }
@@ -180,7 +195,7 @@ export class MFAAuth extends HTMLElement {
   handleSubmit(event) {
     event.preventDefault();
     const token = this.querySelector('#token-input').value;
-    
+
     if (!token || token.length !== 6 || !/^\d+$/.test(token)) {
       this.setState({ error: 'Please enter a valid 6-digit code' });
       return;
