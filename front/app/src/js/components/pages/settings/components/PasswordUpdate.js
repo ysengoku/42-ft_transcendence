@@ -38,10 +38,8 @@ export class PasswordUpdate extends HTMLElement {
   }
 
   render() {
-    if (this.connectionType !== 'regular') {
-      return;
-    }
     this.innerHTML = `
+    <div id="password-setting-field">
       <div class="mt-3">
         <label for="old-password" class="form-label">Current password (if change password)</label>
         <input type="password" class="form-control" id="old-password" placeholder="current password" autocomplete="off">
@@ -59,7 +57,13 @@ export class PasswordUpdate extends HTMLElement {
         <input type="password" class="form-control" id="new-password-repeat" placeholder="new password" autocomplete="off">
         <div class="invalid-feedback" id="new-password-repeat-feedback"></div>
       </div>
+    </div>
     `;
+
+    if (this.connectionType !== 'regular') {
+      const field = this.querySelector('#password-setting-field');
+      field.classList.add('d-none');
+    }
   }
 
   checkPasswordInput() {
