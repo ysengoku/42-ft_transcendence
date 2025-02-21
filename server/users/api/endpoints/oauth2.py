@@ -48,7 +48,7 @@ def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
     if platform == OauthConnection.FT:
         try:
             response = requests.get(config["oauth_uri"], timeout=2.0)
-            if response.status_code != 200:
+            if response.status_code != 200:  # noqa: PLR2004
                 return False, "42 API is temporarily unavailable"
             return True, ""
         except requests.RequestException:
