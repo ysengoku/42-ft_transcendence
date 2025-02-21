@@ -2,7 +2,7 @@ from random import choice, randint
 
 from django.core.management.base import BaseCommand
 
-from users.models import Match, User
+from users.models import Match, OauthConnection, User
 
 
 # ruff: noqa: S106
@@ -10,23 +10,17 @@ class Command(BaseCommand):
     help = "Populates db with a dummy data"
 
     def handle(self, **kwargs) -> None:
-        if User.objects.count() != 0:
-            print("DB is not empty.")  # noqa: T201
-            return
+        # if User.objects.count() != 0:
+        #     print("DB is not empty.")  # noqa: T201
+        #     return
 
         User.objects.create_superuser("admin", "admin@gmail.com", "123")
-        life_enjoyer = User.objects.create_user(
-            "LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123"
-        ).profile
+        life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123").profile
         yuko = User.objects.create_user("Yuko", email="yuko@gmail.com", password="123").profile
         celia = User.objects.create_user("celiastral", email="celiastral@gmail.com", password="123").profile
-        fanny = User.objects.create_user(
-            "Fannybooboo", email="fannybooboo@gmail.com", password="123"
-        ).profile
+        fanny = User.objects.create_user("Fannybooboo", email="fannybooboo@gmail.com", password="123").profile
         eldar = User.objects.create_user("emuminov", email="emuminov@gmail.com", password="123").profile
-        sad_hampter = User.objects.create_user(
-            "SadHampter", email="sadhampter@gmail.com", password="123"
-        ).profile
+        sad_hampter = User.objects.create_user("SadHampter", email="sadhampter@gmail.com", password="123").profile
         User.objects.create_user("User0", email="user0@gmail.com", password="123")
 
         regular_users = []
@@ -53,7 +47,6 @@ class Command(BaseCommand):
         for i in range(30):
             user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
             life_enjoyer.block_user(user.profile)
-
 
         celia.add_friend(sad_hampter)
         users = yuko, celia, fanny, eldar
@@ -128,5 +121,41 @@ class Command(BaseCommand):
                     Match.objects.resolve(winner.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)))  # noqa: S311
                 if randint(0, 10) > 7:  # noqa: S311,PLR2004
                     Match.objects.resolve(loser.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)))  # noqa: S311
+        mfa_users = [
+            ("secure_bob", "secure_bob@gmail.com"),
+            ("safe_alice", "safe_alice@gmail.com"),
+            ("careful_charlie", "careful_charlie@gmail.com"),
+            ("prudent_paula", "prudent_paula@gmail.com"),
+        ]
+        for username, email in mfa_users:
+            user = User.objects.create_user(username, email=email, password="123")
+            user.profile.mfa_enabled = True
+            user.profile.save()
+
+        # Groupe 2: Utilisateurs OAuth 42
+        ft_users = [
+            ("ft_user1", "ft1@student.42.fr"),
+            ("ft_user2", "ft2@student.42.fr"),
+            ("ft_cadet", "cadet@student.42.fr"),
+            ("ft_champion", "champion@student.42.fr"),
+        ]
+        for username, email in ft_users:
+            user = User.objects.create_user(username, email=email, password="123")
+            user.profile.oauth_provider = OauthConnection.FT
+            user.profile.oauth_id = f"42_id_{username}"
+            user.profile.save()
+
+        # Groupe 3: Utilisateurs OAuth GitHub
+        github_users = [
+            ("github_dev", "dev@gmail.com"),
+            ("github_coder", "coder@gmail.com"),
+            ("open_source_pro", "opensource@gmail.com"),
+            ("git_master", "gitmaster@gmail.com"),
+        ]
+        for username, email in github_users:
+            user = User.objects.create_user(username, email=email, password="123")
+            user.profile.oauth_provider = OauthConnection.GITHUB
+            user.profile.oauth_id = f"github_id_{username}"
+            user.profile.save()
 
         print("\033[92mDB was successefully populated!\033[0m")  # noqa: T201
