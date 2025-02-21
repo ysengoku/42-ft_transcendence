@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -63,6 +64,11 @@ class UserSettingsSchema(Schema):
         oauth_connection = obj.get_oauth_connection()
         return oauth_connection.connection_type if oauth_connection else "regular"
 
+class OAuthCallbackParams(Schema):
+    code: str | None = None  # Plutôt que Optional[str]
+    state: str | None = None
+    error: str | None = None
+    error_description: str | None = None
 
 
 class OpponentProfileAndStatsSchema(Schema):
