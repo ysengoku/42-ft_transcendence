@@ -88,6 +88,9 @@ export class Login extends HTMLElement {
   }
 
   render() {
+    // if (this.isLoggedin) {
+    //   router.navigate('/home');
+    // }
     this.innerHTML = `
       <div class="container">
         <div class="row justify-content-center">

@@ -1,5 +1,11 @@
 # Components
 
+## Pages
+- [] Loading
+- [] 404
+
+---------------------------------------------------------------------
+
 ## Router
 - [x] Update navigation to pages that need authentication
 - [x] Navbar and content rendering should not call refresh token twice (navbar --> async function? / promise?)
@@ -19,8 +25,20 @@
 ---------------------------------------------------------------------
 
 ## Navbar
+
 - [x] Dropdown menu is hidden by Chat message header on Chat page
 - [x] Update login status depending on login status
+- [x] Rendering for mobile
+
+### Friends list
+- [x] Get list from server
+- [x] Handle see more making a new request (To show more than first 10 friends)
+- [] Delete modal
+
+### User search
+- [x] Add user search button and dropdown to Navbar
+- [x] User search function
+- [x] Adjust style for search bar
 
 ---------------------------------------------------------------------
 
@@ -30,6 +48,7 @@
 ---------------------------------------------------------------------
 
 ## Login
+
 - [x] Adjust width
 - [x] CSRF Token handling
 - [x] Error handling
@@ -37,7 +56,7 @@
 - [x] Fix parsing of Error message from server
 - [x] Forbitten letters or format for username? (e.g. email format for username)
 - [] Forgot password
-- [] Unit test (input validation)
+- [x] Unit test (input validation)
 
 ---------------------------------------------------------------------
 
@@ -48,6 +67,7 @@
 ---------------------------------------------------------------------
 
 ## Register
+
 - [X] Adjust width
 - [x] 422 handling
 - [x] Password length check
@@ -59,17 +79,19 @@
 ---------------------------------------------------------------------
 
 ## Settings
+
 - [X] Adjust width
 - [X] Restrict other users to access to the page (remove username from url)
 - [X] Add nickname input
 - [X] Add old password input
 - [X] Hide password & email change for OAuth users
-- [~] Add 2FA activate toggle
-- [] New avatar upload settings (new_profile_picture)
-- [] 401 handling
-- [] 404 handling
-- [] 413 handling
-- [] 422 handling
+- [x] New avatar upload settings (new_profile_picture)
+- [x] API request
+- [x] Empty input case handling
+- [] Add 2FA activate toggle
+- [x] 413 handling
+- [x] 422 handling
+- [x] Error handling
 - [] Unit test (input validation)
 
 ---------------------------------------------------------------------
@@ -77,6 +99,7 @@
 ## Profile
 
 - [x] Add auth check before rendering
+- [] Layout for Mobile
 
 ### Error handling
 - [x] 404 handling
@@ -104,25 +127,29 @@
 
 ---------------------------------------------------------------------
 
-## Friends list
-- [] User search by username
+## Alert
+- [x] Replace showErrorMessage to showAlertMessage
+- [x] Delete errorMessage file
 
 ---------------------------------------------------------------------
-
-## Friends list
-- [] Get list from server
-- [] Handle see more making a new request (To show more than first 10 friends)
-
----------------------------------------------------------------------
-
-## Chat
-
-- [] Add auth check before rendering
-- [x] Websocket
-- [] Add new chat (user search ?)
-- [] Block user on chat
-- [] Resize event listner
 
 ## WebSocket
 
 -[] Handle auto close
+
+### Chat
+- [x] Add auth check before rendering
+- [x] Websocket
+- [] Block user on chat
+- [] Invite to play game
+- [] Add link to Profile of current chat user
+- [x] Resize event listner
+- [x] Autocomplete off
+
+### Notifications
+- [] Add dropdown
+
+---------------------------------------------------------------------
+
+## CSS
+- [x] Add cursor for html: active and body:active

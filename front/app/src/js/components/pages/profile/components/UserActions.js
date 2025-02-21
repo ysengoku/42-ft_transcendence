@@ -1,22 +1,22 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessageForDuration } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ProfileUserActions extends HTMLElement {
   constructor() {
     super();
     this._data = {
-      'loggedInUsername': '',
-      'shownUsername': '',
-      'isFriend': false,
-      'isBlockedByUser': false,
+      loggedInUsername: '',
+      shownUsername: '',
+      isFriend: false,
+      isBlockedByUser: false,
     };
     this.isMyProfile = false;
     this.errorMessages = {
-      'addFriend': 'Failed to add friend. Please try again later.',
-      'removeFriend': 'Failed to remove friend. Please try again later.',
-      'blockUser': 'Failed to block user. Please try again later.',
-      'unblockUser': 'Failed to unblock user. Please try again later.',
+      addFriend: 'Failed to add friend. Please try again later.',
+      removeFriend: 'Failed to remove friend. Please try again later.',
+      blockUser: 'Failed to block user. Please try again later.',
+      unblockUser: 'Failed to unblock user. Please try again later.',
     };
   }
 
@@ -94,7 +94,7 @@ export class ProfileUserActions extends HTMLElement {
   // -------------------------------------
 
   async addFriend() {
-    const request = { 'username': this._data.shownUsername };
+    const request = { username: this._data.shownUsername };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
@@ -111,7 +111,7 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error adding friend:', response);
-      showErrorMessageForDuration(this.errorMessages.addFriend, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.addFriend, 3000);
     }
   }
 
@@ -132,12 +132,12 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error removing friend:', response);
-      showErrorMessageForDuration(this.errorMessages.removeFriend, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.removeFriend, 3000);
     }
   }
 
   async blockUser() {
-    const request = { 'username': this._data.shownUsername };
+    const request = { username: this._data.shownUsername };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
@@ -155,7 +155,7 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error blocking user:', response);
-      showErrorMessageForDuration(this.errorMessages.blockUser, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.blockUser, 3000);
     }
   }
 
@@ -176,7 +176,7 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error unblocking:', response);
-      showErrorMessageForDuration(this.errorMessages.unblockUser, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.unblockUser, 3000);
     }
   }
 }

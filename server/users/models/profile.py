@@ -102,7 +102,7 @@ class Profile(models.Model):
     def avatar(self) -> str:
         if self.profile_picture:
             return self.profile_picture.url
-        return "/static/images/default_avatar.png"
+        return "/img/default_avatar.png"
 
     @property
     def matches(self):

@@ -45,20 +45,26 @@ export class ChatListItem extends HTMLElement {
     </style>
       <li class="list-group-item" id="chat-list-item">
         <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
-          <img src="${this._data.avatar}" class="rounded-circle" alt="User" />
+
+          <div class="d-inline-block">
+            <img src="${this._data.avatar}" class="rounded-circle" alt="User" />
+          </div>
 
           <div class="d-flex flex-column justify-content-start py-2 gap-1 flex-grow-1">
-            <div class="d-flex flex-row justify-content-between align-items-center">
-              <div class="fs-5">${this._data.nickname}</div>
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+              <div class="fs- me-2">${this._data.nickname}</div>
               <small>${lastMessageTime}</small>
             </div>
             <small>${this._data.last_message}</small>
           </div>
-          ${this._data.unread_messages > 0 ?
-            `<div class="circle-number">${this._data.unread_messages > 9 ?
-              '9+' :
-              this._data.unread_messages}</div>` :
-            ''}
+
+          <div class="d-inline-block">
+            ${this._data.unread_messages > 0 ?
+              `<div class="circle-number">${this._data.unread_messages > 9 ?
+                '9+' :
+                this._data.unread_messages}</div>` :
+              ''}
+          </div>
         </div>
       </li>
     `;
@@ -82,7 +88,6 @@ export class ChatListItem extends HTMLElement {
   }
 
   setLastMessageTime(time) {
-    console.log('Time:', time);
     const now = new Date();
     const date = new Date(time);
     const diff = now - date;
