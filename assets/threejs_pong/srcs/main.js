@@ -339,6 +339,7 @@ function reset()
 	document.getElementById("divA").textContent ="P1 " + p1_score;
 	document.getElementById("divB").textContent ="P2 " + p2_score;
 }
+
 function animate2()
 {
 	collided_cube = false;
