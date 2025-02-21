@@ -64,17 +64,14 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if not is_password_correct:
         raise HttpError(401, "Username or password are not correct.")
 
+    is_mfa_enabled = User.objects.has_mfa_enabled()
+    if is_mfa_enabled:
+        return JsonResponse({
+            "mfa_required": True,
+            "username": user.username,
+    })
     response_data = user.profile.to_profile_minimal_schema()
-    print(response_data.get("mfa_required"))
-
-    if not response_data["mfa_required"]:
-        return _create_json_response_with_tokens(user, response_data)
-    else:
-       return LoginResponseSchema(
-           # 200 status sent by default
-            mfa_required=True,
-            username=user.username,
-       )
+    return _create_json_response_with_tokens(user, response_data)
 
 @auth_router.post(
     "signup",
