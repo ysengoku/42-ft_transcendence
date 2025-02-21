@@ -9,6 +9,8 @@ import { Settings } from './settings/Settings.js';
 import { Chat } from './chat/Chat.js';
 import { DualMenu } from './dual/DualMenu.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
+import { Game } from './game/Game.js';
+import { Error } from './Error.js';
 
 export {
   Landing,
@@ -22,4 +24,6 @@ export {
   Chat,
   DualMenu,
   TournamentMenu,
+  Game,
+  Error,
 };
