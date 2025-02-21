@@ -7,7 +7,6 @@ services:
       target: ${NODE_ENV:-development} # Utilise le stage 'dev' par défaut, ou 'build' en prod
     volumes:
       - ./front/app:/app
-      - /app/node_modules
     ports:
       - "5173:5173"
     expose:
