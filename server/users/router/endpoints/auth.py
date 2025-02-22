@@ -4,8 +4,8 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
-from users.api.common import allow_only_for_self
 from users.models import RefreshToken, User
+from users.router.common import allow_only_for_self
 from users.schemas import (
     LoginSchema,
     Message,

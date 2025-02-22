@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
 
-from users.api import api
+from server.api import api
 
 urlpatterns = [
     path("api/", api.urls),

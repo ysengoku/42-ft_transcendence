@@ -15,18 +15,12 @@ class Command(BaseCommand):
             return
 
         User.objects.create_superuser("admin", "admin@gmail.com", "123")
-        life_enjoyer = User.objects.create_user(
-            "LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123"
-        ).profile
+        life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123").profile
         yuko = User.objects.create_user("Yuko", email="yuko@gmail.com", password="123").profile
         celia = User.objects.create_user("celiastral", email="celiastral@gmail.com", password="123").profile
-        fanny = User.objects.create_user(
-            "Fannybooboo", email="fannybooboo@gmail.com", password="123"
-        ).profile
+        fanny = User.objects.create_user("Fannybooboo", email="fannybooboo@gmail.com", password="123").profile
         eldar = User.objects.create_user("emuminov", email="emuminov@gmail.com", password="123").profile
-        sad_hampter = User.objects.create_user(
-            "SadHampter", email="sadhampter@gmail.com", password="123"
-        ).profile
+        sad_hampter = User.objects.create_user("SadHampter", email="sadhampter@gmail.com", password="123").profile
         User.objects.create_user("User0", email="user0@gmail.com", password="123")
 
         regular_users = []
@@ -53,7 +47,6 @@ class Command(BaseCommand):
         for i in range(30):
             user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
             life_enjoyer.block_user(user.profile)
-
 
         celia.add_friend(sad_hampter)
         users = yuko, celia, fanny, eldar
