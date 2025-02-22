@@ -32,6 +32,7 @@ export class Settings extends HTMLElement {
       if (response.status === 200) {
         this.user = response.data;
         // this.user.connection_type = '42'; // mock data
+        // this.user.connection_type = 'regular'; // mock data
         this.render();
         this.setParams(this.user);
         this.setEventListener();

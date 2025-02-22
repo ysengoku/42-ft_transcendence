@@ -21,6 +21,7 @@ export class UserProfile extends HTMLElement {
     if (response.success) {
       if (response.status === 200) {
         this.user = response.data;
+        console.log('User data:', this.user);
         this.render();
       }
     } else {
@@ -41,7 +42,7 @@ export class UserProfile extends HTMLElement {
     // --- For rendering test ------
     // this.user.is_blocked = true;
     // -----------------------------
-    if (this.user.is_blocked) {
+    if (this.user.is_blocked_by_user) {
       router.navigate('/user-not-found');
       return;
     }
@@ -201,7 +202,7 @@ export class UserProfile extends HTMLElement {
         loggedInUsername: this.loggedInUsername,
         shownUsername: this.user.username,
         isFriend: this.user.is_friend,
-        isBlockedByUser: this.user.is_blocked_by_user,
+        isBlocked: this.user.is_blocked_user,
       };
     }
 
