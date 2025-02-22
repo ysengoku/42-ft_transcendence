@@ -174,17 +174,20 @@ const router = (() => {
  * Define all routes
  */
 router.addRoute('/', 'landing-page');
-router.addRoute('/login', 'login-page');
 router.addRoute('/register', 'register-form');
+router.addRoute('/login', 'login-page');
+router.addRoute('/forgot-password', 'forgot-password');
 router.addRoute('/home', 'user-home', false);
 router.addRoute('/profile/:username', 'user-profile', true);
 router.addRoute('/user-not-found', 'user-not-found', true);
 router.addRoute('/settings', 'user-settings', false);
+router.addRoute('/chat', 'chat-page', false);
 router.addRoute('/dual-menu', 'dual-menu', false);
 router.addRoute('/dual/:id', 'dual', true);
 router.addRoute('/tournament-menu', 'tournament-menu', false);
 router.addRoute('/tournament/:id', 'tournament', true);
-router.addRoute('/chat', 'chat-page', false);
+router.addRoute('/game', 'app-game', false, true);
+router.addRoute('/error', 'error-page');
 
 /**
  * Initialize the router on the initial HTML document load
@@ -205,3 +208,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 export { router };
+
+// ```
+// https://localhost:1026/error?error=Provider%20error%3A%20invalid_client&code=422
+// ```
+// - error=Provider%20error%3A%20invalid_client
+// - code=422"
+
+// error = Provider error: invalid client

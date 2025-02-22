@@ -44,16 +44,22 @@ export class EmailUpdate extends HTMLElement {
   }
 
   render() {
-    if (this._user.connectionType !== 'regular') {
-      return;
-    }
+    // if (this._user.connectionType !== 'regular') {
+    //   // return;
+    //   this.innerHTML = ``;
+    //   return;
+    // }
     this.innerHTML = `
-      <div class="mt-3">
+      <div class="mt-3" id="email-settings-input">
         <label for="settings-email" class="form-label">Email</label>
         <input type="email" class="form-control" id="settings-email" value="${this._user.email}" autocomplete="off">
         <div class="invalid-feedback" id="settings-email-feedback"></div>
       </div>    
     `;
+    if (this._user.connectionType !== 'regular') {
+      const field = this.querySelector('#email-settings-input');
+      field.classList.add('d-none');
+    }
   }
 }
 
