@@ -2,6 +2,8 @@ from datetime import datetime
 
 from ninja import Schema
 
+from chat.models import ChatMessage
+
 
 # TODO: move common schemas to the common dir
 class MessageSchema(Schema):
@@ -20,10 +22,17 @@ class ChatMessageSchema(Schema):
     content: str
     date: datetime
     sender: str
-    receiver: str
     is_read: bool
     is_liked: bool
     id: str
+
+    @staticmethod
+    def resolve_sender(obj: ChatMessage):
+        return obj.sender.user.username
+
+    @staticmethod
+    def resolve_id(obj: ChatMessage):
+        return str(obj.pk)
 
 
 class BaseChatSchema(Schema):
@@ -45,7 +54,11 @@ class ChatPreviewSchema(BaseChatSchema):
     """
 
     unread_messages_count: int
-    last_message: ChatMessageSchema
+    last_message: ChatMessageSchema | None = None
+
+    @staticmethod
+    def resolve_last_message(obj):
+        return ChatMessage.objects.filter(pk=obj.last_message_id).first()
 
 
 class ChatSchema(BaseChatSchema):
