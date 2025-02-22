@@ -5,7 +5,6 @@ from ninja.pagination import paginate
 from chat.models import Chat
 from chat.schemas import ChatMessageSchema, ChatPreviewSchema, ChatSchema, MessageSchema
 
-# TODO: move all api's to the same place
 chats_router = Router()
 
 
