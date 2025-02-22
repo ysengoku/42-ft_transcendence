@@ -5,8 +5,8 @@ from ninja.errors import AuthenticationError, HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
-from users.api.common import allow_only_for_self, get_profile_queryset_by_username_or_404
 from users.models import Profile
+from users.router.common import allow_only_for_self, get_profile_queryset_by_username_or_404
 from users.schemas import (
     Message,
     ProfileFullSchema,

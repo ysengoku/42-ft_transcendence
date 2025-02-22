@@ -11,8 +11,8 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
-from users.api.endpoints.auth import create_redirect_to_home_page_response_with_tokens
 from users.models import OauthConnection, User
+from users.router.endpoints.auth import create_redirect_to_home_page_response_with_tokens
 from users.schemas import (
     Message,
 )
@@ -111,7 +111,6 @@ def oauth_callback(request, platform: str, code: str, state: str):
 
     except RequestAborted as exc:
         raise HttpError(408, "The request timed out while retrieving the token.") from exc
-
 
     token_data = token_response.json()
 

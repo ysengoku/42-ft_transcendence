@@ -3,7 +3,7 @@ from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
 
-from users.api.common import allow_only_for_self, get_user_queryset_by_username_or_404
+from users.router.common import allow_only_for_self, get_user_queryset_by_username_or_404
 from users.schemas import (
     Message,
     ProfileMinimalSchema,
