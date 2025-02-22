@@ -32,6 +32,7 @@ class ChatQuerySet(models.QuerySet):
         return self.annotate(
             last_message=Subquery(latest_message_subquery.values("content")),
             last_message_date=Subquery(latest_message_subquery.values("date")),
+            last_message_id=Subquery(latest_message_subquery.values("pk")),
         ).order_by("-last_message_date")
 
     def with_other_user_profile_info(self, profile: Profile):
@@ -60,6 +61,13 @@ class ChatQuerySet(models.QuerySet):
                     to_profile=profile,
                 ),
             ),
+        )
+
+    def get_user_chats(self, profile: Profile):
+        return (
+            Chat.objects.for_participants(profile)
+            .with_and_order_by_last_message()
+            .with_other_user_profile_info(profile)
         )
 
 

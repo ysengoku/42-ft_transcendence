@@ -2,7 +2,7 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 
-from chat.models import Chat, ChatMessage
+from chat.models import Chat
 from chat.schemas import ChatMessageSchema, ChatPreviewSchema, ChatSchema, MessageSchema
 
 # TODO: move all api's to the same place
@@ -18,7 +18,7 @@ def get_chats(request: HttpRequest):
     For example, `/chats?&limit=10&offset=0` will get 10 chats from the very first one.
     """
     profile = request.auth.profile
-    return Chat.objects.for_participants(profile).order_by_last_message().with_other_user_profile_info()
+    return Chat.objects.get_user_chats(profile)
 
 
 @chats_router.get("{username}", response={200: ChatSchema, frozenset({401}): ChatMessageSchema})
