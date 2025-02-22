@@ -1,7 +1,7 @@
 import uuid
 
 from django.db import models
-from django.db.models import Max, Subquery
+from django.db.models import Count, Exists, OuterRef, Q, Subquery
 
 from users.models import Profile
 
@@ -22,17 +22,45 @@ class ChatQuerySet(models.QuerySet):
             qs = qs.filter(participants=participant)
         return qs.distinct()
 
-    def order_by_last_message(self):
+    def with_and_order_by_last_message(self):
         """
-        Attaches last message date and content to Chats and sorts them by the latest message date.
+        Annotates Chats with the last message and last message date and sorts them by the latter.
         Chat messages are sorted by the date by default, so there is no need to call 'order_by'.
         """
-        latest_message_subquery = ChatMessage.objects.values("content")[:1]
+        latest_message_subquery = ChatMessage.objects.all()[:1]
 
         return self.annotate(
-            last_message=Subquery(latest_message_subquery),
-            last_message_date=Max("messages__date"),
+            last_message=Subquery(latest_message_subquery.values("content")),
+            last_message_date=Subquery(latest_message_subquery.values("date")),
         ).order_by("-last_message_date")
+
+    def with_other_user_profile_info(self, profile: Profile):
+        other_chat_participant_subquery = Profile.objects.filter(chats=OuterRef("pk")).exclude(
+            pk=profile.pk,
+        )[:1]
+        blocked_through = Profile.blocked_users.through
+
+        return self.annotate(
+            username=Subquery(other_chat_participant_subquery.values("user__username")),
+            nickname=Subquery(other_chat_participant_subquery.values("user__nickname")),
+            avatar=Subquery(other_chat_participant_subquery.values("profile_picture")),
+            is_online=Subquery(other_chat_participant_subquery.values("is_online")),
+            other_profile_id=Subquery(other_chat_participant_subquery.values("pk")),
+            unread_messages_count=Count("messages", filter=~Q(messages__sender=profile) & Q(messages__is_read=False)),
+        ).annotate(
+            is_blocked_user=Exists(
+                blocked_through.objects.filter(
+                    from_profile=profile,
+                    to_profile=OuterRef("other_profile_id"),
+                ),
+            ),
+            is_blocked_by_user=Exists(
+                blocked_through.objects.filter(
+                    from_profile=OuterRef("other_profile_id"),
+                    to_profile=profile,
+                ),
+            ),
+        )
 
 
 class Chat(models.Model):
@@ -41,7 +69,7 @@ class Chat(models.Model):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    participants = models.ManyToManyField(Profile, related_name="chat")
+    participants = models.ManyToManyField(Profile, related_name="chats")
 
     objects = ChatQuerySet.as_manager()
 
