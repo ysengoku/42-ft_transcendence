@@ -4,7 +4,7 @@ from ninja import Schema
 
 
 # TODO: move common schemas to the common dir
-class Message(Schema):
+class MessageSchema(Schema):
     """
     Generic response from the server with user-friendly message.
     """
