@@ -200,7 +200,7 @@ FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 
 HOME_REDIRECT_URL = "https://localhost:1026/home"
-FRONTEND_URL = "http://localhost:1026"
+FRONTEND_URL = "https://localhost:1026"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
