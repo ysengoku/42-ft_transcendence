@@ -12,11 +12,11 @@ RUN npm run build
 # Stage de développement
 FROM node:18-alpine AS development
 
+COPY ./app /app
 WORKDIR /app
 
-COPY ./app/package*.json ./
+COPY ./app/package*.json .
 RUN npm install
-COPY ./app ./app
 
 EXPOSE 5173
 
