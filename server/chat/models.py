@@ -7,6 +7,26 @@ from users.models import Profile
 
 
 class ChatQuerySet(models.QuerySet):
+    def create(self, *participants: Profile):
+        """
+        Creates a new Chat with specified participants.
+        """
+        chat = Chat()
+        chat.save()
+        chat.participants.set(participants)
+        return chat
+
+    def get_or_create(self, *participants: Profile):
+        """
+        Gets or creates a new Chat with specified participants if there aren't any.
+        First returned value is chat, second one is bool which indicated whether or not the recourse was created or not.
+        """
+        chat = self.for_exact_participants(*participants).first()
+        if not chat:
+            chat = self.create(*participants)
+            return chat, True
+        return chat, False
+
     def for_participants(self, *participants: Profile):
         """
         Returns all the chats where at least one of the specified users participate.
@@ -103,6 +123,9 @@ class ChatMessage(models.Model):
         ordering = ["-date"]
 
     def __str__(self):
+        if self.participants.count() == 0:
+            return "Empty chat"
+
         max_msg_len = 15
         return (
             f"{self.date} {self.sender.user.username}: "
