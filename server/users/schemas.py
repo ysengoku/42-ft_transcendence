@@ -60,8 +60,9 @@ class UserSettingsSchema(Schema):
         oauth_connection = obj.get_oauth_connection()
         return oauth_connection.connection_type if oauth_connection else "regular"
 
+
 class OAuthCallbackParams(Schema):
-    code: str | None = None  # Plutôt que Optional[str]
+    code: str | None = None
     state: str | None = None
     error: str | None = None
     error_description: str | None = None
@@ -213,3 +214,7 @@ class UpdateUserChema(PasswordValidationSchema):
         if err_dict:
             raise ValidationError(err_dict)
         return self
+
+
+class ForgotPasswordSchema(Schema):
+    email: str
