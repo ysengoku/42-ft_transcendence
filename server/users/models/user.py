@@ -1,3 +1,6 @@
+from functools import cache
+import hashlib
+import os
 import uuid
 
 from django.contrib.auth.hashers import make_password
@@ -178,6 +181,13 @@ class User(AbstractUser):
             return self.oauth_connection
         except OauthConnection.DoesNotExist:
             return None
+
+    def generate_reset_token(self) -> str:
+        """Generate and store a reset token for the user"""
+        token = hashlib.sha256(os.urandom(32)).hexdigest()
+        cache_key = f"password_reset_{token}"
+        cache.set(cache_key, str(self.id), timeout=3600)
+        return token
 
     def __str__(self):
         connection_type = "Regular" if not self.get_oauth_connection() else self.oauth_connection.connection_type
