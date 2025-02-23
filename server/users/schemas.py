@@ -220,3 +220,6 @@ class UpdateUserChema(PasswordValidationSchema):
         if err_dict:
             raise ValidationError(err_dict)
         return self
+
+class SendMfaCode(Schema):
+    token: str
