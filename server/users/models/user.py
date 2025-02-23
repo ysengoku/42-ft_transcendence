@@ -93,7 +93,11 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, default="")
     password = models.CharField(max_length=128, blank=True, default="")
     mfa_enabled = models.BooleanField(default=False)
-    mfa_secret = models.CharField(max_length=128, blank=True, default="")  # do we need it ?
+    mfa_secret = models.CharField(max_length=128, blank=True, default="")
+    forgot_password_token = models.CharField(max_length=128, blank=True, default="")
+    forgot_password_token_date = models.DateTimeField(blank=True, null=True)
+    mfa_token = models.CharField(max_length=128, blank=True, default="")
+    mfa_token_date = models.DateTimeField(blank=True, null=True)
 
     objects = UserManager()
 

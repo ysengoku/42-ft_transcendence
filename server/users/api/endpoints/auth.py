@@ -3,10 +3,11 @@ import os
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from ninja import Router
+from ninja import Form, Router
 from ninja.errors import AuthenticationError, HttpError
 
 from users.api.common import allow_only_for_self
@@ -17,7 +18,9 @@ from users.schemas import (
     LoginSchema,
     Message,
     ProfileMinimalSchema,
+    ResetPasswordSchema,
     SignUpSchema,
+    UpdateUserChema,
     ValidationErrorMessageSchema,
 )
 
@@ -76,7 +79,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
             {
                 "mfa_required": True,
                 "username": user.username,
-            }
+            },
         )
     response_data = user.profile.to_profile_minimal_schema()
     return _create_json_response_with_tokens(user, response_data)
@@ -148,76 +151,62 @@ def logout(request: HttpRequest, response: HttpResponse):
     return 204, None
 
 
-@auth_router.post("/forgot-password", response={200: dict, 500: dict}, auth=None)
-@ensure_csrf_cookie
+@auth_router.post("/forgot-password", response={200: Message}, auth=None)
+@csrf_exempt
 def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any]:
     """Request a password reset link"""
-    try:
-        user = User.objects.for_username_or_email(data.email).first()
+    user = User.objects.for_username_or_email(data.email).first()
 
-        if not user:
-            return {"status": "success", "message": "If an account exists with this email, a reset link will be sent."}
+    if not user:
+        return {"msg": "Password reset instructions sent to your email if email exists."}
 
-        token = hashlib.sha256(os.urandom(32)).hexdigest()
-        cache_key = f"password_reset_{token}"
-        cache.set(cache_key, str(user.id), timeout=3600)
+    token = hashlib.sha256(os.urandom(32)).hexdigest()
+    cache_key = f"password_reset_{token}"
+    cache.set(cache_key, str(user.id), timeout=3600)
 
-        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+    reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
 
-        try:
-            send_mail(
-                subject="Password Reset Request",
-                message=f"Click this link to reset your password: {reset_url}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
+    send_mail(
+        subject="Password Reset Request",
+        message=f"Click this link to reset your password: {reset_url}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
 
-        except HttpError as e:
-            raise e
-        except Exception as e:
-            raise HttpError(500, "Failed to send reset email")
-
-        return JsonResponse(
-            {
-                "status": "success",
-                "message": "Password reset instructions sent to your email",
-            }
-        )
-
-    except HttpError as e:
-        raise e
-    except Exception as e:
-        raise HttpError(500, "Failed to send reset email")
+    return {
+        "msg": "Password reset instructions sent to your email",
+    }
 
 
-@auth_router.post("/reset-password", response={200: dict, 500: dict}, auth=None)
-@ensure_csrf_cookie
-def reset_password(request, token: str, password: str) -> dict[str, any]:
-    """Reset password"""
-    if not token:
-        raise HttpError(400, "Invalid token")
+@auth_router.post(
+    "/reset-password/{token}/", response={200: dict, 400: dict, 422: list[ValidationErrorMessageSchema]}, auth=None
+)
+@csrf_exempt
+def reset_password(request, token: str, data: Form[ResetPasswordSchema]) -> dict[str, any]:
+    """Reset user password using token from URL and new password from body"""
+    cache_key = f"password_reset_{token}"
+    user_id = cache.get(cache_key)
+    if not user_id:
+        raise HttpError(400, "Invalid or expired token")
+
+    user = User.objects.for_id(user_id).first()
+    if not user:
+        raise AuthenticationError
+
+    update_data = UpdateUserChema(
+        password=data.password,
+        password_repeat=data.password_repeat,
+    )
 
     try:
-        user_id = cache.get(f"password_reset_{token}")
-        if not user_id:
-            raise HttpError(400, "Invalid token")
+        user.update_user(update_data, None)
 
-        user = User.objects.filter(id=user_id).first()
-        if not user:
-            raise HttpError(404, "User not found")
+        cache.delete(cache_key)
 
-        user.set_password(password)
-        user.save()
+        return JsonResponse({"status": "success", "message": "Password has been reset successfully"})
 
-        return JsonResponse(
-            {
-                "status": "success",
-                "message": "Password reset successfully",
-            }
-        )
-
-    except HttpError as e:
-        raise e
-    except Exception as e:
-        raise HttpError(500, "Failed to reset password")
+    except ValidationError as exc:
+        raise HttpError(422, exc.error_dict) from exc
+    except PermissionDenied as exc:
+        raise HttpError(400, "Invalid password reset request") from exc

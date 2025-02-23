@@ -29,42 +29,32 @@ def get_cache_key(username: str) -> str:
     return f"mfa_email_code_{username}"
 
 
-@mfa_router.post("/send-code", auth=None, response={200: dict, 404: dict, 500: dict})
+@mfa_router.post("/send-code", auth=None, response={200: dict, 404: dict})
 @ensure_csrf_cookie
 def send_verification_code(request, username: str) -> dict[str, Any]:
     """Send a verification code to the user's email"""
-    try:
-        user = User.objects.filter(username=username).first()
-        if not user:
-            raise HttpError(404, "User not found")
+    user = User.objects.filter(username=username).first()
+    if not user:
+        raise HttpError(404, "User with that email not found")
 
-        verification_code = generate_verification_code()
+    verification_code = generate_verification_code()
 
-        try:
-            send_mail(
-                subject="Your Verification Code",
-                message=f"Your verification code is: {verification_code}\nThis code will expire in 10 minutes.",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
-        except Exception as e:
-            raise HttpError(500, "Failed to send verification code") from e
-
-        cache_key = get_cache_key(username)
-        cache.set(cache_key, verification_code, TOKEN_EXPIRY)
-
-        return JsonResponse(
-            {
-                "status": "success",
-                "message": "Verification code sent to user email",
-            },
+    send_mail(
+        subject="Your Verification Code",
+        message=f"Your verification code is: {verification_code}\nThis code will expire in 10 minutes.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
         )
 
-    except HttpError as e:
-        raise e
-    except Exception as e:
-        raise HttpError(500, f"Error sending verification code: {str(e)}") from e
+    cache_key = get_cache_key(username)
+    cache.set(cache_key, verification_code, TOKEN_EXPIRY)
+
+    return JsonResponse(
+        {
+            "msg": "Verification code sent to user email",
+        },
+    )
 
 
 @mfa_router.post("/verify-login", auth=None)
