@@ -42,6 +42,9 @@ class UserManager(BaseUserManager):
     def for_forgot_password_token(self, token: str):
         return self.filter(forgot_password_token=token)
 
+    def for_mfa_token(self, token: str):
+        return self.filter(mfa_token=token)
+
     def fill_user_data(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         username = AbstractUser.normalize_username(username)
         if oauth_connection:
@@ -153,10 +156,9 @@ class User(AbstractUser):
             err_dict = merge_err_dicts(err_dict, {"password": ["Please enter your new password."]})
 
         if data.password and data.password_repeat:
-            if data.old_password:
-                is_old_password_valid = self.check_password(data.old_password)
-                if not is_old_password_valid:
-                    raise PermissionDenied
+            is_old_password_valid = self.check_password(data.old_password)
+            if not is_old_password_valid:
+                raise PermissionDenied
             if data.old_password == data.password:
                 err_dict = merge_err_dicts(
                     err_dict,
