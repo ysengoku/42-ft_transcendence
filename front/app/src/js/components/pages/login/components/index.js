@@ -1,4 +1,4 @@
 import { LoginForm } from './LoginForm.js';
 import { OAuth } from './OAuth.js';
 
-export { LoginForm, OAuth };
+export { LoginForm, MfaVerification, OAuth };

@@ -1,6 +1,7 @@
 import { Landing } from './Landing.js';
 import { Register } from './register/Register.js';
 import { Login } from './login//Login.js';
+import { MfaVerification } from './login/MfaVerification.js';
 import { ForgotPassword } from './ForgotPassword.js';
 import { Home } from './home/Home.js';
 import { UserProfile } from './profile/Profile.js';
@@ -17,6 +18,7 @@ export {
   Landing,
   Register,
   Login,
+  MfaVerification,
   ForgotPassword,
   Home,
   UserProfile,

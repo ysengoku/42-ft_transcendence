@@ -60,13 +60,18 @@ export class LoginForm extends HTMLElement {
     console.log('Login response:', response);
     if (response.success) {
       if (response.status == 200) {
-        const userInformation = {
-          username: response.data.username,
-          nickname: response.data.nickname,
-          avatar: response.data.avatar,
-        };
-        auth.storeUser(userInformation);
-        router.navigate(`/home`, response.user);
+        if (response.data.mfa_required) {
+          sessionStorage.setItem('username', JSON.stringify(response.data.username));
+          router.navigate('/mfa-verification', response.data);
+        } else {
+          const userInformation = {
+            username: response.data.username,
+            nickname: response.data.nickname,
+            avatar: response.data.avatar,
+          };
+          auth.storeUser(userInformation);
+          router.navigate(`/home`, response.user);
+        }
       }
     } else {
       const feedback = document.querySelector('#login-failed-feedback');
