@@ -27,11 +27,11 @@ class RefreshTokenQuerySet(models.QuerySet):
         payload = {
             "sub": str(user.id),
             "iat": now,
-            "exp": now + timedelta(seconds=10),
+            "exp": now + timedelta(minutes=5),
         }
 
         access_token = jwt.encode(payload, settings.ACCESS_TOKEN_SECRET_KEY, algorithm="HS256")
-        payload["exp"] = now + timedelta(minutes=2)
+        payload["exp"] = now + timedelta(minutes=15)
         refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
 
         refresh_token_instance = self.model(

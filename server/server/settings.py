@@ -112,12 +112,9 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'server.wsgi.application'
 ASGI_APPLICATION = "server.asgi.application"  # Pour Django Channels
 
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -227,13 +224,13 @@ OAUTH_CONFIG = {
     },
 }
 
-
-# # SendGrid Settings
-# SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-# SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.sendgrid.net'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
-# EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password
+# email sending for 2fa and password reset
+# Email configuration
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")

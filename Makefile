@@ -124,6 +124,9 @@ update-nginx:
 populate-db:
 	docker exec server ./manage.py populate_db
 
+clean-db:
+	docker exec server ./manage.py flush --no-input
+
 # backup-volumes: create-backup-dirs
 # 	@echo "Starting unified backup of all volumes..."
 # 	@echo "Backing up database volume..."
