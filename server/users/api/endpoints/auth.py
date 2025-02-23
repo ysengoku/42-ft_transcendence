@@ -190,7 +190,6 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 def reset_password(request, token: str, data: Form[ResetPasswordSchema]) -> dict[str, any]:
     """Reset user password using token from URL and new password from body"""
     user = User.objects.for_forgot_password_token(token).first()
-    print(User.objects.for_forgot_password_token(token).first())
     if not user:
         raise AuthenticationError
 
