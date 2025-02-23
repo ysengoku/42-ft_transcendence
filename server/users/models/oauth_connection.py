@@ -178,8 +178,6 @@ class OauthConnection(models.Model):
             raise HttpError(408, "Request timeout while retrieving token") from exc
         except requests.exceptions.JSONDecodeError as exc:
             raise HttpError(408, "Invalid JSON response from authorization server") from exc
-        except requests.exceptions.RequestException as exc:
-            raise HttpError(500, f"Request error: {str(exc)}") from exc
 
     def get_user_info(self, config: dict, access_token: str) -> dict:
         """
@@ -194,7 +192,7 @@ class OauthConnection(models.Model):
                 timeout=10,
             )
 
-            if user_response.status_code != 200:
+            if user_response.status_code != 200:  # noqa: PLR2004
                 error_data = user_response.json()
                 provider_error = error_data.get("error", "api_error")
                 if not provider_error:
@@ -205,10 +203,10 @@ class OauthConnection(models.Model):
 
         except RequestAborted as exc:
             raise HttpError(408, "The request timed out while retrieving user information.") from exc
-        except requests.ConnectionError:
-            raise HttpError(503, "Failed to connect to the server while retrieving user information.") from None
+        except requests.ConnectionError as exc:
+            raise HttpError(503, "Failed to connect to the server while retrieving user information.") from exc
         except requests.RequestException as exc:
-            raise AuthenticationError(f"An error occurred while retrieving user information: {str(exc)}") from None
+            raise AuthenticationError("An error occurred while retrieving user information") from exc
 
     def check_state_and_validity(self, platform: str, state: str) -> None:
         """
