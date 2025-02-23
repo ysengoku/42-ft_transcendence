@@ -1,5 +1,6 @@
 from django.http import HttpRequest
 from ninja import Router
+from ninja.errors import HttpError
 from ninja.pagination import paginate
 
 from chat.models import Chat
@@ -30,9 +31,7 @@ def get_or_create_chat(request, username: str):
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile
     chat, created = Chat.objects.get_or_create(profile, other_profile)
-    chat = (
-        Chat.objects.filter(pk=chat.pk).with_other_user_profile_info(other_profile).first()
-    )
+    chat = Chat.objects.filter(pk=chat.pk).with_other_user_profile_info(other_profile).first()
     if created:
         return 201, chat
     return 200, chat
@@ -40,9 +39,15 @@ def get_or_create_chat(request, username: str):
 
 @chats_router.get("{username}/messages", response={200: list[ChatMessageSchema], frozenset({401, 404}): MessageSchema})
 @paginate
-def get_messages(username: str):
+def get_messages(request, username: str):
     """
     Gets messages of a specific chat.
     Paginated by the `limit` and `offset` settings.
     For example, `/chats/celiastral/messages?&limit=10&offset=0` will get 10 messages from the very first one.
     """
+    other_profile = get_profile_queryset_by_username_or_404(username).first()
+    profile = request.auth.profile
+    chat = Chat.objects.for_exact_participants(profile, other_profile).first()
+    if not chat:
+        raise HttpError(404, f"Chat with {other_profile} was not found.")
+    return chat.messages.all().prefetch_related("sender")
