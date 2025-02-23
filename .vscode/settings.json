@@ -1,0 +1,15 @@
+{
+    "liveServer.settings.root": "/front/app",
+    "liveServer.settings.CustomBrowser": "chrome",
+    "liveServer.settings.port": 5501,
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true
+      },
+    "eslint.alwaysShowStatus": true,
+    "python.linting.enabled": true,
+    "python.linting.ruffEnabled": true,
+    "python.linting.ruffPath": "ruff",
+    "python.formatting.provider": "none",
+    "editor.defaultFormatter": "ruff"
+}
