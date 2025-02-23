@@ -204,7 +204,7 @@ def reset_password(request, token: str, data: Form[ResetPasswordSchema]) -> dict
 
         cache.delete(cache_key)
 
-        return JsonResponse({"status": "success", "message": "Password has been reset successfully"})
+        return {"msg": "Password has been reset successfully"}
 
     except ValidationError as exc:
         raise HttpError(422, exc.error_dict) from exc

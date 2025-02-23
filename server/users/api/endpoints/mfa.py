@@ -45,7 +45,7 @@ def send_verification_code(request, username: str) -> dict[str, Any]:
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],
         fail_silently=False,
-        )
+    )
 
     cache_key = get_cache_key(username)
     cache.set(cache_key, verification_code, TOKEN_EXPIRY)
@@ -64,26 +64,20 @@ def verify_email_login(request, username: str, token: str) -> dict[str, Any]:
     if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
         raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
 
-    try:
-        user = User.objects.filter(username=username).first()
-        if not user:
-            raise HttpError(404, "User not found")
+    user = User.objects.filter(username=username).first()
+    if not user:
+        raise HttpError(404, "User not found")
 
-        cache_key = get_cache_key(username)
-        stored_code = cache.get(cache_key)
+    cache_key = get_cache_key(username)
+    stored_code = cache.get(cache_key)
 
-        if not stored_code:
-            raise HttpError(400, "Verification code has expired. Please request a new code.")
+    if not stored_code:
+        raise HttpError(400, "Verification code has expired. Please request a new code.")
 
-        if token != stored_code:
-            raise HttpError(400, "Invalid verification code. Please try again.")
+    if token != stored_code:
+        raise HttpError(400, "Invalid verification code. Please try again.")
 
-        cache.delete(cache_key)
+    cache.delete(cache_key)
 
-        response_data = user.profile.to_profile_minimal_schema()
-        return _create_json_response_with_tokens(user, response_data)
-
-    except HttpError as e:
-        raise e
-    except Exception as e:
-        raise HttpError(500, f"Error verifying code: {str(e)}") from e
+    response_data = user.profile.to_profile_minimal_schema()
+    return _create_json_response_with_tokens(user, response_data)
