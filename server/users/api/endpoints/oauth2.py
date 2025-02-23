@@ -41,6 +41,7 @@ def create_user_oauth(user_info: dict, oauth_connection: OauthConnection) -> Use
     oauth_connection.set_connection_as_connected(user_info, user)
     return user
 
+
 def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
     """
     Quick health check for OAuth provider API using the OAuth endpoint
@@ -55,8 +56,9 @@ def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
             return False, "Could not connect to 42 API"
     return True, ""
 
+
 @csrf_exempt
-@oauth2_router.get("/authorize/{platform}", auth=None, response={200: dict, frozenset({404, 422}): Message})
+@oauth2_router.get("/authorize/{platform}", auth=None, response={200: Message, frozenset({404, 422}): Message})
 def oauth_authorize(request, platform: str):
     """
     Starts the OAuth2 authorization process.
@@ -84,7 +86,7 @@ def oauth_authorize(request, platform: str):
     return JsonResponse({"auth_url": f"{config['auth_uri']}?{urlencode(params)}"})
 
 
-@oauth2_router.get("/callback/{platform}", auth=None, response={200: dict, frozenset({408, 422, 500, 503}): Message})
+@oauth2_router.get("/callback/{platform}", auth=None, response={200: Message, frozenset({408, 422, 503}): Message})
 @ensure_csrf_cookie
 def oauth_callback(  # noqa: PLR0911
     request,
