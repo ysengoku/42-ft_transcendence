@@ -63,9 +63,7 @@ def send_verification_code(request, username: str) -> dict[str, Any]:
 
     except HttpError as e:
         raise e
-        print(e)
     except Exception as e:
-        print(e)
         raise HttpError(500, f"Error sending verification code: {str(e)}") from e
 
 
