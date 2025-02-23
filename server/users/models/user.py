@@ -39,6 +39,9 @@ class UserManager(BaseUserManager):
     def for_username(self, username: str):
         return self.filter(username__iexact=username)
 
+    def for_forgot_password_token(self, token: str):
+        return self.filter(forgot_password_token=token)
+
     def fill_user_data(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         username = AbstractUser.normalize_username(username)
         if oauth_connection:
@@ -150,9 +153,10 @@ class User(AbstractUser):
             err_dict = merge_err_dicts(err_dict, {"password": ["Please enter your new password."]})
 
         if data.password and data.password_repeat:
-            is_old_password_valid = self.check_password(password=data.old_password)
-            if not is_old_password_valid:
-                raise PermissionDenied
+            if data.old_password:
+                is_old_password_valid = self.check_password(data.old_password)
+                if not is_old_password_valid:
+                    raise PermissionDenied
             if data.old_password == data.password:
                 err_dict = merge_err_dicts(
                     err_dict,
@@ -200,13 +204,6 @@ class User(AbstractUser):
             return self.oauth_connection
         except OauthConnection.DoesNotExist:
             return None
-
-    def generate_reset_token(self) -> str:
-        """Generate and store a reset token for the user"""
-        token = hashlib.sha256(os.urandom(32)).hexdigest()
-        cache_key = f"password_reset_{token}"
-        cache.set(cache_key, str(self.id), timeout=3600)
-        return token
 
     def __str__(self):
         connection_type = "Regular" if not self.get_oauth_connection() else self.oauth_connection.connection_type

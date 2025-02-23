@@ -1,8 +1,9 @@
+import datetime
 import hashlib
 import os
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
-from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -161,8 +162,9 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
         return {"msg": "Password reset instructions sent to your email if email exists."}
 
     token = hashlib.sha256(os.urandom(32)).hexdigest()
-    cache_key = f"password_reset_{token}"
-    cache.set(cache_key, str(user.id), timeout=3600)
+    user.forgot_password_token = token
+    user.forgot_password_token_date = datetime.now(timezone.utc)
+    user.save()
 
     reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
 
@@ -180,19 +182,21 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
 
 @auth_router.post(
-    "/reset-password/{token}/", response={200: dict, 400: dict, 422: list[ValidationErrorMessageSchema]}, auth=None
+    "/reset-password/{token}",
+    response={200: dict, 400: dict, 422: list[ValidationErrorMessageSchema]},
+    auth=None,
 )
 @csrf_exempt
 def reset_password(request, token: str, data: Form[ResetPasswordSchema]) -> dict[str, any]:
     """Reset user password using token from URL and new password from body"""
-    cache_key = f"password_reset_{token}"
-    user_id = cache.get(cache_key)
-    if not user_id:
-        raise HttpError(400, "Invalid or expired token")
-
-    user = User.objects.for_id(user_id).first()
+    user = User.objects.for_forgot_password_token(token).first()
+    print(User.objects.for_forgot_password_token(token).first())
     if not user:
         raise AuthenticationError
+
+    now = datetime.now(timezone.utc)
+    if user.forgot_password_token_date + timedelta(minutes=5) < now:
+        raise HttpError(408, "Expired session: authentication request timed out")
 
     update_data = UpdateUserChema(
         password=data.password,
@@ -201,8 +205,6 @@ def reset_password(request, token: str, data: Form[ResetPasswordSchema]) -> dict
 
     try:
         user.update_user(update_data, None)
-
-        cache.delete(cache_key)
 
         return {"msg": "Password has been reset successfully"}
 

@@ -65,7 +65,7 @@ def oauth_authorize(request, platform: str):
     return JsonResponse({"auth_url": f"{config['auth_uri']}?{urlencode(params)}"})
 
 
-@oauth2_router.get("/callback/{platform}", auth=None, response={200: dict, frozenset({408, 422, 500, 503}): Message})
+@oauth2_router.get("/callback/{platform}", auth=None, response={200: dict, frozenset({408, 422}): Message})
 @ensure_csrf_cookie
 def oauth_callback(
     request,

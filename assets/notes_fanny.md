@@ -1,9 +1,3 @@
-# TODO:
-mettre le register avec oauth2 et 2fa - corriger register.js
-mettre le login avec oauth2 et 2fa - corriger login.js
-
-
-
 ## what I did
 
 - a docker which work for development and production with django, vite and nginx
@@ -12,7 +6,10 @@ mettre le login avec oauth2 et 2fa - corriger login.js
 - a nginx .conf that created aliases so all is at the same level : app. the static and media files are served by nginx
 a nginx conf that prevents ddos attacks
 - the nginx cache
-- github actions that test the code and deploy it. and test can be done by installing act. 
+- github actions that test the code and deploy it. and test can be done by installing act.
+- oauth2 with 42 api and github
+- 2fa with email
+- forgot password 
 
 ## nginx
 
@@ -276,37 +273,7 @@ password: password
 
 ## daily report
 
-change to gunicorn instead of daphne so that we can use the django admin interface on localhost:8000/admin
 
-info from settings.py is linked to the .env file to avoid hardcoding the values
-
-DEBUG = int(os.environ.get('DEBUG', default=0))
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
-CORS_ALLOW_ALL_ORIGINS = True # En développement seulement
-
-serving static and media files from the back end:
-
-- in settings.py, I specify the path to the static and media files, from the local location.
-  from static files to static
-  from media to media
-- in docker compose,
-  - I specify the volumes "named volumes" to store the static and media files
-    - "static_volume":/app/static
-    - "media_volume":/app/media
-  - I specify where to put these static and media files in the nginx container
-  - I specify them in volumes to say that they are shared between the containers
-- in nginx.conf, I specify the location of the static and media files
-  location /static/ {
-  alias /app/static/;
-  }
-
-#/media/ pointe vers /app/media/ dans le conteneur, qui est lié au dossier ./back/media via le volume.
-location /media/ {
-alias /app/media/;
-}
-
-this allows to acces to the media files from the url:
-http://localhost:1026/media/avatars/avatar.jpg
 
 ## docker:
 
@@ -434,11 +401,3 @@ Eldar asked me to research if github api was providing refresh tokens (the 42 ap
  in fact, github api offers 2 type of oauth2 flows : the traditionnal oauth one, and a github one, more complex, dedicated to complex CI. 
 
 cf picture :  i have created a traditionnal oauth connection with github. in the traditionnal one it is no question of refresh token. 
-
-# 2FA:
-TOTP app = Time-based One-Time Password
-
-
-vite prod:
-rm -rf node_modules/.vite
-npm run build
