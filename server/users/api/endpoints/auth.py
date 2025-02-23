@@ -1,8 +1,8 @@
 import hashlib
 import os
-from django.core.cache import cache
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -191,4 +191,33 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
         raise HttpError(500, "Failed to send reset email")
 
 
-# view reset password
+@auth_router.post("/reset-password", response={200: dict, 500: dict}, auth=None)
+@ensure_csrf_cookie
+def reset_password(request, token: str, password: str) -> dict[str, any]:
+    """Reset password"""
+    if not token:
+        raise HttpError(400, "Invalid token")
+
+    try:
+        user_id = cache.get(f"password_reset_{token}")
+        if not user_id:
+            raise HttpError(400, "Invalid token")
+
+        user = User.objects.filter(id=user_id).first()
+        if not user:
+            raise HttpError(404, "User not found")
+
+        user.set_password(password)
+        user.save()
+
+        return JsonResponse(
+            {
+                "status": "success",
+                "message": "Password reset successfully",
+            }
+        )
+
+    except HttpError as e:
+        raise e
+    except Exception as e:
+        raise HttpError(500, "Failed to reset password")
