@@ -225,3 +225,7 @@ class UpdateUserChema(PasswordValidationSchema):
 
 class ForgotPasswordSchema(Schema):
     email: str
+
+
+class SendMfaCode(Schema):
+    token: str
