@@ -3,11 +3,10 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from ninja import Form, Router
+from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
 from users.api.common import allow_only_for_self
@@ -20,7 +19,6 @@ from users.schemas import (
     PasswordValidationSchema,
     ProfileMinimalSchema,
     SignUpSchema,
-    UpdateUserChema,
     ValidationErrorMessageSchema,
 )
 
