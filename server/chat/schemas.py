@@ -2,7 +2,7 @@ from datetime import datetime
 
 from ninja import Schema
 
-from chat.models import ChatMessage
+from chat.models import Chat, ChatMessage
 
 
 # TODO: move common schemas to the common dir
@@ -57,13 +57,17 @@ class ChatPreviewSchema(BaseChatSchema):
     last_message: ChatMessageSchema | None = None
 
     @staticmethod
-    def resolve_last_message(obj):
+    def resolve_last_message(obj: Chat):
         return ChatMessage.objects.filter(pk=obj.last_message_id).first()
 
 
 class ChatSchema(BaseChatSchema):
     """
-    Already opened chat, with messages.
+    Already opened chat, with the last 30 messages.
     """
 
     messages: list[ChatMessageSchema]
+
+    @staticmethod
+    def resolve_messages(obj: Chat):
+        return obj.messages.all().prefetch_related("sender")[:30]
