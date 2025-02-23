@@ -1,6 +1,7 @@
-from functools import cache
 import hashlib
 import os
+from django.core.cache import cache
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -12,6 +13,7 @@ from users.api.common import allow_only_for_self
 from users.models import RefreshToken, User
 from users.schemas import (
     ForgotPasswordSchema,
+    LoginResponseSchema,
     LoginSchema,
     Message,
     ProfileMinimalSchema,
@@ -51,8 +53,9 @@ def check_self(request: HttpRequest):
     return request.auth.profile
 
 
-# TODO: add secure options for the cookie
-@auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message, 429: Message}, auth=None)
+@auth_router.post(
+    "login", response={200: ProfileMinimalSchema | LoginResponseSchema, 401: Message, 429: Message}, auth=None
+)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
@@ -67,7 +70,16 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if not is_password_correct:
         raise HttpError(401, "Username or password are not correct.")
 
-    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+    is_mfa_enabled = User.objects.has_mfa_enabled(credentials.username)
+    if is_mfa_enabled:
+        return JsonResponse(
+            {
+                "mfa_required": True,
+                "username": user.username,
+            }
+        )
+    response_data = user.profile.to_profile_minimal_schema()
+    return _create_json_response_with_tokens(user, response_data)
 
 
 @auth_router.post(
@@ -190,5 +202,6 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
         else:
             error_message = "An error occurred while processing your request"
         raise HttpError(500, error_message)
+
 
 # view reset password

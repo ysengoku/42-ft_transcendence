@@ -35,6 +35,11 @@ class ValidationErrorMessageSchema(Message):
     )
 
 
+class LoginResponseSchema(Schema):
+    mfa_required: bool
+    username: str  # ou les autres champs nécessaires du ProfileMinimalSchema
+
+
 class ProfileMinimalSchema(Schema):
     """
     Represents the bare minimum information about the user for preview in searches, friend lists etc.
@@ -204,6 +209,7 @@ class UpdateUserChema(PasswordValidationSchema):
     old_password: str | None = None
     password: str | None = None
     password_repeat: str | None = None
+    mfa_enabled: bool | None = None
 
     @model_validator(mode="after")
     def validate_updated_user_data(self):
