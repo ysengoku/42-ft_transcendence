@@ -217,7 +217,7 @@ OAUTH_CONFIG = {
         "redirect_uris": [GITHUB_REDIRECT_URI],
         "scopes": ["user"],
         "user_info_uri": GITHUB_USER_PROFILE_URL,
-        "oauth_uri": GITHUB_FT_API_URL
+        "oauth_uri": GITHUB_FT_API_URL,
     },
     "42": {
         "client_id": API42_CLIENT_ID,
