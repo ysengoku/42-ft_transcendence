@@ -154,9 +154,6 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
     """Request a password reset link"""
     try:
         user = User.objects.for_username_or_email(data.email).first()
-        print(data.email)
-        print(User)
-        print(user.email)
 
         if not user:
             return {"status": "success", "message": "If an account exists with this email, a reset link will be sent."}
@@ -175,33 +172,23 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
                 recipient_list=[user.email],
                 fail_silently=False,
             )
+
+        except HttpError as e:
+            raise e
         except Exception as e:
-            if settings.DEBUG:
-                print(f"Failed to send email: {str(e)}")
-                return {"status": "success", "debug_token": token}
             raise HttpError(500, "Failed to send reset email")
 
-        if settings.DEBUG:
-            print("=" * 50)
-            print(f"PASSWORD RESET TOKEN for {user.email}: {token}")
-            print(f"Reset URL: {reset_url}")
-            print("=" * 50)
-            debug_token = token
-        else:
-            debug_token = None
+        return JsonResponse(
+            {
+                "status": "success",
+                "message": "Password reset instructions sent to your email",
+            }
+        )
 
-        return {
-            "status": "success",
-            "message": "Password reset instructions sent to your email",
-            "debug_token": debug_token,
-        }
-
+    except HttpError as e:
+        raise e
     except Exception as e:
-        if settings.DEBUG:
-            error_message = str(e)
-        else:
-            error_message = "An error occurred while processing your request"
-        raise HttpError(500, error_message)
+        raise HttpError(500, "Failed to send reset email")
 
 
 # view reset password
