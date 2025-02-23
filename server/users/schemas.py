@@ -224,3 +224,8 @@ class UpdateUserChema(PasswordValidationSchema):
 
 class ForgotPasswordSchema(Schema):
     email: str
+
+
+class ResetPasswordSchema(Schema):
+    password: str
+    password_repeat: str
