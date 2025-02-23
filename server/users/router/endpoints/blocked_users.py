@@ -3,7 +3,7 @@ from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
 
-from users.router.common import allow_only_for_self, get_user_queryset_by_username_or_404
+from common.routers import allow_only_for_self, get_user_queryset_by_username_or_404
 from users.schemas import (
     Message,
     ProfileMinimalSchema,
@@ -14,7 +14,8 @@ blocked_users_router = Router()
 
 
 @blocked_users_router.get(
-    "{username}/blocked_users", response={200: list[ProfileMinimalSchema], frozenset({401, 403, 404}): Message},
+    "{username}/blocked_users",
+    response={200: list[ProfileMinimalSchema], frozenset({401, 403, 404}): Message},
 )
 @paginate
 def get_blocked_users(request: HttpRequest, username: str):
