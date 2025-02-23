@@ -157,6 +157,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
 class PasswordValidationSchema(Schema):
     password: str
     password_repeat: str
+    username: str | None = None
 
     def validate_password(self) -> dict[str, list[str]]:
         err_dict = {}
@@ -224,8 +225,3 @@ class UpdateUserChema(PasswordValidationSchema):
 
 class ForgotPasswordSchema(Schema):
     email: str
-
-
-class ResetPasswordSchema(Schema):
-    password: str
-    password_repeat: str
