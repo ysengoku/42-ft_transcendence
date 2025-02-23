@@ -29,7 +29,6 @@ SECRET_KEY = "your-secret-key"
 # Environment variables
 
 DEBUG = os.environ.get("DEBUG", True)
-# DEBUG = int(os.environ.get("DEBUG", default=1)) # special for fanny for working from home
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 
@@ -112,12 +111,9 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'server.wsgi.application'
 ASGI_APPLICATION = "server.asgi.application"  # Pour Django Channels
 
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -204,6 +200,7 @@ FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 
 HOME_REDIRECT_URL = "https://localhost:1026/home"
+FRONTEND_URL = "http://localhost:1026"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
@@ -227,3 +224,13 @@ OAUTH_CONFIG = {
     },
 }
 
+# email sending for 2fa and password reset
+# Email configuration
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
