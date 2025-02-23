@@ -186,6 +186,7 @@ const router = (() => {
 router.addRoute('/', 'landing-page');
 router.addRoute('/register', 'register-form');
 router.addRoute('/login', 'login-page');
+router.addRoute('/mfa-verification', 'mfa-verification');
 router.addRoute('/forgot-password', 'forgot-password');
 router.addRoute('/home', 'user-home', false);
 router.addRoute('/profile/:username', 'user-profile', true);
