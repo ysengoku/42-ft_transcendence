@@ -1,18 +1,17 @@
 import secrets
 import string
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 from django.conf import settings
-from django.core.cache import cache
 from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from ninja import Router
-from ninja.errors import AuthenticationError, HttpError
+from ninja.errors import HttpError
 
 from users.api.endpoints.auth import _create_json_response_with_tokens
 from users.models import User
+from users.schemas import Message, SendMfaCode
 
 mfa_router = Router()
 
@@ -30,9 +29,9 @@ def get_cache_key(username: str) -> str:
     return f"mfa_email_code_{username}"
 
 
-@mfa_router.post("/send-code", auth=None, response={200: dict, 404: dict})
+@mfa_router.post("/send-code", auth=None, response={200: Message, 404: Message})
 @ensure_csrf_cookie
-def send_verification_code(request, username: str) -> dict[str, Any]:
+def send_verification_code(request, username: str) -> dict[str, any]:
     """Send a verification code to the user's email"""
     user = User.objects.filter(username=username).first()
     if not user:
@@ -58,24 +57,23 @@ def send_verification_code(request, username: str) -> dict[str, Any]:
     )
 
 
-# @mfa_router.post("/verify-mfa", auth=None)
-# @ensure_csrf_cookie
-# def verify_email_login(request, username: str) -> dict[str, Any]:
-#     """Verify email verification code during login"""
-#     user = User.objects.filter(username=username).first()
-#     if not user:
-#         raise HttpError(404, "User not found")
+@mfa_router.post("/verify-mfa", auth=None, response={200: Message, 404: Message, 408: Message, 401: Message})
+@ensure_csrf_cookie
+def verify_email_login(request, username: str, data: SendMfaCode) -> dict[str, any]:
+    """Verify email verification code during login"""
+    user = User.objects.filter(username=username).first()
+    if not user:
+        raise HttpError(404, "User not found")
 
-#     user = User.objects.for_forgot_password_token().first()
-#     if not user:
-#         raise AuthenticationError
+    if not data.token or len(data.token) != TOKEN_LENGTH or not data.token.isdigit():
+        raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
 
-#     if not token or len(token) != TOKEN_LENGTH or not token.isdigit():
-#         raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
+    now = datetime.now(timezone.utc)
+    if user.mfa_token_date + timedelta(seconds=TOKEN_EXPIRY) < now:
+        raise HttpError(408, "Expired session: authentication request timed out")
 
-#     now = datetime.now(timezone.utc)
-#     if user.mfa_token_date + timedelta(seconds=TOKEN_EXPIRY) < now:
-#         raise HttpError(408, "Expired session: authentication request timed out")
+    if data.token != user.mfa_token:
+        raise HttpError(401, "Invalid verification code")
 
-#     response_data = user.profile.to_profile_minimal_schema()
-#     return _create_json_response_with_tokens(user, response_data)
+    response_data = user.profile.to_profile_minimal_schema()
+    return _create_json_response_with_tokens(user, response_data)

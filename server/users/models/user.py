@@ -99,7 +99,6 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, default="")
     password = models.CharField(max_length=128, blank=True, default="")
     mfa_enabled = models.BooleanField(default=False)
-    mfa_secret = models.CharField(max_length=128, blank=True, default="")
     forgot_password_token = models.CharField(max_length=128, blank=True, default="")
     forgot_password_token_date = models.DateTimeField(blank=True, null=True)
     mfa_token = models.CharField(max_length=128, blank=True, default="")
@@ -177,11 +176,8 @@ class User(AbstractUser):
             if val and hasattr(self, key):
                 setattr(self, key, val)
 
-        if data.mfa_enabled:
-            self.mfa_secret = hashlib.sha256(os.urandom(32)).hexdigest()
-        elif data.mfa_enabled is False:
+        if data.mfa_enabled is False:
             self.mfa_enabled = False
-            self.mfa_secret = ""
 
         exclude = set()
         if not data.email:
