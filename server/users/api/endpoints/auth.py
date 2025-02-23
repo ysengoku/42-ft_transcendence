@@ -1,4 +1,3 @@
-import datetime
 import hashlib
 import os
 from datetime import datetime, timedelta, timezone
@@ -18,8 +17,8 @@ from users.schemas import (
     LoginResponseSchema,
     LoginSchema,
     Message,
+    PasswordValidationSchema,
     ProfileMinimalSchema,
-    ResetPasswordSchema,
     SignUpSchema,
     UpdateUserChema,
     ValidationErrorMessageSchema,
@@ -183,13 +182,13 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
 @auth_router.post(
     "/reset-password/{token}",
-    response={200: dict, 400: dict, 422: list[ValidationErrorMessageSchema]},
+    response={200: Message, 400: Message, 422: list[ValidationErrorMessageSchema]},
     auth=None,
 )
 @csrf_exempt
-def reset_password(request, token: str, data: Form[ResetPasswordSchema]) -> dict[str, any]:
+def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[str, any]:
     """Reset user password using token from URL and new password from body"""
-    user = User.objects.for_forgot_password_token(token).first()
+    user = User.objects.for_forgot_password_token(token=token).first()
     if not user:
         raise AuthenticationError
 
@@ -197,17 +196,17 @@ def reset_password(request, token: str, data: Form[ResetPasswordSchema]) -> dict
     if user.forgot_password_token_date + timedelta(minutes=5) < now:
         raise HttpError(408, "Expired session: authentication request timed out")
 
-    update_data = UpdateUserChema(
+    obj = PasswordValidationSchema(
+        username=user.username,
         password=data.password,
         password_repeat=data.password_repeat,
     )
 
-    try:
-        user.update_user(update_data, None)
+    err_dict = obj.validate_password()
+    if err_dict:
+        raise HttpError(422, err_dict)
 
-        return {"msg": "Password has been reset successfully"}
+    user.set_password(data.password)
+    user.save()
 
-    except ValidationError as exc:
-        raise HttpError(422, exc.error_dict) from exc
-    except PermissionDenied as exc:
-        raise HttpError(400, "Invalid password reset request") from exc
+    return {"msg": "Password has been reset successfully"}
