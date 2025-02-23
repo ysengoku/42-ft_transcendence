@@ -1,4 +1,8 @@
+from functools import cache
+import hashlib
+import os
 from django.conf import settings
+from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
@@ -7,6 +11,7 @@ from ninja.errors import AuthenticationError, HttpError
 from users.api.common import allow_only_for_self
 from users.models import RefreshToken, User
 from users.schemas import (
+    ForgotPasswordSchema,
     LoginSchema,
     Message,
     ProfileMinimalSchema,
@@ -129,3 +134,61 @@ def logout(request: HttpRequest, response: HttpResponse):
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return 204, None
+
+
+@auth_router.post("/forgot-password", response={200: dict, 500: dict}, auth=None)
+@ensure_csrf_cookie
+def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any]:
+    """Request a password reset link"""
+    try:
+        user = User.objects.for_username_or_email(data.email).first()
+        print(data.email)
+        print(User)
+        print(user.email)
+
+        if not user:
+            return {"status": "success", "message": "If an account exists with this email, a reset link will be sent."}
+
+        token = hashlib.sha256(os.urandom(32)).hexdigest()
+        cache_key = f"password_reset_{token}"
+        cache.set(cache_key, str(user.id), timeout=3600)
+
+        reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+
+        try:
+            send_mail(
+                subject="Password Reset Request",
+                message=f"Click this link to reset your password: {reset_url}",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"Failed to send email: {str(e)}")
+                return {"status": "success", "debug_token": token}
+            raise HttpError(500, "Failed to send reset email")
+
+        if settings.DEBUG:
+            print("=" * 50)
+            print(f"PASSWORD RESET TOKEN for {user.email}: {token}")
+            print(f"Reset URL: {reset_url}")
+            print("=" * 50)
+            debug_token = token
+        else:
+            debug_token = None
+
+        return {
+            "status": "success",
+            "message": "Password reset instructions sent to your email",
+            "debug_token": debug_token,
+        }
+
+    except Exception as e:
+        if settings.DEBUG:
+            error_message = str(e)
+        else:
+            error_message = "An error occurred while processing your request"
+        raise HttpError(500, error_message)
+
+# view reset password
