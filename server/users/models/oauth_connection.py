@@ -1,16 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
-from urllib.parse import quote
 
 import cv2
 import numpy as np
 import requests
-from django.conf import settings
-from django.core.exceptions import RequestAborted
 from django.core.files.base import ContentFile
 from django.db import models
-from django.http import HttpResponseRedirect
-from ninja.errors import AuthenticationError, HttpError
 from PIL import Image, ImageFilter
 
 
@@ -183,9 +178,6 @@ class OauthConnection(models.Model):
         except requests.exceptions.JSONDecodeError:
             error_message = "Invalid JSON response from authorization server"
             return None, (error_message, 422)
-        except requests.exceptions.RequestException:
-            error_message = "Failed to retrieve access token"
-            return None, (error_message, 500)
 
     def get_user_info(self, config: dict, access_token: str) -> tuple:
         """
@@ -200,7 +192,7 @@ class OauthConnection(models.Model):
                 timeout=10,
             )
 
-            if user_response.status_code != 200:
+            if user_response.status_code != 200:  # noqa: PLR2004
                 error_data = user_response.json()
                 provider_error = error_data.get("error", "api_error")
                 error_message = provider_error if provider_error else "api_error"
@@ -214,9 +206,6 @@ class OauthConnection(models.Model):
         except requests.exceptions.ConnectionError:
             error_message = "Failed to connect to the server while retrieving user information."
             return None, (error_message, 503)
-        except requests.exceptions.RequestException:
-            error_message = "Failed to retrieve user info"
-            return None, (error_message, 500)
 
     def check_state_and_validity(self, platform: str, state: str) -> tuple:
         """
@@ -248,7 +237,7 @@ class OauthConnection(models.Model):
                 oauth_connection=self,
             )
             if not user:
-                return None, ("Failed to create user in database.", 500)
+                return None, ("Failed to create user in database.", 503)
         else:
             old_oauth_connection = user.get_oauth_connection()
             if old_oauth_connection:
