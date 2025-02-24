@@ -1,4 +1,3 @@
-from typing import Union
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -6,14 +5,15 @@ from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
 from users.api.common import allow_only_for_self
+from users.api.endpoints.mfa import send_verification_code
 from users.models import RefreshToken, User
 from users.schemas import (
+    LoginResponseSchema,
     LoginSchema,
     Message,
     ProfileMinimalSchema,
     SignUpSchema,
     ValidationErrorMessageSchema,
-    LoginResponseSchema,
 )
 
 auth_router = Router()
@@ -67,12 +67,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
 
     is_mfa_enabled = User.objects.has_mfa_enabled(credentials.username)
     if is_mfa_enabled:
-        return JsonResponse(
-            {
-                "mfa_required": True,
-                "username": user.username,
-            }
-        )
+        send_verification_code
     response_data = user.profile.to_profile_minimal_schema()
     return _create_json_response_with_tokens(user, response_data)
 
