@@ -17,8 +17,6 @@ export const API_ENDPOINTS = {
   USER_UNBLOCK_USER: (username, blockedUser) => `${API_BASE_URL}users/${username}/blocked_users/${blockedUser}`,
   OAUTH_AUTHORIZE: (platform) => `${API_BASE_URL}oauth/authorize/${platform}`,
   OAUTH_CALLBACK: (platform) => `${API_BASE_URL}oauth/callback/${platform}`,
-  MFA_RESEND: `${API_BASE_URL}mfa/resend_code`,
-  MFA_VERIFY: `${API_BASE_URL}mfa/verify-mfa`,
   USER_SEARCH: (query, limit, offset) => `${API_BASE_URL}users?search=${query}&limit=${limit}&offset=${offset}`,
   USER_FRIENDS_LIST: (username, limit, offset) => `${API_BASE_URL}users/${username}/friends?limit=${limit}&offset=${offset}`,
 };
