@@ -102,6 +102,9 @@ class Chat(models.Model):
     objects = ChatQuerySet.as_manager()
 
     def __str__(self):
+        if self.participants.count() == 0:
+            return "Empty chat"
+
         max_participants_to_display = 20
         participants_list = [p.user.username for p in self.participants.all()[:max_participants_to_display]]
         res = ", ".join(participants_list)
@@ -123,9 +126,6 @@ class ChatMessage(models.Model):
         ordering = ["-date"]
 
     def __str__(self):
-        if self.participants.count() == 0:
-            return "Empty chat"
-
         max_msg_len = 15
         return (
             f"{self.date} {self.sender.user.username}: "
