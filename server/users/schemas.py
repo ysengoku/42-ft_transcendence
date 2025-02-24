@@ -34,6 +34,11 @@ class ValidationErrorMessageSchema(Message):
     )
 
 
+class LoginResponseSchema(Schema):
+    mfa_required: bool
+    username: str  # ou les autres champs nécessaires du ProfileMinimalSchema
+
+
 class ProfileMinimalSchema(Schema):
     """
     Represents the bare minimum information about the user for preview in searches, friend lists etc.
@@ -58,6 +63,7 @@ class UserSettingsSchema(Schema):
     def resolve_connection_type(obj: User):
         oauth_connection = obj.get_oauth_connection()
         return oauth_connection.connection_type if oauth_connection else "regular"
+
 
 class OAuthCallbackParams(Schema):
     code: str | None = None  # Plutôt que Optional[str]
@@ -202,6 +208,7 @@ class UpdateUserChema(PasswordValidationSchema):
     old_password: str | None = None
     password: str | None = None
     password_repeat: str | None = None
+    mfa_enabled: bool | None = None
 
     @model_validator(mode="after")
     def validate_updated_user_data(self):
@@ -212,3 +219,6 @@ class UpdateUserChema(PasswordValidationSchema):
         if err_dict:
             raise ValidationError(err_dict)
         return self
+
+class SendMfaCode(Schema):
+    token: str

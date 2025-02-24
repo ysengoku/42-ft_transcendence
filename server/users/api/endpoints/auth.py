@@ -1,12 +1,14 @@
-from django.conf import settings
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
 from users.api.common import allow_only_for_self
+from users.api.endpoints.mfa import handle_mfa_code
+from users.api.utils import _create_json_response_with_tokens
 from users.models import RefreshToken, User
 from users.schemas import (
+    LoginResponseSchema,
     LoginSchema,
     Message,
     ProfileMinimalSchema,
@@ -15,26 +17,6 @@ from users.schemas import (
 )
 
 auth_router = Router()
-
-
-def _create_json_response_with_tokens(user: User, json: dict):
-    access_token, refresh_token_instance = RefreshToken.objects.create(user)
-
-    response = JsonResponse(json)
-    response.set_cookie("access_token", access_token)
-    response.set_cookie("refresh_token", refresh_token_instance.token)
-
-    return response
-
-
-def create_redirect_to_home_page_response_with_tokens(user: User):
-    access_token, refresh_token_instance = RefreshToken.objects.create(user)
-
-    response = HttpResponseRedirect(settings.HOME_REDIRECT_URL)
-    response.set_cookie("access_token", access_token)
-    response.set_cookie("refresh_token", refresh_token_instance.token)
-
-    return response
 
 
 @auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
@@ -46,7 +28,9 @@ def check_self(request: HttpRequest):
     return request.auth.profile
 
 
-@auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message, 429: Message}, auth=None)
+@auth_router.post(
+    "login", response={200: ProfileMinimalSchema | LoginResponseSchema, 401: Message, 429: Message}, auth=None
+)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
@@ -61,7 +45,18 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if not is_password_correct:
         raise HttpError(401, "Username or password are not correct.")
 
-    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+    is_mfa_enabled = User.objects.has_mfa_enabled(credentials.username)
+    if is_mfa_enabled and handle_mfa_code(user):
+        return JsonResponse(
+            {
+                "mfa_required": True,
+                "username": user.username,
+            },
+        )
+    if is_mfa_enabled:
+        raise HttpError(503, "Failed to send MFA code")
+    response_data = user.profile.to_profile_minimal_schema()
+    return _create_json_response_with_tokens(user, response_data)
 
 
 @auth_router.post(
