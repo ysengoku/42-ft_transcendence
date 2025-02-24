@@ -119,6 +119,8 @@ export class Game extends HTMLElement {
 	}
 	const Bumpers = [new Bumper_obj(0, 1, -9), new Bumper_obj(0, 1, 9)];
 
+
+	
     const playerShape = new CANNON.Cylinder(1, 1, 3, 32);
     const playerBody = new CANNON.Body({ mass: 10 });
     playerBody.addShape(playerShape);
@@ -222,16 +224,16 @@ export class Game extends HTMLElement {
 
     function reset() {
       if (last_score == 0) {
-        // if (p2_score % 2 == 0)
-        z_value = -10;
-        // else
-        //   z_value = -10;
+        if (p2_score % 2 == 0)
+        	z_value = 10;
+        else
+        	z_value = -10;
       }
       if (last_score == 1) {
-        // if (p1_score % 2 == 0)
-        z_value = 10;
-        // else
-        // z_value = -10;
+        if (p1_score % 2 == 0)
+       		z_value = -10;
+        else
+        	z_value = 10;
       }
       if (p1_score == 10 || p2_score == 10) {
         p1_score = 0;
@@ -254,12 +256,12 @@ export class Game extends HTMLElement {
 
 		requestAnimationFrame(animate2);
 		if (Ball.sphereBody.position.z >= 10) {
-			// p1_score++;
+			p1_score++;
 			last_score = 1;
 			reset();
 		}
 		if (Ball.sphereBody.position.z <= -10) {
-			// p2_score++;
+			p2_score++;
 			last_score = 0;
 			reset();
 		}
@@ -308,27 +310,21 @@ export class Game extends HTMLElement {
 			Ball.sphereBody.quaternion.z,
 			Ball.sphereBody.quaternion.w,
 		);
-		Bumpers[0].cubeMesh.position.set(Bumpers[0].cubeBody.position.x, Bumpers[0].cubeBody.position.y, Bumpers[0].cubeBody.position.z);
-		Bumpers[0].cubeMesh.quaternion.set(
-			Bumpers[0].cubeBody.quaternion.x,
-			Bumpers[0].cubeBody.quaternion.y,
-			Bumpers[0].cubeBody.quaternion.z,
-			Bumpers[0].cubeBody.quaternion.w,
-		);
-		Bumpers[1].cubeMesh.position.set(Bumpers[1].cubeBody.position.x, Bumpers[1].cubeBody.position.y, Bumpers[1].cubeBody.position.z);
-		Bumpers[1].cubeMesh.quaternion.set(
-			Bumpers[1].cubeBody.quaternion.x,
-			Bumpers[1].cubeBody.quaternion.y,
-			Bumpers[1].cubeBody.quaternion.z,
-			Bumpers[1].cubeBody.quaternion.w,
-		);
+		for (let i = 0; i < 2; i++)
+		{
+			Bumpers[i].cubeMesh.position.set(Bumpers[i].cubeBody.position.x, Bumpers[i].cubeBody.position.y, Bumpers[i].cubeBody.position.z);
+			Bumpers[i].cubeMesh.quaternion.set(
+				Bumpers[i].cubeBody.quaternion.x,
+				Bumpers[i].cubeBody.quaternion.y,
+				Bumpers[i].cubeBody.quaternion.z,
+				Bumpers[i].cubeBody.quaternion.w,
+			);
+		}
 		if (mixer) {
 			mixer.update(delta);
 		}
 		renderer.render(scene, camera);
 		input_manager();
-
-      // stats.update()
     }
 
     var keyMap = [];
