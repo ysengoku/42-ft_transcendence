@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Query, Router
 from ninja.errors import AuthenticationError, HttpError
 
-from users.api.endpoints.auth import create_redirect_to_home_page_response_with_tokens
+from users.api.utils import create_redirect_to_home_page_response_with_tokens
 from users.models import OauthConnection, User
 from users.schemas import (
     Message,
