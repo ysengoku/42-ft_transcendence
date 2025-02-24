@@ -140,7 +140,6 @@ export class Settings extends HTMLElement {
     const avatarField = avatarUploadField.selectedFile;
 
     const formData = new FormData();
-    // If there are any changes, append to formData
     if (userIdentity.username) {
       formData.append('username', userIdentity.username);
     }
@@ -150,19 +149,19 @@ export class Settings extends HTMLElement {
     if (newEmail) {
       formData.append('email', newEmail);
     }
-    // If there is password change request, append to formData
     const oldPassword = this.querySelector('#old-password');
     const newPassword = this.querySelector('#new-password');
     const newPasswordRepeat = this.querySelector('#new-password-repeat');
     if (oldPassword.value && newPassword.value && newPasswordRepeat.value) {
-      formData.append('old-password', oldPassword.value);
+      formData.append('old_password', oldPassword.value);
       formData.append('password', newPassword.value);
-      formData.append('password-repeat', newPasswordRepeat.value);
+      formData.append('password_repeat', newPasswordRepeat.value);
     }
-
-    // TODO: Check if 2FA enabled status changed, if yes append to formData
-    // formData.append('mfa-enabled', this.querySelector('#mfa-switch-check').checked);
-
+    // TODO: Test if it works after merge
+    const mfaEnabled = this.querySelector('#mfa-switch-check').checked;
+    if (this.user.mfa_enabled !== mfaEnabled) {
+      formData.append('mfa_enabled', mfaEnabled);
+    }
     if (avatarField) {
       formData.append('new_profile_picture', avatarField);
     }
