@@ -9,7 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import HttpError
 
-from users.api.endpoints.auth import _create_json_response_with_tokens
+from users.api.utils import _create_json_response_with_tokens
 from users.models import User
 from users.schemas import Message, SendMfaCode
 
@@ -29,11 +29,25 @@ def get_cache_key(username: str) -> str:
     return f"mfa_email_code_{username}"
 
 
-@mfa_router.post("/send-code", auth=None, response={200: Message, 404: Message})
+@mfa_router.post("/resend-code", auth=None, response={200: Message, 404: Message})
 @ensure_csrf_cookie
-def send_verification_code(request, username: str) -> dict[str, any]:
-    """Send a verification code to the user's email"""
+def resend_verification_code(request, username: str) -> dict[str, any]:
     user = User.objects.filter(username=username).first()
+    if not user:
+        raise HttpError(404, "User with that email not found")
+
+    if handle_mfa_code(user):
+        return JsonResponse(
+            {
+                "msg": "Verification code sent to user email",
+            },
+        )
+    return None
+
+
+def handle_mfa_code(user):
+    """Send a verification code to the user's email"""
+    user = User.objects.filter(username=user.username).first()
     if not user:
         raise HttpError(404, "User with that email not found")
 
@@ -42,19 +56,19 @@ def send_verification_code(request, username: str) -> dict[str, any]:
     user.mfa_token_date = datetime.now(timezone.utc)
     user.save()
 
-    send_mail(
-        subject="Your Verification Code",
-        message=f"Your verification code is: {verification_code}\nThis code will expire in 10 minutes.",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
 
-    return JsonResponse(
-        {
-            "msg": "Verification code sent to user email",
-        },
-    )
+    try:
+        send_mail(
+            subject="Your Verification Code",
+            message=f"Your verification code is: {verification_code}\nThis code will expire in 10 minutes.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        return True
+    except Exception as e:
+        print(f"Failed to send email: {str(e)}")
+        return False
 
 
 @mfa_router.post("/verify-mfa", auth=None, response={200: Message, 404: Message, 408: Message, 401: Message})
