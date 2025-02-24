@@ -188,18 +188,3 @@ export class Settings extends HTMLElement {
 }
 
 customElements.define('user-settings', Settings);
-
-
-// # curl -X 'POST' \
-// #   'http://localhost:8000/api/users/john/settings' \
-// #   -H 'accept: application/json' \
-// #   -H 'Content-Type: multipart/form-data' \
-// #   -H 'X-CSRFToken: BqZ3x9lVUBIJ7H4Qbp5FvkbuiSJ6uFRNGrCmuZ724xToDYCC7VQYzlwxXmAwJu9x' \
-// #   -F 'password=string' \
-// #   -F 'password_repeat=string' \
-// #   -F 'username=string' \
-// #   -F 'email=string' \
-// #   -F 'nickname=string' \
-// #   -F 'old_password=string' \
-// #   -F 'mfa_enabled=true' \
-// #   -F 'new_profile_picture='
