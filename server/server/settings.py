@@ -189,7 +189,7 @@ GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
 GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
-GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")  # Défini dans le .env
+GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
 GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
 
 # OAuth 42
@@ -197,7 +197,7 @@ API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
 API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
 FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
 FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
-FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
+FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 
 HOME_REDIRECT_URL = "https://localhost:1026/home"
