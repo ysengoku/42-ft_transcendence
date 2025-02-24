@@ -208,3 +208,5 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
     user.save()
 
     return {"msg": "Password has been reset successfully"}
+
+# ajouter resend email function
