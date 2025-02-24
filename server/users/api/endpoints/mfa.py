@@ -56,19 +56,13 @@ def handle_mfa_code(user):
     user.mfa_token_date = datetime.now(timezone.utc)
     user.save()
 
-
-    try:
-        send_mail(
-            subject="Your Verification Code",
-            message=f"Your verification code is: {verification_code}\nThis code will expire in 10 minutes.",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-        return True
-    except Exception as e:
-        print(f"Failed to send email: {str(e)}")
-        return False
+    return send_mail(
+        subject="Your Verification Code",
+        message=f"Your verification code is: {verification_code}\nThis code will expire in 10 minutes.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
 
 
 @mfa_router.post("/verify-mfa", auth=None, response={200: Message, 404: Message, 408: Message, 401: Message})

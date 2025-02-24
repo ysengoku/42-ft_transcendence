@@ -54,7 +54,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
             },
         )
     if is_mfa_enabled:
-        raise HttpError(500, "Failed to send MFA code")
+        raise HttpError(503, "Failed to send MFA code")
     response_data = user.profile.to_profile_minimal_schema()
     return _create_json_response_with_tokens(user, response_data)
 
