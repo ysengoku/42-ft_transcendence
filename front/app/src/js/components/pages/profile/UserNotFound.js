@@ -29,7 +29,7 @@ export class UserNotFound extends HTMLElement {
 		  height: auto;
     }
     </style>
-	  <div class="d-flex flex-row justify-content-center align-items-stretch gap-3">
+	  <div class="d-flex flex-row justify-content-center align-items-stretch my-4 gap-3">
 	    <div class="image-container mx-2">
 	    <img src="${userNotFoundImage}" alt="404" class="img-fluid">
 	    </div>
