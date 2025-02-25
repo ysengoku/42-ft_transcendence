@@ -1,4 +1,5 @@
 import uuid
+from functools import cache
 
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
@@ -35,6 +36,12 @@ class UserManager(BaseUserManager):
 
     def for_username(self, username: str):
         return self.filter(username__iexact=username)
+
+    def for_forgot_password_token(self, token: str):
+        return self.filter(forgot_password_token=token)
+
+    def for_mfa_token(self, token: str):
+        return self.filter(mfa_token=token)
 
     def fill_user_data(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         username = AbstractUser.normalize_username(username)
@@ -90,6 +97,8 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, default="")
     password = models.CharField(max_length=128, blank=True, default="")
     mfa_enabled = models.BooleanField(default=False)
+    forgot_password_token = models.CharField(max_length=128, blank=True, default="")
+    forgot_password_token_date = models.DateTimeField(blank=True, null=True)
     mfa_token = models.CharField(max_length=128, blank=True, default="")
     mfa_token_date = models.DateTimeField(blank=True, null=True)
 
@@ -141,7 +150,7 @@ class User(AbstractUser):
             err_dict = merge_err_dicts(err_dict, {"password": ["Please enter your new password."]})
 
         if data.password and data.password_repeat:
-            is_old_password_valid = self.check_password(password=data.old_password)
+            is_old_password_valid = self.check_password(data.old_password)
             if not is_old_password_valid:
                 raise PermissionDenied
             if data.old_password == data.password:
