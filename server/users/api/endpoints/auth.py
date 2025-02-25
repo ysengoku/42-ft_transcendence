@@ -1,3 +1,9 @@
+import hashlib
+import os
+from datetime import datetime, timedelta, timezone
+
+from django.conf import settings
+from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
@@ -8,9 +14,11 @@ from users.api.endpoints.mfa import handle_mfa_code
 from users.api.utils import _create_json_response_with_tokens
 from users.models import RefreshToken, User
 from users.schemas import (
+    ForgotPasswordSchema,
     LoginResponseSchema,
     LoginSchema,
     Message,
+    PasswordValidationSchema,
     ProfileMinimalSchema,
     SignUpSchema,
     ValidationErrorMessageSchema,
@@ -29,7 +37,7 @@ def check_self(request: HttpRequest):
 
 
 @auth_router.post(
-    "login", response={200: ProfileMinimalSchema | LoginResponseSchema, 401: Message, 429: Message}, auth=None
+    "login", response={200: ProfileMinimalSchema | LoginResponseSchema, 401: Message, 429: Message}, auth=None,
 )
 @ensure_csrf_cookie
 @csrf_exempt
@@ -123,3 +131,65 @@ def logout(request: HttpRequest, response: HttpResponse):
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return 204, None
+
+
+@auth_router.post("/forgot-password", response={200: Message}, auth=None)
+@csrf_exempt
+def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any]:
+    """Request a password reset link"""
+    user = User.objects.for_username_or_email(data.email).first()
+
+    if not user:
+        return {"msg": "Password reset instructions sent to your email if email exists."}
+
+    token = hashlib.sha256(os.urandom(32)).hexdigest()
+    user.forgot_password_token = token
+    user.forgot_password_token_date = datetime.now(timezone.utc)
+    user.save()
+
+    reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
+
+    send_mail(
+        subject="Password Reset Request",
+        message=f"Click this link to reset your password: {reset_url}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+    return {
+        "msg": "Password reset instructions sent to your email",
+    }
+
+
+@auth_router.post(
+    "/reset-password/{token}",
+    response={200: Message, 400: Message, 422: list[ValidationErrorMessageSchema]},
+    auth=None,
+)
+@csrf_exempt
+def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[str, any]:
+    """Reset user password using token from URL and new password from body"""
+    user = User.objects.for_forgot_password_token(token=token).first()
+    if not user:
+        raise AuthenticationError
+
+    now = datetime.now(timezone.utc)
+    if user.forgot_password_token_date + timedelta(minutes=5) < now:
+        raise HttpError(408, "Expired session: authentication request timed out")
+
+    obj = PasswordValidationSchema(
+        username=user.username,
+        password=data.password,
+        password_repeat=data.password_repeat,
+    )
+
+    err_dict = obj.validate_password()
+    if err_dict:
+        raise HttpError(422, err_dict)
+
+    user.set_password(data.password)
+    user.save()
+
+    return {"msg": "Password has been reset successfully"}
+
