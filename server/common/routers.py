@@ -1,3 +1,7 @@
+"""
+Common utility functions that are used by the routers.
+"""
+
 from django.db import models
 from django.http import HttpRequest
 from ninja.errors import HttpError

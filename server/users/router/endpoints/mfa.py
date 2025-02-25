@@ -9,9 +9,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import HttpError
 
-from users.api.utils import _create_json_response_with_tokens
+from common.schemas import MessageSchema
 from users.models import User
-from users.schemas import Message, SendMfaCode
+from users.router.utils import _create_json_response_with_tokens
+from users.schemas import SendMfaCode
 
 mfa_router = Router()
 
@@ -29,7 +30,7 @@ def get_cache_key(username: str) -> str:
     return f"mfa_email_code_{username}"
 
 
-@mfa_router.post("/resend-code", auth=None, response={200: Message, 404: Message})
+@mfa_router.post("/resend-code", auth=None, response={200: MessageSchema, 404: MessageSchema})
 @ensure_csrf_cookie
 def resend_verification_code(request, username: str) -> dict[str, any]:
     user = User.objects.filter(username=username).first()
@@ -65,7 +66,11 @@ def handle_mfa_code(user):
     )
 
 
-@mfa_router.post("/verify-mfa", auth=None, response={200: Message, 404: Message, 408: Message, 401: Message})
+@mfa_router.post(
+    "/verify-mfa",
+    auth=None,
+    response={200: MessageSchema, 404: MessageSchema, 408: MessageSchema, 401: MessageSchema},
+)
 @ensure_csrf_cookie
 def verify_mfa_code(request, username: str, data: SendMfaCode) -> dict[str, any]:
     """Verify verification code received by email during login"""
