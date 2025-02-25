@@ -38,65 +38,34 @@ front/
 │  │  │  │  │  │  └─ UserSearchButton.js
 │  │  │  │  │  └─ index.js
 │  │  │  │  └─ pages/
+│  │  │  │     ├─ index.js
 │  │  │  │     ├─ Landing.js
 │  │  │  │     ├─ NotFound.js
-│  │  │  │     ├─ ResetPassword.js
+│  │  │  │     ├─ Error.js
 │  │  │  │     ├─ chat/
 │  │  │  │     │  ├─ Chat.js
 │  │  │  │     │  └─ components/
-│  │  │  │     │     ├─ ChatList.js
-│  │  │  │     │     ├─ ChatListItem.js
-│  │  │  │     │     ├─ ChatMessageArea.js
-│  │  │  │     │     ├─ ChatMessageInput.js
-│  │  │  │     │     └─ index.js
-│  │  │  │     ├─ dual/
-│  │  │  │     │  ├─ Dual.js
-│  │  │  │     │  └─ DualMenu.js
 │  │  │  │     ├─ home/
 │  │  │  │     │  ├─ Home.js
 │  │  │  │     │  └─ components/
-│  │  │  │     │     ├─ DualButton.js
-│  │  │  │     │     ├─ LogoutButton.js
-│  │  │  │     │     ├─ ProfileButton.js
-│  │  │  │     │     ├─ SettingsButton.js
-│  │  │  │     │     ├─ TournamentButton.js
-│  │  │  │     │     └─ index.js
-│  │  │  │     ├─ index.js
 │  │  │  │     ├─ login/
 │  │  │  │     │  ├─ Login.js
+│  │  │  │     │  ├─ MfaVerification.js
+│  │  │  │     │  ├─ ForgotPassword.js
+│  │  │  │     │  ├─ RecoverPassword.js
 │  │  │  │     │  └─ components/
-│  │  │  │     │     ├─ LoginForm.js
-│  │  │  │     │     ├─ OAuth.js
-│  │  │  │     │     └─ index.js
 │  │  │  │     ├─ profile/
 │  │  │  │     │  ├─ Profile.js
 │  │  │  │     │  ├─ UserNotFound.js
 │  │  │  │     │  └─ components/
-│  │  │  │     │     ├─ Avatar.js
-│  │  │  │     │     ├─ DuelHistory.js
-│  │  │  │     │     ├─ Enemy.js
-│  │  │  │     │     ├─ GameHistory.js
-│  │  │  │     │     ├─ OnlineStatusIndicator.js
-│  │  │  │     │     ├─ StatCard.js
-│  │  │  │     │     ├─ TournamentHistory.js
-│  │  │  │     │     ├─ UserActions.js
-│  │  │  │     │     ├─ UserInfo.js
-│  │  │  │     │     ├─ WinRatePieGraph.js
-│  │  │  │     │     └─ index.js
 │  │  │  │     ├─ register/
 │  │  │  │     │  └─ Register.js
 │  │  │  │     ├─ settings/
 │  │  │  │     │  ├─ Settings.js
-│  │  │  │     │  ├─ components/
-│  │  │  │     │  │  ├─ AvatarUpload.js
-│  │  │  │     │  │  ├─ AvatarUploadModal.js
-│  │  │  │     │  │  ├─ DeleteAccountButton.js
-│  │  │  │     │  │  ├─ EmailUpdate.js
-│  │  │  │     │  │  ├─ MfaEnableUpdate.js
-│  │  │  │     │  │  ├─ PasswordUpdate.js
-│  │  │  │     │  │  ├─ UserIdentityUpdate.js
-│  │  │  │     │  │  └─ index.js
-│  │  │  │     │  └─ index.js
+│  │  │  │     │  └─ components/
+│  │  │  │     ├─ dual/
+│  │  │  │     │  ├─ Dual.js
+│  │  │  │     │  └─ DualMenu.js
 │  │  │  │     └─ tournament/
 │  │  │  │        ├─ Tournament.js
 │  │  │  │        └─ TournamentMenu.js

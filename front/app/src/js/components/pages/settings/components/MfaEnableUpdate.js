@@ -9,7 +9,7 @@ export class MfaEnableUpdate extends HTMLElement {
 
   setParams(user) {
     this._user.connectionType = user.connection_type;
-    this._user.mfaEnabled = user.mfaEnabled;
+    this._user.mfaEnabled = user.mfa_enabled;
     this.render();
   }
 
@@ -17,7 +17,7 @@ export class MfaEnableUpdate extends HTMLElement {
     this.innerHTML = `
       <div class="form-check form-switch mt-5" id="mfa-setting">
         <label for="mfa-switch-check" class="form-check-label">Enable Two-factor authentication</label>
-        <input type="checkbox" class="form-check-input" role="switch" id="mfa-switch-check" ${this.mfaEnabled ? 'checked' : ''}>
+        <input type="checkbox" class="form-check-input" role="switch" id="mfa-switch-check" ${this._user.mfaEnabled ? 'checked' : ''}>
       </div>
     `;
 
