@@ -19,18 +19,3 @@ export const API_ENDPOINTS = {
   USER_FRIENDS_LIST: (username, limit, offset) =>
     `${API_BASE_URL}users/${username}/friends?limit=${limit}&offset=${offset}`,
 };
-
-// curl -X 'POST' \
-//   'http://localhost:8000/api/mfa/verify-mfa?username=john' \
-//   -H 'accept: application/json' \
-//   -H 'Content-Type: application/json' \
-//   -H 'X-CSRFToken: Aj4mvulfzyamfhiOdUYNxlNDQKlIbjPyFkHFsk7mJul1LyQA9qJ6Bm8Gvec8q87i' \
-//   -d '{
-//   "token": "string"
-// }'
-
-// curl -X 'POST' \
-//   'http://localhost:8000/api/mfa/send-code?username=john' \
-//   -H 'accept: application/json' \
-//   -H 'X-CSRFToken: Aj4mvulfzyamfhiOdUYNxlNDQKlIbjPyFkHFsk7mJul1LyQA9qJ6Bm8Gvec8q87i' \
-//   -d ''

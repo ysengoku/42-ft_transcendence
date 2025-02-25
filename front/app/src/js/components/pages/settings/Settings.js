@@ -158,8 +158,9 @@ export class Settings extends HTMLElement {
       formData.append('password_repeat', newPasswordRepeat.value);
     }
     // TODO: Test if it works after merge
-    const mfaEnabled = this.querySelector('#mfa-switch-check').checked;
-    if (this.user.mfa_enabled !== mfaEnabled) {
+    const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
+    const currentMfaEnabled = this.user.mfa_enabled ? 'true' : 'false';
+    if (currentMfaEnabled !== mfaEnabled) {
       formData.append('mfa_enabled', mfaEnabled);
     }
     if (avatarField) {

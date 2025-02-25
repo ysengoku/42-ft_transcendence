@@ -1,7 +1,6 @@
 import { API_ENDPOINTS } from '@api';
 import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 
-
 export class OAuth extends HTMLElement {
   constructor() {
     super();
@@ -22,18 +21,17 @@ export class OAuth extends HTMLElement {
   }
 
   async handleOAuthClick(platform) {
-      /* eslint-disable-next-line new-cap */
-      const response = await fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform));
+    /* eslint-disable-next-line new-cap */
+    const response = await fetch(API_ENDPOINTS.OAUTH_AUTHORIZE(platform));
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('oauth_platform', platform);
-        location.href = data.auth_url;
-      }
-      else {
-        console.error('OAuth initialization failed:', response.statusText);
-        showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
-      }
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem('oauth_platform', platform);
+      location.href = data.auth_url;
+    } else {
+      console.error('OAuth initialization failed:', response.statusText);
+      showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
+    }
   }
 
   render() {
