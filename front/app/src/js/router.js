@@ -1,5 +1,6 @@
 import { auth } from '@auth';
 import { addDissmissAlertListener } from '@utils';
+import { CubeTexture } from 'three/src/Three.Core.js';
 
 /**
  * Router module for handling client-side navigation.
@@ -28,7 +29,6 @@ const router = (() => {
      * @param {string} path - The URL path for the route.
      * @param {string} componentTag - The custom HTML tag for the component to render.
      * @param {boolean} [isDynamic=false] - Whether the route is dynamic (contains a parameter).
-     * @param {boolean} [requiresAuth=false] - Whether the route requires authentication.
      * @return {void}
      * @example
      * router.addRoute('/home', 'user-home', false, true);
@@ -188,16 +188,17 @@ router.addRoute('/register', 'register-form');
 router.addRoute('/login', 'login-page');
 router.addRoute('/mfa-verification', 'mfa-verification');
 router.addRoute('/forgot-password', 'forgot-password');
-router.addRoute('/home', 'user-home', false);
+router.addRoute('/reset-password/:token', 'reset-password', true);
+router.addRoute('/home', 'user-home');
 router.addRoute('/profile/:username', 'user-profile', true);
-router.addRoute('/user-not-found', 'user-not-found', true);
-router.addRoute('/settings', 'user-settings', false);
-router.addRoute('/chat', 'chat-page', false);
-router.addRoute('/dual-menu', 'dual-menu', false);
-router.addRoute('/dual/:id', 'dual', true);
-router.addRoute('/tournament-menu', 'tournament-menu', false);
-router.addRoute('/tournament/:id', 'tournament', true);
-router.addRoute('/game', 'app-game', false, true);
+router.addRoute('/user-not-found', 'user-not-found');
+router.addRoute('/settings', 'user-settings');
+router.addRoute('/chat', 'chat-page');
+router.addRoute('/dual-menu', 'dual-menu');
+// router.addRoute('/dual/:id', 'dual', true);
+router.addRoute('/tournament-menu', 'tournament-menu');
+// router.addRoute('/tournament/:id', 'tournament', true);
+router.addRoute('/game', 'app-game');
 router.addRoute('/error', 'error-page');
 
 /**

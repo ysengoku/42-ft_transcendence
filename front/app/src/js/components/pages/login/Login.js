@@ -10,7 +10,6 @@ export class Login extends HTMLElement {
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    console.log('authStatus:', authStatus);
     this.isLoggedin = authStatus.success;
     if (this.isLoggedin) {
       router.navigate('/home');
