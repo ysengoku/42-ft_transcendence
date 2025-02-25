@@ -271,9 +271,6 @@ admin:
 login: admin
 password: password
 
-## daily report
-
-
 
 ## docker:
 
@@ -401,3 +398,72 @@ Eldar asked me to research if github api was providing refresh tokens (the 42 ap
  in fact, github api offers 2 type of oauth2 flows : the traditionnal oauth one, and a github one, more complex, dedicated to complex CI. 
 
 cf picture :  i have created a traditionnal oauth connection with github. in the traditionnal one it is no question of refresh token. 
+
+# 2FA:
+TOTP app = Time-based One-Time Password
+
+
+vite prod:
+rm -rf node_modules/.vite
+npm run build
+
+
+
+Meeting Report ( please comment if modification or additionnal comment needed)
+- App name confirmed: Peacemakers : Ponggers edition
+- Visual identity defined : Gold - Brown - Orange (day mode)
+- Font confirmed: Texas Tango for stylized font + Crimson pro for regular
+- On profile: Texas Tango on Wanted - title - star txt + maybe nickname
+- Joke about Joe the uncatchable made by Eldar
+- Next steps for the project defined
+
+TODO for Celia
+- mid-March: Confirm the colors for day-Mode + Confirm the colors for night-Mode (Blue - Purple - Pink?)
+- March: Work on remote Player + tournament with Eldar
+- April: Game customization + AI
+- May: Drawings expected:
+- Landing Page: a day background + a night background. (!) clouds will be passing on the picture as done momently.
+- other drawings needed ( homepage, ...)
+- Pistol + fire when click ( though I personnaly like the current firing)
+
+
+TODO for Fanny
+- Feb: install Redis
+- End-March: Do online status
+- April: Support on modules I have made + Docker Prod + presentation of the project
+
+TODO for Melodie
+- Mid-March: Define protocol with Yuko for live chat + learn Django channels and ORM
+- April: do Live chat + notifications
+
+Todo for Eldar:
+- March: Work on remote Player + tournament with Celia
+- Help everybody XD
+
+Todo for Yuko:
+- Mid march: change all fonts + app name
+- Mid-March: define a protocol with Melodie for live chat
+- March: create Figma design and confirm them with Celia. Ask Celia if some sketches are needed
+   - Pages to create for info:
+      - home page: was supposed to be 3js but will be more simple 
+         -> Figma to be done
+- April: finish front end components and pages
+      - Dual menu
+      - Dual (users list)
+      - Dual (waiting)
+      - Dual (match start)
+      - Dual (match finished - winner)
+      - Dual (match finished - loser)
+      - Tournament subscribe
+      - Waiting Room Tournament
+      - Tournament Tree
+      - Tournament (win)
+      - Tournament (lose)
+      - Tournament (champion)
+      - Live Chat: UI exists, routes and components related to endpoints need to be implemented
+
+Figjam to add pictures and inspiration: 
+https://www.figma.com/board/DRobeokeHLoM8U8bvd96gA/ft_transcendence-Concept-%26-Style-Board?node-id=0-1&p=f&t=VSJFMxGMNQVQzelB-0
+
+Figma:
+https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=0-1&p=f&t=e49KbRQ10iVVR48b-0

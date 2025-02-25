@@ -188,19 +188,22 @@ GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
 GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
-GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")  # Défini dans le .env
+GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
 GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
+GITHUB_FT_API_URL = "https://api.github.com"
 
 # OAuth 42
 API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
 API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
 FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
 FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
-FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
+FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
+FT_API_OAUTH_URL = "https://api.intra.42.fr"
 
 HOME_REDIRECT_URL = "https://localhost:1026/home"
 FRONTEND_URL = "https://localhost:1026"
+ERROR_REDIRECT_URL = "https://localhost:1026/error"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
@@ -212,6 +215,7 @@ OAUTH_CONFIG = {
         "redirect_uris": [GITHUB_REDIRECT_URI],
         "scopes": ["user"],
         "user_info_uri": GITHUB_USER_PROFILE_URL,
+        "oauth_uri": GITHUB_FT_API_URL,
     },
     "42": {
         "client_id": API42_CLIENT_ID,
@@ -221,11 +225,11 @@ OAUTH_CONFIG = {
         "redirect_uris": [FT_API_REDIRECT_URI],
         "scopes": ["public", "profile"],
         "user_info_uri": FT_API_USER_PROFILE_URL,
+        "oauth_uri": FT_API_OAUTH_URL,
     },
 }
 
-# email sending for 2fa and password reset
-# Email configuration
+# email configuration for 2fa and password reset
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
