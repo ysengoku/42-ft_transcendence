@@ -15,8 +15,6 @@ export const API_ENDPOINTS = {
   USER_REMOVE_FRIEND: (username, friend) => `${API_BASE_URL}users/${username}/friends/${friend}`,
   USER_BLOCKED_USERS: (username) => `${API_BASE_URL}users/${username}/blocked_users`,
   USER_UNBLOCK_USER: (username, blockedUser) => `${API_BASE_URL}users/${username}/blocked_users/${blockedUser}`,
-  OAUTH_AUTHORIZE: (platform) => `${API_BASE_URL}oauth/authorize/${platform}`,
-  OAUTH_CALLBACK: (platform) => `${API_BASE_URL}oauth/callback/${platform}`,
   USER_SEARCH: (query, limit, offset) => `${API_BASE_URL}users?search=${query}&limit=${limit}&offset=${offset}`,
   USER_FRIENDS_LIST: (username, limit, offset) => `${API_BASE_URL}users/${username}/friends?limit=${limit}&offset=${offset}`,
 };
