@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -132,6 +133,38 @@ def logout(request: HttpRequest, response: HttpResponse):
     response.delete_cookie("refresh_token")
     return 204, None
 
+
+@auth_router.delete("/users/{username}/delete", response={200: Message, frozenset({401, 403, 404}): Message})
+def delete_account(request, username: str, response: HttpResponse):
+    """
+    Delete definitely the user account and the associated profile, including friends relations and avatar.
+    """
+    user = request.auth
+
+    if not user:
+        raise AuthenticationError
+
+    if user.username != username:
+        raise PermissionDenied("You are not allowed to delete this account.")
+
+    old_refresh_token = request.COOKIES.get("refresh_token")
+    if old_refresh_token:
+        refresh_token_qs = RefreshToken.objects.for_token(old_refresh_token)
+        refresh_token_qs.set_revoked()
+
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+
+    profile = user.profile
+    if not profile:
+        raise HttpError(404, "Profile not found.")
+
+    if profile.profile_picture:
+        profile.delete_avatar()
+
+    user.delete()
+
+    return {"msg": "Account successfully deleted."}
 
 @auth_router.post("/forgot-password", response={200: Message}, auth=None)
 @csrf_exempt
