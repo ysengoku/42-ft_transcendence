@@ -126,9 +126,9 @@ export class MfaVerification extends HTMLElement {
     }
   }
 
-  resendMfaCode() {
+  async resendMfaCode() {
     this.username = sessionStorage.getItem('username');
-    apiRequest(
+    const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
         API_ENDPOINTS.MFA_RESEND(this.username),
@@ -136,6 +136,11 @@ export class MfaVerification extends HTMLElement {
         false,
         true,
     );
+    if (response.success) {
+      router.navigate('/mfa-verification', response.data);
+    } else {
+      // TODO: handle error
+    }
   }
 }
 

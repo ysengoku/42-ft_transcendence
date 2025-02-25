@@ -3,7 +3,6 @@ import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 import './components/index.js';
-// import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
 export class Settings extends HTMLElement {
   constructor() {
@@ -23,7 +22,8 @@ export class Settings extends HTMLElement {
       return;
     }
     this.username = user.username;
-    this.fetchUserData();
+    await this.fetchUserData();
+    this.newUserData = this.currentUserData;
   }
 
   async fetchUserData() {
@@ -32,7 +32,6 @@ export class Settings extends HTMLElement {
     if (response.success) {
       if (response.status === 200) {
         this.currentUserData = response.data;
-        this.newUserData = this.currentUserData;
         this.render();
         this.setParams();
         this.setEventListener();
@@ -161,7 +160,6 @@ export class Settings extends HTMLElement {
       formData.append('password', newPassword.value);
       formData.append('password_repeat', newPasswordRepeat.value);
     }
-    // TODO: Test if it works after merge
     const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
     const currentMfaEnabled = this.currentUserData.mfa_enabled ? 'true' : 'false';
     if (currentMfaEnabled !== mfaEnabled) {
