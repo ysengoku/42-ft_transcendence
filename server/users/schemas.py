@@ -5,17 +5,11 @@ from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
+from common.schemas import MessageSchema
+
 from .models import Profile, User
 
 # ruff: noqa: S105
-
-
-class Message(Schema):
-    """
-    Generic response from the server with user-friendly message.
-    """
-
-    msg: str
 
 
 class UsernameSchema(Schema):
@@ -26,7 +20,7 @@ class UsernameSchema(Schema):
     username: str
 
 
-class ValidationErrorMessageSchema(Message):
+class ValidationErrorMessageSchema(MessageSchema):
     type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
     loc: list[str] = Field(
         description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
