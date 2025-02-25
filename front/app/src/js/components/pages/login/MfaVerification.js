@@ -1,3 +1,5 @@
+import { router } from '@router';
+import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 
 export class MfaVerification extends HTMLElement {
@@ -19,7 +21,7 @@ export class MfaVerification extends HTMLElement {
       input.addEventListener('input', (event) => {
         this.moveFocus(event, parseInt(input.id.split('-')[1]));
         if (input.value.length === 1) {
-          this.fetchInput();
+          this.otp = this.fetchInput();
         } else if (input.value.length < 1) {
           const otpSubmit = this.querySelector('#otp-submit');
           otpSubmit.classList.add('disabled');
@@ -94,7 +96,7 @@ export class MfaVerification extends HTMLElement {
   }
 
   async handleMfaVerification() {
-    this.username = sessionStorage.getItem('username');
+    this.username = sessionStorage.getItem('username')?.replace(/^"|"$/g, '');
     const otpInput = this.otp;
     const response = await apiRequest(
         'POST',
@@ -102,10 +104,26 @@ export class MfaVerification extends HTMLElement {
         API_ENDPOINTS.MFA_VERIFICATION(this.username),
         { token: otpInput },
         false,
-        true,
+        false,
     );
-    // TODO: Handle response
-    sessionStorage.removeItem('username');
+    if (response.success) {
+      const userInformation = {
+        username: response.data.username,
+        nickname: response.data.nickname,
+        avatar: response.data.avatar,
+      };
+      auth.storeUser(userInformation);
+      router.navigate(`/home`, response.user);
+      sessionStorage.removeItem('username');
+    } else {
+      const feedback = document.querySelector('#mfa-failed-feedback');
+      feedback.innerHTML = `
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          ${response.msg}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+    }
   }
 
   resendMfaCode() {
