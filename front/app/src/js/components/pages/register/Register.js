@@ -1,8 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { INPUT_FEEDBACK } from '@utils';
-// import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
+import { isFieldFilled, passwordFeedback, INPUT_FEEDBACK } from '@utils';
 
 export class Register extends HTMLElement {
   constructor() {
@@ -52,7 +51,7 @@ export class Register extends HTMLElement {
                 <div class='mb-3'>
                   <label for='password_repeat' class='form-label'>Confirm Password</label>
                   <input type='password' class='form-control' id='password_repeat' placeholder='password' autocomplete="off">
-                  <div class='invalid-feedback' id='password_repeat-feedback'></div>
+                  <div class='invalid-feedback' id='password-repeat-feedback'></div>
                 </div>
 
                 <div class='mb-3 py-3'>
@@ -60,10 +59,8 @@ export class Register extends HTMLElement {
                 </div>
               </form>
             </div>
-            </div>
           </div>
         </div>
-      </div>
       `;
   }
 
@@ -117,51 +114,11 @@ export class Register extends HTMLElement {
 
   checkInputFields(usernameField, emailField, passwordField, passwordRepeatField) {
     let isFormValid = true;
-    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', INPUT_FEEDBACK.EMPTY_USERNAME);
-    isFormValid = this.isFieldFilled(emailField, '#email-feedback', INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
-    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', INPUT_FEEDBACK.EMPTY_PASSWORD) && isFormValid;
-    isFormValid =
-      isFormValid = this.isFieldFilled(
-          passwordRepeatField, '#password_repeat-feedback', INPUT_FEEDBACK.EMPTY_PASSWORD_REPEAT) && isFormValid;
-    isFormValid =
-      this.checkPasswordLength(passwordField) &&
-      this.checkPasswordDiff(passwordField, passwordRepeatField) &&
-      isFormValid;
+    isFormValid = isFieldFilled(usernameField, '#username-feedback', INPUT_FEEDBACK.EMPTY_USERNAME);
+    isFormValid = isFieldFilled(emailField, '#email-feedback', INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
+    isFormValid = passwordFeedback(passwordField, passwordRepeatField, '#password-feedback', '#password-repeat-feedback') && isFormValid;
+
     return isFormValid;
-  }
-
-  isFieldFilled(field, feedbackSelector, errorMessage) {
-    if (!field.value.trim()) {
-      field.classList.add('is-invalid');
-      document.querySelector(feedbackSelector).textContent = errorMessage;
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  checkPasswordLength(passwordField) {
-    const shortPassword = 'Password must be at least 8 characters';
-    if (passwordField.value.length < 8) {
-      passwordField.classList.add('is-invalid');
-      document.querySelector('#password-feedback').textContent = shortPassword;
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  checkPasswordDiff(passwordField, passwordRepeatField) {
-    const passwordsDoNotMatch = 'Passwords do not match';
-    if (passwordField.value != passwordRepeatField.value) {
-      passwordField.classList.add('is-invalid');
-      passwordRepeatField.classList.add('is-invalid');
-      document.querySelector('#password-feedback').textContent = passwordsDoNotMatch;
-      document.querySelector('#password_repeat-feedback').textContent = passwordsDoNotMatch;
-      return false;
-    } else {
-      return true;
-    }
   }
 }
 

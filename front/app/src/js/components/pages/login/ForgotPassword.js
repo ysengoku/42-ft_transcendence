@@ -56,9 +56,6 @@ export class ForgotPassword extends HTMLElement {
   }
 
   async handlePasswordResetRequest() {
-    // if (!this.checkEmailInput()) {
-    //   return;
-    // }
     const response = await apiRequest('POST', API_ENDPOINTS.FORGOT_PASSWORD, { email: this.email }, false, false);
     if (response.success) {
       this.renderEmailSentMessage();
