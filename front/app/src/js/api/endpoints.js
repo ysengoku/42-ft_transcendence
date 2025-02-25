@@ -18,5 +18,6 @@ export const API_ENDPOINTS = {
   USER_BLOCKED_USERS: (username) => `${API_BASE_URL}users/${username}/blocked_users`,
   USER_UNBLOCK_USER: (username, blockedUser) => `${API_BASE_URL}users/${username}/blocked_users/${blockedUser}`,
   USER_SEARCH: (query, limit, offset) => `${API_BASE_URL}users?search=${query}&limit=${limit}&offset=${offset}`,
-  USER_FRIENDS_LIST: (username, limit, offset) => `${API_BASE_URL}users/${username}/friends?limit=${limit}&offset=${offset}`,
+  USER_FRIENDS_LIST: (username, limit, offset) =>
+    `${API_BASE_URL}users/${username}/friends?limit=${limit}&offset=${offset}`,
 };
