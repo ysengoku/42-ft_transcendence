@@ -2,7 +2,7 @@
 
 ## Pages
 - [] Loading
-- [] 404
+- [x] 404
 
 ## Static images
 - [] Path to static image sent by server
@@ -59,7 +59,7 @@
 - [x] Fix parsing of Error message from server
 - [x] Forbitten letters or format for username? (e.g. email format for username)
 - [] Forgot password
-- [] Mfa handling
+- [x] Mfa handling
 
 - [x] Unit test (input validation)
 
@@ -68,7 +68,7 @@
 ## Logout
 - [x] Clear CSRF token
 - [x] logout API request
-- [] Add refresh token if 401
+- [x] Add refresh token if 401
 
 ---------------------------------------------------------------------
 
@@ -148,11 +148,12 @@
 - [x] Add auth check before rendering
 - [x] Websocket
 - [x] Block user on chat
-- [] Blocked user chat rendering
-- [] Invite to play game
 - [x] Add link to Profile of current chat user
 - [x] Resize event listner
 - [x] Autocomplete off
+- [] Blocked user chat rendering
+- [] Invite to play game
+- [] Add API request for chat
 
 ### Notifications
 - [] Add dropdown

@@ -1,3 +1,5 @@
+import { router } from '@router';
+import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 
 export class MfaVerification extends HTMLElement {
@@ -13,16 +15,18 @@ export class MfaVerification extends HTMLElement {
   }
 
   setEventListeners() {
-    // Input check and activate submit button
+    // Input event listeners
     const otpInputs = this.querySelectorAll('.otp-input');
     otpInputs.forEach((input) => {
-      input.addEventListener('input', () => {
-        this.moveFocus(input.id.split('-')[1]);
+      input.addEventListener('input', (event) => {
+        this.moveFocus(event, parseInt(input.id.split('-')[1]));
+        if (input.value.length === 1) {
+          this.otp = this.fetchInput();
+        } else if (input.value.length < 1) {
+          const otpSubmit = this.querySelector('#otp-submit');
+          otpSubmit.classList.add('disabled');
+        }
       });
-    });
-    const lastInput = this.querySelector('#otp-6');
-    lastInput.addEventListener('input', () => {
-      this.fetchInput();
     });
 
     const mfaVerificationForm = this.querySelector('#mfa-verification-form');
@@ -48,12 +52,12 @@ export class MfaVerification extends HTMLElement {
                 <p>Enter the verification code sent to your email</p>
 
                 <div class="otp-container d-flex flex-row my-4 gap-2">
+                  <input type="text" maxlength="1" class="otp-input form-control" id="otp-0" autocomplete="off" />
                   <input type="text" maxlength="1" class="otp-input form-control" id="otp-1" autocomplete="off" />
                   <input type="text" maxlength="1" class="otp-input form-control" id="otp-2" autocomplete="off" />
                   <input type="text" maxlength="1" class="otp-input form-control" id="otp-3" autocomplete="off" />
                   <input type="text" maxlength="1" class="otp-input form-control" id="otp-4" autocomplete="off" />
                   <input type="text" maxlength="1" class="otp-input form-control" id="otp-5" autocomplete="off" />
-                  <input type="text" maxlength="1" class="otp-input form-control" id="otp-6" autocomplete="off" />
                 </div>
 
                 <button type="submit" id="otp-submit" class="btn btn-primary w-100 disabled">Login</button>
@@ -67,21 +71,14 @@ export class MfaVerification extends HTMLElement {
     `;
   }
 
-  moveFocus(index) {
-    console.log('index: ', index);
-    const currentInput = this.querySelector(`#otp-${index}`);
-    const nextInput = this.querySelector(`#otp-${index + 1}`);
-    const prevInput = this.querySelector(`#otp-${index - 1}`);
-
-    if (currentInput.value.length === 1 && index < 6) {
-      console.log('movefocus to next');
-      nextInput.focus();
-    }
-    currentInput.addEventListener('keydown', (event) => {
-      if (event.key === 'Backspace' && currentInput.value === '' && prevInput) {
-        prevInput.focus();
-      }
-    });
+  moveFocus(event, index) {
+    const inputs = this.querySelectorAll('.otp-input');
+    const currentInput = event.target;
+    if (currentInput.value.length === 1 && index < 5) {
+      inputs[index + 1].focus();
+    } else if (currentInput.value.length < 1 && index > 0) {
+      inputs[index - 1].focus();
+    };
   }
 
   fetchInput() {
@@ -99,7 +96,7 @@ export class MfaVerification extends HTMLElement {
   }
 
   async handleMfaVerification() {
-    this.username = sessionStorage.getItem('username');
+    this.username = sessionStorage.getItem('username')?.replace(/^"|"$/g, '');
     const otpInput = this.otp;
     const response = await apiRequest(
         'POST',
@@ -107,10 +104,26 @@ export class MfaVerification extends HTMLElement {
         API_ENDPOINTS.MFA_VERIFICATION(this.username),
         { token: otpInput },
         false,
-        true,
+        false,
     );
-    // TODO: Handle response
-    sessionStorage.removeItem('username');
+    if (response.success) {
+      const userInformation = {
+        username: response.data.username,
+        nickname: response.data.nickname,
+        avatar: response.data.avatar,
+      };
+      auth.storeUser(userInformation);
+      router.navigate(`/home`, response.user);
+      sessionStorage.removeItem('username');
+    } else {
+      const feedback = document.querySelector('#mfa-failed-feedback');
+      feedback.innerHTML = `
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          ${response.msg}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+    }
   }
 
   resendMfaCode() {
@@ -119,7 +132,7 @@ export class MfaVerification extends HTMLElement {
         'POST',
         /* eslint-disable-next-line new-cap */
         API_ENDPOINTS.MFA_RESEND(this.username),
-        {},
+        null,
         false,
         true,
     );
