@@ -11,17 +11,16 @@ import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
  * @param {string} endpoint - The API endpoint to make the request to.
  * @param {object|null} [data=null] - The data to be sent with the request, for POST or PUT requests. Defaults to null.
  * @param {boolean} [isFileUpload=false] - Whether the request involves file uploading. Defaults to false.
- * @param {boolean} [needToken=true] - Whether a CSRF token is needed for the request. Defaults to true.
+ * @param {boolean} [needToken=true] - Whether an access token is needed for the request. Defaults to true.
  * @return {Promise<Response>} The response object from the fetch request if successful.
  */
 export async function apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true) {
   const url = `${endpoint}`;
   const csrfToken = getCSRFTokenfromCookies();
-  const needCSRF = needToken && ['POST', 'DELETE'].includes(method) && csrfToken;
   const options = {
     method,
     headers: {
-      ...(needCSRF ? { 'X-CSRFToken': csrfToken } : {}),
+      ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
       ...(isFileUpload ? {} : { 'Content-Type': 'application/json' }),
     },
     credentials: 'include',
