@@ -1,6 +1,5 @@
 export const INPUT_FEEDBACK = {
   EMPTY_USERNAME: `Username is required`,
-  // EMPTY_NICKNAME: `Nickname is required`,
   EMPTY_EMAIL: `Email is required`,
   EMPTY_OLD_PASSWORD: `Old password is required`,
   EMPTY_PASSWORD: `Password is required`,
