@@ -66,7 +66,7 @@ class UserSettingsSchema(Schema):
 
 
 class OAuthCallbackParams(Schema):
-    code: str | None = None  # Plutôt que Optional[str]
+    code: str | None = None
     state: str | None = None
     error: str | None = None
     error_description: str | None = None
@@ -156,6 +156,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
 class PasswordValidationSchema(Schema):
     password: str
     password_repeat: str
+    username: str | None = None
 
     def validate_password(self) -> dict[str, list[str]]:
         err_dict = {}
@@ -219,6 +220,11 @@ class UpdateUserChema(PasswordValidationSchema):
         if err_dict:
             raise ValidationError(err_dict)
         return self
+
+
+class ForgotPasswordSchema(Schema):
+    email: str
+
 
 class SendMfaCode(Schema):
     token: str
