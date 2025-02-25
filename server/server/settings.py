@@ -30,7 +30,7 @@ SECRET_KEY = "your-secret-key"
 
 DEBUG = os.environ.get("DEBUG", True)
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
@@ -66,6 +66,14 @@ else:
 
 
 INSTALLED_APPS = [
+    # ASGI server for working with websockets
+    "daphne",
+    "channels",
+
+    # Our apps
+    "users",
+    "chat",
+
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -74,11 +82,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    # Third-party applications
-    "silk",  # Application for profiling
-    "channels",  # Django Channels
-    # Our applications
-    "users",
+
+    # Profiling
+    "silk",
 ]
 
 MIDDLEWARE = [
@@ -111,7 +117,7 @@ TEMPLATES = [
     },
 ]
 
-ASGI_APPLICATION = "server.asgi.application"  # Pour Django Channels
+ASGI_APPLICATION = "server.asgi.application"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
