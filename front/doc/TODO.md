@@ -2,7 +2,7 @@
 
 ## Pages
 - [] Loading
-- [] 404
+- [x] 404
 
 ## Static images
 - [] Path to static image sent by server
