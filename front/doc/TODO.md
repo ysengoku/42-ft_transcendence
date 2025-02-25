@@ -59,7 +59,7 @@
 - [x] Fix parsing of Error message from server
 - [x] Forbitten letters or format for username? (e.g. email format for username)
 - [] Forgot password
-- [] Mfa steps (modal)
+- [] Mfa handling
 
 - [x] Unit test (input validation)
 
@@ -68,6 +68,7 @@
 ## Logout
 - [x] Clear CSRF token
 - [x] logout API request
+- [] Add refresh token if 401
 
 ---------------------------------------------------------------------
 
@@ -93,11 +94,12 @@
 - [x] New avatar upload settings (new_profile_picture)
 - [x] API request
 - [x] Empty input case handling
-- [] Add 2FA activate toggle
+- [x] Add 2FA activate toggle
 - [x] 413 handling
 - [x] 422 handling
 - [x] Error handling
 - [] Unit test (input validation)
+- [] Disable submit button if there is no change
 
 ---------------------------------------------------------------------
 

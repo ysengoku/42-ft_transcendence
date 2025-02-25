@@ -4,12 +4,14 @@ from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.core.mail import send_mail
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
 from users.api.common import allow_only_for_self
+from users.api.endpoints.mfa import handle_mfa_code
+from users.api.utils import _create_json_response_with_tokens
 from users.models import RefreshToken, User
 from users.schemas import (
     ForgotPasswordSchema,
@@ -25,26 +27,6 @@ from users.schemas import (
 auth_router = Router()
 
 
-def _create_json_response_with_tokens(user: User, json: dict):
-    access_token, refresh_token_instance = RefreshToken.objects.create(user)
-
-    response = JsonResponse(json)
-    response.set_cookie("access_token", access_token)
-    response.set_cookie("refresh_token", refresh_token_instance.token)
-
-    return response
-
-
-def create_redirect_to_home_page_response_with_tokens(user: User):
-    access_token, refresh_token_instance = RefreshToken.objects.create(user)
-
-    response = HttpResponseRedirect(settings.HOME_REDIRECT_URL)
-    response.set_cookie("access_token", access_token)
-    response.set_cookie("refresh_token", refresh_token_instance.token)
-
-    return response
-
-
 @auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
 def check_self(request: HttpRequest):
     """
@@ -55,7 +37,7 @@ def check_self(request: HttpRequest):
 
 
 @auth_router.post(
-    "login", response={200: ProfileMinimalSchema | LoginResponseSchema, 401: Message, 429: Message}, auth=None
+    "login", response={200: ProfileMinimalSchema | LoginResponseSchema, 401: Message, 429: Message}, auth=None,
 )
 @ensure_csrf_cookie
 @csrf_exempt
@@ -72,13 +54,15 @@ def login(request: HttpRequest, credentials: LoginSchema):
         raise HttpError(401, "Username or password are not correct.")
 
     is_mfa_enabled = User.objects.has_mfa_enabled(credentials.username)
-    if is_mfa_enabled:
+    if is_mfa_enabled and handle_mfa_code(user):
         return JsonResponse(
             {
                 "mfa_required": True,
                 "username": user.username,
             },
         )
+    if is_mfa_enabled:
+        raise HttpError(503, "Failed to send MFA code")
     response_data = user.profile.to_profile_minimal_schema()
     return _create_json_response_with_tokens(user, response_data)
 
@@ -209,4 +193,3 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
 
     return {"msg": "Password has been reset successfully"}
 
-# ajouter resend email function

@@ -1,5 +1,3 @@
-import hashlib
-import os
 import uuid
 from functools import cache
 
@@ -105,9 +103,6 @@ class User(AbstractUser):
     mfa_token_date = models.DateTimeField(blank=True, null=True)
 
     objects = UserManager()
-
-    def has_valid_mfa(self) -> bool:
-        return bool(self.mfa_secret and self.mfa_enabled)
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
         """
