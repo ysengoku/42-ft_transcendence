@@ -59,7 +59,7 @@
 - [x] Fix parsing of Error message from server
 - [x] Forbitten letters or format for username? (e.g. email format for username)
 - [] Forgot password
-- [] Mfa handling
+- [x] Mfa handling
 
 - [x] Unit test (input validation)
 
