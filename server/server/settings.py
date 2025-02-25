@@ -202,6 +202,7 @@ FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 FT_API_OAUTH_URL = "https://api.intra.42.fr"
 
 HOME_REDIRECT_URL = "https://localhost:1026/home"
+FRONTEND_URL = "https://localhost:1026"
 ERROR_REDIRECT_URL = "https://localhost:1026/error"
 
 # OAUTH Configuration
@@ -228,8 +229,7 @@ OAUTH_CONFIG = {
     },
 }
 
-# email sending for 2fa and password reset
-# Email configuration
+# email configuration for 2fa and password reset
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
