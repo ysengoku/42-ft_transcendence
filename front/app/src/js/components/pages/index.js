@@ -2,7 +2,7 @@ import { Landing } from './Landing.js';
 import { Register } from './register/Register.js';
 import { Login } from './login//Login.js';
 import { MfaVerification } from './login/MfaVerification.js';
-import { ForgotPassword } from './ForgotPassword.js';
+import { ForgotPassword } from './login/ForgotPassword.js';
 import { Home } from './home/Home.js';
 import { UserProfile } from './profile/Profile.js';
 import { UserNotFound } from './profile/UserNotFound.js';
