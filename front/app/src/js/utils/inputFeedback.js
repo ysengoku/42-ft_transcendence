@@ -52,3 +52,8 @@ function checkPasswordDiff(passwordField, passwordRepeatField, feedbackField, fe
     return true;
   }
 }
+
+export function removeInputFeedback(event, feedbackField) {
+  event.target.classList.remove('is-invalid');
+  feedbackField.innerHTML = '';
+}
