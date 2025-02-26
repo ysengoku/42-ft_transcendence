@@ -48,6 +48,10 @@ legend {
   z-index: 1050 !important; /* Keep dropdown always on top */
 }
 
+.form-container {
+  background-color: rgba(128,128,128, 0.1);
+}
+
 /* ----- Settings ----------------------------------------------------------- */
 
 .avatar-preview-container {
