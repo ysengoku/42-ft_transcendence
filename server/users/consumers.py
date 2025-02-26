@@ -1,52 +1,136 @@
 import json
-from channels.generic.websocket import WebsocketConsumer
-from asgiref.sync import async_to_sync
+import time
+import redis
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from users.models import User  # Ajustez selon votre modèle
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import WebsocketConsumer
+
+User = get_user_model()
+
+
+class RedisUserStatusManager:
+    """
+    Manages user online status using Redis
+    Provides a centralized way to track and manage online users
+    """
+
+    def __init__(self, redis_client=None):
+        # Use provided Redis client or create a new one
+        self._redis = redis_client or redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+        # Prefix for Redis keys to avoid conflicts
+        self._online_users_key = "online_users"
+        # Timeout for online status (1 hour)
+        self._timeout = 3600
+
+    def set_user_online(self, user_id):
+        """
+        Mark a user as online
+
+        Args:
+            user_id (int): ID of the user to mark online
+        """
+        try:
+            # Add user to the set of online users with an expiration
+            self._redis.setex(
+                f"{self._online_users_key}:{user_id}",
+                self._timeout,
+                json.dumps({"user_id": user_id, "timestamp": int(time.time())}),
+            )
+        except Exception as e:
+            # Log the error in a production environment
+            print(f"Error setting user online: {e}")
+
+    def set_user_offline(self, user_id):
+        """
+        Mark a user as offline
+
+        Args:
+            user_id (int): ID of the user to mark offline
+        """
+        try:
+            # Remove the user from online users
+            self._redis.delete(f"{self._online_users_key}:{user_id}")
+        except Exception as e:
+            print(f"Error setting user offline: {e}")
+
+    def get_online_users(self):
+        """
+        Retrieve all online users
+
+        Returns:
+            list: List of online user IDs
+        """
+        try:
+            # Find all keys matching the online users pattern
+            online_keys = self._redis.keys(f"{self._online_users_key}:*")
+
+            # Extract user IDs from the keys
+            return [int(key.decode("utf-8").split(":")[-1]) for key in online_keys]
+        except Exception as e:
+            print(f"Error getting online users: {e}")
+            return []
+
+
+# Create a singleton instance of the Redis status manager
+redis_status_manager = RedisUserStatusManager()
 
 
 class OnlineStatusConsumer(WebsocketConsumer):
     def connect(self):
+        """
+        Handle new WebSocket connection
+        """
         self.user = self.scope["user"]
 
-        # Vérifiez que l'utilisateur est authentifié
+        # Verify user authentication
         if not self.user.is_authenticated:
             self.close()
             return
 
-        # Ajouter l'utilisateur au groupe "online_users"
+        # Add user to the online_users group
         self.group_name = "online_users"
         async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
 
-        # Accepter la connexion
+        # Accept the connection
         self.accept()
 
-        # Mettre à jour le statut de l'utilisateur en ligne
+        # Update user's online status
         self._set_user_online(True)
 
-        # Annoncer aux autres utilisateurs
+        # Announce to other users
         self._announce_status(True)
 
     def disconnect(self, close_code):
+        """
+        Handle WebSocket disconnection
+        """
         if not hasattr(self, "user") or not self.user.is_authenticated:
             return
 
-        # Mettre à jour le statut de l'utilisateur hors ligne
+        # Update user's offline status
         self._set_user_online(False)
 
-        # Annoncer aux autres utilisateurs
+        # Announce to other users
         self._announce_status(False)
 
-        # Retirer l'utilisateur du groupe
+        # Remove user from the group
         async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
 
     def receive(self, text_data):
-        # Ce consumer n'attend pas de messages spécifiques
-        # Vous pourriez implémenter des fonctionnalités supplémentaires ici
+        """
+        Handle received WebSocket messages
+        Currently a no-op, but can be extended
+        """
         pass
 
     def user_status(self, event):
-        """Reçoit les mises à jour de statut et les envoie au client"""
+        """
+        Send status updates to the client
+
+        Args:
+            event (dict): Event containing user status information
+        """
         self.send(
             text_data=json.dumps(
                 {
@@ -59,28 +143,36 @@ class OnlineStatusConsumer(WebsocketConsumer):
         )
 
     def _set_user_online(self, status):
-        """Met à jour le statut en ligne dans la base de données"""
-        # Option 1: Utilisez une propriété sur le modèle User
-        # self.user.is_online = status
-        # self.user.save(update_fields=['is_online'])
+        """
+        Update user's online status
 
-        # Option 2: Utilisez un modèle séparé pour le statut en ligne
-        # UserOnlineStatus.objects.update_or_create(
-        #     user=self.user,
-        #     defaults={'is_online': status, 'last_seen': timezone.now()}
-        # )
-
-        # Option 3: Stockez le statut en cache (Redis)
-        # from django.core.cache import cache
-        # cache_key = f"user_online_{self.user.id}"
-        # if status:
-        #     cache.set(cache_key, True, timeout=3600)  # 1 heure de timeout
-        # else:
-        #     cache.delete(cache_key)
+        Args:
+            status (bool): Whether the user is online or offline
+        """
+        if status:
+            # Mark user as online
+            redis_status_manager.set_user_online(self.user.id)
+        else:
+            # Mark user as offline
+            redis_status_manager.set_user_offline(self.user.id)
 
     def _announce_status(self, status):
-        """Annonce le changement de statut à tous les utilisateurs connectés"""
+        """
+        Announce status change to all connected users
+
+        Args:
+            status (bool): Whether the user is online or offline
+        """
         async_to_sync(self.channel_layer.group_send)(
             self.group_name,
             {"type": "user_status", "user_id": str(self.user.id), "username": self.user.username, "online": status},
         )
+
+def get_online_users():
+    """
+    Retrieve list of online user IDs
+    
+    Returns:
+        list: List of online user IDs
+    """
+    return redis_status_manager.get_online_users()

@@ -1,3 +1,4 @@
+Code frontend pour gérer le statut en ligne
 
 // users-online.js
 
