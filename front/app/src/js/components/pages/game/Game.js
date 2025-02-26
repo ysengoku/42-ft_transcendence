@@ -79,6 +79,8 @@ export class Game extends HTMLElement {
 	
 	class	Ball_obj {
 		constructor(posX, posY, posZ){
+			this.z_value = -15;
+			this.x_value = 0;
 			this.sphereGeometry = new THREE.SphereGeometry(0.5);
 			this.sphereMesh = new THREE.Mesh(this.sphereGeometry, normalMaterial);
 			this.sphereMesh.position.x = posX;
@@ -120,7 +122,7 @@ export class Game extends HTMLElement {
 	const Bumpers = [new Bumper_obj(0, 1, -9), new Bumper_obj(0, 1, 9)];
 
 
-	
+
     const playerShape = new CANNON.Cylinder(1, 1, 3, 32);
     const playerBody = new CANNON.Body({ mass: 10 });
     playerBody.addShape(playerShape);
@@ -152,18 +154,24 @@ export class Game extends HTMLElement {
 	}
 	const Walls = [new Wall_obj(10, 2.5, 0), new Wall_obj(-10, 2.5, 0)];
 
-    const phongMaterial = new THREE.MeshPhongMaterial();
-    const planeGeometry = new THREE.PlaneGeometry(25, 25);
-    const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
-    planeMesh.rotateX(-Math.PI / 2);
-    planeMesh.receiveShadow = true;
-    scene.add(planeMesh);
-    const planeShape = new CANNON.Plane();
-    const planeBody = new CANNON.Body({ mass: 0 });
-    planeBody.addShape(planeShape);
-    planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-    world.addBody(planeBody);
 
+	class Plane_obj {
+		constructor(){
+			this.phongMaterial = new THREE.MeshPhongMaterial();
+			this.planeGeometry = new THREE.PlaneGeometry(25, 25);
+			this.planeMesh = new THREE.Mesh(this.planeGeometry, this.phongMaterial);
+			this.planeMesh.rotateX(-Math.PI / 2);
+			this.planeMesh.receiveShadow = true;
+			this.planeShape = new CANNON.Plane();
+			this.planeBody = new CANNON.Body({ mass: 0 });
+			this.planeBody.addShape(this.planeShape);
+			this.planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+			scene.add(this.planeMesh);
+			world.addBody(this.planeBody);
+			return this;
+		}
+	}
+	const Plane = new Plane_obj();
 
     const clock = new THREE.Clock();
     let delta;
@@ -180,8 +188,9 @@ export class Game extends HTMLElement {
       collided_wall = e.body.id == Walls[0].wallBody.id || e.body.id == Walls[1].wallBody.id;
     });
 
-    let z_value = -15;
-    let x_value = 0;
+    // let z_value = -15;
+    // let Ball.x_value = 0;
+
     let p1_score = 0;
     let p2_score = 0;
     let last_score = 0;
@@ -225,21 +234,21 @@ export class Game extends HTMLElement {
     function reset() {
       if (last_score == 0) {
         if (p2_score % 2 == 0)
-        	z_value = 10;
+        	Ball.z_value = 10;
         else
-        	z_value = -10;
+        	Ball.z_value = -10;
       }
       if (last_score == 1) {
         if (p1_score % 2 == 0)
-       		z_value = -10;
+       		Ball.z_value = -10;
         else
-        	z_value = 10;
+        	Ball.z_value = 10;
       }
       if (p1_score == 10 || p2_score == 10) {
         p1_score = 0;
         p2_score = 0;
       }
-      x_value = 0;
+      Ball.x_value = 0;
       Ball.sphereMesh.position.x = 0;
       Ball.sphereMesh.position.y = 0.5;
       Ball.sphereMesh.position.z = 0;
@@ -274,11 +283,12 @@ export class Game extends HTMLElement {
 			collided_cube2 == true
 			? (hit_pos = get_coll_pos(Bumpers[1].cubeBody, Bumpers[1].cubeGeometry, Ball.sphereMesh))
 			: (hit_pos = get_coll_pos(Bumpers[0].cubeBody, Bumpers[0].cubeGeometry, Ball.sphereMesh));
-			collided_cube2 == true ? (z_value += 0.5) : (z_value -= 0.5);
-			z_value *= -1;
-			x_value = hit_pos_angle_calculator(hit_pos);
+			if (Ball.z_value < 30 && Ball.z_value > -30)
+				collided_cube2 == true ? (Ball.z_value += 0.5) : (Ball.z_value -= 0.5);
+			Ball.z_value *= -1;
+			Ball.x_value = hit_pos_angle_calculator(hit_pos);
 		}
-		if (collided_wall == true) x_value *= -1;
+		if (collided_wall == true) Ball.x_value *= -1;
 
 		for (let i = 0; i < 2; i++)
 		{
@@ -291,7 +301,7 @@ export class Game extends HTMLElement {
 				Bumpers[i].cubeMesh.position.x = -7;
 			}
 		}
-		Ball.sphereBody.velocity.set(x_value * 0.3, -9, z_value);
+		Ball.sphereBody.velocity.set(Ball.x_value * 0.3, -9, Ball.z_value);
 
 		// Copy coordinates from Cannon to Three.js
 		// playerMesh.position.set(playerBody.position.x, playerBody.position.y, playerBody.position.z)
