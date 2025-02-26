@@ -80,7 +80,6 @@
 - [x] 422 handling
 - [x] Password length check
 - [x] 422 Error message check
-- [] Nickname input?
 - [x] Unit test (input validation)
 - [x] Fix parsing of Error message from server
 
@@ -100,6 +99,7 @@
 - [x] 413 handling
 - [x] 422 handling
 - [x] Error handling
+- [] Test Delete account & add adieu message
 - [] Unit test (input validation)
 - [] Disable submit button if there is no change
 
