@@ -1,74 +1,57 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { showFormErrorFeedback, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class MfaVerification extends HTMLElement {
+  #state = {
+    username: '',
+    otp: '',
+  };
+
   constructor() {
     super();
-    this.username = '';
-    this.otp = '';
+    this.handleInput = this.handleInput.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.resendMfaCode = this.resendMfaCode.bind(this);
   }
 
   connectedCallback() {
     this.render();
-    this.setEventListeners();
-  }
-
-  setEventListeners() {
-    // Input event listeners
-    const otpInputs = this.querySelectorAll('.otp-input');
-    otpInputs.forEach((input) => {
-      input.addEventListener('input', (event) => {
-        this.moveFocus(event, parseInt(input.id.split('-')[1]));
-        if (input.value.length === 1) {
-          this.otp = this.fetchInput();
-        } else if (input.value.length < 1) {
-          const otpSubmit = this.querySelector('#otp-submit');
-          otpSubmit.classList.add('disabled');
-        }
-      });
-    });
-
-    const mfaVerificationForm = this.querySelector('#mfa-verification-form');
-    mfaVerificationForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      await this.handleMfaVerification();
-    });
-
-    const resendButton = this.querySelector('#resend-mfacode-button');
-    resendButton.addEventListener('click', () => {
-      this.resendMfaCode();
-    });
   }
 
   render() {
-    this.innerHTML = `
-        <div class="row justify-content-center m-4">
-          <div class="form-container col-12 col-md-4 p-4"> 
-            <div id="mfa-failed-feedback"></div>
-            <div class="container d-flex flex-column justify-content-center align-items-center">
-              <form class="w-100" id="mfa-verification-form">
-                <legend class="mt-4">Check your email</legend>
-                <p>Enter the verification code sent to your email</p>
+    this.innerHTML = this.style() + this.template();
 
-                <div class="otp-container d-flex flex-row my-4 gap-2">
-                  <input type="text" maxlength="1" class="otp-input form-control" id="otp-0" autocomplete="off" />
-                  <input type="text" maxlength="1" class="otp-input form-control" id="otp-1" autocomplete="off" />
-                  <input type="text" maxlength="1" class="otp-input form-control" id="otp-2" autocomplete="off" />
-                  <input type="text" maxlength="1" class="otp-input form-control" id="otp-3" autocomplete="off" />
-                  <input type="text" maxlength="1" class="otp-input form-control" id="otp-4" autocomplete="off" />
-                  <input type="text" maxlength="1" class="otp-input form-control" id="otp-5" autocomplete="off" />
-                </div>
+    this.otpInputs = this.querySelectorAll('.otp-input');
+    this.mfaVerificationForm = this.querySelector('#mfa-verification-form');
+    this.resendButton = this.querySelector('#resend-mfacode-button');
 
-                <button type="submit" id="otp-submit" class="btn btn-primary w-100 disabled">Login</button>
-              </form>
-              <button class="btn w-100 mt-4" id="resend-mfacode-button">
-                <small>Didn't receive the code? Resend email.</small>
-              </button>
-            </div>
-          </div>
-        </div>
-    `;
+    this.otpInputs.forEach((input) => {
+      input.addEventListener('input', this.handleInput);
+    });
+
+    this.mfaVerificationForm.addEventListener('submit', this.handleSubmit);
+    this.resendButton.addEventListener('click', this.resendMfaCode);
+  }
+
+  disconnectedCallback() {
+    this.otpInputs.forEach((input) => {
+      input.removeEventListener('input', this.handleInput);
+    });
+    this.mfaVerificationForm.removeEventListener('submit', this.handleSubmit);
+    this.resendButton.removeEventListener('click', this.resendMfaCode);
+  }
+
+  handleInput(event) {
+    const input = event.target;
+    this.moveFocus(event, parseInt(input.id.split('-')[1]));
+    if (input.value.length === 1) {
+      this.#state.otp = this.fetchInput();
+    } else if (input.value.length < 1) {
+      const otpSubmit = this.querySelector('#otp-submit');
+      otpSubmit.classList.add('disabled');
+    }
   }
 
   moveFocus(event, index) {
@@ -95,13 +78,18 @@ export class MfaVerification extends HTMLElement {
     return otp;
   }
 
+  async handleSubmit(event) {
+    event.preventDefault();
+    await this.handleMfaVerification();
+  };
+
   async handleMfaVerification() {
-    this.username = sessionStorage.getItem('username')?.replace(/^"|"$/g, '');
-    const otpInput = this.otp;
+    this.#state.username = sessionStorage.getItem('username');
+    const otpInput = this.#state.otp;
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.MFA_VERIFICATION(this.username),
+        API_ENDPOINTS.MFA_VERIFICATION(this.#state.username),
         { token: otpInput },
         false,
         false,
@@ -116,31 +104,81 @@ export class MfaVerification extends HTMLElement {
       router.navigate(`/home`, response.user);
       sessionStorage.removeItem('username');
     } else {
-      const feedback = document.querySelector('#mfa-failed-feedback');
-      feedback.innerHTML = `
-        <div class="alert alert-danger alert-dismissible" role="alert">
-          ${response.msg}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
+      this.feedbackField = this.querySelector('#mfa-failed-feedback');
+      this.feedbackField.innerHTML = '';
+      showFormErrorFeedback(this.feedbackField, response.msg);
     }
   }
 
   async resendMfaCode() {
-    this.username = sessionStorage.getItem('username');
+    this.#state.username = sessionStorage.getItem('username');
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.MFA_RESEND(this.username),
+        API_ENDPOINTS.MFA_RESEND_CODE(this.#state.username),
         null,
         false,
         true,
     );
     if (response.success) {
-      router.navigate('/mfa-verification', response.data);
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Email resent successfully', 3000);
     } else {
-      // TODO: handle error
+      showFormErrorFeedback(this.feedbackField, response.msg);
     }
+  }
+
+  template() {
+    return  `
+    <div class="row justify-content-center m-4">
+      <div class="form-container col-12 col-md-4 p-4"> 
+        <div id="mfa-failed-feedback"></div>
+        <div class="container d-flex flex-column justify-content-center align-items-center">
+          <form class="text-center w-100" id="mfa-verification-form">
+            <legend class="mt-4">Check your email</legend>
+            <p>Enter the verification code sent to your email</p>
+
+            <div class="otp-container d-flex flex-row justify-content-center my-4">
+              <input type="text" maxlength="1" class="otp-input form-control" id="otp-0" autocomplete="off" />
+              <input type="text" maxlength="1" class="otp-input form-control" id="otp-1" autocomplete="off" />
+              <input type="text" maxlength="1" class="otp-input form-control" id="otp-2" autocomplete="off" />
+              <input type="text" maxlength="1" class="otp-input form-control" id="otp-3" autocomplete="off" />
+              <input type="text" maxlength="1" class="otp-input form-control" id="otp-4" autocomplete="off" />
+              <input type="text" maxlength="1" class="otp-input form-control" id="otp-5" autocomplete="off" />
+            </div>
+
+            <button type="submit" id="otp-submit" class="btn btn-primary w-100 disabled">Login</button>
+          </form>
+
+          <button class="btn w-100 mt-4" id="resend-mfacode-button">
+            <small>Didn't receive the code? Resend email.</small>
+          </button>
+        </div>
+      </div>
+    </div>
+    `;
+  }
+
+  style() {
+    return `
+    <style>
+      .otp-container {
+        gap: 0.5rem;
+      }
+      .otp-input {
+        width: 2.5rem;
+        text-align: center;
+      }
+      @media (max-width: 992px) and (min-width: 768px) {
+        .otp-container {
+          gap: 0.3rem;
+        }
+        .otp-input {
+          width: 2rem;
+          font-size: 0.8rem;
+        }
+      }
+    </style>
+  `;
   }
 }
 

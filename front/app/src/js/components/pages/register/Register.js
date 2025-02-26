@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { isFieldFilled, passwordFeedback, INPUT_FEEDBACK } from '@utils';
+import { showFormErrorFeedback, isFieldFilled, passwordFeedback, removeInputFeedback, INPUT_FEEDBACK } from '@utils';
 
 export class Register extends HTMLElement {
   constructor() {
@@ -15,7 +15,7 @@ export class Register extends HTMLElement {
   render() {
     this.innerHTML = this.template();
 
-    const form = this.querySelector('form');
+    this.form = this.querySelector('form');
     this.usernameField = this.querySelector('#username');
     this.emailField = this.querySelector('#email');
     this.passwordField = this.querySelector('#password');
@@ -25,29 +25,28 @@ export class Register extends HTMLElement {
     this.passwordFeedback = this.querySelector('#password-feedback');
     this.passwordRepeatFeedback = this.querySelector('#password-repeat-feedback');
 
-    form.addEventListener('submit', (event) => {
+    this.handleSubmit = async (event) => {
       event.preventDefault();
-      this.handleRegister();
-    });
-    this.usernameField.addEventListener('input', (event) => {
-      this.removeInputFeedback(event, this.usernameFeedback);
-    });
-    this.emailField.addEventListener('input', (event) => {
-      this.removeInputFeedback(event, this.emailFeedback);
-    });
-    this.passwordField.addEventListener('input', (event) => {
-      this.removeInputFeedback(event, this.passwordFeedback);
-    });
-    this.passwordRepeatField.addEventListener('input', (event) => {
-      this.removeInputFeedback(event, this.passwordRepeatFeedback);
-    });
+      await this.handleRegister();
+    };
+    this.handleUsernameInput = (event) => removeInputFeedback(event, this.usernameFeedback);
+    this.handleEmailInput = (event) => removeInputFeedback(event, this.emailFeedback);
+    this.handlePasswordInput = (event) => removeInputFeedback(event, this.passwordFeedback);
+    this.handlePasswordRepeatInput = (event) => removeInputFeedback(event, this.passwordRepeatFeedback);
+
+    this.form.addEventListener('submit', this.handleSubmit);
+    this.usernameField.addEventListener('input', this.handleUsernameInput);
+    this.emailField.addEventListener('input', this.handleEmailInput);
+    this.passwordField.addEventListener('input', this.handlePasswordInput);
+    this.passwordRepeatField.addEventListener('input', this.handlePasswordRepeatInput);
   }
 
   disconnectedCallback() {
-    this.usernameField.removeEventListener('input', this.removeInputFeedback);
-    this.emailField.removeEventListener('input', this.removeInputFeedback);
-    this.passwordField.removeEventListener('input', this.removeInputFeedback);
-    this.passwordRepeatField.removeEventListener('input', this.removeInputFeedback);
+    this.form.removeEventListener('submit', this.handleSubmit);
+    this.usernameField.removeEventListener('input', this.handleUsernameInput);
+    this.emailField.removeEventListener('input', this.handleEmailInput);
+    this.passwordField.removeEventListener('input', this.handlePasswordInput);
+    this.passwordRepeatField.removeEventListener('input', this.handlePasswordRepeatInput);
   }
 
   async handleRegister() {
@@ -76,7 +75,9 @@ export class Register extends HTMLElement {
       }
     } else {
       console.error('Registration failed:', response.msg);
-      this.showErrorFeedback(response.msg);
+      this.feedbackField = this.querySelector('#signup-failed-feedback');
+      this.feedbackField.innerHTML = '';
+      showFormErrorFeedback(this.feedbackField, response.msg);
     }
   }
 
@@ -91,65 +92,41 @@ export class Register extends HTMLElement {
     return isFormValid;
   }
 
-  removeInputFeedback(event, feedbackField) {
-    event.target.classList.remove('is-invalid');
-    feedbackField.innerHTML = '';
-  }
-
-  showErrorFeedback(message) {
-    const feedbackField = this.querySelector('#signup-failed-feedback');
-    const feedback = document.createElement('div');
-    const dismissButton = document.createElement('button');
-
-    feedbackField.innerHTML = '';
-
-    feedback.classList.add('alert', 'alert-danger', 'alert-dismissible');
-    feedback.setAttribute('role', 'alert');
-    feedback.textContent = message;
-
-    dismissButton.classList.add('btn-close');
-    dismissButton.setAttribute('data-bs-dismiss', 'alert');
-    dismissButton.setAttribute('aria-label', 'Close');
-    feedback.appendChild(dismissButton);
-
-    feedbackField.appendChild(feedback);
-  }
-
   template() {
     return `
       <div class="container">
         <div class="row justify-content-center py-4">
           <div class="form-container col-12 col-md-4 p-4"> 
               <div id="signup-failed-feedback"></div>
-              <form class='w-100'>
+              <form class="w-100">
                 <legend class="mt-4 mb-5 border-bottom">Sign Up</legend>
 
-                <div class='mb-3'>
-                  <label for='username' class='form-label'>Username</label>
-                  <input type='username' class='form-control' id='username' placeholder='username' autocomplete="off">
-                  <div class='invalid-feedback' id='username-feedback'></div>
+                <div class="mb-3">
+                  <label for="username" class="form-label">Username</label>
+                  <input type="username" class="form-control" id="username" placeholder="username" autocomplete="off">
+                  <div class="invalid-feedback" id="username-feedback"></div>
                 </div>
 
-                <div class='mb-3'>
-                  <label for='email' class='form-label'>Email</label>
-                  <input type='email' class='form-control' id='email' placeholder='email' autocomplete="off">
-                  <div class='invalid-feedback' id='email-feedback'></div>
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" placeholder="email" autocomplete="off">
+                  <div class="invalid-feedback" id="email-feedback"></div>
                 </div>
 
-                <div class='mb-3'>
-                  <label for='password' class='form-label'>Password</label>
-                 <input type='password' class='form-control' id='password' placeholder='password' autocomplete="off">
-                 <div class='invalid-feedback' id='password-feedback'></div>
+                <div class="mb-3">
+                  <label for="password" class="form-label">Password</label>
+                 <input type="password" class="form-control" id="password" placeholder="password" autocomplete="off">
+                 <div class="invalid-feedback" id="password-feedback"></div>
                 </div>
 
-                <div class='mb-3'>
-                  <label for='password_repeat' class='form-label'>Confirm Password</label>
-                  <input type='password' class='form-control' id='password_repeat' placeholder='password' autocomplete="off">
-                  <div class='invalid-feedback' id='password-repeat-feedback'></div>
+                <div class="mb-3">
+                  <label for="password_repeat" class="form-label">Confirm Password</label>
+                  <input type="password" class="form-control" id="password_repeat" placeholder="password" autocomplete="off">
+                  <div class="invalid-feedback" id="password-repeat-feedback"></div>
                 </div>
 
-                <div class='mb-3 py-3'>
-                  <button type='submit' id='registerSubmit' class='btn btn-primary btn-lg w-100 pt-50'>Sign Up</button>
+                <div class="mb-3 py-3">
+                  <button type="submit" id="registerSubmit" class="btn btn-primary btn-lg w-100 pt-50">Sign Up</button>
                 </div>
               </form>
             </div>
