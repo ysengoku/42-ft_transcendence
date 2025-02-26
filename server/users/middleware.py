@@ -18,6 +18,8 @@ def get_user(user_id):
 class JWTAuthMiddleware(BaseMiddleware):
     async def __call__(self, scope, receive, send):
         # Récupérer le token depuis les cookies ou les headers
+        print(f"JWT Middleware called with scope type: {scope['type']}")
+        print(f"Headers: {dict(scope['headers'])}")
         headers = dict(scope["headers"])
         cookies = headers.get(b"cookie", b"").decode("utf-8")
         token = None
