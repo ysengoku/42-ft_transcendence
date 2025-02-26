@@ -69,11 +69,9 @@ INSTALLED_APPS = [
     # ASGI server for working with websockets
     "daphne",
     "channels",
-
     # Our apps
     "users",
     "chat",
-
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -82,7 +80,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-
     # Profiling
     "silk",
 ]
@@ -159,7 +156,10 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     },
 }
+REDIS_HOST = "redis"
+REDIS_PORT = 6380
 
+# Configuration for proxy
 CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
