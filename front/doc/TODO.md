@@ -36,7 +36,7 @@
 ### Friends list
 - [x] Get list from server
 - [x] Handle see more making a new request (To show more than first 10 friends)
-- [] Delete modal
+- [x] Delete modal
 
 ### User search
 - [x] Add user search button and dropdown to Navbar
@@ -58,10 +58,10 @@
 - [x] email login
 - [x] Fix parsing of Error message from server
 - [x] Forbitten letters or format for username? (e.g. email format for username)
-- [] Forgot password
+- [x] Forgot password
 - [x] Mfa handling
-- [] Resend Mfa error handling
-- [] Style mfa code form
+- [x] Resend Mfa error handling
+- [x] Style mfa code form
 
 - [x] Unit test (input validation)
 
