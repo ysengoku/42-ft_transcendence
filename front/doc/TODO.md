@@ -60,6 +60,8 @@
 - [x] Forbitten letters or format for username? (e.g. email format for username)
 - [] Forgot password
 - [x] Mfa handling
+- [] Resend Mfa error handling
+- [] Style mfa code form
 
 - [x] Unit test (input validation)
 
