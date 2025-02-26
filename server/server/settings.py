@@ -156,8 +156,9 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     },
 }
-REDIS_HOST = "redis"
-REDIS_PORT = 6380
+REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+
 
 # Configuration for proxy
 CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
