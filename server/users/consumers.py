@@ -53,7 +53,7 @@ class RedisUserStatusManager:
             self._redis.delete(f"{self._online_users_key}:{user_id}")
         except Exception as e:
             print(f"Error setting user offline: {e}")
-
+            
     def get_online_users(self):
         """
         Retrieve all online users
@@ -83,8 +83,9 @@ class OnlineStatusConsumer(WebsocketConsumer):
         """
         self.user = self.scope["user"]
 
-        # Verify user authentication
-        if not self.user.is_authenticated:
+        # Verify user authentication using Django's built-in auth
+        if not self.user or not self.user.is_authenticated:
+            print("WebSocket connection rejected: User not authenticated")
             self.close()
             return
 
@@ -105,7 +106,7 @@ class OnlineStatusConsumer(WebsocketConsumer):
         """
         Handle WebSocket disconnection
         """
-        if not hasattr(self, "user") or not self.user.is_authenticated:
+        if not hasattr(self, "user") or not self.user or not self.user.is_authenticated:
             return
 
         # Update user's offline status
