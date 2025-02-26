@@ -22,27 +22,34 @@ export class DropdownMenu extends HTMLElement {
     const avatarSrc = this.user ? this.user.avatar : `${anonymousavatar}`;
 
     this.innerHTML = `
-		<div class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-		  <img id="avatar-img" src="${avatarSrc}" height="40" alt="user" class="d-inline-block align-top rounded-circle">
-	  </div>
-		<div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-			${ this.isLoggedIn ? `
-				<div class="dropdown-item" id="dropdown-item-profile">Your profile</div>
-				<div class="dropdown-item" id="dropdown-item-settings">Settings</div>
-			` : `
-				<div class="dropdown-item" id="dropdown-item-login">Login</div>
-				<div class="dropdown-item" id="dropdown-item-register">Sign up</div>
-			` }
-			<div class="dropdown-divider"></div>
-			<button class="dropdown-item" id="theme-toggle">
-				<span id="theme-label">${isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
-		  </button>
-			${ this.isLoggedIn ? `
-				<div class="dropdown-divider"></div>
-				<div class="dropdown-item" id="dropdown-item-logout">Logout</div>
-			` : `` }
-		</div>
-		`;
+    <style>
+      #avatar-img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+      }
+    </style>
+    <div class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <img id="avatar-img" src="${avatarSrc}" height="40" alt="user" class="d-inline-block align-top rounded-circle">
+    </div>
+    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+      ${ this.isLoggedIn ? `
+        <div class="dropdown-item" id="dropdown-item-profile">Your profile</div>
+        <div class="dropdown-item" id="dropdown-item-settings">Settings</div>
+      ` : `
+        <div class="dropdown-item" id="dropdown-item-login">Login</div>
+        <div class="dropdown-item" id="dropdown-item-register">Sign up</div>
+      ` }
+      <div class="dropdown-divider"></div>
+      <button class="dropdown-item" id="theme-toggle">
+        <span id="theme-label">${isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+      </button>
+      ${ this.isLoggedIn ? `
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" id="dropdown-item-logout">Logout</div>
+      ` : `` }
+    </div>
+    `;
 
     const themeToggleButton = document.getElementById('theme-toggle');
     if (themeToggleButton) {

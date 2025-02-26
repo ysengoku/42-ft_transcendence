@@ -4,8 +4,8 @@ from ninja.errors import HttpError
 from ninja.pagination import paginate
 
 from common.routers import allow_only_for_self, get_user_queryset_by_username_or_404
+from common.schemas import MessageSchema
 from users.schemas import (
-    Message,
     ProfileMinimalSchema,
     UsernameSchema,
 )
@@ -15,7 +15,7 @@ blocked_users_router = Router()
 
 @blocked_users_router.get(
     "{username}/blocked_users",
-    response={200: list[ProfileMinimalSchema], frozenset({401, 403, 404}): Message},
+    response={200: list[ProfileMinimalSchema], frozenset({401, 403, 404}): MessageSchema},
 )
 @paginate
 def get_blocked_users(request: HttpRequest, username: str):
@@ -30,7 +30,7 @@ def get_blocked_users(request: HttpRequest, username: str):
 
 @blocked_users_router.post(
     "{username}/blocked_users",
-    response={201: ProfileMinimalSchema, frozenset({401, 403, 404, 422}): Message},
+    response={201: ProfileMinimalSchema, frozenset({401, 403, 404, 422}): MessageSchema},
 )
 def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: UsernameSchema):
     """
@@ -48,7 +48,7 @@ def add_to_blocked_users(request: HttpRequest, username: str, user_to_add: Usern
 
 @blocked_users_router.delete(
     "{username}/blocked_users/{blocked_user_to_remove}",
-    response={204: None, frozenset({401, 403, 404, 422}): Message},
+    response={204: None, frozenset({401, 403, 404, 422}): MessageSchema},
 )
 def remove_from_blocked_users(request: HttpRequest, username: str, blocked_user_to_remove: str):
     """

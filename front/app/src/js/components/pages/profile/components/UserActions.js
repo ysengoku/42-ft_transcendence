@@ -1,22 +1,22 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessageForDuration } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ProfileUserActions extends HTMLElement {
   constructor() {
     super();
     this._data = {
-      'loggedInUsername': '',
-      'shownUsername': '',
-      'isFriend': false,
-      'isBlockedByUser': false,
+      loggedInUsername: '',
+      shownUsername: '',
+      isFriend: false,
+      isBlocked: false,
     };
     this.isMyProfile = false;
     this.errorMessages = {
-      'addFriend': 'Failed to add friend. Please try again later.',
-      'removeFriend': 'Failed to remove friend. Please try again later.',
-      'blockUser': 'Failed to block user. Please try again later.',
-      'unblockUser': 'Failed to unblock user. Please try again later.',
+      addFriend: 'Failed to add friend. Please try again later.',
+      removeFriend: 'Failed to remove friend. Please try again later.',
+      blockUser: 'Failed to block user. Please try again later.',
+      unblockUser: 'Failed to unblock user. Please try again later.',
     };
   }
 
@@ -24,13 +24,15 @@ export class ProfileUserActions extends HTMLElement {
     this._data = value;
     // ----- For rendering test ------------
     // this._data.isFriend = true;
-    // this._data.isBlockedByUser = true;
+    // this._data.isBlocked = true;
     // -------------------------------------
     this.isMyProfile = this._data.loggedInUsername === this._data.shownUsername;
+    console.log('data: ', this._data);
     this.render();
   }
 
   render() {
+    console.log('data: ', this._data);
     this.innerHTML = `
 			<style>
 				.profile-user-action-button {
@@ -44,7 +46,7 @@ export class ProfileUserActions extends HTMLElement {
 
 				<button class="btn btn-primary mx-1 profile-user-action-button" id="send-message-button">Send Message</button>
 
-				<button class="btn btn-primary mx-1 profile-user-action-button" id="block-user-button">${this._data.isBlockedByUser ? 'Unblock user' : 'Block user'}</button>
+				<button class="btn btn-primary mx-1 profile-user-action-button" id="block-user-button">${this._data.isBlocked ? 'Unblock user' : 'Block user'}</button>
 			</div>
 		`;
     this.setupButtons();
@@ -60,7 +62,7 @@ export class ProfileUserActions extends HTMLElement {
       return;
     }
 
-    if (!this._data.isBlockedByUser) {
+    if (!this._data.isBlocked) {
       const sendMessageButton = this.querySelector('#send-message-button');
       sendMessageButton.style.display = 'block';
       // Handle send message
@@ -76,7 +78,7 @@ export class ProfileUserActions extends HTMLElement {
 
     const blockUserButton = this.querySelector('#block-user-button');
     blockUserButton.style.display = 'block';
-    if (this._data.isBlockedByUser) {
+    if (this._data.isBlocked) {
       blockUserButton.addEventListener('click', this.unblockUser.bind(this));
     } else {
       blockUserButton.addEventListener('click', this.blockUser.bind(this));
@@ -94,7 +96,7 @@ export class ProfileUserActions extends HTMLElement {
   // -------------------------------------
 
   async addFriend() {
-    const request = { 'username': this._data.shownUsername };
+    const request = { username: this._data.shownUsername };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
@@ -111,7 +113,7 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error adding friend:', response);
-      showErrorMessageForDuration(this.errorMessages.addFriend, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.addFriend, 3000);
     }
   }
 
@@ -132,12 +134,12 @@ export class ProfileUserActions extends HTMLElement {
       this.render();
     } else {
       console.error('Error removing friend:', response);
-      showErrorMessageForDuration(this.errorMessages.removeFriend, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.removeFriend, 3000);
     }
   }
 
   async blockUser() {
-    const request = { 'username': this._data.shownUsername };
+    const request = { username: this._data.shownUsername };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
@@ -150,12 +152,12 @@ export class ProfileUserActions extends HTMLElement {
     // const response = await this.testResponse();
     // --------------------------------------------
     if (response.success) {
-      this._data.isBlockedByUser = true;
+      this._data.isBlocked = true;
       this._data.isFriend = false;
       this.render();
     } else {
       console.error('Error blocking user:', response);
-      showErrorMessageForDuration(this.errorMessages.blockUser, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.blockUser, 3000);
     }
   }
 
@@ -172,11 +174,11 @@ export class ProfileUserActions extends HTMLElement {
     // const response = await this.testResponse();
     // --------------------------------------------
     if (response.success) {
-      this._data.isBlockedByUser = false;
+      this._data.isBlocked = false;
       this.render();
     } else {
       console.error('Error unblocking:', response);
-      showErrorMessageForDuration(this.errorMessages.unblockUser, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.unblockUser, 3000);
     }
   }
 }
