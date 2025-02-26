@@ -9,51 +9,61 @@ export class PasswordUpdate extends HTMLElement {
   setParam(value) {
     this.connectionType = value;
     this.render();
+    this.setEventListeners();
+  }
+
+  setEventListeners() {
+    const oldPasswordField = this.querySelector('#old-password');
+    const newPasswordField = this.querySelector('#new-password');
+    const newPasswordRepeatField = this.querySelector('#new-password-repeat');
+
+    oldPasswordField.addEventListener('input', () => {
+      this.clearFeedback('oldPasswordField');
+    });
+    oldPasswordField.addEventListener('click', () => {
+      this.clearFeedback(oldPasswordField);
+    });
+    newPasswordField.addEventListener('input', () => {
+      this.clearFeedback(newPasswordField);
+    });
+    newPasswordField.addEventListener('click', () => {
+      this.clearFeedback(newPasswordField);
+    });
+    newPasswordRepeatField.addEventListener('input', () => {
+      this.clearFeedback(newPasswordRepeatField);
+    });
+    newPasswordRepeatField.addEventListener('click', () => {
+      this.clearFeedback(newPasswordRepeatField);
+    });
   }
 
   render() {
-    if (this.connectionType !== 'regular') {
-      return;
-    }
     this.innerHTML = `
+    <div id="password-setting-field">
       <div class="mt-3">
-        <label for="old-password" class="form-label">Current password (if you would like to change your password)</label>
-        <input type="password" class="form-control" id="old-password" placeholder="current password">
+        <label for="old-password" class="form-label">Current password (if change password)</label>
+        <input type="password" class="form-control" id="old-password" placeholder="current password" autocomplete="off">
         <div class="invalid-feedback" id="old-password-feedback"></div>
       </div>
 
       <div class="mt-3">
         <label for="new-password" class="form-label">Password</label>
-        <input type="password" class="form-control" id="new-password" placeholder="new password">
+        <input type="password" class="form-control" id="new-password" placeholder="new password" autocomplete="off">
         <div class="invalid-feedback" id="new-password-feedback"></div>
       </div>
 
       <div class="mt-3">
         <label for="new-password-repeat" class="form-label">Confirm Password</label>
-        <input type="password" class="form-control" id="new-password-repeat" placeholder="new password">
+        <input type="password" class="form-control" id="new-password-repeat" placeholder="new password" autocomplete="off">
         <div class="invalid-feedback" id="new-password-repeat-feedback"></div>
       </div>
+    </div>
     `;
 
-    const oldPasswordField = this.querySelector('#old-password');
-    const newPasswordField = this.querySelector('#new-password');
-    const newPasswordRepeatField = this.querySelector('#new-password-repeat');
-
-    oldPasswordField.addEventListener('input', (event) => {
-      const feedback = this.querySelector('#old-password-feedback');
-      oldPasswordField.classList.remove('is-invalid');
-      feedback.textContent = '';
-    });
-    newPasswordField.addEventListener('input', (event) => {
-      const feedback = this.querySelector('#new-password-feedback');
-      newPasswordField.classList.remove('is-invalid');
-      feedback.textContent = '';
-    });
-    newPasswordRepeatField.addEventListener('input', (event) => {
-      const feedback = this.querySelector('#new-password-repeat-feedback');
-      newPasswordRepeatField.classList.remove('is-invalid');
-      feedback.textContent = '';
-    });
+    if (this.connectionType !== 'regular') {
+      const field = this.querySelector('#password-setting-field');
+      field.classList.add('d-none');
+    }
   }
 
   checkPasswordInput() {
@@ -124,6 +134,12 @@ export class PasswordUpdate extends HTMLElement {
       return false;
     }
     return true;
+  }
+
+  clearFeedback(field) {
+    const feedback = this.querySelector(`#${field.id}-feedback`);
+    field.classList.remove('is-invalid');
+    feedback.textContent = '';
   }
 }
 
