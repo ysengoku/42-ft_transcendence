@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
   LOGOUT: `${API_BASE_URL}logout`,
   USER_PROFILE: (username) => `${API_BASE_URL}users/${username}`,
   USER_SETTINGS: (username) => `${API_BASE_URL}users/${username}/settings`,
+  USER_DELETE: (username) => `${API_BASE_URL}users/${username}/delete`,
   USER_FRIENDS: (username) => `${API_BASE_URL}users/${username}/friends`,
   USER_REMOVE_FRIEND: (username, friend) => `${API_BASE_URL}users/${username}/friends/${friend}`,
   USER_BLOCKED_USERS: (username) => `${API_BASE_URL}users/${username}/blocked_users`,
