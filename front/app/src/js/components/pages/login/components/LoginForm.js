@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { INPUT_FEEDBACK } from '@utils';
 // import { simulateApiLogin } from '@mock/functions/mockLogin.js';
 // import { simulateLoginSuccessResponse } from '@mock/functions/mockLogin.js';
 
@@ -22,12 +23,12 @@ export class LoginForm extends HTMLElement {
       <legend class="mt-4 mb-5 border-bottom">Login</legend>
   			<div class="d-flex flex-column mb-3 gap-2">
     			<label for="inputUsername" class="form-label">Username or Email</label>
-   				<input type="text" class="form-control" id="inputUsername" placeholder="username or email">
+   				<input type="text" class="form-control" id="inputUsername" placeholder="username or email" autocomplete="off">
           <div class='invalid-feedback' id='username-feedback'></div>
   			</div>
 				<div class="mb-3">
 					<label for="inputPassword" class="form-label">Password</label>
-    			<input type="password" class="form-control" id="inputPassword" placeholder="password">
+    			<input type="password" class="form-control" id="inputPassword" placeholder="password" autocomplete="off">
           <div class='invalid-feedback' id='loginpassword-feedback'></div>
   			</div>
 				<div class="mb-2 py-3">
@@ -59,13 +60,18 @@ export class LoginForm extends HTMLElement {
     console.log('Login response:', response);
     if (response.success) {
       if (response.status == 200) {
-        const userInformation = {
-          username: response.data.username,
-          nickname: response.data.nickname,
-          avatar: response.data.avatar,
-        };
-        auth.storeUser(userInformation);
-        router.navigate(`/home`, response.user);
+        if (response.data.mfa_required) {
+          sessionStorage.setItem('username', JSON.stringify(response.data.username));
+          router.navigate('/mfa-verification', response.data);
+        } else {
+          const userInformation = {
+            username: response.data.username,
+            nickname: response.data.nickname,
+            avatar: response.data.avatar,
+          };
+          auth.storeUser(userInformation);
+          router.navigate(`/home`, response.user);
+        }
       }
     } else {
       const feedback = document.querySelector('#login-failed-feedback');
@@ -79,20 +85,19 @@ export class LoginForm extends HTMLElement {
   }
 
   checkInputs() {
+    const emptyUsername = 'Username or email is required';
     const usernameField = this.querySelector('#inputUsername');
-    const emailField = this.querySelector('#inputEmail');
     const passwordField = this.querySelector('#inputPassword');
 
     let isValid = true;
-    if (!usernameField.value.trim() && !emailField.value.trim()) {
+    if (!usernameField.value.trim()) {
       usernameField.classList.add('is-invalid');
-      emailField.classList.add('is-invalid');
-      document.querySelector('#username-feedback').textContent = 'Login ID or email is required';
+      document.querySelector('#username-feedback').textContent = emptyUsername;
       isValid = false;
     }
     if (!passwordField.value.trim()) {
       passwordField.classList.add('is-invalid');
-      document.querySelector('#loginpassword-feedback').textContent = 'Password is required';
+      document.querySelector('#loginpassword-feedback').textContent = INPUT_FEEDBACK.EMPTY_PASSWORD;
       isValid = false;
     }
     return isValid;

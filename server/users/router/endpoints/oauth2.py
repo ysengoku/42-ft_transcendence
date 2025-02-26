@@ -1,20 +1,19 @@
 import hashlib
 import os
-from datetime import datetime, timedelta, timezone
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import requests
 from django.conf import settings
-from django.core.exceptions import RequestAborted
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
-from ninja import Router
-from ninja.errors import AuthenticationError, HttpError
+from ninja import Query, Router
+from ninja.errors import HttpError
 
+from common.schemas import MessageSchema
 from users.models import OauthConnection, User
-from users.router.endpoints.auth import create_redirect_to_home_page_response_with_tokens
+from users.router.utils import create_redirect_to_home_page_response_with_tokens
 from users.schemas import (
-    Message,
+    OAuthCallbackParams,
 )
 
 oauth2_router = Router()
@@ -23,10 +22,10 @@ oauth2_router = Router()
 def get_oauth_config(platform: str) -> dict:
     """
     Retrieves OAuth configuration for the platform.
-    Raises 400 if the platform is unsupported.
+    Raises 422 if the platform is unsupported.
     """
     if platform not in settings.OAUTH_CONFIG:
-        raise HttpError(400, f"Unsupported platform: {platform}")
+        raise HttpError(422, f"Unsupported platform: {platform}")
     return settings.OAUTH_CONFIG[platform]
 
 
@@ -43,17 +42,39 @@ def create_user_oauth(user_info: dict, oauth_connection: OauthConnection) -> Use
     return user
 
 
+def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
+    """
+    Quick health check for OAuth provider API using the OAuth endpoint
+    """
+    if platform == OauthConnection.FT:
+        try:
+            response = requests.get(config["oauth_uri"], timeout=2.0)
+            if response.status_code != 200:  # noqa: PLR2004
+                return False, "42 API is temporarily unavailable"
+            return True, ""
+        except requests.RequestException:
+            return False, "Could not connect to 42 API"
+    return True, ""
+
+
 @csrf_exempt
-@oauth2_router.get("/authorize/{platform}", auth=None, response={200: dict, 400: Message})
+@oauth2_router.get(
+    "/authorize/{platform}",
+    auth=None,
+    response={200: MessageSchema, frozenset({404, 422}): MessageSchema},
+)
 def oauth_authorize(request, platform: str):
     """
     Starts the OAuth2 authorization process.
     Returns the authorization URL.
-    Raises 400 if the platform is unsupported.
+    Raises 404 if the platform is unsupported (raised from def get_oauth_config).
+    Raises 422 if the platform is not available (raised from def check_api_availability).
     """
+    is_available, error_msg = check_api_availability(platform, get_oauth_config(platform))
+    if not is_available:
+        return JsonResponse({"error": error_msg}, status=422)
+
     config = get_oauth_config(platform)
-    if not config:
-        raise HttpError(400, "OAuth platform not supported")
 
     state = hashlib.sha256(os.urandom(32)).hexdigest()
 
@@ -69,81 +90,67 @@ def oauth_authorize(request, platform: str):
     return JsonResponse({"auth_url": f"{config['auth_uri']}?{urlencode(params)}"})
 
 
+@oauth2_router.get(
+    "/callback/{platform}",
+    auth=None,
+    response={200: MessageSchema, frozenset({408, 422, 503}): MessageSchema},
+)
 @ensure_csrf_cookie
-@oauth2_router.get("/callback/{platform}", auth=None, response={200: dict, 400: Message, 401: Message})
-def oauth_callback(request, platform: str, code: str, state: str):
+def oauth_callback(  # noqa: PLR0911
+    request,
+    platform: str,
+    params: OAuthCallbackParams = Query(...),
+):
     """
     Handles the OAuth2 callback.
-    Exchanges the code for tokens and retrieves user info.
-    Raises 400 for invalid state, 401 for expired sessions or failed token retrieval.
+    Captures errors directly from the OAuth provider.
     """
+    is_available, error_msg = check_api_availability(platform, get_oauth_config(platform))
+    if not is_available:
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_msg)}&code=404")
+
+    params = request.GET
+    error = params.get("error")
+    error_description = params.get("error_description")
+    code = params.get("code")
+    state = params.get("state")
+
+    if error:
+        error_message = quote(f"{error}: {error_description}")
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
+
+    if not code or not state:
+        error_message = quote("Missing code or state.")
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
+
     oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
-
     if not oauth_connection:
-        raise AuthenticationError("Invalid OAuth connection.")
+        raise HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error=Invalid state&code=422")
 
-    now = datetime.now(timezone.utc)
-    if oauth_connection.date + timedelta(minutes=5) < now:
-        raise AuthenticationError("Session expired")
+    state_error = oauth_connection.check_state_and_validity(platform, state)
+    if state_error:
+        error_message, status_code = state_error
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
-    if state != oauth_connection.state or platform != oauth_connection.connection_type:
-        raise HttpError(400, "Invalid state parameter")
-
-    # Request access token
     config = get_oauth_config(platform)
 
-    try:
-        token_response = requests.post(
-            config["token_uri"],
-            data={
-                "client_id": config["client_id"],
-                "client_secret": config["client_secret"],
-                "code": code,
-                "redirect_uri": config["redirect_uris"][0],
-                "grant_type": "authorization_code",
-            },
-            headers={"Accept": "application/json"},
-            timeout=10,
-        )
+    access_token, token_error = oauth_connection.request_access_token(config, code)
+    if token_error:
+        error_message, status_code = token_error
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
-        if "access_token" not in token_response.json():
-            raise AuthenticationError("Failed to retrieve the token.")
-
-    except RequestAborted as exc:
-        raise HttpError(408, "The request timed out while retrieving the token.") from exc
-
-    token_data = token_response.json()
-
-    # Get user info
-    try:
-        user_response = requests.get(
-            config["user_info_uri"],
-            headers={"Authorization": f"Bearer {token_data['access_token']}"},
-            timeout=10,
-        )
-
-    except RequestAborted as exc:
-        raise HttpError(408, "The request timed out while retrieving user information.") from exc
-    except requests.ConnectionError:
-        raise HttpError(503, "Failed to connect to the server while retrieving user information.") from None
-    except requests.RequestException as exc:
-        raise AuthenticationError(f"An error occurred while retrieving user information: {str(exc)}") from None
-
-    user_info = user_response.json()
+    user_info, user_error = oauth_connection.get_user_info(config, access_token)
+    if user_error:
+        error_message, status_code = user_error
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
     if platform not in [OauthConnection.FT, OauthConnection.GITHUB]:
-        raise HttpError(400, "Invalid platform")
+        error_message = quote("Unsupported platform")
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
 
-    # Get or create user
-    user = User.objects.for_oauth_id(user_info["id"]).first()
-    if not user:
-        user = create_user_oauth(user_info, oauth_connection)
-        if not user:
-            raise AuthenticationError("Failed to create user in database.")
-    else:
-        old_oauth_connection = user.get_oauth_connection()
-        if old_oauth_connection:
-            old_oauth_connection.delete()
-        oauth_connection.set_connection_as_connected(user_info, user)
+    user, user_creation_error = oauth_connection.create_or_update_user(user_info)
+    if user_creation_error:
+        error_message, status_code = user_creation_error
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
     return create_redirect_to_home_page_response_with_tokens(user)

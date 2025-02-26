@@ -28,8 +28,7 @@ SECRET_KEY = "your-secret-key"
 
 # Environment variables
 
-# DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
-DEBUG = int(os.environ.get("DEBUG", default=1))
+DEBUG = os.environ.get("DEBUG", True)
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
@@ -123,7 +122,6 @@ ASGI_APPLICATION = "server.asgi.application"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -197,18 +195,22 @@ GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
 GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
-GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")  # Défini dans le .env
+GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
 GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
+GITHUB_FT_API_URL = "https://api.github.com"
 
 # OAuth 42
 API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
 API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
 FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
 FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
-FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")  # Défini dans le .env
+FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
+FT_API_OAUTH_URL = "https://api.intra.42.fr"
 
 HOME_REDIRECT_URL = "https://localhost:1026/home"
+FRONTEND_URL = "https://localhost:1026"
+ERROR_REDIRECT_URL = "https://localhost:1026/error"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
@@ -220,6 +222,7 @@ OAUTH_CONFIG = {
         "redirect_uris": [GITHUB_REDIRECT_URI],
         "scopes": ["user"],
         "user_info_uri": GITHUB_USER_PROFILE_URL,
+        "oauth_uri": GITHUB_FT_API_URL,
     },
     "42": {
         "client_id": API42_CLIENT_ID,
@@ -229,16 +232,16 @@ OAUTH_CONFIG = {
         "redirect_uris": [FT_API_REDIRECT_URI],
         "scopes": ["public", "profile"],
         "user_info_uri": FT_API_USER_PROFILE_URL,
+        "oauth_uri": FT_API_OAUTH_URL,
     },
 }
 
-
-# # SendGrid Settings
-# SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-# SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL") # Email used to send emails
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.sendgrid.net'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'apikey'  # SendGrid's SMTP user is ALWAYS 'apikey'
-# EMAIL_HOST_PASSWORD = SENDGRID_API_KEY  # Use your SendGrid API key as the password
+# email configuration for 2fa and password reset
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")

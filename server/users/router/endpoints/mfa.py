@@ -1,156 +1,92 @@
-# import base64
-# from io import BytesIO
-# from typing import Any, Dict
-# import pyotp
-# import qrcode
-# from django.conf import settings
-# from django.core.exceptions import ObjectDoesNotExist
-# from ninja import Router
-# from ninja.errors import HttpError
+import secrets
+import string
+from datetime import datetime, timedelta, timezone
 
-# from users.models import User
+from django.conf import settings
+from django.core.mail import send_mail
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+from ninja import Router
+from ninja.errors import HttpError
 
-# mfa_router = Router()
+from common.schemas import MessageSchema
+from users.models import User
+from users.router.utils import _create_json_response_with_tokens
+from users.schemas import SendMfaCode
 
+mfa_router = Router()
 
-# def generate_secret_key() -> str:
-#     """Generate a random secret key for 2FA"""
-#     return pyotp.random_base32()
-
-
-# @mfa_router.post("/2fa/setup")
-# def setup_2fa(request, username: str) -> Dict[str, Any]:
-#     """Setup 2FA for a user"""
-#     try:
-#         user = User.objects.find_by_username(username)
-#         if not user:
-#             raise HttpError(404, "User not found")
-
-#         secret = generate_secret_key()
-
-#         # Check if 2FA already exists
-#         existing_2fa = mfa.objects.filter(user=user).first()
-#         if existing_2fa:
-#             if existing_2fa.is_enabled:
-#                 raise HttpError(400, "2FA is already enabled for this account")
-#             # Update existing secret
-#             existing_2fa.secret = secret
-#             existing_2fa.save()
-#         else:
-#             # Create new 2FA entry
-#             mfa.objects.create(user=user, secret=secret, is_enabled=False)
-
-#         # Generate QR code
-#         totp = pyotp.TOTP(secret)
-#         uri = totp.provisioning_uri(
-#             name=user.username,
-#             issuer_name="Transcendence",
-#         )
-
-#         # Create QR code
-#         qr = qrcode.make(uri)
-#         buffer = BytesIO()
-#         qr.save(buffer, format="PNG")
-#         qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-
-#         return {
-#             "status": "success",
-#             "message": "2FA setup initiated",
-#             "instructions": {
-#                 "step1": "Install an authenticator app (Google Authenticator, Microsoft Authenticator, or Authy)",
-#                 "step2": "Open your authenticator app and scan the QR code below",
-#                 "step3": "Enter the 6-digit code from your authenticator app to verify and enable 2FA",
-#                 "manual_entry": "If you can't scan the QR code, manually enter this secret key in your authenticator app",
-#             },
-#             "qr_code": qr_base64,
-#             "secret": secret,
-#             "requires_verification": True,
-#         }
-
-#     except Exception as e:
-#         raise HttpError(500, f"Error setting up 2FA: {str(e)}")
+TOKEN_LENGTH = 6
+TOKEN_EXPIRY = 10 * 60
 
 
-# @mfa_router.post("/2fa/verify")
-# def verify_2fa(request, username: str, token: str) -> Dict[str, str]:
-#     """Verify and enable 2FA for a user"""
-#     if not token or len(token) != 6 or not token.isdigit():
-#         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
-
-#     try:
-#         user = User.objects.find_by_username(username)
-#         if not user:
-#             raise HttpError(404, "User not found")
-
-#         mfa = mfa.objects.filter(user=user).first()
-#         if not mfa:
-#             raise HttpError(404, "Please set up 2FA before verifying")
-
-#         totp = pyotp.TOTP(mfa.secret)
-#         if not totp.verify(token):
-#             raise HttpError(400, "Invalid code. Please try again with a new code from your authenticator app.")
-
-#         mfa.is_enabled = True
-#         mfa.save()
-
-#         return {"status": "success", "message": "2FA has been successfully enabled for your account"}
-
-#     except ObjectDoesNotExist:
-#         raise HttpError(404, "User or 2FA configuration not found")
-#     except Exception as e:
-#         raise HttpError(500, f"Error verifying 2FA: {str(e)}")
+def generate_verification_code() -> str:
+    """Generate a random 6-digit verification code"""
+    return "".join(secrets.choice(string.digits) for _ in range(TOKEN_LENGTH))
 
 
-# @mfa_router.post("/2fa/verify-login")
-# def verify_2fa_login(request, username: str, token: str) -> Dict[str, str]:
-#     """Verify 2FA token during login"""
-#     if not token or len(token) != 6 or not token.isdigit():
-#         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
-
-#     try:
-#         user = User.objects.find_by_username(username)
-#         if not user:
-#             raise HttpError(404, "User not found")
-
-#         mfa = mfa.objects.filter(user=user).first()
-#         if not mfa or not mfa.is_enabled:
-#             raise HttpError(400, "2FA is not enabled for this account")
-
-#         totp = pyotp.TOTP(mfa.secret)
-#         if not totp.verify(token):
-#             raise HttpError(400, "Invalid code. Please try again with a new code from your authenticator app.")
-
-#         return {"status": "success", "message": "2FA verification successful"}
-
-#     except Exception as e:
-#         raise HttpError(500, f"Error verifying 2FA: {str(e)}")
+def get_cache_key(username: str) -> str:
+    """Create a unique cache key for storing the verification code"""
+    return f"mfa_email_code_{username}"
 
 
-# @mfa_router.delete("/2fa/disable")
-# def disable_2fa(request, username: str, token: str) -> Dict[str, str]:
-#     """Disable 2FA for a user"""
-#     if not token or len(token) != 6 or not token.isdigit():
-#         raise HttpError(400, "Invalid token format. Please enter a 6-digit code.")
+@mfa_router.post("/resend-code", auth=None, response={200: MessageSchema, 404: MessageSchema})
+@ensure_csrf_cookie
+def resend_verification_code(request, username: str) -> dict[str, any]:
+    user = User.objects.filter(username=username).first()
+    if not user:
+        raise HttpError(404, "User with that email not found")
 
-#     try:
-#         user = User.objects.find_by_username(username)
-#         if not user:
-#             raise HttpError(404, "User not found")
+    if handle_mfa_code(user):
+        return JsonResponse(
+            {
+                "msg": "Verification code sent to user email",
+            },
+        )
+    return None
 
-#         mfa = mfa.objects.filter(user=user).first()
-#         if not mfa:
-#             raise HttpError(404, "2FA is not set up for this account")
-#         if not mfa.is_enabled:
-#             raise HttpError(400, "2FA is already disabled")
 
-#         totp = pyotp.TOTP(mfa.secret)
-#         if not totp.verify(token):
-#             raise HttpError(400, "Invalid code. Please enter a valid code from your authenticator app.")
+def handle_mfa_code(user):
+    """Send a verification code to the user's email"""
+    user = User.objects.filter(username=user.username).first()
+    if not user:
+        raise HttpError(404, "User with that email not found")
 
-#         # Completely delete the 2FA configuration
-#         mfa.delete()
+    verification_code = generate_verification_code()
+    user.mfa_token = verification_code
+    user.mfa_token_date = datetime.now(timezone.utc)
+    user.save()
 
-#         return {"status": "success", "message": "2FA has been successfully disabled"}
+    return send_mail(
+        subject="Your Verification Code",
+        message=f"Your verification code is: {verification_code}\nThis code will expire in 10 minutes.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
 
-#     except Exception as e:
-#         raise HttpError(500, f"Error disabling 2FA: {str(e)}")
+
+@mfa_router.post(
+    "/verify-mfa",
+    auth=None,
+    response={200: MessageSchema, 404: MessageSchema, 408: MessageSchema, 401: MessageSchema},
+)
+@ensure_csrf_cookie
+def verify_mfa_code(request, username: str, data: SendMfaCode) -> dict[str, any]:
+    """Verify verification code received by email during login"""
+    user = User.objects.filter(username=username).first()
+    if not user:
+        raise HttpError(404, "User not found")
+
+    if not data.token or len(data.token) != TOKEN_LENGTH or not data.token.isdigit():
+        raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
+
+    now = datetime.now(timezone.utc)
+    if user.mfa_token_date + timedelta(seconds=TOKEN_EXPIRY) < now:
+        raise HttpError(408, "Expired session: authentication request timed out")
+
+    if data.token != user.mfa_token:
+        raise HttpError(401, "Invalid verification code")
+
+    response_data = user.profile.to_profile_minimal_schema()
+    return _create_json_response_with_tokens(user, response_data)

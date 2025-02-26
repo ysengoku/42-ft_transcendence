@@ -5,15 +5,6 @@ from ninja import Schema
 from chat.models import Chat, ChatMessage
 
 
-# TODO: move common schemas to the common dir
-class MessageSchema(Schema):
-    """
-    Generic response from the server with user-friendly message.
-    """
-
-    msg: str
-
-
 class ChatMessageSchema(Schema):
     """
     Represents a singular message from the chat.

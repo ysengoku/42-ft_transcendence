@@ -1,3 +1,6 @@
+import { auth } from '@auth';
+import { addDissmissAlertListener } from '@utils';
+
 /**
  * Router module for handling client-side navigation.
  * @module router
@@ -14,10 +17,6 @@
  * @requires module:tournament
  * @requires module:chat-page
  */
-
-import { auth } from '@auth';
-import { addDissmissAlertListener } from '@utils';
-
 const router = (() => {
   class Router {
     constructor() {
@@ -40,8 +39,10 @@ const router = (() => {
 
     /**
      * Handles route changes and renders the appropriate component.
+     * @param {string} [queryParams=''] - The query parameters included in the URL.
+     * @return {void}
      */
-    handleRoute() {
+    handleRoute(queryParams = '') {
       const path = window.location.pathname;
       const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
@@ -51,11 +52,11 @@ const router = (() => {
           // console.log('param: ', param);
           this.renderDynamicUrlComponent(componentTag, param);
         } else {
-          this.renderStaticUrlComponent(componentTag);
+          this.renderStaticUrlComponent(componentTag, queryParams);
         }
       } else {
-        console.error(`Route not found for path: ${path}`);
-        this.renderStaticUrlComponent('not-found');
+        console.error(`Route not found for: ${path}`);
+        this.renderStaticUrlComponent('page-not-found');
       }
     }
 
@@ -100,17 +101,36 @@ const router = (() => {
       return param;
     }
 
-    renderStaticUrlComponent(componentTag) {
+    /**
+     * Renders a static URL component.
+     * @param {string} componentTag - The custom HTML tag for the component to render.
+     * @param {Object} [queryParams=''] - The query parameters included in the URL.
+     * @return {void}
+     */
+    renderStaticUrlComponent(componentTag, queryParams = '') {
       if (this.currentComponent) {
         this.currentComponent.remove();
       }
       const component = document.createElement(componentTag);
+
+      if (queryParams.size > 0) {
+        for (const [key, value] of queryParams.entries()) {
+          console.log(`${key}: ${value}`);
+        }
+        component.setQueryParam(queryParams);
+      }
       const contentElement = document.getElementById('content');
       contentElement.innerHTML = '';
       contentElement.appendChild(component);
       this.currentComponent = component;
     }
 
+    /**
+     * Renders a dynamic URL component with parameters.
+     * @param {string} componentTag - The custom HTML tag for the component to render.
+     * @param {Object} param - The parameters extracted from the URL.
+     * @return {void}
+     */
     renderDynamicUrlComponent(componentTag, param) {
       if (this.currentComponent) {
         this.currentComponent.remove();
@@ -123,10 +143,16 @@ const router = (() => {
       this.currentComponent = component;
     }
 
-    navigate(path = window.location.pathname) {
+    /**
+     * Navigates to the specified path.
+     * @param {string} [path=window.location.pathname] - The path to navigate to.
+     * @param {string} [queryParams=''] - The query parameters to include in the URL.
+     * @return {void}
+     */
+    navigate(path = window.location.pathname, queryParams = '') {
       console.log('Navigating to:', path);
       window.history.pushState({}, '', path);
-      this.handleRoute();
+      this.handleRoute(queryParams);
     }
 
     /**
@@ -141,6 +167,7 @@ const router = (() => {
     /**
      * Handles navigation for internal links.
      * @param {Event} event - The click event.
+     * @return {void}
      */
     handleLinkClick(event) {
       if (event.target && event.target.matches('a[href^="/"]')) {
@@ -153,21 +180,29 @@ const router = (() => {
   return new Router();
 })();
 
-// Define all routes
+/**
+ * Define all routes
+ */
 router.addRoute('/', 'landing-page');
-router.addRoute('/login', 'login-page');
 router.addRoute('/register', 'register-form');
+router.addRoute('/login', 'login-page');
+router.addRoute('/mfa-verification', 'mfa-verification');
+router.addRoute('/forgot-password', 'forgot-password');
 router.addRoute('/home', 'user-home', false);
 router.addRoute('/profile/:username', 'user-profile', true);
 router.addRoute('/user-not-found', 'user-not-found', true);
 router.addRoute('/settings', 'user-settings', false);
+router.addRoute('/chat', 'chat-page', false);
 router.addRoute('/dual-menu', 'dual-menu', false);
 router.addRoute('/dual/:id', 'dual', true);
 router.addRoute('/tournament-menu', 'tournament-menu', false);
 router.addRoute('/tournament/:id', 'tournament', true);
-router.addRoute('/chat', 'chat-page', false);
+router.addRoute('/game', 'app-game', false, true);
+router.addRoute('/error', 'error-page');
 
-// Initialize the router on the initial HTML document load
+/**
+ * Initialize the router on the initial HTML document load
+ */
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded');
   await auth.fetchAuthStatus();
@@ -180,7 +215,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   router.init();
   addDissmissAlertListener();
   const currentPath = window.location.pathname || '/';
-  router.navigate(currentPath);
+  const queryParams = new URLSearchParams(window.location.search);
+  router.navigate(currentPath, queryParams);
 });
 
 export { router };

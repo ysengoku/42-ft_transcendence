@@ -5,17 +5,11 @@ from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
+from common.schemas import MessageSchema
+
 from .models import Profile, User
 
 # ruff: noqa: S105
-
-
-class Message(Schema):
-    """
-    Generic response from the server with user-friendly message.
-    """
-
-    msg: str
 
 
 class UsernameSchema(Schema):
@@ -26,12 +20,17 @@ class UsernameSchema(Schema):
     username: str
 
 
-class ValidationErrorMessageSchema(Message):
+class ValidationErrorMessageSchema(MessageSchema):
     type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
     loc: list[str] = Field(
         description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
         "the list is the name of failed field.",
     )
+
+
+class LoginResponseSchema(Schema):
+    mfa_required: bool
+    username: str  # ou les autres champs nécessaires du ProfileMinimalSchema
 
 
 class ProfileMinimalSchema(Schema):
@@ -59,6 +58,12 @@ class UserSettingsSchema(Schema):
         oauth_connection = obj.get_oauth_connection()
         return oauth_connection.connection_type if oauth_connection else "regular"
 
+
+class OAuthCallbackParams(Schema):
+    code: str | None = None
+    state: str | None = None
+    error: str | None = None
+    error_description: str | None = None
 
 
 class OpponentProfileAndStatsSchema(Schema):
@@ -145,6 +150,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
 class PasswordValidationSchema(Schema):
     password: str
     password_repeat: str
+    username: str | None = None
 
     def validate_password(self) -> dict[str, list[str]]:
         err_dict = {}
@@ -197,6 +203,7 @@ class UpdateUserChema(PasswordValidationSchema):
     old_password: str | None = None
     password: str | None = None
     password_repeat: str | None = None
+    mfa_enabled: bool | None = None
 
     @model_validator(mode="after")
     def validate_updated_user_data(self):
@@ -207,3 +214,11 @@ class UpdateUserChema(PasswordValidationSchema):
         if err_dict:
             raise ValidationError(err_dict)
         return self
+
+
+class ForgotPasswordSchema(Schema):
+    email: str
+
+
+class SendMfaCode(Schema):
+    token: str

@@ -9,6 +9,6 @@ export default {
     '@api': '<rootDir>/src/js/api/index.js',
     '@components/(.*)$': '<rootDir>/src/js/components/$1',
     '@utils': '<rootDir>/src/js/utils/index.js',
-    '\\.(svg)(\\?url)?$': '<rootDir>/src/js/mock/svgMock.js',
+    '\\.(svg)(\\?url)?$': '<rootDir>/__mock__/svgMock.js',
   },
 };
