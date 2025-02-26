@@ -11,41 +11,42 @@ export const INPUT_FEEDBACK = {
   CANNOT_DELETE_EMAIL: `You cannot delete email.`,
 };
 
-export function isFieldFilled(field, feedbackSelector, errorMessage) {
+export function isFieldFilled(field, feedbackFeeld, errorMessage) {
   if (!field.value.trim()) {
     field.classList.add('is-invalid');
-    document.querySelector(feedbackSelector).textContent = errorMessage;
+    feedbackFeeld.textContent = errorMessage;
     return false;
   } else {
     return true;
   }
 }
 
-export function passwordFeedback(passwordField, passwordRepeatField, feedbackSelector, feedbackSelectorRepeat) {
+export function passwordFeedback(passwordField, passwordRepeatField, feedbackField, feedbackRepeatField) {
   let isFormValid = true;
-  isFormValid = checkPasswordDiff(passwordField, passwordRepeatField, feedbackSelector, feedbackSelectorRepeat) && isFormValid;
-  isFormValid = checkPasswordLength(passwordField, feedbackSelector) && isFormValid;
-  isFormValid = checkPasswordLength(passwordRepeatField, feedbackSelectorRepeat) && isFormValid;
+  isFormValid =
+    checkPasswordDiff(passwordField, passwordRepeatField, feedbackField, feedbackRepeatField) && isFormValid;
+  isFormValid = checkPasswordLength(passwordField, feedbackField) && isFormValid;
+  isFormValid = checkPasswordLength(passwordRepeatField, feedbackRepeatField) && isFormValid;
   return isFormValid;
 }
 
-function checkPasswordLength(passwordField, feedbackSelector) {
+function checkPasswordLength(passwordField, feedbackField) {
   if (passwordField.value.length < 8) {
     passwordField.classList.add('is-invalid');
-    document.querySelector(feedbackSelector).textContent = INPUT_FEEDBACK.PASSWORD_TOO_SHORT;
+    feedbackField.textContent = INPUT_FEEDBACK.PASSWORD_TOO_SHORT;
     return false;
   } else {
     return true;
   }
 }
 
-function checkPasswordDiff(passwordField, passwordRepeatField, feedbackSelector, feedbackSelectorRepeat) {
+function checkPasswordDiff(passwordField, passwordRepeatField, feedbackField, feedbackRepeatField) {
   const passwordsDoNotMatch = INPUT_FEEDBACK.PASSWORDS_NOT_MATCH;
   if (passwordField.value != passwordRepeatField.value) {
     passwordField.classList.add('is-invalid');
     passwordRepeatField.classList.add('is-invalid');
-    document.querySelector(feedbackSelector).textContent = passwordsDoNotMatch;
-    document.querySelector(feedbackSelectorRepeat).textContent = passwordsDoNotMatch;
+    feedbackField.textContent = passwordsDoNotMatch;
+    feedbackRepeatField.textContent = passwordsDoNotMatch;
     return false;
   } else {
     return true;
