@@ -1,10 +1,11 @@
 import { ThemeController } from './ThemeController';
 import { isMobile } from './viewPort';
 
-import { 
+import {
   INPUT_FEEDBACK,
   passwordFeedback,
   isFieldFilled,
+  removeInputFeedback,
 } from './inputFeedback';
 
 import {
@@ -23,6 +24,7 @@ export {
   INPUT_FEEDBACK,
   passwordFeedback,
   isFieldFilled,
+  removeInputFeedback,
   ALERT_MESSAGES,
   ALERT_TYPE,
   showAlertMessage,
