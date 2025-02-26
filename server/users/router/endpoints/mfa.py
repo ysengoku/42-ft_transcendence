@@ -17,7 +17,7 @@ from users.schemas import SendMfaCode
 mfa_router = Router()
 
 TOKEN_LENGTH = 6
-TOKEN_EXPIRY = 10 * 60
+TOKEN_EXPIRY = 10
 
 
 def generate_verification_code() -> str:
@@ -82,7 +82,7 @@ def verify_mfa_code(request, username: str, data: SendMfaCode) -> dict[str, any]
         raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
 
     now = datetime.now(timezone.utc)
-    if user.mfa_token_date + timedelta(seconds=TOKEN_EXPIRY) < now:
+    if user.mfa_token_date + timedelta(minutes=TOKEN_EXPIRY) < now:
         raise HttpError(408, "Expired session: authentication request timed out")
 
     if data.token != user.mfa_token:
