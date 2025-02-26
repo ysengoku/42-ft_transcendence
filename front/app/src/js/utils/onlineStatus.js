@@ -1,5 +1,3 @@
-Code frontend pour gérer le statut en ligne
-
 // users-online.js
 
 class OnlineStatusManager {
@@ -8,30 +6,30 @@ class OnlineStatusManager {
     this.onlineUsers = new Map(); // userID -> status
     this.listeners = new Set();
     this.isConnected = false;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 3000; // 3 seconds
   }
 
   connect() {
-    if (this.socket) {
-      return;
-    }
-
-    // Récupérer le token JWT pour l'authentification (ajustez selon votre méthode d'auth)
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      console.error('No authentication token found');
+    if (this.socket && this.isConnected) {
+      console.log('WebSocket connection already established');
       return;
     }
 
     // Établir la connexion WebSocket
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/status/`;
+    const wsUrl = `${wsProtocol}//${window.location.host}/wss/online/`;
     
     this.socket = new WebSocket(wsUrl);
     
     this.socket.onopen = () => {
-      console.log('WebSocket status connection established');
+      console.log('WebSocket online status connection established');
       this.isConnected = true;
+      this.reconnectAttempts = 0;
+      console.log('WebSocket online status connection established');
+      
+      // Initialiser la liste des utilisateurs en ligne au démarrage
+      this.fetchInitialOnlineUsers();
     };
     
     this.socket.onmessage = (event) => {
@@ -40,7 +38,13 @@ class OnlineStatusManager {
         
         if (data.type === 'status_update') {
           const { user_id, username, online } = data;
-          this.onlineUsers.set(user_id, { username, online });
+          
+          // Mettre à jour le statut de l'utilisateur
+          if (online) {
+            this.onlineUsers.set(user_id, { username, online });
+          } else {
+            this.onlineUsers.delete(user_id);
+          }
           
           // Notifier tous les écouteurs du changement de statut
           this.notifyListeners(user_id, username, online);
@@ -50,19 +54,25 @@ class OnlineStatusManager {
       }
     };
     
-    this.socket.onclose = () => {
-      console.log('WebSocket status connection closed');
+    this.socket.onclose = (event) => {
+      console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
       this.isConnected = false;
       
-      // Tentative de reconnexion après un délai
-      setTimeout(() => {
-        this.connect();
-      }, 3000);
+      // Tentative de reconnexion avec backoff exponentiel
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
+        console.log(`Attempting to reconnect in ${delay}ms...`);
+        setTimeout(() => {
+          this.reconnectAttempts++;
+          this.connect();
+        }, delay);
+      } else {
+        console.error('Maximum reconnection attempts reached');
+      }
     };
     
     this.socket.onerror = (error) => {
-      console.error('WebSocket status error:', error);
-      this.socket.close();
+      console.error('WebSocket error:', error);
     };
   }
   
@@ -72,22 +82,60 @@ class OnlineStatusManager {
       this.socket = null;
     }
     this.isConnected = false;
+    this.onlineUsers.clear();
+  }
+  
+  async fetchInitialOnlineUsers() {
+    try {
+      const response = await fetch('/api/users/online-users/');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const userIds = await response.json();
+      
+      // Récupérer les informations des utilisateurs si nécessaire
+      for (const userId of userIds) {
+        this.onlineUsers.set(userId, { username: userId, online: true });
+      }
+      
+      console.log(`Loaded ${userIds.length} online users`);
+      
+      // Notifier les écouteurs que les données initiales sont chargées
+      this.notifyListeners(null, null, null, true);
+    } catch (error) {
+      console.error('Error fetching initial online users:', error);
+    }
   }
   
   isUserOnline(userId) {
-    const user = this.onlineUsers.get(userId);
-    return user ? user.online : false;
+    return this.onlineUsers.has(userId);
+  }
+  
+  getAllOnlineUsers() {
+    return Array.from(this.onlineUsers.entries()).map(([userId, data]) => ({
+      userId,
+      username: data.username,
+      online: true
+    }));
   }
   
   addStatusListener(callback) {
     this.listeners.add(callback);
+    // Retourner une fonction pour supprimer l'écouteur
     return () => this.listeners.delete(callback);
   }
   
-  notifyListeners(userId, username, online) {
+  notifyListeners(userId, username, online, isInitialLoad = false) {
     this.listeners.forEach(callback => {
       try {
-        callback(userId, username, online);
+        if (isInitialLoad) {
+          // Notifier que les données initiales sont chargées
+          callback(null, null, null, true);
+        } else {
+          // Notifier d'un changement de statut spécifique
+          callback(userId, username, online, false);
+        }
       } catch (error) {
         console.error('Error in status listener callback:', error);
       }
