@@ -26,6 +26,8 @@ from users.schemas import (
 
 auth_router = Router()
 
+TOKEN_EXPIRY = 10
+
 
 @auth_router.get("self", response={200: ProfileMinimalSchema, 401: MessageSchema})
 def check_self(request: HttpRequest):
@@ -153,7 +155,7 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
     send_mail(
         subject="Password Reset Request",
-        message=f"Click this link to reset your password: {reset_url}",
+        message=f"Click this link to reset your password: {reset_url}\nThis link will expire in 10 minutes.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],
         fail_silently=False,
@@ -177,7 +179,10 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
         raise AuthenticationError
 
     now = datetime.now(timezone.utc)
-    if user.forgot_password_token_date + timedelta(minutes=5) < now:
+    if user.forgot_password_token_date + timedelta(minutes=TOKEN_EXPIRY) < now:
+        user.forgot_password_token = ""
+        user.forgot_password_token_date = None
+        user.save()
         raise HttpError(408, "Expired session: authentication request timed out")
 
     obj = PasswordValidationSchema(
@@ -191,6 +196,8 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
         raise HttpError(422, err_dict)
 
     user.set_password(data.password)
+    user.forgot_password_token = ""
+    user.forgot_password_token_date = None
     user.save()
 
     return {"msg": "Password has been reset successfully"}
