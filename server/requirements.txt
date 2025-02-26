@@ -30,7 +30,6 @@ django-silk==5.3.2
 
 # Gunicorn is a Python WSGI HTTP Server for UNIX
 # TODO: resolve daphne vs gunicorn situation
-gunicorn==20.1.0
 daphne==3.0.1
 
 # Redis for caching online status for users
