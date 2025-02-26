@@ -10,7 +10,6 @@ export class Login extends HTMLElement {
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    console.log('authStatus:', authStatus);
     this.isLoggedin = authStatus.success;
     if (this.isLoggedin) {
       router.navigate('/home');
@@ -36,7 +35,7 @@ export class Login extends HTMLElement {
     this.innerHTML = `
       <div class="container my-3">
         <div class="row justify-content-center py-4">
-          <div class="col-12 col-md-4"> 
+          <div class="form-container col-12 col-md-4 p-4"> 
             <div id="login-failed-feedback"></div>
 
             <login-form></login-form>

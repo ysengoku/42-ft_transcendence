@@ -3,14 +3,14 @@ import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 import './components/index.js';
-// import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
 export class Settings extends HTMLElement {
   constructor() {
     super();
     this.isLoggedIn = false;
     this.username = '';
-    this.user = null;
+    this.currentUserData = null;
+    this.newUserData = null;
   }
 
   async connectedCallback() {
@@ -22,7 +22,8 @@ export class Settings extends HTMLElement {
       return;
     }
     this.username = user.username;
-    this.fetchUserData();
+    await this.fetchUserData();
+    this.newUserData = this.currentUserData;
   }
 
   async fetchUserData() {
@@ -30,11 +31,9 @@ export class Settings extends HTMLElement {
     const response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.username));
     if (response.success) {
       if (response.status === 200) {
-        this.user = response.data;
-        // this.user.connection_type = '42'; // mock data
-        // this.user.connection_type = 'regular'; // mock data
+        this.currentUserData = response.data;
         this.render();
-        this.setParams(this.user);
+        this.setParams();
         this.setEventListener();
         this.setupSubmitHandler();
       }
@@ -88,30 +87,31 @@ export class Settings extends HTMLElement {
 		`;
   }
 
-  setParams(user) {
+  setParams() {
     const avatarUploadButton = this.querySelector('avatar-upload');
-    avatarUploadButton.setAvatar(this.user);
+    avatarUploadButton.setAvatar(this.currentUserData);
 
     const userIdentity = this.querySelector('settings-user-identity');
-    userIdentity.setParams(this.user);
+    userIdentity.setParams(this.currentUserData);
 
     const emailField = this.querySelector('settings-email-update');
-    emailField.setParams(this.user);
+    emailField.setParams(this.currentUserData);
 
     const passwordField = this.querySelector('settings-password-update');
-    passwordField.setParam(this.user.connection_type);
+    passwordField.setParam(this.currentUserData.connection_type);
 
     const mfaEnable = this.querySelector('mfa-enable-update');
-    mfaEnable.setParams(this.user);
+    mfaEnable.setParams(this.currentUserData);
 
     const deleteAccountButton = this.querySelector('delete-account-button');
-    deleteAccountButton.setUsername(this.user.username);
+    deleteAccountButton.setUsername(this.currentUserData.username);
   }
 
   setEventListener() {
     const resetButton = this.querySelector('#settings-reset-button');
     resetButton.addEventListener('click', () => {
       if (confirm('Do you really want to discard the changes?')) {
+        console.log('Resetting the form', this._user);
         this.setParams(this._user);
       }
     });
@@ -142,12 +142,15 @@ export class Settings extends HTMLElement {
     const formData = new FormData();
     if (userIdentity.username) {
       formData.append('username', userIdentity.username);
+      this.newUserData.username = userIdentity.username;
     }
     if (userIdentity.nickname) {
       formData.append('nickname', userIdentity.nickname);
+      this.newUserData.nickname = userIdentity.nickname;
     }
     if (newEmail) {
       formData.append('email', newEmail);
+      this.newUserData.email = newEmail;
     }
     const oldPassword = this.querySelector('#old-password');
     const newPassword = this.querySelector('#new-password');
@@ -157,11 +160,11 @@ export class Settings extends HTMLElement {
       formData.append('password', newPassword.value);
       formData.append('password_repeat', newPasswordRepeat.value);
     }
-    // TODO: Test if it works after merge
     const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
-    const currentMfaEnabled = this.user.mfa_enabled ? 'true' : 'false';
+    const currentMfaEnabled = this.currentUserData.mfa_enabled ? 'true' : 'false';
     if (currentMfaEnabled !== mfaEnabled) {
       formData.append('mfa_enabled', mfaEnabled);
+      this.newUserData.mfa_enabled = mfaEnabled;
     }
     if (avatarField) {
       formData.append('new_profile_picture', avatarField);
@@ -170,9 +173,10 @@ export class Settings extends HTMLElement {
     /* eslint-disable-next-line new-cap */
     const response = await apiRequest('POST', API_ENDPOINTS.USER_SETTINGS(this.username), formData, true);
     if (response.success) {
-      this.user = response.data;
       this.username = response.data.username;
-      auth.storeUser(this.user);
+      this.currentUserData = this.newUserData;
+      this.currentUserData.avatar = response.data.avatar;
+      auth.storeUser(this.currentUserData);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
     } else {
       console.log('Error updating settings', response);
