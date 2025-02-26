@@ -9,10 +9,11 @@ export class OAuth extends HTMLElement {
 
   connectedCallback() {
     this.render();
-    this.setupEventListeners();
   }
 
-  setupEventListeners() {
+  render() {
+    this.innerHTML = this.template();
+ 
     const btn42 = this.querySelector('.btn-42');
     const btnGithub = this.querySelector('.btn-github');
 
@@ -33,10 +34,9 @@ export class OAuth extends HTMLElement {
       showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
     }
   }
-
-  render() {
-    this.innerHTML = `
-      </style>
+  
+  template() {
+    return `
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-12">
