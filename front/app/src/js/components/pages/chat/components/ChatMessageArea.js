@@ -1,12 +1,57 @@
+import { router } from '@router';
+import { auth } from '@auth';
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+
 export class ChatMessageArea extends HTMLElement {
   constructor() {
     super();
+    this.user = auth.getStoredUser();
     this._data = [];
   }
 
   setData(data) {
     this._data = data;
     this.render();
+    this.setEventListeners();
+  }
+
+  setEventListeners() {
+    const header = this.querySelector('#chat-header');
+    header.addEventListener('click', () => {
+      router.navigate(`/profile/${this._data.username}`);
+    });
+
+    const blockButoon = this.querySelector('#chat-block-user-button');
+    blockButoon.addEventListener('click', async () => {
+      const response = await this.blockUser();
+      if (response) {
+        // TODO: Update chat list and current chat
+        console.log('User blocked:', this._data.username);
+      }
+    });
+  }
+
+  async blockUser() {
+    const request = { username: this._data.username };
+    const response = await apiRequest(
+        'POST',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_BLOCKED_USERS(this.user.username),
+        request,
+        false,
+        true,
+    );
+    const successMessage = 'User blocked successfully.';
+    const errorMessage = 'Failed to block user. Please try again later.';
+    if (response.success) {
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
+      return true;
+    } else {
+      console.error('Error blocking user:', response);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
+      return false;
+    }
   }
 
   toggleLikeMessage(index) {
@@ -123,18 +168,28 @@ export class ChatMessageArea extends HTMLElement {
     <div class="d-flex flex-column h-100">
 
       <!-- Header -->
-      <div class="d-flex flex-row justify-content-start align-items-center border-bottom bg-dark ps-4 py-3 gap-3 sticky-top">
-        <img src="${this._data.avatar}" class="rounded-circle" alt="User" id="chat-message-header-avatar"/>
-        <div class="d-flex flex-column text-start">
-          <div class="d-flex flex-row align-items-center gap-3">
-            <h5>${this._data.nickname}</h5>
-            <small>@${this._data.username}</small>
+      <div class="d-flex flex-row justify-content-between align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
+  
+      <div class="d-flex flex-row" id="chat-header">
+        <img src="${this._data.avatar}" class="rounded-circle me-3" alt="User" id="chat-message-header-avatar"/>
+
+        <div class="d-flex flex-column text-start gap-1">
+          <div class="d-flex flex-row gap-3">
+            <h5 class="mb-0">${this._data.nickname}</h5>
+            <p class="mb-0 fs-6">@${this._data.username}</p>
           </div>
           <div class="d-flex flex-row align-items-center gap-2">
             <span class="online-status ${this._data.is_online ? 'online' : ''}"></span>
             ${this._data.is_online ? 'online' : 'offline'}
           </div>
         </div>
+      </div>
+
+      <div class="align-self-end">
+        <button class="btn" id="chat-invite-play-button">Invite to play</button>
+        <button class="btn" id="chat-block-user-button">Block</button>
+      </div>
+
       </div>
 
       <!-- Messages -->
