@@ -1,5 +1,6 @@
 import { ThemeController } from './ThemeController';
 import { isMobile } from './viewPort';
+import { showFormErrorFeedback } from './formFeedback';
 
 import {
   INPUT_FEEDBACK,
@@ -21,6 +22,7 @@ import {
 export {
   ThemeController,
   isMobile,
+  showFormErrorFeedback,
   INPUT_FEEDBACK,
   passwordFeedback,
   isFieldFilled,
