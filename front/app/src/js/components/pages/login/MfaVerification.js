@@ -44,7 +44,7 @@ export class MfaVerification extends HTMLElement {
   render() {
     this.innerHTML = `
         <div class="row justify-content-center m-4">
-          <div class="col-12 col-md-4"> 
+          <div class="form-container col-12 col-md-4 p-4"> 
             <div id="mfa-failed-feedback"></div>
             <div class="container d-flex flex-column justify-content-center align-items-center">
               <form class="w-100" id="mfa-verification-form">

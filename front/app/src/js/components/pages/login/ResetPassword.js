@@ -1,8 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { passwordFeedback } from '@utils';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { passwordFeedback, removeInputFeedback, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ResetPassword extends HTMLElement {
   #state = {
@@ -26,28 +25,32 @@ export class ResetPassword extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.template();
 
     this.passwordField = this.querySelector('#reset-password');
     this.passwordRepeatField = this.querySelector('#reset-password-repeat');
     this.passwordFeedback = this.querySelector('#reset-password-feedback');
     this.passwordRepeatFeedback = this.querySelector('#reset-password-repeat-feedback');
-    const submitButton = this.querySelector('#reset-password-submit');
+    this.submitButton = this.querySelector('#reset-password-submit');
 
-    submitButton.addEventListener('click', async (event) => {
-      event.preventDefault();
-      await this.handleResetPassword();
-    });
-    this.passwordField.addEventListener('input', this.removeInputFeedback);
-    this.passwordRepeatField.addEventListener('input', this.removeInputFeedback);
+    this.handleSubmit = (event) => this.handleResetPassword(event);
+    this.handlePasswordInput = (event) => removeInputFeedback(event, this.passwordFeedback);
+    this.handlePasswordRepeatInput = (event) => removeInputFeedback(event, this.passwordRepeatFeedback);
+
+    this.submitButton.addEventListener('click', this.handleSubmit);
+    this.passwordField.addEventListener('input', this.handlePasswordInput);
+    this.passwordRepeatField.addEventListener('input', this.handlePasswordRepeatInput);
   }
 
   disconnectedCallback() {
-    this.passwordField.removeEventListener('input', this.removeInputFeedback);
-    this.passwordRepeatField.removeEventListener('input', this.removeInputFeedback);
+    this.submitButton.removeEventListener('click', this.handleSubmit);
+    this.passwordField.removeEventListener('input', this.handlePasswordInput);
+    this.passwordRepeatField.removeEventListener('input', this.handlePasswordRepeatInput);
   }
 
-  async handleResetPassword() {
+  async handleResetPassword(event) {
+    event.preventDefault();
+    console.log('new password:', this.passwordField.value);
     if (!passwordFeedback(this.passwordField, this.passwordRepeatField,
         this.passwordFeedback, this.passwordRepeatFeedback)) {
       return;
@@ -59,8 +62,7 @@ export class ResetPassword extends HTMLElement {
         /* eslint-disable-next-line new-cap */
         API_ENDPOINTS.RESET_PASSWORD(this.#state.token),
         { password: this.#state.newPassword, password_repeat: this.#state.newPasswordRepeat },
-        false,
-        true,
+        false, false,
     );
     if (response.success) {
       const successMessage = 'Password reset successful. You can now login with your new password.';
@@ -70,11 +72,6 @@ export class ResetPassword extends HTMLElement {
       const errorMessage = response.message || 'Password reset failed. Please try again.';
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
     }
-  }
-
-  removeInputFeedback(event, feedbackField) {
-    event.target.classList.remove('is-invalid');
-    feedbackField.innerHTML = '';
   }
 
   template() {
