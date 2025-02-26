@@ -18,7 +18,7 @@ class OnlineStatusManager {
     }
 
     // Établir la connexion WebSocket
-    const wsUrl = `${wsProtocol}//${window.location.host}/wss/online/`;
+    const wsUrl = `wss://${window.location.host}/ws/online/`;
     
     this.socket = new WebSocket(wsUrl);
     
@@ -72,8 +72,12 @@ class OnlineStatusManager {
     };
     
     this.socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('❌ WebSocket connection error:', error);
+      // Vous pouvez ajouter plus de détails pour aider au débogage
+      console.log('Current location:', window.location.href);
+      console.log('WebSocket URL attempted:', wsUrl);
     };
+    
   }
   
   disconnect() {
