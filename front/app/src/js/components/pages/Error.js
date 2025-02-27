@@ -1,28 +1,31 @@
 import userNotFoundImage from '/img/sample404.png?url';
 
 export class Error extends HTMLElement {
+  #state = {
+    message: '',
+    status: 0,
+  };
+
   constructor() {
     super();
-    this.message = '';
-    this.status = 0;
   }
 
   setQueryParam(param) {
-    console.log('param: ', param);
-    for (const [key, value] of param.entries()) {
-      console.log(`${key}: ${value}`);
-    }
-    this.message = param.get('error');
-    this.status = param.get('code');
+    this.#state.message = param.get('error') || 'An error occurred';
+    this.#state.status = param.get('code') || '';
     this.render();
   }
 
   render() {
     this.innerHTML = this.template();
+
+    const status = this.querySelector('#error-status');
+    const message = this.querySelector('#error-message');
+    status.textContent = `Error: ${this.#state.status}`;
+    message.textContent = this.#state.message;
   }
 
   template() {
-    const message = this.message || 'An error occurred';
     return `
       <div class="d-flex flex-row justify-content-center align-items-stretch my-4 py-4 gap-3">
         <div class="image-container mx-2">
@@ -30,8 +33,8 @@ export class Error extends HTMLElement {
         </div>
         <div class="d-flex flex-column justify-content-around" mx-2">
           <div class="pt-6">
-            <h2>Error: ${this.status}</h2>
-	          <p>${message}</p>
+            <h2 id="error-status"></h2>
+	          <p id="error-message"></p>
           </div>
           <div class="pb-6">
             <a class="btn btn-primary" href="/home" role="button">Go back to Home</a>

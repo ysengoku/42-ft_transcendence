@@ -5,37 +5,44 @@ import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAG
 import './components/index.js';
 
 export class Settings extends HTMLElement {
+  #state = {
+    isLoggedIn: false,
+    username: '',
+    currentUserData: null,
+    newUserData: null,
+  };
+
   constructor() {
     super();
-    this.isLoggedIn = false;
-    this.username = '';
-    this.currentUserData = null;
-    this.newUserData = null;
+    this.handleSubmitClick = this.handleSubmitClick.bind(this);
+    this.handleResetClick = this.handleResetClick.bind(this);
   }
 
   async connectedCallback() {
     const user = auth.getStoredUser();
-    this.isLoggedIn = user ? true : false;
-    if (!this.isLoggedIn) {
+    this.#state.isLoggedIn = user ? true : false;
+    if (!this.#state.isLoggedIn) {
       showAlertMessageForDuration(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED, 5000);
       router.navigate('/');
       return;
     }
-    this.username = user.username;
+    this.#state.username = user.username;
     await this.fetchUserData();
-    this.newUserData = this.currentUserData;
+    this.#state.newUserData = this.#state.currentUserData;
+  }
+
+  disconnecteCallback() {
+    this.form.removeEventListener('submit', this.handleSubmitClick);
+    this.resetButton.removeEventListener('click', this.handleResetClick);
   }
 
   async fetchUserData() {
     /* eslint-disable-next-line new-cap */
-    const response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.username));
+    const response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.#state.username));
     if (response.success) {
       if (response.status === 200) {
-        this.currentUserData = response.data;
+        this.#state.currentUserData = response.data;
         this.render();
-        this.setParams();
-        this.setEventListener();
-        this.setupSubmitHandler();
       }
     } else {
       if (response.status === 401) {
@@ -49,7 +56,107 @@ export class Settings extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = `
+    this.innerHTML = this.template();
+
+    this.form = this.querySelector('form');
+    this.avatarUploadField = this.querySelector('avatar-upload');
+    this.userIdentityField = this.querySelector('settings-user-identity');
+    this.emailField = this.querySelector('settings-email-update');
+    this.passwordField = this.querySelector('settings-password-update');
+    this.mfaEnable = this.querySelector('mfa-enable-update');
+    this.deleteAccountButton = this.querySelector('delete-account-button');
+    this.resetButton = this.querySelector('#settings-reset-button');
+
+    this.setParams();
+
+    this.form.addEventListener('submit', this.handleSubmitClick);
+    this.resetButton.addEventListener('click', this.handleResetClick);
+  }
+
+  setParams() {
+    this.avatarUploadField.setAvatar(this.#state.currentUserData);
+    this.userIdentityField.setParams(this.#state.currentUserData);
+    this.emailField.setParams(this.#state.currentUserData);
+    this.passwordField.setParam(this.#state.currentUserData.connection_type);
+    this.mfaEnable.setParams(this.#state.currentUserData);
+    this.deleteAccountButton.setUsername(this.#state.currentUserData.username);
+  }
+
+  async handleSubmitClick(event) {
+    event.preventDefault();
+    this.handleSubmit();
+  }
+
+  async handleResetClick() {
+    if (confirm('Do you really want to discard the changes?')) {
+      this.setParams();
+    }
+  }
+
+  async handleSubmit() {
+    const userIdentity = this.userIdentityField.newUserIdentity;
+    const newEmail = this.emailField.newEmail;
+
+    if (!this.passwordField.checkPasswordInput()) {
+      return;
+    }
+
+    const avatarField = this.avatarUploadField.selectedFile;
+
+    const formData = new FormData();
+    if (userIdentity.username) {
+      formData.append('username', userIdentity.username);
+      this.#state.newUserData.username = userIdentity.username;
+    }
+    if (userIdentity.nickname) {
+      formData.append('nickname', userIdentity.nickname);
+      this.#state.newUserData.nickname = userIdentity.nickname;
+    }
+    if (newEmail) {
+      formData.append('email', newEmail);
+      this.#state.newUserData.email = newEmail;
+    }
+    const oldPassword = this.querySelector('#old-password');
+    const newPassword = this.querySelector('#new-password');
+    const newPasswordRepeat = this.querySelector('#new-password-repeat');
+    if (oldPassword.value && newPassword.value && newPasswordRepeat.value) {
+      formData.append('old_password', oldPassword.value);
+      formData.append('password', newPassword.value);
+      formData.append('password_repeat', newPasswordRepeat.value);
+    }
+    const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
+    const currentMfaEnabled = this.#state.currentUserData.mfa_enabled ? 'true' : 'false';
+    if (currentMfaEnabled !== mfaEnabled) {
+      formData.append('mfa_enabled', mfaEnabled);
+      this.#state.newUserData.mfa_enabled = mfaEnabled;
+    }
+    if (avatarField) {
+      formData.append('new_profile_picture', avatarField);
+    }
+
+    /* eslint-disable-next-line new-cap */
+    const response = await apiRequest('POST', API_ENDPOINTS.USER_SETTINGS(this.#state.username), formData, true);
+    if (response.success) {
+      this.#state.username = response.data.username;
+      this.#state.currentUserData = this.#state.newUserData;
+      this.#state.currentUserData.avatar = response.data.avatar;
+      auth.storeUser(this.#state.currentUserData);
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
+    } else {
+      console.log('Error updating settings', response);
+      if (response.status === 401) {
+        return;
+      }
+      let errorMsg = ALERT_MESSAGES.UNKNOWN_ERROR;
+      if (response.status === 413 || response.status === 422) {
+        errorMsg = response.msg + ' Cannot update.';
+      }
+      showAlertMessage(ALERT_TYPE.ERROR, errorMsg);
+    }
+  }
+
+  template() {
+    return `
 		<div class="container">
       <div class="row justify-content-center">
         <delete-account-confirmation-modal></delete-account-confirmation-modal>
@@ -86,110 +193,6 @@ export class Settings extends HTMLElement {
       </div>
     </div>
 		`;
-  }
-
-  setParams() {
-    const avatarUploadButton = this.querySelector('avatar-upload');
-    avatarUploadButton.setAvatar(this.currentUserData);
-
-    const userIdentity = this.querySelector('settings-user-identity');
-    userIdentity.setParams(this.currentUserData);
-
-    const emailField = this.querySelector('settings-email-update');
-    emailField.setParams(this.currentUserData);
-
-    const passwordField = this.querySelector('settings-password-update');
-    passwordField.setParam(this.currentUserData.connection_type);
-
-    const mfaEnable = this.querySelector('mfa-enable-update');
-    mfaEnable.setParams(this.currentUserData);
-
-    const deleteAccountButton = this.querySelector('delete-account-button');
-    deleteAccountButton.setUsername(this.currentUserData.username);
-  }
-
-  setEventListener() {
-    const resetButton = this.querySelector('#settings-reset-button');
-    resetButton.addEventListener('click', () => {
-      if (confirm('Do you really want to discard the changes?')) {
-        console.log('Resetting the form', this._user);
-        this.setParams(this._user);
-      }
-    });
-  }
-
-  setupSubmitHandler() {
-    const form = this.querySelector('form');
-    form.addEventListener('submit', (event) => {
-      event.preventDefault(); // Prevent the default behavior of browser (page reload)
-      this.handleSubmit();
-    });
-  }
-
-  async handleSubmit() {
-    const userIdentityField = this.querySelector('settings-user-identity');
-    const userIdentity = userIdentityField.newUserIdentity;
-    const emailField = this.querySelector('settings-email-update');
-    const newEmail = emailField.newEmail;
-
-    const passwordField = this.querySelector('settings-password-update');
-    if (!passwordField.checkPasswordInput()) {
-      return;
-    }
-
-    const avatarUploadField = this.querySelector('avatar-upload');
-    const avatarField = avatarUploadField.selectedFile;
-
-    const formData = new FormData();
-    if (userIdentity.username) {
-      formData.append('username', userIdentity.username);
-      this.newUserData.username = userIdentity.username;
-    }
-    if (userIdentity.nickname) {
-      formData.append('nickname', userIdentity.nickname);
-      this.newUserData.nickname = userIdentity.nickname;
-    }
-    if (newEmail) {
-      formData.append('email', newEmail);
-      this.newUserData.email = newEmail;
-    }
-    const oldPassword = this.querySelector('#old-password');
-    const newPassword = this.querySelector('#new-password');
-    const newPasswordRepeat = this.querySelector('#new-password-repeat');
-    if (oldPassword.value && newPassword.value && newPasswordRepeat.value) {
-      formData.append('old_password', oldPassword.value);
-      formData.append('password', newPassword.value);
-      formData.append('password_repeat', newPasswordRepeat.value);
-    }
-    const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
-    const currentMfaEnabled = this.currentUserData.mfa_enabled ? 'true' : 'false';
-    if (currentMfaEnabled !== mfaEnabled) {
-      formData.append('mfa_enabled', mfaEnabled);
-      this.newUserData.mfa_enabled = mfaEnabled;
-    }
-    if (avatarField) {
-      formData.append('new_profile_picture', avatarField);
-    }
-
-    /* eslint-disable-next-line new-cap */
-    const response = await apiRequest('POST', API_ENDPOINTS.USER_SETTINGS(this.username), formData, true);
-    if (response.success) {
-      this.username = response.data.username;
-      this.currentUserData = this.newUserData;
-      this.currentUserData.avatar = response.data.avatar;
-      auth.storeUser(this.currentUserData);
-      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
-    } else {
-      console.log('Error updating settings', response);
-      if (response.status === 401) {
-        return;
-      }
-      let errorMsg = ALERT_MESSAGES.UNKNOWN_ERROR;
-      if (response.status === 413 || response.status === 422) {
-        errorMsg = response.msg + ' Cannot update.';
-      }
-      showAlertMessage(ALERT_TYPE.ERROR, errorMsg);
-    }
   }
 }
 
