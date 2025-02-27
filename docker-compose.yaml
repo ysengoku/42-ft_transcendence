@@ -42,8 +42,11 @@ services:
       DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME}
       DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL}
       DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - database
+      - redis
     volumes:
       - ./server:/app
       - static_volume:/app/static
@@ -91,8 +94,21 @@ services:
     networks:
       - transcendance_network
 
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+    - "6380:6379"
+    volumes:
+    - redis_data:/data
+    networks:
+      - transcendance_network
+
 # shared volumes for all services, and between host and containers. better to mount volumes without bind: docker managed the persistence
 volumes:
+  redis_data:
+    name: redis_data
+    
   db_volume:
     name: db_volume
 
