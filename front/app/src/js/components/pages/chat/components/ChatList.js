@@ -28,7 +28,7 @@ export class ChatList extends HTMLElement {
   render() {
     this.innerHTML = `
 	  <div class="border-end d-flex flex-column h-100 overflow-auto">
-      <h5 class="py-3">Conversations</h5>
+      <h5 class="pt-3">Conversations</h5>
       <ul class="list-group flex-grow-1 overflow-auto" id="chat-list">
           <chat-list-item-component></chat-list-item-component>
         </ul>

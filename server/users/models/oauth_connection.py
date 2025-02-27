@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
 import cv2
@@ -139,3 +140,108 @@ class OauthConnection(models.Model):
             self.save_cartoon_avatar(self.avatar_url, self.user)
 
         self.save()
+
+    def request_access_token(self, config: dict, code: str) -> tuple:
+        """
+        Requests an access token from the OAuth provider.
+        Returns a tuple (access_token, None) if successful.
+        Returns a tuple (None, (error_message, status_code)) on failure.
+        """
+        try:
+            token_response = requests.post(
+                config["token_uri"],
+                data={
+                    "client_id": config["client_id"],
+                    "client_secret": config["client_secret"],
+                    "code": code,
+                    "redirect_uri": config["redirect_uris"][0],
+                    "grant_type": "authorization_code",
+                },
+                headers={"Accept": "application/json"},
+                timeout=10,
+            )
+
+            token_data = token_response.json()
+
+            if token_response.status_code != 200 or "access_token" not in token_data:  # noqa: PLR2004
+                provider_error = token_data.get("error", "unknown_error")
+                is_app_error = provider_error in ["invalid_request", "invalid_client", "invalid_grant"]
+                error_message = f"Provider error: {provider_error}"
+                status_code = 503 if is_app_error else 401
+                return None, (error_message, status_code)
+
+            return token_data["access_token"], None
+
+        except requests.exceptions.Timeout:
+            error_message = "The request timed out while retrieving the access token."
+            return None, (error_message, 408)
+        except requests.exceptions.JSONDecodeError:
+            error_message = "Invalid JSON response from authorization server"
+            return None, (error_message, 422)
+
+    def get_user_info(self, config: dict, access_token: str) -> tuple:
+        """
+        Gets user information from the OAuth provider using the access token.
+        Returns a tuple (user_info, None) if successful.
+        Returns a tuple (None, (error_message, status_code)) on failure.
+        """
+        try:
+            user_response = requests.get(
+                config["user_info_uri"],
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=10,
+            )
+
+            if user_response.status_code != 200:  # noqa: PLR2004
+                error_data = user_response.json()
+                provider_error = error_data.get("error", "api_error")
+                error_message = provider_error if provider_error else "api_error"
+                return None, (error_message, 401)
+
+            return user_response.json(), None
+
+        except requests.exceptions.Timeout:
+            error_message = "The request timed out while retrieving user information."
+            return None, (error_message, 408)
+        except requests.exceptions.ConnectionError:
+            error_message = "Failed to connect to the server while retrieving user information."
+            return None, (error_message, 503)
+
+    def check_state_and_validity(self, platform: str, state: str) -> tuple:
+        """
+        Checks if the state is valid and not expired.
+        Returns None if valid.
+        Returns a tuple (error_message, status_code) if invalid.
+        """
+        now = datetime.now(timezone.utc)
+        if self.date + timedelta(minutes=5) < now:
+            return "Expired state: authentication request timed out", 408
+
+        if state != self.state or platform != self.connection_type:
+            return "Invalid state or platform", 422
+
+        return None
+
+    def create_or_update_user(self, user_info: dict) -> tuple:
+        """
+        Creates or updates a user based on OAuth user info.
+        Returns a tuple (user, None) if successful.
+        Returns a tuple (None, (error_message, status_code)) on failure.
+        """
+        from users.models.user import User
+
+        user = User.objects.for_oauth_id(user_info["id"]).first()
+        if not user:
+            user = User.objects.validate_and_create_user(
+                username=user_info.get("login"),
+                oauth_connection=self,
+            )
+            if not user:
+                return None, ("Failed to create user in database.", 503)
+        else:
+            old_oauth_connection = user.get_oauth_connection()
+            if old_oauth_connection:
+                old_oauth_connection.delete()
+
+        self.set_connection_as_connected(user_info, user)
+        return user, None
