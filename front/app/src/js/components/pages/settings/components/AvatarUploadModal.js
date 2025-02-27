@@ -82,25 +82,28 @@ export class AvatarUploadModal extends HTMLElement {
 		<div class="modal fade" tabindex="-1" aria-labelledby="avatar-upload-modal-label" aria-hidden="true" id="avatar-upload-modal">
 			<div class="modal-dialog modal-dialog-centered">
 				<div class="modal-content">
+
 					<div class="modal-header">
 						<h5 class="modal-title">Upload Avatar</h5>
 					</div>
+
 					<div class="modal-body">
-        				<div class="avatar-preview-container">
-         					<div class="avatar-wrapper">
-            					<img id="avatar-upload-preview" src="${avatarPlaceholder}" alt="Avatar Preview" class="avatar-preview">
-        					</div>
-        				</div>
-						<div class="mb-3">
-  							<label for="avatar-upload-input" class="form-label">Select file</label>
-  							<input class="form-control" type="file" id="avatar-upload-input" accept="image/*" readonly>
-							<div class='invalid-feedback' id='avatar-feedback'></div>
+        		<div class="avatar-preview-container">
+         			<div class="avatar-wrapper">
+            		<img id="avatar-upload-preview" src="${avatarPlaceholder}" alt="Avatar Preview" class="avatar-preview">
+        			</div>
+            </div>
+					  <div class="mb-3">
+  					  <label for="avatar-upload-input" class="form-label">Select file</label>
+  					  <input class="form-control" type="file" id="avatar-upload-input" accept="image/jpeg, image/png, image/webp" readonly>
+						  <div class='invalid-feedback' id='avatar-feedback'></div>
 						</div>
 					</div>
+
 					<div class="modal-footer">
-        				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-avatar-upload">Close</button>
-        				<button type="button" class="btn btn-primary" id="confirm-avatar-button">Confirm</button>
-      				</div>
+        		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-avatar-upload">Close</button>
+        		<button type="button" class="btn btn-primary" id="confirm-avatar-button">Confirm</button>
+      		</div>
 				</div>
 			</div>
 		</div>

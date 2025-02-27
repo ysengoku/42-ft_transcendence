@@ -3,29 +3,41 @@ import { auth } from '@auth';
 import './components/index.js';
 
 export class Home extends HTMLElement {
+  #state = {
+    isLoggedin: false,
+    user: null,
+  };
+
   constructor() {
     super();
-    this.isLoggedin = false;
-    this.user = null;
   }
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    this.isLoggedin = authStatus.success;
-    this.user = auth.getStoredUser();
+    this.#state.isLoggedin = authStatus.success;
+    this.#state.user = auth.getStoredUser();
     this.render();
   }
 
   render() {
-    if (!this.isLoggedin) {
+    if (!this.#state.isLoggedin) {
       router.navigate('/');
       return;
     }
+    this.innerHTML = this.style() + this.template();
 
-    // Temporary content
-    this.innerHTML = `
+    const nicknameField = this.querySelector('#home-nickname');
+    nicknameField.textContent = 'Welcome, ' + this.#state.user.nickname;
+
+    const profileButton = this.querySelector('home-profile-button');
+    profileButton.username = this.#state.user.username;
+  }
+
+  // Temporary content
+  template() {
+    return `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center my-3">
-			<h1>Welcome, ${this.user.nickname}</h1>
+			<div id="home-nickname"></div>
 			<p>This is futur Home  ("hub?")</p>
 			<div class="d-flex flex-column justify-content-center align-items-center grid gap-4 row-gap-4">
 				<home-dual-button></home-dual-button>
@@ -36,9 +48,16 @@ export class Home extends HTMLElement {
 			</div>
 		</div>
 		`;
+  }
 
-    const profileButton = this.querySelector('home-profile-button');
-    profileButton.username = this.user.username;
+  style() {
+    return `
+    <style>
+      #home-nickname {
+        font-size: 3rem;
+      }
+    </style>
+    `;
   }
 }
 
