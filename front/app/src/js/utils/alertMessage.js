@@ -25,10 +25,18 @@ export function showAlertMessage(type, message) {
     const alertMessage = document.createElement('div');
     alertMessage.className = `alert ${type} alert-dismissible fade show`;
     alertMessage.role = 'alert';
-    alertMessage.innerHTML = `
-      ${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      `;
+
+    const alertContent = document.createElement('div');
+    alertContent.textContent = message;
+
+    const dismissButton = document.createElement('button');
+    dismissButton.type = 'button';
+    dismissButton.className = 'btn-close';
+    dismissButton.setAttribute('data-bs-dismiss', 'alert');
+    dismissButton.setAttribute('aria-label', 'close');
+
+    alertMessage.appendChild(alertContent);
+    alertMessage.appendChild(dismissButton);
     alertContainer.appendChild(alertMessage);
   }
 }

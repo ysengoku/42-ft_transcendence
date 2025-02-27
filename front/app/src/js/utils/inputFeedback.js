@@ -4,6 +4,7 @@ export const INPUT_FEEDBACK = {
   EMPTY_OLD_PASSWORD: `Old password is required`,
   EMPTY_PASSWORD: `Password is required`,
   EMPTY_PASSWORD_REPEAT: `Please confirm your password`,
+  INVALID_EMAIL: `Invalid email address`,
   PASSWORD_TOO_SHORT: `Password must be at least 8 characters`,
   PASSWORDS_NOT_MATCH: `Passwords do not match`,
   CANNOT_DELETE_USERNAME: `You cannot delete username.`,
@@ -19,6 +20,20 @@ export function isFieldFilled(field, feedbackFeeld, errorMessage) {
   } else {
     return true;
   }
+}
+
+export function emailFeedback(emailField, feedbackField) {
+  if (!isFieldFilled(emailField, feedbackField, INPUT_FEEDBACK.EMPTY_EMAIL)) {
+    return false;
+  }
+  const email = emailField.value;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValid = emailRegex.test(email);
+  if (!isValid) {
+    emailField.classList.add('is-invalid');
+    feedbackField.textContent = INPUT_FEEDBACK.INVALID_EMAIL;
+  }
+  return isValid;
 }
 
 export function passwordFeedback(passwordField, passwordRepeatField, feedbackField, feedbackRepeatField) {

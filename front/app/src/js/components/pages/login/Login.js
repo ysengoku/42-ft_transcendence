@@ -15,24 +15,32 @@ export class Login extends HTMLElement {
       router.navigate('/home');
     }
     this.render();
-    this.setEventListeners();
   }
 
-  setEventListeners() {
-    const forgotPasswordButton = this.querySelector('#forgot-password-button');
-    forgotPasswordButton.addEventListener('click', () => {
-      console.log('forgot password button clicked');
-      router.navigate('/forgot-password');
-    });
-
-    const registerButton = this.querySelector('#link-to-register');
-    registerButton.addEventListener('click', () => {
-      router.navigate('/register');
-    });
+  disconnectedCallback() {
+    this.forgotPasswordButton.removeEventListener('click', this.handleForgotPasswordClick);
+    this.registerButton.removeEventListener('click', this.handleRegisterClick);
   }
 
   render() {
-    this.innerHTML = `
+    this.innerHTML = this.template();
+
+    this.forgotPasswordButton = this.querySelector('#forgot-password-button');
+    this.registerButton = this.querySelector('#link-to-register');
+
+    this.handleForgotPasswordClick = () => {
+      router.navigate('/forgot-password');
+    };
+    this.handleRegisterClick = () => {
+      router.navigate('/register');
+    };
+
+    this.forgotPasswordButton.addEventListener('click', this.handleForgotPasswordClick);
+    this.registerButton.addEventListener('click', this.handleRegisterClick);
+  }
+
+  template() {
+    return `
       <div class="container my-3">
         <div class="row justify-content-center py-4">
           <div class="form-container col-12 col-md-4 p-4"> 

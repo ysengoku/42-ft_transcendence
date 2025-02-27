@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessage, ALERT_TYPE } from '@utils';
-import { isFieldFilled, removeInputFeedback, INPUT_FEEDBACK } from '@utils';
+import { emailFeedback, removeInputFeedback, sanitizeHtml } from '@utils';
 
 export class ForgotPassword extends HTMLElement {
   #state = {
@@ -19,6 +19,12 @@ export class ForgotPassword extends HTMLElement {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.submitButton.removeEventListener('click', this.handlePasswordResetRequest);
+    this.cancelButton.removeEventListener('click', this.handleCancelButton);
+    this.emailField.removeEventListener('input', this.handleRemoveInputFeedback);
+  }
+
   render() {
     this.innerHTML = this.template();
 
@@ -32,15 +38,9 @@ export class ForgotPassword extends HTMLElement {
     this.emailField.addEventListener('input', this.handleRemoveInputFeedback);
   }
 
-  disconnectedCallback() {
-    this.submitButton.removeEventListener('click', this.handlePasswordResetRequest);
-    this.cancelButton.removeEventListener('click', this.handleCancelButton);
-    this.emailField.removeEventListener('input', this.handleRemoveInputFeedback);
-  }
-
   async handlePasswordResetRequest(event) {
     event.preventDefault();
-    if (!isFieldFilled(this.emailField, this.emailFeedbackField, INPUT_FEEDBACK.EMPTY_EMAIL)) {
+    if (!emailFeedback(this.emailField, this.emailFeedbackField)) {
       return;
     }
     this.#state.email = this.emailField.value;
@@ -58,6 +58,10 @@ export class ForgotPassword extends HTMLElement {
 
   renderEmailSentMessage() {
     this.innerHTML = this.emailSentTemplate();
+
+    const email = sanitizeHtml(this.#state.email);
+    const inputEmail = this.querySelector('#user-input-email');
+    inputEmail.textContent = email;
 
     const resendButton = this.querySelector('#resend-email');
     resendButton.addEventListener('click', async (event) => {
@@ -111,18 +115,18 @@ export class ForgotPassword extends HTMLElement {
   emailSentTemplate() {
     return `
     <div class="container my-3">
-      <div class="row justify-content-center py-4">
-        <div class="col-12 col-md-4 text-center">
-          <p class="fs-4 mb-2">Check your email</p>
-          <p class="m-0">We sent a password reset link to </p>
-          <strong>${this.#state.email}</strong></br>
-          <div class="mt-3">
-            <small>If this email address exists in our system, you will receive it shortly.</small>
-          </div>
-          <button class="btn w-100 mt-3" type="submit" id="resend-email">
-            Don't receive email? <strong>Click to resend.</strong>
-          </button>
-        </div>
+    <div class="row justify-content-center py-4">
+    <div class="form-container col-12 col-md-4 text-center py-4">
+    <p class="fs-4 my-2">Check your email</p>
+    <p class="m-0">We sent a password reset link to </p>
+    <strong id="user-input-email"></strong></br>
+    <div class="mt-4 mb-5">
+    <small>If this email address exists in our system, you will receive it shortly.</small>
+    </div>
+    <button class="btn w-100 mt-3" type="submit" id="resend-email">
+    Don't receive email? <strong>Click to resend.</strong>
+    </button>
+    </div>
     </div>
     `;
   }
