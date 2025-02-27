@@ -38,7 +38,6 @@ export class UserProfile extends HTMLElement {
   }
 
   render() {
-    const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
     // --- For rendering test ------
     // this.user.is_blocked = true;
     // -----------------------------
@@ -51,60 +50,65 @@ export class UserProfile extends HTMLElement {
     this.loggedInUsername = JSON.parse(storedUser).username;
 
     // Online status
-    const onlineStatus = document.createElement('profile-online-status');
-    onlineStatus.setAttribute('online', this.user.is_online);
+    this.onlineStatus = document.createElement('profile-online-status');
+    this.onlineStatus.setAttribute('online', this.user.is_online);
 
-    this.innerHTML = `
-    <style>
-      .poster {
-        color: black;
-        background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(222, 184, 135, 1) 100%);
-        filter: sepia(20%) contrast(90%) brightness(95%);
-        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.3);
-        /*background-image: url(${poster});
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;*/
-      }
-      .online-status-indicator {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background-color: gray;
-        display: inline-block;
-      }
-      .online-status-indicator.online {
-        background-color: green;
-      }
-      hr {
-        height: 0;
-        margin: 0;
-        padding: 0;
-        border: 0;
-      }
-      .line {
-        border-top: 4px double #594639;
-        opacity: 1;
-      }
-      .graph-container {
-       background-color:rgba(0, 0,0, 0.1);
-      }
-      .enemies-container {
-        height: 224px;
-      }
-      .enemy-container {
-        background-color: rgba(0, 0, 0, 0.1);
-        corner-radius: 8px;
-      }
-      .no-margin {
-        margin: 0;
-      }
-      .row.no-gutters > [class*='col-'] {
-        padding-right: 0;
-        padding-left: 0;
-      }
-    </style>
+    this.innerHTML = this.style() + this.template();
 
+    const profileAvatar = this.querySelector('profile-avatar');
+    if (profileAvatar) {
+      profileAvatar.avatarUrl = this.user.avatar;
+    }
+
+    const profileUserInfo = this.querySelector('profile-user-info');
+    if (profileUserInfo) {
+      profileUserInfo.data = {
+        username: this.user.username,
+        nickname: this.user.nickname,
+        join_date: this.user.date_joined,
+        titre: this.user.titre,
+      };
+    }
+
+    const profileUserActions = this.querySelector('profile-user-actions');
+    if (profileUserActions) {
+      profileUserActions.data = {
+        loggedInUsername: this.loggedInUsername,
+        shownUsername: this.user.username,
+        isFriend: this.user.is_friend,
+        isBlocked: this.user.is_blocked_user,
+      };
+    }
+
+    const userWinRatePieGraph = this.querySelector('user-win-rate-pie-graph');
+    if (userWinRatePieGraph) {
+      userWinRatePieGraph.data = {
+        rate: this.user.winrate,
+        wins: this.user.wins,
+        losses: this.user.loses,
+      };
+    }
+
+    const bestEnemyComponent = document.querySelector('user-enemy-component[type="best"]');
+    const worstEnemyComponent = document.querySelector('user-enemy-component[type="worst"]');
+    if (bestEnemyComponent) {
+      bestEnemyComponent.data = this.user.best_enemy;
+    }
+    if (worstEnemyComponent) {
+      worstEnemyComponent.data = this.user.worst_enemy;
+    }
+
+    const gameHistory = this.querySelector('user-game-history');
+    if (gameHistory) {
+      gameHistory.data = {
+        matches: this.user.match_history,
+        // tournaments: = this.user.tournament_history
+      };
+    }
+  }
+
+  template() {
+    return `
     <div class="container-fluid flex-grow-1 d-grid">
       <div class="row">
 
@@ -116,7 +120,7 @@ export class UserProfile extends HTMLElement {
             <div class="mb-3 w-100 text-center px-2 pt-3">
               <div class="d-flex flex-row align-items-center">
                 <hr class="line flex-grow-1">  
-                ${onlineStatus.outerHTML}
+                ${this.onlineStatus.outerHTML}
                 <hr class="line flex-grow-1">
               </div>
               <h1>WANTED</h1>
@@ -180,57 +184,65 @@ export class UserProfile extends HTMLElement {
         </div>
       </div>
     </div>`;
+  }
 
-    const profileAvatar = this.querySelector('profile-avatar');
-    if (profileAvatar) {
-      profileAvatar.avatarUrl = this.user.avatar;
-    }
+  style() {
+    const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
 
-    const profileUserInfo = this.querySelector('profile-user-info');
-    if (profileUserInfo) {
-      profileUserInfo.data = {
-        username: this.user.username,
-        nickname: this.user.nickname,
-        join_date: this.user.date_joined,
-        titre: this.user.titre,
-      };
+    return `
+    <style>
+    .poster {
+      color: black;
+      background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(222, 184, 135, 1) 100%);
+      filter: sepia(20%) contrast(90%) brightness(95%);
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.3);
+      /*background-image: url(${poster});
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;*/
     }
-
-    const profileUserActions = this.querySelector('profile-user-actions');
-    if (profileUserActions) {
-      profileUserActions.data = {
-        loggedInUsername: this.loggedInUsername,
-        shownUsername: this.user.username,
-        isFriend: this.user.is_friend,
-        isBlocked: this.user.is_blocked_user,
-      };
+    .online-status-indicator {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: gray;
+      display: inline-block;
     }
-
-    const userWinRatePieGraph = this.querySelector('user-win-rate-pie-graph');
-    if (userWinRatePieGraph) {
-      userWinRatePieGraph.data = {
-        rate: this.user.winrate,
-        wins: this.user.wins,
-        losses: this.user.loses,
-      };
+    .online-status-indicator.online {
+      background-color: green;
     }
-
-    const bestEnemyComponent = document.querySelector('user-enemy-component[type="best"]');
-    const worstEnemyComponent = document.querySelector('user-enemy-component[type="worst"]');
-    if (bestEnemyComponent) {
-      bestEnemyComponent.data = this.user.best_enemy;
+    h1{
+      font-family: 'Texas Tango Extra Roth', serif;
     }
-    if (worstEnemyComponent) {
-      worstEnemyComponent.data = this.user.worst_enemy;
+    hr {
+      height: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
     }
-
-    const gameHistory = this.querySelector('user-game-history');
-    if (gameHistory) {
-      gameHistory.data = {
-        matches: this.user.match_history,
-        // tournaments: = this.user.tournament_history
-      };
+    .line {
+      border-top: 4px double #594639;
+      opacity: 1;
     }
+    .graph-container {
+     background-color:rgba(0, 0,0, 0.1);
+    }
+    .enemies-container {
+      height: 224px;
+    }
+    .enemy-container {
+      background-color: rgba(0, 0, 0, 0.1);
+      corner-radius: 8px;
+    }
+    .no-margin {
+      margin: 0;
+    }
+    .row.no-gutters > [class*='col-'] {
+      padding-right: 0;
+      padding-left: 0;
+    }
+    </style>
+  `;
   }
 }
 

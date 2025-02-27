@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { isFieldFilled, removeInputFeedback, INPUT_FEEDBACK } from '@utils';
+import { isFieldFilled, removeInputFeedback, INPUT_FEEDBACK, showFormErrorFeedback } from '@utils';
 
 export class LoginForm extends HTMLElement {
   constructor() {
@@ -67,13 +67,7 @@ export class LoginForm extends HTMLElement {
         }
       }
     } else {
-      const feedback = document.querySelector('#login-failed-feedback');
-      feedback.innerHTML = `
-        <div class="alert alert-danger alert-dismissible" role="alert">
-          ${response.msg}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
+      showFormErrorFeedback(document.querySelector('#login-failed-feedback'), response.msg);
     }
   }
 
