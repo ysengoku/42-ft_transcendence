@@ -20,6 +20,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({"message": "Welcome!"}))
 
     async def disconnect(self, close_code):
+        self.should_run = False
         await self.channel_layer.group_discard(self.match_group_name, self.channel_name)
 
     async def receive(self, text_data):
