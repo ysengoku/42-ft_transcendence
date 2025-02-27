@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showErrorMessage, ERROR_MESSAGES } from '@utils';
+import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 import './components/index.js';
 // import { simulateFetchUserData } from '@mock/functions/simulateFetchUserData.js';
 
@@ -17,7 +17,7 @@ export class Settings extends HTMLElement {
     const user = auth.getStoredUser();
     this.isLoggedIn = user ? true : false;
     if (!this.isLoggedIn) {
-      showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+      showAlertMessageForDuration(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED, 5000);
       router.navigate('/');
       return;
     }
@@ -32,14 +32,18 @@ export class Settings extends HTMLElement {
       if (response.status === 200) {
         this.user = response.data;
         // this.user.connection_type = '42'; // mock data
+        // this.user.connection_type = 'regular'; // mock data
         this.render();
+        this.setParams(this.user);
+        this.setEventListener();
+        this.setupSubmitHandler();
       }
     } else {
       if (response.status === 401) {
-        showErrorMessageForDuration(ERROR_MESSAGES.SESSION_EXPIRED, 5000);
+        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/');
       } else if (response.status === 403) {
-        showErrorMessage(ERROR_MESSAGES.UNKNOWN_ERROR);
+        showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
         router.navigate('/home');
       }
     }
@@ -56,7 +60,7 @@ export class Settings extends HTMLElement {
 					    <avatar-upload></avatar-upload>
 				    </div>
 				    <div>
-              <settings-user-info></settings-user-info>
+              <settings-user-identity></settings-user-identity>
 				    </div>
             <div>
               <settings-email-update></settings-email-update></div>
@@ -68,8 +72,8 @@ export class Settings extends HTMLElement {
 				    </div>
             
 				    <div class="mt-5 pb-5 border-bottom">
-					    <a class="btn btn-outline-primary" href="/profile/${this.user.username}" role="button">Cancel</a>
-					    <button type="submit" id="settingsSubmit" class="btn btn-primary mx-2">Save changes</button>
+              <button type="reset" class="btn btn-outline-primary mx-2" id="settings-reset-button">Reset</button>
+					    <button type="submit" class="btn btn-primary mx-2">Save changes</button>
 				    </div>
 
 				    <div class="mt-4 mb-3">
@@ -82,22 +86,35 @@ export class Settings extends HTMLElement {
       </div>
     </div>
 		`;
+  }
 
+  setParams(user) {
     const avatarUploadButton = this.querySelector('avatar-upload');
     avatarUploadButton.setAvatar(this.user);
-    const userNames = this.querySelector('settings-user-info');
-    userNames.setParams(this.user);
+
+    const userIdentity = this.querySelector('settings-user-identity');
+    userIdentity.setParams(this.user);
+
     const emailField = this.querySelector('settings-email-update');
     emailField.setParams(this.user);
+
     const passwordField = this.querySelector('settings-password-update');
     passwordField.setParam(this.user.connection_type);
+
     const mfaEnable = this.querySelector('mfa-enable-update');
     mfaEnable.setParams(this.user);
 
     const deleteAccountButton = this.querySelector('delete-account-button');
     deleteAccountButton.setUsername(this.user.username);
+  }
 
-    this.setupSubmitHandler();
+  setEventListener() {
+    const resetButton = this.querySelector('#settings-reset-button');
+    resetButton.addEventListener('click', () => {
+      if (confirm('Do you really want to discard the changes?')) {
+        this.setParams(this._user);
+      }
+    });
   }
 
   setupSubmitHandler() {
@@ -109,8 +126,8 @@ export class Settings extends HTMLElement {
   }
 
   async handleSubmit() {
-    const userInfoField = this.querySelector('settings-user-info');
-    const userInfo = userInfoField.newUserInfo;
+    const userIdentityField = this.querySelector('settings-user-identity');
+    const userIdentity = userIdentityField.newUserIdentity;
     const emailField = this.querySelector('settings-email-update');
     const newEmail = emailField.newEmail;
 
@@ -123,38 +140,51 @@ export class Settings extends HTMLElement {
     const avatarField = avatarUploadField.selectedFile;
 
     const formData = new FormData();
-    // If there are any changes, append to formData
-    if (userInfo.username) {
-      formData.append('username', userInfo.username);
+    if (userIdentity.username) {
+      formData.append('username', userIdentity.username);
     }
-    if (userInfo.nickname) {
-      formData.append('nickname', userInfo.nickname);
+    if (userIdentity.nickname) {
+      formData.append('nickname', userIdentity.nickname);
     }
     if (newEmail) {
       formData.append('email', newEmail);
     }
-    // If there is password change request, append to formData
     const oldPassword = this.querySelector('#old-password');
     const newPassword = this.querySelector('#new-password');
     const newPasswordRepeat = this.querySelector('#new-password-repeat');
     if (oldPassword.value && newPassword.value && newPasswordRepeat.value) {
-      formData.append('old-password', oldPassword);
-      formData.append('password', newPassword);
-      formData.append('password-repeat', newPasswordRepeat);
+      formData.append('old_password', oldPassword.value);
+      formData.append('password', newPassword.value);
+      formData.append('password_repeat', newPasswordRepeat.value);
     }
-
-    // TODO: Check if 2FA enabled status changed, if yes append to formData
-    // formData.append('mfa-enabled', this.querySelector('#mfa-switch-check').checked);
-
+    // TODO: Test if it works after merge
+    const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
+    const currentMfaEnabled = this.user.mfa_enabled ? 'true' : 'false';
+    if (currentMfaEnabled !== mfaEnabled) {
+      formData.append('mfa_enabled', mfaEnabled);
+    }
     if (avatarField) {
-      formData.append('avatar', avatarField);
+      formData.append('new_profile_picture', avatarField);
     }
-    // for (let [key, value] of formData.entries()) {
-    //   console.log(key, value);
-    // }
 
-    // const response = await apiRequest('POST', 'endpoint', formData, true);
-    // handle response
+    /* eslint-disable-next-line new-cap */
+    const response = await apiRequest('POST', API_ENDPOINTS.USER_SETTINGS(this.username), formData, true);
+    if (response.success) {
+      this.user = response.data;
+      this.username = response.data.username;
+      auth.storeUser(this.user);
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
+    } else {
+      console.log('Error updating settings', response);
+      if (response.status === 401) {
+        return;
+      }
+      let errorMsg = ALERT_MESSAGES.UNKNOWN_ERROR;
+      if (response.status === 413 || response.status === 422) {
+        errorMsg = response.msg + ' Cannot update.';
+      }
+      showAlertMessage(ALERT_TYPE.ERROR, errorMsg);
+    }
   }
 }
 

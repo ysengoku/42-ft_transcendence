@@ -22,6 +22,6 @@ import pong.routing as pong  # noqa: E402
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": AllowedHostsOriginValidator(URLRouter(chat.websocket_urlpatterns + pong.websocket_urlpatterns)),
+        "websocket": AllowedHostsOriginValidator(URLRouter(chat_routes + pong_routes)),
     },
 )

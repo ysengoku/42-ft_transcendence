@@ -1,0 +1,55 @@
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Chat Room</title>
+</head>
+<body>
+    <textarea id="match-log" cols="100" rows="20"></textarea><br>
+    <input id="match-message-input" type="text" size="100"><br>
+    <input id="match-message-submit" type="button" value="Send">
+    {{ match_name|json_script:"match-name" }}
+    <input id="match-message-close" type="button" value="Close">
+    <script>
+        const matchName = JSON.parse(document.getElementById('match-name').textContent);
+
+        const pong = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/pong/'
+            + matchName
+            + '/'
+        );
+
+
+        pong.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#match-log').value += (data.message + '\n');
+        };
+
+        pong.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#match-message-input').focus();
+        document.querySelector('#match-message-input').onkeyup = function(e) {
+            if (e.key === 'Enter') {  // enter, return
+                document.querySelector('#match-message-submit').click();
+            }
+        };
+
+        document.querySelector('#match-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#match-message-input');
+            const message = messageInputDom.value;
+            pong.send(JSON.stringify({
+                'message': message
+            }));
+            messageInputDom.value = '';
+        };
+        document.querySelector('#match-message-close').onclick = function(e) {
+            pong.close(1000);
+        };
+    </script>
+</body>
+</html>

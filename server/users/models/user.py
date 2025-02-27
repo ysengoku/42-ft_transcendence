@@ -1,4 +1,5 @@
 import uuid
+from functools import cache
 
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
@@ -21,6 +22,12 @@ class UserManager(BaseUserManager):
     def for_id(self, user_id: str):
         return self.filter(id=user_id)
 
+    def has_mfa_enabled(self, identifier: str):
+        return self.filter(
+            Q(username__iexact=identifier) | Q(email=identifier),
+            mfa_enabled=True,
+        ).exists()
+
     def for_oauth_id(self, oauth_id: str):
         return self.filter(oauth_connection__oauth_id=oauth_id)
 
@@ -29,6 +36,12 @@ class UserManager(BaseUserManager):
 
     def for_username(self, username: str):
         return self.filter(username__iexact=username)
+
+    def for_forgot_password_token(self, token: str):
+        return self.filter(forgot_password_token=token)
+
+    def for_mfa_token(self, token: str):
+        return self.filter(mfa_token=token)
 
     def fill_user_data(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         username = AbstractUser.normalize_username(username)
@@ -84,7 +97,10 @@ class User(AbstractUser):
     email = models.EmailField(blank=True, default="")
     password = models.CharField(max_length=128, blank=True, default="")
     mfa_enabled = models.BooleanField(default=False)
-    mfa_secret = models.CharField(max_length=128, blank=True, default="")
+    forgot_password_token = models.CharField(max_length=128, blank=True, default="")
+    forgot_password_token_date = models.DateTimeField(blank=True, null=True)
+    mfa_token = models.CharField(max_length=128, blank=True, default="")
+    mfa_token_date = models.DateTimeField(blank=True, null=True)
 
     objects = UserManager()
 
@@ -134,7 +150,7 @@ class User(AbstractUser):
             err_dict = merge_err_dicts(err_dict, {"password": ["Please enter your new password."]})
 
         if data.password and data.password_repeat:
-            is_old_password_valid = self.check_password(password=data.old_password)
+            is_old_password_valid = self.check_password(data.old_password)
             if not is_old_password_valid:
                 raise PermissionDenied
             if data.old_password == data.password:
@@ -154,6 +170,9 @@ class User(AbstractUser):
         for key, val in data:
             if val and hasattr(self, key):
                 setattr(self, key, val)
+
+        if data.mfa_enabled is False:
+            self.mfa_enabled = False
 
         exclude = set()
         if not data.email:

@@ -2,7 +2,7 @@ with import <nixpkgs> {};
 mkShell {
   venvDir = "./server/.venv";
   buildInputs = with pkgs; [
-    python310Packages.python
+    python310
     python310Packages.venvShellHook
     python310Packages.python-lsp-server
     python310Packages.ruff
@@ -15,6 +15,7 @@ mkShell {
   '';
   postShellHook = ''
     # allow pip to install wheels
+    export LD_LIBRARY_PATH+=${stdenv.cc.cc.lib}/lib/
     unset SOURCE_DATE_EPOCH
   '';
 }
