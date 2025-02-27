@@ -40,13 +40,13 @@ jobs:
         run: |
           ruff check --fix ./users
           ruff format ./users
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install ruff
           pip install -r server/requirements.txt
-
+          
       - name: Run Django migrations
         working-directory: server/
         env:

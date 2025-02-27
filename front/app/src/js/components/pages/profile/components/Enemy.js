@@ -30,7 +30,7 @@ export class UserEnemy extends HTMLElement {
     if (this._type === 'best') {
       this._data = {
         username: 'George',
-        avatar: '/media/avatars/sample_avatar2.jpg',
+        avatar: '/__mock__/img/sample-pic3.png',
         wins: 20,
         loses: 10,
         winrate: 67,
