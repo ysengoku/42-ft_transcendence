@@ -16,8 +16,8 @@ from django.core.asgi import get_asgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django_asgi_app = get_asgi_application()
 
-import chat.routing as chat  # noqa: E402
-import pong.routing as pong  # noqa: E402
+from chat.routing import websocket_urlpatterns as chat_routes  # noqa: E402
+from pong.routing import websocket_urlpatterns as pong_routes  # noqa: E402
 
 application = ProtocolTypeRouter(
     {
