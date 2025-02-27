@@ -1,11 +1,11 @@
 # Components
 
 ## Pages
-- [] Loading
+- [] - [] Loading
 - [x] 404
 
 ## Static images
-- [] Path to static image sent by server
+- [] - [] Path to static image sent by server
 
 ---------------------------------------------------------------------
 
@@ -23,7 +23,7 @@
 ## API
 - [x] Refresh Token handling
 - [x] Remove reflesh token sending from login and register
-- [] 500 response handling
+- [] - [] 500 response handling
 
 ---------------------------------------------------------------------
 
@@ -99,16 +99,16 @@
 - [x] 413 handling
 - [x] 422 handling
 - [x] Error handling
-- [] Test Delete account & add adieu message
-- [] Unit test (input validation)
-- [] Disable submit button if there is no change
+- [] - [] Test Delete account & add adieu message
+- [] - [] Unit test (input validation)
+- [] - [] Disable submit button if there is no change
 
 ---------------------------------------------------------------------
 
 ## Profile
 
 - [x] Add auth check before rendering
-- [] Layout for Mobile
+- [] - [] Layout for Mobile
 
 ### Error handling
 - [x] 404 handling
@@ -117,22 +117,22 @@
 
 ### User info
 - [x] username & nickname
-- [] Title
+- [] - [] Title
 
 ### User actions
 - [x] Add firend
 - [x] Remove friend
 - [x] Block friend
 - [x] Unblock friend
-- [] Send message
+- [] - [] Send message
 
 ### Stat
 - [x] Pie Graph
-- [] Line graph
+- [] - [] Line graph
 
 ### Game History
-- [] Better solution for Scroll thead sticky
-- [] Tournament history table
+- [] - [] Better solution for Scroll thead sticky
+- [] - [] Tournament history table
 
 ---------------------------------------------------------------------
 
@@ -153,14 +153,106 @@
 - [x] Add link to Profile of current chat user
 - [x] Resize event listner
 - [x] Autocomplete off
-- [] Blocked user chat rendering
-- [] Invite to play game
-- [] Add API request for chat
+- [] - [] Blocked user chat rendering
+- [] - [] Invite to play game
+- [] - [] Add API request for chat
 
 ### Notifications
-- [] Add dropdown
+- [] - [] Add dropdown
 
 ---------------------------------------------------------------------
 
 ## CSS
 - [x] Add cursor for html: active and body:active
+
+---------------------------------------------------------------------
+
+## Add sanitize html | Refactor
+
+### api
+
+- [] apiRequest.js
+- [] endpoints.js
+
+### auth
+- [] - [] authManager.js
+- [] - [] csrfToken.js
+- [] - [] handleLogout.js
+- [] - [] refreshToken.js
+
+### navbar
+- [] - [] Navbar.js
+- [] - [] ChatButton.js
+- [] - [] DropdownMenu.js
+- [] - [] FriendsButton.js
+- [] - [] FriendsList.js
+- [] - [] NavbarBrand.js
+- [] - [] NotificationsButton.js
+- [] - [] UserActionsMenu.js
+- [] - [] UserListItem.js
+- [] - [] UserSearch.js
+- [] - [] UserSearchButton.js
+
+### pages
+- [] - [] Error.js
+- [] - [] Landing.js
+- [] - [] NotFound.js
+
+#### chat
+- [] - [] Chat.js
+- [] - [] ChatList.js
+- [] - [] ChatListItem.js
+- [] - [] ChatMessageArea.js
+- [] - [] ChatMessageInput.js
+
+#### dual
+- [] - [] Dual.js
+- [] - [] DualMenu.js
+
+#### home
+- [] - [] Home.js
+
+#### login
+- [x] - [x] Login.js
+- [x] - [x] LoginForm.js
+- [x] - [x] OAuth.js
+- [x] - [x] ForgotPassword.js
+- [x] - [x] ResetPassword.js
+- [x] - [x] MfaVerification.js
+
+#### profile
+- [] - [] Profile.js
+- [] - [] UserNotFound.js
+- [] - [] Avatar.js
+- [] - [] DuelHistory.js
+- [] - [] Enemy.js
+- [] - [] GameHistory.js
+- [] - [] OnlineStatusIndicator.js
+- [] - [] StatCard.js
+- [] - [] TournamentHistory.js
+- [] - [] UserActions.js
+- [] - [] UserInfo.js
+- [] - [] WinRatePieGraph.js
+
+#### register
+- [] - [] Register.js
+
+#### settings
+- [] - [] Settings.js
+- [] - [] AvatarUpload.js
+- [] - [] AvatarUploadModal.js
+- [] - [] DeleteAccountButton.js
+- [] - [] DeleteAccountConfirmationModal.js
+- [] - [] EmailUpdate.js
+- [] - [] MfaEnableUpdate.js
+- [] - [] PasswordUpdate.js
+- [] - [] UserIdentityUpdate.js
+
+#### tournament
+- [] - [] Tournament.js
+- [] - [] TournamentMenu.js
+
+#### utils
+- [x] alertMessage.js
+- [x] formFeedback.js
+- [] inputFeedback.js

@@ -40,8 +40,6 @@ legend {
 .footer {
   height: 48px;
   background-color: #3b3b3b;
-  /* margin-top: auto; */
-  /* font-size: 0.8em; */
 }
 
 .dropdown-menu {
@@ -50,30 +48,4 @@ legend {
 
 .form-container {
   background-color: rgba(128,128,128, 0.1);
-}
-
-/* ----- Settings ----------------------------------------------------------- */
-
-.avatar-preview-container {
-  width: 70%; /* Adjust size relative to modal */
-  max-width: 300px;
-  margin: 0 auto;
-  position: relative;
-}
-
-/* Wrapper for Circular Cropping */
-.avatar-wrapper {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  overflow: hidden;
-  position: relative;
-  /* background: rgba(255, 255, 255, 0.5); */
-}
-
-.avatar-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
 }
