@@ -36,7 +36,7 @@ pyotp==2.6.0
 qrcode[pil]
 
 # Gunicorn is a Python WSGI HTTP Server for UNIX
-daphne==3.0.1
+daphne==4.1.2
 
 # Redis for caching online status for users
 redis==5.0.1
