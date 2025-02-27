@@ -99,6 +99,7 @@
 - [x] 413 handling
 - [x] 422 handling
 - [x] Error handling
+- [] Email format check
 - [] - [] Test Delete account & add adieu message
 - [] - [] Unit test (input validation)
 - [] - [] Disable submit button if there is no change
@@ -169,17 +170,6 @@
 
 ## Add sanitize html | Refactor
 
-### api
-
-- [] apiRequest.js
-- [] endpoints.js
-
-### auth
-- [] - [] authManager.js
-- [] - [] csrfToken.js
-- [] - [] handleLogout.js
-- [] - [] refreshToken.js
-
 ### navbar
 - [] - [] Navbar.js
 - [] - [] ChatButton.js
@@ -194,9 +184,9 @@
 - [] - [] UserSearchButton.js
 
 ### pages
-- [] - [] Error.js
-- [] - [] Landing.js
-- [] - [] NotFound.js
+- [x] - [x] Landing.js
+- [x] - [x] Error.js
+- [x] - [x] NotFound.js
 
 #### chat
 - [] - [] Chat.js
@@ -210,7 +200,7 @@
 - [] - [] DualMenu.js
 
 #### home
-- [] - [] Home.js
+- [x] - [x] Home.js
 
 #### login
 - [x] - [x] Login.js
@@ -235,15 +225,15 @@
 - [] - [] WinRatePieGraph.js
 
 #### register
-- [] - [] Register.js
+- [x] - [x] Register.js
 
 #### settings
-- [] - [] Settings.js
-- [] - [] AvatarUpload.js
-- [] - [] AvatarUploadModal.js
-- [] - [] DeleteAccountButton.js
-- [] - [] DeleteAccountConfirmationModal.js
-- [] - [] EmailUpdate.js
+- [x] - [x] Settings.js
+- [x] - [x] AvatarUpload.js
+- [x] - [x] AvatarUploadModal.js
+- [x] - [x] DeleteAccountButton.js
+- [x] - [x] DeleteAccountConfirmationModal.js
+- [x] - [x] EmailUpdate.js
 - [] - [] MfaEnableUpdate.js
 - [] - [] PasswordUpdate.js
 - [] - [] UserIdentityUpdate.js
@@ -255,4 +245,4 @@
 #### utils
 - [x] alertMessage.js
 - [x] formFeedback.js
-- [] inputFeedback.js
+- [x] inputFeedback.js
