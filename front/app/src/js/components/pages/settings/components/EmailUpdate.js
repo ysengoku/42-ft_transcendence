@@ -20,8 +20,10 @@ export class EmailUpdate extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.emailInput.removeEventListener('input', this.emailFeedback);
-    this.emailInput.removeEventListener('blur', this.removeFeedback);
+    if (this.#state.connectionType === 'regular') {
+      this.emailInput.removeEventListener('input', this.emailFeedback);
+      this.emailInput.removeEventListener('blur', this.removeFeedback);
+    }
   }
 
   render() {
