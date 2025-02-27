@@ -5,10 +5,10 @@ Django==5.1.4
 pillow==11.1.0
 python-magic==0.4.27
 
-# OpenCV for image processing (headless version for server environments)
+# OpenCV for image processing (headless version for server environments) - necessary for profile picture retrived by oauth
 opencv-python-headless==4.8.0.76
 
-# numpy for numerical computing for image modification
+# numpy for numerical computing for image modification - necessary for profile picture retrived by oauth
 numpy==1.24.4
 
 # Django Channels for handling WebSockets and background tasks
@@ -34,3 +34,10 @@ pyotp==2.6.0
 
 # qrcode is a Python library for generating QR codes. [pil] is an optional dependency for image generation.
 qrcode[pil]
+
+# Gunicorn is a Python WSGI HTTP Server for UNIX
+daphne==3.0.1
+
+# Redis for caching online status for users
+redis==5.0.1
+psycopg2==2.9.6
