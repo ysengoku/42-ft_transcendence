@@ -4,13 +4,14 @@ from ninja.errors import HttpError
 from ninja.pagination import paginate
 
 from chat.models import Chat
-from chat.schemas import ChatMessageSchema, ChatPreviewSchema, ChatSchema, MessageSchema
+from chat.schemas import ChatMessageSchema, ChatPreviewSchema, ChatSchema
 from common.routers import get_profile_queryset_by_username_or_404
+from common.schemas import MessageSchema
 
 chats_router = Router()
 
 
-@chats_router.get("", response={200: list[ChatPreviewSchema], frozenset({401}): ChatMessageSchema})
+@chats_router.get("", response={200: list[ChatPreviewSchema], frozenset({401}): MessageSchema})
 @paginate
 def get_chats(request: HttpRequest):
     """
@@ -31,7 +32,7 @@ def get_or_create_chat(request, username: str):
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile
     chat, created = Chat.objects.get_or_create(profile, other_profile)
-    chat = Chat.objects.filter(pk=chat.pk).with_other_user_profile_info(other_profile).first()
+    chat = Chat.objects.filter(pk=chat.pk).with_other_user_profile_info(profile).first()
     if created:
         return 201, chat
     return 200, chat

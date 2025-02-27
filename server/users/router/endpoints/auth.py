@@ -1,14 +1,24 @@
+import hashlib
+import os
+from datetime import datetime, timedelta, timezone
+
 from django.conf import settings
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.core.mail import send_mail
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
 from common.routers import allow_only_for_self
+from common.schemas import MessageSchema
 from users.models import RefreshToken, User
+from users.router.endpoints.mfa import handle_mfa_code
+from users.router.utils import _create_json_response_with_tokens
 from users.schemas import (
+    ForgotPasswordSchema,
+    LoginResponseSchema,
     LoginSchema,
-    Message,
+    PasswordValidationSchema,
     ProfileMinimalSchema,
     SignUpSchema,
     ValidationErrorMessageSchema,
@@ -17,27 +27,7 @@ from users.schemas import (
 auth_router = Router()
 
 
-def _create_json_response_with_tokens(user: User, json: dict):
-    access_token, refresh_token_instance = RefreshToken.objects.create(user)
-
-    response = JsonResponse(json)
-    response.set_cookie("access_token", access_token)
-    response.set_cookie("refresh_token", refresh_token_instance.token)
-
-    return response
-
-
-def create_redirect_to_home_page_response_with_tokens(user: User):
-    access_token, refresh_token_instance = RefreshToken.objects.create(user)
-
-    response = HttpResponseRedirect(settings.HOME_REDIRECT_URL)
-    response.set_cookie("access_token", access_token)
-    response.set_cookie("refresh_token", refresh_token_instance.token)
-
-    return response
-
-
-@auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
+@auth_router.get("self", response={200: ProfileMinimalSchema, 401: MessageSchema})
 def check_self(request: HttpRequest):
     """
     Checks authentication status of the user.
@@ -46,8 +36,11 @@ def check_self(request: HttpRequest):
     return request.auth.profile
 
 
-# TODO: add secure options for the cookie
-@auth_router.post("login", response={200: ProfileMinimalSchema, 401: Message, 429: Message}, auth=None)
+@auth_router.post(
+    "login",
+    response={200: ProfileMinimalSchema | LoginResponseSchema, 401: MessageSchema, 429: MessageSchema},
+    auth=None,
+)
 @ensure_csrf_cookie
 @csrf_exempt
 def login(request: HttpRequest, credentials: LoginSchema):
@@ -62,7 +55,18 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if not is_password_correct:
         raise HttpError(401, "Username or password are not correct.")
 
-    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+    is_mfa_enabled = User.objects.has_mfa_enabled(credentials.username)
+    if is_mfa_enabled and handle_mfa_code(user):
+        return JsonResponse(
+            {
+                "mfa_required": True,
+                "username": user.username,
+            },
+        )
+    if is_mfa_enabled:
+        raise HttpError(503, "Failed to send MFA code")
+    response_data = user.profile.to_profile_minimal_schema()
+    return _create_json_response_with_tokens(user, response_data)
 
 
 @auth_router.post(
@@ -88,7 +92,7 @@ def signup(request: HttpRequest, data: SignUpSchema):
 
 @auth_router.post(
     "refresh",
-    response={204: None, 401: Message},
+    response={204: None, 401: MessageSchema},
     auth=None,
 )
 def refresh(request: HttpRequest, response: HttpResponse):
@@ -108,7 +112,7 @@ def refresh(request: HttpRequest, response: HttpResponse):
 
 @auth_router.delete(
     "logout",
-    response={204: None, 401: Message},
+    response={204: None, 401: MessageSchema},
 )
 def logout(request: HttpRequest, response: HttpResponse):
     """
@@ -129,3 +133,64 @@ def logout(request: HttpRequest, response: HttpResponse):
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return 204, None
+
+
+@auth_router.post("/forgot-password", response={200: MessageSchema}, auth=None)
+@csrf_exempt
+def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any]:
+    """Request a password reset link"""
+    user = User.objects.for_username_or_email(data.email).first()
+
+    if not user:
+        return {"msg": "Password reset instructions sent to your email if email exists."}
+
+    token = hashlib.sha256(os.urandom(32)).hexdigest()
+    user.forgot_password_token = token
+    user.forgot_password_token_date = datetime.now(timezone.utc)
+    user.save()
+
+    reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
+
+    send_mail(
+        subject="Password Reset Request",
+        message=f"Click this link to reset your password: {reset_url}",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+    return {
+        "msg": "Password reset instructions sent to your email",
+    }
+
+
+@auth_router.post(
+    "/reset-password/{token}",
+    response={200: MessageSchema, 400: MessageSchema, 422: list[ValidationErrorMessageSchema]},
+    auth=None,
+)
+@csrf_exempt
+def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[str, any]:
+    """Reset user password using token from URL and new password from body"""
+    user = User.objects.for_forgot_password_token(token=token).first()
+    if not user:
+        raise AuthenticationError
+
+    now = datetime.now(timezone.utc)
+    if user.forgot_password_token_date + timedelta(minutes=5) < now:
+        raise HttpError(408, "Expired session: authentication request timed out")
+
+    obj = PasswordValidationSchema(
+        username=user.username,
+        password=data.password,
+        password_repeat=data.password_repeat,
+    )
+
+    err_dict = obj.validate_password()
+    if err_dict:
+        raise HttpError(422, err_dict)
+
+    user.set_password(data.password)
+    user.save()
+
+    return {"msg": "Password has been reset successfully"}
