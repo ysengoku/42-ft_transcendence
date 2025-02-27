@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessage, ALERT_TYPE } from '@utils';
-import { emailFeedback, removeInputFeedback, sanitizeHtml } from '@utils';
+import { emailFeedback, removeInputFeedback } from '@utils';
 
 export class ForgotPassword extends HTMLElement {
   #state = {
@@ -59,9 +59,8 @@ export class ForgotPassword extends HTMLElement {
   renderEmailSentMessage() {
     this.innerHTML = this.emailSentTemplate();
 
-    const email = sanitizeHtml(this.#state.email);
     const inputEmail = this.querySelector('#user-input-email');
-    inputEmail.textContent = email;
+    inputEmail.textContent = this.#state.email;
 
     const resendButton = this.querySelector('#resend-email');
     resendButton.addEventListener('click', async (event) => {
@@ -115,18 +114,19 @@ export class ForgotPassword extends HTMLElement {
   emailSentTemplate() {
     return `
     <div class="container my-3">
-    <div class="row justify-content-center py-4">
-    <div class="form-container col-12 col-md-4 text-center py-4">
-    <p class="fs-4 my-2">Check your email</p>
-    <p class="m-0">We sent a password reset link to </p>
-    <strong id="user-input-email"></strong></br>
-    <div class="mt-4 mb-5">
-    <small>If this email address exists in our system, you will receive it shortly.</small>
-    </div>
-    <button class="btn w-100 mt-3" type="submit" id="resend-email">
-    Don't receive email? <strong>Click to resend.</strong>
-    </button>
-    </div>
+      <div class="row justify-content-center py-4">
+        <div class="form-container col-12 col-md-4 text-center py-4">
+          <p class="fs-4 my-2">Check your email</p>
+          <p class="m-0">We sent a password reset link to </p>
+          <strong id="user-input-email"></strong></br>
+          <div class="mt-4 mb-5">
+            <small>If this email address exists in our system, you will receive it shortly.</small>
+          </div>
+          <button class="btn w-100 mt-3" type="submit" id="resend-email">
+            Don't receive email? <strong>Click to resend.</strong>
+          </button>
+        </div>
+      </div>
     </div>
     `;
   }
