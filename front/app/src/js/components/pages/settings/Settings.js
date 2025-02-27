@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+import { emailFeedback, showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
 import './components/index.js';
 
 export class Settings extends HTMLElement {
@@ -97,7 +97,8 @@ export class Settings extends HTMLElement {
     const userIdentity = this.userIdentityField.newUserIdentity;
     const newEmail = this.emailField.newEmail;
 
-    if (!this.passwordField.checkPasswordInput()) {
+    if (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) || 
+      !this.passwordField.checkPasswordInput()) {
       return;
     }
 

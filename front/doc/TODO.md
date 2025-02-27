@@ -1,11 +1,11 @@
 # Components
 
 ## Pages
-- [] - [] Loading
+- [] Loading
 - [x] 404
 
 ## Static images
-- [] - [] Path to static image sent by server
+- [] Path to static image sent by server
 
 ---------------------------------------------------------------------
 
@@ -23,7 +23,7 @@
 ## API
 - [x] Refresh Token handling
 - [x] Remove reflesh token sending from login and register
-- [] - [] 500 response handling
+- [] 500 response handling
 
 ---------------------------------------------------------------------
 
@@ -99,17 +99,18 @@
 - [x] 413 handling
 - [x] 422 handling
 - [x] Error handling
-- [] Email format check
-- [] - [] Test Delete account & add adieu message
-- [] - [] Unit test (input validation)
-- [] - [] Disable submit button if there is no change
+- [x] Email format check
+- [] Incorrect old password case (401 occurs infinite loop with current logic)
+- [] Test Delete account & add adieu message
+- [] Unit test (input validation)
+- [] Disable submit button if there is no change
 
 ---------------------------------------------------------------------
 
 ## Profile
 
 - [x] Add auth check before rendering
-- [] - [] Layout for Mobile
+- [] Layout for Mobile
 
 ### Error handling
 - [x] 404 handling
@@ -234,9 +235,9 @@
 - [x] - [x] DeleteAccountButton.js
 - [x] - [x] DeleteAccountConfirmationModal.js
 - [x] - [x] EmailUpdate.js
-- [] - [] MfaEnableUpdate.js
-- [] - [] PasswordUpdate.js
-- [] - [] UserIdentityUpdate.js
+- [x] - [x] MfaEnableUpdate.js
+- [x] - [x] PasswordUpdate.js
+- [x] - [x] UserIdentityUpdate.js
 
 #### tournament
 - [] - [] Tournament.js
