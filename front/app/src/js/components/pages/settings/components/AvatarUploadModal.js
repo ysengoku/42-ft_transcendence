@@ -15,33 +15,7 @@ export class AvatarUploadModal extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = `
-		<div class="modal fade" tabindex="-1" aria-labelledby="avatar-upload-modal-label" aria-hidden="true" id="avatar-upload-modal">
-			<div class="modal-dialog modal-dialog-centered">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title">Upload Avatar</h5>
-					</div>
-					<div class="modal-body">
-        				<div class="avatar-preview-container">
-         					<div class="avatar-wrapper">
-            					<img id="avatar-upload-preview" src="${avatarPlaceholder}" alt="Avatar Preview" class="avatar-preview">
-        					</div>
-        				</div>
-						<div class="mb-3">
-  							<label for="avatar-upload-input" class="form-label">Select file</label>
-  							<input class="form-control" type="file" id="avatar-upload-input" accept="image/*" readonly>
-							<div class='invalid-feedback' id='avatar-feedback'></div>
-						</div>
-					</div>
-					<div class="modal-footer">
-        				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-avatar-upload">Close</button>
-        				<button type="button" class="btn btn-primary" id="confirm-avatar-button">Confirm</button>
-      				</div>
-				</div>
-			</div>
-		</div>
-		`;
+    this.innerHTML = this.style() + this.template();
     this.modal = new bootstrap.Modal(this.querySelector('#avatar-upload-modal'));
   }
 
@@ -101,6 +75,63 @@ export class AvatarUploadModal extends HTMLElement {
       this.onConfirm(this.selectedFile);
     }
     this.modal.hide();
+  }
+
+  template() {
+    return `
+		<div class="modal fade" tabindex="-1" aria-labelledby="avatar-upload-modal-label" aria-hidden="true" id="avatar-upload-modal">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">Upload Avatar</h5>
+					</div>
+					<div class="modal-body">
+        				<div class="avatar-preview-container">
+         					<div class="avatar-wrapper">
+            					<img id="avatar-upload-preview" src="${avatarPlaceholder}" alt="Avatar Preview" class="avatar-preview">
+        					</div>
+        				</div>
+						<div class="mb-3">
+  							<label for="avatar-upload-input" class="form-label">Select file</label>
+  							<input class="form-control" type="file" id="avatar-upload-input" accept="image/*" readonly>
+							<div class='invalid-feedback' id='avatar-feedback'></div>
+						</div>
+					</div>
+					<div class="modal-footer">
+        				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-avatar-upload">Close</button>
+        				<button type="button" class="btn btn-primary" id="confirm-avatar-button">Confirm</button>
+      				</div>
+				</div>
+			</div>
+		</div>
+		`;
+  }
+
+  style() {
+    return `
+    <style>
+      .avatar-preview-container {
+        width: 70%;
+        max-width: 300px;
+        margin: 0 auto;
+        position: relative; 
+      }
+      .avatar-wrapper {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        overflow: hidden;
+        position: relative;
+        /* background: rgba(255, 255, 255, 0.5); */
+      }
+      .avatar-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+      }
+    </style>
+    `;
   }
 }
 

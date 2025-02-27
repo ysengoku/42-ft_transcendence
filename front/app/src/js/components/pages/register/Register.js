@@ -12,6 +12,14 @@ export class Register extends HTMLElement {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.form.removeEventListener('submit', this.handleSubmit);
+    this.usernameField.removeEventListener('input', this.handleUsernameInput);
+    this.emailField.removeEventListener('input', this.handleEmailInput);
+    this.passwordField.removeEventListener('input', this.handlePasswordInput);
+    this.passwordRepeatField.removeEventListener('input', this.handlePasswordRepeatInput);
+  }
+
   render() {
     this.innerHTML = this.template();
 
@@ -39,14 +47,6 @@ export class Register extends HTMLElement {
     this.emailField.addEventListener('input', this.handleEmailInput);
     this.passwordField.addEventListener('input', this.handlePasswordInput);
     this.passwordRepeatField.addEventListener('input', this.handlePasswordRepeatInput);
-  }
-
-  disconnectedCallback() {
-    this.form.removeEventListener('submit', this.handleSubmit);
-    this.usernameField.removeEventListener('input', this.handleUsernameInput);
-    this.emailField.removeEventListener('input', this.handleEmailInput);
-    this.passwordField.removeEventListener('input', this.handlePasswordInput);
-    this.passwordRepeatField.removeEventListener('input', this.handlePasswordRepeatInput);
   }
 
   async handleRegister() {

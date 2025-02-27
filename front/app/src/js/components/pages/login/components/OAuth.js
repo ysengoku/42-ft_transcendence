@@ -11,14 +11,28 @@ export class OAuth extends HTMLElement {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.btn42.removeEventListener('click', this.handleOauth42Click);
+    this.btnGithub.removeEventListener('click', this.handleOauthGithubClick);
+  }
+
   render() {
     this.innerHTML = this.template();
- 
-    const btn42 = this.querySelector('.btn-42');
-    const btnGithub = this.querySelector('.btn-github');
 
-    if (btn42) btn42.addEventListener('click', () => this.handleOAuthClick('42'));
-    if (btnGithub) btnGithub.addEventListener('click', () => this.handleOAuthClick('github'));
+    this.btn42 = this.querySelector('.btn-42');
+    this.btnGithub = this.querySelector('.btn-github');
+
+    this.handleOauth42Click = async (event) => {
+      event.preventDefault();
+      await this.handleOAuthClick('42');
+    };
+    this.handleOauthGithubClick = async (event) => {
+      event.preventDefault();
+      await this.handleOAuthClick('github');
+    };
+
+    this.btn42.addEventListener('click', this.handleOauth42Click);
+    this.btnGithub.addEventListener('click', this.handleOauthGithubClick);
   }
 
   async handleOAuthClick(platform) {
@@ -34,7 +48,7 @@ export class OAuth extends HTMLElement {
       showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
     }
   }
-  
+
   template() {
     return `
       <div class="container">

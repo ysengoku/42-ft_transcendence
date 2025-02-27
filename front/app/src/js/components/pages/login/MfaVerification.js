@@ -20,6 +20,14 @@ export class MfaVerification extends HTMLElement {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.otpInputs.forEach((input) => {
+      input.removeEventListener('input', this.handleInput);
+    });
+    this.mfaVerificationForm.removeEventListener('submit', this.handleSubmit);
+    this.resendButton.removeEventListener('click', this.resendMfaCode);
+  }
+
   render() {
     this.innerHTML = this.style() + this.template();
 
@@ -33,14 +41,6 @@ export class MfaVerification extends HTMLElement {
 
     this.mfaVerificationForm.addEventListener('submit', this.handleSubmit);
     this.resendButton.addEventListener('click', this.resendMfaCode);
-  }
-
-  disconnectedCallback() {
-    this.otpInputs.forEach((input) => {
-      input.removeEventListener('input', this.handleInput);
-    });
-    this.mfaVerificationForm.removeEventListener('submit', this.handleSubmit);
-    this.resendButton.removeEventListener('click', this.resendMfaCode);
   }
 
   handleInput(event) {
@@ -128,7 +128,7 @@ export class MfaVerification extends HTMLElement {
   }
 
   template() {
-    return  `
+    return `
     <div class="row justify-content-center m-4">
       <div class="form-container col-12 col-md-4 p-4"> 
         <div id="mfa-failed-feedback"></div>
