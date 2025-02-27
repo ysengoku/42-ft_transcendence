@@ -11,26 +11,20 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Définir le répertoire de travail
-RUN mkdir /app
 WORKDIR /app
 
-# Copier les fichiers requirements.txt d'abord pour optimiser le cache
-COPY requirements.txt /app/
-
-# psycopg2 is a PostgreSQL adapter for Python. this version is compatible with Django 5.1.4 + act (to test github actions)
-RUN echo "psycopg2==2.9.6" >> requirements.txt
-
-# Installer les dépendances Python
+# Copier les fichiers requirements et installer les dépendances
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier tout le reste du projet
-COPY . /app
+# Copier tout le projet
+COPY . .
 
-# Exposer le port 8000 pour Gunicorn
+# Collecter les fichiers statiques
+RUN python manage.py collectstatic --noinput
+
+# Exposer le port
 EXPOSE 8000
 
-# Utiliser Gunicorn pour démarrer l'application
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "server.wsgi:application"]
-
-# [ Utilisateur ] ⇄ [ Nginx (SSL, Proxy) ] ⇄ [ Gunicorn (ASGI) ] ⇄ [ Django ]
-#                                        ⇄ [ PostgreSQL / Redis (gestion du cache) ]
+# Utiliser Daphne pour ASGI (support WebSocket)
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "server.asgi:application"]
