@@ -1,50 +1,65 @@
 export class ProfileUserInfo extends HTMLElement {
+  #state = {
+    username: null,
+    nickname: null,
+    join_date: null,
+    titre: null,
+  };
+
   constructor() {
     super();
-    this._data = {
-      username: null,
-      nickname: null,
-      join_date: null,
-      titre: null,
-    };
   }
 
   set data(value) {
-    this._data = value;
-    this.render();
-  }
-
-  connectedCallback() {
+    this.#state = value;
     this.render();
   }
 
   render() {
-    const username = this._data.username;
-    const nickname = this._data.nickname;
-    const date = new Date(this._data.join_date);
-    const formatedDate = new Intl.DateTimeFormat('en-US', {
+    const date = new Date(this.#state.join_date);
+    this.formatedDate = new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     }).format(date);
-    // const titre = this._data.titre;
-    const titre = 'titre';
 
-    this.innerHTML = `
-			<div class="d-flex flex-row justify-content-center align-items-center  gap-3">
+    this.innerHTML = this.template() + this.style();
+
+    // Temporay
+    this.#state.titre = 'Titre';
+
+    this.querySelector('#profile-nickname').textContent = this.#state.nickname;
+    this.querySelector('#profile-username').textContent = `@${this.#state.username}`;
+    this.querySelector('#profile-titre').textContent = this.#state.titre;
+  }
+    
+    template() {
+      return `
+			<div class="d-flex flex-row justify-content-center align-items-center gap-3">
 				<div class="d-flex flex-column justify-content-center px-3 pt-3">
           <div class="d-flex flex-row align-items-center">
-					  <h2 class="no-margin pe-3">${nickname}</h2>
-            <p class="no-margin pt-2">@${username}</p>
+					  <h2 class="no-margin pe-3" id="profile-nickname"></h2>
+            <p class="no-margin pt-2" id="profile-username"></p>
           </div>
-					<p class="no-margin">Joined on ${formatedDate}</p>
+					<p class="no-margin">Joined on ${this.formatedDate}</p>
 				</div>
 				<div class="text-center px-3 pt-3">
-					<p>${titre}</p>
+					<p id="profile-titre"></p>
 				</div>
 			</div>
 		`;
   }
+
+  style() {
+    return `
+    <style>
+      h2 {
+        font-family: 'Texas Tango Extra Roth', serif;
+        color: #1F1101;
+      }
+    </style>
+    `;
+    }
 }
 
 customElements.define('profile-user-info', ProfileUserInfo);

@@ -3,117 +3,111 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ProfileUserActions extends HTMLElement {
-  constructor() {
-    super();
-    this._data = {
+  #state = {
+    data: {
       loggedInUsername: '',
       shownUsername: '',
       isFriend: false,
       isBlocked: false,
-    };
-    this.isMyProfile = false;
-    this.errorMessages = {
+    },
+    isMyProfile: false,
+    errorMessages: {
       addFriend: 'Failed to add friend. Please try again later.',
       removeFriend: 'Failed to remove friend. Please try again later.',
       blockUser: 'Failed to block user. Please try again later.',
       unblockUser: 'Failed to unblock user. Please try again later.',
-    };
+    },
+  }
+
+  constructor() {
+    super();
+    this.addFriend = this.addFriend.bind(this);
+    this.removeFriend = this.removeFriend.bind(this);
+    this.blockUser = this.blockUser.bind(this);
+    this.unblockUser = this.unblockUser.bind(this);
   }
 
   set data(value) {
-    this._data = value;
-    // ----- For rendering test ------------
-    // this._data.isFriend = true;
-    // this._data.isBlocked = true;
-    // -------------------------------------
-    this.isMyProfile = this._data.loggedInUsername === this._data.shownUsername;
-    console.log('data: ', this._data);
+    this.#state.data = value;
+    this.#state.isMyProfile = this.#state.data.loggedInUsername === this.#state.data.shownUsername;
     this.render();
   }
 
-  render() {
-    console.log('data: ', this._data);
-    this.innerHTML = `
-			<style>
-				.profile-user-action-button {
-					display: none;
-				}
-			</style>
-			<div class="d-flex flex-row justify-content-center my-2">
-				<button class="btn btn-primary mx-1 profile-user-action-button" id="edit-profile-button">Edit Profile</button>
-
-				<button class="btn btn-primary mx-1 profile-user-action-button" id="add-friend-button">${this._data.isFriend ? 'Remove friend' : 'Add friend'}</button>
-
-				<button class="btn btn-primary mx-1 profile-user-action-button" id="send-message-button">Send Message</button>
-
-				<button class="btn btn-primary mx-1 profile-user-action-button" id="block-user-button">${this._data.isBlocked ? 'Unblock user' : 'Block user'}</button>
-			</div>
-		`;
-    this.setupButtons();
+  disconnectedCallback() {
+    if (this.#state.isMyProfile) {
+      this.editProfileButton.removeEventListener('click', this.handleEditProfile);
+      return;
+    }
+    if (!this.#state.data.isBlocked) {
+      if (this.#state.data.isFriend) {
+        this.addFriendButton.removeEventListener('click', this.removeFriend);
+      } else {
+      this.addFriendButton.removeEventListener('click', this.addFriend);
+      }
+    }
+    if (this.#state.data.isBlocked) {
+      this.blockUserButton.removeEventListener('click', this.unblockUser);
+    } else {
+      this.blockUserButton.removeEventListener('click', this.blockUser);
+    }
   }
 
-  setupButtons() {
-    if (this.isMyProfile) {
-      const editProfileButton = this.querySelector('#edit-profile-button');
-      editProfileButton.style.display = 'block';
-      editProfileButton.addEventListener('click', () => {
+  render() {
+    this.innerHTML = this.template() + this.style();
+
+    if (this.#state.isMyProfile) {
+      this.editProfileButton = this.querySelector('#edit-profile-button');
+      this.editProfileButton.style.display = 'block';
+      this.handleEditProfile = () => {
         router.navigate(`/settings`);
-      });
+      };
+      this.editProfileButton.addEventListener('click', this.handleEditProfile);
       return;
     }
 
-    if (!this._data.isBlocked) {
-      const sendMessageButton = this.querySelector('#send-message-button');
-      sendMessageButton.style.display = 'block';
-      // Handle send message
+    if (!this.#state.data.isBlocked) {
+      this.sendMessageButton = this.querySelector('#send-message-button');
+      this.sendMessageButton.style.display = 'block';
+      // TODO: Handle send message
 
-      const addFriendButton = this.querySelector('#add-friend-button');
-      addFriendButton.style.display = 'block';
-      if (this._data.isFriend) {
-        addFriendButton.addEventListener('click', this.removeFriend.bind(this));
+      this.addFriendButton = this.querySelector('#add-friend-button');
+      this.addFriendButton.style.display = 'block';
+      if (this.#state.data.isFriend) {
+        this.addFriendButton.textContent = 'Remove friend';
+        this.addFriendButton.addEventListener('click', this.removeFriend);
       } else {
-        addFriendButton.addEventListener('click', this.addFriend.bind(this));
+        this.addFriendButton.textContent = 'Add friend';
+        this.addFriendButton.addEventListener('click', this.addFriend);
       }
     }
 
-    const blockUserButton = this.querySelector('#block-user-button');
-    blockUserButton.style.display = 'block';
-    if (this._data.isBlocked) {
-      blockUserButton.addEventListener('click', this.unblockUser.bind(this));
+    this.blockUserButton = this.querySelector('#block-user-button');
+    this.blockUserButton.style.display = 'block';
+    if (this.#state.data.isBlocked) {
+      this.blockUserButton.textContent = 'Unblock user';
+      this.blockUserButton.addEventListener('click', this.unblockUser);
     } else {
-      blockUserButton.addEventListener('click', this.blockUser.bind(this));
+      this.blockUserButton.textContent = 'Block user';
+      this.blockUserButton.addEventListener('click', this.blockUser);
     }
   }
 
-  // --- For rendering test --------------
-  async testResponse() {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ success: false });
-      }, 500);
-    });
-  }
-  // -------------------------------------
-
   async addFriend() {
-    const request = { username: this._data.shownUsername };
+    const request = { username: this.#state.data.shownUsername };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_FRIENDS(this._data.loggedInUsername),
+        API_ENDPOINTS.USER_FRIENDS(this.#state.data.loggedInUsername),
         request,
         false,
         true,
     );
-    // --- For rendering test ---------------------
-    // const response = await this.testResponse();
-    // --------------------------------------------
     if (response.success) {
-      this._data.isFriend = true;
+      this.#state.data.isFriend = true;
       this.render();
     } else {
       console.error('Error adding friend:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.addFriend, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.addFriend, 3000);
     }
   }
 
@@ -121,43 +115,37 @@ export class ProfileUserActions extends HTMLElement {
     const response = await apiRequest(
         'DELETE',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_REMOVE_FRIEND(this._data.loggedInUsername, this._data.shownUsername),
+        API_ENDPOINTS.USER_REMOVE_FRIEND(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
         null,
         false,
         true,
     );
-    // --- For rendering test ---------------------
-    // const response = await this.testResponse();
-    // --------------------------------------------
     if (response.success) {
-      this._data.isFriend = false;
+      this.#state.data.isFriend = false;
       this.render();
     } else {
       console.error('Error removing friend:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.removeFriend, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.removeFriend, 3000);
     }
   }
 
   async blockUser() {
-    const request = { username: this._data.shownUsername };
+    const request = { username: this.#state.data.shownUsername };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_BLOCKED_USERS(this._data.loggedInUsername),
+        API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.data.loggedInUsername),
         request,
         false,
         true,
     );
-    // --- For rendering test ---------------------
-    // const response = await this.testResponse();
-    // --------------------------------------------
     if (response.success) {
-      this._data.isBlocked = true;
-      this._data.isFriend = false;
+      this.#state.data.isBlocked = true;
+      this.#state.data.isFriend = false;
       this.render();
     } else {
       console.error('Error blocking user:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.blockUser, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.blockUser, 3000);
     }
   }
 
@@ -165,21 +153,40 @@ export class ProfileUserActions extends HTMLElement {
     const response = await apiRequest(
         'DELETE',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_UNBLOCK_USER(this._data.loggedInUsername, this._data.shownUsername),
+        API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
         null,
         false,
         true,
     );
-    // --- For rendering test ---------------------
-    // const response = await this.testResponse();
-    // --------------------------------------------
     if (response.success) {
-      this._data.isBlocked = false;
+      this.#state.data.isBlocked = false;
       this.render();
     } else {
       console.error('Error unblocking:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.errorMessages.unblockUser, 3000);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.unblockUser, 3000);
     }
+  }
+
+  template() {
+    return `
+    <div class="d-flex flex-row justify-content-center my-2">
+      <button class="btn btn-primary mx-1 profile-user-action-button" id="edit-profile-button">Edit Profile</button>
+
+      <button class="btn btn-primary mx-1 profile-user-action-button" id="add-friend-button"></button>
+      <button class="btn btn-primary mx-1 profile-user-action-button" id="send-message-button">Send Message</button>
+      <button class="btn btn-primary mx-1 profile-user-action-button" id="block-user-button"></button>
+    </div>
+    `;
+  }
+
+  style() {
+    return `
+    <style>
+      .profile-user-action-button {
+        display: none;
+      }
+    </style>
+    `;
   }
 }
 

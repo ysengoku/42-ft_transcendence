@@ -1,5 +1,5 @@
 import { API_ENDPOINTS } from '@api';
-import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+import { showAlertMessage, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class OAuth extends HTMLElement {
   constructor() {
@@ -45,7 +45,7 @@ export class OAuth extends HTMLElement {
       location.href = data.auth_url;
     } else {
       console.error('OAuth initialization failed:', response.statusText);
-      showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
+      showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
     }
   }
 

@@ -213,17 +213,17 @@
 
 #### profile
 - [] - [] Profile.js
-- [] - [] UserNotFound.js
-- [] - [] Avatar.js
+- [x] - [x] UserNotFound.js
+- [x] - [x] Avatar.js
 - [] - [] DuelHistory.js
-- [] - [] Enemy.js
-- [] - [] GameHistory.js
-- [] - [] OnlineStatusIndicator.js
-- [] - [] StatCard.js
+- [x] - [x] Enemy.js
+- [x] - [x] GameHistory.js
+- [x] - [x] OnlineStatusIndicator.js
+- [x] - [x] StatCard.js
 - [] - [] TournamentHistory.js
-- [] - [] UserActions.js
-- [] - [] UserInfo.js
-- [] - [] WinRatePieGraph.js
+- [x] - [x] UserActions.js
+- [x] - [x] UserInfo.js
+- [x] - [x] WinRatePieGraph.js
 
 #### register
 - [x] - [x] Register.js
