@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 
@@ -12,4 +14,5 @@ def create_profile(sender, instance: User, created: bool, **kwargs) -> None:
 
 @receiver(pre_delete, sender=User)
 def delete_avatar(sender, instance: User, **kwargs) -> None:
-    instance.profile.delete_avatar()
+    with suppress(Profile.DoesNotExist):
+        instance.profile.delete_avatar()
