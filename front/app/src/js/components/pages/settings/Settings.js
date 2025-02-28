@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { emailFeedback, showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+import { emailFeedback, showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 
 export class Settings extends HTMLElement {
@@ -22,7 +22,7 @@ export class Settings extends HTMLElement {
     const user = auth.getStoredUser();
     this.#state.isLoggedIn = user ? true : false;
     if (!this.#state.isLoggedIn) {
-      showAlertMessageForDuration(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED, 5000);
+      showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
       router.navigate('/');
       return;
     }
@@ -46,10 +46,10 @@ export class Settings extends HTMLElement {
       }
     } else {
       if (response.status === 401) {
-        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED, 5000);
+        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/');
       } else if (response.status === 403) {
-        showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
+        showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
         router.navigate('/home');
       }
     }
@@ -148,7 +148,7 @@ export class Settings extends HTMLElement {
       if (response.status === 401) {
         return;
       }
-      let errorMsg = ALERT_MESSAGES.UNKNOWN_ERROR;
+      let errorMsg = ERROR_MESSAGES.UNKNOWN_ERROR;
       if (response.status === 413 || response.status === 422) {
         errorMsg = response.msg + ' Cannot update.';
       }
