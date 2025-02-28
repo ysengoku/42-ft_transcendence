@@ -72,6 +72,8 @@ INSTALLED_APPS = [
     # Our apps
     "users",
     "chat",
+    "pong",
+
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",

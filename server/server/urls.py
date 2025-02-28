@@ -8,6 +8,7 @@ urlpatterns = [
     path("api/", api.urls),
     path("silk/", include("silk.urls", namespace="silk")),
     path("chat/", include("chat.urls")),
+    path("pong/", include("pong.urls")),
 ]
 
 if settings.DEBUG:

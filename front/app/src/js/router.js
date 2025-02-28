@@ -191,14 +191,15 @@ router.addRoute('/forgot-password', 'forgot-password');
 router.addRoute('/reset-password/:token', 'reset-password', true);
 router.addRoute('/home', 'user-home');
 router.addRoute('/profile/:username', 'user-profile', true);
-router.addRoute('/user-not-found', 'user-not-found');
-router.addRoute('/settings', 'user-settings');
-router.addRoute('/chat', 'chat-page');
-router.addRoute('/dual-menu', 'dual-menu');
-// router.addRoute('/dual/:id', 'dual', true);
-router.addRoute('/tournament-menu', 'tournament-menu');
-// router.addRoute('/tournament/:id', 'tournament', true);
-router.addRoute('/game', 'app-game');
+router.addRoute('/user-not-found', 'user-not-found', true);
+router.addRoute('/settings', 'user-settings', false);
+router.addRoute('/chat', 'chat-page', false);
+router.addRoute('/dual-menu', 'dual-menu', false);
+router.addRoute('/dual/:id', 'dual', true);
+router.addRoute('/tournament-menu', 'tournament-menu', false);
+router.addRoute('/tournament/:id', 'tournament', true);
+router.addRoute('/multiplayer-game', 'multiplayer-game', false, true);
+router.addRoute('/singleplayer-game', 'singleplayer-game', false, true);
 router.addRoute('/error', 'error-page');
 
 /**

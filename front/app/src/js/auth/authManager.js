@@ -78,6 +78,7 @@ const auth = (() => {
         ws.addEventListener('close', () => {
           console.log('WebSocket connection closed');
         });
+        console.log(ws);
         this.storeUser(data);
         return { success: true, response: data };
       } else if (response.status === 401) {

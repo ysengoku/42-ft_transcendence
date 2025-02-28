@@ -12,6 +12,7 @@ import { Chat } from './chat/Chat.js';
 import { DualMenu } from './dual/DualMenu.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
 import { Game } from './game/Game.js';
+import { MultiplayerGame } from './game/MultiplayerGame.js';
 import { Error } from './Error.js';
 import { NotFoundPage } from './NotFound.js';
 
@@ -30,6 +31,7 @@ export {
   DualMenu,
   TournamentMenu,
   Game,
+  MultiplayerGame,
   Error,
   NotFoundPage,
 };

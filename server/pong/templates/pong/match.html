@@ -1,0 +1,54 @@
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Chat Room</title>
+</head>
+<body>
+    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
+    <input id="chat-action-input" type="text" size="100"><br>
+    <input id="chat-action-submit" type="button" value="Send">
+    {{ match_name|json_script:"match-name" }}
+    <input id="chat-action-close" type="button" value="Close">
+    <script>
+        const roomName = JSON.parse(document.getElementById('match-name').textContent);
+
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/pong/'
+            + roomName
+            + '/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#chat-log').value += (data.message + '\n');
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-action-input').focus();
+        document.querySelector('#chat-action-input').onkeyup = function(e) {
+            if (e.key === 'Enter') {  // enter, return
+                document.querySelector('#chat-action-submit').click();
+            }
+        };
+
+        document.querySelector('#chat-action-submit').onclick = function(e) {
+            const actionInputDom = document.querySelector('#chat-action-input');
+            const action = actionInputDom.value;
+            chatSocket.send(JSON.stringify({
+                'action': action
+            }));
+            actionInputDom.value = '';
+        };
+        document.querySelector('#chat-action-close').onclick = function(e) {
+            chatSocket.close(1000);
+        };
+    </script>
+</body>
+</html>
