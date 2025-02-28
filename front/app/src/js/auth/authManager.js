@@ -87,9 +87,10 @@ const auth = (() => {
         const data = await response.json();
         console.log('User is logged in: ', data);
         this.storeUser(data);
-        
+        const wsUrl  = `wss://${window.location.host}/ws/online/`;
+        this.socket = new WebSocket(wsUrl);
         // Établir la connexion WebSocket lorsque l'utilisateur est connecté
-        onlineStatus.connect();
+        // onlineStatus.connect();
         
         return { success: true, response: data };
       } else if (response.status === 401) {
@@ -100,7 +101,7 @@ const auth = (() => {
               return this.fetchAuthStatus();
             case 401:
               // Déconnecter le WebSocket si l'utilisateur n'est pas authentifié
-              onlineStatus.disconnect();
+              // onlineStatus.disconnect();
               return { success: false, status: 401 };
             case 500:
               showAlertMessageForDuration(ALERT_TYPE.ERROR, ALERT_MESSAGES.SERVER_ERROR, 3000);
