@@ -1,0 +1,30 @@
+name: Feature Improvement Request
+description: Suggest an improvement for an existing feature
+title: "[Feature Improvement]: "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: "Please describe the improvement you would like to suggest."
+  - type: textarea
+    id: current-issue
+    attributes:
+      label: What issue are you experiencing with the current feature?
+      description: A clear and concise description of what the problem is with the existing feature. Ex. "I find it difficult to..."
+  - type: textarea
+    id: improvement-description
+    attributes:
+      label: Describe the improvement you would like
+      description: A clear and concise description of how the feature could be improved.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative improvements or approaches you've considered.
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context or screenshots about the feature improvement here.
