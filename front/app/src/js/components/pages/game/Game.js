@@ -54,7 +54,7 @@ export class Game extends HTMLElement {
       undefined,
       function (error) {
         console.error(error);
-      },
+      }
     );
     scene.add(playerglb);
     let light = new THREE.DirectionalLight(0xffffff);
@@ -84,7 +84,7 @@ export class Game extends HTMLElement {
       new THREE.MeshBasicMaterial({
         side: THREE.DoubleSide,
         visible: false,
-      }),
+      })
     );
     planeMesh.rotateX(-Math.PI / 2);
     scene.add(planeMesh);
@@ -398,28 +398,28 @@ export class Game extends HTMLElement {
         playerBody.quaternion.x,
         playerBody.quaternion.y,
         playerBody.quaternion.z,
-        playerBody.quaternion.w,
+        playerBody.quaternion.w
       );
       SM.position.set(sphereBody.position.x, sphereBody.position.y, sphereBody.position.z);
       SM.quaternion.set(
         sphereBody.quaternion.x,
         sphereBody.quaternion.y,
         sphereBody.quaternion.z,
-        sphereBody.quaternion.w,
+        sphereBody.quaternion.w
       );
       cubeMesh.position.set(cubeBody.position.x, cubeBody.position.y, cubeBody.position.z);
       cubeMesh.quaternion.set(
         cubeBody.quaternion.x,
         cubeBody.quaternion.y,
         cubeBody.quaternion.z,
-        cubeBody.quaternion.w,
+        cubeBody.quaternion.w
       );
       cubeMesh2.position.set(cubeBody2.position.x, cubeBody2.position.y, cubeBody2.position.z);
       cubeMesh2.quaternion.set(
         cubeBody2.quaternion.x,
         cubeBody2.quaternion.y,
         cubeBody2.quaternion.z,
-        cubeBody2.quaternion.w,
+        cubeBody2.quaternion.w
       );
       if (mixer) {
         mixer.update(delta);

@@ -9,7 +9,7 @@ from users.models import UserOnlineStatus
 class OnlineStatusConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope["user"]
-        print(self.user)
+        print("hello")
 
         if not self.user.is_authenticated:
             self.close()
@@ -45,18 +45,17 @@ class OnlineStatusConsumer(WebsocketConsumer):
     def _announce_status(self, status):
         async_to_sync(self.channel_layer.group_send)(
             self.group_name,
-            {
-                "type": "user_status", 
-                "user_id": str(self.user.id), 
-                "username": self.user.username, 
-                "online": status
-            }
+            {"type": "user_status", "user_id": str(self.user.id), "username": self.user.username, "online": status},
         )
 
     def user_status(self, event):
-        self.send(text_data=json.dumps({
-            "type": "status_update",
-            "user_id": event["user_id"],
-            "username": event["username"],
-            "online": event["online"],
-        }))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "type": "status_update",
+                    "user_id": event["user_id"],
+                    "username": event["username"],
+                    "online": event["online"],
+                }
+            )
+        )
