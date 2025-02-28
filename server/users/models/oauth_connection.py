@@ -76,14 +76,14 @@ class OauthConnection(models.Model):
         return None
 
     @staticmethod
-    def save_avatar(avatar_url: str, user) -> None:
+    def save_avatar(avatar_url: str, user) -> str:
         """
         Downloads the avatar image and saves it.
         If an error occurs, no avatar is loaded, and the process is silently ignored.
         """
         avatar_response = requests.get(avatar_url, timeout=5)
 
-        if avatar_response.status_code == 200:
+        if avatar_response.status_code == 200:  # noqa: PLR2004
             avatar_io = BytesIO(avatar_response.content)
 
             user.profile.profile_picture.save(
@@ -91,6 +91,8 @@ class OauthConnection(models.Model):
                 ContentFile(avatar_io.getvalue()),
                 save=True,
             )
+            return None
+        return "/img/default_avatar.png"
 
     def set_connection_as_connected(self, user_info: dict, user) -> None:
         """
