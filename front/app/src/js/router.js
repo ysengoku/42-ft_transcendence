@@ -197,7 +197,8 @@ router.addRoute('/dual-menu', 'dual-menu', false);
 router.addRoute('/dual/:id', 'dual', true);
 router.addRoute('/tournament-menu', 'tournament-menu', false);
 router.addRoute('/tournament/:id', 'tournament', true);
-router.addRoute('/game', 'app-game', false, true);
+router.addRoute('/multiplayer-game', 'multiplayer-game', false, true);
+router.addRoute('/singleplayer-game', 'singleplayer-game', false, true);
 router.addRoute('/error', 'error-page');
 
 /**

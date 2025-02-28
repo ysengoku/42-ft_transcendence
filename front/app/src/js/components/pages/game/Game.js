@@ -16,38 +16,6 @@ export class Game extends HTMLElement {
   }
 
   game() {
-        const pongSocket = new WebSocket(
-            'wss://'
-            + window.location.host
-            + '/ws/pong/'
-            + 'asd'
-            + '/'
-        );
-
-      console.log(
-          'wss://'
-            + window.location.host
-            + '/ws/pong/'
-            + 'asd'
-            + '/'
-      )
-
-      pongSocket.addEventListener("open", function(e) {
-          console.log('Success!')
-          pongSocket.send(JSON.stringify({action: "start"}))
-      });
-
-      pongSocket.addEventListener("message", function(e) {
-          const data = JSON.parse(e.data);
-          console.log(data.message)
-      });
-
-        pongSocket.addEventListener("close", function(e) {
-            console.error('Chat socket closed unexpectedly');
-        });
-
-
-
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
@@ -409,4 +377,4 @@ export class Game extends HTMLElement {
   }
 }
 
-customElements.define('app-game', Game);
+customElements.define('singleplayer-game', Game);
