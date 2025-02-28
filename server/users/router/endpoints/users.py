@@ -7,8 +7,8 @@ from ninja.pagination import paginate
 
 from common.routers import allow_only_for_self, get_profile_queryset_by_username_or_404
 from common.schemas import MessageSchema
-from users.consumers import get_online_users
 from users.models import Profile
+from users.models.user import UserOnlineStatus
 from users.schemas import (
     ProfileFullSchema,
     ProfileMinimalSchema,
@@ -83,13 +83,10 @@ def update_user_settings(
     return user.profile
 
 
-# Example usage in Django Ninja router
-@users_router.get("/online-users/", response=list[str], auth=None)
-def get_online_users_endpoint(request):
+@users_router.get("/online-users/", response=list[str])
+def get_online_users(request):
     """
-    API endpoint to retrieve online users
-
-    Returns:
-        list: List of online user IDs
+    Récupère la liste des utilisateurs en ligne
     """
-    return get_online_users()
+    online_users = UserOnlineStatus.objects.filter(connection_count__gt=0)
+    return [user.user.username for user in online_users]

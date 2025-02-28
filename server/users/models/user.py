@@ -205,8 +205,23 @@ class User(AbstractUser):
 
 class UserOnlineStatus(models.Model):
     user = models.OneToOneField("User", on_delete=models.CASCADE, related_name="online_status")
-    is_online = models.BooleanField(default=False)
+    connection_count = models.PositiveIntegerField(default=0)
     last_seen = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"{self.user.username} - {'Online' if self.is_online else 'Offline'}"
+        return f"{self.user.username} - Connections: {self.connection_count}"
+
+    def increment_connection(self):
+        self.connection_count += 1
+        self.last_seen = timezone.now()
+        self.save()
+
+    def decrement_connection(self):
+        if self.connection_count > 0:
+            self.connection_count -= 1
+            self.last_seen = timezone.now()
+            self.save()
+
+    @property
+    def is_online(self):
+        return self.connection_count > 0
