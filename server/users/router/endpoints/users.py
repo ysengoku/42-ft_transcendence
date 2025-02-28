@@ -5,10 +5,10 @@ from ninja.errors import AuthenticationError, HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
-from users.api.common import allow_only_for_self, get_profile_queryset_by_username_or_404
+from common.routers import allow_only_for_self, get_profile_queryset_by_username_or_404
+from common.schemas import MessageSchema
 from users.models import Profile
 from users.schemas import (
-    Message,
     ProfileFullSchema,
     ProfileMinimalSchema,
     UpdateUserChema,
@@ -20,7 +20,7 @@ users_router = Router()
 
 
 # TODO: delete endpoint
-@users_router.get("", response={200: list[ProfileMinimalSchema], frozenset({401}): Message})
+@users_router.get("", response={200: list[ProfileMinimalSchema], frozenset({401}): MessageSchema})
 @paginate
 def get_users(request: HttpRequest, search: str | None = None):
     """
@@ -35,7 +35,7 @@ def get_users(request: HttpRequest, search: str | None = None):
     return Profile.objects.with_search(search)
 
 
-@users_router.get("{username}", response={200: ProfileFullSchema, frozenset({401, 404}): Message})
+@users_router.get("{username}", response={200: ProfileFullSchema, frozenset({401, 404}): MessageSchema})
 def get_user(request: HttpRequest, username: str):
     """
     Gets a specific user by username.
@@ -44,7 +44,7 @@ def get_user(request: HttpRequest, username: str):
     return user_profile_qs.with_full_profile(request.auth, username).first()
 
 
-@users_router.get("{username}/settings", response={200: UserSettingsSchema, frozenset({401, 403}): Message})
+@users_router.get("{username}/settings", response={200: UserSettingsSchema, frozenset({401, 403}): MessageSchema})
 def get_user_settings(request: HttpRequest, username: str):
     """
     Gets settings of a specific user by username.
@@ -56,7 +56,7 @@ def get_user_settings(request: HttpRequest, username: str):
     "{username}/settings",
     response={
         200: ProfileMinimalSchema,
-        frozenset({401, 403, 404, 413}): Message,
+        frozenset({401, 403, 404, 413}): MessageSchema,
         422: list[ValidationErrorMessageSchema],
     },
 )

@@ -9,10 +9,10 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Query, Router
 from ninja.errors import HttpError
 
-from users.api.utils import create_redirect_to_home_page_response_with_tokens
+from common.schemas import MessageSchema
 from users.models import OauthConnection, User
+from users.router.utils import create_redirect_to_home_page_response_with_tokens
 from users.schemas import (
-    Message,
     OAuthCallbackParams,
 )
 
@@ -58,7 +58,11 @@ def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
 
 
 @csrf_exempt
-@oauth2_router.get("/authorize/{platform}", auth=None, response={200: Message, frozenset({404, 422}): Message})
+@oauth2_router.get(
+    "/authorize/{platform}",
+    auth=None,
+    response={200: MessageSchema, frozenset({404, 422}): MessageSchema},
+)
 def oauth_authorize(request, platform: str):
     """
     Starts the OAuth2 authorization process.
@@ -86,7 +90,11 @@ def oauth_authorize(request, platform: str):
     return JsonResponse({"auth_url": f"{config['auth_uri']}?{urlencode(params)}"})
 
 
-@oauth2_router.get("/callback/{platform}", auth=None, response={200: Message, frozenset({408, 422, 503}): Message})
+@oauth2_router.get(
+    "/callback/{platform}",
+    auth=None,
+    response={200: MessageSchema, frozenset({408, 422, 503}): MessageSchema},
+)
 @ensure_csrf_cookie
 def oauth_callback(  # noqa: PLR0911
     request,
