@@ -76,56 +76,21 @@ class OauthConnection(models.Model):
         return None
 
     @staticmethod
-    def cartoonize_image(img: Image) -> Image:
+    def save_avatar(avatar_url: str, user) -> None:
         """
-        Apply a cartoon effect to an image using Pillow and OpenCV.
-        """
-        # Convert to RGB if image is in RGBA mode
-        if img.mode == "RGBA":
-            img = img.convert("RGB")
-
-        img = img.filter(ImageFilter.SMOOTH_MORE)
-        img_array = np.array(img)
-
-        # Ensure the image array is in the correct format for OpenCV
-        img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-
-        gray = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
-        gray = cv2.medianBlur(gray, 5)
-
-        edges = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 9, 9)
-
-        color = cv2.bilateralFilter(img_array, 9, 300, 300)
-        cartoon = cv2.bitwise_and(color, color, mask=edges)
-
-        # Convert back to RGB for PIL
-        cartoon = cv2.cvtColor(cartoon, cv2.COLOR_BGR2RGB)
-        return Image.fromarray(cartoon)
-
-    @staticmethod
-    def save_cartoon_avatar(avatar_url: str, user) -> None:
-        """
-        Downloads the avatar image, applies the cartoon effect, and saves it.
+        Downloads the avatar image and saves it.
         If an error occurs, no avatar is loaded, and the process is silently ignored.
         """
-        try:
-            avatar_response = requests.get(avatar_url, timeout=5)
-            avatar_response.raise_for_status()
+        avatar_response = requests.get(avatar_url, timeout=5)
 
-            avatar_image = Image.open(BytesIO(avatar_response.content))
-            cartoon_image = OauthConnection.cartoonize_image(avatar_image)
-
-            avatar_io = BytesIO()
-            cartoon_image.save(avatar_io, format="PNG")
-            avatar_io.seek(0)
+        if avatar_response.status_code == 200:
+            avatar_io = BytesIO(avatar_response.content)
 
             user.profile.profile_picture.save(
                 f"{user.username}_avatar.png",
-                ContentFile(avatar_io.read()),
+                ContentFile(avatar_io.getvalue()),
                 save=True,
             )
-        except (requests.RequestException, OSError):
-            pass
 
     def set_connection_as_connected(self, user_info: dict, user) -> None:
         """
@@ -137,7 +102,7 @@ class OauthConnection(models.Model):
 
         self.avatar_url = self.get_avatar_url(user_info, self.connection_type)
         if self.avatar_url:
-            self.save_cartoon_avatar(self.avatar_url, self.user)
+            self.save_avatar(self.avatar_url, self.user)
 
         self.save()
 
