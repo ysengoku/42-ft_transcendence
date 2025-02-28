@@ -5,12 +5,6 @@ Django==5.1.4
 pillow==11.1.0
 python-magic==0.4.27
 
-# OpenCV for image processing (headless version for server environments)
-opencv-python-headless==4.8.0.76
-
-# numpy for numerical computing for image modification
-numpy==1.24.4
-
 # Django Channels for handling WebSockets and background tasks
 channels==4.0.0
 asgiref==3.8.1
@@ -31,10 +25,8 @@ django-silk==5.3.2
 # Gunicorn is a Python WSGI HTTP Server for UNIX
 # TODO: resolve daphne vs gunicorn situation
 gunicorn==20.1.0
-daphne==3.0.1
+daphne==4.1.2
 
-# pyotp is a Python library for generating and verifying one-time passwords
-pyotp==2.6.0
-
-# qrcode is a Python library for generating QR codes. [pil] is an optional dependency for image generation.
-qrcode[pil]
+# Redis for caching online status for users
+redis==5.0.1
+psycopg2==2.9.6
