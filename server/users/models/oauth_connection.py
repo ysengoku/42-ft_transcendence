@@ -1,12 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
-import cv2
-import numpy as np
 import requests
 from django.core.files.base import ContentFile
 from django.db import models
-from PIL import Image, ImageFilter
 
 
 class OauthConnectionManager(models.Manager):
