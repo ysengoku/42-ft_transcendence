@@ -1,8 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { INPUT_FEEDBACK } from '@utils';
-// import { mockRegisterSuccessResponse } from '@mock/functions/mockRegister';
+import { isFieldFilled, passwordFeedback, INPUT_FEEDBACK } from '@utils';
 
 export class Register extends HTMLElement {
   constructor() {
@@ -11,22 +10,116 @@ export class Register extends HTMLElement {
 
   connectedCallback() {
     this.render();
-    this.setupRegisterHandler();
-
-    const inputFields = this.querySelectorAll('input');
-    inputFields.forEach((field) => {
-      field.addEventListener('input', () => {
-        field.classList.remove('is-invalid');
-        document.querySelector('#username-feedback').textContent = '';
-      });
-    });
   }
 
   render() {
-    this.innerHTML = `
+    this.innerHTML = this.template();
+
+    const form = this.querySelector('form');
+    this.usernameField = this.querySelector('#username');
+    this.emailField = this.querySelector('#email');
+    this.passwordField = this.querySelector('#password');
+    this.passwordRepeatField = this.querySelector('#password_repeat');
+    this.usernameFeedback = this.querySelector('#username-feedback');
+    this.emailFeedback = this.querySelector('#email-feedback');
+    this.passwordFeedback = this.querySelector('#password-feedback');
+    this.passwordRepeatFeedback = this.querySelector('#password-repeat-feedback');
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      this.handleRegister();
+    });
+    this.usernameField.addEventListener('input', (event) => {
+      this.removeInputFeedback(event, this.usernameFeedback);
+    });
+    this.emailField.addEventListener('input', (event) => {
+      this.removeInputFeedback(event, this.emailFeedback);
+    });
+    this.passwordField.addEventListener('input', (event) => {
+      this.removeInputFeedback(event, this.passwordFeedback);
+    });
+    this.passwordRepeatField.addEventListener('input', (event) => {
+      this.removeInputFeedback(event, this.passwordRepeatFeedback);
+    });
+  }
+
+  disconnectedCallback() {
+    this.usernameField.removeEventListener('input', this.removeInputFeedback);
+    this.emailField.removeEventListener('input', this.removeInputFeedback);
+    this.passwordField.removeEventListener('input', this.removeInputFeedback);
+    this.passwordRepeatField.removeEventListener('input', this.removeInputFeedback);
+  }
+
+  async handleRegister() {
+    if (!this.checkInputFields()) {
+      return;
+    }
+    const userData = {
+      username: this.usernameField.value,
+      email: this.emailField.value,
+      password: this.passwordField.value,
+      password_repeat: this.passwordRepeatField.value,
+    };
+
+    const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
+
+    if (response.success) {
+      console.log('Registration successful:', response);
+      if (response.status === 200) {
+        const userInformation = {
+          username: response.data.username,
+          nickname: response.data.nickname,
+          avatar: response.data.avatar,
+        };
+        auth.storeUser(userInformation);
+        router.navigate(`/home`, response.user);
+      }
+    } else {
+      console.error('Registration failed:', response.msg);
+      this.showErrorFeedback(response.msg);
+    }
+  }
+
+  checkInputFields() {
+    let isFormValid = true;
+    isFormValid = isFieldFilled(this.usernameField, this.usernameFeedback, INPUT_FEEDBACK.EMPTY_USERNAME);
+    isFormValid = isFieldFilled(this.emailField, this.emailFeedback, INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
+    isFormValid =
+      passwordFeedback(this.passwordField, this.passwordRepeatField,
+          this.passwordFeedback, this.passwordRepeatFeedback) && isFormValid;
+
+    return isFormValid;
+  }
+
+  removeInputFeedback(event, feedbackField) {
+    event.target.classList.remove('is-invalid');
+    feedbackField.innerHTML = '';
+  }
+
+  showErrorFeedback(message) {
+    const feedbackField = this.querySelector('#signup-failed-feedback');
+    const feedback = document.createElement('div');
+    const dismissButton = document.createElement('button');
+
+    feedbackField.innerHTML = '';
+
+    feedback.classList.add('alert', 'alert-danger', 'alert-dismissible');
+    feedback.setAttribute('role', 'alert');
+    feedback.textContent = message;
+
+    dismissButton.classList.add('btn-close');
+    dismissButton.setAttribute('data-bs-dismiss', 'alert');
+    dismissButton.setAttribute('aria-label', 'Close');
+    feedback.appendChild(dismissButton);
+
+    feedbackField.appendChild(feedback);
+  }
+
+  template() {
+    return `
       <div class="container">
         <div class="row justify-content-center py-4">
-          <div class="col-12 col-md-4"> 
+          <div class="form-container col-12 col-md-4 p-4"> 
               <div id="signup-failed-feedback"></div>
               <form class='w-100'>
                 <legend class="mt-4 mb-5 border-bottom">Sign Up</legend>
@@ -52,7 +145,7 @@ export class Register extends HTMLElement {
                 <div class='mb-3'>
                   <label for='password_repeat' class='form-label'>Confirm Password</label>
                   <input type='password' class='form-control' id='password_repeat' placeholder='password' autocomplete="off">
-                  <div class='invalid-feedback' id='password_repeat-feedback'></div>
+                  <div class='invalid-feedback' id='password-repeat-feedback'></div>
                 </div>
 
                 <div class='mb-3 py-3'>
@@ -60,108 +153,9 @@ export class Register extends HTMLElement {
                 </div>
               </form>
             </div>
-            </div>
           </div>
         </div>
-      </div>
       `;
-  }
-
-  setupRegisterHandler() {
-    const form = this.querySelector('form');
-    form.addEventListener('submit', (event) => {
-      event.preventDefault(); // Prevent the default behavior of browser (page reload)
-      this.handleRegister();
-    });
-  }
-
-  async handleRegister() {
-    const usernameField = this.querySelector('#username');
-    const emailField = this.querySelector('#email');
-    const passwordField = this.querySelector('#password');
-    const passwordRepeatField = this.querySelector('#password_repeat');
-    if (!this.checkInputFields(usernameField, emailField, passwordField, passwordRepeatField)) {
-      return;
-    }
-    const userData = {
-      username: usernameField.value,
-      email: emailField.value,
-      password: passwordField.value,
-      password_repeat: passwordRepeatField.value,
-    };
-
-    const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
-
-    if (response.success) {
-      console.log('Registration successful:', response);
-      if (response.status === 200) {
-        const userInformation = {
-          username: response.data.username,
-          nickname: response.data.nickname,
-          avatar: response.data.avatar,
-        };
-        auth.storeUser(userInformation);
-        router.navigate(`/home`, response.user);
-      }
-    } else {
-      console.error('Registration failed:', response.msg);
-      const feedback = this.querySelector('#signup-failed-feedback');
-      feedback.innerHTML = `
-        <div class="alert alert-danger alert-dismissible" role="alert">
-          ${response.msg}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      `;
-    }
-  }
-
-  checkInputFields(usernameField, emailField, passwordField, passwordRepeatField) {
-    let isFormValid = true;
-    isFormValid = this.isFieldFilled(usernameField, '#username-feedback', INPUT_FEEDBACK.EMPTY_USERNAME);
-    isFormValid = this.isFieldFilled(emailField, '#email-feedback', INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
-    isFormValid = this.isFieldFilled(passwordField, '#password-feedback', INPUT_FEEDBACK.EMPTY_PASSWORD) && isFormValid;
-    isFormValid =
-      isFormValid = this.isFieldFilled(
-          passwordRepeatField, '#password_repeat-feedback', INPUT_FEEDBACK.EMPTY_PASSWORD_REPEAT) && isFormValid;
-    isFormValid =
-      this.checkPasswordLength(passwordField) &&
-      this.checkPasswordDiff(passwordField, passwordRepeatField) &&
-      isFormValid;
-    return isFormValid;
-  }
-
-  isFieldFilled(field, feedbackSelector, errorMessage) {
-    if (!field.value.trim()) {
-      field.classList.add('is-invalid');
-      document.querySelector(feedbackSelector).textContent = errorMessage;
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  checkPasswordLength(passwordField) {
-    const shortPassword = 'Password must be at least 8 characters';
-    if (passwordField.value.length < 8) {
-      passwordField.classList.add('is-invalid');
-      document.querySelector('#password-feedback').textContent = shortPassword;
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  checkPasswordDiff(passwordField, passwordRepeatField) {
-    const passwordsDoNotMatch = 'Passwords do not match';
-    if (passwordField.value != passwordRepeatField.value) {
-      passwordField.classList.add('is-invalid');
-      passwordRepeatField.classList.add('is-invalid');
-      document.querySelector('#password-feedback').textContent = passwordsDoNotMatch;
-      document.querySelector('#password_repeat-feedback').textContent = passwordsDoNotMatch;
-      return false;
-    } else {
-      return true;
-    }
   }
 }
 

@@ -18,6 +18,7 @@ api.add_router("", router=users_app_router)
 api.add_router("", router=chat_app_router)
 
 
+
 @api.exception_handler(HttpError)
 def handle_http_error_error(request: HttpRequest, exc: HttpError):
     return api.create_response(

@@ -1,5 +1,13 @@
-import { INPUT_FEEDBACK } from './inputFeedback';
 import { ThemeController } from './ThemeController';
+import { isMobile } from './viewPort';
+
+import {
+  INPUT_FEEDBACK,
+  passwordFeedback,
+  isFieldFilled,
+  removeInputFeedback,
+} from './inputFeedback';
+
 import {
   ALERT_TYPE,
   ALERT_MESSAGES,
@@ -8,16 +16,19 @@ import {
   removeAlert,
   addDissmissAlertListener,
 } from './alertMessage';
-import { isMobile } from './viewPort';
+
 
 export {
-  INPUT_FEEDBACK,
   ThemeController,
+  isMobile,
+  INPUT_FEEDBACK,
+  passwordFeedback,
+  isFieldFilled,
+  removeInputFeedback,
   ALERT_MESSAGES,
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
   removeAlert,
   addDissmissAlertListener,
-  isMobile,
 };
