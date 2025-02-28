@@ -10,15 +10,15 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
-from users.api.common import allow_only_for_self
-from users.api.endpoints.mfa import handle_mfa_code
-from users.api.utils import _create_json_response_with_tokens
+from common.routers import allow_only_for_self
+from common.schemas import MessageSchema
 from users.models import RefreshToken, User
+from users.router.endpoints.mfa import handle_mfa_code
+from users.router.utils import _create_json_response_with_tokens
 from users.schemas import (
     ForgotPasswordSchema,
     LoginResponseSchema,
     LoginSchema,
-    Message,
     PasswordValidationSchema,
     ProfileMinimalSchema,
     SignUpSchema,
@@ -28,7 +28,7 @@ from users.schemas import (
 auth_router = Router()
 
 
-@auth_router.get("self", response={200: ProfileMinimalSchema, 401: Message})
+@auth_router.get("self", response={200: ProfileMinimalSchema, 401: MessageSchema})
 def check_self(request: HttpRequest):
     """
     Checks authentication status of the user.
@@ -38,7 +38,9 @@ def check_self(request: HttpRequest):
 
 
 @auth_router.post(
-    "login", response={200: ProfileMinimalSchema | LoginResponseSchema, 401: Message, 429: Message}, auth=None,
+    "login",
+    response={200: ProfileMinimalSchema | LoginResponseSchema, 401: MessageSchema, 429: MessageSchema},
+    auth=None,
 )
 @ensure_csrf_cookie
 @csrf_exempt
@@ -91,7 +93,7 @@ def signup(request: HttpRequest, data: SignUpSchema):
 
 @auth_router.post(
     "refresh",
-    response={204: None, 401: Message},
+    response={204: None, 401: MessageSchema},
     auth=None,
 )
 def refresh(request: HttpRequest, response: HttpResponse):
@@ -111,7 +113,7 @@ def refresh(request: HttpRequest, response: HttpResponse):
 
 @auth_router.delete(
     "logout",
-    response={204: None, 401: Message},
+    response={204: None, 401: MessageSchema},
 )
 def logout(request: HttpRequest, response: HttpResponse):
     """
@@ -134,18 +136,17 @@ def logout(request: HttpRequest, response: HttpResponse):
     return 204, None
 
 
-@auth_router.delete("/users/{username}/delete", response={200: Message, frozenset({401, 403, 404}): Message})
+@auth_router.delete("/users/{username}/delete", response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema})
 def delete_account(request, username: str, response: HttpResponse):
     """
     Delete definitely the user account and the associated profile, including friends relations and avatar.
     """
     user = request.auth
-
     if not user:
-        raise AuthenticationError
+        return None
 
     if user.username != username:
-        raise PermissionDenied("You are not allowed to delete this account.")
+        raise HttpError(403, "You are not allowed to delete this account.")
 
     old_refresh_token = request.COOKIES.get("refresh_token")
     if old_refresh_token:
@@ -155,18 +156,11 @@ def delete_account(request, username: str, response: HttpResponse):
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
 
-    profile = user.profile
-    if not profile:
-        raise HttpError(404, "Profile not found.")
-
-    if profile.profile_picture:
-        profile.delete_avatar()
-
     user.delete()
 
     return {"msg": "Account successfully deleted."}
 
-@auth_router.post("/forgot-password", response={200: Message}, auth=None)
+@auth_router.post("/forgot-password", response={200: MessageSchema}, auth=None)
 @csrf_exempt
 def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any]:
     """Request a password reset link"""
@@ -197,7 +191,7 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
 @auth_router.post(
     "/reset-password/{token}",
-    response={200: Message, 400: Message, 422: list[ValidationErrorMessageSchema]},
+    response={200: MessageSchema, 400: MessageSchema, 422: list[ValidationErrorMessageSchema]},
     auth=None,
 )
 @csrf_exempt
@@ -225,4 +219,3 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
     user.save()
 
     return {"msg": "Password has been reset successfully"}
-
