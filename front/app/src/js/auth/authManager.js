@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
-import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 /**
  * @module authManager
@@ -76,18 +76,16 @@ const auth = (() => {
             case 401:
               return { success: false, status: 401 };
             case 500:
-              showAlertMessageForDuration(ALERT_TYPE.ERROR, ALERT_MESSAGES.SERVER_ERROR, 3000);
-
+              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR, 3000);
               break;
             default:
               console.log('Unknown error.');
-              showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
+              showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
               return { success: false, status: refreshTokenResponse.status };
           }
         }
         return { success: false, status: response.status };
       }
-      showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
       return { success: false, status: response.status };
     }
   }
