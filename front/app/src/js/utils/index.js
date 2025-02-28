@@ -13,7 +13,7 @@ import {
 
 import {
   ALERT_TYPE,
-  ALERT_MESSAGES,
+  ERROR_MESSAGES,
   showAlertMessage,
   showAlertMessageForDuration,
   removeAlert,
@@ -31,7 +31,7 @@ export {
   passwordFeedback,
   isFieldFilled,
   removeInputFeedback,
-  ALERT_MESSAGES,
+  ERROR_MESSAGES,
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,

@@ -1,6 +1,6 @@
 import { router } from '@router';
 import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
-import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+import { showAlertMessage, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 /**
  * Makes an API request with the specified method and endpoint.
@@ -41,8 +41,8 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     if (response.ok) {
       return handlers.success(response);
     }
-    const responseData = await response.clone().json();
     if (needToken && response.status === 401) {
+      const responseData = await response.json();
       if (responseData.msg === 'Old password is invalid.') {
         // Special case for password update (temporary)
         return ({ success: false, status: 422, msg: responseData.msg });
@@ -99,12 +99,12 @@ const handlers = {
     }
     if (refreshResponse.status === 401) {
       router.navigate('/login');
-      showAlertMessage(ALERT_TYPE.LIGHT, ALERT_MESSAGES.SESSION_EXPIRED);
+      showAlertMessage(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
       return { success: false, status: 401, msg: 'Session expired' };
     }
     auth.clearStoredUser();
     router.navigate('/');
-    showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
+    showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
     return { success: false, status: refreshResponse.status };
   },
 
@@ -118,7 +118,7 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and response message.
    */
   500: async (url, options) => {
-    showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.SERVER_ERROR);
+    showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
     // Retry request
     setTimeout(async () => {
       const retryResponse = await fetch(url, options);
@@ -134,7 +134,7 @@ const handlers = {
     }, 3000);
     auth.clearStoredUser();
     router.navigate('/');
-    return { success: false, status: 500, msg: ALERT_MESSAGES.UNKNOWN_ERROR };
+    return { success: false, status: 500, msg: ERROR_MESSAGES.UNKNOWN_ERROR };
   },
 
   /**
@@ -147,7 +147,7 @@ const handlers = {
    */
   failure: async (response) => {
     const errorData = await response.json();
-    let errorMsg = ALERT_MESSAGES.UNKNOWN_ERROR;
+    let errorMsg = ERROR_MESSAGES.UNKNOWN_ERROR;
     if (Array.isArray(errorData)) {
       const foundErrorMsg = errorData.find((item) => item.msg);
       errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;
