@@ -196,9 +196,9 @@
 - [] - [] ChatMessageArea.js
 - [] - [] ChatMessageInput.js
 
-#### dual
-- [] - [] Dual.js
-- [] - [] DualMenu.js
+#### duel
+- [] - [] Duel.js
+- [] - [] DuelMenu.js
 
 #### home
 - [x] - [x] Home.js
@@ -215,7 +215,7 @@
 - [] - [] Profile.js
 - [x] - [x] UserNotFound.js
 - [x] - [x] Avatar.js
-- [] - [] DuelHistory.js
+- [x] - [x] DuelHistory.js
 - [x] - [x] Enemy.js
 - [x] - [x] GameHistory.js
 - [x] - [x] OnlineStatusIndicator.js
@@ -247,3 +247,4 @@
 - [x] alertMessage.js
 - [x] formFeedback.js
 - [x] inputFeedback.js
+ 
