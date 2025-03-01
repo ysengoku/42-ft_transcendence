@@ -8,10 +8,14 @@ export class NotificationsButton extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = `
-			<button class="btn btn-secondary me-2 rounded-circle">
-				<i class="bi bi-bell"></i>
-			</button>
+    this.innerHTML = this.template();
+  }
+  
+  template() {
+    return `
+		<button class="btn me-2">
+			<i class="bi bi-bell"></i>
+		</button>
 		`;
 
     // Add notifications functions
