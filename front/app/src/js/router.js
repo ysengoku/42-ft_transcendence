@@ -1,6 +1,6 @@
 import { auth } from '@auth';
 import { addDissmissAlertListener } from '@utils';
-import { CubeTexture } from 'three/src/Three.Core.js';
+// import { CubeTexture } from 'three/src/Three.Core.js';
 
 /**
  * Router module for handling client-side navigation.
@@ -12,8 +12,9 @@ import { CubeTexture } from 'three/src/Three.Core.js';
  * @requires module:user-profile
  * @requires module:user-not-found
  * @requires module:user-settings
- * @requires module:dual-menu
- * @requires module:dual
+ * @requires module:duel-menu
+ * @requires module:duel
+ * @requires module:duel-result
  * @requires module:tournament-menu
  * @requires module:tournament
  * @requires module:chat-page
@@ -194,8 +195,9 @@ router.addRoute('/profile/:username', 'user-profile', true);
 router.addRoute('/user-not-found', 'user-not-found');
 router.addRoute('/settings', 'user-settings');
 router.addRoute('/chat', 'chat-page');
-router.addRoute('/dual-menu', 'dual-menu');
-// router.addRoute('/dual/:id', 'dual', true);
+router.addRoute('/duel-menu', 'duel-menu');
+// router.addRoute('/duel/:id', 'duel', true);
+router.addRoute('/duel-result', 'duel-result', true);
 router.addRoute('/tournament-menu', 'tournament-menu');
 // router.addRoute('/tournament/:id', 'tournament', true);
 router.addRoute('/game', 'app-game');

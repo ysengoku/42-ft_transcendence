@@ -17,7 +17,7 @@ export class Error extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template();
+    this.innerHTML = this.template() + this.style();
 
     const status = this.querySelector('#error-status');
     const message = this.querySelector('#error-message');
