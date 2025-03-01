@@ -40,7 +40,7 @@ export class Home extends HTMLElement {
 			<div id="home-nickname"></div>
 			<p>This is futur Home  ("hub?")</p>
 			<div class="d-flex flex-column justify-content-center align-items-center grid gap-4 row-gap-4">
-				<home-dual-button></home-dual-button>
+				<home-duel-button></home-duel-button>
 				<home-tournament-button></home-tournament-button>
         <home-profile-button></home-profile-button>
 				<home-settings-button></home-settings-button>
