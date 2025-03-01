@@ -179,7 +179,7 @@
 - [x] - [x] FriendsList.js
 - [x] - [x] NavbarBrand.js
 - [x] - [x] NotificationsButton.js
-- [] - [] UserActionsMenu.js
+- [x] - [x] UserActionsMenu.js
 - [x] - [x] UserListItem.js
 - [x] - [x] UserSearch.js
 - [x] - [x] UserSearchButton.js
