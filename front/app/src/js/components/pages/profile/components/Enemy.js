@@ -16,8 +16,10 @@ export class UserEnemy extends HTMLElement {
     this.render();
   }
 
-  disconnectedCallback() {  
-    this.enemyContainer.removeEventListener('click', this.handleClick);
+  disconnectedCallback() {
+    if (this.#state.data) {
+      this.enemyContainer.removeEventListener('click', this.handleClick);
+    }
   }
 
   render() {

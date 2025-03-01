@@ -32,6 +32,8 @@ export class UserProfile extends HTMLElement {
     } else {
       if (response.status === 404) {
         router.navigate('/user-not-found');
+      } else if (response.status === 401) {
+        router.navigate('/login');
       } else {
         router.navigate(`/error?code=${response.status}&error=${response.msg}`);
         console.error('Error ', response.status, ': ', response.msg);
