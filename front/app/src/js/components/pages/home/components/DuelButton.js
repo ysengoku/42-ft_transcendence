@@ -1,6 +1,6 @@
 import { router } from '@router';
 
-export class DualButton extends HTMLElement {
+export class DuelButton extends HTMLElement {
   constructor() {
     super();
     this.handleClick = this.handleClick.bind(this);
@@ -17,22 +17,22 @@ export class DualButton extends HTMLElement {
   render() {
     this.innerHTML = this.template();
 
-    this.button = this.querySelector('#home-dual-button');
+    this.button = this.querySelector('#home-duel-button');
     this.button.addEventListener('click', this.handleClick);
   }
 
   handleClick(event) {
     event.preventDefault();
-    router.navigate('/dual-menu');
+    router.navigate('/duel-menu');
   }
 
   template() {
     return `
-	    <div id="home-dual-button">
-	      <div class="btn btn-primary btn-lg">Dual</div>
+	    <div id="home-duel-button">
+	      <div class="btn btn-primary btn-lg">Duel</div>
 	    </div>
 	  `;
   }
 }
 
-customElements.define('home-dual-button', DualButton);
+customElements.define('home-duel-button', DuelButton);

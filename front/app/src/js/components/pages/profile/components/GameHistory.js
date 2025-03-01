@@ -7,7 +7,7 @@ export class UserGameHistory extends HTMLElement {
       matches: [],
       tournaments: [],
     };
-    this.handleDualTabClick = this.handleDualTabClick.bind(this);
+    this.handleDuelTabClick = this.handleDuelTabClick.bind(this);
     this.handleTournamentTabClick = this.handleTournamentTabClick.bind(this);
   }
 
@@ -17,7 +17,7 @@ export class UserGameHistory extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.dualsTab.removeEventListener('click', this.handleDualTabClick);
+    this.duelsTab.removeEventListener('click', this.handleDuelTabClick);
     this.tournamentsTab.removeEventListener('click', this.handleTournamentTabClick);
   }
 
@@ -25,20 +25,20 @@ export class UserGameHistory extends HTMLElement {
     this._data.matches = mockFetchDuelHistory();
     this.innerHTML = this.template() + this.style();
 
-    this.dualsTab = this.querySelector('#duels-tab');
+    this.duelsTab = this.querySelector('#duels-tab');
     this.tournamentsTab = this.querySelector('#tournaments-tab');
     this.cardBody = this.querySelector('#user-game-history-body');
 
-    this.dualsTab.addEventListener('click', this.handleDualTabClick);
+    this.duelsTab.addEventListener('click', this.handleDuelTabClick);
     this.tournamentsTab.addEventListener('click', this.handleTournamentTabClick);
 
     const userDuelHistory = this.querySelector('user-duel-history');
     userDuelHistory.data = this._data.matches;
   }
 
-  handleDualTabClick(event) {
+  handleDuelTabClick(event) {
     event.preventDefault();
-    this.dualsTab.classList.add('active');
+    this.duelsTab.classList.add('active');
     this.tournamentsTab.classList.remove('active');
     this.cardBody.innerHTML = '';
     const userDuelHistory = document.createElement('user-duel-history');
@@ -49,7 +49,7 @@ export class UserGameHistory extends HTMLElement {
   handleTournamentTabClick(event) {
     event.preventDefault();
     this.tournamentsTab.classList.add('active');
-    this.dualsTab.classList.remove('active');
+    this.duelsTab.classList.remove('active');
     this.cardBody.innerHTML = '';
     const userTournamentHistory = document.createElement('user-tournament-history');
     this.cardBody.appendChild(userTournamentHistory);
@@ -107,7 +107,7 @@ export class UserGameHistory extends HTMLElement {
         padding: 1rem 0 1rem 0.5rem;
       }
       .user-game-history-avatar {
-        width: 24px;
+        width: 36px;
         aspect-ratio: 1;
         object-fit: cover;
         border-radius: 50%;
