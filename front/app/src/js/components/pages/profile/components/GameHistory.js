@@ -1,4 +1,5 @@
 import { mockFetchDuelHistory } from '@mock/functions/mockFetchDuelHistory.js';
+import { mockFetchTournamentHistory } from '@mock/functions/mockFetchTournamentHistory.js';
 
 export class UserGameHistory extends HTMLElement {
   constructor() {
@@ -23,6 +24,7 @@ export class UserGameHistory extends HTMLElement {
 
   render() {
     this._data.matches = mockFetchDuelHistory();
+    this._data.tournaments = mockFetchTournamentHistory();
     this.innerHTML = this.template() + this.style();
 
     this.duelsTab = this.querySelector('#duels-tab');
@@ -52,6 +54,7 @@ export class UserGameHistory extends HTMLElement {
     this.duelsTab.classList.remove('active');
     this.cardBody.innerHTML = '';
     const userTournamentHistory = document.createElement('user-tournament-history');
+    userTournamentHistory.data = this._data.tournaments;
     this.cardBody.appendChild(userTournamentHistory);
   }
 
@@ -69,7 +72,7 @@ export class UserGameHistory extends HTMLElement {
           </li>
         </ul>
       </div>
-      <div class="card-body p-2 table-container" id="user-game-history-body">
+      <div class="card-body px-2 pt-0 mt-2 table-container" id="user-game-history-body">
         <user-duel-history></user-duel-history>
       </div>
     </div>
@@ -125,7 +128,7 @@ export class UserGameHistory extends HTMLElement {
         overflow-y: auto;
       }
       .table-container thead th {
-        --bs-table-bg: rgba(0, 0, 0, 0.8);
+        --bs-table-bg: rgb(0, 0, 0);
         --bs-table-color: white;
         font-weight:normal;
         position: sticky;
@@ -141,6 +144,9 @@ export class UserGameHistory extends HTMLElement {
       .table-container::-webkit-scrollbar-thumb {
         background: black;
         border-radius: 4px;
+      }
+      td {
+        font-size: 1rem;
       }
     </style>
     `;

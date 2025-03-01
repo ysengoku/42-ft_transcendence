@@ -86,19 +86,19 @@ export class UserDuelHistory extends HTMLElement {
 
   template() {
     return `
-	  <table class="table table-hover user-game-history-table">
-		<thead>
-		  <tr>
-			<th scope="col">User</th>
-			<th scope="col">Date</th>
-			<th scope="col">Score</th>
-			<th scope="col">Result</th>
-			<th scope="col">Elo</th>
-		  </tr>
-		</thead>
-		<tbody></tbody>
-	  </table>
-	`;
+    <table class="table table-hover user-game-history-table">
+    <thead>
+      <tr>
+      <th scope="col">User</th>
+      <th scope="col">Date</th>
+      <th scope="col">Score</th>
+      <th scope="col">Result</th>
+      <th scope="col">Elo</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    </table>
+  `;
   }
 
   rowTemplate() {
@@ -106,7 +106,7 @@ export class UserDuelHistory extends HTMLElement {
     <tr>
       <td>
         <div class="d-flex flex-row align-items-center">
-	        <img class="user-game-history-avatar" />
+          <img class="user-game-history-avatar" />
           <div class="opponent-nickname"></div>
         </div>
       </td>
@@ -120,15 +120,12 @@ export class UserDuelHistory extends HTMLElement {
         </div>
       </td>
     </tr>
-	   `;
+     `;
   }
 
   style() {
     return `
     <style>
-      td {
-        font-size: 1rem;
-      }
       .result-badge {
         color: white;
         font-size: 0.8rem;
