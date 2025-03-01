@@ -172,17 +172,17 @@
 ## Add sanitize html | Refactor
 
 ### navbar
-- [] - [] Navbar.js
-- [] - [] ChatButton.js
-- [] - [] DropdownMenu.js
-- [] - [] FriendsButton.js
-- [] - [] FriendsList.js
-- [] - [] NavbarBrand.js
-- [] - [] NotificationsButton.js
+- [x] - [x] Navbar.js
+- [x] - [x] ChatButton.js
+- [x] - [x] DropdownMenu.js
+- [x] - [x] FriendsButton.js
+- [x] - [x] FriendsList.js
+- [x] - [x] NavbarBrand.js
+- [x] - [x] NotificationsButton.js
 - [] - [] UserActionsMenu.js
-- [] - [] UserListItem.js
-- [] - [] UserSearch.js
-- [] - [] UserSearchButton.js
+- [x] - [x] UserListItem.js
+- [x] - [x] UserSearch.js
+- [x] - [x] UserSearchButton.js
 
 ### pages
 - [x] - [x] Landing.js
