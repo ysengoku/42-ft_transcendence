@@ -1,27 +1,46 @@
 import { router } from '@router';
 
 export class UserListItem extends HTMLElement {
+  #state = {
+    username: '',
+    nickname: '',
+    avatar: '',
+    online: false,
+  };
+
   constructor() {
     super();
-    this.username = '';
-    this.nickname = '';
-    this.avatar = '';
-    this.online = false;
+    this.handleClick = this.handleClick.bind(this);
   }
 
   connectedCallback() {
-    this.setAttributes();
+    this.#state.username = this.getAttribute('username');
+    this.#state.nickname = this.getAttribute('nickname');
+    this.#state.avatar = this.getAttribute('avatar');
+    this.#state.online = this.getAttribute('online') === 'true';
+  
     this.render();
-    this.addEventListener('click', () => {
-      router.navigate(`/profile/${this.username}`);
-    });
   }
 
-  setAttributes() {
-    this.username = this.getAttribute('username');
-    this.nickname = this.getAttribute('nickname');
-    this.avatar = this.getAttribute('avatar');
-    this.online = this.getAttribute('online') === 'true';
+  disconnectedCallback() {
+    this.removeEventListener('click', this.handleClick);
+  }
+
+  render() {
+    this.innerHTML = this.template() + this.style();
+
+    const avatar = this.querySelector('.user-list-avatar');
+    avatar.src = this.#state.avatar;
+    const nickname = this.querySelector('.userlist-nickname');
+    nickname.textContent = this.#state.nickname;
+    const username = this.querySelector('.userlist-username');
+    username.textContent = `@${this.#state.username}`;
+
+    this.addEventListener('click', this.handleClick);
+  }
+
+  handleClick() {
+    router.navigate(`/profile/${this.#state.username}`);
   }
 
   static get observedAttributes() {
@@ -30,16 +49,33 @@ export class UserListItem extends HTMLElement {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (name === 'online') {
-      this.online = newValue === 'true';
+      this.#state.online = newValue === 'true';
       this.updateOnlineStatus();
     }
   }
 
   updateOnlineStatus() {
   }
+  
+  template() {
+    return`
+		<li class="list-group-item user-list-item">
+      <div class="d-flex flex-row align-items-center">
+			  <div class="avatar-container">
+				  <img class="user-list-avatar rounded-circle me-3" alt="Avatar">
+				  <span class="user-list-status-indicator ${this.#state.online ? 'online' : ''} ms-3"></span>
+			  </div>
+        <div class="d-flex flex-column justify-content-center">
+          <p class="userlist-nickname m-0 fs-5"></P>
+			    <p class="userlist-username m-0 fw-light"></p>
+        </div>
+      <div>
+		</li>
+	`;
+  }
 
-  render() {
-    this.innerHTML = `
+  style() {
+    return `
     <style>
       .user-list-item {
         border: none;
@@ -56,12 +92,12 @@ export class UserListItem extends HTMLElement {
         display: inline-block;
         margin-right: 10px;
       }
-      .friends-list-avatar {
+      .user-list-avatar {
         width: 56px;
         height: 56px;
         object-fit: cover;
       }
-      .friends-list-status-indicator {
+      .user-list-status-indicator {
         position: absolute;
         width: 16px;
         height: 16px;
@@ -71,23 +107,11 @@ export class UserListItem extends HTMLElement {
         background-color: gray;
         border: 2px solid var(--bs-body-bg);
       }
-      .friends-list-status-indicator.online {
+      .user-list-status-indicator.online {
         background-color: green;
       }
     </style>
-		<li class="list-group-item user-list-item">
-      <div class="d-flex flex-row align-items-center">
-			  <div class="avatar-container">
-				  <img src="${this.avatar}" alt="Avatar" class="rounded-circle me-3 friends-list-avatar">
-				  <span class="friends-list-status-indicator ${this.online ? 'online' : ''} ms-3"></span>
-			  </div>
-        <div class="d-flex flex-column justify-content-center">
-          <p class="m-0 fs-5">${this.nickname}</P>
-			    <p class="m-0 fw-light">@${this.username}</p>
-        </div>
-      <div>
-		</li>
-	`;
+    `;
   }
 }
 

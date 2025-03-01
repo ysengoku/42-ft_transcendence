@@ -6,39 +6,68 @@ export class UserSearch extends HTMLElement {
     super();
     this.userList = [];
     this.totalUsersCount = 0;
+
+    this.handleClick = this.handleClick.bind(this);
+    this.handleInput = this.handleInput.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleDropdownHidden = this.handleDropdownHidden.bind(this);
   }
 
   connectedCallback() {
     this.render();
-    this.setupSearchHandler();
   }
 
-  setupSearchHandler() {
-    const form = this.querySelector('form');
-    const input = form.querySelector('input');
-    input.addEventListener('click', (event) => {
-      event.stopPropagation();
-    });
-    input.addEventListener('input', () => {
-      if (input.value === '') {
-        this.userList = [];
-        this.totalUserCount = 0;
-        const listContainer = this.querySelector('#navbar-user-list');
-        listContainer.innerHTML = '';
-      }
-    });
-    form.addEventListener('submit', async (event) => {
-      event.stopPropagation();
-      event.preventDefault();
-      const searchQuery = form.querySelector('input').value;
-      await this.searchUser(searchQuery);
-    });
-    form.addEventListener('click', (event) => {
-      event.stopPropagation();
-    });
-    document.addEventListener('hidden.bs.dropdown', () => {
-      input.value = '';
-    });
+  disconnectedCallback() {
+    this.input.removeEventListener('click', this.handleClick);
+    this.input.removeEventListener('input', this.handleInput);
+    this.form.removeEventListener('click', this.handleClick);
+    this.form.removeEventListener('submit', this.handleSubmit);
+    document.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+  }
+
+  render() {
+    this.innerHTML = this.template();
+
+    this.listContainer = this.querySelector('#navbar-user-list');
+    this.form = this.querySelector('form');
+    this.input = this.form.querySelector('input');
+
+    this.input.addEventListener('click', this.handleClick);
+    this.input.addEventListener('input', this.handleInput);
+    this.form.addEventListener('click', this.handleClick);
+    this.form.addEventListener('submit', this.handleSubmit);
+    document.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+  }
+
+  handleClick(event) {
+    event.stopPropagation();
+    if (this.input.value === '') {
+      this.userList = [];
+      this.totalUserCount = 0;
+      this.listContainer.innerHTML = '';
+    }
+  }
+
+  handleInput() {
+    if (this.input.value === '') {
+      this.userList = [];
+      this.totalUserCount = 0;
+      this.listContainer.innerHTML = '';
+    }
+  }
+
+  async handleSubmit(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const searchQuery = this.input.value;
+    await this.searchUser(searchQuery);
+  }
+
+  handleDropdownHidden() {
+    this.userList = [];
+    this.totalUserCount = 0;
+    this.listContainer.innerHTML = '';
+    this.input.value = '';
   }
 
   async searchUser(searchQuery) {
@@ -68,8 +97,47 @@ export class UserSearch extends HTMLElement {
     }
   }
 
-  render() {
-    this.innerHTML = `
+  renderUserList() {
+    this.listContainer.innerHTML = '';
+    if (this.userList.length === 0) {
+      this.renderNoUserFound();
+      return;
+    }
+    this.userList.forEach((user) => {
+      const listItem = document.createElement('user-list-item');
+      listItem.setAttribute('username', user.username);
+      listItem.setAttribute('nickname', user.nickname);
+      listItem.setAttribute('avatar', user.avatar);
+      listItem.setAttribute('online', user.is_online);
+      this.listContainer.appendChild(listItem);
+    });
+    if (this.totalUsersCount > this.userList.length) {
+      this.renderShowMoreButton();
+    }
+  }
+
+  renderNoUserFound() {
+    const noUser = document.createElement('li');
+    noUser.innerHTML = this.noUserFoundTemplate();
+    this.listContainer.appendChild(noUser);
+  }
+
+  renderShowMoreButton() {
+    const showMoreButton = document.createElement('li');
+    showMoreButton.innerHTML = this.showMoreButtonTemplate();
+    this.listContainer.appendChild(showMoreButton);
+
+    const button = showMoreButton.querySelector('#show-more-users');
+    if (button) {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.searchUser();
+      });
+    }
+  }
+
+  template() {
+    return`
     <form class="d-flex mx-3 mt-3 mb-2" role="search" id="user-search-form">
       <div class="input-group">
         <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
@@ -81,80 +149,41 @@ export class UserSearch extends HTMLElement {
         <ul class="list-group mb-2" id="navbar-user-list"></ul>
     </div>
     `;
-
-    document.addEventListener('hidden.bs.dropdown', () => {
-      this.userList = [];
-      this.totalUserCount = 0;
-      const listContainer = this.querySelector('#navbar-user-list');
-      listContainer.innerHTML = '';
-    });
   }
 
-  renderUserList() {
-    const listContainer = this.querySelector('#navbar-user-list');
-    listContainer.innerHTML = '';
-    if (this.userList.length === 0) {
-      this.renderNoUserFound(listContainer);
-      return;
-    }
-    this.userList.forEach((user) => {
-      const listItem = document.createElement('user-list-item');
-      listItem.setAttribute('username', user.username);
-      listItem.setAttribute('nickname', user.nickname);
-      listItem.setAttribute('avatar', user.avatar);
-      listItem.setAttribute('online', user.is_online);
-      listContainer.appendChild(listItem);
-    });
-    if (this.totalUsersCount > this.userList.length) {
-      this.renderShowMoreButton(listContainer);
-    }
-  }
-
-  renderNoUserFound(listContainer) {
-    const noUser = document.createElement('li');
-    noUser.innerHTML = `
-      <style>
-        .list-group-item {
-          border: none;
-          position: relative;
-        }
-        li {
-          list-style-type: none;
-        }
-      </style>
-      <div class="list-group-item p-3">
-        <p class="text-center m-0">No user found</p>
-      </div>
+  noUserFoundTemplate() {
+    return `
+    <style>
+      .list-group-item {
+        border: none;
+        position: relative;
+      }
+      li {
+        list-style-type: none;
+      }
+    </style>
+    <div class="list-group-item p-3">
+      <p class="text-center m-0">No user found</p>
+    </div>
     `;
-    listContainer.appendChild(noUser);
   }
 
-  renderShowMoreButton(listContainer) {
-    const showMoreButton = document.createElement('li');
-    showMoreButton.innerHTML = `
-      <style>
-        #show-more-users {
-          border: none;
-          position: relative;
-          border-top: 1px solid var(--bs-border-color);
-        }
-        li {
-          list-style-type: none;
-        }
-      </style>
-      <div class="list-group-item mt-4 p-3" id="show-more-users">
-        <p class="text-center m-0">Show more users</p>
-      </div>
+  showMoreButtonTemplate() {
+    return `
+    <style>
+      #show-more-users {
+        border: none;
+        position: relative;
+        border-top: 1px solid var(--bs-border-color);
+      }
+      li {
+        list-style-type: none;
+      }
+    </style>
+    <div class="list-group-item mt-4 p-3" id="show-more-users">
+      <p class="text-center m-0">Show more users</p>
+    </div>
     `;
-    listContainer.appendChild(showMoreButton);
-
-    const button = showMoreButton.querySelector('#show-more-users');
-    if (button) {
-      button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        this.searchUser();
-      });
-    }
   }
 }
 
