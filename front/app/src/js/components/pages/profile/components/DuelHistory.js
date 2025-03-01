@@ -51,13 +51,13 @@ export class UserDuelHistory extends HTMLElement {
 
   createRow(item) {
     const row = document.createElement('tr');
-    row.innerHTML = this.rowTemplate();
+    row.innerHTML = this.rowTemplate() + this.style(item.is_winner);
   
     const opponentAvatar = row.querySelector('.user-game-history-avatar');
     const opponentNickname = row.querySelector('.opponent-nickname');
     const duelDate = row.querySelector('.duel-date');
     const duelScore = row.querySelector('.duel-score');
-    const duelResult = row.querySelector('.duel-result');
+    const duelResult = row.querySelector('.result-badge');
     const eloResult = row.querySelector('.elo-result');
     const eloChangeIndicator = row.querySelector('.elo-change-indicator');
   
@@ -65,10 +65,8 @@ export class UserDuelHistory extends HTMLElement {
     opponentNickname.textContent = item.opponent.username;
     duelDate.textContent = this.formatDate(item.date);
     duelScore.textContent = item.score;
-    duelResult.innerHTML = `
-      <span class="badge text-bg-${item.is_winner ? 'success' : 'danger'}">
-        ${item.is_winner ? 'Win' : 'Lost'}
-      </span>`;
+    duelResult.textContent = item.is_winner ? 'Win' : 'Lost';
+    duelResult.style.backgroundColor = item.is_winner ? 'green' : 'red';
     eloResult.textContent = item.elo_result;
     const indicator = item.is_winner ? '<i class="bi bi-arrow-up-right ps-1"></i>' :
       '<i class="bi bi-arrow-down-right ps-1"></i>';
@@ -109,20 +107,36 @@ export class UserDuelHistory extends HTMLElement {
       <td>
         <div class="d-flex flex-row align-items-center">
 	        <img class="user-game-history-avatar" />
-          <div class="opponent-nickname">Nickname</div>
+          <div class="opponent-nickname"></div>
         </div>
       </td>
-      <td class="duel-date">Date</td>
-      <td class="duel-score">Score</td>
-      <td class="duel-result">Result</td>
+      <td class="duel-date"></td>
+      <td class="duel-score"></td>
+      <td class="duel-result"><span class="result-badge"></span></td>
       <td>
         <div class="d-flex flex-row align-items-center">
-          <div class="elo-result">elo</div>
-          <div class="elo-change-indicator">↑</div>
+          <div class="elo-result"></div>
+          <div class="elo-change-indicator"></div>
         </div>
       </td>
     </tr>
 	   `;
+  }
+
+  style() {
+    return `
+    <style>
+      td {
+        font-size: 1rem;
+      }
+      .result-badge {
+        color: white;
+        font-size: 0.8rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.5rem;
+      }
+    </style>
+    `;
   }
 }
 
