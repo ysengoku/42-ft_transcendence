@@ -19,6 +19,7 @@ export class UserGameResultModal extends HTMLElement {
   }
   
   render() {
+    console.log(this.#state.type);
     this.innerHTML = this.template() + this.style();
     this.modal = new bootstrap.Modal(this.querySelector('.modal'));
 

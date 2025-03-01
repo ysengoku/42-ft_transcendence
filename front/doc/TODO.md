@@ -196,10 +196,6 @@
 - [] - [] ChatMessageArea.js
 - [] - [] ChatMessageInput.js
 
-#### duel
-- [] - [] Duel.js
-- [] - [] DuelMenu.js
-
 #### home
 - [x] - [x] Home.js
 
@@ -212,7 +208,7 @@
 - [x] - [x] MfaVerification.js
 
 #### profile
-- [] - [] Profile.js
+- [x] - [x] Profile.js
 - [x] - [x] UserNotFound.js
 - [x] - [x] Avatar.js
 - [x] - [x] DuelHistory.js
@@ -220,7 +216,7 @@
 - [x] - [x] GameHistory.js
 - [x] - [x] OnlineStatusIndicator.js
 - [x] - [x] StatCard.js
-- [] - [] TournamentHistory.js
+- [x] - [x] TournamentHistory.js
 - [x] - [x] UserActions.js
 - [x] - [x] UserInfo.js
 - [x] - [x] WinRatePieGraph.js
@@ -238,10 +234,6 @@
 - [x] - [x] MfaEnableUpdate.js
 - [x] - [x] PasswordUpdate.js
 - [x] - [x] UserIdentityUpdate.js
-
-#### tournament
-- [] - [] Tournament.js
-- [] - [] TournamentMenu.js
 
 #### utils
 - [x] alertMessage.js
