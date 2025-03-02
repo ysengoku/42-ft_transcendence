@@ -101,7 +101,7 @@
 - [x] Error handling
 - [x] Email format check
 - [] Incorrect old password case (401 occurs infinite loop with current logic)
-- [] Test Delete account & add adieu message
+- [x] Test Delete account & add adieu message
 - [] Unit test (input validation)
 - [] Disable submit button if there is no change
 
