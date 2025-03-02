@@ -130,11 +130,11 @@
 
 ### Stat
 - [x] Pie Graph
-- [] - [] Line graph
+- [] Line graph
 
 ### Game History
-- [] - [] Better solution for Scroll thead sticky
-- [] - [] Tournament history table
+- [x] Better solution for Scroll thead sticky
+- [x]  Tournament history table
 
 ---------------------------------------------------------------------
 
