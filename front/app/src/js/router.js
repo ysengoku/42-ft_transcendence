@@ -194,6 +194,7 @@ router.addRoute('/home', 'user-home');
 router.addRoute('/profile/:username', 'user-profile', true);
 router.addRoute('/user-not-found', 'user-not-found');
 router.addRoute('/settings', 'user-settings');
+router.addRoute('/account-deleted', 'account-deleted');
 router.addRoute('/chat', 'chat-page');
 router.addRoute('/duel-menu', 'duel-menu');
 // router.addRoute('/duel/:id', 'duel', true);
