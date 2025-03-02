@@ -71,7 +71,7 @@ export class Navbar extends HTMLElement {
       .navbar {
         background-color: #3b3b3b;
       }
-      i {
+      .navbar-button i {
         font-size: 1.5rem;  
       }
 

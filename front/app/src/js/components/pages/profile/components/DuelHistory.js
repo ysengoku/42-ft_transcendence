@@ -132,6 +132,9 @@ export class UserDuelHistory extends HTMLElement {
         padding: 0.2rem 0.5rem;
         border-radius: 0.5rem;
       }
+      i {
+        font-size: 1rem;
+      }
     </style>
     `;
   }

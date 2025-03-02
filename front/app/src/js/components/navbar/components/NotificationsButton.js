@@ -13,7 +13,7 @@ export class NotificationsButton extends HTMLElement {
   
   template() {
     return `
-		<button class="btn me-2">
+		<button class="navbar-button btn me-2">
 			<i class="bi bi-bell"></i>
 		</button>
 		`;
