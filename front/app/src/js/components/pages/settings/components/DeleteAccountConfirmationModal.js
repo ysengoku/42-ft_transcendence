@@ -33,7 +33,7 @@ export class DeleteAccountConfirmationModal extends HTMLElement {
 
   template() {
     return `
-    <div class="modal fade" id="delete-account-confirm-modal" tabindex="-1">
+    <div class="modal fade" id="delete-account-confirm-modal" tabindex="-1" aria-hidden="true">
 	  <div class="modal-dialog">
 	    <div class="modal-content">
 		  <div class="modal-body py-4">

@@ -8,6 +8,7 @@ import { Home } from './home/Home.js';
 import { UserProfile } from './profile/Profile.js';
 import { UserNotFound } from './profile/UserNotFound.js';
 import { Settings } from './settings/Settings.js';
+import { AccountDeleted } from './settings/AccountDeleted.js';
 import { Chat } from './chat/Chat.js';
 import { DuelMenu } from './duel/DuelMenu.js';
 import { DuelResult } from './duel/DuelResult.js';
@@ -28,6 +29,7 @@ export {
   UserProfile,
   UserNotFound,
   Settings,
+  AccountDeleted,
   Chat,
   DuelMenu,
   DuelResult,
