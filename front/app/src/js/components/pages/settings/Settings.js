@@ -10,6 +10,7 @@ export class Settings extends HTMLElement {
     username: '',
     currentUserData: null,
     newUserData: null,
+    changed: false,
   };
 
   constructor() {
@@ -108,14 +109,17 @@ export class Settings extends HTMLElement {
     if (userIdentity.username) {
       formData.append('username', userIdentity.username);
       this.#state.newUserData.username = userIdentity.username;
+      this.#state.changed = true;
     }
     if (userIdentity.nickname) {
       formData.append('nickname', userIdentity.nickname);
       this.#state.newUserData.nickname = userIdentity.nickname;
+      this.#state.changed = true;
     }
     if (newEmail) {
       formData.append('email', newEmail);
       this.#state.newUserData.email = newEmail;
+      this.#state.changed = true;
     }
     const oldPassword = this.querySelector('#old-password');
     const newPassword = this.querySelector('#new-password');
@@ -124,25 +128,37 @@ export class Settings extends HTMLElement {
       formData.append('old_password', oldPassword.value);
       formData.append('password', newPassword.value);
       formData.append('password_repeat', newPasswordRepeat.value);
+      this.#state.changed = true;
     }
     const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
     const currentMfaEnabled = this.#state.currentUserData.mfa_enabled ? 'true' : 'false';
     if (currentMfaEnabled !== mfaEnabled) {
       formData.append('mfa_enabled', mfaEnabled);
       this.#state.newUserData.mfa_enabled = mfaEnabled;
+      this.#state.changed = true;
     }
     if (avatarField) {
       formData.append('new_profile_picture', avatarField);
+      this.#state.changed = true;
     }
 
+    if (!this.#state.changed) {
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, 'No changes to save', 2000);
+      return;
+    }
     /* eslint-disable-next-line new-cap */
-    const response = await apiRequest('POST', API_ENDPOINTS.USER_SETTINGS(this.#state.username), formData, true);
+    const response = await apiRequest(
+        'POST',
+        API_ENDPOINTS.USER_SETTINGS(this.#state.username),
+        formData,
+        true
+    );
     if (response.success) {
       this.#state.username = response.data.username;
       this.#state.currentUserData = this.#state.newUserData;
       this.#state.currentUserData.avatar = response.data.avatar;
       auth.storeUser(this.#state.currentUserData);
-      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 1000);
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 2000);
     } else {
       console.log('Error updating settings', response);
       if (response.status === 401) {
