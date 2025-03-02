@@ -28,7 +28,7 @@ export class ChatButton extends HTMLElement {
   
   template() {
     return`
-			<button class="btn">
+			<button class="navbar-button btn">
 				<i class="bi bi-chat"></i>
 			</button>
 		`;

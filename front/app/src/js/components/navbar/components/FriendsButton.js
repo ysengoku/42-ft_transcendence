@@ -14,7 +14,7 @@ export class FriendsButton extends HTMLElement {
   template() {
     return `
     <div class="nav-link" id="navbar-friends-button" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			<button class="btn">
+			<button class="navbar-button btn">
 				<i class="bi bi-people"></i>
 			</button>
     </div>
