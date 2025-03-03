@@ -313,16 +313,6 @@ export class MultiplayerGame extends HTMLElement {
 
         function animate() {
             requestAnimationFrame(animate);
-            if (Ball.sphereBody.position.z >= 10) {
-                Bumpers[0].score++;
-                lastScore = 1;
-                reset();
-            }
-            if (Ball.sphereBody.position.z <= -10) {
-                Bumpers[1].score++;
-                lastScore = 0;
-                reset();
-            }
             let delta = Math.min(clock.getDelta(), 0.1);
             world.step(delta);
 
