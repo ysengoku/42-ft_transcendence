@@ -363,7 +363,6 @@ export class MultiplayerGame extends HTMLElement {
             renderer.render(scene, camera);
         }
 
-        var keyMap = [];
         document.addEventListener('keydown', onDocumentKeyDown, true);
         document.addEventListener('keyup', onDocumentKeyUp, true);
         function onDocumentKeyDown(event) {
