@@ -35,7 +35,6 @@ export class Chat extends HTMLElement {
   disconnectedCallback() {
     document.removeEventListener('chatItemSelected', this.handleChatItemSelected);
     document.removeEventListener('sendMessage', this.handleSendMessage);
-    socketManager.removeListener('chat', this.handleNewMessage);
     window.removeEventListener('resize', this.handleWindowResize);
     this.backButton?.removeEventListener('click', this.handleBackToChatList);
   }
