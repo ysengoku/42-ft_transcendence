@@ -39,10 +39,36 @@ export class MultiplayerGame extends HTMLElement {
         const camera = new THREE.PerspectiveCamera(45, rendererWidth / rendererHeight, 0.1, 2000);
         const orbit = new OrbitControls(camera, renderer.domElement);
         const world = new CANNON.World();
-        const playerglb = pedro_init()
 
         let mixer;
         const normalMaterial = new THREE.MeshNormalMaterial();
+
+        const playerglb = pedro_init();
+        const ligths = [new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff)];
+
+        class Ball_obj {
+            constructor(posX, posY, posZ) {
+                this.z_value = -15;
+                this.x_value = 0;
+                this.sphereGeometry = new THREE.SphereGeometry(0.5);
+                this.sphereMesh = new THREE.Mesh(this.sphereGeometry, normalMaterial);
+                this.sphereMesh.position.x = posX;
+                this.sphereMesh.position.y = posY;
+                this.sphereMesh.position.z = posZ;
+                this.sphereMesh.castShadow = true;
+                this.sphereShape = new CANNON.Sphere(0.5);
+                this.sphereBody = new CANNON.Body({ mass: 1, velocity: new CANNON.Vec3(0, 0, -10) });
+                this.sphereBody.addShape(this.sphereShape);
+                this.sphereBody.position.x = this.sphereMesh.position.x;
+                this.sphereBody.position.y = this.sphereMesh.position.y;
+                this.sphereBody.position.z = this.sphereMesh.position.z;
+                scene.add(this.sphereMesh);
+                world.addBody(this.sphereBody);
+                return this;
+            }
+        }
+        const Ball = new Ball_obj(0, 3, 0);
+        
         function pedro_init() {
             const pedro_model = new THREE.Object3D();
             loader.load(
@@ -80,6 +106,13 @@ export class MultiplayerGame extends HTMLElement {
             orbit.update();
 
             world.gravity.set(0, -9.82, 0);
+            
+            ligths[0].position.set(0, 10, 30);
+            ligths[1].position.set(10, 0, 30);
+            ligths[2].position.set(0, 10, -30);
+            ligths[3].position.set(0, -10, 0);
+            for (let i = 0; i < 4; i++)
+                scene.add(ligths[i]);
         }
 
         function update_state(data) {
@@ -104,39 +137,14 @@ export class MultiplayerGame extends HTMLElement {
         });
 
 
-        const ligths = [new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff)];
 
-        ligths[0].position.set(0, 10, 30);
-        ligths[1].position.set(10, 0, 30);
-        ligths[2].position.set(0, 10, -30);
-        ligths[3].position.set(0, -10, 0);
-        for (let i = 0; i < 4; i++)
-            scene.add(ligths[i]);
+        // ligths[0].position.set(0, 10, 30);
+        // ligths[1].position.set(10, 0, 30);
+        // ligths[2].position.set(0, 10, -30);
+        // ligths[3].position.set(0, -10, 0);
+        // for (let i = 0; i < 4; i++)
+        //     scene.add(ligths[i]);
 
-
-        class Ball_obj {
-            constructor(posX, posY, posZ) {
-                this.z_value = -15;
-                this.x_value = 0;
-                this.sphereGeometry = new THREE.SphereGeometry(0.5);
-                this.sphereMesh = new THREE.Mesh(this.sphereGeometry, normalMaterial);
-                this.sphereMesh.position.x = posX;
-                this.sphereMesh.position.y = posY;
-                this.sphereMesh.position.z = posZ;
-                this.sphereMesh.castShadow = true;
-                this.sphereShape = new CANNON.Sphere(0.5);
-                this.sphereBody = new CANNON.Body({ mass: 1, velocity: new CANNON.Vec3(0, 0, -10) });
-                this.sphereBody.addShape(this.sphereShape);
-                this.sphereBody.position.x = this.sphereMesh.position.x;
-                this.sphereBody.position.y = this.sphereMesh.position.y;
-                this.sphereBody.position.z = this.sphereMesh.position.z;
-                scene.add(this.sphereMesh);
-                world.addBody(this.sphereBody);
-                return this;
-            }
-        }
-        console.log(data);
-        const Ball = new Ball_obj(0, 3, 0);
 
         class Bumper_obj {
             constructor(posX, posY, posZ) {
