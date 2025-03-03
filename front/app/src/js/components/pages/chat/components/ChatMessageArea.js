@@ -4,40 +4,62 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ChatMessageArea extends HTMLElement {
+  #state = {
+    user: null,
+    data: [],
+  };
+
   constructor() {
     super();
-    this.user = auth.getStoredUser();
-    this._data = [];
+
+    this.handleNavigateToProfile = this.handleNavigateToProfile.bind(this);
+    this.blockUser = this.blockUser.bind(this);
   }
 
   setData(data) {
-    this._data = data;
+    this.#state.user = auth.getStoredUser();
+    this.#state.data = data;
     this.render();
-    this.setEventListeners();
   }
 
-  setEventListeners() {
-    const header = this.querySelector('#chat-header');
-    header.addEventListener('click', () => {
-      router.navigate(`/profile/${this._data.username}`);
-    });
+  disconnectedCallback() {
+    this.header?.removeEventListener('click', this.handleNavigateToProfile);
+    this.blockButoon?.removeEventListener('click', this.blockUser);
+  }
 
-    const blockButoon = this.querySelector('#chat-block-user-button');
-    blockButoon.addEventListener('click', async () => {
-      const response = await this.blockUser();
-      if (response) {
-        // TODO: Update chat list and current chat
-        console.log('User blocked:', this._data.username);
-      }
-    });
+  render() {
+    this.innerHTML = this.template() + this.style();
+
+    this.headerAvatar = this.querySelector('#chat-header-avatar');
+    this.headerNickname = this.querySelector('#chat-header-nickname');
+    this.headerUsername = this.querySelector('#chat-header-username');
+    this.headerOnlineStatusIndicator = this.querySelector('#chat-header-online-status-indicator');
+    this.headerOnlineStatus = this.querySelector('#chat-header-online-status');
+    this.headerAvatar.src = this.#state.data.avatar;
+    this.headerNickname.textContent = this.#state.data.nickname;
+    this.headerUsername.textContent = `@${this.#state.data.username}`;
+    this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.is_online);
+    this.headerOnlineStatus.textContent = this.#state.data.is_online ? 'online' : 'offline';
+
+    this.renderMessages();
+
+    this.header = this.querySelector('#chat-header');
+    this.blockButoon = this.querySelector('#chat-block-user-button');
+
+    this.header.addEventListener('click', this.handleNavigateToProfile);
+    this.blockButoon.addEventListener('click', this.blockUser);
+  }
+
+  handleNavigateToProfile() {
+    router.navigate(`/profile/${this.#state.data.username}`);
   }
 
   async blockUser() {
-    const request = { username: this._data.username };
+    const request = { username: this.#state.data.username };
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_BLOCKED_USERS(this.user.username),
+        API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.user.username),
         request,
         false,
         true,
@@ -46,21 +68,21 @@ export class ChatMessageArea extends HTMLElement {
     const errorMessage = 'Failed to block user. Please try again later.';
     if (response.success) {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
-      return true;
+      // TODO: Update chat list and current chat
+      console.log('User blocked:', this.#state.data.username);
     } else {
       console.error('Error blocking user:', response);
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
-      return false;
     }
   }
 
   toggleLikeMessage(index) {
-    this._data.messages[index].liked = !this._data.messages[index].liked;
+    this.#state.data.messages[index].liked = !this.#state.data.messages[index].liked;
     this.updateMessageElement(index);
   }
 
   updateMessageElement(index) {
-    const message = this._data.messages[index];
+    const message = this.#state.data.messages[index];
     const messageElement = this.querySelector(`[dataIndex='${index}'] .bubble`);
     if (messageElement) {
       messageElement.innerHTML = `
@@ -73,34 +95,32 @@ export class ChatMessageArea extends HTMLElement {
   renderMessages() {
     const chatMessages = this.querySelector('#chat-messages');
     chatMessages.innerHTML = '';
-    this._data.messages.forEach((message, index) => {
+    this.#state.data.messages.forEach((message, index) => {
       const messageElement = document.createElement('div');
+      messageElement.innerHTML = this.messageTemplate();
       messageElement.setAttribute('dataIndex', index);
-      if (message.sender === this._data.username) {
+      const messageContent = messageElement.querySelector('.bubble');
+
+      if (message.sender === this.#state.data.username) {
         messageElement.classList.add(
             'left-align-message', 'd-flex', 'flex-row', 'justify-content-start',
             'align-items-center', 'gap-3',
         );
-        messageElement.innerHTML = `
-          <img src="${this._data.avatar}" class="chat-message-avatar rounded-circle" alt="User" />
-          <div class="message">
-            <div class="bubble me-5">
-              ${message.message}
-              ${message.liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
-            </div>
-          </div>
-        `;
+        messageContent.classList.add('me-5');
+        messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
+        messageElement.querySelector('.message-content').textContent = message.message;
+        messageElement.querySelector('.message-liked').innerHTML = message.liked ?
+          '<i class="bi bi-heart-fill h5"></i>' : '';
       } else {
         messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
             'align-items-center');
-        messageElement.innerHTML = `
-          <div class="bubble ms-5">
-            ${message.message}
-            ${message.liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
-          </div>
-        `;
+        messageContent.classList.add('ms-5');
+        messageElement.querySelector('.chat-message-avatar').remove();
+        messageElement.querySelector('.message-content').textContent = message.message;
+        messageElement.querySelector('.message-liked').innerHTML = message.liked ?
+          '<i class="bi bi-heart-fill h5"></i>' : '';
       }
-      const messageContent = messageElement.querySelector('.bubble');
+
       messageContent.addEventListener('click', () => {
         this.toggleLikeMessage(index);
       });
@@ -109,13 +129,53 @@ export class ChatMessageArea extends HTMLElement {
     chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
   }
 
-  render() {
-    this.innerHTML = `
+  template() {
+    return `
+    <div class="d-flex flex-column h-100">
+
+      <!-- Header -->
+      <div class="d-flex flex-row justify-content-between align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
+  
+      <div class="d-flex flex-row" id="chat-header">
+        <img class="rounded-circle me-3" alt="User" id="chat-header-avatar"/>
+
+        <div class="d-flex flex-column text-start gap-1">
+          <div class="d-flex flex-row gap-3">
+            <h5 class="mb-0" id="chat-header-nickname"></h5>
+            <p class="mb-0 fs-6" id="chat-header-username"></p>
+          </div>
+          <div class="d-flex flex-row align-items-center gap-2">
+            <span class="online-status" id="chat-header-online-status-indicator"></span>
+            <div id="chat-header-online-status"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="align-self-end">
+        <button class="btn" id="chat-invite-play-button">Invite to play</button>
+        <button class="btn" id="chat-block-user-button">Block</button>
+      </div>
+
+      </div>
+
+      <!-- Messages -->
+      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
+
+      <!-- Input -->
+      <div>
+        <chat-message-input></chat-message-input>
+      </div>
+    </div>
+	  `;
+  }
+
+  style() {
+    return `
 	  <style>
       #chat-messages {
         min-height: 0;
       }
-      #chat-message-header-avatar {
+      #chat-header-avatar {
         width: 52px;
         height: 52px;
         object-fit: cover;
@@ -165,43 +225,19 @@ export class ChatMessageArea extends HTMLElement {
         color: red;
       }
 	  </style>
-    <div class="d-flex flex-column h-100">
+    `;
+  }
 
-      <!-- Header -->
-      <div class="d-flex flex-row justify-content-between align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
-  
-      <div class="d-flex flex-row" id="chat-header">
-        <img src="${this._data.avatar}" class="rounded-circle me-3" alt="User" id="chat-message-header-avatar"/>
-
-        <div class="d-flex flex-column text-start gap-1">
-          <div class="d-flex flex-row gap-3">
-            <h5 class="mb-0">${this._data.nickname}</h5>
-            <p class="mb-0 fs-6">@${this._data.username}</p>
-          </div>
-          <div class="d-flex flex-row align-items-center gap-2">
-            <span class="online-status ${this._data.is_online ? 'online' : ''}"></span>
-            ${this._data.is_online ? 'online' : 'offline'}
-          </div>
-        </div>
-      </div>
-
-      <div class="align-self-end">
-        <button class="btn" id="chat-invite-play-button">Invite to play</button>
-        <button class="btn" id="chat-block-user-button">Block</button>
-      </div>
-
-      </div>
-
-      <!-- Messages -->
-      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
-
-      <!-- Input -->
-      <div>
-        <chat-message-input></chat-message-input>
+  messageTemplate() {
+    return `
+    <img class="chat-message-avatar rounded-circle" alt="User" />
+      <div class="message">
+        <div class="bubble">
+          <div class="message-content"></div>
+          <div class="message-liked"></div>
       </div>
     </div>
-	  `;
-    this.renderMessages();
+    `;
   }
 }
 
