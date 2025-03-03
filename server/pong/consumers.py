@@ -3,25 +3,6 @@ import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-"""
-			this.z_value = -15;
-			this.x_value = 0;
-			this.sphereGeometry = new THREE.SphereGeometry(0.5);
-			this.sphereMesh = new THREE.Mesh(this.sphereGeometry, normalMaterial);
-			this.sphereMesh.position.x = posX;
-			this.sphereMesh.position.y = posY;
-			this.sphereMesh.position.z = posZ;
-			this.sphereMesh.castShadow = true;
-			this.sphereShape = new CANNON.Sphere(0.5);
-			this.sphereBody = new CANNON.Body({ mass: 1, velocity: new CANNON.Vec3(0, 0, -10) });
-			this.sphereBody.addShape(this.sphereShape);
-			this.sphereBody.position.x = this.sphereMesh.position.x;
-			this.sphereBody.position.y = this.sphereMesh.position.y;
-			this.sphereBody.position.z = this.sphereMesh.position.z;
-			scene.add(this.sphereMesh);
-			world.addBody(this.sphereBody);
-			return this;
-"""
 class GameConsumer(AsyncWebsocketConsumer):
     def initialize_or_load_the_state(self):
         self.state = {
@@ -29,20 +10,31 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "x": 0,
                 "y": 3,
                 "z": 0,
-            },
 
+                "velocity": {"x": 0, "y": 0, "z": 1},
+
+                "has_collided_with_bumper_1": False,
+                "has_collided_with_bumper_2": False,
+                "has_collided_with_wall": False,
+            },
             "bumper_1": {
                 "x": 0,
                 "y": 1,
                 "z": 9,
+                "score": 0,
+                "moves_left": False,
+                "moves_right": False,
             },
 
             "bumper_2": {
                 "x": 0,
                 "y": 1,
                 "z": -9,
+                "score": 0,
+                "moves_left": False,
+                "moves_right": False,
             },
-
+            "scored_last": 1,
             "wall_left": {
                 "x": 10,
                 "y": 2.5,
@@ -64,8 +56,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.accept()
 
         self.initialize_or_load_the_state()
-        self.should_run = False
         await self.send(text_data=json.dumps({"state": self.state}))
+        self.should_run = True
+        asyncio.create_task(self.timer())
 
     async def disconnect(self, close_code):
         self.should_run = False
@@ -74,23 +67,29 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         action = text_data_json["action"]
-        await self.channel_layer.group_send(self.match_group_name, {"type": "match.command", "action": action})
+        match action:
+            case "bumper1_move_left":
+                self.state["bumper_1"]["moves_left"] = text_data_json["content"]
+            case "bumper2_move_left":
+                self.state["bumper_2"]["moves_left"] = text_data_json["content"]
+            case "bumper1_move_right":
+                self.state["bumper_1"]["moves_right"] = text_data_json["content"]
+            case "bumper2_move_right":
+                self.state["bumper_2"]["moves_right"] = text_data_json["content"]
 
     def calculate_sleeping_time(self):
-        return 1
-
-    async def match_command(self, event):
-        action = event["action"]
-        match action:
-            case "start":
-                if not self.should_run:
-                    self.should_run = True
-                    asyncio.create_task(self.timer())
-            case "stop":
-                self.should_run = False
+        return 0.015
 
     def update_the_state(self):
-        self.state += 1
+        if self.state["bumper_1"]["moves_left"]:
+            self.state["bumper_1"]["x"] += 0.25
+        if self.state["bumper_1"]["moves_right"]:
+            self.state["bumper_1"]["x"] -= 0.25
+
+        if self.state["bumper_2"]["moves_left"]:
+            self.state["bumper_2"]["x"] += 0.25
+        if self.state["bumper_2"]["moves_right"]:
+            self.state["bumper_2"]["x"] -= 0.25
 
     async def timer(self):
         while self.should_run:
@@ -102,7 +101,4 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def game_tick(self):
         self.update_the_state()
-        await self.channel_layer.group_send(
-            self.match_group_name,
-            {"type": "state_update", "state": self.state},
-        )
+        await self.send(text_data=json.dumps({"state": self.state}))

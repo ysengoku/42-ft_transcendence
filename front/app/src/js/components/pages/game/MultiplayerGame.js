@@ -16,15 +16,6 @@ export class MultiplayerGame extends HTMLElement {
     }
 
     game() {
-        const pongSocket = new WebSocket(
-            'wss://'
-            + window.location.host
-            + '/ws/pong/'
-            + 'asd'
-            + '/'
-        );
-        console.log(pongSocket)
-
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
@@ -43,33 +34,9 @@ export class MultiplayerGame extends HTMLElement {
         let mixer;
         const normalMaterial = new THREE.MeshNormalMaterial();
 
-        const playerglb = pedro_init();
         const ligths = [new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff)];
-
-        class Ball_obj {
-            constructor(posX, posY, posZ) {
-                this.z_value = -15;
-                this.x_value = 0;
-                this.sphereGeometry = new THREE.SphereGeometry(0.5);
-                this.sphereMesh = new THREE.Mesh(this.sphereGeometry, normalMaterial);
-                this.sphereMesh.position.x = posX;
-                this.sphereMesh.position.y = posY;
-                this.sphereMesh.position.z = posZ;
-                this.sphereMesh.castShadow = true;
-                this.sphereShape = new CANNON.Sphere(0.5);
-                this.sphereBody = new CANNON.Body({ mass: 1, velocity: new CANNON.Vec3(0, 0, -10) });
-                this.sphereBody.addShape(this.sphereShape);
-                this.sphereBody.position.x = this.sphereMesh.position.x;
-                this.sphereBody.position.y = this.sphereMesh.position.y;
-                this.sphereBody.position.z = this.sphereMesh.position.z;
-                scene.add(this.sphereMesh);
-                world.addBody(this.sphereBody);
-                return this;
-            }
-        }
-        const Ball = new Ball_obj(0, 3, 0);
         
-        function pedro_init() {
+        const playerglb = (() => {
             const pedro_model = new THREE.Object3D();
             loader.load(
                 pedro,
@@ -99,147 +66,146 @@ export class MultiplayerGame extends HTMLElement {
             pedro_model.scale.set(0.1, 0.1, 0.1);
             scene.add(pedro_model);
             return pedro_model;
-        }
+        })();
 
-        function init_game() {
-            camera.position.set(10, 15, -22);
-            orbit.update();
+        const Ball = ((posX, posY, posZ) => {
+            let z_value = -15;
+            let x_value = 0;
+            const sphereGeometry = new THREE.SphereGeometry(0.5);
+            const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
+            sphereMesh.position.x = posX;
+            sphereMesh.position.y = posY;
+            sphereMesh.position.z = posZ;
+            sphereMesh.castShadow = true;
+            const sphereShape = new CANNON.Sphere(0.5);
+            const sphereBody = new CANNON.Body({ mass: 1, velocity: new CANNON.Vec3(0, 0, -10) });
+            sphereBody.addShape(sphereShape);
+            sphereBody.position.x = sphereMesh.position.x;
+            sphereBody.position.y = sphereMesh.position.y;
+            sphereBody.position.z = sphereMesh.position.z;
+            scene.add(sphereMesh);
+            world.addBody(sphereBody);
 
-            world.gravity.set(0, -9.82, 0);
+            let hasCollidedWithAnyBumper = false;
+            let hasCollidedWithBumper1 = false;
+            let hasCollidedWithBumper2 = false;
+            let hasCollidedWithWall = false;
+
+            return ({
+                get z_value () { return z_value },
+                set z_value (new_z_value) { z_value = new_z_value },
+
+                get x_value () { return x_value },
+                set x_value (new_x_value) { x_value = new_x_value },
+
+                get hasCollidedWithAnyBumper () { return hasCollidedWithBumper1 || hasCollidedWithBumper2 },
+
+                get hasCollidedWithBumper1 () { return hasCollidedWithBumper1 },
+                set hasCollidedWithBumper1 (newHasCollidedWithBumper1) { hasCollidedWithBumper1 = newHasCollidedWithBumper1 },
+
+                get hasCollidedWithBumper2 () { return hasCollidedWithBumper2 },
+                set hasCollidedWithBumper2 (newHasCollidedWithBumper2) { hasCollidedWithBumper2 = newHasCollidedWithBumper2 },
+
+                get hasCollidedWithWall () { return hasCollidedWithWall },
+                set hasCollidedWithWall (newHasCollidedWithWall) { hasCollidedWithWall = newHasCollidedWithWall },
+
+                sphereMesh,
+                sphereBody,
+            });
+        })(0, 3, 0);
+
+        camera.position.set(10, 15, -22);
+        orbit.update();
+
+        world.gravity.set(0, -9.82, 0);
+
+        ligths[0].position.set(0, 10, 30);
+        ligths[1].position.set(10, 0, 30);
+        ligths[2].position.set(0, 10, -30);
+        ligths[3].position.set(0, -10, 0);
+        for (let i = 0; i < 4; i++)
+            scene.add(ligths[i]);
+
+        const BumperFactory = (posX, posY, posZ) => {
+            const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
+            const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
+            cubeMesh.position.x = posX;
+            cubeMesh.position.y = posY;
+            cubeMesh.position.z = posZ;
+            cubeMesh.castShadow = true;
+            const cubeShape = new CANNON.Box(new CANNON.Vec3(2.5, 0.5, 0.5));
+            const cubeBody = new CANNON.Body({ mass: 0 });
+            cubeBody.addShape(cubeShape);
+            cubeBody.position.x = cubeMesh.position.x;
+            cubeBody.position.y = cubeMesh.position.y;
+            cubeBody.position.z = cubeMesh.position.z;
+            scene.add(cubeMesh);
+            world.addBody(cubeBody);
             
-            ligths[0].position.set(0, 10, 30);
-            ligths[1].position.set(10, 0, 30);
-            ligths[2].position.set(0, 10, -30);
-            ligths[3].position.set(0, -10, 0);
-            for (let i = 0; i < 4; i++)
-                scene.add(ligths[i]);
+            let score = 0;
+            return ({
+                cubeBody,
+                cubeMesh,
+                cubeGeometry,
+
+                get score() { return score; },
+                set score(newScore) { score = newScore; },
+            });
         }
 
-        function update_state(data) {
+        const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
+        const WallFactory = (posX, posY, posZ) => {
+            const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
+            const wallMesh = new THREE.Mesh(wallGeometry, normalMaterial);
+            wallMesh.position.x = posX;
+            wallMesh.position.y = posY;
+            wallMesh.position.z = posZ;
+            wallMesh.rotation.y = -Math.PI / 2;
+            wallMesh.castShadow = true;
+            const wallBody = new CANNON.Body({ mass: 0 });
+            const wallShape = new CANNON.Box(new CANNON.Vec3(10, 2.5, 0.5));
+            wallBody.addShape(wallShape);
+            wallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 2);
+            wallBody.position.x = wallMesh.position.x;
+            wallBody.position.y = wallMesh.position.y;
+            wallBody.position.z = wallMesh.position.z;
+            scene.add(wallMesh);
+            world.addBody(wallBody);
+
+            return ({
+                wallBody,
+            });
         }
-
-        pongSocket.addEventListener("open", function(e) {
-            console.log('Success! :3')
-        });
-
-        let data;
-        pongSocket.addEventListener("message", function(e) {
-            data = JSON.parse(e.data);
-            console.log(data.state);
-            update_state(data);
-        });
-
-        init_game();
-
-        pongSocket.addEventListener("close", function(e) {
-            console.log('PONG socket was nice! :3');
-        });
+        const Walls = [WallFactory(10, 2.5, 0), WallFactory(-10, 2.5, 0)];
 
 
-
-        // ligths[0].position.set(0, 10, 30);
-        // ligths[1].position.set(10, 0, 30);
-        // ligths[2].position.set(0, 10, -30);
-        // ligths[3].position.set(0, -10, 0);
-        // for (let i = 0; i < 4; i++)
-        //     scene.add(ligths[i]);
-
-
-        class Bumper_obj {
-            constructor(posX, posY, posZ) {
-                this.cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
-                this.cubeMesh = new THREE.Mesh(this.cubeGeometry, normalMaterial);
-                this.cubeMesh.position.x = posX;
-                this.cubeMesh.position.y = posY;
-                this.cubeMesh.position.z = posZ;
-                this.cubeMesh.castShadow = true;
-                this.cubeShape = new CANNON.Box(new CANNON.Vec3(2.5, 0.5, 0.5));
-                this.cubeBody = new CANNON.Body({ mass: 0 });
-                this.cubeBody.addShape(this.cubeShape);
-                this.cubeBody.position.x = this.cubeMesh.position.x;
-                this.cubeBody.position.y = this.cubeMesh.position.y;
-                this.cubeBody.position.z = this.cubeMesh.position.z;
-                scene.add(this.cubeMesh);
-                world.addBody(this.cubeBody);
-                return this;
-            }
-        }
-        const Bumpers = [new Bumper_obj(0, 1, -9), new Bumper_obj(0, 1, 9)];
-
-
-
-        const playerShape = new CANNON.Cylinder(1, 1, 3, 32);
-        const playerBody = new CANNON.Body({ mass: 10 });
-        playerBody.addShape(playerShape);
-        playerBody.position.x = 3;
-        playerBody.position.y = 3;
-        playerBody.position.z = 3;
-        world.addBody(playerBody);
-
-        class Wall_obj {
-            constructor(posX, posY, posZ) {
-                this.wallGeometry = new THREE.BoxGeometry(20, 5, 1);
-                this.wallMesh = new THREE.Mesh(this.wallGeometry, normalMaterial);
-                this.wallMesh.position.x = posX;
-                this.wallMesh.position.y = posY;
-                this.wallMesh.position.z = posZ;
-                this.wallMesh.rotation.y = -Math.PI / 2;
-                this.wallMesh.castShadow = true;
-                this.wallBody = new CANNON.Body({ mass: 0 });
-                this.wallShape = new CANNON.Box(new CANNON.Vec3(10, 2.5, 0.5));
-                this.wallBody.addShape(this.wallShape);
-                this.wallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 2);
-                this.wallBody.position.x = this.wallMesh.position.x;
-                this.wallBody.position.y = this.wallMesh.position.y;
-                this.wallBody.position.z = this.wallMesh.position.z;
-                scene.add(this.wallMesh);
-                world.addBody(this.wallBody);
-                return this;
-            }
-        }
-        const Walls = [new Wall_obj(10, 2.5, 0), new Wall_obj(-10, 2.5, 0)];
-
-
-        class Plane_obj {
-            constructor() {
-                this.phongMaterial = new THREE.MeshPhongMaterial();
-                this.planeGeometry = new THREE.PlaneGeometry(25, 25);
-                this.planeMesh = new THREE.Mesh(this.planeGeometry, this.phongMaterial);
-                this.planeMesh.rotateX(-Math.PI / 2);
-                this.planeMesh.receiveShadow = true;
-                this.planeShape = new CANNON.Plane();
-                this.planeBody = new CANNON.Body({ mass: 0 });
-                this.planeBody.addShape(this.planeShape);
-                this.planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-                scene.add(this.planeMesh);
-                world.addBody(this.planeBody);
-                return this;
-            }
-        }
-        const Plane = new Plane_obj();
+        (() => {
+            const phongMaterial = new THREE.MeshPhongMaterial();
+            const planeGeometry = new THREE.PlaneGeometry(25, 25);
+            const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
+            planeMesh.rotateX(-Math.PI / 2);
+            planeMesh.receiveShadow = true;
+            const planeShape = new CANNON.Plane();
+            const planeBody = new CANNON.Body({ mass: 0 });
+            planeBody.addShape(planeShape);
+            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            scene.add(planeMesh);
+            world.addBody(planeBody);
+        })();
 
         const clock = new THREE.Clock();
-        let delta;
-
-        let collided_cube = false;
-        let collided_cube1 = false;
-        let collided_cube2 = false;
-        let collided_wall = false;
 
         Ball.sphereBody.addEventListener('collide', function(e) {
-            collided_cube1 = e.body.id == Bumpers[0].cubeBody.id;
-            collided_cube2 = e.body.id == Bumpers[1].cubeBody.id;
-            collided_cube = collided_cube1 || collided_cube2;
-            collided_wall = e.body.id == Walls[0].wallBody.id || e.body.id == Walls[1].wallBody.id;
+            Ball.hasCollidedWithBumper1 = e.body.id == Bumpers[0].cubeBody.id;
+            Ball.hasCollidedWithBumper2 = e.body.id == Bumpers[1].cubeBody.id;
+            Ball.hasCollidedWithWall = e.body.id == Walls[0].wallBody.id || e.body.id == Walls[1].wallBody.id;
         });
 
         // let z_value = -15;
         // let Ball.x_value = 0;
 
-        let p1_score = 0;
-        let p2_score = 0;
-        let last_score = 0;
+        let lastScore = 0;
 
         function get_coll_pos(cubeBody, cubeGeom, sphereMesh) {
             let hit_pos;
@@ -278,21 +244,21 @@ export class MultiplayerGame extends HTMLElement {
         }
 
         function reset() {
-            if (last_score == 0) {
-                if (p2_score % 2 == 0)
+            if (lastScore == 0) {
+                if (Bumpers[1].score % 2 == 0)
                     Ball.z_value = 10;
                 else
                     Ball.z_value = -10;
             }
-            if (last_score == 1) {
-                if (p1_score % 2 == 0)
+            if (lastScore == 1) {
+                if (Bumpers[0].score % 2 == 0)
                     Ball.z_value = -10;
                 else
                     Ball.z_value = 10;
             }
-            if (p1_score == 10 || p2_score == 10) {
-                p1_score = 0;
-                p2_score = 0;
+            if (Bumpers[0].score == 10 || Bumpers[1].score == 10) {
+                Bumpers[0].score = 0;
+                Bumpers[1].score = 0;
             }
             Ball.x_value = 0;
             Ball.sphereMesh.position.x = 0;
@@ -301,40 +267,78 @@ export class MultiplayerGame extends HTMLElement {
             Ball.sphereBody.position.x = Ball.sphereMesh.position.x;
             Ball.sphereBody.position.y = Ball.sphereMesh.position.y;
             Ball.sphereBody.position.z = Ball.sphereMesh.position.z;
-            // document.getElementById("divA").textContent ="P1 " + p1_score;
-            // document.getElementById("divB").textContent ="P2 " + p2_score;
+            // document.getElementById("divA").textContent ="P1 " + Bumpers[0].score;
+            // document.getElementById("divB").textContent ="P2 " + Bumpers[1].score;
         }
 
-        function animate2() {
-            collided_cube = false;
-            collided_wall = false;
+        const pongSocket = new WebSocket(
+            'wss://'
+            + window.location.host
+            + '/ws/pong/'
+            + 'asd'
+            + '/'
+        );
 
-            requestAnimationFrame(animate2);
+        function updateState(data) {
+            if (!data)
+                return;
+            Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
+            Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
+            Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
+
+            Ball.sphereBody.position.z = data.ball.z;
+            Ball.sphereBody.position.x = data.ball.x;
+            Ball.sphereBody.velocity.set(data.ball.velocity.x * 0.3, -9, data.ball.velocity.z);
+
+            Bumpers[0].score = data.bumper_1.score;
+            Bumpers[0].cubeBody.position.x = data.bumper_1.x;
+
+            Bumpers[1].score = data.bumper_2.score;
+            Bumpers[1].cubeBody.position.x = data.bumper_2.x;
+            lastScore = data.last_score;
+        }
+
+        pongSocket.addEventListener("open", function(e) {
+            console.log('Success! :3')
+        });
+
+        let data;
+        pongSocket.addEventListener("message", function(e) {
+            data = JSON.parse(e.data);
+            updateState(data.state);
+        });
+
+        pongSocket.addEventListener("close", function(e) {
+            console.log('PONG socket was nice! :3');
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
             if (Ball.sphereBody.position.z >= 10) {
-                p1_score++;
-                last_score = 1;
+                Bumpers[0].score++;
+                lastScore = 1;
                 reset();
             }
             if (Ball.sphereBody.position.z <= -10) {
-                p2_score++;
-                last_score = 0;
+                Bumpers[1].score++;
+                lastScore = 0;
                 reset();
             }
-            delta = Math.min(clock.getDelta(), 0.1);
+            let delta = Math.min(clock.getDelta(), 0.1);
             world.step(delta);
 
-            if (collided_cube == true) {
+            if (Ball.hasCollidedWithAnyBumper == true) {
                 let hit_pos;
 
-                collided_cube2 == true
+                Ball.hasCollidedWithBumper2 == true
                     ? (hit_pos = get_coll_pos(Bumpers[1].cubeBody, Bumpers[1].cubeGeometry, Ball.sphereMesh))
                     : (hit_pos = get_coll_pos(Bumpers[0].cubeBody, Bumpers[0].cubeGeometry, Ball.sphereMesh));
                 if (Ball.z_value < 30 && -Ball.z_value > -30)
-                    collided_cube2 == true ? (Ball.z_value += 0.5) : (Ball.z_value -= 0.5);
+                    Ball.hasCollidedWithBumper2 == true ? (Ball.z_value += 0.5) : (Ball.z_value -= 0.5);
                 Ball.z_value *= -1;
                 Ball.x_value = hit_pos_angle_calculator(hit_pos);
             }
-            if (collided_wall == true) Ball.x_value *= -1;
+            if (Ball.hasCollidedWithWall == true) Ball.x_value *= -1;
 
             for (let i = 0; i < 2; i++) {
                 if (Bumpers[i].cubeBody.position.x > 7) {
@@ -348,16 +352,6 @@ export class MultiplayerGame extends HTMLElement {
             }
             Ball.sphereBody.velocity.set(Ball.x_value * 0.3, -9, Ball.z_value);
 
-            // Copy coordinates from Cannon to Three.js
-            // playerMesh.position.set(playerBody.position.x, playerBody.position.y, playerBody.position.z)
-            playerglb.position.set(playerBody.position.x, playerBody.position.y, playerBody.position.z);
-            // playerMesh.quaternion.set(playerBody.quaternion.x, playerBody.quaternion.y, playerBody.quaternion.z, playerBody.quaternion.w)
-            playerglb.quaternion.set(
-                playerBody.quaternion.x,
-                playerBody.quaternion.y,
-                playerBody.quaternion.z,
-                playerBody.quaternion.w,
-            );
             Ball.sphereMesh.position.set(Ball.sphereBody.position.x, Ball.sphereBody.position.y, Ball.sphereBody.position.z);
             Ball.sphereMesh.quaternion.set(
                 Ball.sphereBody.quaternion.x,
@@ -378,7 +372,6 @@ export class MultiplayerGame extends HTMLElement {
                 mixer.update(delta);
             }
             renderer.render(scene, camera);
-            input_manager();
         }
 
         var keyMap = [];
@@ -388,37 +381,48 @@ export class MultiplayerGame extends HTMLElement {
             if (event.defaultPrevented) {
                 return; // Do noplayerglb if the event was already processed
             }
-            var keyCode = event.key;
-            keyMap[keyCode] = true;
+            var keyCode = event.code;
+            if (keyCode == 'ArrowLeft')
+                pongSocket.send(JSON.stringify({"action": "bumper1_move_left", "content": true}))
+            if (keyCode == 'ArrowRight')
+                pongSocket.send(JSON.stringify({"action": "bumper1_move_right", "content": true}))
+            if (keyCode == 'KeyA')
+                pongSocket.send(JSON.stringify({"action": "bumper2_move_left", "content": true}))
+            if (keyCode == 'KeyD')
+                pongSocket.send(JSON.stringify({"action": "bumper2_move_right", "content": true}))
             event.preventDefault();
         }
         function onDocumentKeyUp(event) {
             if (event.defaultPrevented) {
                 return; // Do noplayerglb if the event was already processed
             }
-            var keyCode = event.key;
-            keyMap[keyCode] = false;
+            var keyCode = event.code;
+            if (keyCode == 'ArrowLeft')
+                pongSocket.send(JSON.stringify({"action": "bumper1_move_left", "content": false}))
+            if (keyCode == 'ArrowRight')
+                pongSocket.send(JSON.stringify({"action": "bumper1_move_right", "content": false}))
+            if (keyCode == 'KeyA')
+                pongSocket.send(JSON.stringify({"action": "bumper2_move_left", "content": false}))
+            if (keyCode == 'KeyD')
+                pongSocket.send(JSON.stringify({"action": "bumper2_move_right", "content": false}))
             event.preventDefault();
         }
 
-        function input_manager() {
-            if (keyMap['ArrowLeft'] == true) Bumpers[0].cubeBody.position.x += 0.25;
-            if (keyMap['ArrowRight'] == true) Bumpers[0].cubeBody.position.x -= 0.25;
-            if (keyMap['q'] == true) Bumpers[1].cubeBody.position.x += 0.25;
-            if (keyMap['d'] == true) Bumpers[1].cubeBody.position.x -= 0.25;
-        }
-        window.addEventListener('resize', function() {
-            camera.aspect = rendererWidth / rendererHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(rendererWidth, rendererHeight);
-        });
-        animate2();
+        return [camera, renderer, animate];
     }
 
     render() {
         this.innerHTML = ``;
 
-        this.game();
+        const [camera, renderer, animate] = this.game();
+        window.addEventListener('resize', function() {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            let rendererWidth = renderer.domElement.offsetWidth;
+            let rendererHeight = renderer.domElement.offsetHeight;
+            camera.aspect = rendererWidth / rendererHeight;
+            camera.updateProjectionMatrix();
+        });
+        animate()
     }
 }
 
