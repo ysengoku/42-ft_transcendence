@@ -1,6 +1,5 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 // import poster from '/img/sample-background.png?url';
 
@@ -89,7 +88,7 @@ export class UserProfile extends HTMLElement {
     userStatCardTotalMatches.setParam({ title: 'Total Matches', value: this.user.total_matches });
     const userStatCardFriendsCount = document.createElement('user-stat-card');
     userStatCardFriendsCount.setParam({ title: 'Friends', value: this.user.friends_count });
-    
+
     const userStatElo = this.querySelector('#user-stat-card-elo');
     const userStatScoredBalls = this.querySelector('#user-stat-card-scored-balls');
     const userStatTotalMatches = this.querySelector('#user-stat-card-total-matches');
@@ -107,7 +106,7 @@ export class UserProfile extends HTMLElement {
         losses: this.user.loses,
       };
     }
-      
+
     // TODO: Elo graph
 
     const bestEnemyContainer = this.querySelector('#best-enemy');
