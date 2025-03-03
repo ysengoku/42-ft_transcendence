@@ -5,22 +5,12 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 
 WALL_LEFT_X = 6.75
 WALL_RIGHT_X = -WALL_LEFT_X
+BUMPER_2_BORDER = 10
+BUMPER_1_BORDER = -BUMPER_2_BORDER
 
 class GameConsumer(AsyncWebsocketConsumer):
-
     def initialize_or_load_the_state(self):
         self.state = {
-            "ball": {
-                "x": 0,
-                "y": 3,
-                "z": 0,
-
-                "velocity": {"x": 0, "y": 0, "z": 1},
-
-                "has_collided_with_bumper_1": False,
-                "has_collided_with_bumper_2": False,
-                "has_collided_with_wall": False,
-            },
             "bumper_1": {
                 "x": 0,
                 "y": 1,
@@ -29,7 +19,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "moves_left": False,
                 "moves_right": False,
             },
-
             "bumper_2": {
                 "x": 0,
                 "y": 1,
@@ -40,6 +29,21 @@ class GameConsumer(AsyncWebsocketConsumer):
             },
             "scored_last": 1,
         }
+        self.reset_ball_state()
+
+    def reset_ball_state(self):
+        resetted_ball_state = {
+            "ball": {
+                "x": 0,
+                "y": 3,
+                "z": 0,
+                "velocity": {"x": 0, "y": 0, "z": 1},
+                "has_collided_with_bumper_1": False,
+                "has_collided_with_bumper_2": False,
+                "has_collided_with_wall": False,
+            },
+        }
+        self.state = self.state | resetted_ball_state
 
     async def connect(self):
         self.match_name = self.scope["url_route"]["kwargs"]["match_name"]
@@ -84,14 +88,25 @@ class GameConsumer(AsyncWebsocketConsumer):
         if self.state["bumper_2"]["moves_right"] and not self.state["bumper_2"]["x"] < WALL_RIGHT_X:
             self.state["bumper_2"]["x"] -= 0.25
 
+        if self.state["ball"]["z"] >= BUMPER_2_BORDER:
+            self.state["bumper_1"]["score"] += 1
+            self.state["scored_last"] = -1
+            self.reset_ball_state()
+        elif self.state["ball"]["z"] <= BUMPER_1_BORDER:
+            self.state["bumper_2"]["score"] += 1
+            self.state["scored_last"] = 1
+            self.reset_ball_state()
+
+        self.state["ball"]["z"] += 0.1 * self.state["scored_last"]
+
     async def timer(self):
         while self.should_run:
             await asyncio.sleep(self.calculate_sleeping_time())
             await self.game_tick()
 
     async def state_update(self, event):
-        await self.send(text_data=json.dumps({"message": event["state"]}))
+        await self.send(text_data=json.dumps({"state": event["state"]}))
 
     async def game_tick(self):
         self.update_the_state()
-        await self.send(text_data=json.dumps({"state": self.state}))
+        await self.channel_layer.group_send(self.match_group_name, {"type": "state_update", "state": self.state})
