@@ -339,16 +339,6 @@ export class MultiplayerGame extends HTMLElement {
             }
             if (Ball.hasCollidedWithWall == true) Ball.x_value *= -1;
 
-            for (let i = 0; i < 2; i++) {
-                if (Bumpers[i].cubeBody.position.x > 7) {
-                    Bumpers[i].cubeBody.position.x = 7;
-                    Bumpers[i].cubeMesh.position.x = 7;
-                }
-                if (Bumpers[i].cubeBody.position.x < -7) {
-                    Bumpers[i].cubeBody.position.x = -7;
-                    Bumpers[i].cubeMesh.position.x = -7;
-                }
-            }
             Ball.sphereBody.velocity.set(Ball.x_value * 0.3, -9, Ball.z_value);
 
             Ball.sphereMesh.position.set(Ball.sphereBody.position.x, Ball.sphereBody.position.y, Ball.sphereBody.position.z);
