@@ -3,7 +3,11 @@ import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+WALL_LEFT_X = 6.75
+WALL_RIGHT_X = -WALL_LEFT_X
+
 class GameConsumer(AsyncWebsocketConsumer):
+
     def initialize_or_load_the_state(self):
         self.state = {
             "ball": {
@@ -81,14 +85,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         return 0.015
 
     def update_the_state(self):
-        if self.state["bumper_1"]["moves_left"]:
+        if self.state["bumper_1"]["moves_left"] and not self.state["bumper_1"]["x"] > WALL_LEFT_X:
             self.state["bumper_1"]["x"] += 0.25
-        if self.state["bumper_1"]["moves_right"]:
+        if self.state["bumper_1"]["moves_right"] and not self.state["bumper_1"]["x"] < WALL_RIGHT_X:
             self.state["bumper_1"]["x"] -= 0.25
 
-        if self.state["bumper_2"]["moves_left"]:
+        if self.state["bumper_2"]["moves_left"] and not self.state["bumper_2"]["x"] > WALL_LEFT_X:
             self.state["bumper_2"]["x"] += 0.25
-        if self.state["bumper_2"]["moves_right"]:
+        if self.state["bumper_2"]["moves_right"] and not self.state["bumper_2"]["x"] < WALL_RIGHT_X:
             self.state["bumper_2"]["x"] -= 0.25
 
     async def timer(self):

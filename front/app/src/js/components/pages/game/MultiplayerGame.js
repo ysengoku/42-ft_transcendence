@@ -179,7 +179,6 @@ export class MultiplayerGame extends HTMLElement {
         }
         const Walls = [WallFactory(10, 2.5, 0), WallFactory(-10, 2.5, 0)];
 
-
         (() => {
             const phongMaterial = new THREE.MeshPhongMaterial();
             const planeGeometry = new THREE.PlaneGeometry(25, 25);
