@@ -39,17 +39,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "moves_right": False,
             },
             "scored_last": 1,
-            "wall_left": {
-                "x": 10,
-                "y": 2.5,
-                "z": 0,
-            },
-
-            "wall_right": {
-                "x": -10,
-                "y": 2.5,
-                "z": 0,
-            },
         }
 
     async def connect(self):
