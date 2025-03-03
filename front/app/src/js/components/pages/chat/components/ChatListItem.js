@@ -16,75 +16,49 @@ export class ChatListItem extends HTMLElement {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.listItem?.removeEventListener('chatItemSelected', this.handleChatItemSelected);
+  }
+
   render() {
-    const lastMessageTime = this.setLastMessageTime(this._data.last_message_time);
+    this.innerHTML = this.template() + this.style();
 
-    this.innerHTML = `
-    <style>
-      .list-group-item {
-        border: none;
-        border-bottom: 1px solid var(--bs-border-color);
-      }
-      .list-item img {
-        width: 52px;
-        height: 52px;
-        object-fit: cover;
-      }
-      .circle-number {
-        background-color: red;
-        color: white;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        inline-height: 1;
-       }
-    </style>
-      <li class="list-group-item" id="chat-list-item">
-        <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
+    this.avatar = this.querySelector('.chat-list-item-avatar');
+    this.avatar.src = this._data.avatar;
 
-          <div class="d-inline-block">
-            <img src="${this._data.avatar}" class="rounded-circle" alt="User" />
-          </div>
+    this.nickname = this.querySelector('.chat-list-item-nickname');
+    this.nickname.textContent = this._data.nickname;
 
-          <div class="d-flex flex-column justify-content-start py-2 gap-1 flex-grow-1">
-            <div class="d-flex flex-wrap justify-content-between align-items-center">
-              <div class="fs- me-2">${this._data.nickname}</div>
-              <small>${lastMessageTime}</small>
-            </div>
-            <small>${this._data.last_message}</small>
-          </div>
+    this.lastMessageTime = this.querySelector('.chat-list-item-last-message-time');
+    this.lastMessageTime.textContent = this.setLastMessageTime(this._data.last_message_time);
 
-          <div class="d-inline-block">
-            ${this._data.unread_messages > 0 ?
-              `<div class="circle-number">${this._data.unread_messages > 9 ?
-                '9+' :
-                this._data.unread_messages}</div>` :
-              ''}
-          </div>
-        </div>
-      </li>
-    `;
+    this.lastMessage = this.querySelector('.chat-list-item-last-message');
+    this.lastMessage.textContent = this._data.last_message;
 
-    const listItem = this.querySelector('#chat-list-item');
-    listItem.addEventListener('click', () => {
-      listItem.classList.add('active');
-      const circleNumber = listItem.querySelector('.circle-number');
+    this.unreadMessages = this.querySelector('.chat-list-item-unread-message');
+    if (this.unreadMessages) {
+      this.unreadMessages.textContent = this._data.unread_messages > 9 ? '9+' : this._data.unread_messages;
+    }
+
+    this.listItem = this.querySelector('#chat-list-item');
+
+    this.handleChatItemSelected = ('click', () => {
+      this.listItem.classList.add('active');
+      const circleNumber = this.listItem.querySelector('.circle-number');
       if (circleNumber) {
         circleNumber.remove();
       }
       const chatListItems = document.querySelectorAll('.list-group-item');
       chatListItems.forEach((item) => {
-        if (item !== listItem) {
+        if (item !== this.listItem) {
           item.classList.remove('active');
         }
       });
       const event = new CustomEvent('chatItemSelected', { detail: this._data.id, bubbles: true });
       this.dispatchEvent(event);
     });
+
+    this.listItem.addEventListener('click', this.handleChatItemSelected);
   }
 
   setLastMessageTime(time) {
@@ -115,6 +89,60 @@ export class ChatListItem extends HTMLElement {
       hour12: false,
     }).format(date);
     return formatedDate;
+  }
+
+  template() {
+    return `
+    <li class="list-group-item" id="chat-list-item">
+      <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
+
+        <div class="d-inline-block">
+          <img class="chat-list-item-avatar rounded-circle" alt="User" />
+        </div>
+
+        <div class="d-flex flex-column justify-content-start py-2 gap-1 flex-grow-1">
+          <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <div class="chat-list-item-nickname fs- me-2"></div>
+            <small class="chat-list-item-last-message-time"></small>
+          </div>
+          <small class="chat-list-item-last-message"></small>
+        </div>
+
+        <div class="d-inline-block">
+          ${ this._data.unread_messages > 0 ?
+            `<div class="chat-list-item-unread-message circle-number"></div>` : '' }
+        </div>
+      </div>
+    </li>
+    `;
+  }
+
+  style() {
+    return `
+      <style>
+      .list-group-item {
+        border: none;
+        border-bottom: 1px solid var(--bs-border-color);
+      }
+      .list-item img {
+        width: 52px;
+        height: 52px;
+        object-fit: cover;
+      }
+      .circle-number {
+        background-color: red;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        inline-height: 1;
+       }
+    </style>
+    `;
   }
 }
 

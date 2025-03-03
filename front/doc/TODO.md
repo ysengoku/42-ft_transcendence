@@ -190,11 +190,11 @@
 - [x] - [x] NotFound.js
 
 #### chat
-- [] - [] Chat.js
-- [] - [] ChatList.js
-- [] - [] ChatListItem.js
-- [] - [] ChatMessageArea.js
-- [] - [] ChatMessageInput.js
+- [x] - [x] Chat.js
+- [x] - [x] ChatList.js
+- [x] - [x] ChatListItem.js
+- [x] - [] ChatMessageArea.js (TODO: Remove message like event listeners)
+- [x] - [x] ChatMessageInput.js
 
 #### home
 - [x] - [x] Home.js
