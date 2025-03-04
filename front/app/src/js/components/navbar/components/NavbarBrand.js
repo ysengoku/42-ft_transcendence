@@ -13,7 +13,7 @@ export class NavbarBrand extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.img.removeEventListener('click', this.handleClick);
+    this.img?.removeEventListener('click', this.handleClick);
   }
 
   setLoginStatus(value) {
