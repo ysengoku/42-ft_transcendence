@@ -1,14 +1,14 @@
+import defaultAvatar from '/img/default_avatar.png?url';
+
 export class ChatListItem extends HTMLElement {
+  #state = {
+    data: '',
+    itemCount: 0,
+  };
+
   constructor() {
     super();
-    this._data = {
-      id: null,
-      nickname: '',
-      avatar: '',
-      last_message: '',
-      last_message_time: '',
-      unread_messages: 0,
-    };
+    this._data = '';
   }
 
   setData(data) {
@@ -21,23 +21,26 @@ export class ChatListItem extends HTMLElement {
   }
 
   render() {
+    if (!this._data.last_message) {
+      return;
+    }
     this.innerHTML = this.template() + this.style();
 
     this.avatar = this.querySelector('.chat-list-item-avatar');
-    this.avatar.src = this._data.avatar;
+    this._data.avatar ? this.avatar.src = this._data.avatar : this.avatar.src = defaultAvatar;
 
     this.nickname = this.querySelector('.chat-list-item-nickname');
     this.nickname.textContent = this._data.nickname;
 
     this.lastMessageTime = this.querySelector('.chat-list-item-last-message-time');
-    this.lastMessageTime.textContent = this.setLastMessageTime(this._data.last_message_time);
+    this.lastMessageTime.textContent = this.setLastMessageTime(this._data.last_message.date);
 
     this.lastMessage = this.querySelector('.chat-list-item-last-message');
-    this.lastMessage.textContent = this._data.last_message;
+    this.lastMessage.textContent = this._data.last_message.content;
 
     this.unreadMessages = this.querySelector('.chat-list-item-unread-message');
     if (this.unreadMessages) {
-      this.unreadMessages.textContent = this._data.unread_messages > 9 ? '9+' : this._data.unread_messages;
+      this.unreadMessages.textContent = this._data.unread_messages_count > 9 ? '9+' : this._data.unread_messages_count;
     }
 
     this.listItem = this.querySelector('#chat-list-item');
@@ -54,7 +57,7 @@ export class ChatListItem extends HTMLElement {
           item.classList.remove('active');
         }
       });
-      const event = new CustomEvent('chatItemSelected', { detail: this._data.id, bubbles: true });
+      const event = new CustomEvent('chatItemSelected', { detail: this._data, bubbles: true });
       this.dispatchEvent(event);
     });
 
@@ -109,7 +112,7 @@ export class ChatListItem extends HTMLElement {
         </div>
 
         <div class="d-inline-block">
-          ${ this._data.unread_messages > 0 ?
+          ${ this._data.unread_messages_count > 0 ?
             `<div class="chat-list-item-unread-message circle-number"></div>` : '' }
         </div>
       </div>
