@@ -1,7 +1,7 @@
-from django.core.exceptions import PermissionDenied, RequestDataTooBig
+from django.core.exceptions import RequestDataTooBig
 from django.http import HttpRequest
 from ninja import File, Form, Router
-from ninja.errors import AuthenticationError, HttpError
+from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
@@ -74,8 +74,6 @@ def update_user_settings(
 
     try:
         user.update_user(data, new_profile_picture)
-    except PermissionDenied as exc:
-        raise AuthenticationError("Old password is invalid.") from exc
     except RequestDataTooBig as exc:
         raise HttpError(413, "File is too big. Please upload a file that weights less than 10mb.") from exc
 
