@@ -10,7 +10,7 @@ export class FriendsButton extends HTMLElement {
   render() {
     this.innerHTML = this.template() + this.style();
   }
-  
+
   template() {
     return `
     <div class="nav-link" id="navbar-friends-button" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

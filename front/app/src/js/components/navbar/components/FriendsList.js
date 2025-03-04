@@ -30,13 +30,12 @@ export class FriendsList extends HTMLElement {
 
   render() {
     this.innerHTML = this.template() + this.style();
-  
+
     this.button = document.getElementById('navbar-friends-button');
     this.listContainer = this.querySelector('#friends-list');
 
     this.button?.addEventListener('shown.bs.dropdown', this.fetchFriendsData);
     this.button?.addEventListener('hidden.bs.dropdown', this.handleModalClose);
-
   }
 
   async fetchFriendsData() {
@@ -106,7 +105,7 @@ export class FriendsList extends HTMLElement {
     this.#state.totalFriendsCount = 0;
     this.listContainer.innerHTML = '';
   }
-  
+
   async handleShowMoreFriends(event) {
     event.stopPropagation();
     await this.fetchFriendsData();

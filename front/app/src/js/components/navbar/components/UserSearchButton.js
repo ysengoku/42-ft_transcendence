@@ -10,9 +10,9 @@ export class UserSearchButton extends HTMLElement {
   render() {
     this.innerHTML = this.template() + this.style();
   }
-  
+
   template() {
-    return`
+    return `
 	    <div class="nav-link" id="navbar-user-search" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <button class="navbar-button btn">
           <i class="bi bi-search"></i>

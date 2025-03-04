@@ -22,7 +22,7 @@ export class DropdownMenu extends HTMLElement {
 
   disconnectedCallback() {
     this.logoutButton?.removeEventListener('click', this.handleLogoutClick);
-    this.themeToggleButton.removeEventListener('click', this.handleThemeChange);
+    this.themeToggleButton?.removeEventListener('click', this.handleThemeChange);
   }
 
   render() {
@@ -58,7 +58,7 @@ export class DropdownMenu extends HTMLElement {
       themeLabel.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
     }
   }
-    
+
   template() {
     const isDarkMode = ThemeController.getTheme() === 'dark';
 

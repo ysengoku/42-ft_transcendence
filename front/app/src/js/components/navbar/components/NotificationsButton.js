@@ -10,7 +10,7 @@ export class NotificationsButton extends HTMLElement {
   render() {
     this.innerHTML = this.template();
   }
-  
+
   template() {
     return `
 		<button class="navbar-button btn me-2">
