@@ -73,6 +73,7 @@ class OpponentProfileAndStatsSchema(Schema):
     """
 
     username: str
+    nickname: str
     avatar: str
     elo: int
     wins: int
