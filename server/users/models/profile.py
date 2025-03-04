@@ -139,6 +139,7 @@ class Profile(models.Model):
         )
         return {
             "username": profile.user.username,
+            "nickname": profile.user.nickname,
             "avatar": profile.avatar,
             "elo": profile.elo,
             "wins": res["wins"],
