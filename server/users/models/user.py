@@ -1,11 +1,10 @@
 import uuid
-from functools import cache
 
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from ninja.files import UploadedFile
@@ -152,7 +151,7 @@ class User(AbstractUser):
         if data.password and data.password_repeat:
             is_old_password_valid = self.check_password(data.old_password)
             if not is_old_password_valid:
-                raise PermissionDenied
+                err_dict = merge_err_dicts(err_dict, {"old_password": ["Old password is invalid."]})
             if data.old_password == data.password:
                 err_dict = merge_err_dicts(
                     err_dict,
