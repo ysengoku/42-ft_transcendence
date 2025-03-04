@@ -66,7 +66,7 @@ export class UserEnemy extends HTMLElement {
     this.enemyContainer = this.querySelector('.enemy-container');
     this.handleClick = () => {
       router.navigate(`/profile/${this.#state.data.username}`);
-    }
+    };
     this.enemyContainer.addEventListener('click', this.handleClick);
   }
 
