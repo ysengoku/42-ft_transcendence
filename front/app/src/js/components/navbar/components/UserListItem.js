@@ -18,7 +18,7 @@ export class UserListItem extends HTMLElement {
     this.#state.nickname = this.getAttribute('nickname');
     this.#state.avatar = this.getAttribute('avatar');
     this.#state.online = this.getAttribute('online') === 'true';
-  
+
     this.render();
   }
 
@@ -56,9 +56,9 @@ export class UserListItem extends HTMLElement {
 
   updateOnlineStatus() {
   }
-  
+
   template() {
-    return`
+    return `
 		<li class="list-group-item user-list-item">
       <div class="d-flex flex-row align-items-center">
 			  <div class="avatar-container">
