@@ -137,7 +137,7 @@ export class UserSearch extends HTMLElement {
   }
 
   template() {
-    return`
+    return `
     <form class="d-flex mx-3 mt-3 mb-2" role="search" id="user-search-form">
       <div class="input-group">
         <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>

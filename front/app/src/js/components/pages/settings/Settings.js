@@ -98,7 +98,7 @@ export class Settings extends HTMLElement {
     const userIdentity = this.userIdentityField.newUserIdentity;
     const newEmail = this.emailField.newEmail;
 
-    if (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) || 
+    if (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) ||
       !this.passwordField.checkPasswordInput()) {
       return;
     }
@@ -149,9 +149,10 @@ export class Settings extends HTMLElement {
     /* eslint-disable-next-line new-cap */
     const response = await apiRequest(
         'POST',
+        /* eslint-disable-next-line new-cap */
         API_ENDPOINTS.USER_SETTINGS(this.#state.username),
         formData,
-        true
+        true,
     );
     if (response.success) {
       this.#state.username = response.data.username;
