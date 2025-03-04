@@ -42,11 +42,6 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       return handlers.success(response);
     }
     if (needToken && response.status === 401) {
-      const responseData = await response.json();
-      if (responseData.msg === 'Old password is invalid.') {
-        // Special case for password update (temporary)
-        return ({ success: false, status: 422, msg: responseData.msg });
-      }
       return handlers[401](method, endpoint, data, isFileUpload, needToken, csrfToken);
     }
     if (response.status === 500) {
