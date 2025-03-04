@@ -3,6 +3,11 @@
   src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
 }
 
+@font-face {
+  font-family: 'kleader';
+  src: url(/fonts/Kleader.ttf) format ('truetype');
+}
+
 html,
 body {
   height: 100%;
