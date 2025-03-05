@@ -98,8 +98,9 @@ export class Settings extends HTMLElement {
     const userIdentity = this.userIdentityField.newUserIdentity;
     const newEmail = this.emailField.newEmail;
 
-    if (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) ||
-      !this.passwordField.checkPasswordInput()) {
+    if (this.#state.currentUserData.connection_type === 'regular' &&
+       (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) ||
+        !this.passwordField.checkPasswordInput())) {
       return;
     }
 
