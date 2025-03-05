@@ -213,63 +213,6 @@ export class MultiplayerGame extends HTMLElement {
             return hit_pos;
         }
 
-        function hit_pos_angle_calculator(hit_pos) {
-            if (hit_pos >= -1.5 && hit_pos < -0.5) {
-                return 2;
-            }
-            if (hit_pos >= -0.5 && hit_pos < 0.5) {
-                return -10;
-            }
-
-            if (hit_pos >= 0.5 && hit_pos < 1.5) {
-                return -20;
-            }
-
-            if (hit_pos >= 1.5 && hit_pos < 2.5) {
-                return -30;
-            }
-            if (hit_pos < -1.5 && hit_pos >= -2.5) {
-                return 10;
-            }
-
-            if (hit_pos < -2.5 && hit_pos >= -3.5) {
-                return 20;
-            }
-
-            if (hit_pos < -3.5 && hit_pos >= -4.5) {
-                return 30;
-            }
-            return 0;
-        }
-
-        function reset() {
-            if (lastScore == 0) {
-                if (Bumpers[1].score % 2 == 0)
-                    Ball.z_value = 10;
-                else
-                    Ball.z_value = -10;
-            }
-            if (lastScore == 1) {
-                if (Bumpers[0].score % 2 == 0)
-                    Ball.z_value = -10;
-                else
-                    Ball.z_value = 10;
-            }
-            if (Bumpers[0].score == 10 || Bumpers[1].score == 10) {
-                Bumpers[0].score = 0;
-                Bumpers[1].score = 0;
-            }
-            Ball.x_value = 0;
-            Ball.sphereMesh.position.x = 0;
-            Ball.sphereMesh.position.y = 0.5;
-            Ball.sphereMesh.position.z = 0;
-            Ball.sphereBody.position.x = Ball.sphereMesh.position.x;
-            Ball.sphereBody.position.y = Ball.sphereMesh.position.y;
-            Ball.sphereBody.position.z = Ball.sphereMesh.position.z;
-            // document.getElementById("divA").textContent ="P1 " + Bumpers[0].score;
-            // document.getElementById("divB").textContent ="P2 " + Bumpers[1].score;
-        }
-
         const pongSocket = new WebSocket(
             'wss://'
             + window.location.host
@@ -315,21 +258,6 @@ export class MultiplayerGame extends HTMLElement {
             requestAnimationFrame(animate);
             let delta = Math.min(clock.getDelta(), 0.1);
             world.step(delta);
-
-            if (Ball.hasCollidedWithAnyBumper == true) {
-                let hit_pos;
-
-                Ball.hasCollidedWithBumper2 == true
-                    ? (hit_pos = get_coll_pos(Bumpers[1].cubeBody, Bumpers[1].cubeGeometry, Ball.sphereMesh))
-                    : (hit_pos = get_coll_pos(Bumpers[0].cubeBody, Bumpers[0].cubeGeometry, Ball.sphereMesh));
-                if (Ball.z_value < 30 && -Ball.z_value > -30)
-                    Ball.hasCollidedWithBumper2 == true ? (Ball.z_value += 0.5) : (Ball.z_value -= 0.5);
-                Ball.z_value *= -1;
-                Ball.x_value = hit_pos_angle_calculator(hit_pos);
-            }
-            if (Ball.hasCollidedWithWall == true) Ball.x_value *= -1;
-
-            Ball.sphereBody.velocity.set(Ball.x_value * 0.3, -9, Ball.z_value);
 
             Ball.sphereMesh.position.set(Ball.sphereBody.position.x, Ball.sphereBody.position.y, Ball.sphereBody.position.z);
             Ball.sphereMesh.quaternion.set(
