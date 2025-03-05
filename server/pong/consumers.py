@@ -3,11 +3,48 @@ import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
-WALL_LEFT_X = 6.75
-WALL_RIGHT_X = -WALL_LEFT_X
-BUMPER_2_BORDER = 10
-BUMPER_1_BORDER = -BUMPER_2_BORDER
+WALL_LEFT_X = 10
+WALL_RIGHT_X = -10
+WALL_WIDTH_HALF = 0.5
+BUMPER_LENGTH_HALF = 2.5
+BUMPER_WIDTH = 1
+BUMPER_WIDTH_HALF = BUMPER_WIDTH / 2
+BALL_DIAMETER = 1
+BALL_RADIUS = BALL_DIAMETER / 2
+BUMPER_2_BORDER = 9.5
+BUMPER_1_BORDER = -9.5
 SPEED_CAP = 30
+
+"""
+CASE 1:
+    Ball(3, 9)
+    Bumper(0, 9)
+    Z overlaps (z is the same), X overlaps (Ball.x - 0.5 <= 2.5 && Bumper.x + 2.5 <= 2.5)
+    BOUNCE HAPPEN
+
+CASE 2:
+    Ball(-3, 9)
+    Bumper(0, 9)
+    Z overlaps (z is the same), X overlaps (Ball.x + 0.5 = -2.5 && Bumper.x - 2.5 = -2.5)
+    BOUNCE HAPPEN
+
+Bounce happens when (Ball.x <= 2.5 && Bumper.x <= 2.5) || (Ball.x >= -2.5 && Bumper.x >= -2.5)
+                    (Ball.x <= Bumper.x + BUMPER_LENGTH_HALF) || (Ball.x >= Bumper.x - BUMPER_LENGTH_HALF)
+
+CASE 3:
+    Ball(0, 8)
+    Bumper(0, 9)
+    Z overlaps (Ball.z + 0.5, Bumper.z - 0.5), X overlaps (duh)
+    BOUNCE HAPPEN
+
+    (Ball.z + BALL_RADIUS <= Bumper.z + BUMPER_WIDTH_HALF)
+"""
+"""
+(Ball.x + BALL_RADIUS <= Bumper.x + BUMPER_LENGTH_HALF) || (Ball.x - BALL_RADIUS >= Bumper.x - BUMPER_LENGTH_HALF)
+
+(Ball.z + BALL_RADIUS <= Bumper.z + BUMPER_WIDTH_HALF)
+"""
+
 
 class GameConsumer(AsyncWebsocketConsumer):
     # TODO: wall collision
@@ -15,17 +52,17 @@ class GameConsumer(AsyncWebsocketConsumer):
     def initialize_or_load_the_state(self):
         self.state = {
             "bumper_1": {
-                "x": 0,
+                "x": 7,
                 "y": 1,
-                "z": 9,
+                "z": -9,
                 "score": 0,
                 "moves_left": False,
                 "moves_right": False,
             },
             "bumper_2": {
-                "x": 0,
+                "x": -7,
                 "y": 1,
-                "z": -9,
+                "z": 9,
                 "score": 0,
                 "moves_left": False,
                 "moves_right": False,
@@ -41,10 +78,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         }
         resetted_ball_state = {
             "ball": {
-                "x": 0,
+                "x": 3.5,
                 "y": 3,
-                "z": 0,
-                "velocity": {"x": 1, "z": 1},
+                "z": -8.05,
+                "velocity": {"x": 1, "z": -1},
                 "has_collided_with_bumper_1": False,
                 "has_collided_with_bumper_2": False,
                 "has_collided_with_wall": False,
@@ -85,18 +122,50 @@ class GameConsumer(AsyncWebsocketConsumer):
         return 0.015
 
     def update_the_state(self):
-        if self.state["bumper_1"]["moves_left"] and not self.state["bumper_1"]["x"] > WALL_LEFT_X:
+        if (
+            self.state["bumper_1"]["moves_left"]
+            and not self.state["bumper_1"]["x"] > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF
+        ):
             self.state["bumper_1"]["x"] += 0.25
-        if self.state["bumper_1"]["moves_right"] and not self.state["bumper_1"]["x"] < WALL_RIGHT_X:
+        if (
+            self.state["bumper_1"]["moves_right"]
+            and not self.state["bumper_1"]["x"] < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF
+        ):
             self.state["bumper_1"]["x"] -= 0.25
 
-        if self.state["bumper_2"]["moves_left"] and not self.state["bumper_2"]["x"] > WALL_LEFT_X:
+        if (
+            self.state["bumper_2"]["moves_left"]
+            and not self.state["bumper_2"]["x"] > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF
+        ):
             self.state["bumper_2"]["x"] += 0.25
-        if self.state["bumper_2"]["moves_right"] and not self.state["bumper_2"]["x"] < WALL_RIGHT_X:
+        if (
+            self.state["bumper_2"]["moves_right"]
+            and not self.state["bumper_2"]["x"] < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF
+        ):
             self.state["bumper_2"]["x"] -= 0.25
 
-        if self.state["ball"]["x"] <= WALL_RIGHT_X - 2.25 or self.state["ball"]["x"] >= WALL_LEFT_X + 2.25:
-           self.state["ball"]["velocity"]["x"] *= -1
+        if (
+            self.state["ball"]["x"] <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
+            or self.state["ball"]["x"] >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
+        ):
+            self.state["ball"]["velocity"]["x"] *= -1
+
+        if (
+            (
+                (self.state["ball"]["x"] + BALL_RADIUS <= self.state["bumper_1"]["x"] + BUMPER_LENGTH_HALF)
+                and (self.state["ball"]["x"] - BALL_RADIUS >= self.state["bumper_1"]["x"] - BUMPER_LENGTH_HALF)
+            )
+            and (self.state["ball"]["z"] - BALL_RADIUS <= self.state["bumper_1"]["z"] + BUMPER_WIDTH_HALF)
+        ) or (
+            (
+                (self.state["ball"]["x"] + BALL_RADIUS <= self.state["bumper_2"]["x"] + BUMPER_LENGTH_HALF)
+                and (self.state["ball"]["x"] - BALL_RADIUS >= self.state["bumper_2"]["x"] - BUMPER_LENGTH_HALF)
+            )
+            and (self.state["ball"]["z"] + BALL_RADIUS >= self.state["bumper_2"]["z"] - BUMPER_WIDTH_HALF)
+        ):
+            self.params["speed_z"] += 0.001
+            self.state["ball"]["velocity"]["z"] *= -1
+            self.state["ball"]["velocity"]["x"] *= -1
 
         if self.state["ball"]["z"] >= BUMPER_2_BORDER:
             self.state["bumper_1"]["score"] += 1
@@ -109,7 +178,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         self.state["ball"]["z"] += self.params["speed_z"] * self.state["ball"]["velocity"]["z"]
         self.state["ball"]["x"] += self.params["speed_x"] * self.state["ball"]["velocity"]["x"]
-        self.params["speed_z"] += 0.001
         self.params["speed_z"] = min(SPEED_CAP, self.params["speed_z"])
 
     async def timer(self):
