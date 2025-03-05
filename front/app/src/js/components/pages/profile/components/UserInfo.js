@@ -32,9 +32,9 @@ export class ProfileUserInfo extends HTMLElement {
     this.querySelector('#profile-username').textContent = `@${this.#state.username}`;
     this.querySelector('#profile-titre').textContent = this.#state.titre;
   }
-    
-    template() {
-      return `
+
+  template() {
+    return `
 			<div class="d-flex flex-row justify-content-center align-items-center gap-3">
 				<div class="d-flex flex-column justify-content-center px-3 pt-3">
           <div class="d-flex flex-row align-items-center">
@@ -54,12 +54,12 @@ export class ProfileUserInfo extends HTMLElement {
     return `
     <style>
       h2 {
-        font-family: 'Texas Tango Extra Roth', serif;
+        font-family: 'WestCarabao', serif;
         color: #1F1101;
       }
     </style>
     `;
-    }
+  }
 }
 
 customElements.define('profile-user-info', ProfileUserInfo);

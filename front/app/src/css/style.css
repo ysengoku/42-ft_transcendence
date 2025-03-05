@@ -1,11 +1,21 @@
 @font-face {
-  font-family: 'Texas Tango Extra Roth';
+  font-family: 'Texas Tango';
   src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
 }
 
 @font-face {
+  font-family: 'van dyke';
+  src: url(/fonts/VAN_DYKE.ttf) format('truetype');
+}
+
+@font-face {
   font-family: 'kleader';
-  src: url(/fonts/Kleader.ttf) format ('truetype');
+  src: url(/fonts/Kleader.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'WestCarabao';
+  src: url(/fonts/WestCarabao.ttf) format('truetype');
 }
 
 html,
@@ -30,7 +40,7 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
 }
 
 legend {
-  font-family: 'Texas Tango Extra Roth', serif;
+  font-family: 'kleader', serif;
 }
 
 #content {
