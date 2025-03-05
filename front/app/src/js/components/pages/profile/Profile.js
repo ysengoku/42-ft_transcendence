@@ -228,9 +228,11 @@ export class UserProfile extends HTMLElement {
     .online-status-indicator.online {
       background-color: green;
     }
-    h1{
-      font-family: 'Texas Tango Extra Roth', serif;
-      font-size: 3.5rem;
+    h1 {
+      display: inline-block;
+      font-family: 'Texas Tango', serif;
+      font-size: 4rem;
+     /* transform: scale(1.2, 1); */
     }
     hr {
       height: 0;
