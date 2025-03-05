@@ -7,8 +7,11 @@ WALL_LEFT_X = 6.75
 WALL_RIGHT_X = -WALL_LEFT_X
 BUMPER_2_BORDER = 10
 BUMPER_1_BORDER = -BUMPER_2_BORDER
+SPEED_CAP = 30
 
 class GameConsumer(AsyncWebsocketConsumer):
+    # TODO: wall collision
+    # TODO: bumper collision
     def initialize_or_load_the_state(self):
         self.state = {
             "bumper_1": {
@@ -32,12 +35,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.reset_ball_state()
 
     def reset_ball_state(self):
+        self.params = {
+            "speed_x": 0.1,
+            "speed_z": 0.1,
+        }
         resetted_ball_state = {
             "ball": {
                 "x": 0,
                 "y": 3,
                 "z": 0,
-                "velocity": {"x": 0, "y": 0, "z": 1},
+                "velocity": {"x": 1, "z": 1},
                 "has_collided_with_bumper_1": False,
                 "has_collided_with_bumper_2": False,
                 "has_collided_with_wall": False,
@@ -88,16 +95,22 @@ class GameConsumer(AsyncWebsocketConsumer):
         if self.state["bumper_2"]["moves_right"] and not self.state["bumper_2"]["x"] < WALL_RIGHT_X:
             self.state["bumper_2"]["x"] -= 0.25
 
+        if self.state["ball"]["x"] <= WALL_RIGHT_X - 2.25 or self.state["ball"]["x"] >= WALL_LEFT_X + 2.25:
+           self.state["ball"]["velocity"]["x"] *= -1
+
         if self.state["ball"]["z"] >= BUMPER_2_BORDER:
             self.state["bumper_1"]["score"] += 1
-            self.state["scored_last"] = -1
             self.reset_ball_state()
+            self.state["ball"]["velocity"]["z"] = -1
         elif self.state["ball"]["z"] <= BUMPER_1_BORDER:
             self.state["bumper_2"]["score"] += 1
-            self.state["scored_last"] = 1
             self.reset_ball_state()
+            self.state["ball"]["velocity"]["z"] = 1
 
-        self.state["ball"]["z"] += 0.1 * self.state["scored_last"]
+        self.state["ball"]["z"] += self.params["speed_z"] * self.state["ball"]["velocity"]["z"]
+        self.state["ball"]["x"] += self.params["speed_x"] * self.state["ball"]["velocity"]["x"]
+        self.params["speed_z"] += 0.001
+        self.params["speed_z"] = min(SPEED_CAP, self.params["speed_z"])
 
     async def timer(self):
         while self.should_run:
