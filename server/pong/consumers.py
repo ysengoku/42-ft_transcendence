@@ -3,6 +3,7 @@ import json
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+#### CONSTANTS ####
 WALL_LEFT_X = 10
 WALL_RIGHT_X = -10
 WALL_WIDTH_HALF = 0.5
@@ -13,46 +14,15 @@ BALL_DIAMETER = 1
 BALL_RADIUS = BALL_DIAMETER / 2
 BUMPER_2_BORDER = 9.5
 BUMPER_1_BORDER = -9.5
-SPEED_CAP = 30
-
-"""
-CASE 1:
-    Ball(3, 9)
-    Bumper(0, 9)
-    Z overlaps (z is the same), X overlaps (Ball.x - 0.5 <= 2.5 && Bumper.x + 2.5 <= 2.5)
-    BOUNCE HAPPEN
-
-CASE 2:
-    Ball(-3, 9)
-    Bumper(0, 9)
-    Z overlaps (z is the same), X overlaps (Ball.x + 0.5 = -2.5 && Bumper.x - 2.5 = -2.5)
-    BOUNCE HAPPEN
-
-Bounce happens when (Ball.x <= 2.5 && Bumper.x <= 2.5) || (Ball.x >= -2.5 && Bumper.x >= -2.5)
-                    (Ball.x <= Bumper.x + BUMPER_LENGTH_HALF) || (Ball.x >= Bumper.x - BUMPER_LENGTH_HALF)
-
-CASE 3:
-    Ball(0, 8)
-    Bumper(0, 9)
-    Z overlaps (Ball.z + 0.5, Bumper.z - 0.5), X overlaps (duh)
-    BOUNCE HAPPEN
-
-    (Ball.z + BALL_RADIUS <= Bumper.z + BUMPER_WIDTH_HALF)
-"""
-"""
-(Ball.x + BALL_RADIUS <= Bumper.x + BUMPER_LENGTH_HALF) || (Ball.x - BALL_RADIUS >= Bumper.x - BUMPER_LENGTH_HALF)
-
-(Ball.z + BALL_RADIUS <= Bumper.z + BUMPER_WIDTH_HALF)
-"""
-
+SUBTICK = 0.5
+SPEED_CAP = 1
+###################
 
 class GameConsumer(AsyncWebsocketConsumer):
-    # TODO: wall collision
-    # TODO: bumper collision
     def initialize_or_load_the_state(self):
         self.state = {
             "bumper_1": {
-                "x": 7,
+                "x": 0,
                 "y": 1,
                 "z": -9,
                 "score": 0,
@@ -60,7 +30,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "moves_right": False,
             },
             "bumper_2": {
-                "x": -7,
+                "x": 0,
                 "y": 1,
                 "z": 9,
                 "score": 0,
@@ -73,15 +43,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     def reset_ball_state(self):
         self.params = {
-            "speed_x": 0.1,
-            "speed_z": 0.1,
+            "speed_x": 0.05,
+            "speed_z": 0.05,
         }
         resetted_ball_state = {
             "ball": {
-                "x": 3.5,
+                "x": 0,
                 "y": 3,
-                "z": -8.05,
-                "velocity": {"x": 1, "z": -1},
+                "z": 0,
+                "velocity": {"x": 0.5, "z": 0.5},
                 "has_collided_with_bumper_1": False,
                 "has_collided_with_bumper_2": False,
                 "has_collided_with_wall": False,
@@ -121,7 +91,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     def calculate_sleeping_time(self):
         return 0.015
 
-    def update_the_state(self):
+    def change_players_positions(self):
         if (
             self.state["bumper_1"]["moves_left"]
             and not self.state["bumper_1"]["x"] > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF
@@ -144,41 +114,59 @@ class GameConsumer(AsyncWebsocketConsumer):
         ):
             self.state["bumper_2"]["x"] -= 0.25
 
-        if (
-            self.state["ball"]["x"] <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
-            or self.state["ball"]["x"] >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
-        ):
-            self.state["ball"]["velocity"]["x"] *= -1
 
-        if (
-            (
-                (self.state["ball"]["x"] + BALL_RADIUS <= self.state["bumper_1"]["x"] + BUMPER_LENGTH_HALF)
-                and (self.state["ball"]["x"] - BALL_RADIUS >= self.state["bumper_1"]["x"] - BUMPER_LENGTH_HALF)
-            )
-            and (self.state["ball"]["z"] - BALL_RADIUS <= self.state["bumper_1"]["z"] + BUMPER_WIDTH_HALF)
-        ) or (
-            (
-                (self.state["ball"]["x"] + BALL_RADIUS <= self.state["bumper_2"]["x"] + BUMPER_LENGTH_HALF)
-                and (self.state["ball"]["x"] - BALL_RADIUS >= self.state["bumper_2"]["x"] - BUMPER_LENGTH_HALF)
-            )
-            and (self.state["ball"]["z"] + BALL_RADIUS >= self.state["bumper_2"]["z"] - BUMPER_WIDTH_HALF)
-        ):
-            self.params["speed_z"] += 0.001
-            self.state["ball"]["velocity"]["z"] *= -1
-            self.state["ball"]["velocity"]["x"] *= -1
+    def is_collided_with_ball(self, bumper):
+        """
+        Calculates rectangle-on-rectangle collision between the ball and the bumper which is given as a
+        parameter to this function.
+        """
+        return (
+            (self.state["ball"]["x"] - BALL_RADIUS <= bumper["x"] + BUMPER_LENGTH_HALF)
+            and (self.state["ball"]["x"] + BALL_RADIUS >= bumper["x"] - BUMPER_LENGTH_HALF)
+            and (self.state["ball"]["z"] - BALL_RADIUS <= bumper["z"] + BUMPER_WIDTH_HALF)
+            and (self.state["ball"]["z"] + BALL_RADIUS >= bumper["z"] - BUMPER_WIDTH_HALF)
+        )
 
-        if self.state["ball"]["z"] >= BUMPER_2_BORDER:
-            self.state["bumper_1"]["score"] += 1
-            self.reset_ball_state()
-            self.state["ball"]["velocity"]["z"] = -1
-        elif self.state["ball"]["z"] <= BUMPER_1_BORDER:
-            self.state["bumper_2"]["score"] += 1
-            self.reset_ball_state()
-            self.state["ball"]["velocity"]["z"] = 1
+    def move_ball(self):
+        """
+        Moves the ball by a single constant subtick at a time in order to avoid collision errors.
+        This approach is called Conservative Advancement.
+        """
+        total_distance_z = abs(self.params["speed_z"] * self.state["ball"]["velocity"]["z"])
+        total_distance_x = abs(self.params["speed_x"] * self.state["ball"]["velocity"]["x"])
+        current_subtick = 0
+        subtick_z = SUBTICK
+        total_subticks = total_distance_z / subtick_z
+        subtick_x = total_distance_x / total_subticks
+        while current_subtick <= total_subticks:
+            if (
+                self.state["ball"]["x"] <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
+                or self.state["ball"]["x"] >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
+            ):
+                self.state["ball"]["velocity"]["x"] *= -1
 
-        self.state["ball"]["z"] += self.params["speed_z"] * self.state["ball"]["velocity"]["z"]
-        self.state["ball"]["x"] += self.params["speed_x"] * self.state["ball"]["velocity"]["x"]
-        self.params["speed_z"] = min(SPEED_CAP, self.params["speed_z"])
+            if self.is_collided_with_ball(self.state["bumper_1"]) or self.is_collided_with_ball(self.state["bumper_2"]):
+                self.params["speed_z"] = min(SPEED_CAP, self.params["speed_z"] + SUBTICK)
+                self.state["ball"]["velocity"]["z"] *= -1
+                self.state["ball"]["velocity"]["x"] *= -1
+
+            if self.state["ball"]["z"] >= BUMPER_2_BORDER:
+                self.state["bumper_1"]["score"] += 1
+                self.reset_ball_state()
+                self.state["ball"]["velocity"]["z"] = -1
+            elif self.state["ball"]["z"] <= BUMPER_1_BORDER:
+                self.state["bumper_2"]["score"] += 1
+                self.reset_ball_state()
+                self.state["ball"]["velocity"]["z"] = 1
+
+            self.state["ball"]["z"] += subtick_z * self.state["ball"]["velocity"]["z"]
+            self.state["ball"]["x"] += subtick_x * self.state["ball"]["velocity"]["x"]
+            current_subtick += 1
+
+
+    def update_the_state(self):
+        self.change_players_positions()
+        self.move_ball()
 
     async def timer(self):
         while self.should_run:
