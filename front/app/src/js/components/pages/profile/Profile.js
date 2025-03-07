@@ -1,7 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import './components/index.js';
-// import poster from '/img/sample-background.png?url';
 
 export class UserProfile extends HTMLElement {
   #state = {
@@ -198,6 +197,11 @@ export class UserProfile extends HTMLElement {
             </div>
           </div>
         </div>
+
+        <svg><defs><filter id="wave">
+						<feTurbulence baseFrequency="0.02" numOctaves="8" seed="1"></feTurbulence>
+				 	 	<feDisplacementMap in="SourceGraphic" scale="12" />
+				</filter></defs></svg>
       </div>
     </div>`;
   }
@@ -212,11 +216,6 @@ export class UserProfile extends HTMLElement {
       background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(164, 106, 48, 0.9) 100%);
       filter: sepia(20%) contrast(90%) brightness(95%);
       box-shadow: inset 0 0 40px rgba(24, 15, 1, 0.3);
-
-      /*background-image: url(${poster});
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;*/
     }
     .online-status-indicator {
       width: 16px;
@@ -230,9 +229,10 @@ export class UserProfile extends HTMLElement {
     }
     h1 {
       display: inline-block;
-      font-family: 'Texas Tango', serif;
-      font-size: 4rem;
-     /* transform: scale(1.2, 1); */
+      font-family: 'docktrin', serif;
+      font-size: 6em;
+      margin-bottom: -.8em;
+      transform: scale(1.2, 1);
     }
     hr {
       height: 0;
