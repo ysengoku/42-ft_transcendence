@@ -5,6 +5,7 @@ import Stats from '/node_modules/three/examples/jsm/libs/stats.module.js';
 import { GUI } from '/node_modules/dat.gui/build/dat.gui.module.js';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import pedro from '/3d_models/lilguy.glb?url';
+import auidourl from '/audio/score_sound.mp3?url';
 
 export class MultiplayerGame extends HTMLElement {
     constructor() {
@@ -16,6 +17,7 @@ export class MultiplayerGame extends HTMLElement {
     }
 
     game() {
+        const audio = new Audio(auidourl);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
@@ -248,6 +250,8 @@ export class MultiplayerGame extends HTMLElement {
         pongSocket.addEventListener("message", function(e) {
             data = JSON.parse(e.data);
             updateState(data.state);
+            if (data.scored)
+              audio.cloneNode().play();
         });
 
         pongSocket.addEventListener("close", function(e) {
