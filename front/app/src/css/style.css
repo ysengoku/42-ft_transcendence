@@ -4,6 +4,11 @@
 }
 
 @font-face {
+  font-family: 'docktrin';
+  src: url(/fonts/docktrin.ttf) format('truetype');
+}
+
+@font-face {
   font-family: 'van dyke';
   src: url(/fonts/VAN_DYKE.ttf) format('truetype');
 }
