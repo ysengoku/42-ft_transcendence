@@ -152,7 +152,11 @@ const router = (() => {
      */
     navigate(path = window.location.pathname, queryParams = '') {
       console.log('Navigating to:', path);
-      window.history.pushState({}, '', path);
+      if (path === '/user-not-found') {
+        window.history.replaceState({}, '', path);
+      } else {
+        window.history.pushState({}, '', path);
+      }
       this.handleRoute(queryParams);
     }
 
