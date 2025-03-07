@@ -15,7 +15,7 @@ BALL_RADIUS = BALL_DIAMETER / 2
 BUMPER_2_BORDER = 9.5
 BUMPER_1_BORDER = -9.5
 SUBTICK = 0.05
-SPEED_CAP = 1
+SPEED_CAP = 50
 ###################
 
 class GameConsumer(AsyncWebsocketConsumer):
@@ -40,6 +40,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             "scored_last": 1,
         }
         self.reset_ball_state()
+        self.scored = False
 
     def reset_ball_state(self):
         self.params = {
@@ -154,10 +155,12 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.state["bumper_1"]["score"] += 1
                 self.reset_ball_state()
                 self.state["ball"]["velocity"]["z"] = -1
+                self.scored = True
             elif self.state["ball"]["z"] <= BUMPER_1_BORDER:
                 self.state["bumper_2"]["score"] += 1
                 self.reset_ball_state()
                 self.state["ball"]["velocity"]["z"] = 1
+                self.scored = True
 
             self.state["ball"]["z"] += subtick_z * self.state["ball"]["velocity"]["z"]
             self.state["ball"]["x"] += subtick_x * self.state["ball"]["velocity"]["x"]
@@ -174,7 +177,11 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.game_tick()
 
     async def state_update(self, event):
-        await self.send(text_data=json.dumps({"state": event["state"]}))
+        if self.scored:
+            await self.send(text_data=json.dumps({"state": event["state"], "scored": "yes"}))
+            self.scored = False
+        else:
+            await self.send(text_data=json.dumps({"state": event["state"]}))
 
     async def game_tick(self):
         self.update_the_state()
