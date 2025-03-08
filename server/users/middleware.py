@@ -1,6 +1,7 @@
 from channels.db import database_sync_to_async
 from channels.middleware import BaseMiddleware
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 
 from users.models.refresh_token import RefreshToken
 
@@ -8,13 +9,15 @@ User = get_user_model()
 
 
 @database_sync_to_async
-def get_user(user_id):
+def authenticate_token(token):
     """
-    Convert a synchronous database query to an asynchronous operation.
+    Authenticate a token using the same logic as your API
     """
     try:
-        return User.objects.get(id=user_id)
-    except User.DoesNotExist:
+        payload = RefreshToken.objects.verify_access_token(token)
+        user = User.objects.filter(id=payload["sub"]).first()
+        return user
+    except Exception:
         return None
 
 
@@ -30,7 +33,8 @@ class JWTAuthMiddleware(BaseMiddleware):
 
     async def __call__(self, scope, receive, send):
         headers = dict(scope["headers"])
-        cookies = headers.get(b"cookie", b"").decode("utf-8")
+        cookies = headers.get(b"cookie", b"").decode("utf-8") if b"cookie" in headers else ""
+        scope["user"] = AnonymousUser()
         token = None
 
         for cookie_part in cookies.split(";"):
@@ -39,17 +43,14 @@ class JWTAuthMiddleware(BaseMiddleware):
                 token = cookie_clean[13:]
                 break
 
-        scope["user"] = None
+        print(token)
 
         if token:
-            payload = await database_sync_to_async(RefreshToken.objects.verify_access_token)(token)
-            user_id = payload.get("user_id")
-
-            if user_id:
-                user = await get_user(user_id)
+            user = await authenticate_token(token)
+            if user:
                 scope["user"] = user
+                print(f"Authenticated as {user.username}")
             else:
-                scope["user"] = None
-
+                print("Authentication failed")
 
         return await super().__call__(scope, receive, send)

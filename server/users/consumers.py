@@ -7,8 +7,12 @@ from users.models import UserOnlineStatus
 
 
 class OnlineStatusConsumer(WebsocketConsumer):
+    """
+    Consumer that handles online status updates for users.
+    """
     def connect(self):
         self.user = self.scope["user"]
+        print(self.user)
 
         if not self.user.is_authenticated:
             self.close()

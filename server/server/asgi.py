@@ -27,6 +27,8 @@ combined_patterns = chat_websocket_urlpatterns + users_websocket_urlpatterns + p
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": AllowedHostsOriginValidator(URLRouter(combined_patterns)),
+        "websocket": JWTAuthMiddleware(
+            AllowedHostsOriginValidator(URLRouter(combined_patterns)),
+        ),
     },
 )
