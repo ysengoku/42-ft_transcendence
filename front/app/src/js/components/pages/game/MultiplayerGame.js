@@ -242,7 +242,7 @@ export class MultiplayerGame extends HTMLElement {
             lastScore = data.last_score;
         }
 
-        pongSocket.addEventListener("open", function(e) {
+        pongSocket.addEventListener("open", function(_) {
             console.log('Success! :3')
         });
 
@@ -250,11 +250,11 @@ export class MultiplayerGame extends HTMLElement {
         pongSocket.addEventListener("message", function(e) {
             data = JSON.parse(e.data);
             updateState(data.state);
-            if (data.scored)
+            if (data.state.someone_scored)
               audio.cloneNode().play();
         });
 
-        pongSocket.addEventListener("close", function(e) {
+        pongSocket.addEventListener("close", function(_) {
             console.log('PONG socket was nice! :3');
         });
 
