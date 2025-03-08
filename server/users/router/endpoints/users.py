@@ -20,7 +20,6 @@ from users.schemas import (
 users_router = Router()
 
 
-# TODO: delete endpoint
 @users_router.get("", response={200: list[ProfileMinimalSchema], frozenset({401}): MessageSchema})
 @paginate
 def get_users(request: HttpRequest, search: str | None = None):
@@ -81,6 +80,21 @@ def update_user_settings(
     return user.profile
 
 
+# @users_router.get(
+#     "/online-or-offline-user/",
+#     response=200,
+# )
+# def get_online_users(request):
+#     """
+#     Gets if the user is online or offline.
+#     """
+#     user_is_online = UserOnlineStatus.objects.filter(user=request.auth).exists()
+#     if user_is_online:
+#         return
+#     return user_is_online
+
+
+# for development purpose
 @users_router.get("/online-users/", response=list[str])
 def get_online_users(request):
     """

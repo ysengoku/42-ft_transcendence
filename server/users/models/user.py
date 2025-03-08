@@ -225,3 +225,14 @@ class UserOnlineStatus(models.Model):
     @property
     def is_online(self):
         return self.connection_count > 0
+
+# move model to user
+# announce status only to the people who are in the chat or on the user's profile - to be discussed with melodie and yuko
+
+# add a limit of 10 reconnections if failed
+
+# optionnal for tommorrow:
+# last seen = now. if user is offline, last seen = last seen
+# ast seen > jwt exp date. user = out of keyboard
+# last seen = now. message = online
+
