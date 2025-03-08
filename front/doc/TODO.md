@@ -36,7 +36,7 @@
 ### Friends list
 - [x] Get list from server
 - [x] Handle see more making a new request (To show more than first 10 friends)
-- [] Delete modal
+- [x] Delete modal
 
 ### User search
 - [x] Add user search button and dropdown to Navbar
@@ -58,10 +58,10 @@
 - [x] email login
 - [x] Fix parsing of Error message from server
 - [x] Forbitten letters or format for username? (e.g. email format for username)
-- [] Forgot password
+- [x] Forgot password
 - [x] Mfa handling
-- [] Resend Mfa error handling
-- [] Style mfa code form
+- [x] Resend Mfa error handling
+- [x] Style mfa code form
 
 - [x] Unit test (input validation)
 
@@ -80,7 +80,6 @@
 - [x] 422 handling
 - [x] Password length check
 - [x] 422 Error message check
-- [] Nickname input?
 - [x] Unit test (input validation)
 - [x] Fix parsing of Error message from server
 
@@ -100,6 +99,9 @@
 - [x] 413 handling
 - [x] 422 handling
 - [x] Error handling
+- [x] Email format check
+- [] Incorrect old password case (401 occurs infinite loop with current logic)
+- [x] Test Delete account & add adieu message
 - [] Unit test (input validation)
 - [] Disable submit button if there is no change
 
@@ -117,22 +119,22 @@
 
 ### User info
 - [x] username & nickname
-- [] Title
+- [] - [] Title
 
 ### User actions
 - [x] Add firend
 - [x] Remove friend
 - [x] Block friend
 - [x] Unblock friend
-- [] Send message
+- [] - [] Send message
 
 ### Stat
 - [x] Pie Graph
 - [] Line graph
 
 ### Game History
-- [] Better solution for Scroll thead sticky
-- [] Tournament history table
+- [x] Better solution for Scroll thead sticky
+- [x]  Tournament history table
 
 ---------------------------------------------------------------------
 
@@ -153,14 +155,88 @@
 - [x] Add link to Profile of current chat user
 - [x] Resize event listner
 - [x] Autocomplete off
-- [] Blocked user chat rendering
-- [] Invite to play game
-- [] Add API request for chat
+- [] - [] Blocked user chat rendering
+- [] - [] Invite to play game
+- [] - [] Add API request for chat
 
 ### Notifications
-- [] Add dropdown
+- [] - [] Add dropdown
 
 ---------------------------------------------------------------------
 
 ## CSS
 - [x] Add cursor for html: active and body:active
+
+---------------------------------------------------------------------
+
+## Add sanitize html | Refactor
+
+### navbar
+- [x] - [x] Navbar.js
+- [x] - [x] ChatButton.js
+- [x] - [x] DropdownMenu.js
+- [x] - [x] FriendsButton.js
+- [x] - [x] FriendsList.js
+- [x] - [x] NavbarBrand.js
+- [x] - [x] NotificationsButton.js
+- [x] - [x] UserActionsMenu.js
+- [x] - [x] UserListItem.js
+- [x] - [x] UserSearch.js
+- [x] - [x] UserSearchButton.js
+
+### pages
+- [x] - [x] Landing.js
+- [x] - [x] Error.js
+- [x] - [x] NotFound.js
+
+#### chat
+- [x] - [x] Chat.js
+- [x] - [x] ChatList.js
+- [x] - [x] ChatListItem.js
+- [x] - [] ChatMessageArea.js (TODO: Remove message like event listeners)
+- [x] - [x] ChatMessageInput.js
+
+#### home
+- [x] - [x] Home.js
+
+#### login
+- [x] - [x] Login.js
+- [x] - [x] LoginForm.js
+- [x] - [x] OAuth.js
+- [x] - [x] ForgotPassword.js
+- [x] - [x] ResetPassword.js
+- [x] - [x] MfaVerification.js
+
+#### profile
+- [x] - [x] Profile.js
+- [x] - [x] UserNotFound.js
+- [x] - [x] Avatar.js
+- [x] - [x] DuelHistory.js
+- [x] - [x] Enemy.js
+- [x] - [x] GameHistory.js
+- [x] - [x] OnlineStatusIndicator.js
+- [x] - [x] StatCard.js
+- [x] - [x] TournamentHistory.js
+- [x] - [x] UserActions.js
+- [x] - [x] UserInfo.js
+- [x] - [x] WinRatePieGraph.js
+
+#### register
+- [x] - [x] Register.js
+
+#### settings
+- [x] - [x] Settings.js
+- [x] - [x] AvatarUpload.js
+- [x] - [x] AvatarUploadModal.js
+- [x] - [x] DeleteAccountButton.js
+- [x] - [x] DeleteAccountConfirmationModal.js
+- [x] - [x] EmailUpdate.js
+- [x] - [x] MfaEnableUpdate.js
+- [x] - [x] PasswordUpdate.js
+- [x] - [x] UserIdentityUpdate.js
+
+#### utils
+- [x] alertMessage.js
+- [x] formFeedback.js
+- [x] inputFeedback.js
+ 

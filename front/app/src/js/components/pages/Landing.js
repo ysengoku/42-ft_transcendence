@@ -4,22 +4,47 @@ import dune from '/img/dune.jpg?url';
 import cloud from '/img/cloud.png?url';
 
 export class Landing extends HTMLElement {
+  #state = {
+    isLoggedIn: false,
+  };
+
   constructor() {
-    super(); // Call the constructor of the parent class (HTMLElement)
-    this.isLoggedIn = false;
+    super();
   }
 
   async connectedCallback() {
-    // const authStatus = await auth.fetchAuthStatus();
-    // this.isLoggedIn = authStatus.success;
-    this.isLoggedIn = auth.getStoredUser() ? true : false;
+    this.#state.isLoggedIn = auth.getStoredUser() ? true : false;
     this.render();
   }
 
   render() {
-    console.log('this.isLoggedIn', this.isLoggedIn);
+    this.innerHTML = this.template() + this.style();
+  }
 
-    this.innerHTML = `
+  template() {
+    return `
+      <div class="cloud"></div>
+      <div class="container d-flex flex-column justify-content-center align-items-center text-center">
+        <img src="${logo}" alt="logo" class="img-fluid w-100 mb-2">
+            
+        <div class="d-flex flex-column align-items-center" id="landinf-buttons"> 
+          ${ this.#state.isLoggedIn ?
+            `<div class="mb-3">
+              <a class="btn btn-primary btn-lg" href="/home" role="button">Enter</a>
+            </div>` :
+          `<div class="mb-3">
+            <a class="btn btn-primary btn-lg" href="/login" role="button">Login</a>
+          </div>
+          <div class="mb-3">
+            <a class="btn btn-outline-primary" href="/register" role="button">Sign up</a>
+          </div>`}
+        </div>
+      </div>
+      `;
+  }
+
+  style() {
+    return `
       <style>
         .container-fluid {
           background: url(${dune});
@@ -52,24 +77,7 @@ export class Landing extends HTMLElement {
           z-index: 3;
         }
       </style>
-      <div class="cloud"></div>
-      <div class="container d-flex flex-column justify-content-center align-items-center text-center">
-        <img src="${logo}" alt="logo" class="img-fluid w-100 mb-2">
-            
-        <div class="d-flex flex-column align-items-center" id="landinf-buttons"> 
-          ${ this.isLoggedIn ?
-          `<div class="mb-3">
-            <a class="btn btn-primary btn-lg" href="/home" role="button">Enter</a>
-          </div>` :
-          `<div class="mb-3">
-            <a class="btn btn-primary btn-lg" href="/login" role="button">Login</a>
-          </div>
-          <div class="mb-3">
-            <a class="btn btn-outline-primary" href="/register" role="button">Sign up</a>
-          </div>`}
-        </div>
-      </div>
-      `;
+    `;
   }
 }
 

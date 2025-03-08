@@ -99,16 +99,6 @@ export class ResetPassword extends HTMLElement {
     </div>
     `;
   }
-
-//   style() {
-//     return `
-// 	<style>
-// 	  .form-container {
-// 		background-color: rgba(128,128,128, 0.1);
-// 	  }
-// 	</style>
-// 	`;
-//   }
 }
 
 customElements.define('reset-password', ResetPassword);

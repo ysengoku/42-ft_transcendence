@@ -1,4 +1,4 @@
-export class DualMenu extends HTMLElement {
+export class DuelMenu extends HTMLElement {
   constructor() {
     super();
   }
@@ -8,9 +8,13 @@ export class DualMenu extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = `
+    this.innerHTML = this.template();
+  }
+  
+  template() {
+    return `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
-			<h1>This is Dual Menu</h1>
+			<h1>This is Duel Menu</h1>
 			<div class="mb-3 pt-5">
 				<a class="btn btn-primary" href="/home" role="button">Back to Home</a>
 			</div>
@@ -19,4 +23,4 @@ export class DualMenu extends HTMLElement {
   }
 }
 
-customElements.define('dual-menu', DualMenu);
+customElements.define('duel-menu', DuelMenu);

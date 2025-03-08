@@ -1,8 +1,11 @@
 import { ThemeController } from './ThemeController';
 import { isMobile } from './viewPort';
+import { sanitizeHtml } from './sanitizeHtml';
+import { showFormErrorFeedback } from './formFeedback';
 
 import {
   INPUT_FEEDBACK,
+  emailFeedback,
   passwordFeedback,
   isFieldFilled,
   removeInputFeedback,
@@ -10,7 +13,7 @@ import {
 
 import {
   ALERT_TYPE,
-  ALERT_MESSAGES,
+  ERROR_MESSAGES,
   showAlertMessage,
   showAlertMessageForDuration,
   removeAlert,
@@ -21,11 +24,14 @@ import {
 export {
   ThemeController,
   isMobile,
+  sanitizeHtml,
+  showFormErrorFeedback,
   INPUT_FEEDBACK,
+  emailFeedback,
   passwordFeedback,
   isFieldFilled,
   removeInputFeedback,
-  ALERT_MESSAGES,
+  ERROR_MESSAGES,
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,

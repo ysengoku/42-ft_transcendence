@@ -1,13 +1,13 @@
 import { ProfileButton } from './ProfileButton';
 import { SettingsButton } from './SettingsButton';
-import { DualButton } from './DualButton';
+import { DuelButton } from './DuelButton';
 import { TournamentButton } from './TournamentButton';
 import { LogoutButton } from './LogoutButton';
 
 export {
   ProfileButton,
   SettingsButton,
-  DualButton,
+  DuelButton,
   TournamentButton,
   LogoutButton,
 };

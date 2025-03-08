@@ -6,6 +6,7 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
+    historyFallback: true,
   },
   resolve: {
     alias: {

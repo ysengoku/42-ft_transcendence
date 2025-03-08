@@ -7,40 +7,44 @@ export class ChatMessageInput extends HTMLElement {
     this.render();
   }
 
-  render() {
-    this.innerHTML = `
-      <div class="chat-input mx-4 mt-3">
-        <div class="input-group">
-          <input type="text" id="chatMessageInput" class="form-control" placeholder="Type a message..." autocomplete="off">
-          <button class="btn btn-secondary" id="sendMessage">
-            <i class="bi bi-send"></i>
-          </button>
-        </div>
-      </div>
-    `;
+  disconnectedCallback() {
+    this.sendMessageButton?.removeEventListener('click', this.handleSendMessage);
+    this.messageInput?.removeEventListener('keypress', this.handleSendMessage);
+  }
 
-    const sendMessageButton = this.querySelector('#sendMessage');
-    const messageInput = this.querySelector('#chatMessageInput');
-    sendMessageButton.addEventListener('click', () => {
-      const message = messageInput.value;
-      console.log('Message:', message);
-      if (message.trim() !== '') {
-        const event = new CustomEvent('sendMessage', { detail: message, bubbles: true });
-        document.dispatchEvent(event);
-        messageInput.value = '';
-      }
-    });
-    messageInput.addEventListener('keypress', (event) => {
-      if (event.key === 'Enter') {
-        const message = messageInput.value;
+  render() {
+    this.innerHTML = this.template();
+
+    this.sendMessageButton = this.querySelector('#sendMessage');
+    this.messageInput = this.querySelector('#chat-message-input');
+
+    this.handleSendMessage = (event) => {
+      if (event.key === 'Enter' || event.type === 'click') {
+        const message = this.messageInput.value;
         console.log('Message:', message);
         if (message.trim() !== '') {
-          const event = new CustomEvent('sendMessage', { detail: message, bubbles: true });
-          document.dispatchEvent(event);
-          messageInput.value = '';
+          const customEvent = new CustomEvent('sendMessage', { detail: message, bubbles: true });
+          document.dispatchEvent(customEvent);
+          this.messageInput.value = '';
         }
       }
-    });
+    };
+
+    this.sendMessageButton?.addEventListener('click', this.handleSendMessage);
+    this.messageInput?.addEventListener('keypress', this.handleSendMessage);
+  }
+
+  template() {
+    return `
+    <div class="chat-input mx-4 mt-3">
+      <div class="input-group">
+        <input type="text" id="chat-message-input" class="form-control" placeholder="Type a message..." autocomplete="off">
+        <button class="btn btn-secondary" id="sendMessage">
+          <i class="bi bi-send"></i>
+        </button>
+      </div>
+    </div>
+    `;
   }
 }
 

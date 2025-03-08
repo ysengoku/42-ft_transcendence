@@ -1,85 +1,105 @@
 import { INPUT_FEEDBACK } from '@utils';
 
 export class UserIdentityUpdate extends HTMLElement {
+  #state = {
+    username: '',
+    nickname: '',
+  };
+
   constructor() {
     super();
-    this._user = {
-      username: '',
-      nickname: '',
-    };
     this.newUserIdentity = {
       username: '',
       nickname: '',
     };
+    this.handleUsernameInput = this.handleUsernameInput.bind(this);
+    this.handleUsernameBlur = this.handleUsernameBlur.bind(this);
+    this.handleNicknameInput = this.handleNicknameInput.bind(this);
+    this.handleNicknameBlur = this.handleNicknameBlur.bind(this);
   }
 
   setParams(user) {
-    this._user.username = user.username;
-    this._user.nickname = user.nickname;
+    this.#state.username = user.username;
+    this.#state.nickname = user.nickname;
     this.render();
-    this.setEventListeners();
   }
 
-  setEventListeners() {
-    const usernameInput = this.querySelector('#settings-username');
-
-    usernameInput.addEventListener('input', (event) => {
-      const feedback = this.querySelector('#settings-username-feedback');
-      if (event.target.value.length < 1) {
-        feedback.textContent = INPUT_FEEDBACK.CANNOT_DELETE_USERNAME;
-        usernameInput.classList.add('is-invalid');
-      } else {
-        feedback.textContent = '';
-        usernameInput.classList.remove('is-invalid');
-      }
-      if (event.target.value !== this._user.username) {
-        this.newUserIdentity.username = event.target.value;
-      }
-    });
-
-    usernameInput.addEventListener('blur', (event) => {
-      if (event.target.value.length < 1) {
-        event.target.value = this._user.username;
-        usernameInput.classList.remove('is-invalid');
-        this.querySelector('#settings-username-feedback').textContent = '';
-      }
-    });
-
-    const nicknameInput = this.querySelector('#settings-nickname');
-
-    nicknameInput.addEventListener('input', (event) => {
-      const feedback = this.querySelector('#settings-nickname-feedback');
-      if (event.target.value.length < 1) {
-        feedback.textContent = INPUT_FEEDBACK.CANNOT_DELETE_NICKNAME;
-        nicknameInput.classList.add('is-invalid');
-      } else {
-        feedback.textContent = '';
-        nicknameInput.classList.remove('is-invalid');
-      }
-      if (event.target.value !== this._user.nickname) {
-        this.newUserIdentity.nickname = event.target.value;
-      }
-    });
-
-    nicknameInput.addEventListener('blur', (event) => {
-      if (event.target.value.length < 1) {
-        event.target.value = this._user.nickname;
-        nicknameInput.classList.remove('is-invalid');
-        this.querySelector('#settings-nickname-feedback').textContent = '';
-      }
-    });
+  disconnectedCallback() {
+    this.usernameInput.removeEventListener('input', this.handleUsernameInput);
+    this.usernameInput.removeEventListener('blur', this.handleUsernameBlur);
+    this.nicknameInput.removeEventListener('input', this.handleNicknameInput);
+    this.nicknameInput.removeEventListener('blur', this.handleNicknameBlur);
   }
 
   render() {
-    this.innerHTML = `
+    this.innerHTML = this.template();
+
+    this.usernameInput = this.querySelector('#settings-username');
+    this.nicknameInput = this.querySelector('#settings-nickname');
+    this.usernameFeedback = this.querySelector('#settings-username-feedback');
+    this.nicknameFeedback = this.querySelector('#settings-nickname-feedback');
+
+    this.usernameInput.value = this.#state.username;
+    this.nicknameInput.value = this.#state.nickname;
+
+    this.usernameInput.addEventListener('input', this.handleUsernameInput);
+    this.usernameInput.addEventListener('blur', this.handleUsernameBlur);
+    this.nicknameInput.addEventListener('input', this.handleNicknameInput);
+    this.nicknameInput.addEventListener('blur', this.handleNicknameBlur);
+  }
+
+  handleUsernameInput(event) {
+    if (event.target.value.length < 1) {
+      this.usernameFeedback.textContent = INPUT_FEEDBACK.CANNOT_DELETE_USERNAME;
+      this.usernameInput.classList.add('is-invalid');
+    } else {
+      this.usernameFeedback.textContent = '';
+      this.usernameInput.classList.remove('is-invalid');
+    }
+    if (event.target.value !== this.#state.username) {
+      this.newUserIdentity.username = event.target.value;
+    }
+  }
+
+  handleUsernameBlur(event) {
+    if (event.target.value.length < 1) {
+      event.target.value = this.#state.username;
+      this.usernameInput.classList.remove('is-invalid');
+      this.usernameFeedback.textContent = '';
+    }
+  }
+
+  handleNicknameInput(event) {
+    if (event.target.value.length < 1) {
+      this.nicknameFeedback.textContent = INPUT_FEEDBACK.CANNOT_DELETE_NICKNAME;
+      this.nicknameInput.classList.add('is-invalid');
+    } else {
+      this.nicknameFeedback.textContent = '';
+      this.nicknameInput.classList.remove('is-invalid');
+    }
+    if (event.target.value !== this.#state.nickname) {
+      this.newUserIdentity.nickname = event.target.value;
+    }
+  }
+
+  handleNicknameBlur(event) {
+    if (event.target.value.length < 1) {
+      event.target.value = this.#state.nickname;
+      this.nicknameInput.classList.remove('is-invalid');
+      this.nicknameFeedback.textContent = '';
+    }
+  }
+
+  template() {
+    return `
 	  <div class="mt-3">
 		  <label for="settings-username" class="form-label">Username</label>
-		  <input type="text" class="form-control" id="settings-username" value="${this._user.username}" autocomplete="off">
+		  <input type="text" class="form-control" id="settings-username" autocomplete="off">
 		  <div class="invalid-feedback" id="settings-username-feedback"></div>
 	  </div>
 	  <div class="mt-3">
 		  <label for="settings-nickname" class="form-label">Nickname</label>
-		  <input type="text" class="form-control" id="settings-nickname" value="${this._user.nickname}" autocomplete="off">
+		  <input type="text" class="form-control" id="settings-nickname" autocomplete="off">
 		  <div class="invalid-feedback" id="settings-nickname-feedback"></div>
 	  </div>
 	 `;

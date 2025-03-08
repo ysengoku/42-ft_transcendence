@@ -1,6 +1,6 @@
 import { auth } from '@auth';
 import { addDissmissAlertListener } from '@utils';
-import { CubeTexture } from 'three/src/Three.Core.js';
+// import { CubeTexture } from 'three/src/Three.Core.js';
 
 /**
  * Router module for handling client-side navigation.
@@ -12,8 +12,9 @@ import { CubeTexture } from 'three/src/Three.Core.js';
  * @requires module:user-profile
  * @requires module:user-not-found
  * @requires module:user-settings
- * @requires module:dual-menu
- * @requires module:dual
+ * @requires module:duel-menu
+ * @requires module:duel
+ * @requires module:duel-result
  * @requires module:tournament-menu
  * @requires module:tournament
  * @requires module:chat-page
@@ -151,7 +152,11 @@ const router = (() => {
      */
     navigate(path = window.location.pathname, queryParams = '') {
       console.log('Navigating to:', path);
-      window.history.pushState({}, '', path);
+      if (path === '/user-not-found') {
+        window.history.replaceState({}, '', path);
+      } else {
+        window.history.pushState({}, '', path);
+      }
       this.handleRoute(queryParams);
     }
 
@@ -191,15 +196,18 @@ router.addRoute('/forgot-password', 'forgot-password');
 router.addRoute('/reset-password/:token', 'reset-password', true);
 router.addRoute('/home', 'user-home');
 router.addRoute('/profile/:username', 'user-profile', true);
-router.addRoute('/user-not-found', 'user-not-found', true);
-router.addRoute('/settings', 'user-settings', false);
-router.addRoute('/chat', 'chat-page', false);
-router.addRoute('/dual-menu', 'dual-menu', false);
-router.addRoute('/dual/:id', 'dual', true);
-router.addRoute('/tournament-menu', 'tournament-menu', false);
-router.addRoute('/tournament/:id', 'tournament', true);
 router.addRoute('/multiplayer-game', 'multiplayer-game', false, true);
 router.addRoute('/singleplayer-game', 'singleplayer-game', false, true);
+router.addRoute('/user-not-found', 'user-not-found');
+router.addRoute('/settings', 'user-settings');
+router.addRoute('/account-deleted', 'account-deleted');
+router.addRoute('/chat', 'chat-page');
+router.addRoute('/duel-menu', 'duel-menu');
+// router.addRoute('/duel/:id', 'duel', true);
+router.addRoute('/duel-result', 'duel-result', true);
+router.addRoute('/tournament-menu', 'tournament-menu');
+// router.addRoute('/tournament/:id', 'tournament', true);
+router.addRoute('/game', 'app-game');
 router.addRoute('/error', 'error-page');
 
 /**

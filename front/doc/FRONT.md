@@ -63,9 +63,9 @@ front/
 │  │  │  │     ├─ settings/
 │  │  │  │     │  ├─ Settings.js
 │  │  │  │     │  └─ components/
-│  │  │  │     ├─ dual/
-│  │  │  │     │  ├─ Dual.js
-│  │  │  │     │  └─ DualMenu.js
+│  │  │  │     ├─ duel/
+│  │  │  │     │  ├─ Duel.js
+│  │  │  │     │  └─ DuelMenu.js
 │  │  │  │     └─ tournament/
 │  │  │  │        ├─ Tournament.js
 │  │  │  │        └─ TournamentMenu.js

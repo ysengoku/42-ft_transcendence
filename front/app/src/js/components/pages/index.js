@@ -8,9 +8,12 @@ import { Home } from './home/Home.js';
 import { UserProfile } from './profile/Profile.js';
 import { UserNotFound } from './profile/UserNotFound.js';
 import { Settings } from './settings/Settings.js';
+import { AccountDeleted } from './settings/AccountDeleted.js';
 import { Chat } from './chat/Chat.js';
-import { DualMenu } from './dual/DualMenu.js';
+import { DuelMenu } from './duel/DuelMenu.js';
+import { DuelResult } from './duel/DuelResult.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
+import { TournamentResult } from './tournament/TournamentResult.js';
 import { Game } from './game/Game.js';
 import { MultiplayerGame } from './game/MultiplayerGame.js';
 import { Error } from './Error.js';
@@ -27,9 +30,12 @@ export {
   UserProfile,
   UserNotFound,
   Settings,
+  AccountDeleted,
   Chat,
-  DualMenu,
+  DuelMenu,
+  DuelResult,
   TournamentMenu,
+  TournamentResult,
   Game,
   MultiplayerGame,
   Error,

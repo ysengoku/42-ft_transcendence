@@ -1,5 +1,5 @@
 import { API_ENDPOINTS } from '@api';
-import { showAlertMessage, ALERT_TYPE, ALERT_MESSAGES } from '@utils';
+import { showAlertMessage, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class OAuth extends HTMLElement {
   constructor() {
@@ -9,15 +9,30 @@ export class OAuth extends HTMLElement {
 
   connectedCallback() {
     this.render();
-    this.setupEventListeners();
   }
 
-  setupEventListeners() {
-    const btn42 = this.querySelector('.btn-42');
-    const btnGithub = this.querySelector('.btn-github');
+  disconnectedCallback() {
+    this.btn42.removeEventListener('click', this.handleOauth42Click);
+    this.btnGithub.removeEventListener('click', this.handleOauthGithubClick);
+  }
 
-    if (btn42) btn42.addEventListener('click', () => this.handleOAuthClick('42'));
-    if (btnGithub) btnGithub.addEventListener('click', () => this.handleOAuthClick('github'));
+  render() {
+    this.innerHTML = this.template();
+
+    this.btn42 = this.querySelector('.btn-42');
+    this.btnGithub = this.querySelector('.btn-github');
+
+    this.handleOauth42Click = async (event) => {
+      event.preventDefault();
+      await this.handleOAuthClick('42');
+    };
+    this.handleOauthGithubClick = async (event) => {
+      event.preventDefault();
+      await this.handleOAuthClick('github');
+    };
+
+    this.btn42.addEventListener('click', this.handleOauth42Click);
+    this.btnGithub.addEventListener('click', this.handleOauthGithubClick);
   }
 
   async handleOAuthClick(platform) {
@@ -30,13 +45,12 @@ export class OAuth extends HTMLElement {
       location.href = data.auth_url;
     } else {
       console.error('OAuth initialization failed:', response.statusText);
-      showAlertMessage(ALERT_TYPE.ERROR, ALERT_MESSAGES.UNKNOWN_ERROR);
+      showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
     }
   }
 
-  render() {
-    this.innerHTML = `
-      </style>
+  template() {
+    return `
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-12">
