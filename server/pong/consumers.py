@@ -1,5 +1,6 @@
 import asyncio
 import json
+import math
 from dataclasses import dataclass
 
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -39,6 +40,7 @@ class Bumper(Vector2):
     score: int
     moves_left: bool
     moves_right: bool
+    dir_z: int
 
 
 @dataclass(slots=True)
@@ -53,8 +55,8 @@ class Pong:
     BUMPER_1 and BUMPER_2 are symbolic constants that represent specific bumpers.
     """
 
-    bumper_1: Bumper = Bumper(*STARTING_BUMPER_1_POS, score=0, moves_left=False, moves_right=False)
-    bumper_2: Bumper = Bumper(*STARTING_BUMPER_2_POS, score=0, moves_left=False, moves_right=False)
+    bumper_1: Bumper = Bumper(*STARTING_BUMPER_1_POS, score=0, moves_left=False, moves_right=False, dir_z=1)
+    bumper_2: Bumper = Bumper(*STARTING_BUMPER_2_POS, score=0, moves_left=False, moves_right=False, dir_z=-1)
     ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_SPEED), Vector2(*STARTING_BALL_DIR))
     scored_last: int = BUMPER_1
     someone_scored: bool = False
@@ -66,7 +68,7 @@ class Pong:
             "ball": {
                 "x": self.ball.x,
                 "z": self.ball.z,
-                "velocity": {"x": self.ball.dir.x , "z": self.ball.dir.z},
+                "velocity": {"x": self.ball.dir.x, "z": self.ball.dir.z},
             },
             "scored_last": self.scored_last,
             "someone_scored": self.someone_scored,
@@ -83,16 +85,27 @@ class Pong:
             case "bumper2_move_right":
                 self.bumper_2.moves_right = content
 
-
     def reset_ball(self):
         self.ball.speed.x, self.ball.speed.z = STARTING_BALL_SPEED
         self.ball.x, self.ball.z = STARTING_BALL_POS
         self.ball.dir.x, self.ball.dir.z = STARTING_BALL_DIR
 
-    def calculate_new_velocity(self, bumper):
-        self.ball.speed.z = min(BALL_SPEED_CAP, self.ball.speed.z + SUBTICK)
-        self.ball.dir.x *= -1
-        self.ball.dir.z *= -1
+    def calculate_new_dir(self, bumper):
+        # self.ball.speed.z = min(BALL_SPEED_CAP, self.ball.speed.z + SUBTICK)
+        collision_pos = bumper.x - self.ball.x
+        normalized_collision_pos = collision_pos / (BALL_RADIUS + BUMPER_LENGTH_HALF)
+        radians = math.radians(55 * normalized_collision_pos)
+        self.ball.dir.x = -math.sin(radians)
+        self.ball.dir.z = math.cos(radians) * bumper.dir_z
+        print("Bumper pos:       ", bumper.x)
+        print("Ball pos:         ", self.ball.x)
+        print("Collided pos:     ", collision_pos)
+        print("Normalized value: ", normalized_collision_pos)
+        print("New ball.dir.x:   ", self.ball.dir.x)
+        print("New ball.dir.z:   ", self.ball.dir.z)
+        print("Radians:          ", radians)
+        print("cos(radians):     ", math.cos(radians))
+        print("sin(radians):     ", math.sin(radians))
 
     def resolve_next_tick(self):
         """
@@ -114,9 +127,9 @@ class Pong:
                 self.ball.dir.x *= -1
 
             if self.is_collided_with_ball(self.bumper_1, ball_subtick_z, ball_subtick_x):
-                self.calculate_new_velocity(self.bumper_1)
+                self.calculate_new_dir(self.bumper_1)
             elif self.is_collided_with_ball(self.bumper_2, ball_subtick_z, ball_subtick_x):
-                self.calculate_new_velocity(self.bumper_2)
+                self.calculate_new_dir(self.bumper_2)
 
             if self.ball.z >= BUMPER_2_BORDER:
                 self.bumper_1.score += 1
