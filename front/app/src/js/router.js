@@ -213,6 +213,10 @@ router.addRoute('/error', 'error-page');
  */
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded');
+  document.documentElement.getAttribute('data-bs-theme') === 'light' ?
+  document.body.style.backgroundImage = `linear-gradient(180deg,rgb(243, 204, 163), #d47a3e,  #d47a3e)` :
+  document.body.style.backgroundImage = `linear-gradient(0deg, #115d89,rgb(13, 66, 97), #080f1c)`;
+
   await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');
   if (navbarContainer) {
