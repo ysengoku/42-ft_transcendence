@@ -27,6 +27,7 @@ STARTING_BALL_POS = 0, 8
 STARTING_BALL_DIR = 0, 1
 SUBTICK = 0.05
 BOUNCING_ANGLE_DEGREES = 55
+TEMPORAL_SPEED_DECAY = 0.005
 ###################
 
 
@@ -106,7 +107,7 @@ class Pong:
         normalized_collision_pos_z
         if ((self.ball.z - BALL_RADIUS * self.ball.dir.z <= bumper.z + BUMPER_WIDTH_HALF) and
             (self.ball.z + BALL_RADIUS * self.ball.dir.z >= bumper.z - BUMPER_WIDTH_HALF)):
-                self.ball.temporal_speed.x += SUBTICK * 5
+                self.ball.temporal_speed.x += SUBTICK * 15
 
     def resolve_next_tick(self):
         """
@@ -115,8 +116,8 @@ class Pong:
         """
         total_distance_x = abs((self.ball.speed.x + self.ball.temporal_speed.x) * self.ball.dir.x)
         total_distance_z = abs((self.ball.speed.z + self.ball.temporal_speed.z) * self.ball.dir.z)
-        self.ball.temporal_speed.x = max(0, self.ball.temporal_speed.x - SUBTICK)
-        self.ball.temporal_speed.z = max(0, self.ball.temporal_speed.z - SUBTICK)
+        self.ball.temporal_speed.x = max(0, self.ball.temporal_speed.x - TEMPORAL_SPEED_DECAY)
+        self.ball.temporal_speed.z = max(0, self.ball.temporal_speed.z - TEMPORAL_SPEED_DECAY)
         current_subtick = 0
         ball_subtick_z = SUBTICK
         total_subticks = total_distance_z / ball_subtick_z
