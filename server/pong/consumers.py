@@ -98,15 +98,6 @@ class Pong:
         radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos)
         self.ball.dir.x = -math.sin(radians)
         self.ball.dir.z = math.cos(radians) * bumper.dir_z
-        print("Bumper pos:       ", bumper.x)
-        print("Ball pos:         ", self.ball.x)
-        print("Collided pos:     ", collision_pos)
-        print("Normalized value: ", normalized_collision_pos)
-        print("New ball.dir.x:   ", self.ball.dir.x)
-        print("New ball.dir.z:   ", self.ball.dir.z)
-        print("Radians:          ", radians)
-        print("cos(radians):     ", math.cos(radians))
-        print("sin(radians):     ", math.sin(radians))
 
     def resolve_next_tick(self):
         """
