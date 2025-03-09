@@ -48,6 +48,7 @@ class Bumper(Vector2):
 class Ball(Vector2):
     speed: Vector2
     dir: Vector2
+    temporal_speed: Vector2
 
 
 class Pong:
@@ -58,7 +59,7 @@ class Pong:
 
     bumper_1: Bumper = Bumper(*STARTING_BUMPER_1_POS, score=0, moves_left=False, moves_right=False, dir_z=1)
     bumper_2: Bumper = Bumper(*STARTING_BUMPER_2_POS, score=0, moves_left=False, moves_right=False, dir_z=-1)
-    ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_SPEED), Vector2(*STARTING_BALL_DIR))
+    ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_SPEED), Vector2(*STARTING_BALL_DIR), Vector2(0, 0))
     scored_last: int = BUMPER_1
     someone_scored: bool = False
 
@@ -88,34 +89,45 @@ class Pong:
 
     def reset_ball(self):
         self.ball.speed.x, self.ball.speed.z = STARTING_BALL_SPEED
+        self.ball.temporal_speed.x, self.ball.temporal_speed.z = 0, 0
         self.ball.x, self.ball.z = STARTING_BALL_POS
         self.ball.dir.x, self.ball.dir.z = STARTING_BALL_DIR
 
     def calculate_new_dir(self, bumper):
-        # self.ball.speed.z = min(BALL_SPEED_CAP, self.ball.speed.z + SUBTICK)
-        collision_pos = bumper.x - self.ball.x
-        normalized_collision_pos = collision_pos / (BALL_RADIUS + BUMPER_LENGTH_HALF)
-        radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos)
+        self.ball.speed.z = min(BALL_SPEED_CAP, self.ball.speed.z + SUBTICK)
+        collision_pos_x = bumper.x - self.ball.x
+        normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + BUMPER_LENGTH_HALF)
+        radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos_x)
         self.ball.dir.x = -math.sin(radians)
         self.ball.dir.z = math.cos(radians) * bumper.dir_z
+
+        collision_pos_z = bumper.z - self.ball.z
+        normalized_collision_pos_z = collision_pos_z / (BALL_RADIUS + BUMPER_WIDTH_HALF)
+        normalized_collision_pos_z
+        if ((self.ball.z - BALL_RADIUS * self.ball.dir.z <= bumper.z + BUMPER_WIDTH_HALF) and
+            (self.ball.z + BALL_RADIUS * self.ball.dir.z >= bumper.z - BUMPER_WIDTH_HALF)):
+                self.ball.temporal_speed.x += SUBTICK * 5
 
     def resolve_next_tick(self):
         """
         Moves the objects in the game by one subtick at a time.
         This approach is called Conservative Advancement.
         """
-        total_distance_x = abs(self.ball.speed.x * self.ball.dir.x)
-        total_distance_z = abs(self.ball.speed.z * self.ball.dir.z)
+        total_distance_x = abs((self.ball.speed.x + self.ball.temporal_speed.x) * self.ball.dir.x)
+        total_distance_z = abs((self.ball.speed.z + self.ball.temporal_speed.z) * self.ball.dir.z)
+        self.ball.temporal_speed.x = max(0, self.ball.temporal_speed.x - SUBTICK)
+        self.ball.temporal_speed.z = max(0, self.ball.temporal_speed.z - SUBTICK)
         current_subtick = 0
         ball_subtick_z = SUBTICK
         total_subticks = total_distance_z / ball_subtick_z
         ball_subtick_x = total_distance_x / total_subticks
         bumper_subtick = BUMPER_SPEED / total_subticks
         while current_subtick <= total_subticks:
-            if (
-                self.ball.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
-                or self.ball.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
-            ):
+            if  self.ball.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF:
+                self.ball.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
+                self.ball.dir.x *= -1
+            if self.ball.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF:
+                self.ball.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
                 self.ball.dir.x *= -1
 
             if self.ball.dir.z <= 0 and self.is_collided_with_ball(self.bumper_1, ball_subtick_z, ball_subtick_x):
