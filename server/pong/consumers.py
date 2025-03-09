@@ -26,6 +26,7 @@ STARTING_BALL_SPEED = 0.1, 0.1
 STARTING_BALL_POS = 0, 8
 STARTING_BALL_DIR = 0, 1
 SUBTICK = 0.05
+BOUNCING_ANGLE_DEGREES = 55
 ###################
 
 
@@ -94,7 +95,7 @@ class Pong:
         # self.ball.speed.z = min(BALL_SPEED_CAP, self.ball.speed.z + SUBTICK)
         collision_pos = bumper.x - self.ball.x
         normalized_collision_pos = collision_pos / (BALL_RADIUS + BUMPER_LENGTH_HALF)
-        radians = math.radians(55 * normalized_collision_pos)
+        radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos)
         self.ball.dir.x = -math.sin(radians)
         self.ball.dir.z = math.cos(radians) * bumper.dir_z
         print("Bumper pos:       ", bumper.x)
@@ -126,9 +127,9 @@ class Pong:
             ):
                 self.ball.dir.x *= -1
 
-            if self.is_collided_with_ball(self.bumper_1, ball_subtick_z, ball_subtick_x):
+            if self.ball.dir.z <= 0 and self.is_collided_with_ball(self.bumper_1, ball_subtick_z, ball_subtick_x):
                 self.calculate_new_dir(self.bumper_1)
-            elif self.is_collided_with_ball(self.bumper_2, ball_subtick_z, ball_subtick_x):
+            elif self.ball.dir.z > 0 and self.is_collided_with_ball(self.bumper_2, ball_subtick_z, ball_subtick_x):
                 self.calculate_new_dir(self.bumper_2)
 
             if self.ball.z >= BUMPER_2_BORDER:
