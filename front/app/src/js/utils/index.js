@@ -4,6 +4,12 @@ import { sanitizeHtml } from './sanitizeHtml';
 import { showFormErrorFeedback } from './formFeedback';
 
 import {
+  createClouds,
+  createStars,
+  createShootingStars,
+} from './animations';
+
+import {
   INPUT_FEEDBACK,
   emailFeedback,
   passwordFeedback,
@@ -26,6 +32,9 @@ export {
   isMobile,
   sanitizeHtml,
   showFormErrorFeedback,
+  createClouds,
+  createStars,
+  createShootingStars,
   INPUT_FEEDBACK,
   emailFeedback,
   passwordFeedback,
