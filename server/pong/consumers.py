@@ -25,7 +25,7 @@ STARTING_BALL_POS = 0, 0
 Z_VELOCITY = 0.25
 STARTING_BALL_VELOCITY = 0, Z_VELOCITY
 SUBTICK = 0.05
-BOUNCING_ANGLE_DEGREES = 50
+BOUNCING_ANGLE_DEGREES = 55
 BALL_VELOCITY_CAP = 1
 TEMPORAL_SPEED_DEFAULT = 1, 1
 TEMPORAL_SPEED_INCREASE = SUBTICK * 0
@@ -103,6 +103,7 @@ class Pong:
             min(BALL_VELOCITY_CAP, abs(self.ball.velocity.z * 1.025 * self.ball.temporal_speed.z)) * bumper.dir_z
         )
         self.ball.velocity.x = self.ball.velocity.z * -math.tan(bounce_angle_radians) * bumper.dir_z
+        self.ball.velocity.x = math.copysign(max(abs(self.ball.velocity.x), 0.05), self.ball.velocity.x)
 
         collision_pos_z = bumper.z - self.ball.z
         normalized_collision_pos_z = collision_pos_z / (BALL_RADIUS + BUMPER_WIDTH_HALF)
