@@ -1,3 +1,5 @@
+/*----- Font definition ------------------------------------------------------*/
+
 @font-face {
   font-family: 'Texas Tango';
   src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
@@ -23,6 +25,8 @@
   src: url(/fonts/WestCarabao.ttf) format('truetype');
 }
 
+/*----- Global ---------------------------------------------------------------*/
+
 html,
 body {
   height: 100%;
@@ -36,17 +40,8 @@ body {
   z-index: 0;
 }
 
-a, button, div [role="button"], input[type="submit"], input[type="button"] {
-  cursor: url('/img/sample-cursor.png') 4 4, auto !important;
-}
-
-/* html:active,
-body:active {
-  cursor: url('/img/sample-cursor-active.png') 4 4, auto;
-} */
-a:active, button:active, 
-div [role="button"]:active, input[type="submit"]:active, input[type="button"]:active {
-  cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
+.navbar {
+  z-index: 3;
 }
 
 legend {
@@ -60,6 +55,7 @@ legend {
   flex-direction: column;
   align-items: center;
   overflow-x: hidden;
+  z-index: 2;
 }
 
 .footer {
@@ -73,4 +69,84 @@ legend {
 
 .form-container {
   background-color: rgba(128,128,128, 0.1);
+}
+
+
+/*----- Cursor ---------------------------------------------------------------*/
+a, button, div [role="button"], input[type="submit"], input[type="button"] {
+  cursor: url('/img/sample-cursor.png') 4 4, auto !important;
+}
+
+/* html:active,
+body:active {
+  cursor: url('/img/sample-cursor-active.png') 4 4, auto;
+} */
+a:active, button:active, 
+div [role="button"]:active, input[type="submit"]:active, input[type="button"]:active {
+  cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
+}
+
+/*----- Background animation -------------------------------------------------*/
+
+#cloud {
+  position: absolute;
+  display: block;
+  top: -60px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: url('/img/cloud.png');
+  animation: float-cloud 60s linear infinite;
+  z-index: 1;
+}
+@keyframes float-cloud {
+  0%{
+    background-position: 0px;
+  }
+  100%{
+    background-position: 5440px;
+  }
+}
+
+.star {
+  position: absolute;
+  display: block;
+  background-color: #f6f7af;
+  border-radius: 50%;
+  box-shadow: 0 0 4px 3px rgba(#f6f7af, 0.2);
+  opacity: 0;
+  animation: twinkle 3s infinite;
+}
+@keyframes twinkle {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.shooting-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(45deg, #f6f7af, rgba(255, 255, 255, 0));
+  opacity: 0;
+  animation: shoot 2s ease-in-out infinite;
+} 
+@keyframes shoot {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-200px, 300px);
+  }
 }
