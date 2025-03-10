@@ -48,10 +48,10 @@ export class Settings extends HTMLElement {
     } else {
       if (response.status === 401) {
         showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
-        router.navigate('/');
+        router.navigate('/login');
       } else if (response.status === 403) {
         showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
-        router.navigate('/home');
+        router.navigate('/');
       }
     }
   }
