@@ -169,7 +169,7 @@ export class ProfileUserActions extends HTMLElement {
 
   template() {
     return `
-    <div class="d-flex flex-row justify-content-center my-2">
+    <div class="d-flex flex-row justify-content-center m-4">
       <button class="btn btn-primary mx-1 profile-user-action-button" id="edit-profile-button">Edit Profile</button>
 
       <button class="btn btn-primary mx-1 profile-user-action-button" id="add-friend-button"></button>
