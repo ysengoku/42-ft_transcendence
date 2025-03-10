@@ -1,6 +1,5 @@
 import { auth } from '@auth';
 import logo from '/img/sample-logo.svg?url';
-import dune from '/img/dune.jpg?url';
 import duneDay from '/img/dune-day.png?url';
 import duneNight from '/img/dune-night.png?url';
 import cloud from '/img/cloud.png?url';

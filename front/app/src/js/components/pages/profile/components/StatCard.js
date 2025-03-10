@@ -24,7 +24,7 @@ export class UserStatCard extends HTMLElement {
     title.textContent = this.#state.title;
     value.textContent = this.#state.value;
   }
-  
+
   template() {
     return `
     <div class="stat-card d-flex flex-column justify-content-cernter align-items-center pt-4">
