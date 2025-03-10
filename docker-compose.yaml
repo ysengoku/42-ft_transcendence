@@ -53,6 +53,8 @@ services:
       - media_volume:/app/media
     networks:
       - transcendance_network
+    stdin_open: true
+    tty: true
 
   database:
     container_name: database
