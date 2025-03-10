@@ -15,7 +15,7 @@ export class ProfileAvatar extends HTMLElement {
   render() {
     this.innerHTML = this.template() + this.style();
   }
-  
+
   template() {
     return `
     <div class="profile-avatar-container">
