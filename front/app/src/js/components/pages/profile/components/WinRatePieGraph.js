@@ -19,13 +19,13 @@ export class UserWinRatePieGraph extends HTMLElement {
   }
 
   render() {
-  // Test data ---------------------------------------
+    // Test data ---------------------------------------
     this.#state = {
       rate: 67,
       wins: 20,
       losses: 10,
     };
-  // -------------------------------------------------
+    // -------------------------------------------------
     this.innerHTML = this.template();
 
     if (this.#state.wins === 0 && this.#state.losses === 0) {

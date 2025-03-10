@@ -22,7 +22,7 @@ export function simulateFetchUserData(username) {
   const user = mockUserData.find((user) => user.username === username);
 
   if (!user) {
-    return {username: 'Unknown User', avatar: '/assets/img/default_avatar.png', online: false};
+    return { username: 'Unknown User', avatar: '/assets/img/default_avatar.png', online: false };
   }
   return user;
 }
