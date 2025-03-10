@@ -138,43 +138,42 @@ export class UserProfile extends HTMLElement {
 
             <!-- Online indicator & wanted -->
             <div class="mb-3 text-center justify-content-center px-2 pt-3">
-              <div class="d-flex flex-row align-items-center">
-                <hr class="line flex-grow-1">  
-       
-                <div id="user-profile-online-status"></div>
-                <hr class="line flex-grow-1">
-              </div>
-              <h1>WANTED</h1>
-              <hr class="line">
+            <h1 class="mt-2">WANTED</h1>
+            <div class="d-flex flex-row align-items-center">
+              <hr class="line flex-grow-1">  
+     
+              <div id="user-profile-online-status"></div>
+              <hr class="line flex-grow-1">
+            </div>
             </div>
             
             <!-- Avatar & User Info -->
             <profile-avatar></profile-avatar>
             <profile-user-info></profile-user-info>
+            <hr class="line">
+
+            <profile-user-actions></profile-user-actions>
 
             <!-- Stats section -->
-            <div class="flex-grow-1">
-              <profile-user-actions></profile-user-actions>
 
+            <div class="d-flex flex-row justify-content-around flex-grow-1">
               <!-- Stat cards -->
-              <div class="d-flex flex-row justify-content-around px-3 mt-4 w-100">
-                <div id="user-stat-card-elo"></div>
-                <div id="user-stat-card-scored-balls"></div>
-                <div id="user-stat-card-total-matches"></div>
-                <div id="user-stat-card-friends-count"></div>
+              <div class="d-flex flex-wrap justify-content-center align-items-start pe-2">
+    
+                  <div id="user-stat-card-elo"></div>
+                  <div id="user-stat-card-scored-balls"></div>
+       
+                  <div id="user-stat-card-total-matches"></div>
+                  <div id="user-stat-card-friends-count"></div>
+             
               </div>
 
-              <!-- Graphs -->
-              <div class="graphs-container container d-flex flex-row justify-content-around align-items-top p-3 gap-3">
-                <div class="graph-container p-2">
-                  <p>Win Rate</p>
-                  <user-win-rate-pie-graph></user-win-rate-pie-graph>
-                </div>               
-                <div class="graph-container flex-grow-1 p-2">
-                  <p>Elo progression</p>
-                  <canvas id="eloProgressionChart"></canvas>
-                </div>
+              <!-- Enemies -->
+              <div class="d-flex flex-wrap flex-column gap-3">
+                <div class="d-flex flex-column px-2 pb-1" id="best-enemy"></div>
+                <div class="d-flex flex-column px-2 pb-1" id="worst-enemy"></div>
               </div>
+
             </div>
           </div>
         </div>
@@ -183,25 +182,31 @@ export class UserProfile extends HTMLElement {
         <div class="d-flex col-12 col-lg-6 py-4">
           <div class="poster container d-flex flex-column flex-grow-1 p-3 gap-2">
 
-            <!-- Enemies -->
-            <div class="d-grid">
-              <div class="row no-gutters no-margin mt-4">
-                <div class="col-6 d-flex flex-column px-2 pb-1" id="best-enemy"></div>
-                <div class="col-6 d-flex flex-column px-2 pb-1" id="worst-enemy"></div>
+            <!-- Graphs -->
+            <div class="graphs-container container d-flex flex-row justify-content-around align-items-top p-3 gap-3">
+              <div class="graph-container p-2">
+                <p>Win Rate</p>
+                <user-win-rate-pie-graph></user-win-rate-pie-graph>
+              </div>               
+              <div class="graph-container flex-grow-1 p-2">
+                <p>Elo progression</p>
+                <div id="eloProgressionChart"></div>
               </div>
             </div>
 
             <!-- Game History -->
-            <div class="flex-grow-1 d-flex flex-column px-1 mb-2">
+            <div class="flex-grow-1 d-flex flex-column px-3 mb-2">
               <user-game-history class="flex-grow-1"></user-game-history>
             </div>
           </div>
         </div>
 
+        <!--
         <svg><defs><filter id="wave">
 						<feTurbulence baseFrequency="0.02" numOctaves="8" seed="1"></feTurbulence>
 				 	 	<feDisplacementMap in="SourceGraphic" scale="12" />
 				</filter></defs></svg>
+        -->
       </div>
     </div>`;
   }
@@ -213,6 +218,7 @@ export class UserProfile extends HTMLElement {
       color: #1F1101;
       background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(164, 106, 48, 0.9) 100%);
       filter: sepia(20%) contrast(90%) brightness(95%);
+      /* filter: url(#wave); */
       box-shadow: inset 0 0 40px rgba(24, 15, 1, 0.3);
     }
     .online-status-indicator {
@@ -251,9 +257,6 @@ export class UserProfile extends HTMLElement {
     .enemy-container {
       background-color: rgba(0, 0, 0, 0.1);
       corner-radius: 8px;
-    }
-    .no-margin {
-      margin: 0;
     }
     .row.no-gutters > [class*='col-'] {
       padding-right: 0;
