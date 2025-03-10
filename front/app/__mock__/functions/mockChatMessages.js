@@ -67,7 +67,11 @@ export async function mockChatMessagesData(username) {
         {
           id: 8,
           sender: myUsername,
-          content: 'Just making sure. Last time you showed up empty-handed. I don\'t want a repeat of that situation, so I need to confirm everything is in order. You know how important this is, and I can\'t afford any mistakes. If anything is missing again, we\'ll have a serious problem. 👀',
+          content: 'Just making sure. Last time you showed up empty-handed. ' +
+          'I don\'t want a repeat of that situation, ' +
+          'so I need to confirm everything is in order.' +
+          'You know how important this is, and I can\'t afford any mistakes.' +
+          'If anything is missing again, we\'ll have a serious problem. 👀',
           date: '2025-02-02T12:07:00Z',
           is_liked: false,
           is_read: true,
