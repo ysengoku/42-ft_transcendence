@@ -19,14 +19,16 @@ BUMPER_2_BORDER = -BUMPER_1_BORDER
 BUMPER_SPEED = 0.25
 BALL_DIAMETER = 1
 BALL_RADIUS = BALL_DIAMETER / 2
-BALL_SPEED_CAP = 50
 STARTING_BUMPER_1_POS = 0, -9
 STARTING_BUMPER_2_POS = 0, 9
-STARTING_BALL_SPEED = 0.1, 0.1
-STARTING_BALL_POS = 0, 8
-STARTING_BALL_DIR = 0, 1
+STARTING_BALL_POS = 0, 0
+Z_VELOCITY = 0.25
+STARTING_BALL_VELOCITY = 0, Z_VELOCITY
 SUBTICK = 0.05
-BOUNCING_ANGLE_DEGREES = 55
+BOUNCING_ANGLE_DEGREES = 50
+BALL_VELOCITY_CAP = 1
+TEMPORAL_SPEED_DEFAULT = 1, 1
+TEMPORAL_SPEED_INCREASE = SUBTICK * 0
 TEMPORAL_SPEED_DECAY = 0.005
 ###################
 
@@ -47,8 +49,7 @@ class Bumper(Vector2):
 
 @dataclass(slots=True)
 class Ball(Vector2):
-    speed: Vector2
-    dir: Vector2
+    velocity: Vector2
     temporal_speed: Vector2
 
 
@@ -60,7 +61,7 @@ class Pong:
 
     bumper_1: Bumper = Bumper(*STARTING_BUMPER_1_POS, score=0, moves_left=False, moves_right=False, dir_z=1)
     bumper_2: Bumper = Bumper(*STARTING_BUMPER_2_POS, score=0, moves_left=False, moves_right=False, dir_z=-1)
-    ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_SPEED), Vector2(*STARTING_BALL_DIR), Vector2(0, 0))
+    ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
     scored_last: int = BUMPER_1
     someone_scored: bool = False
 
@@ -71,7 +72,7 @@ class Pong:
             "ball": {
                 "x": self.ball.x,
                 "z": self.ball.z,
-                "velocity": {"x": self.ball.dir.x, "z": self.ball.dir.z},
+                "velocity": {"x": self.ball.velocity.x, "z": self.ball.velocity.z},
             },
             "scored_last": self.scored_last,
             "someone_scored": self.someone_scored,
@@ -88,63 +89,63 @@ class Pong:
             case "bumper2_move_right":
                 self.bumper_2.moves_right = content
 
-    def reset_ball(self):
-        self.ball.speed.x, self.ball.speed.z = STARTING_BALL_SPEED
-        self.ball.temporal_speed.x, self.ball.temporal_speed.z = 0, 0
+    def reset_ball(self, direction: int):
+        self.ball.temporal_speed.x, self.ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
         self.ball.x, self.ball.z = STARTING_BALL_POS
-        self.ball.dir.x, self.ball.dir.z = STARTING_BALL_DIR
+        self.ball.velocity.x, self.ball.velocity.z = STARTING_BALL_VELOCITY
+        self.ball.velocity.z *= direction
 
     def calculate_new_dir(self, bumper):
-        self.ball.speed.z = min(BALL_SPEED_CAP, self.ball.speed.z + SUBTICK)
         collision_pos_x = bumper.x - self.ball.x
         normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + BUMPER_LENGTH_HALF)
-        radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos_x)
-        self.ball.dir.x = -math.sin(radians)
-        self.ball.dir.z = math.cos(radians) * bumper.dir_z
+        bounce_angle_radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos_x)
+        self.ball.velocity.z = (
+            min(BALL_VELOCITY_CAP, abs(self.ball.velocity.z * 1.025 * self.ball.temporal_speed.z)) * bumper.dir_z
+        )
+        self.ball.velocity.x = self.ball.velocity.z * -math.tan(bounce_angle_radians) * bumper.dir_z
 
         collision_pos_z = bumper.z - self.ball.z
         normalized_collision_pos_z = collision_pos_z / (BALL_RADIUS + BUMPER_WIDTH_HALF)
         normalized_collision_pos_z
-        if ((self.ball.z - BALL_RADIUS * self.ball.dir.z <= bumper.z + BUMPER_WIDTH_HALF) and
-            (self.ball.z + BALL_RADIUS * self.ball.dir.z >= bumper.z - BUMPER_WIDTH_HALF)):
-                self.ball.temporal_speed.x += SUBTICK * 15
+        if (self.ball.z - BALL_RADIUS * self.ball.velocity.z <= bumper.z + BUMPER_WIDTH_HALF) and (
+            self.ball.z + BALL_RADIUS * self.ball.velocity.z >= bumper.z - BUMPER_WIDTH_HALF
+        ):
+            self.ball.temporal_speed.x += TEMPORAL_SPEED_INCREASE
 
     def resolve_next_tick(self):
         """
         Moves the objects in the game by one subtick at a time.
         This approach is called Conservative Advancement.
         """
-        total_distance_x = abs((self.ball.speed.x + self.ball.temporal_speed.x) * self.ball.dir.x)
-        total_distance_z = abs((self.ball.speed.z + self.ball.temporal_speed.z) * self.ball.dir.z)
-        self.ball.temporal_speed.x = max(0, self.ball.temporal_speed.x - TEMPORAL_SPEED_DECAY)
-        self.ball.temporal_speed.z = max(0, self.ball.temporal_speed.z - TEMPORAL_SPEED_DECAY)
+        total_distance_x = abs((self.ball.temporal_speed.x) * self.ball.velocity.x)
+        total_distance_z = abs((self.ball.temporal_speed.z) * self.ball.velocity.z)
+        self.ball.temporal_speed.x = max(TEMPORAL_SPEED_DEFAULT[0], self.ball.temporal_speed.x - TEMPORAL_SPEED_DECAY)
+        self.ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self.ball.temporal_speed.z - TEMPORAL_SPEED_DECAY)
         current_subtick = 0
         ball_subtick_z = SUBTICK
         total_subticks = total_distance_z / ball_subtick_z
         ball_subtick_x = total_distance_x / total_subticks
         bumper_subtick = BUMPER_SPEED / total_subticks
         while current_subtick <= total_subticks:
-            if  self.ball.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF:
+            if self.ball.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF:
                 self.ball.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
-                self.ball.dir.x *= -1
+                self.ball.velocity.x *= -1
             if self.ball.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF:
                 self.ball.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
-                self.ball.dir.x *= -1
+                self.ball.velocity.x *= -1
 
-            if self.ball.dir.z <= 0 and self.is_collided_with_ball(self.bumper_1, ball_subtick_z, ball_subtick_x):
+            if self.ball.velocity.z <= 0 and self.is_collided_with_ball(self.bumper_1, ball_subtick_z, ball_subtick_x):
                 self.calculate_new_dir(self.bumper_1)
-            elif self.ball.dir.z > 0 and self.is_collided_with_ball(self.bumper_2, ball_subtick_z, ball_subtick_x):
+            elif self.ball.velocity.z > 0 and self.is_collided_with_ball(self.bumper_2, ball_subtick_z, ball_subtick_x):
                 self.calculate_new_dir(self.bumper_2)
 
             if self.ball.z >= BUMPER_2_BORDER:
                 self.bumper_1.score += 1
-                self.reset_ball()
-                self.ball.dir.z = -1
+                self.reset_ball(-1)
                 self.someone_scored = True
             elif self.ball.z <= BUMPER_1_BORDER:
                 self.bumper_2.score += 1
-                self.reset_ball()
-                self.ball.dir.z = 1
+                self.reset_ball(1)
                 self.someone_scored = True
 
             if self.bumper_1.moves_left and not self.bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
@@ -157,8 +158,8 @@ class Pong:
             if self.bumper_2.moves_right and not self.bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
                 self.bumper_2.x -= bumper_subtick
 
-            self.ball.z += ball_subtick_z * self.ball.dir.z
-            self.ball.x += ball_subtick_x * self.ball.dir.x
+            self.ball.z += ball_subtick_z * self.ball.velocity.z
+            self.ball.x += ball_subtick_x * self.ball.velocity.x
             current_subtick += 1
 
     def is_collided_with_ball(self, bumper, ball_subtick_z, ball_subtick_x):
@@ -167,10 +168,10 @@ class Pong:
         parameter to this function.
         """
         return (
-            (self.ball.x - BALL_RADIUS + ball_subtick_x * self.ball.dir.x <= bumper.x + BUMPER_LENGTH_HALF)
-            and (self.ball.x + BALL_RADIUS + ball_subtick_x * self.ball.dir.x >= bumper.x - BUMPER_LENGTH_HALF)
-            and (self.ball.z - BALL_RADIUS + ball_subtick_z * self.ball.dir.z <= bumper.z + BUMPER_WIDTH_HALF)
-            and (self.ball.z + BALL_RADIUS + ball_subtick_z * self.ball.dir.z >= bumper.z - BUMPER_WIDTH_HALF)
+            (self.ball.x - BALL_RADIUS + ball_subtick_x * self.ball.velocity.x <= bumper.x + BUMPER_LENGTH_HALF)
+            and (self.ball.x + BALL_RADIUS + ball_subtick_x * self.ball.velocity.x >= bumper.x - BUMPER_LENGTH_HALF)
+            and (self.ball.z - BALL_RADIUS + ball_subtick_z * self.ball.velocity.z <= bumper.z + BUMPER_WIDTH_HALF)
+            and (self.ball.z + BALL_RADIUS + ball_subtick_z * self.ball.velocity.z >= bumper.z - BUMPER_WIDTH_HALF)
         )
 
 
