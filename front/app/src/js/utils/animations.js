@@ -27,21 +27,20 @@ export function createStars() {
   for (let i = 0; i < 80; i++) {
     createStar();
   }
-  document.body.appendChild(starContainer);
-};
 
-export function createShootingStars() {
   const createShootingStar = () => {
     const shootingStar = document.createElement('div');
     shootingStar.className = 'shooting-star';
     shootingStar.style.left = `${Math.random() * 100}%`;
     shootingStar.style.top = `${Math.random() * 20}%`;
     shootingStar.style.animationDelay = `${Math.random() * 5}s`;
-    document.body.appendChild(shootingStar);
+    starContainer.appendChild(shootingStar);
 
     setTimeout(() => {
-      document.body.removeChild(shootingStar);
+      starContainer.removeChild(shootingStar);
     }, 2000);
   };
+
   setInterval(createShootingStar, 2000);
+  document.body.appendChild(starContainer);
 };
