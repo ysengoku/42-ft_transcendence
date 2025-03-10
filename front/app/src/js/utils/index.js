@@ -6,7 +6,6 @@ import { showFormErrorFeedback } from './formFeedback';
 import {
   createClouds,
   createStars,
-  createShootingStars,
 } from './animations';
 
 import {
@@ -34,7 +33,6 @@ export {
   showFormErrorFeedback,
   createClouds,
   createStars,
-  createShootingStars,
   INPUT_FEEDBACK,
   emailFeedback,
   passwordFeedback,

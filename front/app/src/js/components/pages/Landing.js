@@ -1,5 +1,5 @@
 import { auth } from '@auth';
-import { createClouds, createStars, createShootingStars } from '@utils';
+import { createClouds, createStars } from '@utils';
 import logo from '/img/sample-logo.svg?url';
 import duneDay from '/img/dune-day.png?url';
 import duneNight from '/img/dune-night.png?url';
@@ -34,7 +34,6 @@ export class Landing extends HTMLElement {
 
       document.body.style.backgroundImage = `linear-gradient( #080f1c 0%, #0d4261 32%,  #1473ab 100%)`;
       createStars();
-      createShootingStars();
     } else {
       const stars = document.getElementById('stars');
       stars ? document.body.removeChild(stars) : null;

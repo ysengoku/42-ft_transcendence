@@ -97,7 +97,7 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   height: 100%;
   object-fit: cover;
   background: url('/img/cloud.png');
-  animation: float-cloud 60s linear infinite;
+  animation: float-cloud 120s linear infinite;
   z-index: 1;
 }
 @keyframes float-cloud {
