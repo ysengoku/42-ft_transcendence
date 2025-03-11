@@ -32,12 +32,12 @@ export class Landing extends HTMLElement {
       const cloud = document.getElementById('cloud');
       cloud ? contentContainer.removeChild(cloud) : null;
 
-      document.body.style.backgroundImage = `linear-gradient( #080f1c 0%, #0d4261 32%,  #1473ab 100%)`;
+      // document.body.style.backgroundImage = `linear-gradient( #080f1c 0%, #0d4261 32%,  #1473ab 100%)`;
       createStars();
     } else {
       const stars = document.getElementById('stars');
       stars ? document.body.removeChild(stars) : null;
-      document.body.style.backgroundImage = `linear-gradient(rgb(225, 164, 99),rgb(160, 94, 50), #d47a3e)`;
+      // document.body.style.backgroundImage = `linear-gradient(rgb(225, 164, 99),rgb(160, 94, 50), #d47a3e)`;
       createClouds();
     }
   }
