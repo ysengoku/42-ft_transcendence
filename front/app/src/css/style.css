@@ -25,6 +25,11 @@
   src: url(/fonts/WestCarabao.ttf) format('truetype');
 }
 
+/*----- Colors ---------------------------------------------------------------*/
+:root {
+  --bs-dark: #351901;
+}
+
 /*----- Global ---------------------------------------------------------------*/
 
 html,
@@ -64,6 +69,10 @@ legend {
 
 .dropdown-menu {
   z-index: 1050 !important; /* Keep dropdown always on top */
+}
+
+.modal-backdrop {
+  z-index: -1;
 }
 
 .form-container {
