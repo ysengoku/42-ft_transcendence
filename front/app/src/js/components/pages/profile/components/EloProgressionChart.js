@@ -1,4 +1,4 @@
-import { eloHistory } from '@mock/functions/mockEloHistory.js';
+import { mockEloHistory } from '@mock/functions/mockEloHistory.js';
 
 export class UserEloProgressionChart extends HTMLElement {
   #state = {
@@ -13,7 +13,7 @@ export class UserEloProgressionChart extends HTMLElement {
     // this.#state.history = value.slice().reverse();
 
     // ------ Test data ---------------------------------
-    this.#state.history = eloHistory().slice().reverse();
+    this.#state.history = mockEloHistory().slice().reverse();
     // --------------------------------------------------
 
     this.render();
@@ -38,7 +38,26 @@ export class UserEloProgressionChart extends HTMLElement {
       marker.setAttribute('cx', item.x);
       marker.setAttribute('cy', item.y);
       marker.setAttribute('r', '2');
+      marker.setAttribute('data-value', item.elo);
+
+      const tooltip = document.createElementNS(namespaceUrl, 'text');
+      tooltip.setAttribute('x', item.x - 5);
+      tooltip.setAttribute('y', item.y + 5);
+      tooltip.setAttribute('text-anchor', 'end');
+      tooltip.setAttribute('font-size', '10');
+      tooltip.setAttribute('fill', '#351901');
+      tooltip.setAttribute('visibility', 'hidden');
+      tooltip.textContent = item.elo;
+
+      marker.addEventListener("mouseenter", () => {
+        tooltip.setAttribute("visibility", "visible");
+      });
+      marker.addEventListener("mouseleave", () => {
+        tooltip.setAttribute("visibility", "hidden");
+      });
+
       markers.appendChild(marker);
+      markers.insertBefore(tooltip, marker);
     });
   }
 
@@ -68,7 +87,7 @@ export class UserEloProgressionChart extends HTMLElement {
     return `
     <div class="line-chart-container">
       <div class="line-chart">
-        <svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+        <svg width="100%" height="148" viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
           <g class="linechart-grid y-linechart-grid">
             <line x1="20" x2="20" y1="10" y2="110"></line> 
           </g>
@@ -81,8 +100,9 @@ export class UserEloProgressionChart extends HTMLElement {
             <line x1="20" x2="270" y1="110" y2="110"></line> 
           </g>
           <g class="linechart-labels"></g>
-          <polyline points="${points}" fill="none" stroke="#351901" stroke-width="1" />
-		  <g class="line-chart-marker"></g>
+            <polyline points="${points}" fill="none" stroke="#351901" stroke-width="1" />
+		      <g class="line-chart-marker"></g>
+        </svg>
       </div>
     </div>
     `;
@@ -94,6 +114,7 @@ export class UserEloProgressionChart extends HTMLElement {
     .line-chart-container {
       width: 100%;
       height: 100%;
+      min-width: 240px;
     }
     .linechart-grid {
       stroke: #351901;

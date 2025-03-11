@@ -15,6 +15,9 @@ export class UserWinRatePieGraph extends HTMLElement {
   }
 
   render() {
+    this.#state.wins = 12;
+    this.#state.losses = 8;
+    this.#state.rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     this.innerHTML = this.template() + this.style();
 
     if (this.#state.wins === 0 && this.#state.losses === 0) {
@@ -23,7 +26,7 @@ export class UserWinRatePieGraph extends HTMLElement {
       const noData = this.querySelector('.no-data');
       noData.textContent = 'No data';
       noData.classList.remove('d-none');
-      noData.style.width = '160px';
+      noData.style.width = '80px';
       noData.style.height = '160px';
     }
   }
@@ -58,9 +61,9 @@ export class UserWinRatePieGraph extends HTMLElement {
           </text>
         </svg>
         <div class="d-flex flex-row justify-content-center mt-2">
-          <p class="fs-6">Wins: ${this.#state.wins}</p>
+          <p class="fs-6 text-center">Wins: ${this.#state.wins}</p>
           <p>&nbsp;-&nbsp;</p>
-          <p class="fs-6">Losses: ${this.#state.losses}</p>
+          <p class="fs-6 text-center">Losses: ${this.#state.losses}</p>
         </div>
       </div>
     </div>
@@ -72,7 +75,7 @@ export class UserWinRatePieGraph extends HTMLElement {
     <style>
     .pie-graph-container {
       max-width: 160px;
-      height: 88%;
+      height: 160px;
     }
     .pie-graph svg {
       width: 88%;
