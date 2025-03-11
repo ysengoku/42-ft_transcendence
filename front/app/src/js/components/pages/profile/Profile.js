@@ -97,6 +97,15 @@ export class UserProfile extends HTMLElement {
     userStatTotalMatches.appendChild(userStatCardTotalMatches);
     userStatFriendsCount.appendChild(userStatCardFriendsCount);
 
+    const bestEnemyContainer = this.querySelector('#best-enemy');
+    const bestEnemy = document.createElement('user-enemy-component');
+    bestEnemy.setParam({ type: 'best', data: this.user.best_enemy });
+    bestEnemyContainer.appendChild(bestEnemy);
+    const worstEnemyContainer = this.querySelector('#worst-enemy');
+    const worstEnemy = document.createElement('user-enemy-component');
+    worstEnemy.setParam({ type: 'worst', data: this.user.worst_enemy });
+    worstEnemyContainer.appendChild(worstEnemy);
+
     const userWinRatePieGraph = this.querySelector('user-win-rate-pie-graph');
     if (userWinRatePieGraph) {
       userWinRatePieGraph.data = {
@@ -106,16 +115,10 @@ export class UserProfile extends HTMLElement {
       };
     }
 
-    // TODO: Elo graph
-
-    const bestEnemyContainer = this.querySelector('#best-enemy');
-    const bestEnemy = document.createElement('user-enemy-component');
-    bestEnemy.setParam({ type: 'best', data: this.user.best_enemy });
-    bestEnemyContainer.appendChild(bestEnemy);
-    const worstEnemyContainer = this.querySelector('#worst-enemy');
-    const worstEnemy = document.createElement('user-enemy-component');
-    worstEnemy.setParam({ type: 'worst', data: this.user.worst_enemy });
-    worstEnemyContainer.appendChild(worstEnemy);
+    const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
+    if (userEloProgressionChart) {
+      userEloProgressionChart.data = this.user.elo_history;
+    }
 
     const gameHistory = this.querySelector('user-game-history');
     if (gameHistory) {
@@ -141,7 +144,6 @@ export class UserProfile extends HTMLElement {
             <h1 class="mt-2">WANTED</h1>
             <div class="d-flex flex-row align-items-center">
               <hr class="line flex-grow-1">  
-     
               <div id="user-profile-online-status"></div>
               <hr class="line flex-grow-1">
             </div>
@@ -185,12 +187,12 @@ export class UserProfile extends HTMLElement {
             <!-- Graphs -->
             <div class="graphs-container container d-flex flex-row justify-content-around align-items-top p-3 gap-3">
               <div class="graph-container p-2">
-                <p>Win Rate</p>
+                <p class="m-0 pb-2">Win Rate</p>
                 <user-win-rate-pie-graph></user-win-rate-pie-graph>
               </div>               
               <div class="graph-container flex-grow-1 p-2">
-                <p>Elo progression</p>
-                <div id="eloProgressionChart"></div>
+                <p class="m-0 pb-2">Elo progression</p>
+                <user-elo-progression-chart></user-elo-progression-chart>
               </div>
             </div>
 
