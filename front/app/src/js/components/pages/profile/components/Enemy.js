@@ -23,29 +23,6 @@ export class UserEnemy extends HTMLElement {
   }
 
   render() {
-    // Test data ---------------------------------------
-    // if (this.#state.type === 'best') {
-    //   this.#state.data = {
-    //     username: 'george',
-    //     nickname: 'George',
-    //     avatar: '/__mock__/img/sample-pic3.png',
-    //     wins: 20,
-    //     loses: 10,
-    //     winrate: 67,
-    //     elo: 1100,
-    //   };
-    // }
-    // if (this.#state.type === 'worst') {
-    //   this.#state.data = {
-    //     nickname: 'Lalala',
-    //     avatar: '/__mock__/img/sample-pic2.png',
-    //     wins: 20,
-    //     loses: 10,
-    //     winrate: 67,
-    //     elo: 1100,
-    //   };
-    // }
-    // -------------------------------------------------
     this.innerHTML = this.template() + this.style();
 
     if (!this.#state.data) {
