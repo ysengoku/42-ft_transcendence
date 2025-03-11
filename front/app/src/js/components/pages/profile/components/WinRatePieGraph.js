@@ -14,19 +14,8 @@ export class UserWinRatePieGraph extends HTMLElement {
     this.render();
   }
 
-  connectedCallback() {
-    this.render();
-  }
-
   render() {
-    // Test data ---------------------------------------
-    this.#state = {
-      rate: 67,
-      wins: 20,
-      losses: 10,
-    };
-    // -------------------------------------------------
-    this.innerHTML = this.template();
+    this.innerHTML = this.template() + this.style();
 
     if (this.#state.wins === 0 && this.#state.losses === 0) {
       const graph = this.querySelector('.pie-graph');
@@ -42,11 +31,11 @@ export class UserWinRatePieGraph extends HTMLElement {
   template() {
     const r = 100 / (2 * Math.PI); // radius
     return `
-    <div class="d-flex flex-column justify-content-center align-items-center">
+    <div class="pie-graph-container d-flex flex-column justify-content-center align-items-center">
       <div class="no-data text-center pt-5 d-none"></div>
-      <div class="pie-graph">
-        <svg viewBox="0 0 40 40">
-          <path
+      <div class="pie-graph d-flex flex-column jusify-content-around align-items-center">
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+         <path
             d="M20 ${(40 - (r * 2)) / 2}
               a ${r} ${r} 0 0 1 0 ${r * 2}
               a ${r} ${r} 0 0 1 0 -${r * 2}"
@@ -68,7 +57,7 @@ export class UserWinRatePieGraph extends HTMLElement {
             ${this.#state.rate}%
           </text>
         </svg>
-        <div class="d-flex flex-row justify-content-center">
+        <div class="d-flex flex-row justify-content-center mt-2">
           <p class="fs-6">Wins: ${this.#state.wins}</p>
           <p>&nbsp;-&nbsp;</p>
           <p class="fs-6">Losses: ${this.#state.losses}</p>
@@ -81,14 +70,14 @@ export class UserWinRatePieGraph extends HTMLElement {
   style() {
     return `
     <style>
-      .pie-graph {
-        width: 160px;
-        height: 160px;
-      }
-      .pie-graph svg {
-        width: 100%;
-        height: 100%;
-      }
+    .pie-graph-container {
+      max-width: 160px;
+      height: 88%;
+    }
+    .pie-graph svg {
+      width: 88%;
+      height: 88%;
+    }
     </style>
   `;
   }
