@@ -51,7 +51,7 @@ export class UserEnemy extends HTMLElement {
     const type = this.#state.type === 'best' ? 'Best Enemy' : 'Worst Enemy';
     if (this.#state.data) {
       return `
-      <div class="d-flex flex-column justify-content-start enemy-container py-2">
+      <div class="enemy-container d-flex flex-column justify-content-start p-2">
 			  <p class="m-0 ms-1 text-center">${type}</p>
 			  <div class="enemy-avatar-container">
 				  <p class="enemy-nickname lh-1 fs-5 ps-4 py-2 m-0"></p>
@@ -70,9 +70,9 @@ export class UserEnemy extends HTMLElement {
 			`;
     } else {
       return `
-      <div class="d-flex flex-column justify-content-start enemy-container py-2">
+      <div class="enemy-container d-flex flex-column justify-content-start p-2">
 			  <p class="m-0 ms-1 text-center">${type}</p>
-			  <div class="enemy-avatar-container d-flex flex-column justify-content-center text-center p-2">
+			  <div class="enemy-avatar-container d-flex flex-column justify-content-center text-center mt-3 p-2">
 				  <p>No ${type.toLowerCase()}</p>
 			  </div>
       </div>
@@ -81,22 +81,24 @@ export class UserEnemy extends HTMLElement {
   }
 
   style() {
+    let style = `
+    <style>
+		.enemy-container {
+			min-width: 240px;
+		}	
+    `;
+
     if (this.#state.data) {
-      return `
-      <style>
-				.enemy-container {
-					min-width: 240px;
-				}	
-				.enemy-avatar-container img {
-    				width: 88px;
-    				aspect-ratio: 1;
-    				object-fit: cover;
-				}
+      style += `
+			.enemy-avatar-container img {
+    		width: 88px;
+    		aspect-ratio: 1;
+    		object-fit: cover;
+			}
 		  </style>
       `;
-    } else {
-      return '';
     }
+    return style + '</style>';
   }
 }
 

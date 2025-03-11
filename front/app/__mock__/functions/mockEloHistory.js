@@ -1,4 +1,4 @@
-export function eloHistory() {
+export function mockEloHistory() {
   return [
     {
       date: '2024-03-11T14:00:00Z',
