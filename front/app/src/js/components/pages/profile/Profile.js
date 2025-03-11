@@ -158,7 +158,7 @@ export class UserProfile extends HTMLElement {
 
             <!-- Stats section -->
 
-            <div class="d-flex flex-row justify-content-around flex-grow-1">
+            <div class="d-flex flex-row justify-content-around flex-grow-1 px-3">
               <!-- Stat cards -->
               <div class="d-flex flex-wrap justify-content-center align-items-start pe-2">
     
@@ -172,8 +172,8 @@ export class UserProfile extends HTMLElement {
 
               <!-- Enemies -->
               <div class="d-flex flex-wrap flex-column gap-3">
-                <div class="d-flex flex-column px-2 pb-1" id="best-enemy"></div>
-                <div class="d-flex flex-column px-2 pb-1" id="worst-enemy"></div>
+                <div class="d-flex flex-column pb-1" id="best-enemy"></div>
+                <div class="d-flex flex-column pb-1" id="worst-enemy"></div>
               </div>
 
             </div>
