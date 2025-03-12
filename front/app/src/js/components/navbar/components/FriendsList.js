@@ -29,7 +29,7 @@ export class FriendsList extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.template();
 
     this.button = document.getElementById('navbar-friends-button');
     this.listContainer = this.querySelector('#friends-list');
@@ -114,23 +114,9 @@ export class FriendsList extends HTMLElement {
   template() {
     return `
     <div class="ps-3 pe-4">
-      <h6 class="pt-2 pb-4" id="friends-list-header" sticky>Friends</h6>
+      <h6 class="pt-2 pb-4 dropdown-list-header" sticky>Friends</h6>
       <ul class="list-group mb-2" id="friends-list"></ul>
     </div>
-    `;
-  }
-
-  style() {
-    return `
-    <style>
-      #friends-list-header {
-        border-bottom: 1px solid var(--bs-border-color);
-        position: sticky;
-        top: 0;
-        background-color: var(--bs-body-bg);
-        z-index: 1;
-      }
-    </style>
     `;
   }
 
