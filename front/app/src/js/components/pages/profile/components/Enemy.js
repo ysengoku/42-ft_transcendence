@@ -52,7 +52,7 @@ export class UserEnemy extends HTMLElement {
     if (this.#state.data) {
       return `
       <div class="enemy-container d-flex flex-column justify-content-start p-2">
-			  <p class="m-0 ms-1 text-center">${type}</p>
+			  <p class="stat-label text-center">${type}</p>
 			  <div class="enemy-avatar-container">
 				  <p class="enemy-nickname lh-1 fs-5 ps-4 py-2 m-0"></p>
 				  <div class="d-flex flex-row justify-content-around align-items-start p-1">
