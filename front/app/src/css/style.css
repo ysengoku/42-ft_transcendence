@@ -59,7 +59,7 @@ body {
   z-index: 3;
 }
 
-legend {
+h2, h3, h4, h5, h6, legend {
   font-family: 'van dyke', serif;
 }
 
