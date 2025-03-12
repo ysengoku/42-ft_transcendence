@@ -34,7 +34,7 @@ export class UserWinRatePieGraph extends HTMLElement {
   template() {
     const r = 100 / (2 * Math.PI); // radius
     return `
-    <div class="pie-graph-container d-flex flex-column justify-content-center align-items-center">
+    <div class="pie-graph-wrapper d-flex flex-column justify-content-center align-items-center">
       <div class="no-data text-center pt-5 d-none"></div>
       <div class="pie-graph d-flex flex-column jusify-content-around align-items-center">
         <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
@@ -43,7 +43,7 @@ export class UserWinRatePieGraph extends HTMLElement {
               a ${r} ${r} 0 0 1 0 ${r * 2}
               a ${r} ${r} 0 0 1 0 -${r * 2}"
             fill="none"
-            stroke="grey"
+            stroke="rgba(146, 79, 9, 0.4)"
             stroke-width="6"
             stroke-dasharray="100"
           />
@@ -52,7 +52,7 @@ export class UserWinRatePieGraph extends HTMLElement {
               a ${r} ${r} 0 0 1 0 ${r * 2}
               a ${r} ${r} 0 0 1 0 -${r * 2}"
             fill="none"
-            stroke="#2f2926"
+            stroke="#613304"
             stroke-width="6"
             stroke-dasharray="${this.#state.rate} 100"
           />
@@ -61,9 +61,9 @@ export class UserWinRatePieGraph extends HTMLElement {
           </text>
         </svg>
         <div class="d-flex flex-row justify-content-center mt-2">
-          <p class="fs-6 text-center">Wins: ${this.#state.wins}</p>
+          <p class="fs-6 text-center">Wins ${this.#state.wins}</p>
           <p>&nbsp;-&nbsp;</p>
-          <p class="fs-6 text-center">Losses: ${this.#state.losses}</p>
+          <p class="fs-6 text-center">Losses ${this.#state.losses}</p>
         </div>
       </div>
     </div>
@@ -73,9 +73,9 @@ export class UserWinRatePieGraph extends HTMLElement {
   style() {
     return `
     <style>
-    .pie-graph-container {
+    .pie-graph-wrapper {
       max-width: 160px;
-      height: 160px;
+      height: 240px;
     }
     .pie-graph svg {
       width: 88%;
