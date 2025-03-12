@@ -54,8 +54,8 @@ export class ProfileUserInfo extends HTMLElement {
     return `
     <style>
       h2 {
-        font-family: 'WestCarabao', serif;
-        color: #1F1101;
+        font-family: 'van dyke', serif;
+        color: #351904;
       }
     </style>
     `;

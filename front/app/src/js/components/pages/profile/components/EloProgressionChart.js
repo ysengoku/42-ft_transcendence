@@ -49,11 +49,11 @@ export class UserEloProgressionChart extends HTMLElement {
       tooltip.setAttribute('visibility', 'hidden');
       tooltip.textContent = item.elo;
 
-      marker.addEventListener("mouseenter", () => {
-        tooltip.setAttribute("visibility", "visible");
+      marker.addEventListener('mouseenter', () => {
+        tooltip.setAttribute('visibility', 'visible');
       });
-      marker.addEventListener("mouseleave", () => {
-        tooltip.setAttribute("visibility", "hidden");
+      marker.addEventListener('mouseleave', () => {
+        tooltip.setAttribute('visibility', 'hidden');
       });
 
       markers.appendChild(marker);
@@ -65,7 +65,10 @@ export class UserEloProgressionChart extends HTMLElement {
     this.itemCount = this.#state.history.length;
 
     this.minElo = Math.min(...this.#state.history.map((item) => item.elo_result));
+    this.minElo = Math.round(this.minElo / 10) * 10;
     this.maxElo = Math.max(...this.#state.history.map((item) => item.elo_result));
+    this.maxElo = Math.round(this.maxElo / 10) * 10;
+    this.midrangeElo = Math.round((this.minElo + this.maxElo) / 20) * 10;
 
     this.scaleY = 100 / (this.maxElo - this.minElo);
 
@@ -76,7 +79,7 @@ export class UserEloProgressionChart extends HTMLElement {
         date: date,
         elo: item.elo_result,
         x: 20 + index * 40,
-        y: 110 - (item.elo_result - this.minElo) * this.scaleY,
+        y: 120 - (item.elo_result - this.minElo) * this.scaleY,
       });
     });
     console.log('Parsed data:', this.parsedData);
@@ -85,22 +88,22 @@ export class UserEloProgressionChart extends HTMLElement {
   template() {
     const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
     return `
-    <div class="line-chart-container">
+    <div class="line-chart-wrapper">
       <div class="line-chart">
-        <svg width="100%" height="148" viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <svg width="100%" height="224" viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
           <g class="linechart-grid y-linechart-grid">
             <line x1="20" x2="20" y1="10" y2="110"></line> 
           </g>
           <g class="linechart-labels">
             <text x="16" y="110" text-anchor="end">${this.minElo}</text>
-            <text x="16" y="65" text-anchor="end">${Math.round((this.minElo + this.maxElo) / 2)}</text>
+            <text x="16" y="65" text-anchor="end">${this.midrangeElo}</text>
             <text x="16" y="20" text-anchor="end">${this.maxElo}</text>
           </g>
           <g class="linechart-grid x-linechart-grid">
             <line x1="20" x2="270" y1="110" y2="110"></line> 
           </g>
           <g class="linechart-labels"></g>
-            <polyline points="${points}" fill="none" stroke="#351901" stroke-width="1" />
+            <polyline points="${points}" fill="none" stroke="#613304" stroke-width="1" />
 		      <g class="line-chart-marker"></g>
         </svg>
       </div>
@@ -111,9 +114,9 @@ export class UserEloProgressionChart extends HTMLElement {
   style() {
     return `
     <style>
-    .line-chart-container {
+    .line-chart-wrapper {
       width: 100%;
-      height: 100%;
+      height: 240px;
       min-width: 240px;
     }
     .linechart-grid {
@@ -124,9 +127,9 @@ export class UserEloProgressionChart extends HTMLElement {
       font-size: 0.5rem;
       text-align: center;
     }
-    .line-chart-marker circl {
-	  fill: #351901;
-	}
+    .line-chart-marker circle {
+	    fill: #613304;
+	  }
     </style>
     `;
   }

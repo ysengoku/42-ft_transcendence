@@ -1,11 +1,6 @@
 /*----- Font definition ------------------------------------------------------*/
 
 @font-face {
-  font-family: 'Texas Tango';
-  src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
-}
-
-@font-face {
   font-family: 'docktrin';
   src: url(/fonts/docktrin.ttf) format('truetype');
 }
@@ -15,7 +10,12 @@
   src: url(/fonts/VAN_DYKE.ttf) format('truetype');
 }
 
-@font-face {
+/* @font-face {
+  font-family: 'Texas Tango';
+  src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
+} */
+
+/* @font-face {
   font-family: 'kleader';
   src: url(/fonts/Kleader.ttf) format('truetype');
 }
@@ -23,11 +23,22 @@
 @font-face {
   font-family: 'WestCarabao';
   src: url(/fonts/WestCarabao.ttf) format('truetype');
-}
+} */
 
 /*----- Colors ---------------------------------------------------------------*/
 :root {
-  --bs-dark: #351901;
+  --bs-body-color: #22201F;
+  --bs-black-rgb: 34, 32, 31;
+}
+
+[data-bs-theme="light"] {
+  --bs-body-color: #22201F;
+  --bs-black-rgb: 34, 32, 31;
+}
+
+[data-bs-theme="dark"] {
+  --bs-body-color: #f1f0f0;
+  --bs-black-rgb: 241, 240, 240;
 }
 
 /*----- Global ---------------------------------------------------------------*/
@@ -49,7 +60,7 @@ body {
 }
 
 legend {
-  font-family: 'kleader', serif;
+  font-family: 'van dyke', serif;
 }
 
 #content {

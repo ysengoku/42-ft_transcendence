@@ -158,9 +158,9 @@ export class UserProfile extends HTMLElement {
 
             <!-- Stats section -->
 
-            <div class="d-flex flex-row justify-content-around flex-grow-1 px-3">
+            <div class="d-flex flex-row justify-content-around flex-grow-1 mb-2 px-3">
               <!-- Stat cards -->
-              <div class="d-flex flex-wrap justify-content-center align-items-start pe-2">
+              <div class="stat-cards-wrapper d-flex flex-wrap justify-content-center align-items-start me-3">
     
                   <div id="user-stat-card-elo"></div>
                   <div id="user-stat-card-scored-balls"></div>
@@ -172,8 +172,8 @@ export class UserProfile extends HTMLElement {
 
               <!-- Enemies -->
               <div class="d-flex flex-wrap flex-column gap-3">
-                <div class="d-flex flex-column pb-1" id="best-enemy"></div>
-                <div class="d-flex flex-column pb-1" id="worst-enemy"></div>
+                <div class="d-flex flex-column" id="best-enemy"></div>
+                <div class="d-flex flex-column" id="worst-enemy"></div>
               </div>
 
             </div>
@@ -185,13 +185,17 @@ export class UserProfile extends HTMLElement {
           <div class="poster container d-flex flex-column flex-grow-1 p-3 gap-2">
 
             <!-- Graphs -->
-            <div class="graphs-container container d-flex flex-row justify-content-around align-items-top p-3 gap-3">
-              <div class="graph-container p-2">
-                <p class="m-0 pb-2">Win Rate</p>
+            <div class="graphs-wrapper container d-flex flex-row justify-content-around align-items-top p-3 gap-3">
+              <div class="graph-wrapper text-center p-2">
+                <p class="stat-label">Win Rate</p>
                 <user-win-rate-pie-graph></user-win-rate-pie-graph>
               </div>               
-              <div class="graph-container flex-grow-1 p-2">
-                <p class="m-0 pb-2">Elo progression</p>
+              <div class="graph-wrapper flex-grow-1 p-2">
+                <div class="d-flex flex-row align-items-center">
+                  <p class="stat-label mx-4">Elo progression</p>
+                  <button class="btn-elo-history" id="btn-elo-history-prev" type="button">< prev</button>
+                  <button disabled class="btn-elo-history" id="btn-elo-history-next" type="button">next ></button>
+                </div>
                 <user-elo-progression-chart></user-elo-progression-chart>
               </div>
             </div>
@@ -217,7 +221,7 @@ export class UserProfile extends HTMLElement {
     return `
     <style>
     .poster {
-      color: #1F1101;
+      color: #351901;
       background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(164, 106, 48, 0.9) 100%);
       filter: sepia(20%) contrast(90%) brightness(95%);
       /* filter: url(#wave); */
@@ -235,10 +239,17 @@ export class UserProfile extends HTMLElement {
     }
     h1 {
       display: inline-block;
+      color: #613304;      
       font-family: 'docktrin', serif;
       font-size: 6em;
       margin-bottom: -.8em;
       transform: scale(1.2, 1);
+    }
+    .stat-label {
+      font-family: 'van dyke', serif;
+      font-size: 1.2em;
+      color: #613304;
+      margin-bottom: .25em;
     }
     hr {
       height: 0;
@@ -247,18 +258,23 @@ export class UserProfile extends HTMLElement {
       border: 0;
     }
     .line {
-      border-top: 4px double #594639;
+      border-top: 4px double #613304;;
       opacity: 0.8;
     }
-    .graph-container {
-     background-color:rgba(0, 0, 0, 0.1);
+    .profile-avatar-frame,
+    .stat-cards-wrapper,
+    .enemy-container,
+    .graph-wrapper {
+      background-color:rgba(97, 51, 4, 0.1);
     }
     .enemies-container {
-      height: 224px;
+      min-height: 224px;
     }
-    .enemy-container {
-      background-color: rgba(0, 0, 0, 0.1);
-      corner-radius: 8px;
+    .btn-elo-history {
+      color: #351904;
+      font-weight: bold;
+      background: none;
+      border: none;
     }
     .row.no-gutters > [class*='col-'] {
       padding-right: 0;
@@ -274,7 +290,7 @@ export class UserProfile extends HTMLElement {
         padding: 0 !important;
         margin : 0 !important;
       }
-      .graphs-container {
+      .graphs-wrapper {
         max-width: 100vw !important;
       }
     }
