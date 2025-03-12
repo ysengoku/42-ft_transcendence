@@ -68,28 +68,51 @@ export class Navbar extends HTMLElement {
   style() {
     return `
     <style>
-      .navbar {
-        background-color: rgba(59, 59, 59, 0.6);
-      }
-      .navbar-button i {
-        font-size: 1.5rem;  
-      }
-
-      /*
-      .navbar-icon {
-        position: relative;
-      }
-      .badge {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 10px;
-        height: 10px;
-        background-color: red;
-        border-radius: 50%;
-        display: block;
-      }
-      */
+    .navbar {
+      background-color: rgba(59, 59, 59, 0.6);
+    }
+    .navbar-button i {
+      font-size: 1.5rem;  
+    }
+    .dropdown-list-header {
+      border-bottom: 1px solid var(--bs-border-color);
+      position: sticky;
+      top: 0;
+      background-color: var(--bs-body-bg);
+      z-index: 1;
+    }
+	  .dropdown-list-item {
+	    border: none;
+	    padding: 16px 32px;
+	    border-bottom: 1px solid var(--bs-border-color);
+	    position: relative;
+    }
+    dropdown-list-item:last-of-type .dropdown-list-item {
+	    border-bottom: none;
+	    padding-bottom: 8px;
+    }
+    .dropdown-list-avatar-container {
+	    position: relative;
+	    display: inline-block;
+	    margin-right: 10px;
+    }
+    .dropdown-list-avatar {
+      width: 56px;
+      height: 56px;
+      object-fit: cover;
+    }
+    /*
+    .badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 10px;
+      height: 10px;
+      background-color: red;
+      border-radius: 50%;
+      display: block;
+    }
+    */
     </style>
     `;
   }
