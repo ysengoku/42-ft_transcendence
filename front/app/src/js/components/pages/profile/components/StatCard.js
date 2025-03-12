@@ -27,9 +27,9 @@ export class UserStatCard extends HTMLElement {
 
   template() {
     return `
-    <div class="stat-card d-flex flex-column justify-content-around align-items-center mx-3 my-2 py-4">
-      <p class="m-0" id="stat-card-title"></p>
-      <p class="m-0 fs-3" id="stat-card-value"></p>
+    <div class="stat-card d-flex flex-column justify-content-around align-items-center mx-4 my-5 py-4">
+      <p class="stat-label m-0" id="stat-card-title"></p>
+      <p class="m-0 fs-2" id="stat-card-value"></p>
     </div>
     
     `;

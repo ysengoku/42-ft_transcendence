@@ -19,7 +19,7 @@ export class ProfileAvatar extends HTMLElement {
   template() {
     return `
     <div class="profile-avatar-container">
-      <div class="profile-avatar-frame d-flex justify-content-center align-items-center p-2">
+      <div class="profile-avatar-frame d-flex justify-content-center align-items-center p-2 w-100">
         <img src="${this.#state.avatarUrl}" alt="Avatar" class="rounded-circle">
       </div>
     </div>
@@ -35,10 +35,6 @@ export class ProfileAvatar extends HTMLElement {
         justify-content: center;
         align-items: center;
         height: auto;
-      }
-      .profile-avatar-frame {
-          width: 100%;
-          background-color: rgba(0, 0, 0, 0.1);
       }
       .profile-avatar-container img {
         width: 240px;
