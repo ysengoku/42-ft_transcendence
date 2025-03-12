@@ -1,6 +1,8 @@
 import asyncio
+import hashlib
 import json
 import math
+import os
 from dataclasses import dataclass
 
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -176,24 +178,76 @@ class Pong:
         )
 
 
+MAX_PLAYERS = 2
+players = {}
+"""
+on connection: when the player joins the game
+player receives id for specific match id
+player waits for other player to join
+client sends: {nothing}
+server sends: {player_id: string}
+
+countdown started: when two players joined the game
+when the second player joined the game
+receives initial state and starts the countdown
+client sends: {nothing}
+server sends: {state: state}
+
+game is running:
+client sends: {inputs: inputs}
+server sends: {state: state}
+
+game is ended:
+client sends: {nothing}
+server sends: {winner: Profile}
+
+
+1                         2
+no pause, exits game   nothing -> player 1 loses
+1                         1
+
+1           2
+pause    unpauses -> player 1 loses
+1            1
+
+1             2
+pause       waits -> they resume the game and finish
+"""
+
+
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.match_name = self.scope["url_route"]["kwargs"]["match_name"]
         self.match_group_name = f"match_{self.match_name}"
-        await self.channel_layer.group_add(self.match_group_name, self.channel_name)
+
+        if len(players) > MAX_PLAYERS:
+            await self.disconnect()
+            return
 
         await self.accept()
+        await self.channel_layer.group_add(self.match_group_name, self.channel_name)
+        self.player_id = hashlib.sha256(os.urandom(32)).hexdigest()
+        if len(players) == 1:
+            players[self.player_id] = self.state.bumper_1
+        else:
+            players[self.player_id] = self.state.bumper_2
 
-        self.state = Pong()
-        await self.send(text_data=json.dumps({"state": self.state.as_dict()}))
-        self.should_run = True
-        asyncio.create_task(self.timer())
+        await self.send(text_data=json.dumps({"player_id": self.player_id}))
+
+        if len(players) == MAX_PLAYERS:
+            self.state = Pong()
+            await self.channel_layer.group_send(self.match_group_name, {"state": self.state.as_dict()})
+            self.should_run = True
+            asyncio.create_task(self.timer())
 
     async def disconnect(self, close_code):
         self.should_run = False
+        del players[self.player_id]
         await self.channel_layer.group_discard(self.match_group_name, self.channel_name)
 
     async def receive(self, text_data):
+        if not self.should_run:
+            return
         text_data_json = json.loads(text_data)
         action, content = text_data_json["action"], text_data_json["content"]
         self.state.receive_input(action, content)
@@ -203,6 +257,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def timer(self):
         while self.should_run:
+            if len(players) != MAX_PLAYERS:
+                while True:
+                    await asyncio.sleep(0.015)
+                    if len(players) == MAX_PLAYERS:
+                        break
             await asyncio.sleep(self.calculate_sleeping_time())
             await self.game_tick()
 
