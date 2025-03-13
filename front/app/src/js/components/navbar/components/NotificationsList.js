@@ -10,7 +10,7 @@ export class NotificationsList extends HTMLElement {
   constructor() {
     super();
 
-    this.renderList = this.renderList.bind(this);
+    this.fetchNotifications = this.fetchNotifications.bind(this);
     this.clearList = this.clearList.bind(this);
   }
 
@@ -19,7 +19,7 @@ export class NotificationsList extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.button?.removeEventListener('shown.bs.dropdown', this.renderList);
+    this.button?.removeEventListener('shown.bs.dropdown', this.fetchNotifications);
     this.button?.removeEventListener('hidden.bs.dropdown', this.clearList);
   }
 
@@ -31,18 +31,8 @@ export class NotificationsList extends HTMLElement {
 
     // TODO: Handle websocket events (Add new notification to the list)
 
-    this.button?.addEventListener('shown.bs.dropdown', this.renderList);
+    this.button?.addEventListener('shown.bs.dropdown', this.fetchNotifications);
     this.button?.addEventListener('hidden.bs.dropdown', this.clearList);
-  }
-
-  async renderList() {
-    await this.fetchNotifications();
-
-    this.#state.notifications.forEach((notification) => {
-      const item = document.createElement('notifications-list-item');
-      item.data = notification;
-      this.list.appendChild(item);
-    });
   }
 
   async fetchNotifications() {
@@ -73,7 +63,28 @@ export class NotificationsList extends HTMLElement {
       this.#state.notifications.push(notification);
     });
 
-    // TODO: If list length is smaller than total notifications count, show "Show more" button
+    this.renderList();
+  }
+
+  renderList() {
+    this.list.innerHTML = '';
+    if (this.#state.notifications.length === 0) {
+      this.list.innerHTML = this.noNotificationTemplate();
+    }
+
+    for (let i = this.#state.listLength; i < this.#state.notifications.length; i++) {
+      const item = document.createElement('notifications-list-item');
+      item.data = this.#state.notifications[i];
+      if (i === 0) {
+        item.querySelector('.list-group-item')?.classList.add('border-top-0');
+      }
+      this.list.appendChild(item);
+      this.#state.listLength++;
+    }
+
+    if (this.#state.totalNotificationsCount > this.#state.listLength) {
+      this.renderShowMoreButton();
+    }
   }
 
   clearList() {
@@ -83,11 +94,24 @@ export class NotificationsList extends HTMLElement {
     this.#state.totalNotificationsCount = 0;
   }
 
+  renderShowMoreButton() {
+    const showMoreButtonContainer = document.createElement('li');
+    showMoreButtonContainer.innerHTML = this.showMoreButtonTemplate();
+    this.list.appendChild(showMoreButtonContainer);
+
+    this.showMoreButton = showMoreButtonContainer.querySelector('#show-more-notifications');
+    this.showMoreButton?.addEventListener('click', this.handleShowMoreNotifications);
+  }
+
+  handleShowMoreNotifications() {
+    // TODO
+  }
+
   template() {
     return `
     <div class="d-flex flex-column justify-content-start ps-3 pe-4">
-      <h6 class="pt-2 pb-4 dropdown-list-header" sticky>Notifications</h6>
-      <ul class="list-group mb-2" id="notifications-list"></ul>
+      <h6 class="py-4 dropdown-list-header" sticky>Notifications</h6>
+      <ul class="dropdown-list list-group mb-2" id="notifications-list"></ul>
     </div>
     `;
   }
@@ -95,9 +119,9 @@ export class NotificationsList extends HTMLElement {
   style() {
     return `
     <style>
-    #notifications-list .dropdown-list-item:last-of-type {
-      border-bottom: none;
-      padding-bottom: 8px;
+    #notifications-list {
+      max-height: 75vh;
+      max-width: 480px;
     }
 	  .notifications-list-avatar {
 	    width: 64px;
@@ -125,6 +149,24 @@ export class NotificationsList extends HTMLElement {
     </style>
     <div class="list-group-item p-3">
       <p class="text-center m-0">No notification</p>
+    </div>
+    `;
+  }
+
+  showMoreButtonTemplate() {
+    return `
+    <style>
+    #show-more-notifications {
+      border: none;
+      position: relative;
+      border-top: 1px solid var(--bs-border-color);
+    }
+    li {
+      list-style-type: none;
+    }
+    </style>
+    <div class="list-group-item mt-4 p-3" id="show-more-notifications">
+      <p class="text-center m-0">Show more notifications</p>
     </div>
     `;
   }

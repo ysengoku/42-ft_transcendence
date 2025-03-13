@@ -74,6 +74,10 @@ export class Navbar extends HTMLElement {
     .navbar-button i {
       font-size: 1.5rem;  
     }
+    .dropdown-menu {
+      max-height: 75vh;
+      padding-top: 0;
+    }
     .dropdown-list-header {
       border-bottom: 1px solid var(--bs-border-color);
       position: sticky;
@@ -83,16 +87,10 @@ export class Navbar extends HTMLElement {
     }
 	  .dropdown-list-item {
 	    border: none;
-	    padding: 16px 32px;
-	    border-bottom: 1px solid var(--bs-border-color);
+      border-top: 1px solid var(--bs-border-color);
+	    padding: 16px 8px;
 	    position: relative;
     }
-/*
-    .dropdown-list-item:last-of-type {
-	    border-bottom: none;
-	    padding-bottom: 8px;
-    }
-*/
     .dropdown-list-avatar-container {
 	    position: relative;
 	    display: inline-block;
