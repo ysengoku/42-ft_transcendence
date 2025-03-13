@@ -1,5 +1,6 @@
 import { ThemeController } from './ThemeController';
 import { isMobile } from './viewPort';
+import { getRelativeTime } from './dateFormat';
 import { sanitizeHtml } from './sanitizeHtml';
 import { showFormErrorFeedback } from './formFeedback';
 
@@ -29,6 +30,7 @@ import {
 export {
   ThemeController,
   isMobile,
+  getRelativeTime,
   sanitizeHtml,
   showFormErrorFeedback,
   createClouds,

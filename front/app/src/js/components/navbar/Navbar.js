@@ -87,10 +87,12 @@ export class Navbar extends HTMLElement {
 	    border-bottom: 1px solid var(--bs-border-color);
 	    position: relative;
     }
-    dropdown-list-item:last-of-type .dropdown-list-item {
+/*
+    .dropdown-list-item:last-of-type {
 	    border-bottom: none;
 	    padding-bottom: 8px;
     }
+*/
     .dropdown-list-avatar-container {
 	    position: relative;
 	    display: inline-block;
