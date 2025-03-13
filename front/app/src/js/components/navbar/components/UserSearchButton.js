@@ -28,7 +28,6 @@ export class UserSearchButton extends HTMLElement {
     return `
       <style>
       .dropdown-menu {
-        max-height: 75vh;
         overflow: auto;
       }
       </style>
