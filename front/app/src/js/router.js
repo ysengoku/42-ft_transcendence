@@ -32,7 +32,7 @@ const router = (() => {
      * @param {boolean} [isDynamic=false] - Whether the route is dynamic (contains a parameter).
      * @return {void}
      * @example
-     * router.addRoute('/home', 'user-home', false, true);
+     * router.addRoute('/home', 'user-home', false);
      */
     addRoute(path, componentTag, isDynamic = false) {
       this.routes.set(path, { componentTag, isDynamic });
