@@ -13,12 +13,11 @@ export class UserListItem extends HTMLElement {
     this.handleClick = this.handleClick.bind(this);
   }
 
-  connectedCallback() {
-    this.#state.username = this.getAttribute('username');
-    this.#state.nickname = this.getAttribute('nickname');
-    this.#state.avatar = this.getAttribute('avatar');
-    this.#state.online = this.getAttribute('online') === 'true';
-
+  set data(data) {
+    this.#state.username = data.username;
+    this.#state.nickname = data.nickname;
+    this.#state.avatar = data.avatar;
+    this.#state.online = data.is_online;
     this.render();
   }
 

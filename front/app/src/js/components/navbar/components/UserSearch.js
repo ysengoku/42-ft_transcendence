@@ -82,16 +82,17 @@ export class UserSearch extends HTMLElement {
 
   async handleShowMoreUsers(event) {
     event.stopPropagation();
-    this.searchUser(this.searchQuery);
+    this.searchUser();
     this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
     this.showMoreButton?.remove();
   }
 
-  async searchUser(searchQuery) {
+  async searchUser() {
+    console.log('current list length: ', this.currentListLength);
     const response = await apiRequest(
         'GET',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SEARCH(searchQuery, 10, this.currentListLength),
+        API_ENDPOINTS.USER_SEARCH(this.searchQuery, 10, this.currentListLength),
         null,
         false,
         true,
@@ -100,6 +101,7 @@ export class UserSearch extends HTMLElement {
       if (response.data) {
         this.totalUsersCount = response.data.count;
         this.userList.push(...response.data.items);
+        console.log('user list: ', this.userList);
       }
       this.renderUserList();
     } else {
@@ -120,10 +122,11 @@ export class UserSearch extends HTMLElement {
     }
     for (let i = this.currentListLength; i < this.userList.length; i++) {
       const listItem = document.createElement('user-list-item');
-      listItem.setAttribute('username', this.userList[i].username);
-      listItem.setAttribute('nickname', this.userList[i].nickname);
-      listItem.setAttribute('avatar', this.userList[i].avatar);
-      listItem.setAttribute('online', this.userList[i].is_online);
+      listItem.data = this.userList[i];
+      if (i === 0) {
+        const firstItem = listItem.querySelector('.list-group-item');
+        firstItem.classList.add('border-top-0');
+      }
       this.listContainer.appendChild(listItem);
       this.currentListLength++;
     }
@@ -150,7 +153,7 @@ export class UserSearch extends HTMLElement {
   template() {
     return `
     <form class="d-flex mx-3 mt-3 mb-2" role="search" id="user-search-form">
-      <div class="input-group">
+      <div class="input-group mt-2">
         <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
         <input class="form-control me-2" type="search" placeholder="Find user(s)" aria-label="Search">
       </div>
