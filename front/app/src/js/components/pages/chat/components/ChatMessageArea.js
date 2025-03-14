@@ -96,6 +96,13 @@ export class ChatMessageArea extends HTMLElement {
   renderMessages() {
     const chatMessages = this.querySelector('#chat-messages');
     chatMessages.innerHTML = '';
+    if (!this.#state.data.messages) {
+      // const noMessages = document.createElement('div');
+      // noMessages.textContent = 'No messages yet';
+      // noMessages.classList.add('text-center', 'mt-3', 'pe-2', 'pt-3');
+      // chatMessages.appendChild(noMessages);
+      return;
+    }
     this.#state.data.messages.forEach((message, index) => {
       const messageElement = document.createElement('div');
       messageElement.innerHTML = this.messageTemplate();
@@ -125,7 +132,7 @@ export class ChatMessageArea extends HTMLElement {
       messageContent.addEventListener('click', () => {
         this.toggleLikeMessage(index);
       });
-      chatMessages.appendChild(messageElement);
+      chatMessages.prepend(messageElement);
     });
     chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
   }

@@ -20,6 +20,29 @@ export class ChatList extends HTMLElement {
     this.render();
   }
 
+  restartChat(data) {
+    const index = this.chatListData.findIndex(chat => chat.username === data.username);
+    if (index !== -1) {
+      let tmp = this.chatListData[index];
+      tmp.unread_messages_count = 0;
+      this.chatListData.splice(index, 1);
+      this.chatListData.unshift(tmp);
+      this.render();
+      this.chatMessagesArea = document.querySelector('chat-message-area');
+      this.chatMessagesArea.setData(data);
+    } else {
+      this.addNewChat(data);
+    }
+  }
+
+  addNewChat(data) {
+    this.chatListData.unshift(data);
+    this.#state.itemCount += 1;
+    this.render();
+    this.chatMessagesArea = document.querySelector('chat-message-area');
+    this.chatMessagesArea.setData(data);
+  }
+
   render() {
     this.innerHTML = this.template();
 
@@ -48,14 +71,6 @@ export class ChatList extends HTMLElement {
   }
 
   template() {
-    // if (this.#state.itemCount < 1) {
-    //   return `
-    //     <div class="border-end d-flex flex-column h-100 overflow-auto">
-    //       <h5 class="pt-3">Conversations</h5>
-    //       <p class="mt-3 pe-2 text-center">No conversations yet</p>
-    //     </div>
-    //     `;
-    // }
     return `
 	  <div class="border-end d-flex flex-column h-100">
       <div class="d-flex felx-row justify-content-between align-items-center me-3 gap-3 sticky-top">
