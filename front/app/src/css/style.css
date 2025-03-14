@@ -169,3 +169,9 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
     transform: translate(-200px, 300px);
   }
 }
+
+/*----- Buttons ---------------------------------------------------------------*/
+.search-submit-btn {
+  border: none;
+  background-color: transparent;
+}

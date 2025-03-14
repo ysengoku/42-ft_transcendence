@@ -39,8 +39,8 @@ export class ChatMessageArea extends HTMLElement {
     this.#state.data.avatar ? this.headerAvatar.src = this.#state.data.avatar : this.headerAvatar.src = defaultAvatar;
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
-    this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.is_online);
-    this.headerOnlineStatus.textContent = this.#state.data.is_online ? 'online' : 'offline';
+    this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.isOnline);
+    this.headerOnlineStatus.textContent = this.#state.data.isOnline ? 'online' : 'offline';
 
     this.renderMessages();
 
