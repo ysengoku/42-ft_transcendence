@@ -1,78 +1,103 @@
-# Frontend structure
+# Frontend
 
 Serves static assets (HTML, CSS, JavaScript).
 Handles UI interactions and API calls to backend services.
 
-ft_transcendence
-├── front/
-│ ├── app/
-│ │ ├── index.html # Single entry point for the SPA
-│ │ │
-│ │ ├── assets/ # Static images (logos, icons, etc.)
-│ │ │ └── img/  
-│ │ │ ├── logo
-│ │ │ ├── anonymous_avatar.svg
-│ │ │ ├── favicon.ico
-│ │ │ └── ...
-│ │ │
-│ │ ├── css/
-│ │ │ ├── style.css # Main stylesheet
-│ │ │ └── components/
-│ │ │ ├── header.css
-│ │ │ ├── footer.css
-│ │ │ └── ...
-│ │ │
-│ │ ├── js/
-│ │ │ ├── main.js # Main entry point for JavaScript
-│ │ │ ├── Router.js # Manages client-side routing for SPA
-│ │ │ │
-│ │ │ ├── components/
-│ │ │ │ ├── navbar/
-│ │ │ │ │ ├── Navbar.js
-│ │ │ │ │ └── ...
-│ │ │ │ │── pages/
-│ │ │ │ │ ├── Landing.js
-│ │ │ │ │ ├── Login.js
-│ │ │ │ │ └── ...
-│ │ │ │ │── modals/
-│ │ │ │ │ ├── chat/
-│ │ │ │ │ └── friends/
-│ │ │ │ │
-│ │ │ │ └── .../
-│ │ │ │ ├── ...
-│ │ │ │ └── ...
-│ │ │ │
-│ │ │ ├── api/
-│ │ │ │ ├──
-│ │ │ │ ├──
-│ │ │ │ └── ...
-│ │ │ │
-│ │ │ └── utils/
-│ │ │ ├── ...
-│ │ │ └── ...
-│ │ │
-│ │ │── package.json
-│ │ │── vite.config.js
-│ │ │
-│ │ └── mock/
-│ │ ├── img/  
-│ │ | ├── sample_avatar1.jpg
-│ │ | ├── sample_avatar1.jpg
-│ │ | └── ...
-│ │ └── js/
-│ │ ├── mockApiLogin.js
-│ │ ├── simulateFetchFriendsList.js
-│ │ ├── simulateFetchUserData.js
-│ │ └── ...
-│ │
-│ ├── docker/
-│ │ ├── Dockerfile
-│ │ └── docker-compose.yml
-│ │
-│ └── doc/
-│ ├── FRONT.md
-│ └── ...
-│
-├── user-management/
-├── game/
-├── database/
+## Directory structure
+
+front/
+├─ app/
+│  ├─ index.html
+│  ├─ src/
+│  │  ├─ css/
+│  │  │  └─ style.css
+│  │  ├─ js/
+│  │  │  ├─ api/
+│  │  │  │  ├─ apiRequest.js
+│  │  │  │  ├─ endpoints.js
+│  │  │  │  └─ index.js
+│  │  │  ├─ auth/
+│  │  │  │  ├─ authManager.js
+│  │  │  │  ├─ csrfToken.js
+│  │  │  │  ├─ handleLogout.js
+│  │  │  │  ├─ index.js
+│  │  │  │  └─ refreshToken.js
+│  │  │  ├─ components/
+│  │  │  │  ├─ navbar/
+│  │  │  │  │  ├─ Navbar.js
+│  │  │  │  │  ├─ components/
+│  │  │  │  │  │  ├─ ChatButton.js
+│  │  │  │  │  │  ├─ DropdownMenu.js
+│  │  │  │  │  │  ├─ FriendsButton.js
+│  │  │  │  │  │  ├─ FriendsList.js
+│  │  │  │  │  │  ├─ NavbarBrand.js
+│  │  │  │  │  │  ├─ NotificationsButton.js
+│  │  │  │  │  │  ├─ UserActionsMenu.js
+│  │  │  │  │  │  ├─ UserListItem.js
+│  │  │  │  │  │  ├─ UserSearch.js
+│  │  │  │  │  │  └─ UserSearchButton.js
+│  │  │  │  │  └─ index.js
+│  │  │  │  └─ pages/
+│  │  │  │     ├─ index.js
+│  │  │  │     ├─ Landing.js
+│  │  │  │     ├─ NotFound.js
+│  │  │  │     ├─ Error.js
+│  │  │  │     ├─ chat/
+│  │  │  │     │  ├─ Chat.js
+│  │  │  │     │  └─ components/
+│  │  │  │     ├─ home/
+│  │  │  │     │  ├─ Home.js
+│  │  │  │     │  └─ components/
+│  │  │  │     ├─ login/
+│  │  │  │     │  ├─ Login.js
+│  │  │  │     │  ├─ MfaVerification.js
+│  │  │  │     │  ├─ ForgotPassword.js
+│  │  │  │     │  ├─ RecoverPassword.js
+│  │  │  │     │  └─ components/
+│  │  │  │     ├─ profile/
+│  │  │  │     │  ├─ Profile.js
+│  │  │  │     │  ├─ UserNotFound.js
+│  │  │  │     │  └─ components/
+│  │  │  │     ├─ register/
+│  │  │  │     │  └─ Register.js
+│  │  │  │     ├─ settings/
+│  │  │  │     │  ├─ Settings.js
+│  │  │  │     │  └─ components/
+│  │  │  │     ├─ duel/
+│  │  │  │     │  ├─ Duel.js
+│  │  │  │     │  └─ DuelMenu.js
+│  │  │  │     └─ tournament/
+│  │  │  │        ├─ Tournament.js
+│  │  │  │        └─ TournamentMenu.js
+│  │  │  ├─ router.js
+│  │  │  ├─ socket.js
+│  │  │  └─ utils/
+│  │  │     ├─ ThemeController.js
+│  │  │     ├─ alertMessage.js
+│  │  │     ├─ errorMessage.js
+│  │  │     ├─ index.js
+│  │  │     ├─ inputFeedback.js
+│  │  │     └─ viewPort.js
+│  │  └─ main.js
+│  │
+│  ├─ public/
+│  │  └─ img/
+│  │ 
+│  ├─ __tests__/
+│  ├─ .eslintrc.json
+│  ├─ .gitignore
+│  ├─ .prettierrc
+│  ├─ babel.config.cjs
+│  ├─ jest.config.js
+│  ├─ package-lock.json
+│  ├─ package.json
+│  └─ vite.config.js
+└─ Dockerfile
+
+
+## Unit tests
+
+```bash
+# From app directory
+npm test
+```

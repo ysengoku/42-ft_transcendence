@@ -6,15 +6,18 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
+    historyFallback: true,
   },
   resolve: {
     alias: {
       '@main': path.resolve(__dirname, 'src/main.js'),
       '@router': path.resolve(__dirname, 'src/js/router.js'),
-      '@api': path.resolve(__dirname, 'src/js/api/'),
+      '@socket': path.resolve(__dirname, 'src/js/socket.js'),
+      '@api': path.resolve(__dirname, 'src/js/api/index.js'),
       '@components': path.resolve(__dirname, 'src/js/components/'),
-      '@mock': path.resolve(__dirname, 'src/js/mock/'),
-      '@utils': path.resolve(__dirname, 'src/js/utils/'),
+      '@auth': path.resolve(__dirname, 'src/js/auth/index.js'),
+      '@utils': path.resolve(__dirname, 'src/js/utils/index.js'),
+      '@mock': path.resolve(__dirname, '__mock__/'),
       '@css': path.resolve(__dirname, 'src/css/'),
     },
   },

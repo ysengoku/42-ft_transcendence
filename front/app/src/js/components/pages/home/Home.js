@@ -1,38 +1,63 @@
-import {router} from '@router';
+import { router } from '@router';
+import { auth } from '@auth';
+import './components/index.js';
 
 export class Home extends HTMLElement {
+  #state = {
+    isLoggedin: false,
+    user: null,
+  };
+
   constructor() {
     super();
-    this.user = null;
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    this.#state.isLoggedin = authStatus.success;
+    this.#state.user = auth.getStoredUser();
     this.render();
   }
 
   render() {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) {
-      console.error('Missing user information.');
-      router.navigate('/login');
+    if (!this.#state.isLoggedin) {
+      router.navigate('/');
+      return;
     }
-    this.user = JSON.parse(storedUser);
+    this.innerHTML = this.style() + this.template();
 
-    // Temporary content
-    this.innerHTML = `
-		<div class="container d-flex flex-column justify-content-center align-items-center text-center">
-			<h1>Welcome, ${this.user.username}</h1>
+    const nicknameField = this.querySelector('#home-nickname');
+    nicknameField.textContent = 'Welcome, ' + this.#state.user.nickname;
+
+    const profileButton = this.querySelector('home-profile-button');
+    profileButton.username = this.#state.user.username;
+  }
+
+  // Temporary content
+  template() {
+    return `
+		<div class="container d-flex flex-column justify-content-center align-items-center text-center my-3">
+			<div id="home-nickname"></div>
 			<p>This is futur Home  ("hub?")</p>
 			<div class="d-flex flex-column justify-content-center align-items-center grid gap-4 row-gap-4">
-				<a class="btn btn-primary btn-lg" href="/dual-menu" role="button">Dual</a>
-				<a class="btn btn-primary btn-lg" href="/tournament-menu" role="button">Tournament</a>
-				<div class="btn-group d-flex justify-content-center grid gap-4">
-					<a class="btn btn-outline-primary" href="/profile/${this.user.username}" role="button">Profile</a>
-					<a class="btn btn-outline-primary" href="/settings/${this.user.username}" role="button">Setting</a>
-				</div>
+				<home-duel-button></home-duel-button>
+				<home-tournament-button></home-tournament-button>
+        <home-profile-button></home-profile-button>
+				<home-settings-button></home-settings-button>
+        <home-logout-button></home-logout-button>
 			</div>
 		</div>
 		`;
+  }
+
+  style() {
+    return `
+    <style>
+      #home-nickname {
+        font-size: 3rem;
+      }
+    </style>
+    `;
   }
 }
 
