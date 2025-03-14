@@ -158,18 +158,19 @@ export class Chat extends HTMLElement {
     const messageData = {
       type: 'chat',
       data: {
-        id: this.currentChat.username,
-        message: {
+
           id: this.currentChat.messages.length + 1,
           sender: this.#state.user.username,
-          message: event.detail,
-          timestamp: new Date().toISOString(),
-        },
+          content: event.detail,
+          date: new Date().toISOString(),
+          is_liked: false,
+          is_read: false,
+        
       },
     };
     console.log('Message data:', messageData);
     // ----- Temporary message sending handler -----------------------------
-    this.currentChat.messages.push(messageData.data.message);
+    this.currentChat.messages.unshift(messageData.data);
     this.chatMessagesArea.setData(this.currentChat);
     socketManager.socket.send(JSON.stringify(messageData));
     // ---------------------------------------------------------------------
@@ -178,11 +179,14 @@ export class Chat extends HTMLElement {
   handleNewMessage(message) {
     console.log('New message:', message);
     const newMessage = message;
-    if (newMessage.username === this.currentChat.username) {
-      this.currentChat.messages.push(newMessage.message);
+    //----- For test --------------------------------
+    newMessage.sender = this.currentChat.username;
+    //-----------------------------------------------
+    if (newMessage.sender === this.currentChat.username) {
+      this.currentChat.messages.unshift(newMessage);
+      console.log('Current chat:', this.currentChat);
       this.chatMessagesArea.setData(this.currentChat);
     }
-
     this.updateChatList(newMessage);
   }
 
