@@ -80,16 +80,16 @@ class Pong:
             "someone_scored": self.someone_scored,
         }
 
-    def receive_input(self, action: str, content: bool):
+    def receive_input(self, bumper: Bumper, action: str, content: bool):
         match action:
-            case "bumper1_move_left":
-                self.bumper_1.moves_left = content
-            case "bumper2_move_left":
-                self.bumper_2.moves_left = content
-            case "bumper1_move_right":
-                self.bumper_1.moves_right = content
-            case "bumper2_move_right":
-                self.bumper_2.moves_right = content
+            case "move_left":
+                bumper.moves_left = content
+            case "move_left":
+                bumper.moves_left = content
+            case "move_right":
+                bumper.moves_right = content
+            case "move_right":
+                bumper.moves_right = content
 
     def reset_ball(self, direction: int):
         self.ball.temporal_speed.x, self.ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
@@ -178,8 +178,6 @@ class Pong:
         )
 
 
-MAX_PLAYERS = 2
-players = {}
 """
 --normal mode--
 on connection: when the player joins the game
@@ -227,58 +225,61 @@ server sends: {winner: Profile}
 """
 
 
+MAX_PLAYERS = 2
+players = {}
+
+
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.match_name = self.scope["url_route"]["kwargs"]["match_name"]
         self.match_group_name = f"match_{self.match_name}"
 
         if len(players) > MAX_PLAYERS:
-            await self.disconnect()
+            await self.disconnect(1000)
             return
 
         await self.accept()
         await self.channel_layer.group_add(self.match_group_name, self.channel_name)
         self.player_id = hashlib.sha256(os.urandom(32)).hexdigest()
-        if len(players) == 1:
+        self.state = Pong()
+        if len(players) == 0:
             players[self.player_id] = self.state.bumper_1
         else:
             players[self.player_id] = self.state.bumper_2
 
-        await self.send(text_data=json.dumps({"player_id": self.player_id}))
+        await self.send(text_data=json.dumps({"event": "joined", "player_id": self.player_id}))
 
         if len(players) == MAX_PLAYERS:
-            self.state = Pong()
-            await self.channel_layer.group_send(self.match_group_name, {"state": self.state.as_dict()})
-            self.should_run = True
+            await self.channel_layer.group_send(
+                self.match_group_name,
+                {"type": "state_update", "state": self.state.as_dict()},
+            )
             asyncio.create_task(self.timer())
 
     async def disconnect(self, close_code):
-        self.should_run = False
         del players[self.player_id]
         await self.channel_layer.group_discard(self.match_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        if not self.should_run:
+        if len(players) != MAX_PLAYERS:
             return
         text_data_json = json.loads(text_data)
-        action, content = text_data_json["action"], text_data_json["content"]
-        self.state.receive_input(action, content)
+        action = text_data_json["action"]
+        match action:
+            case "move_left" | "move_right":
+                player_id, content = text_data_json["player_id"], text_data_json["content"]
+                self.state.receive_input(players[player_id], action, content)
 
     def calculate_sleeping_time(self):
         return 0.015
 
     async def timer(self):
-        while self.should_run:
-            if len(players) != MAX_PLAYERS:
-                while True:
-                    await asyncio.sleep(0.015)
-                    if len(players) == MAX_PLAYERS:
-                        break
+        while len(players) == MAX_PLAYERS:
             await asyncio.sleep(self.calculate_sleeping_time())
             await self.game_tick()
 
     async def state_update(self, event):
-        await self.send(text_data=json.dumps({"state": self.state.as_dict()}))
+        await self.send(text_data=json.dumps({"event": "game_tick", "state": self.state.as_dict()}))
         self.state.someone_scored = False
 
     async def game_tick(self):
