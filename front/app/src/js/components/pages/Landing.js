@@ -1,5 +1,5 @@
 import { auth } from '@auth';
-import { createClouds, createStars } from '@utils';
+import { createClouds, createStars } from '@utils'; 
 import logo from '/img/sample-logo.svg?url';
 import duneDay from '/img/dune-day.png?url';
 import duneNight from '/img/dune-night.png?url';
@@ -26,20 +26,6 @@ export class Landing extends HTMLElement {
   render() {
     const theme = document.documentElement.getAttribute('data-bs-theme') || 'light';
     this.innerHTML = this.template() + this.style(theme);
-
-    if (theme === 'dark') {
-      const contentContainer = document.getElementById('content');
-      const cloud = document.getElementById('cloud');
-      cloud ? contentContainer.removeChild(cloud) : null;
-
-      // document.body.style.backgroundImage = `linear-gradient( #080f1c 0%, #0d4261 32%,  #1473ab 100%)`;
-      createStars();
-    } else {
-      const stars = document.getElementById('stars');
-      stars ? document.body.removeChild(stars) : null;
-      // document.body.style.backgroundImage = `linear-gradient(rgb(225, 164, 99),rgb(160, 94, 50), #d47a3e)`;
-      createClouds();
-    }
   }
 
   template() {
