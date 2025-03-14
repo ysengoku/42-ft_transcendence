@@ -88,7 +88,6 @@ export class UserSearch extends HTMLElement {
   }
 
   async searchUser() {
-    console.log('current list length: ', this.currentListLength);
     const response = await apiRequest(
         'GET',
         /* eslint-disable-next-line new-cap */
@@ -101,7 +100,6 @@ export class UserSearch extends HTMLElement {
       if (response.data) {
         this.totalUsersCount = response.data.count;
         this.userList.push(...response.data.items);
-        console.log('user list: ', this.userList);
       }
       this.renderUserList();
     } else {
@@ -155,9 +153,9 @@ export class UserSearch extends HTMLElement {
     <form class="d-flex mx-3 mt-3 mb-2" role="search" id="user-search-form">
       <div class="input-group mt-2">
         <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-        <input class="form-control me-2" type="search" placeholder="Find user(s)" aria-label="Search">
+        <input class="form-control" type="search" placeholder="Find user(s)" aria-label="Search">
       </div>
-      <button class="btn btn-primary" type="submit">Search</button>
+      <button class="search-submit-btn btn mt-2" type="submit">Search</button>
     </form>
     <div class="ps-3 pe-4">
         <ul class="list-group mb-2" id="navbar-user-list"></ul>

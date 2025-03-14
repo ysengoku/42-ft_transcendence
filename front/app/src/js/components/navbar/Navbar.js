@@ -56,13 +56,13 @@ export class Navbar extends HTMLElement {
 
   template() {
     return `
-		<nav class="navbar navbar-expand navbar-dark px-3">
+    <nav class="navbar navbar-expand navbar-dark px-3">
       <user-actions-menu></user-actions-menu>
-			<navbar-brand-component></navbar-brand-component>
-			<div class="ms-auto d-flex align-items-center" id="navbar-actions-content">
-			</div>
-		</nav>
-		`;
+      <navbar-brand-component></navbar-brand-component>
+      <div class="ms-auto d-flex align-items-center" id="navbar-actions-content">
+      </div>
+    </nav>
+    `;
   }
 
   style() {
@@ -85,16 +85,16 @@ export class Navbar extends HTMLElement {
       background-color: var(--bs-body-bg);
       z-index: 1;
     }
-	  .dropdown-list-item {
-	    border: none;
+    .dropdown-list-item {
+      border: none;
       border-top: 1px solid var(--bs-border-color);
-	    padding: 16px 8px;
-	    position: relative;
+      padding: 16px 8px;
+      position: relative;
     }
     .dropdown-list-avatar-container {
-	    position: relative;
-	    display: inline-block;
-	    margin-right: 10px;
+      position: relative;
+      display: inline-block;
+      margin-right: 10px;
     }
     .dropdown-list-avatar {
       width: 56px;
