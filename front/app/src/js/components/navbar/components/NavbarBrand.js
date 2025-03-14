@@ -1,32 +1,48 @@
+import { router } from '@router';
 import navbarBrand from '/img/sample-logo.svg?url';
 
 export class NavbarBrand extends HTMLElement {
   constructor() {
     super();
+    this.isLoggedIn = false;
+    this.handleClick = this.handleClick.bind(this);
   }
 
   connectedCallback() {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.img?.removeEventListener('click', this.handleClick);
+  }
+
+  setLoginStatus(value) {
+    this.isLoggedIn = value;
+    this.render();
+  }
+
   render() {
-    // Temporary solution
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    this.href = this.isLoggedIn ? '/home' : '/';
 
-    const href = isLoggedIn ? '/home' : '/';
-    const link = document.createElement('a');
-    link.classList.add('navbar-brand');
-    link.href = href;
+    this.link = document.createElement('div');
+    this.link.classList.add('navbar-brand');
+    this.link.href = this.href;
 
-    const img = document.createElement('img');
-    img.src = navbarBrand;
-    img.height = 40;
-    img.alt = 'transcendence';
-    img.classList.add('d-inline-block', 'align-top');
+    this.img = document.createElement('img');
+    this.img.src = navbarBrand;
+    this.img.height = 40;
+    this.img.alt = 'Peacemakers';
+    this.img.classList.add('d-inline-block', 'align-top');
 
-    link.appendChild(img);
+    this.img.addEventListener('click', this.handleClick);
+    this.link.appendChild(this.img);
     this.innerHTML = '';
-    this.appendChild(link);
+    this.appendChild(this.link);
+  }
+
+  handleClick(event) {
+    event.preventDefault();
+    router.navigate(this.href);
   }
 }
 

@@ -28,7 +28,6 @@ export class OnlineStatusIndicator extends HTMLElement {
     if (!this.statusIndicator) {
       return;
     }
-    // console.log('Is Online: ', this.isOnline);
     this.statusIndicator.className = `online-status-indicator mx-2 ${this.isOnline ? 'online' : 'offline'}`;
   }
 

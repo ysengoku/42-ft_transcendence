@@ -27,11 +27,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "your-secret-key"
 
 # Environment variables
-DEBUG = int(os.environ.get("DEBUG", default=1))
-IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
-CORS_ALLOW_ALL_ORIGINS = True  # En développement seulement
+
+DEBUG = os.environ.get("DEBUG", True)
+
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
+IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
 if not IN_CONTAINER:
     DATABASES = {
@@ -51,7 +52,6 @@ elif "GITHUB_ACTIONS" in os.environ:
             "PORT": "5432",
         },
     }
-# PostgreSQL for production
 else:
     DATABASES = {
         "default": {
@@ -66,6 +66,14 @@ else:
 
 
 INSTALLED_APPS = [
+    # ASGI server for working with websockets
+    "daphne",
+    "channels",
+
+    # Our apps
+    "users",
+    "chat",
+
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -74,12 +82,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    # Third-party applications
-    "silk",  # Application for profiling
-    "corsheaders",  # Application for CORS if two ports are different. must be removed for production
-    "channels",  # Django Channels
-    # Our applications
-    "users",
+
+    # Profiling
+    "silk",
 ]
 
 MIDDLEWARE = [
@@ -90,9 +95,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Third party middleware
     "silk.middleware.SilkyMiddleware",
-    "corsheaders.middleware.CorsMiddleware",  #  must be removed for production.
 ]
 
 
@@ -114,12 +117,9 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'server.wsgi.application'
-ASGI_APPLICATION = "server.asgi.application"  # Pour Django Channels
-
+ASGI_APPLICATION = "server.asgi.application"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
@@ -160,16 +160,9 @@ CHANNEL_LAYERS = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = ["https://localhost:1026"]
+CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
-
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ORIGINS = [
-    "http://localhost:5173",
-    "https://localhost:1026",
-]
-CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 
 # Configuration for picture
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -184,9 +177,70 @@ STATIC_ROOT = BASE_DIR / "static"
 
 AUTH_SETTINGS = {
     "password_min_len": 8,
-    "repeats_allowed": 3,
     "check_attribute_similarity": True,
-    "check_is_diverse": True,
+    "check_is_alphanumeric": True,
 }
 
+ACCESS_TOKEN_SECRET_KEY = "secret"
+REFRESH_TOKEN_SECRET_KEY = "refresh_secret"
+
 NINJA_PAGINATION_PER_PAGE = 10
+
+APPEND_SLASH = False
+
+# OAuth
+
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
+GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
+GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
+GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
+GITHUB_FT_API_URL = "https://api.github.com"
+
+# OAuth 42
+API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
+API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
+FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
+FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
+FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")
+FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
+FT_API_OAUTH_URL = "https://api.intra.42.fr"
+
+HOME_REDIRECT_URL = "https://localhost:1026/home"
+FRONTEND_URL = "https://localhost:1026"
+ERROR_REDIRECT_URL = "https://localhost:1026/error"
+
+# OAUTH Configuration
+OAUTH_CONFIG = {
+    "github": {
+        "client_id": GITHUB_CLIENT_ID,
+        "client_secret": GITHUB_CLIENT_SECRET,
+        "auth_uri": GITHUB_AUTHORIZE_URL,
+        "token_uri": GITHUB_ACCESS_TOKEN_URL,
+        "redirect_uris": [GITHUB_REDIRECT_URI],
+        "scopes": ["user"],
+        "user_info_uri": GITHUB_USER_PROFILE_URL,
+        "oauth_uri": GITHUB_FT_API_URL,
+    },
+    "42": {
+        "client_id": API42_CLIENT_ID,
+        "client_secret": API42_CLIENT_SECRET,
+        "auth_uri": FT_API_AUTHORIZE_URL,
+        "token_uri": FT_API_ACCESS_TOKEN_URL,
+        "redirect_uris": [FT_API_REDIRECT_URI],
+        "scopes": ["public", "profile"],
+        "user_info_uri": FT_API_USER_PROFILE_URL,
+        "oauth_uri": FT_API_OAUTH_URL,
+    },
+}
+
+# email configuration for 2fa and password reset
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
