@@ -1,12 +1,15 @@
-import { mockFetchDuelHistory } from "@mock/functions/mockFetchDuelHistory.js";
+import { mockFetchDuelHistory } from '@mock/functions/mockFetchDuelHistory.js';
+import { mockFetchTournamentHistory } from '@mock/functions/mockFetchTournamentHistory.js';
 
 export class UserGameHistory extends HTMLElement {
   constructor() {
     super();
-	this._data = {
-	  matches: [],
-	  tournaments: []
-	}
+    this._data = {
+      matches: [],
+      tournaments: [],
+    };
+    this.handleDuelTabClick = this.handleDuelTabClick.bind(this);
+    this.handleTournamentTabClick = this.handleTournamentTabClick.bind(this);
   }
 
   set data(value) {
@@ -14,53 +17,123 @@ export class UserGameHistory extends HTMLElement {
     this.render();
   }
 
-  connectedCallback() {
-    this.render();
+  disconnectedCallback() {
+    this.duelsTab.removeEventListener('click', this.handleDuelTabClick);
+    this.tournamentsTab.removeEventListener('click', this.handleTournamentTabClick);
   }
 
   render() {
-    this._data.matches = mockFetchDuelHistory();  // Test data
-	  // console.log(this._data.matches);
-    this.innerHTML = `
-	  <style>
-		  .card {
-		    background-color: rgba(0, 0,0, 0.1);
-		    color: black;
-		  }
-	    .nav-link {
-		    color: black;
-		    font-size: 0.8rem;
-		  }
-		  .card-header-tabs .nav-link.active {
+    this._data.matches = mockFetchDuelHistory();
+    this._data.tournaments = mockFetchTournamentHistory();
+    this.innerHTML = this.template() + this.style();
+
+    this.duelsTab = this.querySelector('#duels-tab');
+    this.tournamentsTab = this.querySelector('#tournaments-tab');
+    this.cardBody = this.querySelector('#user-game-history-body');
+
+    this.duelsTab.addEventListener('click', this.handleDuelTabClick);
+    this.tournamentsTab.addEventListener('click', this.handleTournamentTabClick);
+
+    const userDuelHistory = this.querySelector('user-duel-history');
+    userDuelHistory.data = this._data.matches;
+  }
+
+  handleDuelTabClick(event) {
+    event.preventDefault();
+    this.duelsTab.classList.add('active');
+    this.tournamentsTab.classList.remove('active');
+    this.cardBody.innerHTML = '';
+    const userDuelHistory = document.createElement('user-duel-history');
+    userDuelHistory.data = this._data.matches;
+    this.cardBody.appendChild(userDuelHistory);
+  }
+
+  handleTournamentTabClick(event) {
+    event.preventDefault();
+    this.tournamentsTab.classList.add('active');
+    this.duelsTab.classList.remove('active');
+    this.cardBody.innerHTML = '';
+    const userTournamentHistory = document.createElement('user-tournament-history');
+    userTournamentHistory.data = this._data.tournaments;
+    this.cardBody.appendChild(userTournamentHistory);
+  }
+
+  template() {
+    return `
+    <div class="card text-center px-2">
+      <div class="card-header">
+        <p class="text-start">Game History</p>
+        <ul class="nav nav-tabs card-header-tabs">
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="true" id="duels-tab">Duels</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="tournaments-tab">Tournaments</a>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body px-2 pt-0 mt-2 table-container" id="user-game-history-body">
+        <user-duel-history></user-duel-history>
+      </div>
+    </div>
+    `;
+  }
+
+  style() {
+    return `
+    <style>
+      .card {
+        background-color: rgba(0, 0, 0, 0.1);
+        color: black;
+      }
+      .nav-link {
+        color: black;
+        font-size: 0.8rem;
+      }
+      .card-header-tabs .nav-link.active {
         color: black;
         background-color: transparent !important;
         border: none;
         border-bottom: 4px solid black;
-  	  }
-		  .nav-link:hover{
-		    color: black;
-  	  }
-	    .user-game-history-avatar {
-		    width: 24px;
-		  	aspect-ratio: 1;
+      }
+      .nav-link:hover{
+        color: black;
+      }
+      .user-game-history-table {
+        font-size: 14px;
+        txt-decoration: none;
+      }
+      .user-game-history-table td {
+        vertical-align: middle;
+        background-color: transparent;
+        color: black;
+        padding: 1rem 0 1rem 0.5rem;
+      }
+      .user-game-history-avatar {
+        width: 36px;
+        aspect-ratio: 1;
         object-fit: cover;
         border-radius: 50%;
         background-color: grey;
-			  margin-right: 8px;
+        margin-right: 8px;
       }
-		  .bi-arrow-up-right {
-		    color: green;
-		  }
-		  .bi-arrow-down-right {
-		    color: red;
-		  }
-		  .table-container {
+      .bi-arrow-up-right {
+        color: green;
+      }
+      .bi-arrow-down-right {
+        color: red;
+      }
+      .table-container {
         max-height: 640px;
         overflow-y: auto;
       }
-		  .table-container thead {
-	      --bs-table-bg: transparent;
-		    --bs-table-color: black;
+      .table-container thead th {
+        --bs-table-bg: rgb(0, 0, 0);
+        --bs-table-color: white;
+        font-weight:normal;
+        position: sticky;
+        top: 0;
+        z-index: 1;
       }
       .table-container::-webkit-scrollbar {
         width: 4px;
@@ -69,56 +142,15 @@ export class UserGameHistory extends HTMLElement {
         background: grey;
       }
       .table-container::-webkit-scrollbar-thumb {
-          background: black;
-          border-radius: 4px;
+        background: black;
+        border-radius: 4px;
+      }
+      td {
+        font-size: 1rem;
       }
     </style>
-      <div class="card text-center px-2">
-	      <div class="card-header">
-	        <p class="text-start">Game History</p>
-          <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="true" id="duels-tab">Duels</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" id="tournaments-tab">Tournaments</a>
-            </li>
-          </ul>
-        </div>
-        <div class="card-body p-2 table-container" id="user-game-history-body">
-          <user-duel-history></user-duel-history>
-        </div>
-      </div>
-	  `;
-
-    const duelsTab = this.querySelector("#duels-tab");
-    const tournamentsTab = this.querySelector("#tournaments-tab");
-    const cardBody = this.querySelector("#user-game-history-body");
-
-    duelsTab.addEventListener("click", (event) => {
-      event.preventDefault();
-      duelsTab.classList.add("active");
-      tournamentsTab.classList.remove("active");
-      cardBody.innerHTML = "";
-      const userDuelHistory = document.createElement("user-duel-history");
-	  userDuelHistory.data = this._data.matches;
-      cardBody.appendChild(userDuelHistory);
-    });
-
-    tournamentsTab.addEventListener("click", (event) => {
-      event.preventDefault();
-      tournamentsTab.classList.add("active");
-      duelsTab.classList.remove("active");
-      cardBody.innerHTML = "";
-      const userTournamentHistory = document.createElement(
-        "user-tournament-history"
-      );
-      cardBody.appendChild(userTournamentHistory);
-    });
-
-	const userDuelHistory = this.querySelector("user-duel-history");
-	userDuelHistory.data = this._data.matches;
+    `;
   }
 }
 
-customElements.define("user-game-history", UserGameHistory);
+customElements.define('user-game-history', UserGameHistory);

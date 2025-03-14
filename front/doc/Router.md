@@ -1,107 +1,52 @@
-# Router class
+# Router module
 
-`Router` class is a simple front-end router that handles navigation in a single-page application (SPA), defining routes (URLs) and associating them with specific components (custom HTML tags), dynamically rendering content based on the current URL.
+`Router` provides a simple client-side routing system for a single-page application (SPA). It allows dynamic navigation between different views without reloading the page.
 
 ## Key Features
 
 ### Routes Management (addRoute):
 
-Routes can be registered by specifying a URL path and the component to render for that path.
-Supports both static routes (e.g., `/home`) and dynamic routes (e.g., `/user/:id`).
+- Supports static (e.g., `/home`) and dynamic routes (e.g., `/user/:id`)
+- Handles authentication-required routes 
+- Renders components dynamically
+- Updates browser history using pushState
+- Supports browser back/forward navigation
 
-### Dynamic Route Matching (matchDynamicRoute and extractParam):
+### Usage
 
-Dynamic routes include placeholders like `:id` that match parts of the URL dynamically.
-Extracts dynamic parameters (e.g., id=123 from /user/123) and passes them to components.
+#### Intallation
+No installation is required. Simply import the module into your project:
+```js
+import { router } from 'src/js/router.js'
+// or
+// With vite alias
+import { router } from '@router'; 
+```
 
-### Rendering Components (renderComponent and renderDynamicComponent):
+#### Define routes
+Routes can be added using router.addRoute(path, componentTag, isDynamic, requiresAuth).   
+Example:
+```js
+router.addRoute('/', 'landing-page');
+router.addRoute('/home', 'user-home', false, true);
+router.addRoute('/profile/:username', 'user-profile', true, true);
+```
 
-Replaces the content of a `<div>` with `id="content"` with the specified component.
-For dynamic routes, extracted parameters are passed to the component.
+#### Navigate between pages
+Use router.navigate(path) to change routes dynamically.   
+Examples:
+```js
+document.querySelector('a').addEventListener('click', (event) => {
+  event.preventDefault();
+  router.navigate('/home');
+});
+```
+```js
+<a class="btn btn-outline-primary" href="/profile/${this.user.username}" role="button">Profile</a>
+// This will trigger the handleLinkClick(event) methode on click.
+```
 
-### Navigation (navigate):
-
-Updates the browser's URL without reloading the page and renders the appropriate component.
-
-### History and Link Handling (init and handleLinkClick):
+### History and Link Handling
 
 Listens for popstate events (triggered by the browser's back/forward buttons) to handle navigation changes.  
 Captures clicks on internal `<a>` links (hrefs starting with /) to navigate without reloading the page.
-
-### addRoute
-
-This function adds all routes to Map (collections of key-value pairs) named 'routes' in this class
-`'routes': key = path, value = { componentTag, isDynamic }`
-
-```js
-addRoute(path, componentTag) {
-	const isDynamic = /:\w+/.test(path);
-    this.routes.set(path, { componentTag, isDynamic });
-}
-```
-
-This line determines if the path contains dynamic segments.
-
-- `/regular expression/.test(path)` : 'test' methode tests if the regular expression matches any part of the string `path`
-- `\w+` : This means one or more characters(letters, digits and underscores).
-
-```js
-const isDynamic = /:\w+/.test(path);
-```
-
-Example usage:
-
-```js
-const router = new Router();
-
-// Static URL
-router.addRoute("/login", "login-form"); // key: '/login', value: { 'login-form', false }
-
-// Dynamic URL
-router.addRoute("/profile/:id", "profile-page"); // key: '/profile/:id', value: { 'profile-page', true }
-```
-
-### extractParam
-
-```js
-extractParam(routePath, path) {
-
-// e.g.
-// routePath '/profile/:id'
-// path '/profile/123'
-	const routePathParts = routePath.split('/');  // --> ['', 'profile', ':id']
-	const pathParts = path.split('/');            // --> ['', 'profile', '123']
-	if (routePathParts.length !== pathParts.length) {
-		return null;
-	}
-	for (let i = 0; i < routePathParts.length; i++) {
-		if (routePathParts[i].startsWith(':')) {  // routePathParts[2] --> ':id' --> true
-			param[routePathParts[i].slice(1)] = pathParts[i];
-			// routePathParts[2] --> ':id'
-			// routePathParts[2].slice(1) --> 'id'
-			// pathParts[2] = '123'
-			// ---> create a plain object "param" with key-value pair --> param[id] = '123'
-			// key = id / value = 123
-		} else if (routePathParts[i] !== pathParts[i]) {
-			return null;
-		}
-	}
-	return param;  // param = { id: '123' }
-	}
-```
-
-### renderDynamicComponent
-
-```js
-renderDynamicComponent(componentTag, param) {
-	// If there is a component, remove it
-	if (this.currentComponent) {
-		this.currentComponent.remove();
-	}
-	const component = document.createElement(componentTag);
-	component.param = param;
-
-	document.getElementById('content').appendChild(component);
-	this.currentComponent = component;
-}
-```
