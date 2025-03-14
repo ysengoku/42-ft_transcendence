@@ -1,5 +1,6 @@
 import { auth } from '@auth';
 import { addDissmissAlertListener } from '@utils';
+import { createClouds, createStars } from '@utils';
 // import { CubeTexture } from 'three/src/Three.Core.js';
 
 /**
@@ -213,9 +214,15 @@ router.addRoute('/error', 'error-page');
  */
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded');
-  document.documentElement.getAttribute('data-bs-theme') === 'light' ?
-  document.body.style.backgroundImage = `linear-gradient(180deg,rgb(243, 204, 163), #d47a3e,  #d47a3e)` :
-  document.body.style.backgroundImage = `linear-gradient(0deg, #115d89,rgb(13, 66, 97), #080f1c)`;
+  document.documentElement.getAttribute('data-bs-theme') === 'light' ? (
+    document.getElementById('stars') ? document.body.removeChild(stars) : null,
+    document.body.style.backgroundImage = `linear-gradient(rgb(225, 164, 99),rgb(160, 94, 50), #d47a3e)`,
+    createClouds()
+  ) : (
+    document.getElementById('cloud') ? document.getElementById('content').removeChild(cloud) : null,
+    document.body.style.backgroundImage = `linear-gradient(#080f1c 0%, #0d4261 32%,  #1473ab 100%)`,
+    createStars()
+  );
 
   await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');

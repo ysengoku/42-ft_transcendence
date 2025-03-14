@@ -9,11 +9,10 @@ export class ChatListItem extends HTMLElement {
 
   constructor() {
     super();
-    this._data = '';
   }
 
   setData(data) {
-    this._data = data;
+    this.#state.data = data;
     this.render();
   }
 
@@ -22,26 +21,25 @@ export class ChatListItem extends HTMLElement {
   }
 
   render() {
-    if (!this._data.last_message) {
-      return;
-    }
     this.innerHTML = this.template() + this.style();
 
     this.avatar = this.querySelector('.chat-list-item-avatar');
-    this._data.avatar ? this.avatar.src = this._data.avatar : this.avatar.src = defaultAvatar;
+    this.#state.data.avatar ? this.avatar.src = this.#state.data.avatar : this.avatar.src = defaultAvatar;
 
     this.nickname = this.querySelector('.chat-list-item-nickname');
-    this.nickname.textContent = this._data.nickname;
+    this.nickname.textContent = this.#state.data.nickname;
 
     this.lastMessageTime = this.querySelector('.chat-list-item-last-message-time');
-    this.lastMessageTime.textContent = getRelativeTime(this._data.last_message.date);
-
     this.lastMessage = this.querySelector('.chat-list-item-last-message');
-    this.lastMessage.textContent = this._data.last_message.content;
-
     this.unreadMessages = this.querySelector('.chat-list-item-unread-message');
-    if (this.unreadMessages) {
-      this.unreadMessages.textContent = this._data.unread_messages_count > 9 ? '9+' : this._data.unread_messages_count;
+    if (this.#state.data.last_message) {
+      this.lastMessageTime.textContent = getRelativeTime(this.#state.data.last_message.date);
+      this.lastMessage.textContent = this.#state.data.last_message.content;
+      if (this.unreadMessages) {
+        this.unreadMessages.textContent = this.#state.data.unread_messages_count > 9 ? '9+' : this.#state.data.unread_messages_count;
+      }
+    } else {
+      this.lastMessage.textContent = 'No messages yet';
     }
 
     this.listItem = this.querySelector('#chat-list-item');
@@ -58,7 +56,7 @@ export class ChatListItem extends HTMLElement {
           item.classList.remove('active');
         }
       });
-      const event = new CustomEvent('chatItemSelected', { detail: this._data, bubbles: true });
+      const event = new CustomEvent('chatItemSelected', { detail: this.#state.data, bubbles: true });
       this.dispatchEvent(event);
     });
 
@@ -83,7 +81,7 @@ export class ChatListItem extends HTMLElement {
         </div>
 
         <div class="d-inline-block">
-          ${ this._data.unread_messages_count > 0 ?
+          ${ this.#state.data.unread_messages_count > 0 ?
             `<div class="chat-list-item-unread-message circle-number"></div>` : '' }
         </div>
       </div>
