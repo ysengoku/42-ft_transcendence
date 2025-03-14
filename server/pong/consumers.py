@@ -181,6 +181,7 @@ class Pong:
 MAX_PLAYERS = 2
 players = {}
 """
+--normal mode--
 on connection: when the player joins the game
 player receives id for specific match id
 player waits for other player to join
@@ -194,7 +195,7 @@ client sends: {nothing}
 server sends: {state: state}
 
 game is running:
-client sends: {inputs: inputs}
+client sends: {inputs: inputs, player_id: string}
 server sends: {state: state}
 
 game is ended:
@@ -202,16 +203,27 @@ client sends: {nothing}
 server sends: {winner: Profile}
 
 
-1                         2
-no pause, exits game   nothing -> player 1 loses
-1                         1
+--cool mode--
+on connection: when the player joins the game
+player receives id for specific match id
+player waits for other player to join
+client sends: {nothing}
+server sends: {player_id: string}
 
-1           2
-pause    unpauses -> player 1 loses
-1            1
+countdown started: when two players joined the game
+when the second player joined the game
+receives initial state and starts the countdown
+client sends: {nothing}
+server sends: {state: state}
 
-1             2
-pause       waits -> they resume the game and finish
+game is running:
+client sends: {inputs: inputs, player_id: string} (add revolver angle to input)
+server sends: {state: state} (add coin pos, revolver_bullet pos/velocity to state)
+
+game is ended:
+client sends: {nothing}
+server sends: {winner: Profile}
+
 """
 
 
