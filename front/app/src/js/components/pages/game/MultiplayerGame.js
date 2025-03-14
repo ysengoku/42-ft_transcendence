@@ -37,7 +37,7 @@ export class MultiplayerGame extends HTMLElement {
         const normalMaterial = new THREE.MeshNormalMaterial();
 
         const ligths = [new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff)];
-        
+
         const playerglb = (() => {
             const pedro_model = new THREE.Object3D();
             loader.load(
@@ -94,22 +94,22 @@ export class MultiplayerGame extends HTMLElement {
             let hasCollidedWithWall = false;
 
             return ({
-                get z_value () { return z_value },
-                set z_value (new_z_value) { z_value = new_z_value },
+                get z_value() { return z_value },
+                set z_value(new_z_value) { z_value = new_z_value },
 
-                get x_value () { return x_value },
-                set x_value (new_x_value) { x_value = new_x_value },
+                get x_value() { return x_value },
+                set x_value(new_x_value) { x_value = new_x_value },
 
-                get hasCollidedWithAnyBumper () { return hasCollidedWithBumper1 || hasCollidedWithBumper2 },
+                get hasCollidedWithAnyBumper() { return hasCollidedWithBumper1 || hasCollidedWithBumper2 },
 
-                get hasCollidedWithBumper1 () { return hasCollidedWithBumper1 },
-                set hasCollidedWithBumper1 (newHasCollidedWithBumper1) { hasCollidedWithBumper1 = newHasCollidedWithBumper1 },
+                get hasCollidedWithBumper1() { return hasCollidedWithBumper1 },
+                set hasCollidedWithBumper1(newHasCollidedWithBumper1) { hasCollidedWithBumper1 = newHasCollidedWithBumper1 },
 
-                get hasCollidedWithBumper2 () { return hasCollidedWithBumper2 },
-                set hasCollidedWithBumper2 (newHasCollidedWithBumper2) { hasCollidedWithBumper2 = newHasCollidedWithBumper2 },
+                get hasCollidedWithBumper2() { return hasCollidedWithBumper2 },
+                set hasCollidedWithBumper2(newHasCollidedWithBumper2) { hasCollidedWithBumper2 = newHasCollidedWithBumper2 },
 
-                get hasCollidedWithWall () { return hasCollidedWithWall },
-                set hasCollidedWithWall (newHasCollidedWithWall) { hasCollidedWithWall = newHasCollidedWithWall },
+                get hasCollidedWithWall() { return hasCollidedWithWall },
+                set hasCollidedWithWall(newHasCollidedWithWall) { hasCollidedWithWall = newHasCollidedWithWall },
 
                 sphereMesh,
                 sphereBody,
@@ -143,7 +143,7 @@ export class MultiplayerGame extends HTMLElement {
             cubeBody.position.z = cubeMesh.position.z;
             scene.add(cubeMesh);
             world.addBody(cubeBody);
-            
+
             let score = 0;
             return ({
                 cubeBody,
@@ -247,11 +247,21 @@ export class MultiplayerGame extends HTMLElement {
         });
 
         let data;
+        let player_id = '';
         pongSocket.addEventListener("message", function(e) {
-            data = JSON.parse(e.data);
-            updateState(data.state);
-            if (data.state.someone_scored)
-              audio.cloneNode().play();
+            data = JSON.parse(e.data)
+            switch (data.event) {
+                case "game_tick":
+                    updateState(data.state);
+                    if (data.state.someone_scored)
+                        audio.cloneNode().play();
+                    break;
+                case "joined":
+                    player_id = data.player_id;
+                    break;
+                default:
+                    break;
+            }
         });
 
         pongSocket.addEventListener("close", function(_) {
@@ -293,13 +303,13 @@ export class MultiplayerGame extends HTMLElement {
             }
             var keyCode = event.code;
             if (keyCode == 'ArrowLeft')
-                pongSocket.send(JSON.stringify({"action": "bumper1_move_left", "content": true}))
+                pongSocket.send(JSON.stringify({ action: "move_left", content: true, player_id }))
             if (keyCode == 'ArrowRight')
-                pongSocket.send(JSON.stringify({"action": "bumper1_move_right", "content": true}))
+                pongSocket.send(JSON.stringify({ action: "move_right", content: true, player_id }))
             if (keyCode == 'KeyA')
-                pongSocket.send(JSON.stringify({"action": "bumper2_move_left", "content": true}))
+                pongSocket.send(JSON.stringify({ action: "move_left", content: true, player_id }))
             if (keyCode == 'KeyD')
-                pongSocket.send(JSON.stringify({"action": "bumper2_move_right", "content": true}))
+                pongSocket.send(JSON.stringify({ action: "move_right", content: true, player_id }))
             event.preventDefault();
         }
         function onDocumentKeyUp(event) {
@@ -308,13 +318,13 @@ export class MultiplayerGame extends HTMLElement {
             }
             var keyCode = event.code;
             if (keyCode == 'ArrowLeft')
-                pongSocket.send(JSON.stringify({"action": "bumper1_move_left", "content": false}))
+                pongSocket.send(JSON.stringify({ action: "move_left", content: false, player_id }))
             if (keyCode == 'ArrowRight')
-                pongSocket.send(JSON.stringify({"action": "bumper1_move_right", "content": false}))
+                pongSocket.send(JSON.stringify({ action: "move_right", content: false, player_id }))
             if (keyCode == 'KeyA')
-                pongSocket.send(JSON.stringify({"action": "bumper2_move_left", "content": false}))
+                pongSocket.send(JSON.stringify({ action: "move_left", content: false, player_id }))
             if (keyCode == 'KeyD')
-                pongSocket.send(JSON.stringify({"action": "bumper2_move_right", "content": false}))
+                pongSocket.send(JSON.stringify({ action: "move_right", content: false, player_id }))
             event.preventDefault();
         }
 
