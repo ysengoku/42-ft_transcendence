@@ -164,7 +164,8 @@
 - [x] Add API request for chat
 - [] Blocked user chat rendering
 - [] Invite to play game
-- [] Create new chat room
+- [x] Create new chat room
+- [] Handle scroll up to see old messages
 
 ### Online status
 Update online status in real time

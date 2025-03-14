@@ -1,3 +1,5 @@
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { showAlertMessage, ALERT_TYPE } from '@utils';
 import defaltAvatar from '/img/default_avatar.png?url';
 
 export class ChatUserSearchItem extends HTMLElement {
@@ -17,19 +19,48 @@ export class ChatUserSearchItem extends HTMLElement {
   }
 
   disconnetedCallback() {
+    this.removeEventListener('click', this.handleClick);
   }
 
   render() {
     this.innerHTML = this.template() + this.style();
 
-  const avatar = this.#state.user.avatar ? this.#state.user.avatar : defaltAvatar;
-  this.querySelector('.chat-user-search-avatar').src = avatar;
-  this.querySelector('.userlist-nickname').textContent = this.#state.user.nickname;
-  this.querySelector('.userlist-username').textContent = `@${this.#state.user.username}`;
+    const avatar = this.#state.user.avatar ? this.#state.user.avatar : defaltAvatar;
+    this.querySelector('.chat-user-search-avatar').src = avatar;
+    this.querySelector('.userlist-nickname').textContent = this.#state.user.nickname;
+    this.querySelector('.userlist-username').textContent = `@${this.#state.user.username}`;
+
+    this.chatList = document.querySelector('chat-list-component');
+    this.addEventListener('click', this.handleClick);
   }
 
-  handleClick() {
-    
+  async handleClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    await this.fetchChatRoom();
+  }
+
+  async fetchChatRoom() {
+    const response = await apiRequest(
+      'PUT',
+      API_ENDPOINTS.CHAT(this.#state.user.username),
+      null,
+      false,
+      true,
+    );
+    if (response.success) {
+      console.log('Chat room response:', response);
+      if (response.status === 200) {
+        this.chatList.restartChat(response.data);
+      } else if (response.status === 201) {
+        this.chatList.addNewChat(response.data);
+      }
+    } else {
+      if (response.status !== 401 && response.status !== 500) {
+        console.error(response.msg);
+        showAlertMessage(ALERT_TYPE.ERROR, response.msg);
+      }
+    }
   }
 
   template() {
@@ -38,7 +69,7 @@ export class ChatUserSearchItem extends HTMLElement {
       <div class="d-flex flex-row align-items-center">
       <div class="chat-user-search-avatar-container">
           <img class="chat-user-search-avatar rounded-circle me-3" alt="Avatar">
-          <span class="chat-user-search-status-indicator ${this.#state.online ? 'online' : ''} ms-3"></span>
+          <span class="chat-user-search-status-indicator ${this.#state.user.is_online ? 'online' : ''} ms-3"></span>
     </div>
     <div class="d-flex flex-wrap flex-grow-1 gap-2">
           <p class="userlist-nickname m-0 fw-bolder"></P>
