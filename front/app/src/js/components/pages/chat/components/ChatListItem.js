@@ -9,6 +9,8 @@ export class ChatListItem extends HTMLElement {
 
   constructor() {
     super();
+
+    this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
   }
 
   setData(data) {
@@ -17,7 +19,7 @@ export class ChatListItem extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.listItem?.removeEventListener('chatItemSelected', this.handleChatItemSelected);
+    this.listItem?.removeEventListener('click', this.handleChatItemSelected);
   }
 
   render() {
@@ -44,24 +46,40 @@ export class ChatListItem extends HTMLElement {
 
     this.listItem = this.querySelector('#chat-list-item');
 
-    this.handleChatItemSelected = ('click', () => {
-      this.listItem.classList.add('active');
-      const circleNumber = this.listItem.querySelector('.circle-number');
-      if (circleNumber) {
-        circleNumber.remove();
-      }
-      const chatListItems = document.querySelectorAll('.list-group-item');
-      chatListItems.forEach((item) => {
-        if (item !== this.listItem) {
-          item.classList.remove('active');
-        }
-      });
-      const event = new CustomEvent('chatItemSelected', { detail: this.#state.data, bubbles: true });
-      this.dispatchEvent(event);
-    });
+    // this.handleChatItemSelected = ('click', () => {
+    //   this.listItem.classList.add('active');
+    //   const circleNumber = this.listItem.querySelector('.circle-number');
+    //   if (circleNumber) {
+    //     circleNumber.remove();
+    //   }
+    //   const chatListItems = document.querySelectorAll('.list-group-item');
+    //   chatListItems.forEach((item) => {
+    //     if (item !== this.listItem) {
+    //       item.classList.remove('active');
+    //     }
+    //   });
+    //   const event = new CustomEvent('chatItemSelected', { detail: this.#state.data, bubbles: true });
+    //   this.dispatchEvent(event);
+    // });
 
     this.listItem.addEventListener('click', this.handleChatItemSelected);
   }
+
+  handleChatItemSelected() {
+    this.listItem.classList.add('active');
+    const circleNumber = this.listItem.querySelector('.circle-number');
+    if (circleNumber) {
+      circleNumber.remove();
+    }
+    const chatListItems = document.querySelectorAll('.list-group-item');
+    chatListItems.forEach((item) => {
+      if (item !== this.listItem) {
+        item.classList.remove('active');
+      }
+    });
+    const event = new CustomEvent('chatItemSelected', { detail: this.#state.data, bubbles: true });
+    this.dispatchEvent(event);
+  };
 
   template() {
     return `
