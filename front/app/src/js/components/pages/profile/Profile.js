@@ -15,6 +15,11 @@ export class UserProfile extends HTMLElement {
 
   setParam(param) {
     const username = param.username;
+    if (username === '') {
+      const notFound = document.createElement('page-not-found');
+      this.innerHTML = notFound.outerHTML;
+      return;
+    }
     this.fetchUserData(username);
   }
 
