@@ -69,7 +69,7 @@ export class Chat extends HTMLElement {
     this.backButton?.removeEventListener('click', this.handleBackToChatList);
   }
 
-  render() {
+  async render() {
     this.innerHTML = this.template() +this.style();
 
     this.chatListContainer = this.querySelector('#chat-list-container');
@@ -80,7 +80,9 @@ export class Chat extends HTMLElement {
 
     this.chatList.setData(this.chatListData, this.#state.chatListItemCount);
     if (this.#state.chatListItemCount > 1) {
-      this.updateCurrentChat();
+      // this.renderCurrentChat();
+      await this.fetcheCurrentChatMeggages();
+      this.chatMessagesArea.setData(this.currentChat);
     }
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
@@ -105,33 +107,21 @@ export class Chat extends HTMLElement {
       // TODO: Handle error
     }
   }
+  
+  async updateChatList(newMessage) {
+    // TODO
+    // Update chat list with new message notification
+  }
 
-  async updateCurrentChat() {
+  async fetcheCurrentChatMeggages() {
     // ----- Temporary mock data ---------------------------------------
     const data = await mockChatMessagesData(this.currentChat.username);
     this.currentChat.messages = data;
     this.chatMessagesArea.setData(this.currentChat);
     // -----------------------------------------------------------------
-
-    // const response = await apiRequest(
-    //     'GET',
-    //     /* eslint-disable-next-line new-cap */
-    //     API_ENDPOINTS.CHAT_MESSAGES(this.currentChat.username, 10, this.#state.currentChatMessageIndex),
-    //     null, false, true);
-    // if (response.success) {
-    //   this.currentChat.messages = response.data.items;
-    //   this.chatMessagesArea.setData(this.currentChat);
-    // } else {
-    //   // TODO: Handle error
-    // }
   }
 
-  async updateChatList(newMessage) {
-    // TODO
-    // fetch new chat list data and render
-  }
-
-  handleChatItemSelected(event) {
+  async handleChatItemSelected(event) {
     this.currentChat = {
       username: event.detail.username,
       nickname: event.detail.nickname,
@@ -140,8 +130,12 @@ export class Chat extends HTMLElement {
       isBlockedUser: event.detail.is_blocked,
       isBlockedByUser: event.detail.is_blocked_by_user,
     };
-    // this.currentChatUsername = event.detail;
-    this.updateCurrentChat();
+    if (event.detail.messages) {
+      this.currentChat.messages = event.detail.messages;
+      this.chatMessagesArea.setData(this.currentChat);
+    } else {
+      await this.fetcheCurrentChatMeggages();
+    }
 
     if (isMobile()) {
       this.chatListContainer.classList.add('d-none');
@@ -184,7 +178,6 @@ export class Chat extends HTMLElement {
     //-----------------------------------------------
     if (newMessage.sender === this.currentChat.username) {
       this.currentChat.messages.unshift(newMessage);
-      console.log('Current chat:', this.currentChat);
       this.chatMessagesArea.setData(this.currentChat);
     }
     this.updateChatList(newMessage);
