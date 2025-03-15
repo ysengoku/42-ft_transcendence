@@ -28,8 +28,8 @@ export class ChatList extends HTMLElement {
       this.chatListData.splice(index, 1);
       this.chatListData.unshift(tmp);
       this.render();
-      this.chatMessagesArea = document.querySelector('chat-message-area');
-      this.chatMessagesArea.setData(data);
+      const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
+      this.dispatchEvent(event);
     } else {
       this.addNewChat(data);
     }
@@ -39,8 +39,8 @@ export class ChatList extends HTMLElement {
     this.chatListData.unshift(data);
     this.#state.itemCount += 1;
     this.render();
-    this.chatMessagesArea = document.querySelector('chat-message-area');
-    this.chatMessagesArea.setData(data);
+    const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
+    this.dispatchEvent(event);
   }
 
   render() {
