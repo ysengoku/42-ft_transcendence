@@ -1,5 +1,5 @@
 import { router } from '@router';
-import navbarBrand from '/img/sample-logo.svg?url';
+import navbarBrand from '/img/logo-navbar.svg?url';
 
 export class NavbarBrand extends HTMLElement {
   constructor() {
@@ -30,9 +30,9 @@ export class NavbarBrand extends HTMLElement {
 
     this.img = document.createElement('img');
     this.img.src = navbarBrand;
-    this.img.height = 40;
+    this.img.height = 20;
     this.img.alt = 'Peacemakers';
-    this.img.classList.add('d-inline-block', 'align-top');
+    this.img.classList.add('d-inline-block', 'align-center');
 
     this.img.addEventListener('click', this.handleClick);
     this.link.appendChild(this.img);

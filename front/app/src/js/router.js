@@ -137,6 +137,7 @@ const router = (() => {
       if (this.currentComponent) {
         this.currentComponent.remove();
       }
+      console.log('param: ', param);
       const component = document.createElement(componentTag);
       if (typeof component.setParam === 'function') {
         component.setParam(param);
