@@ -1,8 +1,8 @@
 import { auth } from '@auth';
 import { createClouds, createStars } from '@utils'; 
-import logo from '/img/sample-logo.svg?url';
-import duneDay from '/img/dune-day.png?url';
-import duneNight from '/img/dune-night.png?url';
+import logo from '/img/logo.svg?url';
+import duneDay from '/img/dunes-day.png?url';
+import duneNight from '/img/dunes-night.png?url';
 
 export class Landing extends HTMLElement {
   #state = {
@@ -31,9 +31,9 @@ export class Landing extends HTMLElement {
   template() {
     return `
     <div class="container d-flex flex-column justify-content-center align-items-center text-center">
-      <img src="${logo}" alt="logo" class="img-fluid w-100 mb-2">
+      <img src="${logo}" alt="logo" class="landing-logo img-fluid w-50 mb-2">
             
-      <div class="d-flex flex-column align-items-center" id="landing-buttons"> 
+      <div class="d-flex flex-column align-items-center mt-4" id="landing-buttons"> 
         ${ this.#state.isLoggedIn ?
           `<div class="mb-3">
             <a class="btn btn-primary btn-lg" href="/home" role="button">Enter</a>
@@ -60,6 +60,9 @@ export class Landing extends HTMLElement {
       }
       #landing-buttons {
         z-index: 4;
+      }
+      .landing-logo {
+        max-width: 320px;
       }
     </style>
     `;
