@@ -46,5 +46,8 @@ class JWTAuthMiddleware:
 
         if token:
             scope["user"] = await authenticate_token(token)
+        else:
+            scope["user"] = None
+
 
         return await self.app(scope, receive, send)
