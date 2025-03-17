@@ -12,7 +12,7 @@ export class ChatButton extends HTMLElement {
 
   disconnectedCallback() {
     if (this.button) {
-      this.button.removeEventListener('click', this.handleClick);
+      this.button?.removeEventListener('click', this.handleClick);
     }
   }
 
@@ -25,9 +25,9 @@ export class ChatButton extends HTMLElement {
   handleClick() {
     router.navigate('/chat');
   }
-  
+
   template() {
-    return`
+    return `
 			<button class="navbar-button btn">
 				<i class="bi bi-chat"></i>
 			</button>

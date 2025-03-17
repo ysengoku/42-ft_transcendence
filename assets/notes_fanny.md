@@ -467,3 +467,8 @@ https://www.figma.com/board/DRobeokeHLoM8U8bvd96gA/ft_transcendence-Concept-%26-
 
 Figma:
 https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=0-1&p=f&t=e49KbRQ10iVVR48b-0
+
+### online status
+
+OnlineStatus.js in utils
+OnlineStatusIndicator.js in /components/pages/profile/components/
