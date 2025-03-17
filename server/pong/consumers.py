@@ -47,6 +47,8 @@ class Bumper(Vector2):
     moves_left: bool
     moves_right: bool
     dir_z: int
+    player_id: str
+    user_id: str
 
 
 @dataclass(slots=True)
@@ -228,13 +230,29 @@ server sends: {winner: Profile}
 MAX_PLAYERS = 2
 players = {}
 
+"""
+user connects
+
+we search in players for the id of the user
+
+if there is one, we reuse that
+
+otherwise if there are no more than two players, we generate a new player id and add it to the players:
+    {user_id:player_id} -> add it to the list of players -> send it to client
+
+otherwise disconnect
+
+on each input client sends it back
+clients disconnects
+"""
 
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.match_name = self.scope["url_route"]["kwargs"]["match_name"]
         self.match_group_name = f"match_{self.match_name}"
+        self.user = self.scope.get("user")
 
-        if len(players) > MAX_PLAYERS:
+        if len(players) > MAX_PLAYERS or not self.user:
             await self.disconnect(1000)
             return
 
