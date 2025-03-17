@@ -1,5 +1,4 @@
 import { auth } from '@auth';
-import { createClouds, createStars } from '@utils'; 
 import logo from '/img/logo.svg?url';
 import duneDay from '/img/dunes-day.png?url';
 import duneNight from '/img/dunes-night.png?url';
