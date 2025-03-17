@@ -47,8 +47,6 @@ class Bumper(Vector2):
     moves_left: bool
     moves_right: bool
     dir_z: int
-    player_id: str
-    user_id: str
 
 
 @dataclass(slots=True)
@@ -252,13 +250,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.match_group_name = f"match_{self.match_name}"
         self.user = self.scope.get("user")
 
+        self.player_id = hashlib.sha256(os.urandom(32)).hexdigest()
         if len(players) > MAX_PLAYERS or not self.user:
             await self.disconnect(1000)
             return
 
         await self.accept()
         await self.channel_layer.group_add(self.match_group_name, self.channel_name)
-        self.player_id = hashlib.sha256(os.urandom(32)).hexdigest()
         self.state = Pong()
         if len(players) == 0:
             players[self.player_id] = self.state.bumper_1
