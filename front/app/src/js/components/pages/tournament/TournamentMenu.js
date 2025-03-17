@@ -10,7 +10,7 @@ export class TournamentMenu extends HTMLElement {
   render() {
     this.innerHTML = this.template();
   }
-  
+
   template() {
     return `
 		<div class="container d-flex flex-column justify-content-center align-items-center text-center">

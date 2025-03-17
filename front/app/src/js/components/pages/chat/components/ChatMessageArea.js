@@ -1,3 +1,5 @@
+import defaultAvatar from '/img/default_avatar.png?url';
+
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -6,12 +8,11 @@ import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 export class ChatMessageArea extends HTMLElement {
   #state = {
     user: null,
-    data: [],
+    data: null,
   };
 
   constructor() {
     super();
-
     this.handleNavigateToProfile = this.handleNavigateToProfile.bind(this);
     this.blockUser = this.blockUser.bind(this);
   }
@@ -35,11 +36,11 @@ export class ChatMessageArea extends HTMLElement {
     this.headerUsername = this.querySelector('#chat-header-username');
     this.headerOnlineStatusIndicator = this.querySelector('#chat-header-online-status-indicator');
     this.headerOnlineStatus = this.querySelector('#chat-header-online-status');
-    this.headerAvatar.src = this.#state.data.avatar;
+    this.#state.data.avatar ? this.headerAvatar.src = this.#state.data.avatar : this.headerAvatar.src = defaultAvatar;
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
-    this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.is_online);
-    this.headerOnlineStatus.textContent = this.#state.data.is_online ? 'online' : 'offline';
+    this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.isOnline);
+    this.headerOnlineStatus.textContent = this.#state.data.isOnline ? 'online' : 'offline';
 
     this.renderMessages();
 
@@ -86,7 +87,7 @@ export class ChatMessageArea extends HTMLElement {
     const messageElement = this.querySelector(`[dataIndex='${index}'] .bubble`);
     if (messageElement) {
       messageElement.innerHTML = `
-        ${message.message}
+        ${message.content}
         ${message.liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
       `;
     }
@@ -95,6 +96,13 @@ export class ChatMessageArea extends HTMLElement {
   renderMessages() {
     const chatMessages = this.querySelector('#chat-messages');
     chatMessages.innerHTML = '';
+    if (!this.#state.data.messages) {
+      // const noMessages = document.createElement('div');
+      // noMessages.textContent = 'No messages yet';
+      // noMessages.classList.add('text-center', 'mt-3', 'pe-2', 'pt-3');
+      // chatMessages.appendChild(noMessages);
+      return;
+    }
     this.#state.data.messages.forEach((message, index) => {
       const messageElement = document.createElement('div');
       messageElement.innerHTML = this.messageTemplate();
@@ -108,7 +116,7 @@ export class ChatMessageArea extends HTMLElement {
         );
         messageContent.classList.add('me-5');
         messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
-        messageElement.querySelector('.message-content').textContent = message.message;
+        messageElement.querySelector('.message-content').textContent = message.content;
         messageElement.querySelector('.message-liked').innerHTML = message.liked ?
           '<i class="bi bi-heart-fill h5"></i>' : '';
       } else {
@@ -116,7 +124,7 @@ export class ChatMessageArea extends HTMLElement {
             'align-items-center');
         messageContent.classList.add('ms-5');
         messageElement.querySelector('.chat-message-avatar').remove();
-        messageElement.querySelector('.message-content').textContent = message.message;
+        messageElement.querySelector('.message-content').textContent = message.content;
         messageElement.querySelector('.message-liked').innerHTML = message.liked ?
           '<i class="bi bi-heart-fill h5"></i>' : '';
       }
@@ -124,7 +132,7 @@ export class ChatMessageArea extends HTMLElement {
       messageContent.addEventListener('click', () => {
         this.toggleLikeMessage(index);
       });
-      chatMessages.appendChild(messageElement);
+      chatMessages.prepend(messageElement);
     });
     chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
   }

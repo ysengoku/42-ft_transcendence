@@ -1,9 +1,9 @@
-import { passwordFeedback, removeInputFeedback, INPUT_FEEDBACK } from '@utils';
+import { passwordFeedback, INPUT_FEEDBACK } from '@utils';
 
 export class PasswordUpdate extends HTMLElement {
   #state = {
     connectionType: '',
-  }
+  };
 
   constructor() {
     super();
@@ -50,7 +50,9 @@ export class PasswordUpdate extends HTMLElement {
     }
 
     let isValid = true;
-    isValid = passwordFeedback(this.newPasswordField, this.newPasswordRepeatField, this.newPasswordFeedback, this.newPasswordRepeatFeedback);
+    isValid = passwordFeedback(
+        this.newPasswordField, this.newPasswordRepeatField,
+        this.newPasswordFeedback, this.newPasswordRepeatFeedback);
     if (!isValid) {
       return false;
     }

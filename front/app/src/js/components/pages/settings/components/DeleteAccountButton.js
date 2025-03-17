@@ -1,5 +1,4 @@
 import { router } from '@router';
-import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessage, ALERT_TYPE } from '@utils';
 
