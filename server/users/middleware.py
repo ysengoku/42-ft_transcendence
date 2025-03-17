@@ -1,53 +1,50 @@
-import jwt
-from django.contrib.auth import get_user_model
-from django.conf import settings
-from channels.middleware import BaseMiddleware
 from channels.db import database_sync_to_async
+from django.contrib.auth import get_user_model
+from ninja.errors import AuthenticationError
+
+from users.models.refresh_token import RefreshToken
 
 User = get_user_model()
 
 
 @database_sync_to_async
-def get_user(user_id):
+def authenticate_token(token):
+    """
+    Authenticate a token using the same logic as your API
+    """
     try:
-        return User.objects.get(id=user_id)
-    except User.DoesNotExist:
+        payload = RefreshToken.objects.verify_access_token(token)
+        return User.objects.select_related("profile", "oauth_connection").filter(id=payload["sub"]).first()
+    except (AuthenticationError, User.DoesNotExist):
         return None
 
 
-class JWTAuthMiddleware(BaseMiddleware):
+class JWTAuthMiddleware:
+    """
+    Authentication middleware for WebSocket connections using JWT tokens.
+
+    This middleware:
+    1. Extracts the access token from cookies
+    2. Verifies the token using your existing JWT verification logic
+    3. Attaches the authenticated user to the scope if valid
+    """
+
+    def __init__(self, app):
+        # Store the ASGI application we were passed
+        self.app = app
+
     async def __call__(self, scope, receive, send):
-        # Récupérer le token depuis les cookies ou les headers
-        print(f"JWT Middleware called with scope type: {scope['type']}")
-        print(f"Headers: {dict(scope['headers'])}")
         headers = dict(scope["headers"])
-        cookies = headers.get(b"cookie", b"").decode("utf-8")
+        cookies = headers.get(b"cookie", b"").decode("utf-8") if b"cookie" in headers else ""
         token = None
 
-        # Extraire le token JWT du cookie (ajustez le nom selon votre système)
-        for cookie in cookies.split(";"):
-            cookie = cookie.strip()
-            if cookie.startswith("access_token="):
-                token = cookie[13:]  # 'access_token=' a 13 caractères
+        for cookie_part in cookies.split(";"):
+            cookie_clean = cookie_part.strip()
+            if cookie_clean.startswith("access_token="):
+                token = cookie_clean[13:]
                 break
 
-        # Si aucun token trouvé dans les cookies, chercher dans les headers. necessaire ?
-        if not token and b"authorization" in headers:
-            auth_header = headers[b"authorization"].decode("utf-8")
-            if auth_header.startswith("Bearer "):
-                token = auth_header[7:]
-
-        scope["user"] = None
-
         if token:
-            try:
-                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-                user_id = payload.get("user_id")
+            scope["user"] = await authenticate_token(token)
 
-                if user_id:
-                    user = await get_user(user_id)
-                    scope["user"] = user
-            except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
-                pass
-
-        return await super().__call__(scope, receive, send)
+        return await self.app(scope, receive, send)
