@@ -23,29 +23,6 @@ export class UserEnemy extends HTMLElement {
   }
 
   render() {
-    // Test data ---------------------------------------
-    if (this.#state.type === 'best') {
-      this.#state.data = {
-        username: 'george',
-        nickname: 'George',
-        avatar: '/__mock__/img/sample-pic3.png',
-        wins: 20,
-        loses: 10,
-        winrate: 67,
-        elo: 1100,
-      };
-    }
-    // if (this.#state.type === 'worst') {
-    //   this.#state.data = {
-    //     nickname: 'Lalala',
-    //     avatar: '/__mock__/img/sample-pic2.png',
-    //     wins: 20,
-    //     loses: 10,
-    //     winrate: 67,
-    //     elo: 1100,
-    //   };
-    // }
-    // -------------------------------------------------
     this.innerHTML = this.template() + this.style();
 
     if (!this.#state.data) {
@@ -66,7 +43,7 @@ export class UserEnemy extends HTMLElement {
     this.enemyContainer = this.querySelector('.enemy-container');
     this.handleClick = () => {
       router.navigate(`/profile/${this.#state.data.username}`);
-    }
+    };
     this.enemyContainer.addEventListener('click', this.handleClick);
   }
 
@@ -74,17 +51,17 @@ export class UserEnemy extends HTMLElement {
     const type = this.#state.type === 'best' ? 'Best Enemy' : 'Worst Enemy';
     if (this.#state.data) {
       return `
-      <div class="d-flex flex-column justify-content-start enemy-container py-2">
-			  <p class="no-margin ms-1 text-center">${type}</p>
+      <div class="enemy-container d-flex flex-column justify-content-start p-2">
+			  <p class="stat-label text-center">${type}</p>
 			  <div class="enemy-avatar-container">
-				  <p class="enemy-nickname lh-1 fs-5 ps-4 py-2 no-margin"></p>
+				  <p class="enemy-nickname lh-1 fs-5 ps-4 py-2 m-0"></p>
 				  <div class="d-flex flex-row justify-content-around align-items-start p-1">
 					  <div class="d-flex flex-column justify-content-start px-2">
 					  <img alt="User Avatar" class="enemy-avatar rounded-circle">
 					  </div>
 					  <div>
-						  <p class="enemy-elo no-margin fs-6"></p>
-						  <p class="enemy-winrate no-margin fs-6"></p>
+						  <p class="enemy-elo m-0 fs-6"></p>
+						  <p class="enemy-winrate m-0 fs-6"></p>
 						  <small class="win-and-losses"</small>
 					  </div>
 				  </div>
@@ -93,9 +70,9 @@ export class UserEnemy extends HTMLElement {
 			`;
     } else {
       return `
-      <div class="d-flex flex-column justify-content-start enemy-container py-2">
-			  <p class="no-margin ms-1 text-center">${type}</p>
-			  <div class="enemy-avatar-container d-flex flex-column justify-content-center text-center p-2">
+      <div class="enemy-container d-flex flex-column justify-content-start p-2">
+			  <p class="m-0 ms-1 text-center">${type}</p>
+			  <div class="enemy-avatar-container d-flex flex-column justify-content-center text-center mt-3 p-2">
 				  <p>No ${type.toLowerCase()}</p>
 			  </div>
       </div>
@@ -104,22 +81,24 @@ export class UserEnemy extends HTMLElement {
   }
 
   style() {
+    let style = `
+    <style>
+		.enemy-container {
+			min-width: 240px;
+		}	
+    `;
+
     if (this.#state.data) {
-      return `
-      <style>
-				.enemy-avatar-container {
-					height: 144px;
-				}	
-				.enemy-avatar-container img {
-    				width: 88px;
-    				aspect-ratio: 1;
-    				object-fit: cover;
-				}
+      style += `
+			.enemy-avatar-container img {
+    		width: 88px;
+    		aspect-ratio: 1;
+    		object-fit: cover;
+			}
 		  </style>
       `;
-    } else {
-      return '';
     }
+    return style + '</style>';
   }
 }
 

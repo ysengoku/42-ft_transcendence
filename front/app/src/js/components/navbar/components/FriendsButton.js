@@ -8,9 +8,9 @@ export class FriendsButton extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.template();
   }
-  
+
   template() {
     return `
     <div class="nav-link" id="navbar-friends-button" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -22,16 +22,6 @@ export class FriendsButton extends HTMLElement {
       <friends-list></friends-list>
 	  </div>
 		`;
-  }
-
-  style() {
-    return `
-    <style>
-      .dropdown-menu {
-        max-height: 75vh;
-        overflow: auto;
-     }
-    </style>`;
   }
 }
 

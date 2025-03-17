@@ -1,5 +1,6 @@
 import { auth } from '@auth';
 import { addDissmissAlertListener } from '@utils';
+import { createClouds, createStars } from '@utils';
 // import { CubeTexture } from 'three/src/Three.Core.js';
 
 /**
@@ -32,7 +33,7 @@ const router = (() => {
      * @param {boolean} [isDynamic=false] - Whether the route is dynamic (contains a parameter).
      * @return {void}
      * @example
-     * router.addRoute('/home', 'user-home', false, true);
+     * router.addRoute('/home', 'user-home', false);
      */
     addRoute(path, componentTag, isDynamic = false) {
       this.routes.set(path, { componentTag, isDynamic });
@@ -136,6 +137,7 @@ const router = (() => {
       if (this.currentComponent) {
         this.currentComponent.remove();
       }
+      console.log('param: ', param);
       const component = document.createElement(componentTag);
       if (typeof component.setParam === 'function') {
         component.setParam(param);
@@ -152,7 +154,11 @@ const router = (() => {
      */
     navigate(path = window.location.pathname, queryParams = '') {
       console.log('Navigating to:', path);
-      window.history.pushState({}, '', path);
+      if (path === '/user-not-found') {
+        window.history.replaceState({}, '', path);
+      } else {
+        window.history.pushState({}, '', path);
+      }
       this.handleRoute(queryParams);
     }
 
@@ -209,6 +215,16 @@ router.addRoute('/error', 'error-page');
  */
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded');
+  document.documentElement.getAttribute('data-bs-theme') === 'light' ? (
+    document.getElementById('stars') ? document.body.removeChild(stars) : null,
+    document.body.style.backgroundImage = `linear-gradient(rgb(225, 164, 99),rgb(160, 94, 50), #d47a3e)`,
+    createClouds()
+  ) : (
+    document.getElementById('cloud') ? document.getElementById('content').removeChild(cloud) : null,
+    document.body.style.backgroundImage = `linear-gradient(#080f1c 0%, #0d4261 32%,  #1473ab 100%)`,
+    createStars()
+  );
+
   await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');
   if (navbarContainer) {

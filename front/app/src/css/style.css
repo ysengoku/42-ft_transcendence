@@ -1,16 +1,97 @@
+/*----- Font definition ------------------------------------------------------*/
+
 @font-face {
-  font-family: 'Texas Tango Extra Roth';
-  src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
+  font-family: 'docktrin';
+  src: url(/fonts/docktrin.ttf) format('truetype');
 }
+
+@font-face {
+  font-family: 'van dyke';
+  src: url(/fonts/VAN_DYKE.ttf) format('truetype');
+}
+
+/* @font-face {
+  font-family: 'Texas Tango';
+  src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
+} */
+
+/* @font-face {
+  font-family: 'kleader';
+  src: url(/fonts/Kleader.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'WestCarabao';
+  src: url(/fonts/WestCarabao.ttf) format('truetype');
+} */
+
+/*----- Colors ---------------------------------------------------------------*/
+:root {
+  --bs-body-color: #22201F;
+  --bs-black-rgb: 34, 32, 31;
+}
+
+[data-bs-theme="light"] {
+  --bs-body-color: #22201F;
+  --bs-black-rgb: 34, 32, 31;
+}
+
+[data-bs-theme="dark"] {
+  --bs-body-color: #f1f0f0;
+  --bs-black-rgb: 241, 240, 240;
+}
+
+/*----- Global ---------------------------------------------------------------*/
 
 html,
 body {
-  height: 100%;
+  height: auto;
   margin: 0;
   cursor: url('/img/sample-cursor.png') 4 4, auto;
   font-family: "Crimson Pro", serif;
 }
 
+body {
+  z-index: 0;
+}
+
+.navbar {
+  z-index: 3;
+}
+
+h2, h3, h4, h5, h6, legend {
+  font-family: 'van dyke', serif;
+}
+
+#content {
+  max-width: 100%;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  z-index: 2;
+}
+
+.footer {
+  height: 48px;
+  background-color: #3b3b3b;
+}
+
+.dropdown-menu {
+  z-index: 1050 !important; /* Keep dropdown always on top */
+}
+
+.modal-backdrop {
+  z-index: -1;
+}
+
+.form-container {
+  background-color: rgba(128,128,128, 0.1);
+}
+
+
+/*----- Cursor ---------------------------------------------------------------*/
 a, button, div [role="button"], input[type="submit"], input[type="button"] {
   cursor: url('/img/sample-cursor.png') 4 4, auto !important;
 }
@@ -24,28 +105,73 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
 }
 
-legend {
-  font-family: 'Texas Tango Extra Roth', serif;
+/*----- Background animation -------------------------------------------------*/
+
+#cloud {
+  position: absolute;
+  display: block;
+  top: -60px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: url('/img/cloud.png');
+  animation: float-cloud 120s linear infinite;
+  z-index: 1;
+}
+@keyframes float-cloud {
+  0%{
+    background-position: 0px;
+  }
+  100%{
+    background-position: 5440px;
+  }
 }
 
-#content {
-  max-width: 100%;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-x: hidden;
+.star {
+  position: absolute;
+  display: block;
+  background-color: #f6f7af;
+  border-radius: 50%;
+  box-shadow: 0 0 4px 3px rgba(#f6f7af, 0.2);
+  opacity: 0;
+  animation: twinkle 3s infinite;
+}
+@keyframes twinkle {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
 }
 
-.footer {
-  height: 48px;
-  background-color: #3b3b3b;
+.shooting-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(45deg, #f6f7af, rgba(255, 255, 255, 0));
+  opacity: 0;
+  animation: shoot 2s ease-in-out infinite;
+} 
+@keyframes shoot {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-200px, 300px);
+  }
 }
 
-.dropdown-menu {
-  z-index: 1050 !important; /* Keep dropdown always on top */
-}
-
-.form-container {
-  background-color: rgba(128,128,128, 0.1);
+/*----- Buttons ---------------------------------------------------------------*/
+.search-submit-btn {
+  border: none;
+  background-color: transparent;
 }
