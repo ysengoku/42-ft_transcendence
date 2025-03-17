@@ -48,10 +48,10 @@ export class Settings extends HTMLElement {
     } else {
       if (response.status === 401) {
         showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
-        router.navigate('/');
+        router.navigate('/login');
       } else if (response.status === 403) {
         showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
-        router.navigate('/home');
+        router.navigate('/');
       }
     }
   }
@@ -98,8 +98,9 @@ export class Settings extends HTMLElement {
     const userIdentity = this.userIdentityField.newUserIdentity;
     const newEmail = this.emailField.newEmail;
 
-    if (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) || 
-      !this.passwordField.checkPasswordInput()) {
+    if (this.#state.currentUserData.connection_type === 'regular' &&
+       (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) ||
+        !this.passwordField.checkPasswordInput())) {
       return;
     }
 
@@ -149,9 +150,10 @@ export class Settings extends HTMLElement {
     /* eslint-disable-next-line new-cap */
     const response = await apiRequest(
         'POST',
+        /* eslint-disable-next-line new-cap */
         API_ENDPOINTS.USER_SETTINGS(this.#state.username),
         formData,
-        true
+        true,
     );
     if (response.success) {
       this.#state.username = response.data.username;

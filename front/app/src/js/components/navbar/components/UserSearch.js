@@ -4,13 +4,16 @@ import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils'
 export class UserSearch extends HTMLElement {
   constructor() {
     super();
+    this.searchQuery = '';
     this.userList = [];
     this.totalUsersCount = 0;
+    this.currentListLength = 0;
 
     this.handleClick = this.handleClick.bind(this);
     this.handleInput = this.handleInput.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleDropdownHidden = this.handleDropdownHidden.bind(this);
+    this.handleShowMoreUsers = this.handleShowMoreUsers.bind(this);
   }
 
   connectedCallback() {
@@ -44,38 +47,51 @@ export class UserSearch extends HTMLElement {
     if (this.input.value === '') {
       this.userList = [];
       this.totalUserCount = 0;
+      this.currentListLength = 0;
       this.listContainer.innerHTML = '';
     }
+    this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
   }
 
   handleInput() {
     if (this.input.value === '') {
       this.userList = [];
       this.totalUserCount = 0;
+      this.currentListLength = 0;
       this.listContainer.innerHTML = '';
+      this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
     }
   }
 
   async handleSubmit(event) {
     event.stopPropagation();
     event.preventDefault();
-    const searchQuery = this.input.value;
-    await this.searchUser(searchQuery);
+    this.searchQuery = this.input.value;
+    this.listContainer.innerHTML = '';
+    await this.searchUser(this.searchQuery);
   }
 
   handleDropdownHidden() {
+    this.searchQuery = '';
     this.userList = [];
     this.totalUserCount = 0;
     this.listContainer.innerHTML = '';
     this.input.value = '';
+    this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
   }
 
-  async searchUser(searchQuery) {
-    const listLength = this.userList.length;
+  async handleShowMoreUsers(event) {
+    event.stopPropagation();
+    this.searchUser();
+    this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
+    this.showMoreButton?.remove();
+  }
+
+  async searchUser() {
     const response = await apiRequest(
         'GET',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SEARCH(searchQuery, 10, listLength),
+        API_ENDPOINTS.USER_SEARCH(this.searchQuery, 10, this.currentListLength),
         null,
         false,
         true,
@@ -98,20 +114,21 @@ export class UserSearch extends HTMLElement {
   }
 
   renderUserList() {
-    this.listContainer.innerHTML = '';
     if (this.userList.length === 0) {
       this.renderNoUserFound();
       return;
     }
-    this.userList.forEach((user) => {
+    for (let i = this.currentListLength; i < this.userList.length; i++) {
       const listItem = document.createElement('user-list-item');
-      listItem.setAttribute('username', user.username);
-      listItem.setAttribute('nickname', user.nickname);
-      listItem.setAttribute('avatar', user.avatar);
-      listItem.setAttribute('online', user.is_online);
+      listItem.data = this.userList[i];
+      if (i === 0) {
+        const firstItem = listItem.querySelector('.list-group-item');
+        firstItem.classList.add('border-top-0');
+      }
       this.listContainer.appendChild(listItem);
-    });
-    if (this.totalUsersCount > this.userList.length) {
+      this.currentListLength++;
+    }
+    if (this.totalUsersCount > this.currentListLength) {
       this.renderShowMoreButton();
     }
   }
@@ -123,27 +140,22 @@ export class UserSearch extends HTMLElement {
   }
 
   renderShowMoreButton() {
-    const showMoreButton = document.createElement('li');
-    showMoreButton.innerHTML = this.showMoreButtonTemplate();
-    this.listContainer.appendChild(showMoreButton);
+    this.showMoreButtonContainer = document.createElement('li');
+    this.showMoreButtonContainer.innerHTML = this.showMoreButtonTemplate();
+    this.listContainer.appendChild(this.showMoreButtonContainer);
 
-    const button = showMoreButton.querySelector('#show-more-users');
-    if (button) {
-      button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        this.searchUser();
-      });
-    }
+    this.showMoreButton = this.showMoreButtonContainer.querySelector('#show-more-users');
+    this.showMoreButton?.addEventListener('click', this.handleShowMoreUsers);
   }
 
   template() {
-    return`
+    return `
     <form class="d-flex mx-3 mt-3 mb-2" role="search" id="user-search-form">
-      <div class="input-group">
+      <div class="input-group mt-2">
         <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-        <input class="form-control me-2" type="search" placeholder="Find user(s)" aria-label="Search">
+        <input class="form-control" type="search" placeholder="Find user(s)" aria-label="Search">
       </div>
-      <button class="btn btn-primary" type="submit">Search</button>
+      <button class="search-submit-btn btn mt-2" type="submit">Search</button>
     </form>
     <div class="ps-3 pe-4">
         <ul class="list-group mb-2" id="navbar-user-list"></ul>

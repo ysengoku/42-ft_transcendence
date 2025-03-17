@@ -15,7 +15,7 @@ export class AvatarUpload extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.removeEventListener('click', this.handleClick);
+    this.avatarUploadButton.removeEventListener('click', this.handleClick);
   }
 
   render() {
@@ -23,10 +23,11 @@ export class AvatarUpload extends HTMLElement {
 
     this.avatarUploadButton = this.querySelector('#avatar-upload-button');
     this.avatarImage = this.querySelector('#user-avatar-image');
-    this.addEventListener('click', this.handleClick);
+    this.avatarUploadButton.addEventListener('click', this.handleClick);
   }
 
-  handleClick() {
+  handleClick(event) {
+    event.preventDefault();
     const modal = document.querySelector('avatar-upload-modal');
     modal.showModal((file) => {
       if (file) {

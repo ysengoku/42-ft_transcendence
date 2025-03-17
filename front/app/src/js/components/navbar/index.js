@@ -9,6 +9,8 @@ import { UserSearch } from './components/UserSearch.js';
 import { ChatButton } from './components/ChatButton.js';
 import { UserActionsMenu } from './components/UserActionsMenu.js';
 import { NotificationsButton } from './components/NotificationsButton.js';
+import { NotificationsList } from './components/NotificationsList.js';
+import { NotificationsListItem } from './components/NotificationsListItem.js';
 
 export {
   Navbar,
@@ -22,4 +24,6 @@ export {
   ChatButton,
   UserActionsMenu,
   NotificationsButton,
+  NotificationsList,
+  NotificationsListItem,
 };
