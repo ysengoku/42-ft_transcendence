@@ -46,13 +46,13 @@ export class UserDuelHistory extends HTMLElement {
   handleRowClick(event) {
     event.preventDefault();
     const modal = document.querySelector('game-result-modal');
-    modal.showModal('duel');  // TODO: Send id of the duel too
+    modal.showModal('duel'); // TODO: Send id of the duel too
   }
 
   createRow(item) {
     const row = document.createElement('tr');
     row.innerHTML = this.rowTemplate() + this.style(item.is_winner);
-  
+
     const opponentAvatar = row.querySelector('.user-game-history-avatar');
     const opponentNickname = row.querySelector('.opponent-nickname');
     const duelDate = row.querySelector('.duel-date');
@@ -60,7 +60,7 @@ export class UserDuelHistory extends HTMLElement {
     const duelResult = row.querySelector('.result-badge');
     const eloResult = row.querySelector('.elo-result');
     const eloChangeIndicator = row.querySelector('.elo-change-indicator');
-  
+
     opponentAvatar.src = item.opponent.avatar;
     opponentNickname.textContent = item.opponent.username;
     duelDate.textContent = this.formatDate(item.date);

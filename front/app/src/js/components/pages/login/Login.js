@@ -18,8 +18,8 @@ export class Login extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.forgotPasswordButton.removeEventListener('click', this.handleForgotPasswordClick);
-    this.registerButton.removeEventListener('click', this.handleRegisterClick);
+    this.forgotPasswordButton?.removeEventListener('click', this.handleForgotPasswordClick);
+    this.registerButton?.removeEventListener('click', this.handleRegisterClick);
   }
 
   render() {
