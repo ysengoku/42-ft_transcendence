@@ -1,8 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { ERROR_MESSAGES } from '@utils';
 import './components/index.js';
-// import poster from '/img/sample-background.png?url';
 
 export class UserProfile extends HTMLElement {
   #state = {
@@ -17,6 +15,11 @@ export class UserProfile extends HTMLElement {
 
   setParam(param) {
     const username = param.username;
+    if (username === '') {
+      const notFound = document.createElement('page-not-found');
+      this.innerHTML = notFound.outerHTML;
+      return;
+    }
     this.fetchUserData(username);
   }
 
@@ -89,7 +92,7 @@ export class UserProfile extends HTMLElement {
     userStatCardTotalMatches.setParam({ title: 'Total Matches', value: this.user.total_matches });
     const userStatCardFriendsCount = document.createElement('user-stat-card');
     userStatCardFriendsCount.setParam({ title: 'Friends', value: this.user.friends_count });
-    
+
     const userStatElo = this.querySelector('#user-stat-card-elo');
     const userStatScoredBalls = this.querySelector('#user-stat-card-scored-balls');
     const userStatTotalMatches = this.querySelector('#user-stat-card-total-matches');
@@ -99,17 +102,6 @@ export class UserProfile extends HTMLElement {
     userStatTotalMatches.appendChild(userStatCardTotalMatches);
     userStatFriendsCount.appendChild(userStatCardFriendsCount);
 
-    const userWinRatePieGraph = this.querySelector('user-win-rate-pie-graph');
-    if (userWinRatePieGraph) {
-      userWinRatePieGraph.data = {
-        rate: this.user.winrate,
-        wins: this.user.wins,
-        losses: this.user.loses,
-      };
-    }
-      
-    // TODO: Elo graph
-
     const bestEnemyContainer = this.querySelector('#best-enemy');
     const bestEnemy = document.createElement('user-enemy-component');
     bestEnemy.setParam({ type: 'best', data: this.user.best_enemy });
@@ -118,6 +110,20 @@ export class UserProfile extends HTMLElement {
     const worstEnemy = document.createElement('user-enemy-component');
     worstEnemy.setParam({ type: 'worst', data: this.user.worst_enemy });
     worstEnemyContainer.appendChild(worstEnemy);
+
+    const userWinRatePieGraph = this.querySelector('user-win-rate-pie-graph');
+    if (userWinRatePieGraph) {
+      userWinRatePieGraph.data = {
+        rate: this.user.winrate,
+        wins: this.user.wins,
+        losses: this.user.loses,
+      };
+    }
+
+    const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
+    if (userEloProgressionChart) {
+      userEloProgressionChart.data = this.user.elo_history;
+    }
 
     const gameHistory = this.querySelector('user-game-history');
     if (gameHistory) {
@@ -140,43 +146,41 @@ export class UserProfile extends HTMLElement {
 
             <!-- Online indicator & wanted -->
             <div class="mb-3 text-center justify-content-center px-2 pt-3">
-              <div class="d-flex flex-row align-items-center">
-                <hr class="line flex-grow-1">  
-       
-                <div id="user-profile-online-status"></div>
-                <hr class="line flex-grow-1">
-              </div>
-              <h1>WANTED</h1>
-              <hr class="line">
+            <h1 class="mt-2">WANTED</h1>
+            <div class="d-flex flex-row align-items-center">
+              <hr class="line flex-grow-1">  
+              <div id="user-profile-online-status"></div>
+              <hr class="line flex-grow-1">
+            </div>
             </div>
             
             <!-- Avatar & User Info -->
             <profile-avatar></profile-avatar>
             <profile-user-info></profile-user-info>
+            <hr class="line">
+
+            <profile-user-actions></profile-user-actions>
 
             <!-- Stats section -->
-            <div class="flex-grow-1">
-              <profile-user-actions></profile-user-actions>
 
+            <div class="d-flex flex-row justify-content-around flex-grow-1 mb-2 px-3">
               <!-- Stat cards -->
-              <div class="d-flex flex-row justify-content-around px-3 mt-4 w-100">
-                <div id="user-stat-card-elo"></div>
-                <div id="user-stat-card-scored-balls"></div>
-                <div id="user-stat-card-total-matches"></div>
-                <div id="user-stat-card-friends-count"></div>
+              <div class="stat-cards-wrapper d-flex flex-wrap justify-content-center align-items-start me-3">
+    
+                  <div id="user-stat-card-elo"></div>
+                  <div id="user-stat-card-scored-balls"></div>
+       
+                  <div id="user-stat-card-total-matches"></div>
+                  <div id="user-stat-card-friends-count"></div>
+             
               </div>
 
-              <!-- Graphs -->
-              <div class="graphs-container container d-flex flex-row justify-content-around align-items-top p-3 gap-3">
-                <div class="graph-container p-2">
-                  <p>Win Rate</p>
-                  <user-win-rate-pie-graph></user-win-rate-pie-graph>
-                </div>               
-                <div class="graph-container flex-grow-1 p-2">
-                  <p>Elo progression</p>
-                  <canvas id="eloProgressionChart"></canvas>
-                </div>
+              <!-- Enemies -->
+              <div class="d-flex flex-wrap flex-column gap-3">
+                <div class="d-flex flex-column" id="best-enemy"></div>
+                <div class="d-flex flex-column" id="worst-enemy"></div>
               </div>
+
             </div>
           </div>
         </div>
@@ -185,39 +189,48 @@ export class UserProfile extends HTMLElement {
         <div class="d-flex col-12 col-lg-6 py-4">
           <div class="poster container d-flex flex-column flex-grow-1 p-3 gap-2">
 
-            <!-- Enemies -->
-            <div class="d-grid">
-              <div class="row no-gutters no-margin mt-4">
-                <div class="col-6 d-flex flex-column px-2 pb-1" id="best-enemy"></div>
-                <div class="col-6 d-flex flex-column px-2 pb-1" id="worst-enemy"></div>
+            <!-- Graphs -->
+            <div class="graphs-wrapper container d-flex flex-row justify-content-around align-items-top p-3 gap-3">
+              <div class="graph-wrapper text-center p-2">
+                <p class="stat-label">Win Rate</p>
+                <user-win-rate-pie-graph></user-win-rate-pie-graph>
+              </div>               
+              <div class="graph-wrapper flex-grow-1 p-2">
+                <div class="d-flex flex-row align-items-center">
+                  <p class="stat-label mx-4">Elo progression</p>
+                  <button class="btn-elo-history" id="btn-elo-history-prev" type="button">< prev</button>
+                  <button disabled class="btn-elo-history" id="btn-elo-history-next" type="button">next ></button>
+                </div>
+                <user-elo-progression-chart></user-elo-progression-chart>
               </div>
             </div>
 
             <!-- Game History -->
-            <div class="flex-grow-1 d-flex flex-column px-1 mb-2">
+            <div class="flex-grow-1 d-flex flex-column px-3 mb-2">
               <user-game-history class="flex-grow-1"></user-game-history>
             </div>
           </div>
         </div>
+
+        <!--
+        <svg><defs><filter id="wave">
+						<feTurbulence baseFrequency="0.02" numOctaves="8" seed="1"></feTurbulence>
+				 	 	<feDisplacementMap in="SourceGraphic" scale="12" />
+				</filter></defs></svg>
+        -->
       </div>
     </div>`;
   }
 
   style() {
-    const poster = 'https://placehold.jp/c7c4c2/dedede/480x640.png?text=mock%20img'; // mock img
-
     return `
     <style>
     .poster {
-      color: #1F1101;
+      color: #351901;
       background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(164, 106, 48, 0.9) 100%);
       filter: sepia(20%) contrast(90%) brightness(95%);
+      /* filter: url(#wave); */
       box-shadow: inset 0 0 40px rgba(24, 15, 1, 0.3);
-
-      /*background-image: url(${poster});
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;*/
     }
     .online-status-indicator {
       width: 16px;
@@ -229,9 +242,19 @@ export class UserProfile extends HTMLElement {
     .online-status-indicator.online {
       background-color: green;
     }
-    h1{
-      font-family: 'Texas Tango Extra Roth', serif;
-      font-size: 3.5rem;
+    h1 {
+      display: inline-block;
+      color: #613304;      
+      font-family: 'docktrin', serif;
+      font-size: 6em;
+      margin-bottom: -.8em;
+      transform: scale(1.2, 1);
+    }
+    .stat-label {
+      font-family: 'van dyke', serif;
+      font-size: 1.2em;
+      color: #613304;
+      margin-bottom: .25em;
     }
     hr {
       height: 0;
@@ -240,21 +263,23 @@ export class UserProfile extends HTMLElement {
       border: 0;
     }
     .line {
-      border-top: 4px double #594639;
+      border-top: 4px double #613304;;
       opacity: 0.8;
     }
-    .graph-container {
-     background-color:rgba(0, 0, 0, 0.1);
+    .profile-avatar-frame,
+    .stat-cards-wrapper,
+    .enemy-container,
+    .graph-wrapper {
+      background-color:rgba(97, 51, 4, 0.1);
     }
     .enemies-container {
-      height: 224px;
+      min-height: 224px;
     }
-    .enemy-container {
-      background-color: rgba(0, 0, 0, 0.1);
-      corner-radius: 8px;
-    }
-    .no-margin {
-      margin: 0;
+    .btn-elo-history {
+      color: #351904;
+      font-weight: bold;
+      background: none;
+      border: none;
     }
     .row.no-gutters > [class*='col-'] {
       padding-right: 0;
@@ -270,7 +295,7 @@ export class UserProfile extends HTMLElement {
         padding: 0 !important;
         margin : 0 !important;
       }
-      .graphs-container {
+      .graphs-wrapper {
         max-width: 100vw !important;
       }
     }

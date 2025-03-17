@@ -17,7 +17,7 @@ export class ProfileUserActions extends HTMLElement {
       blockUser: 'Failed to block user. Please try again later.',
       unblockUser: 'Failed to unblock user. Please try again later.',
     },
-  }
+  };
 
   constructor() {
     super();
@@ -42,7 +42,7 @@ export class ProfileUserActions extends HTMLElement {
       if (this.#state.data.isFriend) {
         this.addFriendButton.removeEventListener('click', this.removeFriend);
       } else {
-      this.addFriendButton.removeEventListener('click', this.addFriend);
+        this.addFriendButton.removeEventListener('click', this.addFriend);
       }
     }
     if (this.#state.data.isBlocked) {
@@ -169,7 +169,7 @@ export class ProfileUserActions extends HTMLElement {
 
   template() {
     return `
-    <div class="d-flex flex-row justify-content-center my-2">
+    <div class="d-flex flex-row justify-content-center m-4">
       <button class="btn btn-primary mx-1 profile-user-action-button" id="edit-profile-button">Edit Profile</button>
 
       <button class="btn btn-primary mx-1 profile-user-action-button" id="add-friend-button"></button>
