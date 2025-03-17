@@ -26,7 +26,7 @@ export class ChatListItem extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.avatar = this.querySelector('.chat-list-item-avatar');
-    this.#state.data.avatar ? this.avatar.src = this.#state.data.avatar : this.avatar.src = defaultAvatar;
+    this.#state.data.avatar ? (this.avatar.src = this.#state.data.avatar) : (this.avatar.src = defaultAvatar);
 
     this.nickname = this.querySelector('.chat-list-item-nickname');
     this.nickname.textContent = this.#state.data.nickname;
@@ -38,30 +38,14 @@ export class ChatListItem extends HTMLElement {
       this.lastMessageTime.textContent = getRelativeTime(this.#state.data.last_message.date);
       this.lastMessage.textContent = this.#state.data.last_message.content;
       if (this.unreadMessages) {
-        this.unreadMessages.textContent = this.#state.data.unread_messages_count > 9 ? '9+' : this.#state.data.unread_messages_count;
+        this.unreadMessages.textContent =
+          this.#state.data.unread_messages_count > 9 ? '9+' : this.#state.data.unread_messages_count;
       }
     } else {
       this.lastMessage.textContent = 'No messages yet';
     }
 
     this.listItem = this.querySelector('#chat-list-item');
-
-    // this.handleChatItemSelected = ('click', () => {
-    //   this.listItem.classList.add('active');
-    //   const circleNumber = this.listItem.querySelector('.circle-number');
-    //   if (circleNumber) {
-    //     circleNumber.remove();
-    //   }
-    //   const chatListItems = document.querySelectorAll('.list-group-item');
-    //   chatListItems.forEach((item) => {
-    //     if (item !== this.listItem) {
-    //       item.classList.remove('active');
-    //     }
-    //   });
-    //   const event = new CustomEvent('chatItemSelected', { detail: this.#state.data, bubbles: true });
-    //   this.dispatchEvent(event);
-    // });
-
     this.listItem.addEventListener('click', this.handleChatItemSelected);
   }
 
@@ -79,7 +63,7 @@ export class ChatListItem extends HTMLElement {
     });
     const event = new CustomEvent('chatItemSelected', { detail: this.#state.data, bubbles: true });
     this.dispatchEvent(event);
-  };
+  }
 
   template() {
     return `
@@ -92,10 +76,10 @@ export class ChatListItem extends HTMLElement {
 
         <div class="d-flex flex-column justify-content-start py-2 gap-1 flex-grow-1">
           <div class="d-flex flex-wrap justify-content-between align-items-center">
-            <div class="chat-list-item-nickname fs- me-2"></div>
-            <small class="chat-list-item-last-message-time"></small>
+            <p class="chat-list-item-nickname fs-5 m-0 me-2"></p>
+            <p class="chat-list-item-last-message-time m-0 fs-6"></p>
           </div>
-          <small class="chat-list-item-last-message"></small>
+          <p class="chat-list-item-last-message m-0 fs-6"></p>
         </div>
 
         <div class="d-inline-block">
@@ -132,6 +116,13 @@ export class ChatListItem extends HTMLElement {
         justify-content: center;
         inline-height: 1;
        }
+      .chat-list-item-last-message {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+      }
     </style>
     `;
   }

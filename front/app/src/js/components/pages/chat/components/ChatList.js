@@ -21,9 +21,9 @@ export class ChatList extends HTMLElement {
   }
 
   restartChat(data) {
-    const index = this.chatListData.findIndex(chat => chat.username === data.username);
+    const index = this.chatListData.findIndex((chat) => chat.username === data.username );
     if (index !== -1) {
-      let tmp = this.chatListData[index];
+      const tmp = this.chatListData[index];
       tmp.unread_messages_count = 0;
       this.chatListData.splice(index, 1);
       this.chatListData.unshift(tmp);
