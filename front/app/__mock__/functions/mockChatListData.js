@@ -44,7 +44,8 @@ export async function mockChatListData() {
         is_blocked_by_user: true,
         unread_messages_count: 1,
         last_message: {
-          content: 'Did you get my email?',
+          content: 'You know how important this is, and I can\'t afford any mistakes.' +
+          'If anything is missing again, we\'ll have a serious problem. 👀',
           date: '2025-02-28T12:00:00Z',
           sender: 'george55',
           is_read: false,
