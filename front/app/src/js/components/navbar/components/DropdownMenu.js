@@ -1,6 +1,6 @@
 import { auth, handleLogout } from '@auth';
 import { ThemeController } from '@utils';
-import anonymousavatar from '/img/anonymous-avatar.svg?url';
+import anonymousavatar from '/img/anonymous-avatar.png?url';
 
 export class DropdownMenu extends HTMLElement {
   #state = {
@@ -22,7 +22,7 @@ export class DropdownMenu extends HTMLElement {
 
   disconnectedCallback() {
     this.logoutButton?.removeEventListener('click', this.handleLogoutClick);
-    this.themeToggleButton.removeEventListener('click', this.handleThemeChange);
+    this.themeToggleButton?.removeEventListener('click', this.handleThemeChange);
   }
 
   render() {
@@ -58,7 +58,7 @@ export class DropdownMenu extends HTMLElement {
       themeLabel.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
     }
   }
-    
+
   template() {
     const isDarkMode = ThemeController.getTheme() === 'dark';
 

@@ -113,6 +113,13 @@ class Chat(models.Model):
         return res
 
 
+class ChatMessageQuerySet(models.QuerySet):
+    def create(self, content: str, sender: Profile, chat: Chat):
+        new_message = self.model(content=content, sender=sender, chat=chat)
+        new_message.save()
+        return new_message
+
+
 class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content = models.CharField(max_length=256)
@@ -121,6 +128,8 @@ class ChatMessage(models.Model):
     chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
     is_liked = models.BooleanField(default=False)
+
+    objects = ChatMessageQuerySet.as_manager()
 
     class Meta:
         ordering = ["-date"]

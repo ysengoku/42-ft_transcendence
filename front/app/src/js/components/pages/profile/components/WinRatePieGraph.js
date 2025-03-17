@@ -14,19 +14,11 @@ export class UserWinRatePieGraph extends HTMLElement {
     this.render();
   }
 
-  connectedCallback() {
-    this.render();
-  }
-
   render() {
-  // Test data ---------------------------------------
-    this.#state = {
-      rate: 67,
-      wins: 20,
-      losses: 10,
-    };
-  // -------------------------------------------------
-    this.innerHTML = this.template();
+    this.#state.wins = 12;
+    this.#state.losses = 8;
+    this.#state.rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
+    this.innerHTML = this.template() + this.style();
 
     if (this.#state.wins === 0 && this.#state.losses === 0) {
       const graph = this.querySelector('.pie-graph');
@@ -34,7 +26,7 @@ export class UserWinRatePieGraph extends HTMLElement {
       const noData = this.querySelector('.no-data');
       noData.textContent = 'No data';
       noData.classList.remove('d-none');
-      noData.style.width = '160px';
+      noData.style.width = '80px';
       noData.style.height = '160px';
     }
   }
@@ -42,16 +34,16 @@ export class UserWinRatePieGraph extends HTMLElement {
   template() {
     const r = 100 / (2 * Math.PI); // radius
     return `
-    <div class="d-flex flex-column justify-content-center align-items-center">
+    <div class="pie-graph-wrapper d-flex flex-column justify-content-center align-items-center">
       <div class="no-data text-center pt-5 d-none"></div>
-      <div class="pie-graph">
-        <svg viewBox="0 0 40 40">
-          <path
+      <div class="pie-graph d-flex flex-column jusify-content-around align-items-center">
+        <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+         <path
             d="M20 ${(40 - (r * 2)) / 2}
               a ${r} ${r} 0 0 1 0 ${r * 2}
               a ${r} ${r} 0 0 1 0 -${r * 2}"
             fill="none"
-            stroke="grey"
+            stroke="rgba(146, 79, 9, 0.4)"
             stroke-width="6"
             stroke-dasharray="100"
           />
@@ -60,7 +52,7 @@ export class UserWinRatePieGraph extends HTMLElement {
               a ${r} ${r} 0 0 1 0 ${r * 2}
               a ${r} ${r} 0 0 1 0 -${r * 2}"
             fill="none"
-            stroke="#2f2926"
+            stroke="#613304"
             stroke-width="6"
             stroke-dasharray="${this.#state.rate} 100"
           />
@@ -68,10 +60,10 @@ export class UserWinRatePieGraph extends HTMLElement {
             ${this.#state.rate}%
           </text>
         </svg>
-        <div class="d-flex flex-row justify-content-center">
-          <p class="fs-6">Wins: ${this.#state.wins}</p>
+        <div class="d-flex flex-row justify-content-center mt-2">
+          <p class="fs-6 text-center">Wins ${this.#state.wins}</p>
           <p>&nbsp;-&nbsp;</p>
-          <p class="fs-6">Losses: ${this.#state.losses}</p>
+          <p class="fs-6 text-center">Losses ${this.#state.losses}</p>
         </div>
       </div>
     </div>
@@ -81,14 +73,14 @@ export class UserWinRatePieGraph extends HTMLElement {
   style() {
     return `
     <style>
-      .pie-graph {
-        width: 160px;
-        height: 160px;
-      }
-      .pie-graph svg {
-        width: 100%;
-        height: 100%;
-      }
+    .pie-graph-wrapper {
+      max-width: 160px;
+      height: 240px;
+    }
+    .pie-graph svg {
+      width: 88%;
+      height: 88%;
+    }
     </style>
   `;
   }

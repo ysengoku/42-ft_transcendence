@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://localhost:1026/api/'; // For Test environment
+const API_BASE_URL = `https://${location.host}/api/`; // For Test environment
 
 export const API_ENDPOINTS = {
   SIGNUP: `${API_BASE_URL}signup`,
@@ -21,4 +21,7 @@ export const API_ENDPOINTS = {
   USER_SEARCH: (query, limit, offset) => `${API_BASE_URL}users?search=${query}&limit=${limit}&offset=${offset}`,
   USER_FRIENDS_LIST: (username, limit, offset) =>
     `${API_BASE_URL}users/${username}/friends?limit=${limit}&offset=${offset}`,
+  CHAT_LIST: (limit, offset) => `${API_BASE_URL}chats?&limit=${limit}&offset=${offset}`,
+  CHAT: (username) => `${API_BASE_URL}chats/${username}`,
+  CHAT_MESSAGES: (username, limit, offset) => `${API_BASE_URL}chats/${username}/messages?limit=${limit}&offset=${offset}`,
 };

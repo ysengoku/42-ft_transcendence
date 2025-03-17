@@ -8,16 +8,21 @@ export class Register extends HTMLElement {
     super();
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    this.isLoggedin = authStatus.success;
+    if (this.isLoggedin) {
+      router.navigate('/home');
+    }
     this.render();
   }
 
   disconnectedCallback() {
-    this.form.removeEventListener('submit', this.handleSubmit);
-    this.usernameField.removeEventListener('input', this.handleUsernameInput);
-    this.emailField.removeEventListener('input', this.handleEmailInput);
-    this.passwordField.removeEventListener('input', this.handlePasswordInput);
-    this.passwordRepeatField.removeEventListener('input', this.handlePasswordRepeatInput);
+    this.form?.removeEventListener('submit', this.handleSubmit);
+    this.usernameField?.removeEventListener('input', this.handleUsernameInput);
+    this.emailField?.removeEventListener('input', this.handleEmailInput);
+    this.passwordField?.removeEventListener('input', this.handlePasswordInput);
+    this.passwordRepeatField?.removeEventListener('input', this.handlePasswordRepeatInput);
   }
 
   render() {
