@@ -283,7 +283,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.match_name = self.scope["url_route"]["kwargs"]["match_name"]
         self.match_group_name = f"match_{self.match_name}"
         self.user = self.scope.get("user")
-        print(self.channel_layer)
 
         if not self.user:
             await self.disconnect(1000)
