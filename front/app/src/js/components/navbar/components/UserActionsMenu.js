@@ -34,7 +34,7 @@ export class UserActionsMenu extends HTMLElement {
 
   render() {
     this.innerHTML = this.template() + this.style();
- 
+
     this.dropdownUserActions = document.getElementById('dropdown-user-actions');
     this.dropdownUserSearch = document.getElementById('dropdown-user-search');
     this.dropdownFriendsList = document.getElementById('dropdown-friends-list');
@@ -85,7 +85,7 @@ export class UserActionsMenu extends HTMLElement {
     this.dropdownFriendsList.classList.remove('show');
     router.navigate('/chat');
   }
-  
+
   template() {
     return `
     <div class="nav-link me-2" id="navbar-user-actions" role="button" data-bs-toggle="dropdown" aria-expanded="false">

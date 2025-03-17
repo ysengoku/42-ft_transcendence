@@ -29,14 +29,13 @@ export class FriendsList extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
-  
+    this.innerHTML = this.template();
+
     this.button = document.getElementById('navbar-friends-button');
     this.listContainer = this.querySelector('#friends-list');
 
     this.button?.addEventListener('shown.bs.dropdown', this.fetchFriendsData);
     this.button?.addEventListener('hidden.bs.dropdown', this.handleModalClose);
-
   }
 
   async fetchFriendsData() {
@@ -68,20 +67,21 @@ export class FriendsList extends HTMLElement {
   }
 
   renderFriendsList() {
-    this.listContainer.innerHTML = '';
     if (this.#state.friendsList.length === 0) {
       this.renderNoFriendsFound();
       return;
     }
-    this.#state.friendsList.forEach((friend) => {
+    for (let i = this.#state.listLength; i < this.#state.friendsList.length; i++) {
       const listItem = document.createElement('user-list-item');
-      listItem.setAttribute('username', friend.username);
-      listItem.setAttribute('nickname', friend.nickname);
-      listItem.setAttribute('avatar', friend.avatar);
-      listItem.setAttribute('online', friend.is_online);
+      listItem.data = this.#state.friendsList[i];
+      if (i === 0) {
+        const firstItem = listItem.querySelector('.list-group-item');
+        firstItem.classList.add('border-top-0');
+      }
       this.listContainer.appendChild(listItem);
-    });
-    if (this.#state.friendsList.length < this.#state.totalFriendsCount) {
+      this.#state.listLength++;
+    }
+    if (this.#state.totalFriendsCount > this.#state.listLength) {
       this.renderShowMoreButton();
     }
   }
@@ -98,7 +98,7 @@ export class FriendsList extends HTMLElement {
     this.listContainer.appendChild(showMoreButtonContainer);
 
     this.showMoreButton = showMoreButtonContainer.querySelector('#show-more-friends');
-    this.showMoreButton.addEventListener('click', this.handleShowMoreFriends);
+    this.showMoreButton?.addEventListener('click', this.handleShowMoreFriends);
   }
 
   handleModalClose() {
@@ -106,45 +106,33 @@ export class FriendsList extends HTMLElement {
     this.#state.totalFriendsCount = 0;
     this.listContainer.innerHTML = '';
   }
-  
+
   async handleShowMoreFriends(event) {
     event.stopPropagation();
     await this.fetchFriendsData();
+    this.showMoreButton?.removeEventListener('click', this.handleShowMoreFriends);
+    this.showMoreButton?.remove();
   }
 
   template() {
     return `
     <div class="ps-3 pe-4">
-      <h6 class="pt-2 pb-4" id="friends-list-header" sticky>Friends</h6>
-      <ul class="list-group mb-2" id="friends-list"></ul>
+      <h6 class="py-4 dropdown-list-header" sticky>Friends</h6>
+      <ul class="dropdown-list list-group mb-2" id="friends-list"></ul>
     </div>
-    `;
-  }
-
-  style() {
-    return `
-    <style>
-      #friends-list-header {
-        border-bottom: 1px solid var(--bs-border-color);
-        position: sticky;
-        top: 0;
-        background-color: var(--bs-body-bg);
-        z-index: 1;
-      }
-    </style>
     `;
   }
 
   noFriendTemplate() {
     return `
     <style>
-      .list-group-item {
-        border: none;
-        position: relative;
-       }
-      li {
-         list-style-type: none;
-       }
+    .list-group-item {
+      border: none;
+      position: relative;
+    }
+    li {
+        list-style-type: none;
+    }
     </style>
     <div class="list-group-item p-3">
       <p class="text-center m-0">No friends found</p>
@@ -155,14 +143,14 @@ export class FriendsList extends HTMLElement {
   showMoreButtonTemplate() {
     return `
     <style>
-      #show-more-friends {
-        border: none;
-        position: relative;
-        border-top: 1px solid var(--bs-border-color);
-      }
-      li {
-        list-style-type: none;
-      }
+    #show-more-friends {
+      border: none;
+      position: relative;
+      border-top: 1px solid var(--bs-border-color);
+    }
+    li {
+      list-style-type: none;
+    }
     </style>
     <div class="list-group-item mt-4 p-3" id="show-more-friends">
       <p class="text-center m-0">Show more friends</p>
