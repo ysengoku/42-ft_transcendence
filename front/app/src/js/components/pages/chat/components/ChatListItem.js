@@ -99,6 +99,10 @@ export class ChatListItem extends HTMLElement {
         border-top: 1px solid var(--bs-border-color);
         background-color: transparent;
       }
+      .list-group-item.active {
+        background-color: var(--pm-primary-500) !important;
+        border: none;
+      }
       .list-item img {
         width: 52px;
         height: 52px;

@@ -215,7 +215,7 @@ export class ChatMessageArea extends HTMLElement {
         color: black;
       }
       .right-align-message .bubble {
-        background-color: #007bff;
+        background-color: var(--pm-primary-500);
         color: white;
       }
       .chat-message-avatar {
