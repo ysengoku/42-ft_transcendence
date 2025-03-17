@@ -15,6 +15,7 @@ import { DuelResult } from './duel/DuelResult.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
 import { TournamentResult } from './tournament/TournamentResult.js';
 import { Game } from './game/Game.js';
+import { MultiplayerGame } from './game/MultiplayerGame.js';
 import { Error } from './Error.js';
 import { NotFoundPage } from './NotFound.js';
 
@@ -36,6 +37,7 @@ export {
   TournamentMenu,
   TournamentResult,
   Game,
+  MultiplayerGame,
   Error,
   NotFoundPage,
 };
