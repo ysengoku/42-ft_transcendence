@@ -13,9 +13,9 @@ export class ChatUserSearch extends HTMLElement {
     super();
 
     this.handleSubmit = this.handleSubmit.bind(this);
-	this.handleShowMoreUsers = this.handleShowMoreUsers.bind(this);
+    this.handleShowMoreUsers = this.handleShowMoreUsers.bind(this);
     this.handleInput = this.handleInput.bind(this);
-	this.handleHideUserSearch = this.handleHideUserSearch.bind(this);
+    this.handleHideUserSearch = this.handleHideUserSearch.bind(this);
   }
 
   connectedCallback() {
@@ -25,8 +25,8 @@ export class ChatUserSearch extends HTMLElement {
   disconnectedCallback() {
     this.submitButton?.removeEventListener('click', this.handleSubmit);
     this.input?.removeEventListener('input', this.handleInput);
-	this.searchBarToggleButton?.removeEventListener('click', this.handleHideUserSearch);
-	this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
+    this.searchBarToggleButton?.removeEventListener('click', this.handleHideUserSearch);
+    this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
   }
 
   render() {
@@ -35,11 +35,11 @@ export class ChatUserSearch extends HTMLElement {
     this.listContainer = this.querySelector('#chat-user-list');
     this.submitButton = this.querySelector('.search-submit-btn');
     this.input = this.querySelector('input');
-	this.searchBarToggleButton = document.querySelector('.new-chat');
+    this.searchBarToggleButton = document.querySelector('.new-chat');
 
     this.submitButton.addEventListener('click', this.handleSubmit);
-	this.input.addEventListener('input', this.handleInput);
-	this.searchBarToggleButton.addEventListener('click', this.handleHideUserSearch);
+    this.input.addEventListener('input', this.handleInput);
+    this.searchBarToggleButton.addEventListener('click', this.handleHideUserSearch);
   }
 
   async searchUsers() {
@@ -110,12 +110,12 @@ export class ChatUserSearch extends HTMLElement {
     for (let i = this.#state.currentListLength; i < this.#state.userList.length; i++) {
       const listItem = document.createElement('chat-user-search-item');
       listItem.data = this.#state.userList[i];
-        if (i === 0) {
-          const firstItem = listItem.querySelector('.list-group-item');
-          firstItem.classList.add('border-top-0');
-        }
-        this.listContainer.appendChild(listItem);
-        this.#state.currentListLength++;
+      if (i === 0) {
+        const firstItem = listItem.querySelector('.list-group-item');
+        firstItem.classList.add('border-top-0');
+      }
+      this.listContainer.appendChild(listItem);
+      this.#state.currentListLength++;
     }
     if (this.#state.totalUserCount > this.#state.currentListLength) {
       this.renderShowMoreButton();
@@ -129,7 +129,7 @@ export class ChatUserSearch extends HTMLElement {
   }
 
   renderShowMoreButton() {
-	this.showMoreButtonContainer = document.createElement('li');
+    this.showMoreButtonContainer = document.createElement('li');
     this.showMoreButtonContainer.innerHTML = this.showMoreButtonTemplate();
     this.listContainer.appendChild(this.showMoreButtonContainer);
 
@@ -156,12 +156,12 @@ export class ChatUserSearch extends HTMLElement {
 
   style() {
     return `
-	<style>
-	#chat-user-list {
+    <style>
+    #chat-user-list {
       max-height: 50vh;
     }
-	</style>
-	`;
+    </style>
+    `;
   }
 
   noUserFoundTemplate() {

@@ -42,11 +42,12 @@ export class ChatUserSearchItem extends HTMLElement {
 
   async fetchChatRoom() {
     const response = await apiRequest(
-      'PUT',
-      API_ENDPOINTS.CHAT(this.#state.user.username),
-      null,
-      false,
-      true,
+        'PUT',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.CHAT(this.#state.user.username),
+        null,
+        false,
+        true,
     );
     if (response.success) {
       console.log('Chat room response:', response);

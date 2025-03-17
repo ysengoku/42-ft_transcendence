@@ -107,7 +107,7 @@ export class Chat extends HTMLElement {
       // TODO: Handle error
     }
   }
-  
+
   async updateChatList(newMessage) {
     // TODO
     // Update chat list with new message notification
@@ -152,14 +152,12 @@ export class Chat extends HTMLElement {
     const messageData = {
       type: 'chat',
       data: {
-
-          id: this.currentChat.messages.length + 1,
-          sender: this.#state.user.username,
-          content: event.detail,
-          date: new Date().toISOString(),
-          is_liked: false,
-          is_read: false,
-        
+        id: this.currentChat.messages.length + 1,
+        sender: this.#state.user.username,
+        content: event.detail,
+        date: new Date().toISOString(),
+        is_liked: false,
+        is_read: false,
       },
     };
     console.log('Message data:', messageData);
@@ -173,9 +171,9 @@ export class Chat extends HTMLElement {
   handleNewMessage(message) {
     console.log('New message:', message);
     const newMessage = message;
-    //----- For test --------------------------------
+    // ----- For test --------------------------------
     newMessage.sender = this.currentChat.username;
-    //-----------------------------------------------
+    // -----------------------------------------------
     if (newMessage.sender === this.currentChat.username) {
       this.currentChat.messages.unshift(newMessage);
       this.chatMessagesArea.setData(this.currentChat);
