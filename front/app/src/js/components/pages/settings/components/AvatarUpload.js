@@ -48,7 +48,7 @@ export class AvatarUpload extends HTMLElement {
 			  </div>
 			  <div class="col-5 d-flex flex-column align-items-start mx-3 my-auto py-3">
 				  <b>Avatar</b>
-				  <button class="btn btn-primary my-3" id="avatar-upload-button">${avatarUploadMessage}</button>
+				  <button class="btn btn-wood my-3" id="avatar-upload-button">${avatarUploadMessage}</button>
 			  </div>
 		  </div>
 		`;

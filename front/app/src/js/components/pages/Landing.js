@@ -35,13 +35,13 @@ export class Landing extends HTMLElement {
       <div class="d-flex flex-column align-items-center mt-4" id="landing-buttons"> 
         ${ this.#state.isLoggedIn ?
           `<div class="mb-3">
-            <a class="btn btn-primary btn-lg" href="/home" role="button">Enter</a>
+            <a class="btn btn-wood btn-lg" href="/home" role="button">Enter</a>
           </div>` :
           `<div class="mb-3">
-            <a class="btn btn-primary btn-lg" href="/login" role="button">Login</a>
+            <a class="btn btn-wood btn-lg" href="/login" role="button">Login</a>
           </div>
           <div class="mb-3">
-            <a class="btn btn-outline-primary" href="/register" role="button">Sign up</a>
+            <a class="btn btn-wood" href="/register" role="button">Sign up</a>
           </div>`}
       </div>
     </div>
