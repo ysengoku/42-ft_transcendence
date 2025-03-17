@@ -7,6 +7,7 @@ from ninja.pagination import paginate
 
 from common.routers import allow_only_for_self, get_profile_queryset_by_username_or_404
 from common.schemas import MessageSchema
+from users.consumers import get_online_users
 from users.models import Profile
 from users.schemas import (
     ProfileFullSchema,
@@ -78,3 +79,15 @@ def update_user_settings(
         raise HttpError(413, "File is too big. Please upload a file that weights less than 10mb.") from exc
 
     return user.profile
+
+
+# Example usage in Django Ninja router
+@users_router.get("/online-users/", response=list[str], auth=None)
+def get_online_users_endpoint(request):
+    """
+    API endpoint to retrieve online users
+
+    Returns:
+        list: List of online user IDs
+    """
+    return get_online_users()
