@@ -11,33 +11,40 @@
 }
 
 /* @font-face {
-  font-family: 'Texas Tango';
-  src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
-} */
-
-/* @font-face {
   font-family: 'kleader';
   src: url(/fonts/Kleader.ttf) format('truetype');
 }
 
-@font-face {
-  font-family: 'WestCarabao';
-  src: url(/fonts/WestCarabao.ttf) format('truetype');
-} */
-
 /*----- Colors ---------------------------------------------------------------*/
+/* https://getbootstrap.com/docs/5.3/customize/color/#colors */
 :root {
-  --bs-body-color: #22201F;
+  --pm-primary-700: #351901;
+  --pm-primary-600: #613304;
+  --pm-primary-500: #924f09;
+  --pm-primary-400: #C66D10;
+  --pm-primary-300: #FD8D18;
+  --pm-primary-200: #FEC4A8;
+  --pm-primary-100: #FFEDE7;
+
+  --pm-gray-700: #22201F;
+  --pm-gray-600: #413E3D;
+  --pm-gray-500: #64605D;
+  --pm-gray-400: #898380;
+  --pm-gray-300: #B0A8A4;
+  --pm-gray-200: #D4D0CE;
+  --pm-gray-100: #F1F0F0;
+
+  --bs-body-color: var(--pm-gray-700);
   --bs-black-rgb: 34, 32, 31;
 }
 
 [data-bs-theme="light"] {
-  --bs-body-color: #22201F;
+  --bs-body-color: var(--pm-gray-700);
   --bs-black-rgb: 34, 32, 31;
 }
 
 [data-bs-theme="dark"] {
-  --bs-body-color: #f1f0f0;
+  --bs-body-color: var(--pm-gray-100);
   --bs-black-rgb: 241, 240, 240;
 }
 
@@ -106,7 +113,6 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
 }
 
 /*----- Background animation -------------------------------------------------*/
-
 #cloud {
   position: absolute;
   display: block;
@@ -171,6 +177,16 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
 }
 
 /*----- Buttons ---------------------------------------------------------------*/
+.btn-wood {
+  background-color: var(--pm-primary-500);
+  color: var(--pm-gray-100);
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
 .search-submit-btn {
   border: none;
   background-color: transparent;

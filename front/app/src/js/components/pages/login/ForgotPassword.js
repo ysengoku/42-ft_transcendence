@@ -99,7 +99,7 @@ export class ForgotPassword extends HTMLElement {
                 <input type="email" class='form-control' id='email-for-reset-password' placeholder="email" autocomplete="off">
                 <div class="invalid-feedback" id="email-feedback"></div>
               </div>
-              <button class="btn btn-primary w-100 mt-3" type="submit" id="forgot-password-submit">
+              <button class="btn btn-wood w-100 mt-3" type="submit" id="forgot-password-submit">
                 Reset password
               </button>
               <button class="btn w-100 mt-3" type="button" id="cancel-forgot-password">
