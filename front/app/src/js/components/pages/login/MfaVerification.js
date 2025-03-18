@@ -146,7 +146,7 @@ export class MfaVerification extends HTMLElement {
               <input type="text" maxlength="1" class="otp-input form-control" id="otp-5" autocomplete="off" />
             </div>
 
-            <button type="submit" id="otp-submit" class="btn btn-primary w-100 disabled">Login</button>
+            <button type="submit" id="otp-submit" class="btn btn-wood w-100 disabled">Login</button>
           </form>
 
           <button class="btn w-100 mt-4" id="resend-mfacode-button">
