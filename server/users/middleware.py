@@ -37,6 +37,7 @@ class JWTAuthMiddleware:
         headers = dict(scope["headers"])
         cookies = headers.get(b"cookie", b"").decode("utf-8") if b"cookie" in headers else ""
         token = None
+        scope["user"] = None
 
         for cookie_part in cookies.split(";"):
             cookie_clean = cookie_part.strip()
