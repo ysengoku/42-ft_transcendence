@@ -131,7 +131,7 @@ export class Register extends HTMLElement {
                 </div>
 
                 <div class="mb-3 py-3">
-                  <button type="submit" id="registerSubmit" class="btn btn-primary btn-lg w-100 pt-50">Sign Up</button>
+                  <button type="submit" id="registerSubmit" class="btn btn-wood btn-lg w-100 pt-50">Sign Up</button>
                 </div>
               </form>
             </div>
