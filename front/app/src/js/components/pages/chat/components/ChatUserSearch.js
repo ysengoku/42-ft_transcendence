@@ -55,8 +55,10 @@ export class ChatUserSearch extends HTMLElement {
     );
     if (response.success) {
       if (response.data) {
+        console.log('Data:', response.data);
         this.#state.totalUserCount = response.data.count;
         this.#state.userList.push(...response.data.items);
+        console.log('User list:', this.#state.userList);
       }
       this.renderUserList();
     } else {
@@ -79,13 +81,11 @@ export class ChatUserSearch extends HTMLElement {
   }
 
   handleInput() {
-    if (this.input.value === '') {
-      this.#state.userList = [];
-      this.#state.totalUserCount = 0;
-      this.#state.currentListLength = 0;
-      this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
-      this.listContainer.innerHTML = '';
-    }
+    this.#state.userList = [];
+    this.#state.totalUserCount = 0;
+    this.#state.currentListLength = 0;
+    this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
+    this.listContainer.innerHTML = '';
   }
 
   handleHideUserSearch() {
@@ -105,8 +105,10 @@ export class ChatUserSearch extends HTMLElement {
   }
 
   renderUserList() {
-    if (this.#state.userList.length === 0 ||
-      (this.#state.userList.length === 1 && this.#state.userList[0].username === this.#state.loggedinUsername)) {
+    if (
+      this.#state.userList.length === 0 ||
+      (this.#state.userList.length === 1 && this.#state.userList[0].username === this.#state.loggedinUsername)
+    ) {
       this.renderNoUserFound();
       return;
     }
