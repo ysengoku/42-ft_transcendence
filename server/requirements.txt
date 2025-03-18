@@ -6,6 +6,7 @@ pillow==11.1.0
 python-magic==0.4.27
 
 # Django Channels for handling WebSockets and background tasks
+daphne==4.1.2
 channels==4.0.0
 asgiref==3.8.1
 django-eventstream==4.5.1
@@ -22,10 +23,11 @@ sqlparse==0.5.3
 # Database profiling
 django-silk==5.3.2
 
-# Gunicorn is a Python WSGI HTTP Server for UNIX
-# TODO: resolve daphne vs gunicorn situation
-gunicorn==20.1.0
-daphne==4.1.2
+# pyotp is a Python library for generating and verifying one-time passwords
+pyotp==2.6.0
+
+# qrcode is a Python library for generating QR codes. [pil] is an optional dependency for image generation.
+qrcode[pil]
 
 # Redis for caching online status for users
 redis==5.0.1
