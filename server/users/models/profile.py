@@ -1,6 +1,7 @@
 from pathlib import Path  # noqa: A005
 
 import magic
+from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
 from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
@@ -8,7 +9,6 @@ from django.db.models.lookups import Exact
 from ninja.files import UploadedFile
 
 from users.utils import merge_err_dicts
-from django.conf import settings
 
 
 def calculate_winrate(wins: int, loses: int) -> int | None:
