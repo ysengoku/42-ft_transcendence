@@ -8,6 +8,7 @@ from django.db.models.lookups import Exact
 from ninja.files import UploadedFile
 
 from users.utils import merge_err_dicts
+from django.conf import settings
 
 
 def calculate_winrate(wins: int, loses: int) -> int | None:
@@ -102,7 +103,7 @@ class Profile(models.Model):
     def avatar(self) -> str:
         if self.profile_picture:
             return self.profile_picture.url
-        return "/img/default_avatar.png"
+        return settings.DEFAULT_USER_AVATAR
 
     @property
     def matches(self):
