@@ -102,8 +102,13 @@ export class Chat extends HTMLElement {
   }
 
   async handleChatItemSelected(event) {
-    const chatData = await mockChatMessagesData(event.detail);
-    this.currentChat = chatData;
+    if (!event.detail.messages) {
+      // TODO: Replace by apiRequest
+      const chatData = await mockChatMessagesData(event.detail);
+      this.currentChat = chatData;
+    } else {
+      this.currentChat = event.detail;
+    }
     this.chatMessagesArea.setData(this.currentChat);
 
     if (isMobile()) {
