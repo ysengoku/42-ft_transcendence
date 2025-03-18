@@ -1,9 +1,9 @@
 import defaultAvatar from '/img/default_avatar.png?url';
-
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { mockChatMoreMessages } from '@mock/functions/mockChatMoreMesssages';
 
 export class ChatMessageArea extends HTMLElement {
   #state = {
@@ -21,12 +21,12 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   setData(data) {
+    console.log('ChatMessageArea data:', data);
     if (this.#state.user === null) {
       this.#state.user = auth.getStoredUser();
     }
     this.#state.renderedMessagesCount = 0;
     this.#state.data = data;
-    this.#state.totalMessagesCount = data.messages.length;
     this.render();
   }
 
@@ -52,12 +52,14 @@ export class ChatMessageArea extends HTMLElement {
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
     this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.is_online);
-    this.headerOnlineStatus.textContent = this.#state.data.isOnline ? 'online' : 'offline';
+    this.headerOnlineStatus.textContent = this.#state.data.is_online ? 'online' : 'offline';
 
     this.chatMessages.innerHTML = '';
-    this.renderMessages();
-    this.chatMessages.scrollTop = this.chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
-    this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
+    if (this.#state.data.messages.length > 0) {
+      this.renderMessages();
+      this.chatMessages.scrollTop = this.chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
+      this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
+    }
 
     this.header.addEventListener('click', this.handleNavigateToProfile);
     this.blockButoon.addEventListener('click', this.blockUser);
@@ -89,9 +91,37 @@ export class ChatMessageArea extends HTMLElement {
     }
   }
 
-  loadMoreMessages() {
+  async loadMoreMessages() {
     if (this.chatMessages.scrollTop === 0) {
-      console.log('Scrolled to the top');
+      if (this.#state.renderedMessagesCount < 10) {
+        return;
+      }
+      if (this.#state.totalMessagesCount === 0 ||
+        this.#state.renderedMessagesCount < this.#state.totalMessagesCount) {
+        const previousHeight = this.chatMessages.scrollHeight;
+
+        // ----- TODO: Replace by apiRequest ----------------------------------
+        const response = await mockChatMoreMessages(this.#state.data.username);
+        this.#state.data.messages.push(...response.items);
+        this.#state.totalMessagesCount = response.count;
+        this.renderMessages();
+        // ----------------------------------------------------------------------
+
+        // const response = apiRequest(
+        //     'GET',
+        //     API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
+        //     null,
+        //     false,
+        //     true);
+        // if (response.success) {
+        //   this.#state.data.messages.push(...response.data.items);
+        //   this.#state.totalMessagesCount = response.data.count;
+        //   this.renderMessages();
+        // } else {
+        //   // TODO: Handle error
+        // }
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight - previousHeight;
+      }
     }
   }
 
@@ -112,11 +142,8 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   renderMessages() {
-    console.log('rendered messages:', this.#state.renderedMessagesCount, '', this.#state.totalMessagesCount);
-    if (!this.#state.data.messages) {
-      return;
-    }
-    for (let i = this.#state.renderedMessagesCount; i < this.#state.totalMessagesCount; i++) {
+    const currentMessageCount = this.#state.data.messages.length;
+    for (let i = this.#state.renderedMessagesCount; i < currentMessageCount; i++) {
       const message = this.#state.data.messages[i];
       const messageElement = document.createElement('div');
       messageElement.innerHTML = this.messageTemplate();

@@ -97,6 +97,19 @@ h2, h3, h4, h5, h6, legend {
   background-color: rgba(128,128,128, 0.1);
 }
 
+/*----- Scroll bar ---------------------------------------------------------- */
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--pm-gray-600);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: transparent;
+}
 
 /*----- Cursor ---------------------------------------------------------------*/
 a, button, div [role="button"], input[type="submit"], input[type="button"] {

@@ -55,10 +55,8 @@ export class ChatUserSearch extends HTMLElement {
     );
     if (response.success) {
       if (response.data) {
-        console.log('Data:', response.data);
         this.#state.totalUserCount = response.data.count;
         this.#state.userList.push(...response.data.items);
-        console.log('User list:', this.#state.userList);
       }
       this.renderUserList();
     } else {
@@ -166,6 +164,7 @@ export class ChatUserSearch extends HTMLElement {
     <style>
     #chat-user-list {
       max-height: 50vh;
+      /*background-color: var(--pm-gray-700);*/
     }
     </style>
     `;
