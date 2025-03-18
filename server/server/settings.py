@@ -139,7 +139,7 @@ AUTHENTICATION_BACKENDS = [
 # CUSTOM USER MODEL
 
 AUTH_USER_MODEL = "users.User"
-
+DEFAULT_USER_AVATAR = "/img/default_avatar.png"
 
 # Configuration OAuth 42
 SOCIALACCOUNT_PROVIDERS = {
@@ -152,18 +152,17 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-# Configuration Django Channels
-CHANNEL_LAYERS = {
-    "default": {
-        # "BACKEND": "channels.layers.InMemoryChannelLayer",
-          'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
-}
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
 REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
+        },
+    },
+ }
+
 
 
 # Configuration for proxy

@@ -100,7 +100,7 @@ export class LoginForm extends HTMLElement {
           <div class="invalid-feedback" id="loginpassword-feedback"></div>
   			</div>
 				<div class="mb-2 py-3">
-					<button type="submit" id="loginSubmit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
+					<button type="submit" id="loginSubmit" class="btn btn-wood btn-lg w-100 pt-50">Login</button>
 				</div>
 			</form>
 		</div>
