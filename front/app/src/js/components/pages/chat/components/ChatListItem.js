@@ -61,7 +61,7 @@ export class ChatListItem extends HTMLElement {
         item.classList.remove('active');
       }
     });
-    const event = new CustomEvent('chatItemSelected', { detail: this.#state.data, bubbles: true });
+    const event = new CustomEvent('chatItemSelected', { detail: this.#state.data.username, bubbles: true });
     this.dispatchEvent(event);
   }
 
