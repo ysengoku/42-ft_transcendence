@@ -3,6 +3,7 @@ import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils'
 
 export class ChatUserSearch extends HTMLElement {
   #state = {
+    loggedinUsername: '',
     userList: [],
     totalUserCount: 0,
     currentListLength: 0,
@@ -18,7 +19,8 @@ export class ChatUserSearch extends HTMLElement {
     this.handleHideUserSearch = this.handleHideUserSearch.bind(this);
   }
 
-  connectedCallback() {
+  set user(value) {
+    this.#state.loggedinUsername = value;
     this.render();
   }
 
@@ -103,18 +105,21 @@ export class ChatUserSearch extends HTMLElement {
   }
 
   renderUserList() {
-    if (this.#state.userList.length === 0) {
+    if (this.#state.userList.length === 0 ||
+      (this.#state.userList.length === 1 && this.#state.userList[0].username === this.#state.loggedinUsername)) {
       this.renderNoUserFound();
       return;
     }
     for (let i = this.#state.currentListLength; i < this.#state.userList.length; i++) {
-      const listItem = document.createElement('chat-user-search-item');
-      listItem.data = this.#state.userList[i];
-      if (i === 0) {
-        const firstItem = listItem.querySelector('.list-group-item');
-        firstItem.classList.add('border-top-0');
+      if (this.#state.userList[i].username !== this.#state.loggedinUsername) {
+        const listItem = document.createElement('chat-user-search-item');
+        listItem.data = this.#state.userList[i];
+        if (i === 0) {
+          const firstItem = listItem.querySelector('.list-group-item');
+          firstItem.classList.add('border-top-0');
+        }
+        this.listContainer.appendChild(listItem);
       }
-      this.listContainer.appendChild(listItem);
       this.#state.currentListLength++;
     }
     if (this.#state.totalUserCount > this.#state.currentListLength) {

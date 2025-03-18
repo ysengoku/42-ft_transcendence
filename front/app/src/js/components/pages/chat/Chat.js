@@ -78,7 +78,7 @@ export class Chat extends HTMLElement {
     this.chatList = this.querySelector('chat-list-component');
     this.backButton = this.querySelector('#back-to-chat-list');
 
-    this.chatList.setData(this.chatListData, this.#state.chatListItemCount);
+    this.chatList.setData(this.chatListData, this.#state.chatListItemCount, this.#state.user.username);
     if (this.#state.chatListItemCount > 1) {
       // this.renderCurrentChat();
       await this.fetcheCurrentChatMeggages();
@@ -116,9 +116,9 @@ export class Chat extends HTMLElement {
   async fetcheCurrentChatMeggages() {
     // ----- Temporary mock data ---------------------------------------
     const data = await mockChatMessagesData(this.currentChat.username);
+    // -----------------------------------------------------------------
     this.currentChat.messages = data;
     this.chatMessagesArea.setData(this.currentChat);
-    // -----------------------------------------------------------------
   }
 
   async handleChatItemSelected(event) {
