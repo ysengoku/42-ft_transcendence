@@ -3,6 +3,7 @@ import './ChatListItem.js';
 
 export class ChatList extends HTMLElement {
   #state = {
+    loggedinUsername: '',
     listItems: '',
     itemCount: 0,
   };
@@ -14,16 +15,17 @@ export class ChatList extends HTMLElement {
     this.toggleUserSearchBar = this.toggleUserSearchBar.bind(this);
   }
 
-  setData(data, count) {
+  setData(data, count, username) {
+    this.#state.loggedinUsername = username;
     this.#state.itemCount = count;
     this.chatListData = data;
     this.render();
   }
 
   restartChat(data) {
-    const index = this.chatListData.findIndex(chat => chat.username === data.username);
+    const index = this.chatListData.findIndex((chat) => chat.username === data.username);
     if (index !== -1) {
-      let tmp = this.chatListData[index];
+      const tmp = this.chatListData[index];
       tmp.unread_messages_count = 0;
       this.chatListData.splice(index, 1);
       this.chatListData.unshift(tmp);
@@ -48,6 +50,8 @@ export class ChatList extends HTMLElement {
 
     this.searchButton = this.querySelector('.new-chat');
     this.searchButton.addEventListener('click', this.toggleUserSearchBar);
+    this.serachBar = this.querySelector('chat-user-search');
+    this.serachBar.user = this.#state.loggedinUsername;
 
     this.listContainer = this.querySelector('#chat-list');
     if (this.#state.itemCount > 1) {
