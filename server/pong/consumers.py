@@ -47,6 +47,8 @@ class Bumper(Vector2):
     moves_left: bool
     moves_right: bool
     dir_z: int
+    user_id: str
+    player_id: str
 
 
 @dataclass(slots=True)
@@ -61,8 +63,24 @@ class Pong:
     BUMPER_1 and BUMPER_2 are symbolic constants that represent specific bumpers.
     """
 
-    bumper_1: Bumper = Bumper(*STARTING_BUMPER_1_POS, score=0, moves_left=False, moves_right=False, dir_z=1)
-    bumper_2: Bumper = Bumper(*STARTING_BUMPER_2_POS, score=0, moves_left=False, moves_right=False, dir_z=-1)
+    bumper_1: Bumper = Bumper(
+        *STARTING_BUMPER_1_POS,
+        score=0,
+        moves_left=False,
+        moves_right=False,
+        dir_z=1,
+        user_id="",
+        player_id="",
+    )
+    bumper_2: Bumper = Bumper(
+        *STARTING_BUMPER_2_POS,
+        score=0,
+        moves_left=False,
+        moves_right=False,
+        dir_z=-1,
+        user_id="",
+        player_id="",
+    )
     ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
     scored_last: int = BUMPER_1
     someone_scored: bool = False
@@ -225,9 +243,6 @@ server sends: {winner: Profile}
 """
 
 
-MAX_PLAYERS = 2
-players = {}
-
 """
 user connects
 
@@ -244,28 +259,59 @@ on each input client sends it back
 clients disconnects
 """
 
+"""
+1. store the state in the database
+2. synchronize the state between players
+"""
+MAX_PLAYERS = 2
+player_ids = {}
+bumpers = {}
+
+
+def is_player_in_the_game(user_id: str):
+    return any(user_id == player for player in player_ids)
+
+def set_bumper(user_id: str, bumper: Bumper):
+    bumpers[player_ids[user_id]] = bumper
+
+def get_bumper(user_id: str):
+    return bumpers[player_ids[user_id]]
+
+
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.match_name = self.scope["url_route"]["kwargs"]["match_name"]
         self.match_group_name = f"match_{self.match_name}"
         self.user = self.scope.get("user")
 
-        self.player_id = hashlib.sha256(os.urandom(32)).hexdigest()
-        if len(players) > MAX_PLAYERS or not self.user:
+        if not self.user:
+            await self.disconnect(1000)
+            return
+
+        self.user_id = str(self.user.id)
+        is_in_game = is_player_in_the_game(self.user_id)
+
+        if not is_in_game and len(player_ids) > MAX_PLAYERS:
             await self.disconnect(1000)
             return
 
         await self.accept()
         await self.channel_layer.group_add(self.match_group_name, self.channel_name)
         self.state = Pong()
-        if len(players) == 0:
-            players[self.player_id] = self.state.bumper_1
-        else:
-            players[self.player_id] = self.state.bumper_2
+        if not is_in_game:
+            player_ids[self.user_id] = hashlib.sha256(os.urandom(32)).hexdigest()
+            if len(player_ids) == 1:
+                self.state.bumper_1.user_id = self.user_id
+                self.state.bumper_1.player_id = player_ids[self.user_id]
+                set_bumper(self.user_id, self.state.bumper_1)
+            elif len(player_ids) == MAX_PLAYERS:
+                self.state.bumper_2.user_id = self.user_id
+                self.state.bumper_2.player_id = player_ids[self.user_id]
+                set_bumper(self.user_id, self.state.bumper_2)
 
-        await self.send(text_data=json.dumps({"event": "joined", "player_id": self.player_id}))
+        await self.send(text_data=json.dumps({"event": "joined", "player_id": player_ids[self.user_id]}))
 
-        if len(players) == MAX_PLAYERS:
+        if len(player_ids) == MAX_PLAYERS:
             await self.channel_layer.group_send(
                 self.match_group_name,
                 {"type": "state_update", "state": self.state.as_dict()},
@@ -273,24 +319,25 @@ class GameConsumer(AsyncWebsocketConsumer):
             asyncio.create_task(self.timer())
 
     async def disconnect(self, close_code):
-        del players[self.player_id]
         await self.channel_layer.group_discard(self.match_group_name, self.channel_name)
 
     async def receive(self, text_data):
-        if len(players) != MAX_PLAYERS:
+        if len(player_ids) != MAX_PLAYERS:
             return
         text_data_json = json.loads(text_data)
         action = text_data_json["action"]
         match action:
             case "move_left" | "move_right":
                 player_id, content = text_data_json["player_id"], text_data_json["content"]
-                self.state.receive_input(players[player_id], action, content)
+                if not bumpers.get(player_id):
+                    await self.disconnect(1000)
+                self.state.receive_input(bumpers[player_id], action, content)
 
     def calculate_sleeping_time(self):
         return 0.015
 
     async def timer(self):
-        while len(players) == MAX_PLAYERS:
+        while len(player_ids) == MAX_PLAYERS:
             await asyncio.sleep(self.calculate_sleeping_time())
             await self.game_tick()
 

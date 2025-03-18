@@ -1,7 +1,9 @@
+// Will be replaced by GET /api/chats
 export async function mockChatListData() {
   const data = {
     items: [
       {
+        chat_id: '1',
         username: 'alice123',
         nickname: 'Alice',
         avatar: '/__mock__/img/sample-pic1.jpg',
@@ -19,6 +21,7 @@ export async function mockChatListData() {
         },
       },
       {
+        chat_id: '2',
         username: 'johndoe1',
         nickname: 'JohnDoe',
         avatar: '/__mock__/img/sample-pic2.png',
@@ -36,6 +39,7 @@ export async function mockChatListData() {
         },
       },
       {
+        chat_id: '3',
         username: 'george55',
         nickname: 'George',
         avatar: '/__mock__/img/sample-pic3.png',
@@ -44,7 +48,8 @@ export async function mockChatListData() {
         is_blocked_by_user: true,
         unread_messages_count: 1,
         last_message: {
-          content: 'Did you get my email?',
+          content: 'You know how important this is, and I can\'t afford any mistakes.' +
+          'If anything is missing again, we\'ll have a serious problem. 👀',
           date: '2025-02-28T12:00:00Z',
           sender: 'george55',
           is_read: false,
