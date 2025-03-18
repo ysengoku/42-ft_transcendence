@@ -9,43 +9,55 @@ export class ChatMessageArea extends HTMLElement {
   #state = {
     user: null,
     data: null,
+    renderedMessagesCount: 0,
+    totalMessagesCount: 0,
   };
 
   constructor() {
     super();
     this.handleNavigateToProfile = this.handleNavigateToProfile.bind(this);
     this.blockUser = this.blockUser.bind(this);
+    this.loadMoreMessages = this.loadMoreMessages.bind(this);
   }
 
   setData(data) {
-    this.#state.user = auth.getStoredUser();
+    if (this.#state.user === null) {
+      this.#state.user = auth.getStoredUser();
+    }
+    this.#state.renderedMessagesCount = 0;
     this.#state.data = data;
+    this.#state.totalMessagesCount = data.messages.length;
     this.render();
   }
 
   disconnectedCallback() {
     this.header?.removeEventListener('click', this.handleNavigateToProfile);
     this.blockButoon?.removeEventListener('click', this.blockUser);
+    this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
   }
 
   render() {
     this.innerHTML = this.template() + this.style();
 
+    this.header = this.querySelector('#chat-header');
     this.headerAvatar = this.querySelector('#chat-header-avatar');
     this.headerNickname = this.querySelector('#chat-header-nickname');
     this.headerUsername = this.querySelector('#chat-header-username');
     this.headerOnlineStatusIndicator = this.querySelector('#chat-header-online-status-indicator');
     this.headerOnlineStatus = this.querySelector('#chat-header-online-status');
+    this.blockButoon = this.querySelector('#chat-block-user-button');
+    this.chatMessages = this.querySelector('#chat-messages');
+
     this.#state.data.avatar ? this.headerAvatar.src = this.#state.data.avatar : this.headerAvatar.src = defaultAvatar;
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
-    this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.isOnline);
+    this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.is_online);
     this.headerOnlineStatus.textContent = this.#state.data.isOnline ? 'online' : 'offline';
 
+    this.chatMessages.innerHTML = '';
     this.renderMessages();
-
-    this.header = this.querySelector('#chat-header');
-    this.blockButoon = this.querySelector('#chat-block-user-button');
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
+    this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
 
     this.header.addEventListener('click', this.handleNavigateToProfile);
     this.blockButoon.addEventListener('click', this.blockUser);
@@ -77,8 +89,14 @@ export class ChatMessageArea extends HTMLElement {
     }
   }
 
+  loadMoreMessages() {
+    if (this.chatMessages.scrollTop === 0) {
+      console.log('Scrolled to the top');
+    }
+  }
+
   toggleLikeMessage(index) {
-    this.#state.data.messages[index].liked = !this.#state.data.messages[index].liked;
+    this.#state.data.messages[index].is_liked = !this.#state.data.messages[index].is_liked;
     this.updateMessageElement(index);
   }
 
@@ -88,25 +106,21 @@ export class ChatMessageArea extends HTMLElement {
     if (messageElement) {
       messageElement.innerHTML = `
         ${message.content}
-        ${message.liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
+        ${message.is_liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
       `;
     }
   }
 
   renderMessages() {
-    const chatMessages = this.querySelector('#chat-messages');
-    chatMessages.innerHTML = '';
+    console.log('rendered messages:', this.#state.renderedMessagesCount, '', this.#state.totalMessagesCount);
     if (!this.#state.data.messages) {
-      // const noMessages = document.createElement('div');
-      // noMessages.textContent = 'No messages yet';
-      // noMessages.classList.add('text-center', 'mt-3', 'pe-2', 'pt-3');
-      // chatMessages.appendChild(noMessages);
       return;
     }
-    this.#state.data.messages.forEach((message, index) => {
+    for (let i = this.#state.renderedMessagesCount; i < this.#state.totalMessagesCount; i++) {
+      const message = this.#state.data.messages[i];
       const messageElement = document.createElement('div');
       messageElement.innerHTML = this.messageTemplate();
-      messageElement.setAttribute('dataIndex', index);
+      messageElement.setAttribute('dataIndex', i);
       const messageContent = messageElement.querySelector('.bubble');
 
       if (message.sender === this.#state.data.username) {
@@ -128,13 +142,13 @@ export class ChatMessageArea extends HTMLElement {
         messageElement.querySelector('.message-liked').innerHTML = message.liked ?
           '<i class="bi bi-heart-fill h5"></i>' : '';
       }
-
+      // TODO: Replace by like_message request using message_id
       messageContent.addEventListener('click', () => {
-        this.toggleLikeMessage(index);
+        this.toggleLikeMessage(i);
       });
-      chatMessages.prepend(messageElement);
-    });
-    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
+      this.chatMessages.prepend(messageElement);
+      this.#state.renderedMessagesCount++;
+    }
   }
 
   template() {
@@ -215,7 +229,7 @@ export class ChatMessageArea extends HTMLElement {
         color: black;
       }
       .right-align-message .bubble {
-        background-color: #007bff;
+        background-color: var(--pm-primary-500);
         color: white;
       }
       .chat-message-avatar {
@@ -228,8 +242,6 @@ export class ChatMessageArea extends HTMLElement {
         position: absolute;
         bottom: -20px;
         right: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
-        border-radius: 50%;
         color: red;
       }
 	  </style>
