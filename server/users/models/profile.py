@@ -77,9 +77,9 @@ class ProfileQuerySet(models.QuerySet):
             return (
                 self.prefetch_related("user")
                 .filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
-                .order_by("-is_online")
+                .order_by("-is_online", "user__nickname")
             )
-        return Profile.objects.prefetch_related("user").all().order_by("-is_online")
+        return Profile.objects.prefetch_related("user").all().order_by("-is_online", "user__nickname")
 
 
 class Profile(models.Model):
