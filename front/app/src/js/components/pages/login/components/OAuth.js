@@ -55,10 +55,10 @@ export class OAuth extends HTMLElement {
         <div class="row justify-content-center">
           <div class="col-12">
             <div class="d-grid gap-3">
-              <button class="btn btn-primary btn-lg btn-42">
+              <button class="btn btn-wood btn-lg btn-42">
                 Sign in with 42
               </button>
-              <button class="btn btn-primary btn-lg btn-github">
+              <button class="btn btn-wood btn-lg btn-github">
                   Sign in with GitHub
               </button>
             </div>
