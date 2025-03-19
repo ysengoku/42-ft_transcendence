@@ -33,6 +33,9 @@ export class ChatMessageArea extends HTMLElement {
     this.header?.removeEventListener('click', this.handleNavigateToProfile);
     this.blockButoon?.removeEventListener('click', this.blockUser);
     this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+    this.#state.data.message.forEach = (message, index) => {
+      message.querySelector('.bubble').removeEventListener('click', this.toggleLikeMessage(index));
+    };
   }
 
   render() {
@@ -127,6 +130,14 @@ export class ChatMessageArea extends HTMLElement {
   toggleLikeMessage(index) {
     this.#state.data.messages[index].is_liked = !this.#state.data.messages[index].is_liked;
     this.updateMessageElement(index);
+
+    if (this.#state.user.username === this.#state.data.messages[index].sender) {
+      return;
+    }
+    const isLiked = !this.#state.data.messages[index].is_liked;
+    const messageId = this.#state.data.messages[index].id;
+    const customEvent = new CustomEvent('toggle-like-message', { detail: { messageId, isLiked } });
+    this.dispatchEvent(customEvent);
   }
 
   updateMessageElement(index) {

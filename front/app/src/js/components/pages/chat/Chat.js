@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-// import { socketManager } from '@socket';
+import { socketManager } from '@socket';
 import { isMobile } from '@utils';
 import './components/index.js';
 import { mockChatListData } from '@mock/functions/mockChatListData.js';
@@ -20,7 +20,7 @@ export class Chat extends HTMLElement {
     this.currentChat = null;
 
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
-    this.handleSendMessage = this.handleSendMessage.bind(this);
+    this.sendMessage = this.sendMessage.bind(this);
     this.handleWindowResize = this.handleWindowResize.bind(this);
     this.handleBackToChatList = this.handleBackToChatList.bind(this);
   }
@@ -51,10 +51,14 @@ export class Chat extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('chatItemSelected', this.handleChatItemSelected);
-    document.removeEventListener('sendMessage', this.handleSendMessage);
+    document.removeEventListener('sendMessage', this.sendMessage);
     window.removeEventListener('resize', this.handleWindowResize);
     this.backButton?.removeEventListener('click', this.handleBackToChatList);
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Rendering                                                           */
+  /* ------------------------------------------------------------------------ */
 
   async render() {
     this.innerHTML = this.template() + this.style();
@@ -69,12 +73,13 @@ export class Chat extends HTMLElement {
     this.chatMessagesArea.setData(this.currentChat);
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
-    document.addEventListener('sendMessage', this.handleSendMessage);
-
-    // socketManager.addListener('chat', (message) => this.handleNewMessage(message));
-
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
+
+    document.addEventListener('sendMessage', this.sendMessage);
+    socketManager.addListener('message', (message) => this.receiveMessage(message));
+    socketManager.addListener('like_message', (ids) => this.handleLikedMessage);
+    socketManager.addListener('unlike_message', this.handleUnlikedMessage);
   }
 
   async fetchChatList() {
@@ -101,6 +106,10 @@ export class Chat extends HTMLElement {
     // Update chat list with new message notification
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Event listeners                                                     */
+  /* ------------------------------------------------------------------------ */
+
   async handleChatItemSelected(event) {
     if (!event.detail.messages) {
       // TODO: Replace by apiRequest
@@ -117,32 +126,50 @@ export class Chat extends HTMLElement {
     }
   }
 
-  // TODO: Send message event
-  handleSendMessage(event) {
-    console.log('Send message event:', event.detail);
+  handleWindowResize() {
+    if (!isMobile()) {
+      this.chatListContainer.classList.remove('d-none');
+      this.chatContainer.classList.remove('d-none');
+    }
+  }
 
-    // Send message to the server
-    // TODO: Adjust data to our server
+  handleBackToChatList() {
+    this.chatListContainer.classList.remove('d-none');
+    this.chatContainer.classList.add('d-none');
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Action handlers                                                     */
+  /* ------------------------------------------------------------------------ */
+
+  sendMessage(event) {
+    console.log('Send message event:', event.detail);
     const messageData = {
-      type: 'chat',
+      action: 'message',
       data: {
-        id: this.currentChat.messages.length + 1,
-        sender: this.#state.user.username,
+        chat_id: this.currentChat.chat_id,
         content: event.detail,
-        date: new Date().toISOString(),
-        is_liked: false,
-        is_read: false,
       },
     };
     console.log('Message data:', messageData);
-    // ----- Temporary message sending handler -----------------------------
-    this.currentChat.messages.unshift(messageData.data);
-    this.chatMessagesArea.setData(this.currentChat);
-    // socketManager.socket.send(JSON.stringify(messageData));
-    // ---------------------------------------------------------------------
+    socketManager.socket.send(JSON.stringify(messageData));
+    // TODO: Render temporary message (in gray) to chat message area?
+    // But how to remove it after receiving the actual message?
   }
 
-  handleNewMessage(message) {
+  // TODO: Add event listner (custom event from chat messages area
+  toggleLikeMessage(event) {
+    const messageData = {
+      action: event.detail.isLiked ? 'like_message' : 'unlike_message',
+      data: {
+        chat_id: this.currentChat.chat_id,
+        message_id: event.detail.messageId,
+      },
+    };
+    socketManager.socket.send(JSON.stringify(messageData));
+  }
+
+  receiveMessage(message) {
     console.log('New message:', message);
     const newMessage = message;
     // ----- For test --------------------------------
@@ -156,17 +183,21 @@ export class Chat extends HTMLElement {
     this.updateChatList(newMessage);
   }
 
-  handleWindowResize() {
-    if (!isMobile()) {
-      this.chatListContainer.classList.remove('d-none');
-      this.chatContainer.classList.remove('d-none');
-    }
+  handleLikedMessage(ids) {
+    // Find concerned Chat
+
+    // If the message is in the current chat
+    // Find concerned message in the Chat
+    // Update is_liked field
+    // If the message is in the current chat, update the message
   }
 
-  handleBackToChatList() {
-    this.chatListContainer.classList.remove('d-none');
-    this.chatContainer.classList.add('d-none');
+  handleUnlikedMessage(ids) {
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Template & style                                                     */
+  /* ------------------------------------------------------------------------ */
 
   template() {
     return `
