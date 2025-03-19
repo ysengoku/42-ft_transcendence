@@ -40,6 +40,9 @@ const socketManager = (() => {
     }
 
     close() {
+      if (!this.socketOpen) {
+        return;
+      }
       this.socket.close();
       this.socketOpen = false;
     }
