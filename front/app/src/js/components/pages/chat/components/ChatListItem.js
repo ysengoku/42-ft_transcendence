@@ -49,6 +49,10 @@ export class ChatListItem extends HTMLElement {
     this.listItem.addEventListener('click', this.handleChatItemSelected);
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*     Event handlers                                                       */
+  /* ------------------------------------------------------------------------ */
+
   handleChatItemSelected() {
     this.listItem.classList.add('active');
     const circleNumber = this.listItem.querySelector('.circle-number');
@@ -64,6 +68,10 @@ export class ChatListItem extends HTMLElement {
     const event = new CustomEvent('chatItemSelected', { detail: this.#state.data.username, bubbles: true });
     this.dispatchEvent(event);
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Template & style                                                     */
+  /* ------------------------------------------------------------------------ */
 
   template() {
     return `

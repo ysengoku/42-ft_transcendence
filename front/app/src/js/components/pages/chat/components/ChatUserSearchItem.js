@@ -10,7 +10,7 @@ export class ChatUserSearchItem extends HTMLElement {
   constructor() {
     super();
 
-    this.handleClick = this.handleClick.bind(this);
+    this.startChat = this.startChat.bind(this);
   }
 
   set data(value) {
@@ -19,8 +19,12 @@ export class ChatUserSearchItem extends HTMLElement {
   }
 
   disconnetedCallback() {
-    this.removeEventListener('click', this.handleClick);
+    this.removeEventListener('click', this.startChat);
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Render                                                               */
+  /* ------------------------------------------------------------------------ */
 
   render() {
     this.innerHTML = this.template() + this.style();
@@ -31,10 +35,14 @@ export class ChatUserSearchItem extends HTMLElement {
     this.querySelector('.userlist-username').textContent = `@${this.#state.user.username}`;
 
     this.chatList = document.querySelector('chat-list-component');
-    this.addEventListener('click', this.handleClick);
+    this.addEventListener('click', this.startChat);
   }
 
-  async handleClick(event) {
+  /* ------------------------------------------------------------------------ */
+  /*     Event handlers                                                       */
+  /* ------------------------------------------------------------------------ */
+
+  async startChat(event) {
     event.preventDefault();
     event.stopPropagation();
     await this.fetchChatRoom();
@@ -63,6 +71,10 @@ export class ChatUserSearchItem extends HTMLElement {
       }
     }
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Template & style                                                     */
+  /* ------------------------------------------------------------------------ */
 
   template() {
     return `

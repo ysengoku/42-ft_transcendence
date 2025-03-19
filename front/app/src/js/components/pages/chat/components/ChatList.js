@@ -22,40 +22,6 @@ export class ChatList extends HTMLElement {
     this.render();
   }
 
-  restartChat(data) {
-    const index = this.chatListData.findIndex((chat) => chat.username === data.username);
-    if (index !== -1) {
-      const tmp = this.chatListData[index];
-      tmp.unread_messages_count = 0;
-      this.chatListData.splice(index, 1);
-      this.chatListData.unshift(tmp);
-      this.render();
-      const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
-      this.dispatchEvent(event);
-    } else {
-      this.addNewChat(data);
-    }
-  }
-
-  addNewChat(data) {
-    const chatData = {
-      username: data.username,
-      nickname: data.nickname,
-      avatar: data.avatar,
-      is_online: data.is_online,
-      is_blocked_user: data.is_blocked_user,
-      is_blocked_by_user: data.is_blocked_by_user,
-      unread_messages_count: 0,
-      last_message: data.messages[0],
-    };
-    this.chatListData.unshift(chatData);
-    console.log('Chat list data:', this.chatListData);
-    this.#state.itemCount += 1;
-    this.render();
-    const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
-    this.dispatchEvent(event);
-  }
-
   render() {
     this.innerHTML = this.template();
 
@@ -80,10 +46,52 @@ export class ChatList extends HTMLElement {
     }
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*     Event handlers                                                       */
+  /* ------------------------------------------------------------------------ */
+
+  addNewChat(data) {
+    const chatData = {
+      username: data.username,
+      nickname: data.nickname,
+      avatar: data.avatar,
+      is_online: data.is_online,
+      is_blocked_user: data.is_blocked_user,
+      is_blocked_by_user: data.is_blocked_by_user,
+      unread_messages_count: 0,
+      last_message: data.messages[0],
+    };
+    this.chatListData.unshift(chatData);
+    console.log('Chat list data:', this.chatListData);
+    this.#state.itemCount += 1;
+    this.render();
+    const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
+    this.dispatchEvent(event);
+  }
+
+  restartChat(data) {
+    const index = this.chatListData.findIndex((chat) => chat.username === data.username);
+    if (index !== -1) {
+      const tmp = this.chatListData[index];
+      tmp.unread_messages_count = 0;
+      this.chatListData.splice(index, 1);
+      this.chatListData.unshift(tmp);
+      this.render();
+      const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
+      this.dispatchEvent(event);
+    } else {
+      this.addNewChat(data);
+    }
+  }
+
   toggleUserSearchBar() {
     const userSearch = document.getElementById('chat-user-search');
     userSearch?.classList.toggle('d-none');
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Template & style                                                     */
+  /* ------------------------------------------------------------------------ */
 
   template() {
     return `
