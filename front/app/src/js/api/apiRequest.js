@@ -127,8 +127,8 @@ const handlers = {
         return { success: true, status: response.status, data: responseData };
       }
     }, 3000);
-    auth.clearStoredUser();
-    router.navigate('/');
+    // auth.clearStoredUser();
+    // router.navigate('/');
     return { success: false, status: 500, msg: ERROR_MESSAGES.UNKNOWN_ERROR };
   },
 

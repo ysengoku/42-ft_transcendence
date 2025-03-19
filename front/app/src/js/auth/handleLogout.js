@@ -11,6 +11,5 @@ export async function handleLogout() {
     console.error('A problem occurred while logging out:', response);
   }
   auth.clearStoredUser();
-  socketManager.close();
   router.navigate('/');
 }
