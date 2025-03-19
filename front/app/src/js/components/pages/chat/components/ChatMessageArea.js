@@ -21,7 +21,6 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   setData(data) {
-    console.log('ChatMessageArea data:', data);
     if (this.#state.user === null) {
       this.#state.user = auth.getStoredUser();
     }
