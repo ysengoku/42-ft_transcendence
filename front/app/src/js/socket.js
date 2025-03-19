@@ -4,23 +4,39 @@ const socketManager = (() => {
       this.url = 'wss://' + window.location.host + '/ws/events/';
       console.log('WebSocket URL:', this.url);
       this.socket = null;
-      this.listeners = null;
+      this.listeners = new Map();
       this.socketOpen = false;
     }
 
-    init() {
+    connect() {
       if (this.socketOpen) {
         return;
       }
       this.socket = new WebSocket(this.url);
       this.socketOpen = true;
-      this.listeners = new Map();
-
-      this.socket.onmessage = (event) => this.handleMessage(event);
 
       this.socket.onopen = (event) => console.log('WebSocket opened:', event);
-      this.socket.onclose = (event) => console.log('WebSocket closed:', event);
+      this.socket.onmessage = (event) => this.handleAction(event);
       this.socket.onerror = (event) => console.error('WebSocket error:', event);
+      this.socket.onclose = (event) => {
+        console.log('WebSocket closed:', event);
+        setTimeout(() => this.reconnect(), 1000);
+      };
+    }
+
+    reconnect() {
+      if (!this.socketOpen) {
+        return;
+      }
+      console.log('Reconnecting to WebSocket...');
+      this.socket = new WebSocket(this.url);
+      this.socket.onopen = (event) => console.log('WebSocket opened:', event);
+      this.socket.onmessage = (event) => this.handleAction(event);
+      this.socket.onerror = (event) => console.error('WebSocket error:', event);
+      this.socket.onclose = (event) => {
+        console.log('WebSocket closed:', event);
+        setTimeout(() => this.reconnect(), 1000);
+      };
     }
 
     close() {
@@ -28,17 +44,17 @@ const socketManager = (() => {
       this.socketOpen = false;
     }
 
-    handleMessage(event) {
+    handleAction(event) {
       // console.log('Message received:', event.data);
       let message = null;
       try {
         message = JSON.parse(event.data);
       } catch (error) {
-        // console.error('Invalid JSON:', event.data);
+        console.error('Invalid JSON:', event.data);
         return;
       }
       if (!message.action) {
-        console.error('Message missing action field:', message);
+        console.error('Missing action field:', message);
         return;
       }
       const matchedListeners = this.listeners.get(message.action);
