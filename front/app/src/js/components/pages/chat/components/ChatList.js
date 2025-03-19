@@ -38,7 +38,18 @@ export class ChatList extends HTMLElement {
   }
 
   addNewChat(data) {
-    this.chatListData.unshift(data);
+    const chatData = {
+      username: data.username,
+      nickname: data.nickname,
+      avatar: data.avatar,
+      is_online: data.is_online,
+      is_blocked_user: data.is_blocked_user,
+      is_blocked_by_user: data.is_blocked_by_user,
+      unread_messages_count: 0,
+      last_message: data.messages[0],
+    };
+    this.chatListData.unshift(chatData);
+    console.log('Chat list data:', this.chatListData);
     this.#state.itemCount += 1;
     this.render();
     const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
