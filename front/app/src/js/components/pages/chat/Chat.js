@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { socketManager } from '@socket';
+// import { socketManager } from '@socket';
 import { isMobile } from '@utils';
 import './components/index.js';
 import { mockChatListData } from '@mock/functions/mockChatListData.js';
@@ -71,7 +71,7 @@ export class Chat extends HTMLElement {
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
     document.addEventListener('sendMessage', this.handleSendMessage);
 
-    socketManager.addListener('chat', (message) => this.handleNewMessage(message));
+    // socketManager.addListener('chat', (message) => this.handleNewMessage(message));
 
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
@@ -138,7 +138,7 @@ export class Chat extends HTMLElement {
     // ----- Temporary message sending handler -----------------------------
     this.currentChat.messages.unshift(messageData.data);
     this.chatMessagesArea.setData(this.currentChat);
-    socketManager.socket.send(JSON.stringify(messageData));
+    // socketManager.socket.send(JSON.stringify(messageData));
     // ---------------------------------------------------------------------
   }
 

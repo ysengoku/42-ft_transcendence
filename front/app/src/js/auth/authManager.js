@@ -2,6 +2,7 @@ import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
 import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
+import { socketManager } from '@socket';
 
 /**
  * @module authManager
@@ -22,6 +23,11 @@ const auth = (() => {
       sessionStorage.setItem('user', JSON.stringify(user));
       const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
       document.dispatchEvent(event);
+      socketManager.init();
+    }
+
+    updateStoredUser(user) {
+      sessionStorage.setItem('user', JSON.stringify(user));
     }
 
     /**
