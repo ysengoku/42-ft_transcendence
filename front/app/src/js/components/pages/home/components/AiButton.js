@@ -1,9 +1,9 @@
 import { router } from '@router';
 
-export class SettingsButton extends HTMLElement {
+export class AiButton extends HTMLElement {
   constructor() {
     super();
-    this.handleClicked = this.handleClick.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
   connectedCallback() {
@@ -17,22 +17,23 @@ export class SettingsButton extends HTMLElement {
   render() {
     this.innerHTML = this.template();
 
-    this.button = this.querySelector('#home-settings-button');
+    this.button = this.querySelector('#home-ai-button');
     this.button.addEventListener('click', this.handleClick);
   }
 
   handleClick(event) {
     event.preventDefault();
-    router.navigate('/settings');
+    // TODO: Update route
+    router.navigate('/duel-menu');
   }
 
   template() {
     return `
-      <div id="home-settings-button">
-        <div class="btn btn-wood btn-lg">Settings</div>
-      </div>
-    `;
+	    <div id="home-ai-button">
+	      <div class="btn btn-wood btn-lg">Play against AI</div>
+	    </div>
+	  `;
   }
 }
 
-customElements.define('home-settings-button', SettingsButton);
+customElements.define('home-ai-button', AiButton);
