@@ -21,6 +21,7 @@ export class Chat extends HTMLElement {
 
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
+    this.toggleLikeMessage = this.toggleLikeMessage.bind(this);
     this.handleWindowResize = this.handleWindowResize.bind(this);
     this.handleBackToChatList = this.handleBackToChatList.bind(this);
   }
@@ -52,6 +53,7 @@ export class Chat extends HTMLElement {
   disconnectedCallback() {
     document.removeEventListener('chatItemSelected', this.handleChatItemSelected);
     document.removeEventListener('sendMessage', this.sendMessage);
+    document.removeEventListener('toggleLike', this.toggleLikeMessage);
     window.removeEventListener('resize', this.handleWindowResize);
     this.backButton?.removeEventListener('click', this.handleBackToChatList);
   }
@@ -73,13 +75,14 @@ export class Chat extends HTMLElement {
     this.chatMessagesArea.setData(this.currentChat);
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
+    document.addEventListener('sendMessage', this.sendMessage);
+    document.addEventListener('toggleLike', this.toggleLikeMessage);
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
 
-    document.addEventListener('sendMessage', this.sendMessage);
     socketManager.addListener('message', (message) => this.receiveMessage(message));
-    socketManager.addListener('like_message', (ids) => this.handleLikedMessage);
-    socketManager.addListener('unlike_message', this.handleUnlikedMessage);
+    socketManager.addListener('like_message', (ids) => this.handleLikedMessage(ids));
+    socketManager.addListener('unlike_message', (ids) => this.handleUnlikedMessage(ids));
   }
 
   async fetchChatList() {
@@ -107,7 +110,7 @@ export class Chat extends HTMLElement {
   }
 
   /* ------------------------------------------------------------------------ */
-  /*      Event listeners                                                     */
+  /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
 
   async handleChatItemSelected(event) {
@@ -138,10 +141,6 @@ export class Chat extends HTMLElement {
     this.chatContainer.classList.add('d-none');
   }
 
-  /* ------------------------------------------------------------------------ */
-  /*      Action handlers                                                     */
-  /* ------------------------------------------------------------------------ */
-
   sendMessage(event) {
     console.log('Send message event:', event.detail);
     const messageData = {
@@ -154,10 +153,9 @@ export class Chat extends HTMLElement {
     console.log('Message data:', messageData);
     socketManager.socket.send(JSON.stringify(messageData));
     // TODO: Render temporary message (in gray) to chat message area?
-    // But how to remove it after receiving the actual message?
+    // But how to match with the server response to remove it after ?
   }
 
-  // TODO: Add event listner (custom event from chat messages area
   toggleLikeMessage(event) {
     const messageData = {
       action: event.detail.isLiked ? 'like_message' : 'unlike_message',
@@ -166,6 +164,7 @@ export class Chat extends HTMLElement {
         message_id: event.detail.messageId,
       },
     };
+    console.log('Like message data:', messageData);
     socketManager.socket.send(JSON.stringify(messageData));
   }
 
@@ -173,14 +172,15 @@ export class Chat extends HTMLElement {
     console.log('New message:', message);
     const newMessage = message;
     // ----- For test --------------------------------
-    newMessage.sender = this.currentChat.username;
+    message.sender = this.currentChat.username;
     // -----------------------------------------------
-    if (newMessage.sender === this.currentChat.username) {
-      this.currentChat.messages.unshift(newMessage);
+    if (message.chat_id === this.currentChat.chat_id) {
+      this.currentChat.messages.unshift(message);
       // TODO: Append new message instead of updating the whole chat
       this.chatMessagesArea.setData(this.currentChat);
+    } else {
+      this.updateChatList(message);
     }
-    this.updateChatList(newMessage);
   }
 
   handleLikedMessage(ids) {

@@ -38,6 +38,7 @@ const auth = (() => {
       sessionStorage.removeItem('user');
       const event = new CustomEvent('userStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
+      socketManager.close();
     }
 
     /**
