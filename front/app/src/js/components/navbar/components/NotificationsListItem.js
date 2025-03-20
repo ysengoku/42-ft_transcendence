@@ -97,7 +97,7 @@ export class NotificationsListItem extends HTMLElement {
 	  <div class="d-flex flex-column">
         <div class="d-flex flex-row justify-content-start align-items-start">
           <div class="dropdown-list-avatar-container">
-            <img class="notifications-list-avatar rounded-circle me-1" alt="Avatar"">
+            <img class="notifications-list-avatar avatar-m rounded-circle me-1" alt="Avatar"">
           </div>
           <div class="d-flex flex-column justify-content-center">
             <p class="notification-time m-0 mb-2"></P>

@@ -224,10 +224,10 @@ export class Chat extends HTMLElement {
   style() {
     return `
     <style>
-      #chat-component-container {
-        height: calc(100vh - 104px);
-      }
-      /style>
+    #chat-component-container {
+      height: calc(100vh - 104px);
+    }
+    </style>
     `;
   }
 }

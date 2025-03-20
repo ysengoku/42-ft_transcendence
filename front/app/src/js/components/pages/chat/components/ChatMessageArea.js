@@ -213,7 +213,7 @@ export class ChatMessageArea extends HTMLElement {
       <div class="d-flex flex-row justify-content-between align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
   
       <div class="d-flex flex-row" id="chat-header">
-        <img class="rounded-circle me-3" alt="User" id="chat-header-avatar"/>
+        <img class="avatar-m rounded-circle me-3" alt="User" id="chat-header-avatar"/>
 
         <div class="d-flex flex-column text-start gap-1">
           <div class="d-flex flex-row gap-3">
@@ -250,20 +250,6 @@ export class ChatMessageArea extends HTMLElement {
 	  <style>
       #chat-messages {
         min-height: 0;
-      }
-      #chat-header-avatar {
-        width: 52px;
-        height: 52px;
-        object-fit: cover;
-      }
-      .online-status {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background-color: grey;
-      }
-      .online-status.online {
-        background-color: green;
       }
       .left-align-message {
         padding-right: 32px;
