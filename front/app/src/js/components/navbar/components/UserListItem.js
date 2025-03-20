@@ -59,9 +59,9 @@ export class UserListItem extends HTMLElement {
     return `
   	<li class="list-group-item dropdown-list-item">
       <div class="d-flex flex-row align-items-center">
-  		  <div class="dropdown-list-avatar-container">
-  			  <img class="dropdown-list-avatar rounded-circle me-3" alt="Avatar">
-  			  <span class="user-list-status-indicator ${this.#state.online ? 'online' : ''} ms-3"></span>
+  		  <div class="d-inline-block position-relative me-2">
+  			  <img class="dropdown-list-avatar avatar-m rounded-circle me-3" alt="Avatar">
+  			  <span class="online-status user-list-status-indicator ${this.#state.online ? 'online' : ''} ms-3"></span>
   		  </div>
         <div class="d-flex flex-column justify-content-center">
           <p class="userlist-nickname m-0 fs-5"></P>
@@ -75,19 +75,12 @@ export class UserListItem extends HTMLElement {
   style() {
     return `
     <style>
-      .user-list-status-indicator {
-        position: absolute;
-        width: 16px;
-        height: 16px;
-        bottom: 0;
-        right: 16%;
-        border-radius: 50%;
-        background-color: gray;
-        border: 2px solid var(--bs-body-bg);
-      }
-      .user-list-status-indicator.online {
-        background-color: green;
-      }
+    .user-list-status-indicator {
+      position: absolute;
+      bottom: 0;
+      right: 16%;
+      border: 2px solid var(--bs-body-bg);
+    }
     </style>
     `;
   }
