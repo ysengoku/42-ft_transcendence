@@ -43,11 +43,13 @@
 
 [data-bs-theme="light"] {
   --bs-body-color: var(--pm-gray-700);
+  --bs-bg-color: var(--pm-primary-100);
   --bs-black-rgb: 34, 32, 31;
 }
 
 [data-bs-theme="dark"] {
   --bs-body-color: var(--pm-gray-100);
+  --bs-bg-color: var(--pm-gray-700);
   --bs-black-rgb: 241, 240, 240;
 }
 
@@ -104,6 +106,21 @@ h2, h3, h4, h5, h6, legend {
 
 .tooltip {
   font-size: 12px;
+}
+
+.avatar-m {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+}
+.online-status {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: grey;
+}
+.online-status.online {
+  background-color: green;
 }
 
 /*--------------------------------------------------------------------------- */

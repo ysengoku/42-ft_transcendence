@@ -80,14 +80,14 @@ export class ChatUserSearchItem extends HTMLElement {
     return `
     <li class="list-group-item ps-3 py-2">
       <div class="d-flex flex-row align-items-center">
-      <div class="chat-user-search-avatar-container">
+        <div class="position-relative d-inline-block me-2">
           <img class="chat-user-search-avatar rounded-circle me-3" alt="Avatar">
-          <span class="chat-user-search-status-indicator ${this.#state.user.is_online ? 'online' : ''} ms-3"></span>
-    </div>
-    <div class="d-flex flex-wrap flex-grow-1 gap-2">
+          <span class="online-status chat-user-search-status-indicator ${this.#state.user.is_online ? 'online' : ''} ms-3"></span>
+        </div>
+        <div class="d-flex flex-wrap flex-grow-1 gap-2">
           <p class="userlist-nickname m-0 fw-bolder"></P>
           <p class="userlist-username m-0 fs-light"></p>
-    </div>
+        </div>
       <div>
     </li>
     `;
@@ -96,11 +96,6 @@ export class ChatUserSearchItem extends HTMLElement {
   style() {
     return `
     <style>
-    .chat-user-search-avatar-container {
-      position: relative;
-      display: inline-block;
-      margin-right: 10px;
-    }
     .chat-user-search-avatar {
       width: 40px;
       height: 40px;
@@ -108,16 +103,11 @@ export class ChatUserSearchItem extends HTMLElement {
     }
     .chat-user-search-status-indicator {
       position: absolute;
-      width: 12px;
-      height: 12px;
       bottom: 0;
       right: 24%;
-      border-radius: 50%;
-      background-color: gray;
-      border: 2px solid var(--bs-body-bg);
-    }
-    .chat-user-search-status-indicator.online {
-      background-color: green;
+      border: 1px solid var(--bs-bg-color);
+      width: 12px;
+      height: 12px;
     }
     </style>
     `;
