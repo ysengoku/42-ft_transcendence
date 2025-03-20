@@ -78,8 +78,9 @@ export class ChatListItem extends HTMLElement {
     <li class="list-group-item me-3" id="chat-list-item">
       <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
 
-        <div class="d-inline-block">
-          <img class="chat-list-item-avatar rounded-circle" alt="User" />
+        <div class="d-inline-block position-relative">
+          <img class="chat-list-item-avatar avatar-m rounded-circle" alt="User" />
+          <span class="online-status chat-list-status-indicator ${this.#state.data.is_online ? 'online' : ''} ms-3"></span>
         </div>
 
         <div class="d-flex flex-column justify-content-start py-2 gap-1 flex-grow-1">
@@ -111,10 +112,11 @@ export class ChatListItem extends HTMLElement {
         background-color: var(--pm-primary-500) !important;
         border: none;
       }
-      .list-item img {
-        width: 52px;
-        height: 52px;
-        object-fit: cover;
+      .chat-list-status-indicator {
+        position: absolute;
+        bottom: 0;
+        right: -2px;
+        border: 1px solid var(--bs-bg-color);
       }
       .circle-number {
         background-color: red;

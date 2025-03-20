@@ -91,16 +91,6 @@ export class Navbar extends HTMLElement {
       padding: 16px 8px;
       position: relative;
     }
-    .dropdown-list-avatar-container {
-      position: relative;
-      display: inline-block;
-      margin-right: 10px;
-    }
-    .dropdown-list-avatar {
-      width: 56px;
-      height: 56px;
-      object-fit: cover;
-    }
     /*
     .badge {
       position: absolute;
