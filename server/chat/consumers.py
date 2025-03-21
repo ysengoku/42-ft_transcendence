@@ -39,8 +39,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.handle_message(text_data_json)
             case "notification":
                 self.handle_notification(text_data_json)
-            case "mark_notification_as_read":
-                self.handle_mark_notification_as_read(text_data_json)
             case "user_online":
                 self.handle_online_status(text_data_json)
             case "user_offline":
@@ -174,13 +172,12 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def handle_notification(self, data):
         notification_data = data["notification"]
-        notification_id = data.get["notification_id"]
+        notification_id = data.get("notification_id")
 
         if notification_id is None:
             Notification.objects.create(
                 user=self.user, message=notification_data)
-
-        if notification_id:
+        else:
             try:
                 notification = Notification.objects.get(id=notification_id)
                 notification.read = True
@@ -192,20 +189,6 @@ class UserEventsConsumer(WebsocketConsumer):
             "type": "notification",
             "data": notification_data
         }))
-
-    def handle_mark_notification_as_read(self, data):
-        notification_id = data["notification_id"]
-
-        try:
-            notification = Notification.objects.get(id=notification_id)
-            notification.read = True
-            notification.save()
-            self.send(text_data=json.dumps({
-                "type": "notification_read",
-                "data": {"id": notification_id}
-            }))
-        except Notification.DoesNotExist:
-            print(f"Notification {notification_id} does not exist.")
 
     def handle_game_invite(self, event):
         pass
