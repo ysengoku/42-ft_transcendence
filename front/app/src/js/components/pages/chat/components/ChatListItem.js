@@ -75,7 +75,7 @@ export class ChatListItem extends HTMLElement {
 
   template() {
     return `
-    <li class="list-group-item me-3" id="chat-list-item">
+    <li class="list-group-item me-4 mb-2" id="chat-list-item">
       <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
 
         <div class="d-inline-block position-relative">
@@ -105,8 +105,7 @@ export class ChatListItem extends HTMLElement {
       <style>
       .list-group-item {
         border: none;
-        border-top: 1px solid var(--bs-border-color);
-        background-color: transparent;
+        background-color: rgba(var(--pm-primary-100-rgb), 0.3);
       }
       .list-group-item.active {
         background-color: var(--pm-primary-500) !important;
