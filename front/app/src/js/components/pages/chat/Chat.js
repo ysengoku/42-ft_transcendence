@@ -10,6 +10,7 @@ import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 export class Chat extends HTMLElement {
   #state = {
     user: null,
+    currentChatUsername: '',
     currentChatIndex: 0,
     chatListItemCount: 0,
   };
@@ -33,19 +34,23 @@ export class Chat extends HTMLElement {
       router.navigate('/login');
     }
     // ----- Temporary mock data -------------------------
-    this.mockData = await mockChatListData();
-    this.chatListData = this.mockData.items;
-    this.#state.chatListItemCount = this.mockData.count;
+    // this.mockData = await mockChatListData();
+    // this.chatListData = this.mockData.items;
+    // this.#state.chatListItemCount = this.mockData.count;
     // ---------------------------------------------------
-    // this.chatListData = await this.fetchChatList();
+    const listData = await this.fetchChatList();
+    // TODO: Error handling
+    this.chatListData = listData;
 
     if (this.#state.chatListItemCount > 0) {
       // ----- Temporary mock data ----------------------------------------------
-      const chatData = await mockChatMessagesData(this.chatListData[0].username);
+      // const chatData = await mockChatMessagesData(this.chatListData[0].username);
       // ------------------------------------------------------------------------
-      // PUT /api/chats/username
-      this.currentChat = chatData;
+      this.#state.currentChatUsername = this.chatListData[0].username;
       this.chatListData[0].unread_messages_count = 0;
+      const chatData = await this.fetchChatData();
+      // TODO: Error handling
+      this.currentChat = chatData;
     }
     this.render();
   }
@@ -104,6 +109,23 @@ export class Chat extends HTMLElement {
     }
   }
 
+  async fetchChatData() {
+    const response = await apiRequest(
+        'PUT',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.CHAT(this.#state.currentChatUsername),
+        null,
+        false,
+        true,
+    );
+    if (response.success) {
+      console.log('Chat data response:', response);
+      return response.data;
+    } else {
+      // TODO: Handle error
+    }
+  }
+
   async updateChatList(newMessage) {
     // TODO
     // Update chat list with new message notification
@@ -115,8 +137,10 @@ export class Chat extends HTMLElement {
 
   async handleChatItemSelected(event) {
     if (!event.detail.messages) {
-      // TODO: Replace by apiRequest
-      const chatData = await mockChatMessagesData(event.detail);
+      // const chatData = await mockChatMessagesData(event.detail);
+      this.#state.currentChatUsername = event.detail;
+      const chatData = await this.fetchChatData();
+      // TODO: Error handling
       this.currentChat = chatData;
     } else {
       this.currentChat = event.detail;
@@ -201,18 +225,20 @@ export class Chat extends HTMLElement {
 
   template() {
     return `
-    <div class="container-fluid d-flex flex-row flex-grow-1 py-4" id="chat-component-container">
-      <div class="col-12 col-md-4" id="chat-list-container">
-        <chat-list-component></chat-list-component>
+    <div class="container-fluid d-flex flex-row flex-grow-1 p-0" id="chat-component-container">
+      <div class="chat-list-wrapper col-12 col-md-4">
+        <div class="ms-4 my-4" id="chat-list-container">
+          <chat-list-component></chat-list-component>
+        </div>
       </div>
 
-      <div class="col-12 col-md-8 d-none d-md-block" id="chat-container">
-        <div class="d-flex flex-column h-100">
+      <div class="col-12 col-md-8 d-none d-md-block my-4" id="chat-container">
+        <div class="d-flex flex-column me-4 h-100">
           <button class="btn btn-secondry mt-2 text-start d-md-none mb-3" id="back-to-chat-list">
             <i class="bi bi-arrow-left"></i>
              Back
           </button>
-          <div class="flex-grow-1 overflow-auto">
+          <div class="flex-grow-1 overflow-auto me-3">
             <chat-message-area></chat-message-area>
           </div>
         </div>
@@ -224,8 +250,12 @@ export class Chat extends HTMLElement {
   style() {
     return `
     <style>
+    .chat-list-wrapper {
+      background-color: rgba(var(--pm-primary-100-rgb), 0.1);
+    }
     #chat-component-container {
-      height: calc(100vh - 104px);
+      height: calc(100vh - 66px);
+      background-color: rgba(var(--pm-primary-100-rgb), 0.2);
     }
     </style>
     `;

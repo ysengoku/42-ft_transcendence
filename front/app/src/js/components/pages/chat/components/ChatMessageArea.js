@@ -115,7 +115,7 @@ export class ChatMessageArea extends HTMLElement {
 
   async loadMoreMessages() {
     if (this.chatMessages.scrollTop === 0) {
-      if (this.#state.renderedMessagesCount < 10) {
+      if (this.#state.renderedMessagesCount < 30) {
         return;
       }
       if (this.#state.totalMessagesCount === 0 ||
@@ -123,25 +123,25 @@ export class ChatMessageArea extends HTMLElement {
         const previousHeight = this.chatMessages.scrollHeight;
 
         // ----- TODO: Replace by apiRequest ----------------------------------
-        const response = await mockChatMoreMessages(this.#state.data.username);
-        this.#state.data.messages.push(...response.items);
-        this.#state.totalMessagesCount = response.count;
-        this.renderMessages();
+        // const response = await mockChatMoreMessages(this.#state.data.username);
+        // this.#state.data.messages.push(...response.items);
+        // this.#state.totalMessagesCount = response.count;
+        // this.renderMessages();
         // ----------------------------------------------------------------------
 
-        // const response = apiRequest(
-        //     'GET',
-        //     API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
-        //     null,
-        //     false,
-        //     true);
-        // if (response.success) {
-        //   this.#state.data.messages.push(...response.data.items);
-        //   this.#state.totalMessagesCount = response.data.count;
-        //   this.renderMessages();
-        // } else {
-        //   // TODO: Handle error
-        // }
+        const response = await apiRequest(
+            'GET',
+            API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
+            null,
+            false,
+            true);
+        if (response.success) {
+          this.#state.data.messages.push(...response.data.items);
+          this.#state.totalMessagesCount = response.data.count;
+          this.renderMessages();
+        } else {
+          // TODO: Handle error
+        }
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight - previousHeight;
       }
     }
