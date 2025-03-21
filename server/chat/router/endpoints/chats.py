@@ -31,6 +31,8 @@ def get_or_create_chat(request, username: str):
     """
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile
+    if other_profile == profile:
+        raise HttpError(422, "Cannot get chat with yourself.")
     chat, created = Chat.objects.get_or_create(profile, other_profile)
     chat = Chat.objects.filter(pk=chat.pk).with_other_user_profile_info(profile).first()
     if created:
@@ -48,6 +50,8 @@ def get_messages(request, username: str):
     """
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile
+    if other_profile == profile:
+        raise HttpError(422, "Cannot get messages with yourself.")
     chat = Chat.objects.for_exact_participants(profile, other_profile).first()
     if not chat:
         raise HttpError(404, f"Chat with {other_profile} was not found.")
