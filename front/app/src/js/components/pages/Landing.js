@@ -13,11 +13,6 @@ export class Landing extends HTMLElement {
   async connectedCallback() {
     this.#state.isLoggedIn = auth.getStoredUser() ? true : false;
     this.render();
-
-    const themeObserver = new MutationObserver(() => {
-      this.render();
-    });
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
   }
 
   render() {
@@ -25,26 +20,44 @@ export class Landing extends HTMLElement {
   }
 
   template() {
+    const button = this.#state.isLoggedIn ? this.buttonLoggedin() : this.buttonsNotLoggedin();
     return `
     <div class="container d-flex flex-column justify-content-center align-items-center text-center">
-      <img src="${logo}" alt="logo" class="landing-logo img-fluid w-50 mb-4">
-            
-      ${ this.#state.isLoggedIn ?
-      `<div class="d-flex flex-column align-items-center mt-4" id="landing-buttons"> 
-        <div class="mb-3">
-          <a class="btn btn-wood btn-lg" href="/home" role="button">Enter</a>
-        </div>
-      </div>` :
-      `<div class="signpost d-flex justify-content-center align-items-start mt-6">
-        <span class="pole"></span>
-        <div class="d-flex flex-column justify-content-center align-items-center mt-3" id="landing-buttons">
-          <a class="btn btn-wood mb-3" href="/login" role="button">Login</a>
-          <a class="btn btn-wood mb-3" href="/register" role="button">Sign up</a>
-        </div>
-      </div>`
-      }
+      <img src="${logo}" alt="logo" class="landing-logo img-fluid w-50 mt-5 pt-5">
+      ${button}
     </div>
-      `;
+    `;
+  }
+
+  buttonsNotLoggedin() {
+    return `
+    <style>
+      .pole {
+        height: 240px;
+      }
+    </style>
+    <div class="signpost d-flex justify-content-center align-items-start">
+      <span class="pole"></span>
+      <div class="d-flex flex-column justify-content-center align-items-center mt-3" id="landing-buttons">
+        <a class="btn btn-wood landing-btn-1 mb-2" href="/login" role="button">Login</a>
+        <a class="btn btn-wood landing-btn-2 mb-2" href="/register" role="button">Sign up</a>
+      </div>
+    </div>`;
+  }
+
+  buttonLoggedin() {
+    return `
+    <style>
+      .pole {
+        height: 160px;
+      }
+    </style>
+    <div class="signpost d-flex justify-content-center align-items-start">
+      <span class="pole"></span>
+      <div class="d-flex flex-column justify-content-center align-items-center mt-3" id="landing-buttons">
+        <a class="btn btn-wood landing-btn-2 mb-2" href="/home" role="button">Enter</a>
+      </div>
+    </div>`;
   }
 
   style() {
@@ -54,8 +67,7 @@ export class Landing extends HTMLElement {
       max-width: 320px;
     }
     .signpost {
-      margin-top: 160px;
-      width: 200px;
+       padding-top: 160px;
     }
     #landing-buttons {
       z-index: 4;
@@ -63,21 +75,23 @@ export class Landing extends HTMLElement {
       transform: translateX(-4%);
     }
     .btn-wood {
-      width: 100%;
+      width: 140%;
+      position: relative;
+      font-size: 1.4rem;
     }
     .landing-btn-1 {
-      position: relative;
       text-align: left;
-      padding-right: 96px;
+      padding-left: 80px;
       transform: perspective(440px) rotateY(45deg);  
-      right: 16%;
+      right: 20%;
+      clip-path: polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%, 0% 50%);
     }
     .landing-btn-2 {
-      position: relative;
       text-align: right;
-      padding-left: 96px;
+      padding-right: 80px;
       transform: perspective(440px) rotateY(-45deg);
-      left: 8%;
+      left: 20%;
+      clip-path: polygon(0% 0%, 92% 0%, 100% 47%, 100% 52%, 92% 100%, 0% 100%);
     }
     .pole {
       display: block;
@@ -85,7 +99,6 @@ export class Landing extends HTMLElement {
       left: 50%;
       transform: translateX(-50%);
       width: 16px;
-      height: 216px;
       border-radius: 4px;
   
       --clrs1: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
@@ -93,13 +106,13 @@ export class Landing extends HTMLElement {
       --clrs3: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 60%);
       --clrs4: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 88%);
       background: var(--pm-primary-600);
+      box-shadow: -1px 4px 1px #8F501A;
       linear-gradient(to right,
         var(--clrs1) 0%, 
         var(--clrs2) 20%,
         var(--clrs3) 50%, 
         var(--clrs4) 80%) 0 0 / 2px 100%; 
       filter: url('/filters/wood-grain.svg#wave-filter-0');
-      filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
     }
     </style>
     `;
