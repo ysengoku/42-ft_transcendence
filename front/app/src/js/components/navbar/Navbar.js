@@ -72,7 +72,8 @@ export class Navbar extends HTMLElement {
       background-color: rgba(var(--pm-primary-600-rgb), 0.7);
     }
     .navbar-button i {
-      font-size: 1.5rem;  
+      font-size: 1.5rem;
+      color: var(--pm-primary-100);
     }
     .dropdown-menu {
       max-height: 75vh;
