@@ -40,6 +40,7 @@ class UserEventsConsumer(WebsocketConsumer):
             case "notification":
                 self.handle_notification(text_data_json)
             case "user_online":
+                self.handle_online_status(text_data_json)
             case "user_offline":
                 self.handle_online_status(text_data_json)
             case "like_message":
