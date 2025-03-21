@@ -29,7 +29,7 @@ export class TournamentButton extends HTMLElement {
   template() {
     return `
       <div id="home-tournament-button">
-        <div class="btn btn-primary btn-lg">Tournament</div>
+        <div class="btn btn-wood btn-lg">Tournament</div>
       </div>
       `;
   }

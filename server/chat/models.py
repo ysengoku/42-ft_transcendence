@@ -1,7 +1,9 @@
 import uuid
 
+from django.conf import settings
 from django.db import models
-from django.db.models import Count, Exists, OuterRef, Q, Subquery
+from django.db.models import Count, Exists, ImageField, OuterRef, Q, Subquery, Value
+from django.db.models.functions import Coalesce, NullIf
 
 from users.models import Profile
 
@@ -64,7 +66,14 @@ class ChatQuerySet(models.QuerySet):
         return self.annotate(
             username=Subquery(other_chat_participant_subquery.values("user__username")),
             nickname=Subquery(other_chat_participant_subquery.values("user__nickname")),
-            avatar=Subquery(other_chat_participant_subquery.values("profile_picture")),
+            avatar=Coalesce(
+                # sets field to null if the profile_picture is an empty string
+                NullIf(
+                    Subquery(other_chat_participant_subquery.values("profile_picture")),
+                    Value("", output_field=ImageField()),
+                ),
+                Value(settings.DEFAULT_USER_AVATAR, output_field=ImageField()),
+            ),
             is_online=Subquery(other_chat_participant_subquery.values("is_online")),
             other_profile_id=Subquery(other_chat_participant_subquery.values("pk")),
             unread_messages_count=Count("messages", filter=~Q(messages__sender=profile) & Q(messages__is_read=False)),
@@ -113,14 +122,23 @@ class Chat(models.Model):
         return res
 
 
+class ChatMessageQuerySet(models.QuerySet):
+    def create(self, content: str, sender: Profile, chat: Chat):
+        new_message = self.model(content=content, sender=sender, chat=chat)
+        new_message.save()
+        return new_message
+
+
 class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    content = models.CharField(max_length=256)
+    content = models.TextField(max_length=256)
     date = models.DateTimeField(auto_now_add=True)
     sender = models.ForeignKey(Profile, related_name="sent_messages", on_delete=models.CASCADE)
     chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
     is_liked = models.BooleanField(default=False)
+
+    objects = ChatMessageQuerySet.as_manager()
 
     class Meta:
         ordering = ["-date"]
