@@ -60,12 +60,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.decline_game_invite(text_data_json)
             case "new_tournament":
                 self.handle_new_tournament(text_data_json)
-            case "send_friend_request":
-                self.send_friend_request(text_data_json)
-            case "accept_friend_request":
-                self.accept_friend_request(text_data_json)
-            case "decline_friend_request":
-                self.decline_friend_request(text_data_json)
+            case "add_new_friend":
+                self.add_new_friend(text_data_json)
             case _:
                 print(f"Unknown action : {action}")
 
@@ -269,57 +265,19 @@ class UserEventsConsumer(WebsocketConsumer):
             "data": tournament_data
         }))
 
-    def send_friend_request(self, data):
+    def add_new_friend(self, data):
         sender_id = data["sender_id"]
         receiver_id = data["receiver_id"]
-        # Add friendship request in db
-        FriendRequest.objects.create(
-            sender_id=sender_id, receiver_id=receiver_id)
+
+        # Add direclty in friendlist
+        sender = Profile.objects.get(id=sender_id)
+        receiver = Profile.objects.get(id=receiver_id)
+
+        # Verify if not already friend
+        if not sender.friends.filter(id=receiver.id).exists():
+            sender.friends.add(receiver)
+
         self.send(text_data=json.dumps({
             "type": "new_friend",
             "data": {"sender_id": sender_id, "receiver_id": receiver_id}
         }))
-
-    def accept_friend_request(self, data):
-        request_id = data["request_id"]
-        try:
-            request = FriendRequest.objects.get(id=request_id)
-            request.status = "accepted"
-            request.save()
-            # send notif to the request sender
-            async_to_sync(self.channel_layer.group_send)(f"user_{request.sender_id}", {
-                "type": "friend_request_accepted",
-                "data": {"id": request_id}
-            })
-            self.send(text_data=json.dumps({
-                "type": "friend_request_accepted",
-                "data": {"id": request_id}
-            }))
-        except FriendRequest.DoesNotExist:
-            print(f"Request {request_id} does not exist.")
-            self.send(text_data=json.dumps({
-                "type": "error",
-                        "friend_request": "Friend request not found."
-            }))
-
-    def decline_friend_request(self, data):
-        request_id = data["request_id"]
-        try:
-            request = FriendRequest.objects.get(id=request_id)
-            request.status = "declined"
-            request.save()
-            # send notif to the request sender
-            async_to_sync(self.channel_layer.group_send)(f"user_{request.sender_id}", {
-                "type": "friend_request_declined",
-                "data": {"id": request_id}
-            })
-            self.send(text_data=json.dumps({
-                "type": "friend_request_declined",
-                "data": {"id": request_id}
-            }))
-        except FriendRequest.DoesNotExist:
-            print(f"Request {request_id} does not exist.")
-            self.send(text_data=json.dumps({
-                "type": "error",
-                        "friend_request": "Friend request not found."
-            }))
