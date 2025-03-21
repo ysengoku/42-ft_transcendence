@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://localhost:1026/api/'; // For Test environment
+const API_BASE_URL = `https://${location.host}/api/`; // For Test environment
 
 export const API_ENDPOINTS = {
   SIGNUP: `${API_BASE_URL}signup`,

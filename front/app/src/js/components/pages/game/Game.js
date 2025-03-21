@@ -20,13 +20,21 @@ export class Game extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     document.querySelector('#content').appendChild(renderer.domElement);
+
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
-    console.log(rendererWidth, rendererHeight);
 
     const scene = new THREE.Scene();
-
     const loader = new GLTFLoader();
+
+	const camera = new THREE.PerspectiveCamera(45, rendererWidth / rendererHeight, 0.1, 2000);
+	const orbit = new OrbitControls(camera, renderer.domElement);
+    camera.position.set(10, 15, -22);
+    orbit.update();
+
+    const world = new CANNON.World();
+    world.gravity.set(0, -9.82, 0);
+
     let mixer, idleAction, idleAction2;
     const playerglb = new THREE.Object3D();
     let model;
@@ -56,98 +64,64 @@ export class Game extends HTMLElement {
         console.error(error);
       },
     );
+	playerglb.scale.set(0.1, 0.1, 0.1);
     scene.add(playerglb);
-    let light = new THREE.DirectionalLight(0xffffff);
-    light.position.set(0, 10, 30);
-    let light2 = new THREE.DirectionalLight(0xffffff);
-    light2.position.set(10, 0, 30);
-    let light3 = new THREE.DirectionalLight(0xffffff);
-    light3.position.set(0, 10, -30);
-    let light4 = new THREE.DirectionalLight(0xffffff);
-    light4.position.set(0, -10, 0);
 
-    scene.add(light);
-    scene.add(light2);
-    scene.add(light3);
-    scene.add(light4);
-    playerglb.scale.set(0.1, 0.1, 0.1);
+	const	ligths = [new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff)];
+    
+    ligths[0].position.set(0, 10, 30);
+    ligths[1].position.set(10, 0, 30);
+    ligths[2].position.set(0, 10, -30);
+    ligths[3].position.set(0, -10, 0);
+	for (let i = 0; i < 4; i++)
+		scene.add(ligths[i]);
+	
+	class	Ball_obj {
+		constructor(posX, posY, posZ){
+			this.z_value = -15;
+			this.x_value = 0;
+			this.sphereGeometry = new THREE.SphereGeometry(0.5);
+			this.sphereMesh = new THREE.Mesh(this.sphereGeometry, normalMaterial);
+			this.sphereMesh.position.x = posX;
+			this.sphereMesh.position.y = posY;
+			this.sphereMesh.position.z = posZ;
+			this.sphereMesh.castShadow = true;
+			this.sphereShape = new CANNON.Sphere(0.5);
+			this.sphereBody = new CANNON.Body({ mass: 1, velocity: new CANNON.Vec3(0, 0, -10) });
+			this.sphereBody.addShape(this.sphereShape);
+			this.sphereBody.position.x = this.sphereMesh.position.x;
+			this.sphereBody.position.y = this.sphereMesh.position.y;
+			this.sphereBody.position.z = this.sphereMesh.position.z;
+			scene.add(this.sphereMesh);
+			world.addBody(this.sphereBody);
+			return this;
+		}
+	}
+	const	Ball = new Ball_obj(0, 3, 0);
+	
+	class Bumper_obj {
+		constructor(posX, posY, posZ){
+			this.cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
+			this.cubeMesh = new THREE.Mesh(this.cubeGeometry, normalMaterial);
+			this.cubeMesh.position.x = posX;
+			this.cubeMesh.position.y = posY;
+			this.cubeMesh.position.z = posZ;
+			this.cubeMesh.castShadow = true;
+			this.cubeShape = new CANNON.Box(new CANNON.Vec3(2.5, 0.5, 0.5));
+			this.cubeBody = new CANNON.Body({ mass: 0 });
+			this.cubeBody.addShape(this.cubeShape);
+			this.cubeBody.position.x = this.cubeMesh.position.x;
+			this.cubeBody.position.y = this.cubeMesh.position.y;
+			this.cubeBody.position.z = this.cubeMesh.position.z;
+			scene.add(this.cubeMesh);
+			world.addBody(this.cubeBody);
+			return this;
+		}
+	}
+	const Bumpers = [new Bumper_obj(0, 1, -9), new Bumper_obj(0, 1, 9)];
 
-    const camera = new THREE.PerspectiveCamera(45, rendererWidth / rendererHeight, 0.1, 2000);
 
-    const orbit = new OrbitControls(camera, renderer.domElement);
-    camera.position.set(10, 15, -22);
 
-    orbit.update();
-
-    const planeMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(20, 20),
-      new THREE.MeshBasicMaterial({
-        side: THREE.DoubleSide,
-        visible: false,
-      }),
-    );
-    planeMesh.rotateX(-Math.PI / 2);
-    scene.add(planeMesh);
-
-    const world = new CANNON.World();
-    world.gravity.set(0, -9.82, 0);
-
-    const sphereGeometry = new THREE.SphereGeometry(0.5);
-    const SM = new THREE.Mesh(sphereGeometry, normalMaterial);
-    SM.position.x = 0;
-    SM.position.y = 3;
-    SM.position.z = 0;
-    SM.castShadow = true;
-    scene.add(SM);
-    const sphereShape = new CANNON.Sphere(0.5);
-    const sphereBody = new CANNON.Body({ mass: 1, velocity: new CANNON.Vec3(0, 0, -10) });
-    sphereBody.addShape(sphereShape);
-    sphereBody.position.x = SM.position.x;
-    sphereBody.position.y = SM.position.y;
-    sphereBody.position.z = SM.position.z;
-    world.addBody(sphereBody);
-
-    const cubeGeometry2 = new THREE.BoxGeometry(5, 1, 1);
-    const cubeMesh2 = new THREE.Mesh(cubeGeometry2, normalMaterial);
-    cubeMesh2.position.x = 0;
-    cubeMesh2.position.y = 1;
-    cubeMesh2.position.z = 9;
-    cubeMesh2.castShadow = true;
-    scene.add(cubeMesh2);
-    const cubeShape2 = new CANNON.Box(new CANNON.Vec3(2.5, 0.5, 0.5));
-    const cubeBody2 = new CANNON.Body({ mass: 0 });
-    cubeBody2.addShape(cubeShape2);
-    cubeBody2.position.x = cubeMesh2.position.x;
-    cubeBody2.position.y = cubeMesh2.position.y;
-    cubeBody2.position.z = cubeMesh2.position.z;
-    world.addBody(cubeBody2);
-    console.log(cubeGeometry2.parameters.height * cubeMesh2.scale.x);
-
-    const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
-    const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
-    cubeMesh.position.x = 0;
-    cubeMesh.position.y = 1;
-    cubeMesh.position.z = -9;
-    cubeMesh.castShadow = true;
-    scene.add(cubeMesh);
-    const cubeShape = new CANNON.Box(new CANNON.Vec3(2.5, 0.5, 0.5));
-    const cubeBody = new CANNON.Body({ mass: 0 });
-    cubeBody.addShape(cubeShape);
-    cubeBody.position.x = cubeMesh.position.x;
-    cubeBody.position.y = cubeMesh.position.y;
-    cubeBody.position.z = cubeMesh.position.z;
-    world.addBody(cubeBody);
-
-    // window.addEventListener("keydown", input_manager);
-    // window.addEventListener("keydown", input_manager2);
-
-    // const playergeometry = new THREE.CylinderGeometry(1,1,3,32,1,false,0,Math.PI * 2);
-    // const playerMesh = new THREE.Mesh(playergeometry, normalMaterial);
-    // playerMesh.position.x = 3;
-    // playerMesh.position.y = 3;
-    // playerMesh.position.z = 2;
-    // playerMesh.castShadow = true;
-    // scene.add(playerMesh);
     const playerShape = new CANNON.Cylinder(1, 1, 3, 32);
     const playerBody = new CANNON.Body({ mass: 10 });
     playerBody.addShape(playerShape);
@@ -156,124 +130,66 @@ export class Game extends HTMLElement {
     playerBody.position.z = 3;
     world.addBody(playerBody);
 
-    var axis = new CANNON.Vec3(0, 1, 0);
-    var angle = -Math.PI / 2;
-    const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
-    const wallMesh = new THREE.Mesh(wallGeometry, normalMaterial);
-    wallMesh.position.x = 10;
-    wallMesh.position.y = 2.5;
-    wallMesh.position.z = 0;
-    wallMesh.rotation.y = -Math.PI / 2;
-    wallMesh.castShadow = true;
-    scene.add(wallMesh);
-    const wallShape = new CANNON.Box(new CANNON.Vec3(10, 2.5, 0.5));
-    const wallBody = new CANNON.Body({ mass: 0 });
-    wallBody.addShape(wallShape);
-    wallBody.quaternion.setFromAxisAngle(axis, angle);
-    wallBody.position.x = wallMesh.position.x;
-    wallBody.position.y = wallMesh.position.y;
-    wallBody.position.z = wallMesh.position.z;
-    world.addBody(wallBody);
+	class Wall_obj {
+		constructor(posX, posY, posZ){
+			this.wallGeometry = new THREE.BoxGeometry(20, 5, 1);
+			this.wallMesh = new THREE.Mesh(this.wallGeometry, normalMaterial);
+			this.wallMesh.position.x = posX;
+			this.wallMesh.position.y = posY;
+			this.wallMesh.position.z = posZ;
+			this.wallMesh.rotation.y = -Math.PI / 2;
+			this.wallMesh.castShadow = true;
+			this.wallBody = new CANNON.Body({ mass: 0 });
+			this.wallShape = new CANNON.Box(new CANNON.Vec3(10, 2.5, 0.5));
+			this.wallBody.addShape(this.wallShape);
+			this.wallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 2);
+			this.wallBody.position.x = this.wallMesh.position.x;
+			this.wallBody.position.y = this.wallMesh.position.y;
+			this.wallBody.position.z = this.wallMesh.position.z;
+			scene.add(this.wallMesh);
+			world.addBody(this.wallBody);
+			return this;
+		}
+	}
+	const Walls = [new Wall_obj(10, 2.5, 0), new Wall_obj(-10, 2.5, 0)];
 
-    var axis = new CANNON.Vec3(0, 1, 0);
-    var angle = -Math.PI / 2;
-    const wall2Geometry = new THREE.BoxGeometry(20, 5, 1);
-    const wall2Mesh = new THREE.Mesh(wall2Geometry, normalMaterial);
-    wall2Mesh.position.x = -10;
-    wall2Mesh.position.y = 2.5;
-    wall2Mesh.position.z = 0;
-    wall2Mesh.rotation.y = -Math.PI / 2;
-    wall2Mesh.castShadow = true;
-    scene.add(wall2Mesh);
-    const wall2Shape = new CANNON.Box(new CANNON.Vec3(10, 2.5, 0.5));
-    const wall2Body = new CANNON.Body({ mass: 0 });
-    wall2Body.addShape(wall2Shape);
-    wall2Body.quaternion.setFromAxisAngle(axis, angle);
-    wall2Body.position.x = wall2Mesh.position.x;
-    wall2Body.position.y = wall2Mesh.position.y;
-    wall2Body.position.z = wall2Mesh.position.z;
-    world.addBody(wall2Body);
 
-    const phongMaterial = new THREE.MeshPhongMaterial();
-    const planeGeometry = new THREE.PlaneGeometry(25, 25);
-    const PM = new THREE.Mesh(planeGeometry, phongMaterial);
-    PM.rotateX(-Math.PI / 2);
-    PM.receiveShadow = true;
-    scene.add(PM);
-    const planeShape = new CANNON.Plane();
-    const planeBody = new CANNON.Body({ mass: 0 });
-    planeBody.addShape(planeShape);
-    planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-    world.addBody(planeBody);
-
-    // const stats = new Stats()
-    // document.body.appendChild(stats.dom)
-
-    // const gui = new GUI()
-    // const physicsFolder = gui.addFolder('Physics')
-    // physicsFolder.add(world.gravity, 'x', -10.0, 10.0, 0.1)
-    // physicsFolder.add(world.gravity, 'y', -10.0, 10.0, 0.1)
-    // physicsFolder.add(world.gravity, 'z', -10.0, 10.0, 0.1)
-    // physicsFolder.open()
+	class Plane_obj {
+		constructor(){
+			this.phongMaterial = new THREE.MeshPhongMaterial();
+			this.planeGeometry = new THREE.PlaneGeometry(25, 25);
+			this.planeMesh = new THREE.Mesh(this.planeGeometry, this.phongMaterial);
+			this.planeMesh.rotateX(-Math.PI / 2);
+			this.planeMesh.receiveShadow = true;
+			this.planeShape = new CANNON.Plane();
+			this.planeBody = new CANNON.Body({ mass: 0 });
+			this.planeBody.addShape(this.planeShape);
+			this.planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+			scene.add(this.planeMesh);
+			world.addBody(this.planeBody);
+			return this;
+		}
+	}
+	const Plane = new Plane_obj();
 
     const clock = new THREE.Clock();
     let delta;
-
-    // const grid = new THREE.GridHelper(20, 20);
-    // scene.add(grid);
-
-    // const highlightMesh = new THREE.Mesh(
-    //   new THREE.PlaneGeometry(1, 1),
-    //   new THREE.MeshBasicMaterial({
-    //     side: THREE.DoubleSide,
-    //     transparent: true
-    //   })
-    // );
-    // highlightMesh.rotateX(-Math.PI / 2);
-    // highlightMesh.position.set(0.5, 0, 0.5);
-    // scene.add(highlightMesh);
-
-    const mousePosition = new THREE.Vector2();
-    const raycaster = new THREE.Raycaster();
-    let intersects;
 
     let collided_cube = false;
     let collided_cube1 = false;
     let collided_cube2 = false;
     let collided_wall = false;
 
-    sphereBody.addEventListener('collide', function (e) {
-      collided_cube1 = e.body.id == cubeBody.id;
-      collided_cube2 = e.body.id == cubeBody2.id;
+    Ball.sphereBody.addEventListener('collide', function (e) {
+      collided_cube1 = e.body.id == Bumpers[0].cubeBody.id;
+      collided_cube2 = e.body.id == Bumpers[1].cubeBody.id;
       collided_cube = collided_cube1 || collided_cube2;
-      collided_wall = e.body.id == wallBody.id || e.body.id == wall2Body.id;
+      collided_wall = e.body.id == Walls[0].wallBody.id || e.body.id == Walls[1].wallBody.id;
     });
 
-    // window.addEventListener('mousemove', function(e) {
-    //   mousePosition.x = (e.clientX / rendererWidth) * 2 - 1;
-    //   mousePosition.y = -(e.clientY / rendererHeight) * 2 + 1;
-    //   raycaster.setFromCamera(mousePosition, camera);
-    //   intersects = raycaster.intersectObject(planeMesh);
-    //   if(intersects.length > 0) {
-    //     const intersect = intersects[0];
-    //     const highlightPos = new THREE.Vector3().copy(intersect.point).floor().addScalar(0.5);
-    //     highlightMesh.position.set(highlightPos.x, 0, highlightPos.z);
+    // let z_value = -15;
+    // let Ball.x_value = 0;
 
-    //     const objectExist = objects.find(function(object) {
-    //       return (object.position.x === highlightMesh.position.x)
-    //       && (object.position.z === highlightMesh.position.z)
-    //     });
-
-    //     if(!objectExist)
-    //       highlightMesh.material.color.setHex(0xFFFFFF);
-    //     else
-    //       highlightMesh.material.color.setHex(0xFF0000);
-    //   }
-    // });
-
-    const objects = [];
-    let z_value = -15;
-    let x_value = 0;
     let p1_score = 0;
     let p2_score = 0;
     let last_score = 0;
@@ -316,118 +232,108 @@ export class Game extends HTMLElement {
 
     function reset() {
       if (last_score == 0) {
-        // if (p2_score % 2 == 0)
-        z_value = -10;
-        // else
-        //   z_value = -10;
+        if (p2_score % 2 == 0)
+        	Ball.z_value = 10;
+        else
+        	Ball.z_value = -10;
       }
       if (last_score == 1) {
-        // if (p1_score % 2 == 0)
-        z_value = 10;
-        // else
-        // z_value = -10;
+        if (p1_score % 2 == 0)
+       		Ball.z_value = -10;
+        else
+        	Ball.z_value = 10;
       }
       if (p1_score == 10 || p2_score == 10) {
         p1_score = 0;
         p2_score = 0;
       }
-      x_value = 0;
-      SM.position.x = 0;
-      SM.position.y = 0.5;
-      SM.position.z = 0;
-      sphereBody.position.x = SM.position.x;
-      sphereBody.position.y = SM.position.y;
-      sphereBody.position.z = SM.position.z;
+      Ball.x_value = 0;
+      Ball.sphereMesh.position.x = 0;
+      Ball.sphereMesh.position.y = 0.5;
+      Ball.sphereMesh.position.z = 0;
+      Ball.sphereBody.position.x = Ball.sphereMesh.position.x;
+      Ball.sphereBody.position.y = Ball.sphereMesh.position.y;
+      Ball.sphereBody.position.z = Ball.sphereMesh.position.z;
       // document.getElementById("divA").textContent ="P1 " + p1_score;
       // document.getElementById("divB").textContent ="P2 " + p2_score;
     }
 
-    function animate2() {
-      collided_cube = false;
-      collided_wall = false;
+	function animate2() {
+		collided_cube = false;
+		collided_wall = false;
 
-      requestAnimationFrame(animate2);
-      if (sphereBody.position.z >= 10) {
-        // p1_score++;
-        last_score = 1;
-        reset();
-      }
-      if (sphereBody.position.z <= -10) {
-        // p2_score++;
-        last_score = 0;
-        reset();
-      }
-      delta = Math.min(clock.getDelta(), 0.1);
-      world.step(delta);
-      // console.log(cubeBody.position)
-      if (collided_cube == true) {
-        let hit_pos;
+		requestAnimationFrame(animate2);
+		if (Ball.sphereBody.position.z >= 10) {
+			p1_score++;
+			last_score = 1;
+			reset();
+		}
+		if (Ball.sphereBody.position.z <= -10) {
+			p2_score++;
+			last_score = 0;
+			reset();
+		}
+		delta = Math.min(clock.getDelta(), 0.1);
+		world.step(delta);
 
-        collided_cube2 == true
-          ? (hit_pos = get_coll_pos(cubeBody2, cubeGeometry2, SM))
-          : (hit_pos = get_coll_pos(cubeBody, cubeGeometry, SM));
-        collided_cube2 == true ? (z_value += 0.5) : (z_value -= 0.5);
-        z_value *= -1;
-        x_value = hit_pos_angle_calculator(hit_pos);
-      }
-      if (collided_wall == true) x_value *= -1;
+		if (collided_cube == true) {
+			let hit_pos;
 
-      if (cubeBody.position.x > 7) {
-        cubeBody.position.x = 7;
-        cubeMesh.position.x = 7;
-      }
-      if (cubeBody.position.x < -7) {
-        cubeBody.position.x = -7;
-        cubeMesh.position.x = -7;
-      }
-      if (cubeBody2.position.x > 7) {
-        cubeBody2.position.x = 7;
-        cubeMesh2.position.x = 7;
-      }
-      if (cubeBody2.position.x < -7) {
-        cubeBody2.position.x = -7;
-        cubeMesh2.position.x = -7;
-      }
-      sphereBody.velocity.set(x_value * 0.3, -9, z_value);
+			collided_cube2 == true
+			? (hit_pos = get_coll_pos(Bumpers[1].cubeBody, Bumpers[1].cubeGeometry, Ball.sphereMesh))
+			: (hit_pos = get_coll_pos(Bumpers[0].cubeBody, Bumpers[0].cubeGeometry, Ball.sphereMesh));
+			if (Ball.z_value < 30 && Ball.z_value > -30)
+				collided_cube2 == true ? (Ball.z_value += 0.5) : (Ball.z_value -= 0.5);
+			Ball.z_value *= -1;
+			Ball.x_value = hit_pos_angle_calculator(hit_pos);
+		}
+		if (collided_wall == true) Ball.x_value *= -1;
 
-      // Copy coordinates from Cannon to Three.js
-      // playerMesh.position.set(playerBody.position.x, playerBody.position.y, playerBody.position.z)
-      playerglb.position.set(playerBody.position.x, playerBody.position.y, playerBody.position.z);
-      // playerMesh.quaternion.set(playerBody.quaternion.x, playerBody.quaternion.y, playerBody.quaternion.z, playerBody.quaternion.w)
-      playerglb.quaternion.set(
-        playerBody.quaternion.x,
-        playerBody.quaternion.y,
-        playerBody.quaternion.z,
-        playerBody.quaternion.w,
-      );
-      SM.position.set(sphereBody.position.x, sphereBody.position.y, sphereBody.position.z);
-      SM.quaternion.set(
-        sphereBody.quaternion.x,
-        sphereBody.quaternion.y,
-        sphereBody.quaternion.z,
-        sphereBody.quaternion.w,
-      );
-      cubeMesh.position.set(cubeBody.position.x, cubeBody.position.y, cubeBody.position.z);
-      cubeMesh.quaternion.set(
-        cubeBody.quaternion.x,
-        cubeBody.quaternion.y,
-        cubeBody.quaternion.z,
-        cubeBody.quaternion.w,
-      );
-      cubeMesh2.position.set(cubeBody2.position.x, cubeBody2.position.y, cubeBody2.position.z);
-      cubeMesh2.quaternion.set(
-        cubeBody2.quaternion.x,
-        cubeBody2.quaternion.y,
-        cubeBody2.quaternion.z,
-        cubeBody2.quaternion.w,
-      );
-      if (mixer) {
-        mixer.update(delta);
-      }
-      renderer.render(scene, camera);
-      input_manager();
+		for (let i = 0; i < 2; i++)
+		{
+			if (Bumpers[i].cubeBody.position.x > 7) {
+				Bumpers[i].cubeBody.position.x = 7;
+				Bumpers[i].cubeMesh.position.x = 7;
+			}
+			if (Bumpers[i].cubeBody.position.x < -7) {
+				Bumpers[i].cubeBody.position.x = -7;
+				Bumpers[i].cubeMesh.position.x = -7;
+			}
+		}
+		Ball.sphereBody.velocity.set(Ball.x_value * 0.3, -9, Ball.z_value);
 
-      // stats.update()
+		// Copy coordinates from Cannon to Three.js
+		// playerMesh.position.set(playerBody.position.x, playerBody.position.y, playerBody.position.z)
+		playerglb.position.set(playerBody.position.x, playerBody.position.y, playerBody.position.z);
+		// playerMesh.quaternion.set(playerBody.quaternion.x, playerBody.quaternion.y, playerBody.quaternion.z, playerBody.quaternion.w)
+		playerglb.quaternion.set(
+			playerBody.quaternion.x,
+			playerBody.quaternion.y,
+			playerBody.quaternion.z,
+			playerBody.quaternion.w,
+		);
+		Ball.sphereMesh.position.set(Ball.sphereBody.position.x, Ball.sphereBody.position.y, Ball.sphereBody.position.z);
+		Ball.sphereMesh.quaternion.set(
+			Ball.sphereBody.quaternion.x,
+			Ball.sphereBody.quaternion.y,
+			Ball.sphereBody.quaternion.z,
+			Ball.sphereBody.quaternion.w,
+		);
+		for (let i = 0; i < 2; i++)
+		{
+			Bumpers[i].cubeMesh.position.set(Bumpers[i].cubeBody.position.x, Bumpers[i].cubeBody.position.y, Bumpers[i].cubeBody.position.z);
+			Bumpers[i].cubeMesh.quaternion.set(
+				Bumpers[i].cubeBody.quaternion.x,
+				Bumpers[i].cubeBody.quaternion.y,
+				Bumpers[i].cubeBody.quaternion.z,
+				Bumpers[i].cubeBody.quaternion.w,
+			);
+		}
+		if (mixer) {
+			mixer.update(delta);
+		}
+		renderer.render(scene, camera);
+		input_manager();
     }
 
     var keyMap = [];
@@ -451,10 +357,10 @@ export class Game extends HTMLElement {
     }
 
     function input_manager() {
-      if (keyMap['ArrowLeft'] == true) cubeBody.position.x += 0.25;
-      if (keyMap['ArrowRight'] == true) cubeBody.position.x -= 0.25;
-      if (keyMap['q'] == true) cubeBody2.position.x += 0.25;
-      if (keyMap['d'] == true) cubeBody2.position.x -= 0.25;
+      if (keyMap['ArrowLeft'] == true) Bumpers[0].cubeBody.position.x += 0.25;
+      if (keyMap['ArrowRight'] == true) Bumpers[0].cubeBody.position.x -= 0.25;
+      if (keyMap['q'] == true) Bumpers[1].cubeBody.position.x += 0.25;
+      if (keyMap['d'] == true) Bumpers[1].cubeBody.position.x -= 0.25;
     }
     window.addEventListener('resize', function () {
       camera.aspect = rendererWidth / rendererHeight;
@@ -471,4 +377,4 @@ export class Game extends HTMLElement {
   }
 }
 
-customElements.define('app-game', Game);
+customElements.define('singleplayer-game', Game);

@@ -29,7 +29,7 @@ export class DuelButton extends HTMLElement {
   template() {
     return `
 	    <div id="home-duel-button">
-	      <div class="btn btn-primary btn-lg">Duel</div>
+	      <div class="btn btn-wood btn-lg">Duel</div>
 	    </div>
 	  `;
   }
