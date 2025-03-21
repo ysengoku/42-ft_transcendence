@@ -207,21 +207,3 @@ class GameInvitation(models.Model):
 
     def __str__(self):
         return f'{self.game_session}:'
-
-
-class FriendRequest(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('accepted', 'Accepted'),
-        ('declined', 'Declined'),
-    ]
-
-    sender = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name='sent_friend_requests')
-    receiver = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name='received_friend_requests')
-    status = models.CharField(
-        max_length=10, choices=STATUS_CHOICES, default='pending')
-
-    def __str__(self):
-        return f"Friend request from {self.sender.user.username} to {self.receiver.user.username}"
