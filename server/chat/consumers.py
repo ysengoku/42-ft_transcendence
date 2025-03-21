@@ -32,7 +32,15 @@ class UserEventsConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_discard)(
                 "chat_" + str(chat.id), self.channel_name)
 
+    def get_user_data(profile):
+        return {
+            "date": datetime.now().isoformat(),
+            "username": profile.user.username,
+            "nickname": profile.user.nickname,
+            "avatar": profile.profile_picture.url if profile.profile_picture else settings.DEFAULT_USER_AVATAR,
+        }
     # Receive message from WebSocket
+
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
         action = text_data_json.get("action")
@@ -42,9 +50,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.handle_message(text_data_json)
             case "notification":
                 self.handle_notification(text_data_json)
-            case "user_online":
-                self.handle_online_status(text_data_json)
-            case "user_offline":
+            case ("user_offline", "user_online"):
                 self.handle_online_status(text_data_json)
             case "like_message":
                 self.handle_like_message(text_data_json)
@@ -99,19 +105,22 @@ class UserEventsConsumer(WebsocketConsumer):
         username = data["data"]["username"]
         status = data["action"]
 
+        try:
+            profile = Profile.objects.get(user__username=username)
+        except Profile.DoesNotExist:
+            print(f"Profile for {username} does not exist.")
+            return
+
+        notification_data = get_user_data(profile)
         if status == "user_online":
             self.send(text_data=json.dumps({
                 "type": "user_online",
-                "data": {
-                    "username": username,
-                }
+                "data": notification_data
             }))
         elif status == "user_offline":
             self.send(text_data=json.dumps({
                 "type": "user_offline",
-                "data": {
-                    "username": username,
-                }
+                "data": notification_data
             }))
 
     def handle_like_message(self, data):
@@ -206,10 +215,13 @@ class UserEventsConsumer(WebsocketConsumer):
             invitation = GameInvitation.objects.get(id=invitation_id)
             invitation.status = "accepted"
             invitation.save()
-            # send notif to sender of the game invitation
+            # send notif to sender of the game invitation with receivers' infos
+            notification_data = get_user_data(self.user_profile)
+            notification_data.update(
+                {"id": str(invitation_id), "status": "accepted"})
             async_to_sync(self.channel_layer.group_send)(f"user_{invitation.sender.id}", {
                 "type": "game_invite",
-                "data": {"id": invitation_id, "status": "accepted"}
+                "data": notification_data
             })
 
             self.send(text_data=json.dumps({
@@ -230,9 +242,12 @@ class UserEventsConsumer(WebsocketConsumer):
             invitation.status = "declined"
             invitation.save()
             # send notif to sender of the game invitation
+            notification_data = get_user_data(self.user_profile)
+            notification_data.update(
+                {"id": str(invitation_id), "status": "declined"})
             async_to_sync(self.channel_layer.group_send)(f"user_{invitation.sender.id}", {
                 "type": "game_invite",
-                "data": {"id": invitation_id, "status": "declined"}
+                "data": notification_data
             })
             self.send(text_data=json.dumps({
                 "type": "game_invite",
@@ -245,24 +260,45 @@ class UserEventsConsumer(WebsocketConsumer):
                         "message": "Invitation not found."
             }))
 
-    def send_game_invite(self, event):
+    def send_game_invite(self, data):
         sender_id = data["sender_id"]
         receiver_id = data["receiver_id"]
 
-        GameInvitation.objects.create(
-            sender_id=sender_id, receiver_id=receiver_id)
+        sender = Profile.objects.get(id=sender_id)
+        receiver = Profile.objects.get(id=receiver_id)
+
+        invitation = GameInvitation.objects.create(
+            sender=sender, game_session=None, recipient=receiver)
+
+        # Envoyer une notification au destinataire
+        notification_data = get_user_data(sender)
+        notification_data.update({"id": str(invitation.id)})
+
+        async_to_sync(self.channel_layer.group_send)(f"user_{receiver_id}", {
+            "type": "game_invite",
+            "data": notification_data
+        })
 
         self.send(text_data=json.dumps({
             "type": "game_invite",
-            "data": {"sender_id": sender_id, "receiver_id": receiver_id}
+            "data": notification_data
         }))
 
-    def handle_new_tournament(self, event):
-        tournament_data = data["tournament_data"]
+    def handle_new_tournament(self, data):
+        tournament_id = data["tournament_id"]
+        tournament_name = data["tournament_name"]
+        organizer_id = data["organizer_id"]
+
+        organizer = Profile.objects.get(id=organizer_id)
+
         # send notification to concerned users
+        notification_data = get_user_data(organizer)
+        notification_data.update({"id": tournament_id,
+                                 "tournament_name": tournament_name})
+
         self.send(text_data=json.dumps({
             "type": "new_tournament",
-            "data": tournament_data
+            "data": notification_data
         }))
 
     def add_new_friend(self, data):
@@ -276,8 +312,9 @@ class UserEventsConsumer(WebsocketConsumer):
         # Verify if not already friend
         if not sender.friends.filter(id=receiver.id).exists():
             sender.friends.add(receiver)
+        notification_data = get_user_data(sender)
 
-        self.send(text_data=json.dumps({
+        async_to_sync(self.channel_layer.group_send)(f"user_{receiver_id}", {
             "type": "new_friend",
-            "data": {"sender_id": sender_id, "receiver_id": receiver_id}
-        }))
+            "data": notification_data
+        })

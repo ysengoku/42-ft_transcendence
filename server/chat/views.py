@@ -1,4 +1,3 @@
-from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from .models import Notification
@@ -12,7 +11,6 @@ def room(request, room_name):
     return render(request, "chat/room.html", {"room_name": room_name})
 
 
-@login_required
 def notifications_view(request):
     notifications = Notification.objects.filter(user=request.user)
     return render(request, 'notifications.html', {'notifications': notifications})
