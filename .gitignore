@@ -124,6 +124,7 @@ celerybeat.pid
 # Environments and secrets
 .env
 .venv
+.myenv
 .envrc
 .direnv/
 env/

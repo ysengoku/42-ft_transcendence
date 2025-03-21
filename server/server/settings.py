@@ -69,11 +69,10 @@ INSTALLED_APPS = [
     # ASGI server for working with websockets
     "daphne",
     "channels",
-
     # Our apps
     "users",
     "chat",
-
+    "pong",
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -82,7 +81,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-
     # Profiling
     "silk",
 ]
@@ -140,7 +138,7 @@ AUTHENTICATION_BACKENDS = [
 # CUSTOM USER MODEL
 
 AUTH_USER_MODEL = "users.User"
-
+DEFAULT_USER_AVATAR = "/img/default_avatar.png"
 
 # Configuration OAuth 42
 SOCIALACCOUNT_PROVIDERS = {
@@ -153,13 +151,19 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-# Configuration Django Channels
+REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
+        },
     },
 }
 
+
+# Configuration for proxy
 CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
@@ -236,7 +240,9 @@ OAUTH_CONFIG = {
 }
 
 # email configuration for 2fa and password reset
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
