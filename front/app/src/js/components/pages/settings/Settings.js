@@ -176,10 +176,10 @@ export class Settings extends HTMLElement {
 
   template() {
     return `
-		<div class="container">
+		<div class="container my-3">
       <div class="row justify-content-center">
         <delete-account-confirmation-modal></delete-account-confirmation-modal>
-        <div class="form-container col-12 col-md-6 p-4">
+        <div class="form-container col-12 col-md-5 p-4">
 			    <form class="w-100">
 				    <legend class="mt-4 mb-3 border-bottom">Settings</legend>
 				    <div class="mt-3">

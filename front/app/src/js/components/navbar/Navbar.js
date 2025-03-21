@@ -69,7 +69,7 @@ export class Navbar extends HTMLElement {
     return `
     <style>
     .navbar {
-      background-color: rgba(59, 59, 59, 0.6);
+      background-color: rgba(var(--pm-primary-600-rgb), 0.7);
     }
     .navbar-button i {
       font-size: 1.5rem;  
