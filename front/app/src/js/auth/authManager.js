@@ -28,6 +28,8 @@ const auth = (() => {
 
     updateStoredUser(user) {
       sessionStorage.setItem('user', JSON.stringify(user));
+      const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
+      document.dispatchEvent(event);
     }
 
     /**

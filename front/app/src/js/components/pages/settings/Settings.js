@@ -159,7 +159,7 @@ export class Settings extends HTMLElement {
       this.#state.username = response.data.username;
       this.#state.currentUserData = this.#state.newUserData;
       this.#state.currentUserData.avatar = response.data.avatar;
-      auth.updateStoreUser(this.#state.currentUserData);
+      auth.updateStoredUser(this.#state.currentUserData);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 2000);
     } else {
       console.log('Error updating settings', response);
@@ -176,7 +176,7 @@ export class Settings extends HTMLElement {
 
   template() {
     return `
-		<div class="container my-3">
+		<div class="container mt-3 mb-4">
       <div class="row justify-content-center">
         <delete-account-confirmation-modal></delete-account-confirmation-modal>
         <div class="form-container col-12 col-md-5 p-4">
