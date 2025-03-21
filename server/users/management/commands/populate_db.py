@@ -60,7 +60,7 @@ class Command(BaseCommand):
             life_enjoyer.add_friend(user.profile)
         life_enjoyer.save()
 
-        for i in range(30):
+        for i in range(10):
             user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
             life_enjoyer.block_user(user.profile)
 
@@ -288,10 +288,11 @@ Keep soaring high, superstar!""",
         ]
         profiles = list(Profile.objects.all())
         for profile in profiles:
-            for _ in range(50):
+            for _ in range(100):
                 other_profile = choice_except(profiles, profile)
                 chat, _ = Chat.objects.get_or_create(profile, other_profile)
                 for _ in range(10):
-                    ChatMessage.objects.create(content=choice(chat_messages_content), sender=profile, chat=chat)   # noqa: S311
+                    random_message_content = choice(chat_messages_content)  # noqa: S311
+                    ChatMessage.objects.create(content=random_message_content, sender=profile, chat=chat)
 
         print("\033[92mDB was successefully populated!\033[0m")  # noqa: T201
