@@ -38,7 +38,7 @@ export class ChatMessageInput extends HTMLElement {
 
   template() {
     return `
-    <div class="chat-input mx-4 mt-3">
+    <div class="chat-input mx-4 my-3">
       <div class="input-group">
         <input type="text" id="chat-message-input" class="form-control" placeholder="Type a message..." autocomplete="off">
         <button class="btn btn-secondary" id="sendMessage">
