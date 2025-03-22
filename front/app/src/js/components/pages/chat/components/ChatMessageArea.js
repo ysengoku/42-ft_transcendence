@@ -217,7 +217,7 @@ export class ChatMessageArea extends HTMLElement {
 
         <div class="d-flex flex-column text-start gap-1">
           <div class="d-flex flex-row gap-3">
-            <h5 class="mb-0" id="chat-header-nickname"></h5>
+            <h4 class="mb-0" id="chat-header-nickname"></h4>
             <p class="mb-0 fs-6" id="chat-header-username"></p>
           </div>
           <div class="d-flex flex-row align-items-center gap-2">
