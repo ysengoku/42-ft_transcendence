@@ -218,12 +218,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOM loaded');
   document.documentElement.getAttribute('data-bs-theme') === 'light' ? (
     document.getElementById('stars') ? document.body.removeChild(stars) : null,
-    // document.body.style.backgroundImage = `linear-gradient(#aa4fec 0%, #ec4f54 50%, #ec4f54 100%)`,
     document.body.style.backgroundImage = `linear-gradient(rgba(170,79,236, 0.8) 0%, rgba(236,79,84, 0.8) 50%, rgba(236,79,84, 0.8) 100%)`,
 
     createClouds()
   ) : (
-    document.getElementById('cloud') ? document.getElementById('content').removeChild(cloud) : null,
+    document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
     document.body.style.backgroundImage = `linear-gradient(#080f1c 0%, #0d4261 32%,  #1473ab 100%)`,
     createStars()
   );
