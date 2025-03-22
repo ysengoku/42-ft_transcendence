@@ -9,17 +9,16 @@ import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 
 export class Chat extends HTMLElement {
   #state = {
-    user: null,
-    currentChatUsername: '',
-    currentChatIndex: 0,
+    loggedInUser: null,
+    chatListData: [],
+    renderedChatCount: 0,
     chatListItemCount: 0,
+    currentChatUsername: '',
+    currentChat: null,
   };
 
   constructor() {
     super();
-    this.chatListData = [];
-    this.currentChat = null;
-
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.toggleLikeMessage = this.toggleLikeMessage.bind(this);
@@ -28,29 +27,34 @@ export class Chat extends HTMLElement {
   }
 
   async connectedCallback() {
-    this.#state.user = auth.getStoredUser();
-    const isLoggedIn = this.#state.user ? true : false;
+    this.#state.loggedInUser = auth.getStoredUser();
+    const isLoggedIn = this.#state.loggedInUser ? true : false;
     if (!isLoggedIn) {
       router.navigate('/login');
+      return;
     }
     // ----- Temporary mock data -------------------------
     // this.mockData = await mockChatListData();
-    // this.chatListData = this.mockData.items;
+    // this.#state.chatListData = this.mockData.items;
     // this.#state.chatListItemCount = this.mockData.count;
     // ---------------------------------------------------
     const listData = await this.fetchChatList();
-    // TODO: Error handling
-    this.chatListData = listData;
+    if (!listData) {
+      return;
+    }
+    this.#state.chatListData = listData;
 
     if (this.#state.chatListItemCount > 0) {
       // ----- Temporary mock data ----------------------------------------------
-      // const chatData = await mockChatMessagesData(this.chatListData[0].username);
+      // const chatData = await mockChatMessagesData(this.#state.chatListData[0].username);
       // ------------------------------------------------------------------------
-      this.#state.currentChatUsername = this.chatListData[0].username;
-      this.chatListData[0].unread_messages_count = 0;
+      this.#state.currentChatUsername = this.#state.chatListData[0].username;
+      this.#state.chatListData[0].unread_messages_count = 0;
       const chatData = await this.fetchChatData();
-      // TODO: Error handling
-      this.currentChat = chatData;
+      if (!chatData) {
+        return;
+      }
+      this.#state.currentChat = chatData;
     }
     this.render();
   }
@@ -76,8 +80,8 @@ export class Chat extends HTMLElement {
     this.chatList = this.querySelector('chat-list-component');
     this.backButton = this.querySelector('#back-to-chat-list');
 
-    this.chatList.setData(this.chatListData, this.#state.chatListItemCount, this.#state.user.username);
-    this.chatMessagesArea.setData(this.currentChat);
+    this.chatList.setData(this.#state.chatListData, this.#state.chatListItemCount, this.#state.loggedInUser.username);
+    this.chatMessagesArea.setData(this.#state.currentChat);
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
     document.addEventListener('sendMessage', this.sendMessage);
@@ -94,16 +98,16 @@ export class Chat extends HTMLElement {
     const response = await apiRequest(
         'GET',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT_LIST(10, this.#state.currentChatIndex),
+        API_ENDPOINTS.CHAT_LIST(10, this.#state.renderedChatCount),
         null,
         false,
         true,
     );
     if (response.success) {
       console.log('Chat list response:', response);
-      this.chatListData = response.data.items;
+      this.#state.chatListData = response.data.items;
       this.#state.chatListItemCount = response.data.count;
-      return this.chatListData;
+      return this.#state.chatListData;
     } else {
       // TODO: Handle error
     }
@@ -141,11 +145,11 @@ export class Chat extends HTMLElement {
       this.#state.currentChatUsername = event.detail;
       const chatData = await this.fetchChatData();
       // TODO: Error handling
-      this.currentChat = chatData;
+      this.#state.currentChat = chatData;
     } else {
-      this.currentChat = event.detail;
+      this.#state.currentChat = event.detail;
     }
-    this.chatMessagesArea.setData(this.currentChat);
+    this.chatMessagesArea.setData(this.#state.currentChat);
 
     if (isMobile()) {
       this.chatListContainer.classList.add('d-none');
@@ -170,7 +174,7 @@ export class Chat extends HTMLElement {
     const messageData = {
       action: 'message',
       data: {
-        chat_id: this.currentChat.chat_id,
+        chat_id: this.#state.currentChat.chat_id,
         content: event.detail,
       },
     };
@@ -184,7 +188,7 @@ export class Chat extends HTMLElement {
     const messageData = {
       action: event.detail.isLiked ? 'like_message' : 'unlike_message',
       data: {
-        chat_id: this.currentChat.chat_id,
+        chat_id: this.#state.currentChat.chat_id,
         message_id: event.detail.messageId,
       },
     };
@@ -193,15 +197,24 @@ export class Chat extends HTMLElement {
   }
 
   receiveMessage(message) {
-    console.log('New message:', message);
+    // Check chat_id
+    // If chat_id === current chat_id
+    // Add the new message to the current chat (at the bottom)
+    // Send read_message action to the server
+
+    // Else
+    // Look for the chat in the chat list
+    // If found, update the chat list item with unread badge and move it to the top
+    // If not found, add the chat item with unread badge to the top of the list
+
     const newMessage = message;
     // ----- For test --------------------------------
-    message.sender = this.currentChat.username;
+    message.sender = this.#state.currentChat.username;
     // -----------------------------------------------
-    if (message.chat_id === this.currentChat.chat_id) {
-      this.currentChat.messages.unshift(message);
+    if (message.chat_id === this.#state.currentChat.chat_id) {
+      this.#state.currentChat.messages.unshift(message);
       // TODO: Append new message instead of updating the whole chat
-      this.chatMessagesArea.setData(this.currentChat);
+      this.chatMessagesArea.setData(this.#state.currentChat);
     } else {
       this.updateChatList(message);
     }
@@ -226,10 +239,10 @@ export class Chat extends HTMLElement {
   template() {
     return `
     <div class="container-fluid d-flex flex-row flex-grow-1 p-0" id="chat-component-container">
-      <div class="chat-list-wrapper col-12 col-md-4">
-        <div class="ms-4 my-4" id="chat-list-container">
+      <div class="chat-list-wrapper col-12 col-md-4" id="chat-list-container">
+   
           <chat-list-component></chat-list-component>
-        </div>
+     
       </div>
 
       <div class="col-12 col-md-8 d-none d-md-block my-4" id="chat-container">
@@ -251,11 +264,11 @@ export class Chat extends HTMLElement {
     return `
     <style>
     .chat-list-wrapper {
-      background-color: rgba(var(--pm-primary-100-rgb), 0.1);
+      background-color: rgba(var(--bs-body-bg-rgb), 0.1);
     }
     #chat-component-container {
       height: calc(100vh - 66px);
-      background-color: rgba(var(--pm-primary-100-rgb), 0.2);
+      background-color: rgba(var(--bs-body-bg-rgb), 0.2);
     }
     </style>
     `;

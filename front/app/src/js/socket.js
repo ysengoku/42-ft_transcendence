@@ -2,7 +2,6 @@ const socketManager = (() => {
   class WebSocketManager {
     constructor() {
       this.url = 'wss://' + window.location.host + '/ws/events/';
-      console.log('WebSocket URL:', this.url);
       this.socket = null;
       this.listeners = new Map();
       this.socketOpen = false;
@@ -60,12 +59,12 @@ const socketManager = (() => {
         console.error('Missing action field:', message);
         return;
       }
-      const matchedListeners = this.listeners.get(message.action);
-      if (!matchedListeners) {
+      const matchedListener = this.listeners.get(message.action);
+      if (!matchedListener) {
         console.error('No listeners set for this action:', message.action);
         return;
       }
-      matchedListeners.forEach((callback) => callback(message.data));
+      matchedListener.callback(message.data);
     }
 
     addListener(action, callback) {
@@ -73,6 +72,11 @@ const socketManager = (() => {
         this.listeners.set(action, []);
       }
       this.listeners.get(action).push(callback);
+    }
+
+    handleNewMessage(data) {
+      // If window.location.pathname is /chat, call the receiveMessage method of the Chat class
+      // Else, add notification badge to the Chat button of the navbar 
     }
   }
   return new WebSocketManager();
