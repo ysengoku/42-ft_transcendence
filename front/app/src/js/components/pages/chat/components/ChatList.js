@@ -95,7 +95,7 @@ export class ChatList extends HTMLElement {
 
   template() {
     return `
-	  <div class="d-flex flex-column h-100 overflow-auto">
+	  <div class="d-flex flex-column ms-4 py-4 h-100">
       <div class="d-flex felx-row justify-content-between align-items-center me-3 gap-3 sticky-top">
         <h5 class="m-0">Conversations</h5>
         <button class="btn new-chat me-3 p-0"><i class="bi bi-pencil-square"></i></button>

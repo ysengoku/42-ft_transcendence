@@ -55,7 +55,7 @@ export class Landing extends HTMLElement {
     <div class="signpost d-flex justify-content-center align-items-start">
       <span class="pole"></span>
       <div class="d-flex flex-column justify-content-center align-items-center mt-3" id="landing-buttons">
-        <a class="btn btn-wood landing-btn-2 mb-2" href="/home" role="button">Enter</a>
+        <a class="btn btn-wood landing-btn-1 mb-2" href="/home" role="button">Enter</a>
       </div>
     </div>`;
   }
@@ -80,18 +80,18 @@ export class Landing extends HTMLElement {
       font-size: 1.4rem;
     }
     .landing-btn-1 {
-      text-align: left;
-      padding-left: 80px;
-      transform: perspective(440px) rotateY(45deg);  
-      right: 20%;
-      clip-path: polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%, 0% 50%);
-    }
-    .landing-btn-2 {
       text-align: right;
       padding-right: 80px;
-      transform: perspective(440px) rotateY(-45deg);
+      transform: perspective(480px) rotateY(-45deg);
       left: 20%;
       clip-path: polygon(0% 0%, 92% 0%, 100% 47%, 100% 52%, 92% 100%, 0% 100%);
+    }
+    .landing-btn-2 {
+      text-align: left;
+      padding-left: 80px;
+      transform: perspective(480px) rotateY(45deg);  
+      right: 20%;
+      clip-path: polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%, 0% 50%);
     }
     .pole {
       display: block;

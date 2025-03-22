@@ -23,7 +23,7 @@ export function showAlertMessage(type, message) {
   if (alertContainer) {
     alertContainer.innerHTML = '';
     const alertMessage = document.createElement('div');
-    alertMessage.className = `alert ${type} alert-dismissible fade show`;
+    alertMessage.className = `alert ${type} alert-dismissible fade show mt-2`;
     alertMessage.role = 'alert';
 
     const alertContent = document.createElement('div');

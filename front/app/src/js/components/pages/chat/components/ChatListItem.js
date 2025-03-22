@@ -105,7 +105,8 @@ export class ChatListItem extends HTMLElement {
       <style>
       .list-group-item {
         border: none;
-        background-color: rgba(var(--pm-primary-100-rgb), 0.3);
+        background-color: rgba(var(--bs-body-bg-rgb), 0.3);
+        border-radius: 0.5rem !important;
       }
       .list-group-item.active {
         background-color: var(--pm-primary-500) !important;
