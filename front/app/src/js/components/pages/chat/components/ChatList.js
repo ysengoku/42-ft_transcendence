@@ -3,23 +3,30 @@ import './ChatListItem.js';
 
 export class ChatList extends HTMLElement {
   #state = {
-    loggedinUsername: '',
-    listItems: '',
-    itemCount: 0,
+    loggedInUsername: '',
+    currentItemCount: 0,
+    totalItemCount: 0,
+    items: [],
   };
 
   constructor() {
     super();
-    this.chatListData = [];
+    this.chatComponent = document.querySelector('chat-page');
 
     this.toggleUserSearchBar = this.toggleUserSearchBar.bind(this);
+    this.loadMoreItems = this.loadMoreItems.bind(this);
   }
 
-  setData(data, count, username) {
-    this.#state.loggedinUsername = username;
-    this.#state.itemCount = count;
-    this.chatListData = data;
+  setData(data, username) {
+    this.#state.loggedInUsername = username;
+    this.#state.items = data.items;
+    this.#state.totalItemCount = data.count;
     this.render();
+  }
+
+  disconnectedCallback() {
+    this.searchButton?.removeEventListener('click', this.toggleUserSearchBar);
+    this.listContainer?.removeEventListener('scroll', this.loadMoreItems);
   }
 
   render() {
@@ -28,29 +35,55 @@ export class ChatList extends HTMLElement {
     this.searchButton = this.querySelector('.new-chat');
     this.searchButton.addEventListener('click', this.toggleUserSearchBar);
     this.serachBar = this.querySelector('chat-user-search');
-    this.serachBar.user = this.#state.loggedinUsername;
+    this.serachBar.user = this.#state.loggedInUsername;
 
-    this.listContainer = this.querySelector('#chat-list');
-    if (this.#state.itemCount > 1) {
-      this.listContainer.innerHTML = '';
-      this.chatListData.forEach((chat) => {
-        const listItem = document.createElement('chat-list-item-component');
-        listItem.setData(chat);
-        this.listContainer.appendChild(listItem);
-      });
-    } else {
-      const noChat = document.createElement('li');
-      noChat.textContent = 'No conversations yet';
-      noChat.classList.add('text-center', 'border-top', 'mt-3', 'pe-2', 'pt-3');
-      this.listContainer.appendChild(noChat);
+    this.listContainer = this.querySelector('#chat-list-wrapper');
+    this.list = this.querySelector('#chat-list');
+    if (this.#state.totalItemCount > 0) {
+      this.list.innerHTML = '';
+      this.renderListItems();
+      // this.#state.items.forEach((chat) => {
+      //   const listItem = document.createElement('chat-list-item-component');
+      //   listItem.setData(chat);
+      //   this.list.appendChild(listItem);
+      // });
+    }
+    this.listContainer.addEventListener('scrollend', this.loadMoreItems);
+  }
+
+  renderListItems() {
+    for (let i = this.#state.currentItemCount; i < this.#state.items.length; i++) {
+      const listItem = document.createElement('chat-list-item-component');
+      listItem.setData(this.#state.items[i]);
+      this.list.appendChild(listItem);
+      ++this.#state.currentItemCount;
     }
   }
 
   /* ------------------------------------------------------------------------ */
   /*     Event handlers                                                       */
   /* ------------------------------------------------------------------------ */
+  toggleUserSearchBar() {
+    const userSearch = document.getElementById('chat-user-search');
+    userSearch?.classList.toggle('d-none');
+  }
+
+  async loadMoreItems(event) {
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    if (scrollTop + clientHeight < scrollHeight ||
+      this.#state.currentItemCount === this.#state.totalItemCount) {
+      return;
+    }
+    const data = await this.chatComponent.fetchChatList(this.#state.currentItemCount);
+    if (!data) {
+      return;
+    }
+    this.#state.items = [...this.#state.items, ...data.items];
+    this.renderListItems();
+  }
 
   addNewChat(data) {
+    console.log('Add new chat:', data);
     const chatData = {
       username: data.username,
       nickname: data.nickname,
@@ -61,32 +94,28 @@ export class ChatList extends HTMLElement {
       unread_messages_count: 0,
       last_message: data.messages[0],
     };
-    this.chatListData.unshift(chatData);
-    console.log('Chat list data:', this.chatListData);
-    this.#state.itemCount += 1;
+    this.#state.items.unshift(chatData);
+    console.log('Chat list data:', this.#state.items);
+    this.#state.currentItemCount += 1;
+    this.#state.totalItemCount += 1;
     this.render();
     const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
     this.dispatchEvent(event);
   }
 
   restartChat(data) {
-    const index = this.chatListData.findIndex((chat) => chat.username === data.username);
+    const index = this.#state.items.findIndex((chat) => chat.username === data.username);
     if (index !== -1) {
-      const tmp = this.chatListData[index];
+      const tmp = this.#state.items[index];
       tmp.unread_messages_count = 0;
-      this.chatListData.splice(index, 1);
-      this.chatListData.unshift(tmp);
+      this.#state.items.splice(index, 1);
+      this.#state.items.unshift(tmp);
       this.render();
       const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
       this.dispatchEvent(event);
     } else {
       this.addNewChat(data);
     }
-  }
-
-  toggleUserSearchBar() {
-    const userSearch = document.getElementById('chat-user-search');
-    userSearch?.classList.toggle('d-none');
   }
 
   /* ------------------------------------------------------------------------ */
@@ -100,9 +129,9 @@ export class ChatList extends HTMLElement {
         <h5 class="m-0">Conversations</h5>
         <button class="btn new-chat me-3 p-0"><i class="bi bi-pencil-square"></i></button>
       </div>
-      <div class="overflow-auto">
+      <div class="overflow-auto" id="chat-list-wrapper">
         <chat-user-search></chat-user-search>
-        <ul class="list-group overflow-auto border-top-1 pt-4" id="chat-list"></ul>
+        <ul class="list-group border-top-1 pt-4" id="chat-list"></ul>
       </div>
     </div>
 	  `;

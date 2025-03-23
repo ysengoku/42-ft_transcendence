@@ -67,7 +67,7 @@
   --bs-black-rgb: 34, 32, 31;
 
   #content {
-    background: url('/img/draft-day.png') no-repeat center center;
+    background: url('/img/bg-day.png') no-repeat center center;
     background-size: cover;
   }
 
@@ -82,7 +82,7 @@
   --bs-black-rgb: 241, 240, 240;
 
   #content {
-    background: url('/img/dunes-night.png') no-repeat center center;
+    background: url('/img/bg-night-dark.png') no-repeat center center;
     background-size: cover;
   }
 
