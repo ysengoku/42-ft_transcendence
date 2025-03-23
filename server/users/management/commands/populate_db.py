@@ -2,7 +2,8 @@ from random import choice, randint
 
 from django.core.management.base import BaseCommand
 
-from users.models import Match, OauthConnection, User
+from pong.models import Match
+from users.models import OauthConnection, User
 
 
 # ruff: noqa: S106
@@ -144,9 +145,9 @@ class Command(BaseCommand):
             ("ft_cadet", "cadet@student.42.fr"),
             ("ft_champion", "champion@student.42.fr"),
         ]
-        for i, (username, email) in enumerate(ft_users, start=1):
+        for i, (username, _) in enumerate(ft_users, start=1):
             oauth_connection = OauthConnection.objects.create(
-                status=OauthConnection.CONNECTED, connection_type=OauthConnection.FT, oauth_id=420000 + i
+                status=OauthConnection.CONNECTED, connection_type=OauthConnection.FT, oauth_id=420000 + i,
             )
             User.objects.create_user(
                 username=username,
@@ -160,9 +161,9 @@ class Command(BaseCommand):
             ("open_source_pro", "opensource@gmail.com"),
             ("git_master", "gitmaster@gmail.com"),
         ]
-        for i, (username, email) in enumerate(github_users, start=1):
+        for i, (username, _) in enumerate(github_users, start=1):
             oauth_connection = OauthConnection.objects.create(
-                status=OauthConnection.CONNECTED, connection_type=OauthConnection.GITHUB, oauth_id=430000 + i
+                status=OauthConnection.CONNECTED, connection_type=OauthConnection.GITHUB, oauth_id=430000 + i,
             )
             User.objects.create_user(
                 username=username,
