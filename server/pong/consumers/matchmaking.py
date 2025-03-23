@@ -1,6 +1,6 @@
 import json
 
-from channels.consumer import AsyncConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer
 
 """
 example protocol
@@ -16,9 +16,30 @@ flowchart TD
     H -- Decline --> J[Remove ticket & re-queue accepted players]
 """
 
-class MatchmakingConsumer(AsyncConsumer):
-    async def search_match(self, message: dict):
+"""
+user connects and creates ticket
+"""
+
+class MatchmakingConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
         if not self.user:
+            await self.close()
             return
 
+        # user connects
+        #     -> search for matchmaking ticket
+        #           -> if found, startgame
+        #           -> if not found, create a ticket with one pending player
+        await self.accept()
+
+    async def disconnect(self, code: int):
+        pass
+
+    async def receive(self, text_data):
+        pass
+
+    async def find_pending_players():
+        pass
+
+    async def search_match(self, message: dict):
         await self.send(text_data=json.dumps({"id": self.user.id}))
