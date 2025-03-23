@@ -23,7 +23,7 @@ const auth = (() => {
       sessionStorage.setItem('user', JSON.stringify(user));
       const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
       document.dispatchEvent(event);
-      socketManager.connect();
+      // socketManager.connect();
     }
 
     updateStoredUser(user) {

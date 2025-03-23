@@ -25,8 +25,12 @@ export class ChatMessageArea extends HTMLElement {
     if (this.#state.user === null) {
       this.#state.user = auth.getStoredUser();
     }
+    if (!data) {
+      return;
+    }
     this.#state.renderedMessagesCount = 0;
     this.#state.data = data;
+    console.log('ChatMessageArea data:', this.#state.data);
     this.render();
   }
 

@@ -4,15 +4,10 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
 import { isMobile } from '@utils';
 import './components/index.js';
-import { mockChatListData } from '@mock/functions/mockChatListData.js';
-import { mockChatMessagesData } from '@mock/functions/mockChatMessages';
 
 export class Chat extends HTMLElement {
   #state = {
     loggedInUser: null,
-    chatListData: [],
-    renderedChatCount: 0,
-    chatListItemCount: 0,
     currentChatUsername: '',
     currentChat: null,
   };
@@ -33,23 +28,14 @@ export class Chat extends HTMLElement {
       router.navigate('/login');
       return;
     }
-    // ----- Temporary mock data -------------------------
-    // this.mockData = await mockChatListData();
-    // this.#state.chatListData = this.mockData.items;
-    // this.#state.chatListItemCount = this.mockData.count;
-    // ---------------------------------------------------
-    const listData = await this.fetchChatList();
-    if (!listData) {
+    const chatListData = await this.fetchChatList();
+    if (!chatListData) {
       return;
     }
-    this.#state.chatListData = listData;
 
-    if (this.#state.chatListItemCount > 0) {
-      // ----- Temporary mock data ----------------------------------------------
-      // const chatData = await mockChatMessagesData(this.#state.chatListData[0].username);
-      // ------------------------------------------------------------------------
-      this.#state.currentChatUsername = this.#state.chatListData[0].username;
-      this.#state.chatListData[0].unread_messages_count = 0;
+    if (chatListData.count > 0) {
+      this.#state.currentChatUsername = chatListData.items[0].username;
+      chatListData.items[0].unread_messages_count = 0;
       const chatData = await this.fetchChatData();
       if (!chatData) {
         return;
@@ -57,6 +43,8 @@ export class Chat extends HTMLElement {
       this.#state.currentChat = chatData;
     }
     this.render();
+    this.chatList.setData(chatListData, this.#state.loggedInUser.username);
+    this.chatMessagesArea.setData(this.#state.currentChat);
   }
 
   disconnectedCallback() {
@@ -74,14 +62,12 @@ export class Chat extends HTMLElement {
   async render() {
     this.innerHTML = this.template() + this.style();
 
+    this.chatList = this.querySelector('chat-list-component');
+    this.chatMessagesArea = document.querySelector('chat-message-area');
+
     this.chatListContainer = this.querySelector('#chat-list-container');
     this.chatContainer = this.querySelector('#chat-container');
-    this.chatMessagesArea = document.querySelector('chat-message-area');
-    this.chatList = this.querySelector('chat-list-component');
     this.backButton = this.querySelector('#back-to-chat-list');
-
-    this.chatList.setData(this.#state.chatListData, this.#state.chatListItemCount, this.#state.loggedInUser.username);
-    this.chatMessagesArea.setData(this.#state.currentChat);
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
     document.addEventListener('sendMessage', this.sendMessage);
@@ -94,20 +80,18 @@ export class Chat extends HTMLElement {
     socketManager.addListener('unlike_message', (ids) => this.handleUnlikedMessage(ids));
   }
 
-  async fetchChatList() {
+  async fetchChatList(offset = 0) {
     const response = await apiRequest(
         'GET',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT_LIST(10, this.#state.renderedChatCount),
+        API_ENDPOINTS.CHAT_LIST(10, offset),
         null,
         false,
         true,
     );
     if (response.success) {
       console.log('Chat list response:', response);
-      this.#state.chatListData = response.data.items;
-      this.#state.chatListItemCount = response.data.count;
-      return this.#state.chatListData;
+      return response.data;
     } else {
       // TODO: Handle error
     }
@@ -128,11 +112,6 @@ export class Chat extends HTMLElement {
     } else {
       // TODO: Handle error
     }
-  }
-
-  async updateChatList(newMessage) {
-    // TODO
-    // Update chat list with new message notification
   }
 
   /* ------------------------------------------------------------------------ */
