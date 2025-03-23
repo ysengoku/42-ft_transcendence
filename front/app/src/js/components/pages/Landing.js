@@ -67,7 +67,7 @@ export class Landing extends HTMLElement {
       max-width: 320px;
     }
     .signpost {
-       padding-top: 160px;
+       padding-top: 216px;
     }
     #landing-buttons {
       z-index: 4;
@@ -101,18 +101,18 @@ export class Landing extends HTMLElement {
       width: 16px;
       border-radius: 4px;
   
-      --clrs1: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
-      --clrs2: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 20%);
-      --clrs3: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 60%);
-      --clrs4: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 88%);
-      background: var(--pm-primary-600);
-      box-shadow: -1px 4px 1px #8F501A;
-      linear-gradient(to right,
-        var(--clrs1) 0%, 
-        var(--clrs2) 20%,
-        var(--clrs3) 50%, 
-        var(--clrs4) 80%) 0 0 / 2px 100%; 
-      filter: url('/filters/wood-grain.svg#wave-filter-0');
+      --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 50%);
+      --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 20%);
+      --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 60%);
+      --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 88%);
+      background: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
+      /* box-shadow: -1px 4px 1px #8F501A;
+      linear-gradient(78deg,
+      var(--clrs1),
+      var(--clrs2) 20% 70%,
+      var(--clrs3) 90%,
+      var(--clrs4)) 0 0 / 100% .2rem;
+      filter: url('/filters/wood-grain.svg#wave-filter-0'); */
     }
     </style>
     `;

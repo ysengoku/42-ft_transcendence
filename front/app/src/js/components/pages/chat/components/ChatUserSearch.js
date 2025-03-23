@@ -28,7 +28,7 @@ export class ChatUserSearch extends HTMLElement {
     this.submitButton?.removeEventListener('click', this.handleSubmit);
     this.input?.removeEventListener('input', this.handleInput);
     this.searchBarToggleButton?.removeEventListener('click', this.hideUserSearch);
-    this.showMoreButton?.removeEventListener('click', this.loadMoreUsers);
+    this.listContainer?.removeEventListener('scrollend', this.loadMoreUsers);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -46,6 +46,7 @@ export class ChatUserSearch extends HTMLElement {
     this.submitButton.addEventListener('click', this.handleSubmit);
     this.input.addEventListener('input', this.handleInput);
     this.searchBarToggleButton.addEventListener('click', this.hideUserSearch);
+    this.listContainer.addEventListener('scrollend', this.loadMoreUsers);
   }
 
   renderUserList() {
@@ -66,24 +67,12 @@ export class ChatUserSearch extends HTMLElement {
       }
       this.#state.currentListLength++;
     }
-    if (this.#state.totalUserCount > this.#state.currentListLength) {
-      this.renderShowMoreButton();
-    }
   }
 
   renderNoUserFound() {
     const noUser = document.createElement('li');
     noUser.innerHTML = this.noUserFoundTemplate();
     this.listContainer.appendChild(noUser);
-  }
-
-  renderShowMoreButton() {
-    this.showMoreButtonContainer = document.createElement('li');
-    this.showMoreButtonContainer.innerHTML = this.showMoreButtonTemplate();
-    this.listContainer.appendChild(this.showMoreButtonContainer);
-
-    this.showMoreButton = this.showMoreButtonContainer.querySelector('#chat-show-more-users');
-    this.showMoreButton?.addEventListener('click', this.loadMoreUsers);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -125,9 +114,11 @@ export class ChatUserSearch extends HTMLElement {
   }
 
   async loadMoreUsers(event) {
-    event.stopPropagation();
-    this.showMoreButton?.removeEventListener('click', this.loadMoreUsers);
-    this.showMoreButton?.remove();
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    if (scrollTop + clientHeight < scrollHeight ||
+      this.#state.totalUserCount === this.#state.currentListLength) {
+        return;
+      }
     this.searchUsers();
   }
 
@@ -135,7 +126,6 @@ export class ChatUserSearch extends HTMLElement {
     this.#state.userList = [];
     this.#state.totalUserCount = 0;
     this.#state.currentListLength = 0;
-    this.showMoreButton?.removeEventListener('click', this.loadMoreUsers);
     this.listContainer.innerHTML = '';
   }
 
@@ -144,7 +134,6 @@ export class ChatUserSearch extends HTMLElement {
     this.userList = [];
     this.totalUserCount = 0;
     this.input.value = '';
-    this.showMoreButton?.removeEventListener('click', this.loadMoreUsers);
     this.listContainer.innerHTML = '';
   }
 
@@ -193,24 +182,6 @@ export class ChatUserSearch extends HTMLElement {
     </style>
     <div class="list-group-item p-3">
       <p class="text-center m-0">No user found</p>
-    </div>
-    `;
-  }
-
-  showMoreButtonTemplate() {
-    return `
-    <style>
-    #chat-show-more-users {
-      border: none;
-      position: relative;
-      border-top: 1px solid var(--bs-border-color);
-    }
-    li {
-      list-style-type: none;
-    }
-    </style>
-    <div class="list-group-item mt-4 p-3" id="chat-show-more-users">
-      <p class="text-center m-0">Show more users</p>
     </div>
     `;
   }
