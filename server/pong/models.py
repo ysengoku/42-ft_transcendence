@@ -70,4 +70,6 @@ class Match(models.Model):
         ordering = ["-date"]
 
     def __str__(self) -> str:
-        return f"{self.winner.user.username} - {self.loser.user.username}"
+        winner = self.winner.user.username if self.user else "Deleted User"
+        loser = self.loser.user.username if self.user else "Deleted User"
+        return f"{winner} - {loser}"
