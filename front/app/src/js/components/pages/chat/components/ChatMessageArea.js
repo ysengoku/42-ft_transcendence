@@ -4,7 +4,6 @@ import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import { getRelativeDateAndTime } from '@utils';
-import { mockChatMoreMessages } from '@mock/functions/mockChatMoreMesssages';
 
 export class ChatMessageArea extends HTMLElement {
   #state = {
@@ -30,7 +29,7 @@ export class ChatMessageArea extends HTMLElement {
     }
     this.#state.renderedMessagesCount = 0;
     this.#state.data = data;
-    console.log('ChatMessageArea data:', this.#state.data);
+    // console.log('ChatMessageArea data:', this.#state.data);
     this.render();
   }
 
@@ -135,6 +134,7 @@ export class ChatMessageArea extends HTMLElement {
 
         const response = await apiRequest(
             'GET',
+            /* eslint-disable-next-line new-cap */
             API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
             null,
             false,
