@@ -2,8 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
-from django.db.models import (Count, Exists, ImageField, OuterRef, Q, Subquery,
-                              Value)
+from django.db.models import Count, Exists, ImageField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 
 from users.models import Profile
@@ -163,11 +162,11 @@ class ChatMessage(models.Model):
 
 class Notification(models.Model):
     TYPE_CHOICES = [
-        ('game_invite', 'game invite'),
-        ('reply_game_invite', 'reply to game invite'),
-        ('new_tournament', 'new tournament'),
-        ('new_friend', 'new friend'),
-        ('message', 'message received'),
+        ("game_invite", "game invite"),
+        ("reply_game_invite", "reply to game invite"),
+        ("new_tournament", "new tournament"),
+        ("new_friend", "new friend"),
+        ("message", "message received"),
     ]
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE)
@@ -175,7 +174,7 @@ class Notification(models.Model):
     # not sure about the default type, could be null but don't know if
     # it would impact anything
     type = models.CharField(
-        max_length=50, choices=TYPE_CHOICES, default='message')
+        max_length=50, choices=TYPE_CHOICES, default="message")
     created_at = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
 
@@ -183,27 +182,32 @@ class Notification(models.Model):
         return f"Notification for {self.user.username}: {self.message}"
 
 
-class GameSession(models.Model):
-    # TODO Game Session definition
+class GameSession(models.Model):  # noqa: DJ008
+    # TO VALID LATER, NOT SURE
+    # name = models.CharField(max_length=255)
+    # created_at = models.DateTimeField(auto_now_add=True)
+
+    # def __str__(self):
+    #     return f"{self.name} - {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
     pass
 
 
 class GameInvitation(models.Model):
     INVITE_STATUS = [
-        ('pending', 'Pending'),
-        ('accepted', 'Accepted'),
-        ('declined', 'Declined'),
+        ("pending", "Pending"),
+        ("accepted", "Accepted"),
+        ("declined", "Declined"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(
         Profile, on_delete=models.CASCADE, null=True, blank=True)
     game_session = models.ForeignKey(
-        GameSession, on_delete=models.PROTECT, related_name='game_invites')
+        GameSession, on_delete=models.PROTECT, related_name="game_invites")
     recipient = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="received_invites")
     status = models.CharField(
-        max_length=11, null=True, blank=False, choices=INVITE_STATUS, default='pending')
+        max_length=11, blank=False, choices=INVITE_STATUS, default="pending")
 
     def __str__(self):
-        return f'{self.game_session}:'
+        return f"{self.game_session}:"

@@ -2,9 +2,21 @@ import json
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
-from chat.models import Chat, ChatMessage
+from chat.models import Chat, ChatMessage, GameInvitation, Notification
 from users.models import Profile
+
+
+def get_user_data(self):
+    return {
+        "date": timezone.now().isoformat(),
+        "username": self.user.username,
+        "nickname": self.user.nickname,
+        "avatar": self.profile_picture.url if self.profile_picture else settings.DEFAULT_USER_AVATAR,
+    }
 
 
 class UserEventsConsumer(WebsocketConsumer):
@@ -30,18 +42,11 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         # verify if self.chats exists and is not empty
-        if hasattr(self, 'chats') and self.chats:
+        if hasattr(self, "chats") and self.chats:
             for chat in self.chats:
                 async_to_sync(self.channel_layer.group_discard)(
                     "chat_" + str(chat.id), self.channel_name)
 
-    def get_user_data(profile):
-        return {
-            "date": datetime.now().isoformat(),
-            "username": profile.user.username,
-            "nickname": profile.user.nickname,
-            "avatar": profile.profile_picture.url if profile.profile_picture else settings.DEFAULT_USER_AVATAR,
-        }
     # Receive message from WebSocket
 
     def receive(self, text_data):
@@ -100,8 +105,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     "sender": self.user_profile.user.username,
                     "is_read": False,
                     "is_liked": False,
-                }
-            })
+                },
+            }),
         })
 
     def handle_online_status(self, data):
@@ -118,12 +123,12 @@ class UserEventsConsumer(WebsocketConsumer):
         if status == "user_online":
             self.send(text_data=json.dumps({
                 "type": "user_online",
-                "data": notification_data
+                "data": notification_data,
             }))
         elif status == "user_offline":
             self.send(text_data=json.dumps({
                 "type": "user_offline",
-                "data": notification_data
+                "data": notification_data,
             }))
 
     def handle_like_message(self, data):
@@ -137,14 +142,14 @@ class UserEventsConsumer(WebsocketConsumer):
                     "type": "like_message", "data": {
                         "id": message_id,
                         # "chat_id": message_id, HOW TO SEND THIS
-                    }
+                    },
                 }))
                 # if user on the chat, sends to client
             except ObjectDoesNotExist:
                 print(f"Message {message_id} does not exist.")
                 self.send(text_data=json.dumps({
                     "type": "error",
-                            "message": "Message not found."
+                            "message": "Message not found.",
                 }))
 
     def handle_unlike_message(self, data):
@@ -159,13 +164,13 @@ class UserEventsConsumer(WebsocketConsumer):
                     "data": {
                         "id": message_id,
                         # "chat_id": message_id, HOW TO SEND THIS
-                    }
+                    },
                 }))
             except ObjectDoesNotExist:
                 print(f"Message {message_id} does not exist.")
                 self.send(text_data=json.dumps({
                     "type": "error",
-                            "message": "Message not found."
+                            "message": "Message not found.",
                 }))
 
     def handle_read_message(self, data):
@@ -178,7 +183,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 "type": "read_message",
                 "data": {
                     "id": message_id,
-                }
+                },
             }))
         except ObjectDoesNotExist:
             print(f"Message {message_id} does not exist.")
@@ -221,7 +226,7 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "type": "notification",
             "data": notification_data,
-            "type_notification": notification_type
+            "type_notification": notification_type,
         }))
 
     def accept_game_invite(self, data):
@@ -236,18 +241,18 @@ class UserEventsConsumer(WebsocketConsumer):
                 {"id": str(invitation_id), "status": "accepted"})
             async_to_sync(self.channel_layer.group_send)(f"user_{invitation.sender.id}", {
                 "type": "game_invite",
-                "data": notification_data
+                "data": notification_data,
             })
 
             self.send(text_data=json.dumps({
                 "type": "game_invite",
-                "data": {"id": invitation_id, "status": "accepted"}
+                "data": {"id": invitation_id, "status": "accepted"},
             }))
         except GameInvitation.DoesNotExist:
             print(f"Invitation {invitation_id} does not exist.")
             self.send(text_data=json.dumps({
                 "type": "error",
-                        "message": "Invitation not found."
+                        "message": "Invitation not found.",
             }))
 
     def decline_game_invite(self, data):
@@ -262,17 +267,17 @@ class UserEventsConsumer(WebsocketConsumer):
                 {"id": str(invitation_id), "status": "declined"})
             async_to_sync(self.channel_layer.group_send)(f"user_{invitation.sender.id}", {
                 "type": "game_invite",
-                "data": notification_data
+                "data": notification_data,
             })
             self.send(text_data=json.dumps({
                 "type": "game_invite",
-                "data": {"id": invitation_id, "status": "declined"}
+                "data": {"id": invitation_id, "status": "declined"},
             }))
         except GameInvitation.DoesNotExist:
             print(f"Invitation {invitation_id} does not exist.")
             self.send(text_data=json.dumps({
                 "type": "error",
-                        "message": "Invitation not found."
+                        "message": "Invitation not found.",
             }))
 
     def send_game_invite(self, data):
@@ -291,12 +296,12 @@ class UserEventsConsumer(WebsocketConsumer):
 
         async_to_sync(self.channel_layer.group_send)(f"user_{receiver_id}", {
             "type": "game_invite",
-            "data": notification_data
+            "data": notification_data,
         })
 
         self.send(text_data=json.dumps({
             "type": "game_invite",
-            "data": notification_data
+            "data": notification_data,
         }))
 
     def handle_new_tournament(self, data):
@@ -313,7 +318,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
         self.send(text_data=json.dumps({
             "type": "new_tournament",
-            "data": notification_data
+            "data": notification_data,
         }))
 
     def add_new_friend(self, data):
@@ -331,5 +336,5 @@ class UserEventsConsumer(WebsocketConsumer):
 
         async_to_sync(self.channel_layer.group_send)(f"user_{receiver_id}", {
             "type": "new_friend",
-            "data": notification_data
+            "data": notification_data,
         })

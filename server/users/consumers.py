@@ -32,6 +32,7 @@ class RedisUserStatusManager:
 
         Args:
             user_id (int): ID of the user to mark online
+
         """
         try:
             # Add user to the set of online users with an expiration
@@ -50,6 +51,7 @@ class RedisUserStatusManager:
 
         Args:
             user_id (int): ID of the user to mark offline
+
         """
         try:
             # Remove the user from online users
@@ -63,6 +65,7 @@ class RedisUserStatusManager:
 
         Returns:
             list: List of online user IDs
+
         """
         try:
             # Find all keys matching the online users pattern
@@ -137,6 +140,7 @@ class OnlineStatusConsumer(WebsocketConsumer):
 
         Args:
             event (dict): Event containing user status information
+
         """
         self.send(
             text_data=json.dumps(
@@ -145,8 +149,8 @@ class OnlineStatusConsumer(WebsocketConsumer):
                     "user_id": event["user_id"],
                     "username": event["username"],
                     "online": event["online"],
-                }
-            )
+                },
+            ),
         )
 
     def _set_user_online(self, status):
@@ -155,6 +159,7 @@ class OnlineStatusConsumer(WebsocketConsumer):
 
         Args:
             status (bool): Whether the user is online or offline
+
         """
         if status:
             # Mark user as online
@@ -169,6 +174,7 @@ class OnlineStatusConsumer(WebsocketConsumer):
 
         Args:
             status (bool): Whether the user is online or offline
+
         """
         async_to_sync(self.channel_layer.group_send)(
             self.group_name,
@@ -183,5 +189,6 @@ def get_online_users():
 
     Returns:
         list: List of online user IDs
+
     """
     return redis_status_manager.get_online_users()
