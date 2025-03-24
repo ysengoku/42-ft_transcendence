@@ -22,6 +22,7 @@ export class Chat extends HTMLElement {
   }
 
   async connectedCallback() {
+    console.log('Current path:', window.location.pathname);
     this.#state.loggedInUser = auth.getStoredUser();
     const isLoggedIn = this.#state.loggedInUser ? true : false;
     if (!isLoggedIn) {
@@ -75,9 +76,9 @@ export class Chat extends HTMLElement {
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
 
-    socketManager.addListener('message', (message) => this.receiveMessage(message));
-    socketManager.addListener('like_message', (ids) => this.handleLikedMessage(ids));
-    socketManager.addListener('unlike_message', (ids) => this.handleUnlikedMessage(ids));
+    // socketManager.addListener('message', (message) => this.receiveMessage(message));
+    // socketManager.addListener('like_message', (ids) => this.handleLikedMessage(ids));
+    // socketManager.addListener('unlike_message', (ids) => this.handleUnlikedMessage(ids));
   }
 
   async fetchChatList(offset = 0) {
@@ -174,28 +175,27 @@ export class Chat extends HTMLElement {
     socketManager.socket.send(JSON.stringify(messageData));
   }
 
-  receiveMessage(message) {
-    // Check chat_id
-    // If chat_id === current chat_id
-    // Add the new message to the current chat (at the bottom)
-    // Send read_message action to the server
-
-    // Else
-    // Look for the chat in the chat list
-    // If found, update the chat list item with unread badge and move it to the top
-    // If not found, add the chat item with unread badge to the top of the list
-
-    const newMessage = message;
-    // ----- For test --------------------------------
-    message.sender = this.#state.currentChat.username;
-    // -----------------------------------------------
-    if (message.chat_id === this.#state.currentChat.chat_id) {
-      this.#state.currentChat.messages.unshift(message);
-      // TODO: Append new message instead of updating the whole chat
-      this.chatMessagesArea.setData(this.#state.currentChat);
+  receiveMessage(data) {
+    console.log('New message received:', data);
+    if (data.chat_id === this.#state.currentChat.chat_id) {
+      this.chatMessagesArea.renderNewMessage(data);
     } else {
-      this.updateChatList(message);
+      // Look for the chat in the chat list
+      // If found, update the chat list item with unread badge and move it to the top
+      // If not found, add the chat item with unread badge to the top of the list
     }
+
+    // const newMessage = message;
+    // // ----- For test --------------------------------
+    // message.sender = this.#state.currentChat.username;
+    // // -----------------------------------------------
+    // if (message.chat_id === this.#state.currentChat.chat_id) {
+    //   this.#state.currentChat.messages.unshift(message);
+    //   // TODO: Append new message instead of updating the whole chat
+    //   this.chatMessagesArea.setData(this.#state.currentChat);
+    // } else {
+    //   this.updateChatList(message);
+    // }
   }
 
   handleLikedMessage(ids) {

@@ -67,7 +67,7 @@ export class Landing extends HTMLElement {
       max-width: 320px;
     }
     .signpost {
-       padding-top: 216px;
+       padding-top: 232px;
     }
     #landing-buttons {
       z-index: 4;
