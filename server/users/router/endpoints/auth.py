@@ -15,15 +15,10 @@ from common.schemas import MessageSchema
 from users.models import RefreshToken, User
 from users.router.endpoints.mfa import handle_mfa_code
 from users.router.utils import _create_json_response_with_tokens
-from users.schemas import (
-    ForgotPasswordSchema,
-    LoginResponseSchema,
-    LoginSchema,
-    PasswordValidationSchema,
-    ProfileMinimalSchema,
-    SignUpSchema,
-    ValidationErrorMessageSchema,
-)
+from users.schemas import (ForgotPasswordSchema, LoginResponseSchema,
+                           LoginSchema, PasswordValidationSchema,
+                           ProfileMinimalSchema, SignUpSchema,
+                           ValidationErrorMessageSchema)
 
 auth_router = Router()
 
@@ -41,7 +36,8 @@ def check_self(request: HttpRequest):
 
 @auth_router.post(
     "login",
-    response={200: ProfileMinimalSchema | LoginResponseSchema, 401: MessageSchema, 429: MessageSchema},
+    response={200: ProfileMinimalSchema | LoginResponseSchema,
+              401: MessageSchema, 429: MessageSchema},
     auth=None,
 )
 @ensure_csrf_cookie
@@ -74,7 +70,8 @@ def login(request: HttpRequest, credentials: LoginSchema):
 
 @auth_router.post(
     "signup",
-    response={201: ProfileMinimalSchema, 422: list[ValidationErrorMessageSchema]},
+    response={201: ProfileMinimalSchema,
+              422: list[ValidationErrorMessageSchema]},
     auth=None,
 )
 @ensure_csrf_cookie
@@ -106,7 +103,8 @@ def refresh(request: HttpRequest, response: HttpResponse):
     if not old_refresh_token:
         raise AuthenticationError
 
-    new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
+    new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(
+        old_refresh_token)
 
     response.set_cookie("access_token", new_access_token)
     response.set_cookie("refresh_token", new_refresh_token_instance.token)
@@ -138,7 +136,8 @@ def logout(request: HttpRequest, response: HttpResponse):
     return 204, None
 
 
-@auth_router.delete("/users/{username}/delete", response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema})
+@auth_router.delete("/users/{username}/delete",
+                    response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema})
 def delete_account(request, username: str, response: HttpResponse):
     """
     Delete definitely the user account and the associated profile, including friends relations and avatar.
@@ -161,6 +160,7 @@ def delete_account(request, username: str, response: HttpResponse):
     user.delete()
 
     return {"msg": "Account successfully deleted."}
+
 
 @auth_router.post("/forgot-password", response={200: MessageSchema}, auth=None)
 @csrf_exempt
@@ -193,7 +193,8 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
 @auth_router.post(
     "/reset-password/{token}",
-    response={200: MessageSchema, 400: MessageSchema, 422: list[ValidationErrorMessageSchema]},
+    response={200: MessageSchema, 400: MessageSchema,
+              422: list[ValidationErrorMessageSchema]},
     auth=None,
 )
 @csrf_exempt
@@ -208,7 +209,8 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
         user.forgot_password_token = ""
         user.forgot_password_token_date = None
         user.save()
-        raise HttpError(408, "Expired session: authentication request timed out")
+        raise HttpError(
+            408, "Expired session: authentication request timed out")
 
     obj = PasswordValidationSchema(
         username=user.username,
