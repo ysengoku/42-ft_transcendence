@@ -4,6 +4,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
 from chat.models import Chat, ChatMessage
+from users.models import Profile
 
 
 class UserEventsConsumer(WebsocketConsumer):
@@ -11,10 +12,16 @@ class UserEventsConsumer(WebsocketConsumer):
         self.user = self.scope.get("user")
         if not self.user:
             self.close()
+    # Add user's channel to personal group to receive answers to invitations sent
+        async_to_sync(self.channel_layer.group_add)(
+            f"user_{self.user.id}", self.channel_name)
 
-        self.chats = Chat.objects.all()
+        self.user_profile = self.user.profile
+        self.chats = Chat.objects.for_participants(self.user_profile)
+
         for chat in self.chats:
-            async_to_sync(self.channel_layer.group_add)("chat_" + str(chat.id), self.channel_name)
+            async_to_sync(self.channel_layer.group_add)(
+                "chat_" + str(chat.id), self.channel_name)
 
         self.accept()
 
@@ -22,35 +29,292 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         for chat in self.chats:
-            async_to_sync(self.channel_layer.group_discard)("chat_" + str(chat.id), self.channel_name)
+            async_to_sync(self.channel_layer.group_discard)(
+                "chat_" + str(chat.id), self.channel_name)
 
+    def get_user_data(profile):
+        return {
+            "date": datetime.now().isoformat(),
+            "username": profile.user.username,
+            "nickname": profile.user.nickname,
+            "avatar": profile.profile_picture.url if profile.profile_picture else settings.DEFAULT_USER_AVATAR,
+        }
     # Receive message from WebSocket
+
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
         action = text_data_json.get("action")
 
         match action:
             case "message":
-                message, chat_id = text_data_json["message"], text_data_json["chat_id"]
+                self.handle_message(text_data_json)
+            case "notification":
+                self.handle_notification(text_data_json)
+            case ("user_offline", "user_online"):
+                self.handle_online_status(text_data_json)
+            case "like_message":
+                self.handle_like_message(text_data_json)
+            case "unlike_message":
+                self.handle_unlike_message(text_data_json)
+            case "read_message":
+                self.handle_read_message(text_data_json)
+            case "game_invite":
+                self.send_game_invite(text_data_json)
+            case "accept_game_invite":
+                self.accept_game_invite(text_data_json)
+            case "decline_game_invite":
+                self.decline_game_invite(text_data_json)
+            case "new_tournament":
+                self.handle_new_tournament(text_data_json)
+            case "add_new_friend":
+                self.add_new_friend(text_data_json)
+            case _:
+                print(f"Unknown action : {action}")
 
-                # security check: chat should exist
-                chat = Chat.objects.filter(id=chat_id).first()
-                if not chat:
-                    return
+    def handle_message(self, data):
+        message, chat_id = data["message"], data["chat_id"]
 
-                # security check: user should be in the chat
-                is_in_chat = chat.participants.filter(id=self.user.profile.id).exists()
-                if not is_in_chat:
-                    return
+        # security check: chat should exist
+        chat = Chat.objects.filter(id=chat_id).first()
+        if not chat:
+            return
 
-                ChatMessage.objects.create(sender=self.user.profile, content=message, chat=chat)
-                async_to_sync(self.channel_layer.group_send)("chat_" + chat_id, {
-                    "type": "chat.message", "message": message,
-                })
+        # security check: user should be in the chat
+        is_in_chat = chat.participants.filter(id=self.user_profile.id).exists()
+        if not is_in_chat:
+            return
+
+        ChatMessage.objects.create(
+            sender=self.user_profile, content=message, chat=chat)
+        async_to_sync(self.channel_layer.group_send)("chat_" + chat_id, {
+            "type": "chat.message",
+            "message": json.dumps({
+                "type": "message",
+                "data": {
+                    "id": str(ChatMessage.objects.latest("id").pk),
+                    "content": message,
+                    "date": ChatMessage.objects.latest("id").date.isoformat(),
+                    "sender": self.user_profile.user.username,
+                    "is_read": False,
+                    "is_liked": False,
+                }
+            })
+        })
+
+    def handle_online_status(self, data):
+        username = data["data"]["username"]
+        status = data["action"]
+
+        try:
+            profile = Profile.objects.get(user__username=username)
+        except Profile.DoesNotExist:
+            print(f"Profile for {username} does not exist.")
+            return
+
+        notification_data = get_user_data(profile)
+        if status == "user_online":
+            self.send(text_data=json.dumps({
+                "type": "user_online",
+                "data": notification_data
+            }))
+        elif status == "user_offline":
+            self.send(text_data=json.dumps({
+                "type": "user_offline",
+                "data": notification_data
+            }))
+
+    def handle_like_message(self, data):
+        message_id = data["message_id"]
+        try:
+            message = ChatMessage.objects.get(pk=message_id)
+            message.is_liked = True
+            message.save()
+            self.send(text_data=json.dumps({
+                "type": "like_message",
+                "data": {
+                    "id": message_id,
+                }
+            }))
+        except ObjectDoesNotExist:
+            print(f"Message {message_id} does not exist.")
+
+    def handle_unlike_message(self, data):
+        message_id = data["message_id"]
+        try:
+            message = ChatMessage.objects.get(pk=message_id)
+            message.is_liked = False
+            message.save()
+            self.send(text_data=json.dumps({
+                "type": "unlike_message",
+                "data": {
+                    "id": message_id,
+                }
+            }))
+        except ObjectDoesNotExist:
+            print(f"Message {message_id} does not exist.")
+
+    def handle_read_message(self, data):
+        message_id = data["message_id"]
+        try:
+            message = ChatMessage.objects.get(pk=message_id)
+            message.is_read = True
+            message.save()
+            self.send(text_data=json.dumps({
+                "type": "read_message",
+                "data": {
+                    "id": message_id,
+                }
+            }))
+        except ObjectDoesNotExist:
+            print(f"Message {message_id} does not exist.")
 
     # Receive message from room group
     def chat_message(self, event):
         message = event["message"]
-
         # Send message to WebSocket
-        self.send(text_data=json.dumps({"message": message}))
+        try:
+            json.loads(message)
+            # message already in JSON -> send
+            self.send(text_data=message)
+        except json.JSONDecodeError:
+            # message no in JSON -> restructure and send
+            self.send(text_data=json.dumps({"message": message}))
+        # self.send(text_data=message)
+        # message is created in handle_message :
+        # -> it is already structured in json before being send
+        # -> this function seems useless / reworking for nothing
+        # self.send(text_data=json.dumps({"message": message}))
+        # let the try / except just to be sure
+
+    def handle_notification(self, data):
+        notification_data = data["notification"]
+        notification_type = data["type"]
+        notification_id = data.get("notification_id")
+
+        # Create the notification in the db
+        if notification_id is None:
+            Notification.objects.create(
+                user=self.user, message=notification_data, type=notification_type)
+        else:
+            try:
+                notification = Notification.objects.get(id=notification_id)
+                notification.read = True
+                notification.save()
+            except Notification.DoesNotExist:
+                print(f"Notification {notification_id} does not exist.")
+
+        self.send(text_data=json.dumps({
+            "type": "notification",
+            "data": notification_data,
+            "type_notification": notification_type
+        }))
+
+    def accept_game_invite(self, data):
+        invitation_id = data["invitation_id"]
+        try:
+            invitation = GameInvitation.objects.get(id=invitation_id)
+            invitation.status = "accepted"
+            invitation.save()
+            # send notif to sender of the game invitation with receivers' infos
+            notification_data = get_user_data(self.user_profile)
+            notification_data.update(
+                {"id": str(invitation_id), "status": "accepted"})
+            async_to_sync(self.channel_layer.group_send)(f"user_{invitation.sender.id}", {
+                "type": "game_invite",
+                "data": notification_data
+            })
+
+            self.send(text_data=json.dumps({
+                "type": "game_invite",
+                "data": {"id": invitation_id, "status": "accepted"}
+            }))
+        except GameInvitation.DoesNotExist:
+            print(f"Invitation {invitation_id} does not exist.")
+            self.send(text_data=json.dumps({
+                "type": "error",
+                        "message": "Invitation not found."
+            }))
+
+    def decline_game_invite(self, data):
+        invitation_id = data["invitation_id"]
+        try:
+            invitation = GameInvitation.objects.get(id=invitation_id)
+            invitation.status = "declined"
+            invitation.save()
+            # send notif to sender of the game invitation
+            notification_data = get_user_data(self.user_profile)
+            notification_data.update(
+                {"id": str(invitation_id), "status": "declined"})
+            async_to_sync(self.channel_layer.group_send)(f"user_{invitation.sender.id}", {
+                "type": "game_invite",
+                "data": notification_data
+            })
+            self.send(text_data=json.dumps({
+                "type": "game_invite",
+                "data": {"id": invitation_id, "status": "declined"}
+            }))
+        except GameInvitation.DoesNotExist:
+            print(f"Invitation {invitation_id} does not exist.")
+            self.send(text_data=json.dumps({
+                "type": "error",
+                        "message": "Invitation not found."
+            }))
+
+    def send_game_invite(self, data):
+        sender_id = data["sender_id"]
+        receiver_id = data["receiver_id"]
+
+        sender = Profile.objects.get(id=sender_id)
+        receiver = Profile.objects.get(id=receiver_id)
+
+        invitation = GameInvitation.objects.create(
+            sender=sender, game_session=None, recipient=receiver)
+
+        # Envoyer une notification au destinataire
+        notification_data = get_user_data(sender)
+        notification_data.update({"id": str(invitation.id)})
+
+        async_to_sync(self.channel_layer.group_send)(f"user_{receiver_id}", {
+            "type": "game_invite",
+            "data": notification_data
+        })
+
+        self.send(text_data=json.dumps({
+            "type": "game_invite",
+            "data": notification_data
+        }))
+
+    def handle_new_tournament(self, data):
+        tournament_id = data["tournament_id"]
+        tournament_name = data["tournament_name"]
+        organizer_id = data["organizer_id"]
+
+        organizer = Profile.objects.get(id=organizer_id)
+
+        # send notification to concerned users
+        notification_data = get_user_data(organizer)
+        notification_data.update({"id": tournament_id,
+                                 "tournament_name": tournament_name})
+
+        self.send(text_data=json.dumps({
+            "type": "new_tournament",
+            "data": notification_data
+        }))
+
+    def add_new_friend(self, data):
+        sender_id = data["sender_id"]
+        receiver_id = data["receiver_id"]
+
+        # Add direclty in friendlist
+        sender = Profile.objects.get(id=sender_id)
+        receiver = Profile.objects.get(id=receiver_id)
+
+        # Verify if not already friend
+        if not sender.friends.filter(id=receiver.id).exists():
+            sender.friends.add(receiver)
+        notification_data = get_user_data(sender)
+
+        async_to_sync(self.channel_layer.group_send)(f"user_{receiver_id}", {
+            "type": "new_friend",
+            "data": notification_data
+        })
