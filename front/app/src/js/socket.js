@@ -87,7 +87,8 @@ const socketManager = (() => {
         chat.receiveMessage(data);
         // Call the receiveMessage method of the Chat class
       } else {
-        // Else, add notification badge to the Chat button of the navbar
+        const chatButton = document.querySelector('chat-button');
+        chatButton?.querySelector('.notification-badge')?.classList.remove('d-none');
       }
     }
 
@@ -109,16 +110,22 @@ const socketManager = (() => {
 
     handleGameInvite(data) {
       console.log('Game invite received:', data);
+      const notificationButton = document.querySelector('notifications-button');
+      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
       // TODO
     }
 
     handleNewTournament(data) {
       console.log('New tournament received:', data);
+      const notificationButton = document.querySelector('notifications-button');
+      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
       // TODO
     }
 
     handleNewFriend(data) {
       console.log('New friend received:', data);
+      const notificationButton = document.querySelector('notifications-button');
+      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
       // TODO
     }
 

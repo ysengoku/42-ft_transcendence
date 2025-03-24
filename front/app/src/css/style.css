@@ -51,6 +51,22 @@
   --pm-gray-200-rgb: 212, 208, 206;
   --pm-gray-100-rgb: 241, 240, 240;
 
+  --pm-red-700: #4D0302;
+  --pm-red-600: #870907;
+  --pm-red-500: #C61210;
+  --pm-red-400: #FB3C3B;
+  --pm-red-300: #FF6A69;
+  --pm-red-200: #FDC7C6;
+  --pm-red-100: #FEEDED;
+
+  --pm-green-700: #141400;
+  --pm-green-600: #323301;
+  --pm-green-500: #535403;
+  --pm-green-400: #777806;
+  --pm-green-300: #9D9E0A;
+  --pm-green-200: #C4C610;
+  --pm-green-100: #EDEF16;
+
   --bs-light: var(--pm-gray-100);
   --bs-light-rgb: var(--pm-gray-100-rgb);
   --bs-dark: var(--pm-gray-700);
