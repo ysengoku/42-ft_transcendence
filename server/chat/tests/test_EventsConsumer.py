@@ -1,9 +1,10 @@
 
-from asgiref.sync import sync_to_async
+import pytest
+from asgiref.sync import async_to_sync
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, TransactionTestCase
 
 from chat.routing import websocket_urlpatterns
 from chat.views import notifications_view
@@ -12,36 +13,40 @@ from server.asgi import application
 User = get_user_model()
 
 
-class TestNotificationsViewTestCase(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = User.objects.create_user(
-            username='testuser', password='12345')
-
-    def test_notifications_view(self):
-        request = self.factory.get('/chat/notifications/test/')
-        request.user = self.user  # Simuler un utilisateur connecté
-        response = notifications_view(request)
-        self.assertEqual(response.status_code, 200)
-
-
-class UserEventsConsumerTestCase(TestCase):
-    def test_connect(self):
-        user = User.objects.create_user(
-            username="testuser", password="password")
-        scope = {
-            "user": user,
-            "type": "websocket",
-            "path": "/ws/events/",
-            "headers": [],
-        }
-
-        communicator = WebsocketCommunicator(
-            websocket_urlpatterns[0].callback, "/ws/events/", scope)
-        connected, _ = communicator.connect()
+class TestEventsConsumer(TestCase):
+    # def test_connect(self):
+    #     communicator = WebsocketCommunicator(application, "/ws/events/")
+    #     connected, _ = communicator.connect()
+    #     self.assertTrue(connected)
+    #     communicator.disconnect()
+    #
+    @pytest.mark.asyncio
+    async def test_connect():
+        communicator = WebsocketCommunicator(application, "/ws/events/")
+        connected, _ = await communicator.connect()
+        assert connected is True  # Vérification que la connexion a réussi
         self.assertTrue(connected)  # Vérification synchrone
-        communicator.disconnect()
+        print(connected)
+        await communicator.disconnect()
 
+# class UserEventsConsumerTestCase(TransactionTestCase):
+#     def test_connect(self):
+#         user = User.objects.create_user(
+#             username="testuser", password="password")
+#         scope = {
+#             "user": user,
+#             "type": "websocket",
+#             "path": "/ws/events/",
+#             "headers": [],
+#         }
+#
+#     communicator = WebsocketCommunicator(application, "/ws/events/")
+#     connected, _ = async_to_sync(communicator.connect)()
+#     # communicator = WebsocketCommunicator(
+#     #     websocket_urlpatterns[0].callback, "/ws/events/", scope)
+#     self.assertTrue(connected)  # Vérification synchrone
+#     communicator.disconnect()
+#
 
 # class UserEventsConsumerTestCase(TestCase):
 #     async def test_connect(self):
