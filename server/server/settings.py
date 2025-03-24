@@ -28,11 +28,16 @@ SECRET_KEY = "your-secret-key"
 
 # Environment variables
 
-DEBUG = os.environ.get("DEBUG", True)
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
+# ruff format request, old line was :
+# DEBUG = os.environ.get("DEBUG", True)
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.environ.get(
+    "ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
+IN_CONTAINER = int(os.environ.get("IN_CONTAINER", "0"))
+# ruff format request, old line was :
+# IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
 if not IN_CONTAINER:
     DATABASES = {
@@ -69,11 +74,10 @@ INSTALLED_APPS = [
     # ASGI server for working with websockets
     "daphne",
     "channels",
-
     # Our apps
     "users",
     "chat",
-
+    "pong",
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -82,7 +86,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-
     # Profiling
     "silk",
 ]
@@ -140,7 +143,7 @@ AUTHENTICATION_BACKENDS = [
 # CUSTOM USER MODEL
 
 AUTH_USER_MODEL = "users.User"
-
+DEFAULT_USER_AVATAR = "/img/default_avatar.png"
 
 # Configuration OAuth 42
 SOCIALACCOUNT_PROVIDERS = {
@@ -153,13 +156,29 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-# Configuration Django Channels
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    },
-}
+REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
+# For ruff format : int must be str before being int
+# REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+# For the tests
+if "test" in sys.argv:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(REDIS_HOST, REDIS_PORT)],
+            },
+        },
+    }
 
+
+# Configuration for proxy
 CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
@@ -236,11 +255,19 @@ OAUTH_CONFIG = {
 }
 
 # email configuration for 2fa and password reset
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend",
+)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+# For ruff format : int must be str before being int
+# EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
+# replaced with ruff's informations, == "true" is just to say it's a boolean
+# not to assign the value to true
+# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
+# EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")

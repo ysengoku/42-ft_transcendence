@@ -56,40 +56,54 @@ export class Navbar extends HTMLElement {
 
   template() {
     return `
-		<nav class="navbar navbar-expand navbar-dark px-3">
+    <nav class="navbar navbar-expand navbar-dark px-3">
       <user-actions-menu></user-actions-menu>
-			<navbar-brand-component></navbar-brand-component>
-			<div class="ms-auto d-flex align-items-center" id="navbar-actions-content">
-			</div>
-		</nav>
-		`;
+      <navbar-brand-component></navbar-brand-component>
+      <div class="ms-auto d-flex align-items-center" id="navbar-actions-content">
+      </div>
+    </nav>
+    `;
   }
 
   style() {
     return `
     <style>
-      .navbar {
-        background-color: #3b3b3b;
-      }
-      .navbar-button i {
-        font-size: 1.5rem;  
-      }
-
-      /*
-      .navbar-icon {
-        position: relative;
-      }
-      .badge {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 10px;
-        height: 10px;
-        background-color: red;
-        border-radius: 50%;
-        display: block;
-      }
-      */
+    .navbar {
+      background-color: rgba(var(--pm-primary-600-rgb), 0.7);
+    }
+    .navbar-button i {
+      font-size: 1.5rem;
+      color: var(--pm-primary-100);
+    }
+    .dropdown-menu {
+      max-height: 75vh;
+      padding-top: 0;
+    }
+    .dropdown-list-header {
+      border-bottom: 1px solid var(--bs-border-color);
+      position: sticky;
+      top: 0;
+      background-color: var(--bs-body-bg);
+      z-index: 1;
+    }
+    .dropdown-list-item {
+      border: none;
+      border-top: 1px solid var(--bs-border-color);
+      padding: 16px 8px;
+      position: relative;
+    }
+    /*
+    .badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 10px;
+      height: 10px;
+      background-color: red;
+      border-radius: 50%;
+      display: block;
+    }
+    */
     </style>
     `;
   }

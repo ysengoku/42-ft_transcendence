@@ -54,8 +54,8 @@ class MatchManager(models.Manager):
 
 
 class Match(models.Model):
-    winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True)
-    loser = models.ForeignKey(Profile, related_name="lost_matches", on_delete=models.SET_NULL, null=True)
+    winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
+    loser = models.ForeignKey(Profile, related_name="lost_matches", on_delete=models.SET_NULL, null=True, blank=True)
     winners_score = models.IntegerField()
     losers_score = models.IntegerField()
     elo_change = models.IntegerField()

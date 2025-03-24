@@ -7,6 +7,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 from ninja.files import UploadedFile
 
 from users.models import OauthConnection
@@ -200,3 +201,12 @@ class User(AbstractUser):
     def __str__(self):
         connection_type = "Regular" if not self.get_oauth_connection() else self.oauth_connection.connection_type
         return f"{self.username} - {connection_type}"
+
+
+class UserOnlineStatus(models.Model):
+    user = models.OneToOneField("User", on_delete=models.CASCADE, related_name="online_status")
+    is_online = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.user.username} - {'Online' if self.is_online else 'Offline'}"

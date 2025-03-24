@@ -1,8 +1,6 @@
-@font-face {
-  font-family: 'Texas Tango';
-  src: url(/fonts/TEXAT_BOLD_PERSONAL_USE___.otf) format('opentype');
-}
-
+/*--------------------------------------------------------------------------- */
+/*     Fonts                                                                  */
+/*----------------------------------------------------------------------------*/
 @font-face {
   font-family: 'docktrin';
   src: url(/fonts/docktrin.ttf) format('truetype');
@@ -18,19 +16,162 @@
   src: url(/fonts/Kleader.ttf) format('truetype');
 }
 
-@font-face {
-  font-family: 'WestCarabao';
-  src: url(/fonts/WestCarabao.ttf) format('truetype');
+/*--------------------------------------------------------------------------- */
+/*     Colors                                                                 */
+/*----------------------------------------------------------------------------*/
+/* https://getbootstrap.com/docs/5.3/customize/color/#colors */
+:root {
+  --pm-primary-700: #351901;
+  --pm-primary-600: #613304;
+  --pm-primary-500: #924f09;
+  --pm-primary-400: #C66D10;
+  --pm-primary-300: #FD8D18;
+  --pm-primary-200: #FEC4A8;
+  --pm-primary-100: #FFEDE7;
+  --pm-primary-700-rgb: 53, 25, 1;
+  --pm-primary-600-rgb: 97, 51, 4;
+  --pm-primary-500-rgb: 146, 79, 9;
+  --pm-primary-400-rgb: 198, 109, 16;
+  --pm-primary-300-rgb: 253, 141, 24;
+  --pm-primary-200-rgb: 254, 196, 168;
+  --pm-primary-100-rgb: 255, 237, 231;
+
+  --pm-gray-700: #22201F;
+  --pm-gray-600: #413E3D;
+  --pm-gray-500: #64605D;
+  --pm-gray-400: #898380;
+  --pm-gray-300: #B0A8A4;
+  --pm-gray-200: #D4D0CE;
+  --pm-gray-100: #F1F0F0;
+  --pm-gray-700-rgb: 34, 32, 31;
+  --pm-gray-600-rgb: 65, 62, 61;
+  --pm-gray-500-rgb: 100, 96, 93;
+  --pm-gray-400-rgb: 137, 131, 128;
+  --pm-gray-300-rgb: 176, 168, 164;
+  --pm-gray-200-rgb: 212, 208, 206;
+  --pm-gray-100-rgb: 241, 240, 240;
+
+  --bs-light: var(--pm-gray-100);
+  --bs-light-rgb: var(--pm-gray-100-rgb);
+  --bs-dark: var(--pm-gray-700);
+  --bs-dark-rgb: var(--pm-gray-700-rgb);
 }
 
+/*--------------------------------------------------------------------------- */
+/*     Theme                                                                  */
+/*----------------------------------------------------------------------------*/
+
+[data-bs-theme="light"] {
+  --bs-body-color: var(--pm-gray-700);
+  --bs-bg-color: var(--pm-primary-100);
+  --bs-black-rgb: 34, 32, 31;
+
+  #content {
+    background: url('/img/bg-day.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  .form-container {
+    background-color: rgba(var(--pm-gray-200-rgb), 0.6);
+  }
+}
+
+[data-bs-theme="dark"] {
+  --bs-body-color: var(--pm-gray-100);
+  --bs-bg-color: var(--pm-gray-700);
+  --bs-black-rgb: 241, 240, 240;
+
+  #content {
+    background: url('/img/bg-night-dark.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  .form-container {
+    background-color: rgba(var(--pm-gray-600-rgb), 0.6);
+  }
+}
+
+/*--------------------------------------------------------------------------- */
+/*     Global                                                                 */
+/*----------------------------------------------------------------------------*/
 html,
 body {
-  height: 100%;
+  height: auto;
   margin: 0;
   cursor: url('/img/sample-cursor.png') 4 4, auto;
   font-family: "Crimson Pro", serif;
 }
 
+body {
+  z-index: 0;
+  background-color: var(--pm-gray-700);
+}
+
+.navbar {
+  z-index: 3;
+}
+
+h2, h3, h4, h5, h6, legend {
+  font-family: 'van dyke', serif;
+}
+
+#content {
+  max-width: 100%;
+  padding: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  z-index: 2;
+}
+
+.dropdown-menu {
+  z-index: 1050 !important; /* Keep dropdown always on top */
+}
+
+.modal-backdrop {
+  z-index: -1;
+}
+
+.tooltip {
+  font-size: 12px;
+}
+
+.avatar-m {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+}
+.online-status {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: grey;
+}
+.online-status.online {
+  background-color: green;
+}
+
+/*--------------------------------------------------------------------------- */
+/*     Scroll bar                                                             */
+/*----------------------------------------------------------------------------*/
+*::-webkit-scrollbar {
+  width: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--pm-gray-600);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/*--------------------------------------------------------------------------- */
+/*    Cursor                                                                  */
+/*----------------------------------------------------------------------------*/
 a, button, div [role="button"], input[type="submit"], input[type="button"] {
   cursor: url('/img/sample-cursor.png') 4 4, auto !important;
 }
@@ -44,28 +185,108 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
 }
 
-legend {
-  font-family: 'kleader', serif;
+/*--------------------------------------------------------------------------- */
+/*     Background animation                                                   */
+/*----------------------------------------------------------------------------*/
+#cloud {
+  position: absolute;
+  display: block;
+  top: -60px;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: url('/img/cloud.png');
+  animation: float-cloud 120s linear infinite;
+  z-index: 1;
+}
+@keyframes float-cloud {
+  0%{
+    background-position: 0px;
+  }
+  100%{
+    background-position: 2400px;
+  }
 }
 
-#content {
-  max-width: 100%;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-x: hidden;
+.star {
+  position: absolute;
+  display: block;
+  background-color: #f6f7af;
+  border-radius: 50%;
+  box-shadow: 0 0 4px 3px rgba(#f6f7af, 0.2);
+  opacity: 0;
+  animation: twinkle 3s infinite;
+}
+@keyframes twinkle {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
 }
 
-.footer {
-  height: 48px;
-  background-color: #3b3b3b;
+.shooting-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: linear-gradient(45deg, #f6f7af, rgba(255, 255, 255, 0));
+  opacity: 0;
+  animation: shoot 2s ease-in-out infinite;
+} 
+@keyframes shoot {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-200px, 300px);
+  }
 }
 
-.dropdown-menu {
-  z-index: 1050 !important; /* Keep dropdown always on top */
+/*--------------------------------------------------------------------------- */
+/*    Buttons                                                                 */
+/*----------------------------------------------------------------------------*/
+.btn-wood {
+  color: var(--pm-gray-100);
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: .5em 2em;
+  border: none;
+  position: relative;
+  filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
+ }
+
+.btn-wood:before {
+  filter: url('/filters/wood-grain.svg#wave-filter-0');
+  --clrs1: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
+  --clrs2: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 20%);
+  --clrs3: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 60%);
+  --clrs4: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 98%);
+    position: absolute;
+    content: '';
+    inset: 0;
+    padding: .2em;
+    border: 4px double var(--pm-primary-600);
+    border-radius: .1em .2em / .5em .23em;
+    z-index: -1;
+    transition: .25s ease;
+    background: var(--pm-primary-500)
+    linear-gradient(178deg, 
+      var(--clrs1),
+      var(--clrs2) 20% 70%,
+      var(--clrs3) 90%,
+      var(--clrs4)) 0 0 / 100% .3rem;
 }
 
-.form-container {
-  background-color: rgba(128,128,128, 0.1);
+.search-submit-btn {
+  border: none;
+  background-color: transparent;
 }

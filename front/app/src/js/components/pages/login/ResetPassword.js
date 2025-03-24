@@ -90,7 +90,7 @@ export class ResetPassword extends HTMLElement {
               <input type="password" class='form-control' id='reset-password-repeat' placeholder="confirm new password" autocomplete="off">
               <div class="invalid-feedback" id="reset-password-repeat-feedback"></div>
             </div>
-            <button class="btn btn-primary w-100 mt-4" type="submit" id="reset-password-submit">
+            <button class="btn btn-wood w-100 mt-4" type="submit" id="reset-password-submit">
               Reset password
             </button>
           </form>
