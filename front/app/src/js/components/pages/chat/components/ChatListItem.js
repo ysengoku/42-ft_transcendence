@@ -45,8 +45,8 @@ export class ChatListItem extends HTMLElement {
       this.lastMessage.textContent = 'No messages yet';
     }
 
-    this.listItem = this.querySelector('#chat-list-item');
-    this.listItem.addEventListener('click', this.handleChatItemSelected);
+    this.listItem = this.querySelector('.chat-list-item');
+    this.addEventListener('click', this.handleChatItemSelected);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -75,7 +75,7 @@ export class ChatListItem extends HTMLElement {
 
   template() {
     return `
-    <li class="list-group-item me-4 mb-2" id="chat-list-item">
+    <li class="chat-list-item list-group-item me-4 mb-2">
       <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
 
         <div class="d-inline-block position-relative">
@@ -103,7 +103,7 @@ export class ChatListItem extends HTMLElement {
   style() {
     return `
       <style>
-      .list-group-item {
+      .chat-list-item {
         border: none;
         background-color: rgba(var(--bs-body-bg-rgb), 0.3);
         border-radius: 0.5rem !important;

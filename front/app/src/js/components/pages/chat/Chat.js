@@ -149,15 +149,14 @@ export class Chat extends HTMLElement {
   }
 
   sendMessage(event) {
-    console.log('Send message event:', event.detail);
     const messageData = {
-      action: 'message',
+      action: 'new_message',
       data: {
         chat_id: this.#state.currentChat.chat_id,
         content: event.detail,
       },
     };
-    console.log('Message data:', messageData);
+    console.log('Sending new message to server. Data:', messageData);
     socketManager.socket.send(JSON.stringify(messageData));
     // TODO: Render temporary message (in gray) to chat message area?
     // But how to match with the server response to remove it after ?
