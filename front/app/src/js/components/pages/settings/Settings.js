@@ -48,10 +48,10 @@ export class Settings extends HTMLElement {
     } else {
       if (response.status === 401) {
         showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
-        router.navigate('/');
+        router.navigate('/login');
       } else if (response.status === 403) {
         showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
-        router.navigate('/home');
+        router.navigate('/');
       }
     }
   }
@@ -159,7 +159,7 @@ export class Settings extends HTMLElement {
       this.#state.username = response.data.username;
       this.#state.currentUserData = this.#state.newUserData;
       this.#state.currentUserData.avatar = response.data.avatar;
-      auth.storeUser(this.#state.currentUserData);
+      auth.updateStoredUser(this.#state.currentUserData);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 2000);
     } else {
       console.log('Error updating settings', response);
@@ -176,10 +176,10 @@ export class Settings extends HTMLElement {
 
   template() {
     return `
-		<div class="container">
+		<div class="container mt-3 mb-4">
       <div class="row justify-content-center">
         <delete-account-confirmation-modal></delete-account-confirmation-modal>
-        <div class="form-container col-12 col-md-6 p-4">
+        <div class="form-container col-12 col-md-5 p-4">
 			    <form class="w-100">
 				    <legend class="mt-4 mb-3 border-bottom">Settings</legend>
 				    <div class="mt-3">
@@ -199,7 +199,7 @@ export class Settings extends HTMLElement {
             
 				    <div class="mt-5 pb-5 border-bottom">
               <button type="reset" class="btn btn-outline-primary mx-2" id="settings-reset-button">Reset</button>
-					    <button type="submit" class="btn btn-primary mx-2">Save changes</button>
+					    <button type="submit" class="btn btn-wood mx-2">Save changes</button>
 				    </div>
 
 				    <div class="mt-4 mb-3">

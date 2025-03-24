@@ -26,7 +26,7 @@ export class ProfileUserInfo extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     // Temporay
-    this.#state.titre = 'Titre';
+    this.#state.titre = '$5000';
 
     this.querySelector('#profile-nickname').textContent = this.#state.nickname;
     this.querySelector('#profile-username').textContent = `@${this.#state.username}`;
@@ -38,13 +38,13 @@ export class ProfileUserInfo extends HTMLElement {
 			<div class="d-flex flex-row justify-content-center align-items-center gap-3">
 				<div class="d-flex flex-column justify-content-center px-3 pt-3">
           <div class="d-flex flex-row align-items-center">
-					  <h2 class="no-margin pe-3" id="profile-nickname"></h2>
-            <p class="no-margin pt-2" id="profile-username"></p>
+					  <h2 class="m-0 pe-3" id="profile-nickname"></h2>
+            <p class="m-0 pt-1" id="profile-username"></p>
           </div>
-					<p class="no-margin">Joined on ${this.formatedDate}</p>
+					<p class="m-0 text-center">Joined on ${this.formatedDate}</p>
 				</div>
 				<div class="text-center px-3 pt-3">
-					<p id="profile-titre"></p>
+					<h2 class="m-0" id="profile-titre"></h2>
 				</div>
 			</div>
 		`;
@@ -54,8 +54,8 @@ export class ProfileUserInfo extends HTMLElement {
     return `
     <style>
       h2 {
-        font-family: 'WestCarabao', serif;
-        color: #1F1101;
+        font-family: 'van dyke', serif;
+        color: #351904;
       }
     </style>
     `;

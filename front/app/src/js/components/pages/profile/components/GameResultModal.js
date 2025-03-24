@@ -8,7 +8,7 @@ export class UserGameResultModal extends HTMLElement {
     super();
     this.modal = null;
   }
-  
+
   showModal(type, id) {
     this.#state.type = type;
     // this.#state.id = id;
@@ -17,7 +17,7 @@ export class UserGameResultModal extends HTMLElement {
       this.modal.show();
     }
   }
-  
+
   render() {
     console.log(this.#state.type);
     this.innerHTML = this.template() + this.style();
@@ -55,5 +55,5 @@ export class UserGameResultModal extends HTMLElement {
     `;
   }
 }
-  
+
 customElements.define('game-result-modal', UserGameResultModal);

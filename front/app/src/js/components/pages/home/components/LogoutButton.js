@@ -29,7 +29,7 @@ export class LogoutButton extends HTMLElement {
   template() {
     return `
       <div id="home-logout-button">
-        <div class="btn btn-outline-primary btn-lg">Logout</div>
+        <div class="btn btn-wood btn-lg">Logout</div>
       </div>
       `;
   }
