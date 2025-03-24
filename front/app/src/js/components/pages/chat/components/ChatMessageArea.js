@@ -132,8 +132,8 @@ export class ChatMessageArea extends HTMLElement {
   messageItem(message) {
     const messageElement = document.createElement('div');
     messageElement.innerHTML = this.messageTemplate();
-    // messageElement.setAttribute('messageId', message.id);
     const messageContent = messageElement.querySelector('.bubble');
+    messageContent.setAttribute('message-id', message.id);
 
     if (message.sender === this.#state.data.username) {
       messageElement.classList.add(
@@ -143,7 +143,7 @@ export class ChatMessageArea extends HTMLElement {
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
       messageElement.querySelector('.message-content').textContent = message.content;
-      messageElement.querySelector('.message-content').setAttribute('message-id', message.id);
+      // messageElement.querySelector('.message-content').setAttribute('message-id', message.id);
       messageElement.querySelector('.message-liked').innerHTML = message.liked ?
         '<i class="bi bi-heart-fill h5"></i>' : '';
       if (!message.is_read) {
@@ -205,28 +205,18 @@ export class ChatMessageArea extends HTMLElement {
 
   toggleLikeMessage(event) {
     console.log('Toggle like message:', event.target);
-    const messageElement = event.target.closest('.message-content');
-    if (!messageElement) {
+    const messageBubble = event.target.closest('.bubble');
+    if (!messageBubble) {
       return;
     }
-    const messageId = messageElement.getAttribute('message-id');
+    const messageId = messageBubble.getAttribute('message-id');
     const messageData = this.#state.data.messages.find((message) => message.id === messageId);
-
     const isLiked = !messageData.is_liked;
     messageData.is_liked = isLiked;
+    messageBubble.querySelector('.message-liked').innerHTML = isLiked ?
+        '<i class="bi bi-heart-fill h5"></i>' : ''
     const customEvent = new CustomEvent('toggleLike', { detail: { messageId, isLiked }, bubbles: true });
     this.dispatchEvent(customEvent);
-  }
-
-  updateMessageElement(index) {
-    const message = this.#state.data.messages[index];
-    const messageElement = this.querySelector(`[dataIndex='${index}'] .bubble`);
-    if (messageElement) {
-      messageElement.innerHTML = `
-        ${message.content}
-        ${message.is_liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
-      `;
-    }
   }
 
   /* ------------------------------------------------------------------------ */
