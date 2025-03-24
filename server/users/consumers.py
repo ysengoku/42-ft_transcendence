@@ -38,7 +38,6 @@ class RedisUserStatusManager:
                 json.dumps({"user_id": user_id, "timestamp": int(time.time())}),
             )
         except Exception as e:
-            # Log the error in a production environment
             print(f"Error setting user online: {e}")
 
     def set_user_offline(self, user_id):
