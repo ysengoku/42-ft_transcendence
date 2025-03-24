@@ -7,6 +7,7 @@ from django.test import RequestFactory, TestCase
 
 from chat.routing import websocket_urlpatterns
 from chat.views import notifications_view
+from server.asgi import application
 
 User = get_user_model()
 
@@ -22,6 +23,24 @@ class TestNotificationsViewTestCase(TestCase):
         request.user = self.user  # Simuler un utilisateur connecté
         response = notifications_view(request)
         self.assertEqual(response.status_code, 200)
+
+
+class UserEventsConsumerTestCase(TestCase):
+    def test_connect(self):
+        user = User.objects.create_user(
+            username="testuser", password="password")
+        scope = {
+            "user": user,
+            "type": "websocket",
+            "path": "/ws/events/",
+            "headers": [],
+        }
+
+        communicator = WebsocketCommunicator(
+            websocket_urlpatterns[0].callback, "/ws/events/", scope)
+        connected, _ = communicator.connect()
+        self.assertTrue(connected)  # Vérification synchrone
+        communicator.disconnect()
 
 
 # class UserEventsConsumerTestCase(TestCase):
