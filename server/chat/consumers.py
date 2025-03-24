@@ -12,6 +12,7 @@ class UserEventsConsumer(WebsocketConsumer):
         self.user = self.scope.get("user")
         if not self.user:
             self.close()
+            return
     # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
             f"user_{self.user.id}", self.channel_name)
@@ -28,9 +29,11 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({"message": "Welcome!"}))
 
     def disconnect(self, close_code):
-        for chat in self.chats:
-            async_to_sync(self.channel_layer.group_discard)(
-                "chat_" + str(chat.id), self.channel_name)
+        # verify if self.chats exists and is not empty
+        if hasattr(self, 'chats') and self.chats:
+            for chat in self.chats:
+                async_to_sync(self.channel_layer.group_discard)(
+                    "chat_" + str(chat.id), self.channel_name)
 
     def get_user_data(profile):
         return {
@@ -125,33 +128,43 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def handle_like_message(self, data):
         message_id = data["message_id"]
-        try:
-            message = ChatMessage.objects.get(pk=message_id)
-            message.is_liked = True
-            message.save()
-            self.send(text_data=json.dumps({
-                "type": "like_message",
-                "data": {
-                    "id": message_id,
-                }
-            }))
-        except ObjectDoesNotExist:
-            print(f"Message {message_id} does not exist.")
+        if data["sender"] != self.username:  # prevent from liking own message
+            try:
+                message = ChatMessage.objects.get(pk=message_id)
+                message.is_liked = True
+                message.save()
+                self.send(text_data=json.dumps({
+                    "type": "like_message",
+                    "data": {
+                        "id": message_id,
+                    }
+                }))
+            except ObjectDoesNotExist:
+                print(f"Message {message_id} does not exist.")
+                self.send(text_data=json.dumps({
+                    "type": "error",
+                            "message": "Message not found."
+                }))
 
     def handle_unlike_message(self, data):
         message_id = data["message_id"]
-        try:
-            message = ChatMessage.objects.get(pk=message_id)
-            message.is_liked = False
-            message.save()
-            self.send(text_data=json.dumps({
-                "type": "unlike_message",
-                "data": {
-                    "id": message_id,
-                }
-            }))
-        except ObjectDoesNotExist:
-            print(f"Message {message_id} does not exist.")
+        if data["sender"] != self.username:  # prevent from unliking own message
+            try:
+                message = ChatMessage.objects.get(pk=message_id)
+                message.is_liked = False
+                message.save()
+                self.send(text_data=json.dumps({
+                    "type": "unlike_message",
+                    "data": {
+                        "id": message_id,
+                    }
+                }))
+            except ObjectDoesNotExist:
+                print(f"Message {message_id} does not exist.")
+                self.send(text_data=json.dumps({
+                    "type": "error",
+                            "message": "Message not found."
+                }))
 
     def handle_read_message(self, data):
         message_id = data["message_id"]
