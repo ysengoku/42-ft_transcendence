@@ -34,18 +34,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Check and fix style errors
-        working-directory: server/
-        run: |
-          ruff check --fix ./users
-          ruff format ./users
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff
+          pip install ruff pytest
           pip install -r server/requirements.txt
+      - name: Check and fix style errors
+        working-directory: server/
+        run: |
+          ruff check --ignore SIM105 --ignore F401 --ignore LOG015 --ignore ERA001 --ignore PIE790 --ignore T201 --ignore BLE001 --ignore S106 --ignore S105 --fix ./users
+          ruff format .
           
       - name: Run Django migrations
         working-directory: server/

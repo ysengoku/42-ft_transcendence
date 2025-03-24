@@ -62,7 +62,7 @@ export class UserGameHistory extends HTMLElement {
     return `
     <div class="card text-center px-2">
       <div class="card-header">
-        <p class="text-start">Game History</p>
+        <p class="stat-label text-center">Game History</p>
         <ul class="nav nav-tabs card-header-tabs">
           <li class="nav-item">
             <a class="nav-link active" aria-current="true" id="duels-tab">Duels</a>
@@ -83,21 +83,22 @@ export class UserGameHistory extends HTMLElement {
     return `
     <style>
       .card {
-        background-color: rgba(0, 0, 0, 0.1);
-        color: black;
+        background-color:rgba(97, 51, 4, 0.1);
+        color: #351901;
       }
       .nav-link {
-        color: black;
-        font-size: 0.8rem;
+        color: #351901;
+        font-weight: bold;
       }
       .card-header-tabs .nav-link.active {
-        color: black;
+        color: #351901;
         background-color: transparent !important;
         border: none;
-        border-bottom: 4px solid black;
-      }
+        border-bottom: 4px solid #613304;
+        }
       .nav-link:hover{
-        color: black;
+        color: #613304;
+        border: none;
       }
       .user-game-history-table {
         font-size: 14px;
@@ -128,7 +129,7 @@ export class UserGameHistory extends HTMLElement {
         overflow-y: auto;
       }
       .table-container thead th {
-        --bs-table-bg: rgb(0, 0, 0);
+        --bs-table-bg: #351901;
         --bs-table-color: white;
         font-weight:normal;
         position: sticky;
@@ -139,10 +140,10 @@ export class UserGameHistory extends HTMLElement {
         width: 4px;
       }
       .table-container::-webkit-scrollbar-track {
-        background: grey;
+        background: #898380;
       }
       .table-container::-webkit-scrollbar-thumb {
-        background: black;
+        background: #351901;
         border-radius: 4px;
       }
       td {

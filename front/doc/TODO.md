@@ -43,6 +43,11 @@
 - [x] User search function
 - [x] Adjust style for search bar
 
+### Notification
+-[x] Add dropdown
+- [] Rendering of notifications received via Websocket
+- [] Fetch old notifications
+
 ---------------------------------------------------------------------
 
 ## Landing
@@ -100,17 +105,17 @@
 - [x] 422 handling
 - [x] Error handling
 - [x] Email format check
-- [] Incorrect old password case (401 occurs infinite loop with current logic)
+- [x] Incorrect old password case (401 occurs infinite loop with current logic)
 - [x] Test Delete account & add adieu message
 - [] Unit test (input validation)
-- [] Disable submit button if there is no change
+- [x] Disable submit button if there is no change
 
 ---------------------------------------------------------------------
 
 ## Profile
 
 - [x] Add auth check before rendering
-- [] Layout for Mobile
+- [x] Layout for Mobile
 
 ### Error handling
 - [x] 404 handling
@@ -119,18 +124,19 @@
 
 ### User info
 - [x] username & nickname
-- [] - [] Title
+- [] Title
 
 ### User actions
 - [x] Add firend
 - [x] Remove friend
 - [x] Block friend
 - [x] Unblock friend
-- [] - [] Send message
+- [] Send message
 
 ### Stat
 - [x] Pie Graph
 - [] Line graph
+- [] Badge design
 
 ### Game History
 - [x] Better solution for Scroll thead sticky
@@ -155,12 +161,18 @@
 - [x] Add link to Profile of current chat user
 - [x] Resize event listner
 - [x] Autocomplete off
-- [] - [] Blocked user chat rendering
-- [] - [] Invite to play game
-- [] - [] Add API request for chat
+- [x] Add API request for chat
+- [] Blocked user chat rendering
+- [] Invite to play game
+- [x] Create new chat room
+- [] Handle scroll up to see old messages
 
-### Notifications
-- [] - [] Add dropdown
+### Online status
+Update online status in real time
+- [] Chat page
+- [] Profile
+- [] Friends list?
+- [] User search list?
 
 ---------------------------------------------------------------------
 
