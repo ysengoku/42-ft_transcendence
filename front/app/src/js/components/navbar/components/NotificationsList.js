@@ -36,6 +36,9 @@ export class NotificationsList extends HTMLElement {
   }
 
   async fetchNotifications() {
+    const notificationButton = document.querySelector('notifications-button');
+    notificationButton?.querySelector('.notification-badge')?.classList.add('d-none');
+
     this.#state.listLength = this.#state.notifications.length;
     // TODO: Replace by API request
     const data = await mockNotificationsData();
