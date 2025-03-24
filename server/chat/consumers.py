@@ -29,9 +29,11 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({"message": "Welcome!"}))
 
     def disconnect(self, close_code):
-        for chat in self.chats:
-            async_to_sync(self.channel_layer.group_discard)(
-                "chat_" + str(chat.id), self.channel_name)
+        # verify if self.chats exists and is not empty
+        if hasattr(self, 'chats') and self.chats:
+            for chat in self.chats:
+                async_to_sync(self.channel_layer.group_discard)(
+                    "chat_" + str(chat.id), self.channel_name)
 
     def get_user_data(profile):
         return {
@@ -139,6 +141,10 @@ class UserEventsConsumer(WebsocketConsumer):
                 }))
             except ObjectDoesNotExist:
                 print(f"Message {message_id} does not exist.")
+                self.send(text_data=json.dumps({
+                    "type": "error",
+                            "message": "Message not found."
+                }))
 
     def handle_unlike_message(self, data):
         message_id = data["message_id"]
@@ -155,6 +161,10 @@ class UserEventsConsumer(WebsocketConsumer):
                 }))
             except ObjectDoesNotExist:
                 print(f"Message {message_id} does not exist.")
+                self.send(text_data=json.dumps({
+                    "type": "error",
+                            "message": "Message not found."
+                }))
 
     def handle_read_message(self, data):
         message_id = data["message_id"]
