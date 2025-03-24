@@ -1,10 +1,11 @@
 import json
 import time
+
 import redis
-from django.conf import settings
-from django.contrib.auth import get_user_model
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from django.conf import settings
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -17,7 +18,8 @@ class RedisUserStatusManager:
 
     def __init__(self, redis_client=None):
         # Use provided Redis client or create a new one
-        self._redis = redis_client or redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
+        self._redis = redis_client or redis.Redis(
+            host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=0)
         # Prefix for Redis keys to avoid conflicts
         self._online_users_key = "online_users"
         # Timeout for online status (1 hour)
@@ -35,7 +37,8 @@ class RedisUserStatusManager:
             self._redis.setex(
                 f"{self._online_users_key}:{user_id}",
                 self._timeout,
-                json.dumps({"user_id": user_id, "timestamp": int(time.time())}),
+                json.dumps(
+                    {"user_id": user_id, "timestamp": int(time.time())}),
             )
         except Exception as e:
             print(f"Error setting user online: {e}")
@@ -52,7 +55,7 @@ class RedisUserStatusManager:
             self._redis.delete(f"{self._online_users_key}:{user_id}")
         except Exception as e:
             print(f"Error setting user offline: {e}")
-            
+
     def get_online_users(self):
         """
         Retrieve all online users
@@ -91,7 +94,8 @@ class OnlineStatusConsumer(WebsocketConsumer):
 
         # Add user to the online_users group
         self.group_name = "online_users"
-        async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name, self.channel_name)
 
         # Accept the connection
         self.accept()
@@ -116,7 +120,8 @@ class OnlineStatusConsumer(WebsocketConsumer):
         self._announce_status(False)
 
         # Remove user from the group
-        async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(
+            self.group_name, self.channel_name)
 
     def receive(self, text_data):
         """
@@ -166,13 +171,15 @@ class OnlineStatusConsumer(WebsocketConsumer):
         """
         async_to_sync(self.channel_layer.group_send)(
             self.group_name,
-            {"type": "user_status", "user_id": str(self.user.id), "username": self.user.username, "online": status},
+            {"type": "user_status", "user_id": str(
+                self.user.id), "username": self.user.username, "online": status},
         )
+
 
 def get_online_users():
     """
     Retrieve list of online user IDs
-    
+
     Returns:
         list: List of online user IDs
     """
