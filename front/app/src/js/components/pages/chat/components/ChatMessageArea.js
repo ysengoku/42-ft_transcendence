@@ -143,7 +143,6 @@ export class ChatMessageArea extends HTMLElement {
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
       messageElement.querySelector('.message-content').textContent = message.content;
-      // messageElement.querySelector('.message-content').setAttribute('message-id', message.id);
       messageElement.querySelector('.message-liked').innerHTML = message.liked ?
         '<i class="bi bi-heart-fill h5"></i>' : '';
       if (!message.is_read) {
@@ -154,7 +153,7 @@ export class ChatMessageArea extends HTMLElement {
             id: message.id,
           },
         };
-        socketManager.socket.send(readMessage);
+        socketManager.socket.send(JSON.stringify(readMessage));
       }
       messageElement.addEventListener('click', this.toggleLikeMessage);
     } else {
