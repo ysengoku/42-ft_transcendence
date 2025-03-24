@@ -11,7 +11,7 @@ from chat.views import notifications_view
 from server.asgi import application
 
 User = get_user_model()
-
+#just to test the yaml
 
 class TestEventsConsumer(TestCase):
     # def test_connect(self):
