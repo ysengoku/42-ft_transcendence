@@ -21,6 +21,7 @@ const socketManager = (() => {
         console.log('WebSocket closed:', event);
         setTimeout(() => this.reconnect(), 1000);
       };
+      this.addListeners();
     }
 
     reconnect() {
@@ -67,16 +68,54 @@ const socketManager = (() => {
       matchedListener.callback(message.data);
     }
 
-    addListener(action, callback) {
-      if (!this.listeners.has(action)) {
-        this.listeners.set(action, []);
-      }
-      this.listeners.get(action).push(callback);
+    addListeners() {
+      this.listeners.set('new_chat_message', this.handleNewChatMessage);
+      this.listeners.set('like_message', this.handleLikeMessage);
+      this.listeners.set('unlike_message', this.handleUnlikeMessage);
+      this.listeners.set('game_invite', this.handleGameInvite);
+      this.listeners.set('new_tournament', this.handleNewTournament);
+      this.listeners.set('new_friend', this.handleNewFriend);
+      this.listeners.set('user_online', this.handleUserOnline);
+      this.listeners.set('user_offline', this.handleUserOffline);
     }
 
-    handleNewMessage(data) {
-      // If window.location.pathname is /chat, call the receiveMessage method of the Chat class
-      // Else, add notification badge to the Chat button of the navbar
+    handleNewChatMessage(data) {
+      console.log('New chat message received:', data);
+      console.log('Current path:', window.location.pathname);
+      if (window.location.pathname === '/chat') {
+        const chat = document.querySelector('chat-component');
+        chat.receiveMessage(data);
+        // Call the receiveMessage method of the Chat class
+      } else {
+        // Else, add notification badge to the Chat button of the navbar
+      }
+    }
+
+    handleLikeMessage(data) {
+      if (window.location.pathname !== '/chat') {
+        return;
+      }
+    }
+
+    handleUnlikeMessage(data) {
+    }
+
+    handleGameInvite(data) {
+    }
+
+    handleNewTournament(data) {
+    }
+
+    handleNewFriend(data) {
+
+    }
+
+    handleUserOnline(data) {
+
+    }
+
+    handleUserOffline(data) {
+
     }
   }
   return new WebSocketManager();
