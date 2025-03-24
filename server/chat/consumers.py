@@ -12,6 +12,7 @@ class UserEventsConsumer(WebsocketConsumer):
         self.user = self.scope.get("user")
         if not self.user:
             self.close()
+            return
     # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
             f"user_{self.user.id}", self.channel_name)
