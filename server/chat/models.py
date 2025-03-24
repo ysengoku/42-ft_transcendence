@@ -2,7 +2,8 @@ import uuid
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Count, Exists, ImageField, OuterRef, Q, Subquery, Value
+from django.db.models import (Count, Exists, ImageField, OuterRef, Q, Subquery,
+                              Value)
 from django.db.models.functions import Coalesce, NullIf
 
 from users.models import Profile
@@ -64,19 +65,25 @@ class ChatQuerySet(models.QuerySet):
         blocked_through = Profile.blocked_users.through
 
         return self.annotate(
-            username=Subquery(other_chat_participant_subquery.values("user__username")),
-            nickname=Subquery(other_chat_participant_subquery.values("user__nickname")),
+            username=Subquery(
+                other_chat_participant_subquery.values("user__username")),
+            nickname=Subquery(
+                other_chat_participant_subquery.values("user__nickname")),
             avatar=Coalesce(
                 # sets field to null if the profile_picture is an empty string
                 NullIf(
-                    Subquery(other_chat_participant_subquery.values("profile_picture")),
+                    Subquery(other_chat_participant_subquery.values(
+                        "profile_picture")),
                     Value("", output_field=ImageField()),
                 ),
                 Value(settings.DEFAULT_USER_AVATAR, output_field=ImageField()),
             ),
-            is_online=Subquery(other_chat_participant_subquery.values("is_online")),
-            other_profile_id=Subquery(other_chat_participant_subquery.values("pk")),
-            unread_messages_count=Count("messages", filter=~Q(messages__sender=profile) & Q(messages__is_read=False)),
+            is_online=Subquery(
+                other_chat_participant_subquery.values("is_online")),
+            other_profile_id=Subquery(
+                other_chat_participant_subquery.values("pk")),
+            unread_messages_count=Count("messages", filter=~Q(
+                messages__sender=profile) & Q(messages__is_read=False)),
         ).annotate(
             is_blocked_user=Exists(
                 blocked_through.objects.filter(
@@ -115,7 +122,8 @@ class Chat(models.Model):
             return "Empty chat"
 
         max_participants_to_display = 20
-        participants_list = [p.user.username for p in self.participants.all()[:max_participants_to_display]]
+        participants_list = [p.user.username for p in self.participants.all()[
+            :max_participants_to_display]]
         res = ", ".join(participants_list)
         if self.participants.count() > max_participants_to_display:
             res + " ..."
@@ -133,8 +141,10 @@ class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content = models.TextField(max_length=256)
     date = models.DateTimeField(auto_now_add=True)
-    sender = models.ForeignKey(Profile, related_name="sent_messages", on_delete=models.CASCADE)
-    chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
+    sender = models.ForeignKey(
+        Profile, related_name="sent_messages", on_delete=models.CASCADE)
+    chat = models.ForeignKey(
+        Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
     is_liked = models.BooleanField(default=False)
 
@@ -149,3 +159,51 @@ class ChatMessage(models.Model):
             f"{self.date} {self.sender.user.username}: "
             f"{self.content[:max_msg_len] + ' ...' if len(self.content) > max_msg_len else self.content}"
         )
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ('game_invite', 'game invite'),
+        ('reply_game_invite', 'reply to game invite'),
+        ('new_tournament', 'new tournament'),
+        ('new_friend', 'new friend'),
+        ('message', 'message received'),
+    ]
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,
+                             on_delete=models.CASCADE)
+    message = models.TextField()
+    # not sure about the default type, could be null but don't know if
+    # it would impact anything
+    type = models.CharField(
+        max_length=50, choices=TYPE_CHOICES, default='message')
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Notification for {self.user.username}: {self.message}"
+
+
+class GameSession(models.Model):
+    # TODO Game Session definition
+    pass
+
+
+class GameInvitation(models.Model):
+    INVITE_STATUS = [
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, null=True, blank=True)
+    game_session = models.ForeignKey(
+        GameSession, on_delete=models.PROTECT, related_name='game_invites')
+    recipient = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="received_invites")
+    status = models.CharField(
+        max_length=11, null=True, blank=False, choices=INVITE_STATUS, default='pending')
+
+    def __str__(self):
+        return f'{self.game_session}:'
