@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 
 import redis
@@ -70,7 +71,8 @@ class RedisUserStatusManager:
             # Extract user IDs from the keys
             return [int(key.decode("utf-8").split(":")[-1]) for key in online_keys]
         except Exception as e:
-            print(f"Error getting online users: {e}")
+            logging.error(f"Error getting online users: {e}")
+            # print(f"Error getting online users: {e}")
             return []
 
 
