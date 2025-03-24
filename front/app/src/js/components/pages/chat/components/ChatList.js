@@ -39,6 +39,7 @@ export class ChatList extends HTMLElement {
 
     this.listContainer = this.querySelector('#chat-list-wrapper');
     this.list = this.querySelector('#chat-list');
+    console.log('Chat list count:', this.#state.totalItemCount, this.#state.items);
     if (this.#state.totalItemCount > 0) {
       this.list.innerHTML = '';
       this.renderListItems();
@@ -51,13 +52,17 @@ export class ChatList extends HTMLElement {
     this.listContainer.addEventListener('scrollend', this.loadMoreItems);
   }
 
-  renderListItems() {
-    for (let i = this.#state.currentItemCount; i < this.#state.items.length; i++) {
+  renderListItems(index = 0) {
+    for (let i = index; i < this.#state.items.length; i++) {
       const listItem = document.createElement('chat-list-item-component');
       listItem.setData(this.#state.items[i]);
       this.list.appendChild(listItem);
       ++this.#state.currentItemCount;
     }
+  }
+
+  // TODO
+  addnewListItemToTop() {
   }
 
   /* ------------------------------------------------------------------------ */
@@ -70,7 +75,8 @@ export class ChatList extends HTMLElement {
 
   async loadMoreItems(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
-    if (scrollTop + clientHeight < scrollHeight ||
+    const threshold = 5;
+    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
       this.#state.currentItemCount === this.#state.totalItemCount) {
       return;
     }
@@ -85,6 +91,7 @@ export class ChatList extends HTMLElement {
   addNewChat(data) {
     console.log('Add new chat:', data);
     const chatData = {
+      chat_id: data.chat_id,
       username: data.username,
       nickname: data.nickname,
       avatar: data.avatar,
@@ -95,16 +102,16 @@ export class ChatList extends HTMLElement {
       last_message: data.messages[0],
     };
     this.#state.items.unshift(chatData);
-    console.log('Chat list data:', this.#state.items);
-    this.#state.currentItemCount += 1;
     this.#state.totalItemCount += 1;
-    this.render();
+    this.render(); // TODO: Will be replaced by addnewListItemToTop
     const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
     this.dispatchEvent(event);
   }
 
   restartChat(data) {
+    console.log('Restart chat / items before adding new one:', this.#state.items);
     const index = this.#state.items.findIndex((chat) => chat.username === data.username);
+    console.log('Restart chat:', index);
     if (index !== -1) {
       const tmp = this.#state.items[index];
       tmp.unread_messages_count = 0;
