@@ -92,30 +92,44 @@ const socketManager = (() => {
     }
 
     handleLikeMessage(data) {
+      console.log('Message liked:', data);
       if (window.location.pathname !== '/chat') {
         return;
       }
+      // TODO
     }
 
     handleUnlikeMessage(data) {
+      console.log('Message unliked:', data);
+      if (window.location.pathname !== '/chat') {
+        return;
+      }
+      // TODO
     }
 
     handleGameInvite(data) {
+      console.log('Game invite received:', data);
+      // TODO
     }
 
     handleNewTournament(data) {
+      console.log('New tournament received:', data);
+      // TODO
     }
 
     handleNewFriend(data) {
-
+      console.log('New friend received:', data);
+      // TODO
     }
 
     handleUserOnline(data) {
-
+      console.log('User online:', data);
+      // TODO
     }
 
     handleUserOffline(data) {
-
+      console.log('User offline:', data);
+      // TODO
     }
   }
   return new WebSocketManager();

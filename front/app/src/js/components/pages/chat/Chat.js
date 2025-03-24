@@ -75,10 +75,6 @@ export class Chat extends HTMLElement {
     document.addEventListener('toggleLike', this.toggleLikeMessage);
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
-
-    // socketManager.addListener('message', (message) => this.receiveMessage(message));
-    // socketManager.addListener('like_message', (ids) => this.handleLikedMessage(ids));
-    // socketManager.addListener('unlike_message', (ids) => this.handleUnlikedMessage(ids));
   }
 
   async fetchChatList(offset = 0) {
@@ -184,24 +180,13 @@ export class Chat extends HTMLElement {
       // If found, update the chat list item with unread badge and move it to the top
       // If not found, add the chat item with unread badge to the top of the list
     }
-
-    // const newMessage = message;
-    // // ----- For test --------------------------------
-    // message.sender = this.#state.currentChat.username;
-    // // -----------------------------------------------
-    // if (message.chat_id === this.#state.currentChat.chat_id) {
-    //   this.#state.currentChat.messages.unshift(message);
-    //   // TODO: Append new message instead of updating the whole chat
-    //   this.chatMessagesArea.setData(this.#state.currentChat);
-    // } else {
-    //   this.updateChatList(message);
-    // }
   }
 
-  handleLikedMessage(ids) {
-    // Find concerned Chat
+  handleLikedMessage(data) {
+    if (data.chat_id !== this.#state.currentChat.chat_id) {
+      return;
+    }
 
-    // If the message is in the current chat
     // Find concerned message in the Chat
     // Update is_liked field
     // If the message is in the current chat, update the message
