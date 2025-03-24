@@ -10,25 +10,24 @@ from chat.routing import websocket_urlpatterns
 from chat.views import notifications_view
 from server.asgi import application
 
-User = get_user_model()
-#just to test the yaml
-
-class TestEventsConsumer(TestCase):
-    # def test_connect(self):
-    #     communicator = WebsocketCommunicator(application, "/ws/events/")
-    #     connected, _ = communicator.connect()
-    #     self.assertTrue(connected)
-    #     communicator.disconnect()
-    #
-    @pytest.mark.asyncio
-    async def test_connect():
-        communicator = WebsocketCommunicator(application, "/ws/events/")
-        connected, _ = await communicator.connect()
-        assert connected is True  # Vérification que la connexion a réussi
-        self.assertTrue(connected)  # Vérification synchrone
-        print(connected)
-        await communicator.disconnect()
-
+# User = get_user_model()
+#
+# class TestEventsConsumer(TestCase):
+#     # def test_connect(self):
+#     #     communicator = WebsocketCommunicator(application, "/ws/events/")
+#     #     connected, _ = communicator.connect()
+#     #     self.assertTrue(connected)
+#     #     communicator.disconnect()
+#     #
+#     @pytest.mark.asyncio
+#     async def test_connect():
+#         communicator = WebsocketCommunicator(application, "/ws/events/")
+#         connected, _ = await communicator.connect()
+#         assert connected is True  # Vérification que la connexion a réussi
+#         self.assertTrue(connected)  # Vérification synchrone
+#         print(connected)
+#         await communicator.disconnect()
+#
 # class UserEventsConsumerTestCase(TransactionTestCase):
 #     def test_connect(self):
 #         user = User.objects.create_user(

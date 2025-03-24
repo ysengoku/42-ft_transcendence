@@ -134,11 +134,12 @@ class UserEventsConsumer(WebsocketConsumer):
                 message.is_liked = True
                 message.save()
                 self.send(text_data=json.dumps({
-                    "type": "like_message",
-                    "data": {
+                    "type": "like_message", "data": {
                         "id": message_id,
+                        # "chat_id": message_id, HOW TO SEND THIS
                     }
                 }))
+                # if user on the chat, sends to client
             except ObjectDoesNotExist:
                 print(f"Message {message_id} does not exist.")
                 self.send(text_data=json.dumps({
@@ -157,6 +158,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     "type": "unlike_message",
                     "data": {
                         "id": message_id,
+                        # "chat_id": message_id, HOW TO SEND THIS
                     }
                 }))
             except ObjectDoesNotExist:
