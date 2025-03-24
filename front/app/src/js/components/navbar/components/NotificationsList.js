@@ -109,7 +109,7 @@ export class NotificationsList extends HTMLElement {
 
   template() {
     return `
-    <div class="d-flex flex-column justify-content-start ps-3 pe-4">
+    <div class="d-flex flex-column justify-content-start">
       <h6 class="py-4 dropdown-list-header" sticky>Notifications</h6>
       <ul class="dropdown-list list-group mb-2" id="notifications-list"></ul>
     </div>
@@ -128,6 +128,9 @@ export class NotificationsList extends HTMLElement {
       height: 64px;
       object-fit: cover;
 	  }
+    .notification-time {
+      color: var(--pm-gray-400);
+    }
     .call-to-action-groupe button {
       border: none;
       background: none;
