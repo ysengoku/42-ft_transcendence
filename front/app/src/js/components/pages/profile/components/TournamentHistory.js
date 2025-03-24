@@ -47,10 +47,10 @@ export class UserTournamentHistory extends HTMLElement {
   handleRowClick(event) {
     event.preventDefault();
     const modal = document.querySelector('game-result-modal');
-    modal.showModal('tournament');  // TODO: Send id of the duel too
+    modal.showModal('tournament'); // TODO: Send id of the duel too
   }
 
-   createRow(item) {
+  createRow(item) {
     console.log(item);
     const row = document.createElement('tr');
     row.innerHTML = this.rowTemplate() + this.rowStyle();
@@ -60,7 +60,7 @@ export class UserTournamentHistory extends HTMLElement {
     const tournamentWinnerAvatar = row.querySelector('.user-game-history-avatar');
     const tournamentWinnerNickname = row.querySelector('.winner-nickname');
     const tournamentStatus = row.querySelector('.tounament-status');
-   
+
     tournamentName.textContent = item.name;
     tournamentDate.textContent = this.formatDate(item.date);
     if (item.winner) {
@@ -71,7 +71,7 @@ export class UserTournamentHistory extends HTMLElement {
     tournamentStatus.textContent = item.status;
 
     return row;
-   }
+  }
 
   formatDate(dateDtring) {
     const date = new Date(dateDtring);

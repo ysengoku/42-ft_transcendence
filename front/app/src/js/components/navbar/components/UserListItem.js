@@ -13,12 +13,11 @@ export class UserListItem extends HTMLElement {
     this.handleClick = this.handleClick.bind(this);
   }
 
-  connectedCallback() {
-    this.#state.username = this.getAttribute('username');
-    this.#state.nickname = this.getAttribute('nickname');
-    this.#state.avatar = this.getAttribute('avatar');
-    this.#state.online = this.getAttribute('online') === 'true';
-
+  set data(data) {
+    this.#state.username = data.username;
+    this.#state.nickname = data.nickname;
+    this.#state.avatar = data.avatar;
+    this.#state.online = data.is_online;
     this.render();
   }
 
@@ -29,7 +28,7 @@ export class UserListItem extends HTMLElement {
   render() {
     this.innerHTML = this.template() + this.style();
 
-    const avatar = this.querySelector('.user-list-avatar');
+    const avatar = this.querySelector('.dropdown-list-avatar');
     avatar.src = this.#state.avatar;
     const nickname = this.querySelector('.userlist-nickname');
     nickname.textContent = this.#state.nickname;
@@ -54,62 +53,34 @@ export class UserListItem extends HTMLElement {
     }
   }
 
-  updateOnlineStatus() {
-  }
+  updateOnlineStatus() {}
 
   template() {
     return `
-		<li class="list-group-item user-list-item">
+  	<li class="list-group-item dropdown-list-item">
       <div class="d-flex flex-row align-items-center">
-			  <div class="avatar-container">
-				  <img class="user-list-avatar rounded-circle me-3" alt="Avatar">
-				  <span class="user-list-status-indicator ${this.#state.online ? 'online' : ''} ms-3"></span>
-			  </div>
+  		  <div class="d-inline-block position-relative me-2">
+  			  <img class="dropdown-list-avatar avatar-m rounded-circle me-3" alt="Avatar">
+  			  <span class="online-status user-list-status-indicator ${this.#state.online ? 'online' : ''} ms-3"></span>
+  		  </div>
         <div class="d-flex flex-column justify-content-center">
           <p class="userlist-nickname m-0 fs-5"></P>
-			    <p class="userlist-username m-0 fw-light"></p>
+  		    <p class="userlist-username m-0 fw-light"></p>
         </div>
       <div>
-		</li>
-	`;
+  	</li>
+  `;
   }
 
   style() {
     return `
     <style>
-      .user-list-item {
-        border: none;
-        padding: 16px 32px;
-        border-bottom: 1px solid var(--bs-border-color);
-        position: relative;
-      }
-      user-list-item:last-of-type .user-list-item {
-        border-bottom: none;
-        padding-bottom: 8px;
-      }
-      .avatar-container {
-        position: relative;
-        display: inline-block;
-        margin-right: 10px;
-      }
-      .user-list-avatar {
-        width: 56px;
-        height: 56px;
-        object-fit: cover;
-      }
-      .user-list-status-indicator {
-        position: absolute;
-        width: 16px;
-        height: 16px;
-        bottom: 0;
-        right: 16%;
-        border-radius: 50%;
-        background-color: gray;
-        border: 2px solid var(--bs-body-bg);
-      }
-      .user-list-status-indicator.online {
-        background-color: green;
-      }
+    .user-list-status-indicator {
+      position: absolute;
+      bottom: 0;
+      right: 16%;
+      border: 2px solid var(--bs-body-bg);
+    }
     </style>
     `;
   }

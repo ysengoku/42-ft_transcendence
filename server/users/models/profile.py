@@ -1,6 +1,7 @@
 from pathlib import Path  # noqa: A005
 
 import magic
+from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
 from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
@@ -76,9 +77,9 @@ class ProfileQuerySet(models.QuerySet):
             return (
                 self.prefetch_related("user")
                 .filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
-                .order_by("-is_online")
+                .order_by("-is_online", "user__nickname")
             )
-        return Profile.objects.prefetch_related("user").all().order_by("-is_online")
+        return Profile.objects.prefetch_related("user").all().order_by("-is_online", "user__nickname")
 
 
 class Profile(models.Model):
@@ -102,7 +103,7 @@ class Profile(models.Model):
     def avatar(self) -> str:
         if self.profile_picture:
             return self.profile_picture.url
-        return "/img/default_avatar.png"
+        return settings.DEFAULT_USER_AVATAR
 
     @property
     def matches(self):

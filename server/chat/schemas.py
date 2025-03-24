@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from ninja import Schema
+from ninja import Field, Schema
 
 from chat.models import Chat, ChatMessage
 
@@ -31,12 +31,17 @@ class BaseChatSchema(Schema):
     Shared data that is present on all chat schemas.
     """
 
+    chat_id: str
     username: str
     nickname: str
     avatar: str
     is_online: bool
     is_blocked_user: bool
     is_blocked_by_user: bool
+
+    @staticmethod
+    def resolve_chat_id(obj: Chat):
+        return str(obj.id)
 
 
 class ChatPreviewSchema(BaseChatSchema):

@@ -88,7 +88,7 @@ export class LoginForm extends HTMLElement {
     return `
 		<div class="container d-flex flex-column justify-content-center align-items-center">
 			<form class="w-100" id="loginForm">
-      <legend class="mt-4 mb-5 border-bottom">Login</legend>
+      <legend class="mt-2 mb-4">Login</legend>
   			<div class="d-flex flex-column mb-3 gap-2">
     			<label for="input-username" class="form-label">Username or Email</label>
    				<input type="text" class="form-control" id="input-username" placeholder="username or email" autocomplete="off">
@@ -100,7 +100,7 @@ export class LoginForm extends HTMLElement {
           <div class="invalid-feedback" id="loginpassword-feedback"></div>
   			</div>
 				<div class="mb-2 py-3">
-					<button type="submit" id="loginSubmit" class="btn btn-primary btn-lg w-100 pt-50">Login</button>
+					<button type="submit" id="loginSubmit" class="btn btn-wood btn-lg w-100 pt-50">Login</button>
 				</div>
 			</form>
 		</div>
