@@ -39,7 +39,6 @@ export class ChatList extends HTMLElement {
 
     this.listContainer = this.querySelector('#chat-list-wrapper');
     this.list = this.querySelector('#chat-list');
-    console.log('Chat list count:', this.#state.totalItemCount, this.#state.items);
     if (this.#state.totalItemCount > 0) {
       this.list.innerHTML = '';
       this.renderListItems();
