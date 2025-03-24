@@ -47,7 +47,7 @@ const socketManager = (() => {
     }
 
     handleAction(event) {
-      // console.log('Message received:', event.data);
+      console.log('Message received:', event.data);
       let message = null;
       try {
         message = JSON.parse(event.data);
@@ -76,7 +76,7 @@ const socketManager = (() => {
 
     handleNewMessage(data) {
       // If window.location.pathname is /chat, call the receiveMessage method of the Chat class
-      // Else, add notification badge to the Chat button of the navbar 
+      // Else, add notification badge to the Chat button of the navbar
     }
   }
   return new WebSocketManager();
