@@ -15,10 +15,15 @@ from common.schemas import MessageSchema
 from users.models import RefreshToken, User
 from users.router.endpoints.mfa import handle_mfa_code
 from users.router.utils import _create_json_response_with_tokens
-from users.schemas import (ForgotPasswordSchema, LoginResponseSchema,
-                           LoginSchema, PasswordValidationSchema,
-                           ProfileMinimalSchema, SignUpSchema,
-                           ValidationErrorMessageSchema)
+from users.schemas import (
+    ForgotPasswordSchema,
+    LoginResponseSchema,
+    LoginSchema,
+    PasswordValidationSchema,
+    ProfileMinimalSchema,
+    SignUpSchema,
+    ValidationErrorMessageSchema,
+)
 
 auth_router = Router()
 

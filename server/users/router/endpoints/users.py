@@ -89,5 +89,6 @@ def get_online_users_endpoint(request):
 
     Returns:
         list: List of online user IDs
+
     """
     return get_online_users()

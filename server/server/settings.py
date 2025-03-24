@@ -28,12 +28,16 @@ SECRET_KEY = "your-secret-key"
 
 # Environment variables
 
-DEBUG = os.environ.get("DEBUG", True)
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
+# ruff format request, old line was :
+# DEBUG = os.environ.get("DEBUG", True)
 
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
+IN_CONTAINER = int(os.environ.get("IN_CONTAINER", "0"))
+# ruff format request, old line was :
+# IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
 
 if not IN_CONTAINER:
     DATABASES = {
@@ -153,9 +157,11 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
-REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
-# Pour les tests
-if 'test' in sys.argv:
+REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
+# For ruff format : int must be str before being int
+# REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+# For the tests
+if "test" in sys.argv:
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels.layers.InMemoryChannelLayer",
@@ -250,14 +256,16 @@ OAUTH_CONFIG = {
 
 # email configuration for 2fa and password reset
 EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend",
 )
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+# For ruff format : int must be str before being int
+# EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
 # replaced with ruff's informations, == "true" is just to say it's a boolean
-# not to assing the value to true
+# not to assign the value to true
 # EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
 # EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
