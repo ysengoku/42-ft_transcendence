@@ -71,8 +71,7 @@ class RedisUserStatusManager:
             # Extract user IDs from the keys
             return [int(key.decode("utf-8").split(":")[-1]) for key in online_keys]
         except Exception as e:
-            logging.error(f"Error getting online users: {e}")
-            # print(f"Error getting online users: {e}")
+            print(f"Error getting online users: {e}")
             return []
 
 
