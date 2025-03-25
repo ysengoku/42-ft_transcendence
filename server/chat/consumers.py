@@ -194,17 +194,9 @@ class UserEventsConsumer(WebsocketConsumer):
         # Send message to WebSocket
         try:
             json.loads(message)
-            # message already in JSON -> send
             self.send(text_data=message)
         except json.JSONDecodeError:
-            # message no in JSON -> restructure and send
             self.send(text_data=json.dumps({"message": message}))
-        # self.send(text_data=message)
-        # message is created in handle_message :
-        # -> it is already structured in json before being send
-        # -> this function seems useless / reworking for nothing
-        # self.send(text_data=json.dumps({"message": message}))
-        # let the try / except just to be sure
 
     def handle_notification(self, data):
         notification_data = data["notification"]
