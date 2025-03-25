@@ -59,7 +59,7 @@ export class ChatListItem extends HTMLElement {
     if (circleNumber) {
       circleNumber.remove();
     }
-    const chatListItems = document.querySelectorAll('.list-group-item');
+    const chatListItems = document.querySelectorAll('.chat-list-item');
     chatListItems.forEach((item) => {
       if (item !== this.listItem) {
         item.classList.remove('active');
@@ -111,12 +111,15 @@ export class ChatListItem extends HTMLElement {
       .list-group-item.active {
         background-color: var(--pm-primary-500) !important;
         border: none;
+        .chat-list-status-indicator {
+          border-color: var(--pm-primary-500)
+        }
       }
       .chat-list-status-indicator {
         position: absolute;
         bottom: 0;
         right: -2px;
-        border: 1px solid var(--bs-bg-color);
+        border: 1px solid var(--bs-body-bg);
       }
       .circle-number {
         background-color: red;
@@ -131,6 +134,7 @@ export class ChatListItem extends HTMLElement {
         inline-height: 1;
        }
       .chat-list-item-last-message {
+        color: var(--bs-text-light);
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
