@@ -115,10 +115,11 @@ export class ChatUserSearch extends HTMLElement {
 
   async loadMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
-    if (scrollTop + clientHeight < scrollHeight ||
+    const threshold = 5;
+    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
       this.#state.totalUserCount === this.#state.currentListLength) {
-        return;
-      }
+      return;
+    }
     this.searchUsers();
   }
 
@@ -163,7 +164,7 @@ export class ChatUserSearch extends HTMLElement {
     <style>
     #chat-user-list {
       max-height: 50vh;
-      /*background-color: var(--pm-gray-700);*/
+      border: none;
     }
     </style>
     `;

@@ -93,18 +93,18 @@ export class NotificationsListItem extends HTMLElement {
 
   template() {
     return `
-	<li class="list-group-item dropdown-list-item">
+	<li class="list-group-item dropdown-list-item px-2 pt-2">
 	  <div class="d-flex flex-column">
-        <div class="d-flex flex-row justify-content-start align-items-start">
+        <div class="d-flex flex-row justify-content-start align-items-center gap-4">
           <div class="dropdown-list-avatar-container">
-            <img class="notifications-list-avatar avatar-m rounded-circle me-1" alt="Avatar"">
+            <img class="notifications-list-avatar avatar-m rounded-circle" alt="Avatar"">
           </div>
           <div class="d-flex flex-column justify-content-center">
-            <p class="notification-time m-0 mb-2"></P>
-            <p class="notification-content m-0"></p>
+            <p class="notification-content m-0 mb-1"></p>
+            <p class="notification-time m-0"></P>
           </div>
 	    </div>
-        <div class="call-to-action-groupe d-flex flex-row justify-content-end align-items-center mt-1 gap-3"></div>
+      <div class="call-to-action-groupe d-flex flex-row justify-content-end align-items-center mt-1 gap-3"></div>
 	  </div>
 	</li>
     `;

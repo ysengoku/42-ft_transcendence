@@ -36,12 +36,12 @@ export class Navbar extends HTMLElement {
       if (!isMobile()) {
         const searchUserButtotn = document.createElement('user-search-button');
         const friendsButton = document.createElement('friends-button');
-        const chatButton = document.createElement('chat-button');
         navbarActions.appendChild(searchUserButtotn);
         navbarActions.appendChild(friendsButton);
-        navbarActions.appendChild(chatButton);
       }
+      const chatButton = document.createElement('chat-button');
       const notificationsButton = document.createElement('notifications-button');
+      navbarActions.appendChild(chatButton);
       navbarActions.appendChild(notificationsButton);
     }
     const dropdownMenu = document.createElement('navbar-dropdown-menu');
@@ -92,18 +92,16 @@ export class Navbar extends HTMLElement {
       padding: 16px 8px;
       position: relative;
     }
-    /*
-    .badge {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 10px;
-      height: 10px;
-      background-color: red;
-      border-radius: 50%;
+    .notification-badge {
       display: block;
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background-color: var(--pm-red-400);
+      border-radius: 50%;
+      top: 8px;
+      right: 8px;
     }
-    */
     </style>
     `;
   }
