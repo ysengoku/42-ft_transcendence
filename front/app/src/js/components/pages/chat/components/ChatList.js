@@ -53,7 +53,6 @@ export class ChatList extends HTMLElement {
   }
 
   renderListItems(index = 0) {
-    console.log('current chat user:', this.#getCurrentChatUsername());
     for (let i = index; i < this.#state.items.length; i++) {
       const listItem = document.createElement('chat-list-item-component');
       listItem.setData(this.#state.items[i]);
