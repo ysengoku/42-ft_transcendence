@@ -1,5 +1,4 @@
 import json
-import logging
 import time
 
 import redis
@@ -42,7 +41,7 @@ class RedisUserStatusManager:
                 json.dumps(
                     {"user_id": user_id, "timestamp": int(time.time())}),
             )
-        except Exception as e:
+        except redis.RedisError as e:
             print(f"Error setting user online: {e}")
 
     def set_user_offline(self, user_id):
@@ -56,7 +55,7 @@ class RedisUserStatusManager:
         try:
             # Remove the user from online users
             self._redis.delete(f"{self._online_users_key}:{user_id}")
-        except Exception as e:
+        except redis.RedisError as e:
             print(f"Error setting user offline: {e}")
 
     def get_online_users(self):
@@ -73,7 +72,7 @@ class RedisUserStatusManager:
 
             # Extract user IDs from the keys
             return [int(key.decode("utf-8").split(":")[-1]) for key in online_keys]
-        except Exception as e:
+        except redis.RedisError as e:
             print(f"Error getting online users: {e}")
             return []
 
@@ -132,7 +131,6 @@ class OnlineStatusConsumer(WebsocketConsumer):
         Handle received WebSocket messages
         Currently a no-op, but can be extended
         """
-        pass
 
     def user_status(self, event):
         """
