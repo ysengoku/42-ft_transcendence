@@ -130,7 +130,7 @@ export class ChatMessageArea extends HTMLElement {
     };
     this.#state.data.messages.unshift(message);
     const messageElement = this.messageItem(message);
-    this.chatMessages.prepend(messageElement);
+    this.chatMessages.appendChild(messageElement);
     this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
   }
 
