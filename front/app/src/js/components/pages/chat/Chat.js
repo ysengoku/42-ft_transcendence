@@ -12,9 +12,10 @@ export class Chat extends HTMLElement {
     currentChat: null,
   };
 
+  #queryParam = '';
+
   constructor() {
     super();
-
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.receiveMessage = this.receiveMessage.bind(this);
@@ -29,24 +30,38 @@ export class Chat extends HTMLElement {
       router.navigate('/login');
       return;
     }
+    this.render();
     const chatListData = await this.fetchChatList();
     if (!chatListData) {
       return;
     }
-
+    
     if (chatListData.count > 0) {
-      this.#state.currentChatUsername = chatListData.items[0].username;
-      chatListData.items[0].unread_messages_count = 0;
+      if (!this.#queryParam) {
+        this.#state.currentChatUsername = chatListData.items[0].username;
+        chatListData.items[0].unread_messages_count = 0;
+      } else {
+        this.#state.currentChatUsername = this.#queryParam;
+      }
+      this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
       const chatData = await this.fetchChatData();
       if (!chatData) {
         return;
+      } else {
+        this.#state.currentChat = chatData.data;
+        this.chatMessagesArea.setData(this.#state.currentChat);
+        if (this.#queryParam && chatData.status === 201) {
+          this.chatList.addNewChat(chatData.data);
+        } else if (this.#queryParam && chatData.status === 200) {
+          this.chatList.restartChat(chatData.data);
+        }
       }
-      this.#state.currentChat = chatData;
     }
-    this.render();
-    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
-    this.chatMessagesArea.setData(this.#state.currentChat);
     this.chatMessagesArea.sendToggleLikeEvent = this.sendToggleLikeEvent;
+  }
+
+  async setQueryParam(param) {
+    this.#queryParam = param.get('username');;
   }
 
   disconnectedCallback() {
@@ -111,7 +126,7 @@ export class Chat extends HTMLElement {
     );
     if (response.success) {
       console.log('Chat data response:', response);
-      return response.data;
+      return { data: response.data, status: response.status };
     } else {
       // TODO: Handle error
     }
@@ -127,7 +142,7 @@ export class Chat extends HTMLElement {
       this.#state.currentChatUsername = event.detail;
       const chatData = await this.fetchChatData();
       // TODO: Error handling
-      this.#state.currentChat = chatData;
+      this.#state.currentChat = chatData.data;
     } else {
       this.#state.currentChat = event.detail;
     }
