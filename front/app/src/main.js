@@ -13,8 +13,7 @@ const observer = new MutationObserver(() => {
     createClouds()
   ) : (
     document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
-    // document.body.style.backgroundImage = `linear-gradient(#080f1c 0%, #0d4261 32%,  #1473ab 100%)`,
-    document.body.style.backgroundImage = `linear-gradient(rgba(43, 18, 55, 0.8) 0%, rgba(57, 24, 73, 0.8) 32%,  rgba(15, 14, 41, 0.8) 100%)`,
+    document.body.style.backgroundImage = `linear-gradient(rgb(23, 18, 40) 0%, rgb(62, 52, 97) 16%, rgb(95, 83, 138) 40%, #6670A2 100%)`,
     createStars()
   );
 });
