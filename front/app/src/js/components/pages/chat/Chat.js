@@ -164,7 +164,7 @@ export class Chat extends HTMLElement {
       action: isLiked ? 'like_message' : 'unlike_message',
       data: {
         chat_id: chatId,
-        message_id: messageId,
+        id: messageId,
       },
     };
     if (socketManager.socket.readyState === WebSocket.OPEN) {
