@@ -11,8 +11,7 @@ fixable = ["ALL"]
 ignore = [
     ##### rules to allow again at the end
     "T201", # print found
-    #"ERA001", # Commented code
-    "S105",
+    "S105", # hardcoded password
     #### modules
     "ANN",  # obligatory annotations
     "C90",  # complexity check
