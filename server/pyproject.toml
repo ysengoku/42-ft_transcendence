@@ -9,6 +9,11 @@ pylint.max-statements = 100
 select = ["ALL"]
 fixable = ["ALL"]
 ignore = [
+    ##### rules to allow again at the end
+    "LOG015", # Root logger usage
+    "ERA001", # Commented code
+    # "PIE790", 
+    "S105",
     #### modules
     "ANN",  # obligatory annotations
     "C90",  # complexity check
