@@ -38,8 +38,6 @@ class UserEventsConsumer(WebsocketConsumer):
 
         self.accept()
 
-        self.send(text_data=json.dumps({"message": "Welcome!"}))
-
     def disconnect(self, close_code):
         # verify if self.chats exists and is not empty
         if hasattr(self, "chats") and self.chats:
@@ -80,17 +78,9 @@ class UserEventsConsumer(WebsocketConsumer):
                 print(f"Unknown action : {action}")
 
     def handle_message(self, data):
-        # print(data)
-        # message, chat_id = data.get("content"), data.get("chat_id")
-        # print(chat_id)
-        # print(message)
-        # action = data.get('action')
-        # if action == 'new_message':
         message_data = data.get('data', {})
         message = message_data.get('content')
         chat_id = message_data.get('chat_id')
-        print(f"Chat ID: {chat_id}")
-        print(f"Message: {message}")
         # security check: chat should exist
         chat = Chat.objects.filter(id=chat_id).first()
         if not chat:
@@ -119,8 +109,9 @@ class UserEventsConsumer(WebsocketConsumer):
         })
 
     def handle_online_status(self, data):
-        username = data["data"]["username"]
-        status = data["action"]
+        user_data = data.get('data', {})
+        username = user_data.get('username')
+        status = data.get('action')
 
         try:
             profile = Profile.objects.get(user__username=username)
@@ -141,7 +132,9 @@ class UserEventsConsumer(WebsocketConsumer):
             }))
 
     def handle_like_message(self, data):
-        message_id = data["message_id"]
+        message_data = data.get('data', {})
+        message = message_data.get('content')
+        message_id = message_data.get["id"]
         if data["sender"] != self.username:  # prevent from liking own message
             try:
                 message = ChatMessage.objects.get(pk=message_id)
@@ -162,7 +155,9 @@ class UserEventsConsumer(WebsocketConsumer):
                 }))
 
     def handle_unlike_message(self, data):
-        message_id = data["message_id"]
+        message_data = data.get('data', {})
+        message = message_data.get('content')
+        message_id = message_data.get["id"]
         if data["sender"] != self.username:  # prevent from unliking own message
             try:
                 message = ChatMessage.objects.get(pk=message_id)
@@ -172,7 +167,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     "type": "unlike_message",
                     "data": {
                         "id": message_id,
-                        # "chat_id": message_id, HOW TO SEND THIS
+                        # "chat_id": message_id, HOW TO SEND THIS YUKO NEEDS IT
                     },
                 }))
             except ObjectDoesNotExist:
@@ -183,7 +178,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 }))
 
     def handle_read_message(self, data):
-        message_id = data["message_id"]
+        message_data = data.get('data', {})
+        message_id = message_data.get["id"]
         try:
             message = ChatMessage.objects.get(pk=message_id)
             message.is_read = True
