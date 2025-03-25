@@ -31,7 +31,6 @@ export class MultiplayerGame extends HTMLElement {
 
         const camera = new THREE.PerspectiveCamera(45, rendererWidth / rendererHeight, 0.1, 2000);
         const orbit = new OrbitControls(camera, renderer.domElement);
-        const world = new CANNON.World();
 
         let mixer;
         const normalMaterial = new THREE.MeshNormalMaterial();
@@ -71,36 +70,20 @@ export class MultiplayerGame extends HTMLElement {
         })();
 
         const Ball = ((posX, posY, posZ) => {
-            let z_value = -15;
-            let x_value = 0;
             const sphereGeometry = new THREE.SphereGeometry(0.5);
             const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
             sphereMesh.position.x = posX;
             sphereMesh.position.y = posY;
             sphereMesh.position.z = posZ;
             sphereMesh.castShadow = true;
-            const sphereShape = new CANNON.Sphere(0.5);
-            const sphereBody = new CANNON.Body({ mass: 1, velocity: new CANNON.Vec3(0, 0, -10) });
-            sphereBody.addShape(sphereShape);
-            sphereBody.position.x = sphereMesh.position.x;
-            sphereBody.position.y = sphereMesh.position.y;
-            sphereBody.position.z = sphereMesh.position.z;
+            const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
             scene.add(sphereMesh);
-            world.addBody(sphereBody);
 
-            let hasCollidedWithAnyBumper = false;
             let hasCollidedWithBumper1 = false;
             let hasCollidedWithBumper2 = false;
             let hasCollidedWithWall = false;
 
             return ({
-                get z_value() { return z_value },
-                set z_value(new_z_value) { z_value = new_z_value },
-
-                get x_value() { return x_value },
-                set x_value(new_x_value) { x_value = new_x_value },
-
-                get hasCollidedWithAnyBumper() { return hasCollidedWithBumper1 || hasCollidedWithBumper2 },
 
                 get hasCollidedWithBumper1() { return hasCollidedWithBumper1 },
                 set hasCollidedWithBumper1(newHasCollidedWithBumper1) { hasCollidedWithBumper1 = newHasCollidedWithBumper1 },
@@ -112,14 +95,12 @@ export class MultiplayerGame extends HTMLElement {
                 set hasCollidedWithWall(newHasCollidedWithWall) { hasCollidedWithWall = newHasCollidedWithWall },
 
                 sphereMesh,
-                sphereBody,
+                sphereUpdate,
             });
-        })(0, 3, 0);
+        })(0, 1, 0);
 
         camera.position.set(10, 15, -22);
         orbit.update();
-
-        world.gravity.set(0, -9.82, 0);
 
         ligths[0].position.set(0, 10, 30);
         ligths[1].position.set(10, 0, 30);
@@ -135,18 +116,10 @@ export class MultiplayerGame extends HTMLElement {
             cubeMesh.position.y = posY;
             cubeMesh.position.z = posZ;
             cubeMesh.castShadow = true;
-            const cubeShape = new CANNON.Box(new CANNON.Vec3(2.5, 0.5, 0.5));
-            const cubeBody = new CANNON.Body({ mass: 0 });
-            cubeBody.addShape(cubeShape);
-            cubeBody.position.x = cubeMesh.position.x;
-            cubeBody.position.y = cubeMesh.position.y;
-            cubeBody.position.z = cubeMesh.position.z;
             scene.add(cubeMesh);
-            world.addBody(cubeBody);
 
             let score = 0;
             return ({
-                cubeBody,
                 cubeMesh,
                 cubeGeometry,
 
@@ -165,18 +138,10 @@ export class MultiplayerGame extends HTMLElement {
             wallMesh.position.z = posZ;
             wallMesh.rotation.y = -Math.PI / 2;
             wallMesh.castShadow = true;
-            const wallBody = new CANNON.Body({ mass: 0 });
-            const wallShape = new CANNON.Box(new CANNON.Vec3(10, 2.5, 0.5));
-            wallBody.addShape(wallShape);
-            wallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 2);
-            wallBody.position.x = wallMesh.position.x;
-            wallBody.position.y = wallMesh.position.y;
-            wallBody.position.z = wallMesh.position.z;
             scene.add(wallMesh);
-            world.addBody(wallBody);
 
             return ({
-                wallBody,
+                wallMesh,
             });
         }
         const Walls = [WallFactory(10, 2.5, 0), WallFactory(-10, 2.5, 0)];
@@ -187,33 +152,10 @@ export class MultiplayerGame extends HTMLElement {
             const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
             planeMesh.rotateX(-Math.PI / 2);
             planeMesh.receiveShadow = true;
-            const planeShape = new CANNON.Plane();
-            const planeBody = new CANNON.Body({ mass: 0 });
-            planeBody.addShape(planeShape);
-            planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
             scene.add(planeMesh);
-            world.addBody(planeBody);
         })();
 
         const clock = new THREE.Clock();
-
-        Ball.sphereBody.addEventListener('collide', function(e) {
-            Ball.hasCollidedWithBumper1 = e.body.id == Bumpers[0].cubeBody.id;
-            Ball.hasCollidedWithBumper2 = e.body.id == Bumpers[1].cubeBody.id;
-            Ball.hasCollidedWithWall = e.body.id == Walls[0].wallBody.id || e.body.id == Walls[1].wallBody.id;
-        });
-
-        // let z_value = -15;
-        // let Ball.x_value = 0;
-
-        let lastScore = 0;
-
-        function get_coll_pos(cubeBody, cubeGeom, sphereMesh) {
-            let hit_pos;
-
-            hit_pos = cubeBody.position.x - cubeGeom.parameters.depth - sphereMesh.position.x;
-            return hit_pos;
-        }
 
         const pongSocket = new WebSocket(
             'wss://'
@@ -230,16 +172,15 @@ export class MultiplayerGame extends HTMLElement {
             Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
             Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
 
-            Ball.sphereBody.position.z = data.ball.z;
-            Ball.sphereBody.position.x = data.ball.x;
-            Ball.sphereBody.velocity.set(data.ball.velocity.x * 0.3, -9, data.ball.velocity.z);
+            Ball.sphereUpdate.z = data.ball.z;
+            Ball.sphereUpdate.x = data.ball.x;
 
             Bumpers[0].score = data.bumper_1.score;
-            Bumpers[0].cubeBody.position.x = data.bumper_1.x;
+            Bumpers[0].cubeMesh.position.x = data.bumper_1.x;
 
             Bumpers[1].score = data.bumper_2.score;
-            Bumpers[1].cubeBody.position.x = data.bumper_2.x;
-            lastScore = data.last_score;
+            Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
+            // lastScore = data.last_score;
         }
 
         pongSocket.addEventListener("open", function(_) {
@@ -271,24 +212,8 @@ export class MultiplayerGame extends HTMLElement {
         function animate() {
             requestAnimationFrame(animate);
             let delta = Math.min(clock.getDelta(), 0.1);
-            world.step(delta);
 
-            Ball.sphereMesh.position.set(Ball.sphereBody.position.x, Ball.sphereBody.position.y, Ball.sphereBody.position.z);
-            Ball.sphereMesh.quaternion.set(
-                Ball.sphereBody.quaternion.x,
-                Ball.sphereBody.quaternion.y,
-                Ball.sphereBody.quaternion.z,
-                Ball.sphereBody.quaternion.w,
-            );
-            for (let i = 0; i < 2; i++) {
-                Bumpers[i].cubeMesh.position.set(Bumpers[i].cubeBody.position.x, Bumpers[i].cubeBody.position.y, Bumpers[i].cubeBody.position.z);
-                Bumpers[i].cubeMesh.quaternion.set(
-                    Bumpers[i].cubeBody.quaternion.x,
-                    Bumpers[i].cubeBody.quaternion.y,
-                    Bumpers[i].cubeBody.quaternion.z,
-                    Bumpers[i].cubeBody.quaternion.w,
-                );
-            }
+            Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
             if (mixer) {
                 mixer.update(delta);
             }
