@@ -59,7 +59,6 @@ export class Chat extends HTMLElement {
   }
 
   getCurrentChatUsername() {
-    console.log('Current chat username:', this.#state.currentChatUsername);
     return this.#state.currentChatUsername;
   }
 
