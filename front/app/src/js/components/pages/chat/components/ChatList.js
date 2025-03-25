@@ -147,6 +147,8 @@ export class ChatList extends HTMLElement {
       this.render();
     } else {
       this.addNewChat(data);
+      const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
+      this.dispatchEvent(event);
     }
   }
 
