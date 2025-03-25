@@ -21,6 +21,7 @@ const socketManager = (() => {
         console.log('WebSocket closed:', event);
         setTimeout(() => this.reconnect(), 1000);
       };
+      this.addListeners();
     }
 
     reconnect() {
@@ -67,16 +68,75 @@ const socketManager = (() => {
       matchedListener.callback(message.data);
     }
 
-    addListener(action, callback) {
-      if (!this.listeners.has(action)) {
-        this.listeners.set(action, []);
-      }
-      this.listeners.get(action).push(callback);
+    addListeners() {
+      this.listeners.set('new_chat_message', this.handleNewChatMessage);
+      this.listeners.set('like_message', this.handleLikeMessage);
+      this.listeners.set('unlike_message', this.handleUnlikeMessage);
+      this.listeners.set('game_invite', this.handleGameInvite);
+      this.listeners.set('new_tournament', this.handleNewTournament);
+      this.listeners.set('new_friend', this.handleNewFriend);
+      this.listeners.set('user_online', this.handleUserOnline);
+      this.listeners.set('user_offline', this.handleUserOffline);
     }
 
-    handleNewMessage(data) {
-      // If window.location.pathname is /chat, call the receiveMessage method of the Chat class
-      // Else, add notification badge to the Chat button of the navbar
+    handleNewChatMessage(data) {
+      console.log('New chat message received:', data);
+      console.log('Current path:', window.location.pathname);
+      if (window.location.pathname === '/chat') {
+        const chat = document.querySelector('chat-component');
+        chat.receiveMessage(data);
+        // Call the receiveMessage method of the Chat class
+      } else {
+        const chatButton = document.querySelector('chat-button');
+        chatButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+      }
+    }
+
+    handleLikeMessage(data) {
+      console.log('Message liked:', data);
+      if (window.location.pathname !== '/chat') {
+        return;
+      }
+      // TODO
+    }
+
+    handleUnlikeMessage(data) {
+      console.log('Message unliked:', data);
+      if (window.location.pathname !== '/chat') {
+        return;
+      }
+      // TODO
+    }
+
+    handleGameInvite(data) {
+      console.log('Game invite received:', data);
+      const notificationButton = document.querySelector('notifications-button');
+      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+      // TODO
+    }
+
+    handleNewTournament(data) {
+      console.log('New tournament received:', data);
+      const notificationButton = document.querySelector('notifications-button');
+      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+      // TODO
+    }
+
+    handleNewFriend(data) {
+      console.log('New friend received:', data);
+      const notificationButton = document.querySelector('notifications-button');
+      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+      // TODO
+    }
+
+    handleUserOnline(data) {
+      console.log('User online:', data);
+      // TODO
+    }
+
+    handleUserOffline(data) {
+      console.log('User offline:', data);
+      // TODO
     }
   }
   return new WebSocketManager();

@@ -89,11 +89,8 @@ export class UserActionsMenu extends HTMLElement {
   template() {
     return `
     <div class="nav-link me-2" id="navbar-user-actions" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-      <div class="navbar-icon">
+      <div class="navbar-icon d-inline-block">
         <i class="bi bi-list"></i>
-        <span class="badge">
-		      <i class="bi bi-circle-fill"></i>
-        </span>
       </div>
     </div>
 
@@ -122,19 +119,6 @@ export class UserActionsMenu extends HTMLElement {
       #navbar-user-actions i {
         font-size: 40px
       }
-		  .navbar-icon {
-        position: relative;
-		    display: inline-block;
-      }
-      .badge {
-        position: absolute;
-        top: 8px;
-        right: -8px;
-        color: red;
-      }
-      .badge i {
-        font-size: 12px !important;
-      }
       .dropdown-menu {
         position: absolute;
         top: 100%;
@@ -142,7 +126,7 @@ export class UserActionsMenu extends HTMLElement {
         max-height: 75vh;
         overflow: auto;
       }
-	  </style>  
+    </style>  
     `;
   }
 }
