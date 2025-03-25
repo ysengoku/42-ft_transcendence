@@ -48,11 +48,11 @@ export class ChatUserSearchItem extends HTMLElement {
     await this.fetchChatRoom();
   }
 
-  async fetchChatRoom() {
+  async fetchChatRoom(username = this.#state.user.username) {
     const response = await apiRequest(
         'PUT',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT(this.#state.user.username),
+        API_ENDPOINTS.CHAT(username),
         null,
         false,
         true,
@@ -63,6 +63,8 @@ export class ChatUserSearchItem extends HTMLElement {
       } else if (response.status === 201) {
         this.chatList.addNewChat(response.data);
       }
+      // const event = new CustomEvent('chatItemSelected', { detail: response.data.username, bubbles: true });
+      // this.dispatchEvent(event);
     } else {
       if (response.status !== 401 && response.status !== 500) {
         console.error(response.msg);
