@@ -14,6 +14,8 @@ export class ChatMessageArea extends HTMLElement {
     totalMessagesCount: 0,
   };
 
+  #sendToggleLikeEvent = null;
+
   constructor() {
     super();
     this.navigateToProfile = this.navigateToProfile.bind(this);
@@ -33,6 +35,10 @@ export class ChatMessageArea extends HTMLElement {
     this.#state.data = data;
     console.log('ChatMessageArea data:', this.#state.data);
     this.render();
+  }
+
+  set sendToggleLikeEvent(callback) {
+    this.#sendToggleLikeEvent = callback;
   }
 
   disconnectedCallback() {
@@ -204,6 +210,7 @@ export class ChatMessageArea extends HTMLElement {
 
   toggleLikeMessage(event) {
     console.log('Toggle like message:', event.target);
+    console.log('Current chat', this.#state.data);
     const messageBubble = event.target.closest('.bubble');
     if (!messageBubble) {
       return;
@@ -213,9 +220,10 @@ export class ChatMessageArea extends HTMLElement {
     const isLiked = !messageData.is_liked;
     messageData.is_liked = isLiked;
     messageBubble.querySelector('.message-liked').innerHTML = isLiked ?
-        '<i class="bi bi-heart-fill h5"></i>' : ''
-    const customEvent = new CustomEvent('toggleLike', { detail: { messageId, isLiked }, bubbles: true });
-    this.dispatchEvent(customEvent);
+        '<i class="bi bi-heart-fill h5"></i>' : '';
+    this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, isLiked);
+    // const customEvent = new CustomEvent('toggleLike', { detail: { messageId, isLiked }, bubbles: true });
+    // this.dispatchEvent(customEvent);
   }
 
   /* ------------------------------------------------------------------------ */
