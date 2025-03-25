@@ -58,7 +58,6 @@ export class ChatUserSearchItem extends HTMLElement {
         true,
     );
     if (response.success) {
-      console.log('Chat room response:', response);
       if (response.status === 200) {
         this.chatList.restartChat(response.data);
       } else if (response.status === 201) {
@@ -109,7 +108,7 @@ export class ChatUserSearchItem extends HTMLElement {
       position: absolute;
       bottom: 0;
       right: 24%;
-      border: 1px solid var(--bs-bg-color);
+      border: 1px solid var(--bs-body-bg);
       width: 12px;
       height: 12px;
     }
