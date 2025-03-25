@@ -1,14 +1,14 @@
 
-import pytest
-from asgiref.sync import async_to_sync
-from channels.testing import WebsocketCommunicator
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AnonymousUser
-from django.test import RequestFactory, TestCase, TransactionTestCase
-
-from chat.routing import websocket_urlpatterns
-from chat.views import notifications_view
-from server.asgi import application
+# import pytest
+# from asgiref.sync import async_to_sync
+# from channels.testing import WebsocketCommunicator
+# from django.contrib.auth import get_user_model
+# from django.contrib.auth.models import AnonymousUser
+# from django.test import RequestFactory, TestCase, TransactionTestCase
+#
+# from chat.routing import websocket_urlpatterns
+# from chat.views import notifications_view
+# from server.asgi import application
 
 # User = get_user_model()
 #

@@ -11,6 +11,7 @@ fixable = ["ALL"]
 ignore = [
     ##### rules to allow again at the end
     "LOG015", # Root logger usage
+    "T201", # print found
     "ERA001", # Commented code
     # "PIE790", 
     "S105",
