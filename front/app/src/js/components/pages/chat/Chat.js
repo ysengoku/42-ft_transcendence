@@ -14,14 +14,15 @@ export class Chat extends HTMLElement {
 
   constructor() {
     super();
+
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
-    this.toggleLikeMessage = this.toggleLikeMessage.bind(this);
     this.handleWindowResize = this.handleWindowResize.bind(this);
     this.handleBackToChatList = this.handleBackToChatList.bind(this);
   }
 
   async connectedCallback() {
+    console.log('Current path:', window.location.pathname);
     this.#state.loggedInUser = auth.getStoredUser();
     const isLoggedIn = this.#state.loggedInUser ? true : false;
     if (!isLoggedIn) {
@@ -45,6 +46,7 @@ export class Chat extends HTMLElement {
     this.render();
     this.chatList.setData(chatListData, this.#state.loggedInUser.username);
     this.chatMessagesArea.setData(this.#state.currentChat);
+    this.chatMessagesArea.sendToggleLikeEvent = this.sendToggleLikeEvent;
   }
 
   disconnectedCallback() {
@@ -71,13 +73,8 @@ export class Chat extends HTMLElement {
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
     document.addEventListener('sendMessage', this.sendMessage);
-    document.addEventListener('toggleLike', this.toggleLikeMessage);
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
-
-    socketManager.addListener('message', (message) => this.receiveMessage(message));
-    socketManager.addListener('like_message', (ids) => this.handleLikedMessage(ids));
-    socketManager.addListener('unlike_message', (ids) => this.handleUnlikedMessage(ids));
   }
 
   async fetchChatList(offset = 0) {
@@ -149,60 +146,51 @@ export class Chat extends HTMLElement {
   }
 
   sendMessage(event) {
-    console.log('Send message event:', event.detail);
     const messageData = {
-      action: 'message',
+      action: 'new_message',
       data: {
         chat_id: this.#state.currentChat.chat_id,
         content: event.detail,
       },
     };
-    console.log('Message data:', messageData);
+    console.log('Sending new message to server. Data:', messageData);
     socketManager.socket.send(JSON.stringify(messageData));
     // TODO: Render temporary message (in gray) to chat message area?
     // But how to match with the server response to remove it after ?
   }
 
-  toggleLikeMessage(event) {
+  sendToggleLikeEvent(chatId, messageId, isLiked) {
     const messageData = {
-      action: event.detail.isLiked ? 'like_message' : 'unlike_message',
+      action: isLiked ? 'like_message' : 'unlike_message',
       data: {
-        chat_id: this.#state.currentChat.chat_id,
-        message_id: event.detail.messageId,
+        chat_id: chatId,
+        id: messageId,
       },
     };
-    console.log('Like message data:', messageData);
-    socketManager.socket.send(JSON.stringify(messageData));
-  }
-
-  receiveMessage(message) {
-    // Check chat_id
-    // If chat_id === current chat_id
-    // Add the new message to the current chat (at the bottom)
-    // Send read_message action to the server
-
-    // Else
-    // Look for the chat in the chat list
-    // If found, update the chat list item with unread badge and move it to the top
-    // If not found, add the chat item with unread badge to the top of the list
-
-    const newMessage = message;
-    // ----- For test --------------------------------
-    message.sender = this.#state.currentChat.username;
-    // -----------------------------------------------
-    if (message.chat_id === this.#state.currentChat.chat_id) {
-      this.#state.currentChat.messages.unshift(message);
-      // TODO: Append new message instead of updating the whole chat
-      this.chatMessagesArea.setData(this.#state.currentChat);
+    if (socketManager.socket.readyState === WebSocket.OPEN) {
+      console.log('Sending like/unlike message action to server. Data:', messageData);
+      socketManager.socket.send(JSON.stringify(messageData));
     } else {
-      this.updateChatList(message);
+      console.error('WebSocket is not open:', socketManager.socket.readyState);
     }
   }
 
-  handleLikedMessage(ids) {
-    // Find concerned Chat
+  receiveMessage(data) {
+    console.log('New message received:', data);
+    if (data.chat_id === this.#state.currentChat.chat_id) {
+      this.chatMessagesArea.renderNewMessage(data);
+    } else {
+      // Look for the chat in the chat list
+      // If found, update the chat list item with unread badge and move it to the top
+      // If not found, add the chat item with unread badge to the top of the list
+    }
+  }
 
-    // If the message is in the current chat
+  handleLikedMessage(data) {
+    if (data.chat_id !== this.#state.currentChat.chat_id) {
+      return;
+    }
+
     // Find concerned message in the Chat
     // Update is_liked field
     // If the message is in the current chat, update the message

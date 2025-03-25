@@ -11,9 +11,7 @@ export class ChatButton extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (this.button) {
-      this.button?.removeEventListener('click', this.handleClick);
-    }
+    this.button?.removeEventListener('click', this.handleClick);
   }
 
   render() {
@@ -23,15 +21,17 @@ export class ChatButton extends HTMLElement {
   }
 
   handleClick() {
+    this.querySelector('.notification-badge').classList.add('d-none');
     router.navigate('/chat');
   }
 
   template() {
     return `
-			<button class="navbar-button btn">
-				<i class="bi bi-chat"></i>
-			</button>
-		`;
+    <button class="navbar-button btn position-relative">
+      <i class="bi bi-chat"></i>
+      <span class="notification-badge d-none"></span>
+    </button>
+    `;
   }
 }
 customElements.define('chat-button', ChatButton);
