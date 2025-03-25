@@ -2,9 +2,9 @@ import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { socketManager } from '@socket';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import { getRelativeDateAndTime } from '@utils';
-import { mockChatMoreMessages } from '@mock/functions/mockChatMoreMesssages';
 
 export class ChatMessageArea extends HTMLElement {
   #state = {
@@ -14,11 +14,14 @@ export class ChatMessageArea extends HTMLElement {
     totalMessagesCount: 0,
   };
 
+  #sendToggleLikeEvent = null;
+
   constructor() {
     super();
     this.navigateToProfile = this.navigateToProfile.bind(this);
     this.blockUser = this.blockUser.bind(this);
     this.loadMoreMessages = this.loadMoreMessages.bind(this);
+    this.toggleLikeMessage = this.toggleLikeMessage.bind(this);
   }
 
   setData(data) {
@@ -32,6 +35,10 @@ export class ChatMessageArea extends HTMLElement {
     this.#state.data = data;
     console.log('ChatMessageArea data:', this.#state.data);
     this.render();
+  }
+
+  set sendToggleLikeEvent(callback) {
+    this.#sendToggleLikeEvent = callback;
   }
 
   disconnectedCallback() {
@@ -76,44 +83,12 @@ export class ChatMessageArea extends HTMLElement {
     this.blockButoon.addEventListener('click', this.blockUser);
   }
 
+  // TODO: Need to update (don't use index, should take messages array as argument)
   renderMessages() {
     const currentMessageCount = this.#state.data.messages.length;
     for (let i = this.#state.renderedMessagesCount; i < currentMessageCount; i++) {
-      const message = this.#state.data.messages[i];
-      const messageElement = document.createElement('div');
-      messageElement.innerHTML = this.messageTemplate();
-      messageElement.setAttribute('dataIndex', i);
-      const messageContent = messageElement.querySelector('.bubble');
-
-      if (message.sender === this.#state.data.username) {
-        messageElement.classList.add(
-            'left-align-message', 'd-flex', 'flex-row', 'justify-content-start',
-            'align-items-center', 'gap-3',
-        );
-        messageContent.classList.add('me-5');
-        messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
-        messageElement.querySelector('.message-content').textContent = message.content;
-        messageElement.querySelector('.message-liked').innerHTML = message.liked ?
-          '<i class="bi bi-heart-fill h5"></i>' : '';
-        // TODO: Send read_message to Server
-      } else {
-        messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
-            'align-items-center');
-        messageContent.classList.add('ms-5');
-        messageElement.querySelector('.chat-message-avatar').remove();
-        messageElement.querySelector('.message-content').textContent = message.content;
-        messageElement.querySelector('.message-liked').innerHTML = message.liked ?
-          '<i class="bi bi-heart-fill h5"></i>' : '';
-      }
-      // TODO: Replace by like_message request using message_id
-      messageContent.addEventListener('click', () => {
-        this.toggleLikeMessage(i);
-      });
-      messageElement.querySelector('.message').setAttribute('title', getRelativeDateAndTime(message.date));
-      const tooltip = new bootstrap.Tooltip(messageElement.querySelector('.message'));
-      tooltip.update();
-      this.chatMessages.prepend(messageElement);
-      this.#state.renderedMessagesCount++;
+      const message = this.messageItem(this.#state.data.messages[i]);
+      this.chatMessages.prepend(message);
     }
   }
 
@@ -126,15 +101,9 @@ export class ChatMessageArea extends HTMLElement {
         this.#state.renderedMessagesCount < this.#state.totalMessagesCount) {
         const previousHeight = this.chatMessages.scrollHeight;
 
-        // ----- TODO: Replace by apiRequest ----------------------------------
-        // const response = await mockChatMoreMessages(this.#state.data.username);
-        // this.#state.data.messages.push(...response.items);
-        // this.#state.totalMessagesCount = response.count;
-        // this.renderMessages();
-        // ----------------------------------------------------------------------
-
         const response = await apiRequest(
             'GET',
+            /* eslint-disable-next-line new-cap */
             API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
             null,
             false,
@@ -149,6 +118,64 @@ export class ChatMessageArea extends HTMLElement {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight - previousHeight;
       }
     }
+  }
+
+  renderNewMessage(data) {
+    const message = {
+      content: data.content,
+      date: data.date,
+      sender: data.sender,
+      is_read: true,
+      is_liked: false,
+      id: data.id,
+    };
+    this.#state.data.messages.unshift(message);
+    const messageElement = this.messageItem(message);
+    this.chatMessages.prepend(messageElement);
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+  }
+
+  messageItem(message) {
+    const messageElement = document.createElement('div');
+    messageElement.innerHTML = this.messageTemplate();
+    const messageContent = messageElement.querySelector('.bubble');
+    messageContent.setAttribute('message-id', message.id);
+
+    if (message.sender === this.#state.data.username) {
+      messageElement.classList.add(
+          'left-align-message', 'd-flex', 'flex-row', 'justify-content-start',
+          'align-items-center', 'gap-3',
+      );
+      messageContent.classList.add('me-5');
+      messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
+      messageElement.querySelector('.message-content').textContent = message.content;
+      messageElement.querySelector('.message-liked').innerHTML = message.liked ?
+        '<i class="bi bi-heart-fill h5"></i>' : '';
+      if (!message.is_read) {
+        const readMessage = {
+          action: 'read_message',
+          data: {
+            chat_id: this.#state.data.chat_id,
+            id: message.id,
+          },
+        };
+        socketManager.socket.send(JSON.stringify(readMessage));
+      }
+      messageElement.addEventListener('click', this.toggleLikeMessage);
+    } else {
+      messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
+          'align-items-center');
+      messageContent.classList.add('ms-5');
+      messageElement.querySelector('.chat-message-avatar').remove();
+      messageElement.querySelector('.message-content').textContent = message.content;
+      messageElement.querySelector('.message-liked').innerHTML = message.liked ?
+        '<i class="bi bi-heart-fill h5"></i>' : '';
+    }
+    messageElement.querySelector('.message').setAttribute('title', getRelativeDateAndTime(message.date));
+    const tooltip = new bootstrap.Tooltip(messageElement.querySelector('.message'));
+    tooltip.update();
+    this.#state.renderedMessagesCount++;
+    return messageElement;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -181,28 +208,22 @@ export class ChatMessageArea extends HTMLElement {
     }
   }
 
-  toggleLikeMessage(index) {
-    // this.#state.data.messages[index].is_liked = !this.#state.data.messages[index].is_liked;
-    // this.updateMessageElement(index);
-
-    if (this.#state.user.username === this.#state.data.messages[index].sender) {
+  toggleLikeMessage(event) {
+    console.log('Toggle like message:', event.target);
+    console.log('Current chat', this.#state.data);
+    const messageBubble = event.target.closest('.bubble');
+    if (!messageBubble) {
       return;
     }
-    const isLiked = !this.#state.data.messages[index].is_liked;
-    const messageId = this.#state.data.messages[index].id;
-    const customEvent = new CustomEvent('toggleLike', { detail: { messageId, isLiked }, bubbles: true });
-    this.dispatchEvent(customEvent);
-  }
-
-  updateMessageElement(index) {
-    const message = this.#state.data.messages[index];
-    const messageElement = this.querySelector(`[dataIndex='${index}'] .bubble`);
-    if (messageElement) {
-      messageElement.innerHTML = `
-        ${message.content}
-        ${message.is_liked ? '<i class="bi bi-heart-fill h5"></i>' : ''}
-      `;
-    }
+    const messageId = messageBubble.getAttribute('message-id');
+    const messageData = this.#state.data.messages.find((message) => message.id === messageId);
+    const isLiked = !messageData.is_liked;
+    messageData.is_liked = isLiked;
+    messageBubble.querySelector('.message-liked').innerHTML = isLiked ?
+        '<i class="bi bi-heart-fill h5"></i>' : '';
+    this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, isLiked);
+    // const customEvent = new CustomEvent('toggleLike', { detail: { messageId, isLiked }, bubbles: true });
+    // this.dispatchEvent(customEvent);
   }
 
   /* ------------------------------------------------------------------------ */

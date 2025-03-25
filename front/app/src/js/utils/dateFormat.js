@@ -15,15 +15,12 @@ export function getRelativeTime(time) {
   if (diff < 172800000) {
     return 'yesterday';
   }
-  if (diff < 604800000) {
-    return `${Math.floor(diff / 86400000)}days ago`;
+  if (diff < 259200000) {
+    return `${Math.floor(diff / 86400000)} days ago`;
   }
   const formattedDate = new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: false,
   }).format(date);
   return formattedDate;
 }
