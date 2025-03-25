@@ -58,6 +58,16 @@ const socketManager = (() => {
       }
       if (!message.action) {
         console.error('Missing action field:', message);
+        // ----- Test--------------------------------------
+        const testData = {
+          chat_id: '02972e57-ced9-4f6a-b394-cd627a54c3f0',
+          id: 1,
+          content: 'Hello, how are you?',
+          date: new Date().toISOString(),
+          sender: 'pedro',
+        };
+        this.handleNewChatMessage(testData);
+        // ------------------------------------------------
         return;
       }
       const matchedListener = this.listeners.get(message.action);
@@ -80,12 +90,11 @@ const socketManager = (() => {
     }
 
     handleNewChatMessage(data) {
-      console.log('New chat message received:', data);
+      console.log('New chat message:', data);
       console.log('Current path:', window.location.pathname);
       if (window.location.pathname === '/chat') {
-        const chat = document.querySelector('chat-component');
-        chat.receiveMessage(data);
-        // Call the receiveMessage method of the Chat class
+        const customEvent = new CustomEvent('newChatMessage', { detail: data, bubbles: true });
+        document.dispatchEvent(customEvent);
       } else {
         const chatButton = document.querySelector('chat-button');
         chatButton?.querySelector('.notification-badge')?.classList.remove('d-none');
