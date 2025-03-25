@@ -54,7 +54,7 @@ class UserEventsConsumer(WebsocketConsumer):
         action = text_data_json.get("action")
 
         match action:
-            case "message":
+            case "new_message":
                 self.handle_message(text_data_json)
             case "notification":
                 self.handle_notification(text_data_json)
@@ -80,8 +80,17 @@ class UserEventsConsumer(WebsocketConsumer):
                 print(f"Unknown action : {action}")
 
     def handle_message(self, data):
-        message, chat_id = data["message"], data["chat_id"]
-
+        # print(data)
+        # message, chat_id = data.get("content"), data.get("chat_id")
+        # print(chat_id)
+        # print(message)
+        # action = data.get('action')
+        # if action == 'new_message':
+        message_data = data.get('data', {})
+        message = message_data.get('content')
+        chat_id = message_data.get('chat_id')
+        print(f"Chat ID: {chat_id}")
+        print(f"Message: {message}")
         # security check: chat should exist
         chat = Chat.objects.filter(id=chat_id).first()
         if not chat:
