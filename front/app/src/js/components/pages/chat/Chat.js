@@ -17,12 +17,12 @@ export class Chat extends HTMLElement {
 
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
+    this.receiveMessage = this.receiveMessage.bind(this);
     this.handleWindowResize = this.handleWindowResize.bind(this);
     this.handleBackToChatList = this.handleBackToChatList.bind(this);
   }
 
   async connectedCallback() {
-    console.log('Current path:', window.location.pathname);
     this.#state.loggedInUser = auth.getStoredUser();
     const isLoggedIn = this.#state.loggedInUser ? true : false;
     if (!isLoggedIn) {
@@ -44,7 +44,7 @@ export class Chat extends HTMLElement {
       this.#state.currentChat = chatData;
     }
     this.render();
-    this.chatList.setData(chatListData, this.#state.loggedInUser.username);
+    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
     this.chatMessagesArea.setData(this.#state.currentChat);
     this.chatMessagesArea.sendToggleLikeEvent = this.sendToggleLikeEvent;
   }
@@ -52,9 +52,15 @@ export class Chat extends HTMLElement {
   disconnectedCallback() {
     document.removeEventListener('chatItemSelected', this.handleChatItemSelected);
     document.removeEventListener('sendMessage', this.sendMessage);
+    // document.removeEventListener('newChatMessage', this.receiveMessage);
     document.removeEventListener('toggleLike', this.toggleLikeMessage);
     window.removeEventListener('resize', this.handleWindowResize);
     this.backButton?.removeEventListener('click', this.handleBackToChatList);
+  }
+
+  getCurrentChatUsername() {
+    console.log('Current chat username:', this.#state.currentChatUsername);
+    return this.#state.currentChatUsername;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -73,6 +79,7 @@ export class Chat extends HTMLElement {
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
     document.addEventListener('sendMessage', this.sendMessage);
+    document.addEventListener('newChatMessage', this.receiveMessage);
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
   }
@@ -116,8 +123,8 @@ export class Chat extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   async handleChatItemSelected(event) {
+    console.log('Chat item selected:', event.detail);
     if (!event.detail.messages) {
-      // const chatData = await mockChatMessagesData(event.detail);
       this.#state.currentChatUsername = event.detail;
       const chatData = await this.fetchChatData();
       // TODO: Error handling
@@ -175,14 +182,13 @@ export class Chat extends HTMLElement {
     }
   }
 
-  receiveMessage(data) {
-    console.log('New message received:', data);
-    if (data.chat_id === this.#state.currentChat.chat_id) {
-      this.chatMessagesArea.renderNewMessage(data);
+  async receiveMessage(event) {
+    console.log('New message received:', event.detail);
+    // debugger;
+    if (event.detail.chat_id === this.#state.currentChat.chat_id) {
+      this.chatMessagesArea.renderNewMessage(event.detail);
     } else {
-      // Look for the chat in the chat list
-      // If found, update the chat list item with unread badge and move it to the top
-      // If not found, add the chat item with unread badge to the top of the list
+      await this.chatList.updateListWithIncomingMessage(event.detail);
     }
   }
 
