@@ -14,9 +14,9 @@ export class Chat extends HTMLElement {
 
   constructor() {
     super();
+
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
-    this.toggleLikeMessage = this.toggleLikeMessage.bind(this);
     this.handleWindowResize = this.handleWindowResize.bind(this);
     this.handleBackToChatList = this.handleBackToChatList.bind(this);
   }
@@ -46,6 +46,7 @@ export class Chat extends HTMLElement {
     this.render();
     this.chatList.setData(chatListData, this.#state.loggedInUser.username);
     this.chatMessagesArea.setData(this.#state.currentChat);
+    this.chatMessagesArea.sendToggleLikeEvent = this.sendToggleLikeEvent;
   }
 
   disconnectedCallback() {
@@ -72,7 +73,6 @@ export class Chat extends HTMLElement {
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
     document.addEventListener('sendMessage', this.sendMessage);
-    document.addEventListener('toggleLike', this.toggleLikeMessage);
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
   }
@@ -159,16 +159,20 @@ export class Chat extends HTMLElement {
     // But how to match with the server response to remove it after ?
   }
 
-  toggleLikeMessage(event) {
+  sendToggleLikeEvent(chatId, messageId, isLiked) {
     const messageData = {
-      action: event.detail.isLiked ? 'like_message' : 'unlike_message',
+      action: isLiked ? 'like_message' : 'unlike_message',
       data: {
-        chat_id: this.#state.currentChat.chat_id,
-        message_id: event.detail.messageId,
+        chat_id: chatId,
+        message_id: messageId,
       },
     };
-    console.log('Like message data:', messageData);
-    socketManager.socket.send(JSON.stringify(messageData));
+    if (socketManager.socket.readyState === WebSocket.OPEN) {
+      console.log('Sending like/unlike message action to server. Data:', messageData);
+      socketManager.socket.send(JSON.stringify(messageData));
+    } else {
+      console.error('WebSocket is not open:', socketManager.socket.readyState);
+    }
   }
 
   receiveMessage(data) {
