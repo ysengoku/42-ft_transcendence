@@ -10,10 +10,8 @@ select = ["ALL"]
 fixable = ["ALL"]
 ignore = [
     ##### rules to allow again at the end
-    "LOG015", # Root logger usage
     "T201", # print found
-    "ERA001", # Commented code
-    # "PIE790", 
+    #"ERA001", # Commented code
     "S105",
     #### modules
     "ANN",  # obligatory annotations
