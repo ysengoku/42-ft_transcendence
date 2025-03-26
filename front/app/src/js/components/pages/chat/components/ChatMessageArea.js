@@ -1,6 +1,5 @@
 import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
-import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
@@ -9,6 +8,7 @@ import { getRelativeDateAndTime } from '@utils';
 export class ChatMessageArea extends HTMLElement {
   #state = {
     user: null,
+    loggedInUsername: '',
     data: null,
     renderedMessagesCount: 0,
     totalMessagesCount: 0,
@@ -20,19 +20,18 @@ export class ChatMessageArea extends HTMLElement {
     super();
     this.navigateToProfile = this.navigateToProfile.bind(this);
     this.blockUser = this.blockUser.bind(this);
+    this.unblockUser = this.unblockUser.bind(this);
     this.loadMoreMessages = this.loadMoreMessages.bind(this);
     this.toggleLikeMessage = this.toggleLikeMessage.bind(this);
   }
 
-  setData(data) {
-    if (this.#state.user === null) {
-      this.#state.user = auth.getStoredUser();
-    }
+  setData(data, loggedInUsername) {
     if (!data) {
       return;
     }
     this.#state.renderedMessagesCount = 0;
     this.#state.data = data;
+    this.#state.loggedInUsername = loggedInUsername;
     console.log('ChatMessageArea data:', this.#state.data);
     this.render();
   }
@@ -43,7 +42,9 @@ export class ChatMessageArea extends HTMLElement {
 
   disconnectedCallback() {
     this.header?.removeEventListener('click', this.navigateToProfile);
-    this.blockButoon?.removeEventListener('click', this.blockUser);
+    this.#state.data.is_blocked_user ?
+      this.blockButoon?.removeEventListener('click', this.unblockUser) :
+      this.blockButoon?.removeEventListener('click', this.blockUser);
     this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
     this.#state.data.messages.forEach = (message, index) => {
       message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
@@ -63,14 +64,17 @@ export class ChatMessageArea extends HTMLElement {
     this.headerUsername = this.querySelector('#chat-header-username');
     this.headerOnlineStatusIndicator = this.querySelector('#chat-header-online-status-indicator');
     this.headerOnlineStatus = this.querySelector('#chat-header-online-status');
+    this.invitePlayButton = this.querySelector('#chat-invite-play-button');
     this.blockButoon = this.querySelector('#chat-block-user-button');
     this.chatMessages = this.querySelector('#chat-messages');
+    this.messageInput = this.querySelector('#chat-message-input-wrapper');
 
     this.#state.data.avatar ? this.headerAvatar.src = this.#state.data.avatar : this.headerAvatar.src = defaultAvatar;
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
     this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.is_online);
     this.headerOnlineStatus.textContent = this.#state.data.is_online ? 'online' : 'offline';
+    this.header.addEventListener('click', this.navigateToProfile);
 
     this.chatMessages.innerHTML = '';
     if (this.#state.data.messages.length > 0) {
@@ -79,11 +83,22 @@ export class ChatMessageArea extends HTMLElement {
       this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
     }
 
-    this.header.addEventListener('click', this.navigateToProfile);
-    this.blockButoon.addEventListener('click', this.blockUser);
+    if (this.#state.data.is_blocked_user) {
+      this.messageInput.classList.add('d-none');
+      this.invitePlayButton.classList.add('d-none');
+      this.blockButoon.textContent = 'Unblock user';
+      this.blockButoon.addEventListener('click', this.unblockUser);
+    } else {
+      this.messageInput.classList.remove('d-none');
+      this.blockButoon.textContent = 'Block user';
+      this.blockButoon.addEventListener('click', this.blockUser);
+    }
   }
 
   renderMessages() {
+    if (this.#state.data.is_blocked_user) {
+      return;
+    }
     const currentMessageCount = this.#state.data.messages.length;
     for (let i = this.#state.renderedMessagesCount; i < currentMessageCount; i++) {
       const message = this.messageItem(this.#state.data.messages[i]);
@@ -191,7 +206,7 @@ export class ChatMessageArea extends HTMLElement {
     const response = await apiRequest(
         'POST',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.user.username),
+        API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.loggedInUsername),
         request,
         false,
         true,
@@ -202,8 +217,31 @@ export class ChatMessageArea extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
       // TODO: Update chat list and current chat
       console.log('User blocked:', this.#state.data.username);
+      this.#state.data.is_blocked_user = true;
+      this.render();
     } else {
-      console.error('Error blocking user:', response);
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
+    }
+  }
+
+  async unblockUser() {
+    console.log('Loggedin user:', this.#state.loggedInUsername);
+    const response = await apiRequest(
+        'DELETE',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.loggedInUsername, this.#state.data.username),
+        null,
+        false,
+        true,
+    );
+    const successMessage = 'User unblocked successfully.';
+    const errorMessage = 'Failed to unblock user. Please try again later.';
+    if (response.success) {
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
+      this.#state.data.is_blocked_user = false;
+      this.render();
+    } else {
+      console.error('Error unblocking:', response);
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
     }
   }
@@ -252,7 +290,7 @@ export class ChatMessageArea extends HTMLElement {
 
       <div class="align-self-end">
         <button class="btn" id="chat-invite-play-button">Invite to play</button>
-        <button class="btn" id="chat-block-user-button">Block</button>
+        <button class="btn" id="chat-block-user-button"></button>
       </div>
 
       </div>
@@ -261,7 +299,7 @@ export class ChatMessageArea extends HTMLElement {
       <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
 
       <!-- Input -->
-      <div>
+      <div id="chat-message-input-wrapper">
         <chat-message-input></chat-message-input>
       </div>
     </div>

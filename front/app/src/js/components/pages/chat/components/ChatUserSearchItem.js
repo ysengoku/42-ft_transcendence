@@ -59,6 +59,7 @@ export class ChatUserSearchItem extends HTMLElement {
     );
     if (response.success) {
       if (response.status === 200) {
+        debugger;
         this.chatList.restartChat(response.data);
       } else if (response.status === 201) {
         this.chatList.addNewChat(response.data);
