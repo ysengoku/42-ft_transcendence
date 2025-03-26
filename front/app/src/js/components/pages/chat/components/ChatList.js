@@ -55,7 +55,7 @@ export class ChatList extends HTMLElement {
   renderListItems(index = 0) {
     for (let i = index; i < this.#state.items.length; i++) {
       const listItem = document.createElement('chat-list-item-component');
-      listItem.setData(this.#state.items[i]);
+      listItem.setData(this.#state.items[i], this.#state.loggedInUsername);
       if (this.#state.items[i].username === this.#getCurrentChatUsername()) {
         listItem.querySelector('.chat-list-item').classList.add('active');
       }
@@ -66,7 +66,7 @@ export class ChatList extends HTMLElement {
 
   prependNewListItem(newItemData) {
     const listItem = document.createElement('chat-list-item-component');
-    listItem.setData(newItemData);
+    listItem.setData(newItemData, this.#state.loggedInUsername);
     listItem.querySelector('.chat-list-item').classList.add('active');
     const chatListItems = document.querySelectorAll('.chat-list-item');
     chatListItems.forEach((item) => {
