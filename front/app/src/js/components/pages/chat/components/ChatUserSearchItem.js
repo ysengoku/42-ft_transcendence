@@ -48,22 +48,23 @@ export class ChatUserSearchItem extends HTMLElement {
     await this.fetchChatRoom();
   }
 
-  async fetchChatRoom() {
+  async fetchChatRoom(username = this.#state.user.username) {
     const response = await apiRequest(
         'PUT',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT(this.#state.user.username),
+        API_ENDPOINTS.CHAT(username),
         null,
         false,
         true,
     );
     if (response.success) {
-      console.log('Chat room response:', response);
       if (response.status === 200) {
         this.chatList.restartChat(response.data);
       } else if (response.status === 201) {
         this.chatList.addNewChat(response.data);
       }
+      // const event = new CustomEvent('chatItemSelected', { detail: response.data.username, bubbles: true });
+      // this.dispatchEvent(event);
     } else {
       if (response.status !== 401 && response.status !== 500) {
         console.error(response.msg);
@@ -109,7 +110,7 @@ export class ChatUserSearchItem extends HTMLElement {
       position: absolute;
       bottom: 0;
       right: 24%;
-      border: 1px solid var(--bs-bg-color);
+      border: 1px solid var(--bs-body-bg);
       width: 12px;
       height: 12px;
     }
