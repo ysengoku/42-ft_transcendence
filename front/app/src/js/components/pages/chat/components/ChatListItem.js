@@ -5,6 +5,7 @@ export class ChatListItem extends HTMLElement {
   #state = {
     data: '',
     itemCount: 0,
+    loggedInUsername: '',
   };
 
   constructor() {
@@ -13,8 +14,9 @@ export class ChatListItem extends HTMLElement {
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
   }
 
-  setData(data) {
+  setData(data, loggedInUsername) {
     this.#state.data = data;
+    this.#state.loggedInUsername = loggedInUsername;
     this.render();
   }
 
@@ -36,7 +38,10 @@ export class ChatListItem extends HTMLElement {
     this.unreadMessages = this.querySelector('.chat-list-item-unread-message');
     if (this.#state.data.last_message) {
       this.lastMessageTime.textContent = getRelativeTime(this.#state.data.last_message.date);
-      this.lastMessage.textContent = this.#state.data.last_message.content;
+      let content = this.#state.data.last_message.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ?
+        'You: ' : this.#state.data.nickname + ': ';
+      content += this.#state.data.last_message.content;
+      this.lastMessage.textContent = content;
       if (this.unreadMessages) {
         this.unreadMessages.textContent =
           this.#state.data.unread_messages_count > 9 ? '9+' : this.#state.data.unread_messages_count;
@@ -59,7 +64,7 @@ export class ChatListItem extends HTMLElement {
     if (circleNumber) {
       circleNumber.remove();
     }
-    const chatListItems = document.querySelectorAll('.list-group-item');
+    const chatListItems = document.querySelectorAll('.chat-list-item');
     chatListItems.forEach((item) => {
       if (item !== this.listItem) {
         item.classList.remove('active');
@@ -111,12 +116,15 @@ export class ChatListItem extends HTMLElement {
       .list-group-item.active {
         background-color: var(--pm-primary-500) !important;
         border: none;
+        .chat-list-status-indicator {
+          border-color: var(--pm-primary-500)
+        }
       }
       .chat-list-status-indicator {
         position: absolute;
         bottom: 0;
         right: -2px;
-        border: 1px solid var(--bs-bg-color);
+        border: 1px solid var(--bs-body-bg);
       }
       .circle-number {
         background-color: red;
@@ -131,6 +139,7 @@ export class ChatListItem extends HTMLElement {
         inline-height: 1;
        }
       .chat-list-item-last-message {
+        color: var(--bs-text-light);
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;

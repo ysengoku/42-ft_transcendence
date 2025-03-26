@@ -9,6 +9,8 @@ export class ChatList extends HTMLElement {
     items: [],
   };
 
+  #getCurrentChatUsername = null;
+
   constructor() {
     super();
     this.chatComponent = document.querySelector('chat-page');
@@ -17,10 +19,11 @@ export class ChatList extends HTMLElement {
     this.loadMoreItems = this.loadMoreItems.bind(this);
   }
 
-  setData(data, username) {
+  setData(data, username, getCurrentChatUsername) {
     this.#state.loggedInUsername = username;
     this.#state.items = data.items;
     this.#state.totalItemCount = data.count;
+    this.#getCurrentChatUsername = getCurrentChatUsername;
     this.render();
   }
 
@@ -29,6 +32,9 @@ export class ChatList extends HTMLElement {
     this.listContainer?.removeEventListener('scroll', this.loadMoreItems);
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*     Render                                                               */
+  /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template();
 
@@ -42,11 +48,6 @@ export class ChatList extends HTMLElement {
     if (this.#state.totalItemCount > 0) {
       this.list.innerHTML = '';
       this.renderListItems();
-      // this.#state.items.forEach((chat) => {
-      //   const listItem = document.createElement('chat-list-item-component');
-      //   listItem.setData(chat);
-      //   this.list.appendChild(listItem);
-      // });
     }
     this.listContainer.addEventListener('scrollend', this.loadMoreItems);
   }
@@ -54,14 +55,38 @@ export class ChatList extends HTMLElement {
   renderListItems(index = 0) {
     for (let i = index; i < this.#state.items.length; i++) {
       const listItem = document.createElement('chat-list-item-component');
-      listItem.setData(this.#state.items[i]);
+      listItem.setData(this.#state.items[i], this.#state.loggedInUsername);
+      if (this.#state.items[i].username === this.#getCurrentChatUsername()) {
+        listItem.querySelector('.chat-list-item').classList.add('active');
+      }
       this.list.appendChild(listItem);
       ++this.#state.currentItemCount;
     }
   }
 
-  // TODO
-  addnewListItemToTop() {
+  prependNewListItem(newItemData) {
+    const listItem = document.createElement('chat-list-item-component');
+    listItem.setData(newItemData, this.#state.loggedInUsername);
+    listItem.querySelector('.chat-list-item').classList.add('active');
+    const chatListItems = document.querySelectorAll('.chat-list-item');
+    chatListItems.forEach((item) => {
+      if (item !== listItem) {
+        item.classList.remove('active');
+      }
+    });
+    this.list.prepend(listItem);
+  }
+
+  async refreshList() {
+    const data = await this.chatComponent.fetchChatList();
+    if (!data) {
+      return;
+    }
+    this.#state.items = data.items;
+    this.#state.items[0].unread_messages_count = 0;
+    this.#state.currentItemCount = 0;
+    this.#state.totalItemCount = data.count;
+    this.render();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -69,7 +94,14 @@ export class ChatList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   toggleUserSearchBar() {
     const userSearch = document.getElementById('chat-user-search');
+    debugger;
     userSearch?.classList.toggle('d-none');
+    debugger;
+  }
+
+  hideUserSearchBar() {
+    const userSearch = document.getElementById('chat-user-search');
+    userSearch?.classList.add('d-none');
   }
 
   async loadMoreItems(event) {
@@ -102,8 +134,9 @@ export class ChatList extends HTMLElement {
     };
     this.#state.items.unshift(chatData);
     this.#state.totalItemCount += 1;
-    this.render(); // TODO: Will be replaced by addnewListItemToTop
-    const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
+    this.prependNewListItem(chatData);
+    this.hideUserSearchBar();
+    const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
     this.dispatchEvent(event);
   }
 
@@ -112,15 +145,36 @@ export class ChatList extends HTMLElement {
     const index = this.#state.items.findIndex((chat) => chat.username === data.username);
     console.log('Restart chat:', index);
     if (index !== -1) {
+      const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
+      this.dispatchEvent(event);
       const tmp = this.#state.items[index];
       tmp.unread_messages_count = 0;
       this.#state.items.splice(index, 1);
       this.#state.items.unshift(tmp);
       this.render();
-      const event = new CustomEvent('chatItemSelected', { detail: data, bubbles: true });
-      this.dispatchEvent(event);
     } else {
       this.addNewChat(data);
+    }
+  }
+
+  async updateListWithIncomingMessage(data) {
+    console.log('Received new message. Update Chat list:', data);
+    const index = this.#state.items.findIndex((chat) => chat.chat_id === data.chat_id);
+    if (index !== -1) {
+      const tmp = this.#state.items[index];
+      tmp.unread_messages_count += 1;
+      tmp.last_message = {
+        content: data.content,
+        date: data.date,
+        sender: data.sender,
+        is_read: false,
+        is_liked: false,
+      };
+      this.#state.items.splice(index, 1);
+      this.#state.items.unshift(tmp);
+      this.render();
+    } else {
+      await this.refreshList();
     }
   }
 
