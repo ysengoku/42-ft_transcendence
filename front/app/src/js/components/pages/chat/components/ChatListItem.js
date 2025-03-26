@@ -45,9 +45,17 @@ export class ChatListItem extends HTMLElement {
     this.listItem = this.querySelector('.chat-list-item');
     this.listItem.setAttribute('id', `chat-item-${this.#state.data.username}`);
     this.addEventListener('click', this.handleChatItemSelected);
+    if (this.#state.data.is_blocked_user) {
+      this.listItem.classList.add('blocked');
+    }
   }
 
   renderLastMessage() {
+    if (this.#state.data.is_blocked_user) {
+      this.lastMessage.textContent = 'You have blocked this user';
+      this.unreadMessages.classList.add('d-none');
+      return;
+    }
     this.lastMessageTime.textContent = getRelativeTime(this.#state.data.last_message.date);
     let content = this.#state.data.last_message.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ?
       'You: ' : this.#state.data.nickname + ': ';
@@ -145,12 +153,14 @@ export class ChatListItem extends HTMLElement {
         inline-height: 1;
        }
       .chat-list-item-last-message {
-        color: var(--bs-text-light);
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
+      }
+      .blocked {
+        filter: opacity(0.6);
       }
     </style>
     `;
