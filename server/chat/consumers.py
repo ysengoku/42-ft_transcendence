@@ -54,7 +54,7 @@ class UserEventsConsumer(WebsocketConsumer):
         action = text_data_json.get("action")
 
         match action:
-            case "message":
+            case "new_message":
                 self.handle_message(text_data_json)
             case "notification":
                 self.handle_notification(text_data_json)
