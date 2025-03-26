@@ -94,7 +94,14 @@ export class ChatList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   toggleUserSearchBar() {
     const userSearch = document.getElementById('chat-user-search');
+    debugger;
     userSearch?.classList.toggle('d-none');
+    debugger;
+  }
+
+  hideUserSearchBar() {
+    const userSearch = document.getElementById('chat-user-search');
+    userSearch?.classList.add('d-none');
   }
 
   async loadMoreItems(event) {
@@ -128,7 +135,7 @@ export class ChatList extends HTMLElement {
     this.#state.items.unshift(chatData);
     this.#state.totalItemCount += 1;
     this.prependNewListItem(chatData);
-    this.toggleUserSearchBar();
+    this.hideUserSearchBar();
     const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
     this.dispatchEvent(event);
   }
@@ -147,8 +154,6 @@ export class ChatList extends HTMLElement {
       this.render();
     } else {
       this.addNewChat(data);
-      const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
-      this.dispatchEvent(event);
     }
   }
 
