@@ -49,7 +49,7 @@ export class Chat extends HTMLElement {
         return;
       } else {
         this.#state.currentChat = chatData.data;
-        this.chatMessagesArea.setData(this.#state.currentChat);
+        this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
         if (this.#queryParam && chatData.status === 201) {
           this.chatList.addNewChat(chatData.data);
         } else if (this.#queryParam && chatData.status === 200) {
@@ -146,7 +146,7 @@ export class Chat extends HTMLElement {
     } else {
       this.#state.currentChat = event.detail;
     }
-    this.chatMessagesArea.setData(this.#state.currentChat);
+    this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
 
     if (isMobile()) {
       this.chatListContainer.classList.add('d-none');
