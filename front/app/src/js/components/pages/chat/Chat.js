@@ -35,7 +35,7 @@ export class Chat extends HTMLElement {
     if (!chatListData) {
       return;
     }
-    
+
     if (chatListData.count > 0) {
       if (!this.#queryParam) {
         this.#state.currentChatUsername = chatListData.items[0].username;
@@ -61,13 +61,13 @@ export class Chat extends HTMLElement {
   }
 
   async setQueryParam(param) {
-    this.#queryParam = param.get('username');;
+    this.#queryParam = param.get('username');
   }
 
   disconnectedCallback() {
     document.removeEventListener('chatItemSelected', this.handleChatItemSelected);
     document.removeEventListener('sendMessage', this.sendMessage);
-    // document.removeEventListener('newChatMessage', this.receiveMessage);
+    document.removeEventListener('newChatMessage', this.receiveMessage);
     document.removeEventListener('toggleLike', this.toggleLikeMessage);
     window.removeEventListener('resize', this.handleWindowResize);
     this.backButton?.removeEventListener('click', this.handleBackToChatList);
@@ -198,7 +198,6 @@ export class Chat extends HTMLElement {
 
   async receiveMessage(event) {
     console.log('New message received:', event.detail);
-    // debugger;
     if (event.detail.chat_id === this.#state.currentChat.chat_id) {
       this.chatMessagesArea.renderNewMessage(event.detail);
     } else {
@@ -213,10 +212,13 @@ export class Chat extends HTMLElement {
 
     // Find concerned message in the Chat
     // Update is_liked field
-    // If the message is in the current chat, update the message
+    // Update the message
   }
 
-  handleUnlikedMessage(ids) {
+  handleUnlikedMessage(data) {
+    if (data.chat_id !== this.#state.currentChat.chat_id) {
+      return;
+    }
   }
 
   /* ------------------------------------------------------------------------ */
