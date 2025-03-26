@@ -142,8 +142,8 @@ export class ChatList extends HTMLElement {
   }
 
   restartChat(data) {
-    console.log('Restart chat:', index);
     const index = this.#state.items.findIndex((chat) => chat.username === data.username);
+    console.log('Restart chat:', index);
     if (index !== -1) {
       const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
       this.dispatchEvent(event);
