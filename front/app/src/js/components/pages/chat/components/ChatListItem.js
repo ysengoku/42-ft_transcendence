@@ -37,21 +37,28 @@ export class ChatListItem extends HTMLElement {
     this.lastMessage = this.querySelector('.chat-list-item-last-message');
     this.unreadMessages = this.querySelector('.chat-list-item-unread-message');
     if (this.#state.data.last_message) {
-      this.lastMessageTime.textContent = getRelativeTime(this.#state.data.last_message.date);
-      let content = this.#state.data.last_message.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ?
-        'You: ' : this.#state.data.nickname + ': ';
-      content += this.#state.data.last_message.content;
-      this.lastMessage.textContent = content;
-      if (this.unreadMessages) {
-        this.unreadMessages.textContent =
-          this.#state.data.unread_messages_count > 9 ? '9+' : this.#state.data.unread_messages_count;
-      }
+      this.renderLastMessage();
     } else {
       this.lastMessage.textContent = 'No messages yet';
     }
 
     this.listItem = this.querySelector('.chat-list-item');
+    this.listItem.setAttribute('id', `chat-item-${this.#state.data.username}`);
     this.addEventListener('click', this.handleChatItemSelected);
+  }
+
+  renderLastMessage() {
+    this.lastMessageTime.textContent = getRelativeTime(this.#state.data.last_message.date);
+    let content = this.#state.data.last_message.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ?
+      'You: ' : this.#state.data.nickname + ': ';
+    content += this.#state.data.last_message.content;
+    this.lastMessage.textContent = content;
+    if (this.#state.data.unread_messages_count === 0) {
+      this.unreadMessages.classList.add('d-none');
+    } else {
+      this.unreadMessages.textContent =
+        this.#state.data.unread_messages_count > 9 ? '9+' : this.#state.data.unread_messages_count;
+    }
   }
 
   /* ------------------------------------------------------------------------ */
@@ -97,8 +104,7 @@ export class ChatListItem extends HTMLElement {
         </div>
 
         <div class="d-inline-block">
-          ${ this.#state.data.unread_messages_count > 0 ?
-            `<div class="chat-list-item-unread-message circle-number"></div>` : '' }
+          <div class="chat-list-item-unread-message circle-number"></div>
         </div>
       </div>
     </li>
@@ -117,14 +123,14 @@ export class ChatListItem extends HTMLElement {
         background-color: var(--pm-primary-500) !important;
         border: none;
         .chat-list-status-indicator {
-          border-color: var(--pm-primary-500)
+          outline: 1px solid var(--pm-primary-500) !important;
         }
       }
       .chat-list-status-indicator {
         position: absolute;
         bottom: 0;
         right: -2px;
-        border: 1px solid var(--bs-body-bg);
+        outline: 2px solid rgba(var(--bs-body-bg-rgb), 0.4) !important;
       }
       .circle-number {
         background-color: red;
