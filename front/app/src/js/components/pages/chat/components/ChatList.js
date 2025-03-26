@@ -1,5 +1,6 @@
 import './ChatUserSearch.js';
 import './ChatListItem.js';
+import { getRelativeTime } from '@utils';
 
 export class ChatList extends HTMLElement {
   #state = {
@@ -141,9 +142,8 @@ export class ChatList extends HTMLElement {
   }
 
   restartChat(data) {
-    console.log('Restart chat / items before adding new one:', this.#state.items);
-    const index = this.#state.items.findIndex((chat) => chat.username === data.username);
     console.log('Restart chat:', index);
+    const index = this.#state.items.findIndex((chat) => chat.username === data.username);
     if (index !== -1) {
       const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
       this.dispatchEvent(event);
@@ -159,10 +159,35 @@ export class ChatList extends HTMLElement {
 
   async updateListWithIncomingMessage(data) {
     console.log('Received new message. Update Chat list:', data);
+    const currentChatUsername = this.#getCurrentChatUsername();
     const index = this.#state.items.findIndex((chat) => chat.chat_id === data.chat_id);
-    if (index !== -1) {
+    if (this.#state.items[index].username === currentChatUsername) {
+      this.#state.items[index].unread_messages_count = 0;
+    } else {
+      this.#state.items[index].unread_messages_count += 1;
+    }
+    if (index === 0) {
+      this.#state.items[0].last_message = data;
+      const component = document.getElementById(`chat-item-${this.#state.items[0].username}`);
+      const lastMessageTime = component.querySelector('.chat-list-item-last-message-time');
+      const lastMessageContent = component.querySelector('.chat-list-item-last-message');
+      const unreadMessages = component.querySelector('.chat-list-item-unread-message');
+
+      lastMessageTime.textContent = getRelativeTime(data.date);
+      let content =
+        data.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ?
+        'You: ' : this.#state.data.nickname + ': ';
+      content += data.content;
+      lastMessageContent.textContent = content;
+      if (this.#state.items[0].unread_messages_count === 0) {
+        unreadMessages.classList.add('d-none');
+      } else {
+        unreadMessages.classList.remove('d-none');
+        unreadMessages.textContent =
+        this.#state.items[0].unread_messages_count > 9 ? '9+' : this.#state.items[0].unread_messages_count;
+      }
+    } else if (index !== -1) {
       const tmp = this.#state.items[index];
-      tmp.unread_messages_count += 1;
       tmp.last_message = {
         content: data.content,
         date: data.date,
