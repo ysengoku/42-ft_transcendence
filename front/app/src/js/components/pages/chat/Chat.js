@@ -200,6 +200,7 @@ export class Chat extends HTMLElement {
     console.log('New message received:', event.detail);
     if (event.detail.chat_id === this.#state.currentChat.chat_id) {
       this.chatMessagesArea.renderNewMessage(event.detail);
+      await this.chatList.updateListWithIncomingMessage(event.detail);
     } else {
       await this.chatList.updateListWithIncomingMessage(event.detail);
     }
