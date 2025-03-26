@@ -83,7 +83,6 @@ export class ChatMessageArea extends HTMLElement {
     this.blockButoon.addEventListener('click', this.blockUser);
   }
 
-  // TODO: Need to update (don't use index, should take messages array as argument)
   renderMessages() {
     const currentMessageCount = this.#state.data.messages.length;
     for (let i = this.#state.renderedMessagesCount; i < currentMessageCount; i++) {
@@ -131,7 +130,7 @@ export class ChatMessageArea extends HTMLElement {
     };
     this.#state.data.messages.unshift(message);
     const messageElement = this.messageItem(message);
-    this.chatMessages.prepend(messageElement);
+    this.chatMessages.appendChild(messageElement);
     this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
   }
 
@@ -151,16 +150,17 @@ export class ChatMessageArea extends HTMLElement {
       messageElement.querySelector('.message-content').textContent = message.content;
       messageElement.querySelector('.message-liked').innerHTML = message.liked ?
         '<i class="bi bi-heart-fill h5"></i>' : '';
-      if (!message.is_read) {
-        const readMessage = {
-          action: 'read_message',
-          data: {
-            chat_id: this.#state.data.chat_id,
-            id: message.id,
-          },
-        };
-        socketManager.socket.send(JSON.stringify(readMessage));
-      }
+      // Temporary desactivated, waiting bug fix in server
+      // if (!message.is_read) {
+      //   const readMessage = {
+      //     action: 'read_message',
+      //     data: {
+      //       chat_id: this.#state.data.chat_id,
+      //       id: message.id,
+      //     },
+      //   };
+      // socketManager.socket.send(JSON.stringify(readMessage));
+      // }
       messageElement.addEventListener('click', this.toggleLikeMessage);
     } else {
       messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
@@ -222,8 +222,6 @@ export class ChatMessageArea extends HTMLElement {
     messageBubble.querySelector('.message-liked').innerHTML = isLiked ?
         '<i class="bi bi-heart-fill h5"></i>' : '';
     this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, isLiked);
-    // const customEvent = new CustomEvent('toggleLike', { detail: { messageId, isLiked }, bubbles: true });
-    // this.dispatchEvent(customEvent);
   }
 
   /* ------------------------------------------------------------------------ */
