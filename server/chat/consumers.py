@@ -107,7 +107,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     {
                         "action": "new_message",
                         "data": {
-                            "chat_id": str(ChatMessage.objects.latest("chat_id").pk),
+                            "chat_id": str(chat.id),
                             "id": str(ChatMessage.objects.latest("id").pk),
                             "content": message,
                             "date": ChatMessage.objects.latest("id").date.isoformat(),
