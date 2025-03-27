@@ -170,7 +170,6 @@ class UserEventsConsumer(WebsocketConsumer):
                             "data": {
                                 "id": message_id,
                                 "chat_id": chat_id,
-                                "sender": sender,
                             },
                         },
                     ),
@@ -205,7 +204,6 @@ class UserEventsConsumer(WebsocketConsumer):
                             "data": {
                                 "id": message_id,
                                 "chat_id": chat_id,
-                                "sender": sender,
                             },
                         },
                     ),
