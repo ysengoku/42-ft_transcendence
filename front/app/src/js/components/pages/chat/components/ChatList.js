@@ -181,8 +181,7 @@ export class ChatList extends HTMLElement {
 
       lastMessageTime.textContent = getRelativeTime(data.date);
       let content =
-        data.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ?
-        'You: ' : this.#state.data.nickname + ': ';
+        data.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ? 'You: ' : '';
       content += data.content;
       lastMessageContent.textContent = content;
       if (this.#state.items[0].unread_messages_count === 0) {
