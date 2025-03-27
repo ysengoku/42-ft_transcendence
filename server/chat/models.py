@@ -183,13 +183,9 @@ class Notification(models.Model):
 
 
 class GameSession(models.Model):  # noqa: DJ008
-    # TO VALID LATER, NOT SURE
-    # name = models.CharField(max_length=255)
-    # created_at = models.DateTimeField(auto_now_add=True)
-
-    # def __str__(self):
-    #     return f"{self.name} - {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
-    pass
+    """
+    Currently a no-op, but can be extended
+    """
 
 
 class GameInvitation(models.Model):
