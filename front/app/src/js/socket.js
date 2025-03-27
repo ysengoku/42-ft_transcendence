@@ -65,7 +65,6 @@ const socketManager = (() => {
     listeners = {
       new_message: (data) => {
         console.log('New chat message:', data);
-        console.log('Current path:', window.location.pathname);
         if (window.location.pathname === '/chat') {
           const customEvent = new CustomEvent('newChatMessage', { detail: data, bubbles: true });
           document.dispatchEvent(customEvent);
