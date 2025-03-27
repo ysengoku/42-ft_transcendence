@@ -56,16 +56,6 @@ const socketManager = (() => {
       }
       if (!message.action) {
         console.error('Missing action field:', message);
-        // ----- Test--------------------------------------
-        // const testData = {
-        //   chat_id: '02972e57-ced9-4f6a-b394-cd627a54c3f0',
-        //   id: 1,
-        //   content: 'Hello, how are you?',
-        //   date: new Date().toISOString(),
-        //   sender: 'pedro',
-        // };
-        // this.handleNewChatMessage(testData);
-        // ------------------------------------------------
         return;
       }
       const matchedListener = this.listeners[message.action] || this.listeners.noMatchedListener;
