@@ -26,7 +26,7 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   setData(data, loggedInUsername) {
-    if (!data) {
+    if (!data || data.is_blocked_by_user) {
       return;
     }
     this.#state.renderedMessagesCount = 0;
