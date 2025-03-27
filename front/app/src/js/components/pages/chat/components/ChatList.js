@@ -55,6 +55,9 @@ export class ChatList extends HTMLElement {
 
   renderListItems(index = 0) {
     for (let i = index; i < this.#state.items.length; i++) {
+      if (this.#state.items[i].is_blocked_by_user) {
+        continue;
+      }
       const listItem = document.createElement('chat-list-item-component');
       listItem.setData(this.#state.items[i], this.#state.loggedInUsername);
       if (this.#state.items[i].username === this.#getCurrentChatUsername()) {
@@ -117,7 +120,7 @@ export class ChatList extends HTMLElement {
       return;
     }
     this.#state.items = [...this.#state.items, ...data.items];
-    this.renderListItems();
+    this.renderListItems(this.#state.currentItemCount);
   }
 
   addNewChat(data) {

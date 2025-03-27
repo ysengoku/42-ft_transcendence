@@ -1,5 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessage, ALERT_TYPE } from '@utils';
+import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import defaltAvatar from '/img/default_avatar.png?url';
 
 export class ChatUserSearchItem extends HTMLElement {
@@ -9,7 +9,6 @@ export class ChatUserSearchItem extends HTMLElement {
 
   constructor() {
     super();
-
     this.startChat = this.startChat.bind(this);
   }
 
@@ -58,14 +57,16 @@ export class ChatUserSearchItem extends HTMLElement {
         true,
     );
     if (response.success) {
+      if (response.data.is_blocked_by_user) {
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, `Chat with ${response.data.nickname} @${response.data.username} is currently unavailable.`, 3000);
+        this.chatList.hideUserSearchBar();
+        return;
+      }
       if (response.status === 200) {
-        debugger;
         this.chatList.restartChat(response.data);
       } else if (response.status === 201) {
         this.chatList.addNewChat(response.data);
       }
-      // const event = new CustomEvent('chatItemSelected', { detail: response.data.username, bubbles: true });
-      // this.dispatchEvent(event);
     } else {
       if (response.status !== 401 && response.status !== 500) {
         console.error(response.msg);
