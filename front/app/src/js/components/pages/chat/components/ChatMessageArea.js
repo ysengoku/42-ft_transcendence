@@ -23,6 +23,8 @@ export class ChatMessageArea extends HTMLElement {
     this.unblockUser = this.unblockUser.bind(this);
     this.loadMoreMessages = this.loadMoreMessages.bind(this);
     this.toggleLikeMessage = this.toggleLikeMessage.bind(this);
+
+    this.chatListComponent = document.querySelector('chat-list-component');
   }
 
   setData(data, loggedInUsername) {
@@ -215,10 +217,13 @@ export class ChatMessageArea extends HTMLElement {
     const errorMessage = 'Failed to block user. Please try again later.';
     if (response.success) {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
-      // TODO: Update chat list and current chat
-      console.log('User blocked:', this.#state.data.username);
       this.#state.data.is_blocked_user = true;
       this.render();
+      const chatListItemComponent = document.getElementById(`chat-item-${this.#state.data.username}`);
+      chatListItemComponent.classList.add('blocked');
+      chatListItemComponent.querySelector('.chat-list-item-last-message').textContent = 'You have blocked this user';
+      chatListItemComponent.querySelector('.chat-list-item-last-message-time').textContent = '';
+      chatListItemComponent.querySelector('.chat-list-item-unread-message').classList.add('d-none');
     } else {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
     }
@@ -240,6 +245,7 @@ export class ChatMessageArea extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
       this.#state.data.is_blocked_user = false;
       this.render();
+      this.chatListComponent.refreshList();
     } else {
       console.error('Error unblocking:', response);
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
