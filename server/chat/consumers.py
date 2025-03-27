@@ -98,7 +98,8 @@ class UserEventsConsumer(WebsocketConsumer):
         if not is_in_chat:
             return
 
-        ChatMessage.objects.create(sender=self.user_profile, content=message, chat=chat)
+        ChatMessage.objects.create(
+            sender=self.user_profile, content=message, chat=chat)
         async_to_sync(self.channel_layer.group_send)(
             "chat_" + chat_id,
             {
@@ -154,7 +155,7 @@ class UserEventsConsumer(WebsocketConsumer):
     def handle_like_message(self, data):
         message_data = data.get("data", {})
         message = message_data.get("content")
-        message_id = message_data.get["id"]
+        message_id = message_data.get("id")
         if data["sender"] != self.username:  # prevent from liking own message
             try:
                 message = ChatMessage.objects.get(pk=message_id)
@@ -186,7 +187,7 @@ class UserEventsConsumer(WebsocketConsumer):
     def handle_unlike_message(self, data):
         message_data = data.get("data", {})
         message = message_data.get("content")
-        message_id = message_data.get["id"]
+        message_id = message_data.get("id")
         if data["sender"] != self.username:  # prevent from unliking own message
             try:
                 message = ChatMessage.objects.get(pk=message_id)
@@ -216,7 +217,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def handle_read_message(self, data):
         message_data = data.get("data", {})
-        message_id = message_data.get["id"]
+        message_id = message_data.get("id")
         try:
             message = ChatMessage.objects.get(pk=message_id)
             message.is_read = True
@@ -280,7 +281,8 @@ class UserEventsConsumer(WebsocketConsumer):
             invitation.save()
             # send notif to sender of the game invitation with receivers' infos
             notification_data = get_user_data(self.user_profile)
-            notification_data.update({"id": str(invitation_id), "status": "accepted"})
+            notification_data.update(
+                {"id": str(invitation_id), "status": "accepted"})
             async_to_sync(self.channel_layer.group_send)(
                 f"user_{invitation.sender.id}",
                 {
@@ -316,7 +318,8 @@ class UserEventsConsumer(WebsocketConsumer):
             invitation.save()
             # send notif to sender of the game invitation
             notification_data = get_user_data(self.user_profile)
-            notification_data.update({"id": str(invitation_id), "status": "declined"})
+            notification_data.update(
+                {"id": str(invitation_id), "status": "declined"})
             async_to_sync(self.channel_layer.group_send)(
                 f"user_{invitation.sender.id}",
                 {
