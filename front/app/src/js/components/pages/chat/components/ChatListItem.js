@@ -57,8 +57,7 @@ export class ChatListItem extends HTMLElement {
       return;
     }
     this.lastMessageTime.textContent = getRelativeTime(this.#state.data.last_message.date);
-    let content = this.#state.data.last_message.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ?
-      'You: ' : this.#state.data.nickname + ': ';
+    let content = this.#state.data.last_message.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ? 'You: ' : '';
     content += this.#state.data.last_message.content;
     this.lastMessage.textContent = content;
     if (this.#state.data.unread_messages_count === 0) {
@@ -75,10 +74,8 @@ export class ChatListItem extends HTMLElement {
 
   handleChatItemSelected() {
     this.listItem.classList.add('active');
-    const circleNumber = this.listItem.querySelector('.circle-number');
-    if (circleNumber) {
-      circleNumber.remove();
-    }
+    const unreadMessageCount = this.listItem.querySelector('.chat-list-item-unread-message');
+    unreadMessageCount.classList.add('d-none');
     const chatListItems = document.querySelectorAll('.chat-list-item');
     chatListItems.forEach((item) => {
       if (item !== this.listItem) {
@@ -112,7 +109,7 @@ export class ChatListItem extends HTMLElement {
         </div>
 
         <div class="d-inline-block">
-          <div class="chat-list-item-unread-message circle-number"></div>
+          <div class="chat-list-item-unread-message"></div>
         </div>
       </div>
     </li>
@@ -143,7 +140,7 @@ export class ChatListItem extends HTMLElement {
       .chat-list-item-content {
         min-width: 0;
       }
-      .circle-number {
+      .chat-list-item-unread-message {
         background-color: var(--pm-red-500);
         color: var(--pm-gray-100);
         border-radius: 50%;
