@@ -9,6 +9,9 @@ pylint.max-statements = 100
 select = ["ALL"]
 fixable = ["ALL"]
 ignore = [
+    ##### rules to allow again at the end
+    "T201", # print found
+    "S105", # hardcoded password
     #### modules
     "ANN",  # obligatory annotations
     "C90",  # complexity check

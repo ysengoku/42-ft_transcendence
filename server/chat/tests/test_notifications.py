@@ -13,7 +13,7 @@ class TestNotificationsViewTestCase(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.user = User.objects.create_user(
-            username="testuser", password="12345")
+            username="testuser", password="12345") # noqa: S106
 
     def test_notifications_view(self):
         request = self.factory.get("/chat/notifications/test/")

@@ -3,7 +3,6 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
