@@ -158,7 +158,7 @@ class UserEventsConsumer(WebsocketConsumer):
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
         sender = message_data.get("sender")
-        if sender != self.username:  # prevent from liking own message
+        if sender != self.user.username:  # prevent from liking own message
             try:
                 message = ChatMessage.objects.get(pk=message_id)
                 message.is_liked = True
@@ -192,7 +192,7 @@ class UserEventsConsumer(WebsocketConsumer):
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
         sender = message_data.get("sender")
-        if sender != self.username:  # prevent from liking own message
+        if sender != self.user.username:  # prevent from liking own message
             try:
                 message = ChatMessage.objects.get(pk=message_id)
                 message.is_liked = False
