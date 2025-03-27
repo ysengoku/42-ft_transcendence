@@ -38,24 +38,28 @@ export class Chat extends HTMLElement {
 
     if (chatListData.count > 0) {
       if (!this.#queryParam) {
-        this.#state.currentChatUsername = chatListData.items[0].username;
-        chatListData.items[0].unread_messages_count = 0;
-      } else {
-        this.#state.currentChatUsername = this.#queryParam;
+        chatListData.items[0].is_blocked_by_user ? (
+          this.#state.currentChatUsername = chatListData.items[1].username,
+          chatListData.items[1].unread_messages_count = 0
+        ) : (
+          this.#state.currentChatUsername = chatListData.items[0].username,
+          chatListData.items[0].unread_messages_count = 0
+        );
       }
-      this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
-      const chatData = await this.fetchChatData();
-      if (!chatData) {
-        return;
-      } else {
-        this.#state.currentChat = chatData.data;
-        this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
-        if (this.#queryParam && chatData.status === 201) {
-          this.chatList.addNewChat(chatData.data);
-        } else if (this.#queryParam && chatData.status === 200) {
-          this.chatList.restartChat(chatData.data);
-        }
-      }
+    } else {
+      this.#state.currentChatUsername = this.#queryParam;
+    }
+    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
+    const chatData = await this.fetchChatData();
+    if (!chatData) {
+      return;
+    }
+    this.#state.currentChat = chatData.data;
+    this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
+    if (this.#queryParam && chatData.status === 201) {
+      this.chatList.addNewChat(chatData.data);
+    } else if (this.#queryParam && chatData.status === 200) {
+      this.chatList.restartChat(chatData.data);
     }
     this.chatMessagesArea.sendToggleLikeEvent = this.sendToggleLikeEvent;
   }
