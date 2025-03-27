@@ -156,6 +156,7 @@ class UserEventsConsumer(WebsocketConsumer):
         message_data = data.get("data", {})
         message = message_data.get("content")
         message_id = message_data.get("id")
+        chat_id = message_data.get("chat_id")
         sender = message_data.get("sender")
         if sender != self.username:  # prevent from liking own message
             try:
@@ -168,7 +169,8 @@ class UserEventsConsumer(WebsocketConsumer):
                             "type": "like_message",
                             "data": {
                                 "id": message_id,
-                                # "chat_id": message_id, HOW TO SEND THIS
+                                "chat_id": chat_id,
+                                "sender": sender,
                             },
                         },
                     ),
@@ -189,6 +191,7 @@ class UserEventsConsumer(WebsocketConsumer):
         message_data = data.get("data", {})
         message = message_data.get("content")
         message_id = message_data.get("id")
+        chat_id = message_data.get("chat_id")
         sender = message_data.get("sender")
         if sender != self.username:  # prevent from liking own message
             try:
@@ -201,7 +204,8 @@ class UserEventsConsumer(WebsocketConsumer):
                             "type": "unlike_message",
                             "data": {
                                 "id": message_id,
-                                # "chat_id": message_id, HOW TO SEND THIS YUKO NEEDS IT
+                                "chat_id": chat_id,
+                                "sender": sender,
                             },
                         },
                     ),
