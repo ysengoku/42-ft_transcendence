@@ -30,7 +30,7 @@ export class UserNotFound extends HTMLElement {
     return `
 	  <div class="usernotfound-wrapper d-flex flex-row justify-content-center align-items-stretch my-4 py-4 gap-3">
 	    <div class="image-container mx-2">
-	    <img src="${userNotFoundImage}" alt="404" class="img-fluid">
+	      <img src="${userNotFoundImage}" alt="404" class="img-fluid">
 	    </div>
 	    <div class="d-flex flex-column justify-content-around" mx-2">
         <div class="pt-6">
@@ -55,11 +55,9 @@ export class UserNotFound extends HTMLElement {
 	    max-width: 240px;
 		  height: auto;
     }
-    /*
     .usernotfound-wrapper {
-      background-color: rgba(var(--bs-body-bg-rgb), 0.5);
+      backdrop-filter: blur(4px);
     }
-    */
     </style>
     `;
   }

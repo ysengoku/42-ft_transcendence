@@ -10,6 +10,12 @@ export class Error extends HTMLElement {
     super();
   }
 
+  connectedCallback() {
+    this.#state.status = '';
+    this.#state.message = 'An error occurred';
+    this.render();
+  }
+
   setQueryParam(param) {
     this.#state.message = param.get('error') || 'An error occurred';
     this.#state.status = param.get('code') || '';
@@ -27,7 +33,7 @@ export class Error extends HTMLElement {
 
   template() {
     return `
-      <div class="d-flex flex-row justify-content-center align-items-stretch my-4 py-4 gap-3">
+      <div class="error-wrapper d-flex flex-row justify-content-center align-items-stretch my-4 py-4 gap-3">
         <div class="image-container mx-2">
         <img src="${userNotFoundImage}" alt="404" class="img-fluid">
         </div>
@@ -53,6 +59,9 @@ export class Error extends HTMLElement {
       .image-container {
         width: 300px;
         height: auto;
+      }
+      .error-wrapper {
+        backdrop-filter: blur(4px);
       }
     </style>
       `;
