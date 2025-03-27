@@ -72,6 +72,7 @@ export class ChatList extends HTMLElement {
     const listItem = document.createElement('chat-list-item-component');
     listItem.setData(newItemData, this.#state.loggedInUsername);
     listItem.querySelector('.chat-list-item').classList.add('active');
+    listItem.querySelector('.chat-list-item-unread-message').classList.add('d-none');
     const chatListItems = document.querySelectorAll('.chat-list-item');
     chatListItems.forEach((item) => {
       if (item !== listItem) {
@@ -98,9 +99,7 @@ export class ChatList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   toggleUserSearchBar() {
     const userSearch = document.getElementById('chat-user-search');
-    debugger;
     userSearch?.classList.toggle('d-none');
-    debugger;
   }
 
   hideUserSearchBar() {
