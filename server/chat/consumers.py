@@ -31,7 +31,7 @@ class UserEventsConsumer(WebsocketConsumer):
             return
         # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
-            f"user_{self.user.id}", self.channel_name
+            f"user_{self.user.id}", self.channel_name,
         )
 
         self.user_profile = self.user.profile
@@ -39,7 +39,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
         for chat in self.chats:
             async_to_sync(self.channel_layer.group_add)(
-                "chat_" + str(chat.id), self.channel_name
+                "chat_" + str(chat.id), self.channel_name,
             )
 
         self.accept()
@@ -49,7 +49,7 @@ class UserEventsConsumer(WebsocketConsumer):
         if hasattr(self, "chats") and self.chats:
             for chat in self.chats:
                 async_to_sync(self.channel_layer.group_discard)(
-                    "chat_" + str(chat.id), self.channel_name
+                    "chat_" + str(chat.id), self.channel_name,
                 )
 
     # Receive message from WebSocket
@@ -115,7 +115,7 @@ class UserEventsConsumer(WebsocketConsumer):
                             "is_read": False,
                             "is_liked": False,
                         },
-                    }
+                    },
                 ),
             },
         )
@@ -138,8 +138,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     {
                         "type": "user_online",
                         "data": notification_data,
-                    }
-                )
+                    },
+                ),
             )
         elif status == "user_offline":
             self.send(
@@ -147,8 +147,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     {
                         "type": "user_offline",
                         "data": notification_data,
-                    }
-                )
+                    },
+                ),
             )
 
     def handle_like_message(self, data):
@@ -168,8 +168,8 @@ class UserEventsConsumer(WebsocketConsumer):
                                 "id": message_id,
                                 # "chat_id": message_id, HOW TO SEND THIS
                             },
-                        }
-                    )
+                        },
+                    ),
                 )
                 # if user on the chat, sends to client
             except ObjectDoesNotExist:
@@ -179,8 +179,8 @@ class UserEventsConsumer(WebsocketConsumer):
                         {
                             "type": "error",
                             "message": "Message not found.",
-                        }
-                    )
+                        },
+                    ),
                 )
 
     def handle_unlike_message(self, data):
@@ -200,8 +200,8 @@ class UserEventsConsumer(WebsocketConsumer):
                                 "id": message_id,
                                 # "chat_id": message_id, HOW TO SEND THIS YUKO NEEDS IT
                             },
-                        }
-                    )
+                        },
+                    ),
                 )
             except ObjectDoesNotExist:
                 print(f"Message {message_id} does not exist.")
@@ -210,8 +210,8 @@ class UserEventsConsumer(WebsocketConsumer):
                         {
                             "type": "error",
                             "message": "Message not found.",
-                        }
-                    )
+                        },
+                    ),
                 )
 
     def handle_read_message(self, data):
@@ -228,8 +228,8 @@ class UserEventsConsumer(WebsocketConsumer):
                         "data": {
                             "id": message_id,
                         },
-                    }
-                )
+                    },
+                ),
             )
         except ObjectDoesNotExist:
             print(f"Message {message_id} does not exist.")
@@ -252,7 +252,7 @@ class UserEventsConsumer(WebsocketConsumer):
         # Create the notification in the db
         if notification_id is None:
             Notification.objects.create(
-                user=self.user, message=notification_data, type=notification_type
+                user=self.user, message=notification_data, type=notification_type,
             )
         else:
             try:
@@ -268,8 +268,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     "type": "notification",
                     "data": notification_data,
                     "type_notification": notification_type,
-                }
-            )
+                },
+            ),
         )
 
     def accept_game_invite(self, data):
@@ -294,8 +294,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     {
                         "type": "game_invite",
                         "data": {"id": invitation_id, "status": "accepted"},
-                    }
-                )
+                    },
+                ),
             )
         except GameInvitation.DoesNotExist:
             print(f"Invitation {invitation_id} does not exist.")
@@ -304,8 +304,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     {
                         "type": "error",
                         "message": "Invitation not found.",
-                    }
-                )
+                    },
+                ),
             )
 
     def decline_game_invite(self, data):
@@ -329,8 +329,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     {
                         "type": "game_invite",
                         "data": {"id": invitation_id, "status": "declined"},
-                    }
-                )
+                    },
+                ),
             )
         except GameInvitation.DoesNotExist:
             print(f"Invitation {invitation_id} does not exist.")
@@ -339,8 +339,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     {
                         "type": "error",
                         "message": "Invitation not found.",
-                    }
-                )
+                    },
+                ),
             )
 
     def send_game_invite(self, data):
@@ -351,7 +351,7 @@ class UserEventsConsumer(WebsocketConsumer):
         receiver = Profile.objects.get(id=receiver_id)
 
         invitation = GameInvitation.objects.create(
-            sender=sender, game_session=None, recipient=receiver
+            sender=sender, game_session=None, recipient=receiver,
         )
 
         # Envoyer une notification au destinataire
@@ -371,8 +371,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 {
                     "type": "game_invite",
                     "data": notification_data,
-                }
-            )
+                },
+            ),
         )
 
     def handle_new_tournament(self, data):
@@ -385,7 +385,7 @@ class UserEventsConsumer(WebsocketConsumer):
         # send notification to concerned users
         notification_data = get_user_data(organizer)
         notification_data.update(
-            {"id": tournament_id, "tournament_name": tournament_name}
+            {"id": tournament_id, "tournament_name": tournament_name},
         )
 
         self.send(
@@ -393,8 +393,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 {
                     "type": "new_tournament",
                     "data": notification_data,
-                }
-            )
+                },
+            ),
         )
 
     def add_new_friend(self, data):
