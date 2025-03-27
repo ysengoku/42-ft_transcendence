@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from ninja import Field, Schema
+from ninja import Schema
 
 from chat.models import Chat, ChatMessage
 
