@@ -36,7 +36,7 @@ export class Landing extends HTMLElement {
         height: 240px;
       }
     </style>
-    <div class="signpost d-flex justify-content-center align-items-start">
+    <div class="signpost d-flex justify-content-center align-items-start mb-2">
       <span class="pole"></span>
       <div class="d-flex flex-column justify-content-center align-items-center mt-3" id="landing-buttons">
         <a class="btn btn-wood landing-btn-1 mb-2" href="/login" role="button">Login</a>

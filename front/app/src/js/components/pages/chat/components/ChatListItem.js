@@ -96,16 +96,16 @@ export class ChatListItem extends HTMLElement {
   template() {
     return `
     <li class="chat-list-item list-group-item me-4 mb-2">
-      <div class="list-item d-flex flex-row align-items-center py-2 gap-3">
+      <div class="list-item d-flex flex-row align-items-center py-2">
 
         <div class="d-inline-block position-relative">
           <img class="chat-list-item-avatar avatar-m rounded-circle" alt="User" />
           <span class="online-status chat-list-status-indicator ${this.#state.data.is_online ? 'online' : ''} ms-3"></span>
         </div>
 
-        <div class="d-flex flex-column justify-content-start py-2 gap-1 flex-grow-1">
+        <div class="chat-list-item-content d-flex flex-column justify-content-start px-3 py-2 gap-1 flex-grow-1">
           <div class="d-flex flex-wrap justify-content-between align-items-center">
-            <p class="chat-list-item-nickname fs-5 m-0 me-2"></p>
+            <p class="chat-list-item-nickname fs-5 m-0"></p>
             <p class="chat-list-item-last-message-time m-0 fs-6"></p>
           </div>
           <p class="chat-list-item-last-message m-0 fs-6"></p>
@@ -140,9 +140,12 @@ export class ChatListItem extends HTMLElement {
         right: -2px;
         outline: 2px solid rgba(var(--bs-body-bg-rgb), 0.4) !important;
       }
+      .chat-list-item-content {
+        min-width: 0;
+      }
       .circle-number {
-        background-color: red;
-        color: white;
+        background-color: var(--pm-red-500);
+        color: var(--pm-gray-100);
         border-radius: 50%;
         width: 24px;
         height: 24px;
@@ -152,6 +155,10 @@ export class ChatListItem extends HTMLElement {
         justify-content: center;
         inline-height: 1;
        }
+      .chat-list-item-nickname {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
       .chat-list-item-last-message {
         overflow: hidden;
         text-overflow: ellipsis;
