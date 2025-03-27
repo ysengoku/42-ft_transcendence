@@ -3,7 +3,6 @@ const socketManager = (() => {
     constructor() {
       this.url = 'wss://' + window.location.host + '/ws/events/';
       this.socket = null;
-      this.listeners = new Map();
       this.socketOpen = false;
     }
 
@@ -21,7 +20,6 @@ const socketManager = (() => {
         console.log('WebSocket closed:', event);
         setTimeout(() => this.reconnect(), 1000);
       };
-      this.addListeners();
     }
 
     reconnect() {
@@ -59,94 +57,79 @@ const socketManager = (() => {
       if (!message.action) {
         console.error('Missing action field:', message);
         // ----- Test--------------------------------------
-        const testData = {
-          chat_id: '02972e57-ced9-4f6a-b394-cd627a54c3f0',
-          id: 1,
-          content: 'Hello, how are you?',
-          date: new Date().toISOString(),
-          sender: 'pedro',
-        };
-        this.handleNewChatMessage(testData);
+        // const testData = {
+        //   chat_id: '02972e57-ced9-4f6a-b394-cd627a54c3f0',
+        //   id: 1,
+        //   content: 'Hello, how are you?',
+        //   date: new Date().toISOString(),
+        //   sender: 'pedro',
+        // };
+        // this.handleNewChatMessage(testData);
         // ------------------------------------------------
         return;
       }
-      const matchedListener = this.listeners.get(message.action);
-      if (!matchedListener) {
+      const matchedListener = this.listeners[message.action] || this.listeners.noMatchedListener;
+      matchedListener(message.data);
+    }
+
+    listeners = {
+      new_message: (data) => {
+        console.log('New chat message:', data);
+        console.log('Current path:', window.location.pathname);
+        if (window.location.pathname === '/chat') {
+          const customEvent = new CustomEvent('newChatMessage', { detail: data, bubbles: true });
+          document.dispatchEvent(customEvent);
+        } else {
+          const chatButton = document.querySelector('chat-button');
+          chatButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+        }
+        return;
+      },
+      like_message: (data) => {
+        console.log('Message liked:', data);
+        if (window.location.pathname !== '/chat') {
+          return;
+        }
+        // TODO
+      },
+      unlike_message: (data) => {
+        console.log('Message liked:', data);
+        if (window.location.pathname !== '/chat') {
+          return;
+        }
+        // TODO
+      },
+      game_invite: (data) => {
+        console.log('Game invite received:', data);
+        const notificationButton = document.querySelector('notifications-button');
+        notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+        // TODO
+      },
+      new_tournament: (data) => {
+        console.log('New tournament received:', data);
+        const notificationButton = document.querySelector('notifications-button');
+        notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+        // TODO
+      },
+      new_friend: (data) => {
+        console.log('New friend received:', data);
+        const notificationButton = document.querySelector('notifications-button');
+        notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+        // TODO
+      },
+      user_online: (data) => {
+        console.log('User online:', data);
+        // TODO
+      },
+      user_offline: (data) => {
+        console.log('User offline:', data);
+        // TODO
+      },
+      noMatchedListener: () => {
         console.error('No listeners set for this action:', message.action);
         return;
-      }
-      matchedListener.callback(message.data);
-    }
-
-    addListeners() {
-      this.listeners.set('new_chat_message', this.handleNewChatMessage);
-      this.listeners.set('like_message', this.handleLikeMessage);
-      this.listeners.set('unlike_message', this.handleUnlikeMessage);
-      this.listeners.set('game_invite', this.handleGameInvite);
-      this.listeners.set('new_tournament', this.handleNewTournament);
-      this.listeners.set('new_friend', this.handleNewFriend);
-      this.listeners.set('user_online', this.handleUserOnline);
-      this.listeners.set('user_offline', this.handleUserOffline);
-    }
-
-    handleNewChatMessage(data) {
-      console.log('New chat message:', data);
-      console.log('Current path:', window.location.pathname);
-      if (window.location.pathname === '/chat') {
-        const customEvent = new CustomEvent('newChatMessage', { detail: data, bubbles: true });
-        document.dispatchEvent(customEvent);
-      } else {
-        const chatButton = document.querySelector('chat-button');
-        chatButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-      }
-    }
-
-    handleLikeMessage(data) {
-      console.log('Message liked:', data);
-      if (window.location.pathname !== '/chat') {
-        return;
-      }
-      // TODO
-    }
-
-    handleUnlikeMessage(data) {
-      console.log('Message unliked:', data);
-      if (window.location.pathname !== '/chat') {
-        return;
-      }
-      // TODO
-    }
-
-    handleGameInvite(data) {
-      console.log('Game invite received:', data);
-      const notificationButton = document.querySelector('notifications-button');
-      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-      // TODO
-    }
-
-    handleNewTournament(data) {
-      console.log('New tournament received:', data);
-      const notificationButton = document.querySelector('notifications-button');
-      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-      // TODO
-    }
-
-    handleNewFriend(data) {
-      console.log('New friend received:', data);
-      const notificationButton = document.querySelector('notifications-button');
-      notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-      // TODO
-    }
-
-    handleUserOnline(data) {
-      console.log('User online:', data);
-      // TODO
-    }
-
-    handleUserOffline(data) {
-      console.log('User offline:', data);
-      // TODO
-    }
+      },
+    };
   }
   return new WebSocketManager();
 })();

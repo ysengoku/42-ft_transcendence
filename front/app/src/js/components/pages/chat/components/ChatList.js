@@ -161,6 +161,10 @@ export class ChatList extends HTMLElement {
     console.log('Received new message. Update Chat list:', data);
     const currentChatUsername = this.#getCurrentChatUsername();
     const index = this.#state.items.findIndex((chat) => chat.chat_id === data.chat_id);
+    if (index === -1) {
+      await this.refreshList();
+      return;
+    }
     if (this.#state.items[index].username === currentChatUsername) {
       this.#state.items[index].unread_messages_count = 0;
     } else {
@@ -186,7 +190,7 @@ export class ChatList extends HTMLElement {
         unreadMessages.textContent =
         this.#state.items[0].unread_messages_count > 9 ? '9+' : this.#state.items[0].unread_messages_count;
       }
-    } else if (index !== -1) {
+    } else {
       const tmp = this.#state.items[index];
       tmp.last_message = {
         content: data.content,
@@ -198,8 +202,6 @@ export class ChatList extends HTMLElement {
       this.#state.items.splice(index, 1);
       this.#state.items.unshift(tmp);
       this.render();
-    } else {
-      await this.refreshList();
     }
   }
 
