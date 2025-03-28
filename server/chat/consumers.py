@@ -103,7 +103,7 @@ class UserEventsConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             "chat_" + chat_id,
             {
-                "action": "chat.message",
+                "type": "chat.message",
                 "message": json.dumps(
                     {
                         "action": "new_message",
