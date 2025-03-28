@@ -37,7 +37,10 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
 
   try {
     const response = await fetch(url, options);
-    console.log('API response:', response);
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      console.log('API response:', response);
+    }
     if (response.ok) {
       return handlers.success(response);
     }
