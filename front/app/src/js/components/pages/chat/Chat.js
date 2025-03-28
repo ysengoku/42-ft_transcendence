@@ -36,36 +36,37 @@ export class Chat extends HTMLElement {
     if (!chatListData) {
       return;
     }
+    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
 
-    if (chatListData.count > 0) {
-      if (!this.#queryParam) {
-        chatListData.items[0].is_blocked_by_user ? (
-          this.#state.currentChatUsername = chatListData.items[1].username,
-          chatListData.items[1].unread_messages_count = 0
-        ) : (
-          this.#state.currentChatUsername = chatListData.items[0].username,
-          chatListData.items[0].unread_messages_count = 0
-        );
+    if (chatListData.count > 0 && !this.#queryParam) {
+      for (let i = 0; i < chatListData.items.length; i++) {
+        if (!chatListData.items[0].is_blocked_by_user && chatListData.items[i].last_message) {
+          this.#state.currentChatUsername = chatListData.items[i].username;
+          chatListData.items[i].unread_messages_count = 0;
+          break;
+        }
       }
-    } else {
+    } else if (this.#queryParam) {
       this.#state.currentChatUsername = this.#queryParam;
     }
-    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
-    const chatData = await this.fetchChatData();
-    if (!chatData) {
-      return;
-    }
-    this.#state.currentChat = chatData.data;
-    this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
-    if (this.#queryParam && chatData.status === 201) {
-      this.chatList.addNewChat(chatData.data);
-    } else if (this.#queryParam && chatData.status === 200) {
-      this.chatList.restartChat(chatData.data);
+    let chatData = null;
+    if (this.#state.currentChatUsername) {
+      chatData = await this.fetchChatData();
+      if (!chatData) {
+        return;
+      }
+      if (this.#queryParam && chatData.status === 201) {
+        this.chatList.addNewChat(chatData.data);
+      } else if (this.#queryParam && chatData.status === 200) {
+        this.chatList.restartChat(chatData.data);
+      }
+      this.#state.currentChat = chatData.data;
+      this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
     }
     this.chatMessagesArea.sendToggleLikeEvent = this.sendToggleLikeEvent;
   }
 
-  async setQueryParam(param) {
+  setQueryParam(param) {
     this.#queryParam = param.get('username');
   }
 
