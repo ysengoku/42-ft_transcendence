@@ -3,6 +3,7 @@ import hashlib
 import json
 import math
 import os
+import random
 from dataclasses import dataclass
 
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -308,7 +309,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.state.bumper_2.user_id = self.user_id
                 self.state.bumper_2.player_id = player_ids[self.user_id]
                 set_bumper(self.user_id, self.state.bumper_2)
-
+        if random.randint(0, 1):
+            self.state.ball.velocity.z *= -1 
         await self.send(text_data=json.dumps({"event": "joined", "player_id": player_ids[self.user_id]}))
 
         if len(player_ids) == MAX_PLAYERS:
