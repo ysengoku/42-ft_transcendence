@@ -103,7 +103,7 @@ class UserEventsConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             "chat_" + chat_id,
             {
-                "type": "chat.message",
+                "action": "chat.message",
                 "message": json.dumps(
                     {
                         "action": "new_message",
@@ -137,7 +137,7 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(
                 text_data=json.dumps(
                     {
-                        "type": "user_online",
+                        "action": "user_online",
                         "data": notification_data,
                     },
                 ),
@@ -146,7 +146,7 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(
                 text_data=json.dumps(
                     {
-                        "type": "user_offline",
+                        "action": "user_offline",
                         "data": notification_data,
                     },
                 ),
@@ -166,7 +166,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.send(
                     text_data=json.dumps(
                         {
-                            "type": "like_message",
+                            "action": "like_message",
                             "data": {
                                 "id": message_id,
                                 "chat_id": chat_id,
@@ -180,7 +180,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.send(
                     text_data=json.dumps(
                         {
-                            "type": "error",
+                            "action": "error",
                             "message": "Message not found.",
                         },
                     ),
@@ -200,7 +200,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.send(
                     text_data=json.dumps(
                         {
-                            "type": "unlike_message",
+                            "action": "unlike_message",
                             "data": {
                                 "id": message_id,
                                 "chat_id": chat_id,
@@ -213,7 +213,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.send(
                     text_data=json.dumps(
                         {
-                            "type": "error",
+                            "action": "error",
                             "message": "Message not found.",
                         },
                     ),
@@ -229,7 +229,7 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(
                 text_data=json.dumps(
                     {
-                        "type": "read_message",
+                        "action": "read_message",
                         "data": {
                             "id": message_id,
                         },
@@ -270,7 +270,7 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(
             text_data=json.dumps(
                 {
-                    "type": "notification",
+                    "action": "notification",
                     "data": notification_data,
                     "type_notification": notification_type,
                 },
@@ -290,7 +290,7 @@ class UserEventsConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 f"user_{invitation.sender.id}",
                 {
-                    "type": "game_invite",
+                    "action": "game_invite",
                     "data": notification_data,
                 },
             )
@@ -298,7 +298,7 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(
                 text_data=json.dumps(
                     {
-                        "type": "game_invite",
+                        "action": "game_invite",
                         "data": {"id": invitation_id, "status": "accepted"},
                     },
                 ),
@@ -308,7 +308,7 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(
                 text_data=json.dumps(
                     {
-                        "type": "error",
+                        "action": "error",
                         "message": "Invitation not found.",
                     },
                 ),
@@ -327,14 +327,14 @@ class UserEventsConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(
                 f"user_{invitation.sender.id}",
                 {
-                    "type": "game_invite",
+                    "action": "game_invite",
                     "data": notification_data,
                 },
             )
             self.send(
                 text_data=json.dumps(
                     {
-                        "type": "game_invite",
+                        "action": "game_invite",
                         "data": {"id": invitation_id, "status": "declined"},
                     },
                 ),
@@ -344,7 +344,7 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(
                 text_data=json.dumps(
                     {
-                        "type": "error",
+                        "action": "error",
                         "message": "Invitation not found.",
                     },
                 ),
@@ -368,7 +368,7 @@ class UserEventsConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             f"user_{receiver_id}",
             {
-                "type": "game_invite",
+                "action": "game_invite",
                 "data": notification_data,
             },
         )
@@ -376,7 +376,7 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(
             text_data=json.dumps(
                 {
-                    "type": "game_invite",
+                    "action": "game_invite",
                     "data": notification_data,
                 },
             ),
@@ -398,7 +398,7 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(
             text_data=json.dumps(
                 {
-                    "type": "new_tournament",
+                    "action": "new_tournament",
                     "data": notification_data,
                 },
             ),
@@ -420,7 +420,7 @@ class UserEventsConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_send)(
             f"user_{receiver_id}",
             {
-                "type": "new_friend",
+                "action": "new_friend",
                 "data": notification_data,
             },
         )
