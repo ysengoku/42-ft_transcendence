@@ -55,7 +55,7 @@ export class ChatList extends HTMLElement {
 
   renderListItems(index = 0) {
     for (let i = index; i < this.#state.items.length; i++) {
-      if (this.#state.items[i].is_blocked_by_user) {
+      if (this.#state.items[i].is_blocked_by_user || !this.#state.items[i].last_message) {
         continue;
       }
       const listItem = document.createElement('chat-list-item-component');
@@ -153,7 +153,10 @@ export class ChatList extends HTMLElement {
       tmp.unread_messages_count = 0;
       this.#state.items.splice(index, 1);
       this.#state.items.unshift(tmp);
-      this.render();
+      const component = document.getElementById(`chat-item-${data.username}`);
+      component?.remove();
+      this.prependNewListItem(tmp);
+      this.hideUserSearchBar();
     } else {
       this.addNewChat(data);
     }
