@@ -40,6 +40,7 @@ export class ChatListItem extends HTMLElement {
       this.renderLastMessage();
     } else {
       this.lastMessage.textContent = 'No messages yet';
+      this.unreadMessages.classList.add('d-none');
     }
 
     this.listItem = this.querySelector('.chat-list-item');
@@ -57,9 +58,11 @@ export class ChatListItem extends HTMLElement {
       return;
     }
     this.lastMessageTime.textContent = getRelativeTime(this.#state.data.last_message.date);
-    let content = this.#state.data.last_message.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ? 'You: ' : '';
+    let content =
+      this.#state.data.last_message.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ? 'You: ' : '';
     content += this.#state.data.last_message.content;
     this.lastMessage.textContent = content;
+    console.log('Rendering last message, unread message count: ', this.#state.data.unread_messages_count);
     if (this.#state.data.unread_messages_count === 0) {
       this.unreadMessages.classList.add('d-none');
     } else {
