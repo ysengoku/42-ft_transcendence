@@ -18,7 +18,7 @@ export class FriendsButton extends HTMLElement {
 				<i class="bi bi-people"></i>
 			</button>
     </div>
-	  <div class="dropdown-menu dropdown-menu-end px-3">
+	  <div class="dropdown-menu dropdown-menu-end px-3" id="friends-list-dropdown">
       <friends-list></friends-list>
 	  </div>
 		`;
