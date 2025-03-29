@@ -349,7 +349,7 @@ export class ChatMessageArea extends HTMLElement {
         display: block;
       }
       .right-align-message .bubble {
-        background-color: var(--pm-primary-500);
+        background-color: var(--pm-primary-600);
         color: white;
       }
       .chat-message-avatar {
