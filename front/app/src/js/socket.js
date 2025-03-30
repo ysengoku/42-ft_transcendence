@@ -1,3 +1,5 @@
+import { showToastNotification } from "@utils";
+
 const socketManager = (() => {
   class WebSocketManager {
     constructor() {
@@ -75,6 +77,7 @@ const socketManager = (() => {
         } else {
           const chatButton = document.querySelector('chat-button');
           chatButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+          showToastNotification('New message just rode in.');
         }
         return;
       },
