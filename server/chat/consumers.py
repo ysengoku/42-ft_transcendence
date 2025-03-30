@@ -4,6 +4,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.utils import timezone
 
 from chat.models import Chat, ChatMessage, GameInvitation, Notification
@@ -197,9 +198,20 @@ class UserEventsConsumer(WebsocketConsumer):
         sender = message_data.get("sender")
         if sender != self.user.username:  # prevent from liking own message
             try:
-                message = ChatMessage.objects.get(pk=message_id)
-                message.is_liked = True
-                message.save()
+                with transaction.atomic():
+                    message = ChatMessage.objects.select_for_update().get(pk=message_id)
+                    message.is_liked = True
+                    # Force la mise à jour du champ
+                    message.save(update_fields=['is_liked'])
+
+                    print(message.is_liked)  # Devrait afficher True
+                    print(f"DOIT ETRE TRUE : {message.is_liked} .")
+                    # Envoi de la notification après commit
+                    transaction.on_commit(
+                        lambda: self.send_like_update(chat_id, message_id, True))
+                # message = ChatMessage.objects.get(pk=message_id)
+                # message.is_liked = True
+                # message.save()
                 self.send(
                     text_data=json.dumps(
                         {
@@ -231,9 +243,22 @@ class UserEventsConsumer(WebsocketConsumer):
         sender = message_data.get("sender")
         if sender != self.user.username:  # prevent from liking own message
             try:
-                message = ChatMessage.objects.get(pk=message_id)
-                message.is_liked = False
-                message.save()
+                with transaction.atomic():
+                    message = ChatMessage.objects.select_for_update().get(pk=message_id)
+                    message.is_liked = False
+                    # Force la mise à jour du champ
+                    message.save(update_fields=['is_liked'])
+
+                    # Envoi de la notification après commit
+                    transaction.on_commit(
+                        lambda: self.send_like_update(chat_id, message_id, False))
+                    # message = ChatMessage.objects.get(pk=message_id)
+                    # message.is_liked = False
+                    # message.save()
+
+                    message.refresh_from_db()
+                    print(message.is_liked)  # Devrait afficher True
+                    print(f"DOIT ETRE FALSE : {message.is_liked} .")
                 self.send(
                     text_data=json.dumps(
                         {
@@ -255,6 +280,22 @@ class UserEventsConsumer(WebsocketConsumer):
                         },
                     ),
                 )
+
+    def send_like_update(self, chat_id, message_id, is_liked):
+        async_to_sync(self.channel_layer.group_send)(
+            f"chat_{chat_id}",
+            {
+                "type": "chat.like_update",
+                "message": json.dumps({
+                    "action": "like_message",
+                    "data": {
+                        "id": str(message_id),
+                        "chat_id": str(chat_id),
+                        "is_liked": is_liked
+                    }
+                })
+            }
+        )
 
     def handle_read_message(self, data):
         message_data = data.get("data", {})
