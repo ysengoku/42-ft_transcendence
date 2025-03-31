@@ -36,7 +36,6 @@ export class UserSearch extends HTMLElement {
     this.form = this.querySelector('form');
     this.input = this.form.querySelector('input');
     this.dropdown = document.getElementById('user-search-dropdown');
-    console.log(this.dropdown);
 
     this.form.addEventListener('click', this.handleClick);
     this.form.addEventListener('submit', this.handleSubmit);
