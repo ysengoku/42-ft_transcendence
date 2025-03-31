@@ -19,6 +19,7 @@ export class Chat extends HTMLElement {
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
     this.sendMessage = this.sendMessage.bind(this);
     this.receiveMessage = this.receiveMessage.bind(this);
+    this.handleToggleLikeMessage = this.handleToggleLikeMessage.bind(this);
     this.handleWindowResize = this.handleWindowResize.bind(this);
     this.handleBackToChatList = this.handleBackToChatList.bind(this);
   }
@@ -71,6 +72,7 @@ export class Chat extends HTMLElement {
   disconnectedCallback() {
     document.removeEventListener('chatItemSelected', this.handleChatItemSelected);
     document.removeEventListener('sendMessage', this.sendMessage);
+    this.removeEventListener('toggleLikeChatMessage', this.handleToggleLikeMessage);
     document.removeEventListener('newChatMessage', this.receiveMessage);
     document.removeEventListener('toggleLike', this.toggleLikeMessage);
     window.removeEventListener('resize', this.handleWindowResize);
@@ -97,6 +99,7 @@ export class Chat extends HTMLElement {
 
     document.addEventListener('chatItemSelected', this.handleChatItemSelected);
     document.addEventListener('sendMessage', this.sendMessage);
+    document.addEventListener('toggleLikeChatMessage', this.handleToggleLikeMessage);
     document.addEventListener('newChatMessage', this.receiveMessage);
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
@@ -210,11 +213,21 @@ export class Chat extends HTMLElement {
     }
   }
 
-  handleLikedMessage(data) {
-    if (data.chat_id !== this.#state.currentChat.chat_id) {
+  handleToggleLikeMessage(event) {
+    console.log('Toggle like message event:', event.detail);
+    if (event.detail.data.chat_id !== this.#state.currentChat.chat_id) {
+      console.log('Not the current chat:', event.detail.data.chat_id, this.#state.currentChat.chat_id);
       return;
     }
-
+    console.log('Message liked:', event.detail.is_liked);
+    const component = document.getElementById(`chat-message-${event.detail.data.id}`);
+    if (component) {
+      const messageLikedElement = component.querySelector('.message-liked');
+      if (messageLikedElement) {
+        messageLikedElement.innerHTML = event.detail.is_liked ?
+          '<i class="bi bi-heart-fill h5"></i>' : '';
+      }
+    }
     // Find concerned message in the Chat
     // Update is_liked field
     // Update the message
