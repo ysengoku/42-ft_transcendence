@@ -123,7 +123,6 @@ export class ChatList extends HTMLElement {
   }
 
   addNewChat(data) {
-    console.log('Add new chat:', data);
     const chatData = {
       chat_id: data.chat_id,
       username: data.username,
@@ -145,7 +144,6 @@ export class ChatList extends HTMLElement {
 
   restartChat(data) {
     const index = this.#state.items.findIndex((chat) => chat.username === data.username);
-    console.log('Restart chat:', index);
     if (index !== -1) {
       const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
       this.dispatchEvent(event);
@@ -163,7 +161,6 @@ export class ChatList extends HTMLElement {
   }
 
   async updateListWithIncomingMessage(data) {
-    console.log('Received new message. Update Chat list:', data);
     const currentChatUsername = this.#getCurrentChatUsername();
     const index = this.#state.items.findIndex((chat) => chat.chat_id === data.chat_id);
     if (index === -1) {

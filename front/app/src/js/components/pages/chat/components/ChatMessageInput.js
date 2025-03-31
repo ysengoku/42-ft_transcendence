@@ -27,7 +27,6 @@ export class ChatMessageInput extends HTMLElement {
   sendMessage(event) {
     if (event.key === 'Enter' || event.type === 'click') {
       const message = this.messageInput.value;
-      console.log('Message:', message);
       if (message.trim() !== '') {
         const customEvent = new CustomEvent('sendMessage', { detail: message, bubbles: true });
         document.dispatchEvent(customEvent);
