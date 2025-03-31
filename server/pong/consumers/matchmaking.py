@@ -31,7 +31,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.send(
             "matchmaking",
             {
-                "type": "find_pending_players",
+                "type": "matchmaking.find",
                 "heh": "hehehe",
             },
         )
@@ -52,7 +52,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
 
 class MatchmakingWorkerConsumer(AsyncConsumer):
-    async def find_pending_players(self, message):
+    async def matchmaking_find(self, message):
         print("As shrimple as that. Message: ", message)
 
     async def search_match(self, message: dict):
