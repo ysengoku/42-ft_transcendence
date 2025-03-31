@@ -53,11 +53,11 @@ const socketManager = (() => {
       try {
         message = JSON.parse(event.data);
       } catch (error) {
-        devLogError('Invalid JSON:', event.data);
+        devErrorLog('Invalid JSON:', event.data);
         return;
       }
       if (!message.action) {
-        devLogError('Missing action field:', message);
+        devErrorLog('Missing action field:', message);
         return;
       }
       const matchedListener = this.listeners[message.action];
@@ -86,8 +86,10 @@ const socketManager = (() => {
         if (window.location.pathname !== '/chat') {
           return;
         }
-        const customEvent =
-          new CustomEvent('toggleLikeChatMessage', { detail: { data, is_liked: true }, bubbles: true });
+        const customEvent = new CustomEvent('toggleLikeChatMessage', {
+          detail: { data, is_liked: true },
+          bubbles: true,
+        });
         document.dispatchEvent(customEvent);
       },
       unlike_message: (data) => {
@@ -95,8 +97,10 @@ const socketManager = (() => {
         if (window.location.pathname !== '/chat') {
           return;
         }
-        const customEvent =
-          new CustomEvent('toggleLikeChatMessage', { detail: { data, is_liked: false }, bubbles: true });
+        const customEvent = new CustomEvent('toggleLikeChatMessage', {
+          detail: { data, is_liked: false },
+          bubbles: true,
+        });
         document.dispatchEvent(customEvent);
       },
       game_invite: (data) => {
@@ -126,7 +130,7 @@ const socketManager = (() => {
         // TODO
       },
       noMatchedListener: (action) => {
-        devLogError('No listeners set for this action:', action);
+        devErrorLog('No listeners set for this action:', action);
         return;
       },
     };
