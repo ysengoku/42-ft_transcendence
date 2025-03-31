@@ -20,6 +20,7 @@ COPY . .
 
 # Collecter les fichiers statiques
 RUN python manage.py collectstatic --noinput
+RUN python manage.py runworker matchmaking
 
 # Exposer le port
 EXPOSE 8000
