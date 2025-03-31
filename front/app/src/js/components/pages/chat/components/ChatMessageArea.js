@@ -164,9 +164,9 @@ export class ChatMessageArea extends HTMLElement {
       );
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
-      messageElement.querySelector('.message-content').textContent = message.content;
-      messageElement.querySelector('.message-liked').innerHTML = message.liked ?
-        '<i class="bi bi-heart-fill h5"></i>' : '';
+      // messageElement.querySelector('.message-liked').innerHTML = message.liked ?
+      //   '<i class="bi bi-heart-fill h5"></i>' : '';
+
       // Temporary desactivated, waiting bug fix in server
       // if (!message.is_read) {
       //   const readMessage = {
@@ -184,10 +184,10 @@ export class ChatMessageArea extends HTMLElement {
           'align-items-center');
       messageContent.classList.add('ms-5');
       messageElement.querySelector('.chat-message-avatar').remove();
-      messageElement.querySelector('.message-content').textContent = message.content;
-      messageElement.querySelector('.message-liked').innerHTML = message.liked ?
-        '<i class="bi bi-heart-fill h5"></i>' : '';
     }
+    messageElement.querySelector('.message-content').textContent = message.content;
+    message.is_liked ? messageContent.classList.add('liked') : messageContent.classList.remove('liked');
+
     messageElement.querySelector('.message').setAttribute('title', getRelativeDateAndTime(message.date));
     const tooltip = new bootstrap.Tooltip(messageElement.querySelector('.message'));
     tooltip.update();
@@ -261,11 +261,13 @@ export class ChatMessageArea extends HTMLElement {
     }
     const messageId = messageBubble.getAttribute('message-id');
     const messageData = this.#state.data.messages.find((message) => message.id === messageId);
-    const isLiked = !messageData.is_liked;
-    messageData.is_liked = isLiked;
-    messageBubble.querySelector('.message-liked').innerHTML = isLiked ?
-        '<i class="bi bi-heart-fill h5"></i>' : '';
-    this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, isLiked);
+    messageData.is_liked = !messageData.is_liked;
+    if (messageData.is_liked) {
+      messageBubble.classList.add('liked');
+    } else {
+      messageBubble.classList.remove('liked');
+    }
+    this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, messageData.is_liked);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -343,6 +345,12 @@ export class ChatMessageArea extends HTMLElement {
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         color: black;
       }
+      .bubble i {
+        display: none;
+      }
+      .bubble.liked i {
+        display: block;
+      }
       .right-align-message .bubble {
         background-color: var(--pm-primary-500);
         color: white;
@@ -356,7 +364,7 @@ export class ChatMessageArea extends HTMLElement {
       .bi-heart-fill {
         position: absolute;
         bottom: -20px;
-        right: 8px;
+        right: 4px;
         color: red;
       }
       .message-time {
@@ -372,7 +380,7 @@ export class ChatMessageArea extends HTMLElement {
     <div class="message" data-bs-toggle="tooltip">
       <div class="bubble">
         <div class="message-content"></div>
-        <div class="message-liked"></div>
+        <i class="message-liked bi bi-heart-fill h5"></i>
       </div>
     </div>
     `;
