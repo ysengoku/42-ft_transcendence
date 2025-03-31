@@ -203,7 +203,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     message.is_liked = True
                     # Force la mise à jour du champ
                     message.save(update_fields=['is_liked'])
-
+                    message.refresh_from_db()
                     print(message.is_liked)  # Devrait afficher True
                     print(f"DOIT ETRE TRUE : {message.is_liked} .")
                     # Envoi de la notification après commit
@@ -249,6 +249,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     # Force la mise à jour du champ
                     message.save(update_fields=['is_liked'])
 
+                    message.refresh_from_db()
                     # Envoi de la notification après commit
                     transaction.on_commit(
                         lambda: self.send_like_update(chat_id, message_id, False))
@@ -257,7 +258,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     # message.save()
 
                     message.refresh_from_db()
-                    print(message.is_liked)  # Devrait afficher True
+                    print(message.is_liked)  # Devrait afficher False
                     print(f"DOIT ETRE FALSE : {message.is_liked} .")
                 self.send(
                     text_data=json.dumps(
@@ -326,6 +327,16 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(text_data=message)
         except json.JSONDecodeError:
             self.send(text_data=json.dumps({"message": message}))
+
+    def chat_like_update(self, event):
+        """
+        Gère les mises à jour de like envoyées au groupe de chat
+        """
+        message_data = json.loads(event["message"])
+        self.send(text_data=json.dumps({
+            "action": message_data["action"],
+            "data": message_data["data"]
+        }))
 
     def handle_notification(self, data):
         notification_data = data["notification"]
