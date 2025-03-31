@@ -4,6 +4,7 @@ FROM python:3.10-slim
 # Installer les dépendances système
 RUN apt-get update && apt-get install -y \
     libpq-dev \
+    procps \
     gcc \
     libmagic1 \
     && rm -rf /var/lib/apt/lists/*
