@@ -18,12 +18,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copier tout le projet
 COPY . .
 
+# It's important to chmox the script
+ENV chmox="chmod +x"
+RUN $chmox ./django_init.sh
+
 # Collecter les fichiers statiques
 RUN python manage.py collectstatic --noinput
-RUN python manage.py runworker matchmaking
 
 # Exposer le port
 EXPOSE 8000
 
 # Utiliser Daphne pour ASGI (support WebSocket)
+ENTRYPOINT ["./django_init.sh"]
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "server.asgi:application"]
