@@ -30,14 +30,13 @@ class UserEventsConsumer(WebsocketConsumer):
         if not self.user:
             self.close()
             return
+        self.user_profile = self.user.profile
+        self.chats = Chat.objects.for_participants(self.user_profile)
         # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
             f"user_{self.user.id}",
             self.channel_name,
         )
-
-        self.user_profile = self.user.profile
-        self.chats = Chat.objects.for_participants(self.user_profile)
 
         for chat in self.chats:
             async_to_sync(self.channel_layer.group_add)(
@@ -54,37 +53,35 @@ class UserEventsConsumer(WebsocketConsumer):
                 f"chat_{chat.id}", self.channel_name
             )
         except Chat.DoesNotExist:
-            print(f"Chat Room {chat_id} n'existe pas.")
+            print(f"Chat Room {chat_id} does not exist.")
 
-    def create_room(self, data):
-        participants_ids = data.get("participants", [])
-        participants = Profile.objects.filter(id__in=participants_ids)
+    def join_chat(self, event):
+        chat_id = event["data"]["chat_id"]
+        try:
+            # Vérification améliorée avec .for_participants()
+            chat = Chat.objects.for_participants(
+                self.user_profile).get(id=chat_id)
 
-        if participants.exists():
-            chat, created = Chat.objects.get_or_create(*participants)
-            if created:
-                # Add every participants to the WebSocket group room
-                for participant in participants:
-                    async_to_sync(self.channel_layer.group_add)(
-                        f"chat_{chat.id}", f"user_{participant.id}"
-                    )
-                # Après avoir créé la Room et ajouté les membres au groupe :
-                async_to_sync(self.channel_layer.group_send)(
-                    f"chat_{chat.id}",  # Nom du groupe
-                    {
-                        "type": "room.created",  # Doit correspondre à une méthode du consumer
-                        "action": "room_created",
-                        "data": {"chat_id": str(chat.id)},
-                    }
-                )
-                self.send(
-                    text_data=json.dumps(
-                        {
-                            "action": "room_created",
-                            "data": {"chat_id": str(chat.id)},
-                        }
-                    )
-                )
+            # Ajout au groupe WebSocket
+            async_to_sync(self.channel_layer.group_add)(
+                f"chat_{chat_id}",
+                self.channel_name
+            )
+
+            # Notification au client
+            self.send(text_data=json.dumps({
+                "action": "chat_joined",
+                "data": {"chat_id": chat_id}
+            }))
+
+        except Chat.DoesNotExist:
+            print(f"Accès refusé au chat {chat_id} pour {self.user.username}")
+
+    def chat_created(self, event):
+        self.send(text_data=json.dumps({
+            "action": "chat_created",
+            "data": event["data"]
+        }))
 
     def disconnect(self, close_code):
         # verify if self.chats exists and is not empty
@@ -124,6 +121,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.handle_new_tournament(text_data_json)
             case "add_new_friend":
                 self.add_new_friend(text_data_json)
+            case "join_chat":
+                self.join_chat(text_data_json)
             case "room_created":
                 self.send_room_created(
                     text_data_json.get("data", {}).get("chat_id"))
