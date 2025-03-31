@@ -21,11 +21,11 @@ export class UserSearch extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.input.removeEventListener('click', this.handleClick);
-    this.input.removeEventListener('input', this.handleInput);
-    this.form.removeEventListener('click', this.handleClick);
-    this.form.removeEventListener('submit', this.handleSubmit);
-    this.dropdpown.removeEventListener('scrollend', this.showMoreUsers);
+    this.input?.removeEventListener('click', this.handleClick);
+    this.input?.removeEventListener('input', this.handleInput);
+    this.form?.removeEventListener('click', this.handleClick);
+    this.form?.removeEventListener('submit', this.handleSubmit);
+    this.dropdown?.removeEventListener('scrollend', this.showMoreUsers);
     document.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
   }
 
@@ -35,13 +35,13 @@ export class UserSearch extends HTMLElement {
     this.listContainer = this.querySelector('#navbar-user-list');
     this.form = this.querySelector('form');
     this.input = this.form.querySelector('input');
-    this.dropdpown = document.getElementById('user-search-dropdown');
+    this.dropdown = document.getElementById('user-search-dropdown');
 
     this.form.addEventListener('click', this.handleClick);
     this.form.addEventListener('submit', this.handleSubmit);
     this.input.addEventListener('click', this.handleClick);
     this.input.addEventListener('input', this.handleInput);
-    this.dropdpown.addEventListener('scrollend', this.showMoreUsers);
+    this.dropdown.addEventListener('scrollend', this.showMoreUsers);
     document.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
   }
 
