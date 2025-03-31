@@ -1,6 +1,6 @@
 import json
 
-from channels.generic.websocket import AsyncWebsocketConsumer, AsyncConsumer
+from channels.generic.websocket import AsyncConsumer, AsyncWebsocketConsumer
 
 """
 example protocol
@@ -19,6 +19,7 @@ flowchart TD
 """
 user connects and creates ticket
 """
+
 
 class MatchmakingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -48,6 +49,7 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
 
     async def search_match(self, message: dict):
         await self.send(text_data=json.dumps({"id": self.user.id}))
+
 
 class MatchmakingWorkerConsumer(AsyncConsumer):
     async def find_pending_players(self, message):
