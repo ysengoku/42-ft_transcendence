@@ -3,6 +3,7 @@ import { isMobile } from './viewPort';
 import { getRelativeTime, getRelativeDateAndTime } from './dateFormat';
 import { sanitizeHtml } from './sanitizeHtml';
 import { showFormErrorFeedback } from './formFeedback';
+import { showToastNotification } from './toastnotification';
 
 import {
   createClouds,
@@ -34,6 +35,7 @@ export {
   getRelativeDateAndTime,
   sanitizeHtml,
   showFormErrorFeedback,
+  showToastNotification,
   createClouds,
   createStars,
   INPUT_FEEDBACK,
