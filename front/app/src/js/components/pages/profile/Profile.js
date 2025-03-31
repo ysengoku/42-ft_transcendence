@@ -29,7 +29,7 @@ export class UserProfile extends HTMLElement {
     if (response.success) {
       if (response.status === 200) {
         this.user = response.data;
-        console.log('User data:', this.user);
+        devLog('User data:', this.user);
         this.render();
       }
     } else {
