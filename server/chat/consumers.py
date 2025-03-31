@@ -127,7 +127,14 @@ class UserEventsConsumer(WebsocketConsumer):
         message = message_data.get("content")
         chat_id = message_data.get("chat_id")
         # security check: chat should exist
-        chat = Chat.objects.filter(id=chat_id).first()
+        chat = (
+            Chat.objects
+            .for_participants(self.user_profile)  # Filtrage initial
+            # Ajout d'annotations
+            .with_other_user_profile_info(self.user_profile)
+            .filter(id=chat_id)  # Filtrage final
+            .first()
+        )
         if not chat:
             return
 
@@ -135,7 +142,9 @@ class UserEventsConsumer(WebsocketConsumer):
         is_in_chat = chat.participants.filter(id=self.user_profile.id).exists()
         if not is_in_chat:
             return
-
+        is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
+        if is_blocked:
+            return
         new_message = ChatMessage.objects.create(
             sender=self.user_profile, content=message, chat=chat)
         async_to_sync(self.channel_layer.group_send)(
