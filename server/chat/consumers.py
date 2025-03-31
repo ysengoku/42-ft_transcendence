@@ -37,7 +37,6 @@ class UserEventsConsumer(WebsocketConsumer):
             f"user_{self.user.id}",
             self.channel_name,
         )
-
         for chat in self.chats:
             async_to_sync(self.channel_layer.group_add)(
                 f"chat_{chat.id}",
@@ -70,7 +69,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
             # Notification au client
             self.send(text_data=json.dumps({
-                "action": "chat_joined",
+                "action": "join_chat",
                 "data": {"chat_id": chat_id}
             }))
 
