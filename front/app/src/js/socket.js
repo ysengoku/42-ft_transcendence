@@ -15,11 +15,11 @@ const socketManager = (() => {
       this.socket = new WebSocket(this.url);
       this.socketOpen = true;
 
-      this.socket.onopen = (event) => console.log('WebSocket opened:', event);
+      this.socket.onopen = (event) => devLog('WebSocket opened:', event);
       this.socket.onmessage = (event) => this.handleAction(event);
       this.socket.onerror = (event) => console.error('WebSocket error:', event);
       this.socket.onclose = (event) => {
-        console.log('WebSocket closed:', event);
+        devLog('WebSocket closed:', event);
         setTimeout(() => this.reconnect(), 1000);
       };
     }
@@ -28,13 +28,13 @@ const socketManager = (() => {
       if (!this.socketOpen) {
         return;
       }
-      console.log('Reconnecting to WebSocket...');
+      devLog('Reconnecting to WebSocket...');
       this.socket = new WebSocket(this.url);
-      this.socket.onopen = (event) => console.log('WebSocket opened:', event);
+      this.socket.onopen = (event) => devLog('WebSocket opened:', event);
       this.socket.onmessage = (event) => this.handleAction(event);
       this.socket.onerror = (event) => console.error('WebSocket error:', event);
       this.socket.onclose = (event) => {
-        console.log('WebSocket closed:', event);
+        devLog('WebSocket closed:', event);
         setTimeout(() => this.reconnect(), 1000);
       };
     }
@@ -48,16 +48,16 @@ const socketManager = (() => {
     }
 
     handleAction(event) {
-      console.log('Message received:', event.data);
+      devLog('Message received via WebSocket:', event.data);
       let message = null;
       try {
         message = JSON.parse(event.data);
       } catch (error) {
-        console.error('Invalid JSON:', event.data);
+        devLogError('Invalid JSON:', event.data);
         return;
       }
       if (!message.action) {
-        console.error('Missing action field:', message);
+        devLogError('Missing action field:', message);
         return;
       }
       const matchedListener = this.listeners[message.action];
@@ -70,7 +70,7 @@ const socketManager = (() => {
 
     listeners = {
       new_message: (data) => {
-        console.log('New chat message:', data);
+        devLog('New chat message:', data);
         if (window.location.pathname === '/chat') {
           const customEvent = new CustomEvent('newChatMessage', { detail: data, bubbles: true });
           document.dispatchEvent(customEvent);
@@ -82,7 +82,7 @@ const socketManager = (() => {
         return;
       },
       like_message: (data) => {
-        console.log('Message liked:', data);
+        devLog('Message liked:', data);
         if (window.location.pathname !== '/chat') {
           return;
         }
@@ -91,7 +91,7 @@ const socketManager = (() => {
         document.dispatchEvent(customEvent);
       },
       unlike_message: (data) => {
-        console.log('Message unliked:', data);
+        devLog('Message unliked:', data);
         if (window.location.pathname !== '/chat') {
           return;
         }
@@ -100,33 +100,33 @@ const socketManager = (() => {
         document.dispatchEvent(customEvent);
       },
       game_invite: (data) => {
-        console.log('Game invite received:', data);
+        devLog('Game invite received:', data);
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
         // TODO
       },
       new_tournament: (data) => {
-        console.log('New tournament received:', data);
+        devLog('New tournament received:', data);
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
         // TODO
       },
       new_friend: (data) => {
-        console.log('New friend received:', data);
+        devLog('New friend received:', data);
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
         // TODO
       },
       user_online: (data) => {
-        console.log('User online:', data);
+        devLog('User online:', data);
         // TODO
       },
       user_offline: (data) => {
-        console.log('User offline:', data);
+        devLog('User offline:', data);
         // TODO
       },
       noMatchedListener: (action) => {
-        console.error('No listeners set for this action:', action);
+        devLogError('No listeners set for this action:', action);
         return;
       },
     };
