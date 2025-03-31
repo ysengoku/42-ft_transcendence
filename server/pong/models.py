@@ -107,8 +107,8 @@ class PendingMatch(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
-    elo_range_level = models.IntegerField(choices=LEVEL_CHOICES)
-    player = models.OneToOneField(Profile, on_delete=models.CASCADE)
+    elo_range_level = models.IntegerField(choices=LEVEL_CHOICES, default=LEVEL_1)
+    player = models.OneToOneField(Profile, on_delete=models.CASCADE, null=True)
 
     def __str__(self) -> str:
         return f"{self.get_status_display()} match {str(self.id)}"
