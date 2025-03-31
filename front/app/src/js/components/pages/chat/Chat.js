@@ -44,10 +44,10 @@ export class Chat extends HTMLElement {
           break;
         }
       }
-      this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
     } else if (this.#queryParam) {
       this.#state.currentChatUsername = this.#queryParam;
     }
+    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
     let chatData = null;
     if (this.#state.currentChatUsername) {
       chatData = await this.fetchChatData();
@@ -115,7 +115,7 @@ export class Chat extends HTMLElement {
         true,
     );
     if (response.success) {
-      console.log('Chat list response:', response);
+      devLog('Chat list response:', response);
       return response.data;
     } else {
       // TODO: Handle error
@@ -132,7 +132,7 @@ export class Chat extends HTMLElement {
         true,
     );
     if (response.success) {
-      console.log('Chat data response:', response);
+      devLog('Chat data response:', response);
       return { data: response.data, status: response.status };
     } else {
       // TODO: Handle error
@@ -144,7 +144,7 @@ export class Chat extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   async handleChatItemSelected(event) {
-    console.log('Chat item selected:', event.detail);
+    devLog('Chat item selected:', event.detail);
     if (!event.detail.messages) {
       this.#state.currentChatUsername = event.detail;
       const chatData = await this.fetchChatData();
@@ -181,7 +181,7 @@ export class Chat extends HTMLElement {
         content: event.detail,
       },
     };
-    console.log('Sending new message to server. Data:', messageData);
+    devLog('Sending new message to server. Data:', messageData);
     socketManager.socket.send(JSON.stringify(messageData));
     // TODO: Render temporary message (in gray) to chat message area?
     // But how to match with the server response to remove it after ?
@@ -196,7 +196,7 @@ export class Chat extends HTMLElement {
       },
     };
     if (socketManager.socket.readyState === WebSocket.OPEN) {
-      console.log('Sending like/unlike message action to server. Data:', messageData);
+      devLog('Sending like/unlike message action to server. Data:', messageData);
       socketManager.socket.send(JSON.stringify(messageData));
     } else {
       console.error('WebSocket is not open:', socketManager.socket.readyState);
@@ -204,7 +204,7 @@ export class Chat extends HTMLElement {
   }
 
   async receiveMessage(event) {
-    console.log('New message received:', event.detail);
+    devLog('New message received:', event.detail);
     if (event.detail.chat_id === this.#state.currentChat.chat_id) {
       this.chatMessagesArea.renderNewMessage(event.detail);
       await this.chatList.updateListWithIncomingMessage(event.detail);
@@ -221,10 +221,10 @@ export class Chat extends HTMLElement {
     const component = document.getElementById(data.id);
     if (component) {
       if (data.is_liked) {
-        console.log('Message is liked:', component);
+        devLog('Message is liked:', component);
         component.classList.add('liked');
       } else {
-        console.log('Message is unliked:', component);
+        devLog('Message is unliked:', component);
         component.classList.remove('liked');
       }
     }
