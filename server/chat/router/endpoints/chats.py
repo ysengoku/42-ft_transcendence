@@ -1,3 +1,5 @@
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
@@ -34,10 +36,19 @@ def get_or_create_chat(request, username: str):
     if other_profile == profile:
         raise HttpError(422, "Cannot get chat with yourself.")
     chat, created = Chat.objects.get_or_create(profile, other_profile)
-    chat = Chat.objects.filter(pk=chat.pk).with_other_user_profile_info(profile).first()
+    chat = Chat.objects.filter(
+        pk=chat.pk).with_other_user_profile_info(profile).first()
     if created:
-        return 201, chat
-    return 200, chat
+        channel_layer = get_channel_layer()
+        for user_profile in [profile, other_profile]:
+            async_to_sync(channel_layer.group_send)(
+                f"user_{user_profile.user.id}",
+                {
+                    "type": "join.chat",
+                    "data": {"chat_id": str(chat.id)}
+                }
+            )
+    return (201 if created else 200), chat
 
 
 @chats_router.get("{username}/messages", response={200: list[ChatMessageSchema], frozenset({401, 404}): MessageSchema})
