@@ -1,11 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
-import * as CANNON from '/node_modules/cannon-es/dist/cannon-es.js';
-import Stats from '/node_modules/three/examples/jsm/libs/stats.module.js';
-import { GUI } from '/node_modules/dat.gui/build/dat.gui.module.js';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import pedro from '/3d_models/lilguy.glb?url';
-import auidourl from '/audio/score_sound.mp3?url';
+import audiourl from '/audio/score_sound.mp3?url';
 
 export class MultiplayerGame extends HTMLElement {
     constructor() {
@@ -17,7 +14,7 @@ export class MultiplayerGame extends HTMLElement {
     }
 
     game() {
-        const audio = new Audio(auidourl);
+        const audio = new Audio(audiourl);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
@@ -194,8 +191,8 @@ export class MultiplayerGame extends HTMLElement {
             switch (data.event) {
                 case "game_tick":
                     updateState(data.state);
-                    if (data.state.someone_scored)
-                        audio.cloneNode().play();
+                    // if (data.state.someone_scored)
+                    //     audio.cloneNode().play();
                     break;
                 case "joined":
                     player_id = data.player_id;
