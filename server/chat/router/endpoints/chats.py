@@ -40,9 +40,9 @@ def get_or_create_chat(request, username: str):
         pk=chat.pk).with_other_user_profile_info(profile).first()
     if created:
         channel_layer = get_channel_layer()
-        for user in [profile, other_profile]:
+        for user_profile in [profile, other_profile]:
             async_to_sync(channel_layer.group_send)(
-                f"user_{user.id}",
+                f"user_{user_profile.user.id}",
                 {
                     "type": "join.chat",
                     "data": {"chat_id": str(chat.id)}
