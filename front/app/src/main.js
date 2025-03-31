@@ -26,3 +26,15 @@ document.addEventListener('mousedown', () => {
 document.addEventListener('mouseup', () => {
   document.body.style.cursor ='url(\'/img/gun.png\') 4 4, auto';
 });
+
+window.devLog = (...args) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('%c[DEV LOG]', 'color: green; font-weight: bold;', ...args);
+  }
+};
+
+window.devErrorLog = (...args) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error('%c[DEV ERROR]', 'color: red; font-weight: bold;', ...args);
+  }
+};
