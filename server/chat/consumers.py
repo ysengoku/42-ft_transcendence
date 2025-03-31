@@ -300,16 +300,6 @@ class UserEventsConsumer(WebsocketConsumer):
             message = ChatMessage.objects.get(pk=message_id)
             message.is_read = True
             message.save()
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "read_message",
-                        "data": {
-                            "id": message_id,
-                        },
-                    },
-                ),
-            )
         except ObjectDoesNotExist:
             print(f"Message {message_id} does not exist.")
 
