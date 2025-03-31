@@ -1,8 +1,5 @@
 #!/bin/bash
-exec "$@" &
 
-python ./manage.py runworker matchmaking &
+python ./manage.py runworker matchmaking -v 3 &
 
-wait -n
-
-exit $?
+exec "$@"
