@@ -215,23 +215,20 @@ export class Chat extends HTMLElement {
   }
 
   handleToggleLikeMessage(event) {
-    console.log('Toggle like message event:', event.detail);
-    if (event.detail.data.chat_id !== this.#state.currentChat.chat_id) {
-      console.log('Not the current chat:', event.detail.data.chat_id, this.#state.currentChat.chat_id);
+    const data = event.detail.data;
+    if (data.chat_id !== this.#state.currentChat.chat_id) {
       return;
     }
-    console.log('Message liked:', event.detail.is_liked);
-    const component = document.getElementById(`chat-message-${event.detail.data.id}`);
+    const component = document.getElementById(data.id);
     if (component) {
-      const messageLikedElement = component.querySelector('.message-liked');
-      if (messageLikedElement) {
-        messageLikedElement.innerHTML = event.detail.is_liked ?
-          '<i class="bi bi-heart-fill h5"></i>' : '';
+      if (data.is_liked) {
+        console.log('Message is liked:', component);
+        component.classList.add('liked');
+      } else {
+        console.log('Message is unliked:', component);
+        component.classList.remove('liked');
       }
     }
-    // Find concerned message in the Chat
-    // Update is_liked field
-    // Update the message
   }
 
   handleUnlikedMessage(data) {
