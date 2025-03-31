@@ -34,7 +34,7 @@ export class ChatMessageArea extends HTMLElement {
     this.#state.renderedMessagesCount = 0;
     this.#state.data = data;
     this.#state.loggedInUsername = loggedInUsername;
-    console.log('ChatMessageArea data:', this.#state.data);
+    devLog('ChatMessageArea data:', this.#state.data);
     this.render();
   }
 
@@ -173,7 +173,7 @@ export class ChatMessageArea extends HTMLElement {
             id: message.id,
           },
         };
-        console.log('Sending read_message to server:', readMessage);
+        devLog('Sending read_message to server:', readMessage);
         socketManager.socket.send(JSON.stringify(readMessage));
       }
     } else {
@@ -227,7 +227,6 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   async unblockUser() {
-    console.log('Loggedin user:', this.#state.loggedInUsername);
     const response = await apiRequest(
         'DELETE',
         /* eslint-disable-next-line new-cap */
@@ -250,8 +249,6 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   toggleLikeMessage(event) {
-    console.log('Toggle like message:', event.target);
-    console.log('Current chat', this.#state.data);
     const messageBubble = event.target.closest('.bubble');
     if (!messageBubble) {
       return;
