@@ -136,26 +136,24 @@ class UserEventsConsumer(WebsocketConsumer):
         if not is_in_chat:
             return
 
-        ChatMessage.objects.create(
+        new_message = ChatMessage.objects.create(
             sender=self.user_profile, content=message, chat=chat)
         async_to_sync(self.channel_layer.group_send)(
-            "chat_" + chat_id,
+            f"chat_{chat_id}",
             {
                 "type": "chat.message",
-                "message": json.dumps(
-                    {
-                        "action": "new_message",
-                        "data": {
-                            "chat_id": str(chat.id),
-                            "id": str(ChatMessage.objects.latest("id").pk),
-                            "content": message,
-                            "date": ChatMessage.objects.latest("id").date.isoformat(),
-                            "sender": self.user_profile.user.username,
-                            "is_read": False,
-                            "is_liked": False,
-                        },
+                "message": json.dumps({
+                    "action": "new_message",
+                    "data": {
+                        "chat_id": str(chat.id),
+                        "id": str(new_message.pk),
+                        "content": message,
+                        "date": new_message.date.isoformat(),
+                        "sender": self.user_profile.user.username,
+                        "is_read": False,
+                        "is_liked": False,
                     },
-                ),
+                }),
             },
         )
 
