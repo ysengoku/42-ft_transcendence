@@ -36,16 +36,15 @@ export class Chat extends HTMLElement {
     if (!chatListData) {
       return;
     }
-    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
-
     if (chatListData.count > 0 && !this.#queryParam) {
       for (let i = 0; i < chatListData.items.length; i++) {
-        if (!chatListData.items[0].is_blocked_by_user && chatListData.items[i].last_message) {
+        if (!chatListData.items[i].is_blocked_by_user && chatListData.items[i].last_message) {
           this.#state.currentChatUsername = chatListData.items[i].username;
           chatListData.items[i].unread_messages_count = 0;
           break;
         }
       }
+      this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
     } else if (this.#queryParam) {
       this.#state.currentChatUsername = this.#queryParam;
     }
