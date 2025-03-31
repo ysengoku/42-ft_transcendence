@@ -1,3 +1,5 @@
+import { showToastNotification } from '@utils';
+
 const socketManager = (() => {
   class WebSocketManager {
     constructor() {
@@ -58,8 +60,12 @@ const socketManager = (() => {
         console.error('Missing action field:', message);
         return;
       }
-      const matchedListener = this.listeners[message.action] || this.listeners.noMatchedListener;
-      matchedListener(message.data);
+      const matchedListener = this.listeners[message.action];
+      if (matchedListener) {
+        matchedListener(message.data);
+      } else {
+        this.listeners.noMatchedListener(message.action);
+      }
     }
 
     listeners = {
@@ -71,6 +77,7 @@ const socketManager = (() => {
         } else {
           const chatButton = document.querySelector('chat-button');
           chatButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+          showToastNotification('New message just rode in.');
         }
         return;
       },
@@ -79,14 +86,18 @@ const socketManager = (() => {
         if (window.location.pathname !== '/chat') {
           return;
         }
-        // TODO
+        const customEvent =
+          new CustomEvent('toggleLikeChatMessage', { detail: { data, is_liked: true }, bubbles: true });
+        document.dispatchEvent(customEvent);
       },
       unlike_message: (data) => {
-        console.log('Message liked:', data);
+        console.log('Message unliked:', data);
         if (window.location.pathname !== '/chat') {
           return;
         }
-        // TODO
+        const customEvent =
+          new CustomEvent('toggleLikeChatMessage', { detail: { data, is_liked: false }, bubbles: true });
+        document.dispatchEvent(customEvent);
       },
       game_invite: (data) => {
         console.log('Game invite received:', data);
@@ -114,8 +125,8 @@ const socketManager = (() => {
         console.log('User offline:', data);
         // TODO
       },
-      noMatchedListener: () => {
-        console.error('No listeners set for this action:', message.action);
+      noMatchedListener: (action) => {
+        console.error('No listeners set for this action:', action);
         return;
       },
     };
