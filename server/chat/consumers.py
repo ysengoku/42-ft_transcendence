@@ -30,15 +30,13 @@ class UserEventsConsumer(WebsocketConsumer):
         if not self.user:
             self.close()
             return
+        self.user_profile = self.user.profile
+        self.chats = Chat.objects.for_participants(self.user_profile)
         # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
             f"user_{self.user.id}",
             self.channel_name,
         )
-
-        self.user_profile = self.user.profile
-        self.chats = Chat.objects.for_participants(self.user_profile)
-
         for chat in self.chats:
             async_to_sync(self.channel_layer.group_add)(
                 f"chat_{chat.id}",
@@ -54,36 +52,42 @@ class UserEventsConsumer(WebsocketConsumer):
                 f"chat_{chat.id}", self.channel_name
             )
         except Chat.DoesNotExist:
-            print(f"Chat Room {chat_id} n'existe pas.")
+            print(f"Chat Room {chat_id} does not exist.")
 
-    def create_room(self, data):
-        participants_ids = data.get("participants", [])
-        participants = Profile.objects.filter(id__in=participants_ids)
+    def join_chat(self, event):
+        chat_id = event["data"]["chat_id"]
+        try:
+            # Vérification améliorée avec .for_participants()
+            chat = Chat.objects.for_participants(
+                self.user_profile).get(id=chat_id)
 
-        if participants.exists():
-            chat, created = Chat.objects.get_or_create(*participants)
-            if created:
-                # Add every participants to the WebSocket group room
-                for participant in participants:
-                    async_to_sync(self.channel_layer.group_add)(
-                        f"chat_{chat.id}", f"user_{participant.id}"
-                    )
+            # Ajout au groupe WebSocket
+            async_to_sync(self.channel_layer.group_add)(
+                f"chat_{chat_id}",
+                self.channel_name
+            )
 
-                self.send(
-                    text_data=json.dumps(
-                        {
-                            "action": "room_created",
-                            "data": {"chat_id": str(chat.id)},
-                        }
-                    )
-                )
+            # Notification au client
+            self.send(text_data=json.dumps({
+                "action": "join_chat",
+                "data": {"chat_id": chat_id}
+            }))
+
+        except Chat.DoesNotExist:
+            print(f"Accès refusé au chat {chat_id} pour {self.user.username}")
+
+    def chat_created(self, event):
+        self.send(text_data=json.dumps({
+            "action": "chat_created",
+            "data": event["data"]
+        }))
 
     def disconnect(self, close_code):
         # verify if self.chats exists and is not empty
         if hasattr(self, "chats") and self.chats:
             for chat in self.chats:
                 async_to_sync(self.channel_layer.group_discard)(
-                    "chat_" + str(chat.id),
+                    f"chat_{chat.id}",
                     self.channel_name,
                 )
 
@@ -116,6 +120,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.handle_new_tournament(text_data_json)
             case "add_new_friend":
                 self.add_new_friend(text_data_json)
+            case "join_chat":
+                self.join_chat(text_data_json)
             case "room_created":
                 self.send_room_created(
                     text_data_json.get("data", {}).get("chat_id"))
@@ -127,7 +133,14 @@ class UserEventsConsumer(WebsocketConsumer):
         message = message_data.get("content")
         chat_id = message_data.get("chat_id")
         # security check: chat should exist
-        chat = Chat.objects.filter(id=chat_id).first()
+        chat = (
+            Chat.objects
+            .for_participants(self.user_profile)  # Filtrage initial
+            # # Ajout d'annotations
+            .with_other_user_profile_info(self.user_profile)
+            .filter(id=chat_id)  # Filtrage final
+            .first()
+        )
         if not chat:
             return
 
@@ -135,27 +148,27 @@ class UserEventsConsumer(WebsocketConsumer):
         is_in_chat = chat.participants.filter(id=self.user_profile.id).exists()
         if not is_in_chat:
             return
-
-        ChatMessage.objects.create(
+        # is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
+        # if is_blocked:
+        #     return
+        new_message = ChatMessage.objects.create(
             sender=self.user_profile, content=message, chat=chat)
         async_to_sync(self.channel_layer.group_send)(
-            "chat_" + chat_id,
+            f"chat_{chat_id}",
             {
                 "type": "chat.message",
-                "message": json.dumps(
-                    {
-                        "action": "new_message",
-                        "data": {
-                            "chat_id": str(chat.id),
-                            "id": str(ChatMessage.objects.latest("id").pk),
-                            "content": message,
-                            "date": ChatMessage.objects.latest("id").date.isoformat(),
-                            "sender": self.user_profile.user.username,
-                            "is_read": False,
-                            "is_liked": False,
-                        },
+                "message": json.dumps({
+                    "action": "new_message",
+                    "data": {
+                        "chat_id": str(chat.id),
+                        "id": str(new_message.pk),
+                        "content": message,
+                        "date": new_message.date.isoformat(),
+                        "sender": self.user_profile.user.username,
+                        "is_read": False,
+                        "is_liked": False,
                     },
-                ),
+                }),
             },
         )
 
@@ -201,17 +214,10 @@ class UserEventsConsumer(WebsocketConsumer):
                 with transaction.atomic():
                     message = ChatMessage.objects.select_for_update().get(pk=message_id)
                     message.is_liked = True
-                    # Force la mise à jour du champ
                     message.save(update_fields=['is_liked'])
                     message.refresh_from_db()
-                    print(message.is_liked)  # Devrait afficher True
-                    print(f"DOIT ETRE TRUE : {message.is_liked} .")
-                    # Envoi de la notification après commit
                     transaction.on_commit(
                         lambda: self.send_like_update(chat_id, message_id, True))
-                # message = ChatMessage.objects.get(pk=message_id)
-                # message.is_liked = True
-                # message.save()
                 self.send(
                     text_data=json.dumps(
                         {
@@ -223,7 +229,6 @@ class UserEventsConsumer(WebsocketConsumer):
                         },
                     ),
                 )
-                # if user on the chat, sends to client
             except ObjectDoesNotExist:
                 print(f"Message {message_id} does not exist.")
                 self.send(
@@ -246,20 +251,13 @@ class UserEventsConsumer(WebsocketConsumer):
                 with transaction.atomic():
                     message = ChatMessage.objects.select_for_update().get(pk=message_id)
                     message.is_liked = False
-                    # Force la mise à jour du champ
                     message.save(update_fields=['is_liked'])
 
                     message.refresh_from_db()
-                    # Envoi de la notification après commit
                     transaction.on_commit(
                         lambda: self.send_like_update(chat_id, message_id, False))
-                    # message = ChatMessage.objects.get(pk=message_id)
-                    # message.is_liked = False
-                    # message.save()
 
                     message.refresh_from_db()
-                    print(message.is_liked)  # Devrait afficher False
-                    print(f"DOIT ETRE FALSE : {message.is_liked} .")
                 self.send(
                     text_data=json.dumps(
                         {
