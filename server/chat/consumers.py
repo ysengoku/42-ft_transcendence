@@ -68,7 +68,15 @@ class UserEventsConsumer(WebsocketConsumer):
                     async_to_sync(self.channel_layer.group_add)(
                         f"chat_{chat.id}", f"user_{participant.id}"
                     )
-
+                # Après avoir créé la Room et ajouté les membres au groupe :
+                async_to_sync(self.channel_layer.group_send)(
+                    f"chat_{chat.id}",  # Nom du groupe
+                    {
+                        "type": "room.created",  # Doit correspondre à une méthode du consumer
+                        "action": "room_created",
+                        "data": {"chat_id": str(chat.id)},
+                    }
+                )
                 self.send(
                     text_data=json.dumps(
                         {
@@ -83,7 +91,7 @@ class UserEventsConsumer(WebsocketConsumer):
         if hasattr(self, "chats") and self.chats:
             for chat in self.chats:
                 async_to_sync(self.channel_layer.group_discard)(
-                    "chat_" + str(chat.id),
+                    f"chat_{chat.id}",
                     self.channel_name,
                 )
 
@@ -130,7 +138,7 @@ class UserEventsConsumer(WebsocketConsumer):
         chat = (
             Chat.objects
             .for_participants(self.user_profile)  # Filtrage initial
-            # Ajout d'annotations
+            # # Ajout d'annotations
             .with_other_user_profile_info(self.user_profile)
             .filter(id=chat_id)  # Filtrage final
             .first()
@@ -142,9 +150,9 @@ class UserEventsConsumer(WebsocketConsumer):
         is_in_chat = chat.participants.filter(id=self.user_profile.id).exists()
         if not is_in_chat:
             return
-        is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
-        if is_blocked:
-            return
+        # is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
+        # if is_blocked:
+        #     return
         new_message = ChatMessage.objects.create(
             sender=self.user_profile, content=message, chat=chat)
         async_to_sync(self.channel_layer.group_send)(
@@ -208,17 +216,10 @@ class UserEventsConsumer(WebsocketConsumer):
                 with transaction.atomic():
                     message = ChatMessage.objects.select_for_update().get(pk=message_id)
                     message.is_liked = True
-                    # Force la mise à jour du champ
                     message.save(update_fields=['is_liked'])
                     message.refresh_from_db()
-                    print(message.is_liked)  # Devrait afficher True
-                    print(f"DOIT ETRE TRUE : {message.is_liked} .")
-                    # Envoi de la notification après commit
                     transaction.on_commit(
                         lambda: self.send_like_update(chat_id, message_id, True))
-                # message = ChatMessage.objects.get(pk=message_id)
-                # message.is_liked = True
-                # message.save()
                 self.send(
                     text_data=json.dumps(
                         {
@@ -230,7 +231,6 @@ class UserEventsConsumer(WebsocketConsumer):
                         },
                     ),
                 )
-                # if user on the chat, sends to client
             except ObjectDoesNotExist:
                 print(f"Message {message_id} does not exist.")
                 self.send(
@@ -253,20 +253,13 @@ class UserEventsConsumer(WebsocketConsumer):
                 with transaction.atomic():
                     message = ChatMessage.objects.select_for_update().get(pk=message_id)
                     message.is_liked = False
-                    # Force la mise à jour du champ
                     message.save(update_fields=['is_liked'])
 
                     message.refresh_from_db()
-                    # Envoi de la notification après commit
                     transaction.on_commit(
                         lambda: self.send_like_update(chat_id, message_id, False))
-                    # message = ChatMessage.objects.get(pk=message_id)
-                    # message.is_liked = False
-                    # message.save()
 
                     message.refresh_from_db()
-                    print(message.is_liked)  # Devrait afficher False
-                    print(f"DOIT ETRE FALSE : {message.is_liked} .")
                 self.send(
                     text_data=json.dumps(
                         {
