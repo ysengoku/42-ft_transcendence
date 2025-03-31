@@ -28,19 +28,19 @@ export function getRelativeTime(time) {
 export function getRelativeDateAndTime(time) {
   const now = new Date();
   const date = new Date(time);
-  
+
   const today = now.toISOString().split('T')[0];
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
-  
+
   const targetDate = date.toISOString().split('T')[0];
   const formattedTime = new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: false,
   }).format(date);
-  
+
   if (targetDate === today) {
     return `today, ${formattedTime}`;
   }
@@ -52,5 +52,4 @@ export function getRelativeDateAndTime(time) {
     day: 'numeric',
   }).format(date);
   return `${formattedDate}, ${formattedTime}`;
- }
-  
+}
