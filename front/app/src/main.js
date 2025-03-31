@@ -24,5 +24,5 @@ document.addEventListener('mousedown', () => {
 });
 
 document.addEventListener('mouseup', () => {
-  document.body.style.cursor ='url(\'/img/sample-cursor.png\') 4 4, auto';
+  document.body.style.cursor ='url(\'/img/gun.png\') 4 4, auto';
 });

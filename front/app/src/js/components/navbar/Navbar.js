@@ -77,6 +77,7 @@ export class Navbar extends HTMLElement {
     }
     .dropdown-menu {
       max-height: 75vh;
+      min-width: 360px;
       padding-top: 0;
     }
     .dropdown-list-header {
