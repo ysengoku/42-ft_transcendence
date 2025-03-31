@@ -1,6 +1,6 @@
 import json
 
-from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer, AsyncConsumer
 
 """
 example protocol
@@ -22,10 +22,18 @@ user connects and creates ticket
 
 class MatchmakingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        self.user = self.scope.get("user")
         if not self.user:
             await self.close()
             return
 
+        await self.channel_layer.send(
+            "matchmaking",
+            {
+                "type": "find_pending_players",
+                "heh": "hehehe",
+            },
+        )
         # user connects
         #     -> search for matchmaking ticket
         #           -> if found, startgame
@@ -38,8 +46,12 @@ class MatchmakingConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         pass
 
-    async def find_pending_players():
-        pass
+    async def search_match(self, message: dict):
+        await self.send(text_data=json.dumps({"id": self.user.id}))
+
+class MatchmakingWorkerConsumer(AsyncConsumer):
+    async def find_pending_players(self, message):
+        print("As shrimple as that. Message: ", message)
 
     async def search_match(self, message: dict):
         await self.send(text_data=json.dumps({"id": self.user.id}))
