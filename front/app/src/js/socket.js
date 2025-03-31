@@ -1,4 +1,4 @@
-import { showToastNotification } from "@utils";
+import { showToastNotification } from '@utils';
 
 const socketManager = (() => {
   class WebSocketManager {
@@ -91,7 +91,7 @@ const socketManager = (() => {
         document.dispatchEvent(customEvent);
       },
       unlike_message: (data) => {
-        console.log('Message liked:', data);
+        console.log('Message unliked:', data);
         if (window.location.pathname !== '/chat') {
           return;
         }

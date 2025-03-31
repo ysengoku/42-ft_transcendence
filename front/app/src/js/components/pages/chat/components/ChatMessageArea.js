@@ -155,7 +155,7 @@ export class ChatMessageArea extends HTMLElement {
     const messageElement = document.createElement('div');
     messageElement.innerHTML = this.messageTemplate();
     const messageContent = messageElement.querySelector('.bubble');
-    messageContent.setAttribute('message-id', message.id);
+    messageContent.id = message.id;
 
     if (message.sender === this.#state.data.username) {
       messageElement.classList.add(
@@ -256,14 +256,9 @@ export class ChatMessageArea extends HTMLElement {
     if (!messageBubble) {
       return;
     }
-    const messageId = messageBubble.getAttribute('message-id');
+    const messageId = messageBubble.getAttribute('id');
     const messageData = this.#state.data.messages.find((message) => message.id === messageId);
     messageData.is_liked = !messageData.is_liked;
-    if (messageData.is_liked) {
-      messageBubble.classList.add('liked');
-    } else {
-      messageBubble.classList.remove('liked');
-    }
     this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, messageData.is_liked);
   }
 
