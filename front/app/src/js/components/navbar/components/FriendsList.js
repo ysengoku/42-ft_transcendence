@@ -15,7 +15,7 @@ export class FriendsList extends HTMLElement {
     super();
     this.fetchFriendsData = this.fetchFriendsData.bind(this);
     this.handleModalClose = this.handleModalClose.bind(this);
-    this.handleShowMoreFriends = this.handleShowMoreFriends.bind(this);
+    this.showMoreFriends = this.showMoreFriends.bind(this);
   }
 
   connectedCallback() {
@@ -25,17 +25,19 @@ export class FriendsList extends HTMLElement {
   disconnectedCallback() {
     this.button?.removeEventListener('shown.bs.dropdown', this.fetchFriendsData);
     this.button?.removeEventListener('hidden.bs.dropdown', this.handleModalClose);
-    this.showMoreButton?.removeEventListener('click', this.handleShowMoreFriends);
+    this.dropdown?.removeEventListener('scrollend', this.showMoreFriends);
   }
 
   render() {
     this.innerHTML = this.template();
 
     this.button = document.getElementById('navbar-friends-button');
+    this.dropdown = document.getElementById('friends-list-dropdown');
     this.listContainer = this.querySelector('#friends-list');
 
     this.button?.addEventListener('shown.bs.dropdown', this.fetchFriendsData);
     this.button?.addEventListener('hidden.bs.dropdown', this.handleModalClose);
+    this.dropdown?.addEventListener('scrollend', this.showMoreFriends);
   }
 
   async fetchFriendsData() {
@@ -81,9 +83,6 @@ export class FriendsList extends HTMLElement {
       this.listContainer.appendChild(listItem);
       this.#state.listLength++;
     }
-    if (this.#state.totalFriendsCount > this.#state.listLength) {
-      this.renderShowMoreButton();
-    }
   }
 
   renderNoFriendsFound() {
@@ -92,26 +91,20 @@ export class FriendsList extends HTMLElement {
     this.listContainer.appendChild(noFriends);
   }
 
-  renderShowMoreButton() {
-    const showMoreButtonContainer = document.createElement('li');
-    showMoreButtonContainer.innerHTML = this.showMoreButtonTemplate();
-    this.listContainer.appendChild(showMoreButtonContainer);
-
-    this.showMoreButton = showMoreButtonContainer.querySelector('#show-more-friends');
-    this.showMoreButton?.addEventListener('click', this.handleShowMoreFriends);
-  }
-
   handleModalClose() {
     this.#state.friendsList = [];
     this.#state.totalFriendsCount = 0;
     this.listContainer.innerHTML = '';
   }
 
-  async handleShowMoreFriends(event) {
-    event.stopPropagation();
+  async showMoreFriends(event) {
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    const threshold = 5;
+    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalFriendsCount === this.#state.listLength) {
+        return;
+      }
     await this.fetchFriendsData();
-    this.showMoreButton?.removeEventListener('click', this.handleShowMoreFriends);
-    this.showMoreButton?.remove();
   }
 
   template() {
@@ -136,24 +129,6 @@ export class FriendsList extends HTMLElement {
     </style>
     <div class="list-group-item p-3">
       <p class="text-center m-0">No friends found</p>
-    </div>
-    `;
-  }
-
-  showMoreButtonTemplate() {
-    return `
-    <style>
-    #show-more-friends {
-      border: none;
-      position: relative;
-      border-top: 1px solid var(--bs-border-color);
-    }
-    li {
-      list-style-type: none;
-    }
-    </style>
-    <div class="list-group-item mt-4 p-3" id="show-more-friends">
-      <p class="text-center m-0">Show more friends</p>
     </div>
     `;
   }

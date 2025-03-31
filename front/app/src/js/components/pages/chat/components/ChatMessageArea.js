@@ -155,7 +155,7 @@ export class ChatMessageArea extends HTMLElement {
     const messageElement = document.createElement('div');
     messageElement.innerHTML = this.messageTemplate();
     const messageContent = messageElement.querySelector('.bubble');
-    messageContent.setAttribute('message-id', message.id);
+    messageContent.id = message.id;
 
     if (message.sender === this.#state.data.username) {
       messageElement.classList.add(
@@ -164,21 +164,18 @@ export class ChatMessageArea extends HTMLElement {
       );
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
-      // messageElement.querySelector('.message-liked').innerHTML = message.liked ?
-      //   '<i class="bi bi-heart-fill h5"></i>' : '';
-
-      // Temporary desactivated, waiting bug fix in server
-      // if (!message.is_read) {
-      //   const readMessage = {
-      //     action: 'read_message',
-      //     data: {
-      //       chat_id: this.#state.data.chat_id,
-      //       id: message.id,
-      //     },
-      //   };
-      // socketManager.socket.send(JSON.stringify(readMessage));
-      // }
       messageElement.addEventListener('click', this.toggleLikeMessage);
+      if (!message.is_read) {
+        const readMessage = {
+          action: 'read_message',
+          data: {
+            chat_id: this.#state.data.chat_id,
+            id: message.id,
+          },
+        };
+        console.log('Sending read_message to server:', readMessage);
+        socketManager.socket.send(JSON.stringify(readMessage));
+      }
     } else {
       messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
           'align-items-center');
@@ -259,14 +256,9 @@ export class ChatMessageArea extends HTMLElement {
     if (!messageBubble) {
       return;
     }
-    const messageId = messageBubble.getAttribute('message-id');
+    const messageId = messageBubble.getAttribute('id');
     const messageData = this.#state.data.messages.find((message) => message.id === messageId);
     messageData.is_liked = !messageData.is_liked;
-    if (messageData.is_liked) {
-      messageBubble.classList.add('liked');
-    } else {
-      messageBubble.classList.remove('liked');
-    }
     this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, messageData.is_liked);
   }
 
@@ -341,7 +333,7 @@ export class ChatMessageArea extends HTMLElement {
         display: inline-block;
         padding: 12px 20px 12px 16px;
         border-radius: 16px;
-        background-color: #f1f1f1;
+        background-color: var(--pm-gray-100);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         color: black;
       }
@@ -352,7 +344,7 @@ export class ChatMessageArea extends HTMLElement {
         display: block;
       }
       .right-align-message .bubble {
-        background-color: var(--pm-primary-500);
+        background-color: var(--pm-primary-600);
         color: white;
       }
       .chat-message-avatar {

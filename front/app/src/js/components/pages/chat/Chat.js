@@ -36,36 +36,36 @@ export class Chat extends HTMLElement {
     if (!chatListData) {
       return;
     }
-
-    if (chatListData.count > 0) {
-      if (!this.#queryParam) {
-        chatListData.items[0].is_blocked_by_user ? (
-          this.#state.currentChatUsername = chatListData.items[1].username,
-          chatListData.items[1].unread_messages_count = 0
-        ) : (
-          this.#state.currentChatUsername = chatListData.items[0].username,
-          chatListData.items[0].unread_messages_count = 0
-        );
+    if (chatListData.count > 0 && !this.#queryParam) {
+      for (let i = 0; i < chatListData.items.length; i++) {
+        if (!chatListData.items[i].is_blocked_by_user && chatListData.items[i].last_message) {
+          this.#state.currentChatUsername = chatListData.items[i].username;
+          chatListData.items[i].unread_messages_count = 0;
+          break;
+        }
       }
-    } else {
+      this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
+    } else if (this.#queryParam) {
       this.#state.currentChatUsername = this.#queryParam;
     }
-    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
-    const chatData = await this.fetchChatData();
-    if (!chatData) {
-      return;
-    }
-    this.#state.currentChat = chatData.data;
-    this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
-    if (this.#queryParam && chatData.status === 201) {
-      this.chatList.addNewChat(chatData.data);
-    } else if (this.#queryParam && chatData.status === 200) {
-      this.chatList.restartChat(chatData.data);
+    let chatData = null;
+    if (this.#state.currentChatUsername) {
+      chatData = await this.fetchChatData();
+      if (!chatData) {
+        return;
+      }
+      if (this.#queryParam && chatData.status === 201) {
+        this.chatList.addNewChat(chatData.data);
+      } else if (this.#queryParam && chatData.status === 200) {
+        this.chatList.restartChat(chatData.data);
+      }
+      this.#state.currentChat = chatData.data;
+      this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
     }
     this.chatMessagesArea.sendToggleLikeEvent = this.sendToggleLikeEvent;
   }
 
-  async setQueryParam(param) {
+  setQueryParam(param) {
     this.#queryParam = param.get('username');
   }
 
@@ -214,23 +214,20 @@ export class Chat extends HTMLElement {
   }
 
   handleToggleLikeMessage(event) {
-    console.log('Toggle like message event:', event.detail);
-    if (event.detail.data.chat_id !== this.#state.currentChat.chat_id) {
-      console.log('Not the current chat:', event.detail.data.chat_id, this.#state.currentChat.chat_id);
+    const data = event.detail.data;
+    if (data.chat_id !== this.#state.currentChat.chat_id) {
       return;
     }
-    console.log('Message liked:', event.detail.is_liked);
-    const component = document.getElementById(`chat-message-${event.detail.data.id}`);
+    const component = document.getElementById(data.id);
     if (component) {
-      const messageLikedElement = component.querySelector('.message-liked');
-      if (messageLikedElement) {
-        messageLikedElement.innerHTML = event.detail.is_liked ?
-          '<i class="bi bi-heart-fill h5"></i>' : '';
+      if (data.is_liked) {
+        console.log('Message is liked:', component);
+        component.classList.add('liked');
+      } else {
+        console.log('Message is unliked:', component);
+        component.classList.remove('liked');
       }
     }
-    // Find concerned message in the Chat
-    // Update is_liked field
-    // Update the message
   }
 
   handleUnlikedMessage(data) {
