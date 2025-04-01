@@ -69,7 +69,6 @@ export class ChatList extends HTMLElement {
         this.#state.currentListItemCount += 1;
         continue;
       }
-      console.log(this.#state.items[i].username);
       const listItem = document.createElement('chat-list-item-component');
       listItem.setData(this.#state.items[i], this.#state.loggedInUsername);
       if (this.#state.items[i].username === this.#getCurrentChatUsername()) {
@@ -146,7 +145,6 @@ export class ChatList extends HTMLElement {
   }
 
   addNewChat(data) {
-    console.log('Adding new chat');
     const chatData = {
       chat_id: data.chat_id,
       username: data.username,
@@ -173,7 +171,6 @@ export class ChatList extends HTMLElement {
   restartChat(data) {
     const index = this.#state.items.findIndex((chat) => chat.username === data.username);
     if (index !== -1) {
-      console.log('Moving existing chat in this chat list to the top');
       const tmp = this.#state.items[index];
       tmp.unread_messages_count = 0;
       this.#state.items.splice(index, 1);
