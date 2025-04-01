@@ -53,11 +53,11 @@ const socketManager = (() => {
       try {
         message = JSON.parse(event.data);
       } catch (error) {
-        devLogError('Invalid JSON:', event.data);
+        devErrorLog('Invalid JSON:', event.data);
         return;
       }
       if (!message.action) {
-        devLogError('Missing action field:', message);
+        devErrorLog('Missing action field:', message);
         return;
       }
       const matchedListener = this.listeners[message.action];
@@ -86,8 +86,10 @@ const socketManager = (() => {
         if (window.location.pathname !== '/chat') {
           return;
         }
-        const customEvent =
-          new CustomEvent('toggleLikeChatMessage', { detail: { data, is_liked: true }, bubbles: true });
+        const customEvent = new CustomEvent('toggleLikeChatMessage', {
+          detail: { data, is_liked: true },
+          bubbles: true,
+        });
         document.dispatchEvent(customEvent);
       },
       unlike_message: (data) => {
@@ -95,27 +97,32 @@ const socketManager = (() => {
         if (window.location.pathname !== '/chat') {
           return;
         }
-        const customEvent =
-          new CustomEvent('toggleLikeChatMessage', { detail: { data, is_liked: false }, bubbles: true });
+        const customEvent = new CustomEvent('toggleLikeChatMessage', {
+          detail: { data, is_liked: false },
+          bubbles: true,
+        });
         document.dispatchEvent(customEvent);
       },
       game_invite: (data) => {
         devLog('Game invite received:', data);
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-        // TODO
+        showToastNotification(`${data.nickname} challenges you to a duel.`);
+        // TODO: At click on toast, open a notifications list?
       },
       new_tournament: (data) => {
         devLog('New tournament received:', data);
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-        // TODO
+        showToastNotification(`${data.nickname} is calling all gunslingers to a new tournament.`);
+        // TODO: Add link to the concerned tournament page?
       },
       new_friend: (data) => {
         devLog('New friend received:', data);
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-        // TODO
+        showToastNotification(`${data.nickname} just roped you in as a friend.`);
+        // TODO: At click on toast, open a notifications list OR navigate to user's profile?
       },
       user_online: (data) => {
         devLog('User online:', data);
@@ -126,7 +133,7 @@ const socketManager = (() => {
         // TODO
       },
       noMatchedListener: (action) => {
-        devLogError('No listeners set for this action:', action);
+        devErrorLog('No listeners set for this action:', action);
         return;
       },
     };

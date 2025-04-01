@@ -2,6 +2,12 @@ import { auth } from '@auth';
 import { isMobile } from '@utils';
 
 export class Navbar extends HTMLElement {
+  #state = {
+    user: '',
+    unreadNotificationCount: 0,
+    unreadMessageCount: 0,
+  };
+
   constructor() {
     super();
     this.isLoggedin = false;
@@ -10,7 +16,14 @@ export class Navbar extends HTMLElement {
 
   async connectedCallback() {
     document.addEventListener('userStatusChange', this.loginStatusHandler);
-    this.isLoggedin = auth.getStoredUser() ? true : false;
+    // this.isLoggedin = auth.getStoredUser() ? true : false;
+    this.#state.user = auth.getStoredUser();
+    this.isLoggedin = this.#state.user ? true : false;
+    if (this.isLoggedin) {
+      // TODO: Check unread notifications and messages
+      // this.#state.unreadNotificationCount
+      // this.#state.unreadMessageCount
+    }
     this.render();
     window.addEventListener('resize', () => {
       this.render();
@@ -43,6 +56,12 @@ export class Navbar extends HTMLElement {
       const notificationsButton = document.createElement('notifications-button');
       navbarActions.appendChild(chatButton);
       navbarActions.appendChild(notificationsButton);
+      if (this.#state.unreadNotificationCount > 0) {
+        notificationsButton.querySelector('.notification-badge').classList.remove('d-none');
+      }
+      if (this.#state.unreadMessageCount > 0) {
+        chatButton.querySelector('.notification-badge').classList.remove('d-none');
+      }
     }
     const dropdownMenu = document.createElement('navbar-dropdown-menu');
     dropdownMenu.setLoginStatus(this.isLoggedin);
@@ -96,12 +115,12 @@ export class Navbar extends HTMLElement {
     .notification-badge {
       display: block;
       position: absolute;
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       background-color: var(--pm-red-400);
       border-radius: 50%;
-      top: 8px;
-      right: 8px;
+      top: 6px;
+      right: 6px;
     }
     </style>
     `;

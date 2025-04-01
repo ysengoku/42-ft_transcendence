@@ -40,7 +40,7 @@ export async function refreshAccessToken(csrfToken) {
     }, delay);
   }
 
-  console.log('Refreshing access token');
+  devLog('Refreshing access token');
   if (csrfToken) {
     try {
       const request = {
@@ -53,18 +53,18 @@ export async function refreshAccessToken(csrfToken) {
       };
       const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, request);
       if (refreshResponse.ok) {
-        console.log('Refresh successful');
+        devLog('Refresh successful');
         return { success: true, status: 204 };
       } else if (refreshResponse.status === 500) {
         showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
-        console.log('Server error, retrying refresh token request');
+        devErrorLog('Server error, retrying refresh token request');
         return retryRefreshTokenRequest(request, 3000, 2);
       }
-      console.log('Refresh failed');
+      devErrorLog('Refresh failed');
       auth.clearStoredUser();
       return { success: false, status: refreshResponse.status };
     } catch (error) {
-      console.error(error);
+      devErrorLog(error);
       auth.clearStoredUser();
       return { success: false, status: 0 };
     }

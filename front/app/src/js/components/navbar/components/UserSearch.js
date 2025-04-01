@@ -21,11 +21,11 @@ export class UserSearch extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.input.removeEventListener('click', this.handleClick);
-    this.input.removeEventListener('input', this.handleInput);
-    this.form.removeEventListener('click', this.handleClick);
-    this.form.removeEventListener('submit', this.handleSubmit);
-    this.dropdown.removeEventListener('scrollend', this.showMoreUsers);
+    this.input?.removeEventListener('click', this.handleClick);
+    this.input?.removeEventListener('input', this.handleInput);
+    this.form?.removeEventListener('click', this.handleClick);
+    this.form?.removeEventListener('submit', this.handleSubmit);
+    this.dropdown?.removeEventListener('scrollend', this.showMoreUsers);
     document.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
   }
 
@@ -34,14 +34,20 @@ export class UserSearch extends HTMLElement {
 
     this.listContainer = this.querySelector('#navbar-user-list');
     this.form = this.querySelector('form');
-    this.input = this.form.querySelector('input');
     this.dropdown = document.getElementById('user-search-dropdown');
 
-    this.form.addEventListener('click', this.handleClick);
-    this.form.addEventListener('submit', this.handleSubmit);
-    this.input.addEventListener('click', this.handleClick);
-    this.input.addEventListener('input', this.handleInput);
-    this.dropdown.addEventListener('scrollend', this.showMoreUsers);
+    this.form ? (
+      this.form.addEventListener('click', this.handleClick),
+      this.form.addEventListener('submit', this.handleSubmit),
+      this.input = this.form.querySelector('input')
+    ) : devErrorLog('User search form not found');
+    this.input ? (
+      this.input.addEventListener('click', this.handleClick),
+      this.input.addEventListener('input', this.handleInput)
+    ) : devErrorLog('User search input not found');
+    this.dropdown ?
+      this.dropdown.addEventListener('scrollend', this.showMoreUsers) :
+      devErrorLog('User search dropdown not found');
     document.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
   }
 
