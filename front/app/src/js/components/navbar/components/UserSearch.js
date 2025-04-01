@@ -1,5 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES, isMobile } from '@utils';
 
 export class UserSearch extends HTMLElement {
   constructor() {
@@ -34,8 +34,6 @@ export class UserSearch extends HTMLElement {
 
     this.listContainer = this.querySelector('#navbar-user-list');
     this.form = this.querySelector('form');
-    this.dropdown = document.getElementById('user-search-dropdown');
-
     this.form ? (
       this.form.addEventListener('click', this.handleClick),
       this.form.addEventListener('submit', this.handleSubmit),
@@ -45,10 +43,15 @@ export class UserSearch extends HTMLElement {
       this.input.addEventListener('click', this.handleClick),
       this.input.addEventListener('input', this.handleInput)
     ) : devErrorLog('User search input not found');
+    document.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+
+    if (isMobile()) {
+      return;
+    }
+    this.dropdown = document.getElementById('user-search-dropdown');
     this.dropdown ?
       this.dropdown.addEventListener('scrollend', this.showMoreUsers) :
       devErrorLog('User search dropdown not found');
-    document.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
   }
 
   handleClick(event) {
