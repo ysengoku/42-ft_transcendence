@@ -89,7 +89,6 @@ class OnlineStatusConsumer(WebsocketConsumer):
         """
         Handle new WebSocket connection
         """
-        logger.debug("WebSocket connection attempt received")
         self.user = self.scope["user"]
 
         # Verify user authentication using Django's built-in auth
