@@ -62,8 +62,10 @@ export class ChatList extends HTMLElement {
 
   renderListItems(index = 0) {
     for (let i = index; i < this.#state.items.length; i++) {
+      if (this.list.querySelector(`#chat-item-${this.#state.items[i].username}`) !== null) {
+        continue;
+      }
       if (this.#state.items[i].is_blocked_by_user || !this.#state.items[i].last_message) {
-        // Check if the user is already rendered
         this.#state.currentListItemCount += 1;
         continue;
       }
