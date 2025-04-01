@@ -240,10 +240,10 @@ export class ChatMessageArea extends HTMLElement {
     if (response.success) {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
       this.#state.data.is_blocked_user = false;
+      this.#state.renderedMessagesCount = 0;
       this.render();
       this.chatListComponent.refreshList();
     } else {
-      console.error('Error unblocking:', response);
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
     }
   }
