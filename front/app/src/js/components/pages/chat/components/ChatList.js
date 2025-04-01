@@ -5,6 +5,7 @@ import { getRelativeTime } from '@utils';
 export class ChatList extends HTMLElement {
   #state = {
     loggedInUsername: '',
+    // fetchedItemCount: 0,
     currentItemCount: 0,
     totalItemCount: 0,
     items: [],
@@ -23,6 +24,7 @@ export class ChatList extends HTMLElement {
   setData(data, username, getCurrentChatUsername) {
     this.#state.loggedInUsername = username;
     this.#state.items = data.items;
+    // this.#state.fetchedItemCount = data.items.length;
     this.#state.totalItemCount = data.count;
     this.#getCurrentChatUsername = getCurrentChatUsername;
     this.render();
@@ -56,8 +58,10 @@ export class ChatList extends HTMLElement {
   renderListItems(index = 0) {
     for (let i = index; i < this.#state.items.length; i++) {
       if (this.#state.items[i].is_blocked_by_user || !this.#state.items[i].last_message) {
+        this.#state.currentItemCount += 1;
         continue;
       }
+      console.log(this.#state.items[i].username);
       const listItem = document.createElement('chat-list-item-component');
       listItem.setData(this.#state.items[i], this.#state.loggedInUsername);
       if (this.#state.items[i].username === this.#getCurrentChatUsername()) {
@@ -83,15 +87,19 @@ export class ChatList extends HTMLElement {
   }
 
   async refreshList() {
+    console.log('Refreshing chat list');
     const data = await this.chatComponent.fetchChatList();
     if (!data) {
       return;
     }
     this.#state.items = data.items;
     this.#state.items[0].unread_messages_count = 0;
+    // this.#state.fetchedItemCount = data.items.length;
+    this.list.innerHTML = '';
     this.#state.currentItemCount = 0;
     this.#state.totalItemCount = data.count;
-    this.render();
+    // this.render();
+    this.renderListItems();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -100,6 +108,7 @@ export class ChatList extends HTMLElement {
   toggleUserSearchBar() {
     const userSearch = document.getElementById('chat-user-search');
     userSearch?.classList.toggle('d-none');
+    this.listContainer.scrollTop = 0;
   }
 
   hideUserSearchBar() {
@@ -114,6 +123,7 @@ export class ChatList extends HTMLElement {
       this.#state.currentItemCount === this.#state.totalItemCount) {
       return;
     }
+    console.log('Current item count:', this.#state.currentItemCount);
     const data = await this.chatComponent.fetchChatList(this.#state.currentItemCount);
     if (!data) {
       return;
@@ -123,6 +133,7 @@ export class ChatList extends HTMLElement {
   }
 
   addNewChat(data) {
+    console.log('Adding new chat');
     const chatData = {
       chat_id: data.chat_id,
       username: data.username,
@@ -136,8 +147,11 @@ export class ChatList extends HTMLElement {
     };
     this.#state.items.unshift(chatData);
     this.#state.totalItemCount += 1;
+    this.#state.currentItemCount += 1; // Need to change for fetch ChatList
     this.prependNewListItem(chatData);
+    // this.refreshList(); // Cannot use it because the new item (without content) is hidden
     this.hideUserSearchBar();
+    // TODO: Replace by setData to chatMessageArea
     const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
     this.dispatchEvent(event);
   }
@@ -145,6 +159,7 @@ export class ChatList extends HTMLElement {
   restartChat(data) {
     const index = this.#state.items.findIndex((chat) => chat.username === data.username);
     if (index !== -1) {
+      console.log('Moving existing chat in this chat list to the top');
       const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
       this.dispatchEvent(event);
       const tmp = this.#state.items[index];
