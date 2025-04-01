@@ -60,7 +60,7 @@ export async function refreshAccessToken(csrfToken) {
         devErrorLog('Server error, retrying refresh token request');
         return retryRefreshTokenRequest(request, 3000, 2);
       }
-      devErrorLog('Refresh failed');
+      devLog('Refresh failed');
       auth.clearStoredUser();
       return { success: false, status: refreshResponse.status };
     } catch (error) {
