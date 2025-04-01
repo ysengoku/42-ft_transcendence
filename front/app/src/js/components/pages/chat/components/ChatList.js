@@ -5,9 +5,9 @@ import { getRelativeTime } from '@utils';
 export class ChatList extends HTMLElement {
   #state = {
     loggedInUsername: '',
-    currentListItemCount: 0,
-    fetchedItemCount: 0,
-    displayedItemCount: 0,
+    currentListItemCount: 0, // Data in items array including those which are not rendered
+    fetchedItemCount: 0, // Data fetched from the server
+    displayedItemCount: 0, // Data in items array that has been rendered in the list
     totalItemCount: 0,
     items: [],
   };
@@ -54,7 +54,7 @@ export class ChatList extends HTMLElement {
       this.renderListItems();
     }
     this.listContainer.addEventListener('scrollend', this.handleScrollEnd);
-    while (this.#state.displayedItemCount < this.#state.totalItemCount &&
+    while (this.#state.currentListItemCount < this.#state.totalItemCount &&
       this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
@@ -63,6 +63,7 @@ export class ChatList extends HTMLElement {
   renderListItems(index = 0) {
     for (let i = index; i < this.#state.items.length; i++) {
       if (this.#state.items[i].is_blocked_by_user || !this.#state.items[i].last_message) {
+        // Check if the user is already rendered
         this.#state.currentListItemCount += 1;
         continue;
       }
@@ -103,7 +104,6 @@ export class ChatList extends HTMLElement {
   }
 
   async refreshList() {
-    console.log('Refreshing chat list');
     const data = await this.chatComponent.fetchChatList();
     if (!data) {
       return;
@@ -111,10 +111,10 @@ export class ChatList extends HTMLElement {
     this.#state.items = data.items;
     this.#state.items[0].unread_messages_count = 0;
     this.#state.fetchedItemCount = data.items.length;
-    this.list.innerHTML = '';
     this.#state.currentListItemCount = 0;
+    this.#state.displayedItemCount = 0;
+    this.list.innerHTML = '';
     this.#state.totalItemCount = data.count;
-    // this.render();
     this.renderListItems();
   }
 
@@ -159,7 +159,8 @@ export class ChatList extends HTMLElement {
     this.#state.items.unshift(chatData);
     this.#state.totalItemCount += 1;
     this.#state.displayedItemCount += 1;
-    // this.#state.currentListItemCount += 1;
+    this.#state.currentListItemCount += 1;
+    this.#state.fetchedItemCount += 1;
     this.prependNewListItem(chatData);
     this.hideUserSearchBar();
     // TODO: Replace by setData to chatMessageArea
@@ -171,8 +172,6 @@ export class ChatList extends HTMLElement {
     const index = this.#state.items.findIndex((chat) => chat.username === data.username);
     if (index !== -1) {
       console.log('Moving existing chat in this chat list to the top');
-      const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
-      this.dispatchEvent(event);
       const tmp = this.#state.items[index];
       tmp.unread_messages_count = 0;
       this.#state.items.splice(index, 1);
@@ -180,10 +179,27 @@ export class ChatList extends HTMLElement {
       const component = document.getElementById(`chat-item-${data.username}`);
       component?.remove();
       this.prependNewListItem(tmp);
-      this.hideUserSearchBar();
     } else {
-      this.addNewChat(data);
+      const chatData = {
+        chat_id: data.chat_id,
+        username: data.username,
+        nickname: data.nickname,
+        avatar: data.avatar,
+        is_online: data.is_online,
+        is_blocked_user: data.is_blocked_user,
+        is_blocked_by_user: data.is_blocked_by_user,
+        unread_messages_count: 0,
+        last_message: data.messages[0],
+      };
+      this.#state.items.unshift(chatData);
+      this.#state.totalItemCount += 1;
+      this.#state.displayedItemCount += 1;
+      this.#state.currentListItemCount += 1;
+      this.prependNewListItem(chatData);
     }
+    const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
+    this.dispatchEvent(event);
+    this.hideUserSearchBar();
   }
 
   async updateListWithIncomingMessage(data) {
