@@ -57,24 +57,22 @@ class UserEventsConsumer(WebsocketConsumer):
     def join_chat(self, event):
         chat_id = event["data"]["chat_id"]
         try:
-            # Vérification améliorée avec .for_participants()
             chat = Chat.objects.for_participants(
                 self.user_profile).get(id=chat_id)
 
-            # Ajout au groupe WebSocket
             async_to_sync(self.channel_layer.group_add)(
                 f"chat_{chat_id}",
                 self.channel_name
             )
 
-            # Notification au client
             self.send(text_data=json.dumps({
-                "action": "join_chat",
+                "action": "chat_joined",
                 "data": {"chat_id": chat_id}
             }))
 
         except Chat.DoesNotExist:
-            print(f"Accès refusé au chat {chat_id} pour {self.user.username}")
+            print(
+                f"Acces denied to the chat {chat_id} for {self.user.username}")
 
     def chat_created(self, event):
         self.send(text_data=json.dumps({
@@ -136,7 +134,6 @@ class UserEventsConsumer(WebsocketConsumer):
         chat = (
             Chat.objects
             .for_participants(self.user_profile)  # Filtrage initial
-            # # Ajout d'annotations
             .with_other_user_profile_info(self.user_profile)
             .filter(id=chat_id)  # Filtrage final
             .first()
@@ -148,9 +145,9 @@ class UserEventsConsumer(WebsocketConsumer):
         is_in_chat = chat.participants.filter(id=self.user_profile.id).exists()
         if not is_in_chat:
             return
-        # is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
-        # if is_blocked:
-        #     return
+        is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
+        if is_blocked:
+            return
         new_message = ChatMessage.objects.create(
             sender=self.user_profile, content=message, chat=chat)
         async_to_sync(self.channel_layer.group_send)(
@@ -303,16 +300,6 @@ class UserEventsConsumer(WebsocketConsumer):
             message = ChatMessage.objects.get(pk=message_id)
             message.is_read = True
             message.save()
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "read_message",
-                        "data": {
-                            "id": message_id,
-                        },
-                    },
-                ),
-            )
         except ObjectDoesNotExist:
             print(f"Message {message_id} does not exist.")
 
