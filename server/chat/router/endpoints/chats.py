@@ -45,8 +45,8 @@ def get_or_create_chat(request, username: str):
                 f"user_{user_profile.user.id}",
                 {
                     "type": "join.chat",
-                    "data": {"chat_id": str(chat.id)}
-                }
+                    "data": {"chat_id": str(chat.id)},
+                },
             )
     return (201 if created else 200), chat
 

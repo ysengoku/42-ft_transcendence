@@ -171,7 +171,7 @@ class UserEventsConsumer(WebsocketConsumer):
         try:
             profile = Profile.objects.get(user__username=username)
         except Profile.DoesNotExist:
-            print(f"Profile for {username} does not exist.")
+            logger.debug("Profile for %s does not exist.", username)
             return
 
         notification_data = get_user_data(profile)
@@ -374,7 +374,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 ),
             )
         except GameInvitation.DoesNotExist:
-            print(f"Invitation {invitation_id} does not exist.")
+            logger.debug("Invitation %s does not exist.", invitation_id)
             self.send(
                 text_data=json.dumps(
                     {
@@ -410,7 +410,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 ),
             )
         except GameInvitation.DoesNotExist:
-            print(f"Invitation {invitation_id} does not exist.")
+            logger.debug("Invitation %s does not exist.", invitation_id)
             self.send(
                 text_data=json.dumps(
                     {
