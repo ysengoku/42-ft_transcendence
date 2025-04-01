@@ -2,8 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.db import models
-from django.db.models import (Count, Exists, ImageField, OuterRef, Q, Subquery,
-                              Value)
+from django.db.models import Count, Exists, ImageField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
 
 from users.models import Profile
@@ -51,16 +50,16 @@ class ChatQuerySet(models.QuerySet):
         Chat messages are sorted by the date by default, so there is no need to call 'order_by'.
         """
         latest_message_subquery = ChatMessage.objects.filter(
-            chat=OuterRef('pk')
-        ).order_by('-date')
+            chat=OuterRef("pk"),
+        ).order_by("-date")
 
         return self.annotate(
             last_message=Subquery(
-                latest_message_subquery.values('content')[:1]),
+                latest_message_subquery.values("content")[:1]),
             last_message_date=Subquery(
-                latest_message_subquery.values('date')[:1]),
-            last_message_id=Subquery(latest_message_subquery.values('pk')[:1]),
-        ).order_by('-last_message_date')
+                latest_message_subquery.values("date")[:1]),
+            last_message_id=Subquery(latest_message_subquery.values("pk")[:1]),
+        ).order_by("-last_message_date")
 
     def with_other_user_profile_info(self, profile: Profile):
         other_chat_participant_subquery = Profile.objects.filter(chats=OuterRef("pk")).exclude(
