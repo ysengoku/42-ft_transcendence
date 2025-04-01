@@ -29,12 +29,34 @@ document.addEventListener('mouseup', () => {
 
 window.devLog = (...args) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('%c[DEV LOG]', 'color: green; font-weight: bold;', ...args);
+    const stack = new Error().stack.split('\n')[2].trim();
+    const match = stack.match(/([^\/\\]+:\d+:\d+)/);
+    let location = match ? match[1] : 'unknown';
+    location = location.replace(/\?t=\d+/, '');
+    console.log('%c[DEV LOG]', 'color: green; font-weight: bold;', ...args, ` (${location})`);
   }
 };
 
 window.devErrorLog = (...args) => {
   if (process.env.NODE_ENV === 'development') {
-    console.error('%c[DEV ERROR]', 'color: red; font-weight: bold;', ...args);
+    const stack = new Error().stack.split('\n')[2].trim();
+    const match = stack.match(/([^\/\\]+:\d+:\d+)/);
+    let location = match ? match[1] : 'unknown';
+    location = location.replace(/\?t=\d+/, '');
+    console.log('%c[ERROR]', 'color: red; font-weight: bold;', ...args, ` (${location})`);
   }
 };
+
+// window.devLog = (level, ...args) => {
+//   if (process.env.NODE_ENV === 'development') {
+//     const stack = new Error().stack.split('\n')[2].trim();
+//     const match = stack.match(/([^\/\\]+:\d+:\d+)/);
+//     let location = match ? match[1] : 'unknown';
+//     location = location.replace(/\?t=\d+/, '');
+//     if (level === `DEBUG`) {
+//       console.log('%c[DEV LOG]', 'color: green; font-weight: bold;', ...args, ` (${location})`);
+//     } else if (level === 'ERROR') {
+//       console.log('%c[ERROR]', 'color: red; font-weight: bold;', ...args, ` (${location})`);
+//     }
+//   }
+// };
