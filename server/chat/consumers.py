@@ -64,12 +64,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 f"chat_{chat_id}",
                 self.channel_name
             )
-
-            # self.send(text_data=json.dumps({
-            #     # "action": "chat_joined",
-            #     "data": {"chat_id": chat_id}
-            # }))
-
         except Chat.DoesNotExist:
             print(
                 f"Acces denied to the chat {chat_id} for {self.user.username}")
