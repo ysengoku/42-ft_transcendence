@@ -65,10 +65,10 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.channel_name
             )
 
-            self.send(text_data=json.dumps({
-                "action": "chat_joined",
-                "data": {"chat_id": chat_id}
-            }))
+            # self.send(text_data=json.dumps({
+            #     # "action": "chat_joined",
+            #     "data": {"chat_id": chat_id}
+            # }))
 
         except Chat.DoesNotExist:
             print(
