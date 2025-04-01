@@ -1,5 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES, isMobile } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class UserSearch extends HTMLElement {
   constructor() {
@@ -21,37 +21,38 @@ export class UserSearch extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
     this.input?.removeEventListener('click', this.handleClick);
     this.input?.removeEventListener('input', this.handleInput);
     this.form?.removeEventListener('click', this.handleClick);
     this.form?.removeEventListener('submit', this.handleSubmit);
     this.dropdown?.removeEventListener('scrollend', this.showMoreUsers);
-    document.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    this.dropdpwnMobile?.removeEventListener('scrollend', this.showMoreUsers);
   }
 
   render() {
     this.innerHTML = this.template();
 
     this.listContainer = this.querySelector('#navbar-user-list');
+    this.button = document.getElementById('navbar-user-search');
+    this.dropdown = document.getElementById('user-search-dropdown');
     this.form = this.querySelector('form');
+
+    this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    this.dropdown?.addEventListener('scrollend', this.showMoreUsers)
+    
     this.form ? (
       this.form.addEventListener('click', this.handleClick),
       this.form.addEventListener('submit', this.handleSubmit),
       this.input = this.form.querySelector('input')
-    ) : devErrorLog('User search form not found');
+    ) : (devErrorLog('User search form not found'));
     this.input ? (
       this.input.addEventListener('click', this.handleClick),
       this.input.addEventListener('input', this.handleInput)
     ) : devErrorLog('User search input not found');
-    document.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
-
-    if (isMobile()) {
-      return;
-    }
-    this.dropdown = document.getElementById('user-search-dropdown');
-    this.dropdown ?
-      this.dropdown.addEventListener('scrollend', this.showMoreUsers) :
-      devErrorLog('User search dropdown not found');
+    
+    this.dropdpwnMobile?.addEventListener('scrollend', this.showMoreUsers)
+    this.dropdpwnMobile = document.getElementById('dropdown-user-search');
   }
 
   handleClick(event) {
@@ -62,7 +63,6 @@ export class UserSearch extends HTMLElement {
       this.currentListLength = 0;
       this.listContainer.innerHTML = '';
     }
-    this.showMoreButton?.removeEventListener('click', this.showMoreUsers);
   }
 
   handleInput() {
@@ -71,7 +71,6 @@ export class UserSearch extends HTMLElement {
       this.totalUserCount = 0;
       this.currentListLength = 0;
       this.listContainer.innerHTML = '';
-      this.showMoreButton?.removeEventListener('click', this.showMoreUsers);
     }
   }
 
@@ -89,7 +88,6 @@ export class UserSearch extends HTMLElement {
     this.totalUserCount = 0;
     this.listContainer.innerHTML = '';
     this.input.value = '';
-    this.showMoreButton?.removeEventListener('click', this.showMoreUsers);
   }
 
   async showMoreUsers(event) {
