@@ -104,7 +104,7 @@
   --bs-black-rgb: 241, 240, 240;
 
   #content {
-    background: url('/img/bg-night-dark.png') no-repeat center center;
+    background: url('/img/bg-night.png') no-repeat center center;
     background-size: cover;
   }
 
