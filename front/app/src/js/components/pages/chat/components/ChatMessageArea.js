@@ -241,8 +241,9 @@ export class ChatMessageArea extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
       this.#state.data.is_blocked_user = false;
       this.#state.renderedMessagesCount = 0;
+      await this.chatListComponent.refreshList();
+      this.chatListComponent.addNewChat(this.#state.data);
       this.render();
-      this.chatListComponent.refreshList();
     } else {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
     }
