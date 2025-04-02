@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 
 import redis
@@ -8,6 +9,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
+
+logger = logging.getLogger("server")
 
 
 class RedisUserStatusManager:
@@ -42,7 +45,7 @@ class RedisUserStatusManager:
                     {"user_id": user_id, "timestamp": int(time.time())}),
             )
         except redis.RedisError as e:
-            print(f"Error setting user online: {e}")
+            logger.debug("Error setting user online: %s ", e)
 
     def set_user_offline(self, user_id):
         """
@@ -56,7 +59,7 @@ class RedisUserStatusManager:
             # Remove the user from online users
             self._redis.delete(f"{self._online_users_key}:{user_id}")
         except redis.RedisError as e:
-            print(f"Error setting user offline: {e}")
+            logger.debug("Error setting user offline: %s ", e)
 
     def get_online_users(self):
         """
@@ -73,7 +76,7 @@ class RedisUserStatusManager:
             # Extract user IDs from the keys
             return [int(key.decode("utf-8").split(":")[-1]) for key in online_keys]
         except redis.RedisError as e:
-            print(f"Error getting online users: {e}")
+            logger.debug("Error getting online users : %s ", e)
             return []
 
 
@@ -86,12 +89,12 @@ class OnlineStatusConsumer(WebsocketConsumer):
         """
         Handle new WebSocket connection
         """
-        print("WebSocket connection attempt received")
         self.user = self.scope["user"]
 
         # Verify user authentication using Django's built-in auth
         if not self.user or not self.user.is_authenticated:
-            print("WebSocket connection rejected: User not authenticated")
+            logger.debug(
+                "WebSocket connection rejected: User not authenticated")
             self.close()
             return
 
