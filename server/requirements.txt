@@ -33,3 +33,4 @@ qrcode[pil]
 
 # PostgreSQL adapter
 psycopg2==2.9.6
+colorlog==6.9.0
