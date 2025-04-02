@@ -117,6 +117,10 @@ export class ChatList extends HTMLElement {
     this.list.innerHTML = '';
     this.#state.totalItemCount = data.count;
     this.renderListItems();
+    while (this.#state.currentListItemCount < this.#state.totalItemCount &&
+      this.#state.displayedItemCount < 10) {
+      await this.loadMoreItems();
+    }
   }
 
   /* ------------------------------------------------------------------------ */
