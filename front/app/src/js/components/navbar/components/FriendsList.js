@@ -38,6 +38,9 @@ export class FriendsList extends HTMLElement {
     this.button?.addEventListener('shown.bs.dropdown', this.fetchFriendsData);
     this.button?.addEventListener('hidden.bs.dropdown', this.handleModalClose);
     this.dropdown?.addEventListener('scrollend', this.showMoreFriends);
+
+    this.dropdownMobile = document.getElementById('dropdown-friends-list');
+    this.dropdownMobile?.addEventListener('scrollend', this.showMoreFriends);
   }
 
   async fetchFriendsData() {
