@@ -1,3 +1,9 @@
+/**
+ * @file Chat Component
+ * @description Provides a dynamic chat interface that integrates chat lists, messaging, and WebSocket communications.
+ * @module Chat
+ */
+
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -5,15 +11,36 @@ import { socketManager } from '@socket';
 import { isMobile } from '@utils';
 import './components/index.js';
 
+/**
+ * @class Chat
+ * @extends {HTMLElement}
+ * @classdesc Custom Web Component that manages chat functionality, including listing chats, displaying messages,
+ *            and handling real-time updates.
+ */
 export class Chat extends HTMLElement {
+  /**
+   * Private state of the Chat component.
+   * @type {Object}
+   * @property {Object|null} loggedInUser - The authenticated user.
+   * @property {string} currentChatUsername - The username for the current active chat.
+   * @property {Object|null} currentChat - Data of the current active chat.
+   */
   #state = {
     loggedInUser: null,
     currentChatUsername: '',
     currentChat: null,
   };
 
+  /**
+   * Stores the query parameter used to set the current chat
+   * in case the logged-in user starts the chat clicking 'send message' button on Profile page.
+   * @type {string}
+   */
   #queryParam = '';
 
+  /**
+   * Creates an instance of Chat.
+   */
   constructor() {
     super();
     this.handleChatItemSelected = this.handleChatItemSelected.bind(this);
@@ -24,6 +51,11 @@ export class Chat extends HTMLElement {
     this.handleBackToChatList = this.handleBackToChatList.bind(this);
   }
 
+  /**
+   * Invoked when the component is added to the DOM.
+   * @async
+   * @return {Promise<void>}
+   */
   async connectedCallback() {
     this.#state.loggedInUser = auth.getStoredUser();
     const isLoggedIn = this.#state.loggedInUser ? true : false;
@@ -32,10 +64,12 @@ export class Chat extends HTMLElement {
       return;
     }
     this.render();
+    // Fetch and set data for the chat list component
     const chatListData = await this.fetchChatList();
     if (!chatListData) {
       return;
     }
+    // Determine initial chat based on available data or query parameter
     if (chatListData.count > 0 && !this.#queryParam) {
       for (let i = 0; i < chatListData.items.length; i++) {
         if (!chatListData.items[i].is_blocked_by_user && chatListData.items[i].last_message) {
@@ -48,6 +82,8 @@ export class Chat extends HTMLElement {
       this.#state.currentChatUsername = this.#queryParam;
     }
     this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
+
+    // Fetch and set data for the chat message area component
     let chatData = null;
     if (this.#state.currentChatUsername) {
       chatData = await this.fetchChatData();
@@ -144,7 +180,6 @@ export class Chat extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   async handleChatItemSelected(event) {
-    devLog('Chat item selected:', event.detail);
     if (!event.detail.messages) {
       this.#state.currentChatUsername = event.detail;
       const chatData = await this.fetchChatData();
