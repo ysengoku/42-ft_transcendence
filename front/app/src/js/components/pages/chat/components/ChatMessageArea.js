@@ -1,3 +1,11 @@
+/**
+ * @file ChatMessageArea Component
+ * @description Render the chat messages area, including the header, messages, and input to send messages.
+ *              It handles user interactions such as navigating to a profile, blocking/unblocking users,
+ *              loading more messages, and toggling likes on messages.
+ * @module ChatMessageArea
+ */
+
 import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -5,10 +13,24 @@ import { socketManager } from '@socket';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import { getRelativeDateAndTime } from '@utils';
 
+/**
+ * @class ChatMessageArea
+ * @extends {HTMLElement}
+ * @classdesc Custom web component for displaying and managing chat messages.
+ */
 export class ChatMessageArea extends HTMLElement {
+  /**
+   * Private state for the ChatMessageArea component.
+   * @type {Object}
+   * @property {string} loggedInUsername - The username of the logged-in user.
+   * @property {Object|null} user - Data of the chat recipient.
+   * @property {Object|null} data - Chat data including messages and user details.
+   * @property {number} renderedMessagesCount
+   * @property {number} totalMessagesCount - Total count of messages available in database.
+   */
   #state = {
-    user: null,
     loggedInUsername: '',
+    user: null,
     data: null,
     renderedMessagesCount: 0,
     totalMessagesCount: 0,
@@ -27,6 +49,11 @@ export class ChatMessageArea extends HTMLElement {
     this.chatListComponent = document.querySelector('chat-list-component');
   }
 
+  /**
+   * Set the chat data and logged-in username, then renders the component.
+   * @param {Object} data - Chat data including messages and user details.
+   * @param {string} loggedInUsername - The username of the logged-in user.
+   */
   setData(data, loggedInUsername) {
     if (!data || data.is_blocked_by_user) {
       return;
@@ -60,6 +87,7 @@ export class ChatMessageArea extends HTMLElement {
   render() {
     this.innerHTML = this.template() + this.style();
 
+    // Initialize elements
     this.header = this.querySelector('#chat-header');
     this.headerAvatar = this.querySelector('#chat-header-avatar');
     this.headerNickname = this.querySelector('#chat-header-nickname');
@@ -71,6 +99,7 @@ export class ChatMessageArea extends HTMLElement {
     this.chatMessages = this.querySelector('#chat-messages');
     this.messageInput = this.querySelector('#chat-message-input-wrapper');
 
+    // Set header information and avatar.
     this.#state.data.avatar ? this.headerAvatar.src = this.#state.data.avatar : this.headerAvatar.src = defaultAvatar;
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
@@ -78,13 +107,16 @@ export class ChatMessageArea extends HTMLElement {
     this.headerOnlineStatus.textContent = this.#state.data.is_online ? 'online' : 'offline';
     this.header.addEventListener('click', this.navigateToProfile);
 
+    // Render messages
     this.chatMessages.innerHTML = '';
     if (this.#state.data.messages.length > 0) {
       this.renderMessages();
-      this.chatMessages.scrollTop = this.chatMessages.scrollHeight; // Scroll to the bottom of the chat messages
+      // Scroll to the bottom of the chat messages
+      this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
     }
 
+    // Toggle input and block button based on block status.
     if (this.#state.data.is_blocked_user) {
       this.messageInput.classList.add('d-none');
       this.invitePlayButton.classList.add('d-none');
@@ -151,6 +183,11 @@ export class ChatMessageArea extends HTMLElement {
     this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
   }
 
+  /**
+   * Create a DOM element for a single message.
+   * @param {Object} message - The message data.
+   * @return {HTMLElement} The message element.
+   */
   messageItem(message) {
     const messageElement = document.createElement('div');
     messageElement.innerHTML = this.messageTemplate();
@@ -200,6 +237,12 @@ export class ChatMessageArea extends HTMLElement {
     router.navigate(`/profile/${this.#state.data.username}`);
   }
 
+  /**
+   * Block the current chat user by sending an API request.
+   * Update the UI accordingly.
+   * @async
+   * @return {Promise<void>}
+   */
   async blockUser() {
     const request = { username: this.#state.data.username };
     const response = await apiRequest(
@@ -226,6 +269,12 @@ export class ChatMessageArea extends HTMLElement {
     }
   }
 
+  /**
+   * Unblock the current chat user by sending an API request.
+   * Update the chat list and this component.
+   * @async
+   * @return {Promise<void>}
+   */
   async unblockUser() {
     const response = await apiRequest(
         'DELETE',

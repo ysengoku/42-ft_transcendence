@@ -1,13 +1,35 @@
+/**
+ * @file ChatList Component
+ * @description Render the chat list, manage the display of list items, and handle user interactions
+ *              such as searching and infinite scrolling.
+ * @module ChatList
+ */
+
 import './ChatUserSearch.js';
 import './ChatListItem.js';
 import { getRelativeTime } from '@utils';
 
+/**
+ * @class ChatList
+ * @extends {HTMLElement}
+ * @classdesc Custom web component for rendering a list of chat conversations.
+ */
 export class ChatList extends HTMLElement {
+  /**
+   * Private state for the ChatList component.
+   * @type {Object}
+   * @property {string} loggedInUsername - The username of the logged-in user.
+   * @property {number} currentListItemCount - Count of items processed (rendered or skipped).
+   * @property {number} fetchedItemCount - Count of items fetched from the server.
+   * @property {number} displayedItemCount - Count of items that have been rendered.
+   * @property {number} totalItemCount - Total number of items in database.
+   * @property {Array} items - Array of chat items.
+   */
   #state = {
     loggedInUsername: '',
-    currentListItemCount: 0, // Data in items array including those which are not rendered
-    fetchedItemCount: 0, // Data fetched from the server
-    displayedItemCount: 0, // Data in items array that has been rendered in the list
+    currentListItemCount: 0,
+    fetchedItemCount: 0,
+    displayedItemCount: 0,
     totalItemCount: 0,
     items: [],
   };
@@ -16,12 +38,20 @@ export class ChatList extends HTMLElement {
 
   constructor() {
     super();
+
+    // Reference to the main chat component
     this.chatComponent = document.querySelector('chat-page');
 
     this.toggleUserSearchBar = this.toggleUserSearchBar.bind(this);
     this.handleScrollEnd = this.handleScrollEnd.bind(this);
   }
 
+  /**
+   * Set the data for the chat list component, called from the parent component.
+   * @param {Object} data - Data object containing chat items and total count.
+   * @param {string} username - Logged-in user's username.
+   * @param {Function} getCurrentChatUsername
+   */
   setData(data, username, getCurrentChatUsername) {
     this.#state.loggedInUsername = username;
     this.#state.items = data.items;
@@ -42,6 +72,7 @@ export class ChatList extends HTMLElement {
   async render() {
     this.innerHTML = this.template();
 
+    // Initialize elements
     this.searchButton = this.querySelector('.new-chat');
     this.searchButton.addEventListener('click', this.toggleUserSearchBar);
     this.serachBar = this.querySelector('chat-user-search');
@@ -54,17 +85,25 @@ export class ChatList extends HTMLElement {
       this.renderListItems();
     }
     this.listContainer.addEventListener('scrollend', this.handleScrollEnd);
+
+    // Load more items if needed to reach the minimum display count
     while (this.#state.currentListItemCount < this.#state.totalItemCount &&
       this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
   }
 
+  /**
+   * Render chat list items starting from a given index.
+   * @param {number} [index=0] - Starting index in the items array.
+   */
   renderListItems(index = 0) {
     for (let i = index; i < this.#state.items.length; i++) {
+      // Skip rendering if the item already exists in the DOM
       if (this.list.querySelector(`#chat-item-${this.#state.items[i].username}`) !== null) {
         continue;
       }
+      // Skip blocked chats or those without a last message
       if (this.#state.items[i].is_blocked_by_user || !this.#state.items[i].last_message) {
         this.#state.currentListItemCount += 1;
         continue;
@@ -148,6 +187,11 @@ export class ChatList extends HTMLElement {
     await this.loadMoreItems();
   }
 
+  /**
+   * Add a new chat to the top of the list.
+   * Dispatche a 'chatItemSelected' event after updating.
+   * @param {Object} data - New chat data.
+   */
   addNewChat(data) {
     const chatData = {
       chat_id: data.chat_id,
@@ -172,6 +216,11 @@ export class ChatList extends HTMLElement {
     this.dispatchEvent(event);
   }
 
+  /**
+   * Restart an existing chat. Move to the top if it existes in this chat list or adds it if not present.
+   * Dispatche a 'chatItemSelected' event after updating.
+   * @param {Object} data - Chat data to be restarted.
+   */
   restartChat(data) {
     const index = this.#state.items.findIndex((chat) => chat.username === data.username);
     if (index !== -1) {
