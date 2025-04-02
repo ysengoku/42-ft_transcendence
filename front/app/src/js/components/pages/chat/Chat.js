@@ -79,7 +79,6 @@ export class Chat extends HTMLElement {
         }
       }
     } else if (this.#queryParam) {
-      // TODO: Check for blocked user case
       this.#state.currentChatUsername = this.#queryParam;
     }
     this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
@@ -181,7 +180,6 @@ export class Chat extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   async handleChatItemSelected(event) {
-    devLog('Chat item selected:', event.detail);
     if (!event.detail.messages) {
       this.#state.currentChatUsername = event.detail;
       const chatData = await this.fetchChatData();
