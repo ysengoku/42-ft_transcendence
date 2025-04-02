@@ -38,6 +38,7 @@ export class UserActionsMenu extends HTMLElement {
     this.dropdownUserActions = document.getElementById('dropdown-user-actions');
     this.dropdownUserSearch = document.getElementById('dropdown-user-search');
     this.dropdownFriendsList = document.getElementById('dropdown-friends-list');
+    this.dropdpwnusersearchList = document.querySelector('user-search');
 
     this.userActionsButton = document.getElementById('navbar-user-actions');
     this.userSearchButton = document.getElementById('dropdown-item-user-search');
@@ -62,16 +63,19 @@ export class UserActionsMenu extends HTMLElement {
     this.dropdownUserActions.classList.remove('show');
     this.dropdownUserSearch.classList.remove('show');
     this.dropdownFriendsList.classList.remove('show');
+    this.dropdpwnusersearchList.clearUserList();
   }
 
   handleClickUserSearch(event) {
     event.stopPropagation();
+    this.dropdownUserActions.classList.remove('show');
     this.dropdownUserSearch.classList.add('show');
     this.dropdownFriendsList.classList.remove('show');
   }
 
   async handleClickFriendsList(event) {
     event.stopPropagation();
+    this.dropdownUserActions.classList.remove('show');
     this.dropdownUserSearch.classList.remove('show');
     this.dropdownFriendsList.classList.add('show');
 
