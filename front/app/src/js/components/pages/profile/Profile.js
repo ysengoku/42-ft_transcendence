@@ -87,9 +87,9 @@ export class UserProfile extends HTMLElement {
     const userStatCardElo = document.createElement('user-stat-card');
     userStatCardElo.setParam({ title: 'Elo', value: this.user.elo });
     const userStatCardScoredBalls = document.createElement('user-stat-card');
-    userStatCardScoredBalls.setParam({ title: 'Scored Balls', value: this.user.scored_balls });
+    userStatCardScoredBalls.setParam({ title: 'Total Score', value: this.user.scored_balls });
     const userStatCardTotalMatches = document.createElement('user-stat-card');
-    userStatCardTotalMatches.setParam({ title: 'Total Matches', value: this.user.total_matches });
+    userStatCardTotalMatches.setParam({ title: 'Total Duels', value: this.user.total_matches });
     const userStatCardFriendsCount = document.createElement('user-stat-card');
     userStatCardFriendsCount.setParam({ title: 'Friends', value: this.user.friends_count });
 
@@ -163,20 +163,17 @@ export class UserProfile extends HTMLElement {
 
             <!-- Stats section -->
 
-            <div class="d-flex flex-row justify-content-around flex-grow-1 mb-2 px-3">
+            <div class="d-flex flex-row justify-content-around flex-grow-1 mb-2 px-3 gap-2">
               <!-- Stat cards -->
-              <div class="stat-cards-wrapper d-flex flex-wrap justify-content-center align-items-start me-3">
-    
+              <div class="stat-cards-wrapper d-flex flex-wrap justify-content-between align-items-start me-2">
                   <div id="user-stat-card-elo"></div>
-                  <div id="user-stat-card-scored-balls"></div>
-       
-                  <div id="user-stat-card-total-matches"></div>
                   <div id="user-stat-card-friends-count"></div>
-             
+                  <div id="user-stat-card-scored-balls"></div>
+                  <div id="user-stat-card-total-matches"></div>           
               </div>
 
               <!-- Enemies -->
-              <div class="d-flex flex-wrap flex-column gap-3">
+              <div class="d-flex flex-wrap flex-column gap-3 flex-grow-1">
                 <div class="d-flex flex-column" id="best-enemy"></div>
                 <div class="d-flex flex-column" id="worst-enemy"></div>
               </div>
@@ -226,7 +223,7 @@ export class UserProfile extends HTMLElement {
     return `
     <style>
     .poster {
-      color: #351901;
+      color: var(--pm-primary-700);
       background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(164, 106, 48, 0.9) 100%);
       filter: sepia(20%) contrast(90%) brightness(95%);
       /* filter: url(#wave); */
@@ -244,7 +241,7 @@ export class UserProfile extends HTMLElement {
     }
     h1 {
       display: inline-block;
-      color: #613304;      
+      color: var(--pm-primary-600);      
       font-family: 'docktrin', serif;
       font-size: 6em;
       margin-bottom: -.8em;
@@ -253,7 +250,7 @@ export class UserProfile extends HTMLElement {
     .stat-label {
       font-family: 'van dyke', serif;
       font-size: 1.2em;
-      color: #613304;
+      color: var(--pm-primary-600);
       margin-bottom: .25em;
     }
     hr {
@@ -263,20 +260,19 @@ export class UserProfile extends HTMLElement {
       border: 0;
     }
     .line {
-      border-top: 4px double #613304;;
+      border-top: 4px double var(--pm-primary-600);
       opacity: 0.8;
     }
     .profile-avatar-frame,
-    .stat-cards-wrapper,
     .enemy-container,
     .graph-wrapper {
-      background-color:rgba(97, 51, 4, 0.1);
+      background-color: rgba(var(--pm-primary-600-rgb), 0.1);
     }
     .enemies-container {
       min-height: 224px;
     }
     .btn-elo-history {
-      color: #351904;
+      color: var(--pm-primary-700);
       font-weight: bold;
       background: none;
       border: none;
