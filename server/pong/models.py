@@ -77,38 +77,25 @@ class Match(models.Model):
         return f"{winner} - {loser}"
 
 
-class PendingMatch(models.Model):
+class MatchmakingTicket(models.Model):
     """
-    elo_range_level defines which range of elo is acceptable for finding an opponent.
-    For example, if the level is 1, it means that if the player has 1000 elo, opponents with 900-1100 elo are viable.
+    Is given to a player when they search for a game in matchmaking.
     """
 
     PENDING = "pending"
-    MATCHED = "matched"
-    EXPIRED = "expired"
+    CLOSED = "closed"
     STATUS_CHOICES = (
         (PENDING, "Pending"),
-        (MATCHED, "Matched"),
-        (EXPIRED, "Expired"),
-    )
-
-    LEVEL_1 = 1
-    LEVEL_2 = 2
-    LEVEL_3 = 3
-    LEVEL_4 = 4
-    LEVEL_5 = 5
-    LEVEL_CHOICES = (
-        (LEVEL_1, "Level 1"),  # Within 100 elo range
-        (LEVEL_2, "Level 2"),  # Within 200 elo range
-        (LEVEL_3, "Level 3"),  # Within 400 elo range
-        (LEVEL_4, "Level 4"),  # Within 800 elo range
-        (LEVEL_5, "Level 5"),  # Every opponent is viable
+        (CLOSED, "Closed"),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
-    elo_range_level = models.IntegerField(choices=LEVEL_CHOICES, default=LEVEL_1)
     player = models.OneToOneField(Profile, on_delete=models.CASCADE, null=True)
 
     def __str__(self) -> str:
         return f"{self.get_status_display()} match {str(self.id)}"
+
+    def close(self):
+        self.status = MatchmakingTicket.CLOSED
+        self.save()

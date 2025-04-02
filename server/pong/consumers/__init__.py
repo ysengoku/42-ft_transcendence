@@ -1,4 +1,4 @@
 from .game import GameConsumer
-from .matchmaking import MatchmakingConsumer, MatchmakingWorkerConsumer
+from .matchmaking import MatchmakingConsumer
 
-__all__ = ["GameConsumer", "MatchmakingConsumer", "MatchmakingWorkerConsumer"]
+__all__ = ["GameConsumer", "MatchmakingConsumer"]
