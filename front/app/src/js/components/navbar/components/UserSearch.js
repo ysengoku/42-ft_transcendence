@@ -9,8 +9,7 @@ export class UserSearch extends HTMLElement {
     this.totalUsersCount = 0;
     this.currentListLength = 0;
 
-    this.handleClick = this.handleClick.bind(this);
-    this.handleInput = this.handleInput.bind(this);
+    this.clearUserList = this.clearUserList.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleDropdownHidden = this.handleDropdownHidden.bind(this);
     this.showMoreUsers = this.showMoreUsers.bind(this);
@@ -22,9 +21,9 @@ export class UserSearch extends HTMLElement {
 
   disconnectedCallback() {
     this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
-    this.input?.removeEventListener('click', this.handleClick);
-    this.input?.removeEventListener('input', this.handleInput);
-    this.form?.removeEventListener('click', this.handleClick);
+    this.form?.removeEventListener('click', this.clearUserList);
+    this.input?.removeEventListener('click', this.clearUserList);
+    this.input?.removeEventListener('input', this.clearUserList);
     this.form?.removeEventListener('submit', this.handleSubmit);
     this.dropdown?.removeEventListener('scrollend', this.showMoreUsers);
     this.dropdpwnMobile?.removeEventListener('scrollend', this.showMoreUsers);
@@ -39,33 +38,26 @@ export class UserSearch extends HTMLElement {
     this.form = this.querySelector('form');
 
     this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
-    this.dropdown?.addEventListener('scrollend', this.showMoreUsers)
-    
+    this.dropdown?.addEventListener('scrollend', this.showMoreUsers);
+
     this.form ? (
-      this.form.addEventListener('click', this.handleClick),
+      this.form.addEventListener('click', this.clearUserList),
       this.form.addEventListener('submit', this.handleSubmit),
       this.input = this.form.querySelector('input')
     ) : (devErrorLog('User search form not found'));
     this.input ? (
-      this.input.addEventListener('click', this.handleClick),
-      this.input.addEventListener('input', this.handleInput)
+      this.input.addEventListener('input', this.clearUserList),
+      this.input.addEventListener('click', this.clearUserList)
     ) : devErrorLog('User search input not found');
-    
-    this.dropdpwnMobile?.addEventListener('scrollend', this.showMoreUsers)
+
+    this.buttonMobile = document.getElementById('dropdown-item-user-search');
     this.dropdpwnMobile = document.getElementById('dropdown-user-search');
+    this.buttonMobile?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    this.dropdpwnMobile?.addEventListener('scrollend', this.showMoreUsers);
   }
 
-  handleClick(event) {
-    event.stopPropagation();
-    if (this.input.value === '') {
-      this.userList = [];
-      this.totalUserCount = 0;
-      this.currentListLength = 0;
-      this.listContainer.innerHTML = '';
-    }
-  }
-
-  handleInput() {
+  clearUserList(event) {
+    event?.stopPropagation();
     if (this.input.value === '') {
       this.userList = [];
       this.totalUserCount = 0;
