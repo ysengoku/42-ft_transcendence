@@ -1,3 +1,5 @@
+import logging
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.http import HttpRequest
@@ -11,6 +13,8 @@ from common.routers import get_profile_queryset_by_username_or_404
 from common.schemas import MessageSchema
 
 chats_router = Router()
+
+logger = logging.getLogger("server")
 
 
 @chats_router.get("", response={200: list[ChatPreviewSchema], frozenset({401}): MessageSchema})
@@ -33,11 +37,27 @@ def get_or_create_chat(request, username: str):
     """
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile
+    logger.info(f"""
+        [USER AUTH] 
+        ID: {profile.user.id}
+        Username: {profile.user.username}
+        Email: {profile.user.email}
+        Last Login: {profile.user.last_login}
+        Avatar Path: {profile.avatar}
+        """)
+    logger.info(f"""
+        [OTHER USER] 
+        ID: {other_profile.user.id} 
+        Username: {other_profile.user.username}
+        Avatar Path: {other_profile.avatar}
+        Online Status: {other_profile.is_online}
+        """)
     if other_profile == profile:
         raise HttpError(422, "Cannot get chat with yourself.")
     chat, created = Chat.objects.get_or_create(profile, other_profile)
     chat = Chat.objects.filter(
         pk=chat.pk).with_other_user_profile_info(profile).first()
+    logger.info(chat)
     if created:
         channel_layer = get_channel_layer()
         for user_profile in [profile, other_profile]:
@@ -45,8 +65,8 @@ def get_or_create_chat(request, username: str):
                 f"user_{user_profile.user.id}",
                 {
                     "type": "join.chat",
-                    "data": {"chat_id": str(chat.id)}
-                }
+                    "data": {"chat_id": str(chat.id)},
+                },
             )
     return (201 if created else 200), chat
 

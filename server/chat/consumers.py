@@ -1,4 +1,5 @@
 import json
+import logging
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
@@ -9,6 +10,8 @@ from django.utils import timezone
 
 from chat.models import Chat, ChatMessage, GameInvitation, Notification
 from users.models import Profile
+
+logger = logging.getLogger("server")
 
 
 def get_user_data(self):
@@ -49,35 +52,26 @@ class UserEventsConsumer(WebsocketConsumer):
         try:
             chat = Chat.objects.get(id=chat_id)
             async_to_sync(self.channel_layer.group_add)(
-                f"chat_{chat.id}", self.channel_name
+                f"chat_{chat.id}", self.channel_name,
             )
         except Chat.DoesNotExist:
-            print(f"Chat Room {chat_id} does not exist.")
+            logger.debug("Char Room %s does not exist.", chat_id)
 
     def join_chat(self, event):
         chat_id = event["data"]["chat_id"]
         try:
-            chat = Chat.objects.for_participants(
-                self.user_profile).get(id=chat_id)
-
             async_to_sync(self.channel_layer.group_add)(
                 f"chat_{chat_id}",
-                self.channel_name
+                self.channel_name,
             )
-
-            self.send(text_data=json.dumps({
-                "action": "chat_joined",
-                "data": {"chat_id": chat_id}
-            }))
-
         except Chat.DoesNotExist:
-            print(
-                f"Acces denied to the chat {chat_id} for {self.user.username}")
+            logger.debug("Acces denied to the chat %s for %s",
+                         chat_id, self.user.username)
 
     def chat_created(self, event):
         self.send(text_data=json.dumps({
             "action": "chat_created",
-            "data": event["data"]
+            "data": event["data"],
         }))
 
     def disconnect(self, close_code):
@@ -124,7 +118,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.send_room_created(
                     text_data_json.get("data", {}).get("chat_id"))
             case _:
-                print(f"Unknown action : {action}")
+                logger.debug("Unknown action : %s", action)
 
     def handle_message(self, data):
         message_data = data.get("data", {})
@@ -177,7 +171,7 @@ class UserEventsConsumer(WebsocketConsumer):
         try:
             profile = Profile.objects.get(user__username=username)
         except Profile.DoesNotExist:
-            print(f"Profile for {username} does not exist.")
+            logger.debug("Profile for %s does not exist.", username)
             return
 
         notification_data = get_user_data(profile)
@@ -211,7 +205,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 with transaction.atomic():
                     message = ChatMessage.objects.select_for_update().get(pk=message_id)
                     message.is_liked = True
-                    message.save(update_fields=['is_liked'])
+                    message.save(update_fields=["is_liked"])
                     message.refresh_from_db()
                     transaction.on_commit(
                         lambda: self.send_like_update(chat_id, message_id, True))
@@ -227,7 +221,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     ),
                 )
             except ObjectDoesNotExist:
-                print(f"Message {message_id} does not exist.")
+                logger.debug("Message %s does not exist.", message_id)
                 self.send(
                     text_data=json.dumps(
                         {
@@ -248,7 +242,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 with transaction.atomic():
                     message = ChatMessage.objects.select_for_update().get(pk=message_id)
                     message.is_liked = False
-                    message.save(update_fields=['is_liked'])
+                    message.save(update_fields=["is_liked"])
 
                     message.refresh_from_db()
                     transaction.on_commit(
@@ -267,7 +261,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     ),
                 )
             except ObjectDoesNotExist:
-                print(f"Message {message_id} does not exist.")
+                logger.debug("Message %s does not exist", message_id)
                 self.send(
                     text_data=json.dumps(
                         {
@@ -287,10 +281,10 @@ class UserEventsConsumer(WebsocketConsumer):
                     "data": {
                         "id": str(message_id),
                         "chat_id": str(chat_id),
-                        "is_liked": is_liked
-                    }
-                })
-            }
+                        "is_liked": is_liked,
+                    },
+                }),
+            },
         )
 
     def handle_read_message(self, data):
@@ -301,7 +295,7 @@ class UserEventsConsumer(WebsocketConsumer):
             message.is_read = True
             message.save()
         except ObjectDoesNotExist:
-            print(f"Message {message_id} does not exist.")
+            logger.debug("Message %s does not exist", message_id)
 
     # Receive message from room group
     def chat_message(self, event):
@@ -320,7 +314,7 @@ class UserEventsConsumer(WebsocketConsumer):
         message_data = json.loads(event["message"])
         self.send(text_data=json.dumps({
             "action": message_data["action"],
-            "data": message_data["data"]
+            "data": message_data["data"],
         }))
 
     def handle_notification(self, data):
@@ -341,7 +335,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 notification.read = True
                 notification.save()
             except Notification.DoesNotExist:
-                print(f"Notification {notification_id} does not exist.")
+                logger.debug("Notification %s does not exist", notification_id)
 
         self.send(
             text_data=json.dumps(
@@ -380,7 +374,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 ),
             )
         except GameInvitation.DoesNotExist:
-            print(f"Invitation {invitation_id} does not exist.")
+            logger.debug("Invitation %s does not exist.", invitation_id)
             self.send(
                 text_data=json.dumps(
                     {
@@ -416,7 +410,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 ),
             )
         except GameInvitation.DoesNotExist:
-            print(f"Invitation {invitation_id} does not exist.")
+            logger.debug("Invitation %s does not exist.", invitation_id)
             self.send(
                 text_data=json.dumps(
                     {
@@ -518,8 +512,8 @@ class UserEventsConsumer(WebsocketConsumer):
                             "participants": participants,
                             "message": f"Room {chat.id} created successfully!",
                         },
-                    }
-                )
+                    },
+                ),
             )
         except Chat.DoesNotExist:
-            print(f"Chat Room {chat_id} does not exist.")
+            logger.debug("Chat Room %s does not exist.", chat_id)
