@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from ninja import Schema
 
 from chat.models import Chat, ChatMessage
@@ -42,6 +43,15 @@ class BaseChatSchema(Schema):
     @staticmethod
     def resolve_chat_id(obj: Chat):
         return str(obj.id)
+
+    @staticmethod
+    def resolve_avatar(obj):
+        """Ensure avatar contains correct URL for both media and static images."""
+        if obj.avatar:
+            if obj.avatar.startswith("/img/"):
+                return obj.avatar
+
+            return f"{settings.MEDIA_URL}{obj.avatar}"
 
 
 class ChatPreviewSchema(BaseChatSchema):
