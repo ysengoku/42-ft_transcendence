@@ -37,8 +37,10 @@ export class UserEnemy extends HTMLElement {
     elo.textContent = `Elo: ${this.#state.data.elo}`;
     const winrate = this.querySelector('.enemy-winrate');
     winrate.textContent = `Win rate: ${this.#state.data.winrate}`;
-    const winAndLosses = this.querySelector('.win-and-losses');
-    winAndLosses.textContent = `win ${this.#state.data.wins} - losses ${this.#state.data.loses}`;
+    const wins = this.querySelector('.wins');
+    wins.textContent = `wins ${this.#state.data.wins}`;
+    const losses = this.querySelector('.losses');
+    losses.textContent = `losses ${this.#state.data.loses}`;
 
     this.enemyContainer = this.querySelector('.enemy-container');
     this.handleClick = () => {
@@ -55,14 +57,15 @@ export class UserEnemy extends HTMLElement {
 			  <p class="stat-label text-center">${type}</p>
 			  <div class="enemy-avatar-container">
 				  <p class="enemy-nickname lh-1 fs-5 ps-4 py-2 m-0"></p>
-				  <div class="d-flex flex-row justify-content-around align-items-start p-1">
+				  <div class="d-flex flex-row justify-content-around align-items-start px-2 pt-1 pb-3">
 					  <div class="d-flex flex-column justify-content-start px-2">
 					  <img alt="User Avatar" class="enemy-avatar rounded-circle">
 					  </div>
 					  <div>
 						  <p class="enemy-elo m-0 fs-6"></p>
 						  <p class="enemy-winrate m-0 fs-6"></p>
-						  <small class="win-and-losses"</small>
+						  <p class="wins m-0 fs-6"</p>
+						  <p class="losses m-0 fs-6"</p>
 					  </div>
 				  </div>
 			  </div>
