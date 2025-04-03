@@ -5,12 +5,14 @@ import './components/index.js';
 export class UserProfile extends HTMLElement {
   #state = {
     loggedInUsername: '',
-    user: null,
+    // user: null,
   };
 
   constructor() {
     super();
     this.user = null;
+
+    this.updateOnlineStatus = this.updateOnlineStatus.bind(this);
   }
 
   setParam(param) {
@@ -54,10 +56,9 @@ export class UserProfile extends HTMLElement {
 
     this.innerHTML = this.style() + this.template();
 
-    this.onlineStatusIndicator = document.createElement('profile-online-status');
-    this.onlineStatusIndicator.setAttribute('online', this.user.is_online);
-    this.onlineStatusIndicatorField = this.querySelector('#user-profile-online-status');
-    this.onlineStatusIndicatorField.innerHTML = this.onlineStatusIndicator.outerHTML;
+    this.onlineStatusIndicator = this.querySelector('profile-online-status');
+    this.onlineStatusIndicator.setStatus(this.user.is_online);
+    document.addEventListener('onlineStatus', this.updateOnlineStatus);
 
     const profileAvatar = this.querySelector('profile-avatar');
     if (profileAvatar) {
@@ -134,6 +135,15 @@ export class UserProfile extends HTMLElement {
     }
   }
 
+  updateOnlineStatus(event) {
+    if (event.detail.data.username.toLowerCase() !== this.user.username.toLowerCase()) {
+      return;
+    }
+    console.log('Update online status:', event.detail);
+    this.user.is_online = event.detail.online;
+    this.onlineStatusIndicator.setStatus(this.user.is_online);
+  }
+
   template() {
     return `
     <div class="container-fluid">
@@ -149,7 +159,7 @@ export class UserProfile extends HTMLElement {
             <h1 class="mt-2">WANTED</h1>
             <div class="d-flex flex-row align-items-center">
               <hr class="line flex-grow-1">  
-              <div id="user-profile-online-status"></div>
+              <profile-online-status></profile-online-status>
               <hr class="line flex-grow-1">
             </div>
             </div>
