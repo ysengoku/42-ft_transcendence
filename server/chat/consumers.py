@@ -15,6 +15,7 @@ logger = logging.getLogger("server")
 
 
 def get_user_data(self):
+    logger.info("hello there !")
     return {
         "date": timezone.now().isoformat(),
         "username": self.user.username,
