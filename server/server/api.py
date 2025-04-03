@@ -34,7 +34,7 @@ def handle_http_error_error(request: HttpRequest, exc: HttpError):
 @api.exception_handler(AuthenticationError)
 def handle_authentication_error(request: HttpRequest, exc: AuthenticationError):
     message = str(exc) if str(exc) else "Unauthorized."
-    logging.error("Auth error: %s", exc)
+    logger.info("Auth error: %s", exc)
     return api.create_response(
         request,
         {"msg": message},

@@ -61,7 +61,7 @@ def get_messages(request, username: str):
     """
     Gets messages of a specific chat.
     Paginated by the `limit` and `offset` settings.
-    For example, `/chats/celiastral/messages?&limit=10&offset=0` will get 10 messages from the very first one.
+    For example, `/ chats/celiastral/messages?& limit = 10 & offset = 0` will get 10 messages from the very first one.
     """
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile
