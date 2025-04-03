@@ -66,7 +66,7 @@ export class DropdownMenu extends HTMLElement {
     <div class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       <img id="avatar-img" alt="user" class="d-inline-block align-top rounded-circle">
     </div>
-    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+    <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="navbarDropdown">
       ${ this.#state.isLoggedIn ? `
         <a class="dropdown-item" id="dropdown-item-profile">Your profile</a>
         <a href="/settings" class="dropdown-item">Settings</a>

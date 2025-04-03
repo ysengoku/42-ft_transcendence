@@ -8,7 +8,7 @@ export async function mockChatMoreMessages(username) {
       items: [
         {
           sender: myUsername,
-          content: 'Nope. See you tomorrow, snackless one! 😆',
+          content: 'test1',
           date: '2025-02-02T12:09:00Z',
           is_liked: false,
           is_read: true,
@@ -16,7 +16,7 @@ export async function mockChatMoreMessages(username) {
         },
         {
           sender: 'alice123',
-          content: 'That was ONE TIME! Never letting that go, huh? 😂',
+          content: 'test2',
           date: '2025-02-02T12:08:00Z',
           is_liked: true,
           is_read: true,
@@ -24,12 +24,7 @@ export async function mockChatMoreMessages(username) {
         },
         {
           sender: myUsername,
-          content:
-            'Just making sure. Last time you showed up empty-handed. ' +
-            'I don\'t want a repeat of that situation, ' +
-            'so I need to confirm everything is in order.' +
-            'You know how important this is, and I can\'t afford any mistakes.' +
-            'If anything is missing again, we\'ll have a serious problem. 👀',
+          content: 'test3',
           date: '2025-02-02T12:07:00Z',
           is_liked: false,
           is_read: true,
@@ -37,7 +32,7 @@ export async function mockChatMoreMessages(username) {
         },
         {
           sender: 'alice123',
-          content: 'Of course! What kind of monster do you think I am?! 🍫',
+          content: 'test4',
           date: '2025-02-02T12:06:00Z',
           is_liked: false,
           is_read: true,
@@ -45,7 +40,7 @@ export async function mockChatMoreMessages(username) {
         },
         {
           sender: myUsername,
-          content: 'Later! Don\'t forget to bring snacks. 🤓',
+          content: 'test5',
           date: '2025-02-02T12:05:00Z',
           is_liked: true,
           is_read: true,
@@ -53,7 +48,7 @@ export async function mockChatMoreMessages(username) {
         },
         {
           sender: 'alice123',
-          content: 'Haha, we\'ll see! Catch you later!',
+          content: 'test6',
           date: '2025-02-02T12:04:00Z',
           is_liked: false,
           is_read: true,
@@ -61,7 +56,7 @@ export async function mockChatMoreMessages(username) {
         },
         {
           sender: myUsername,
-          content: 'Nice! Hope that energy lasts until tomorrow 😆',
+          content: 'test7',
           date: '2025-02-02T12:03:00Z',
           is_liked: false,
           is_read: true,
@@ -69,7 +64,7 @@ export async function mockChatMoreMessages(username) {
         },
         {
           sender: 'alice123',
-          content: 'Feeling like a rockstar today! 😎',
+          content: 'test8',
           date: '2025-02-02T12:02:00Z',
           is_liked: false,
           is_read: true,
@@ -77,14 +72,14 @@ export async function mockChatMoreMessages(username) {
         },
         {
           sender: myUsername,
-          content: 'Hey hey! Just surviving another day. You?',
+          content: 'test9',
           date: '2025-02-02T12:01:00Z',
           is_liked: false,
           is_read: true,
           id: '2',
         },
         {
-          content: 'Yo! What\'s up?',
+          content: 'test10',
           date: '2025-02-02T12:00:00Z',
           sender: 'alice123',
           is_read: true,
@@ -92,64 +87,67 @@ export async function mockChatMoreMessages(username) {
           id: '1',
         },
       ],
+      count: 30,
     },
     {
       username: 'johndoe1',
       items: [
         {
           sender: myUsername,
-          content: 'Bye!',
-          date: '2025-01-31T12:02:00Z',
+          content: 'test',
+          date: '2025-02-02T12:00:00Z',
           is_liked: false,
           is_read: true,
         },
         {
           sender: 'johndoe1',
-          content: 'See you!',
-          date: '2025-01-31T12:01:00Z',
+          content: 'test',
+          date: '2025-02-02T12:00:00Z',
           is_liked: false,
           is_read: true,
         },
         {
           sender: myUsername,
-          content: 'See you tomorrow!',
-          date: '2025-01-31T12:00:00Z',
+          content: 'test',
+          date: '2025-02-02T12:00:00Z',
           is_liked: false,
           is_read: true,
         },
       ],
+      count: 3,
     },
     {
       username: 'george55',
       items: [
         {
           sender: 'george55',
-          content: 'Great, thanks!',
-          date: '2025-01-20T12:02:00Z',
+          content: 'test',
+          date: '2025-02-02T12:00:00Z',
           is_liked: false,
           is_read: true,
         },
         {
           sender: myUsername,
-          content: 'Yes, I did. I will reply soon.',
+          content: 'test',
           date: '2025-01-20T12:01:00Z',
           is_liked: false,
           is_read: true,
         },
         {
           sender: 'george55',
-          content: 'Did you get my email?',
+          content: 'test',
           date: '2025-01-20T12:00:00Z',
           is_liked: false,
           is_read: true,
         },
       ],
+      count: 3,
     },
   ];
 
   for (const chat of chatMessages) {
     if (chat.username === username) {
-      return chat.items;
+      return chat;
     }
   }
 }

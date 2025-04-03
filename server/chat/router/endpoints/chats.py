@@ -1,3 +1,7 @@
+import logging
+
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
@@ -9,6 +13,8 @@ from common.routers import get_profile_queryset_by_username_or_404
 from common.schemas import MessageSchema
 
 chats_router = Router()
+
+logger = logging.getLogger("server")
 
 
 @chats_router.get("", response={200: list[ChatPreviewSchema], frozenset({401}): MessageSchema})
@@ -31,13 +37,37 @@ def get_or_create_chat(request, username: str):
     """
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile
+    logger.info("""
+        [USER AUTH]
+        ID: {%s}
+        Username: %s
+        Last Login: %s
+        Avatar Path: %s
+        """, profile.user.id, profile.user.username, profile.user.last_login, profile.avatar)
+    logger.info("""
+        [OTHER USER]
+        ID: %s
+        Username: %s
+        Last Login: %s
+        Avatar Path: %s
+        """, other_profile.user.id, other_profile.user.username, other_profile.user.last_login, other_profile.avatar)
     if other_profile == profile:
         raise HttpError(422, "Cannot get chat with yourself.")
     chat, created = Chat.objects.get_or_create(profile, other_profile)
-    chat = Chat.objects.filter(pk=chat.pk).with_other_user_profile_info(profile).first()
+    chat = Chat.objects.filter(
+        pk=chat.pk).with_other_user_profile_info(profile).first()
+    logger.info(chat)
     if created:
-        return 201, chat
-    return 200, chat
+        channel_layer = get_channel_layer()
+        for user_profile in [profile, other_profile]:
+            async_to_sync(channel_layer.group_send)(
+                f"user_{user_profile.user.id}",
+                {
+                    "type": "join.chat",
+                    "data": {"chat_id": str(chat.id)},
+                },
+            )
+    return (201 if created else 200), chat
 
 
 @chats_router.get("{username}/messages", response={200: list[ChatMessageSchema], frozenset({401, 404}): MessageSchema})
@@ -46,7 +76,7 @@ def get_messages(request, username: str):
     """
     Gets messages of a specific chat.
     Paginated by the `limit` and `offset` settings.
-    For example, `/chats/celiastral/messages?&limit=10&offset=0` will get 10 messages from the very first one.
+    For example, `/ chats/celiastral/messages?& limit = 10 & offset = 0` will get 10 messages from the very first one.
     """
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile

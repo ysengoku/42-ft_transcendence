@@ -1,9 +1,8 @@
 
 export function createClouds() {
-  const contentContainer = document.getElementById('content');
   const cloud = document.createElement('div');
   cloud.id = 'cloud';
-  contentContainer.appendChild(cloud);
+  document.body.appendChild(cloud);
 };
 
 export function createStars() {
