@@ -56,7 +56,7 @@ export class UserEnemy extends HTMLElement {
       <div class="enemy-container d-flex flex-column justify-content-start p-2">
 			  <p class="stat-label text-center">${type}</p>
 			  <div class="enemy-avatar-container">
-				  <p class="enemy-nickname lh-1 text-center fs-4 fw-bold p-2 m-0"></p>
+				  <p class="enemy-nickname lh-1 text-center text-break fs-4 p-2 m-0"></p>
 				  <div class="d-flex flex-row justify-content-center align-items-start px-2 pt-1 pb-3 gap-4">
 					  <div class="d-flex flex-column justify-content-start px-2">
 					  <img alt="User Avatar" class="enemy-avatar rounded-circle">
