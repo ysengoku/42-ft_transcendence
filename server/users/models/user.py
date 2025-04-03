@@ -48,9 +48,11 @@ class UserManager(BaseUserManager):
         if oauth_connection:
             username = self._generate_unique_username(username)
         if extra_fields.get("password"):
-            extra_fields["password"] = make_password(extra_fields.get("password"))
+            extra_fields["password"] = make_password(
+                extra_fields.get("password"))
         if extra_fields.get("email"):
-            extra_fields["email"] = BaseUserManager.normalize_email(extra_fields.get("email"))
+            extra_fields["email"] = BaseUserManager.normalize_email(
+                extra_fields.get("email"))
         extra_fields.setdefault("nickname", username)
         return self.model(username=username, oauth_connection=oauth_connection, **extra_fields)
 
@@ -69,7 +71,8 @@ class UserManager(BaseUserManager):
 
     def _generate_unique_username(self, username: str):
         base_username = username
-        user_with_colliding_username_exist = self.filter(username__iexact=username).exists()
+        user_with_colliding_username_exist = self.filter(
+            username__iexact=username).exists()
         counter = 0
         if user_with_colliding_username_exist:
             counter = self.filter(
@@ -92,17 +95,29 @@ class User(AbstractUser):
     username_validator = UnicodeUsernameValidator()
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    username = models.CharField(max_length=50, validators=[username_validator], unique=True)
+    username = models.CharField(max_length=50, validators=[
+                                username_validator], unique=True)
     nickname = models.CharField(max_length=50, validators=[username_validator])
     email = models.EmailField(blank=True, default="")
     password = models.CharField(max_length=128, blank=True, default="")
     mfa_enabled = models.BooleanField(default=False)
-    forgot_password_token = models.CharField(max_length=128, blank=True, default="")
+    forgot_password_token = models.CharField(
+        max_length=128, blank=True, default="")
     forgot_password_token_date = models.DateTimeField(blank=True, null=True)
     mfa_token = models.CharField(max_length=128, blank=True, default="")
     mfa_token_date = models.DateTimeField(blank=True, null=True)
 
     objects = UserManager()
+
+    @property
+    def profile(self):
+        """
+        Retourne le profil associé à cet utilisateur.
+        Si aucun profil n'existe, il en crée un automatiquement.
+        """
+        if not hasattr(self, '_profile'):
+            self._profile, _ = Profile.objects.get_or_create(user=self)
+        return self._profile
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
         """
@@ -111,14 +126,16 @@ class User(AbstractUser):
         **kwargs have a default parameter exclude, which excludes certain fields from being validated.
         """
         if "username" not in kwargs.get("exclude") and User.objects.filter(username__iexact=self.username).exists():
-            raise ValidationError({"username": ["A user with that username already exists."]})
+            raise ValidationError(
+                {"username": ["A user with that username already exists."]})
 
         if (
             "email" not in kwargs["exclude"]
             and not self.get_oauth_connection()
             and User.objects.filter(email=self.email).exists()
         ):
-            raise ValidationError({"email": ["A user with that email already exists."]})
+            raise ValidationError(
+                {"email": ["A user with that email already exists."]})
 
         kwargs["exclude"] |= {"username", "email"}
         super().validate_unique(*args, **kwargs)
@@ -128,7 +145,8 @@ class User(AbstractUser):
         Additional validation logic on the entire model that is not related to uniqueness.
         """
         if not self.password and not self.get_oauth_connection():
-            raise ValidationError({"password": ["This connection type requires a password."]})
+            raise ValidationError(
+                {"password": ["This connection type requires a password."]})
         if not self.email and not self.get_oauth_connection():
             raise ValidationError({"password": ["Email is required."]})
 
@@ -147,25 +165,30 @@ class User(AbstractUser):
                 err_dict = merge_err_dicts(err_dict, exc.error_dict)
 
         if data.old_password and not data.password:
-            err_dict = merge_err_dicts(err_dict, {"password": ["Please enter your new password."]})
+            err_dict = merge_err_dicts(
+                err_dict, {"password": ["Please enter your new password."]})
 
         if data.password and data.password_repeat:
             is_old_password_valid = self.check_password(data.old_password)
             if not is_old_password_valid:
-                err_dict = merge_err_dicts(err_dict, {"old_password": ["Old password is invalid."]})
+                err_dict = merge_err_dicts(
+                    err_dict, {"old_password": ["Old password is invalid."]})
             if data.old_password == data.password:
                 err_dict = merge_err_dicts(
                     err_dict,
-                    {"password": ["New password cannot be the same as the old password."]},
+                    {"password": [
+                        "New password cannot be the same as the old password."]},
                 )
             self.set_password(data.password)
             data.password = ""
 
         if data.username == self.username:
-            err_dict = merge_err_dicts(err_dict, {"username": ["New username cannot be the same as the old username."]})
+            err_dict = merge_err_dicts(
+                err_dict, {"username": ["New username cannot be the same as the old username."]})
 
         if data.email == self.email:
-            err_dict = merge_err_dicts(err_dict, {"email": ["New email cannot be the same as the old email."]})
+            err_dict = merge_err_dicts(
+                err_dict, {"email": ["New email cannot be the same as the old email."]})
 
         for key, val in data:
             if val and hasattr(self, key):
@@ -199,12 +222,14 @@ class User(AbstractUser):
             return None
 
     def __str__(self):
-        connection_type = "Regular" if not self.get_oauth_connection() else self.oauth_connection.connection_type
+        connection_type = "Regular" if not self.get_oauth_connection(
+        ) else self.oauth_connection.connection_type
         return f"{self.username} - {connection_type}"
 
 
 class UserOnlineStatus(models.Model):
-    user = models.OneToOneField("User", on_delete=models.CASCADE, related_name="online_status")
+    user = models.OneToOneField(
+        "User", on_delete=models.CASCADE, related_name="online_status")
     is_online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(default=timezone.now)
 
