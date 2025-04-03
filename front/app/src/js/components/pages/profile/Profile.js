@@ -172,17 +172,17 @@ export class UserProfile extends HTMLElement {
             <profile-user-actions></profile-user-actions>
 
             <!-- Stat cards -->
-            <div class="stat-cards-wrapper d-flex flex-wrap justify-content-between align-items-start mx-2 my-3 px-1 gap-2">
-              <div id="user-stat-card-elo"></div>
-                <div id="user-stat-card-friends-count"></div>
-                <div id="user-stat-card-scored-balls"></div>
-                <div id="user-stat-card-total-matches"></div>           
+            <div class="stat-cards-wrapper d-flex flex-wrap justify-content-between align-items-start mx-2 my-3 px-1 gap-3">
+              <div class="flex-fill" id="user-stat-card-elo"></div>
+              <div class="flex-fill" id="user-stat-card-friends-count"></div>
+              <div class="flex-fill" id="user-stat-card-scored-balls"></div>
+              <div class="flex-fill" id="user-stat-card-total-matches"></div>           
             </div>
 
             <!-- Enemies -->
-            <div class="d-flex flex-wrap justify-content-between my-2 px-3 gap-2">
-              <div class="d-flex flex-column" id="best-enemy"></div>
-              <div class="d-flex flex-column" id="worst-enemy"></div>
+            <div class="d-flex flex-wrap justify-content-between my-2 px-3 gap-3">
+              <div class="flex-fill d-flex flex-column" id="best-enemy"></div>
+              <div class="flex-fill d-flex flex-column" id="worst-enemy"></div>
             </div>
           </div>
         </div>
