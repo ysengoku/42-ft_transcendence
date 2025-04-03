@@ -9,11 +9,10 @@ export class UserSearch extends HTMLElement {
     this.totalUsersCount = 0;
     this.currentListLength = 0;
 
-    this.handleClick = this.handleClick.bind(this);
-    this.handleInput = this.handleInput.bind(this);
+    this.clearUserList = this.clearUserList.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleDropdownHidden = this.handleDropdownHidden.bind(this);
-    this.handleShowMoreUsers = this.handleShowMoreUsers.bind(this);
+    this.showMoreUsers = this.showMoreUsers.bind(this);
   }
 
   connectedCallback() {
@@ -21,45 +20,49 @@ export class UserSearch extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.input.removeEventListener('click', this.handleClick);
-    this.input.removeEventListener('input', this.handleInput);
-    this.form.removeEventListener('click', this.handleClick);
-    this.form.removeEventListener('submit', this.handleSubmit);
-    document.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    this.form?.removeEventListener('click', this.clearUserList);
+    this.input?.removeEventListener('click', this.clearUserList);
+    this.input?.removeEventListener('input', this.clearUserList);
+    this.form?.removeEventListener('submit', this.handleSubmit);
+    this.dropdown?.removeEventListener('scrollend', this.showMoreUsers);
+    this.dropdpwnMobile?.removeEventListener('scrollend', this.showMoreUsers);
   }
 
   render() {
     this.innerHTML = this.template();
 
     this.listContainer = this.querySelector('#navbar-user-list');
+    this.button = document.getElementById('navbar-user-search');
+    this.dropdown = document.getElementById('user-search-dropdown');
     this.form = this.querySelector('form');
-    this.input = this.form.querySelector('input');
 
-    this.input.addEventListener('click', this.handleClick);
-    this.input.addEventListener('input', this.handleInput);
-    this.form.addEventListener('click', this.handleClick);
-    this.form.addEventListener('submit', this.handleSubmit);
-    document.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    this.dropdown?.addEventListener('scrollend', this.showMoreUsers);
+
+    this.form ? (
+      this.form.addEventListener('click', this.clearUserList),
+      this.form.addEventListener('submit', this.handleSubmit),
+      this.input = this.form.querySelector('input')
+    ) : (devErrorLog('User search form not found'));
+    this.input ? (
+      this.input.addEventListener('input', this.clearUserList),
+      this.input.addEventListener('click', this.clearUserList)
+    ) : devErrorLog('User search input not found');
+
+    this.buttonMobile = document.getElementById('dropdown-item-user-search');
+    this.dropdpwnMobile = document.getElementById('dropdown-user-search');
+    this.buttonMobile?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    this.dropdpwnMobile?.addEventListener('scrollend', this.showMoreUsers);
   }
 
-  handleClick(event) {
-    event.stopPropagation();
+  clearUserList(event) {
+    event?.stopPropagation();
     if (this.input.value === '') {
       this.userList = [];
       this.totalUserCount = 0;
       this.currentListLength = 0;
       this.listContainer.innerHTML = '';
-    }
-    this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
-  }
-
-  handleInput() {
-    if (this.input.value === '') {
-      this.userList = [];
-      this.totalUserCount = 0;
-      this.currentListLength = 0;
-      this.listContainer.innerHTML = '';
-      this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
     }
   }
 
@@ -77,14 +80,16 @@ export class UserSearch extends HTMLElement {
     this.totalUserCount = 0;
     this.listContainer.innerHTML = '';
     this.input.value = '';
-    this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
   }
 
-  async handleShowMoreUsers(event) {
-    event.stopPropagation();
+  async showMoreUsers(event) {
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    const threshold = 5;
+    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+    this.totalUsersCount === this.currentListLength) {
+      return;
+    }
     this.searchUser();
-    this.showMoreButton?.removeEventListener('click', this.handleShowMoreUsers);
-    this.showMoreButton?.remove();
   }
 
   async searchUser() {
@@ -128,24 +133,12 @@ export class UserSearch extends HTMLElement {
       this.listContainer.appendChild(listItem);
       this.currentListLength++;
     }
-    if (this.totalUsersCount > this.currentListLength) {
-      this.renderShowMoreButton();
-    }
   }
 
   renderNoUserFound() {
     const noUser = document.createElement('li');
     noUser.innerHTML = this.noUserFoundTemplate();
     this.listContainer.appendChild(noUser);
-  }
-
-  renderShowMoreButton() {
-    this.showMoreButtonContainer = document.createElement('li');
-    this.showMoreButtonContainer.innerHTML = this.showMoreButtonTemplate();
-    this.listContainer.appendChild(this.showMoreButtonContainer);
-
-    this.showMoreButton = this.showMoreButtonContainer.querySelector('#show-more-users');
-    this.showMoreButton?.addEventListener('click', this.handleShowMoreUsers);
   }
 
   template() {
@@ -176,24 +169,6 @@ export class UserSearch extends HTMLElement {
     </style>
     <div class="list-group-item p-3">
       <p class="text-center m-0">No user found</p>
-    </div>
-    `;
-  }
-
-  showMoreButtonTemplate() {
-    return `
-    <style>
-      #show-more-users {
-        border: none;
-        position: relative;
-        border-top: 1px solid var(--bs-border-color);
-      }
-      li {
-        list-style-type: none;
-      }
-    </style>
-    <div class="list-group-item mt-4 p-3" id="show-more-users">
-      <p class="text-center m-0">Show more users</p>
     </div>
     `;
   }

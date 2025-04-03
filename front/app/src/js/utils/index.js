@@ -1,8 +1,9 @@
 import { ThemeController } from './ThemeController';
 import { isMobile } from './viewPort';
-import { getRelativeTime } from './dateFormat';
+import { getRelativeTime, getRelativeDateAndTime } from './dateFormat';
 import { sanitizeHtml } from './sanitizeHtml';
 import { showFormErrorFeedback } from './formFeedback';
+import { showToastNotification } from './toastnotification';
 
 import {
   createClouds,
@@ -31,8 +32,10 @@ export {
   ThemeController,
   isMobile,
   getRelativeTime,
+  getRelativeDateAndTime,
   sanitizeHtml,
   showFormErrorFeedback,
+  showToastNotification,
   createClouds,
   createStars,
   INPUT_FEEDBACK,

@@ -51,7 +51,6 @@ const router = (() => {
       if (route) {
         const { componentTag, isDynamic, param } = route;
         if (isDynamic) {
-          // console.log('param: ', param);
           this.renderDynamicUrlComponent(componentTag, param);
         } else {
           this.renderStaticUrlComponent(componentTag, queryParams);
@@ -99,7 +98,6 @@ const router = (() => {
           return null;
         }
       }
-      console.log('param: ', param);
       return param;
     }
 
@@ -117,7 +115,7 @@ const router = (() => {
 
       if (queryParams.size > 0) {
         for (const [key, value] of queryParams.entries()) {
-          console.log(`${key}: ${value}`);
+          devLog(`${key}: ${value}`);
         }
         component.setQueryParam(queryParams);
       }
@@ -137,7 +135,6 @@ const router = (() => {
       if (this.currentComponent) {
         this.currentComponent.remove();
       }
-      console.log('param: ', param);
       const component = document.createElement(componentTag);
       if (typeof component.setParam === 'function') {
         component.setParam(param);
@@ -153,13 +150,23 @@ const router = (() => {
      * @return {void}
      */
     navigate(path = window.location.pathname, queryParams = '') {
-      console.log('Navigating to:', path);
+      devLog('Navigating to:', path);
+
+      let queryParamsObject = new URLSearchParams();
+      if (queryParams && typeof queryParams === 'object') {
+        queryParamsObject = new URLSearchParams(queryParams);
+      } else if (typeof queryParams === 'string' && queryParams.length > 0) {
+        queryParamsObject = new URLSearchParams(queryParams);
+      } else {
+        queryParamsObject = queryParams;
+      }
+
       if (path === '/user-not-found') {
         window.history.replaceState({}, '', path);
       } else {
         window.history.pushState({}, '', path);
       }
-      this.handleRoute(queryParams);
+      this.handleRoute(queryParamsObject);
     }
 
     /**
@@ -215,14 +222,15 @@ router.addRoute('/error', 'error-page');
  * Initialize the router on the initial HTML document load
  */
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM loaded');
+  devLog('DOM loaded');
   document.documentElement.getAttribute('data-bs-theme') === 'light' ? (
     document.getElementById('stars') ? document.body.removeChild(stars) : null,
-    document.body.style.backgroundImage = `linear-gradient(rgb(225, 164, 99),rgb(160, 94, 50), #d47a3e)`,
+    document.body.style.backgroundImage = `linear-gradient(rgba(170,79,236, 0.8) 0%, rgba(236,79,84, 0.8) 50%, rgba(236,79,84, 0.8) 100%)`,
+
     createClouds()
   ) : (
-    document.getElementById('cloud') ? document.getElementById('content').removeChild(cloud) : null,
-    document.body.style.backgroundImage = `linear-gradient(#080f1c 0%, #0d4261 32%,  #1473ab 100%)`,
+    document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
+    document.body.style.backgroundImage = `linear-gradient(rgb(23, 18, 40) 0%, rgb(62, 52, 97) 16%, rgb(95, 83, 138) 40%, #6670A2 100%)`,
     createStars()
   );
 
