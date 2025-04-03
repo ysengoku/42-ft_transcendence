@@ -139,7 +139,7 @@ AUTHENTICATION_BACKENDS = [
 # CUSTOM USER MODEL
 
 AUTH_USER_MODEL = "users.User"
-
+DEFAULT_USER_AVATAR = "/img/default_avatar.png"
 
 # Configuration OAuth 42
 SOCIALACCOUNT_PROVIDERS = {

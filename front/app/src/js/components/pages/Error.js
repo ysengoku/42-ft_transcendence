@@ -37,7 +37,7 @@ export class Error extends HTMLElement {
 	          <p id="error-message"></p>
           </div>
           <div class="pb-6">
-            <a class="btn btn-primary" href="/home" role="button">Go back to Home</a>
+            <a class="btn btn-wood" href="/home" role="button">Go back to Home</a>
           </div>
         </div>
       </div>
