@@ -302,6 +302,19 @@ export class ChatList extends HTMLElement {
     }
   }
 
+  updateOnlineStatus(data) {
+    const username = data.data.username;
+    const index = this.#state.items.findIndex((chat) => chat.username.toLowerCase() === username.toLowerCase());
+    if (index !== -1) {
+      this.#state.items[index].is_online = data.online;
+      const component = document.getElementById(`chat-item-${this.#state.items[index].username}`);
+      const onlineStatus = component.querySelector('.chat-list-status-indicator');
+      data.online ?
+        onlineStatus.classList.add('online') :
+        onlineStatus.classList.remove('online');
+    }
+  }
+
   /* ------------------------------------------------------------------------ */
   /*     Template & style                                                     */
   /* ------------------------------------------------------------------------ */

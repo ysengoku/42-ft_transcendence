@@ -47,6 +47,8 @@ export class Chat extends HTMLElement {
     this.sendMessage = this.sendMessage.bind(this);
     this.receiveMessage = this.receiveMessage.bind(this);
     this.handleToggleLikeMessage = this.handleToggleLikeMessage.bind(this);
+    this.updateOnlinestatus = this.updateOnlinestatus.bind(this);
+
     this.handleWindowResize = this.handleWindowResize.bind(this);
     this.handleBackToChatList = this.handleBackToChatList.bind(this);
   }
@@ -111,6 +113,7 @@ export class Chat extends HTMLElement {
     this.removeEventListener('toggleLikeChatMessage', this.handleToggleLikeMessage);
     document.removeEventListener('newChatMessage', this.receiveMessage);
     document.removeEventListener('toggleLike', this.toggleLikeMessage);
+    document.removeEventListener('onlineStatus', this.updateOnlinestatus);
     window.removeEventListener('resize', this.handleWindowResize);
     this.backButton?.removeEventListener('click', this.handleBackToChatList);
   }
@@ -137,6 +140,7 @@ export class Chat extends HTMLElement {
     document.addEventListener('sendMessage', this.sendMessage);
     document.addEventListener('toggleLikeChatMessage', this.handleToggleLikeMessage);
     document.addEventListener('newChatMessage', this.receiveMessage);
+    document.addEventListener('onlineStatus', this.updateOnlinestatus);
     window.addEventListener('resize', this.handleWindowResize);
     this.backButton.addEventListener('click', this.handleBackToChatList);
   }
@@ -265,10 +269,11 @@ export class Chat extends HTMLElement {
     }
   }
 
-  handleUnlikedMessage(data) {
-    if (data.chat_id !== this.#state.currentChat.chat_id) {
-      return;
+  updateOnlinestatus(event) {
+    if (event.detail.data.username.toLowerCase() === this.#state.currentChatUsername.toLowerCase()) {
+      this.chatMessagesArea.updateOnlineStatus(event.detail);
     }
+    this.chatList.updateOnlineStatus(event.detail);
   }
 
   /* ------------------------------------------------------------------------ */
