@@ -71,6 +71,9 @@
   --bs-light-rgb: var(--pm-gray-100-rgb);
   --bs-dark: var(--pm-gray-700);
   --bs-dark-rgb: var(--pm-gray-700-rgb);
+
+  --pm-online: #228F0B;
+  --pm-offline: var(--pm-gray-400);
 }
 
 /*--------------------------------------------------------------------------- */
