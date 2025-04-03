@@ -37,21 +37,20 @@ def get_or_create_chat(request, username: str):
     """
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile
-    logger.info(f"""
-        [USER AUTH] 
-        ID: {profile.user.id}
-        Username: {profile.user.username}
-        Email: {profile.user.email}
-        Last Login: {profile.user.last_login}
-        Avatar Path: {profile.avatar}
-        """)
-    logger.info(f"""
-        [OTHER USER] 
-        ID: {other_profile.user.id} 
-        Username: {other_profile.user.username}
-        Avatar Path: {other_profile.avatar}
-        Online Status: {other_profile.is_online}
-        """)
+    logger.info("""
+        [USER AUTH]
+        ID: {%s}
+        Username: %s
+        Last Login: %s
+        Avatar Path: %s
+        """, profile.user.id, profile.user.username, profile.user.last_login, profile.avatar)
+    logger.info("""
+        [OTHER USER]
+        ID: %s
+        Username: %s
+        Last Login: %s
+        Avatar Path: %s
+        """, other_profile.user.id, other_profile.user.username, other_profile.user.last_login, other_profile.avatar)
     if other_profile == profile:
         raise HttpError(422, "Cannot get chat with yourself.")
     chat, created = Chat.objects.get_or_create(profile, other_profile)
@@ -77,7 +76,7 @@ def get_messages(request, username: str):
     """
     Gets messages of a specific chat.
     Paginated by the `limit` and `offset` settings.
-    For example, `/chats/celiastral/messages?&limit=10&offset=0` will get 10 messages from the very first one.
+    For example, `/ chats/celiastral/messages?& limit = 10 & offset = 0` will get 10 messages from the very first one.
     """
     other_profile = get_profile_queryset_by_username_or_404(username).first()
     profile = request.auth.profile

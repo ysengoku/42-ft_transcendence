@@ -47,11 +47,9 @@ class BaseChatSchema(Schema):
     @staticmethod
     def resolve_avatar(obj):
         """Ensure avatar contains correct URL for both media and static images."""
-        if obj.avatar:
-            if obj.avatar.startswith("/img/"):
-                return obj.avatar
-
-            return f"{settings.MEDIA_URL}{obj.avatar}"
+        if obj.avatar == settings.DEFAULT_USER_AVATAR:
+            return obj.avatar
+        return f"{settings.MEDIA_URL}{obj.avatar}"
 
 
 class ChatPreviewSchema(BaseChatSchema):
