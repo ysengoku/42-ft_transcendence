@@ -34,9 +34,9 @@ export class UserEnemy extends HTMLElement {
     const avatar = this.querySelector('.enemy-avatar');
     avatar.src = this.#state.data.avatar;
     const elo = this.querySelector('.enemy-elo');
-    elo.textContent = `Elo: ${this.#state.data.elo}`;
+    elo.textContent = this.#state.data.elo;
     const winrate = this.querySelector('.enemy-winrate');
-    winrate.textContent = `Win rate: ${this.#state.data.winrate}`;
+    winrate.textContent = this.#state.data.winrate;
     const wins = this.querySelector('.wins');
     wins.textContent = `wins ${this.#state.data.wins}`;
     const losses = this.querySelector('.losses');
@@ -56,14 +56,14 @@ export class UserEnemy extends HTMLElement {
       <div class="enemy-container d-flex flex-column justify-content-start p-2">
 			  <p class="stat-label text-center">${type}</p>
 			  <div class="enemy-avatar-container">
-				  <p class="enemy-nickname lh-1 fs-5 ps-4 py-2 m-0"></p>
-				  <div class="d-flex flex-row justify-content-around align-items-start px-2 pt-1 pb-3">
+				  <p class="enemy-nickname lh-1 text-center fs-4 fw-bold p-2 m-0"></p>
+				  <div class="d-flex flex-row justify-content-center align-items-start px-2 pt-1 pb-3 gap-4">
 					  <div class="d-flex flex-column justify-content-start px-2">
 					  <img alt="User Avatar" class="enemy-avatar rounded-circle">
 					  </div>
 					  <div>
-						  <p class="enemy-elo m-0 fs-6"></p>
-						  <p class="enemy-winrate m-0 fs-6"></p>
+						  <div class="d-flex m-0 fs-5"><strong class="m-0">Elo:&nbsp;</strong><p class="enemy-elo m-0"></p></div>
+						  <div class="d-flex m-0 fs-5"><strong class="m-0">Win rate:&nbsp;</strong><p class="enemy-winrate m-0"></p></div>
 						  <p class="wins m-0 fs-6"</p>
 						  <p class="losses m-0 fs-6"</p>
 					  </div>
