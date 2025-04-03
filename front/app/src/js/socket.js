@@ -108,29 +108,34 @@ const socketManager = (() => {
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
         showToastNotification(`${data.nickname} challenges you to a duel.`);
-        // TODO: At click on toast, open a notifications list?
       },
       new_tournament: (data) => {
         devLog('New tournament received:', data);
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
         showToastNotification(`${data.nickname} is calling all gunslingers to a new tournament.`);
-        // TODO: Add link to the concerned tournament page?
       },
       new_friend: (data) => {
         devLog('New friend received:', data);
         const notificationButton = document.querySelector('notifications-button');
         notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
         showToastNotification(`${data.nickname} just roped you in as a friend.`);
-        // TODO: At click on toast, open a notifications list OR navigate to user's profile?
       },
       user_online: (data) => {
         devLog('User online:', data);
-        // TODO
+        const customEvent = new CustomEvent('onlineStatus', {
+          detail: { data, online: true },
+          bubbles: true,
+        });
+        dispatchEvent(customEvent);
       },
       user_offline: (data) => {
         devLog('User offline:', data);
-        // TODO
+        const customEvent = new CustomEvent('onlineStatus', {
+          detail: { data, online: false },
+          bubbles: true,
+        });
+        dispatchEvent(customEvent);
       },
       noMatchedListener: (action) => {
         devErrorLog('No listeners set for this action:', action);
