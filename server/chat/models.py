@@ -1,9 +1,11 @@
 import uuid
+from datetime import timedelta
 
 from django.conf import settings
 from django.db import models
-from django.db.models import Count, Exists, ImageField, OuterRef, Q, Subquery, Value
-from django.db.models.functions import Coalesce, NullIf
+from django.db.models import (BooleanField, Count, Exists, ExpressionWrapper,
+                              ImageField, OuterRef, Q, Subquery, Value)
+from django.db.models.functions import Coalesce, Now, NullIf
 
 from users.models import Profile
 
@@ -81,12 +83,17 @@ class ChatQuerySet(models.QuerySet):
                 ),
                 Value(settings.DEFAULT_USER_AVATAR, output_field=ImageField()),
             ),
+            last_activity=Subquery(
+                other_chat_participant_subquery.values("last_activity")),
             is_online=Subquery(
                 other_chat_participant_subquery.values("is_online")),
             other_profile_id=Subquery(
                 other_chat_participant_subquery.values("pk")),
             unread_messages_count=Count("messages", filter=~Q(
                 messages__sender=profile) & Q(messages__is_read=False)),
+            real_online=ExpressionWrapper(
+                Q(last_activity__gte=Now() - timedelta(minutes=2)), output_field=BooleanField()
+            ),
         ).annotate(
             is_blocked_user=Exists(
                 blocked_through.objects.filter(
@@ -107,6 +114,7 @@ class ChatQuerySet(models.QuerySet):
             Chat.objects.for_participants(profile)
             .with_and_order_by_last_message()
             .with_other_user_profile_info(profile)
+            # .annotate_real_online()
         )
 
 

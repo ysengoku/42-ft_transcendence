@@ -13,19 +13,27 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 
-from users.middleware import JWTAuthMiddleware
+from users.middleware import JWTAuthMiddleware, OnlineStatusCleanupMiddleware
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django_asgi_app = get_asgi_application()
 
-from chat.routing import websocket_urlpatterns as chat_websocket_urlpatterns  # noqa: E402
-from pong.routing import websocket_urlpatterns as pong_websocket_urlpatterns  # noqa: E402
+from chat.routing import \
+    websocket_urlpatterns as chat_websocket_urlpatterns  # noqa: E402
+from pong.routing import \
+    websocket_urlpatterns as pong_websocket_urlpatterns  # noqa: E402
 
 combined_patterns = chat_websocket_urlpatterns + pong_websocket_urlpatterns
 
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": AllowedHostsOriginValidator(JWTAuthMiddleware(URLRouter(combined_patterns))),
+        "websocket": AllowedHostsOriginValidator(
+            JWTAuthMiddleware(
+                OnlineStatusCleanupMiddleware(
+                    URLRouter(combined_patterns)
+                )
+            )
+        ),
     },
 )

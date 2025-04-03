@@ -31,10 +31,11 @@ def get_user_data(self):
 class UserEventsConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope.get("user")
-        if not self.user:
+        if not self.user or not self.user.is_authenticated:
             self.close()
             return
         self.user_profile = self.user.profile
+        self.user_profile.update_activity()
         self.chats = Chat.objects.for_participants(self.user_profile)
         # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
@@ -48,6 +49,42 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
         self.accept()
+        async_to_sync(self.channel_layer.group_send)(
+            f"user_{self.user.id}",
+            {
+                "type": "user_status",
+                "action": "user_online",
+                "username": {
+                    "username": self.user.username,
+                    "timestamp": timezone.now().isoformat()
+                },
+            }
+        )
+
+    def disconnect(self, close_code):
+        if hasattr(self, 'user_profile'):
+            self.user_profile.is_online = False
+            self.user_profile.save()
+        # verify if self.chats exists and is not empty
+        if hasattr(self, "chats") and self.chats:
+            for chat in self.chats:
+                async_to_sync(self.channel_layer.group_discard)(
+                    f"chat_{chat.id}",
+                    self.channel_name,
+                )
+        self.user_profile.is_online = False
+        self.user_profile.save()
+        async_to_sync(self.channel_layer.group_send)(
+            f"user_{self.user.id}",
+            {
+                "type": "user_status",
+                "action": "user_offline",
+                "username": {
+                    "username": self.user.username,
+                    "timestamp": timezone.now().isoformat()
+                },
+            }
+        )
 
     def add_user_to_room(self, chat_id):
         try:
@@ -75,15 +112,14 @@ class UserEventsConsumer(WebsocketConsumer):
             "data": event["data"],
         }))
 
-    def disconnect(self, close_code):
-        # verify if self.chats exists and is not empty
-        if hasattr(self, "chats") and self.chats:
-            for chat in self.chats:
-                async_to_sync(self.channel_layer.group_discard)(
-                    f"chat_{chat.id}",
-                    self.channel_name,
-                )
-
+    async def send_user_status(self, action: str):
+        await self.send(text_data=json.dumps({
+            "action": action,
+            "data": {
+                "username": self.user.username,  # Doit être présent
+                "timestamp": timezone.now().isoformat()
+            }
+        }))
     # Receive message from WebSocket
 
     def receive(self, text_data):
@@ -118,8 +154,23 @@ class UserEventsConsumer(WebsocketConsumer):
             case "room_created":
                 self.send_room_created(
                     text_data_json.get("data", {}).get("chat_id"))
+            case "heartbeat":
+                self.handle_heartbeat()
             case _:
                 logger.debug("Unknown action : %s", action)
+
+    def handle_heartbeat(self):
+        if hasattr(self, 'user_profile'):
+            self.user_profile.update_activity()
+            self.send(text_data=json.dumps({
+                "action": "activity_update",
+                "data": {
+                    "username": self.user.username,
+                    "last_activity": self.user_profile.last_activity.isoformat(),
+                }
+            }))
+        else:
+            logger.warning("heartbeat without profil utilisateur")
 
     def handle_message(self, data):
         message_data = data.get("data", {})
@@ -518,3 +569,32 @@ class UserEventsConsumer(WebsocketConsumer):
             )
         except Chat.DoesNotExist:
             logger.debug("Chat Room %s does not exist.", chat_id)
+
+    def user_status(self, event):
+        """
+        Gère les messages de type 'user_status' du channel layer
+        """
+        action = event.get("action")
+        data = event.get("data")
+
+        self.send(text_data=json.dumps({
+            "action": action,
+            "data": data
+        }))
+
+    def handle_online_status(self, text_data_json):
+        action = text_data_json.get("action")
+        user_data = text_data_json.get("data", {})
+        username = user_data.get("username")
+
+        async_to_sync(self.channel_layer.group_send)(
+            f"user_{self.user.id}",
+            {
+                "type": "user_status",  # Doit correspondre au nom de la méthode
+                "action": action,
+                "data": {
+                    "username": username,
+                    "status": action.split('_')[1]  # 'online' ou 'offline'
+                }
+            }
+        )
