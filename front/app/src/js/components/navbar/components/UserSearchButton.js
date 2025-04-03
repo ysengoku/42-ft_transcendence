@@ -18,7 +18,7 @@ export class UserSearchButton extends HTMLElement {
           <i class="bi bi-search"></i>
         </button>
 	    </div>
-	    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbar-user-search">
+	    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbar-user-search" id="user-search-dropdown">
 		    <user-search></user-search>
 		  </div>
     `;

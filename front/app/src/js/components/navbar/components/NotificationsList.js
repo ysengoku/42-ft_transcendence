@@ -36,6 +36,9 @@ export class NotificationsList extends HTMLElement {
   }
 
   async fetchNotifications() {
+    const notificationButton = document.querySelector('notifications-button');
+    notificationButton?.querySelector('.notification-badge')?.classList.add('d-none');
+
     this.#state.listLength = this.#state.notifications.length;
     // TODO: Replace by API request
     const data = await mockNotificationsData();
@@ -109,7 +112,7 @@ export class NotificationsList extends HTMLElement {
 
   template() {
     return `
-    <div class="d-flex flex-column justify-content-start ps-3 pe-4">
+    <div class="d-flex flex-column justify-content-start">
       <h6 class="py-4 dropdown-list-header" sticky>Notifications</h6>
       <ul class="dropdown-list list-group mb-2" id="notifications-list"></ul>
     </div>
@@ -128,6 +131,9 @@ export class NotificationsList extends HTMLElement {
       height: 64px;
       object-fit: cover;
 	  }
+    .notification-time {
+      color: var(--pm-gray-400);
+    }
     .call-to-action-groupe button {
       border: none;
       background: none;

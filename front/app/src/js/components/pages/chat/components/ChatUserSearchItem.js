@@ -1,5 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessage, ALERT_TYPE } from '@utils';
+import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import defaltAvatar from '/img/default_avatar.png?url';
 
 export class ChatUserSearchItem extends HTMLElement {
@@ -9,8 +9,7 @@ export class ChatUserSearchItem extends HTMLElement {
 
   constructor() {
     super();
-
-    this.handleClick = this.handleClick.bind(this);
+    this.startChat = this.startChat.bind(this);
   }
 
   set data(value) {
@@ -19,8 +18,12 @@ export class ChatUserSearchItem extends HTMLElement {
   }
 
   disconnetedCallback() {
-    this.removeEventListener('click', this.handleClick);
+    this.removeEventListener('click', this.startChat);
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Render                                                               */
+  /* ------------------------------------------------------------------------ */
 
   render() {
     this.innerHTML = this.template() + this.style();
@@ -31,26 +34,34 @@ export class ChatUserSearchItem extends HTMLElement {
     this.querySelector('.userlist-username').textContent = `@${this.#state.user.username}`;
 
     this.chatList = document.querySelector('chat-list-component');
-    this.addEventListener('click', this.handleClick);
+    this.addEventListener('click', this.startChat);
   }
 
-  async handleClick(event) {
+  /* ------------------------------------------------------------------------ */
+  /*     Event handlers                                                       */
+  /* ------------------------------------------------------------------------ */
+
+  async startChat(event) {
     event.preventDefault();
     event.stopPropagation();
     await this.fetchChatRoom();
   }
 
-  async fetchChatRoom() {
+  async fetchChatRoom(username = this.#state.user.username) {
     const response = await apiRequest(
         'PUT',
         /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT(this.#state.user.username),
+        API_ENDPOINTS.CHAT(username),
         null,
         false,
         true,
     );
     if (response.success) {
-      console.log('Chat room response:', response);
+      if (response.data.is_blocked_by_user) {
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, `Chat with ${response.data.nickname} @${response.data.username} is currently unavailable.`, 3000);
+        this.chatList.hideUserSearchBar();
+        return;
+      }
       if (response.status === 200) {
         this.chatList.restartChat(response.data);
       } else if (response.status === 201) {
@@ -64,18 +75,22 @@ export class ChatUserSearchItem extends HTMLElement {
     }
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*     Template & style                                                     */
+  /* ------------------------------------------------------------------------ */
+
   template() {
     return `
-    <li class="list-group-item ps-3 py-2">
+    <li class="chat-user-search-list-item list-group-item ps-3 py-2">
       <div class="d-flex flex-row align-items-center">
-      <div class="chat-user-search-avatar-container">
+        <div class="position-relative d-inline-block me-2">
           <img class="chat-user-search-avatar rounded-circle me-3" alt="Avatar">
-          <span class="chat-user-search-status-indicator ${this.#state.user.is_online ? 'online' : ''} ms-3"></span>
-    </div>
-    <div class="d-flex flex-wrap flex-grow-1 gap-2">
+          <span class="online-status chat-user-search-status-indicator ${this.#state.user.is_online ? 'online' : ''} ms-3"></span>
+        </div>
+        <div class="d-flex flex-wrap flex-grow-1 gap-2">
           <p class="userlist-nickname m-0 fw-bolder"></P>
           <p class="userlist-username m-0 fs-light"></p>
-    </div>
+        </div>
       <div>
     </li>
     `;
@@ -84,10 +99,9 @@ export class ChatUserSearchItem extends HTMLElement {
   style() {
     return `
     <style>
-    .chat-user-search-avatar-container {
-      position: relative;
-      display: inline-block;
-      margin-right: 10px;
+    .chat-user-search-list-item {
+      background-color: rgba(var(--bs-body-bg-rgb), 0.3) !important;
+      border: none;
     }
     .chat-user-search-avatar {
       width: 40px;
@@ -96,16 +110,11 @@ export class ChatUserSearchItem extends HTMLElement {
     }
     .chat-user-search-status-indicator {
       position: absolute;
-      width: 12px;
-      height: 12px;
       bottom: 0;
       right: 24%;
-      border-radius: 50%;
-      background-color: gray;
-      border: 2px solid var(--bs-body-bg);
-    }
-    .chat-user-search-status-indicator.online {
-      background-color: green;
+      border: 1px solid var(--bs-body-bg);
+      width: 12px;
+      height: 12px;
     }
     </style>
     `;

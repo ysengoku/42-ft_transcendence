@@ -33,11 +33,14 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       options.body = JSON.stringify(data);
     }
   }
-  console.log('Sending API request:', options);
+  devLog('Sending API request:', options);
 
   try {
     const response = await fetch(url, options);
-    console.log('API response:', response);
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      devLog('API response:', response);
+    }
     if (response.ok) {
       return handlers.success(response);
     }
@@ -66,7 +69,7 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and response data.
    */
   success: async (response) => {
-    console.log('Request successful');
+    devLog('Request successful');
     let responseData = null;
     if (response.status !== 204) {
       responseData = await response.json();
@@ -117,9 +120,9 @@ const handlers = {
     // Retry request
     setTimeout(async () => {
       const retryResponse = await fetch(url, options);
-      console.log('API response:', retryResponse);
+      devLog('API response:', retryResponse);
       if (retryResponse.ok) {
-        console.log('Request successful');
+        devLog('Request successful');
         let responseData = null;
         if (retryResponse.status !== 204) {
           responseData = await retryResponse.json();
@@ -127,8 +130,8 @@ const handlers = {
         return { success: true, status: response.status, data: responseData };
       }
     }, 3000);
-    auth.clearStoredUser();
-    router.navigate('/');
+    // auth.clearStoredUser();
+    // router.navigate('/');
     return { success: false, status: 500, msg: ERROR_MESSAGES.UNKNOWN_ERROR };
   },
 

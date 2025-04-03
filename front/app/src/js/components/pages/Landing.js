@@ -1,7 +1,5 @@
 import { auth } from '@auth';
 import logo from '/img/logo.svg?url';
-import duneDay from '/img/dunes-day.png?url';
-import duneNight from '/img/dunes-night.png?url';
 
 export class Landing extends HTMLElement {
   #state = {
@@ -15,54 +13,107 @@ export class Landing extends HTMLElement {
   async connectedCallback() {
     this.#state.isLoggedIn = auth.getStoredUser() ? true : false;
     this.render();
-
-    const themeObserver = new MutationObserver(() => {
-      this.render();
-    });
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
   }
 
   render() {
-    const theme = document.documentElement.getAttribute('data-bs-theme') || 'light';
-    this.innerHTML = this.template() + this.style(theme);
+    this.innerHTML = this.template() + this.style();
   }
 
   template() {
+    const button = this.#state.isLoggedIn ? this.buttonLoggedin() : this.buttonsNotLoggedin();
     return `
     <div class="container d-flex flex-column justify-content-center align-items-center text-center">
-      <img src="${logo}" alt="logo" class="landing-logo img-fluid w-50 mb-2">
-            
-      <div class="d-flex flex-column align-items-center mt-4" id="landing-buttons"> 
-        ${ this.#state.isLoggedIn ?
-          `<div class="mb-3">
-            <a class="btn btn-wood btn-lg" href="/home" role="button">Enter</a>
-          </div>` :
-          `<div class="mb-3">
-            <a class="btn btn-wood btn-lg" href="/login" role="button">Login</a>
-          </div>
-          <div class="mb-3">
-            <a class="btn btn-wood" href="/register" role="button">Sign up</a>
-          </div>`}
-      </div>
+      <img src="${logo}" alt="logo" class="landing-logo img-fluid w-50 mt-5 pt-5">
+      ${button}
     </div>
-      `;
+    `;
   }
 
-  style(theme) {
-    const background = theme === 'light' ? duneDay : duneNight;
+  buttonsNotLoggedin() {
     return `
     <style>
-      #content {
-        background: url(${background});
-        background-size: cover;
-        background-position: bottom;
+      .pole {
+        height: 240px;
       }
-      #landing-buttons {
-        z-index: 4;
+    </style>
+    <div class="signpost d-flex justify-content-center align-items-start mb-2">
+      <span class="pole"></span>
+      <div class="d-flex flex-column justify-content-center align-items-center mt-3" id="landing-buttons">
+        <a class="btn btn-wood landing-btn-1 mb-2" href="/login" role="button">Login</a>
+        <a class="btn btn-wood landing-btn-2 mb-2" href="/register" role="button">Sign up</a>
+      </div>
+    </div>`;
+  }
+
+  buttonLoggedin() {
+    return `
+    <style>
+      .pole {
+        height: 160px;
       }
-      .landing-logo {
-        max-width: 320px;
-      }
+    </style>
+    <div class="signpost d-flex justify-content-center align-items-start">
+      <span class="pole"></span>
+      <div class="d-flex flex-column justify-content-center align-items-center mt-3" id="landing-buttons">
+        <a class="btn btn-wood landing-btn-1 mb-2" href="/home" role="button">Enter</a>
+      </div>
+    </div>`;
+  }
+
+  style() {
+    return `
+    <style>
+    .landing-logo {
+      max-width: 320px;
+    }
+    .signpost {
+       padding-top: 232px;
+    }
+    #landing-buttons {
+      z-index: 4;
+      width: 100%;
+      transform: translateX(-4%);
+    }
+    .btn-wood {
+      width: 140%;
+      position: relative;
+      font-size: 1.4rem;
+    }
+    .landing-btn-1 {
+      text-align: right;
+      padding-right: 80px;
+      transform: perspective(480px) rotateY(-45deg);
+      left: 20%;
+      clip-path: polygon(0% 0%, 92% 0%, 100% 47%, 100% 52%, 92% 100%, 0% 100%);
+    }
+    .landing-btn-2 {
+      text-align: left;
+      padding-left: 80px;
+      transform: perspective(480px) rotateY(45deg);  
+      right: 20%;
+      clip-path: polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%, 0% 50%);
+    }
+    .pole {
+      display: block;
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      border-radius: 4px;
+  
+      --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 50%);
+      --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 20%);
+      --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 60%);
+      --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 88%);
+      background: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
+      /* box-shadow: -1px 4px 1px #8F501A;
+      linear-gradient(78deg,
+      var(--clrs1),
+      var(--clrs2) 20% 70%,
+      var(--clrs3) 90%,
+      var(--clrs4)) 0 0 / 100% .2rem;
+      filter: url('/filters/wood-grain.svg#wave-filter-0'); */
+    }
     </style>
     `;
   }

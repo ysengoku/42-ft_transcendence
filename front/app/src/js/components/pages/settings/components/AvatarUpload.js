@@ -67,6 +67,9 @@ export class AvatarUpload extends HTMLElement {
           aspect-ratio: 1;
           object-fit: cover;
         }
+        .btn-wood {
+          font-size: 1rem;
+        }
       </style>
     `;
   }
