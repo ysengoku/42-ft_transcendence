@@ -26,7 +26,7 @@ export class UserSearch extends HTMLElement {
     this.input?.removeEventListener('input', this.clearUserList);
     this.form?.removeEventListener('submit', this.handleSubmit);
     this.dropdown?.removeEventListener('scrollend', this.showMoreUsers);
-    this.dropdpwnMobile?.removeEventListener('scrollend', this.showMoreUsers);
+    this.dropdownMobile?.removeEventListener('scrollend', this.showMoreUsers);
   }
 
   render() {
@@ -51,9 +51,9 @@ export class UserSearch extends HTMLElement {
     ) : devErrorLog('User search input not found');
 
     this.buttonMobile = document.getElementById('dropdown-item-user-search');
-    this.dropdpwnMobile = document.getElementById('dropdown-user-search');
+    this.dropdownMobile = document.getElementById('dropdown-user-search');
     this.buttonMobile?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
-    this.dropdpwnMobile?.addEventListener('scrollend', this.showMoreUsers);
+    this.dropdownMobile?.addEventListener('scrollend', this.showMoreUsers);
   }
 
   clearUserList(event) {
