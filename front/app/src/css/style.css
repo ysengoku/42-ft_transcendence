@@ -1,5 +1,6 @@
-/*----- Font definition ------------------------------------------------------*/
-
+/*--------------------------------------------------------------------------- */
+/*     Fonts                                                                  */
+/*----------------------------------------------------------------------------*/
 @font-face {
   font-family: 'docktrin';
   src: url(/fonts/docktrin.ttf) format('truetype');
@@ -10,12 +11,14 @@
   src: url(/fonts/VAN_DYKE.ttf) format('truetype');
 }
 
-/* @font-face {
+@font-face {
   font-family: 'kleader';
   src: url(/fonts/Kleader.ttf) format('truetype');
 }
 
-/*----- Colors ---------------------------------------------------------------*/
+/*--------------------------------------------------------------------------- */
+/*     Colors                                                                 */
+/*----------------------------------------------------------------------------*/
 /* https://getbootstrap.com/docs/5.3/customize/color/#colors */
 :root {
   --pm-primary-700: #351901;
@@ -25,6 +28,13 @@
   --pm-primary-300: #FD8D18;
   --pm-primary-200: #FEC4A8;
   --pm-primary-100: #FFEDE7;
+  --pm-primary-700-rgb: 53, 25, 1;
+  --pm-primary-600-rgb: 97, 51, 4;
+  --pm-primary-500-rgb: 146, 79, 9;
+  --pm-primary-400-rgb: 198, 109, 16;
+  --pm-primary-300-rgb: 253, 141, 24;
+  --pm-primary-200-rgb: 254, 196, 168;
+  --pm-primary-100-rgb: 255, 237, 231;
 
   --pm-gray-700: #22201F;
   --pm-gray-600: #413E3D;
@@ -33,33 +43,90 @@
   --pm-gray-300: #B0A8A4;
   --pm-gray-200: #D4D0CE;
   --pm-gray-100: #F1F0F0;
+  --pm-gray-700-rgb: 34, 32, 31;
+  --pm-gray-600-rgb: 65, 62, 61;
+  --pm-gray-500-rgb: 100, 96, 93;
+  --pm-gray-400-rgb: 137, 131, 128;
+  --pm-gray-300-rgb: 176, 168, 164;
+  --pm-gray-200-rgb: 212, 208, 206;
+  --pm-gray-100-rgb: 241, 240, 240;
 
-  --bs-body-color: var(--pm-gray-700);
-  --bs-black-rgb: 34, 32, 31;
+  --pm-red-700: #4D0302;
+  --pm-red-600: #870907;
+  --pm-red-500: #C61210;
+  --pm-red-400: #FB3C3B;
+  --pm-red-300: #FF6A69;
+  --pm-red-200: #FDC7C6;
+  --pm-red-100: #FEEDED;
+
+  --pm-green-700: #141400;
+  --pm-green-600: #323301;
+  --pm-green-500: #535403;
+  --pm-green-400: #777806;
+  --pm-green-300: #9D9E0A;
+  --pm-green-200: #C4C610;
+  --pm-green-100: #EDEF16;
+
+  --bs-light: var(--pm-gray-100);
+  --bs-light-rgb: var(--pm-gray-100-rgb);
+  --bs-dark: var(--pm-gray-700);
+  --bs-dark-rgb: var(--pm-gray-700-rgb);
 }
+
+/*--------------------------------------------------------------------------- */
+/*     Theme                                                                  */
+/*----------------------------------------------------------------------------*/
 
 [data-bs-theme="light"] {
   --bs-body-color: var(--pm-gray-700);
+  --bs-bg-color: var(--pm-gray-100);
+  --bs-body-bg: var(--pm-gray-100);
+  --bs-body-bg-rgb: var(--pm-gray-100-rgb);
+  --bs-text-light: var(--pm-gray-600);
   --bs-black-rgb: 34, 32, 31;
+
+  #content {
+    background: url('/img/bg-day.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  .form-container {
+    background-color: rgba(var(--pm-gray-200-rgb), 0.6);
+  }
 }
 
 [data-bs-theme="dark"] {
   --bs-body-color: var(--pm-gray-100);
+  --bs-bg-color: var(--pm-gray-700);
+  --bs-body-bg: var(--pm-gray-700);
+  --bs-body-bg-rgb: var(--pm-gray-700-rgb);
+  --bs-text-light: var(--pm-gray-200);
   --bs-black-rgb: 241, 240, 240;
+
+  #content {
+    background: url('/img/bg-night.png') no-repeat center center;
+    background-size: cover;
+  }
+
+  .form-container {
+    background-color: rgba(var(--pm-gray-600-rgb), 0.6);
+  }
 }
 
-/*----- Global ---------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------------- */
+/*     Global                                                                 */
+/*----------------------------------------------------------------------------*/
 html,
 body {
   height: auto;
   margin: 0;
-  cursor: url('/img/sample-cursor.png') 4 4, auto;
+  cursor: url('/img/gun.png') 4 4, auto;
   font-family: "Crimson Pro", serif;
 }
 
 body {
   z-index: 0;
+  background-color: var(--pm-gray-700);
 }
 
 .navbar {
@@ -72,17 +139,13 @@ h2, h3, h4, h5, h6, legend {
 
 #content {
   max-width: 100%;
+  padding: 0;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow-x: hidden;
   z-index: 2;
-}
-
-.footer {
-  height: 48px;
-  background-color: #3b3b3b;
 }
 
 .dropdown-menu {
@@ -93,14 +156,46 @@ h2, h3, h4, h5, h6, legend {
   z-index: -1;
 }
 
-.form-container {
-  background-color: rgba(128,128,128, 0.1);
+.tooltip {
+  font-size: 12px;
 }
 
+.avatar-m {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+}
+.online-status {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: grey;
+}
+.online-status.online {
+  background-color: green;
+}
 
-/*----- Cursor ---------------------------------------------------------------*/
+/*--------------------------------------------------------------------------- */
+/*     Scroll bar                                                             */
+/*----------------------------------------------------------------------------*/
+*::-webkit-scrollbar {
+  width: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--pm-gray-600);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/*--------------------------------------------------------------------------- */
+/*    Cursor                                                                  */
+/*----------------------------------------------------------------------------*/
 a, button, div [role="button"], input[type="submit"], input[type="button"] {
-  cursor: url('/img/sample-cursor.png') 4 4, auto !important;
+  cursor: url('/img/gun.png') 4 4, auto !important;
 }
 
 /* html:active,
@@ -112,7 +207,9 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
 }
 
-/*----- Background animation -------------------------------------------------*/
+/*--------------------------------------------------------------------------- */
+/*     Background animation                                                   */
+/*----------------------------------------------------------------------------*/
 #cloud {
   position: absolute;
   display: block;
@@ -130,7 +227,7 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
     background-position: 0px;
   }
   100%{
-    background-position: 5440px;
+    background-position: 2400px;
   }
 }
 
@@ -176,15 +273,39 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   }
 }
 
-/*----- Buttons ---------------------------------------------------------------*/
+/*--------------------------------------------------------------------------- */
+/*    Buttons                                                                 */
+/*----------------------------------------------------------------------------*/
 .btn-wood {
-  background-color: var(--pm-primary-500);
   color: var(--pm-gray-100);
-  border: none;
-  border-radius: 5px;
-  padding: 0.5rem 1rem;
   font-size: 1.2rem;
   font-weight: 600;
+  padding: .5em 2em;
+  border: none;
+  position: relative;
+  filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
+ }
+
+.btn-wood:before {
+  filter: url('/filters/wood-grain.svg#wave-filter-0');
+  --clrs1: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
+  --clrs2: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 20%);
+  --clrs3: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 60%);
+  --clrs4: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 98%);
+    position: absolute;
+    content: '';
+    inset: 0;
+    padding: .2em;
+    border: 4px double var(--pm-primary-600);
+    border-radius: .1em .2em / .5em .23em;
+    z-index: -1;
+    transition: .25s ease;
+    background: var(--pm-primary-500)
+    linear-gradient(178deg, 
+      var(--clrs1),
+      var(--clrs2) 20% 70%,
+      var(--clrs3) 90%,
+      var(--clrs4)) 0 0 / 100% .3rem;
 }
 
 .search-submit-btn {

@@ -38,6 +38,7 @@ export class UserActionsMenu extends HTMLElement {
     this.dropdownUserActions = document.getElementById('dropdown-user-actions');
     this.dropdownUserSearch = document.getElementById('dropdown-user-search');
     this.dropdownFriendsList = document.getElementById('dropdown-friends-list');
+    this.dropdpwnusersearchList = document.querySelector('user-search');
 
     this.userActionsButton = document.getElementById('navbar-user-actions');
     this.userSearchButton = document.getElementById('dropdown-item-user-search');
@@ -62,16 +63,19 @@ export class UserActionsMenu extends HTMLElement {
     this.dropdownUserActions.classList.remove('show');
     this.dropdownUserSearch.classList.remove('show');
     this.dropdownFriendsList.classList.remove('show');
+    this.dropdpwnusersearchList.clearUserList();
   }
 
   handleClickUserSearch(event) {
     event.stopPropagation();
+    this.dropdownUserActions.classList.remove('show');
     this.dropdownUserSearch.classList.add('show');
     this.dropdownFriendsList.classList.remove('show');
   }
 
   async handleClickFriendsList(event) {
     event.stopPropagation();
+    this.dropdownUserActions.classList.remove('show');
     this.dropdownUserSearch.classList.remove('show');
     this.dropdownFriendsList.classList.add('show');
 
@@ -89,11 +93,8 @@ export class UserActionsMenu extends HTMLElement {
   template() {
     return `
     <div class="nav-link me-2" id="navbar-user-actions" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-      <div class="navbar-icon">
+      <div class="navbar-icon d-inline-block">
         <i class="bi bi-list"></i>
-        <span class="badge">
-		      <i class="bi bi-circle-fill"></i>
-        </span>
       </div>
     </div>
 
@@ -122,19 +123,6 @@ export class UserActionsMenu extends HTMLElement {
       #navbar-user-actions i {
         font-size: 40px
       }
-		  .navbar-icon {
-        position: relative;
-		    display: inline-block;
-      }
-      .badge {
-        position: absolute;
-        top: 8px;
-        right: -8px;
-        color: red;
-      }
-      .badge i {
-        font-size: 12px !important;
-      }
       .dropdown-menu {
         position: absolute;
         top: 100%;
@@ -142,7 +130,7 @@ export class UserActionsMenu extends HTMLElement {
         max-height: 75vh;
         overflow: auto;
       }
-	  </style>  
+    </style>  
     `;
   }
 }
