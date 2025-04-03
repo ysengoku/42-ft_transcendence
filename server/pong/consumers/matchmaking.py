@@ -1,4 +1,5 @@
 import json
+import logging
 
 from channels.generic.websocket import WebsocketConsumer
 
@@ -13,6 +14,7 @@ flowchart
           E[Disconnects] --> F[The ticket is removed from the queue]
           G[Player is found] --> H[Players are redirected to the game route/room]
 """
+logger = logging.getLogger("server")
 
 
 class MatchmakingConsumer(WebsocketConsumer):
@@ -25,7 +27,8 @@ class MatchmakingConsumer(WebsocketConsumer):
         self.accept()
         self.match = MatchmakingTicket.objects.filter(status=MatchmakingTicket.PENDING).first()
         if self.match:
-            raise Exception("not implemented yet")
+            logger.debug("[Matchmaking]: match found {%s}", self.match)
+            return
         self.match = MatchmakingTicket.objects.create(player=self.user.profile)
 
     def disconnect(self, code: int):
