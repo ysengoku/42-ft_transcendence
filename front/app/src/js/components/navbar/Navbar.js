@@ -94,7 +94,7 @@ export class Navbar extends HTMLElement {
       font-size: 1.5rem;
       color: var(--pm-primary-100);
     }
-    .dropdown-menu {
+    .dropdown-menu-end {
       max-height: 75vh;
       min-width: 360px;
       padding-top: 0;
