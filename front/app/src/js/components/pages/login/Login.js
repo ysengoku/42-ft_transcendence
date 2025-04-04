@@ -43,7 +43,7 @@ export class Login extends HTMLElement {
     return `
       <div class="container my-3">
         <div class="row justify-content-center py-4">
-          <div class="form-container col-12 col-md-4 p-4"> 
+          <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4"> 
             <div id="login-failed-feedback"></div>
 
             <login-form></login-form>
