@@ -176,42 +176,42 @@ export class Settings extends HTMLElement {
 
   template() {
     return `
-		<div class="container mt-3 mb-4">
+    <div class="container mt-3 mb-4">
       <div class="row justify-content-center">
         <delete-account-confirmation-modal></delete-account-confirmation-modal>
-        <div class="form-container col-12 col-md-5 p-4">
-			    <form class="w-100">
-				    <legend class="mt-4 mb-3 border-bottom">Settings</legend>
-				    <div class="mt-3">
-					    <avatar-upload></avatar-upload>
-				    </div>
-				    <div>
+        <div class="form-container col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 p-4">
+          <form class="w-100">
+            <legend class="mt-4 mb-3 border-bottom">Settings</legend>
+            <div class="mt-3">
+              <avatar-upload></avatar-upload>
+            </div>
+            <div>
               <settings-user-identity></settings-user-identity>
-				    </div>
+            </div>
             <div>
               <settings-email-update></settings-email-update></div>
-				    <div>
+            <div>
               <settings-password-update></settings-password-update>
-				    </div>
-				    <div>
+            </div>
+            <div>
               <mfa-enable-update></mfa-enable-update>
-				    </div>
+            </div>
             
-				    <div class="mt-5 pb-5 border-bottom">
+            <div class="mt-5 pb-5 border-bottom">
               <button type="reset" class="btn btn-outline-primary mx-2" id="settings-reset-button">Reset</button>
-					    <button type="submit" class="btn btn-wood mx-2">Save changes</button>
-				    </div>
+              <button type="submit" class="btn btn-wood mx-2">Save changes</button>
+            </div>
 
-				    <div class="mt-4 mb-3">
-					    <delete-account-button></delete-account-button>
-				    </div>
-			    </form>
-	
-			    <avatar-upload-modal></avatar-upload-modal>
-		    </div>
+            <div class="mt-4 mb-3">
+              <delete-account-button></delete-account-button>
+            </div>
+          </form>
+  
+          <avatar-upload-modal></avatar-upload-modal>
+        </div>
       </div>
     </div>
-		`;
+    `;
   }
 }
 
