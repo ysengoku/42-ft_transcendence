@@ -23,6 +23,7 @@ export class DuelMenu extends HTMLElement {
 
     this.handleSearchInput = this.handleSearchInput.bind(this);
     this.loadMoreUsers = this.loadMoreUsers.bind(this);
+    this.hideUserList = this.hideUserList.bind(this);
     this.selectOpponent = this.selectOpponent.bind(this);
     this.inviteToDuel = this.inviteToDuel.bind(this);
     this.requestMatchMaking = this.requestMatchMaking.bind(this);
@@ -40,6 +41,7 @@ export class DuelMenu extends HTMLElement {
   disconnectedCallback() {
     this.searchInput?.removeEventListener('input', this.handleSearchInput);
     this.userList?.removeEventListener('scrollend', this.loadMoreUsers);
+    document.removeEventListener('click', this.hideUserList);
     this.inviteButton?.removeEventListener('click', this.inviteToDuel);
     this.requestMatchmakingButton?.removeEventListener('click', this.requestMatchMaking);
     this.userList?.querySelectorAll('li').forEach((item) => {
@@ -66,16 +68,13 @@ export class DuelMenu extends HTMLElement {
     this.opponentAvatar.src = anonymousAvatar;
 
     this.searchInput.addEventListener('input', this.handleSearchInput);
+    document.addEventListener('click', this.hideUserList);
     this.inviteButton.addEventListener('click', this.inviteToDuel);
     this.requestMatchmakingButton.addEventListener('click', this.requestMatchMaking);
     this.userList.addEventListener('scrollend', this.loadMoreUsers);
   }
 
   renderUserList() {
-    // if (this.#usersearch.list.length === 0) {
-    //   this.renderNoUserFound();
-    //   return;
-    // }
     for (let i = this.#usersearch.currentListLength; i < this.#usersearch.list.length; i++) {
       if (this.#usersearch.list[i].username !== this.#state.user.username) {
         this.renderUserListItem(this.#usersearch.list[i]);
@@ -144,18 +143,14 @@ export class DuelMenu extends HTMLElement {
       false,
       true,
     );
-    if (response.success) {
-      if (response.data) {
-        if (response.data.count === 0) {
-          this.renderNoUserFound();
-          return;
-        }
-        this.#usersearch.list.push(...response.data.items);
-        this.#usersearch.totalUsersCount = response.data.count;
-        this.renderUserList();
+    if (response.success && response.data) {
+      if (response.data.count === 0) {
+        this.renderNoUserFound();
+        return;
       }
-    } else {
-        // TODO: Handle error
+      this.#usersearch.list.push(...response.data.items);
+      this.#usersearch.totalUsersCount = response.data.count;
+      this.renderUserList();
     }
   }
 
@@ -209,6 +204,23 @@ export class DuelMenu extends HTMLElement {
     event.preventDefault();
   }
 
+  hideUserList(event) {
+    event.stopPropagation();
+    if (this.userList.contains(event.target) || this.searchInput.contains(event.target)) {
+      return;
+    }
+    this.userList.classList.remove('show');
+    this.userList.innerHTML = '';
+    this.#usersearch.list = [];
+    this.#usersearch.totalUsersCount = 0;
+    this.#usersearch.currentListLength = 0;
+    this.#usersearch.searchQuery = '';
+    this.searchInput.value = '';
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Templates & styles                                                  */
+  /* ------------------------------------------------------------------------ */
   template() {
     return `
       <div class="container">
