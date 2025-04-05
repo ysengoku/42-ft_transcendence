@@ -326,8 +326,8 @@ export class ChatList extends HTMLElement {
         <h5 class="m-0">Conversations</h5>
         <button class="btn new-chat me-3 p-0"><i class="bi bi-pencil-square"></i></button>
       </div>
+      <chat-user-search></chat-user-search>
       <div class="overflow-auto" id="chat-list-wrapper">
-        <chat-user-search></chat-user-search>
         <ul class="list-group border-top-1 pt-4" id="chat-list"></ul>
       </div>
     </div>
