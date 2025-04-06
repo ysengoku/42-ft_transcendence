@@ -3,7 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from ninja import Schema
 
-from chat.models import Chat, ChatMessage
+from chat.models import Chat, ChatMessage, Notification
 from users.schemas import UsernameNicknameAvatarSchema
 
 
@@ -119,4 +119,7 @@ class NotificationSchema(Schema):
     action: str  # one of TYPE_CHOICES on the Notification model
     data: GameInviteNotificationDataSchema | NewTournamentNotificationDataSchema | NewFriendNotificationDataSchema
     is_read: bool
-    date: datetime
+
+    @staticmethod
+    def resolve_id(obj: Notification):
+        return str(obj.id)

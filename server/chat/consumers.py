@@ -327,7 +327,7 @@ class UserEventsConsumer(WebsocketConsumer):
             Notification.objects.create(
                 receiver=self.user,
                 message=notification_data,
-                type=notification_type,
+                action=notification_type,
             )
         else:
             try:
