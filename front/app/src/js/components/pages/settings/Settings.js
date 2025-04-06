@@ -198,7 +198,7 @@ export class Settings extends HTMLElement {
             </div>
             
             <div class="mt-5 pb-5 border-bottom">
-              <button type="reset" class="btn btn-outline-primary mx-2" id="settings-reset-button">Reset</button>
+              <button type="reset" class="btn mx-2" id="settings-reset-button">Reset</button>
               <button type="submit" class="btn btn-wood mx-2">Save changes</button>
             </div>
 
