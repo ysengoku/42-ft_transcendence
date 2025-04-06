@@ -18,7 +18,7 @@ def room(request, room_name):
 
 
 def notifications_view(request):
-    notifications = Notification.objects.filter(user=request.user)
+    notifications = Notification.objects.filter(receiver=request.user)
     return render(request, "chat/notifications.html", {"notifications": notifications})
 
 

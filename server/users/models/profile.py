@@ -248,11 +248,15 @@ class Profile(models.Model):
         self.blocked_users.remove(blocked_user_to_remove)
         return None
 
-    def to_profile_minimal_schema(self):
+    def to_username_nickname_avatar_schema(self):
         return {
             "username": self.user.username,
             "nickname": self.user.nickname,
             "avatar": self.avatar,
+        }
+
+    def to_profile_minimal_schema(self):
+        return self.to_username_nickname_avatar_schema() | {
             "elo": self.elo,
             "is_online": self.is_online,
         }
