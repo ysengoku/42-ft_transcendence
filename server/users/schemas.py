@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
-from chat.models import ChatMessage
+from chat.models import ChatMessage, Notification
 from common.schemas import MessageSchema
 
 from .models import Profile, User
@@ -65,11 +65,11 @@ class SelfSchema(ProfileMinimalSchema):
 
     @staticmethod
     def resolve_unread_messages_count(obj: Profile):
-        return ChatMessage.objects.filter(is_read=False, chat__participants=obj).exclude(sender=obj).count()
+        return ChatMessage.objects.count_unread(obj)
 
     @staticmethod
     def resolve_unread_notifications_count(obj: Profile):
-        return obj.notifications.filter(is_read=False).count()
+        return Notification.objects.count_unread(obj)
 
 
 class UserSettingsSchema(Schema):
