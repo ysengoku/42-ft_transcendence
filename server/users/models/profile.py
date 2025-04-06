@@ -229,7 +229,7 @@ class Profile(models.Model):
         }
 
     def to_profile_minimal_schema(self):
-        return self.to_profile_minimal_schema() | {
+        return self.to_username_nickname_avatar_schema() | {
             "elo": self.elo,
             "is_online": self.is_online,
         }
