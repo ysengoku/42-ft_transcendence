@@ -3,7 +3,8 @@ from datetime import datetime
 from django.conf import settings
 from ninja import Schema
 
-from chat.models import Chat, ChatMessage
+from chat.models import Chat, ChatMessage, Notification
+from users.schemas import UsernameNicknameAvatarSchema
 
 
 class ChatMessageSchema(Schema):
@@ -75,3 +76,50 @@ class ChatSchema(BaseChatSchema):
     @staticmethod
     def resolve_messages(obj: Chat):
         return obj.messages.all().prefetch_related("sender")[:30]
+
+
+class BaseNotificationDataSchema(UsernameNicknameAvatarSchema):
+    """
+    Contains username, nickname and avatar of the sender, as well as current date.
+    """
+
+    date: datetime
+
+
+class GameInviteNotificationDataSchema(BaseNotificationDataSchema):
+    """
+    When someone invited user to a game.
+    """
+
+    game_id: str
+
+
+class NewTournamentNotificationDataSchema(BaseNotificationDataSchema):
+    """
+    When someone invited user to a tournament.
+    """
+
+    tournament_id: str
+    tournament_name: str
+
+
+class NewFriendNotificationDataSchema(BaseNotificationDataSchema):
+    """
+    When someone added user as a friend.
+    """
+
+
+class NotificationSchema(Schema):
+    """
+    Represents notification sent to a user.
+    Can contain different types of `data` based on its `action`.
+    """
+
+    id: str
+    action: str  # one of TYPE_CHOICES on the Notification model
+    data: GameInviteNotificationDataSchema | NewTournamentNotificationDataSchema | NewFriendNotificationDataSchema
+    is_read: bool
+
+    @staticmethod
+    def resolve_id(obj: Notification):
+        return str(obj.id)
