@@ -153,6 +153,7 @@ h2, h3, h4, h5, h6, legend {
 
 .dropdown-menu {
   z-index: 1050 !important; /* Keep dropdown always on top */
+  border-radius: 0;
 }
 
 .modal-backdrop {
@@ -176,6 +177,40 @@ h2, h3, h4, h5, h6, legend {
 }
 .online-status.online {
   background-color: green;
+}
+
+.error-wrapper {
+  backdrop-filter: blur(2px);
+  h2 {
+    font-size: 2.5rem;
+  }
+  .image-container {
+    width: 200px;
+    height: auto;
+  }
+  .btn {
+    font-family: 'van dyke', serif;
+  }
+}
+
+.bubble-error {
+  display: inline-block;
+  position: relative;
+  background-color: var(--bs-body-bg);
+  border-radius: 2rem;
+  padding: 2rem;
+  box-sizing: border-box;
+  max-width: 320px;
+}
+
+.bubble-error::after {
+  position: absolute;
+  content: "";
+  top: 25%;
+  right: -32px;
+  border: 8px solid transparent;
+  border-left: 32px solid var(--bs-body-bg);
+  transform: rotate(32deg);
 }
 
 /*--------------------------------------------------------------------------- */
