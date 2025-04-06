@@ -19,6 +19,13 @@ class UsernameSchema(Schema):
 
     username: str
 
+class UsernameNicknameAvatarSchema(UsernameSchema):
+    """
+    For payloads where it's needed to know the most basic data about the user.
+    """
+
+    nickname: str
+    avatar: str
 
 class ValidationErrorMessageSchema(MessageSchema):
     type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
@@ -30,7 +37,7 @@ class ValidationErrorMessageSchema(MessageSchema):
 
 class LoginResponseSchema(Schema):
     mfa_required: bool
-    username: str  # ou les autres champs nécessaires du ProfileMinimalSchema
+    username: str
 
 
 class ProfileMinimalSchema(Schema):
