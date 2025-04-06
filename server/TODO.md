@@ -71,6 +71,9 @@
 - [ ] Add testing for `users` endpoints.
 - [ ] Add testing for `chat` endpoints.
 
+## Docs
+- [ ] Update docsrings for endpoints that provide paginated data, which is reverse ordered.
+
 ```
 Inspected the current chat implementation and its models. 
 TODO:
@@ -79,6 +82,7 @@ TODO:
 - Change `Notification` choices to use constants
 - Change `read` to `is_read` in `Notification`
 - Added `NotificationManager`
+- Change id in the Notification model from int to uuid
 - NOTIFICATION (as defined in google sheets) now contains the date, instead of each type of notification having individual date
 - Update the `populate_db` script. As for now, it uses raw models to add friends without creating appropriate notifications. We should extract friend addition logic to a specific function.
 ```
