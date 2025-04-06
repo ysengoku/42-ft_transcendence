@@ -174,7 +174,7 @@ class NotificationManager(models.Manager):
         if date:
             data |= {"date": date}
         else:
-            data |= {"data": datetime.now(timezone.utc)}
+            data |= {"date": datetime.now(timezone.utc)}
         return self.create(receiver=receiver, data=data, type=notification_type)
 
 
