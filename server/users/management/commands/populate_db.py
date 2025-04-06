@@ -3,7 +3,8 @@ from random import choice, randint
 from django.core.management.base import BaseCommand
 
 from chat.models import Chat, ChatMessage
-from users.models import Match, OauthConnection, Profile, User
+from pong.models import Match
+from users.models import OauthConnection, Profile, User
 
 
 def choice_except(seq, value):
