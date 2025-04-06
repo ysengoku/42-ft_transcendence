@@ -209,7 +209,7 @@ class Notification(models.Model):
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    receiver = models.ForeignKey(Profile, related_name="notifications", on_delete=models.CASCADE)
     data = models.JSONField(encoder=DjangoJSONEncoder, null=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     is_read = models.BooleanField(default=False)
