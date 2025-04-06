@@ -156,26 +156,41 @@ class ChatMessage(models.Model):
 
 
 class NotificationManager(models.Manager):
-    def create_notification(
+    def _create(
         self,
         receiver: Profile,
         sender: Profile,
-        notification_type: str,
+        notification_action: str,
         notification_data={},  # noqa: B006
         date: datetime = None,
     ):
         """
-        `notification_data` is a data specific to the notification of the `notification_type`.
-        `game_id` for Notification.GAME_INVITE
-        `tournament_id` and `tournament_name` for Notification.NEW_TOURNAMENT
+        `notification_data` is a data specific to the notification of the `notification_action`.
+
+        Notification.NEW_FRIEND:     no additional data required
+        Notification.GAME_INVITE:    `game_id`
+        Notification.NEW_TOURNAMENT: `tournament_id`, `tournament_name`
         """
         data = sender.to_username_nickname_avatar_schema() | notification_data
+        data["date"] = date or datetime.now(timezone.utc)
 
-        if date:
-            data |= {"date": date}
-        else:
-            data |= {"date": datetime.now(timezone.utc)}
-        return self.create(receiver=receiver, data=data, type=notification_type)
+        match notification_action:
+            case self.model.GAME_INVITE:
+                if not notification_data.get("game_id"):
+                    raise ValueError("notification_action is Notification.GAME_INVITE, but no game_id in "
+                                     "notification_data")
+            case self.model.NEW_TOURNAMENT:
+                if not notification_data.get("tournament_id") or not notification_data.get("tournament_name"):
+                    raise ValueError("notification_action is Notification.NEW_TOURNAMENT, but no tournament_id or "
+                                     "tournament_name in notification_data")
+
+        return self.create(receiver=receiver, data=data, action=notification_action)
+
+    def action_new_friend(self, receiver: Profile, sender: Profile, date: datetime = None):
+        """
+        May include additional operations like using the channel layer to send data with websocket.
+        """
+        return self._create(receiver=receiver, sender=sender, notification_action=self.model.NEW_FRIEND, date=date)
 
 
 class Notification(models.Model):
@@ -185,7 +200,7 @@ class Notification(models.Model):
     NEW_FRIEND = "new_friend"
     MESSAGE = "message"
 
-    TYPE_CHOICES = (
+    ACTION_CHOICES = (
         (GAME_INVITE, "Game invite"),
         (REPLY_GAME_INVITE, "Reply to game invite"),
         (NEW_TOURNAMENT, "New tournament"),
@@ -193,15 +208,19 @@ class Notification(models.Model):
         (MESSAGE, "Message received"),
     )
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     receiver = models.ForeignKey(Profile, on_delete=models.CASCADE)
     data = models.JSONField(encoder=DjangoJSONEncoder, null=True)
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     is_read = models.BooleanField(default=False)
 
     objects = NotificationManager()
 
+    class Meta:
+        ordering = ["-data__date"]
+
     def __str__(self):
-        return f"Notification {self.type} for {self.receiver.user.username}"
+        return f"Notification {self.action} for {self.receiver.user.username}"
 
 
 class GameSession(models.Model):  # noqa: DJ008
