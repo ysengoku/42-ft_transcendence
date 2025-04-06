@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.db.models import Count
 
 from users.models.profile import Profile
 
@@ -77,9 +78,22 @@ class Match(models.Model):
         return f"{winner} - {loser}"
 
 
-class MatchmakingTicket(models.Model):
+class MatchmakingTicketManager(models.Manager):
+    def get_valid_game_room(self):
+        """
+        Valid game room is a pending game room with less than 2 players.
+        """
+        return (
+            self.filter(status=GameRoom.PENDING)
+            .annotate(players_num=Count("players"))
+            .filter(players_num__lt=2)
+            .first()
+        )
+
+
+class GameRoom(models.Model):
     """
-    Is given to a player when they search for a game in matchmaking.
+    Gets created when user starts matchmaking search.
     """
 
     PENDING = "pending"
@@ -91,11 +105,17 @@ class MatchmakingTicket(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
-    player = models.OneToOneField(Profile, on_delete=models.CASCADE, null=True)
+    players = models.ManyToManyField(Profile, related_name="game_rooms")
+    date = models.DateTimeField(auto_now_add=True)
+
+    objects = MatchmakingTicketManager()
+
+    class Meta:
+        ordering = ["-date"]
 
     def __str__(self) -> str:
         return f"{self.get_status_display()} match {str(self.id)}"
 
     def close(self):
-        self.status = MatchmakingTicket.CLOSED
+        self.status = GameRoom.CLOSED
         self.save()
