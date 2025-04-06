@@ -106,13 +106,6 @@ export class Landing extends HTMLElement {
       --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 60%);
       --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 88%);
       background: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
-      /* box-shadow: -1px 4px 1px #8F501A;
-      linear-gradient(78deg,
-      var(--clrs1),
-      var(--clrs2) 20% 70%,
-      var(--clrs3) 90%,
-      var(--clrs4)) 0 0 / 100% .2rem;
-      filter: url('/filters/wood-grain.svg#wave-filter-0'); */
     }
     </style>
     `;

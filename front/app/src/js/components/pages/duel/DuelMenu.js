@@ -255,8 +255,8 @@ export class DuelMenu extends HTMLElement {
                   <hr class="flex-grow-1">
                 </div>
 
-                <legend class="my-3">Let us pick your opponent</legend>
-                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg w-100">Find me a duel</button>
+                <legend class="my-3">Let fate decide opponent</legend>
+                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg w-100">Bring me my rival</button>
               </form>
             </div>
           </div>
@@ -280,8 +280,8 @@ export class DuelMenu extends HTMLElement {
       object-fit: cover;
     }
     .duel-usersearch-status-indicator {
-      bottom: -2px;
-      right: -2px;
+      bottom: 0;
+      right: 0;
       border: 1px solid var(--bs-body-bg);
       width: 12px;
       height: 12px;
