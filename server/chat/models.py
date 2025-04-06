@@ -132,6 +132,9 @@ class ChatMessageQuerySet(models.QuerySet):
         new_message.save()
         return new_message
 
+    def count_unread(self, profile: Profile):
+        return self.filter(is_read=False, chat__participants=profile).exclude(sender=profile).count()
+
 
 class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -155,7 +158,7 @@ class ChatMessage(models.Model):
         )
 
 
-class NotificationManager(models.Manager):
+class NotificationQuerySet(models.QuerySet):
     def _create(
         self,
         receiver: Profile,
@@ -192,6 +195,9 @@ class NotificationManager(models.Manager):
         """
         return self._create(receiver=receiver, sender=sender, notification_action=self.model.NEW_FRIEND, date=date)
 
+    def count_unread(self, profile: Profile):
+        return self.filter(is_read=False).count()
+
 
 class Notification(models.Model):
     GAME_INVITE = "game_invite"
@@ -214,7 +220,7 @@ class Notification(models.Model):
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     is_read = models.BooleanField(default=False)
 
-    objects = NotificationManager()
+    objects = NotificationQuerySet.as_manager()
 
     class Meta:
         ordering = ["-data__date"]
