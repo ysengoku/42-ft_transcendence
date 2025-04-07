@@ -5,12 +5,14 @@ import './components/index.js';
 export class UserProfile extends HTMLElement {
   #state = {
     loggedInUsername: '',
-    user: null,
+    // user: null,
   };
 
   constructor() {
     super();
     this.user = null;
+
+    this.updateOnlineStatus = this.updateOnlineStatus.bind(this);
   }
 
   setParam(param) {
@@ -54,10 +56,9 @@ export class UserProfile extends HTMLElement {
 
     this.innerHTML = this.style() + this.template();
 
-    this.onlineStatusIndicator = document.createElement('profile-online-status');
-    this.onlineStatusIndicator.setAttribute('online', this.user.is_online);
-    this.onlineStatusIndicatorField = this.querySelector('#user-profile-online-status');
-    this.onlineStatusIndicatorField.innerHTML = this.onlineStatusIndicator.outerHTML;
+    this.onlineStatusIndicator = this.querySelector('profile-online-status');
+    this.onlineStatusIndicator.setStatus(this.user.is_online);
+    document.addEventListener('onlineStatus', this.updateOnlineStatus);
 
     const profileAvatar = this.querySelector('profile-avatar');
     if (profileAvatar) {
@@ -134,6 +135,15 @@ export class UserProfile extends HTMLElement {
     }
   }
 
+  updateOnlineStatus(event) {
+    if (event.detail.data.username.toLowerCase() !== this.user.username.toLowerCase()) {
+      return;
+    }
+    console.log('Update online status:', event.detail);
+    this.user.is_online = event.detail.online;
+    this.onlineStatusIndicator.setStatus(this.user.is_online);
+  }
+
   template() {
     return `
     <div class="container-fluid">
@@ -149,7 +159,7 @@ export class UserProfile extends HTMLElement {
             <h1 class="mt-2">WANTED</h1>
             <div class="d-flex flex-row align-items-center">
               <hr class="line flex-grow-1">  
-              <div id="user-profile-online-status"></div>
+              <profile-online-status></profile-online-status>
               <hr class="line flex-grow-1">
             </div>
             </div>
@@ -162,17 +172,17 @@ export class UserProfile extends HTMLElement {
             <profile-user-actions></profile-user-actions>
 
             <!-- Stat cards -->
-            <div class="stat-cards-wrapper d-flex flex-wrap justify-content-between align-items-start mx-2 my-3 px-1 gap-2">
-              <div id="user-stat-card-elo"></div>
-                <div id="user-stat-card-friends-count"></div>
-                <div id="user-stat-card-scored-balls"></div>
-                <div id="user-stat-card-total-matches"></div>           
+            <div class="stat-cards-wrapper d-flex flex-wrap justify-content-between align-items-start mx-2 my-3 px-1 gap-3">
+              <div class="flex-fill" id="user-stat-card-elo"></div>
+              <div class="flex-fill" id="user-stat-card-friends-count"></div>
+              <div class="flex-fill" id="user-stat-card-scored-balls"></div>
+              <div class="flex-fill" id="user-stat-card-total-matches"></div>           
             </div>
 
             <!-- Enemies -->
-            <div class="d-flex flex-wrap justify-content-between my-2 px-3 gap-2">
-              <div class="d-flex flex-column" id="best-enemy"></div>
-              <div class="d-flex flex-column" id="worst-enemy"></div>
+            <div class="d-flex flex-wrap justify-content-between my-2 px-3 gap-3">
+              <div class="flex-fill d-flex flex-column" id="best-enemy"></div>
+              <div class="flex-fill d-flex flex-column" id="worst-enemy"></div>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { showAlertMessage, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
-import userNotFoundImage from '/img/sample404.png?url';
+import pedro from '/img/pedro.png?url';
 
 export class UserNotFound extends HTMLElement {
   #state = {
@@ -23,41 +23,34 @@ export class UserNotFound extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.template();
   }
 
   template() {
     return `
-	  <div class="usernotfound-wrapper d-flex flex-row justify-content-center align-items-stretch my-4 py-4 gap-3">
-	    <div class="image-container mx-2">
-	      <img src="${userNotFoundImage}" alt="404" class="img-fluid">
-	    </div>
-	    <div class="d-flex flex-column justify-content-around" mx-2">
-        <div class="pt-6">
-          <h2>Oops!</h2>
-          <p>Looks like the user you're searching for doesn't exist.</p>
+    <div class="error-wrapper d-flex flex-column justify-content-center align-items-center">
+      <div class="d-flex flex-row justify-content-center align-items-stretch mx-2 mt-5 pt-5 gap-1">
+        <div class="d-flex flex-column justify-content-between align-items-center">
+          <div class="bubble-error">
+            <h2 class="m-0">Oops!</h2>
+            <p class="m-0">Looks like this user doesn't exist... or they’ve probably gone off the grid.</p>
+          </div>
         </div>
-        <div class="pb-6">
-          <a class="btn btn-wood" href="/home" role="button">Go back to Home</a>
+        <div class="image-container mt-5">
+          <img src="${pedro}" alt="404" class="img-fluid">
         </div>
       </div>
-	  </div>
-  `;
+      <div class="d-flex flex-row justify-content-center align-items-center mt-2 mb-4">
+        <i class="bi bi-arrow-left fw-bold"></i>
+        <a class="btn m-0 fw-bold" href="/home" role="button">Go back to Home</a>
+      </div>
+    </div>
+    `;
   }
-
   style() {
     return `
     <style>
-	  h2 {
-		  font-size: 2.5rem;
-	  }
-	  .image-container {
-	    max-width: 240px;
-		  height: auto;
-    }
-    .usernotfound-wrapper {
-      backdrop-filter: blur(4px);
-    }
+
     </style>
     `;
   }
