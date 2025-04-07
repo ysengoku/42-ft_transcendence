@@ -78,7 +78,8 @@ class UserEventsConsumer(WebsocketConsumer):
         if hasattr(self, "user_profile"):
             self.user.is_online = False
             self.user.save()
-            self.user_profile.nb_active_connexions -= 1
+            if self.user_profile.nb_active_connexions > 0:
+                self.user_profile.nb_active_connexions -= 1
             if self.user is None:
                 logger.warning("Trying to set user offline without user authenticated")
             elif self.user.profile.nb_active_connexions == 0:
