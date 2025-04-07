@@ -9,7 +9,7 @@ export class UserSearch extends HTMLElement {
     currentListLength: 0,
     timeout: null,
     isLoading: false,
-  }
+  };
 
   constructor() {
     super();

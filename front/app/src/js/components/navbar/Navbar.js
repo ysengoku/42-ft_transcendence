@@ -14,7 +14,7 @@ export class Navbar extends HTMLElement {
 
   async connectedCallback() {
     document.addEventListener('userStatusChange', this.loginStatusHandler);
-    this.#state.user = auth.getStoredUser();
+    this.#state.user = await auth.getStoredUser();
     this.#state.isLoggedin = this.#state.user ? true : false;
     if (this.#state.isLoggedin) {
     }
