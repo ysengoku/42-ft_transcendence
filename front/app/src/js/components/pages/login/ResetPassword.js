@@ -78,7 +78,7 @@ export class ResetPassword extends HTMLElement {
     return `
     <div class="container my-4">
       <div class="row justify-content-center py-4">
-        <div class="form-container col-12 col-md-4 p-4">
+        <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4">
           <form class="w-100">
             <legend class="my-4 border-bottom">Reset password</legend>
             <div class="mt-5 mb-3">

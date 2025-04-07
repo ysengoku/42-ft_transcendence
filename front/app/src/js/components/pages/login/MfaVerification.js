@@ -130,7 +130,7 @@ export class MfaVerification extends HTMLElement {
   template() {
     return `
     <div class="row justify-content-center m-4">
-      <div class="form-container col-12 col-md-4 p-4"> 
+      <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4"> 
         <div id="mfa-failed-feedback"></div>
         <div class="container d-flex flex-column justify-content-center align-items-center">
           <form class="text-center w-100" id="mfa-verification-form">

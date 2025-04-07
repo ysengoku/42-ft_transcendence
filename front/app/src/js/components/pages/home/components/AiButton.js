@@ -29,9 +29,7 @@ export class AiButton extends HTMLElement {
 
   template() {
     return `
-	    <div id="home-ai-button">
-	      <div class="btn btn-wood btn-lg">Play against AI</div>
-	    </div>
+	  <div class="btn btn-wood btn-lg w-100" id="home-ai-button">Play against AI</div>
 	  `;
   }
 }
