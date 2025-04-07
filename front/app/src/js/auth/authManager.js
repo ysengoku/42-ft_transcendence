@@ -20,6 +20,10 @@ const auth = (() => {
      * @return {void}
      */
     storeUser(user) {
+      const currentUser = this.getStoredUser();
+      if (currentUser && currentUser.username === user.username) {
+        return;
+      }
       sessionStorage.setItem('user', JSON.stringify(user));
       const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
       document.dispatchEvent(event);
