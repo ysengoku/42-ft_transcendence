@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from chat.models import Chat, ChatMessage
+from chat.models import Notification
 from users.models import Profile
 
 
@@ -9,14 +9,6 @@ class Command(BaseCommand):
 
     def handle(self, **kwargs) -> None:
         u1 = Profile.objects.for_username("celiastral").first()
-        u3 = Profile.objects.for_username("emuminov").first()
+        u2 = Profile.objects.for_username("emuminov").first()
 
-        m = ChatMessage(
-            content=f"Test message {ChatMessage.objects.all().count()}",
-            sender=u3,
-            chat=Chat.objects.for_exact_participants(u1, u3).first(),
-        )
-        m.save()
-
-        u1.blocked_users.remove(u3)
-        u3.blocked_users.remove(u1)
+        Notification.objects.action_new_friend(receiver=u1, sender=u2)

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
+from chat.models import ChatMessage, Notification
 from common.schemas import MessageSchema
 
 from .models import Profile, User
@@ -20,6 +21,15 @@ class UsernameSchema(Schema):
     username: str
 
 
+class UsernameNicknameAvatarSchema(UsernameSchema):
+    """
+    For payloads where it's needed to know the most basic data about the user.
+    """
+
+    nickname: str
+    avatar: str
+
+
 class ValidationErrorMessageSchema(MessageSchema):
     type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
     loc: list[str] = Field(
@@ -30,7 +40,7 @@ class ValidationErrorMessageSchema(MessageSchema):
 
 class LoginResponseSchema(Schema):
     mfa_required: bool
-    username: str  # ou les autres champs nécessaires du ProfileMinimalSchema
+    username: str
 
 
 class ProfileMinimalSchema(Schema):
@@ -43,6 +53,23 @@ class ProfileMinimalSchema(Schema):
     avatar: str
     elo: int
     is_online: bool
+
+
+class SelfSchema(ProfileMinimalSchema):
+    """
+    Like ProfileMinimalSchema, but contains private information like the count of unread notifications and messages.
+    """
+
+    unread_messages_count: int
+    unread_notifications_count: int
+
+    @staticmethod
+    def resolve_unread_messages_count(obj: Profile):
+        return ChatMessage.objects.count_unread(obj)
+
+    @staticmethod
+    def resolve_unread_notifications_count(obj: Profile):
+        return Notification.objects.count_unread(obj)
 
 
 class UserSettingsSchema(Schema):
