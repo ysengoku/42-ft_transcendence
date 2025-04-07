@@ -310,8 +310,9 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   updateOnlineStatus(data) {
+    console.log('Updating online status:', data);
     this.headerOnlineStatusIndicator.classList.toggle('online', data.online);
-    this.headerOnlineStatus.textContent = data.is_online ? 'online' : 'offline';
+    this.headerOnlineStatus.textContent = data.online ? 'online' : 'offline';
   }
 
   /* ------------------------------------------------------------------------ */
