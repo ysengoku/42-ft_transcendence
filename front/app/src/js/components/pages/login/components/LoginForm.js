@@ -50,7 +50,6 @@ export class LoginForm extends HTMLElement {
     }
 
     const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
-    console.log('Login response:', response);
     if (response.success) {
       if (response.status == 200) {
         if (response.data.mfa_required) {
