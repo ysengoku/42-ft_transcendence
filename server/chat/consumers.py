@@ -15,7 +15,6 @@ logger = logging.getLogger("server")
 
 
 def get_user_data(self):
-    logger.info("hello there !")
     return {
         "date": timezone.now().isoformat(),
         "username": self.user.username,
@@ -27,6 +26,18 @@ def get_user_data(self):
         ),
     }
 
+def notify_online_status(self):
+    logger.info("function notify online status !")
+    async_to_sync(self.channel_layer.group_send)(
+        "online_users",
+        {
+            "type": "user_status",
+            "user_id": str(self.user.id),
+            "username": self.user.username,
+            "online": True,
+            "channel_name": self.channel_name,
+        },
+    )
 
 class UserEventsConsumer(WebsocketConsumer):
     def connect(self):
@@ -35,7 +46,8 @@ class UserEventsConsumer(WebsocketConsumer):
             self.close()
             return
         self.user_profile = self.user.profile
-        self.user_profile.update_activity()
+        self.user_profile.update_activity() # set online
+        notify_online_status(self)
         self.chats = Chat.objects.for_participants(self.user_profile)
         # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
@@ -47,24 +59,31 @@ class UserEventsConsumer(WebsocketConsumer):
                 f"chat_{chat.id}",
                 self.channel_name,
             )
-
         self.accept()
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{self.user.id}",
-            {
-                "type": "user_status",
-                "action": "user_online",
-                "username": {
-                    "username": self.user.username,
-                    "timestamp": timezone.now().isoformat()
-                },
-            }
+        async_to_sync(self.channel_layer.group_add)(
+            "online_users",
+            self.channel_name,
         )
+        self.handle_online_status({
+            "action": "user_online",
+            "data": {"username": self.user.username}
+        })
 
     def disconnect(self, close_code):
-        if hasattr(self, 'user_profile'):
-            self.user_profile.is_online = False
-            self.user_profile.save()
+        if hasattr(self, "user_profile"):
+            self.user.is_online = False
+            self.user.save()
+            if self.user is None:
+                logger.warning("Trying to set user offline without user authenticated")
+            else:
+                self.handle_online_status({
+                    "action": "user_offline",
+                    "data": {"username": self.user.username}
+                })
+            async_to_sync(self.channel_layer.group_discard)(
+                "online_users",
+                self.channel_name,
+            )
         # verify if self.chats exists and is not empty
         if hasattr(self, "chats") and self.chats:
             for chat in self.chats:
@@ -72,19 +91,12 @@ class UserEventsConsumer(WebsocketConsumer):
                     f"chat_{chat.id}",
                     self.channel_name,
                 )
-        self.user_profile.is_online = False
-        self.user_profile.save()
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{self.user.id}",
-            {
-                "type": "user_status",
-                "action": "user_offline",
-                "username": {
-                    "username": self.user.username,
-                    "timestamp": timezone.now().isoformat()
-                },
-            }
+        async_to_sync(self.channel_layer.group_discard)(
+            "online_users",
+            self.channel_name,
         )
+
+
 
     def add_user_to_room(self, chat_id):
         try:
@@ -117,8 +129,8 @@ class UserEventsConsumer(WebsocketConsumer):
             "action": action,
             "data": {
                 "username": self.user.username,  # Doit être présent
-                "timestamp": timezone.now().isoformat()
-            }
+                "timestamp": timezone.now().isoformat(),
+            },
         }))
     # Receive message from WebSocket
 
@@ -160,14 +172,14 @@ class UserEventsConsumer(WebsocketConsumer):
                 logger.debug("Unknown action : %s", action)
 
     def handle_heartbeat(self):
-        if hasattr(self, 'user_profile'):
+        if hasattr(self, "user_profile"):
             self.user_profile.update_activity()
             self.send(text_data=json.dumps({
                 "action": "activity_update",
                 "data": {
                     "username": self.user.username,
                     "last_activity": self.user_profile.last_activity.isoformat(),
-                }
+                },
             }))
         else:
             logger.warning("heartbeat without profil utilisateur")
@@ -215,19 +227,21 @@ class UserEventsConsumer(WebsocketConsumer):
             },
         )
 
-    def handle_online_status(self, data):
-        user_data = data.get("data", {})
+    def handle_online_status(self, event):
+        logger.info("online status received !")
+        action = event.get("action")
+        user_data = event.get("data", {})
         username = user_data.get("username")
-        status = data.get("action")
+        logger.info("online status received username %s", username)
 
         try:
             profile = Profile.objects.get(user__username=username)
         except Profile.DoesNotExist:
-            logger.debug("Profile for %s does not exist.", username)
+            logger.error("Profile for %s does not exist.", username)
             return
 
         notification_data = get_user_data(profile)
-        if status == "user_online":
+        if action == "user_online":
             self.send(
                 text_data=json.dumps(
                     {
@@ -236,7 +250,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     },
                 ),
             )
-        elif status == "user_offline":
+        elif action == "user_offline":
             self.send(
                 text_data=json.dumps(
                     {
@@ -579,22 +593,5 @@ class UserEventsConsumer(WebsocketConsumer):
 
         self.send(text_data=json.dumps({
             "action": action,
-            "data": data
+            "data": data,
         }))
-
-    def handle_online_status(self, text_data_json):
-        action = text_data_json.get("action")
-        user_data = text_data_json.get("data", {})
-        username = user_data.get("username")
-
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{self.user.id}",
-            {
-                "type": "user_status",  # Doit correspondre au nom de la méthode
-                "action": action,
-                "data": {
-                    "username": username,
-                    "status": action.split('_')[1]  # 'online' ou 'offline'
-                }
-            }
-        )
