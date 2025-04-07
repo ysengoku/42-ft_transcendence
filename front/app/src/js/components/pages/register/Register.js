@@ -101,7 +101,7 @@ export class Register extends HTMLElement {
     return `
       <div class="container">
         <div class="row justify-content-center py-4">
-          <div class="form-container col-12 col-md-4 p-4"> 
+          <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4"> 
               <div id="signup-failed-feedback"></div>
               <form class="w-100">
                 <legend class="mt-4 mb-5 border-bottom">Sign Up</legend>

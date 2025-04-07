@@ -90,7 +90,7 @@ export class ForgotPassword extends HTMLElement {
     return `
 	    <div class="container my-3">
         <div class="row justify-content-center py-4">
-          <div class="form-container col-12 col-md-4 p-4">
+          <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4">
       			<form class="w-100">
               <legend class="mt-4 border-bottom">Forgot password?</legend>
               <small>No worries! Just enter your email and we will send you a link to reset your password.</small>
