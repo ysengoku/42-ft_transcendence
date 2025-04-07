@@ -61,7 +61,7 @@
     - `1006` means that the connection was closed due to the network error or by any other abnormal means.
     - `websocketInstance.close({status_code})` can be sent from the client.
         - `1000` means `NORMAL_CLOSURE`, that the client intentionally closed the connection.
-- [ ] Add notifications endpoint.
+- [x] Add notifications endpoint.
 
 ### Multiplayer
 - [ ] Make the multiplayer game compatible with matchmaking.
@@ -70,22 +70,10 @@
 ## Testing
 - [ ] Add testing for `users` endpoints.
 - [ ] Add testing for `chat` endpoints.
+- [ ] Update the `populate_db` script. As for now, it uses raw models to add friends without creating appropriate notifications. We should extract friend addition logic to a specific function.
 
 ## Docs
 - [ ] Update docsrings for endpoints that provide paginated data, which is reverse ordered.
-
-```
-Inspected the current chat implementation and its models. 
-TODO:
-- Change the Notification model to fit different notifications types.
-- Change `user` in notifications from User to Profile.
-- Change `Notification` choices to use constants
-- Change `read` to `is_read` in `Notification`
-- Added `NotificationManager`
-- Change id in the Notification model from int to uuid
-- NOTIFICATION (as defined in google sheets) now contains the date, instead of each type of notification having individual date
-- Update the `populate_db` script. As for now, it uses raw models to add friends without creating appropriate notifications. We should extract friend addition logic to a specific function.
-```
 
 ## Reworks
 - [x] `username`'s are not slugified, like `slug_id`
