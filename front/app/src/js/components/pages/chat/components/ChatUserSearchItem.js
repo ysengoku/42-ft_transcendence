@@ -81,7 +81,7 @@ export class ChatUserSearchItem extends HTMLElement {
 
   template() {
     return `
-    <li class="chat-user-search-list-item list-group-item ps-3 py-2">
+    <li class="chat-user-search-list-item dropdown-item border-0 ps-3 py-2">
       <div class="d-flex flex-row align-items-center">
         <div class="position-relative d-inline-block me-2">
           <img class="chat-user-search-avatar rounded-circle me-3" alt="Avatar">
@@ -99,10 +99,6 @@ export class ChatUserSearchItem extends HTMLElement {
   style() {
     return `
     <style>
-    .chat-user-search-list-item {
-      background-color: rgba(var(--bs-body-bg-rgb), 0.3) !important;
-      border: none;
-    }
     .chat-user-search-avatar {
       width: 40px;
       height: 40px;

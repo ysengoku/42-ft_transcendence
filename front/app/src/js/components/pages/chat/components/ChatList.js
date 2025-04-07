@@ -302,6 +302,19 @@ export class ChatList extends HTMLElement {
     }
   }
 
+  updateOnlineStatus(data) {
+    const username = data.data.username;
+    const index = this.#state.items.findIndex((chat) => chat.username.toLowerCase() === username.toLowerCase());
+    if (index !== -1) {
+      this.#state.items[index].is_online = data.online;
+      const component = document.getElementById(`chat-item-${this.#state.items[index].username}`);
+      const onlineStatus = component.querySelector('.chat-list-status-indicator');
+      data.online ?
+        onlineStatus.classList.add('online') :
+        onlineStatus.classList.remove('online');
+    }
+  }
+
   /* ------------------------------------------------------------------------ */
   /*     Template & style                                                     */
   /* ------------------------------------------------------------------------ */
@@ -313,8 +326,8 @@ export class ChatList extends HTMLElement {
         <h5 class="m-0">Conversations</h5>
         <button class="btn new-chat me-3 p-0"><i class="bi bi-pencil-square"></i></button>
       </div>
+      <chat-user-search></chat-user-search>
       <div class="overflow-auto" id="chat-list-wrapper">
-        <chat-user-search></chat-user-search>
         <ul class="list-group border-top-1 pt-4" id="chat-list"></ul>
       </div>
     </div>

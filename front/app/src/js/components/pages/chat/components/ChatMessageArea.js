@@ -309,6 +309,11 @@ export class ChatMessageArea extends HTMLElement {
     this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, messageData.is_liked);
   }
 
+  updateOnlineStatus(data) {
+    this.headerOnlineStatusIndicator.classList.toggle('online', data.online);
+    this.headerOnlineStatus.textContent = data.is_online ? 'online' : 'offline';
+  }
+
   /* ------------------------------------------------------------------------ */
   /*     Template & style                                                     */
   /* ------------------------------------------------------------------------ */
