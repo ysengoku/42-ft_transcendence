@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from ninja.errors import AuthenticationError
+from asgiref.sync import sync_to_async, async_to_sync
 
 from users.models import Profile
 from users.models.refresh_token import RefreshToken
@@ -96,10 +97,16 @@ class OnlineStatusCleanupMiddleware:
         self.cleanup_status()
         return response
 
-    def cleanup_status(self):
+    async def cleanup_status(self):
         from django.db import transaction
         from django.utils import timezone
+        from .models import Profile
 
+        await sync_to_async(self._cleanup_status)()
+
+    def _cleanup_status(self):
+        from django.db import transaction
+        from django.utils import timezone
         from .models import Profile
 
         with transaction.atomic():
@@ -108,3 +115,16 @@ class OnlineStatusCleanupMiddleware:
                 is_online=True
             )
             offline_users.update(is_online=False)
+
+    # def cleanup_status(self):
+    #     from django.db import transaction
+    #     from django.utils import timezone
+    #
+    #     from .models import Profile
+    #
+    #     with transaction.atomic():
+    #         offline_users = Profile.objects.filter(
+    #             last_activity__lt=timezone.now() - timezone.timedelta(minutes=2),
+    #             is_online=True
+    #         )
+    #         offline_users.update(is_online=False)
