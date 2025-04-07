@@ -32,10 +32,12 @@ def notify_online_status(self):
         "online_users",
         {
             "type": "user_status",
-            "user_id": str(self.user.id),
-            "username": self.user.username,
-            "online": True,
-            "channel_name": self.channel_name,
+            "action": "user_online",
+            "data": {
+                "username": self.user.username,
+                "channel_name": self.channel_name,
+                "status": "online",
+            },
         },
     )
 
