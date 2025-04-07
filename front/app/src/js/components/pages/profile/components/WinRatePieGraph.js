@@ -39,7 +39,7 @@ export class UserWinRatePieGraph extends HTMLElement {
       <div class="pie-graph d-flex flex-column jusify-content-around align-items-center">
         <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
          <path
-            d="M20 ${(40 - (r * 2)) / 2}
+            d="M20 ${(40 - r * 2) / 2}
               a ${r} ${r} 0 0 1 0 ${r * 2}
               a ${r} ${r} 0 0 1 0 -${r * 2}"
             fill="none"
@@ -48,11 +48,11 @@ export class UserWinRatePieGraph extends HTMLElement {
             stroke-dasharray="100"
           />
           <path class="donut"
-            d="M20 ${(40 - (r * 2)) / 2}
+            d="M20 ${(40 - r * 2) / 2}
               a ${r} ${r} 0 0 1 0 ${r * 2}
               a ${r} ${r} 0 0 1 0 -${r * 2}"
             fill="none"
-            stroke="#613304"
+            stroke="var(--pm-primary-600)"
             stroke-width="6"
             stroke-dasharray="${this.#state.rate} 100"
           />
