@@ -27,9 +27,6 @@ export class Home extends HTMLElement {
     }
     this.innerHTML = this.style() + this.template();
 
-    // const nicknameField = this.querySelector('#home-nickname');
-    // nicknameField.textContent = 'Welcome, ' + this.#state.user.nickname;
-
     const profileButton = this.querySelector('home-profile-button');
     profileButton.username = this.#state.user.username;
   }
@@ -39,15 +36,15 @@ export class Home extends HTMLElement {
     <div class="container d-flex justify-content-center align-items-center my-2">
       <div class="row justify-content-center text-center w-100">
         <div class="home-menu-wrapper col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 p-5">
-          <img src="${logo}" alt="Peacemakers logo" id="home-logo"/>
+          <img src="${logo}" alt="Peacemakers logo" class="py-3" id="home-logo"/>
 
-          <div class="d-flex flex-column justify-content-center align-items-center pt-4 gap-4">
+          <div class="d-flex flex-column justify-content-center align-items-center pt-5 gap-4">
             <div class="w-100"><home-duel-button></home-duel-button></div>
             <div class="w-100"><home-ai-button></home-ai-button></div>
             <div class="w-100"><home-tournament-button></home-tournament-button></div>
             <div class="w-100"><home-profile-button></home-profile-button></div>
 
-            <div class="d-flex flex-row justify-content-center mt-3 gap-2 w-100">
+            <div class="d-flex flex-row justify-content-center mt-3 gap-3 w-100">
               <home-settings-button></home-settings-button>
               <home-logout-button></home-logout-button>
             </div>
