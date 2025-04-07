@@ -53,7 +53,7 @@ export class Navbar extends HTMLElement {
       if (this.#state.user.unread_notifications_count > 0) {
         notificationsButton.querySelector('.notification-badge').classList.remove('d-none');
       }
-      if (this.#state.user.unread_messages_count > 0) {
+      if (this.#state.user.unread_messages_count > 0 && window.location.pathname !== '/chat') {
         chatButton.querySelector('.notification-badge').classList.remove('d-none');
       }
     }
@@ -63,7 +63,6 @@ export class Navbar extends HTMLElement {
   }
 
   updateNavbar(event) {
-    console.log('Navbar update event:', event);
     this.#state.isLoggedin = event.detail.user !== null;
     this.render();
   }
