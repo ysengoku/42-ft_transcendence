@@ -6,10 +6,6 @@ const socketManager = (() => {
       this.url = 'wss://' + window.location.host + '/ws/events/';
       this.socket = null;
       this.socketOpen = false;
-      this.activityTimeout = null;
-      this.heartbeatInterval = null;
-      this.HEARTBEAT_INTERVAL = 30000; // 30 seconds
-      this.INACTIVITY_TIMEOUT = 120000; // 2 minutes
     }
 
     connect() {
@@ -19,66 +15,15 @@ const socketManager = (() => {
       this.socket = new WebSocket(this.url);
       this.socketOpen = true;
 
-      this.socket.onopen = (event) => {
-        devLog('WebSocket opened:', event);
-        this._startActivityMonitoring();
-        this._sendInitialStatus();
-      };
+      this.socket.onopen = (event) => devLog('WebSocket opened:', event);
       this.socket.onmessage = (event) => this.handleAction(event);
       this.socket.onerror = (event) => console.error('WebSocket error:', event);
       this.socket.onclose = (event) => {
         devLog('WebSocket closed:', event);
-        this._cleanupActivityMonitoring();
         setTimeout(() => this.reconnect(), 1000);
       };
     }
-    _startActivityMonitoring() {
-      // Surveillance d'activité utilisateur
-      ['mousemove', 'keydown', 'scroll'].forEach((event) => {
-        window.addEventListener(event, this._resetInactivityTimer.bind(this), { passive: true });
-      });
 
-      // Heartbeat périodique
-      this.heartbeatInterval = setInterval(() => {
-        this._sendHeartbeat();
-      }, this.HEARTBEAT_INTERVAL);
-
-      // Déconnexion propre
-      window.addEventListener('beforeunload', () => {
-        this._sendOfflineStatus();
-      });
-    }
-
-    _cleanupActivityMonitoring() {
-      clearTimeout(this.activityTimeout);
-      clearInterval(this.heartbeatInterval);
-      ['mousemove', 'keydown', 'scroll'].forEach((event) => {
-        window.removeEventListener(event, this._resetInactivityTimer);
-      });
-    }
-
-    _resetInactivityTimer() {
-      clearTimeout(this.activityTimeout);
-      this.activityTimeout = setTimeout(() => {
-        this._sendHeartbeat();
-      }, this.INACTIVITY_TIMEOUT);
-    }
-
-    _sendInitialStatus() {
-      if (this.socket.readyState === WebSocket.OPEN) {
-        this.socket.send(JSON.stringify({ action: 'user_online' }));
-      }
-    }
-
-    _sendHeartbeat() {
-      if (this.socket.readyState === WebSocket.OPEN) {
-        this.socket.send(JSON.stringify({ action: 'heartbeat' }));
-      }
-    }
-
-    _sendOfflineStatus() {
-      navigator.sendBeacon(this.url, JSON.stringify({ action: 'user_offline' }));
-    }
     reconnect() {
       if (!this.socketOpen) {
         return;
@@ -177,12 +122,6 @@ const socketManager = (() => {
         showToastNotification(`${data.nickname} just roped you in as a friend.`);
       },
       user_online: (data) => {
-        if (!data?.username) {
-          console.error('invalid data for user_online :', data);
-          return;
-        }
-        devLog('User online:', data.username);
-        this._updateUserStatus(data.username, true);
         devLog('User online:', data);
         const customEvent = new CustomEvent('onlineStatus', {
           detail: { data, online: true },
@@ -191,12 +130,6 @@ const socketManager = (() => {
         dispatchEvent(customEvent);
       },
       user_offline: (data) => {
-        if (!data?.username) {
-          console.error('invalid data for user_offline :', data);
-          return;
-        }
-        devLog('User offline:', data.username);
-        this._updateUserStatus(data.username, false);
         devLog('User offline:', data);
         const customEvent = new CustomEvent('onlineStatus', {
           detail: { data, online: false },
@@ -208,38 +141,7 @@ const socketManager = (() => {
         devErrorLog('No listeners set for this action:', action);
         return;
       },
-      // ICI
-      activity_update: (data) => {
-        console.log('Received activity update:', data);
-
-        // Mettre à jour l'état en ligne de l'utilisateur dans l'interface utilisateur
-        const userElement = document.querySelector(`[data-username="${data.username}"]`);
-        if (userElement) {
-          const statusIndicator = userElement.querySelector('.status-indicator');
-          if (statusIndicator) {
-            statusIndicator.textContent = 'En ligne';
-          }
-        }
-      },
-      // LA
     };
-    _updateUserStatus(username, isOnline) {
-      if (!username) {
-        console.error('Username not defined for the mise à jour du statut');
-        return;
-      }
-      const userElements = document.querySelectorAll(`[data-username="${username}"]`);
-      userElements.forEach((element) => {
-        const statusIndicator = element.querySelector('.status-indicator');
-        if (!statusIndicator) {
-          console.warn('Element .status-indicator non trouvé pour', username);
-          return;
-        }
-
-        element.classList.toggle('online', isOnline);
-        statusIndicator.textContent = isOnline ? 'En ligne' : 'Hors ligne';
-      });
-    }
   }
   return new WebSocketManager();
 })();
