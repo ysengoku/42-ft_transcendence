@@ -67,10 +67,6 @@ class UserEventsConsumer(WebsocketConsumer):
             "online_users",
             self.channel_name,
         )
-        self.handle_online_status({
-            "action": "user_online",
-            "data": {"username": self.user.username}
-        })
 
     def disconnect(self, close_code):
         if hasattr(self, "user_profile"):
@@ -79,10 +75,6 @@ class UserEventsConsumer(WebsocketConsumer):
             if self.user is None:
                 logger.warning("Trying to set user offline without user authenticated")
             else:
-                self.handle_online_status({
-                    "action": "user_offline",
-                    "data": {"username": self.user.username}
-                })
                 notify_online_status(self, "offline")
 
             async_to_sync(self.channel_layer.group_discard)(
@@ -244,26 +236,16 @@ class UserEventsConsumer(WebsocketConsumer):
         except Profile.DoesNotExist:
             logger.error("Profile for %s does not exist.", username)
             return
-
+        online_status = "user_online" if action == "user_online" else "user_offline"
         notification_data = get_user_data(profile)
-        if action == "user_online":
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "user_online",
-                        "data": notification_data,
-                    },
-                ),
-            )
-        elif action == "user_offline":
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "user_offline",
-                        "data": notification_data,
-                    },
-                ),
-            )
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": online_status,
+                    "data": notification_data,
+                },
+            ),
+        )
 
     def handle_like_message(self, data):
         message_data = data.get("data", {})
