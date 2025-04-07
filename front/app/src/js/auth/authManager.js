@@ -21,17 +21,26 @@ const auth = (() => {
      */
     storeUser(user) {
       const currentUser = this.getStoredUser();
-      if (currentUser && currentUser.username === user.username) {
-        return;
+      if (!currentUser || currentUser.username !== user.username ||
+        currentUser.unread_messages_count !== user.unread_messages_count ||
+        currentUser.unread_notifications_count !== user.unread_notifications_count) {
+        sessionStorage.setItem('user', JSON.stringify(user));
+        const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
+        document.dispatchEvent(event);
       }
-      sessionStorage.setItem('user', JSON.stringify(user));
-      const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
-      document.dispatchEvent(event);
       socketManager.connect();
     }
 
     updateStoredUser(user) {
-      sessionStorage.setItem('user', JSON.stringify(user));
+      const currentUser = this.getStoredUser();
+      const updatedUser = {
+        username: user.username,
+        nickname: user.nickname,
+        avatar: user.avatar,
+        unread_messages_count: currentUser.unread_messages_count,
+        unread_notifications_count: currentUser.unread_notifications_count,
+      };
+      sessionStorage.setItem('user', JSON.stringify(updatedUser));
       const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
       document.dispatchEvent(event);
     }
