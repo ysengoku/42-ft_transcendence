@@ -55,12 +55,25 @@
     - [x] Change the validation for the User in all places.
 
 ### Chat
-- [ ] Add authentication support to the consumers.
+- [x] Add authentication support to the consumers.
 - [ ] It is possible to determine how the connection was closed based on the status code.
     - `1001` is send automatically on closing or refreshing the browser tab.
     - `1006` means that the connection was closed due to the network error or by any other abnormal means.
     - `websocketInstance.close({status_code})` can be sent from the client.
         - `1000` means `NORMAL_CLOSURE`, that the client intentionally closed the connection.
+- [x] Add notifications endpoint.
+
+### Multiplayer
+- [ ] Make the multiplayer game compatible with matchmaking.
+- [ ] Allow more than 1 match to be played at the same time.
+
+## Testing
+- [ ] Add testing for `users` endpoints.
+- [ ] Add testing for `chat` endpoints.
+- [ ] Update the `populate_db` script. As for now, it uses raw models to add friends without creating appropriate notifications. We should extract friend addition logic to a specific function.
+
+## Docs
+- [ ] Update docsrings for endpoints that provide paginated data, which is reverse ordered.
 
 ## Reworks
 - [x] `username`'s are not slugified, like `slug_id`

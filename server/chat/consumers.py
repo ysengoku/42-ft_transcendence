@@ -325,9 +325,9 @@ class UserEventsConsumer(WebsocketConsumer):
         # Create the notification in the db
         if notification_id is None:
             Notification.objects.create(
-                user=self.user,
+                receiver=self.user,
                 message=notification_data,
-                type=notification_type,
+                action=notification_type,
             )
         else:
             try:
