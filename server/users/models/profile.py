@@ -104,6 +104,7 @@ class Profile(models.Model):
         "self", symmetrical=False, related_name="blocked_users_of")
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now_add=True)
+    nb_active_connexions = models.IntegerField(default=0)
 
     def update_activity(self):
         self.last_activity = timezone.now()
