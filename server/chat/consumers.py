@@ -143,7 +143,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.handle_message(text_data_json)
             case "notification":
                 self.handle_notification(text_data_json)
-            case ("user_offline", "user_online"):
+            case "user_offline" | "user_online":
                 self.handle_online_status(text_data_json)
             case "like_message":
                 self.handle_like_message(text_data_json)
@@ -169,7 +169,7 @@ class UserEventsConsumer(WebsocketConsumer):
             case "heartbeat":
                 self.handle_heartbeat()
             case _:
-                logger.debug("Unknown action : %s", action)
+                logger.error("Unknown action : %s", action)
 
     def handle_heartbeat(self):
         if hasattr(self, "user_profile"):
