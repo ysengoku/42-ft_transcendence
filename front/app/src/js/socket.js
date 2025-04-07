@@ -127,7 +127,7 @@ const socketManager = (() => {
           detail: { data, online: true },
           bubbles: true,
         });
-        dispatchEvent(customEvent);
+        document.dispatchEvent(customEvent);
       },
       user_offline: (data) => {
         devLog('User offline:', data);
@@ -135,7 +135,7 @@ const socketManager = (() => {
           detail: { data, online: false },
           bubbles: true,
         });
-        dispatchEvent(customEvent);
+        document.dispatchEvent(customEvent);
       },
       noMatchedListener: (action) => {
         devErrorLog('No listeners set for this action:', action);
