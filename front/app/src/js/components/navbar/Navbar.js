@@ -4,25 +4,19 @@ import { isMobile } from '@utils';
 export class Navbar extends HTMLElement {
   #state = {
     user: '',
-    unreadNotificationCount: 0,
-    unreadMessageCount: 0,
+    isLoggedin: false,
   };
 
   constructor() {
     super();
-    this.isLoggedin = false;
     this.loginStatusHandler = this.updateNavbar.bind(this);
   }
 
   async connectedCallback() {
     document.addEventListener('userStatusChange', this.loginStatusHandler);
-    // this.isLoggedin = auth.getStoredUser() ? true : false;
     this.#state.user = auth.getStoredUser();
-    this.isLoggedin = this.#state.user ? true : false;
-    if (this.isLoggedin) {
-      // TODO: Check unread notifications and messages
-      // this.#state.unreadNotificationCount
-      // this.#state.unreadMessageCount
+    this.#state.isLoggedin = this.#state.user ? true : false;
+    if (this.#state.isLoggedin) {
     }
     this.render();
     window.addEventListener('resize', () => {
@@ -38,14 +32,14 @@ export class Navbar extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     const navbarBrand = this.querySelector('navbar-brand-component');
-    navbarBrand.setLoginStatus(this.isLoggedin);
+    navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
   }
 
   renderNavbarActions() {
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
-    if (this.isLoggedin) {
+    if (this.#state.isLoggedin) {
       if (!isMobile()) {
         const searchUserButtotn = document.createElement('user-search-button');
         const friendsButton = document.createElement('friends-button');
@@ -56,20 +50,21 @@ export class Navbar extends HTMLElement {
       const notificationsButton = document.createElement('notifications-button');
       navbarActions.appendChild(chatButton);
       navbarActions.appendChild(notificationsButton);
-      if (this.#state.unreadNotificationCount > 0) {
+      if (this.#state.user.unread_notifications_count > 0) {
         notificationsButton.querySelector('.notification-badge').classList.remove('d-none');
       }
-      if (this.#state.unreadMessageCount > 0) {
+      if (this.#state.user.unread_messages_count > 0) {
         chatButton.querySelector('.notification-badge').classList.remove('d-none');
       }
     }
     const dropdownMenu = document.createElement('navbar-dropdown-menu');
-    dropdownMenu.setLoginStatus(this.isLoggedin);
+    dropdownMenu.setLoginStatus(this.#state.isLoggedin);
     navbarActions.appendChild(dropdownMenu);
   }
 
   updateNavbar(event) {
-    this.isLoggedin = event.detail.user !== null;
+    console.log('Navbar update event:', event);
+    this.#state.isLoggedin = event.detail.user !== null;
     this.render();
   }
 
@@ -90,9 +85,12 @@ export class Navbar extends HTMLElement {
     .navbar {
       background-color: rgba(var(--pm-primary-600-rgb), 0.7);
     }
-    .navbar-button i {
-      font-size: 1.5rem;
-      color: var(--pm-primary-100);
+    .navbar-button {
+      padding: 0.5rem;
+      i {
+        font-size: 1.5rem;
+        color: var(--pm-primary-100);
+      }
     }
     .dropdown-menu-end {
       max-height: 75vh;
@@ -119,8 +117,8 @@ export class Navbar extends HTMLElement {
       height: 14px;
       background-color: var(--pm-red-400);
       border-radius: 50%;
-      top: 6px;
-      right: 6px;
+      top: 8px;
+      right: 4px;
     }
     </style>
     `;
