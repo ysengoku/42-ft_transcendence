@@ -26,17 +26,18 @@ def get_user_data(self):
         ),
     }
 
-def notify_online_status(self):
+def notify_online_status(self, onlinestatus):
     logger.info("function notify online status !")
+    action = "user_online" if onlinestatus == "online" else "user_offline"
     async_to_sync(self.channel_layer.group_send)(
         "online_users",
         {
             "type": "user_status",
-            "action": "user_online",
+            "action": action,
             "data": {
                 "username": self.user.username,
                 "channel_name": self.channel_name,
-                "status": "online",
+                "status": onlinestatus,
             },
         },
     )
@@ -49,7 +50,7 @@ class UserEventsConsumer(WebsocketConsumer):
             return
         self.user_profile = self.user.profile
         self.user_profile.update_activity() # set online
-        notify_online_status(self)
+        notify_online_status(self, "online")
         self.chats = Chat.objects.for_participants(self.user_profile)
         # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
@@ -82,6 +83,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     "action": "user_offline",
                     "data": {"username": self.user.username}
                 })
+                notify_online_status(self, "offline")
+
             async_to_sync(self.channel_layer.group_discard)(
                 "online_users",
                 self.channel_name,
