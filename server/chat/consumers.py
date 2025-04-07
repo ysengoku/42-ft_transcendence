@@ -49,6 +49,12 @@ class UserEventsConsumer(WebsocketConsumer):
             self.close()
             return
         self.user_profile = self.user.profile
+        max_connexions = 1000  # reasonable limit
+        if self.user_profile.nb_active_connexions >= max_connexions:
+            logger.warning("Too many simultaneous connexions for user %s", self.user.username)
+            self.close()
+            return
+        self.user_profile.nb_active_connexions  += 1
         self.user_profile.update_activity() # set online
         notify_online_status(self, "online")
         self.chats = Chat.objects.for_participants(self.user_profile)
@@ -72,9 +78,10 @@ class UserEventsConsumer(WebsocketConsumer):
         if hasattr(self, "user_profile"):
             self.user.is_online = False
             self.user.save()
+            self.user_profile.nb_active_connexions -= 1
             if self.user is None:
                 logger.warning("Trying to set user offline without user authenticated")
-            else:
+            elif self.user.profile.nb_active_connexions == 0:
                 notify_online_status(self, "offline")
 
             async_to_sync(self.channel_layer.group_discard)(
