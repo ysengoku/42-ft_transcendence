@@ -9,7 +9,7 @@ from django.db.models import (Case, Count, Exists, ExpressionWrapper, F, Func,
 from django.db.models.lookups import Exact
 from django.utils import timezone
 from ninja.files import UploadedFile
-
+from asgiref.sync import async_to_sync
 from users.utils import merge_err_dicts
 
 
