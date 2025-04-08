@@ -40,7 +40,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 "Too many simultaneous connexions for user %s", self.user.username)
             self.close()
             return
-        # will replace when a good system to check disconnexions is done
+        # TODO will replace when a good system to check disconnexions is done
         self.user_profile.nb_active_connexions = 1
         self.user_profile.update_activity()  # set online
         logger.info("User %s had %i active connexions", self.user.username,
@@ -68,14 +68,16 @@ class UserEventsConsumer(WebsocketConsumer):
             self.user.is_online = False
             self.user.save()
             self.user_profile.nb_active_connexions -= 1
+            self.user_profile.save()
 
             if self.user is None:
                 logger.warning(
                     "Trying to set user offline without user authenticated")
             elif self.user.profile.nb_active_connexions == 0:
                 self.notify_online_status("offline")
-            logger.info("User %s had %i active connexions SO I'LL CHECK THAT ANY DISCONNEXION DOES DECREMENT THIS NUMBER, AND NOT JUST WHEN THE USER DOES CLICK THE DISCONNECT BUTTON",
-                        self.user.username, self.user_profile.nb_active_connexions)
+            else:
+                logger.info("User %s has %i active connexions : no sending offline status",
+                            self.user.username, self.user_profile.nb_active_connexions)
 
             async_to_sync(self.channel_layer.group_discard)(
                 "online_users",
