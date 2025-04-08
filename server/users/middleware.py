@@ -1,9 +1,9 @@
+from asgiref.sync import async_to_sync, sync_to_async
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 from ninja.errors import AuthenticationError
-from asgiref.sync import sync_to_async, async_to_sync
 
 from users.models import Profile
 from users.models.refresh_token import RefreshToken
@@ -58,22 +58,31 @@ class JWTAuthMiddleware:
 
 
 class ActivityMiddleware:
-    def __call__(self, request):
-        response = self.get_response(request)
-        if request.user.is_authenticated:
-            profile = request.user.profile
-            profile.update_activity()
+    def __init__(self, get_response):
+        self.get_response = get_response
 
-            # Envoi de la mise à jour via WebSocket
-            async_to_sync(get_channel_layer().group_send)(
-                f"user_{request.user.id}",
-                {
-                    "type": "user_status",
-                    "action": "user_online",
-                    "data": {"username": request.user.username}
-                }
-            )
-        return response
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            request.user.profile.update_activity()
+        return self.get_response(request)
+
+    # def __call__(self, request):
+    #     response = self.get_response(request)
+    #     if request.user.is_authenticated:
+    #         profile = request.user.profile
+    #         profile.update_activity()
+    #
+    #         # Envoi de la mise à jour via WebSocket
+    #         async_to_sync(get_channel_layer().group_send)(
+    #             f"user_{request.user.id}",
+    #             {
+    #                 "type": "user_status",
+    #                 "action": "user_online",
+    #                 "data": {"username": request.user.username}
+    #             }
+    #         )
+    #     return response
+    #
 
 
 class OnlineStatusCleanupMiddleware:
@@ -100,6 +109,7 @@ class OnlineStatusCleanupMiddleware:
     async def cleanup_status(self):
         from django.db import transaction
         from django.utils import timezone
+
         from .models import Profile
 
         await sync_to_async(self._cleanup_status)()
@@ -107,6 +117,7 @@ class OnlineStatusCleanupMiddleware:
     def _cleanup_status(self):
         from django.db import transaction
         from django.utils import timezone
+
         from .models import Profile
 
         with transaction.atomic():
