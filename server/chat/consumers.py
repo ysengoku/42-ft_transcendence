@@ -1,14 +1,18 @@
 import json
 import logging
+from datetime import timedelta
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import DatabaseError, models, transaction
+from django.db.models import Q
 from django.utils import timezone
+from django.utils.timezone import now
 
 from chat.models import Chat, ChatMessage, GameInvitation, Notification
+from users.consumers import redis_status_manager
 from users.models import Profile
 
 logger = logging.getLogger("server")
@@ -27,57 +31,94 @@ def get_user_data(self):
     }
 
 
+def check_inactive_users():
+    threshold = timezone.now() - timedelta(minutes=5)
+
+    # Utiliser Q pour combiner les conditions avec OR
+    inactive_users = Profile.objects.filter(
+        Q(last_activity__lt=threshold) | Q(nb_active_connexions=0),
+        is_online=True  # Ne traiter que les utilisateurs marqués en ligne
+    )
+
+    for user in inactive_users:
+        user.is_online = False
+        user.nb_active_connexions = 0
+        # Éviter les valeurs négatives
+        # user.nb_active_connexions = max(user.nb_active_connexions, 0)
+        user.save()
+
+
 class UserEventsConsumer(WebsocketConsumer):
+
     def connect(self):
         self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
             self.close()
             return
-        self.user_profile = self.user.profile
-        max_connexions = 1000  # reasonable limit
-        if self.user_profile.nb_active_connexions >= max_connexions:
-            logger.warning(
-                "Too many simultaneous connexions for user %s", self.user.username)
-            self.close()
-            return
-        # TODO will replace when a good system to check disconnexions is done
-        self.user_profile.nb_active_connexions = 1
-        self.user_profile.update_activity()  # set online
-        logger.info("User %s had %i active connexions", self.user.username,
-                    self.user_profile.nb_active_connexions)
-        self.notify_online_status("online")
-        self.chats = Chat.objects.for_participants(self.user_profile)
-        # Add user's channel to personal group to receive answers to invitations sent
-        async_to_sync(self.channel_layer.group_add)(
-            f"user_{self.user.id}",
-            self.channel_name,
-        )
-        for chat in self.chats:
+        try:
+            self.user_profile = self.user.profile
+            max_connexions = 10
+            # Incrémentation atomique du compteur de connexions
+            self.user_profile.nb_active_connexions = models.F(
+                'nb_active_connexions') + 1
+            self.user_profile.save(update_fields=['nb_active_connexions'])
+            self.user_profile.refresh_from_db()
+
+            if self.user_profile.nb_active_connexions > max_connexions:
+                logger.warning(
+                    "Too many simultaneous connexions for user %s", self.user.username)
+                self.close()
+                return
+            # TODO erase this when system is done
+            # self.user_profile.nb_active_connexions = 1
+            self.user_profile.update_activity()  # set online
+            logger.info("User %s had %i active connexions", self.user.username,
+                        self.user_profile.nb_active_connexions)
+            self.chats = Chat.objects.for_participants(self.user_profile)
+            # Add user's channel to personal group to receive answers to invitations sent
             async_to_sync(self.channel_layer.group_add)(
-                f"chat_{chat.id}",
+                f"user_{self.user.id}",
                 self.channel_name,
             )
-            self.accept()
             async_to_sync(self.channel_layer.group_add)(
                 "online_users",
                 self.channel_name,
             )
+            for chat in self.chats:
+                async_to_sync(self.channel_layer.group_add)(
+                    f"chat_{chat.id}",
+                    self.channel_name,
+                )
+            self.accept()
+            self.notify_online_status("online")
+
+        except DatabaseError as e:
+            logger.error("Database error during connect: %s", e)
+            self.close()
 
     def disconnect(self, close_code):
         if hasattr(self, "user_profile"):
-            self.user.is_online = False
-            self.user.save()
-            self.user_profile.nb_active_connexions -= 1
-            self.user_profile.save()
+            try:
+                self.user_profile.nb_active_connexions = models.F(
+                    'nb_active_connexions') - 1
+                self.user_profile.save(update_fields=['nb_active_connexions'])
+                self.user_profile.refresh_from_db()
+                # Force to 0 if negative after refreshing from db
+                if self.user_profile.nb_active_connexions < 0:
+                    self.user_profile.nb_active_connexions = 0
+                    self.user_profile.save(
+                        update_fields=['nb_active_connexions'])
 
-            if self.user is None:
-                logger.warning(
-                    "Trying to set user offline without user authenticated")
-            elif self.user.profile.nb_active_connexions == 0:
-                self.notify_online_status("offline")
-            else:
-                logger.info("User %s has %i active connexions : no sending offline status",
-                            self.user.username, self.user_profile.nb_active_connexions)
+                if self.user_profile.nb_active_connexions == 0:
+                    self.user_profile.is_online = False
+                    self.user_profile.save(update_fields=['is_online'])
+                    redis_status_manager.set_user_offline(self.user.id)
+                    self.notify_online_status("offline")
+            except DatabaseError as e:
+                logger.error("Database error during disconnect: %s", e)
+
+            logger.info("User %s has %i active connexions",
+                        self.user.username, self.user_profile.nb_active_connexions)
 
             async_to_sync(self.channel_layer.group_discard)(
                 "online_users",
@@ -90,10 +131,6 @@ class UserEventsConsumer(WebsocketConsumer):
                     f"chat_{chat.id}",
                     self.channel_name,
                 )
-        async_to_sync(self.channel_layer.group_discard)(
-            "online_users",
-            self.channel_name,
-        )
 
     def add_user_to_room(self, chat_id):
         try:
