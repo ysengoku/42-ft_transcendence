@@ -48,9 +48,12 @@ export class UserGameResultModal extends HTMLElement {
   style() {
     return `
     <style>
-      .modal-header {
-        border-bottom: none;
-      }
+    .modal {
+      top: 16%;
+    }
+    .modal-header {
+      border-bottom: none;
+    }
     </style>
     `;
   }
