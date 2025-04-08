@@ -21,7 +21,6 @@ export class ChatButton extends HTMLElement {
   }
 
   handleClick() {
-    this.querySelector('.notification-badge').classList.add('d-none');
     router.navigate('/chat');
   }
 
@@ -29,7 +28,7 @@ export class ChatButton extends HTMLElement {
     return `
     <button class="navbar-button btn position-relative">
       <i class="bi bi-chat"></i>
-      <span class="notification-badge d-none"></span>
+      <span class="notification-badge d-none" id="navbar-chat-badge"></span>
     </button>
     `;
   }
