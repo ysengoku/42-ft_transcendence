@@ -26,21 +26,6 @@ def get_user_data(self):
         ),
     }
 
-def notify_online_status(self, onlinestatus):
-    logger.info("function notify online status !")
-    action = "user_online" if onlinestatus == "online" else "user_offline"
-    async_to_sync(self.channel_layer.group_send)(
-        "online_users",
-        {
-            "type": "user_status",
-            "action": action,
-            "data": {
-                "username": self.user.username,
-                "channel_name": self.channel_name,
-                "status": onlinestatus,
-            },
-        },
-    )
 
 class UserEventsConsumer(WebsocketConsumer):
     def connect(self):
@@ -51,12 +36,16 @@ class UserEventsConsumer(WebsocketConsumer):
         self.user_profile = self.user.profile
         max_connexions = 1000  # reasonable limit
         if self.user_profile.nb_active_connexions >= max_connexions:
-            logger.warning("Too many simultaneous connexions for user %s", self.user.username)
+            logger.warning(
+                "Too many simultaneous connexions for user %s", self.user.username)
             self.close()
             return
-        self.user_profile.nb_active_connexions  += 1
-        self.user_profile.update_activity() # set online
-        notify_online_status(self, "online")
+        # will replace when a good system to check disconnexions is done
+        self.user_profile.nb_active_connexions = 1
+        self.user_profile.update_activity()  # set online
+        logger.info("User %s had %i active connexions", self.user.username,
+                    self.user_profile.nb_active_connexions)
+        self.notify_online_status("online")
         self.chats = Chat.objects.for_participants(self.user_profile)
         # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
@@ -68,22 +57,33 @@ class UserEventsConsumer(WebsocketConsumer):
                 f"chat_{chat.id}",
                 self.channel_name,
             )
-        self.accept()
-        async_to_sync(self.channel_layer.group_add)(
-            "online_users",
-            self.channel_name,
-        )
+            self.accept()
+            async_to_sync(self.channel_layer.group_add)(
+                "online_users",
+                self.channel_name,
+            )
 
-    def disconnect(self, close_code):
-        if hasattr(self, "user_profile"):
-            self.user.is_online = False
-            self.user.save()
-            if self.user_profile.nb_active_connexions > 0:
-                self.user_profile.nb_active_connexions -= 1
+        def disconnect(self, close_code):
+            logger.info(
+                "Disconnect method called with close_code: %s", close_code)
+            logger.info("User %s had %i active connexions SO I'LL CHECK THAT ANY DISCONNEXION DOES DECREMENT THIS NUMBER, AND NOT JUST WHEN THE USER DOES CLICK THE DISCONNECT BUTTON",
+                        self.user.username, self.user_profile.nb_active_connexions)
+            if hasattr(self, "user_profile"):
+                self.user.is_online = False
+                self.user.save()
+                self.user_profile.nb_active_connexions = 1
+                if self.user_profile.nb_active_connexions > 0:
+                    self.user_profile.nb_active_connexions -= 1
+                    self.user_profile.save()
+                logger.info("User %s had %i active connexions SO I'LL CHECK THAT ANY DISCONNEXION DOES DECREMENT THIS NUMBER, AND NOT JUST WHEN THE USER DOES CLICK THE DISCONNECT BUTTON",
+                            self.user.username, self.user_profile.nb_active_connexions)
             if self.user is None:
-                logger.warning("Trying to set user offline without user authenticated")
+                logger.warning(
+                    "Trying to set user offline without user authenticated")
             elif self.user.profile.nb_active_connexions == 0:
-                notify_online_status(self, "offline")
+                self.notify_online_status("offline")
+            logger.info("User %s had %i active connexions SO I'LL CHECK THAT ANY DISCONNEXION DOES DECREMENT THIS NUMBER, AND NOT JUST WHEN THE USER DOES CLICK THE DISCONNECT BUTTON",
+                        self.user.username, self.user_profile.nb_active_connexions)
 
             async_to_sync(self.channel_layer.group_discard)(
                 "online_users",
@@ -100,8 +100,6 @@ class UserEventsConsumer(WebsocketConsumer):
             "online_users",
             self.channel_name,
         )
-
-
 
     def add_user_to_room(self, chat_id):
         try:
@@ -129,14 +127,22 @@ class UserEventsConsumer(WebsocketConsumer):
             "data": event["data"],
         }))
 
-    async def send_user_status(self, action: str):
-        await self.send(text_data=json.dumps({
-            "action": action,
-            "data": {
-                "username": self.user.username,  # Doit être présent
-                "timestamp": timezone.now().isoformat(),
+    def notify_online_status(self, onlinestatus):
+        logger.info("function notify online status !")
+        action = "user_online" if onlinestatus == "online" else "user_offline"
+        async_to_sync(self.channel_layer.group_send)(
+            "online_users",
+            {
+                "type": "user_status",
+                "action": action,
+                "data": {
+                    "username": self.user.username,
+                    "channel_name": self.channel_name,
+                    "status": onlinestatus,
+                },
             },
-        }))
+        )
+
     # Receive message from WebSocket
 
     def receive(self, text_data):
