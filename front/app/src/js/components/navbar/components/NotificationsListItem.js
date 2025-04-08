@@ -3,11 +3,8 @@ import { getRelativeTime } from '@utils';
 
 export class NotificationsListItem extends HTMLElement {
   #state = {
-    type: '',
-    date: '',
-    nickname: '',
-    avatar: '',
-    content: {},
+    action: '',
+    data: null,
   };
 
   constructor() {
@@ -20,11 +17,8 @@ export class NotificationsListItem extends HTMLElement {
   }
 
   set data(data) {
-    this.#state.type = data.type;
-    this.#state.date = data.date;
-    this.#state.nickname = data.nickname;
-    this.#state.avatar = data.avatar;
-    this.#state.content = data.content;
+    this.#state.action = data.action;
+    this.#state.data = data.data;
     this.render();
   }
 
@@ -36,14 +30,14 @@ export class NotificationsListItem extends HTMLElement {
   render() {
     this.innerHTML = this.template();
 
-    this.querySelector('.notifications-list-avatar').src = this.#state.avatar;
-    this.querySelector('.notification-time').textContent = getRelativeTime(this.#state.date);
+    this.querySelector('.notifications-list-avatar').src = this.#state.data.avatar;
+    this.querySelector('.notification-time').textContent = getRelativeTime(this.#state.data.date);
 
     this.content = this.querySelector('.notification-content');
     this.buttonWrapper = this.querySelector('.call-to-action-groupe');
-    switch (this.#state.type) {
+    switch (this.#state.action) {
       case 'game_invite':
-        this.content.textContent = `${this.#state.nickname} challenges you to a duel.`;
+        this.content.textContent = `${this.#state.data.nickname} challenges you to a duel.`;
 
         this.acceptButton = document.createElement('button');
         this.acceptButton.textContent = 'Accept';
@@ -57,7 +51,7 @@ export class NotificationsListItem extends HTMLElement {
 
       case 'new_tournament':
         this.querySelector('.notification-content').textContent =
-          `${this.#state.nickname} is calling all gunslingers to a new tournament - ${this.#state.content.tournament_name}!`;
+          `${this.#state.data.nickname} is calling all gunslingers to a new tournament - ${this.#state.data.tournament_name}!`;
 
         this.participateButton = document.createElement('button');
         this.participateButton.textContent = 'Participate';
@@ -66,7 +60,7 @@ export class NotificationsListItem extends HTMLElement {
         break;
 
       case 'new_friend':
-        this.querySelector('.notification-content').textContent = `${this.#state.nickname} just roped you in as a friend.`;
+        this.querySelector('.notification-content').textContent = `${this.#state.data.nickname} just roped you in as a friend.`;
         this.seeProfileButton = document.createElement('button');
         this.seeProfileButton.textContent = 'See profile';
         this.seeProfileButton.addEventListener('click', this.handleSeeProfile);
@@ -93,9 +87,9 @@ export class NotificationsListItem extends HTMLElement {
 
   template() {
     return `
-	<li class="list-group-item dropdown-list-item px-2 pt-2">
+	<li class="list-group-item dropdown-list-item px-2 pt-4">
 	  <div class="d-flex flex-column">
-        <div class="d-flex flex-row justify-content-start align-items-center gap-4">
+        <div class="d-flex flex-row justify-content-start align-items-start gap-4">
           <div class="dropdown-list-avatar-container">
             <img class="notifications-list-avatar avatar-m rounded-circle" alt="Avatar"">
           </div>
@@ -104,7 +98,7 @@ export class NotificationsListItem extends HTMLElement {
             <p class="notification-time m-0"></P>
           </div>
 	    </div>
-      <div class="call-to-action-groupe d-flex flex-row justify-content-end align-items-center mt-1 gap-3"></div>
+      <div class="call-to-action-groupe d-flex flex-row justify-content-end align-items-center gap-3"></div>
 	  </div>
 	</li>
     `;
