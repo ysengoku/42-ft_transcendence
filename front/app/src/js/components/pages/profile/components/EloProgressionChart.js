@@ -45,7 +45,7 @@ export class UserEloProgressionChart extends HTMLElement {
       tooltip.setAttribute('y', item.y + 5);
       tooltip.setAttribute('text-anchor', 'end');
       tooltip.setAttribute('font-size', '10');
-      tooltip.setAttribute('fill', '#351901');
+      tooltip.setAttribute('fill', 'var(--pm-primary-700)');
       tooltip.setAttribute('visibility', 'hidden');
       tooltip.textContent = item.elo;
 
@@ -103,7 +103,7 @@ export class UserEloProgressionChart extends HTMLElement {
             <line x1="20" x2="270" y1="110" y2="110"></line> 
           </g>
           <g class="linechart-labels"></g>
-            <polyline points="${points}" fill="none" stroke="#613304" stroke-width="1" />
+            <polyline points="${points}" fill="none" stroke="var(--pm-primary-600)" stroke-width="1" />
 		      <g class="line-chart-marker"></g>
         </svg>
       </div>
@@ -120,7 +120,7 @@ export class UserEloProgressionChart extends HTMLElement {
       min-width: 240px;
     }
     .linechart-grid {
-      stroke: #351901;
+      stroke: var(--pm-primary-700);
       stroke-width: 1;
     }
     .linechart-labels {
@@ -128,7 +128,7 @@ export class UserEloProgressionChart extends HTMLElement {
       text-align: center;
     }
     .line-chart-marker circle {
-	    fill: #613304;
+	    fill: var(--pm-primary-600);
 	  }
     </style>
     `;
