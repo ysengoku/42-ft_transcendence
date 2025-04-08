@@ -63,20 +63,12 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.channel_name,
             )
 
-        def disconnect(self, close_code):
-            logger.info(
-                "Disconnect method called with close_code: %s", close_code)
-            logger.info("User %s had %i active connexions SO I'LL CHECK THAT ANY DISCONNEXION DOES DECREMENT THIS NUMBER, AND NOT JUST WHEN THE USER DOES CLICK THE DISCONNECT BUTTON",
-                        self.user.username, self.user_profile.nb_active_connexions)
-            if hasattr(self, "user_profile"):
-                self.user.is_online = False
-                self.user.save()
-                self.user_profile.nb_active_connexions = 1
-                if self.user_profile.nb_active_connexions > 0:
-                    self.user_profile.nb_active_connexions -= 1
-                    self.user_profile.save()
-                logger.info("User %s had %i active connexions SO I'LL CHECK THAT ANY DISCONNEXION DOES DECREMENT THIS NUMBER, AND NOT JUST WHEN THE USER DOES CLICK THE DISCONNECT BUTTON",
-                            self.user.username, self.user_profile.nb_active_connexions)
+    def disconnect(self, close_code):
+        if hasattr(self, "user_profile"):
+            self.user.is_online = False
+            self.user.save()
+            self.user_profile.nb_active_connexions -= 1
+
             if self.user is None:
                 logger.warning(
                     "Trying to set user offline without user authenticated")
