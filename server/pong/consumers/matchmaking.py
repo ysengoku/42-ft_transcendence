@@ -20,12 +20,6 @@ flowchart
 logger = logging.getLogger("server")
 
 
-class Stages:
-    WAITING = 0
-    CONFIRMATION_REQUIRED = 1
-    GAME_IS_READY = 2
-
-
 PLAYERS_REQUIRED = 2
 
 
@@ -37,7 +31,6 @@ class MatchmakingConsumer(WebsocketConsumer):
             self.close()
             return
         self.accept()
-        self.stage = Stages.WAITING
 
         self.game_room = GameRoom.objects.get_valid_game_room()
         if not self.game_room:
@@ -51,6 +44,8 @@ class MatchmakingConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
 
         if self.game_room.players.count() == PLAYERS_REQUIRED:
+            logger.info("[Matchmaking.connect]: game room {%s} both players were found")
+            self.game_room.close()
             async_to_sync(self.channel_layer.group_send)(self.group_name, {"type": "matchmaking.players_found"})
 
     def disconnect(self, code: int):
@@ -76,5 +71,4 @@ class MatchmakingConsumer(WebsocketConsumer):
                 self.close()
 
     def matchmaking_players_found(self, event):
-        self.stage = Stages.CONFIRMATION_REQUIRED
-        self.send(text_data=json.dumps({"action": "status_update"}))
+        self.send(text_data=json.dumps({"action": "game_found", "game_room_id": str(self.game_room.id)}))
