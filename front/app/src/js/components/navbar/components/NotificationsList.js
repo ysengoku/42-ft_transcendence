@@ -104,19 +104,17 @@ export class NotificationsList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   async fetchNotifications(read, limit, offset) {
-    // TODO: Replace by API request
-    const data = await mockNotificationsData();
-
-    // const response = await apiRequest(
-    //     'GET',
-    //     /* eslint-disable-next-line new-cap */
-    //     API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
-    //     null, false, true);
-    // if (response.success) {
-    //   return response.data;
-    // } else {
-    //   return null;
-    // }
+    // const data = await mockNotificationsData();
+    const response = await apiRequest(
+        'GET',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
+        null, false, true);
+    if (response.success) {
+      return response.data;
+    } else {
+      return null;
+    }
 
     return data;
   }
