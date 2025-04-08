@@ -10,6 +10,7 @@ export async function mockNotificationsData() {
         date: '2025-03-13T08:00:00Z',
         game_id: '100',
       },
+      is_read: false,
     },
     {
       id: 'angsfee456',
@@ -21,16 +22,18 @@ export async function mockNotificationsData() {
         tournament_id: '25',
         tournament_name: 'Peacemakers Cup',
       },
+      is_read: false,
     },
     {
       id: 'aggehs135',
       action: 'new_friend',
       data: {
-        username: 'perdo',
-        nickname: 'Pedro',
+        username: 'perdo1',
+        nickname: 'Pedro1',
         avatar: '/__mock__/img/sample-pic3.png',
         date: '2025-03-04T08:25:00Z',
       },
+      is_read: false,
     },
     {
       id: 'aggehs135',
@@ -42,6 +45,7 @@ export async function mockNotificationsData() {
         date: '2025-03-13T08:00:00Z',
         game_id: '100',
       },
+      is_read: false,
     },
     {
       id: 'angsfee456',
@@ -53,16 +57,18 @@ export async function mockNotificationsData() {
         tournament_id: '25',
         tournament_name: 'Peacemakers Cup',
       },
+      is_read: false,
     },
     {
       id: 'aggehs135',
       action: 'new_friend',
       data: {
-        username: 'perdo',
-        nickname: 'Pedro',
+        username: 'perdo2',
+        nickname: 'Pedro2',
         avatar: '/__mock__/img/sample-pic3.png',
         date: '2025-03-04T08:25:00Z',
       },
+      is_read: false,
     },
   ];
 

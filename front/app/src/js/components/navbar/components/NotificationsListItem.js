@@ -25,6 +25,8 @@ export class NotificationsListItem extends HTMLElement {
   disconnectedCallback() {
     this.acceptButton?.removeEventListener('click', this.handleAcceptDuel);
     this.declineButton?.removeEventListener('click', this.handleDeclineDuel);
+    this.participateButton?.removeEventListener('click', this.handleParticipateTournament);
+    this.seeProfileButton?.removeEventListener('click', this.handleSeeProfile);
   }
 
   render() {
