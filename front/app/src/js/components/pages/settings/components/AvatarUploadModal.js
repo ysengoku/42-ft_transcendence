@@ -109,7 +109,7 @@ export class AvatarUploadModal extends HTMLElement {
 					</div>
 
 					<div class="modal-footer">
-        		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancel-avatar-upload">Cancel</button>
+        		<button type="button" class="btn" data-bs-dismiss="modal" id="cancel-avatar-upload">Cancel</button>
         		<button type="button" class="btn btn-wood" id="confirm-avatar-button">Confirm</button>
       		</div>
 				</div>
