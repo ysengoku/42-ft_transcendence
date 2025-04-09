@@ -210,11 +210,11 @@ router.addRoute('/settings', 'user-settings');
 router.addRoute('/account-deleted', 'account-deleted');
 router.addRoute('/chat', 'chat-page');
 router.addRoute('/duel-menu', 'duel-menu');
-// router.addRoute('/duel/:id', 'duel', true);
-router.addRoute('/duel-result', 'duel-result', true);
+router.addRoute('/duel/:id', 'duel-component', true);
+// router.addRoute('/duel-result', 'duel-result', true);
 router.addRoute('/tournament-menu', 'tournament-menu');
 // router.addRoute('/tournament/:id', 'tournament', true);
-router.addRoute('/multiplayer-game', 'multiplayer-game', false, true);
+router.addRoute('/multiplayer-game/:id', 'multiplayer-game', true);
 router.addRoute('/singleplayer-game', 'singleplayer-game', false, true);
 router.addRoute('/error', 'error-page');
 

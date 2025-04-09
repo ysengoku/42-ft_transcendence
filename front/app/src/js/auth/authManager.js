@@ -98,7 +98,7 @@ const auth = (() => {
             case 401:
               return { success: false, status: 401 };
             case 500:
-              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR, 3000);
+              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
               break;
             default:
               showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
