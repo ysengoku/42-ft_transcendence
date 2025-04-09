@@ -17,7 +17,7 @@ export class Duel extends HTMLElement {
   constructor() {
     super();
 
-    this.cancelDuel = this.cacnelDuel.bind(this);
+    this.cancelDuel = this.cancelDuel.bind(this);
     this.startDuel = this.startDuel.bind(this);
     // this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
     this.navigateToHome = this.navigateToHome.bind(this);
