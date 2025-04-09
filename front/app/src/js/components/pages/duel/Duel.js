@@ -4,19 +4,22 @@ import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 
+import { mockDuelBeforeData } from '@mock/functions/mockDuelData.js';
+
 export class Duel extends HTMLElement {
   #state = {
     loggedInUser: null,
     gameId: '',
     duelData: null,
-    status: '', // waiting, start, playing, finished, canceled
+    status: '', // wait_opponent, ready_to_start, playing, finished, canceled, wait_matchmaking
   };
 
   constructor() {
     super();
 
-    this.cacelDuel = this.cacelDuel.bind(this);
+    this.cancelDuel = this.cacnelDuel.bind(this);
     this.startDuel = this.startDuel.bind(this);
+    // this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
     this.navigateToHome = this.navigateToHome.bind(this);
     this.navigateToProfile = this.navigateToProfile.bind(this);
   }
@@ -30,7 +33,7 @@ export class Duel extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.cancelButton?.removeEventListener('click', this.cacelDuel);
+    this.cancelButton?.removeEventListener('click', this.cancelDuel);
     this.startButton?.removeEventListener('click', this.startDuel);
     this.goToHomeButton?.removeEventListener('click', this.navigateToHome);
     this.goToProfileButton?.removeEventListener('click', this.navigateToProfile);
@@ -43,18 +46,17 @@ export class Duel extends HTMLElement {
       if (response.success) {
         this.#state.loggedInUser = response.data;
       } else if (response.status === 401) {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED);
-        router.navigateTo('/login');
+        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+        router.navigate('/login');
       }
     }
   }
 
   async fetchDuelData() {
     // For Test
-    // this.#state.status = 'waiting';
-    this.#state.status = 'start';
-    // this.#state.status = 'finished';
-    // this.#state.status = 'canceled';
+    this.#state.duelData = await mockDuelBeforeData();
+
+    this.#state.status = this.#state.duelData.status;
   }
 
   render() {
@@ -66,7 +68,7 @@ export class Duel extends HTMLElement {
 
     this.header.textContent = this.headerTemplate();
     if (this.#state.status === 'waiting' || this.#state.status === 'start' || this.#state.status === 'canceled') {
-      const contentElement = document.createElement('duel-summary');
+      const contentElement = document.createElement('duel-preview');
       contentElement.data = this.#state.duelData;
       this.content.appendChild(contentElement);
     } else if (this.#state.status === 'finished') {
@@ -98,9 +100,12 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
-  cacelDuel() {}
+  cancelDuel() {}
 
   startDuel() {}
+
+  // cancelMatchmaking() {
+  // }
 
   navigateToHome() {
     router.navigate('/home');
@@ -117,7 +122,7 @@ export class Duel extends HTMLElement {
     return `
     <div class="row justify-content-center m-2">
       <div class="form-container col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 d-flex flex-column justify-content-center align-items-center p-4">
-        <h2 class="my-2" id="duel-header"></h2>
+        <p class="fs-4 my-2" id="duel-header"></p>
         <div id="duel-content"></div>
         <div class="my-2" id="duel-user-actions"></div>
       </div>
