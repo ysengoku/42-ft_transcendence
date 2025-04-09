@@ -104,7 +104,6 @@ export class NotificationsList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   async fetchNotifications(read, limit, offset) {
-    // const data = await mockNotificationsData();
     const response = await apiRequest(
         'GET',
         /* eslint-disable-next-line new-cap */
@@ -115,8 +114,8 @@ export class NotificationsList extends HTMLElement {
     } else {
       return null;
     }
-
-    return data;
+    // const data = await mockNotificationsData();
+    // return data;
   }
 
   async toggleTab(event) {
