@@ -2,7 +2,7 @@ from random import choice, randint
 
 from django.core.management.base import BaseCommand
 
-from chat.models import Chat, ChatMessage
+from chat.models import Chat, ChatMessage, Notification
 from users.models import Match, OauthConnection, Profile, User
 
 
@@ -294,5 +294,12 @@ Keep soaring high, superstar!""",
                 for _ in range(10):
                     random_message_content = choice(chat_messages_content)  # noqa: S311
                     ChatMessage.objects.create(content=random_message_content, sender=profile, chat=chat)
+            for _ in range(15):
+                sender = choice_except(profiles, profile)
+                if sender:
+                    notification = Notification.objects.action_new_friend(receiver=profile, sender=sender)
+                    if randint(0, 1):
+                        notification.is_read = True
+                        notification.save()
 
         print("\033[92mDB was successefully populated!\033[0m")  # noqa: T201
