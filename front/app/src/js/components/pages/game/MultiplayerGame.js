@@ -16,12 +16,13 @@ export class MultiplayerGame extends HTMLElement {
     super();
   }
 
-  connectedCallback() {
-    this.render();
-  }
-
   setParam(param) {
-    this.#state.gameId = param;
+    if (!param.id) {
+      const notFound = document.createElement('page-not-found');
+      this.innerHTML = notFound.outerHTML;
+      return;
+    }
+    this.#state.gameId = param.id;
     this.render();
   }
 
