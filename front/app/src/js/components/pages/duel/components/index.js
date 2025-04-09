@@ -1,4 +1,4 @@
-import { DuelSummary } from './DuelSummary';
-import { DuelSummaryFinished } from './DuelSummaryFinished';
+import { DuelPreview } from './DuelPreview';
+import { DuelResult } from './DuelResult';
 
-export { DuelSummary, DuelSummaryFinished };
+export { DuelPreview, DuelResult };
