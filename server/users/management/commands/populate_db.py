@@ -19,13 +19,14 @@ def choice_except(seq, value):
 class Command(BaseCommand):
     help = "Populates db with a dummy data"
 
-    def handle(self, **kwargs) -> None:
+    def handle(self, **kwargs) -> None:  # noqa: PLR0915
         User.objects.all().delete()
         Profile.objects.all().delete()
         Match.objects.all().delete()
         OauthConnection.objects.all().delete()
         Chat.objects.all().delete()
         ChatMessage.objects.all().delete()
+        Notification.objects.all().delete()
 
         life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123").profile
         yuko = User.objects.create_user("Yuko", email="yuko@gmail.com", password="123").profile
@@ -298,7 +299,7 @@ Keep soaring high, superstar!""",
                 sender = choice_except(profiles, profile)
                 if sender:
                     notification = Notification.objects.action_new_friend(receiver=profile, sender=sender)
-                    if randint(0, 1):
+                    if randint(0, 1):  # noqa: S311
                         notification.is_read = True
                         notification.save()
 
