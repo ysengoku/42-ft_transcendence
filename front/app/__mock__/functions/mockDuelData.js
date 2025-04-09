@@ -5,14 +5,14 @@ export function mockDuelBeforeData() {
     player1: {
       username: 'Pedro',
       nickname: 'Pedro',
-      avatar: '/img/default-avatar.png',
+      avatar: '/img/default_avatar.png',
       elo: 1480,
       is_online: true,
     },
     player2: {
       username: 'Alice',
       nickname: 'Alice',
-      avatar: '/img/default-avatar.png',
+      avatar: '/img/default_avatar.png',
       elo: 1500,
       is_online: true,
     },
