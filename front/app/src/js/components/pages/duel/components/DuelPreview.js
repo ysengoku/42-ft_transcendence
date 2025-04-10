@@ -69,7 +69,7 @@ export class DuelPreview extends HTMLElement {
   userProfileTemplate() {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center my-4 p-4" id="duel-player1">
-      <img class="player-avatar" alt="palyer" class="img-fluid rounded-circle">
+      <img class="player-avatar avatar-xl img-fluid rounded-circle" alt="palyer">
       <p class="player-nickname m-0 mt-1 fs-4 fw-bold"></p>
       <p class="player-username m-0"></p>
       <span class="player-elo badge mt-3 p-2"></span> 
@@ -79,15 +79,8 @@ export class DuelPreview extends HTMLElement {
   style() {
     return `
     <style>
-    .player-avatar {
-      width: 120px;
-      aspect-ratio: 1;
-      object-fit: cover;
-      border-radius: 50%;
-      background-color: grey;
-    }
     .badge {
-      background-color: var(--pm-primary-700);
+      background-color: var(--pm-primary-600);
     }
     </style>
 	`;

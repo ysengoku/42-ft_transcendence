@@ -164,11 +164,31 @@ h2, h3, h4, h5, h6, legend {
   font-size: 12px;
 }
 
+.avatar-xs,
+.avatar-s,
+.avatar-m,
+.avatar-l,
+.avatar-xl {
+  object-fit: cover;
+  aspect-ratio: 1;
+  background-color: var(--pm-gray-500-rgb);
+}
+.avatar-xs {
+  width: 36px;
+}
+.avatar-s {
+  width: 40px;
+}
 .avatar-m {
   width: 56px;
-  height: 56px;
-  object-fit: cover;
 }
+.avatar-l {
+  width: 88px;
+}
+.avatar-xl {
+  width: 120px;
+}
+
 .online-status {
   width: 16px;
   height: 16px;

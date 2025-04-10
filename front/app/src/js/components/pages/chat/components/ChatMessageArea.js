@@ -400,12 +400,6 @@ export class ChatMessageArea extends HTMLElement {
         background-color: var(--pm-primary-600);
         color: white;
       }
-      .chat-message-avatar {
-        width: 36px;
-        height: 36px;
-        object-fit: cover;
-        border-radius: 50%;
-      }
       .bi-heart-fill {
         position: absolute;
         bottom: -20px;
@@ -421,7 +415,7 @@ export class ChatMessageArea extends HTMLElement {
 
   messageTemplate() {
     return `
-    <img class="chat-message-avatar rounded-circle" alt="User" />
+    <img class="chat-message-avatar avatar-xs rounded-circle" alt="User" />
     <div class="message" data-bs-toggle="tooltip">
       <div class="bubble">
         <div class="message-content"></div>
