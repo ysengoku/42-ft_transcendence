@@ -122,8 +122,8 @@ export class AvatarUploadModal extends HTMLElement {
     return `
     <style>
       .avatar-preview-container {
-        width: 70%;
-        max-width: 300px;
+        width: 64%;
+        max-width: 240px;
         margin: 0 auto;
         position: relative; 
       }
@@ -133,7 +133,6 @@ export class AvatarUploadModal extends HTMLElement {
         border-radius: 50%;
         overflow: hidden;
         position: relative;
-        /* background: rgba(255, 255, 255, 0.5); */
       }
       .avatar-preview {
         width: 100%;
