@@ -32,6 +32,7 @@ def get_user_data(self):
 
 
 def check_inactive_users():
+    logger.info("Checking for inactive users")
     threshold = timezone.now() - timedelta(minutes=5)
 
     # Utiliser Q pour combiner les conditions avec OR
