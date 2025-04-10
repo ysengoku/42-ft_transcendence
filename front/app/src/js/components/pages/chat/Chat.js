@@ -65,6 +65,8 @@ export class Chat extends HTMLElement {
       router.navigate('/login');
       return;
     }
+    // Remove the unread messages badge from the navbar
+    document.getElementById('navbar-chat-badge')?.classList.add('d-none');
     this.render();
     // Fetch and set data for the chat list component
     const chatListData = await this.fetchChatList();

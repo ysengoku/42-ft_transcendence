@@ -19,15 +19,12 @@ export class UserGameResultModal extends HTMLElement {
   }
 
   render() {
-    console.log(this.#state.type);
     this.innerHTML = this.template() + this.style();
     this.modal = new bootstrap.Modal(this.querySelector('.modal'));
 
     const modalBody = this.querySelector('.modal-body');
     const content = document.createElement(`${this.#state.type}-result`);
     modalBody.innerHTML = content.outerHTML;
-    modalBody.querySelector('h1').remove();
-    modalBody.querySelector('.btn-container').remove();
   }
 
   template() {
@@ -48,9 +45,12 @@ export class UserGameResultModal extends HTMLElement {
   style() {
     return `
     <style>
-      .modal-header {
-        border-bottom: none;
-      }
+    .modal {
+      top: 16%;
+    }
+    .modal-header {
+      border-bottom: none;
+    }
     </style>
     `;
   }

@@ -24,4 +24,5 @@ export const API_ENDPOINTS = {
   CHAT_LIST: (limit, offset) => `${API_BASE_URL}chats?&limit=${limit}&offset=${offset}`,
   CHAT: (username) => `${API_BASE_URL}chats/${username}`,
   CHAT_MESSAGES: (username, limit, offset) => `${API_BASE_URL}chats/${username}/messages?limit=${limit}&offset=${offset}`,
+  NOTIFICATIONS: (isread, limit, offset) => `${API_BASE_URL}notifications?is_read=${isread}&limit=${limit}&offset=${offset}`,
 };

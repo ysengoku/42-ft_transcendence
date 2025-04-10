@@ -1,5 +1,4 @@
 import { router } from '@router';
-import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { isFieldFilled, removeInputFeedback, INPUT_FEEDBACK, showFormErrorFeedback } from '@utils';
 
@@ -56,12 +55,6 @@ export class LoginForm extends HTMLElement {
           sessionStorage.setItem('username', response.data.username);
           router.navigate('/mfa-verification', response.data);
         } else {
-          const userInformation = {
-            username: response.data.username,
-            nickname: response.data.nickname,
-            avatar: response.data.avatar,
-          };
-          auth.storeUser(userInformation);
           router.navigate(`/home`, response.user);
         }
       }

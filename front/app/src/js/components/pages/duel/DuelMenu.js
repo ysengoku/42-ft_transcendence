@@ -16,7 +16,7 @@ export class DuelMenu extends HTMLElement {
     currentListLength: 0,
     searchTimeout: null,
     isLoading: false,
-  }
+  };
 
   constructor() {
     super();
@@ -119,7 +119,7 @@ export class DuelMenu extends HTMLElement {
     event.preventDefault();
     event.stopPropagation();
     clearTimeout(this.#usersearch.searchTimeout);
-    this.#usersearch.searchTimeout = setTimeout( async() => {
+    this.#usersearch.searchTimeout = setTimeout( async () => {
       this.#usersearch.list = [];
       this.#usersearch.totalUsersCount = 0;
       this.#usersearch.currentListLength = 0;
@@ -136,12 +136,12 @@ export class DuelMenu extends HTMLElement {
 
   async searchUser() {
     const response = await apiRequest(
-      'GET',
-      /* eslint-disable-next-line new-cap */
-      API_ENDPOINTS.USER_SEARCH(this.#usersearch.searchQuery, 10, this.#usersearch.currentListLength),
-      null,
-      false,
-      true,
+        'GET',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.USER_SEARCH(this.#usersearch.searchQuery, 10, this.#usersearch.currentListLength),
+        null,
+        false,
+        true,
     );
     if (response.success && response.data) {
       if (response.data.count === 0) {
@@ -173,12 +173,12 @@ export class DuelMenu extends HTMLElement {
     const nickname = selectedUser.querySelector('.duel-usersearch-nickname').textContent;
     const username = selectedUser.querySelector('.duel-usersearch-username').textContent;
     const elo = selectedUser.querySelector('.duel-usersearch-elo').textContent;
-    
+
     this.opponentAvatar.src = avatar;
     this.opponentNickname.textContent = nickname;
     this.opponentUsername.textContent = username;
     this.opponentElo.textContent = elo;
-    
+
     const onlineStatusIndicator = selectedUser.querySelector('.duel-usersearch-status-indicator');
     const online = onlineStatusIndicator.classList.contains('online');
     online ?
