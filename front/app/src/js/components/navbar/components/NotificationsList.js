@@ -1,9 +1,10 @@
+import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
 import { mockNotificationsData } from '@mock/functions/mockNotificationsData';
 
 export class NotificationsList extends HTMLElement {
   #state = {
-    currentTab: 'unread',
+    currentTab: 'all',
     isLoading: false,
   };
 
@@ -13,7 +14,7 @@ export class NotificationsList extends HTMLElement {
     listLength: 0,
   };
 
-  #read = {
+  #all = {
     notifications: [],
     totalCount: 0,
     listLength: 0,
@@ -22,22 +23,27 @@ export class NotificationsList extends HTMLElement {
   constructor() {
     super();
 
-    this.fetchNotifications = this.fetchNotifications.bind(this);
+    this.renderList = this.renderList.bind(this);
     this.loadMoreNotifications = this.loadMoreNotifications.bind(this);
-    this.clearList = this.clearList.bind(this);
     this.toggleTab = this.toggleTab.bind(this);
+    this.readNotification = this.readNotification.bind(this);
+    this.markAllAsRead = this.markAllAsRead.bind(this);
+    this.preventListClose = this.preventListClose.bind(this);
+    this.resetList = this.resetList.bind(this);
   }
 
   connectedCallback() {
-    this.render(true);
+    this.render();
   }
 
   disconnectedCallback() {
-    this.button?.removeEventListener('shown.bs.dropdown', this.fetchNotifications);
+    this.button?.removeEventListener('shown.bs.dropdown', this.renderList);
+    this.button?.removeEventListener('hidden.bs.dropdown', this.resetList);
     this.dropdown?.removeEventListener('scrollend', this.loadMoreNotifications);
-    this.button?.removeEventListener('hidden.bs.dropdown', this.clearList);
+    this.dropdown?.removeEventListener('click', this.preventListClose);
     this.unreadTab?.removeEventListener('click', this.toggleTab);
-    this.readTab?.removeEventListener('click', this.toggleTab);
+    this.allTab?.removeEventListener('click', this.toggleTab);
+    this.markAllAsReadButton?.removeEventListener('click', this.markAllAsRead);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -50,36 +56,30 @@ export class NotificationsList extends HTMLElement {
     this.button = document.getElementById('navbar-notifications-button');
     this.dropdown = document.getElementById('notifications-dropdown');
     this.list = this.querySelector('#notifications-list');
+    this.allTab = this.querySelector('#all-notifications-tab');
     this.unreadTab = this.querySelector('#unread-notifications-tab');
-    this.readTab = this.querySelector('#read-notifications-tab');
+    this.markAllAsReadButton = this.querySelector('#mark-all-as-read');
 
     this.dropdown?.addEventListener('scrollend', this.loadMoreNotifications);
-    this.button?.addEventListener('shown.bs.dropdown', this.fetchNotifications);
-    this.button?.addEventListener('hidden.bs.dropdown', this.clearList);
+    this.dropdown?.addEventListener('click', this.preventListClose);
+    this.button?.addEventListener('shown.bs.dropdown', this.renderList);
+    this.button?.addEventListener('hidden.bs.dropdown', this.resetList);
+    this.allTab?.addEventListener('click', this.toggleTab);
     this.unreadTab?.addEventListener('click', this.toggleTab);
-    this.readTab?.addEventListener('click', this.toggleTab);
+    this.markAllAsReadButton?.addEventListener('click', this.markAllAsRead);
   }
 
-  async fetchNotifications(unread = this.#state.currentTab === 'unread') {
-    const notificationButton = document.querySelector('notifications-button');
-    notificationButton?.querySelector('.notification-badge')?.classList.add('d-none');
+  async renderList() {
+    this.button?.querySelector('.notification-badge')?.classList.add('d-none');
 
-    // TODO: Replace by API request
-    const data = await mockNotificationsData();
-
-    unread ? (
-      this.#unread.totalCount = data.count,
-      this.#unread.notifications.push(...data.items)
-    ): (
-      this.#read.totalCount = data.count,
-      this.#read.notifications.push(...data.items)
-    );
-    this.renderList(unread);
-  }
-
-  renderList(unread) {
-    const listData = unread ? this.#unread : this.#read;
-
+    const read = this.#state.currentTab === 'unread' ? false : true;
+    const listData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
+    const data = await this.fetchNotifications(read, 10, listData.listLength);
+    if (!data) {
+      return;
+    }
+    listData.totalCount = data.count;
+    listData.notifications.push(...data.items);
     if (listData.notifications.length === 0) {
       this.list.innerHTML = this.noNotificationTemplate();
     }
@@ -89,24 +89,34 @@ export class NotificationsList extends HTMLElement {
       if (i === 0) {
         item.querySelector('.dropdown-list-item').classList.add('border-top-0');
       }
+      if (!listData.notifications[i].is_read) {
+        item.addEventListener('click', this.readNotification);
+        item.id = `notification-${listData.notifications[i].id}`;
+        item.classList.add('unread');
+      }
       this.list.appendChild(item);
       listData.listLength++;
-      // if (unread) {
-      //   const message = {
-      //     action: 'read_notification',
-      //     id: listData.notifications[i].id,
-      //   };
-      //   socketManager.socket.send(JSON.stringify(message));
-      // }
     }
-    unread ?
-      this.#unread.listLength = listData.listLength :
-      this.#read.listLength = listData.listLength;
   }
 
   /* ------------------------------------------------------------------------ */
   /*     Event handlers                                                       */
   /* ------------------------------------------------------------------------ */
+
+  async fetchNotifications(read, limit, offset) {
+    const response = await apiRequest(
+        'GET',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
+        null, false, true);
+    if (response.success) {
+      return response.data;
+    } else {
+      return null;
+    }
+    // const data = await mockNotificationsData();
+    // return data;
+  }
 
   async toggleTab(event) {
     event.preventDefault();
@@ -114,19 +124,19 @@ export class NotificationsList extends HTMLElement {
     if (this.#state.isLoading) {
       return;
     }
-    const clickedTab = event.target.id === 'unread-notifications-tab' ? 'unread' : 'read';
+    const clickedTab = event.target.id === 'unread-notifications-tab' ? 'unread' : 'all';
     if (clickedTab !== this.#state.currentTab) {
       this.#state.currentTab = clickedTab;
       this.clearList();
       if (clickedTab === 'unread') {
         this.unreadTab.classList.add('active');
-        this.readTab.classList.remove('active');
+        this.allTab.classList.remove('active');
       } else {
-        this.readTab.classList.add('active');
+        this.allTab.classList.add('active');
         this.unreadTab.classList.remove('active');
       }
       this.#state.isLoading = true;
-      await this.fetchNotifications();
+      await this.renderList();
       this.#state.isLoading = false;
     }
   };
@@ -134,25 +144,91 @@ export class NotificationsList extends HTMLElement {
   async loadMoreNotifications(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    const totalCount = this.#state.currentTab === 'unread' ? this.#unread.totalCount : this.#read.totalCount;
-    const listLength = this.#state.currentTab === 'unread' ? this.#unread.listLength : this.#read.listLength;
+    const totalCount = this.#state.currentTab === 'unread' ? this.#unread.totalCount : this.#all.totalCount;
+    const listLength = this.#state.currentTab === 'unread' ? this.#unread.listLength : this.#all.listLength;
     if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold || totalCount <= listLength ||
       this.#state.isLoading) {
       return;
     }
     this.#state.isLoading = true;
-    await this.fetchNotifications();
+    await this.renderList();
     this.#state.isLoading = false;
   }
 
+  readNotification(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const element = event.target.closest('notifications-list-element');
+    if (element.classList.contains('unread')) {
+      const notificationId = element.id.split('-')[1];
+      const message = {
+        action: 'read_notification',
+        id: notificationId,
+      };
+      socketManager.socket.send(JSON.stringify(message));
+      element.removeEventListener('click', this.readNotification);
+      element.classList.remove('unread');
+      const currentList = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
+      const currentItem = currentList.notifications.find((notification) => notification.id === element.id);
+      if (currentItem) {
+        currentItem.is_read = true;
+      }
+    }
+  }
+
+  async markAllAsRead(event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    let listLength = 0;
+    let totalCount = 0;
+    const unreadList = [];
+    do {
+      const list = await this.fetchNotifications(false, 10, listLength);
+      if (!list) {
+        return;
+      }
+      unreadList.push(...list.items);
+      listLength += list.items.length;
+      totalCount = list.count;
+    } while (listLength < totalCount);
+    console.log('unreadList', unreadList);
+    unreadList.forEach((item) => {
+      const message = {
+        action: 'read_notification',
+        id: item.id,
+      };
+      socketManager.socket.send(JSON.stringify(message));
+    });
+    this.#state.isLoading = true;
+    await this.renderList();
+    this.#state.isLoading = false;
+  }
+
+  preventListClose(event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
   clearList() {
+    const listItems = this.querySelectorAll('notifications-list-item');
+    listItems.forEach((item) => {
+      item.removeEventListener('click', this.readNotification);
+    });
     this.list.innerHTML = '';
     this.#unread.notifications = [];
     this.#unread.listLength = 0;
     this.#unread.totalCount = 0;
-    this.#read.notifications = [];
-    this.#read.listLength = 0;
-    this.#read.totalCount = 0;
+    this.#all.notifications = [];
+    this.#all.listLength = 0;
+    this.#all.totalCount = 0;
+  }
+
+  resetList() {
+    this.allTab.classList.add('active');
+    this.unreadTab.classList.remove('active');
+    this.#state.currentTab = 'all';
+    this.clearList();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -164,13 +240,16 @@ export class NotificationsList extends HTMLElement {
     <div class="notifications-wrapper d-flex flex-column justify-content-start border-0 px-2">
       <div class="pt-4 pb-2 dropdown-list-header border-0" sticky>
         <h6>Notifications</h6>
-        <ul class="nav nav-tabs card-header-tabs border-0">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="true" id="unread-notifications-tab">Unread</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" id="read-notifications-tab">Read</a>
-          </li>
+        <ul class="d-flex justify-content-between nav nav-tabs card-header-tabs border-0">
+          <div class="d-flex">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="true" id="all-notifications-tab">All</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="unread-notifications-tab">Unread(5)</a>
+            </li>
+          </div>
+          <button class="btn" id="mark-all-as-read">Mark all as read</button>
         </ul>
       </div>
 
