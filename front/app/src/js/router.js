@@ -210,7 +210,8 @@ router.addRoute('/settings', 'user-settings');
 router.addRoute('/account-deleted', 'account-deleted');
 router.addRoute('/chat', 'chat-page');
 router.addRoute('/duel-menu', 'duel-menu');
-router.addRoute('/duel/:id', 'duel-component', true);
+router.addRoute('/duel', 'duel-page');
+router.addRoute('/duel-result/:id', 'duel-result', true);
 router.addRoute('/tournament-menu', 'tournament-menu');
 // router.addRoute('/tournament/:id', 'tournament', true);
 router.addRoute('/multiplayer-game/:id', 'multiplayer-game', true);
@@ -225,13 +226,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.documentElement.getAttribute('data-bs-theme') === 'light' ? (
     document.getElementById('stars') ? document.body.removeChild(stars) : null,
     document.body.style.backgroundImage = `linear-gradient(rgba(170,79,236, 0.8) 0%, rgba(236,79,84, 0.8) 50%, rgba(236,79,84, 0.8) 100%)`,
-
-    createClouds()
-  ) : (
+      createClouds()) : (
     document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
     document.body.style.backgroundImage = `linear-gradient(rgb(23, 18, 40) 0%, rgb(62, 52, 97) 16%, rgb(95, 83, 138) 40%, #6670A2 100%)`,
-    createStars()
-  );
+    createStars());
 
   await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');
