@@ -33,3 +33,12 @@ def set_offline(request):
 def get_chats(request: HttpRequest):
     profile = request.auth.profile
     return Chat.objects.get_user_chats(profile)
+
+from django.http import JsonResponse
+from chat.consumers import check_inactive_users  # Importez votre fonction existante
+
+def check_inactive_users_view(request):
+    if request.method == "POST":
+        check_inactive_users()  # Exécutez la logique pour vérifier les utilisateurs inactifs
+        return JsonResponse({"status": "success", "message": "Inactive users checked."})
+    return JsonResponse({"status": "error", "message": "Invalid request method."}, status=400)

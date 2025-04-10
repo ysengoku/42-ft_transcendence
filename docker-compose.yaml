@@ -57,12 +57,12 @@ services:
     tty: true
 
   crontab:
+    container_name: crontab
     build:
-      context: .
-      dockerfile: crontab/Dockerfile
+      context: ./crontab
+      dockerfile: Dockerfile
     depends_on:
       - server
-      - database
     networks:
       - transcendance_network
 
