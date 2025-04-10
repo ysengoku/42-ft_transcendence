@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
@@ -194,14 +195,29 @@ export class DuelMenu extends HTMLElement {
     this.searchInput.value = '';
 
     this.#state.opponentUsername = username;
+    this.inviteButton.classList.remove('disabled');
   }
 
   async inviteToDuel(event) {
     event.preventDefault();
+    if (!this.#state.opponentUsername) {
+      const errorMessage = 'Opponent not selected';
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 5000);
+      return;
+    }
+    const queryParams = {
+      status: 'inviting',
+      username: this.#state.opponentUsername,
+      nickname: this.opponentNickname.textContent,
+      avatar: this.opponentAvatar.src,
+      elo: this.opponentElo.textContent,
+    };
+    router.navigate('/duel', queryParams);
   }
 
   async requestMatchMaking(event) {
     event.preventDefault();
+    router.navigate('/duel', { status: 'matchmaking' });
   }
 
   hideUserList(event) {
@@ -247,7 +263,7 @@ export class DuelMenu extends HTMLElement {
                   </div>
                 </div>
 
-                <button type="submit" id="invite-button" class="btn btn-wood btn-lg w-100">Send a challenge</button>
+                <button type="submit" id="invite-button" class="btn btn-wood btn-lg w-100 disabled">Send a challenge</button>
 
                 <div class="d-flex align-items-center w-100 w-100 my-2 py-3">
                   <hr class="flex-grow-1">
