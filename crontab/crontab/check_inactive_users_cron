@@ -1,1 +1,1 @@
-*/5 * * * * /usr/local/bin/python /app/manage.py check_inactive_users >> /var/log/cron.log 2>&1
+*/5 * * * * curl -X POST https://server:8000/api/check-inactive-users/ >> /var/log/cron.log 2>&1
