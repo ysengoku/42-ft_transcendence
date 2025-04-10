@@ -11,7 +11,7 @@ import { Settings } from './settings/Settings.js';
 import { AccountDeleted } from './settings/AccountDeleted.js';
 import { Chat } from './chat/Chat.js';
 import { DuelMenu } from './duel/DuelMenu.js';
-import { DuelResult } from './duel/DuelResult.js';
+import { Duel } from './duel/Duel.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
 import { TournamentResult } from './tournament/TournamentResult.js';
 import { Game } from './game/Game.js';
@@ -33,7 +33,7 @@ export {
   AccountDeleted,
   Chat,
   DuelMenu,
-  DuelResult,
+  Duel,
   TournamentMenu,
   TournamentResult,
   Game,
