@@ -14,7 +14,7 @@ export class FriendsList extends HTMLElement {
   constructor() {
     super();
     this.fetchFriendsData = this.fetchFriendsData.bind(this);
-    this.handleModalClose = this.handleModalClose.bind(this);
+    this.handleDropdownClose = this.handleDropdownClose.bind(this);
     this.showMoreFriends = this.showMoreFriends.bind(this);
   }
 
@@ -24,7 +24,7 @@ export class FriendsList extends HTMLElement {
 
   disconnectedCallback() {
     this.button?.removeEventListener('shown.bs.dropdown', this.fetchFriendsData);
-    this.button?.removeEventListener('hidden.bs.dropdown', this.handleModalClose);
+    this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownClose);
     this.dropdown?.removeEventListener('scrollend', this.showMoreFriends);
   }
 
@@ -36,7 +36,7 @@ export class FriendsList extends HTMLElement {
     this.listContainer = this.querySelector('#friends-list');
 
     this.button?.addEventListener('shown.bs.dropdown', this.fetchFriendsData);
-    this.button?.addEventListener('hidden.bs.dropdown', this.handleModalClose);
+    this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownClose);
     this.dropdown?.addEventListener('scrollend', this.showMoreFriends);
 
     this.dropdownMobile = document.getElementById('dropdown-friends-list');
@@ -94,7 +94,7 @@ export class FriendsList extends HTMLElement {
     this.listContainer.appendChild(noFriends);
   }
 
-  handleModalClose() {
+  handleDropdownClose() {
     this.#state.friendsList = [];
     this.#state.totalFriendsCount = 0;
     this.listContainer.innerHTML = '';

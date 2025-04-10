@@ -9,15 +9,13 @@ export class Navbar extends HTMLElement {
 
   constructor() {
     super();
-    this.loginStatusHandler = this.updateNavbar.bind(this);
+    this.updateNavbar = this.updateNavbar.bind(this);
   }
 
-  async connectedCallback() {
-    document.addEventListener('userStatusChange', this.loginStatusHandler);
-    this.#state.user = await auth.getStoredUser();
+  connectedCallback() {
+    document.addEventListener('userStatusChange', this.updateNavbar);
+    this.#state.user = auth.getStoredUser();
     this.#state.isLoggedin = this.#state.user ? true : false;
-    if (this.#state.isLoggedin) {
-    }
     this.render();
     window.addEventListener('resize', () => {
       this.render();
@@ -25,14 +23,14 @@ export class Navbar extends HTMLElement {
   }
 
   disconnectedCallback() {
-    document.removeEventListener('userStatusChange', this.loginStatusHandler);
+    document.removeEventListener('userStatusChange', this.updateNavbar);
   }
 
   render() {
     this.innerHTML = this.template() + this.style();
 
-    const navbarBrand = this.querySelector('navbar-brand-component');
-    navbarBrand.setLoginStatus(this.#state.isLoggedin);
+    this.navbarBrand = this.querySelector('navbar-brand-component');
+    this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
   }
 
@@ -50,11 +48,11 @@ export class Navbar extends HTMLElement {
       const notificationsButton = document.createElement('notifications-button');
       navbarActions.appendChild(chatButton);
       navbarActions.appendChild(notificationsButton);
-      if (this.#state.user.unread_notifications_count > 0) {
-        notificationsButton.querySelector('.notification-badge').classList.remove('d-none');
-      }
       if (this.#state.user.unread_messages_count > 0 && window.location.pathname !== '/chat') {
         chatButton.querySelector('.notification-badge').classList.remove('d-none');
+      }
+      if (this.#state.user.unread_notifications_count > 0) {
+        notificationsButton.querySelector('.notification-badge').classList.remove('d-none');
       }
     }
     const dropdownMenu = document.createElement('navbar-dropdown-menu');
@@ -64,7 +62,11 @@ export class Navbar extends HTMLElement {
 
   updateNavbar(event) {
     this.#state.isLoggedin = event.detail.user !== null;
-    this.render();
+    if (this.#state.isLoggedin) {
+      this.#state.user =auth.getStoredUser();
+    }
+    this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
+    this.renderNavbarActions();
   }
 
   template() {
