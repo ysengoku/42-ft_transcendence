@@ -56,6 +56,16 @@ services:
     stdin_open: true
     tty: true
 
+  crontab:
+    build:
+      context: .
+      dockerfile: crontab/Dockerfile
+    depends_on:
+      - server
+      - database
+    networks:
+      - transcendance_network
+
   database:
     container_name: database
     build:
