@@ -77,6 +77,8 @@ export class Duel extends HTMLElement {
 
   disconnectedCallback() {
     this.cancelButton?.removeEventListener('click', this.cancelDuel);
+    this.socket?.close();
+    this.socket = null;
   }
 
   /* ------------------------------------------------------------------------ */

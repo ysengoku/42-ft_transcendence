@@ -289,12 +289,6 @@ export class DuelMenu extends HTMLElement {
       max-height: 320px;
       top: 100%;
     }
-    .duel-usersearch-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
     .duel-usersearch-status-indicator {
       bottom: 0;
       right: 0;
@@ -329,7 +323,7 @@ export class DuelMenu extends HTMLElement {
     <li class="dropdown-item px-4 pt-3 pb-4">
       <div class="d-flex flex-row align-items-center">
         <div class="position-relative d-inline-block me-3">
-          <img class="duel-usersearch-avatar mt-1" />
+          <img class="duel-usersearch-avatar avatar-s rounded-circle mt-1" />
           <span class="online-status duel-usersearch-status-indicator position-absolute ms-3"></span>
         </div>
         <div class="duel-usersearch-user-info d-flex flex-column flex-shrink-1 text-truncate">
