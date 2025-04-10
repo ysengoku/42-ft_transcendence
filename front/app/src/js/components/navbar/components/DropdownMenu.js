@@ -68,7 +68,7 @@ export class DropdownMenu extends HTMLElement {
     </div>
     <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="navbarDropdown">
       ${ this.#state.isLoggedIn ? `
-        <a class="dropdown-item" id="dropdown-item-profile">Your profile</a>
+        <a class="dropdown-item" id="dropdown-item-profile">My profile</a>
         <a href="/settings" class="dropdown-item">Settings</a>
       ` : `
         <a href="/login" class="dropdown-item">Login</a>
