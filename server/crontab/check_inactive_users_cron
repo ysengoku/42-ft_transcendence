@@ -1,0 +1,1 @@
+*/5 * * * * /usr/local/bin/python /app/manage.py check_inactive_users >> /var/log/cron.log 2>&1
