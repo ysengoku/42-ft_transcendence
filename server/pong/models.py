@@ -1,7 +1,9 @@
 import uuid
+from datetime import datetime
 
 from django.db import models
 from django.db.models import Count
+from django.utils import timezone
 
 from users.models.profile import Profile
 
@@ -31,7 +33,7 @@ class MatchManager(models.Manager):
     DRAW = 0.5
     LOSS = 0
 
-    def resolve(self, winner: Profile, loser: Profile, winners_score: int, losers_score: int):
+    def resolve(self, winner: Profile, loser: Profile, winners_score: int, losers_score: int, date: datetime):
         """
         Resolves all elo calculations, updates profiles of players,
         creates a new match record and saves everything into the database.
@@ -64,7 +66,7 @@ class Match(models.Model):
     elo_change = models.IntegerField()
     winners_elo = models.IntegerField()
     losers_elo = models.IntegerField()
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
 
     objects = MatchManager()
 
@@ -106,7 +108,7 @@ class GameRoom(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
     players = models.ManyToManyField(Profile, related_name="game_rooms")
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
 
     objects = MatchmakingTicketManager()
 
