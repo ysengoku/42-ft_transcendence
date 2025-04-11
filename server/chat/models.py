@@ -1,11 +1,12 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import Count, Exists, ImageField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, NullIf
+from django.utils import timezone
 
 from users.models import Profile
 
@@ -139,7 +140,7 @@ class ChatMessageQuerySet(models.QuerySet):
 class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content = models.TextField(max_length=256)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
     sender = models.ForeignKey(Profile, related_name="sent_messages", on_delete=models.CASCADE)
     chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
@@ -175,17 +176,20 @@ class NotificationQuerySet(models.QuerySet):
         Notification.NEW_TOURNAMENT: `tournament_id`, `tournament_name`
         """
         data = sender.to_username_nickname_avatar_schema() | notification_data
-        data["date"] = date or datetime.now(timezone.utc)
+        data["date"] = date or timezone.now()
 
         match notification_action:
             case self.model.GAME_INVITE:
                 if not notification_data.get("game_id"):
-                    raise ValueError("notification_action is Notification.GAME_INVITE, but no game_id in "
-                                     "notification_data")
+                    raise ValueError(
+                        "notification_action is Notification.GAME_INVITE, but no game_id in notification_data",
+                    )
             case self.model.NEW_TOURNAMENT:
                 if not notification_data.get("tournament_id") or not notification_data.get("tournament_name"):
-                    raise ValueError("notification_action is Notification.NEW_TOURNAMENT, but no tournament_id or "
-                                     "tournament_name in notification_data")
+                    raise ValueError(
+                        "notification_action is Notification.NEW_TOURNAMENT, but no tournament_id or "
+                        "tournament_name in notification_data",
+                    )
 
         return self.create(receiver=receiver, data=data, action=notification_action)
 
