@@ -2,13 +2,36 @@
 /*     Fonts                                                                  */
 /*----------------------------------------------------------------------------*/
 @font-face {
-  font-family: 'docktrin';
-  src: url(/fonts/docktrin.ttf) format('truetype');
+  font-family: 'van dyke';
+  font-display: swap;
+  src: url(/fonts/VAN_DYKE.ttf) format('truetype');
 }
 
 @font-face {
-  font-family: 'van dyke';
-  src: url(/fonts/VAN_DYKE.ttf) format('truetype');
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/crimson-pro-v24-latin-regular.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/crimson-pro-v24-latin-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/crimson-pro-v24-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'docktrin';
+  src: url(/fonts/docktrin.ttf) format('truetype');
 }
 
 @font-face {
@@ -124,7 +147,7 @@ body {
   height: auto;
   margin: 0;
   cursor: url('/img/gun.png') 4 4, auto;
-  font-family: "Crimson Pro", serif;
+  font-family: 'Crimson Pro', serif;
 }
 
 body {
