@@ -20,7 +20,6 @@ from users.schemas import (
 users_router = Router()
 
 
-# TODO: delete endpoint
 @users_router.get("", response={200: list[ProfileMinimalSchema], frozenset({401}): MessageSchema})
 @paginate
 def get_users(request: HttpRequest, search: str | None = None):
