@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from io import BytesIO
 
 import requests
 from django.core.files.base import ContentFile
 from django.db import models
+from django.utils import timezone
 
 
 class OauthConnectionManager(models.Manager):
@@ -48,7 +49,7 @@ class OauthConnection(models.Model):
         on_delete=models.CASCADE,
         related_name="oauth_connection",
     )
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(datetime=timezone.now)
 
     objects = OauthConnectionManager()
 
@@ -177,7 +178,7 @@ class OauthConnection(models.Model):
         Returns None if valid.
         Returns a tuple (error_message, status_code) if invalid.
         """
-        now = datetime.now(timezone.utc)
+        now = timezone.now()
         if self.date + timedelta(minutes=5) < now:
             return "Expired state: authentication request timed out", 408
 

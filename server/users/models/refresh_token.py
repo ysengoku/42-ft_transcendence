@@ -1,8 +1,9 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 import jwt
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from ninja.errors import AuthenticationError
 
 
@@ -23,7 +24,7 @@ class RefreshTokenQuerySet(models.QuerySet):
         Creates a new refresh token.
         To avoid collisions, if old refresh token is identical to the new one, deletes the old refresh token.
         """
-        now = datetime.now(timezone.utc)
+        now = timezone.now()
         payload = {
             "sub": str(user.id),
             "iat": now,
