@@ -11,13 +11,15 @@ RUN apt-get update && apt-get install -y \
 # Définir le répertoire de travail
 WORKDIR /app
 
+# Copier tout le projet
+COPY . .
+
 # Copier les fichiers requirements et installer les dépendances
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier tout le projet
-COPY . .
-
+# Lire le .env explicitement AVANT collectstatic
+RUN python -c "from django.core.management.utils import get_random_secret_key; import os; open('.env', 'a').write(f'\nCRON_SECRET={get_random_secret_key()}') if 'CRON_SECRET' not in os.environ else None"
 # Collecter les fichiers statiques
 RUN python manage.py collectstatic --noinput
 
