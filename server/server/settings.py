@@ -3,6 +3,8 @@ import os
 import sys
 from pathlib import Path
 
+import environ
+
 
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
@@ -27,8 +29,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "your-secret-key"
 
 # Environment variables
-
-DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
+# Init django-environ
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+env.read_env(env_file=str(BASE_DIR / '.env'))
+environ.Env.read_env()
+DEBUG = env("DEBUG")
+CRON_SECRET = env("CRON_SECRET", default="")
 
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
@@ -90,8 +98,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "silk.middleware.SilkyMiddleware",

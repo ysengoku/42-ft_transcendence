@@ -1,0 +1,9 @@
+#*/5 * * * * /usr/local/bin/python /app/server/manage.py check_inactive_users >> /tmp/cron.log 2>&1
+
+# */5 * * * * /app/server/venv/bin/python /app/server/manage.py check_inactive_users >> /tmp/cron.log 2>&1
+
+# */5 * * * * curl -X DELETE -k -H "Authorization: Bearer $CRON_SECRET" https://nginx:1026/api/cronjob/cron/check-inactive-users >> /var/log/cron.log 2>&1
+
+# */5 * * * * /app/script/check_inactive_user.sh >> /var/log/cron.log 2>&1
+
+*/1 * * * * /usr/local/bin/python /app/check_inactive_users_cron.py >> /var/log/cron.log 2>&1

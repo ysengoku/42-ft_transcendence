@@ -44,6 +44,7 @@ services:
       DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      CRON_SECRET: ${CRON_SECRET}
     depends_on:
       - database
       - redis
@@ -61,10 +62,22 @@ services:
     build:
       context: ./crontab
       dockerfile: Dockerfile
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+      CRON_ENDPOINT: ${CRON_ENDPOINT}
+      PYTHONPATH: /app/server
+      DJANGO_SETTINGS_MODULE: server.settings
     depends_on:
+      - nginx
       - server
+      - front
+    volumes:
+      - ./crontab:/app/crontab
+      - ./crontab/scripts:/app/scripts
+      - ./server:/app/server
     networks:
       - transcendance_network
+    restart: on-failure
 
   database:
     container_name: database

@@ -5,7 +5,7 @@ Django==5.1.4
 pillow==11.1.0
 python-magic==0.4.27
 
-# Django Channels for handling WebSockets and background tasks
+# # Django Channels for handling WebSockets and background tasks
 daphne==4.1.2
 channels==4.0.0
 asgiref==3.8.1
@@ -13,7 +13,7 @@ django-eventstream==4.5.1
 redis==5.0.1
 channels_redis==4.2.1
 
-# Django Ninja for creating fast APIs with Django
+# # Django Ninja for creating fast APIs with Django
 django-ninja==1.3.0
 annotated-types==0.7.0
 django-cors-headers==4.6.0
@@ -21,17 +21,17 @@ pydantic==2.10.5
 pydantic_core==2.27.2
 typing_extensions==4.12.2
 sqlparse==0.5.3
-
-# Database profiling
+#
+# # Database profiling
 django-silk==5.3.2
+#
+# # pyotp is a Python library for generating and verifying one-time passwords
+# pyotp==2.6.0
+#
+# # qrcode is a Python library for generating QR codes. [pil] is an optional dependency for image generation.
+# qrcode[pil]
+#
+# # PostgreSQL adapter
+# psycopg2==2.9.6
 
-# pyotp is a Python library for generating and verifying one-time passwords
-pyotp==2.6.0
-
-# qrcode is a Python library for generating QR codes. [pil] is an optional dependency for image generation.
-qrcode[pil]
-
-# PostgreSQL adapter
-psycopg2==2.9.6
 colorlog==6.9.0
-django-environ==0.12.0
