@@ -32,7 +32,9 @@ export class NotificationsListItem extends HTMLElement {
     this.acceptButton?.removeEventListener('click', this.handleAcceptDuel);
     this.declineButton?.removeEventListener('click', this.handleDeclineDuel);
     this.participateButton?.removeEventListener('click', this.handleParticipateTournament);
-    this.seeProfileButton?.removeEventListener('click', this.navigateToProfile);
+    if (this.#state.action === 'new_friend') {
+      this.removeEventListener('click', this.navigateToProfile);
+    }
   }
 
   render() {
@@ -71,8 +73,8 @@ export class NotificationsListItem extends HTMLElement {
         this.querySelector('.notification-content').textContent = this.message.newFriend(this.#state.data.nickname);
         this.seeProfileButton = document.createElement('button');
         this.seeProfileButton.textContent = 'See profile';
-        this.seeProfileButton.addEventListener('click', this.navigateToProfile);
         this.buttonWrapper.appendChild(this.seeProfileButton);
+        this.addEventListener('click', this.navigateToProfile);
         break;
     }
   }
@@ -100,13 +102,12 @@ export class NotificationsListItem extends HTMLElement {
 	  <li class="list-group-item dropdown-list-item px-2 pt-4">
 	    <div class="d-flex flex-column">
           <div class="d-flex flex-row justify-content-start align-items-start gap-4">
-            <div class="dropdown-list-avatar-container">
-              <img class="notifications-list-avatar avatar-m rounded-circle" alt="Avatar"">
-            </div>
+            <img class="notifications-list-avatar avatar-m rounded-circle" alt="Avatar"">
             <div class="d-flex flex-column justify-content-center">
               <p class="notification-content m-0 mb-1"></p>
               <p class="notification-time m-0"></P>
             </div>
+            <i class="unread-badge bi bi-record-fill ms-auto"></i>
   	    </div>
         <div class="call-to-action-groupe d-flex flex-row justify-content-end align-items-center gap-3"></div>
 	    </div>
