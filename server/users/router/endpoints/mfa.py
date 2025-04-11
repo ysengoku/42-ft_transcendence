@@ -1,10 +1,11 @@
 import secrets
 import string
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import HttpError
@@ -54,7 +55,7 @@ def handle_mfa_code(user):
 
     verification_code = generate_verification_code()
     user.mfa_token = verification_code
-    user.mfa_token_date = datetime.now(timezone.utc)
+    user.mfa_token_date = timezone.now()
     user.save()
 
     return send_mail(
@@ -81,7 +82,7 @@ def verify_mfa_code(request, username: str, data: SendMfaCode) -> dict[str, any]
     if not data.token or len(data.token) != TOKEN_LENGTH or not data.token.isdigit():
         raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
 
-    now = datetime.now(timezone.utc)
+    now = timezone.now()
     if user.mfa_token_date + timedelta(minutes=TOKEN_EXPIRY) < now:
         raise HttpError(408, "Expired session: authentication request timed out")
 
