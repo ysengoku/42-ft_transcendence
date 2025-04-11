@@ -7,7 +7,6 @@ from ninja.pagination import paginate
 
 from common.routers import allow_only_for_self, get_profile_queryset_by_username_or_404
 from common.schemas import MessageSchema
-from users.consumers import get_online_users
 from users.models import Profile
 from users.schemas import (
     ProfileFullSchema,
