@@ -5,7 +5,8 @@
  *              loading more messages, and toggling likes on messages.
  * @module ChatMessageArea
  */
-
+// import 'bootstrap';
+import { Tooltip } from 'bootstrap';
 import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -71,13 +72,15 @@ export class ChatMessageArea extends HTMLElement {
 
   disconnectedCallback() {
     this.header?.removeEventListener('click', this.navigateToProfile);
+    if (this.#state.data) {
     this.#state.data.is_blocked_user ?
       this.blockButoon?.removeEventListener('click', this.unblockUser) :
       this.blockButoon?.removeEventListener('click', this.blockUser);
+      this.#state.data.messages.forEach = (message, index) => {
+        message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
+      };
+    }
     this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
-    this.#state.data.messages.forEach = (message, index) => {
-      message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
-    };
   }
 
   /* ------------------------------------------------------------------------ */
@@ -223,7 +226,7 @@ export class ChatMessageArea extends HTMLElement {
     message.is_liked ? messageContent.classList.add('liked') : messageContent.classList.remove('liked');
 
     messageElement.querySelector('.message').setAttribute('title', getRelativeDateAndTime(message.date));
-    const tooltip = new bootstrap.Tooltip(messageElement.querySelector('.message'));
+    const tooltip = new Tooltip(messageElement.querySelector('.message'));
     tooltip.update();
     this.#state.renderedMessagesCount++;
     return messageElement;

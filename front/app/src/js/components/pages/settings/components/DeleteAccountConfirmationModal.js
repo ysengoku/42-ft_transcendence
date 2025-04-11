@@ -1,3 +1,5 @@
+import { Modal } from 'bootstrap';
+
 export class DeleteAccountConfirmationModal extends HTMLElement {
   constructor() {
     super();
@@ -10,7 +12,7 @@ export class DeleteAccountConfirmationModal extends HTMLElement {
 
   render() {
     this.innerHTML = this.template();
-    this.modal = new bootstrap.Modal(this.querySelector('.modal'));
+    this.modal = new Modal(this.querySelector('.modal'));
 
     this.deleteButton = this.querySelector('#delete-account-confirm');
     const deleteAccountButton = document.querySelector('delete-account-button');
