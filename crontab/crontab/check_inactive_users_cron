@@ -1,1 +1,0 @@
-*/5 * * * * curl -X POST https://server:8000/api/check-inactive-users/ >> /var/log/cron.log 2>&1

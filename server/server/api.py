@@ -5,12 +5,14 @@ Contains the default exception handlers for some of the possible errors.
 
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 
+from chat.consumers import check_inactive_users
 from chat.router import chat_app_router
 from users.jwt_cookie_auth import JWTCookieAuth
 from users.router import users_app_router

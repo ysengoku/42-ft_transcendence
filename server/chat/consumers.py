@@ -11,9 +11,10 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.timezone import now
 
-from chat.models import Chat, ChatMessage, GameInvitation, Notification
 from users.consumers import redis_status_manager
 from users.models import Profile
+
+from .models import Chat, ChatMessage, GameInvitation, Notification
 
 logger = logging.getLogger("server")
 
