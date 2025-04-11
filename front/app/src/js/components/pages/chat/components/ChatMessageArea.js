@@ -357,7 +357,7 @@ export class ChatMessageArea extends HTMLElement {
       </div>
 
       <!-- Messages -->
-      <div class="chat-loader d-flex text-center justify-content-center align-items-center ms-4 d-none"></div>
+      <div class="chat-loader d-flex text-center justify-content-center align-items-center ms-4 mt-5  d-none"></div>
       <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
 
       <!-- Input -->
