@@ -33,7 +33,9 @@ class MatchManager(models.Manager):
     DRAW = 0.5
     LOSS = 0
 
-    def resolve(self, winner: Profile, loser: Profile, winners_score: int, losers_score: int, date: datetime):
+    def resolve(
+        self, winner: Profile, loser: Profile, winners_score: int, losers_score: int, date: datetime = timezone.now(),
+    ):
         """
         Resolves all elo calculations, updates profiles of players,
         creates a new match record and saves everything into the database.
@@ -51,6 +53,7 @@ class MatchManager(models.Manager):
             elo_change=elo_change,
             winners_elo=winner.elo,
             losers_elo=loser.elo,
+            date=date,
         )
         resolved_match.save()
         winner.save()

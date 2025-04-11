@@ -49,7 +49,7 @@ class OauthConnection(models.Model):
         on_delete=models.CASCADE,
         related_name="oauth_connection",
     )
-    date = models.DateTimeField(datetime=timezone.now)
+    date = models.DateTimeField(default=timezone.now)
 
     objects = OauthConnectionManager()
 
