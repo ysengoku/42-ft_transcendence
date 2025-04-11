@@ -68,11 +68,21 @@ export class Chat extends HTMLElement {
     // Remove the unread messages badge from the navbar
     document.getElementById('navbar-chat-badge')?.classList.add('d-none');
     this.render();
+    this.chatList.setData(null, this.#state.loggedInUser.username, null);
+    this.chatMessagesArea.setData(null, this.#state.loggedInUser.username);
+
     // Fetch and set data for the chat list component
+    this.chatList.querySelector('.chat-loader')?.classList.remove('d-none');
+    this.chatMessagesArea.querySelector('.chat-loader')?.classList.remove('d-none');
+    console.time('Fetching chat list data');
     const chatListData = await this.fetchChatList();
+    console.timeEnd('Fetching chat list data');
+    this.chatList.querySelector('.chat-loader')?.classList.add('d-none');
     if (!chatListData) {
       return;
     }
+    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
+
     // Determine initial chat based on available data or query parameter
     if (chatListData.count > 0 && !this.#queryParam) {
       for (let i = 0; i < chatListData.items.length; i++) {
@@ -85,12 +95,12 @@ export class Chat extends HTMLElement {
     } else if (this.#queryParam) {
       this.#state.currentChatUsername = this.#queryParam;
     }
-    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
 
     // Fetch and set data for the chat message area component
     let chatData = null;
     if (this.#state.currentChatUsername) {
       chatData = await this.fetchChatData();
+      this.chatMessagesArea.querySelector('.chat-loader')?.classList.add('d-none');
       if (!chatData) {
         return;
       }
@@ -286,9 +296,7 @@ export class Chat extends HTMLElement {
     return `
     <div class="container-fluid d-flex flex-row flex-grow-1 p-0" id="chat-component-container">
       <div class="chat-list-wrapper col-12 col-md-4" id="chat-list-container">
-   
           <chat-list-component></chat-list-component>
-     
       </div>
 
       <div class="col-12 col-md-8 d-none d-md-block my-4" id="chat-container">
@@ -316,8 +324,7 @@ export class Chat extends HTMLElement {
       height: calc(100vh - 66px);
       background-color: rgba(var(--bs-body-bg-rgb), 0.2);
     }
-    </style>
-    `;
+    </style>`;
   }
 }
 
