@@ -129,7 +129,7 @@ export class Duel extends HTMLElement {
       devLog('WebSocket message received:', event.data);
       const message = JSON.parse(event.data);
       if (message.action === 'game_found') {
-        this.#state.gameId = message.data.game_room_id;
+        this.#state.gameId = message.game_room_id;
         // TODO: Set opponent data
         this.startDuel();
       }
@@ -143,15 +143,15 @@ export class Duel extends HTMLElement {
     };
 
     // ===== For test ================
-    // this.#state.opponent = {
-    //   username: 'Alice',
-    //   nickname: 'Alice',
-    //   avatar: '/__mock__/img/sample-pic2.png',
-    //   elo: 1500,
-    // };
-    // setTimeout(() => {
-    //   this.startDuel();
-    // }, 5000);
+    this.#state.opponent = {
+      username: 'Alice',
+      nickname: 'Alice',
+      avatar: '/__mock__/img/sample-pic2.png',
+      elo: 1500,
+    };
+    setTimeout(() => {
+      this.startDuel();
+    }, 5000);
     // ================================
   }
 
@@ -175,7 +175,7 @@ export class Duel extends HTMLElement {
         clearInterval(countdown);
 
         // ===== For test ================
-        this.#state.gameId = '1234567890';
+        // this.#state.gameId = '1234567890';
         // ================================
 
         router.navigate(`/multiplayer-game/${this.#state.gameId}`);
