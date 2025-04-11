@@ -105,6 +105,7 @@
 
 [data-bs-theme="light"] {
   --bs-body-color: var(--pm-gray-700);
+  --bs-body-color-rgb: var(--pm-gray-700-rgb);
   --bs-bg-color: var(--pm-gray-100);
   --bs-body-bg: var(--pm-gray-100);
   --bs-body-bg-rgb: var(--pm-gray-100-rgb);
@@ -123,6 +124,7 @@
 
 [data-bs-theme="dark"] {
   --bs-body-color: var(--pm-gray-100);
+  --bs-body-color-rgb: var(--pm-gray-100-rgb);
   --bs-bg-color: var(--pm-gray-700);
   --bs-body-bg: var(--pm-gray-700);
   --bs-body-bg-rgb: var(--pm-gray-700-rgb);

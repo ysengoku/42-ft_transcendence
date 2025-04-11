@@ -284,8 +284,12 @@ export class NotificationsList extends HTMLElement {
       border: none;
       background: none;
     }
-    .unread {
-      background-color: rgba(var(--pm-primary-500-rgb), 1) !important;
+    .unread-badge {
+      display: none;
+    }
+    .unread .unread-badge {
+      color: var(--pm-primary-500);
+      display: block;
     }
     </style>
     `;

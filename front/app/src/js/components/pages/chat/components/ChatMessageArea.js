@@ -11,8 +11,7 @@ import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
-import { getRelativeDateAndTime } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, getRelativeDateAndTime,loader } from '@utils';
 
 /**
  * @class ChatMessageArea
@@ -56,14 +55,14 @@ export class ChatMessageArea extends HTMLElement {
    * @param {string} loggedInUsername - The username of the logged-in user.
    */
   setData(data, loggedInUsername) {
-    if (!data || data.is_blocked_by_user) {
+    if (data && data.is_blocked_by_user) {
       return;
     }
     this.#state.renderedMessagesCount = 0;
     this.#state.data = data;
     this.#state.loggedInUsername = loggedInUsername;
-    devLog('ChatMessageArea data:', this.#state.data);
     this.render();
+    devLog('ChatMessageArea data:', this.#state.data);
   }
 
   set sendToggleLikeEvent(callback) {
@@ -89,6 +88,11 @@ export class ChatMessageArea extends HTMLElement {
 
   render() {
     this.innerHTML = this.template() + this.style();
+    this.loader = this.querySelector('.chat-loader');
+    this.loader.innerHTML = loader();
+    if (!this.#state.data) {
+      return;
+    }
 
     // Initialize elements
     this.header = this.querySelector('#chat-header');
@@ -104,8 +108,10 @@ export class ChatMessageArea extends HTMLElement {
 
     // Set header information and avatar.
     this.#state.data.avatar ? this.headerAvatar.src = this.#state.data.avatar : this.headerAvatar.src = defaultAvatar;
+    this.headerAvatar.classList.remove('d-none');
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
+    this.headerOnlineStatusIndicator.classList.remove('d-none');
     this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.is_online);
     this.headerOnlineStatus.textContent = this.#state.data.is_online ? 'online' : 'offline';
     this.header.addEventListener('click', this.navigateToProfile);
@@ -122,11 +128,11 @@ export class ChatMessageArea extends HTMLElement {
     // Toggle input and block button based on block status.
     if (this.#state.data.is_blocked_user) {
       this.messageInput.classList.add('d-none');
-      this.invitePlayButton.classList.add('d-none');
       this.blockButoon.textContent = 'Unblock user';
       this.blockButoon.addEventListener('click', this.unblockUser);
     } else {
       this.messageInput.classList.remove('d-none');
+      this.invitePlayButton.classList.remove('d-none');
       this.blockButoon.textContent = 'Block user';
       this.blockButoon.addEventListener('click', this.blockUser);
     }
@@ -325,12 +331,11 @@ export class ChatMessageArea extends HTMLElement {
   template() {
     return `
     <div class="d-flex flex-column h-100">
-
       <!-- Header -->
       <div class="d-flex flex-row justify-content-between align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
   
       <div class="d-flex flex-row" id="chat-header">
-        <img class="avatar-m rounded-circle me-3" alt="User" id="chat-header-avatar"/>
+        <img class="avatar-m rounded-circle me-3 d-none" alt="User" id="chat-header-avatar"/>
 
         <div class="d-flex flex-column text-start gap-1">
           <div class="d-flex flex-row gap-3">
@@ -338,20 +343,21 @@ export class ChatMessageArea extends HTMLElement {
             <p class="mb-0 fs-6" id="chat-header-username"></p>
           </div>
           <div class="d-flex flex-row align-items-center gap-2">
-            <span class="online-status" id="chat-header-online-status-indicator"></span>
+            <span class="online-status d-none" id="chat-header-online-status-indicator"></span>
             <div id="chat-header-online-status"></div>
           </div>
         </div>
       </div>
 
       <div class="align-self-end">
-        <button class="btn" id="chat-invite-play-button">Invite to play</button>
+        <button class="btn d-none" id="chat-invite-play-button">Invite to play</button>
         <button class="btn" id="chat-block-user-button"></button>
       </div>
 
       </div>
 
       <!-- Messages -->
+      <div class="chat-loader d-flex text-center justify-content-center align-items-center ms-4 d-none"></div>
       <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
 
       <!-- Input -->
