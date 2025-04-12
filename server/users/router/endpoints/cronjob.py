@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.security import HttpBearer
 
@@ -16,17 +16,18 @@ class CronAuth(HttpBearer):
         return None
 
 
+@cronjob_router.get("/csrf-token", auth=None, response={200: dict})
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    """
+    Dedicated endpoint to get a CSRF token.
+    Used by cron scripts that need a valid CSRF token.
+    """
+    return JsonResponse({"status": "ok"})
+
+
 @csrf_exempt
 @cronjob_router.delete("/cron/check-inactive-users", auth=CronAuth())
 def trigger_inactive_users_check(request):
     check_inactive_users()
     return {"status": "ok"}
-
-#
-# @cronjob_router.delete("/cron/check-inactive-users", auth=None, response={200: dict, 401: dict})
-# def trigger_inactive_users_check(request):
-#     cron_token = request.headers.get("X-Cron-Token", "")
-#     if cron_token != settings.CRON_SECRET:
-#         return JsonResponse({"error": "Invalid cron token"}, status=401)
-#     check_inactive_users()
-#     return JsonResponse({"status": "ok"})
