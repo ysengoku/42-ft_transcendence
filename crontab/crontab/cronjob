@@ -6,4 +6,4 @@
 
 # */5 * * * * /app/script/check_inactive_user.sh >> /var/log/cron.log 2>&1
 
-*/1 * * * * /usr/local/bin/python /app/check_inactive_users_cron.py >> /var/log/cron.log 2>&1
+*/1 * * * * /usr/local/bin/python /app/scripts/check_inactive_users_cron.py >> /var/log/cron.log 2>&1
