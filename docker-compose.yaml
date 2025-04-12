@@ -45,6 +45,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       CRON_SECRET: ${CRON_SECRET}
+      CRON_ENDPOINT: ${CRON_ENDPOINT}
     depends_on:
       - database
       - redis
