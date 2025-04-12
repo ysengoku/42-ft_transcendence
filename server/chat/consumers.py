@@ -119,7 +119,7 @@ class UserEventsConsumer(WebsocketConsumer):
             except DatabaseError as e:
                 logger.error("Database error during disconnect: %s", e)
 
-            logger.info("User %s has %i active connexions",
+            logger.info("User %s has %s active connexions",
                         self.user.username, self.user_profile.nb_active_connexions)
 
             async_to_sync(self.channel_layer.group_discard)(
