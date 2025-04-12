@@ -12,12 +12,14 @@ from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 
 from chat.router import chat_app_router
+from pong.router import pong_app_router
 from users.jwt_cookie_auth import JWTCookieAuth
 from users.router import users_app_router
 
 api = NinjaAPI(auth=JWTCookieAuth(), csrf=True)
 api.add_router("", router=users_app_router)
 api.add_router("", router=chat_app_router)
+api.add_router("", router=pong_app_router)
 
 logger = logging.getLogger("server")
 
