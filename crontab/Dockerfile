@@ -32,10 +32,7 @@ COPY ./scripts/check_inactive_users_cron.py /app/scripts/
 RUN chmod 0644 /etc/cron.d/cronjob && \
     crontab /etc/cron.d/cronjob
 
-# COPY ./scripts/ .
-# RUN mkdir -p /app/scripts
-# COPY ./scripts/check_inactive_users.sh /app/scripts/
-# RUN chmod 0644 /etc/cron.d/cronjob && crontab /etc/cron.d/cronjob
-# RUN chmod 0777 /app/scripts/check_inactive_users.sh
-#
+# Create volume for logs
+VOLUME ["/var/log"]
+
 CMD ["crond", "-f"]

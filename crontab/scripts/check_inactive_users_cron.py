@@ -17,6 +17,7 @@ CRON_SECRET = os.getenv("CRON_SECRET")
 ENDPOINT = os.getenv("CRON_ENDPOINT")
 
 if not ENDPOINT:
+    print("Error: CRON_ENDPOINT is not set in the environment variables")
     raise ValueError("CRON_ENDPOINT is not set in the environment variables")
 
 # Get CSRF token
