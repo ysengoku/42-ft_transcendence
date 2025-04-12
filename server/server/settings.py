@@ -181,7 +181,7 @@ else:
 
 
 # Configuration for proxy
-CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
+CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173", "https://nginx:1026"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
 
