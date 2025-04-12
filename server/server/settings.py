@@ -31,17 +31,47 @@ SECRET_KEY = "your-secret-key"
 # Environment variables
 # Init django-environ
 env = environ.Env(
-    DEBUG=(bool, False)
+    DEBUG=(bool, False),
+    IN_CONTAINER=(bool, False),
+    CRON_SECRET=(str, ""),
+    REDIS_HOST=(str, "redis"),
+    REDIS_PORT=(int, 6379),
+    POSTGRES_DB=(str, ""),
+    POSTGRES_USER=(str, ""),
+    POSTGRES_PASSWORD=(str, ""),
+    DATABASE_HOST=(str, "database"),
+    DATABASE_PORT=(str, "5432"),
+    EMAIL_BACKEND=(str, "django.core.mail.backends.smtp.EmailBackend"),
+    EMAIL_HOST=(str, "smtp.gmail.com"),
+    EMAIL_PORT=(int, 587),
+    EMAIL_USE_TLS=(bool, True),
+    EMAIL_USE_SSL=(bool, False),
+    EMAIL_HOST_USER=(str, ""),
+    EMAIL_HOST_PASSWORD=(str, ""),
+    DEFAULT_FROM_EMAIL=(str, ""),
+    GITHUB_CLIENT_ID=(str, ""),
+    GITHUB_CLIENT_SECRET=(str, ""),
+    GITHUB_REDIRECT_URI=(str, ""),
+    GITHUB_ACCESS_TOKEN_URL=(str, ""),
+    GITHUB_AUTHORIZE_URL=(str, ""),
+    GITHUB_USER_PROFILE_URL=(str, ""),
+    GITHUB_FT_API_URL=(str, ""),
+    API42_CLIENT_ID=(str, ""),
+    API42_CLIENT_SECRET=(str, ""),
+    FT_API_REDIRECT_URI=(str, ""),
+    FT_API_ACCESS_TOKEN_URL=(str, ""),
+    FT_API_AUTHORIZE_URL=(str, ""),
+    FT_API_USER_PROFILE_URL=(str, ""),
+    FT_API_OAUTH_URL=(str, ""),
 )
-env.read_env(env_file=str(BASE_DIR / '.env'))
-environ.Env.read_env()
+env.read_env(env_file=str(BASE_DIR / ".env"))
+
 DEBUG = env("DEBUG")
-CRON_SECRET = env("CRON_SECRET", default="")
+CRON_SECRET = env("CRON_SECRET")
 
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
-IN_CONTAINER = int(os.environ.get("IN_CONTAINER", "0"))
+IN_CONTAINER = env("IN_CONTAINER")
 
 if not IN_CONTAINER:
     DATABASES = {
@@ -65,11 +95,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB"),
-            "USER": os.environ.get("POSTGRES_USER"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-            "HOST": os.environ.get("DATABASE_HOST", "database"),
-            "PORT": os.environ.get("DATABASE_PORT", "5432"),
+            "NAME": env("POSTGRES_DB"),
+            "USER": env("POSTGRES_USER"),
+            "PASSWORD": env("POSTGRES_PASSWORD"),
+            "HOST": env("DATABASE_HOST"),
+            "PORT": env("DATABASE_PORT"),
         },
     }
 
@@ -160,8 +190,8 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
-REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
+REDIS_HOST = env("REDIS_HOST")
+REDIS_PORT = env("REDIS_PORT")
 # For the tests
 if "test" in sys.argv:
     CHANNEL_LAYERS = {
@@ -210,23 +240,22 @@ NINJA_PAGINATION_PER_PAGE = 10
 APPEND_SLASH = False
 
 # OAuth
-
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
-GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
-GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
-GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
-GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
-GITHUB_FT_API_URL = "https://api.github.com"
+GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET")
+GITHUB_AUTHORIZE_URL = env("GITHUB_AUTHORIZE_URL")
+GITHUB_ACCESS_TOKEN_URL = env("GITHUB_ACCESS_TOKEN_URL")
+GITHUB_REDIRECT_URI = env("GITHUB_REDIRECT_URI")
+GITHUB_USER_PROFILE_URL = env("GITHUB_USER_PROFILE_URL")
+GITHUB_FT_API_URL = env("GITHUB_FT_API_URL")
 
 # OAuth 42
-API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
-API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
-FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
-FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
-FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")
-FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
-FT_API_OAUTH_URL = "https://api.intra.42.fr"
+API42_CLIENT_ID = env("API42_CLIENT_ID")
+API42_CLIENT_SECRET = env("API42_CLIENT_SECRET")
+FT_API_AUTHORIZE_URL = env("FT_API_AUTHORIZE_URL")
+FT_API_ACCESS_TOKEN_URL = env("FT_API_ACCESS_TOKEN_URL")
+FT_API_REDIRECT_URI = env("FT_API_REDIRECT_URI")
+FT_API_USER_PROFILE_URL = env("FT_API_USER_PROFILE_URL")
+FT_API_OAUTH_URL = env("FT_API_OAUTH_URL")
 
 HOME_REDIRECT_URL = "https://localhost:1026/home"
 FRONTEND_URL = "https://localhost:1026"
@@ -257,16 +286,14 @@ OAUTH_CONFIG = {
 }
 
 # email configuration for 2fa and password reset
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend",
-)
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_USE_SSL = env("EMAIL_USE_SSL")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 LOGGING = {
     "version": 1,
