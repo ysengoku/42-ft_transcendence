@@ -29,8 +29,9 @@ export class Duel extends HTMLElement {
     this.url = 'wss://' + window.location.host + '/ws/matchmaking/';
     this.socket = null;
     this.cancelDuel = this.cancelDuel.bind(this);
+    this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
-
+  
   setQueryParam(param) {
     console.log('Query param:', param);
     this.#status = param.get('status');
@@ -46,7 +47,7 @@ export class Duel extends HTMLElement {
       // TODO: set necessary information
     }
   }
-
+  
   async connectedCallback() {
     this.#state.loggedInUser = auth.getStoredUser();
     if (!this.#state.loggedInUser) {
@@ -58,12 +59,16 @@ export class Duel extends HTMLElement {
         router.navigate('/login');
       }
     }
+    router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
+    window.addEventListener('beforeunload', this.confirmLeavePage);
 
     // TODO: How to handle browser refresh case?
     if (!this.#status) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = '';
       this.appendChild(notFound);
+      router.removeBeforeunloadCallback();
+      window.removeEventListener('beforeunload', this.confirmLeavePage);
       return;
     }
 
@@ -77,6 +82,8 @@ export class Duel extends HTMLElement {
 
   disconnectedCallback() {
     this.cancelButton?.removeEventListener('click', this.cancelDuel);
+    router.removeBeforeunloadCallback();
+    window.removeEventListener('beforeunload', this.confirmLeavePage);
     this.socket?.close();
     this.socket = null;
   }
@@ -149,9 +156,6 @@ export class Duel extends HTMLElement {
       avatar: '/__mock__/img/sample-pic2.png',
       elo: 1500,
     };
-    setTimeout(() => {
-      this.startDuel();
-    }, 5000);
     // ================================
   }
 
@@ -177,10 +181,53 @@ export class Duel extends HTMLElement {
         // ===== For test ================
         // this.#state.gameId = '1234567890';
         // ================================
-
+        
+        router.removeBeforeunloadCallback();
+        window.removeEventListener('beforeunload', this.confirmLeavePage);
+        this.socket?.close();
+        this.socket = null;
         router.navigate(`/multiplayer-game/${this.#state.gameId}`);
       }
     }, 1000);
+  }
+
+  async confirmLeavePage(event) {
+    // console.log('Beforeunload event triggered');
+    if (event) {
+      event.preventDefault();
+      router.removeBeforeunloadCallback();
+      console.log('Beforeunload event');
+      return;
+    }
+
+    const confirmationModal = document.createElement('confirmation-modal');
+    this.appendChild(confirmationModal);
+    confirmationModal.render();
+    confirmationModal.querySelector('.confirmation-message').textContent = 'If you leave this page, the duel will be canceled. Do you want to continue?';
+    confirmationModal.querySelector('.confirm-button').textContent = 'Leave this page';
+    confirmationModal.querySelector('.cancel-button').textContent = 'Stay';
+    confirmationModal.showModal();
+
+    const userConfirmed = await new Promise((resolve) => {
+      confirmationModal.handleConfirm = () => {
+        devLog('User confirmed to leave the page');
+        this.socket?.close();
+        this.socket = null;
+        confirmationModal.remove();
+        resolve(true);
+      };
+      confirmationModal.handleCancel = () => {
+        devLog('User canceled leaving the page');
+        confirmationModal.remove();
+        resolve(false);
+      };
+    });
+
+    if (userConfirmed) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   /* ------------------------------------------------------------------------ */
