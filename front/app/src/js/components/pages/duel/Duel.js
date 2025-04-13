@@ -1,5 +1,6 @@
 import { router } from '@router';
 import { auth } from '@auth';
+import { socketManager } from '@socket';
 import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 
@@ -26,8 +27,8 @@ export class Duel extends HTMLElement {
   constructor() {
     super();
 
-    this.url = 'wss://' + window.location.host + '/ws/matchmaking/';
-    this.socket = null;
+    // this.url = 'wss://' + window.location.host + '/ws/matchmaking/';
+    // this.socket = null;
     this.cancelDuel = this.cancelDuel.bind(this);
     this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
@@ -84,8 +85,9 @@ export class Duel extends HTMLElement {
     this.cancelButton?.removeEventListener('click', this.cancelDuel);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
-    this.socket?.close();
-    this.socket = null;
+    // this.socket?.close();
+    // this.socket = null;
+    socketManager.closeSocket('matchmaking');
   }
 
   /* ------------------------------------------------------------------------ */
@@ -127,27 +129,13 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   requestMatchmaking() {
     devLog('Requesting matchmaking...');
-    this.socket = new WebSocket(this.url);
+    socketManager.openSocket('matchmaking');
 
-    this.socket.onopen = () => {
-      devLog('WebSocket connection opened to ', this.url);
-    };
-    this.socket.onmessage = (event) => {
-      devLog('WebSocket message received:', event.data);
-      const message = JSON.parse(event.data);
-      if (message.action === 'game_found') {
-        this.#state.gameId = message.game_room_id;
-        // TODO: Set opponent data
-        this.startDuel();
-      }
-    };
-    this.socket.onerror = (event) => {
-      devErrorLog('WebSocket error:', event);
-    };
-    this.socket.onclose = (event) => {
-      devLog('WebSocket connection closed:', event);
-      this.socket = null;
-    };
+    document.addEventListener('gameFound', (event) => {
+      devLog('Game found event:', event.detail);
+      this.#state.gameId = event.detail.game_room_id;
+      this.startDuel();
+    });
 
     // ===== For test ================
     this.#state.opponent = {
@@ -184,15 +172,13 @@ export class Duel extends HTMLElement {
         
         router.removeBeforeunloadCallback();
         window.removeEventListener('beforeunload', this.confirmLeavePage);
-        this.socket?.close();
-        this.socket = null;
+        socketManager.closeSocket('matchmaking');
         router.navigate(`/multiplayer-game/${this.#state.gameId}`);
       }
     }, 1000);
   }
 
   async confirmLeavePage(event) {
-    // console.log('Beforeunload event triggered');
     if (event) {
       event.preventDefault();
       router.removeBeforeunloadCallback();
@@ -211,8 +197,7 @@ export class Duel extends HTMLElement {
     const userConfirmed = await new Promise((resolve) => {
       confirmationModal.handleConfirm = () => {
         devLog('User confirmed to leave the page');
-        this.socket?.close();
-        this.socket = null;
+        socketManager.closeSocket('matchmaking');
         confirmationModal.remove();
         resolve(true);
       };

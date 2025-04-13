@@ -165,7 +165,7 @@ export class NotificationsList extends HTMLElement {
         action: 'read_notification',
         id: notificationId,
       };
-      socketManager.socket.send(JSON.stringify(message));
+      socketManager.sendMessage('livechat', message);
       element.removeEventListener('click', this.readNotification);
       element.classList.remove('unread');
       const currentList = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
@@ -198,7 +198,7 @@ export class NotificationsList extends HTMLElement {
         action: 'read_notification',
         id: item.id,
       };
-      socketManager.socket.send(JSON.stringify(message));
+      socketManager.sendMessage('livechat', message);
     });
     this.#state.isLoading = true;
     await this.renderList();
