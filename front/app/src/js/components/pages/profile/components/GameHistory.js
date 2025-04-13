@@ -18,8 +18,8 @@ export class UserGameHistory extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.duelsTab.removeEventListener('click', this.handleDuelTabClick);
-    this.tournamentsTab.removeEventListener('click', this.handleTournamentTabClick);
+    this.duelsTab?.removeEventListener('click', this.handleDuelTabClick);
+    this.tournamentsTab?.removeEventListener('click', this.handleTournamentTabClick);
   }
 
   render() {
