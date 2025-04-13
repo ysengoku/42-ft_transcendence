@@ -233,7 +233,7 @@ export class Chat extends HTMLElement {
       },
     };
     devLog('Sending new message to server. Data:', messageData);
-    socketManager.socket.send(JSON.stringify(messageData));
+    socketManager.sendMessage('livechat', messageData);
     // TODO: Render temporary message (in gray) to chat message area?
     // But how to match with the server response to remove it after ?
   }
@@ -246,12 +246,13 @@ export class Chat extends HTMLElement {
         id: messageId,
       },
     };
-    if (socketManager.socket.readyState === WebSocket.OPEN) {
-      devLog('Sending like/unlike message action to server. Data:', messageData);
-      socketManager.socket.send(JSON.stringify(messageData));
-    } else {
-      console.error('WebSocket is not open:', socketManager.socket.readyState);
-    }
+    socketManager.sendMessage('livechat', messageData);
+    // if (socketManager.socket.readyState === WebSocket.OPEN) {
+    //   devLog('Sending like/unlike message action to server. Data:', messageData);
+    //   socketManager.socket.send(JSON.stringify(messageData));
+    // } else {
+    //   console.error('WebSocket is not open:', socketManager.socket.readyState);
+    // }
   }
 
   async receiveMessage(event) {

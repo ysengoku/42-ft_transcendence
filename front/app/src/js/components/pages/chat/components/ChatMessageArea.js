@@ -219,8 +219,8 @@ export class ChatMessageArea extends HTMLElement {
             id: message.id,
           },
         };
-        devLog('Sending read_message to server:', readMessage);
-        socketManager.socket.send(JSON.stringify(readMessage));
+        devLog('Sending read_message to server:', readMessage); 
+        socketManager.sendMessage('livechat', readMessage);
       }
     } else {
       messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
