@@ -28,7 +28,7 @@ const auth = (() => {
         const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
         document.dispatchEvent(event);
       }
-      socketManager.connect();
+      socketManager.openSocket('livechat');
     }
 
     updateStoredUser(user) {
@@ -53,7 +53,7 @@ const auth = (() => {
       sessionStorage.removeItem('user');
       const event = new CustomEvent('userStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
-      socketManager.close();
+      socketManager.closeAllSockets();
     }
 
     /**
