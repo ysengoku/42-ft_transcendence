@@ -23,5 +23,3 @@ def get_daily_elo_change(request: HttpRequest, username: str):
     """
     user_profile = get_profile_queryset_by_username_or_404(username).first()
     return Match.objects.get_elo_points_by_day(user_profile)
-
-
