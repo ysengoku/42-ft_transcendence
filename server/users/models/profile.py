@@ -148,12 +148,6 @@ class Profile(models.Model):
             "winrate": calculate_winrate(res["wins"], res["loses"]),
         }
 
-    def get_elo_data_points(self):
-        return self.matches.annotate(
-            elo_change_signed=Case(When(winner=self, then=F("elo_change")), When(loser=self, then=-F("elo_change"))),
-            elo_result=Case(When(winner=self, then=F("winners_elo")), When(loser=self, then=F("losers_elo"))),
-        ).values("elo_change_signed", "elo_result", "date")
-
     def delete_avatar(self) -> None:
         self.profile_picture.delete()
         if self.profile_picture and Path.is_file(self.profile_picture.path):

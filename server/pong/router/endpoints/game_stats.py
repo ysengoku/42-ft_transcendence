@@ -5,14 +5,14 @@ from ninja.pagination import paginate
 from common.routers import get_profile_queryset_by_username_or_404
 from common.schemas import MessageSchema
 from pong.models import Match
-from pong.schemas import DayEloChangeSchema
+from pong.schemas import EloDataPointSchema
 
 game_stats_router = Router()
 
 
 @game_stats_router.get(
     "{username}",
-    response={200: list[DayEloChangeSchema], frozenset({401, 404}): MessageSchema},
+    response={200: list[EloDataPointSchema], frozenset({401, 404}): MessageSchema},
 )
 @paginate
 def get_game_stats(request: HttpRequest, username: str):
