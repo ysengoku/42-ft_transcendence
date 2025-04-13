@@ -130,7 +130,6 @@ class ProfileFullSchema(ProfileMinimalSchema):
     elo_history: list[EloDataPointSchema] = Field(
         description="List of data points for elo changes of the last 7 days.",
     )
-    friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
     friends_count: int
     is_friend: bool
     is_blocked_user: bool
@@ -157,14 +156,6 @@ class ProfileFullSchema(ProfileMinimalSchema):
     @staticmethod
     def resolve_elo_history(obj: Profile):
         return Match.objects.get_elo_points_by_day(obj)[:7]
-
-    @staticmethod
-    def resolve_friends(obj: Profile):
-        return obj.friends.all()[:10]
-
-    @staticmethod
-    def resolve_friends_count(obj: Profile):
-        return obj.friends.count()
 
 
 class PasswordValidationSchema(Schema):
