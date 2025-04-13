@@ -30,6 +30,7 @@ class ProfileQuerySet(models.QuerySet):
             is_friend=Exists(curr_user.profile.friends.filter(user__username=username)),
             is_blocked_user=Exists(curr_user.profile.blocked_users.filter(user__username=username)),
             is_blocked_by_user=Exists(curr_user.profile.blocked_users_of.filter(user__username=username)),
+            friends_count=Count("friends", distinct=True),
         )
 
     def with_wins_and_loses_and_total_matches(self):
