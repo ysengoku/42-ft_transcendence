@@ -15,11 +15,13 @@ game_stats_router = Router()
     response={200: list[EloDataPointSchema], frozenset({401, 404}): MessageSchema},
 )
 @paginate
-def get_game_stats(request: HttpRequest, username: str):
+def get_daily_elo_change(request: HttpRequest, username: str):
     """
-    Gets game statistics for a specific user in the form of overall elo gained across last days.
+    Gets daily elo change statistics for a specific user in the form of overall elo gained across last days.
     Paginated by the `limit` and `offset` settings.
     For example, `/users/{username}/game_stats?limit=7&offset=0` will get 7 elo points.
     """
     user_profile = get_profile_queryset_by_username_or_404(username).first()
     return Match.objects.get_elo_points_by_day(user_profile)
+
+
