@@ -11,7 +11,7 @@ game_stats_router = Router()
 
 
 @game_stats_router.get(
-    "{username}",
+    "{username}/daily-elo",
     response={200: list[EloDataPointSchema], frozenset({401, 404}): MessageSchema},
 )
 @paginate
