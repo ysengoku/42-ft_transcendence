@@ -27,8 +27,8 @@ export class Duel extends HTMLElement {
   constructor() {
     super();
 
-    // this.url = 'wss://' + window.location.host + '/ws/matchmaking/';
-    // this.socket = null;
+    this.handleGameFound = this.handleGameFound.bind(this);
+    this.handleInviteResponse = this.handleInviteResponse.bind(this);
     this.cancelDuel = this.cancelDuel.bind(this);
     this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
@@ -82,11 +82,10 @@ export class Duel extends HTMLElement {
   }
 
   disconnectedCallback() {
+    document.removeEventListener('gameFound', this.handleGameFound);
     this.cancelButton?.removeEventListener('click', this.cancelDuel);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
-    // this.socket?.close();
-    // this.socket = null;
     socketManager.closeSocket('matchmaking');
   }
 
@@ -130,12 +129,7 @@ export class Duel extends HTMLElement {
   requestMatchmaking() {
     devLog('Requesting matchmaking...');
     socketManager.openSocket('matchmaking');
-
-    document.addEventListener('gameFound', (event) => {
-      devLog('Game found event:', event.detail);
-      this.#state.gameId = event.detail.game_room_id;
-      this.startDuel();
-    });
+    document.addEventListener('gameFound', this.handleGameFound);
 
     // ===== For test ================
     this.#state.opponent = {
@@ -145,6 +139,15 @@ export class Duel extends HTMLElement {
       elo: 1500,
     };
     // ================================
+  }
+
+  handleGameFound(event) {
+    devLog('Game found event:', event.detail);
+    this.#state.gameId = event.detail.game_room_id;
+    this.startDuel();
+  }
+
+  handleInviteResponse(event) {
   }
 
   cancelDuel() {
