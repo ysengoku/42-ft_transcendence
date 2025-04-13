@@ -2,7 +2,8 @@ import uuid
 from datetime import datetime
 
 from django.db import models
-from django.db.models import Count
+from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, When
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from users.models.profile import Profile
@@ -26,7 +27,7 @@ def _calculate_elo_change(a: int, b: int, outcome: float, k_factor: int = 32) ->
     return round(k_factor * (outcome - expected_score))
 
 
-class MatchManager(models.Manager):
+class MatchQuerySet(models.QuerySet):
     MINUMUM_ELO = 100
     K_FACTOR = 32
     WIN = 1
@@ -34,15 +35,20 @@ class MatchManager(models.Manager):
     LOSS = 0
 
     def resolve(
-        self, winner: Profile, loser: Profile, winners_score: int, losers_score: int, date: datetime = timezone.now(),
+        self,
+        winner: Profile,
+        loser: Profile,
+        winners_score: int,
+        losers_score: int,
+        date: datetime = timezone.now(),
     ):
         """
         Resolves all elo calculations, updates profiles of players,
         creates a new match record and saves everything into the database.
         """
-        elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchManager.WIN, MatchManager.K_FACTOR)
-        if (loser.elo - elo_change) < MatchManager.MINUMUM_ELO:
-            elo_change = loser.elo - MatchManager.MINUMUM_ELO
+        elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
+        if (loser.elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
+            elo_change = loser.elo - MatchQuerySet.MINUMUM_ELO
         winner.elo += elo_change
         loser.elo -= elo_change
         resolved_match = Match(
@@ -60,6 +66,39 @@ class MatchManager(models.Manager):
         loser.save()
         return resolved_match
 
+    def get_elo_points_by_day(self, profile: Profile):
+        # annotate with day without time and elo change of the specific player
+        player_elo_qs = (
+            self.filter(Q(winner=profile) | Q(loser=profile))
+            .annotate(
+                day=TruncDate("date"),
+                player_elo=Case(
+                    When(winner=profile, then=F("winners_elo")),
+                    When(loser=profile, then=F("losers_elo")),
+            ),
+                player_elo_change=Case(
+                    When(winner=profile, then=F("elo_change")),
+                    When(loser=profile, then=-F("elo_change")),
+            ))
+        )
+
+        latest_match_per_day_subquery = (
+            player_elo_qs
+            .filter(day=OuterRef("day"))
+            .order_by("-date")
+            .values("player_elo")[:1]
+        )
+
+        return (
+            player_elo_qs
+            .values("day")
+            .annotate(
+                daily_elo_change=Sum("player_elo_change"),
+                elo_result=Subquery(latest_match_per_day_subquery),
+            )
+            .order_by("-day")
+        )
+
 
 class Match(models.Model):
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
@@ -71,19 +110,19 @@ class Match(models.Model):
     losers_elo = models.IntegerField()
     date = models.DateTimeField(default=timezone.now)
 
-    objects = MatchManager()
+    objects = MatchQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = "matches"
         ordering = ["-date"]
 
     def __str__(self) -> str:
-        winner = self.winner.user.username if self.user else "Deleted User"
-        loser = self.loser.user.username if self.user else "Deleted User"
+        winner = self.winner.user.username if self.winner else "Deleted User"
+        loser = self.loser.user.username if self.loser else "Deleted User"
         return f"{winner} - {loser}"
 
 
-class MatchmakingTicketManager(models.Manager):
+class GameRoomManager(models.Manager):
     def get_valid_game_room(self):
         """
         Valid game room is a pending game room with less than 2 players.
@@ -113,7 +152,7 @@ class GameRoom(models.Model):
     players = models.ManyToManyField(Profile, related_name="game_rooms")
     date = models.DateTimeField(default=timezone.now)
 
-    objects = MatchmakingTicketManager()
+    objects = GameRoomManager()
 
     class Meta:
         ordering = ["-date"]

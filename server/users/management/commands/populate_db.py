@@ -19,7 +19,7 @@ def choice_except(seq, value):
     return res
 
 
-def generate_random_date(start: datetime = (timezone.now() - timedelta(days=7)), end: datetime = timezone.now()):
+def generate_random_date(start: datetime = (timezone.now() - timedelta(days=22)), end: datetime = timezone.now()):
     delta = end - start
     delta_in_seconds = delta.days * 24 * 60 * 60 + delta.seconds
     return start + timedelta(seconds=randrange(delta_in_seconds))
@@ -83,55 +83,58 @@ class Command(BaseCommand):
                 user.add_friend(friend)
             user.save()
 
-        Match.objects.resolve(celia, yuko, 2, 1, generate_random_date())
-        Match.objects.resolve(celia, yuko, 3, 1, generate_random_date())
-        Match.objects.resolve(celia, yuko, 4, 2, generate_random_date())
-        Match.objects.resolve(celia, yuko, 5, 2, generate_random_date())
-        Match.objects.resolve(celia, yuko, 1, 0, generate_random_date())
-        Match.objects.resolve(celia, yuko, 2, 1, generate_random_date())
+        # generate random sorted dates in advance to preserve the sequentiality of the played matches
+        iter_rand_dates = iter(sorted([generate_random_date() for _ in range(500)]))
+        Match.objects.resolve(celia, yuko, 2, 1, next(iter_rand_dates))
+        Match.objects.resolve(celia, yuko, 3, 1, next(iter_rand_dates))
+        Match.objects.resolve(celia, yuko, 4, 2, next(iter_rand_dates))
+        Match.objects.resolve(celia, yuko, 5, 2, next(iter_rand_dates))
+        Match.objects.resolve(celia, yuko, 1, 0, next(iter_rand_dates))
+        Match.objects.resolve(celia, yuko, 2, 1, next(iter_rand_dates))
 
-        Match.objects.resolve(celia, eldar, 2, 1, generate_random_date())
-        Match.objects.resolve(celia, eldar, 3, 1, generate_random_date())
-        Match.objects.resolve(celia, eldar, 4, 2, generate_random_date())
-        Match.objects.resolve(celia, eldar, 2, 1, generate_random_date())
-        Match.objects.resolve(eldar, celia, 5, 2, generate_random_date())
-        Match.objects.resolve(eldar, celia, 1, 0, generate_random_date())
+        Match.objects.resolve(celia, eldar, 2, 1, next(iter_rand_dates))
+        Match.objects.resolve(celia, eldar, 3, 1, next(iter_rand_dates))
+        Match.objects.resolve(celia, eldar, 4, 2, next(iter_rand_dates))
+        Match.objects.resolve(celia, eldar, 2, 1, next(iter_rand_dates))
+        Match.objects.resolve(eldar, celia, 5, 2, next(iter_rand_dates))
+        Match.objects.resolve(eldar, celia, 1, 0, next(iter_rand_dates))
 
-        Match.objects.resolve(celia, fanny, 3, 2, generate_random_date())
-        Match.objects.resolve(celia, fanny, 3, 0, generate_random_date())
-        Match.objects.resolve(celia, fanny, 5, 1, generate_random_date())
-        Match.objects.resolve(celia, fanny, 4, 1, generate_random_date())
-        Match.objects.resolve(celia, fanny, 5, 4, generate_random_date())
-        Match.objects.resolve(celia, fanny, 2, 1, generate_random_date())
+        Match.objects.resolve(celia, fanny, 3, 2, next(iter_rand_dates))
+        Match.objects.resolve(celia, fanny, 3, 0, next(iter_rand_dates))
+        Match.objects.resolve(celia, fanny, 5, 1, next(iter_rand_dates))
+        Match.objects.resolve(celia, fanny, 4, 1, next(iter_rand_dates))
+        Match.objects.resolve(celia, fanny, 5, 4, next(iter_rand_dates))
+        Match.objects.resolve(celia, fanny, 2, 1, next(iter_rand_dates))
 
-        Match.objects.resolve(yuko, fanny, 3, 2, generate_random_date())
-        Match.objects.resolve(yuko, fanny, 3, 0, generate_random_date())
-        Match.objects.resolve(yuko, fanny, 5, 1, generate_random_date())
-        Match.objects.resolve(yuko, fanny, 4, 1, generate_random_date())
-        Match.objects.resolve(fanny, yuko, 5, 4, generate_random_date())
-        Match.objects.resolve(fanny, yuko, 2, 1, generate_random_date())
+        Match.objects.resolve(yuko, fanny, 3, 2, next(iter_rand_dates))
+        Match.objects.resolve(yuko, fanny, 3, 0, next(iter_rand_dates))
+        Match.objects.resolve(yuko, fanny, 5, 1, next(iter_rand_dates))
+        Match.objects.resolve(yuko, fanny, 4, 1, next(iter_rand_dates))
+        Match.objects.resolve(fanny, yuko, 5, 4, next(iter_rand_dates))
+        Match.objects.resolve(fanny, yuko, 2, 1, next(iter_rand_dates))
 
-        Match.objects.resolve(eldar, fanny, 3, 2, generate_random_date())
-        Match.objects.resolve(eldar, fanny, 3, 0, generate_random_date())
-        Match.objects.resolve(eldar, fanny, 5, 1, generate_random_date())
-        Match.objects.resolve(eldar, fanny, 4, 1, generate_random_date())
-        Match.objects.resolve(fanny, eldar, 5, 4, generate_random_date())
-        Match.objects.resolve(fanny, eldar, 2, 1, generate_random_date())
+        Match.objects.resolve(eldar, fanny, 3, 2, next(iter_rand_dates))
+        Match.objects.resolve(eldar, fanny, 3, 0, next(iter_rand_dates))
+        Match.objects.resolve(eldar, fanny, 5, 1, next(iter_rand_dates))
+        Match.objects.resolve(eldar, fanny, 4, 1, next(iter_rand_dates))
+        Match.objects.resolve(fanny, eldar, 5, 4, next(iter_rand_dates))
+        Match.objects.resolve(fanny, eldar, 2, 1, next(iter_rand_dates))
 
-        Match.objects.resolve(eldar, yuko, 3, 2, generate_random_date())
-        Match.objects.resolve(eldar, yuko, 3, 0, generate_random_date())
-        Match.objects.resolve(eldar, yuko, 5, 1, generate_random_date())
-        Match.objects.resolve(eldar, yuko, 4, 1, generate_random_date())
-        Match.objects.resolve(yuko, eldar, 5, 4, generate_random_date())
-        Match.objects.resolve(yuko, eldar, 2, 1, generate_random_date())
+        Match.objects.resolve(eldar, yuko, 3, 2, next(iter_rand_dates))
+        Match.objects.resolve(eldar, yuko, 3, 0, next(iter_rand_dates))
+        Match.objects.resolve(eldar, yuko, 5, 1, next(iter_rand_dates))
+        Match.objects.resolve(eldar, yuko, 4, 1, next(iter_rand_dates))
+        Match.objects.resolve(yuko, eldar, 5, 4, next(iter_rand_dates))
+        Match.objects.resolve(yuko, eldar, 2, 1, next(iter_rand_dates))
 
         for _i in range(10):
-            Match.objects.resolve(yuko, sad_hampter, 5, 1, generate_random_date())
-            Match.objects.resolve(eldar, sad_hampter, 6, 1, generate_random_date())
-            Match.objects.resolve(celia, sad_hampter, 11, 1, generate_random_date())
-            Match.objects.resolve(fanny, sad_hampter, 5, 1, generate_random_date())
+            Match.objects.resolve(yuko, sad_hampter, 5, 1, next(iter_rand_dates))
+            Match.objects.resolve(eldar, sad_hampter, 6, 1, next(iter_rand_dates))
+            Match.objects.resolve(celia, sad_hampter, 11, 1, next(iter_rand_dates))
+            Match.objects.resolve(fanny, sad_hampter, 5, 1, next(iter_rand_dates))
 
-        for _i in range(5):
+        iter_rand_dates = iter(sorted([generate_random_date() for _ in range(800)]))
+        for _i in range(15):
             for user in regular_users:
                 opponent = choice_except(regular_users, user)
                 players = [user, opponent]
@@ -139,21 +142,21 @@ class Command(BaseCommand):
                 players.remove(winner)
                 loser = players[0]
                 Match.objects.resolve(
-                    winner.profile, loser.profile, choice(range(3, 6)), choice(range(3)), generate_random_date(),
+                    winner.profile, loser.profile, choice(range(3, 6)), choice(range(3)), next(iter_rand_dates),
                 )  # noqa: S311
                 Match.objects.resolve(
-                    life_enjoyer, loser.profile, choice(range(3, 6)), choice(range(3)), generate_random_date(),
+                    life_enjoyer, loser.profile, choice(range(3, 6)), choice(range(3)), next(iter_rand_dates),
                 )  # noqa: S311
                 Match.objects.resolve(
-                    life_enjoyer, winner.profile, choice(range(3, 6)), choice(range(3)), generate_random_date(),
+                    life_enjoyer, winner.profile, choice(range(3, 6)), choice(range(3)), next(iter_rand_dates),
                 )  # noqa: S311
                 if randint(0, 10) > 6:  # noqa: S311,PLR2004
                     Match.objects.resolve(
-                        winner.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)), generate_random_date(),
+                        winner.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)), next(iter_rand_dates),
                     )  # noqa: S311
                 if randint(0, 10) > 7:  # noqa: S311,PLR2004
                     Match.objects.resolve(
-                        loser.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)), generate_random_date(),
+                        loser.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)), next(iter_rand_dates),
                     )  # noqa: S311
 
         # MFA users
