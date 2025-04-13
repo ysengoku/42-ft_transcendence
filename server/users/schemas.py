@@ -7,6 +7,8 @@ from pydantic import model_validator
 
 from chat.models import ChatMessage, Notification
 from common.schemas import MessageSchema
+from pong.models import Match
+from pong.schemas import EloDataPointSchema
 
 from .models import Profile, User
 
@@ -108,16 +110,6 @@ class OpponentProfileAndStatsSchema(Schema):
     winrate: int
 
 
-class EloDataPointSchema(Schema):
-    """
-    Represents a single point on the graph of the user's elo history.
-    """
-
-    date: datetime
-    elo_change_signed: int = Field(description="How much elo user gained or lost from this match.")
-    elo_result: int = Field(description="Resulting elo after elo gain or loss from this match.")
-
-
 class ProfileFullSchema(ProfileMinimalSchema):
     """
     Represents all the data for the full user's profile page.
@@ -136,7 +128,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
     )
     scored_balls: int = Field(description="How many balls player scored overall.")
     elo_history: list[EloDataPointSchema] = Field(
-        description="List of data points for elo changes of the last 10 games.",
+        description="List of data points for elo changes of the last 7 days.",
     )
     friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
     friends_count: int
@@ -164,7 +156,7 @@ class ProfileFullSchema(ProfileMinimalSchema):
 
     @staticmethod
     def resolve_elo_history(obj: Profile):
-        return obj.get_elo_data_points()[:10]
+        return Match.objects.get_elo_points_by_day(obj)[:7]
 
     @staticmethod
     def resolve_friends(obj: Profile):
