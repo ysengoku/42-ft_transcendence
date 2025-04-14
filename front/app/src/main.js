@@ -1,3 +1,7 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+
 import '@components/navbar/index.js';
 import '@components/pages/index.js';
 import '@css/style.css';
