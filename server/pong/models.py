@@ -82,6 +82,7 @@ class MatchQuerySet(models.QuerySet):
             ))
         )
 
+        # takes the last match for each day to determine the end result of elo for this specific day
         latest_match_per_day_subquery = (
             player_elo_qs
             .filter(day=OuterRef("day"))

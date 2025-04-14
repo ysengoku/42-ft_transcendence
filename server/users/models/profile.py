@@ -30,6 +30,7 @@ class ProfileQuerySet(models.QuerySet):
             is_friend=Exists(curr_user.profile.friends.filter(user__username=username)),
             is_blocked_user=Exists(curr_user.profile.blocked_users.filter(user__username=username)),
             is_blocked_by_user=Exists(curr_user.profile.blocked_users_of.filter(user__username=username)),
+            friends_count=Count("friends", distinct=True),
         )
 
     def with_wins_and_loses_and_total_matches(self):
@@ -147,12 +148,6 @@ class Profile(models.Model):
             "loses": res["loses"],
             "winrate": calculate_winrate(res["wins"], res["loses"]),
         }
-
-    def get_elo_data_points(self):
-        return self.matches.annotate(
-            elo_change_signed=Case(When(winner=self, then=F("elo_change")), When(loser=self, then=-F("elo_change"))),
-            elo_result=Case(When(winner=self, then=F("winners_elo")), When(loser=self, then=F("losers_elo"))),
-        ).values("elo_change_signed", "elo_result", "date")
 
     def delete_avatar(self) -> None:
         self.profile_picture.delete()
