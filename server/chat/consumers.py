@@ -39,14 +39,12 @@ def check_inactive_users():
     # Utiliser Q pour combiner les conditions avec OR
     inactive_users = Profile.objects.filter(
         Q(last_activity__lt=threshold) | Q(nb_active_connexions=0),
-        is_online=True  # Ne traiter que les utilisateurs marqués en ligne
+        is_online=True
     )
 
     for user in inactive_users:
         user.is_online = False
         user.nb_active_connexions = 0
-        # Éviter les valeurs négatives
-        # user.nb_active_connexions = max(user.nb_active_connexions, 0)
         user.save()
 
 
@@ -210,23 +208,9 @@ class UserEventsConsumer(WebsocketConsumer):
             case "room_created":
                 self.send_room_created(
                     text_data_json.get("data", {}).get("chat_id"))
-            case "heartbeat":
-                self.handle_heartbeat()
             case _:
                 logger.error("Unknown action : %s", action)
 
-    def handle_heartbeat(self):
-        if hasattr(self, "user_profile"):
-            self.user_profile.update_activity()
-            self.send(text_data=json.dumps({
-                "action": "activity_update",
-                "data": {
-                    "username": self.user.username,
-                    "last_activity": self.user_profile.last_activity.isoformat(),
-                },
-            }))
-        else:
-            logger.warning("heartbeat without profil utilisateur")
 
     def handle_message(self, data):
         message_data = data.get("data", {})
