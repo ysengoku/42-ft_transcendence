@@ -1,11 +1,15 @@
-from random import choice, randint
+from datetime import datetime, timedelta
+from random import choice, randint, randrange
 
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from chat.models import Chat, ChatMessage, Notification
-from users.models import Match, OauthConnection, Profile, User
+from pong.models import Match
+from users.models import OauthConnection, Profile, User
 
 
+# ruff: noqa: S106, S311
 def choice_except(seq, value):
     res = choice(seq)  # noqa: S311
     while res == value:
@@ -15,128 +19,114 @@ def choice_except(seq, value):
     return res
 
 
-# ruff: noqa: S106
+def generate_random_date(start: datetime = (timezone.now() - timedelta(days=22)), end: datetime = timezone.now()):
+    delta = end - start
+    delta_in_seconds = delta.days * 24 * 60 * 60 + delta.seconds
+    return start + timedelta(seconds=randrange(delta_in_seconds))
+
+def clean_database():
+    User.objects.all().delete()
+    Profile.objects.all().delete()
+    Match.objects.all().delete()
+    OauthConnection.objects.all().delete()
+    Chat.objects.all().delete()
+    ChatMessage.objects.all().delete()
+    Notification.objects.all().delete()
+
+def generate_users():
+    # special user who is winning at life
+    life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123")
+
+    # special user who has no data on itself
+    User.objects.create_user("User0", email="user0@gmail.com", password="123")
+
+    users = []
+    names = [
+        "Pedro",
+        "Juan",
+        "Anya",
+        "Juanita",
+        "John",
+        "Joe_The_Uncatchable",
+        "Alex",
+        "alice",
+        "menaco",
+        "evil_sherif",
+        "TheBall",
+        "warhawk",
+        "alice123",
+        "johndoe1",
+        "george55",
+        "Yuko",
+        "celiastral",
+        "emuminov",
+        "Darksmelo",
+        "faboussa",
+        "sad_hampter",
+    ]
+
+    for name in names:
+        user = User.objects.create_user(f"{name}", email=f"{name}@gmail.com", password="123")
+        users.append(user)
+        life_enjoyer.profile.add_friend(user.profile)
+
+    for i in range(10):
+        user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
+        if randint(0, 1):
+            life_enjoyer.profile.block_user(user.profile)
+        else:
+            life_enjoyer.profile.add_friend(user.profile)
+    life_enjoyer.profile.save()
+    return users, life_enjoyer
+
+def generate_matches(users: list[User], life_enjoyer: User):
+    # generate random sorted dates in advance to preserve the sequentiality of the played matches
+    dates = sorted([generate_random_date() for _ in range(100)])
+
+    for i in range(len(dates)):
+        for user in users:
+            opponent = choice_except(users, user)
+            players = [user, opponent]
+            winner = choice(players)
+            players.remove(winner)
+            loser = players[0]
+            Match.objects.resolve(
+                winner.profile,
+                loser.profile,
+                choice(range(3, 6)),
+                choice(range(3)),
+                dates[i],
+            )
+
+            # life_enjoyer can't stop winning
+            if not randint(0, 5):
+                Match.objects.resolve(
+                    life_enjoyer.profile,
+                    loser.profile,
+                    choice(range(3, 6)),
+                    choice(range(3)),
+                    dates[i],
+                )
+            if not randint(0, 8):
+                Match.objects.resolve(
+                    life_enjoyer.profile,
+                    winner.profile,
+                    choice(range(3, 6)),
+                    choice(range(3)),
+                    dates[i],
+                )
+
+
+
 class Command(BaseCommand):
     help = "Populates db with a dummy data"
 
     def handle(self, **kwargs) -> None:  # noqa: PLR0915
-        User.objects.all().delete()
-        Profile.objects.all().delete()
-        Match.objects.all().delete()
-        OauthConnection.objects.all().delete()
-        Chat.objects.all().delete()
-        ChatMessage.objects.all().delete()
-        Notification.objects.all().delete()
+        clean_database()
 
-        life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123").profile
-        yuko = User.objects.create_user("Yuko", email="yuko@gmail.com", password="123").profile
-        celia = User.objects.create_user("celiastral", email="celiastral@gmail.com", password="123").profile
-        fanny = User.objects.create_user("Fannybooboo", email="boussard.fanny@gmail.com", password="123").profile
-        eldar = User.objects.create_user("emuminov", email="emuminov@gmail.com", password="123").profile
-        sad_hampter = User.objects.create_user("SadHampter", email="sadhampter@gmail.com", password="123").profile
-        User.objects.create_user("User0", email="user0@gmail.com", password="123")
+        users, life_enjoyer = generate_users()
 
-        regular_users = []
-        names = [
-            "Pedro",
-            "Juan",
-            "Anya",
-            "Juanita",
-            "John",
-            "Joe_The_Uncatchable",
-            "Alex",
-            "alice",
-            "menaco",
-            "evil_sherif",
-            "TheBall",
-            "warhawk",
-            "alice123",
-            "johndoe1",
-            "george55",
-        ]
-
-        for name in names:
-            user = User.objects.create_user(f"{name}", email=f"{name}@gmail.com", password="123")
-            regular_users.append(user)
-            life_enjoyer.add_friend(user.profile)
-        life_enjoyer.save()
-
-        for i in range(10):
-            user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
-            life_enjoyer.block_user(user.profile)
-
-        celia.add_friend(sad_hampter)
-        users = yuko, celia, fanny, eldar
-        for user in users:
-            for friend in users:
-                if user == friend:
-                    continue
-                user.add_friend(friend)
-            user.save()
-
-        Match.objects.resolve(celia, yuko, 2, 1)
-        Match.objects.resolve(celia, yuko, 3, 1)
-        Match.objects.resolve(celia, yuko, 4, 2)
-        Match.objects.resolve(celia, yuko, 5, 2)
-        Match.objects.resolve(celia, yuko, 1, 0)
-        Match.objects.resolve(celia, yuko, 2, 1)
-
-        Match.objects.resolve(celia, eldar, 2, 1)
-        Match.objects.resolve(celia, eldar, 3, 1)
-        Match.objects.resolve(celia, eldar, 4, 2)
-        Match.objects.resolve(celia, eldar, 2, 1)
-        Match.objects.resolve(eldar, celia, 5, 2)
-        Match.objects.resolve(eldar, celia, 1, 0)
-
-        Match.objects.resolve(celia, fanny, 3, 2)
-        Match.objects.resolve(celia, fanny, 3, 0)
-        Match.objects.resolve(celia, fanny, 5, 1)
-        Match.objects.resolve(celia, fanny, 4, 1)
-        Match.objects.resolve(celia, fanny, 5, 4)
-        Match.objects.resolve(celia, fanny, 2, 1)
-
-        Match.objects.resolve(yuko, fanny, 3, 2)
-        Match.objects.resolve(yuko, fanny, 3, 0)
-        Match.objects.resolve(yuko, fanny, 5, 1)
-        Match.objects.resolve(yuko, fanny, 4, 1)
-        Match.objects.resolve(fanny, yuko, 5, 4)
-        Match.objects.resolve(fanny, yuko, 2, 1)
-
-        Match.objects.resolve(eldar, fanny, 3, 2)
-        Match.objects.resolve(eldar, fanny, 3, 0)
-        Match.objects.resolve(eldar, fanny, 5, 1)
-        Match.objects.resolve(eldar, fanny, 4, 1)
-        Match.objects.resolve(fanny, eldar, 5, 4)
-        Match.objects.resolve(fanny, eldar, 2, 1)
-
-        Match.objects.resolve(eldar, yuko, 3, 2)
-        Match.objects.resolve(eldar, yuko, 3, 0)
-        Match.objects.resolve(eldar, yuko, 5, 1)
-        Match.objects.resolve(eldar, yuko, 4, 1)
-        Match.objects.resolve(yuko, eldar, 5, 4)
-        Match.objects.resolve(yuko, eldar, 2, 1)
-
-        for _i in range(10):
-            Match.objects.resolve(yuko, sad_hampter, 5, 1)
-            Match.objects.resolve(eldar, sad_hampter, 6, 1)
-            Match.objects.resolve(celia, sad_hampter, 11, 1)
-            Match.objects.resolve(fanny, sad_hampter, 5, 1)
-
-        for _i in range(5):
-            for user in regular_users:
-                opponent = choice_except(regular_users, user)
-                players = [user, opponent]
-                winner = choice(players)  # noqa: S311
-                players.remove(winner)
-                loser = players[0]
-                Match.objects.resolve(winner.profile, loser.profile, choice(range(3, 6)), choice(range(3)))  # noqa: S311
-                Match.objects.resolve(life_enjoyer, loser.profile, choice(range(3, 6)), choice(range(3)))  # noqa: S311
-                Match.objects.resolve(life_enjoyer, winner.profile, choice(range(3, 6)), choice(range(3)))  # noqa: S311
-                if randint(0, 10) > 6:  # noqa: S311,PLR2004
-                    Match.objects.resolve(winner.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)))  # noqa: S311
-                if randint(0, 10) > 7:  # noqa: S311,PLR2004
-                    Match.objects.resolve(loser.profile, life_enjoyer, choice(range(3, 6)), choice(range(3)))  # noqa: S311
-
+        generate_matches(users, life_enjoyer)
         # MFA users
         mfa_users = [
             ("secure_bob", "secure_bob@gmail.com"),

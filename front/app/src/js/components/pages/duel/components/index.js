@@ -1,4 +1,4 @@
 import { DuelPreview } from './DuelPreview';
-import { DuelResult } from './DuelResult';
+import { ConfirmationModal } from './ConfirmationModal';
 
-export { DuelPreview, DuelResult };
+export { DuelPreview, ConfirmationModal };

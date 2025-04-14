@@ -84,7 +84,7 @@ export class ChatUserSearchItem extends HTMLElement {
     <li class="chat-user-search-list-item dropdown-item border-0 ps-3 py-2">
       <div class="d-flex flex-row align-items-center">
         <div class="position-relative d-inline-block me-2">
-          <img class="chat-user-search-avatar rounded-circle me-3" alt="Avatar">
+          <img class="chat-user-search-avatar avatar-s rounded-circle me-3" alt="Avatar">
           <span class="online-status chat-user-search-status-indicator ${this.#state.user.is_online ? 'online' : ''} ms-3"></span>
         </div>
         <div class="d-flex flex-wrap flex-grow-1 gap-2">
@@ -99,11 +99,6 @@ export class ChatUserSearchItem extends HTMLElement {
   style() {
     return `
     <style>
-    .chat-user-search-avatar {
-      width: 40px;
-      height: 40px;
-      object-fit: cover;
-    }
     .chat-user-search-status-indicator {
       position: absolute;
       bottom: 0;

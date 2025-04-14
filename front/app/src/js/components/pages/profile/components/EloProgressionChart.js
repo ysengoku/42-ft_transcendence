@@ -9,6 +9,17 @@ export class UserEloProgressionChart extends HTMLElement {
     super();
   }
 
+  // {
+  //   "items": [
+  //     {
+  //       "day": "2025-04-13",
+  //       "daily_elo_change": 0,
+  //       "elo_result": 0
+  //     }
+  //   ],
+  //   "count": 0
+  // }
+
   set data(value) {
     // this.#state.history = value.slice().reverse();
 
