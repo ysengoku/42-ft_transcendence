@@ -5,7 +5,6 @@ import datetime
 
 print("Inactive users check cronjob script")
 print(datetime.date.today(), datetime.datetime.now().time())
-
 with open('/proc/1/environ', 'r') as env_file:
     env_vars = env_file.read().split('\0')
     for var in env_vars:
@@ -23,6 +22,7 @@ if not ENDPOINT:
 # Get CSRF token
 session = requests.Session()
 base_url = ENDPOINT.rsplit('/api', 1)[0]
+print(f"base_url: {base_url}")
 get_response = session.get(f"{base_url}/api/cronjob/csrf-token", verify=False)
 csrf_token = session.cookies.get('csrftoken')
 
@@ -34,8 +34,8 @@ if not csrf_token:
 headers = {
     "Authorization": f"Bearer {CRON_SECRET}",
     "X-CSRFToken": csrf_token,
-    "Referer": ENDPOINT
+    "Referer": base_url
 }
 
-response = session.delete(ENDPOINT, headers=headers, verify=False)
+response = session.delete(f"{ENDPOINT}", headers=headers, verify=False)
 print(f"Status: {response.status_code}")
