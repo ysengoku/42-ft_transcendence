@@ -52,6 +52,7 @@ export function loader() {
     height: 64px;
     position: relative;
     overflow: visible;
+    font-size: 0;
   } 
   .chat-loader::before {
     content: "";
@@ -77,6 +78,7 @@ export function loader() {
   .chat-loader span {
     display: inline-block;
     animation: bounce 3s infinite ease-in-out;
+    font-size: 20px;
   }
   .chat-loader span:nth-child(1) { animation-delay: 0s; }
   .chat-loader span:nth-child(2) { animation-delay: 0.2s; }
