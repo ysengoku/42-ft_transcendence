@@ -41,21 +41,21 @@ function withoutResult(status) {
 const finished = {
   status: 'finished',
   gameId: '1234567890',
-  player1: {
+  winner: {
     username: 'Pedro',
     nickname: 'Pedro',
-    avatar: '/img/default-avatar.png',
+    avatar: '/__mock__/img/sample-pic1.jpg',
     elo: 1480,
     is_online: true,
   },
-  player2: {
+  loser: {
     username: 'Alice',
     nickname: 'Alice',
-    avatar: '/img/default-avatar.png',
+    avatar: '/__mock__/img/sample-pic2.png',
     elo: 1500,
     is_online: true,
   },
-  winner_score: 5,
+  winner_score: 15,
   looser_score: 3,
   date: '2025-04-02T09:00:00Z',
 };
