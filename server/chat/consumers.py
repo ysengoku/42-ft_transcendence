@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.timezone import now
 
-from users.consumers import redis_status_manager
+from users.consumers import redis_status_manager, check_inactive_users, OnlineStatusConsumer
 from users.models import Profile
 
 from .models import Chat, ChatMessage, GameInvitation, Notification
@@ -39,13 +39,20 @@ def check_inactive_users():
     # Utiliser Q pour combiner les conditions avec OR
     inactive_users = Profile.objects.filter(
         Q(last_activity__lt=threshold) | Q(nb_active_connexions=0),
-        is_online=True
+        is_online=True,
     )
 
     for user in inactive_users:
+        logger.info("User %s is inactive", user.user.username)
+        logger.info("User had %i active connexions", user.nb_active_connexions)
         user.is_online = False
+        logger.info("User is now offline")
         user.nb_active_connexions = 0
+        logger.info("User nb_active_connexions set to 0 : %i", user.nb_active_connexions)
         user.save()
+        logger.info("User saved")
+        redis_status_manager.set_user_offline(user.id)
+        logger.info("User set offline in redis")
 
 
 class UserEventsConsumer(WebsocketConsumer):
@@ -57,24 +64,9 @@ class UserEventsConsumer(WebsocketConsumer):
             return
         try:
             self.user_profile = self.user.profile
-            max_connexions = 10
-            # Incrémentation atomique du compteur de connexions
-            self.user_profile.nb_active_connexions = models.F(
-                'nb_active_connexions') + 1
-            self.user_profile.save(update_fields=['nb_active_connexions'])
-            self.user_profile.refresh_from_db()
-
-            if self.user_profile.nb_active_connexions > max_connexions:
-                logger.warning(
-                    "Too many simultaneous connexions for user %s", self.user.username)
-                self.close()
-                return
-            # TODO erase this when system is done
-            # self.user_profile.nb_active_connexions = 1
             self.user_profile.update_activity()  # set online
-            logger.info("User %s had %i active connexions", self.user.username,
-                        self.user_profile.nb_active_connexions)
             self.chats = Chat.objects.for_participants(self.user_profile)
+            
             # Add user's channel to personal group to receive answers to invitations sent
             async_to_sync(self.channel_layer.group_add)(
                 f"user_{self.user.id}",
@@ -90,7 +82,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.channel_name,
                 )
             self.accept()
-            self.notify_online_status("online")
+            # Utiliser la méthode d'OnlineStatusConsumer pour notifier le statut
+            OnlineStatusConsumer.notify_online_status(self, "online", self.user_profile)
 
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
@@ -99,32 +92,19 @@ class UserEventsConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         if hasattr(self, "user_profile"):
             try:
-                self.user_profile.nb_active_connexions = models.F(
-                    'nb_active_connexions') - 1
-                self.user_profile.save(update_fields=['nb_active_connexions'])
-                self.user_profile.refresh_from_db()
-                # Force to 0 if negative after refreshing from db
-                if self.user_profile.nb_active_connexions < 0:
-                    self.user_profile.nb_active_connexions = 0
-                    self.user_profile.save(
-                        update_fields=['nb_active_connexions'])
-
-                if self.user_profile.nb_active_connexions == 0:
-                    self.user_profile.is_online = False
-                    self.user_profile.save(update_fields=['is_online'])
-                    redis_status_manager.set_user_offline(self.user.id)
-                    self.notify_online_status("offline")
+                self.user_profile.update_activity()  # update last activity
+                # Notifier que l'utilisateur est hors ligne
+                OnlineStatusConsumer.notify_online_status(self, "offline", self.user_profile)
             except DatabaseError as e:
                 logger.error("Database error during disconnect: %s", e)
 
             logger.info("User %s has %s active connexions",
-                        self.user.username, self.user_profile.nb_active_connexions)
+                      self.user.username, self.user_profile.nb_active_connexions)
 
             async_to_sync(self.channel_layer.group_discard)(
                 "online_users",
                 self.channel_name,
             )
-        # verify if self.chats exists and is not empty
         if hasattr(self, "chats") and self.chats:
             for chat in self.chats:
                 async_to_sync(self.channel_layer.group_discard)(
@@ -256,27 +236,16 @@ class UserEventsConsumer(WebsocketConsumer):
         )
 
     def handle_online_status(self, event):
-        logger.info("online status received !")
+        """
+        Handle online status updates from other users
+        """
         action = event.get("action")
         user_data = event.get("data", {})
-        username = user_data.get("username")
-        logger.info("online status received username %s", username)
-
-        try:
-            profile = Profile.objects.get(user__username=username)
-        except Profile.DoesNotExist:
-            logger.error("Profile for %s does not exist.", username)
-            return
-        online_status = "user_online" if action == "user_online" else "user_offline"
-        notification_data = get_user_data(profile)
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": online_status,
-                    "data": notification_data,
-                },
-            ),
-        )
+        
+        self.send(text_data=json.dumps({
+            "action": action,
+            "data": user_data,
+        }))
 
     def handle_like_message(self, data):
         message_data = data.get("data", {})
@@ -604,12 +573,9 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def user_status(self, event):
         """
-        Gère les messages de type 'user_status' du channel layer
+        Handle user status messages from the channel layer
         """
-        action = event.get("action")
-        data = event.get("data")
-
         self.send(text_data=json.dumps({
-            "action": action,
-            "data": data,
+            "action": event.get("action"),
+            "data": event.get("data"),
         }))
