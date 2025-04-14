@@ -32,7 +32,7 @@ export class Duel extends HTMLElement {
     this.cancelDuel = this.cancelDuel.bind(this);
     this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
-  
+
   setQueryParam(param) {
     console.log('Query param:', param);
     this.#status = param.get('status');
@@ -48,7 +48,7 @@ export class Duel extends HTMLElement {
       // TODO: set necessary information
     }
   }
-  
+
   async connectedCallback() {
     this.#state.loggedInUser = auth.getStoredUser();
     if (!this.#state.loggedInUser) {
@@ -172,7 +172,7 @@ export class Duel extends HTMLElement {
         // ===== For test ================
         // this.#state.gameId = '1234567890';
         // ================================
-        
+
         router.removeBeforeunloadCallback();
         window.removeEventListener('beforeunload', this.confirmLeavePage);
         socketManager.closeSocket('matchmaking');
@@ -192,7 +192,8 @@ export class Duel extends HTMLElement {
     const confirmationModal = document.createElement('confirmation-modal');
     this.appendChild(confirmationModal);
     confirmationModal.render();
-    confirmationModal.querySelector('.confirmation-message').textContent = 'If you leave this page, the duel will be canceled. Do you want to continue?';
+    confirmationModal.querySelector('.confirmation-message').textContent =
+      'If you leave this page, the duel will be canceled.\nDo you want to continue?';
     confirmationModal.querySelector('.confirm-button').textContent = 'Leave this page';
     confirmationModal.querySelector('.cancel-button').textContent = 'Stay';
     confirmationModal.showModal();
