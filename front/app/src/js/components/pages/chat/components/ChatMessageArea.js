@@ -11,7 +11,7 @@ import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE, getRelativeDateAndTime,loader } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, getRelativeDateAndTime, loader } from '@utils';
 
 /**
  * @class ChatMessageArea
@@ -72,9 +72,9 @@ export class ChatMessageArea extends HTMLElement {
   disconnectedCallback() {
     this.header?.removeEventListener('click', this.navigateToProfile);
     if (this.#state.data) {
-    this.#state.data.is_blocked_user ?
-      this.blockButoon?.removeEventListener('click', this.unblockUser) :
-      this.blockButoon?.removeEventListener('click', this.blockUser);
+      this.#state.data.is_blocked_user ?
+        this.blockButoon?.removeEventListener('click', this.unblockUser) :
+        this.blockButoon?.removeEventListener('click', this.blockUser);
       this.#state.data.messages.forEach = (message, index) => {
         message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
       };
@@ -88,9 +88,12 @@ export class ChatMessageArea extends HTMLElement {
 
   render() {
     this.innerHTML = this.template() + this.style();
+    this.messageInput = this.querySelector('#chat-message-input-wrapper');
     this.loader = this.querySelector('.chat-loader');
     this.loader.innerHTML = loader();
+
     if (!this.#state.data) {
+      this.messageInput.classList.add('d-none');
       return;
     }
 
@@ -104,10 +107,10 @@ export class ChatMessageArea extends HTMLElement {
     this.invitePlayButton = this.querySelector('#chat-invite-play-button');
     this.blockButoon = this.querySelector('#chat-block-user-button');
     this.chatMessages = this.querySelector('#chat-messages');
-    this.messageInput = this.querySelector('#chat-message-input-wrapper');
 
     // Set header information and avatar.
-    this.#state.data.avatar ? this.headerAvatar.src = this.#state.data.avatar : this.headerAvatar.src = defaultAvatar;
+    this.#state.data.avatar ?
+      (this.headerAvatar.src = this.#state.data.avatar) : (this.headerAvatar.src = defaultAvatar);
     this.headerAvatar.classList.remove('d-none');
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
@@ -154,8 +157,7 @@ export class ChatMessageArea extends HTMLElement {
       if (this.#state.renderedMessagesCount < 30) {
         return;
       }
-      if (this.#state.totalMessagesCount === 0 ||
-        this.#state.renderedMessagesCount < this.#state.totalMessagesCount) {
+      if (this.#state.totalMessagesCount === 0 || this.#state.renderedMessagesCount < this.#state.totalMessagesCount) {
         const previousHeight = this.chatMessages.scrollHeight;
 
         const response = await apiRequest(
@@ -164,7 +166,8 @@ export class ChatMessageArea extends HTMLElement {
             API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
             null,
             false,
-            true);
+            true,
+        );
         if (response.success) {
           this.#state.data.messages.push(...response.data.items);
           this.#state.totalMessagesCount = response.data.count;
@@ -205,8 +208,12 @@ export class ChatMessageArea extends HTMLElement {
 
     if (message.sender === this.#state.data.username) {
       messageElement.classList.add(
-          'left-align-message', 'd-flex', 'flex-row', 'justify-content-start',
-          'align-items-center', 'gap-3',
+          'left-align-message',
+          'd-flex',
+          'flex-row',
+          'justify-content-start',
+          'align-items-center',
+          'gap-3',
       );
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
@@ -219,12 +226,17 @@ export class ChatMessageArea extends HTMLElement {
             id: message.id,
           },
         };
-        devLog('Sending read_message to server:', readMessage); 
+        devLog('Sending read_message to server:', readMessage);
         socketManager.sendMessage('livechat', readMessage);
       }
     } else {
-      messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
-          'align-items-center');
+      messageElement.classList.add(
+          'right-align-message',
+          'd-flex',
+          'flex-row',
+          'justify-content-end',
+          'align-items-center',
+      );
       messageContent.classList.add('ms-5');
       messageElement.querySelector('.chat-message-avatar').remove();
     }
@@ -357,8 +369,13 @@ export class ChatMessageArea extends HTMLElement {
       </div>
 
       <!-- Messages -->
-      <div class="chat-loader d-flex text-center justify-content-center align-items-center ms-4 mt-5  d-none"></div>
-      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
+      <div class="chat-loader d-flex text-center justify-content-center align-items-center ms-4 mt-5 d-none"></div>
+      <div class="no-messages d-flex flex-column justify-content-center align-items-center mt-5 d-none">
+        <p class="m-0">Every great partnership starts with a howdy.</p>
+        <p class="m-0">Don\'t be shy now — send your first message.</p>
+      </div>
+      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages">
+      </div>
 
       <!-- Input -->
       <div id="chat-message-input-wrapper">
