@@ -104,7 +104,7 @@ def check_inactive_users():
     channel_layer = get_channel_layer()
 
     for user in inactive_users:
-        logger.info("User %s is inactive (no activity for 5 minutes and no active connections)", 
+        logger.info("User %s is inactive (no activity for 5 minutes and no active connections)",
                   user.user.username)
         
         # Marquer comme hors ligne
@@ -123,7 +123,6 @@ def check_inactive_users():
                 "data": {
                     "username": user.user.username,
                     "nickname": user.nickname if hasattr(user, 'nickname') else user.user.username,
-                    "avatar": user.profile_picture.url if hasattr(user, 'profile_picture') and user.profile_picture else settings.DEFAULT_USER_AVATAR,
                     "status": "offline",
                     "date": timezone.now().isoformat(),
                 },
