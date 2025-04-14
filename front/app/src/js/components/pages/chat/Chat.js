@@ -74,6 +74,7 @@ export class Chat extends HTMLElement {
     // Fetch and set data for the chat list component
     this.chatList.querySelector('.chat-loader')?.classList.remove('d-none');
     this.chatMessagesArea.querySelector('.chat-loader')?.classList.remove('d-none');
+
     console.time('Fetching chat list data');
     const chatListData = await this.fetchChatList();
     console.timeEnd('Fetching chat list data');
@@ -94,6 +95,9 @@ export class Chat extends HTMLElement {
       }
     } else if (this.#queryParam) {
       this.#state.currentChatUsername = this.#queryParam;
+    } else if (chatListData.count === 0) {
+      this.chatMessagesArea.querySelector('.chat-loader')?.classList.add('d-none');
+      this.chatMessagesArea.querySelector('.no-messages')?.classList.remove('d-none');
     }
 
     // Fetch and set data for the chat message area component
@@ -247,22 +251,22 @@ export class Chat extends HTMLElement {
       },
     };
     socketManager.sendMessage('livechat', messageData);
-    // if (socketManager.socket.readyState === WebSocket.OPEN) {
-    //   devLog('Sending like/unlike message action to server. Data:', messageData);
-    //   socketManager.socket.send(JSON.stringify(messageData));
-    // } else {
-    //   console.error('WebSocket is not open:', socketManager.socket.readyState);
-    // }
   }
 
   async receiveMessage(event) {
     devLog('New message received:', event.detail);
-    if (event.detail.chat_id === this.#state.currentChat.chat_id) {
+    if (this.#state.currentChat && event.detail.chat_id === this.#state.currentChat.chat_id) {
       this.chatMessagesArea.renderNewMessage(event.detail);
-      await this.chatList.updateListWithIncomingMessage(event.detail);
-    } else {
-      await this.chatList.updateListWithIncomingMessage(event.detail);
+    } else if (!this.#state.currentChat && event.detail.sender !== this.#state.loggedInUser.username) {
+      this.#state.currentChatUsername = event.detail.sender;
+      const chatData = await this.fetchChatData();
+      if (!chatData) {
+        return;
+      }
+      this.#state.currentChat = chatData.data;
+      this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
     }
+    await this.chatList.updateListWithIncomingMessage(event.detail);
   }
 
   handleToggleLikeMessage(event) {
