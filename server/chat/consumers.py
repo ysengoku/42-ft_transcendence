@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, models, transaction
@@ -11,7 +12,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.timezone import now
 
-from users.consumers import redis_status_manager, check_inactive_users, OnlineStatusConsumer
+from users.consumers import OnlineStatusConsumer, check_inactive_users, redis_status_manager
 from users.models import Profile
 
 from .models import Chat, ChatMessage, GameInvitation, Notification
@@ -32,29 +33,6 @@ def get_user_data(self):
     }
 
 
-def check_inactive_users():
-    logger.info("Checking for inactive users")
-    threshold = timezone.now() - timedelta(minutes=5)
-
-    # Utiliser Q pour combiner les conditions avec OR
-    inactive_users = Profile.objects.filter(
-        Q(last_activity__lt=threshold) | Q(nb_active_connexions=0),
-        is_online=True,
-    )
-
-    for user in inactive_users:
-        logger.info("User %s is inactive", user.user.username)
-        logger.info("User had %i active connexions", user.nb_active_connexions)
-        user.is_online = False
-        logger.info("User is now offline")
-        user.nb_active_connexions = 0
-        logger.info("User nb_active_connexions set to 0 : %i", user.nb_active_connexions)
-        user.save()
-        logger.info("User saved")
-        redis_status_manager.set_user_offline(user.id)
-        logger.info("User set offline in redis")
-
-
 class UserEventsConsumer(WebsocketConsumer):
 
     def connect(self):
@@ -64,9 +42,22 @@ class UserEventsConsumer(WebsocketConsumer):
             return
         try:
             self.user_profile = self.user.profile
-            self.user_profile.update_activity()  # set online
+            max_connexions = 10
+            with transaction.atomic():
+                self.user_profile.refresh_from_db()
+                if self.user_profile.nb_active_connexions >= max_connexions:
+                    logger.warning("Too many simultaneous connexions for user %s", self.user.username)
+                    self.close()
+                    return
+                self.user_profile.is_online = True
+                self.user_profile.last_activity = timezone.now()
+                self.user_profile.nb_active_connexions = models.F('nb_active_connexions') + 1
+                self.user_profile.save(update_fields=['is_online', 'last_activity', 'nb_active_connexions'])
+                self.user_profile.refresh_from_db()
+                redis_status_manager.set_user_online(self.user.id)
+                logger.info("User %s connected, now has %i active connexions", 
+                          self.user.username, self.user_profile.nb_active_connexions)
             self.chats = Chat.objects.for_participants(self.user_profile)
-            
             # Add user's channel to personal group to receive answers to invitations sent
             async_to_sync(self.channel_layer.group_add)(
                 f"user_{self.user.id}",
@@ -82,8 +73,10 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.channel_name,
                 )
             self.accept()
-            # Utiliser la méthode d'OnlineStatusConsumer pour notifier le statut
-            OnlineStatusConsumer.notify_online_status(self, "online", self.user_profile)
+            # Notifier tous les utilisateurs du changement de statut
+            self.notify_online_status("online", self.user_profile)
+            logger.info("User %s is now online with %i active connexions", 
+                      self.user.username, self.user_profile.nb_active_connexions)
 
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
@@ -92,25 +85,41 @@ class UserEventsConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         if hasattr(self, "user_profile"):
             try:
-                self.user_profile.update_activity()  # update last activity
-                # Notifier que l'utilisateur est hors ligne
-                OnlineStatusConsumer.notify_online_status(self, "offline", self.user_profile)
+                with transaction.atomic():
+                    self.user_profile.refresh_from_db()
+                    logger.info("Disconnecting user %s, current connections: %i",
+                              self.user.username, self.user_profile.nb_active_connexions)
+                    if self.user_profile.nb_active_connexions > 0:
+                        self.user_profile.nb_active_connexions = models.F('nb_active_connexions') - 1
+                        self.user_profile.save(update_fields=['nb_active_connexions'])
+                        self.user_profile.refresh_from_db()
+
+                    if self.user_profile.nb_active_connexions == 0:
+                        logger.info("Last connection closed for user %s, marking as offline", 
+                                  self.user.username)
+                        self.user_profile.is_online = False
+                        self.user_profile.save(update_fields=['is_online'])
+                        redis_status_manager.set_user_offline(self.user.id)
+                        self.notify_online_status("offline", self.user_profile)
+                    self.user_profile.update_activity()
+
             except DatabaseError as e:
                 logger.error("Database error during disconnect: %s", e)
 
-            logger.info("User %s has %s active connexions",
+            logger.info("User %s now has %i active connexions",
                       self.user.username, self.user_profile.nb_active_connexions)
 
+            # Retirer de tous les groupes
             async_to_sync(self.channel_layer.group_discard)(
                 "online_users",
                 self.channel_name,
             )
-        if hasattr(self, "chats") and self.chats:
-            for chat in self.chats:
-                async_to_sync(self.channel_layer.group_discard)(
-                    f"chat_{chat.id}",
-                    self.channel_name,
-                )
+            if hasattr(self, "chats") and self.chats:
+                for chat in self.chats:
+                    async_to_sync(self.channel_layer.group_discard)(
+                        f"chat_{chat.id}",
+                        self.channel_name,
+                    )
 
     def add_user_to_room(self, chat_id):
         try:
@@ -138,21 +147,36 @@ class UserEventsConsumer(WebsocketConsumer):
             "data": event["data"],
         }))
 
-    def notify_online_status(self, onlinestatus):
-        logger.info("function notify online status !")
+    def notify_online_status(self, onlinestatus, user_profile=None):
+        """
+        Notify all users about a user's online status change
+        """
+        logger.info("Notifying status change for user %s to %s",
+                  self.user.username, onlinestatus)
         action = "user_online" if onlinestatus == "online" else "user_offline"
+        
+        # Utiliser le profil fourni ou celui de l'instance
+        profile = user_profile if user_profile else self.user_profile
+        
+        # Préparer les données utilisateur
+        user_data = {
+            "username": self.user.username,
+            "nickname": profile.nickname if hasattr(profile, 'nickname') else self.user.username,
+            "avatar": profile.profile_picture.url if hasattr(profile, 'profile_picture') and profile.profile_picture else settings.DEFAULT_USER_AVATAR,
+            "status": onlinestatus,
+            "date": timezone.now().isoformat()
+        }
+        
+        # Envoyer la notification à tous les utilisateurs
         async_to_sync(self.channel_layer.group_send)(
             "online_users",
             {
                 "type": "user_status",
                 "action": action,
-                "data": {
-                    "username": self.user.username,
-                    "channel_name": self.channel_name,
-                    "status": onlinestatus,
-                },
+                "data": user_data,
             },
         )
+        logger.info("Status change notification sent for user %s", self.user.username)
 
     # Receive message from WebSocket
 
@@ -199,9 +223,9 @@ class UserEventsConsumer(WebsocketConsumer):
         # security check: chat should exist
         chat = (
             Chat.objects
-            .for_participants(self.user_profile)  # Filtrage initial
+            .for_participants(self.user_profile)
             .with_other_user_profile_info(self.user_profile)
-            .filter(id=chat_id)  # Filtrage final
+            .filter(id=chat_id)
             .first()
         )
         if not chat:
@@ -245,6 +269,16 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             "action": action,
             "data": user_data,
+        }))
+
+    def user_status(self, event):
+        """
+        Handle user status messages from the channel layer.
+        This method is called when a user's status changes (online/offline).
+        """
+        self.send(text_data=json.dumps({
+            "action": event.get("action"),
+            "data": event.get("data"),
         }))
 
     def handle_like_message(self, data):
@@ -570,12 +604,3 @@ class UserEventsConsumer(WebsocketConsumer):
             )
         except Chat.DoesNotExist:
             logger.debug("Chat Room %s does not exist.", chat_id)
-
-    def user_status(self, event):
-        """
-        Handle user status messages from the channel layer
-        """
-        self.send(text_data=json.dumps({
-            "action": event.get("action"),
-            "data": event.get("data"),
-        }))
