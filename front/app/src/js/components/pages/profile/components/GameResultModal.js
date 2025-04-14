@@ -1,3 +1,5 @@
+import { Modal } from 'bootstrap';
+
 export class UserGameResultModal extends HTMLElement {
   #state = {
     type: '',
@@ -20,7 +22,7 @@ export class UserGameResultModal extends HTMLElement {
 
   render() {
     this.innerHTML = this.template() + this.style();
-    this.modal = new bootstrap.Modal(this.querySelector('.modal'));
+    this.modal = new Modal(this.querySelector('.modal'));
 
     const modalBody = this.querySelector('.modal-body');
     const content = document.createElement(`${this.#state.type}-result`);

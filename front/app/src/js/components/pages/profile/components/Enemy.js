@@ -59,7 +59,7 @@ export class UserEnemy extends HTMLElement {
 				  <p class="enemy-nickname lh-1 text-center text-break fs-4 p-2 m-0"></p>
 				  <div class="d-flex flex-row justify-content-center align-items-start px-2 pt-1 pb-3 gap-4">
 					  <div class="d-flex flex-column justify-content-start px-2">
-					  <img alt="User Avatar" class="enemy-avatar rounded-circle">
+					  <img alt="User Avatar" class="enemy-avatar avatar-l rounded-circle">
 					  </div>
 					  <div>
 						  <div class="d-flex m-0 fs-5"><strong class="m-0">Elo:&nbsp;</strong><p class="enemy-elo m-0"></p></div>
@@ -84,24 +84,13 @@ export class UserEnemy extends HTMLElement {
   }
 
   style() {
-    let style = `
+    return `
     <style>
 		.enemy-container {
 			min-width: 240px;
-		}	
+		}
+    </style>
     `;
-
-    if (this.#state.data) {
-      style += `
-			.enemy-avatar-container img {
-    		width: 88px;
-    		aspect-ratio: 1;
-    		object-fit: cover;
-			}
-		  </style>
-      `;
-    }
-    return style + '</style>';
   }
 }
 

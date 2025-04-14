@@ -72,7 +72,7 @@ export class NotificationsList extends HTMLElement {
   async renderList() {
     this.button?.querySelector('.notification-badge')?.classList.add('d-none');
 
-    const read = this.#state.currentTab === 'unread' ? false : true;
+    const read = this.#state.currentTab === 'unread' ? 'false' : 'all';
     const listData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
     const data = await this.fetchNotifications(read, 10, listData.listLength);
     if (!data) {
@@ -158,14 +158,14 @@ export class NotificationsList extends HTMLElement {
   readNotification(event) {
     event.stopPropagation();
     event.preventDefault();
-    const element = event.target.closest('notifications-list-element');
+    const element = event.target.closest('notifications-list-item');
     if (element.classList.contains('unread')) {
       const notificationId = element.id.split('-')[1];
       const message = {
         action: 'read_notification',
         id: notificationId,
       };
-      socketManager.socket.send(JSON.stringify(message));
+      socketManager.sendMessage('livechat', message);
       element.removeEventListener('click', this.readNotification);
       element.classList.remove('unread');
       const currentList = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
@@ -198,7 +198,7 @@ export class NotificationsList extends HTMLElement {
         action: 'read_notification',
         id: item.id,
       };
-      socketManager.socket.send(JSON.stringify(message));
+      socketManager.sendMessage('livechat', message);
     });
     this.#state.isLoading = true;
     await this.renderList();
@@ -246,7 +246,7 @@ export class NotificationsList extends HTMLElement {
               <a class="nav-link active" aria-current="true" id="all-notifications-tab">All</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" id="unread-notifications-tab">Unread(5)</a>
+              <a class="nav-link" id="unread-notifications-tab">Unread</a>
             </li>
           </div>
           <button class="btn" id="mark-all-as-read">Mark all as read</button>
@@ -277,17 +277,19 @@ export class NotificationsList extends HTMLElement {
       max-height: 75vh;
       max-width: 480px;
     }
-	  .notifications-list-avatar {
-	    width: 64px;
-      height: 64px;
-      object-fit: cover;
-	  }
     .notification-time {
       color: var(--pm-gray-400);
     }
     .call-to-action-groupe button {
       border: none;
       background: none;
+    }
+    .unread-badge {
+      display: none;
+    }
+    .unread .unread-badge {
+      color: var(--pm-primary-500);
+      display: block;
     }
     </style>
     `;
