@@ -1,5 +1,3 @@
-import { mockEloHistory } from '@mock/functions/mockEloHistory.js';
-
 export class UserEloProgressionChart extends HTMLElement {
   #state = {
     history: [],
@@ -21,12 +19,7 @@ export class UserEloProgressionChart extends HTMLElement {
   // }
 
   set data(value) {
-    // this.#state.history = value.slice().reverse();
-
-    // ------ Test data ---------------------------------
-    this.#state.history = mockEloHistory().slice().reverse();
-    // --------------------------------------------------
-
+    this.#state.history = value.slice().reverse();
     this.render();
   }
 
@@ -39,7 +32,7 @@ export class UserEloProgressionChart extends HTMLElement {
     const namespaceUrl = 'http://www.w3.org/2000/svg';
     this.parsedData.forEach((item) => {
       const label = document.createElementNS(namespaceUrl, 'text');
-      label.setAttribute('x', item.x);
+      label.setAttribute('x', item.x - 6);
       label.setAttribute('y', 120);
       label.setAttribute('text-anchor', 'center');
       label.textContent = `${item.date.getMonth() + 1}/${item.date.getDate()}`;
@@ -52,22 +45,33 @@ export class UserEloProgressionChart extends HTMLElement {
       marker.setAttribute('data-value', item.elo);
 
       const tooltip = document.createElementNS(namespaceUrl, 'text');
-      tooltip.setAttribute('x', item.x - 5);
-      tooltip.setAttribute('y', item.y + 5);
+      tooltip.setAttribute('x', item.x + 20);
+      tooltip.setAttribute('y', item.y - 5);
       tooltip.setAttribute('text-anchor', 'end');
-      tooltip.setAttribute('font-size', '10');
+      tooltip.setAttribute('font-size', '0.5rem');
       tooltip.setAttribute('fill', 'var(--pm-primary-700)');
       tooltip.setAttribute('visibility', 'hidden');
-      tooltip.textContent = item.elo;
+      tooltip.textContent = item.elo + ' (' + item.elo_change + ')';
+
+      const tooltipBg = document.createElementNS(namespaceUrl, 'rect');
+      tooltipBg.setAttribute('x', item.x + 20 - 33);
+      tooltipBg.setAttribute('y', item.y - 15);
+      tooltipBg.setAttribute('width', '36');
+      tooltipBg.setAttribute('height', '16');
+      tooltipBg.setAttribute('fill', 'rgba(var(--bs-body-color-rgb), 0.5');
+      tooltipBg.setAttribute('visibility', 'hidden');
 
       marker.addEventListener('mouseenter', () => {
         tooltip.setAttribute('visibility', 'visible');
+        tooltipBg.setAttribute('visibility', 'visible');
       });
       marker.addEventListener('mouseleave', () => {
+        tooltipBg.setAttribute('visibility', 'hidden');
         tooltip.setAttribute('visibility', 'hidden');
       });
 
       markers.appendChild(marker);
+      markers.insertBefore(tooltipBg, marker);
       markers.insertBefore(tooltip, marker);
     });
   }
@@ -76,21 +80,25 @@ export class UserEloProgressionChart extends HTMLElement {
     this.itemCount = this.#state.history.length;
 
     this.minElo = Math.min(...this.#state.history.map((item) => item.elo_result));
-    this.minElo = Math.round(this.minElo / 10) * 10;
+    this.minElo = Math.floor(this.minElo / 10) * 10;
     this.maxElo = Math.max(...this.#state.history.map((item) => item.elo_result));
-    this.maxElo = Math.round(this.maxElo / 10) * 10;
+    this.maxElo = Math.ceil(this.maxElo / 10) * 10;
     this.midrangeElo = Math.round((this.minElo + this.maxElo) / 20) * 10;
 
     this.scaleY = 100 / (this.maxElo - this.minElo);
 
+    console.log('minElo:', this.minElo, 'maxElo:', this.maxElo, 'midrangeElo:', this.midrangeElo);
+
     this.parsedData = [];
     this.#state.history.forEach((item, index) => {
-      const date = new Date(item.date);
+      console.log('item:', item);
+      const date = new Date(item.day);
       this.parsedData.push({
         date: date,
         elo: item.elo_result,
+        elo_change: item.daily_elo_change,
         x: 20 + index * 40,
-        y: 120 - (item.elo_result - this.minElo) * this.scaleY,
+        y: Math.round(120 - (item.elo_result - this.minElo) * this.scaleY), // TODO: Adjust the offset OR scale
       });
     });
     console.log('Parsed data:', this.parsedData);
@@ -98,6 +106,7 @@ export class UserEloProgressionChart extends HTMLElement {
 
   template() {
     const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
+    console.log('Points:', points);
     return `
     <div class="line-chart-wrapper">
       <div class="line-chart">
@@ -114,7 +123,7 @@ export class UserEloProgressionChart extends HTMLElement {
             <line x1="20" x2="270" y1="110" y2="110"></line> 
           </g>
           <g class="linechart-labels"></g>
-            <polyline points="${points}" fill="none" stroke="var(--pm-primary-600)" stroke-width="1" />
+          <polyline points="${points}" fill="none" stroke="var(--pm-primary-600)" stroke-width="1" />
 		      <g class="line-chart-marker"></g>
         </svg>
       </div>
