@@ -5,25 +5,27 @@ import datetime
 
 print("Inactive users check cronjob script")
 print(datetime.date.today(), datetime.datetime.now().time())
+# Get env variables from the container
 with open('/proc/1/environ', 'r') as env_file:
     env_vars = env_file.read().split('\0')
     for var in env_vars:
-        if var.startswith("CRON_ENDPOINT=") or var.startswith("CRON_SECRET="):
+        if var.startswith("CRON_ENDPOINT=") or var.startswith("CRON_SECRET=") or var.startswith("CRON_CSRF_TOKEN="):
             key, value = var.split('=', 1)
             os.environ[key] = value
 
 CRON_SECRET = os.getenv("CRON_SECRET")
 ENDPOINT = os.getenv("CRON_ENDPOINT")
+CSRF_TOKEN_URL = os.getenv("CRON_CSRF_TOKEN")
 
-if not ENDPOINT:
-    print("Error: CRON_ENDPOINT is not set in the environment variables")
+
+if not ENDPOINT or not CSRF_TOKEN_URL:
+    print("Error: CRON_ENDPOINT or CRSF_TOKEN is not set in the env")
     raise ValueError("CRON_ENDPOINT is not set in the environment variables")
 
 # Get CSRF token
 session = requests.Session()
 base_url = ENDPOINT.rsplit('/api', 1)[0]
-print(f"base_url: {base_url}")
-get_response = session.get(f"{base_url}/api/cronjob/csrf-token", verify=False)
+get_response = session.get(CSRF_TOKEN_URL, verify=False)
 csrf_token = session.cookies.get('csrftoken')
 
 if not csrf_token:
