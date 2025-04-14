@@ -1,32 +1,57 @@
 export function mockEloHistory() {
-  return [
-    {
-      date: '2024-03-11T14:00:00Z',
-      elo_result: 1032,
-    },
-    {
-      date: '2024-03-10T18:30:00Z',
-      elo_result: 1020,
-    },
-    {
-      date: '2024-03-09T21:45:00Z',
-      elo_result: 1027,
-    },
-    {
-      date: '2024-03-08T16:20:00Z',
-      elo_result: 1022,
-    },
-    {
-      date: '2024-03-07T09:50:00Z',
-      elo_result: 1032,
-    },
-    {
-      date: '2024-03-06T21:15:00Z',
-      elo_result: 1012,
-    },
-    {
-      date: '2024-03-05T11:40:00Z',
-      elo_result: 1027,
-    },
-  ];
+  return {
+    "items": [
+      {
+        "day": "2025-03-31",
+        "daily_elo_change": -2,
+        "elo_result": 1164
+      },
+      {
+        "day": "2025-03-30",
+        "daily_elo_change": -21,
+        "elo_result": 1166
+      },
+      {
+        "day": "2025-03-29",
+        "daily_elo_change": -47,
+        "elo_result": 1187
+      },
+      {
+        "day": "2025-03-28",
+        "daily_elo_change": 48,
+        "elo_result": 1234
+      },
+      {
+        "day": "2025-03-27",
+        "daily_elo_change": -40,
+        "elo_result": 1186
+      },
+      {
+        "day": "2025-03-26",
+        "daily_elo_change": 24,
+        "elo_result": 1226
+      },
+      {
+        "day": "2025-03-25",
+        "daily_elo_change": -51,
+        "elo_result": 1202
+      },
+      {
+        "day": "2025-03-24",
+        "daily_elo_change": 61,
+        "elo_result": 1253
+      },
+      {
+        "day": "2025-03-23",
+        "daily_elo_change": 43,
+        "elo_result": 1192
+      },
+      {
+        "day": "2025-03-22",
+        "daily_elo_change": 149,
+        "elo_result": 1149
+      }
+    ],
+    "count": 10
+  }
 }

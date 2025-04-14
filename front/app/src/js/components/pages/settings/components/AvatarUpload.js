@@ -43,9 +43,7 @@ export class AvatarUpload extends HTMLElement {
 
     return `
 		  <div class="d-flex align-items-start pb-4 border-bottom">
-			  <div class="col-7 profile-avatar-container me-3">
-				  <img src="${this.#state.user.avatar}" alt="User Avatar" class="rounded-circle" id="user-avatar-image">
-			  </div>
+				  <img src="${this.#state.user.avatar}" alt="User Avatar" class="avatar-xl rounded-circle me-3" id="user-avatar-image">
 			  <div class="col-5 d-flex flex-column align-items-start mx-3 my-auto py-3">
 				  <b>Avatar</b>
 				  <button class="btn btn-wood my-3" id="avatar-upload-button">${avatarUploadMessage}</button>
@@ -56,21 +54,11 @@ export class AvatarUpload extends HTMLElement {
 
   style() {
     return `
-      <style>
-        .profile-avatar-container {
-          width: 160px;
-          height: 160px;
-        }
-        .profile-avatar-container img {
-          width: 100%;
-          height: 100%;
-          aspect-ratio: 1;
-          object-fit: cover;
-        }
-        .btn-wood {
-          font-size: 1rem;
-        }
-      </style>
+    <style>
+    .btn-wood {
+      font-size: 1rem;
+    }
+    </style>
     `;
   }
 }

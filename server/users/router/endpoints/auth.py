@@ -1,10 +1,11 @@
 import hashlib
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
@@ -139,7 +140,8 @@ def logout(request: HttpRequest, response: HttpResponse):
 
 
 @auth_router.delete(
-    "/users/{username}/delete", response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema},
+    "/users/{username}/delete",
+    response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema},
 )
 def delete_account(request, username: str, response: HttpResponse):
     """
@@ -176,7 +178,7 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
     token = hashlib.sha256(os.urandom(32)).hexdigest()
     user.forgot_password_token = token
-    user.forgot_password_token_date = datetime.now(timezone.utc)
+    user.forgot_password_token_date = timezone.now()
     user.save()
 
     reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
@@ -206,7 +208,7 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
     if not user:
         raise AuthenticationError
 
-    now = datetime.now(timezone.utc)
+    now = timezone.now()
     if user.forgot_password_token_date + timedelta(minutes=TOKEN_EXPIRY) < now:
         user.forgot_password_token = ""
         user.forgot_password_token_date = None
