@@ -576,13 +576,21 @@ class UserEventsConsumer(WebsocketConsumer):
             sender.friends.add(receiver)
         notification_data = get_user_data(sender)
 
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{receiver_id}",
-            {
-                "action": "new_friend",
-                "data": notification_data,
-            },
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "new_friend",
+                    "data": notification_data,
+                },
+            ),
         )
+        # async_to_sync(self.channel_layer.group_send)(
+        #     f"user_{receiver_id}",
+        #     {
+        #         "action": "new_friend",
+        #         "data": notification_data,
+        #     },
+        # )
 
     def send_room_created(self, chat_id):
         try:
