@@ -6,7 +6,7 @@ from ninja import Field, Schema
 from pydantic import model_validator
 
 from chat.models import ChatMessage, Notification
-from common.schemas import MessageSchema
+from common.schemas import MessageSchema, ProfileMinimalSchema
 from pong.models import Match
 from pong.schemas import EloDataPointSchema
 
@@ -43,18 +43,6 @@ class ValidationErrorMessageSchema(MessageSchema):
 class LoginResponseSchema(Schema):
     mfa_required: bool
     username: str
-
-
-class ProfileMinimalSchema(Schema):
-    """
-    Represents the bare minimum information about the user for preview in searches, friend lists etc.
-    """
-
-    username: str = Field(alias="user.username")
-    nickname: str = Field(alias="user.nickname")
-    avatar: str
-    elo: int
-    is_online: bool
 
 
 class SelfSchema(ProfileMinimalSchema):
