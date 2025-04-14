@@ -4,16 +4,16 @@ import anonymousavatar from '/img/anonymous-avatar.png?url';
 export class DuelPreview extends HTMLElement {
   #state = {
     status: '',
-    loggedInUser: null,
-    opponent: null,
+    user1: null,
+    user2: null,
   };
 
   constructor() {
     super();
   }
 
-  setData(duelStatus, loggedInUser, opponent) {
-    if (!duelStatus || !loggedInUser) {
+  setData(duelStatus, user1, user2) {
+    if (!duelStatus || !user1) {
       const notFound = document.createElement('page-not-found');
       const duelPage = document.querySelector('duel-page');
       if (duelPage) {
@@ -25,9 +25,9 @@ export class DuelPreview extends HTMLElement {
       return;
     }
     this.#state.status = duelStatus;
-    this.#state.loggedInUser = loggedInUser;
-    if (opponent) {
-      this.#state.opponent = opponent;
+    this.#state.user1 = user1;
+    if (user2) {
+      this.#state.user2 = user2;
     }
     this.render();
   }
@@ -40,19 +40,19 @@ export class DuelPreview extends HTMLElement {
     this.player2 = this.querySelector('#duel-player2');
 
     this.player1.innerHTML = this.userProfileTemplate();
-    this.player1.querySelector('.player-avatar').src = this.#state.loggedInUser.avatar;
-    this.player1.querySelector('.player-nickname').innerHTML = this.#state.loggedInUser.nickname;
-    this.player1.querySelector('.player-username').innerHTML = `@${this.#state.loggedInUser.username}`;
-    this.player1.querySelector('.player-elo').innerHTML = `Elo: ${this.#state.loggedInUser.elo}`;
+    this.player1.querySelector('.player-avatar').src = this.#state.user1.avatar;
+    this.player1.querySelector('.player-nickname').innerHTML = this.#state.user1.nickname;
+    this.player1.querySelector('.player-username').innerHTML = `@${this.#state.user1.username}`;
+    this.player1.querySelector('.player-elo').innerHTML = `Elo: ${this.#state.user1.elo}`;
 
     this.player2.innerHTML = this.userProfileTemplate(),
     this.#state.status === 'matchmaking' ? (
       this.player2.querySelector('.player-avatar').src = anonymousavatar
       ) : (
-      this.player2.querySelector('.player-avatar').src = this.#state.opponent.avatar,
-      this.player2.querySelector('.player-nickname').innerHTML = this.#state.opponent.nickname,
-      this.player2.querySelector('.player-username').innerHTML = this.#state.opponent.username,
-      this.player2.querySelector('.player-elo').innerHTML = `Elo: ${this.#state.opponent.elo}`
+      this.player2.querySelector('.player-avatar').src = this.#state.user2.avatar,
+      this.player2.querySelector('.player-nickname').innerHTML = this.#state.user2.nickname,
+      this.player2.querySelector('.player-username').innerHTML = this.#state.user2.username,
+      this.player2.querySelector('.player-elo').innerHTML = `Elo: ${this.#state.user2.elo}`
     );
   }
 
