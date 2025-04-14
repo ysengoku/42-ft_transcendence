@@ -66,6 +66,7 @@ services:
     environment:
       CRON_SECRET: ${CRON_SECRET}
       CRON_ENDPOINT: ${CRON_ENDPOINT}
+      CRON_CSRF_TOKEN: ${CRON_CSRF_TOKEN}
       PYTHONPATH: /app/server
       DJANGO_SETTINGS_MODULE: server.settings
     depends_on:
