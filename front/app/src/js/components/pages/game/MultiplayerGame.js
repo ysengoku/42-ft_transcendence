@@ -181,7 +181,7 @@ export class MultiplayerGame extends HTMLElement {
         }
 
         pongSocket.addEventListener("open", function(_) {
-            console.log('Success! :3')
+            console.log('Success! :3 ')
         });
 
         let data;
