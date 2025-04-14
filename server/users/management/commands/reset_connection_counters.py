@@ -4,7 +4,7 @@ import logging
 
 logger = logging.getLogger("server")
 
-class ResetConnectionCountersCommand(BaseCommand):
+class Command(BaseCommand):
     help = 'Reset all user connection counters to 0'
 
     def handle(self, *args, **options):
