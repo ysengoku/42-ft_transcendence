@@ -105,6 +105,7 @@ class Profile(models.Model):
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now_add=True)
     nb_active_connexions = models.IntegerField(default=0)
+    active_channels = models.JSONField(default=list, blank=True)  # Stocke les noms des canaux actifs
 
     def update_activity(self):
         self.last_activity = timezone.now()
