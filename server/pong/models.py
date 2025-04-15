@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from django.db import models
-from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, When
+from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
@@ -68,31 +68,27 @@ class MatchQuerySet(models.QuerySet):
 
     def get_elo_points_by_day(self, profile: Profile):
         # annotate with day without time and elo change of the specific player
-        player_elo_qs = (
-            self.filter(Q(winner=profile) | Q(loser=profile))
-            .annotate(
-                day=TruncDate("date"),
-                player_elo=Case(
-                    When(winner=profile, then=F("winners_elo")),
-                    When(loser=profile, then=F("losers_elo")),
+        player_elo_qs = self.filter(Q(winner=profile) | Q(loser=profile)).annotate(
+            day=TruncDate("date"),
+            player_elo=Case(
+                When(winner=profile, then=F("winners_elo")),
+                When(loser=profile, then=F("losers_elo")),
+                default=0,
             ),
-                player_elo_change=Case(
-                    When(winner=profile, then=F("elo_change")),
-                    When(loser=profile, then=-F("elo_change")),
-            ))
+            player_elo_change=Case(
+                When(winner=profile, then=F("elo_change")),
+                When(loser=profile, then=-F("elo_change")),
+                default=0,
+            ),
         )
 
         # takes the last match for each day to determine the end result of elo for this specific day
         latest_match_per_day_subquery = (
-            player_elo_qs
-            .filter(day=OuterRef("day"))
-            .order_by("-date")
-            .values("player_elo")[:1]
+            player_elo_qs.filter(day=OuterRef("day")).order_by("-date").values("player_elo")[:1]
         )
 
         return (
-            player_elo_qs
-            .values("day")
+            player_elo_qs.values("day")
             .annotate(
                 daily_elo_change=Sum("player_elo_change"),
                 elo_result=Subquery(latest_match_per_day_subquery),
@@ -100,8 +96,36 @@ class MatchQuerySet(models.QuerySet):
             .order_by("-day")
         )
 
+    def get_match_preview(self, profile: Profile):
+        """
+        date: date
+        elo_result: int
+        opponent: ProfileMinimalSchema
+        is_winner: bool
+        game_id: str
+        score: str
+        """
+        def create_opponent_subquery(loser_or_winner: str):
+            return self.filter(pk=OuterRef("pk")).values(
+                f"{loser_or_winner}__pk",
+            )[:1]
+
+        return self.filter(Q(winner=profile) | Q(loser=profile)).annotate(
+            elo_result=Case(
+                When(winner=profile, then=F("winners_elo")),
+                When(loser=profile, then=F("losers_elo")),
+                default=0,
+            ),
+            is_winner=Case(When(winner=profile, then=Value(True)), default=Value(False)),
+            opponent_pk=Case(
+                When(winner=profile, then=Subquery(create_opponent_subquery("loser"))),
+                When(loser=profile, then=Subquery(create_opponent_subquery("winner"))),
+            ),
+        )
+
 
 class Match(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
     loser = models.ForeignKey(Profile, related_name="lost_matches", on_delete=models.SET_NULL, null=True, blank=True)
     winners_score = models.IntegerField()
