@@ -1,4 +1,4 @@
-from ninja import Schema
+from ninja import Field, Schema
 
 
 class MessageSchema(Schema):
@@ -7,3 +7,15 @@ class MessageSchema(Schema):
     """
 
     msg: str
+
+
+class ProfileMinimalSchema(Schema):
+    """
+    Represents the bare minimum information about the user for preview in searches, friend lists etc.
+    """
+
+    username: str = Field(alias="user.username")
+    nickname: str = Field(alias="user.nickname")
+    avatar: str
+    elo: int
+    is_online: bool
