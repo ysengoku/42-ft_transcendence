@@ -33,5 +33,8 @@ qrcode[pil]
 
 # PostgreSQL adapter
 psycopg2==2.9.6
+
+# Colored logs
 colorlog==6.9.0
+# Secured env variables
 django-environ==0.12.0
