@@ -2,6 +2,9 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.utils import timezone
 
 from common.routers import allow_only_for_self, get_user_queryset_by_username_or_404
 from common.schemas import MessageSchema
@@ -9,6 +12,7 @@ from users.schemas import (
     ProfileMinimalSchema,
     UsernameSchema,
 )
+from chat.models import Notification
 
 friends_router = Router()
 
@@ -44,6 +48,31 @@ def add_friend(request: HttpRequest, username: str, user_to_add: UsernameSchema)
     err_msg = user.profile.add_friend(friend.profile)
     if err_msg:
         raise HttpError(422, err_msg)
+    
+    # Create notification for the new friend
+    notification = Notification.objects.action_new_friend(
+        receiver=friend.profile,
+        sender=user.profile
+    )
+    
+    # Send notification via websocket
+    channel_layer = get_channel_layer()
+    notification_data = {
+        "username": user.username,
+        "nickname": user.nickname,
+        "avatar": user.profile.avatar,
+        "date": notification.data["date"].isoformat()  # Convert datetime to ISO string
+    }
+    
+    async_to_sync(channel_layer.group_send)(
+        f"user_{friend.id}",
+        {
+            "type": "user_status",
+            "action": "new_friend",
+            "data": notification_data
+        }
+    )
+    
     return 201, friend.profile
 
 
