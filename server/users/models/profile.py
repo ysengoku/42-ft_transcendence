@@ -112,7 +112,27 @@ class Profile(models.Model):
 
     @property
     def dialogues(self):
-        self.dialogues_as_user1 | self.dialogues_as_user2
+        return self.dialogues_as_user1 | self.dialogues_as_user2
+
+    def get_title_and_price(self):  # noqa: PLR0911
+        # ruff: noqa: PLR2004
+        if self.elo > 2700:
+            return "Wild West Legend", 1000000
+        if self.elo > 2300:
+          return "Star Criminal", 500000
+        if self.elo > 2000:
+          return "Ace Outlaw", 100000
+        if self.elo > 1700:
+          return "Big Shot", 10000
+        if self.elo > 1400:
+          return "El Bandito", 1000
+        if self.elo > 1100:
+          return "Goon", 100
+        if self.elo > 800:
+            return "Troublemaker", 50
+        if self.elo > 500:
+            return "Petty Criminal", 10
+        return "Damsel", 0
 
     def get_scored_balls(self):
         return (
