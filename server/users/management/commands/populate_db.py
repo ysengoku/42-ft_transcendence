@@ -11,11 +11,11 @@ from users.models import OauthConnection, Profile, User
 
 # ruff: noqa: S106, S311
 def choice_except(seq, value):
-    res = choice(seq)  # noqa: S311
+    res = choice(seq)
     while res == value:
-        if len(seq) == 1:
+        if len(seq) < 1:
             return None
-        res = choice(seq)  # noqa: S311
+        res = choice(seq)
     return res
 
 
@@ -23,6 +23,11 @@ def generate_random_date(start: datetime = (timezone.now() - timedelta(days=22))
     delta = end - start
     delta_in_seconds = delta.days * 24 * 60 * 60 + delta.seconds
     return start + timedelta(seconds=randrange(delta_in_seconds))
+
+
+def calc_win_chance_based_on_elo(elo1: int, elo2: int):
+    return round(1 / (1 + 10 ** ((elo2 - elo1) / 400)) * 100)
+
 
 def clean_database():
     User.objects.all().delete()
@@ -33,42 +38,65 @@ def clean_database():
     ChatMessage.objects.all().delete()
     Notification.objects.all().delete()
 
-def generate_users():
+
+def generate_users() -> tuple[list[User], User]:
     # special user who is winning at life
     life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123")
+    life_enjoyer.profile.elo = 2800
+    life_enjoyer.profile.save()
 
     # special user who has no data on itself
     User.objects.create_user("User0", email="user0@gmail.com", password="123")
 
-    users = []
-    names = [
-        "Pedro",
-        "Juan",
-        "Anya",
-        "Juanita",
-        "John",
-        "Joe_The_Uncatchable",
-        "Alex",
-        "alice",
-        "menaco",
-        "evil_sherif",
-        "TheBall",
-        "warhawk",
-        "alice123",
-        "johndoe1",
-        "george55",
-        "Yuko",
-        "celiastral",
-        "emuminov",
-        "Darksmelo",
-        "faboussa",
-        "sad_hampter",
+    users = {}
+    names_and_elo = [
+        ("sad_hampter", 100),
+        ("Juan", 150),
+        ("Pedro", 200),
+        ("Anya", 300),
+        ("Juanita", 400),
+        ("John", 800),
+        ("johndoe1", 1000),
+        ("Joe_The_Uncatchable", 1000),
+        ("george55", 1000),
+        ("Alex", 1200),
+        ("alice", 1500),
+        ("menaco", 1600),
+        ("warhawk", 1700),
+        ("evil_sherif", 2000),
+        ("TheBall", 2000),
+        ("alice123", 2100),
+        ("Yuko", 2500),
+        ("celiastral", 2700),
+        ("emuminov", 2500),
+        ("Darksmelo", 2500),
+        ("faboussa", 2500),
     ]
 
-    for name in names:
+    for name, elo in names_and_elo:
         user = User.objects.create_user(f"{name}", email=f"{name}@gmail.com", password="123")
-        users.append(user)
+        user.profile.elo = elo
+        user.profile.save()
+        users[user.username] = user
         life_enjoyer.profile.add_friend(user.profile)
+
+    special_users = {
+        username: user
+        for username, user in users.items()
+        if username in ["Yuko", "celiastral", "emuminov", "Darksmelo", "faboussa"]
+    }
+
+    for user in special_users.values():
+        for friend in special_users.values():
+            if user == friend:
+                continue
+            user.profile.add_friend(friend.profile)
+
+    # sad hampter needs a friend :(
+    celiastral = special_users["celiastral"]
+    sad_hampter = users["sad_hampter"]
+    celiastral.profile.add_friend(sad_hampter.profile)
+    sad_hampter.profile.add_friend(celiastral.profile)
 
     for i in range(10):
         user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
@@ -79,43 +107,47 @@ def generate_users():
     life_enjoyer.profile.save()
     return users, life_enjoyer
 
-def generate_matches(users: list[User], life_enjoyer: User):
+
+def generate_matches(users: dict[str, User], life_enjoyer: User):
     # generate random sorted dates in advance to preserve the sequentiality of the played matches
     dates = sorted([generate_random_date() for _ in range(100)])
 
+    # resolves matches based on chance proportional to their elo
+    users_lst = list(users.values())
     for i in range(len(dates)):
-        for user in users:
-            opponent = choice_except(users, user)
-            players = [user, opponent]
-            winner = choice(players)
-            players.remove(winner)
-            loser = players[0]
+        for user in users_lst:
+            opponent = choice_except(users_lst, user)
+            if randint(0, 100) >= calc_win_chance_based_on_elo(user.profile.elo, opponent.profile.elo):
+                winner = opponent
+                loser = user
+            else:
+                winner = user
+                loser = opponent
             Match.objects.resolve(
                 winner.profile,
                 loser.profile,
-                choice(range(3, 6)),
-                choice(range(3)),
+                randint(4, 7),
+                randint(0, 3),
                 dates[i],
             )
 
             # life_enjoyer can't stop winning
-            if not randint(0, 5):
-                Match.objects.resolve(
-                    life_enjoyer.profile,
-                    loser.profile,
-                    choice(range(3, 6)),
-                    choice(range(3)),
-                    dates[i],
-                )
             if not randint(0, 8):
                 Match.objects.resolve(
                     life_enjoyer.profile,
-                    winner.profile,
-                    choice(range(3, 6)),
-                    choice(range(3)),
+                    loser.profile,
+                    randint(4, 7),
+                    randint(0, 3),
                     dates[i],
                 )
-
+            if not randint(0, 11):
+                Match.objects.resolve(
+                    life_enjoyer.profile,
+                    winner.profile,
+                    randint(4, 7),
+                    randint(0, 3),
+                    dates[i],
+                )
 
 
 class Command(BaseCommand):
