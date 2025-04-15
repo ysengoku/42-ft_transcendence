@@ -1,6 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { mockNotificationsData } from '@mock/functions/mockNotificationsData';
 
 export class NotificationsList extends HTMLElement {
   #state = {

@@ -148,9 +148,9 @@ const socketManager = (() => {
 
     closeAllSockets() {
       this.sockets.forEach((socket) => {
-          socket.close();
-          socket.socketOpen = false;
-          socket.socket = null;
+        socket.close();
+        socket.socketOpen = false;
+        socket.socket = null;
       });
     }
 

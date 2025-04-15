@@ -107,7 +107,7 @@ export class ChatUserSearch extends HTMLElement {
     event.stopPropagation();
     event.preventDefault();
 
-   clearTimeout(this.#state.timeout);
+    clearTimeout(this.#state.timeout);
     this.#state.timeout = setTimeout( async () => {
       this.#state.userList = [];
       this.#state.totalUserCount = 0;
