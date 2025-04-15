@@ -84,6 +84,9 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         if hasattr(self, "user_profile"):
+            if not Profile.objects.filter(pk=self.user_profile.pk).exists():
+                logger.info("User profile does not exist. Possibly deleted.")
+                return
             try:
                 with transaction.atomic():
                     self.user_profile.refresh_from_db()
