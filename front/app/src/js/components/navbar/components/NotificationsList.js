@@ -113,8 +113,6 @@ export class NotificationsList extends HTMLElement {
     } else {
       return null;
     }
-    // const data = await mockNotificationsData();
-    // return data;
   }
 
   async toggleTab(event) {
