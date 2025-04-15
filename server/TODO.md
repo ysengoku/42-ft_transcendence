@@ -60,8 +60,8 @@
     - [x] It should have an option to filter them by loses/wins.
 - [~] Tweak the user profile. 
     - [x] Remove `friends` field.
-    - [ ] Add the price for the head. 
-    - [ ] Add the last ten matches of the user.
+    - [x] Add the price for the head. 
+    - [x] Add the last ten matches of the user.
 
 
 ### Chat
