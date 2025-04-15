@@ -29,6 +29,7 @@ def _calculate_elo_change(a: int, b: int, outcome: float, k_factor: int = 32) ->
 
 class MatchQuerySet(models.QuerySet):
     MINUMUM_ELO = 100
+    MAXIMUM_ELO = 3000
     K_FACTOR = 32
     WIN = 1
     DRAW = 0.5
@@ -49,6 +50,8 @@ class MatchQuerySet(models.QuerySet):
         elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
         if (loser.elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
             elo_change = loser.elo - MatchQuerySet.MINUMUM_ELO
+        elif (winner.elo + elo_change) > MatchQuerySet.MAXIMUM_ELO:
+            elo_change = MatchQuerySet.MAXIMUM_ELO - winner.elo
         winner.elo += elo_change
         loser.elo -= elo_change
         resolved_match = Match(
@@ -97,14 +100,6 @@ class MatchQuerySet(models.QuerySet):
         )
 
     def get_match_preview(self, profile: Profile):
-        """
-        date: date
-        elo_result: int
-        opponent: ProfileMinimalSchema
-        is_winner: bool
-        game_id: str
-        score: str
-        """
         def create_opponent_subquery(loser_or_winner: str):
             return self.filter(pk=OuterRef("pk")).values(
                 f"{loser_or_winner}__pk",

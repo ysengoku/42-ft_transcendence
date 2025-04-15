@@ -8,7 +8,7 @@ from pydantic import model_validator
 from chat.models import ChatMessage, Notification
 from common.schemas import MessageSchema, ProfileMinimalSchema
 from pong.models import Match
-from pong.schemas import EloDataPointSchema
+from pong.schemas import EloDataPointSchema, ProfileMatchPreviewSchema
 
 from .models import Profile, User
 
@@ -118,10 +118,15 @@ class ProfileFullSchema(ProfileMinimalSchema):
     elo_history: list[EloDataPointSchema] = Field(
         description="List of data points for elo changes of the last 7 days.",
     )
+    match_history: list[ProfileMatchPreviewSchema] = Field(
+        description="List of last 10 played matches.",
+    )
     friends_count: int
     is_friend: bool
     is_blocked_user: bool
     is_blocked_by_user: bool
+    title: str
+    price: int
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -144,6 +149,18 @@ class ProfileFullSchema(ProfileMinimalSchema):
     @staticmethod
     def resolve_elo_history(obj: Profile):
         return Match.objects.get_elo_points_by_day(obj)[:7]
+
+    @staticmethod
+    def resolve_match_history(obj: Profile):
+        return Match.objects.get_match_preview(obj)[:10]
+
+    @staticmethod
+    def resolve_title(obj: Profile):
+        return obj.get_title_and_price()[0]
+
+    @staticmethod
+    def resolve_price(obj: Profile):
+        return obj.get_title_and_price()[1]
 
 
 class PasswordValidationSchema(Schema):
