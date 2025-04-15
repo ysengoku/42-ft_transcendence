@@ -8,10 +8,6 @@ export class DuelResult extends HTMLElement {
     gameId: '',
     loggedInUser: null,
     duelData: null,
-    // date
-    // winner (username, nickname, avatar, elo)
-    // looser (username, nickname, avatar, elo)
-    // score
   };
 
   setParam(param) {
@@ -25,13 +21,10 @@ export class DuelResult extends HTMLElement {
 
     // TODO
     // fetch loggedInUser
-    // fetch duel data
     this.#state.loggedInUser = auth.getStoredUser();
 
+    // TODO: Replace by api call
     this.#state.duelData = mockDuelData('finished');
-    if (this.#state.duelData.status !== 'finished') {
-      // TODO: Show some messages
-    }
     console.log('Duel data:', this.#state.duelData);
     this.render();
   }
@@ -55,11 +48,11 @@ export class DuelResult extends HTMLElement {
     winner ? (
       userWrapper =this.winner,
       userData = this.#state.duelData.winner,
-      score = this.#state.duelData.winner_score
+      score = this.#state.duelData.winners_score
     ) : (
       userWrapper = this.loser,
       userData = this.#state.duelData.loser,
-      score = this.#state.duelData.looser_score
+      score = this.#state.duelData.losers_score
     );
     console.log('User data:', userData);
     userWrapper.innerHTML = this.userTemplate();
@@ -83,13 +76,14 @@ export class DuelResult extends HTMLElement {
     return `
     <div class="row justify-content-center m-2">
       <div class="form-container col-12 col-sm-12 col-md-10 col-lg-8 d-flex flex-column justify-content-center align-items-center p-5">
-        <p class="fs-4 my-2">The duel is over. The winner is...</p>
+        <p class="fs-4 my-2" id="game-result-title">The duel is over. The winner is...</p>
+        <p class=""></p>
         <div class="d-flex flex-row flex-wrap justify-content-around align-items-center px-4 my-4 w-100" id="duel-content">
           <div class="mb-3" id="duel-winner">winner</div>
           <div class="vs m-3">vs</div>
           <div class="mb-3" id="duel-loser">loser</div>
         </div>
-        <div class="d-flex flex-row justify-content-center mt-5 gap-4">
+        <div class="d-flex flex-row justify-content-center mt-5 gap-4" id="game-result-cta-buttons">
           <button class="btn btn-wood" id="go-to-home-button">Go to Home</button>
           <button class="btn btn-wood" id="go-to-profile-button">See my profile</button>
         </div>
@@ -101,8 +95,10 @@ export class DuelResult extends HTMLElement {
   style() {
     return `
     <style>
-    .duel-score {
-      font-size: 8rem;
+    #duel-content {
+      .duel-score {
+        font-size: 8rem;
+      }
     }
     .vs {
       font-size: 4rem;

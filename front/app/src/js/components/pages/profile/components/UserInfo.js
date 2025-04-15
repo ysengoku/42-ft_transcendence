@@ -26,11 +26,11 @@ export class ProfileUserInfo extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.#state.title = '5000'; // TODO: remove
-    this.#state.titre = `$${this.#state.title}`;
+    this.#state.title = `$${this.#state.title}`;
 
     this.querySelector('#profile-nickname').textContent = this.#state.nickname;
     this.querySelector('#profile-username').textContent = `@${this.#state.username}`;
-    this.querySelector('#profile-titre').textContent = this.#state.titre;
+    this.querySelector('#profile-title').textContent = this.#state.title;
   }
 
   template() {
@@ -43,7 +43,7 @@ export class ProfileUserInfo extends HTMLElement {
           </div>
 					<p class="m-0 text-center">Joined on ${this.formatedDate}</p>
 				</div>
-				<h2 class="text-center px-3 pt-3 m-0" id="profile-titre"></h2>
+				<h2 class="text-center px-3 pt-3 m-0" id="profile-title"></h2>
 			</div>
 		`;
   }
