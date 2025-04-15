@@ -1,25 +1,30 @@
+import { apiRequest, API_ENDPOINTS } from '@api';
+
 export class UserEloProgressionChart extends HTMLElement {
   #state = {
     history: [],
+    totalItemCount: 0,
+    currentItemCount: 0,
+    displayedItem: [],
+    minIndex: 0,
+    maxIndex: 0,
   };
+
+  #eloRange = {
+    min: 100,
+    max: 2800,
+  };
+  #eloMidrange = Math.round((this.#eloRange.min + this.#eloRange.max) / 2);
 
   constructor() {
     super();
   }
 
-  // {
-  //   "items": [
-  //     {
-  //       "day": "2025-04-13",
-  //       "daily_elo_change": 0,
-  //       "elo_result": 0
-  //     }
-  //   ],
-  //   "count": 0
-  // }
-
   set data(value) {
-    this.#state.history = value.slice().reverse();
+    this.#state.history = value;
+    this.#state.displayedItem = value.slice().reverse();
+    this.currentItemCount = this.#state.history.length;
+    this.#state.maxIndex = this.currentItemCount - 1;
     this.render();
   }
 
@@ -77,20 +82,30 @@ export class UserEloProgressionChart extends HTMLElement {
   }
 
   parseData() {
-    this.itemCount = this.#state.history.length;
+    // this.minElo = Math.min(...this.#state.displayedItem.map((item) => item.elo_result));
+    // this.minElo = Math.floor(this.minElo / 10) * 10 - 10;
+    // this.maxElo = Math.max(...this.#state.displayedItem.map((item) => item.elo_result));
+    // this.maxElo = Math.ceil(this.maxElo / 10) * 10 + 10;
+    // this.midrangeElo = Math.round((this.minElo + this.maxElo) / 20) * 10;
 
-    this.minElo = Math.min(...this.#state.history.map((item) => item.elo_result));
-    this.minElo = Math.floor(this.minElo / 10) * 10;
-    this.maxElo = Math.max(...this.#state.history.map((item) => item.elo_result));
-    this.maxElo = Math.ceil(this.maxElo / 10) * 10;
-    this.midrangeElo = Math.round((this.minElo + this.maxElo) / 20) * 10;
+    // this.scaleY = 100 / (this.maxElo - this.minElo);
 
-    this.scaleY = 100 / (this.maxElo - this.minElo);
-
-    console.log('minElo:', this.minElo, 'maxElo:', this.maxElo, 'midrangeElo:', this.midrangeElo);
+    // this.parsedData = [];
+    // this.#state.displayedItem.forEach((item, index) => {
+    //   console.log('item:', item);
+    //   const date = new Date(item.day);
+    //   this.parsedData.push({
+    //     date: date,
+    //     elo: item.elo_result,
+    //     elo_change: item.daily_elo_change,
+    //     x: 20 + index * 40,
+    //     y: Math.round(110 - (item.elo_result - this.minElo) * this.scaleY),
+    //   });
+    // });
+    const scaleY = 100 / (this.#eloRange.max - this.#eloRange.min);
 
     this.parsedData = [];
-    this.#state.history.forEach((item, index) => {
+    this.#state.displayedItem.forEach((item, index) => {
       console.log('item:', item);
       const date = new Date(item.day);
       this.parsedData.push({
@@ -98,7 +113,7 @@ export class UserEloProgressionChart extends HTMLElement {
         elo: item.elo_result,
         elo_change: item.daily_elo_change,
         x: 20 + index * 40,
-        y: Math.round(120 - (item.elo_result - this.minElo) * this.scaleY), // TODO: Adjust the offset OR scale
+        y: Math.round(110 - (item.elo_result - this.#eloRange.min) * scaleY),
       });
     });
     console.log('Parsed data:', this.parsedData);
@@ -115,9 +130,14 @@ export class UserEloProgressionChart extends HTMLElement {
             <line x1="20" x2="20" y1="10" y2="110"></line> 
           </g>
           <g class="linechart-labels">
+            <!--
             <text x="16" y="110" text-anchor="end">${this.minElo}</text>
             <text x="16" y="65" text-anchor="end">${this.midrangeElo}</text>
-            <text x="16" y="20" text-anchor="end">${this.maxElo}</text>
+            <text x="16" y="15" text-anchor="end">${this.maxElo}</text>
+            -->
+            <text x="16" y="110" text-anchor="end">${this.#eloRange.min}</text>
+            <text x="16" y="65" text-anchor="end">${this.#eloMidrange}</text>
+            <text x="16" y="15" text-anchor="end">${this.#eloRange.max}</text>
           </g>
           <g class="linechart-grid x-linechart-grid">
             <line x1="20" x2="270" y1="110" y2="110"></line> 
