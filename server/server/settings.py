@@ -25,9 +25,6 @@ if __name__ == "__main__":
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# TODO: Change the secret key in production
-SECRET_KEY = "your-secret-key"
-
 # Environment variables
 # Init django-environ
 env = environ.Env(
@@ -63,8 +60,15 @@ env = environ.Env(
     FT_API_AUTHORIZE_URL=(str, ""),
     FT_API_USER_PROFILE_URL=(str, ""),
     FT_API_OAUTH_URL=(str, ""),
+    ACCESS_TOKEN_SECRET_KEY=(str, ""),
+    REFRESH_TOKEN_SECRET_KEY=(str, ""),
+    SECRET_KEY=(str, ""),
 )
+
 env.read_env(env_file=str(BASE_DIR / ".env"))
+
+# TODO: Change the secret key in production
+SECRET_KEY = env("SECRET_KEY")
 
 DEBUG = env("DEBUG")
 CRON_SECRET = env("CRON_SECRET")
@@ -232,8 +236,8 @@ AUTH_SETTINGS = {
     "check_is_alphanumeric": True,
 }
 
-ACCESS_TOKEN_SECRET_KEY = "secret"
-REFRESH_TOKEN_SECRET_KEY = "refresh_secret"
+ACCESS_TOKEN_SECRET_KEY = env("ACCESS_TOKEN_SECRET_KEY")
+REFRESH_TOKEN_SECRET_KEY = env("REFRESH_TOKEN_SECRET_KEY")
 
 NINJA_PAGINATION_PER_PAGE = 10
 
