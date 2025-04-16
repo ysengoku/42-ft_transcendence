@@ -5,7 +5,6 @@ import './components/index.js';
 export class UserProfile extends HTMLElement {
   #state = {
     loggedInUsername: '',
-    // user: null,
   };
 
   constructor() {
@@ -124,7 +123,7 @@ export class UserProfile extends HTMLElement {
 
     const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
     if (userEloProgressionChart) {
-      userEloProgressionChart.setData(this.#state.loggedInUsername, this.user.elo_history);
+      userEloProgressionChart.setData(this.user.username, this.user.elo_history);
     }
 
     const gameHistory = this.querySelector('user-game-history');
