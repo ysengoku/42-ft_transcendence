@@ -55,7 +55,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 f"chat_{chat.id}", self.channel_name,
             )
         except Chat.DoesNotExist:
-            logger.debug("Char Room %s does not exist.", chat_id)
+            logger.debug("Chat Room %s does not exist.", chat_id)
 
     def join_chat(self, event):
         chat_id = event["data"]["chat_id"]
