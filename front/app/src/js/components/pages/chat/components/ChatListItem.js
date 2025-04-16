@@ -25,7 +25,7 @@ export class ChatListItem extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.template();
 
     this.avatar = this.querySelector('.chat-list-item-avatar');
     this.#state.data.avatar ? (this.avatar.src = this.#state.data.avatar) : (this.avatar.src = defaultAvatar);
@@ -115,60 +115,6 @@ export class ChatListItem extends HTMLElement {
         </div>
       </div>
     </li>
-    `;
-  }
-
-  style() {
-    return `
-      <style>
-      .chat-list-item {
-        border: none;
-        background-color: rgba(var(--bs-body-bg-rgb), 0.3);
-        border-radius: 0.5rem !important;
-      }
-      .list-group-item.active {
-        background-color: var(--pm-primary-500) !important;
-        border: none;
-        .chat-list-status-indicator {
-          outline: 1px solid var(--pm-primary-500) !important;
-        }
-      }
-      .chat-list-status-indicator {
-        position: absolute;
-        bottom: 0;
-        right: -2px;
-        outline: 2px solid rgba(var(--bs-body-bg-rgb), 0.4) !important;
-      }
-      .chat-list-item-content {
-        min-width: 0;
-      }
-      .chat-list-item-unread-message {
-        background-color: var(--pm-red-500);
-        color: var(--pm-gray-100);
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        inline-height: 1;
-       }
-      .chat-list-item-nickname {
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .chat-list-item-last-message {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        -webkit-box-orient: vertical;
-      }
-      .blocked {
-        filter: opacity(0.6);
-      }
-    </style>
     `;
   }
 }
