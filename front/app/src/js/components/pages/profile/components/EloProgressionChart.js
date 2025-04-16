@@ -7,8 +7,6 @@ export class UserEloProgressionChart extends HTMLElement {
     totalItemCount: 0,
     currentItemCount: 0,
     currentWeekIndex: 0,
-    minIndex: 0,
-    maxIndex: 0,
   };
 
   #yRange = {
