@@ -173,8 +173,6 @@ export class Chat extends HTMLElement {
     if (response.success) {
       devLog('Chat list response:', response);
       return response.data;
-    } else {
-      // TODO: Handle error
     }
   }
 
