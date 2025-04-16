@@ -8,6 +8,7 @@ import { showToastNotification } from './toastnotification';
 import {
   createClouds,
   createStars,
+  loader,
 } from './animations';
 
 import {
@@ -38,6 +39,7 @@ export {
   showToastNotification,
   createClouds,
   createStars,
+  loader,
   INPUT_FEEDBACK,
   emailFeedback,
   passwordFeedback,

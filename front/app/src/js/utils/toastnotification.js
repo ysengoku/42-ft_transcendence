@@ -1,3 +1,5 @@
+import { Toast } from 'bootstrap';
+
 export function showToastNotification(message) {
   const toastContainer = document.getElementById('toast-notification');
   if (!toastContainer) {
@@ -30,6 +32,6 @@ export function showToastNotification(message) {
   const toastBody = document.querySelector('.toast-body');
   toastBody.textContent = message;
   const toast = document.querySelector('.toast');
-  const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toast);
+  const toastBootstrap = Toast.getOrCreateInstance(toast);
   toastBootstrap.show();
 }

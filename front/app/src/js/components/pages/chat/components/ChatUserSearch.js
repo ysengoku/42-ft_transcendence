@@ -44,9 +44,9 @@ export class ChatUserSearch extends HTMLElement {
     this.input = this.querySelector('input');
     this.searchBarToggleButton = document.querySelector('.new-chat');
 
-    this.input.addEventListener('input', this.handleInput);
-    this.searchBarToggleButton.addEventListener('click', this.hideUserSearch);
-    this.listContainer.addEventListener('scrollend', this.loadMoreUsers);
+    this.input?.addEventListener('input', this.handleInput);
+    this.searchBarToggleButton?.addEventListener('click', this.hideUserSearch);
+    this.listContainer?.addEventListener('scrollend', this.loadMoreUsers);
     document.addEventListener('click', this.handleClick);
   }
 
@@ -107,7 +107,7 @@ export class ChatUserSearch extends HTMLElement {
     event.stopPropagation();
     event.preventDefault();
 
-   clearTimeout(this.#state.timeout);
+    clearTimeout(this.#state.timeout);
     this.#state.timeout = setTimeout( async () => {
       this.#state.userList = [];
       this.#state.totalUserCount = 0;
