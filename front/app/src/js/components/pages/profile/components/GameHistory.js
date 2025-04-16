@@ -18,8 +18,8 @@ export class UserGameHistory extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.duelsTab.removeEventListener('click', this.handleDuelTabClick);
-    this.tournamentsTab.removeEventListener('click', this.handleTournamentTabClick);
+    this.duelsTab?.removeEventListener('click', this.handleDuelTabClick);
+    this.tournamentsTab?.removeEventListener('click', this.handleTournamentTabClick);
   }
 
   render() {
@@ -104,14 +104,6 @@ export class UserGameHistory extends HTMLElement {
         background-color: transparent;
         color: black;
         padding: 1rem 0 1rem 0.5rem;
-      }
-      .user-game-history-avatar {
-        width: 36px;
-        aspect-ratio: 1;
-        object-fit: cover;
-        border-radius: 50%;
-        background-color: grey;
-        margin-right: 8px;
       }
       .bi-arrow-up-right {
         color: green;

@@ -1,3 +1,4 @@
+import { Modal } from 'bootstrap';
 import avatarPlaceholder from '/img/avatar-placeholder.svg?url';
 
 export class AvatarUploadModal extends HTMLElement {
@@ -25,7 +26,7 @@ export class AvatarUploadModal extends HTMLElement {
 
   render() {
     this.innerHTML = this.style() + this.template();
-    this.modal = new bootstrap.Modal(this.querySelector('#avatar-upload-modal'));
+    this.modal = new Modal(this.querySelector('#avatar-upload-modal'));
 
     this.avatarUploadField = this.querySelector('#avatar-upload-input');
     this.avatarPreview = this.querySelector('#avatar-upload-preview');
@@ -122,8 +123,8 @@ export class AvatarUploadModal extends HTMLElement {
     return `
     <style>
       .avatar-preview-container {
-        width: 70%;
-        max-width: 300px;
+        width: 64%;
+        max-width: 240px;
         margin: 0 auto;
         position: relative; 
       }
@@ -133,7 +134,6 @@ export class AvatarUploadModal extends HTMLElement {
         border-radius: 50%;
         overflow: hidden;
         position: relative;
-        /* background: rgba(255, 255, 255, 0.5); */
       }
       .avatar-preview {
         width: 100%;
