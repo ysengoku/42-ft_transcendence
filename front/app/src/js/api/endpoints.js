@@ -1,7 +1,7 @@
 const API_BASE_URL = `https://${location.host}/api/`; // For Test environment
 const API_USERS = 'users';
 const API_CHAT = 'chats';
-const API_GAME_STATS = 'game_stats';
+const API_GAME_STATS = 'game-stats';
 
 export const API_ENDPOINTS = {
   SIGNUP: `${API_BASE_URL}signup`,
@@ -28,7 +28,7 @@ export const API_ENDPOINTS = {
   CHAT: (username) => `${API_BASE_URL}${API_CHAT}/${username}`,
   CHAT_MESSAGES: (username, limit, offset) => `${API_BASE_URL}${API_CHAT}/${username}/messages?limit=${limit}&offset=${offset}`,
   NOTIFICATIONS: (isread, limit, offset) => `${API_BASE_URL}notifications?is_read=${isread}&limit=${limit}&offset=${offset}`,
-  DAILY_ELO: (username, limit, offset) => `${API_BASE_URL}${API_GAME_STATS}/${username}/daily_elo?limit=${limit}&offset=${offset}`,
+  DAILY_ELO: (username, limit, offset) => `${API_BASE_URL}${API_GAME_STATS}/${username}/daily-elo?limit=${limit}&offset=${offset}`,
   MATCHES: (username, limit, offset) => `${API_BASE_URL}${API_GAME_STATS}/${username}/matches?limit=${limit}&offset=${offset}`,
   MATCH_RESULT: (id) => `${API_BASE_URL}${API_GAME_STATS}/matches/${id}`,
 };
