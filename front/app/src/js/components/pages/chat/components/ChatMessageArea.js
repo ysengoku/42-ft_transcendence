@@ -124,7 +124,9 @@ export class ChatMessageArea extends HTMLElement {
     if (this.#state.data.messages.length > 0) {
       this.renderMessages();
       // Scroll to the bottom of the chat messages
-      this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+      requestAnimationFrame(() => {
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+      });
       this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
     }
 
