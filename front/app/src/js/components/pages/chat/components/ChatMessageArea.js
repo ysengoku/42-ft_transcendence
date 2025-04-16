@@ -5,13 +5,13 @@
  *              loading more messages, and toggling likes on messages.
  * @module ChatMessageArea
  */
-
+// import 'bootstrap';
+import { Tooltip } from 'bootstrap';
 import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
-import { getRelativeDateAndTime } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, getRelativeDateAndTime, loader } from '@utils';
 
 /**
  * @class ChatMessageArea
@@ -55,14 +55,14 @@ export class ChatMessageArea extends HTMLElement {
    * @param {string} loggedInUsername - The username of the logged-in user.
    */
   setData(data, loggedInUsername) {
-    if (!data || data.is_blocked_by_user) {
+    if (data && data.is_blocked_by_user) {
       return;
     }
     this.#state.renderedMessagesCount = 0;
     this.#state.data = data;
     this.#state.loggedInUsername = loggedInUsername;
-    devLog('ChatMessageArea data:', this.#state.data);
     this.render();
+    devLog('ChatMessageArea data:', this.#state.data);
   }
 
   set sendToggleLikeEvent(callback) {
@@ -71,13 +71,15 @@ export class ChatMessageArea extends HTMLElement {
 
   disconnectedCallback() {
     this.header?.removeEventListener('click', this.navigateToProfile);
-    this.#state.data.is_blocked_user ?
-      this.blockButoon?.removeEventListener('click', this.unblockUser) :
-      this.blockButoon?.removeEventListener('click', this.blockUser);
+    if (this.#state.data) {
+      this.#state.data.is_blocked_user ?
+        this.blockButoon?.removeEventListener('click', this.unblockUser) :
+        this.blockButoon?.removeEventListener('click', this.blockUser);
+      this.#state.data.messages.forEach = (message, index) => {
+        message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
+      };
+    }
     this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
-    this.#state.data.messages.forEach = (message, index) => {
-      message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
-    };
   }
 
   /* ------------------------------------------------------------------------ */
@@ -86,6 +88,14 @@ export class ChatMessageArea extends HTMLElement {
 
   render() {
     this.innerHTML = this.template() + this.style();
+    this.messageInput = this.querySelector('#chat-message-input-wrapper');
+    this.loader = this.querySelector('.chat-loader');
+    this.loader.innerHTML = loader();
+
+    if (!this.#state.data) {
+      this.messageInput.classList.add('d-none');
+      return;
+    }
 
     // Initialize elements
     this.header = this.querySelector('#chat-header');
@@ -97,12 +107,14 @@ export class ChatMessageArea extends HTMLElement {
     this.invitePlayButton = this.querySelector('#chat-invite-play-button');
     this.blockButoon = this.querySelector('#chat-block-user-button');
     this.chatMessages = this.querySelector('#chat-messages');
-    this.messageInput = this.querySelector('#chat-message-input-wrapper');
 
     // Set header information and avatar.
-    this.#state.data.avatar ? this.headerAvatar.src = this.#state.data.avatar : this.headerAvatar.src = defaultAvatar;
+    this.#state.data.avatar ?
+      (this.headerAvatar.src = this.#state.data.avatar) : (this.headerAvatar.src = defaultAvatar);
+    this.headerAvatar.classList.remove('d-none');
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
+    this.headerOnlineStatusIndicator.classList.remove('d-none');
     this.headerOnlineStatusIndicator.classList.toggle('online', this.#state.data.is_online);
     this.headerOnlineStatus.textContent = this.#state.data.is_online ? 'online' : 'offline';
     this.header.addEventListener('click', this.navigateToProfile);
@@ -112,18 +124,20 @@ export class ChatMessageArea extends HTMLElement {
     if (this.#state.data.messages.length > 0) {
       this.renderMessages();
       // Scroll to the bottom of the chat messages
-      this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+      requestAnimationFrame(() => {
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+      });
       this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
     }
 
     // Toggle input and block button based on block status.
     if (this.#state.data.is_blocked_user) {
       this.messageInput.classList.add('d-none');
-      this.invitePlayButton.classList.add('d-none');
       this.blockButoon.textContent = 'Unblock user';
       this.blockButoon.addEventListener('click', this.unblockUser);
     } else {
       this.messageInput.classList.remove('d-none');
+      this.invitePlayButton.classList.remove('d-none');
       this.blockButoon.textContent = 'Block user';
       this.blockButoon.addEventListener('click', this.blockUser);
     }
@@ -145,8 +159,7 @@ export class ChatMessageArea extends HTMLElement {
       if (this.#state.renderedMessagesCount < 30) {
         return;
       }
-      if (this.#state.totalMessagesCount === 0 ||
-        this.#state.renderedMessagesCount < this.#state.totalMessagesCount) {
+      if (this.#state.totalMessagesCount === 0 || this.#state.renderedMessagesCount < this.#state.totalMessagesCount) {
         const previousHeight = this.chatMessages.scrollHeight;
 
         const response = await apiRequest(
@@ -155,7 +168,8 @@ export class ChatMessageArea extends HTMLElement {
             API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
             null,
             false,
-            true);
+            true,
+        );
         if (response.success) {
           this.#state.data.messages.push(...response.data.items);
           this.#state.totalMessagesCount = response.data.count;
@@ -196,8 +210,12 @@ export class ChatMessageArea extends HTMLElement {
 
     if (message.sender === this.#state.data.username) {
       messageElement.classList.add(
-          'left-align-message', 'd-flex', 'flex-row', 'justify-content-start',
-          'align-items-center', 'gap-3',
+          'left-align-message',
+          'd-flex',
+          'flex-row',
+          'justify-content-start',
+          'align-items-center',
+          'gap-3',
       );
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
@@ -211,11 +229,16 @@ export class ChatMessageArea extends HTMLElement {
           },
         };
         devLog('Sending read_message to server:', readMessage);
-        socketManager.socket.send(JSON.stringify(readMessage));
+        socketManager.sendMessage('livechat', readMessage);
       }
     } else {
-      messageElement.classList.add('right-align-message', 'd-flex', 'flex-row', 'justify-content-end',
-          'align-items-center');
+      messageElement.classList.add(
+          'right-align-message',
+          'd-flex',
+          'flex-row',
+          'justify-content-end',
+          'align-items-center',
+      );
       messageContent.classList.add('ms-5');
       messageElement.querySelector('.chat-message-avatar').remove();
     }
@@ -223,7 +246,7 @@ export class ChatMessageArea extends HTMLElement {
     message.is_liked ? messageContent.classList.add('liked') : messageContent.classList.remove('liked');
 
     messageElement.querySelector('.message').setAttribute('title', getRelativeDateAndTime(message.date));
-    const tooltip = new bootstrap.Tooltip(messageElement.querySelector('.message'));
+    const tooltip = new Tooltip(messageElement.querySelector('.message'));
     tooltip.update();
     this.#state.renderedMessagesCount++;
     return messageElement;
@@ -322,12 +345,11 @@ export class ChatMessageArea extends HTMLElement {
   template() {
     return `
     <div class="d-flex flex-column h-100">
-
       <!-- Header -->
       <div class="d-flex flex-row justify-content-between align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
   
       <div class="d-flex flex-row" id="chat-header">
-        <img class="avatar-m rounded-circle me-3" alt="User" id="chat-header-avatar"/>
+        <img class="avatar-m rounded-circle me-3 d-none" alt="User" id="chat-header-avatar"/>
 
         <div class="d-flex flex-column text-start gap-1">
           <div class="d-flex flex-row gap-3">
@@ -335,21 +357,27 @@ export class ChatMessageArea extends HTMLElement {
             <p class="mb-0 fs-6" id="chat-header-username"></p>
           </div>
           <div class="d-flex flex-row align-items-center gap-2">
-            <span class="online-status" id="chat-header-online-status-indicator"></span>
+            <span class="online-status d-none" id="chat-header-online-status-indicator"></span>
             <div id="chat-header-online-status"></div>
           </div>
         </div>
       </div>
 
       <div class="align-self-end">
-        <button class="btn" id="chat-invite-play-button">Invite to play</button>
+        <button class="btn d-none" id="chat-invite-play-button">Invite to play</button>
         <button class="btn" id="chat-block-user-button"></button>
       </div>
 
       </div>
 
       <!-- Messages -->
-      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages"></div>
+      <div class="chat-loader d-flex text-center justify-content-center align-items-center ms-4 mt-5 d-none"></div>
+      <div class="no-messages d-flex flex-column justify-content-center align-items-center mt-5 d-none">
+        <p class="m-0">Every great partnership starts with a howdy.</p>
+        <p class="m-0">Don\'t be shy now — send your first message.</p>
+      </div>
+      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages">
+      </div>
 
       <!-- Input -->
       <div id="chat-message-input-wrapper">
@@ -400,12 +428,6 @@ export class ChatMessageArea extends HTMLElement {
         background-color: var(--pm-primary-600);
         color: white;
       }
-      .chat-message-avatar {
-        width: 36px;
-        height: 36px;
-        object-fit: cover;
-        border-radius: 50%;
-      }
       .bi-heart-fill {
         position: absolute;
         bottom: -20px;
@@ -421,7 +443,7 @@ export class ChatMessageArea extends HTMLElement {
 
   messageTemplate() {
     return `
-    <img class="chat-message-avatar rounded-circle" alt="User" />
+    <img class="chat-message-avatar avatar-xs rounded-circle" alt="User" />
     <div class="message" data-bs-toggle="tooltip">
       <div class="bubble">
         <div class="message-content"></div>

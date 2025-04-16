@@ -8,6 +8,7 @@
 import './ChatUserSearch.js';
 import './ChatListItem.js';
 import { getRelativeTime } from '@utils';
+import { loader } from '@utils';
 
 /**
  * @class ChatList
@@ -53,11 +54,15 @@ export class ChatList extends HTMLElement {
    * @param {Function} getCurrentChatUsername
    */
   setData(data, username, getCurrentChatUsername) {
+    console.time('ChatList setData');
     this.#state.loggedInUsername = username;
-    this.#state.items = data.items;
-    this.#state.fetchedItemCount = data.items.length;
-    this.#state.totalItemCount = data.count;
-    this.#getCurrentChatUsername = getCurrentChatUsername;
+    if (data) {
+      this.#state.items = data.items;
+      this.#state.fetchedItemCount = data.items.length;
+      this.#state.totalItemCount = data.count;
+      this.#getCurrentChatUsername = getCurrentChatUsername;
+    }
+    console.timeEnd('ChatList setData');
     this.render();
   }
 
@@ -70,7 +75,10 @@ export class ChatList extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
   async render() {
-    this.innerHTML = this.template();
+    console.time('ChatList render');
+    this.innerHTML = this.template() + this.style();
+    this.loader = this.querySelector('.chat-loader');
+    this.loader.innerHTML = loader();
 
     // Initialize elements
     this.searchButton = this.querySelector('.new-chat');
@@ -91,6 +99,7 @@ export class ChatList extends HTMLElement {
       this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
+    console.timeEnd('ChatList render');
   }
 
   /**
@@ -328,10 +337,65 @@ export class ChatList extends HTMLElement {
       </div>
       <chat-user-search></chat-user-search>
       <div class="overflow-auto" id="chat-list-wrapper">
+        <div class="chat-loader d-flex text-center justify-content-center align-items-center me-4 mt-5 d-none"></div>
         <ul class="list-group border-top-1 pt-4" id="chat-list"></ul>
       </div>
     </div>
 	  `;
+  }
+
+  style() {
+    return `
+      <style>
+      .chat-list-item {
+        border: none;
+        background-color: rgba(var(--bs-body-bg-rgb), 0.3);
+        border-radius: 0.5rem !important;
+      }
+      .list-group-item.active {
+        background-color: var(--pm-primary-500) !important;
+        border: none;
+        .chat-list-status-indicator {
+          outline: 1px solid var(--pm-primary-500) !important;
+        }
+      }
+      .chat-list-status-indicator {
+        position: absolute;
+        bottom: 0;
+        right: -2px;
+        outline: 2px solid rgba(var(--bs-body-bg-rgb), 0.4) !important;
+      }
+      .chat-list-item-content {
+        min-width: 0;
+      }
+      .chat-list-item-unread-message {
+        background-color: var(--pm-red-500);
+        color: var(--pm-gray-100);
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        inline-height: 1;
+       }
+      .chat-list-item-nickname {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .chat-list-item-last-message {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+      }
+      .blocked {
+        filter: opacity(0.6);
+      }
+    </style>
+    `;
   }
 }
 
