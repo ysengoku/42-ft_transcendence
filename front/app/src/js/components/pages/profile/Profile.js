@@ -71,7 +71,8 @@ export class UserProfile extends HTMLElement {
         username: this.user.username,
         nickname: this.user.nickname,
         join_date: this.user.date_joined,
-        titre: this.user.titre,
+        title: this.user.title,
+        price: this.user.price,
       };
     }
 
@@ -123,7 +124,7 @@ export class UserProfile extends HTMLElement {
 
     const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
     if (userEloProgressionChart) {
-      userEloProgressionChart.data = this.user.elo_history;
+      userEloProgressionChart.setData(this.#state.loggedInUsername, this.user.elo_history);
     }
 
     const gameHistory = this.querySelector('user-game-history');
@@ -198,11 +199,6 @@ export class UserProfile extends HTMLElement {
                 <user-win-rate-pie-graph></user-win-rate-pie-graph>
               </div>               
               <div class="graph-wrapper flex-grow-1 p-2">
-                <div class="d-flex flex-row align-items-center">
-                  <p class="stat-label mx-4">Elo progression</p>
-                  <button class="btn-elo-history" id="btn-elo-history-prev" type="button">< prev</button>
-                  <button disabled class="btn-elo-history" id="btn-elo-history-next" type="button">next ></button>
-                </div>
                 <user-elo-progression-chart></user-elo-progression-chart>
               </div>
             </div>
