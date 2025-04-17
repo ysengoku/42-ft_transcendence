@@ -1,6 +1,6 @@
 import { Modal } from 'bootstrap';
 import { router } from '@router';
-import { mockDuelData } from '@mock/functions/mockDuelData';
+import { apiRequest, API_ENDPOINTS } from '@api';
 
 export class UserGameResultModal extends HTMLElement {
   #state = {
@@ -16,14 +16,24 @@ export class UserGameResultModal extends HTMLElement {
     this.navigateToProfile = this.navigateToProfile.bind(this);
   }
 
-  showModal(type, id) {
+  async showModal(type, id) {
     this.#state.type = type;
     this.#state.id = id;
 
-    // For test
-    this.#state.gameData = mockDuelData('finished');
-
+    let response = null;
+    if (this.#state.type === 'duel') {
+      response = await apiRequest('GET', API_ENDPOINTS.MATCH_RESULT(this.#state.id), null, false, true);
+    } else if (this.#state.type === 'tournament') {
+      // TODO
+      // response = await apiRequest('GET', API_ENDPOINTS.TOURNAMENT(this.#state.id), null, false, true);
+    }
+    if (!response) {
+      // TODO: handle error (if response.status !== 401/500)
+      return;
+    }
+    this.#state.gameData = response.data;
     this.render();
+
     if (this.modal) {
       this.modal.show();
     }
