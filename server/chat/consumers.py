@@ -1,5 +1,6 @@
 import json
 import logging
+from uuid import UUID
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
@@ -83,42 +84,137 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.channel_name,
                 )
 
+    def is_valid_uuid(self, val):
+        try:
+            UUID(str(val))
+            return True
+        except ValueError:
+            return False
+
+    def validate_action_data(self, action, data):
+        expected_types = {
+            "new_message": {"content": str, "chat_id": str},
+            "notification": {"notification": str, "type": str},
+            "like_message": {"id": str, "chat_id": str},
+            "unlike_message": {"id": str, "chat_id": str},
+            "read_message": {"id": str},
+            "game_invite": {"sender_id": str, "receiver_id": str},
+            "accept_game_invite": {"invitation_id": str},
+            "decline_game_invite": {"invitation_id": str},
+            "new_tournament": {"tournament_id": str, "tournament_name": str, "organizer_id": str},
+            "add_new_friend": {"sender_id": str, "receiver_id": str},
+            "join_chat": {"chat_id": str},
+            "room_created": {"chat_id": str},
+            "user_online": {"username": str},
+            "user_offline": {"username": str},
+        }
+
+        uuid_fields = {
+            "new_message": ["chat_id"],
+            "like_message": ["id", "chat_id"],
+            "unlike_message": ["id", "chat_id"],
+            "read_message": ["id"],
+            "game_invite": ["sender_id", "receiver_id"],
+            "accept_game_invite": ["invitation_id"],
+            "decline_game_invite": ["invitation_id"],
+            "new_tournament": ["tournament_id", "organizer_id"],
+            "add_new_friend": ["sender_id", "receiver_id"],
+            "join_chat": ["chat_id"],
+            "room_created": ["chat_id"],
+        }
+       # Types verification
+        if action in expected_types:
+            for field, expected_type in expected_types[action].items():
+                value = data.get(field)
+                if not isinstance(value, expected_type):
+                    logger.warning(
+                        "Invalid type for '%s' (waited for %s, received %s)",
+                        field, expected_type.__name__, type(value).__name__
+                    )
+                    return False
+
+        # UUID verification
+        if action in uuid_fields:
+            for field in uuid_fields[action]:
+                value = data.get(field)
+                if value and not self.is_valid_uuid(value):
+                    logger.warning("Invalid UUID format for '%s'", field)
+                    return False
+
+        return True
+
     # Receive message from WebSocket
-
     def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        action = text_data_json.get("action")
+        try:
+            text_data_json = json.loads(text_data)
+            action = text_data_json.get("action")
 
-        match action:
-            case "new_message":
-                self.handle_message(text_data_json)
-            case "notification":
-                self.handle_notification(text_data_json)
-            case ("user_offline", "user_online"):
-                self.handle_online_status(text_data_json)
-            case "like_message":
-                self.handle_like_message(text_data_json)
-            case "unlike_message":
-                self.handle_unlike_message(text_data_json)
-            case "read_message":
-                self.handle_read_message(text_data_json)
-            case "game_invite":
-                self.send_game_invite(text_data_json)
-            case "accept_game_invite":
-                self.accept_game_invite(text_data_json)
-            case "decline_game_invite":
-                self.decline_game_invite(text_data_json)
-            case "new_tournament":
-                self.handle_new_tournament(text_data_json)
-            case "add_new_friend":
-                self.add_new_friend(text_data_json)
-            case "join_chat":
-                self.join_chat(text_data_json)
-            case "room_created":
-                self.send_room_created(
-                    text_data_json.get("data", {}).get("chat_id"))
-            case _:
-                logger.debug("Unknown action : %s", action)
+            if not action:
+                logger.warning("Message without action received")
+                return
+
+            data = text_data_json.get("data", {})
+            entire_data = text_data_json.get("data", {})
+            required_fields = {
+                "new_message": ["content", "chat_id"],
+                "notification": ["notification", "type"],
+                "like_message": ["id", "chat_id"],
+                "unlike_message": ["id", "chat_id"],
+                "read_message": ["id"],
+                "game_invite": ["sender_id", "receiver_id"],
+                "accept_game_invite": ["invitation_id"],
+                "decline_game_invite": ["invitation_id"],
+                "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
+                "add_new_friend": ["sender_id", "receiver_id"],
+                "join_chat": ["chat_id"],
+                "room_created": ["chat_id"],
+                "user_online": ["username"],
+                "user_offline": ["username"],
+            }
+
+            if action in required_fields:
+                for field in required_fields[action]:
+                    if field not in entire_data:
+                        logger.warning(
+                            "Missing field [{%s}] for action {%s}", field, action)
+                        return
+            if not self.validate_action_data(action, entire_data):
+                return
+            match action:
+                case "new_message":
+                    self.handle_message(text_data_json)
+                case "notification":
+                    return
+                    self.handle_notification(text_data_json)
+                case ("user_offline", "user_online"):
+                    self.handle_online_status(text_data_json)
+                case "like_message":
+                    self.handle_like_message(text_data_json)
+                case "unlike_message":
+                    self.handle_unlike_message(text_data_json)
+                case "read_message":
+                    self.handle_read_message(text_data_json)
+                case "game_invite":
+                    return
+                    self.send_game_invite(text_data_json)
+                case "accept_game_invite":
+                    self.accept_game_invite(text_data_json)
+                case "decline_game_invite":
+                    self.decline_game_invite(text_data_json)
+                case "new_tournament":
+                    self.handle_new_tournament(text_data_json)
+                case "add_new_friend":
+                    self.add_new_friend(text_data_json)
+                case "join_chat":
+                    self.join_chat(text_data_json)
+                case "room_created":
+                    self.send_room_created(
+                        text_data_json.get("data", {}).get("chat_id"))
+                case _:
+                    logger.debug("Unknown action : %s", action)
+
+        except json.JSONDecodeError:
+            logger.warning("Invalid JSON message")
 
     def handle_message(self, data):
         message_data = data.get("data", {})
@@ -207,11 +303,11 @@ class UserEventsConsumer(WebsocketConsumer):
         message = message_data.get("content")
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
-        sender = message_data.get("sender")
-        if sender != self.user.username:  # prevent from liking own message
-            try:
-                with transaction.atomic():
-                    message = ChatMessage.objects.select_for_update().get(pk=message_id)
+        try:
+            with transaction.atomic():
+                message = ChatMessage.objects.select_for_update().get(pk=message_id)
+                sender = message.sender.user.username
+                if sender != self.user.username:  # prevent from liking own message
                     message.is_liked = True
                     message.save(update_fields=["is_liked"])
                     message.refresh_from_db()
@@ -228,16 +324,16 @@ class UserEventsConsumer(WebsocketConsumer):
                         },
                     ),
                 )
-            except ObjectDoesNotExist:
-                logger.debug("Message %s does not exist.", message_id)
-                self.send(
-                    text_data=json.dumps(
-                        {
-                            "action": "error",
-                            "message": "Message not found.",
-                        },
-                    ),
-                )
+        except ObjectDoesNotExist:
+            logger.debug("Message %s does not exist.", message_id)
+            self.send(
+                text_data=json.dumps(
+                    {
+                        "action": "error",
+                        "message": "Message not found.",
+                    },
+                ),
+            )
 
     def handle_unlike_message(self, data):
         message_data = data.get("data", {})
@@ -245,9 +341,11 @@ class UserEventsConsumer(WebsocketConsumer):
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
         sender = message_data.get("sender")
-        if sender != self.user.username:  # prevent from liking own message
-            try:
-                with transaction.atomic():
+        try:
+            with transaction.atomic():
+                message = ChatMessage.objects.select_for_update().get(pk=message_id)
+                sender = message.sender.user.username
+                if sender != self.user.username:  # prevent from unliking own message
                     message = ChatMessage.objects.select_for_update().get(pk=message_id)
                     message.is_liked = False
                     message.save(update_fields=["is_liked"])
@@ -257,27 +355,27 @@ class UserEventsConsumer(WebsocketConsumer):
                         lambda: self.send_like_update(chat_id, message_id, False))
 
                     message.refresh_from_db()
-                self.send(
-                    text_data=json.dumps(
-                        {
-                            "action": "unlike_message",
-                            "data": {
-                                "id": message_id,
-                                "chat_id": chat_id,
+                    self.send(
+                        text_data=json.dumps(
+                            {
+                                "action": "unlike_message",
+                                "data": {
+                                    "id": message_id,
+                                    "chat_id": chat_id,
+                                },
                             },
-                        },
-                    ),
-                )
-            except ObjectDoesNotExist:
-                logger.debug("Message %s does not exist", message_id)
-                self.send(
-                    text_data=json.dumps(
-                        {
-                            "action": "error",
-                            "message": "Message not found.",
-                        },
-                    ),
-                )
+                        ),
+                    )
+        except ObjectDoesNotExist:
+            logger.debug("Message %s does not exist", message_id)
+            self.send(
+                text_data=json.dumps(
+                    {
+                        "action": "error",
+                        "message": "Message not found.",
+                    },
+                ),
+            )
 
     def send_like_update(self, chat_id, message_id, is_liked):
         async_to_sync(self.channel_layer.group_send)(
@@ -329,6 +427,10 @@ class UserEventsConsumer(WebsocketConsumer):
         notification_data = data["notification"]
         notification_type = data["type"]
         notification_id = data.get("notification_id")
+
+        if not notification_data or not notification_type:
+            logger.warning("Incomplete notifications datas")
+            return
 
         # Create the notification in the db
         if notification_id is None:
@@ -432,6 +534,9 @@ class UserEventsConsumer(WebsocketConsumer):
         sender_id = data["sender_id"]
         receiver_id = data["receiver_id"]
 
+        if not sender_id or not receiver_id:
+            logger.warning("IDs missing for the game_invite")
+            return
         sender = Profile.objects.get(id=sender_id)
         receiver = Profile.objects.get(id=receiver_id)
 
