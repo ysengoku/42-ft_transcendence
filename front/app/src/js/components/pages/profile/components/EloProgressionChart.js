@@ -20,7 +20,7 @@ export class UserEloProgressionChart extends HTMLElement {
     super();
 
     this.renderPrevious = this.renderPrevious.bind(this);
-    this.renderNext = this.renderNext.bind(this)
+    this.renderNext = this.renderNext.bind(this);
   }
 
   setData(username, data) {
@@ -35,7 +35,7 @@ export class UserEloProgressionChart extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.previousButton?.remove
+    this.previousButton?.remove;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -44,7 +44,7 @@ export class UserEloProgressionChart extends HTMLElement {
 
   render() {
     this.innerHTML = this.template() + this.style();
-    
+
     this.chart = this.querySelector('.line-chart-wrapper');
     this.previousButton = this.querySelector('#btn-elo-history-prev');
     this.nextButton = this.querySelector('#btn-elo-history-next');
@@ -53,7 +53,7 @@ export class UserEloProgressionChart extends HTMLElement {
 
     this.renderChart();
   }
-    
+
   renderChart() {
     this.parseData();
 
@@ -65,9 +65,7 @@ export class UserEloProgressionChart extends HTMLElement {
     const namespaceUrl = 'http://www.w3.org/2000/svg';
     this.parsedData.forEach((item, index) => {
       const label = document.createElementNS(namespaceUrl, 'text');
-      index === 0 ?
-        label.setAttribute('x', item.x - 3) :
-        label.setAttribute('x', item.x - 6);
+      index === 0 ? label.setAttribute('x', item.x - 3) : label.setAttribute('x', item.x - 6);
       label.setAttribute('y', 120);
       label.setAttribute('text-anchor', 'center');
       label.textContent = `${item.date.getMonth() + 1}/${item.date.getDate()}`;
@@ -136,7 +134,7 @@ export class UserEloProgressionChart extends HTMLElement {
     const cunkedData = this.chunkArray(this.#state.history);
     const dataToDisplay = cunkedData[this.#state.currentWeekIndex];
     dataToDisplay.reverse();
-    
+
     const count = dataToDisplay.length;
     const startX = 20 + (7 - count) * 40;
 
@@ -158,8 +156,10 @@ export class UserEloProgressionChart extends HTMLElement {
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
   async renderPrevious() {
-    if ((this.#state.totalItemCount === 0 && this.#state.currentItemCount !== 0) ||
-    this.#state.totalItemCount > this.#state.currentItemCount) {
+    if (
+      (this.#state.totalItemCount === 0 && this.#state.currentItemCount !== 0) ||
+      this.#state.totalItemCount > this.#state.currentItemCount
+    ) {
       const response = await this.fetchHistory();
       if (!response) {
         return;
@@ -194,10 +194,11 @@ export class UserEloProgressionChart extends HTMLElement {
   async fetchHistory() {
     const response = await apiRequest(
         'GET',
+        /* eslint-disable-next-line */
         API_ENDPOINTS.DAILY_ELO(this.#state.username, 7, this.#state.currentItemCount),
         null,
         false,
-        true
+        true,
     );
     if (response.success) {
       this.#state.totalItemCount = response.data.count;
@@ -230,7 +231,7 @@ export class UserEloProgressionChart extends HTMLElement {
       min: 112 - 100 * this.#scaleY,
       max: 22,
       mid: 68,
-    }
+    };
     return `
     <div class="line-chart">
       <svg width="100%" height="232" viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
