@@ -82,7 +82,7 @@ export class ChatMessageInput extends HTMLElement {
     <div class="d-flex flex-column mx-4 my-3 gap-2">
       <small class="char-counter text-end me-1 w-100"></small>
       <div class="input-group">
-        <input type="text" id="chat-message-input" class="form-control" placeholder="Type a message..." autocomplete="off" />
+        <input type="text" id="chat-message-input" class="form-control" placeholder="Type a message..." autocomplete="off" maxlength="${this.#maxChar}" />
         <button class="btn btn-secondary" id="sendMessage">
           <i class="bi bi-send"></i>
         </button>
