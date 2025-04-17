@@ -152,6 +152,10 @@ export class UserEloProgressionChart extends HTMLElement {
     });
   }
 
+  applyScale() {
+
+  }
+
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
@@ -267,7 +271,7 @@ export class UserEloProgressionChart extends HTMLElement {
       stroke-width: 1;
     }
     .linechart-labels {
-      font-size: 0.5rem;
+      font-size: 8px !important;
       text-align: center;
     }
     .line-chart-marker circle {
