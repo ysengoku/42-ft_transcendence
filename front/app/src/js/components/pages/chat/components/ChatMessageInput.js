@@ -1,4 +1,4 @@
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils'
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ChatMessageInput extends HTMLElement {
   #charCounter = 0;
@@ -43,7 +43,10 @@ export class ChatMessageInput extends HTMLElement {
     if (event.key === 'Enter' || event.type === 'click') {
       const message = this.messageInput.value;
       if (message.length > this.#maxChar) {
-        showAlertMessageForDuration('Cannot send the message. It exceeds maximum length of 255 characters.');
+        showAlertMessageForDuration(
+            ALERT_TYPE.ERROR,
+            'Cannot send the message. It exceeds maximum length of 255 characters.',
+        );
         this.messageInput.value = '';
         return;
       }
