@@ -79,20 +79,13 @@ class UserEventsConsumer(WebsocketConsumer):
     def validate_action_data(self, action, data):
         expected_types = {
             "new_message": {"content": str, "chat_id": str},
-            "notification": {"notification": str, "type": str},
-            "read_notification": {"id": str},
             "like_message": {"id": str, "chat_id": str},
             "unlike_message": {"id": str, "chat_id": str},
             "read_message": {"id": str},
+            "read_notification": {"id": str},
+            "notification": {"notification": str, "type": str},
+            #TODO : replace game_invite by reply_game_invite
             "game_invite": {"id": str, "accept": bool},
-            "accept_game_invite": {"id": str},
-            "decline_game_invite": {"id": str},
-            "new_tournament": {"tournament_id": str, "tournament_name": str, "organizer_id": str},
-            "add_new_friend": {"sender_id": str, "receiver_id": str},
-            "join_chat": {"chat_id": str},
-            "room_created": {"chat_id": str},
-            "user_online": {"username": str},
-            "user_offline": {"username": str},
         }
 
         uuid_fields = {
@@ -101,9 +94,12 @@ class UserEventsConsumer(WebsocketConsumer):
             "unlike_message": ["id", "chat_id"],
             "read_message": ["id"],
             "read_notification": ["id"],
+            #TODO : replace game_invite by reply_game_invite -->
             "game_invite": ["id"],
             "accept_game_invite": ["id"],
             "decline_game_invite": ["id"],
+            #TODO : replace game_invite by reply_game_invite <--
+            #TODO : check these ids 
             "new_tournament": ["id", "organizer_id"],
             "add_new_friend": ["id"],
             "join_chat": ["chat_id"],
@@ -148,6 +144,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 "like_message": ["id", "chat_id"],
                 "unlike_message": ["id", "chat_id"],
                 "read_message": ["id"],
+            #TODO : replace game_invite by reply_game_invite
                 "game_invite": ["sender_id", "receiver_id"],
                 "accept_game_invite": ["invitation_id"],
                 "decline_game_invite": ["invitation_id"],
@@ -182,12 +179,14 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.handle_unlike_message(text_data_json)
                 case "read_message":
                     self.handle_read_message(text_data_json)
+            #TODO : replace game_invite by reply_game_invite -->
                 case "game_invite":
                     self.send_game_invite(text_data_json)
                 case "accept_game_invite":
                     self.accept_game_invite(text_data_json)
                 case "decline_game_invite":
                     self.decline_game_invite(text_data_json)
+            #TODO : replace game_invite by reply_game_invite <--
                 case "new_tournament":
                     self.handle_new_tournament(text_data_json)
                 case "add_new_friend":
@@ -259,6 +258,9 @@ class UserEventsConsumer(WebsocketConsumer):
         username = user_data.get("username")
         status = data.get("action")
 
+        logger.info("handle online status")
+        logger.info(data)
+        logger.info("handle online status")
         try:
             profile = Profile.objects.get(user__username=username)
         except Profile.DoesNotExist:
