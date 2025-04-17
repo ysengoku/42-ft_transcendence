@@ -124,6 +124,7 @@ class UserEventsConsumer(WebsocketConsumer):
         message_data = data.get("data", {})
         message = message_data.get("content")
         chat_id = message_data.get("chat_id")
+
         # security check: chat should exist
         chat = (
             Chat.objects
@@ -141,6 +142,13 @@ class UserEventsConsumer(WebsocketConsumer):
             return
         is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
         if is_blocked:
+            return
+        # security check: message should not be longueur than 255
+        if message is not None and len(message) > 255:
+            logger.warning(
+                "Message too long (%d caracteres) from user %s in chat %s",
+                len(message), self.user.username, chat_id
+            )
             return
         new_message = ChatMessage.objects.create(
             sender=self.user_profile, content=message, chat=chat)
