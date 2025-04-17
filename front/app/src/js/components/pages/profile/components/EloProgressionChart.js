@@ -66,7 +66,7 @@ export class UserEloProgressionChart extends HTMLElement {
     this.parsedData.forEach((item, index) => {
       const label = document.createElementNS(namespaceUrl, 'text');
       index === 0 ? label.setAttribute('x', item.x - 3) : label.setAttribute('x', item.x - 6);
-      label.setAttribute('y', 120);
+      label.setAttribute('y', 118);
       label.setAttribute('text-anchor', 'center');
       label.textContent = `${item.date.getMonth() + 1}/${item.date.getDate()}`;
       labels.appendChild(label);

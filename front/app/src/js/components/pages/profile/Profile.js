@@ -1,5 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { BREAKPOINT } from '@utils';
 import './components/index.js';
 
 export class UserProfile extends HTMLElement {
@@ -281,7 +282,17 @@ export class UserProfile extends HTMLElement {
       padding-right: 0;
       padding-left: 0;
     }
-    @media (max-width: 576px) {
+    @media (max-width: ${BREAKPOINT.XL}px) and (min-width: ${BREAKPOINT.LG}px) {
+      .graphs-wrapper {
+        flex-wrap: wrap !important;
+      }
+    }
+    @media (max-width: ${BREAKPOINT.MD}px) {
+      .graphs-wrapper {
+        flex-wrap: wrap !important;
+      }
+    }
+    @media (max-width: ${BREAKPOINT.SM}px) {
       .row {
         margin-right: 0 !important;
         margin-left: 0 !important;
