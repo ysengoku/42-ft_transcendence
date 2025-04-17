@@ -45,13 +45,19 @@ export class UserDuelHistory extends HTMLElement {
 
   handleRowClick(event) {
     event.preventDefault();
+    const target = event.target.closest('[match-id]');
+    const matchId = target?.getAttribute('match-id');
+    if (!matchId) {
+      return;
+    }
     const modal = document.querySelector('game-result-modal');
-    modal.showModal('duel'); // TODO: Send id of the duel too
+    modal.showModal('duel', matchId);
   }
 
   createRow(item) {
     const row = document.createElement('tr');
     row.innerHTML = this.rowTemplate() + this.style(item.is_winner);
+    row.setAttribute('match-id', item.game_id);
 
     const opponentAvatar = row.querySelector('.user-game-history-avatar');
     const opponentNickname = row.querySelector('.opponent-nickname');

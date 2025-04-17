@@ -222,7 +222,7 @@ h2, h3, h4, h5, h6, legend {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: grey;
+  background-color: var(--pm-gray-400);
 }
 .online-status.online {
   background-color: green;
