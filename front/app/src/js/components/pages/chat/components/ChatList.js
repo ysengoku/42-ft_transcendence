@@ -348,6 +348,7 @@ export class ChatList extends HTMLElement {
     return `
       <style>
       .chat-list-item {
+        /* max-width: 256px; */
         border: none;
         background-color: rgba(var(--bs-body-bg-rgb), 0.3);
         border-radius: 0.5rem !important;
@@ -387,6 +388,7 @@ export class ChatList extends HTMLElement {
       .chat-list-item-last-message {
         overflow: hidden;
         text-overflow: ellipsis;
+        word-break: break-all;
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
