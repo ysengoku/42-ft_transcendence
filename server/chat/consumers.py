@@ -49,15 +49,6 @@ class UserEventsConsumer(WebsocketConsumer):
 
         self.accept()
 
-    def add_user_to_room(self, chat_id):
-        try:
-            chat = Chat.objects.get(id=chat_id)
-            async_to_sync(self.channel_layer.group_add)(
-                f"chat_{chat.id}", self.channel_name,
-            )
-        except Chat.DoesNotExist:
-            logger.debug("Char Room %s does not exist.", chat_id)
-
     def join_chat(self, event):
         chat_id = event["data"]["chat_id"]
         try:
@@ -68,12 +59,6 @@ class UserEventsConsumer(WebsocketConsumer):
         except Chat.DoesNotExist:
             logger.debug("Acces denied to the chat %s for %s",
                          chat_id, self.user.username)
-
-    def chat_created(self, event):
-        self.send(text_data=json.dumps({
-            "action": "chat_created",
-            "data": event["data"],
-        }))
 
     def disconnect(self, close_code):
         # verify if self.chats exists and is not empty
@@ -95,12 +80,13 @@ class UserEventsConsumer(WebsocketConsumer):
         expected_types = {
             "new_message": {"content": str, "chat_id": str},
             "notification": {"notification": str, "type": str},
+            "read_notification": {"id": str},
             "like_message": {"id": str, "chat_id": str},
             "unlike_message": {"id": str, "chat_id": str},
             "read_message": {"id": str},
-            "game_invite": {"sender_id": str, "receiver_id": str},
-            "accept_game_invite": {"invitation_id": str},
-            "decline_game_invite": {"invitation_id": str},
+            "game_invite": {"id": str, "accept": bool},
+            "accept_game_invite": {"id": str},
+            "decline_game_invite": {"id": str},
             "new_tournament": {"tournament_id": str, "tournament_name": str, "organizer_id": str},
             "add_new_friend": {"sender_id": str, "receiver_id": str},
             "join_chat": {"chat_id": str},
@@ -114,11 +100,12 @@ class UserEventsConsumer(WebsocketConsumer):
             "like_message": ["id", "chat_id"],
             "unlike_message": ["id", "chat_id"],
             "read_message": ["id"],
-            "game_invite": ["sender_id", "receiver_id"],
-            "accept_game_invite": ["invitation_id"],
-            "decline_game_invite": ["invitation_id"],
-            "new_tournament": ["tournament_id", "organizer_id"],
-            "add_new_friend": ["sender_id", "receiver_id"],
+            "read_notification": ["id"],
+            "game_invite": ["id"],
+            "accept_game_invite": ["id"],
+            "decline_game_invite": ["id"],
+            "new_tournament": ["id", "organizer_id"],
+            "add_new_friend": ["id"],
             "join_chat": ["chat_id"],
             "room_created": ["chat_id"],
         }
@@ -166,8 +153,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 "decline_game_invite": ["invitation_id"],
                 "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
                 "add_new_friend": ["sender_id", "receiver_id"],
-                "join_chat": ["chat_id"],
-                "room_created": ["chat_id"],
+                # "join_chat": ["chat_id"],
+                # "room_created": ["chat_id"],
                 "user_online": ["username"],
                 "user_offline": ["username"],
             }
@@ -184,7 +171,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 case "new_message":
                     self.handle_message(text_data_json)
                 case "notification":
-                    return
+                    self.handle_notification(text_data_json)
+                case "read_notification":
                     self.handle_notification(text_data_json)
                 case ("user_offline", "user_online"):
                     self.handle_online_status(text_data_json)
@@ -195,7 +183,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 case "read_message":
                     self.handle_read_message(text_data_json)
                 case "game_invite":
-                    return
                     self.send_game_invite(text_data_json)
                 case "accept_game_invite":
                     self.accept_game_invite(text_data_json)
@@ -303,6 +290,8 @@ class UserEventsConsumer(WebsocketConsumer):
         message = message_data.get("content")
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
+        logger.info("DATA %s", data)
+        logger.info("MESSAGE_DATA %s", message_data)
         try:
             with transaction.atomic():
                 message = ChatMessage.objects.select_for_update().get(pk=message_id)
@@ -424,6 +413,7 @@ class UserEventsConsumer(WebsocketConsumer):
         }))
 
     def handle_notification(self, data):
+        logger.info("HANDLE NOTIFICATION FUNCTION !!!!")
         notification_data = data["notification"]
         notification_type = data["type"]
         notification_id = data.get("notification_id")
@@ -432,6 +422,7 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.warning("Incomplete notifications datas")
             return
 
+        logger.info("Notification %s", notification_data)
         # Create the notification in the db
         if notification_id is None:
             Notification.objects.create(
@@ -458,7 +449,7 @@ class UserEventsConsumer(WebsocketConsumer):
         )
 
     def accept_game_invite(self, data):
-        invitation_id = data["invitation_id"]
+        invitation_id = data["id"]
         try:
             invitation = GameInvitation.objects.get(id=invitation_id)
             invitation.status = "accepted"
@@ -495,7 +486,7 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
     def decline_game_invite(self, data):
-        invitation_id = data["invitation_id"]
+        invitation_id = data["id"]
         try:
             invitation = GameInvitation.objects.get(id=invitation_id)
             invitation.status = "declined"
