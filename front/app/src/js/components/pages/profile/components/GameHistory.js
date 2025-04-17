@@ -1,4 +1,4 @@
-import { mockFetchDuelHistory } from '@mock/functions/mockFetchDuelHistory.js';
+// import { mockFetchDuelHistory } from '@mock/functions/mockFetchDuelHistory.js';
 import { mockFetchTournamentHistory } from '@mock/functions/mockFetchTournamentHistory.js';
 
 export class UserGameHistory extends HTMLElement {
@@ -23,7 +23,7 @@ export class UserGameHistory extends HTMLElement {
   }
 
   render() {
-    this._data.matches = mockFetchDuelHistory();
+    // this._data.matches = mockFetchDuelHistory();
     this._data.tournaments = mockFetchTournamentHistory();
     this.innerHTML = this.template() + this.style();
 
@@ -60,7 +60,7 @@ export class UserGameHistory extends HTMLElement {
 
   template() {
     return `
-    <div class="game-history-card card text-center px-2">
+    <div class="game-history-card text-center px-2">
       <div class="card-header">
         <p class="stat-label text-center">Game History</p>
         <ul class="nav nav-tabs card-header-tabs">
@@ -83,7 +83,7 @@ export class UserGameHistory extends HTMLElement {
     return `
     <style>
       .game-history-card {
-        background-color:rgba(var(--pm-primary-600), 0.1);
+        background-color: rgba(var(--pm-primary-600-rgb), 0.1);
         color: var(--pm-primary-700);
         .card-header-tabs .nav-link {
           color: var(--pm-primary-700);

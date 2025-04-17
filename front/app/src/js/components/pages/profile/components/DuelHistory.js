@@ -106,7 +106,7 @@ export class UserDuelHistory extends HTMLElement {
     <tr>
       <td>
         <div class="d-flex flex-row align-items-center">
-          <img class="user-game-history-avatar avatar-s rounded-circle me-2" />
+          <img class="user-game-history-avatar avatar-s rounded-circle mx-2" />
           <div class="opponent-nickname"></div>
         </div>
       </td>
@@ -114,7 +114,7 @@ export class UserDuelHistory extends HTMLElement {
       <td class="duel-score"></td>
       <td class="duel-result"><span class="result-badge"></span></td>
       <td>
-        <div class="d-flex flex-row align-items-center">
+        <div class="d-flex flex-row justify-content-center align-items-center">
           <div class="elo-result"></div>
           <div class="elo-change-indicator"></div>
         </div>
@@ -126,8 +126,16 @@ export class UserDuelHistory extends HTMLElement {
   style() {
     return `
     <style>
+      .opponent-nickname {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-all;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+      }
       .result-badge {
-        color: white;
+        color: var(--pm-primary-100);
         font-size: 0.8rem;
         padding: 0.2rem 0.5rem;
         border-radius: 0.5rem;

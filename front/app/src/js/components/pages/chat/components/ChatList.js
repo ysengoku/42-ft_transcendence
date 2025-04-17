@@ -348,7 +348,6 @@ export class ChatList extends HTMLElement {
     return `
       <style>
       .chat-list-item {
-        /* max-width: 256px; */
         border: none;
         background-color: rgba(var(--bs-body-bg-rgb), 0.3);
         border-radius: 0.5rem !important;
