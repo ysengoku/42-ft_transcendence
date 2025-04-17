@@ -1,3 +1,5 @@
+import { BREAKPOINT } from '@utils';
+
 export class UserWinRatePieGraph extends HTMLElement {
   #state = {
     rate: 0,
@@ -15,8 +17,6 @@ export class UserWinRatePieGraph extends HTMLElement {
   }
 
   render() {
-    this.#state.wins = 12;
-    this.#state.losses = 8;
     this.#state.rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     this.innerHTML = this.template() + this.style();
 
@@ -36,7 +36,7 @@ export class UserWinRatePieGraph extends HTMLElement {
     return `
     <div class="pie-graph-wrapper d-flex flex-column justify-content-center align-items-center">
       <div class="no-data text-center pt-5 d-none"></div>
-      <div class="pie-graph d-flex flex-column jusify-content-around align-items-center">
+      <div class="pie-graph d-flex flex-column jusify-content-around align-items-center pt-2">
         <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
          <path
             d="M20 ${(40 - r * 2) / 2}
@@ -60,12 +60,12 @@ export class UserWinRatePieGraph extends HTMLElement {
             ${this.#state.rate}%
           </text>
         </svg>
-        <div class="d-flex flex-row justify-content-center mt-2">
-          <p class="fs-6 text-center">Wins ${this.#state.wins}</p>
-          <p>&nbsp;-&nbsp;</p>
-          <p class="fs-6 text-center">Losses ${this.#state.losses}</p>
         </div>
-      </div>
+        <div class="d-flex flex-row justify-content-center">
+          <p class="m-0 text-center">Wins ${this.#state.wins}</p>
+          <p>&nbsp;-&nbsp;</p>
+          <p class="m-0 text-center">Losses ${this.#state.losses}</p>
+        </div>
     </div>
     `;
   }
@@ -74,12 +74,18 @@ export class UserWinRatePieGraph extends HTMLElement {
     return `
     <style>
     .pie-graph-wrapper {
+      min-width: 120px;
       max-width: 160px;
       height: 240px;
     }
     .pie-graph svg {
-      width: 88%;
-      height: 88%;
+      width: 96%;
+      height: 96%;
+    }
+    @media (min-width: ${BREAKPOINT.XXL}px) {
+      .pie-graph-wrapper {
+        max-width: 240px;
+      }
     }
     </style>
   `;
