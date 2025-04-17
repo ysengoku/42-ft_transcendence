@@ -62,16 +62,27 @@ export class UserGameHistory extends HTMLElement {
     return `
     <div class="game-history-card text-center px-2">
       <div class="card-header">
-        <p class="stat-label text-center">Game History</p>
-        <ul class="nav nav-tabs card-header-tabs">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="true" id="duels-tab">Duels</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" id="tournaments-tab">Tournaments</a>
-          </li>
-        </ul>
+        <p class="stat-label text-center pt-2">Game History</p>
+
+        <div class="d-flex justify-content-between align-items-center px-3">
+          <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="true" id="duels-tab">Duels</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="tournaments-tab">Tournaments</a>
+            </li>
+          </ul>
+          <div class="dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Sort by latest
+          </div>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+            <li><button class="dropdown-item">Sort by latest</button></li>
+            <li><button class="dropdown-item">Sort by oldest</button></li>
+          </ul>
+        </div>
       </div>
+
       <div class="card-body px-2 pt-0 mt-2 table-container" id="user-game-history-body">
         <user-duel-history></user-duel-history>
       </div>
