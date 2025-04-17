@@ -2,6 +2,7 @@ import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showFormErrorFeedback, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { BREAKPOINT } from '@utils';
 
 export class MfaVerification extends HTMLElement {
   #state = {
@@ -168,7 +169,7 @@ export class MfaVerification extends HTMLElement {
         width: 2.5rem;
         text-align: center;
       }
-      @media (max-width: 992px) and (min-width: 768px) {
+      @media (max-width: ${BREAKPOINT.LG}px) and (min-width: ${BREAKPOINT.MD}px) {
         .otp-container {
           gap: 0.3rem;
         }

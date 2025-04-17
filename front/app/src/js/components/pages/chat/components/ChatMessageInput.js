@@ -2,7 +2,7 @@ import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class ChatMessageInput extends HTMLElement {
   #charCounter = 0;
-  #maxChar = 255;
+  #maxChar = Number(import.meta.env.VITE_MAX_MESSAGE_LENGTH) || 255;
 
   constructor() {
     super();

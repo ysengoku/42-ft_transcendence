@@ -1,5 +1,5 @@
 import { ThemeController } from './ThemeController';
-import { isMobile } from './viewPort';
+import { isMobile, BREAKPOINT } from './viewPort';
 import { getRelativeTime, getRelativeDateAndTime } from './dateFormat';
 import { sanitizeHtml } from './sanitizeHtml';
 import { showFormErrorFeedback } from './formFeedback';
@@ -32,6 +32,7 @@ import {
 export {
   ThemeController,
   isMobile,
+  BREAKPOINT,
   getRelativeTime,
   getRelativeDateAndTime,
   sanitizeHtml,
