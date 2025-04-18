@@ -1,18 +1,19 @@
+import { formatDateMDY } from '@utils';
+
 export class UserTournamentHistory extends HTMLElement {
   #state = {
-    data: [],
+    items: [],
   };
 
   constructor() {
     super();
     this.tableBody = null;
     this.handleRowClick = this.handleRowClick.bind(this);
-    // this._data = [];
   }
 
   set data(data) {
-    this.#state.data = data;
-    this.noHistory = this.#state.data.length === 0;
+    this.#state.items = data;
+    this.noHistory = this.#state.items.length === 0;
     this.render();
   }
 
@@ -36,7 +37,7 @@ export class UserTournamentHistory extends HTMLElement {
       `;
       this.tableBody.appendChild(row);
     } else {
-      this.#state.data.forEach((item) => {
+      this.#state.items.forEach((item) => {
         const row = this.createRow(item);
         this.tableBody.appendChild(row);
         row.addEventListener('click', this.handleRowClick);
@@ -62,7 +63,7 @@ export class UserTournamentHistory extends HTMLElement {
     const tournamentStatus = row.querySelector('.tounament-status');
 
     tournamentName.textContent = item.name;
-    tournamentDate.textContent = this.formatDate(item.date);
+    tournamentDate.textContent = formatDateMDY(item.date);
     if (item.winner) {
       tournamentWinnerAvatar.src = item.winner.avatar;
       tournamentWinnerAvatar.classList.remove('d-none');
@@ -71,15 +72,6 @@ export class UserTournamentHistory extends HTMLElement {
     tournamentStatus.textContent = item.status;
 
     return row;
-  }
-
-  formatDate(dateDtring) {
-    const date = new Date(dateDtring);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(date);
   }
 
   template() {
