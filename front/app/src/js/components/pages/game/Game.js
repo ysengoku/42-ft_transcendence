@@ -234,13 +234,13 @@ export class Game extends HTMLElement {
     // -> move to the best position
 
     // let isCalculationDone = false;
+    let calculatedBumperPos = Bumpers[1].cubeMesh.position;
     let bumper_subtick = 0;
 
     function moveAiBumper(calculatedPos) {
       keyMap["KeyA"] = false;
       keyMap["KeyD"] = false;
-      let calculatedBumperPos = Bumpers[1].cubeMesh.position;
-      if (calculatedBumperPos.x < calculatedPos.x)
+      if (calculatedBumperPos.x < calculatedPos.x + (Math.random() * (Math.random() < 0.5 ? -BUMPER_LENGTH_HALF : BUMPER_LENGTH_HALF)))
       {
         keyMap["KeyA"] = true;
         calculatedBumperPos.x += bumper_subtick;
@@ -253,34 +253,22 @@ export class Game extends HTMLElement {
     }
     
     let isCalculationDone = false;
-    let calculatedPos;
+    let calculatedPos = Ball.sphereMesh.position;
+    // let i = 0;
     function handleAiBehavior (){
-      calculatedPos = Ball.sphereMesh.position;
-      let calculatedVelocity = Ball.velocity;
-      // isCalculationDone = false;
-
-      if (isCalculationDone == false)
-      {
-        while (calculatedPos.z < BUMPER_2_BORDER - BUMPER_WIDTH){
-          if (calculatedPos.x > 10 - BALL_RADIUS)
-          {
-            calculatedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
-            calculatedVelocity.x *= -1;
-          }
-          if (calculatedPos.x < -10 + BALL_RADIUS)
-          {
-            calculatedPos.x = -10 - BALL_RADIUS - WALL_WIDTH_HALF;
-            calculatedVelocity.x *= -1;
-          }
-          calculatedPos.z += calculatedVelocity.z;
-          calculatedPos.x += calculatedVelocity.x;
-        }
-        isCalculationDone = true;
-      }
+      // i += 1;
+      if (!isCalculationDone)
+        moveAiBumper(Ball.sphereMesh.position);
       else
-        moveAiBumper(calculatedPos);
-      
-
+      {
+        keyMap["KeyD"] = false;
+        keyMap["KeyA"] = false;
+      }
+      // else
+      // {
+      //   keyMap["KeyA"] = false;
+      //   keyMap["KeyD"] = true;
+      // }
     }
 
     function animate() {
@@ -306,9 +294,12 @@ export class Game extends HTMLElement {
               Ball.velocity.x *= -1;
           }
           if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ball_subtick_z, ball_subtick_x)){
-              calculateNewDir(Bumpers[0]);
+            isCalculationDone = false;
+            calculateNewDir(Bumpers[0]);
+            
           }
           else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ball_subtick_z, ball_subtick_x)){
+              isCalculationDone = true;
               calculateNewDir(Bumpers[1]);
           }
 
@@ -318,6 +309,7 @@ export class Game extends HTMLElement {
               someone_scored = true;
           }
           else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
+              isCalculationDone = false;
               Bumpers[1].score++;
               resetBall(1);
               someone_scored = true;
