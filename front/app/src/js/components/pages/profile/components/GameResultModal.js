@@ -22,6 +22,7 @@ export class UserGameResultModal extends HTMLElement {
 
     let response = null;
     if (this.#state.type === 'duel') {
+      /* eslint-disable-next-line new-cap */
       response = await apiRequest('GET', API_ENDPOINTS.MATCH_RESULT(this.#state.id), null, false, true);
     } else if (this.#state.type === 'tournament') {
       // TODO
@@ -156,12 +157,12 @@ export class UserGameResultModal extends HTMLElement {
     }
     #duel-winner {
       .duel-user-score {
-        color: var(--pm-green-300);
+        color: var(--pm-green-400);
       }
     }
     #duel-loser {
       .duel-user-score {
-        color: var(--pm-red-300);
+        color: var(--pm-red-400);
       }
     }
     </style>
