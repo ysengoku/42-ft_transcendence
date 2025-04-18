@@ -130,6 +130,7 @@ export class UserProfile extends HTMLElement {
     const gameHistory = this.querySelector('user-game-history');
     if (gameHistory) {
       gameHistory.data = {
+        username: this.user.username,
         matches: this.user.match_history,
         // tournaments: this.user.tournament_history
       };
