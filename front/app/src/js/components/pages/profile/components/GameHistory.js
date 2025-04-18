@@ -1,68 +1,71 @@
-// import { mockFetchDuelHistory } from '@mock/functions/mockFetchDuelHistory.js';
 import { mockFetchTournamentHistory } from '@mock/functions/mockFetchTournamentHistory.js';
 
 export class UserGameHistory extends HTMLElement {
+  #state = {
+    username: '',
+    selectedTab: 'duel',
+    filter: 'all',
+    sort: 'latest',
+  };
+
   constructor() {
     super();
-    this._data = {
-      matches: [],
-      tournaments: [],
-    };
-    this.handleDuelTabClick = this.handleDuelTabClick.bind(this);
-    this.handleTournamentTabClick = this.handleTournamentTabClick.bind(this);
+    this.toggleTab = this.toggleTab.bind(this);
   }
 
   set data(value) {
-    this._data = value;
+    this.#state.username = value.username;
     this.render();
+
+    this.userDuelHistory.data = {
+      username: this.#state.username,
+      items: value.matches,
+    };
+    // Test
+    this.userTournamentHistory.data = mockFetchTournamentHistory();
+    // this.userTournamentHistory.data = value.tournaments;
   }
 
   disconnectedCallback() {
-    this.duelsTab?.removeEventListener('click', this.handleDuelTabClick);
-    this.tournamentsTab?.removeEventListener('click', this.handleTournamentTabClick);
+    this.duelsTab?.removeEventListener('click', this.toggleTab);
+    this.tournamentsTab?.removeEventListener('click', this.toggleTab);
   }
 
   render() {
-    // this._data.matches = mockFetchDuelHistory();
-    this._data.tournaments = mockFetchTournamentHistory();
     this.innerHTML = this.template() + this.style();
 
     this.duelsTab = this.querySelector('#duels-tab');
     this.tournamentsTab = this.querySelector('#tournaments-tab');
     this.cardBody = this.querySelector('#user-game-history-body');
+    this.filterButton = this.querySelector('#game-history-filter');
+    this.sortButton = this.querySelector('#game-history-sort');
 
-    this.duelsTab.addEventListener('click', this.handleDuelTabClick);
-    this.tournamentsTab.addEventListener('click', this.handleTournamentTabClick);
+    this.duelsTab.addEventListener('click', this.toggleTab);
+    this.tournamentsTab.addEventListener('click', this.toggleTab);
 
-    const userDuelHistory = this.querySelector('user-duel-history');
-    userDuelHistory.data = this._data.matches;
+    this.userDuelHistory = this.querySelector('user-duel-history');
+    this.userTournamentHistory = this.querySelector('user-tournament-history');
   }
 
-  handleDuelTabClick(event) {
+  toggleTab(event) {
     event.preventDefault();
-    this.duelsTab.classList.add('active');
-    this.tournamentsTab.classList.remove('active');
-    this.cardBody.innerHTML = '';
-    const userDuelHistory = document.createElement('user-duel-history');
-    userDuelHistory.data = this._data.matches;
-    this.cardBody.appendChild(userDuelHistory);
-  }
 
-  handleTournamentTabClick(event) {
-    event.preventDefault();
-    this.tournamentsTab.classList.add('active');
-    this.duelsTab.classList.remove('active');
-    this.cardBody.innerHTML = '';
-    const userTournamentHistory = document.createElement('user-tournament-history');
-    userTournamentHistory.data = this._data.tournaments;
-    this.cardBody.appendChild(userTournamentHistory);
+    const target = event.target.closest('a');
+    if (!target || target.classList.contains('active')) {
+      return;
+    }
+    this.#state.selectedTab = target.id === 'duels-tab' ? 'duel' : 'tournament';
+    this.duelsTab.classList.toggle('active');
+    this.tournamentsTab.classList.toggle('active');
+    this.cardBody.querySelector('.duel-history-wrapper').classList.toggle('d-none');
+    this.cardBody.querySelector('.tournament-history-wrapper').classList.toggle('d-none');
   }
 
   template() {
     return `
     <div class="game-history-card text-center px-2">
       <div class="card-header">
-        <p class="stat-label text-center pt-2">Game History</p>
+        <p class="stat-label text-center pt-3">Game History</p>
 
         <div class="d-flex justify-content-between align-items-center px-3">
           <ul class="nav nav-tabs card-header-tabs">
@@ -73,18 +76,33 @@ export class UserGameHistory extends HTMLElement {
               <a class="nav-link" id="tournaments-tab">Tournaments</a>
             </li>
           </ul>
-          <div class="dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Sort by latest
+          <div class="d-flex gap-4">
+            <div class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="game-history-filter">
+              All
+            </div>
+            <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="game-history-filter">
+              <button class="dropdown-item text-center" id="game-history-all">All</button>
+              <button class="dropdown-item text-center" id="game-history-filter-won">Won</button>
+              <button class="dropdown-item text-center" id="game-history-filter-lost">Lost</button>
+            </div>
+            <div class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="game-history-sort">
+              Sort by latest
+            </div>
+            <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="game-history-sort">
+              <button class="dropdown-item text-center" id="game-history-sort-latest" order="desc">Sort by latest</button>
+              <button class="dropdown-item text-center" id="game-history-sort-oldest" order="asc">Sort by oldest</button>
+            </div>
           </div>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-            <li><button class="dropdown-item">Sort by latest</button></li>
-            <li><button class="dropdown-item">Sort by oldest</button></li>
-          </ul>
         </div>
       </div>
 
       <div class="card-body px-2 pt-0 mt-2 table-container" id="user-game-history-body">
-        <user-duel-history></user-duel-history>
+        <div class="duel-history-wrapper">
+          <user-duel-history></user-duel-history>
+        </div>
+        <div class="tournament-history-wrapper d-none">
+          <user-tournament-history></user-tournament-history>
+        </div>
       </div>
     </div>
     `;
@@ -117,10 +135,10 @@ export class UserGameHistory extends HTMLElement {
         padding: 1rem 0 1rem 0.5rem;
       }
       .bi-arrow-up-right {
-        color: green;
+        color: var(--pm-green-400);
       }
       .bi-arrow-down-right {
-        color: red;
+        color: var(--pm-red-500);
       }
       .table-container {
         max-height: 640px;
