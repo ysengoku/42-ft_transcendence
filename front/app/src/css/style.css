@@ -180,6 +180,10 @@ h2, h3, h4, h5, h6, legend {
   z-index: 1050 !important; /* Keep dropdown always on top */
   border-radius: 0;
 }
+.dropdown-menu-end {
+  max-height: 75vh;
+  padding-top: 0;
+}
 
 .modal-backdrop {
   z-index: -1;

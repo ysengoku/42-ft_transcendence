@@ -93,11 +93,6 @@ export class Navbar extends HTMLElement {
         color: var(--pm-primary-100);
       }
     }
-    .dropdown-menu-end {
-      max-height: 75vh;
-      min-width: 360px;
-      padding-top: 0;
-    }
     .dropdown-list-header {
       border-bottom: 1px solid var(--bs-border-color);
       position: sticky;
