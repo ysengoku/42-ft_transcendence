@@ -29,10 +29,19 @@ export class UserActionsMenu extends HTMLElement {
     this.userActionsButton?.removeEventListener('hidden.bs.dropdown', this.hideUserActionsDropdown);
     this.userSearchButton?.removeEventListener('click', this.handleClickUserSearch);
     this.friendsListButton?.removeEventListener('click', this.handleClickFriendsList);
-    this.chatButton?.removeEventListener('click', this.handleClickChat);
+  }
+
+  updateLoginStatus(isLoggedin) {
+    console.log('updateLoginStatus', isLoggedin);
+    this.#state.isLoggedin = isLoggedin;
+    this.render();
   }
 
   render() {
+    if (!this.#state.isLoggedin) {
+      this.innerHTML = '';
+      return;
+    }
     this.innerHTML = this.template() + this.style();
 
     this.dropdownUserActions = document.getElementById('dropdown-user-actions');
@@ -43,14 +52,12 @@ export class UserActionsMenu extends HTMLElement {
     this.userActionsButton = document.getElementById('navbar-user-actions');
     this.userSearchButton = document.getElementById('dropdown-item-user-search');
     this.friendsListButton = document.getElementById('dropdown-item-friends-list');
-    this.chatButton = document.getElementById('dropdown-item-chat');
 
     this.userActionsButton.addEventListener('shown.bs.dropdown', this.showUserActionsDropdown);
     this.userActionsButton.addEventListener('hidden.bs.dropdown', this.hideUserActionsDropdown);
 
     this.userSearchButton.addEventListener('click', this.handleClickUserSearch);
     this.friendsListButton.addEventListener('click', this.handleClickFriendsList);
-    this.chatButton.addEventListener('click', this.handleClickChat);
   }
 
   showUserActionsDropdown() {
@@ -102,7 +109,6 @@ export class UserActionsMenu extends HTMLElement {
     <div class="dropdown-menu p-3" aria-labelledby="navbar-user-actions" data-bs-auto-close="outside" id="dropdown-user-actions">
       <div class="dropdown-item mb-2" id="dropdown-item-user-search">Find user</div>
       <div class="dropdown-item mb-2" id="dropdown-item-friends-list">Friends list</div>
-      <div class="dropdown-item" id="dropdown-item-chat">Chat</div>
     </div>
 
     <!-- User search -->
