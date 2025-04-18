@@ -153,11 +153,13 @@ body {
 }
 
 body {
+  padding-top: 64px;
   z-index: 0;
   background-color: var(--pm-gray-700);
 }
 
 .navbar {
+  height: 64px;
   z-index: 3;
 }
 

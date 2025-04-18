@@ -1,3 +1,5 @@
+import { formatDateMDY } from '@utils';
+
 export class ProfileUserInfo extends HTMLElement {
   #state = {
     username: null,
@@ -17,13 +19,7 @@ export class ProfileUserInfo extends HTMLElement {
   }
 
   render() {
-    const date = new Date(this.#state.join_date);
-    this.formatedDate = new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(date);
-
+    this.formatedDate = formatDateMDY(this.#state.join_date);
     this.innerHTML = this.template() + this.style();
 
     this.querySelector('#profile-nickname').textContent = this.#state.nickname;
