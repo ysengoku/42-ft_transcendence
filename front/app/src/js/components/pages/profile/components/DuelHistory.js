@@ -20,6 +20,7 @@ export class UserDuelHistory extends HTMLElement {
     this.showDuelDetail = this.showDuelDetail.bind(this);
     this.loadMoreItems = this.loadMoreItems.bind(this);
     this.sortItems = this.sortItems.bind(this);
+    this.filterItems = this.filterItems.bind(this);
   }
 
   set data(data) {
@@ -32,6 +33,9 @@ export class UserDuelHistory extends HTMLElement {
   disconnectedCallback() {
     this.sortByLatestButton?.removeEventListener('click', this.sortItems);
     this.sortByOldestButton?.removeEventListener('click', this.sortItems);
+    this.filterButtonAll?.removeEventListener('click', this.filterItems);
+    this.filterButtonWon?.removeEventListener('click', this.filterItems);
+    this.filterButtonLost?.removeEventListener('click', this.filterItems);
     if (this.#state.items.length === 0) {
       return;
     }
@@ -75,6 +79,9 @@ export class UserDuelHistory extends HTMLElement {
     });
     this.sortByLatestButton.addEventListener('click', this.sortItems);
     this.sortByOldestButton.addEventListener('click', this.sortItems);
+    this.filterButtonAll.addEventListener('click', this.filterItems);
+    this.filterButtonWon.addEventListener('click', this.filterItems);
+    this.filterButtonLost.addEventListener('click', this.filterItems);
   }
 
   createRow(item) {
@@ -166,6 +173,30 @@ export class UserDuelHistory extends HTMLElement {
       await this.fetchData();
       this.#state.isLoading = false;
     }
+  }
+
+  async filterItems(event) {
+    event.preventDefault();
+    if (!this.duelsTab.classList.contains('active') || this.#state.items.length === 0 || this.#state.isLoading) {
+      return;
+    }
+    const target = event.target.closest('button');
+    const filter = target?.getAttribute('filter');
+    if (!filter || this.#state.filter === filter) {
+      return;
+    }
+    this.#state.filter = filter;
+    this.filterButton.textContent =
+      String(target.textContent).charAt(0).toUpperCase() + String(target.textContent).slice(1);
+    this.tableBody.querySelectorAll('tr').forEach((row) => {
+      row.removeEventListener('click', this.showDuelDetail);
+    });
+    this.tableBody.innerHTML = '';
+    this.#state.items = [];
+    this.#state.currentLastItemIndex = 0;
+    this.#state.totalMatches = 0;
+    await this.fetchData();
+    this.#state.isLoading = false;
   }
 
   async fetchData() {
