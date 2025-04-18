@@ -81,9 +81,9 @@ export class UserGameHistory extends HTMLElement {
               All
             </div>
             <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="game-history-filter">
-              <button class="dropdown-item text-center" id="game-history-all">All</button>
-              <button class="dropdown-item text-center" id="game-history-filter-won">Won</button>
-              <button class="dropdown-item text-center" id="game-history-filter-lost">Lost</button>
+              <button class="dropdown-item text-center" id="game-history-filter-all" filter="all">All</button>
+              <button class="dropdown-item text-center" id="game-history-filter-won" filter="won">Won</button>
+              <button class="dropdown-item text-center" id="game-history-filter-lost" filter="lost">Lost</button>
             </div>
             <div class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="game-history-sort">
               Sort by latest
