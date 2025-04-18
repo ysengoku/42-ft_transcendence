@@ -41,7 +41,7 @@ export class UserGameResultModal extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.modal.hide();
+    this.modal?.hide();
 
     this.duelWinner?.removeEventListener('click', this.navigateToProfile);
     this.duelLoser?.removeEventListener('click', this.navigateToProfile);
@@ -69,6 +69,7 @@ export class UserGameResultModal extends HTMLElement {
       minute: '2-digit',
       hour12: true,
     }).format(new Date(this.#state.gameData.date));
+
     this.gameDate.innerHTML = formatedDate;
 
     this.duelWinner.innerHTML = this.userTemplate.duel();
