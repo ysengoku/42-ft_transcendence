@@ -9,12 +9,19 @@ export class UserEloProgressionChart extends HTMLElement {
     currentWeekIndex: 0,
   };
 
-  #yRange = {
+  #valueRange = {
     min: 0,
     max: 3000,
   };
-  #eloMidrange = Math.round((this.#yRange.min + this.#yRange.max) / 2);
-  #scaleY = 100 / (this.#yRange.max - this.#yRange.min);
+  #eloMidrange = Math.round((this.#valueRange.min + this.#valueRange.max) / 2);
+
+  #yCoordinate = {
+    max: 110,
+    min: 20,
+    mid: 65,
+  }
+  #scaleY =
+    (this.#yCoordinate.max - this.#yCoordinate.min) / (this.#valueRange.max - this.#valueRange.min);
 
   constructor() {
     super();
@@ -147,7 +154,7 @@ export class UserEloProgressionChart extends HTMLElement {
         elo: item.elo_result,
         elo_change: eloChange,
         x: startX + index * 40,
-        y: 110 - (item.elo_result - this.#yRange.min) * this.#scaleY,
+        y: this.#yCoordinate.max - (item.elo_result - this.#valueRange.min) * this.#scaleY,
       });
     });
   }
@@ -231,10 +238,11 @@ export class UserEloProgressionChart extends HTMLElement {
 
   lineChartTemplate() {
     const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
+    console.log('points', points);
     const yLabelPosition = {
-      min: 112 - 100 * this.#scaleY,
-      max: 22,
-      mid: 68,
+      min: this.#yCoordinate.max,
+      max: this.#yCoordinate.min + 2,
+      mid: this.#yCoordinate.mid,
     };
     return `
     <div class="line-chart">
@@ -243,9 +251,9 @@ export class UserEloProgressionChart extends HTMLElement {
           <line x1="20" x2="20" y1="10" y2="110"></line> 
         </g>
         <g class="linechart-labels">
-          <text x="18" y="${yLabelPosition.min}" text-anchor="end">${this.#yRange.min + 100}</text>
+          <text x="18" y="${yLabelPosition.min}" text-anchor="end">${this.#valueRange.min + 100}</text>
           <text x="18" y="${yLabelPosition.mid}" text-anchor="end">${this.#eloMidrange}</text>
-          <text x="18" y="${yLabelPosition.max}" text-anchor="end">${this.#yRange.max}</text>
+          <text x="18" y="${yLabelPosition.max}" text-anchor="end">${this.#valueRange.max}</text>
         </g>
         <g class="linechart-grid x-linechart-grid">
           <line x1="20" x2="270" y1="110" y2="110"></line> 
