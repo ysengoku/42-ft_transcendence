@@ -153,7 +153,6 @@ body {
 }
 
 body {
-  padding-top: 64px;
   z-index: 0;
   background-color: var(--pm-gray-700);
 }
@@ -168,6 +167,7 @@ h2, h3, h4, h5, h6, legend {
 }
 
 #content {
+  margin-top: 64px;
   max-width: 100%;
   padding: 0;
   flex-grow: 1;
