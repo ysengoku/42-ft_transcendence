@@ -144,6 +144,9 @@ export class Duel extends HTMLElement {
   handleGameFound(event) {
     devLog('Game found event:', event.detail);
     this.#state.gameId = event.detail.game_room_id;
+    this.#state.opponent = {
+        // TODO: handle opponent data found from the server
+    }
     this.startDuel();
   }
 
