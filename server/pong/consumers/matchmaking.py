@@ -25,6 +25,14 @@ PLAYERS_REQUIRED = 2
 
 class MatchmakingConsumer(WebsocketConsumer):
     def connect(self):
+        ###########################
+        async_to_sync(self.channel_layer.send)(
+            "game",
+            {
+                "type": "worker.game",
+            },
+        )
+        ###########################
         self.user = self.scope.get("user")
         if not self.user:
             self.game_room = None
@@ -71,4 +79,11 @@ class MatchmakingConsumer(WebsocketConsumer):
                 self.close()
 
     def matchmaking_players_found(self, event):
-        self.send(text_data=json.dumps({"action": "game_found", "game_room_id": str(self.game_room.id)}))
+        opponent = self.game_room.players.exclude(user=self.user).first()
+        self.send(text_data=json.dumps({
+            "action": "game_found",
+            "game_room_id": str(self.game_room.id),
+            "username": opponent.user.username,
+            "nickname": opponent.user.nickname,
+            "avatar": opponent.avatar,
+        }))
