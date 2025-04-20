@@ -5,6 +5,7 @@ import os
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from django.db import transaction
 
 from pong.models import GameRoom
 
@@ -35,21 +36,27 @@ class GameRoomConsumer(WebsocketConsumer):
         self.accept()
 
         self.player_id = hashlib.sha256(os.urandom(32)).hexdigest()
-        self.game_room = GameRoom.objects.get_valid_game_room()
-        if not self.game_room:
-            self.game_room = GameRoom.objects.create(players=[self.user.profile])
-            logger.info("[Matchmaking.connect]: game room {%s} was created", self.game_room)
 
-        self.game_room.players.add(self.user.profile)
-        logger.info("[Matchmaking.connect]: game room {%s} added profile {%s}", self.game_room, self.user.profile)
+        # transaction.atomic and .select_for_update are needed to prevent possible race condition
+        with transaction.atomic():
+            self.game_room = GameRoom.objects.select_for_update().for_valid_game_room().first()
+            if not self.game_room:
+                self.game_room = GameRoom.objects.create(players=[self.user.profile])
+                logger.info("[Matchmaking.connect]: game room {%s} was created", self.game_room)
+            else:
+                self.game_room.players.add(self.user.profile)
+                logger.info(
+                    "[Matchmaking.connect]: game room {%s} added profile {%s}", self.game_room, self.user.profile,
+                )
 
-        self.group_name = f"game_room_{self.game_room.id}"
-        async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
+            self.group_name = f"game_room_{self.game_room.id}"
+            async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
 
-        if self.game_room.players.count() == PLAYERS_REQUIRED:
-            logger.info("[Matchmaking.connect]: game room {%s} both players were found")
-            self.game_room.close()
-            async_to_sync(self.channel_layer.group_send)(self.group_name, {"type": "matchmaking_players_found"})
+            if self.game_room.players.count() == PLAYERS_REQUIRED:
+                logger.info("[Matchmaking.connect]: game room {%s} both players were found")
+                self.game_room.close()
+                async_to_sync(self.channel_layer.group_send)(self.group_name, {"type": "matchmaking_players_found"})
+
 
     def disconnect(self, code: int):
         if not self.game_room:
@@ -89,6 +96,8 @@ class GameRoomConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.send)(
             "game",
             {
-                "type": "match.start",
+                "type": "match_start",
+                "user_id": str(self.user.id),
+                "player_id": self.player_id,
             },
         )

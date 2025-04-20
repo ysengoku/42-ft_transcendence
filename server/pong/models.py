@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from django.db import models
-from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
+from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
@@ -142,16 +142,13 @@ class Match(models.Model):
         return f"{winner} - {loser}"
 
 
-class GameRoomManager(models.Manager):
-    def get_valid_game_room(self):
+class GameRoomQuerySet(models.QuerySet):
+    def for_valid_game_room(self):
         """
         Valid game room is a pending game room with less than 2 players.
         """
         return (
-            self.filter(status=GameRoom.PENDING)
-            .annotate(players_num=Count("players"))
-            .filter(players_num__lt=2)
-            .first()
+            self.filter(status=GameRoom.PENDING, players__count__lt=2)
         )
 
 
@@ -172,7 +169,7 @@ class GameRoom(models.Model):
     players = models.ManyToManyField(Profile, related_name="game_rooms")
     date = models.DateTimeField(default=timezone.now)
 
-    objects = GameRoomManager()
+    objects = GameRoomQuerySet.as_manager()
 
     class Meta:
         ordering = ["-date"]
