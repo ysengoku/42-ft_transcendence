@@ -205,81 +205,6 @@ class Pong:
         )
 
 
-"""
---normal mode--
-on connection: when the player joins the game
-player receives id for specific match id
-player waits for other player to join
-client sends: {nothing}
-server sends: {player_id: string}
-
-countdown started: when two players joined the game
-when the second player joined the game
-receives initial state and starts the countdown
-client sends: {nothing}
-server sends: {state: state}
-
-game is running:
-client sends: {inputs: inputs, player_id: string}
-server sends: {state: state}
-
-game is ended:
-client sends: {nothing}
-server sends: {winner: Profile}
-
-
---cool mode--
-on connection: when the player joins the game
-player receives id for specific match id
-player waits for other player to join
-client sends: {nothing}
-server sends: {player_id: string}
-
-countdown started: when two players joined the game
-when the second player joined the game
-receives initial state and starts the countdown
-client sends: {nothing}
-server sends: {state: state}
-
-game is running:
-client sends: {inputs: inputs, player_id: string} (add revolver angle to input)
-server sends: {state: state} (add coin pos, revolver_bullet pos/velocity to state)
-
-game is ended:
-client sends: {nothing}
-server sends: {winner: Profile}
-
-"""
-
-
-"""
-user connects
-
-we search in players for the id of the user
-
-if there is one, we reuse that
-
-otherwise if there are no more than two players, we generate a new player id and add it to the players:
-    {user_id:player_id} -> add it to the list of players -> send it to client
-
-otherwise disconnect
-
-on each input client sends it back
-clients disconnects
-"""
-
-"""
-1. store the state in the database
-2. synchronize the state between players
-"""
-MAX_PLAYERS = 2
-player_ids = {}
-bumpers = {}
-
-
-def is_player_in_the_game(user_id: str):
-    return any(user_id == player for player in player_ids)
-
 class GameConsumer(AsyncConsumer):
     def __init__(self):
         super().__init__()
@@ -289,10 +214,11 @@ class GameConsumer(AsyncConsumer):
     async def match_start(self, event):
         game_room_id = event["game_room_id"]
         player_id = event["player_id"]
+        user_id = event["player_id"]
         if self.players[game_room_id]:
-            self.players[game_room_id].append()
+            self.players[game_room_id].append({"player_id": player_id, "user_id": user_id})
         else:
-            self.players[game_room_id] = [player_id]
+            self.players[game_room_id] = [{"player_id": player_id, "user_id": user_id}]
 
         if game_room_id in self.matches:
             return
@@ -309,11 +235,6 @@ class GameConsumer(AsyncConsumer):
             return
 
         self.user_id = str(self.user.id)
-        is_in_game = is_player_in_the_game(self.user_id)
-
-        if not is_in_game and len(player_ids) > MAX_PLAYERS:
-            await self.close(1000)
-            return
 
         await self.accept()
         await self.channel_layer.group_add(self.match_group_name, self.channel_name)
@@ -323,11 +244,9 @@ class GameConsumer(AsyncConsumer):
             if len(player_ids) == 1:
                 self.state.bumper_1.user_id = self.user_id
                 self.state.bumper_1.player_id = player_ids[self.user_id]
-                set_bumper(self.user_id, self.state.bumper_1)
             elif len(player_ids) == MAX_PLAYERS:
                 self.state.bumper_2.user_id = self.user_id
                 self.state.bumper_2.player_id = player_ids[self.user_id]
-                set_bumper(self.user_id, self.state.bumper_2)
 
         await self.send(text_data=json.dumps({"event": "joined", "player_id": player_ids[self.user_id]}))
 
