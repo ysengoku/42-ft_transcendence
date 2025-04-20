@@ -98,7 +98,16 @@ class Pong:
             "someone_scored": self.someone_scored,
         }
 
-    def receive_input(self, bumper: Bumper, action: str, content: bool):
+    def handle_input(self, player_id: str, action: str, content: bool):
+        bumper_map = {
+            self.bumper_1.player_id: self.bumper_1,
+            self.bumper_2.player_id: self.bumper_2,
+        }
+        if player_id in bumper_map:
+            bumper = bumper_map[player_id]
+        else:
+            return
+
         match action:
             case "move_left":
                 bumper.moves_left = content
@@ -271,20 +280,20 @@ bumpers = {}
 def is_player_in_the_game(user_id: str):
     return any(user_id == player for player in player_ids)
 
-def set_bumper(user_id: str, bumper: Bumper):
-    bumpers[player_ids[user_id]] = bumper
-
-def get_bumper(user_id: str):
-    return bumpers[player_ids[user_id]]
-
-
 class GameConsumer(AsyncConsumer):
     def __init__(self):
         super().__init__()
         self.matches = {}
+        self.players = {}
 
     async def match_start(self, event):
         game_room_id = event["game_room_id"]
+        player_id = event["player_id"]
+        if self.players[game_room_id]:
+            self.players[game_room_id].append()
+        else:
+            self.players[game_room_id] = [player_id]
+
         if game_room_id in self.matches:
             return
 
@@ -342,7 +351,7 @@ class GameConsumer(AsyncConsumer):
                 player_id, content = text_data_json["player_id"], text_data_json["content"]
                 if not bumpers.get(player_id):
                     await self.disconnect(1000)
-                self.state.receive_input(bumpers[player_id], action, content)
+                self.state.handle_input(player_id, action, content)
 
     def calculate_sleeping_time(self):
         return 0.015
