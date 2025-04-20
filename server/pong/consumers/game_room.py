@@ -1,5 +1,7 @@
+import hashlib
 import json
 import logging
+import os
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
@@ -23,16 +25,8 @@ logger = logging.getLogger("server")
 PLAYERS_REQUIRED = 2
 
 
-class MatchmakingConsumer(WebsocketConsumer):
+class GameRoomConsumer(WebsocketConsumer):
     def connect(self):
-        ###########################
-        async_to_sync(self.channel_layer.send)(
-            "game",
-            {
-                "type": "worker.game",
-            },
-        )
-        ###########################
         self.user = self.scope.get("user")
         if not self.user:
             self.game_room = None
@@ -40,9 +34,10 @@ class MatchmakingConsumer(WebsocketConsumer):
             return
         self.accept()
 
+        self.player_id = hashlib.sha256(os.urandom(32)).hexdigest()
         self.game_room = GameRoom.objects.get_valid_game_room()
         if not self.game_room:
-            self.game_room = GameRoom.objects.create()
+            self.game_room = GameRoom.objects.create(players=[self.user.profile])
             logger.info("[Matchmaking.connect]: game room {%s} was created", self.game_room)
 
         self.game_room.players.add(self.user.profile)
@@ -54,7 +49,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         if self.game_room.players.count() == PLAYERS_REQUIRED:
             logger.info("[Matchmaking.connect]: game room {%s} both players were found")
             self.game_room.close()
-            async_to_sync(self.channel_layer.group_send)(self.group_name, {"type": "matchmaking.players_found"})
+            async_to_sync(self.channel_layer.group_send)(self.group_name, {"type": "matchmaking_players_found"})
 
     def disconnect(self, code: int):
         if not self.game_room:
@@ -80,10 +75,20 @@ class MatchmakingConsumer(WebsocketConsumer):
 
     def matchmaking_players_found(self, event):
         opponent = self.game_room.players.exclude(user=self.user).first()
-        self.send(text_data=json.dumps({
-            "action": "game_found",
-            "game_room_id": str(self.game_room.id),
-            "username": opponent.user.username,
-            "nickname": opponent.user.nickname,
-            "avatar": opponent.avatar,
-        }))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "game_found",
+                    "game_room_id": str(self.game_room.id),
+                    "username": opponent.user.username,
+                    "nickname": opponent.user.nickname,
+                    "avatar": opponent.avatar,
+                },
+            ),
+        )
+        async_to_sync(self.channel_layer.send)(
+            "game",
+            {
+                "type": "match.start",
+            },
+        )
