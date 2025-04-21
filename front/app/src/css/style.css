@@ -162,12 +162,15 @@ body {
   z-index: 3;
 }
 
-h2, h3, h4, h5, h6, legend {
+h1, h2, h3, h4, h5, h6, legend {
   font-family: 'van dyke', serif;
 }
 
-#content {
+#error-message-container {
   margin-top: 64px;
+}
+
+#content {
   max-width: 100%;
   padding: 0;
   flex-grow: 1;
@@ -399,9 +402,4 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
       var(--clrs2) 20% 70%,
       var(--clrs3) 90%,
       var(--clrs4)) 0 0 / 100% .3rem;
-}
-
-.search-submit-btn {
-  border: none;
-  background-color: transparent;
 }

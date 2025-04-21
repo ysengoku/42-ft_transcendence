@@ -1,16 +1,22 @@
+import { router } from '@router';
 import { auth } from '@auth';
 import './components/index.js';
 import { mockDuelData } from '@mock/functions/mockDuelData';
 
 export class DuelResult extends HTMLElement {
-  // TODO
   #state = {
     gameId: '',
     loggedInUser: null,
     duelData: null,
   };
 
-  setParam(param) {
+  constructor() {
+    super();
+    this.navigateToHome = this.navigateToHome.bind(this);
+    this.navigateToProfile = this.navigateToProfile.bind(this);
+  }
+
+  async setParam(param) {
     if (!param.id) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = '';
@@ -19,9 +25,11 @@ export class DuelResult extends HTMLElement {
     }
     this.#state.gameId = param.id;
 
-    // TODO
-    // fetch loggedInUser
-    this.#state.loggedInUser = auth.getStoredUser();
+    this.#state.loggedInUser = await auth.getUser();
+    if (!this.#state.loggedInUser) {
+      router.navigate('/login');
+      return;
+    }
 
     // TODO: Replace by api call
     this.#state.duelData = mockDuelData('finished');
@@ -29,13 +37,28 @@ export class DuelResult extends HTMLElement {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.navigateToHomeButton.removeEventListener('click', this.navigateToHome);
+    this.navigateToProfileButton.removeEventListener('click', this.navigateToProfile);
+  }
+
   render() {
     this.innerHTML = this.template() + this.style();
 
     this.winner = this.querySelector('#duel-winner');
     this.loser = this.querySelector('#duel-loser');
-    this.goToHomeButton = this.querySelector('#go-to-home-button');
-    this.goToProfileButton = this.querySelector('#go-to-profile-button');
+    this.navigateToHomeButton = this.querySelector('#go-to-home-button');
+    this.navigateToProfileButton = this.querySelector('#go-to-profile-button');
+    
+    const title = this.querySelector('#duel-result-title');
+    this.#state.duelData.winner.username === this.#state.loggedInUser.username ? (
+      title.textContent = 'You won!' ) : (
+      title.textContent = 'You lost!',
+      title.classList.add('title-duel-lost')
+    );
+    
+    this.navigateToHomeButton.addEventListener('click', this.navigateToHome);
+    this.navigateToProfileButton.addEventListener('click', this.navigateToProfile);
 
     this.renderUserResult(true);
     this.renderUserResult(false);
@@ -76,12 +99,11 @@ export class DuelResult extends HTMLElement {
     return `
     <div class="row justify-content-center m-2">
       <div class="form-container col-12 col-sm-12 col-md-10 col-lg-8 d-flex flex-column justify-content-center align-items-center p-5">
-        <p class="fs-4 my-2" id="game-result-title">The duel is over. The winner is...</p>
-        <p class=""></p>
-        <div class="d-flex flex-row flex-wrap justify-content-around align-items-center px-4 my-4 w-100" id="duel-content">
-          <div class="mb-3" id="duel-winner">winner</div>
+        <div class="my-2" id="duel-result-title"></div>
+        <div class="d-flex flex-row flex-wrap justify-content-around align-items-center px-4 mb-4 w-100" id="duel-content">
+          <div class="mb-3" id="duel-winner"></div>
           <div class="vs m-3">vs</div>
-          <div class="mb-3" id="duel-loser">loser</div>
+          <div class="mb-3" id="duel-loser"></div>
         </div>
         <div class="d-flex flex-row justify-content-center mt-5 gap-4" id="game-result-cta-buttons">
           <button class="btn btn-wood" id="go-to-home-button">Go to Home</button>
@@ -95,6 +117,14 @@ export class DuelResult extends HTMLElement {
   style() {
     return `
     <style>
+    #duel-result-title {
+      font-size: 4rem;
+      font-family: 'van dyke', serif;
+      color: var(--pm-green-300);
+    }
+    #duel-result-title.title-duel-lost {
+      color: var(--pm-red-400);
+    }
     #duel-content {
       .duel-score {
         font-size: 8rem;

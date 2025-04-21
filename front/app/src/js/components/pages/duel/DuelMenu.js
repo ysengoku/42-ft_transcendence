@@ -2,12 +2,14 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import './components/GameOptionsModal.js';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
   #state = {
     user: null,
     opponentUsername: '',
+    options: null,
   };
 
   #usersearch = {
@@ -22,6 +24,7 @@ export class DuelMenu extends HTMLElement {
   constructor() {
     super();
 
+    this.openGameOptionsModal = this.openGameOptionsModal.bind(this);
     this.handleSearchInput = this.handleSearchInput.bind(this);
     this.loadMoreUsers = this.loadMoreUsers.bind(this);
     this.hideUserList = this.hideUserList.bind(this);
@@ -40,6 +43,7 @@ export class DuelMenu extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.optionsButton?.removeEventListener('click', this.openGameOptionsModal);
     this.searchInput?.removeEventListener('input', this.handleSearchInput);
     this.userList?.removeEventListener('scrollend', this.loadMoreUsers);
     document.removeEventListener('click', this.hideUserList);
@@ -56,6 +60,7 @@ export class DuelMenu extends HTMLElement {
   render() {
     this.innerHTML = this.template() + this.style();
 
+    this.optionsButton = this.querySelector('#game-options-button');
     this.searchInput = this.querySelector('input');
     this.userList = this.querySelector('#duel-user-list');
     this.opponentNickname = this.querySelector('.opponent-nickname');
@@ -68,6 +73,7 @@ export class DuelMenu extends HTMLElement {
 
     this.opponentAvatar.src = anonymousAvatar;
 
+    this.optionsButton.addEventListener('click', this.openGameOptionsModal);
     this.searchInput.addEventListener('input', this.handleSearchInput);
     document.addEventListener('click', this.hideUserList);
     this.inviteButton.addEventListener('click', this.inviteToDuel);
@@ -116,6 +122,20 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
+  openGameOptionsModal(event) {
+    event.preventDefault();
+    const modal = document.createElement('game-options-modal');
+    console.log('Modal:', modal);
+    if (modal) {
+      this.appendChild(modal);
+      modal.showModal();
+    }
+  }
+
+  storeOption(options) {
+    this.#state.options = options;
+  }
+
   async handleSearchInput(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -242,16 +262,21 @@ export class DuelMenu extends HTMLElement {
       <div class="container">
         <div class="row justify-content-center py-4">
           <div class="form-container col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 p-4">
-            <div class="d-flex justify-content-center w-100">
+            <div class="d-flex flex-column justify-content-center align-items-center w-100">
+              <h2 class="text-start m-0 w-75">Duel</h2>
+              <button class="btn d-flex flex-row justify-content-end align-items-center fw-bold w-75 m-0 p-0 mb-3" id="game-options-button">
+                Game options&nbsp;
+                <i class="bi bi-arrow-right"></i>
+              </button>
               <form class="w-75">
-                <legend class="my=3">Choose your opponent</legend>
-                <div class="input-group position-relative mt-2">
+                <p class="fs-5 fw-bolder m-0 mb-3">Choose your opponent</p>
+                <div class="input-group position-relative">
                   <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-                  <input class="form-control" type="search" placeholder="Find user" aria-label="Search">
+                  <input class="form-control" type="search" placeholder="Find user" aria-label="Search" id="search-opponent">
                   <ul class="dropdown-menu position-absolute px-3 w-100" id="duel-user-list"></ul>
                 </div>       
 
-                <div class="d-flex flex-column align-items-center w-100 my-4 p-3">
+                <div class="d-flex flex-column align-items-center w-100 mb-2 p-3">
                   <div class="d-flex flex-row align-items-center gap-3">
                     <p class="opponent-nickname m-0 fs-4 fw-bolder text-break"></p>
                     <p class="opponent-username m-0 text-break"></p>
@@ -271,8 +296,8 @@ export class DuelMenu extends HTMLElement {
                   <hr class="flex-grow-1">
                 </div>
 
-                <legend class="my-3">Let fate decide opponent</legend>
-                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg w-100">Bring me my rival</button>
+                <p class="fs-5 fw-bolder m-0 mb-3">Let fate decide opponent</p>
+                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg mb-1 w-100">Bring me my rival</button>
               </form>
             </div>
           </div>
@@ -284,6 +309,13 @@ export class DuelMenu extends HTMLElement {
   style() {
     return `
     <style>
+    .modal-content {
+      background-color: transparent;
+      color: var(--pm-primary-100) !important;
+    }
+    #game-options-button {
+      color: rgba(var(--bs-body-color-rgb), 0.6);
+    }
     #duel-user-list {
       min-width: 280px;
       max-height: 320px;
