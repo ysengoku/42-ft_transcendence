@@ -62,7 +62,8 @@ export function loader() {
     width: 16px;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: radial-gradient(circle at 16% 16%, var(--pm-primary-300) 20%, var(--pm-primary-500) 48%, var(--pm-primary-700) 100%);
+    background: var(--pm-primary-500);
+    /* background: radial-gradient(circle at 16% 16%, var(--pm-primary-300) 20%, var(--pm-primary-500) 48%, var(--pm-primary-700) 100%); */
     animation: 
       loader-0 .5s cubic-bezier(0,900,1,900) infinite,
       loader-1  2s linear infinite alternate;

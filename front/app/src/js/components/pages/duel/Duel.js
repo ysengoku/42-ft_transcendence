@@ -50,15 +50,10 @@ export class Duel extends HTMLElement {
   }
 
   async connectedCallback() {
-    this.#state.loggedInUser = auth.getStoredUser();
+    this.#state.loggedInUser = await auth.getUser();
     if (!this.#state.loggedInUser) {
-      const response = await auth.fetchAuthStatus();
-      if (response.success) {
-        this.#state.loggedInUser = response.data;
-      } else if (response.status === 401) {
-        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
-        router.navigate('/login');
-      }
+      router.navigate('/login');
+      return;
     }
     router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
     window.addEventListener('beforeunload', this.confirmLeavePage);

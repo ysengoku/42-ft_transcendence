@@ -68,6 +68,25 @@ const auth = (() => {
       return JSON.parse(user);
     }
 
+    /** 
+     * Get the user stored in session storage. If not found, fetch the user from the server
+     * and store it in session storage. If the user is not logged in, redirect to the login page.
+     * @return { Promise<Object> } The user object
+     * */
+    async getUser() {
+      let user = sessionStorage.getItem('user');
+      if (!user) {
+        const response = await this.fetchAuthStatus();
+        if (response.success) {
+          user = response.response;
+          this.storeUser(user);
+        } else if (response.status === 401) {
+          showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+        }
+      }
+      return JSON.parse(user);
+    }
+
     /**
      * Fetch the user authentication status from the server
      * @return { Promise<Object> } Object including success: bool & user data on success or status code on failure
