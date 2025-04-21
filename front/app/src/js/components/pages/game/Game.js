@@ -17,7 +17,8 @@ export class Game extends HTMLElement {
   game() {
     var keyMap = [];
     const WALL_WIDTH_HALF = 0.5;
-    const BUMPER_LENGTH_HALF = 2.5;
+    let BUMPER_1_LENGTH_HALF = 2.5;
+    let BUMPER_2_LENGTH_HALF = 2.5;
     const BUMPER_WIDTH = 1;
     const BUMPER_WIDTH_HALF = BUMPER_WIDTH / 2;
     const BUMPER_1_BORDER = -10;
@@ -84,6 +85,32 @@ export class Game extends HTMLElement {
       return pedro_model;
   })();
 
+  const Coin = ((posX, posY, posZ) => {
+    const cylinderGeometry = new THREE.CylinderGeometry(0.5,0.5,0.1);
+    const cylinderMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
+  
+    cylinderMesh.position.x = posX;
+    cylinderMesh.position.y = posY;
+    cylinderMesh.position.z = posZ;
+    cylinderMesh.rotation.z = -Math.PI / 2;
+    cylinderMesh.rotation.y = -Math.PI / 2;
+    cylinderMesh.castShadow = true;
+    scene.add(cylinderMesh);
+    const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
+    // let hasCollidedWithBumper1 = false;
+    // let hasCollidedWithBumper2 = false;
+    // let hasCollidedWithWall = false;
+
+    return ({
+
+      
+        cylinderMesh,
+        cylinderUpdate,
+        // velocity,
+        // temporalSpeed,
+    });
+})(0, 3, 0);
+
 	const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
       const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
@@ -143,6 +170,8 @@ export class Game extends HTMLElement {
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dir_z = -Math.sign(posZ);
+      let   lenghtHalf = 2.5;
+      let   lenght = 5;
       let score = 0;
     
       return ({
@@ -151,6 +180,10 @@ export class Game extends HTMLElement {
 
           get score() { return score; },
           set score(newScore) { score = newScore; },
+          get lenghtHalf() { return lenghtHalf; },
+          set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+          get lenght() { return lenght; },
+          set lenght(newLenght) { lenght = newLenght; },
           get dir_z() { return dir_z; },
       });
   }
@@ -184,8 +217,8 @@ export class Game extends HTMLElement {
     })();
 
     let delta;
-    let ball_subtick_z;
-    let ball_subtick_x;
+    let ballSubtickZ;
+    let ballSubtickX;
 
 
     function degreesToRadians(degrees)
@@ -194,17 +227,25 @@ export class Game extends HTMLElement {
         return degrees * (pi/180);
     }
     
-    function isCollidedWithBall(bumper, ball_subtick_z, ball_subtick_x) {
+    function isCoinCollidedWithBall(coin, ballSubtickZ, ballSubtickX) {
+      return (
+          (Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= coin.cylinderUpdate.x + 0.25)
+          && (Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= coin.cylinderUpdate.x - 0.25)
+          && (Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= coin.cylinderUpdate.z + 0.05)
+          && (Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= coin.cylinderUpdate.z - 0.05));
+  }
+
+    function isCollidedWithBall(bumper, ballSubtickZ, ballSubtickX) {
         return (
-            (Ball.sphereUpdate.x - BALL_RADIUS + ball_subtick_x * Ball.velocity.x <= bumper.cubeUpdate.x + BUMPER_LENGTH_HALF)
-            && (Ball.sphereUpdate.x + BALL_RADIUS + ball_subtick_x * Ball.velocity.x >= bumper.cubeUpdate.x - BUMPER_LENGTH_HALF)
-            && (Ball.sphereUpdate.z - BALL_RADIUS + ball_subtick_z * Ball.velocity.z <= bumper.cubeUpdate.z + BUMPER_WIDTH_HALF)
-            && (Ball.sphereUpdate.z + BALL_RADIUS + ball_subtick_z * Ball.velocity.z >= bumper.cubeUpdate.z - BUMPER_WIDTH_HALF));
+            (Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lenghtHalf)
+            && (Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lenghtHalf)
+            && (Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + BUMPER_WIDTH_HALF)
+            && (Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - BUMPER_WIDTH_HALF));
     }
 
     function calculateNewDir(bumper) {
         let collision_pos_x = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
-        let normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + BUMPER_LENGTH_HALF);
+        let normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + bumper.lenghtHalf);
         let bounce_angle_radians = degreesToRadians(55 * normalized_collision_pos_x);
         Ball.velocity.z = (Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dir_z);
         Ball.velocity.x = Ball.velocity.z * -Math.tan(bounce_angle_radians) * bumper.dir_z;
@@ -232,31 +273,27 @@ export class Game extends HTMLElement {
     // -> calculate potential bounce on walls based on the pos and velocity 
     // -> calculate best position to collide
     // -> move to the best position
-
-    // let isCalculationDone = false;
+  
     let calculatedBumperPos = Bumpers[1].cubeMesh.position;
-    let bumper_subtick = 0;
+    let bumperSubtick = 0;
 
     function moveAiBumper(calculatedPos) {
       keyMap["KeyA"] = false;
       keyMap["KeyD"] = false;
-      if (calculatedBumperPos.x < calculatedPos.x + (Math.random() * (Math.random() < 0.5 ? -BUMPER_LENGTH_HALF : BUMPER_LENGTH_HALF)))
+      if (calculatedBumperPos.x <= calculatedPos.x + (Math.random() * (Math.random() < 0.5 ? -Bumpers[1].lenghtHalf + 0.02: Bumpers[1].lenghtHalf + 0.02)))
       {
         keyMap["KeyA"] = true;
-        calculatedBumperPos.x += bumper_subtick;
+        calculatedBumperPos.x += bumperSubtick;
       }
-      else
+      else if (calculatedBumperPos.x >= calculatedPos.x + (Math.random() * (Math.random() < 0.5 ? -Bumpers[1].lenghtHalf + 0.02: Bumpers[1].lenghtHalf + 0.02)))
       {
         keyMap["KeyD"] = true;
-        calculatedBumperPos.x -= bumper_subtick;
+        calculatedBumperPos.x -= bumperSubtick;
       }
     }
     
     let isCalculationDone = false;
-    let calculatedPos = Ball.sphereMesh.position;
-    // let i = 0;
     function handleAiBehavior (){
-      // i += 1;
       if (!isCalculationDone)
         moveAiBumper(Ball.sphereMesh.position);
       else
@@ -264,27 +301,22 @@ export class Game extends HTMLElement {
         keyMap["KeyD"] = false;
         keyMap["KeyA"] = false;
       }
-      // else
-      // {
-      //   keyMap["KeyA"] = false;
-      //   keyMap["KeyD"] = true;
-      // }
     }
 
     function animate() {
       requestAnimationFrame(animate);
       
       let someone_scored = false;
-      let total_distance_x = Math.abs((Ball.temporalSpeed.x) * Ball.velocity.x);
-      let total_distance_z = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
+      let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * Ball.velocity.x);
+      let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
       let current_subtick = 0;
-      ball_subtick_z = SUBTICK;
-      let total_subticks = total_distance_z / ball_subtick_z;
-      ball_subtick_x = total_distance_x / total_subticks;
-      bumper_subtick = BUMPER_SPEED / total_subticks;
-      while (current_subtick <= total_subticks) {
+      ballSubtickZ = SUBTICK;
+      let totalSubticks = totalDistanceZ / ballSubtickZ;
+      ballSubtickX = totalDistanceX / totalSubticks;
+      bumperSubtick = BUMPER_SPEED / totalSubticks;
+      while (current_subtick <= totalSubticks) {
           if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
               Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
               Ball.velocity.x *= -1;
@@ -293,12 +325,12 @@ export class Game extends HTMLElement {
               Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
               Ball.velocity.x *= -1;
           }
-          if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ball_subtick_z, ball_subtick_x)){
+          if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)){
             isCalculationDone = false;
             calculateNewDir(Bumpers[0]);
             
           }
-          else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ball_subtick_z, ball_subtick_x)){
+          else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)){
               isCalculationDone = true;
               calculateNewDir(Bumpers[1]);
           }
@@ -314,23 +346,32 @@ export class Game extends HTMLElement {
               resetBall(1);
               someone_scored = true;
           }
+          if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
+                let choose = Math.floor(Math.random() * 1);
+                if (choose = 1) {
+                  Bumpers[0].cubeMesh.scale.x = 2;
+                  Bumpers[0].lenghtHalf = 5;
+                }
+          }
+          // console.log();
+          if (keyMap['ArrowLeft'] == true && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf))
+              Bumpers[0].cubeUpdate.x += bumperSubtick;
+          if (keyMap['ArrowRight'] == true && !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf))
+              Bumpers[0].cubeUpdate.x -= bumperSubtick;
 
-          if (keyMap['ArrowLeft'] == true && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF))
-              Bumpers[0].cubeUpdate.x += bumper_subtick;
-          if (keyMap['ArrowRight'] == true && !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF))
-              Bumpers[0].cubeUpdate.x -= bumper_subtick;
+          if (keyMap['KeyA'] == true && !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf))
+              Bumpers[1].cubeUpdate.x += bumperSubtick;
+          if (keyMap['KeyD'] == true && !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf))
+              Bumpers[1].cubeUpdate.x -= bumperSubtick;
 
-          if (keyMap['KeyA'] == true && !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF))
-              Bumpers[1].cubeUpdate.x += bumper_subtick;
-          if (keyMap['KeyD'] == true && !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF))
-              Bumpers[1].cubeUpdate.x -= bumper_subtick;
-
-          Ball.sphereUpdate.z += ball_subtick_z * Ball.velocity.z;
-          Ball.sphereUpdate.x += ball_subtick_x * Ball.velocity.x;
+          Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
+          Coin.cylinderUpdate.x += 0.001;
+          Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
           handleAiBehavior();
           current_subtick++;
       }
       Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+      Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
       Bumpers[0].cubeMesh.position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
       Bumpers[1].cubeMesh.position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
       
