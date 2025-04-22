@@ -24,7 +24,7 @@ export class GameOptionsModal extends HTMLElement {
     this._onConfirmCallback = null;
 
     this.updateOptions = this.updateOptions.bind(this);
-    this.showSelectedValue = this.showSelectedValue.bind(this);
+    this.updateSelectedValue = this.updateSelectedValue.bind(this);
     this.confirmOptions = this.confirmOptions.bind(this);
     this.cancelOptionsSelection = this.cancelOptionsSelection.bind(this);
   }
@@ -39,13 +39,13 @@ export class GameOptionsModal extends HTMLElement {
 
   disconnectedCallback() {
     this.scoreToWinInput?.removeEventListener('input', this.updateOptions);
-    this.scoreToWinInput?.removeEventListener('input', this.showSelectedValue);
+    this.scoreToWinInput?.removeEventListener('input', this.updateSelectedValue);
     this.gameSpeedInputs.forEach((input) => {
       input?.removeEventListener('change', this.updateOptions);
     });
     this.isRankedInput?.removeEventListener('change', this.updateOptions);
     this.timeLimitInput?.removeEventListener('input', this.updateOptions);
-    this.timeLimitInput?.removeEventListener('input', this.showSelectedValue);
+    this.timeLimitInput?.removeEventListener('input', this.updateSelectedValue);
     this.confirmButton?.removeEventListener('click', this.confirmOptions);
     this.cancelButton?.removeEventListener('click', this.cancelOptionsSelection);
 
@@ -69,22 +69,38 @@ export class GameOptionsModal extends HTMLElement {
     this.cancelButton = this.querySelector('.cancel-button');
 
     this.scoreToWinInput.addEventListener('input', this.updateOptions);
-    this.scoreToWinInput.addEventListener('input', this.showSelectedValue);
+    this.scoreToWinInput.addEventListener('input', this.updateSelectedValue);
     this.gameSpeedInputs.forEach((input) => {
       input.addEventListener('change', this.updateOptions);
     });
     this.isRankedInput.addEventListener('change', this.updateOptions);
     this.timeLimitInput.addEventListener('input', this.updateOptions);
-    this.timeLimitInput.addEventListener('input', this.showSelectedValue);
+    this.timeLimitInput.addEventListener('input', this.updateSelectedValue);
     this.confirmButton.addEventListener('click', this.confirmOptions);
     this.cancelButton.addEventListener('click', this.cancelOptionsSelection);
 
+    const scoreToWinOutput = this.scoreToWinInput.nextElementSibling;
+    if (scoreToWinOutput) {
+      scoreToWinOutput.value = this.scoreToWinInput.value;
+      const pos =
+        ((this.#state.defaultOptions.scoreToWin - this.#state.range.minScoreToWin) * 100) /
+          (this.#state.range.maxScoreToWin - this.#state.range.minScoreToWin);
+      scoreToWinOutput.style.left = `calc(${pos}% + (${8 - pos * 0.15}px))`;
+    }
     const selectedGameSpeed = this.#state.selectedOptions.gameSpeed;
     const selectedGameSpeedInput = this.querySelector(`input[name="speedOptions"][value="${selectedGameSpeed}"]`);
     if (selectedGameSpeedInput) {
       selectedGameSpeedInput.checked = true;
     }
     this.#state.selectedOptions.isRanked ? this.isRankedInput.checked = true : this.isRankedInput.checked = false;
+    const timeLimitOutput = this.timeLimitInput.nextElementSibling;
+    if (timeLimitOutput) {
+      timeLimitOutput.value = this.timeLimitInput.value;
+      const pos =
+      ((this.#state.defaultOptions.maxTimeLimit - this.#state.range.minTimeLimit) * 100) /
+        (this.#state.range.maxScoreToWin - this.#state.range.minTimeLimit);
+      timeLimitOutput.style.left = `calc(${pos}% + (${8 - pos * 0.15}px))`;
+    }
   }
 
   showModal(onConfirmCallback) {
@@ -134,13 +150,17 @@ export class GameOptionsModal extends HTMLElement {
     }
   }
 
-  showSelectedValue(event) {
+  updateSelectedValue(event) {
     const target = event.target;
     const output = target.nextElementSibling;
     if (output) {
       output.value = target.value;
     }
-    // TODO: calculate the output position
+    const min = Number(target.min);
+    const max = Number(target.max);
+    const value = Number(target.value);
+    const newPos = ((value - min) * 100) / (max - min);
+    output.style.left = `calc(${newPos}% + (${8 - newPos * 0.15}px))`;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -152,6 +172,9 @@ export class GameOptionsModal extends HTMLElement {
     <div class="modal fade mt-5" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog pt-4">
         <div class="modal-content btn-wood">
+          <div class="modal-header border-0">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
           <div class="modal-body pt-4">
             <h2 class="text-center pb-4">Game Options</h2>
             <div class="form-group d-flex flex-column gap-5">
@@ -232,10 +255,20 @@ export class GameOptionsModal extends HTMLElement {
       margin: 0 auto 2rem;
       output {
         position: absolute;
+        padding: 0 0.5rem;
+        top: 1.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(var(--pm-primary-500-rgb), 0.4);
+        border-radius: 0.5rem;
       }
     }
     .form-range {
       width: 100%;
+      -webkit-appearance :none;
+      -moz-appearance :none;
+      appearance :none;
+      background: none;
     }
     .form-range::-webkit-slider-runnable-track {
       background-color: var(--pm-gray-500);
