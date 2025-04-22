@@ -38,6 +38,7 @@ export class GameOptionsModal extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.closeButton?.removeEventListener('click', this.cancelOptionsSelection);
     this.scoreToWinInput?.removeEventListener('input', this.updateOptions);
     this.scoreToWinInput?.removeEventListener('input', this.updateSelectedValue);
     this.gameSpeedInputs.forEach((input) => {
@@ -61,6 +62,7 @@ export class GameOptionsModal extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.duelMenuComponent = document.querySelector('duel-menu');
+    this.closeButton = this.querySelector('.btn-close');
     this.scoreToWinInput = this.querySelector('#score-to-win');
     this.gameSpeedInputs = this.querySelectorAll('input[name="speedOptions"]');
     this.isRankedInput = this.querySelector('#is-ranked');
@@ -68,6 +70,7 @@ export class GameOptionsModal extends HTMLElement {
     this.confirmButton = this.querySelector('.confirm-button');
     this.cancelButton = this.querySelector('.cancel-button');
 
+    this.closeButton.addEventListener('click', this.cancelOptionsSelection);
     this.scoreToWinInput.addEventListener('input', this.updateOptions);
     this.scoreToWinInput.addEventListener('input', this.updateSelectedValue);
     this.gameSpeedInputs.forEach((input) => {
@@ -83,7 +86,7 @@ export class GameOptionsModal extends HTMLElement {
     if (scoreToWinOutput) {
       scoreToWinOutput.value = this.scoreToWinInput.value;
       const pos =
-        ((this.#state.defaultOptions.scoreToWin - this.#state.range.minScoreToWin) * 100) /
+        ((this.scoreToWinInput.value - this.#state.range.minScoreToWin) * 100) /
           (this.#state.range.maxScoreToWin - this.#state.range.minScoreToWin);
       scoreToWinOutput.style.left = `calc(${pos}% + (${8 - pos * 0.15}px))`;
     }
@@ -97,8 +100,8 @@ export class GameOptionsModal extends HTMLElement {
     if (timeLimitOutput) {
       timeLimitOutput.value = this.timeLimitInput.value;
       const pos =
-      ((this.#state.defaultOptions.maxTimeLimit - this.#state.range.minTimeLimit) * 100) /
-        (this.#state.range.maxScoreToWin - this.#state.range.minTimeLimit);
+      ((this.timeLimitInput.value - this.#state.range.minTimeLimit) * 100) /
+        (this.#state.range.maxTimeLimit - this.#state.range.minTimeLimit);
       timeLimitOutput.style.left = `calc(${pos}% + (${8 - pos * 0.15}px))`;
     }
   }
@@ -122,6 +125,7 @@ export class GameOptionsModal extends HTMLElement {
 
   confirmOptions() {
     this._onConfirmCallback(this.#state.selectedOptions);
+    this.modal.hide();
     this.duelMenuComponent?.removeChild(this);
   }
 
@@ -132,6 +136,7 @@ export class GameOptionsModal extends HTMLElement {
       isRanked: true,
       timeLimitMinutes: 3,
     };
+    this.modal.hide();
     this.duelMenuComponent?.removeChild(this);
   }
 
@@ -173,7 +178,7 @@ export class GameOptionsModal extends HTMLElement {
       <div class="modal-dialog pt-4">
         <div class="modal-content btn-wood">
           <div class="modal-header border-0">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close"></button>
           </div>
           <div class="modal-body pt-4">
             <h2 class="text-center pb-4">Game Options</h2>
