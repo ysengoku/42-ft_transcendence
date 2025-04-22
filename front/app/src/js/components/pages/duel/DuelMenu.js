@@ -61,15 +61,18 @@ export class DuelMenu extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.optionsButton = this.querySelector('#game-options-button');
+    this.optionsModal = this.querySelector('game-options-modal');
+
     this.searchInput = this.querySelector('input');
     this.userList = this.querySelector('#duel-user-list');
+    this.inviteButton = this.querySelector('#invite-button');
+    this.requestMatchmakingButton = this.querySelector('#request-matchmaking-button');
+
     this.opponentNickname = this.querySelector('.opponent-nickname');
     this.opponentUsername = this.querySelector('.opponent-username');
     this.opponentElo = this.querySelector('.opponent-elo');
     this.opponentAvatar = this.querySelector('.opponent-avatar');
     this.opponentOnlineStatus = this.querySelector('.opponent-status-indicator');
-    this.inviteButton = this.querySelector('#invite-button');
-    this.requestMatchmakingButton = this.querySelector('#request-matchmaking-button');
 
     this.opponentAvatar.src = anonymousAvatar;
 
@@ -122,18 +125,18 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
-  openGameOptionsModal(event) {
-    event.preventDefault();
+  openGameOptionsModal() {
     const modal = document.createElement('game-options-modal');
-    console.log('Modal:', modal);
     if (modal) {
+      modal.setOptions(this.#state.options);
       this.appendChild(modal);
-      modal.showModal();
+      modal.showModal(this.storeOption.bind(this));
     }
   }
 
   storeOption(options) {
     this.#state.options = options;
+    devLog('Game options:', this.#state.options);
   }
 
   async handleSearchInput(event) {
@@ -259,6 +262,7 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   template() {
     return `
+    <!--<game-options-modal></game-options-modal>-->
       <div class="container">
         <div class="row justify-content-center py-4">
           <div class="form-container col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 p-4">
@@ -272,9 +276,9 @@ export class DuelMenu extends HTMLElement {
                 <p class="fs-5 fw-bolder m-0 mb-3">Choose your opponent</p>
                 <div class="input-group position-relative">
                   <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-                  <input class="form-control" type="search" placeholder="Find user" aria-label="Search" id="search-opponent">
+                  <input class="form-control" type="search" placeholder="Find user" aria-label="Search" id="search-opponent" autocomplete="off">
                   <ul class="dropdown-menu position-absolute px-3 w-100" id="duel-user-list"></ul>
-                </div>       
+                </div>
 
                 <div class="d-flex flex-column align-items-center w-100 mb-2 p-3">
                   <div class="d-flex flex-row align-items-center gap-3">
