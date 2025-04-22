@@ -109,7 +109,7 @@ export class Game extends HTMLElement {
         // velocity,
         // temporalSpeed,
     });
-})(0, 3, 0);
+})(-10, 3, 0);
 
 	const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
@@ -219,7 +219,7 @@ export class Game extends HTMLElement {
     let delta;
     let ballSubtickZ;
     let ballSubtickX;
-
+    let lastBumperCollided = 0;
 
     function degreesToRadians(degrees)
     {
@@ -305,7 +305,6 @@ export class Game extends HTMLElement {
 
     function animate() {
       requestAnimationFrame(animate);
-      
       let someone_scored = false;
       let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * Ball.velocity.x);
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
@@ -326,11 +325,13 @@ export class Game extends HTMLElement {
               Ball.velocity.x *= -1;
           }
           if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)){
+            lastBumperCollided = 0;
             isCalculationDone = false;
             calculateNewDir(Bumpers[0]);
             
           }
           else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)){
+              lastBumperCollided = 1;
               isCalculationDone = true;
               calculateNewDir(Bumpers[1]);
           }
@@ -347,10 +348,14 @@ export class Game extends HTMLElement {
               someone_scored = true;
           }
           if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
-                let choose = Math.floor(Math.random() * 1);
-                if (choose = 1) {
-                  Bumpers[0].cubeMesh.scale.x = 2;
-                  Bumpers[0].lenghtHalf = 5;
+                let choose = Math.floor(Math.random() * 2);
+                if (choose == 1) {
+                  Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+                  Bumpers[lastBumperCollided].lenghtHalf = 5;
+                }
+                else {
+                  Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 0.5;
+                  Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
                 }
           }
           // console.log();
