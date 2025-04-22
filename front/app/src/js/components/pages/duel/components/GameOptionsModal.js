@@ -2,11 +2,13 @@ import { Modal } from 'bootstrap';
 
 export class GameOptionsModal extends HTMLElement {
   #state = {
-    options: {
-      scoreToWin: 15, // 3 - 20
-      gameSpeed: 'medium', // slow, medium, fast
+    selectedOptions: null,
+    // TODO: set default values
+    defaultOptions: {
+      scoreToWin: 15,
+      gameSpeed: 'normal',
       isRanked: true,
-      timeLimitMinutes: 3, // 1 - 5
+      timeLimitMinutes: 3,
     },
     range: {
       minScoreToWin: 3,
@@ -20,41 +22,130 @@ export class GameOptionsModal extends HTMLElement {
     super();
     this.modal = null;
     this._onConfirmCallback = null;
-    this.handleConfirm = this.handleConfirm.bind(this);
-    this.handleCancel = this.handleCancel.bind(this);
+
+    this.updateOptions = this.updateOptions.bind(this);
+    this.showSelectedValue = this.showSelectedValue.bind(this);
+    this.confirmOptions = this.confirmOptions.bind(this);
+    this.cancelOptionsSelection = this.cancelOptionsSelection.bind(this);
   }
 
   connectedCallback() {
+    if (!this.#state.selectedOptions) {
+      this.#state.selectedOptions = this.#state.defaultOptions;
+    }
     this.render();
-  }
-  
-  render() {
-    this.innerHTML = this.template() + this.style();
     this.modal = new Modal(this.querySelector('.modal'));
   }
-  
+
+  disconnectedCallback() {
+    this.scoreToWinInput?.removeEventListener('input', this.updateOptions);
+    this.scoreToWinInput?.removeEventListener('input', this.showSelectedValue);
+    this.gameSpeedInputs.forEach((input) => {
+      input?.removeEventListener('change', this.updateOptions);
+    });
+    this.isRankedInput?.removeEventListener('change', this.updateOptions);
+    this.timeLimitInput?.removeEventListener('input', this.updateOptions);
+    this.timeLimitInput?.removeEventListener('input', this.showSelectedValue);
+    this.confirmButton?.removeEventListener('click', this.confirmOptions);
+    this.cancelButton?.removeEventListener('click', this.cancelOptionsSelection);
+
+    this.innerHTML = '';
+    this.modal = null;
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Render                                                              */
+  /* ------------------------------------------------------------------------ */
+
+  render() {
+    this.innerHTML = this.template() + this.style();
+
+    this.duelMenuComponent = document.querySelector('duel-menu');
+    this.scoreToWinInput = this.querySelector('#score-to-win');
+    this.gameSpeedInputs = this.querySelectorAll('input[name="speedOptions"]');
+    this.isRankedInput = this.querySelector('#is-ranked');
+    this.timeLimitInput = this.querySelector('#time-limit');
+    this.confirmButton = this.querySelector('.confirm-button');
+    this.cancelButton = this.querySelector('.cancel-button');
+
+    this.scoreToWinInput.addEventListener('input', this.updateOptions);
+    this.scoreToWinInput.addEventListener('input', this.showSelectedValue);
+    this.gameSpeedInputs.forEach((input) => {
+      input.addEventListener('change', this.updateOptions);
+    });
+    this.isRankedInput.addEventListener('change', this.updateOptions);
+    this.timeLimitInput.addEventListener('input', this.updateOptions);
+    this.timeLimitInput.addEventListener('input', this.showSelectedValue);
+    this.confirmButton.addEventListener('click', this.confirmOptions);
+    this.cancelButton.addEventListener('click', this.cancelOptionsSelection);
+
+    const selectedGameSpeed = this.#state.selectedOptions.gameSpeed;
+    const selectedGameSpeedInput = this.querySelector(`input[name="speedOptions"][value="${selectedGameSpeed}"]`);
+    if (selectedGameSpeedInput) {
+      selectedGameSpeedInput.checked = true;
+    }
+    this.#state.selectedOptions.isRanked ? this.isRankedInput.checked = true : this.isRankedInput.checked = false;
+  }
+
   showModal(onConfirmCallback) {
     this._onConfirmCallback = onConfirmCallback;
     if (this.modal) {
       this.modal.show();
     }
   }
-  
-  handleConfirm() {
-    this._onConfirmCallback(this.#state);
-    // this.modal.hide();
+
+  setOptions(options) {
+    if (options) {
+      this.#state.selectedOptions = options;
+    }
   }
 
-  handleCancel() {
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling                                                      */
+  /* ------------------------------------------------------------------------ */
+
+  confirmOptions() {
+    this._onConfirmCallback(this.#state.selectedOptions);
+    this.duelMenuComponent?.removeChild(this);
+  }
+
+  cancelOptionsSelection() {
     this.#state = {
       scoreToWin: 20,
       gameSpeed: 'normal',
       isRanked: true,
       timeLimitMinutes: 3,
     };
-  this.innerHTML = '';
-    // this.modal.hide();
+    this.duelMenuComponent?.removeChild(this);
   }
+
+  updateOptions(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const target = event.target;
+    if (target.id === 'score-to-win') {
+      this.#state.selectedOptions.scoreToWin = parseInt(target.value);
+    } else if (target.name === 'speedOptions') {
+      this.#state.selectedOptions.gameSpeed = target.value;
+    } else if (target.id === 'is-ranked') {
+      this.#state.selectedOptions.isRanked = target.checked;
+    } else if (target.id === 'time-limit') {
+      this.#state.selectedOptions.timeLimitMinutes = parseInt(target.value);
+    }
+  }
+
+  showSelectedValue(event) {
+    const target = event.target;
+    const output = target.nextElementSibling;
+    if (output) {
+      output.value = target.value;
+    }
+    // TODO: calculate the output position
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Template & style                                                    */
+  /* ------------------------------------------------------------------------ */
 
   template() {
     return `
@@ -62,13 +153,17 @@ export class GameOptionsModal extends HTMLElement {
       <div class="modal-dialog pt-4">
         <div class="modal-content btn-wood">
           <div class="modal-body pt-4">
-            <h2 class="text-center">Game Options</h2>
+            <h2 class="text-center pb-4">Game Options</h2>
             <div class="form-group d-flex flex-column gap-5">
               <div>
                 <label for="score-to-win">Score to Win</label>
-                <div class="d-flex justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-start gap-2">
                   <span>${this.#state.range.minScoreToWin}</span>
-                  <input type="range" class="form-range" id="score-to-win" value="${this.#state.options.scoreToWin}" min="${this.#state.range.minScoreToWin}" max="${this.#state.range.maxScoreToWin}" step="1">
+                  <div class="range-wrapper flex-grow-1 pt-1">
+                    <input type="range" class="form-range" id="score-to-win" value="${this.#state.selectedOptions.scoreToWin}"
+                      min="${this.#state.range.minScoreToWin}" max="${this.#state.range.maxScoreToWin}" step="1">
+                    <output></output>
+                  </div>
                   <span>${this.#state.range.maxScoreToWin}</span>
                 </div>
               </div>
@@ -76,14 +171,14 @@ export class GameOptionsModal extends HTMLElement {
               <div class="d-flex flex-column pb-1 gap-2">
                 <label>Game Speed</label>
                 <div class="btn-group" role="group">
-                  <input type="radio" class="btn-check" name="options" id="game-speed-slow" autocomplete="off">
-                  <label class="btn btn-outline-duel-options py-0" for="game-speed-slow">slow</label>
+                  <input type="radio" class="btn-check" name="speedOptions" id="game-speed-slow" value="slow" autocomplete="off">
+                  <label class="btn btn-outline-duel-speedOptions py-0" for="game-speed-slow">slow</label>
 
-                  <input type="radio" class="btn-check" name="options" id="game-speed-medium" autocomplete="off" checked>
-                  <label class="btn btn-outline-duel-options py-0" for="game-speed-medium">medium</label>
+                  <input type="radio" class="btn-check" name="speedOptions" id="game-speed-medium" value="medium" autocomplete="off" checked>
+                  <label class="btn btn-outline-duel-speedOptions py-0" for="game-speed-medium">medium</label>
 
-                  <input type="radio" class="btn-check" name="options" id="game-speed-fast" autocomplete="off">
-                  <label class="btn btn-outline-duel-options py-0" for="game-speed-fast">fast</label>
+                  <input type="radio" class="btn-check" name="speedOptions" id="game-speed-fast" value="fast" autocomplete="off">
+                  <label class="btn btn-outline-duel-speedOptions py-0" for="game-speed-fast">fast</label>
                 </div>
               </div>
               
@@ -100,9 +195,13 @@ export class GameOptionsModal extends HTMLElement {
 
               <div>
                 <label for="time-limit">Time Limit</label>
-                <div class="d-flex justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-start gap-2">
                   <span>${this.#state.range.minTimeLimit}</span>
-                  <input type="range" class="form-range" id="time-limit" value="${this.#state.options.timeLimitMinutes}" min="${this.#state.range.minTimeLimit}" max="${this.#state.range.maxTimeLimit}" step="1">
+                  <div class="range-wrapper flex-grow-1 pt-1">
+                    <input type="range" class="form-range" id="time-limit" value="${this.#state.selectedOptions.timeLimitMinutes}"
+                      min="${this.#state.range.minTimeLimit}" max="${this.#state.range.maxTimeLimit}" step="1">
+                    <output></output>
+                  </div>
                   <span class="pe-2">${this.#state.range.maxTimeLimit}</span>
                 </div>
               </div>
@@ -120,39 +219,53 @@ export class GameOptionsModal extends HTMLElement {
   }
 
   style() {
-    const knobColor = getComputedStyle(document.documentElement).getPropertyValue('--pm-primary-400');
-    const knobUrl = "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='" + encodeURIComponent(knobColor) + "'/%3e%3c/svg%3e";
+    const knobColor = getComputedStyle(document.documentElement).getPropertyValue('--pm-primary-500');
+    const knobUrl =
+      'data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\'' +
+      ' viewBox=\'-4 -4 8 8\'%3e%3ccircle r=\'3\' fill=\'' +
+      encodeURIComponent(knobColor) + '\'/%3e%3c/svg%3e';
 
     return `
     <style>
+    .range-wrapper {
+      position: relative;
+      margin: 0 auto 2rem;
+      output {
+        position: absolute;
+      }
+    }
+    .form-range {
+      width: 100%;
+    }
     .form-range::-webkit-slider-runnable-track {
       background-color: var(--pm-gray-500);
     }
     .form-range::-webkit-slider-thumb {
-      background-color: var(--pm-primary-400);
+      background-color: var(--pm-primary-500);
       border: none;
     }
-    .form-range:focus,
-    .form-range:active {
-      outline: none;
+    .form-range:focus {
+      outline: none !important;
+      border: none !important;
+      drop-shadow: none !important;
     }
     .form-range::-moz-range-track {
-      background-color: var(--pm-primary-400);
+      background-color: var(--pm-primary-500);
     }
     .form-range::-moz-range-thumb {
-      background-color: var(--pm-primary-400);
+      background-color: var(--pm-primary-500);
       border: none;
     }
-    .btn-outline-duel-options {
+    .btn-outline-duel-speedOptions {
       border: 1px solid var(--pm-gray-500);
       background-color: var(--pm-gray-500);
       color: var(--pm-primary-100);
     }
-    .btn-check:checked + .btn-outline-duel-options,
-    .btn-check:active + .btn-outline-duel-options,
-    .btn-outline-duel-options.active {
-      background-color: var(--pm-primary-400);
-      border-color: var(--pm-primary-400);
+    .btn-check:checked + .btn-outline-duel-speedOptions,
+    .btn-check:active + .btn-outline-duel-speedOptions,
+    .btn-outline-duel-speedOptions.active {
+      background-color: var(--pm-primary-500);
+      border-color: var(--pm-primary-500);
     }
     .form-check-input,
     .form-check-input:checked,
