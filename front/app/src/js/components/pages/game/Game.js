@@ -97,19 +97,22 @@ export class Game extends HTMLElement {
     cylinderMesh.castShadow = true;
     scene.add(cylinderMesh);
     const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
+    const velocity = new THREE.Vector3(0.001, 0, 0);
+    let lenghtHalf = 0.25;
     // let hasCollidedWithBumper1 = false;
     // let hasCollidedWithBumper2 = false;
     // let hasCollidedWithWall = false;
 
     return ({
 
-      
+        get lenghtHalf() { return lenghtHalf; },
+        set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
         cylinderMesh,
         cylinderUpdate,
-        // velocity,
+        velocity,
         // temporalSpeed,
     });
-})(-10, 3, 0);
+})(-9.25, 3, 0);
 
 	const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
@@ -171,7 +174,9 @@ export class Game extends HTMLElement {
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dir_z = -Math.sign(posZ);
       let   lenghtHalf = 2.5;
-      let   lenght = 5;
+      let   widthHalf = 0.5;
+      let   controlReverse = false;
+      // let   lenght = 5;
       let score = 0;
     
       return ({
@@ -180,10 +185,12 @@ export class Game extends HTMLElement {
 
           get score() { return score; },
           set score(newScore) { score = newScore; },
+          get controlReverse() { return controlReverse; },
+          set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
           get lenghtHalf() { return lenghtHalf; },
           set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
-          get lenght() { return lenght; },
-          set lenght(newLenght) { lenght = newLenght; },
+          get widthHalf() { return widthHalf; },
+          set widthHalf(newWidthHalf) { widthHalf = newWidthHalf; },
           get dir_z() { return dir_z; },
       });
   }
@@ -239,8 +246,8 @@ export class Game extends HTMLElement {
         return (
             (Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lenghtHalf)
             && (Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lenghtHalf)
-            && (Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + BUMPER_WIDTH_HALF)
-            && (Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - BUMPER_WIDTH_HALF));
+            && (Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf)
+            && (Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf));
     }
 
     function calculateNewDir(bumper) {
@@ -251,10 +258,7 @@ export class Game extends HTMLElement {
         Ball.velocity.x = Ball.velocity.z * -Math.tan(bounce_angle_radians) * bumper.dir_z;
         Ball.velocity.x = Math.max(Math.abs(Ball.velocity.x), 0.05) * Math.sign(Ball.velocity.x);
 
-        let collision_pos_z = bumper.cubeUpdate.z - Ball.sphereUpdate.z
-        let normalized_collision_pos_z = collision_pos_z / (BALL_RADIUS + BUMPER_WIDTH_HALF)
-        normalized_collision_pos_z
-        if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + BUMPER_WIDTH_HALF) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - BUMPER_WIDTH_HALF))
+        if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
             Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
 
@@ -280,12 +284,12 @@ export class Game extends HTMLElement {
     function moveAiBumper(calculatedPos) {
       keyMap["KeyA"] = false;
       keyMap["KeyD"] = false;
-      if (calculatedBumperPos.x <= calculatedPos.x + (Math.random() * (Math.random() < 0.5 ? -Bumpers[1].lenghtHalf + 0.02: Bumpers[1].lenghtHalf + 0.02)))
+      if (calculatedBumperPos.x <= calculatedPos.x )
       {
         keyMap["KeyA"] = true;
         calculatedBumperPos.x += bumperSubtick;
       }
-      else if (calculatedBumperPos.x >= calculatedPos.x + (Math.random() * (Math.random() < 0.5 ? -Bumpers[1].lenghtHalf + 0.02: Bumpers[1].lenghtHalf + 0.02)))
+      else if (calculatedBumperPos.x >= calculatedPos.x )
       {
         keyMap["KeyD"] = true;
         calculatedBumperPos.x -= bumperSubtick;
@@ -348,29 +352,48 @@ export class Game extends HTMLElement {
               someone_scored = true;
           }
           if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
-                let choose = Math.floor(Math.random() * 2);
+                let choose = Math.floor(Math.random() * 4);
                 if (choose == 1) {
                   Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
                   Bumpers[lastBumperCollided].lenghtHalf = 5;
+                  if ((Bumpers[lastBumperCollided].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf)) {
+                      Bumpers[lastBumperCollided].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
+                  }
+                  else if (Bumpers[lastBumperCollided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf){
+                      Bumpers[lastBumperCollided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+                  }
                 }
-                else {
+                else if (choose == 2) {
                   Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 0.5;
                   Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
                 }
+                else if (choose == 3){
+                    Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
+                }
+                else{
+                  Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+                  Bumpers[lastBumperCollided].widthHalf = 1.5;
+                }
+                
+                Coin.cylinderUpdate.set(-9.25, 3, 0);
           }
           // console.log();
-          if (keyMap['ArrowLeft'] == true && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf))
+          if (((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf))
               Bumpers[0].cubeUpdate.x += bumperSubtick;
-          if (keyMap['ArrowRight'] == true && !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf))
+          if (((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf))
               Bumpers[0].cubeUpdate.x -= bumperSubtick;
 
-          if (keyMap['KeyA'] == true && !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf))
-              Bumpers[1].cubeUpdate.x += bumperSubtick;
-          if (keyMap['KeyD'] == true && !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf))
-              Bumpers[1].cubeUpdate.x -= bumperSubtick;
+          if (((keyMap['KeyD'] == true && Bumpers[1].controlReverse) || (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) && !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf))
+            Bumpers[1].cubeUpdate.x += bumperSubtick;
+          if (((keyMap['KeyA'] == true && Bumpers[1].controlReverse) || (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) && !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf))
+            Bumpers[1].cubeUpdate.x -= bumperSubtick;
 
           Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
-          Coin.cylinderUpdate.x += 0.001;
+          if ((Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf) || (Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf)) {
+            Coin.velocity.x *= -1
+            console.log("oui")
+          }
+          Coin.cylinderUpdate.x += Coin.velocity.x;
           Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
           handleAiBehavior();
           current_subtick++;
