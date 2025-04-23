@@ -49,14 +49,14 @@ export class DuelResult extends HTMLElement {
     this.loser = this.querySelector('#duel-loser');
     this.navigateToHomeButton = this.querySelector('#go-to-home-button');
     this.navigateToProfileButton = this.querySelector('#go-to-profile-button');
-    
+
     const title = this.querySelector('#duel-result-title');
     this.#state.duelData.winner.username === this.#state.loggedInUser.username ? (
       title.textContent = 'You won!' ) : (
       title.textContent = 'You lost!',
       title.classList.add('title-duel-lost')
     );
-    
+
     this.navigateToHomeButton.addEventListener('click', this.navigateToHome);
     this.navigateToProfileButton.addEventListener('click', this.navigateToProfile);
 

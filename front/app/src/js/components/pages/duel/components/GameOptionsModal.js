@@ -3,7 +3,6 @@ import { Modal } from 'bootstrap';
 export class GameOptionsModal extends HTMLElement {
   #state = {
     selectedOptions: null,
-    // TODO: set default values
     defaultOptions: {
       scoreToWin: 15,
       gameSpeed: 'normal',
@@ -24,9 +23,15 @@ export class GameOptionsModal extends HTMLElement {
     this._onConfirmCallback = null;
 
     this.updateOptions = this.updateOptions.bind(this);
-    this.updateSelectedValue = this.updateSelectedValue.bind(this);
+    this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
     this.confirmOptions = this.confirmOptions.bind(this);
     this.cancelOptionsSelection = this.cancelOptionsSelection.bind(this);
+  }
+
+  setOptions(options) {
+    if (options) {
+      this.#state.selectedOptions = options;
+    }
   }
 
   connectedCallback() {
@@ -38,17 +43,17 @@ export class GameOptionsModal extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.closeButton?.removeEventListener('click', this.cancelOptionsSelection);
     this.scoreToWinInput?.removeEventListener('input', this.updateOptions);
-    this.scoreToWinInput?.removeEventListener('input', this.updateSelectedValue);
+    this.scoreToWinInput?.removeEventListener('input', this.updateSelectedValueOnRange);
     this.gameSpeedInputs.forEach((input) => {
       input?.removeEventListener('change', this.updateOptions);
     });
     this.isRankedInput?.removeEventListener('change', this.updateOptions);
     this.timeLimitInput?.removeEventListener('input', this.updateOptions);
-    this.timeLimitInput?.removeEventListener('input', this.updateSelectedValue);
+    this.timeLimitInput?.removeEventListener('input', this.updateSelectedValueOnRange);
     this.confirmButton?.removeEventListener('click', this.confirmOptions);
     this.cancelButton?.removeEventListener('click', this.cancelOptionsSelection);
+    this.closeButton?.removeEventListener('click', this.cancelOptionsSelection);
 
     this.innerHTML = '';
     this.modal = null;
@@ -70,17 +75,18 @@ export class GameOptionsModal extends HTMLElement {
     this.confirmButton = this.querySelector('.confirm-button');
     this.cancelButton = this.querySelector('.cancel-button');
 
-    this.closeButton.addEventListener('click', this.cancelOptionsSelection);
     this.scoreToWinInput.addEventListener('input', this.updateOptions);
-    this.scoreToWinInput.addEventListener('input', this.updateSelectedValue);
+    this.scoreToWinInput.addEventListener('input', this.updateSelectedValueOnRange);
     this.gameSpeedInputs.forEach((input) => {
       input.addEventListener('change', this.updateOptions);
     });
     this.isRankedInput.addEventListener('change', this.updateOptions);
     this.timeLimitInput.addEventListener('input', this.updateOptions);
-    this.timeLimitInput.addEventListener('input', this.updateSelectedValue);
+    this.timeLimitInput.addEventListener('input', this.updateSelectedValueOnRange);
+
     this.confirmButton.addEventListener('click', this.confirmOptions);
     this.cancelButton.addEventListener('click', this.cancelOptionsSelection);
+    this.closeButton.addEventListener('click', this.cancelOptionsSelection);
 
     const scoreToWinOutput = this.scoreToWinInput.nextElementSibling;
     if (scoreToWinOutput) {
@@ -110,12 +116,6 @@ export class GameOptionsModal extends HTMLElement {
     this._onConfirmCallback = onConfirmCallback;
     if (this.modal) {
       this.modal.show();
-    }
-  }
-
-  setOptions(options) {
-    if (options) {
-      this.#state.selectedOptions = options;
     }
   }
 
@@ -155,7 +155,7 @@ export class GameOptionsModal extends HTMLElement {
     }
   }
 
-  updateSelectedValue(event) {
+  updateSelectedValueOnRange(event) {
     const target = event.target;
     const output = target.nextElementSibling;
     if (output) {
