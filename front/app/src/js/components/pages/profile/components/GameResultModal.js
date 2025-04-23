@@ -56,7 +56,7 @@ export class UserGameResultModal extends HTMLElement {
   }
 
   renderDuelResult() {
-    this.gameResultContent.innerHTML = this.duelResultTemplate();
+    this.gameResultContent.innerHTML = this.resultTemplate.duel();
     this.gameDate = this.querySelector('.game-date');
     this.duelWinner = this.querySelector('#duel-winner');
     this.duelLoser = this.querySelector('#duel-loser');
@@ -137,8 +137,9 @@ export class UserGameResultModal extends HTMLElement {
     `;
   }
 
-  duelResultTemplate() {
-    return `
+  resultTemplate = {
+    duel: () => {
+      return `
     <style>
     .game-date-wrapper {
       color: rgba(var(--bs-body-color-rgb), 0.8);
@@ -177,11 +178,11 @@ export class UserGameResultModal extends HTMLElement {
       <div class="w-100 px-4" id="duel-loser"></div>
     </div>
     `;
-  }
-
-  tournamentResultTemplate() {
-    // TODO
-  }
+    },
+    tournament: () => {
+      // TODO
+    },
+  };
 
   userTemplate = {
     duel: () => {

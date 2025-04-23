@@ -5,5 +5,5 @@ import { ConfirmationModal } from './ConfirmationModal';
 export {
   GameOptionsModal,
   DuelPreview,
-  ConfirmationModal
+  ConfirmationModal,
 };

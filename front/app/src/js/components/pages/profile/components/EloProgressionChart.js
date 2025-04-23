@@ -19,7 +19,7 @@ export class UserEloProgressionChart extends HTMLElement {
     max: 110,
     min: 20,
     mid: 65,
-  }
+  };
   #scaleY =
     (this.#yCoordinate.max - this.#yCoordinate.min) / (this.#valueRange.max - this.#valueRange.min);
 
@@ -58,6 +58,12 @@ export class UserEloProgressionChart extends HTMLElement {
     this.previousButton.addEventListener('click', this.renderPrevious);
     this.nextButton.addEventListener('click', this.renderNext);
 
+    if (this.#state.history.length === 0) {
+      this.chart.textContent = 'No data';
+      this.chart.classList.add('d-flex', 'justify-content-center', 'align-items-center');
+      this.previousButton.classList.add('invisible');
+      return;
+    }
     this.renderChart();
   }
 
