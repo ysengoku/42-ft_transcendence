@@ -1,3 +1,4 @@
+import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
@@ -23,8 +24,9 @@ export class DuelMenu extends HTMLElement {
 
   constructor() {
     super();
-
+    this.gameOptionsModal = null;
     this.openGameOptionsModal = this.openGameOptionsModal.bind(this);
+    this.cancelGameOptionsModal = this.cancelGameOptionsModal.bind(this);
     this.handleSearchInput = this.handleSearchInput.bind(this);
     this.loadMoreUsers = this.loadMoreUsers.bind(this);
     this.hideUserList = this.hideUserList.bind(this);
@@ -61,7 +63,7 @@ export class DuelMenu extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.optionsButton = this.querySelector('#game-options-button');
-    this.optionsModal = this.querySelector('game-options-modal');
+    this.gameOptionsModal = this.querySelector('game-options-modal');
 
     this.searchInput = this.querySelector('input');
     this.userList = this.querySelector('#duel-user-list');
@@ -126,17 +128,46 @@ export class DuelMenu extends HTMLElement {
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
   openGameOptionsModal() {
-    const modal = document.createElement('game-options-modal');
-    if (modal) {
-      modal.setOptions(this.#state.options);
-      this.appendChild(modal);
-      modal.showModal(this.storeOption.bind(this));
+    const template = document.createElement('template');
+    template.innerHTML = this.gameOptionsModalTemplate();
+    this.modalElement = template.content.querySelector('.modal');
+    document.body.appendChild(this.modalElement);
+    this.gameOptionsModal = new Modal(this.modalElement);
+    if (!this.gameOptionsModal) {
+      // TODO: handle error
+      return;
     }
+    const modalBody = this.modalElement.querySelector('.modal-body');
+    const modalBodyContent = document.createElement('game-options');
+    modalBodyContent.setOptions(this.#state.options);
+    modalBody.appendChild(modalBodyContent);
+    this.gameOptionsModal.show();
+
+    this.modalSaveButton = this.modalElement.querySelector('.confirm-button');
+    this.modalCancelButton = this.modalElement.querySelector('.cancel-button');
+    this.modalCloseButton = this.modalElement.querySelector('.btn-close');
+
+    this.modalCancelButton.addEventListener('click', this.cancelGameOptionsModal);
+    this.modalCloseButton.addEventListener('click', this.cancelGameOptionsModal);
   }
 
-  storeOption(options) {
-    this.#state.options = options;
-    devLog('Game options:', this.#state.options);
+  // storeOption(options) {
+  //   this.#state.options = options;
+  //   devLog('Game options:', this.#state.options);
+  // }
+
+  getSelectedOptions() {
+    // TODO
+  }
+
+  cancelGameOptionsModal() {
+    if (this.gameOptionsModal) {
+      this.modalCancelButton.removeEventListener('click', this.cancelGameOptionsModal);
+      this.modalCloseButton.removeEventListener('click', this.cancelGameOptionsModal);
+      this.gameOptionsModal.hide();
+      document.body.removeChild(this.modalElement);
+      this.gameOptionsModal = null;
+    }
   }
 
   async handleSearchInput(event) {
@@ -366,6 +397,25 @@ export class DuelMenu extends HTMLElement {
         </div>
       </div>
     </li>
+    `;
+  }
+
+  gameOptionsModalTemplate() {
+    return `
+    <div class="modal fade mt-5" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog pt-4">
+        <div class="modal-content btn-wood">
+          <div class="modal-header border-0">
+            <button type="button" class="btn-close"></button>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer border-0 mt-4">
+            <button type="button" class="cancel-button btn" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="confirm-button btn fw-bolder fs-5" data-bs-dismiss="modal">Save choice</button>
+          </div>
+        </div>
+      <div>
+    </div>
     `;
   }
 }
