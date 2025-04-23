@@ -17,7 +17,7 @@ export class GameOptions extends HTMLElement {
 
   constructor() {
     super();
-    this._onConfirmCallback = null;
+    // this._onConfirmCallback = null;
 
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
@@ -29,6 +29,14 @@ export class GameOptions extends HTMLElement {
     if (options) {
       this.#state.selectedOptions = options;
     }
+  }
+
+  set selectedOptions(options) {
+    this.#state.selectedOptions = options;
+  }
+
+  get selectedOptions() {
+    return this.#state.selectedOptions;
   }
 
   connectedCallback() {
@@ -156,8 +164,8 @@ export class GameOptions extends HTMLElement {
 
   template() {
     return `
-    <h2 class="text-center pb-4">Game Options</h2>
-    <div class="form-group d-flex flex-column gap-5">
+    <h2 class="modal-title text-center pb-4">Game Options</h2>
+    <div class="form-group d-flex flex-column gap-4">
       <div>
         <label for="score-to-win">Score to Win</label>
         <div class="d-flex align-items-start gap-2">
@@ -171,7 +179,7 @@ export class GameOptions extends HTMLElement {
         </div>
       </div>
 
-      <div class="d-flex flex-column pb-1 gap-2">
+      <div class="d-flex flex-column pb-4 gap-2">
         <label>Game Speed</label>
         <div class="btn-group" role="group">
           <input type="radio" class="btn-check" name="speedOptions" id="game-speed-slow" value="slow" autocomplete="off">
@@ -185,7 +193,7 @@ export class GameOptions extends HTMLElement {
         </div>
       </div>
               
-      <div>
+      <div class="pb-4" id="is-ranked-selector">
         <label for="is-ranked">Ranked</label>
         <div class="d-flex align-items-center gap-2">
           <p class="pe-2 m-0 fs-6 fw-lighter">Casual</p>
@@ -228,7 +236,7 @@ export class GameOptions extends HTMLElement {
     }
     .range-wrapper {
       position: relative;
-      margin: 0 auto 2rem;
+      margin: 0 auto 1.5rem;
       output {
         position: absolute;
         padding: 0 0.5rem;
