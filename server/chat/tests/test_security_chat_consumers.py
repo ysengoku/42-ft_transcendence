@@ -63,13 +63,12 @@ class UserEventsConsumerTests(TransactionTestCase):
                 "chat_id": str(self.chat.id)
             }
         }
-        logger.info("INVALID MESSAGE DATA :%s", invalid_data)
         await communicator.send_json_to(invalid_data)
 
         # Vérification des logs
         with self.assertLogs('server', level='WARNING') as logs:
             await communicator.receive_nothing()
             self.assertTrue(
-                any("Message trop long" in log for log in logs.output))
+                any("Message too long" in log for log in logs.output))
 
         await communicator.disconnect()
