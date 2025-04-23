@@ -15,13 +15,14 @@ import './components/index.js';
 // After 5 seconds, redirect to Game
 
 export class Duel extends HTMLElement {
-  #status = ''; // inviting, matchmaking, starting, canceled(?)
-
   #state = {
+    status: '', // inviting, matchmaking, starting, canceled(?)
+    gameId: '',
     loggedInUser: null,
     opponent: null,
-    gameId: '',
   };
+
+  #countdown = 5;
 
   constructor() {
     super();
@@ -33,9 +34,8 @@ export class Duel extends HTMLElement {
   }
 
   setQueryParam(param) {
-    console.log('Query param:', param);
-    this.#status = param.get('status');
-    if (this.#status === 'inviting') {
+    this.#state.status = param.get('status');
+    if (this.#state.status === 'inviting') {
       this.#state.opponent = {
         username: param.get('username'),
         nickname: param.get('nickname'),
@@ -43,7 +43,7 @@ export class Duel extends HTMLElement {
         elo: param.get('elo'),
       };
       console.log('Opponent:', this.#state.opponent);
-    } else if (this.#status === 'starting') {
+    } else if (this.#state.status === 'starting') {
       // TODO: set necessary information
     }
   }
@@ -57,8 +57,7 @@ export class Duel extends HTMLElement {
     router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
     window.addEventListener('beforeunload', this.confirmLeavePage);
 
-    // TODO: How to handle browser refresh case?
-    if (!this.#status) {
+    if (!this.#state.status) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = '';
       this.appendChild(notFound);
@@ -68,9 +67,9 @@ export class Duel extends HTMLElement {
     }
 
     this.render();
-    if (this.#status === 'matchmaking') {
+    if (this.#state.status === 'matchmaking') {
       this.requestMatchmaking();
-    } else if (this.#status === 'inviting') {
+    } else if (this.#state.status === 'inviting') {
       // TODO: Add listener for response to duel invitation
     }
   }
@@ -89,7 +88,7 @@ export class Duel extends HTMLElement {
 
   render() {
     this.innerHTML = this.template() + this.style();
-    console.log('Status:', this.#status);
+    console.log('Status:', this.#state.status);
     this.header = this.querySelector('#duel-header');
     this.content = this.querySelector('#duel-content');
     this.contentElement = document.createElement('duel-preview');
@@ -98,19 +97,19 @@ export class Duel extends HTMLElement {
     this.timer = this.querySelector('#timer');
 
     this.header.textContent = this.headerTemplate();
-    this.contentElement.setData(this.#status, this.#state.loggedInUser, this.#state.opponent);
+    this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
     this.content.appendChild(this.contentElement);
 
-    if (this.#status === 'matchmaking' || this.#status === 'inviting') {
+    if (this.#state.status === 'matchmaking' || this.#state.status === 'inviting') {
       this.animation.classList.remove('d-none');
       // ==== For test ================
-      // if (this.#status === 'inviting') {
+      // if (this.#state.status === 'inviting') {
       //   setTimeout(() => {
       //     this.startDuel();
       //   }, 5000);
       // }
       // ================================
-    } else if (this.#status === 'starting') {
+    } else if (this.#state.status === 'starting') {
       this.animation.classList.add('d-none');
       this.timer.classList.remove('d-none');
       this.startDuel();
@@ -124,7 +123,11 @@ export class Duel extends HTMLElement {
     devLog('Requesting matchmaking...');
     socketManager.openSocket('matchmaking');
     document.addEventListener('gameFound', this.handleGameFound);
+  }
 
+  handleGameFound(event) {
+    devLog('Game found event:', event.detail);
+    this.#state.gameId = event.detail.game_room_id;
     // ===== For test ================
     this.#state.opponent = {
       username: 'Alice',
@@ -133,11 +136,6 @@ export class Duel extends HTMLElement {
       elo: 1500,
     };
     // ================================
-  }
-
-  handleGameFound(event) {
-    devLog('Game found event:', event.detail);
-    this.#state.gameId = event.detail.game_room_id;
     this.startDuel();
   }
 
@@ -149,24 +147,19 @@ export class Duel extends HTMLElement {
   }
 
   startDuel() {
-    this.#status = 'starting';
+    this.#state.status = 'starting';
     this.animation.classList.add('d-none');
 
     this.header.textContent = this.headerTemplate();
-    this.contentElement.setData(this.#status, this.#state.loggedInUser, this.#state.opponent);
+    this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
     this.timer.classList.remove('d-none');
-    let timeLeft = 5;
+    let timeLeft = this.#countdown;
     this.timer.textContent = `Starting in ${timeLeft} seconds...`;
     const countdown = setInterval(() => {
       timeLeft -= 1;
       this.timer.textContent = `Starting in ${timeLeft} seconds...`;
       if (timeLeft <= 0) {
         clearInterval(countdown);
-
-        // ===== For test ================
-        // this.#state.gameId = '1234567890';
-        // ================================
-
         router.removeBeforeunloadCallback();
         window.removeEventListener('beforeunload', this.confirmLeavePage);
         socketManager.closeSocket('matchmaking');
@@ -176,6 +169,7 @@ export class Duel extends HTMLElement {
   }
 
   async confirmLeavePage(event) {
+    const message = 'If you leave this page, the duel will be canceled.\nDo you want to continue?';
     if (event) {
       event.preventDefault();
       router.removeBeforeunloadCallback();
@@ -186,8 +180,7 @@ export class Duel extends HTMLElement {
     const confirmationModal = document.createElement('confirmation-modal');
     this.appendChild(confirmationModal);
     confirmationModal.render();
-    confirmationModal.querySelector('.confirmation-message').textContent =
-      'If you leave this page, the duel will be canceled.\nDo you want to continue?';
+    confirmationModal.querySelector('.confirmation-message').textContent = message;
     confirmationModal.querySelector('.confirm-button').textContent = 'Leave this page';
     confirmationModal.querySelector('.cancel-button').textContent = 'Stay';
     confirmationModal.showModal();
@@ -196,6 +189,7 @@ export class Duel extends HTMLElement {
       confirmationModal.handleConfirm = () => {
         devLog('User confirmed to leave the page');
         socketManager.closeSocket('matchmaking');
+        // TODO: Send cancel duel message to server
         confirmationModal.remove();
         resolve(true);
       };
@@ -256,7 +250,7 @@ export class Duel extends HTMLElement {
   }
 
   headerTemplate() {
-    switch (this.#status) {
+    switch (this.#state.status) {
       case 'inviting':
         return 'Waiting for your opponent to ride in...';
       case 'matchmaking':

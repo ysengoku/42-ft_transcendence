@@ -45,7 +45,7 @@ const router = (() => {
      * @return {void}
      */
     init() {
-      window.addEventListener('popstate', () => this.handleRoute());
+      window.addEventListener('popstate', this.handlePopstate.bind(this));
       document.addEventListener('click', (event) => this.handleLinkClick(event));
     }
 
@@ -215,7 +215,27 @@ const router = (() => {
         this.navigate(path);
       }
     }
+
+    /**
+     * Handles the popstate event when the user navigates back or forward.
+     * @return {void}
+     * */
+    async handlePopstate() {
+      if (this.beforeunloadCallback) {
+        const response = await this.beforeunloadCallback();
+        if (!response) {
+          return;
+        }
+        this.beforeunloadCallback = null;
+      }
+      this.handleRoute();
+    }
   }
+
+  /**
+   * Initialize the router instance.
+   * @return {Router} The router instance.
+   */
   return new Router();
 })();
 
