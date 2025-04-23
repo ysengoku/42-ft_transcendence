@@ -10,9 +10,10 @@ import { UserNotFound } from './profile/UserNotFound.js';
 import { Settings } from './settings/Settings.js';
 import { AccountDeleted } from './settings/AccountDeleted.js';
 import { Chat } from './chat/Chat.js';
-import { DuelMenu } from './duel/DuelMenu.js';
-import { Duel } from './duel/Duel.js';
-import { DuelResult } from './duel/DuelResult.js';
+import { DuelMenu } from './match/DuelMenu.js';
+import { Duel } from './match/Duel.js';
+import { DuelResult } from './match/DuelResult.js';
+import { LocalGameMenu } from './match/LocalGameMenu.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
 import { TournamentResult } from './tournament/TournamentResult.js';
 import { Game } from './game/Game.js';
@@ -36,6 +37,7 @@ export {
   DuelMenu,
   Duel,
   DuelResult,
+  LocalGameMenu,
   TournamentMenu,
   TournamentResult,
   Game,

@@ -262,12 +262,11 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   template() {
     return `
-    <!--<game-options-modal></game-options-modal>-->
       <div class="container">
         <div class="row justify-content-center py-4">
           <div class="form-container col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 p-4">
             <div class="d-flex flex-column justify-content-center align-items-center w-100">
-              <h2 class="text-start m-0 w-75">Duel</h2>
+              <h2 class="text-start m-0 pt-2 w-75">Duel</h2>
               <button class="btn d-flex flex-row justify-content-end align-items-center fw-bold w-75 m-0 p-0 mb-3" id="game-options-button">
                 Game options&nbsp;
                 <i class="bi bi-arrow-right"></i>
@@ -313,10 +312,6 @@ export class DuelMenu extends HTMLElement {
   style() {
     return `
     <style>
-    .modal-content {
-      background-color: transparent;
-      color: var(--pm-primary-100) !important;
-    }
     #game-options-button {
       color: rgba(var(--bs-body-color-rgb), 0.6);
     }

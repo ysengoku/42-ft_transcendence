@@ -40,7 +40,7 @@ export class Home extends HTMLElement {
 
           <div class="d-flex flex-column justify-content-center align-items-center pt-5 gap-4">
             <div class="w-100"><home-duel-button></home-duel-button></div>
-            <div class="w-100"><home-ai-button></home-ai-button></div>
+            <div class="w-100"><home-localgame-button></home-localgame-button></div>
             <div class="w-100"><home-tournament-button></home-tournament-button></div>
             <div class="w-100"><home-profile-button></home-profile-button></div>
 
