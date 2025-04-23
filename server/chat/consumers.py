@@ -34,7 +34,12 @@ class UserEventsConsumer(WebsocketConsumer):
         if not self.user:
             self.close()
             return
-        self.user_profile = self.user.profile
+        try:
+            self.user_profile = self.user.profile
+        except AttributeError:
+            logger.error("User %s has no profile", self.user.username)
+            self.close()
+            return
         self.chats = Chat.objects.for_participants(self.user_profile)
         # Add user's channel to personal group to receive answers to invitations sent
         async_to_sync(self.channel_layer.group_add)(
@@ -84,7 +89,7 @@ class UserEventsConsumer(WebsocketConsumer):
             "read_message": {"id": str},
             "read_notification": {"id": str},
             "notification": {"notification": str, "type": str},
-            #TODO : replace game_invite by reply_game_invite
+            # TODO : replace game_invite by reply_game_invite
             "game_invite": {"id": str, "accept": bool},
         }
 
@@ -94,12 +99,12 @@ class UserEventsConsumer(WebsocketConsumer):
             "unlike_message": ["id", "chat_id"],
             "read_message": ["id"],
             "read_notification": ["id"],
-            #TODO : replace game_invite by reply_game_invite -->
+            # TODO : replace game_invite by reply_game_invite -->
             "game_invite": ["id"],
             "accept_game_invite": ["id"],
             "decline_game_invite": ["id"],
-            #TODO : replace game_invite by reply_game_invite <--
-            #TODO : check these ids 
+            # TODO : replace game_invite by reply_game_invite <--
+            # TODO : check these ids
             "new_tournament": ["id", "organizer_id"],
             "add_new_friend": ["id"],
             "join_chat": ["chat_id"],
@@ -144,8 +149,9 @@ class UserEventsConsumer(WebsocketConsumer):
                 "like_message": ["id", "chat_id"],
                 "unlike_message": ["id", "chat_id"],
                 "read_message": ["id"],
-            #TODO : replace game_invite by reply_game_invite
+                # TODO : replace game_invite by reply_game_invite
                 "game_invite": ["sender_id", "receiver_id"],
+                "reply_game_invite": ["id", "accept"],
                 "accept_game_invite": ["invitation_id"],
                 "decline_game_invite": ["invitation_id"],
                 "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
@@ -179,14 +185,14 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.handle_unlike_message(text_data_json)
                 case "read_message":
                     self.handle_read_message(text_data_json)
-            #TODO : replace game_invite by reply_game_invite -->
+            # TODO : replace game_invite by reply_game_invite -->
                 case "game_invite":
                     self.send_game_invite(text_data_json)
                 case "accept_game_invite":
                     self.accept_game_invite(text_data_json)
                 case "decline_game_invite":
                     self.decline_game_invite(text_data_json)
-            #TODO : replace game_invite by reply_game_invite <--
+            # TODO : replace game_invite by reply_game_invite <--
                 case "new_tournament":
                     self.handle_new_tournament(text_data_json)
                 case "add_new_friend":
@@ -449,6 +455,44 @@ class UserEventsConsumer(WebsocketConsumer):
                 },
             ),
         )
+
+    def reply_game_invite(self, data):
+
+        invitation_id = data["id"]
+        try:
+            invitation = GameInvitation.objects.get(id=invitation_id)
+            invitation.status = "accepted"
+            invitation.save()
+            # send notif to sender of the game invitation with receivers' infos
+            notification_data = get_user_data(self.user_profile)
+            notification_data.update(
+                {"id": str(invitation_id), "status": "accepted"})
+            async_to_sync(self.channel_layer.group_send)(
+                f"user_{invitation.sender.id}",
+                {
+                    "action": "game_invite",
+                    "data": notification_data,
+                },
+            )
+
+            self.send(
+                text_data=json.dumps(
+                    {
+                        "action": "game_invite",
+                        "data": {"id": invitation_id, "status": "accepted"},
+                    },
+                ),
+            )
+        except GameInvitation.DoesNotExist:
+            logger.debug("Invitation %s does not exist.", invitation_id)
+            self.send(
+                text_data=json.dumps(
+                    {
+                        "action": "error",
+                        "message": "Invitation not found.",
+                    },
+                ),
+            )
 
     def accept_game_invite(self, data):
         invitation_id = data["id"]
