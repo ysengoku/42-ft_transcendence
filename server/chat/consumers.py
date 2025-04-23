@@ -88,7 +88,7 @@ class UserEventsConsumer(WebsocketConsumer):
             "unlike_message": {"id": str, "chat_id": str},
             "read_message": {"id": str},
             "read_notification": {"id": str},
-            "notification": {"notification": str, "type": str},
+            "notification": {"message": str, "type": str},
             # TODO : replace game_invite by reply_game_invite
             "game_invite": {"id": str, "accept": bool},
         }
@@ -101,8 +101,8 @@ class UserEventsConsumer(WebsocketConsumer):
             "read_notification": ["id"],
             # TODO : replace game_invite by reply_game_invite -->
             "game_invite": ["id"],
-            "accept_game_invite": ["id"],
-            "decline_game_invite": ["id"],
+            "game_accepted": ["id"],
+            "game_declined": ["id"],
             # TODO : replace game_invite by reply_game_invite <--
             # TODO : check these ids
             "new_tournament": ["id", "organizer_id"],
@@ -145,15 +145,15 @@ class UserEventsConsumer(WebsocketConsumer):
             entire_data = text_data_json.get("data", {})
             required_fields = {
                 "new_message": ["content", "chat_id"],
-                "notification": ["notification", "type"],
+                "notification": ["message", "type"],
                 "like_message": ["id", "chat_id"],
                 "unlike_message": ["id", "chat_id"],
                 "read_message": ["id"],
                 # TODO : replace game_invite by reply_game_invite
                 "game_invite": ["sender_id", "receiver_id"],
                 "reply_game_invite": ["id", "accept"],
-                "accept_game_invite": ["invitation_id"],
-                "decline_game_invite": ["invitation_id"],
+                "game_accepted": ["invitation_id"],
+                "game_declined": ["invitation_id"],
                 "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
                 "add_new_friend": ["sender_id", "receiver_id"],
                 # "join_chat": ["chat_id"],
@@ -188,9 +188,9 @@ class UserEventsConsumer(WebsocketConsumer):
             # TODO : replace game_invite by reply_game_invite -->
                 case "game_invite":
                     self.send_game_invite(text_data_json)
-                case "accept_game_invite":
+                case "game_accepted":
                     self.accept_game_invite(text_data_json)
-                case "decline_game_invite":
+                case "game_declined":
                     self.decline_game_invite(text_data_json)
             # TODO : replace game_invite by reply_game_invite <--
                 case "new_tournament":
@@ -421,21 +421,19 @@ class UserEventsConsumer(WebsocketConsumer):
         }))
 
     def handle_notification(self, data):
-        logger.info("HANDLE NOTIFICATION FUNCTION !!!!")
-        notification_data = data["notification"]
-        notification_type = data["type"]
+        notification_data = data["data"]["message"]
+        notification_type = data["data"]["type"]
         notification_id = data.get("notification_id")
 
         if not notification_data or not notification_type:
             logger.warning("Incomplete notifications datas")
             return
 
-        logger.info("Notification %s", notification_data)
         # Create the notification in the db
         if notification_id is None:
             Notification.objects.create(
-                receiver=self.user,
-                message=notification_data,
+                receiver=self.user_profile,
+                data={"message": notification_data, "type": notification_type},
                 action=notification_type,
             )
         else:
