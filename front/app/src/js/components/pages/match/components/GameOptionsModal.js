@@ -180,7 +180,7 @@ export class GameOptionsModal extends HTMLElement {
           <div class="modal-header border-0">
             <button type="button" class="btn-close"></button>
           </div>
-          <div class="modal-body pt-4">
+          <div class="modal-body">
             <h2 class="text-center pb-4">Game Options</h2>
             <div class="form-group d-flex flex-column gap-5">
               <div>
@@ -255,6 +255,10 @@ export class GameOptionsModal extends HTMLElement {
 
     return `
     <style>
+    .modal-content {
+      background-color: transparent;
+      color: var(--pm-primary-100) !important;
+    }
     .range-wrapper {
       position: relative;
       margin: 0 auto 2rem;
