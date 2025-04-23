@@ -29,7 +29,7 @@ export class LocalGameButton extends HTMLElement {
 
   template() {
     return `
-	  <div class="btn btn-wood btn-lg w-100" id="home-localgame-button">Local Game</div>
+	  <div class="btn btn-wood btn-lg w-100" id="home-localgame-button">Local Battle</div>
 	  `;
   }
 }
