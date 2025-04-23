@@ -50,25 +50,33 @@ export class UserDuelHistory extends HTMLElement {
   render() {
     this.innerHTML = this.template();
     this.tableBody = this.querySelector('tbody');
+    this.filterButton = document.querySelector('#game-history-filter');
+    this.sortButton = document.querySelector('#game-history-sort');
 
-    if (!this.#state.items.length === 0) {
+    if (this.#state.items.length === 0) {
       const row = document.createElement('tr');
       const data = document.createElement('td');
       data.setAttribute('colspan', 5);
-      data.classList.add('text-center');
-      data.textContent = 'No duel participations yet';
+      data.classList.add('text-center', 'no-data-cell');
+      data.textContent = 'No duels played yet';
       row.appendChild(data);
       this.tableBody.appendChild(row);
+
+      const table = this.querySelector('.table');
+      table.style.borderColor = 'transparent';
+      this.filterButton.classList.add('d-none');
+      this.sortButton.classList.add('d-none');
       return;
     }
 
+    this.filterButton.classList.remove('d-none');
+    this.sortButton.classList.remove('d-none');
+
     this.tableContainer = document.querySelector('#user-game-history-body');
     this.duelsTab = document.querySelector('#duels-tab');
-    this.filterButton = document.querySelector('#game-history-filter');
     this.filterButtonAll = document.querySelector('#game-history-filter-all');
     this.filterButtonWon = document.querySelector('#game-history-filter-won');
     this.filterButtonLost = document.querySelector('#game-history-filter-lost');
-    this.sortButton = document.querySelector('#game-history-sort');
     this.sortByLatestButton = document.querySelector('#game-history-sort-latest');
     this.sortByOldestButton = document.querySelector('#game-history-sort-oldest');
 

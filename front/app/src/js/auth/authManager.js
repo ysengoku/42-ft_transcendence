@@ -68,7 +68,7 @@ const auth = (() => {
       return JSON.parse(user);
     }
 
-    /** 
+    /**
      * Get the user stored in session storage. If not found, fetch the user from the server
      * and store it in session storage. If the user is not logged in, redirect to the login page.
      * @return { Promise<Object> } The user object

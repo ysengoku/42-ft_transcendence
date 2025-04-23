@@ -1,7 +1,6 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import './components/index.js';
 
 // Status === matchmaking
