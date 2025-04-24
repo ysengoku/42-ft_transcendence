@@ -4,16 +4,9 @@ from datetime import datetime
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import (
-    Count,
-    Exists,
-    ImageField,
-    OuterRef,
-    Q,
-    Subquery,
-    Value,
-)
-from django.db.models.functions import Coalesce, NullIf
+from django.db.models import (Count, Exists, ExpressionWrapper, ImageField,
+                              OuterRef, Q, Subquery, Value)
+from django.db.models.functions import Coalesce, Now, NullIf
 from django.utils import timezone
 
 from users.models import Profile
@@ -65,8 +58,10 @@ class ChatQuerySet(models.QuerySet):
         ).order_by("-date")
 
         return self.annotate(
-            last_message=Subquery(latest_message_subquery.values("content")[:1]),
-            last_message_date=Subquery(latest_message_subquery.values("date")[:1]),
+            last_message=Subquery(
+                latest_message_subquery.values("content")[:1]),
+            last_message_date=Subquery(
+                latest_message_subquery.values("date")[:1]),
             last_message_id=Subquery(latest_message_subquery.values("pk")[:1]),
         ).order_by("-last_message_date")
 
@@ -77,34 +72,32 @@ class ChatQuerySet(models.QuerySet):
         blocked_through = Profile.blocked_users.through
 
         return self.annotate(
-            username=Subquery(other_chat_participant_subquery.values("user__username")),
-            nickname=Subquery(other_chat_participant_subquery.values("user__nickname")),
+            username=Subquery(
+                other_chat_participant_subquery.values("user__username")),
+            nickname=Subquery(
+                other_chat_participant_subquery.values("user__nickname")),
             avatar=Coalesce(
                 # sets field to null if the profile_picture is an empty string
                 NullIf(
-                    Subquery(other_chat_participant_subquery.values("profile_picture")),
+                    Subquery(other_chat_participant_subquery.values(
+                        "profile_picture")),
                     Value("", output_field=ImageField()),
                 ),
                 Value(settings.DEFAULT_USER_AVATAR, output_field=ImageField()),
             ),
-            # << << << < HEAD
-            # last_activity=Subquery(
-            #     other_chat_participant_subquery.values("last_activity")),
-            # is_online=Subquery(
-            #     other_chat_participant_subquery.values("is_online")),
-            # other_profile_id=Subquery(
-            #     other_chat_participant_subquery.values("pk")),
-            # unread_messages_count=Count("messages", filter=~Q(
-            #     messages__sender=profile) & Q(messages__is_read=False)),
-            # real_online=ExpressionWrapper(
-            #     Q(last_activity__gte=Now() - timedelta(minutes=2)), output_field=BooleanField()
-            # ),
-            # == == == =
-            is_online=Subquery(other_chat_participant_subquery.values("is_online")),
-            other_profile_id=Subquery(other_chat_participant_subquery.values("pk")),
+            last_activity=Subquery(
+                other_chat_participant_subquery.values("last_activity")),
+            is_online=Subquery(
+                other_chat_participant_subquery.values("is_online")),
+            real_online=ExpressionWrapper(
+                Q(last_activity__gte=Now() - timedelta(minutes=5)), output_field=BooleanField()
+            ),
+            other_profile_id=Subquery(
+                other_chat_participant_subquery.values("pk")),
             unread_messages_count=Count(
                 "messages",
-                filter=~Q(messages__sender=profile) & Q(messages__is_read=False),
+                filter=~Q(messages__sender=profile) & Q(
+                    messages__is_read=False),
             ),
         ).annotate(
             is_blocked_user=Exists(
@@ -169,8 +162,10 @@ class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content = models.TextField(max_length=256)
     date = models.DateTimeField(default=timezone.now)
-    sender = models.ForeignKey(Profile, related_name="sent_messages", on_delete=models.CASCADE)
-    chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
+    sender = models.ForeignKey(
+        Profile, related_name="sent_messages", on_delete=models.CASCADE)
+    chat = models.ForeignKey(
+        Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
     is_liked = models.BooleanField(default=False)
 
@@ -284,7 +279,8 @@ class GameInvitation(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
+    sender = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, null=True, blank=True)
     game_session = models.ForeignKey(
         GameSession, on_delete=models.PROTECT, related_name="game_invites",
     )
