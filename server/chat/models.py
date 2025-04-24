@@ -5,17 +5,15 @@ from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import (
-    BooleanField,
     Count,
     Exists,
-    ExpressionWrapper,
     ImageField,
     OuterRef,
     Q,
     Subquery,
     Value,
 )
-from django.db.models.functions import Coalesce, Now, NullIf
+from django.db.models.functions import Coalesce, NullIf
 from django.utils import timezone
 
 from users.models import Profile
@@ -74,8 +72,8 @@ class ChatQuerySet(models.QuerySet):
 
     def with_other_user_profile_info(self, profile: Profile):
         other_chat_participant_subquery = Profile.objects.filter(
-            chats=OuterRef("pk")
-        ).exclude(pk=profile.pk,)[:1]
+            chats=OuterRef("pk"),
+        ).exclude(pk=profile.pk)[:1]
         blocked_through = Profile.blocked_users.through
 
         return self.annotate(
@@ -224,7 +222,7 @@ class NotificationQuerySet(models.QuerySet):
         return self.create(receiver=receiver, data=data, action=notification_action)
 
     def action_new_friend(
-        self, receiver: Profile, sender: Profile, date: datetime = None
+        self, receiver: Profile, sender: Profile, date: datetime = None,
     ):
         """
         May include additional operations like using the channel layer to send data with websocket.
@@ -257,7 +255,7 @@ class Notification(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     receiver = models.ForeignKey(
-        Profile, related_name="notifications", on_delete=models.CASCADE
+        Profile, related_name="notifications", on_delete=models.CASCADE,
     )
     data = models.JSONField(encoder=DjangoJSONEncoder, null=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
@@ -288,13 +286,13 @@ class GameInvitation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
     game_session = models.ForeignKey(
-        GameSession, on_delete=models.PROTECT, related_name="game_invites"
+        GameSession, on_delete=models.PROTECT, related_name="game_invites",
     )
     recipient = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name="received_invites"
+        Profile, on_delete=models.CASCADE, related_name="received_invites",
     )
     status = models.CharField(
-        max_length=11, blank=False, choices=INVITE_STATUS, default="pending"
+        max_length=11, blank=False, choices=INVITE_STATUS, default="pending",
     )
 
     def __str__(self):
