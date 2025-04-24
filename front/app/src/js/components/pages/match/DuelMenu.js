@@ -3,7 +3,6 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
-import './components/GameOptionsModal.js';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
