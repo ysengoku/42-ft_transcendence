@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import Count, Exists, ExpressionWrapper, ImageField, OuterRef, Q, Subquery, Value
+from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, ImageField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, Now, NullIf
 from django.utils import timezone
 

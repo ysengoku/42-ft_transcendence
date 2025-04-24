@@ -142,10 +142,9 @@ class OnlineStatusConsumer(WebsocketConsumer):
         if not hasattr(self, "user_profile"):
             return
 
-    def notify_online_status(self, onlinestatus, user_profile=None):
+    def notify_online_status(self, onlinestatus):
         logger.info("function notify online status !")
         action = "user_online" if onlinestatus == "online" else "user_offline"
-        profile = user_profile if user_profile else self.user_profile
         user_data = {
             "username": self.user.username,
             "status": onlinestatus,
