@@ -39,7 +39,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def connect(self):
         self.user = self.scope.get("user")
-        if not self.user or not self.user.is_authenticated:
+        if not self.user:
             self.close()
             return
         try:
@@ -48,8 +48,8 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.error("User %s has no profile", self.user.username)
             self.close()
             return
-# << << << < HEAD
-            max_connexions = 10
+        max_connexions = 10
+        try:
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
                 if self.user_profile.nb_active_connexions >= max_connexions:
@@ -67,44 +67,86 @@ class UserEventsConsumer(WebsocketConsumer):
                 redis_status_manager.set_user_online(self.user.id)
                 logger.info("User %s connected, now has %i active connexions",
                             self.user.username, self.user_profile.nb_active_connexions)
-            self.chats = Chat.objects.for_participants(self.user_profile)
-            # Add user's channel to personal group to receive answers to invitations sent
-# == == == =
+        except DatabaseError as e:
+            logger.error("Database error during connect: %s", e)
+            self.close()
+        self.chats = Chat.objects.for_participants(self.user_profile)
+        # Add user's channel to personal group to receive answers to invitations sent
+        async_to_sync(self.channel_layer.group_add)(
+            f"user_{self.user.id}",
+            self.channel_name,
+        )
+        async_to_sync(self.channel_layer.group_add)(
+            "online_users",
+            self.channel_name,
+        )
+        for chat in self.chats:
+            async_to_sync(self.channel_layer.group_add)(
+                f"chat_{chat.id}",
+                self.channel_name,
+            )
+
+        self.accept()
+        self.notify_online_status("online", self.user_profile)
+        logger.info("User %s is now online with %i active connexions",
+                    self.user.username, self.user_profile.nb_active_connexions)
+
+#     def connect(self):
+#         self.user = self.scope.get("user")
+#         if not self.user or not self.user.is_authenticated:
+#             self.close()
+#             return
+#         try:
+#             self.user_profile = self.user.profile
 #         except AttributeError:
 #             logger.error("User %s has no profile", self.user.username)
 #             self.close()
 #             return
-#         self.chats = Chat.objects.for_participants(self.user_profile)
-#         # Add user's channel to personal group to receive answers to invitations sent
-#         async_to_sync(self.channel_layer.group_add)(
-#             f"user_{self.user.id}",
-#             self.channel_name,
-#         )
-#         for chat in self.chats:
-# >>>>>> > origin/live_chat
-            async_to_sync(self.channel_layer.group_add)(
-                f"user_{self.user.id}",
-                self.channel_name,
-            )
-            async_to_sync(self.channel_layer.group_add)(
-                "online_users",
-                self.channel_name,
-            )
-            for chat in self.chats:
-                async_to_sync(self.channel_layer.group_add)(
-                    f"chat_{chat.id}",
-                    self.channel_name,
-                )
-            self.accept()
-            # Notifier tous les utilisateurs du changement de statut
-            self.notify_online_status("online", self.user_profile)
-            logger.info("User %s is now online with %i active connexions",
-                        self.user.username, self.user_profile.nb_active_connexions)
-
-        except DatabaseError as e:
-            logger.error("Database error during connect: %s", e)
-            self.close()
-
+# # << << << < HEAD
+#         max_connexions = 10
+#         try:
+#             with transaction.atomic():
+#                 self.user_profile.refresh_from_db()
+#                 if self.user_profile.nb_active_connexions >= max_connexions:
+#                     logger.warning(
+#                         "Too many simultaneous connexions for user %s", self.user.username)
+#                     self.close()
+#                     return
+#                 self.user_profile.is_online = True
+#                 self.user_profile.last_activity = timezone.now()
+#                 self.user_profile.nb_active_connexions = models.F(
+#                     'nb_active_connexions') + 1
+#                 self.user_profile.save(
+#                     update_fields=['is_online', 'last_activity', 'nb_active_connexions'])
+#                 self.user_profile.refresh_from_db()
+#                 redis_status_manager.set_user_online(self.user.id)
+#                 logger.info("User %s connected, now has %i active connexions",
+#                             self.user.username, self.user_profile.nb_active_connexions)
+#             self.chats = Chat.objects.for_participants(self.user_profile)
+#             self.accept()
+#             async_to_sync(self.channel_layer.group_add)(
+#                   f"user_{self.user.id}",
+#                   self.channel_name,
+#                   )
+#             async_to_sync(self.channel_layer.group_add)(
+#                    "online_users",
+#                     self.channel_name,
+#                    )
+#             for chat in self.chats:
+#                 async_to_sync(self.channel_layer.group_add)(
+#                     f"chat_{chat.id}",
+#                     self.channel_name,
+#                 )
+#            # self.accept()
+#            # Notifier tous les utilisateurs du changement de statut
+#            self.notify_online_status("online", self.user_profile)
+#            logger.info("User %s is now online with %i active connexions",
+#                         self.user.username, self.user_profile.nb_active_connexions)
+#
+#        except DatabaseError as e:
+#            logger.error("Database error during connect: %s", e)
+#            self.close()
+#
     def disconnect(self, close_code):
         if hasattr(self, "user_profile"):
             if not Profile.objects.filter(pk=self.user_profile.pk).exists():
