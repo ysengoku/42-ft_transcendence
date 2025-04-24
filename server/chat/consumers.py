@@ -1,20 +1,15 @@
 import json
 import logging
-from datetime import timedelta
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, models, transaction
-from django.db.models import Q
 from django.utils import timezone
-from django.utils.timezone import now
 
-from users.consumers import (OnlineStatusConsumer, check_inactive_users,
-                             redis_status_manager)
+from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
 
 from .models import Chat, ChatMessage, GameInvitation, Notification
@@ -60,11 +55,11 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.close()
                     return
                 self.user_profile.nb_active_connexions = models.F(
-                    'nb_active_connexions') + 1
+                    "nb_active_connexions") + 1
                 self.user_profile.is_online = True
                 self.user_profile.last_activity = timezone.now()
                 self.user_profile.save(
-                    update_fields=['nb_active_connexions', 'is_online', 'last_activity'])
+                    update_fields=["nb_active_connexions", "is_online", "last_activity"])
                 self.user_profile.refresh_from_db()
                 self.user_profile.update_activity()
             redis_status_manager.set_user_online(self.user.id)
@@ -115,24 +110,23 @@ class UserEventsConsumer(WebsocketConsumer):
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
                 self.user_profile.nb_active_connexions = models.F(
-                    'nb_active_connexions') - 1
-                self.user_profile.save(update_fields=['nb_active_connexions'])
+                    "nb_active_connexions") - 1
+                self.user_profile.save(update_fields=["nb_active_connexions"])
                 self.user_profile.refresh_from_db()
 
                 # S'assurer que le compteur ne devient pas négatif
                 if self.user_profile.nb_active_connexions < 0:
                     self.user_profile.nb_active_connexions = 0
                     self.user_profile.save(
-                        update_fields=['nb_active_connexions'])
+                        update_fields=["nb_active_connexions"])
 
                 logger.info("User %s has %s active connexions",
                             self.user.username, self.user_profile.nb_active_connexions)
                 # Marquer comme hors ligne uniquement si c'était la dernière connexion
                 if self.user_profile.nb_active_connexions == 0:
                     self.user_profile.is_online = False
-                    self.user_profile.save(update_fields=['is_online'])
+                    self.user_profile.save(update_fields=["is_online"])
                     redis_status_manager.set_user_offline(self.user.id)
-                    # self.notify_online_status("offline", self.user_profile)
                     OnlineStatusConsumer.notify_online_status(
                         self, "offline", self.user_profile)
                     logger.info("User %s is now offline (no more active connexions)",
