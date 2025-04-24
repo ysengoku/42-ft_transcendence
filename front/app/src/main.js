@@ -7,8 +7,8 @@ import '@components/pages/index.js';
 import '@css/style.css';
 import { createClouds, createStars } from '@utils';
 
-const savedTheme = localStorage.getItem('theme') || 'light';
-document.documentElement.setAttribute('data-bs-theme', savedTheme);
+const theme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-bs-theme', theme);
 
 const observer = new MutationObserver(() => {
   document.documentElement.getAttribute('data-bs-theme') === 'light' ? (

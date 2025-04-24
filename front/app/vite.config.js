@@ -21,4 +21,16 @@ export default defineConfig({
       '@css': path.resolve(__dirname, 'src/css/'),
     },
   },
+  plugins: [
+    {
+      name: 'inject-theme-init',
+      transformIndexHtml(html) {
+        return html.replace(
+          /(<head[^>]*>)/i,
+          `$1
+          <script src='src/js/theme.js'></script>`
+        );
+      }
+    }
+  ]
 });
