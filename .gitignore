@@ -177,3 +177,4 @@ node_modules/
 /.vscode/
 copy_files.sh
 .idea
+.idea/
