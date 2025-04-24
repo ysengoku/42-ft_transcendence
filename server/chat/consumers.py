@@ -117,7 +117,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 if not isinstance(value, expected_type):
                     logger.warning(
                         "Invalid type for '%s' (waited for %s, received %s)",
-                        field, expected_type.__name__, type(value).__name__
+                        field, expected_type.__name__, type(value).__name__,
                     )
                     return False
 
@@ -141,7 +141,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 logger.warning("Message without action received")
                 return
 
-            data = text_data_json.get("data", {})
+            text_data_json.get("data", {})
             entire_data = text_data_json.get("data", {})
             required_fields = {
                 "new_message": ["content", "chat_id"],
@@ -149,15 +149,13 @@ class UserEventsConsumer(WebsocketConsumer):
                 "like_message": ["id", "chat_id"],
                 "unlike_message": ["id", "chat_id"],
                 "read_message": ["id"],
-                # TODO : replace game_invite by reply_game_invite
+                # TODO : check game_invite and reply_game_invite
                 "game_invite": ["sender_id", "receiver_id"],
                 "reply_game_invite": ["id", "accept"],
                 "game_accepted": ["invitation_id"],
                 "game_declined": ["invitation_id"],
                 "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
                 "add_new_friend": ["sender_id", "receiver_id"],
-                # "join_chat": ["chat_id"],
-                # "room_created": ["chat_id"],
                 "user_online": ["username"],
                 "user_offline": ["username"],
             }
@@ -185,14 +183,14 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.handle_unlike_message(text_data_json)
                 case "read_message":
                     self.handle_read_message(text_data_json)
-            # TODO : replace game_invite by reply_game_invite -->
+                # TODO : check game_invite and reply_game_invite -->
                 case "game_invite":
                     self.send_game_invite(text_data_json)
                 case "game_accepted":
                     self.accept_game_invite(text_data_json)
                 case "game_declined":
                     self.decline_game_invite(text_data_json)
-            # TODO : replace game_invite by reply_game_invite <--
+                # TODO : check game_invite and reply_game_invite <--
                 case "new_tournament":
                     self.handle_new_tournament(text_data_json)
                 case "add_new_friend":
@@ -235,7 +233,7 @@ class UserEventsConsumer(WebsocketConsumer):
         if message is not None and len(message) > 255:
             logger.warning(
                 "Message too long (%d caracteres) from user %s in chat %s",
-                len(message), self.user.username, chat_id
+                len(message), self.user.username, chat_id,
             )
             return
         new_message = ChatMessage.objects.create(

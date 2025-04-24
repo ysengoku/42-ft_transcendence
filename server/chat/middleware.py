@@ -2,10 +2,9 @@
 
 import logging
 
-from channels.auth import AuthMiddleware
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import AnonymousUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import AuthenticationFailed, InvalidToken
 
 logger = logging.getLogger("server")
 
@@ -26,7 +25,7 @@ class JWTAuthMiddleware:
                 validated_token = auth.get_validated_token(token)
                 user = await database_sync_to_async(auth.get_user)(validated_token)
                 scope["user"] = user
-            except Exception as e:
+            except (InvalidToken, AuthenticationFailed):
                 scope["user"] = None
         else:
             scope["user"] = None
