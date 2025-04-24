@@ -85,8 +85,8 @@ INSTALLED_APPS = [
     # Profiling
     "silk",
     # Testing frameworks
-    'rest_framework',
-    'rest_framework_simplejwt',
+    "rest_framework",
+    "rest_framework_simplejwt",
 ]
 
 MIDDLEWARE = [
