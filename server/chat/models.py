@@ -1,11 +1,10 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import (Count, Exists, ExpressionWrapper, ImageField,
-                              OuterRef, Q, Subquery, Value)
+from django.db.models import Count, Exists, ExpressionWrapper, ImageField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, Now, NullIf
 from django.utils import timezone
 
@@ -90,7 +89,7 @@ class ChatQuerySet(models.QuerySet):
             is_online=Subquery(
                 other_chat_participant_subquery.values("is_online")),
             real_online=ExpressionWrapper(
-                Q(last_activity__gte=Now() - timedelta(minutes=5)), output_field=BooleanField()
+                Q(last_activity__gte=Now() - timedelta(minutes=5)), output_field=BooleanField(),
             ),
             other_profile_id=Subquery(
                 other_chat_participant_subquery.values("pk")),
