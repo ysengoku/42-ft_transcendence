@@ -39,7 +39,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def connect(self):
         self.user = self.scope.get("user")
-        if not self.user:
+        if not self.user or not self.user.is_authenticated:
             self.close()
             return
         try:
@@ -48,6 +48,33 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.error("User %s has no profile", self.user.username)
             self.close()
             return
+
+        # Increment the number of active connexions and get the new value
+        max_connexions = 10
+        try:
+            with transaction.atomic():
+                self.user_profile.refresh_from_db()
+                if self.user_profile.nb_active_connexions >= max_connexions:
+                    logger.warning(
+                        "Too many simultaneous connexions for user %s", self.user.username)
+                    self.close()
+                    return
+                self.user_profile.nb_active_connexions = models.F(
+                    'nb_active_connexions') + 1
+                self.user_profile.is_online = True
+                self.user_profile.last_activity = timezone.now()
+                self.user_profile.save(
+                    update_fields=['nb_active_connexions', 'is_online', 'last_activity'])
+                self.user_profile.refresh_from_db()
+                self.user_profile.update_activity()
+            redis_status_manager.set_user_online(self.user.id)
+            logger.info("User %s connected, now has %i active connexions",
+                        self.user.username, self.user_profile.nb_active_connexions)
+        except DatabaseError as e:
+            logger.error("Database error during connect: %s", e)
+            self.close()
+            return
+
         self.chats = Chat.objects.for_participants(self.user_profile)
         async_to_sync(self.channel_layer.group_add)(
             f"user_{self.user.id}",
@@ -67,29 +94,65 @@ class UserEventsConsumer(WebsocketConsumer):
         self.user_profile.update_activity()
         OnlineStatusConsumer.notify_online_status(
             self, "online", self.user_profile)
-        logger.info("User %s is now online with %i active connexions",
-                    self.user.username, self.user_profile.nb_active_connexions)
 
     def disconnect(self, close_code):
-        if hasattr(self, "user_profile"):
-            if not Profile.objects.filter(pk=self.user_profile.pk).exists():
-                logger.info("User profile does not exist. Possibly deleted.")
-                return
-            OnlineStatusConsumer.notify_online_status(
-                self, "offline", self.user_profile)
-            logger.info("User %s now has %i active connexions",
-                        self.user.username, self.user_profile.nb_active_connexions)
+        if not hasattr(self, "user_profile"):
+            return
+        logger.info("User %s has %s active connexions",
+                    self.user.username, self.user_profile.nb_active_connexions)
+        if not Profile.objects.filter(pk=self.user_profile.pk).exists():
+            logger.info("User profile does not exist. Possibly deleted.")
+            return
 
-            async_to_sync(self.channel_layer.group_discard)(
-                "online_users",
-                self.channel_name,
-            )
-            if hasattr(self, "chats") and self.chats:
-                for chat in self.chats:
+        if hasattr(self, "chats") and self.chats:
+            for chat in self.chats:
+                async_to_sync(self.channel_layer.group_discard)(
+                    f"chat_{chat.id}",
+                    self.channel_name,
+                )
+        try:
+            # Décrémenter le compteur de connexions et récupérer la nouvelle valeur
+            with transaction.atomic():
+                self.user_profile.refresh_from_db()
+                self.user_profile.nb_active_connexions = models.F(
+                    'nb_active_connexions') - 1
+                self.user_profile.save(update_fields=['nb_active_connexions'])
+                self.user_profile.refresh_from_db()
+
+                # S'assurer que le compteur ne devient pas négatif
+                if self.user_profile.nb_active_connexions < 0:
+                    self.user_profile.nb_active_connexions = 0
+                    self.user_profile.save(
+                        update_fields=['nb_active_connexions'])
+
+                logger.info("User %s has %s active connexions",
+                            self.user.username, self.user_profile.nb_active_connexions)
+                # Marquer comme hors ligne uniquement si c'était la dernière connexion
+                if self.user_profile.nb_active_connexions == 0:
+                    self.user_profile.is_online = False
+                    self.user_profile.save(update_fields=['is_online'])
+                    redis_status_manager.set_user_offline(self.user.id)
+                    # self.notify_online_status("offline", self.user_profile)
+                    OnlineStatusConsumer.notify_online_status(
+                        self, "offline", self.user_profile)
+                    logger.info("User %s is now offline (no more active connexions)",
+                                self.user.username)
+
+                    # Remove user from the groups only when they have no more active connections
                     async_to_sync(self.channel_layer.group_discard)(
-                        f"chat_{chat.id}",
+                        f"user_{self.user.id}",
                         self.channel_name,
                     )
+                    async_to_sync(self.channel_layer.group_discard)(
+                        "online_users",
+                        self.channel_name,
+                    )
+                else:
+                    logger.info("User %s still has %i active connexions",
+                                self.user.username, self.user_profile.nb_active_connexions)
+
+        except DatabaseError as e:
+            logger.error("Database error during disconnect: %s", e)
 
     def join_chat(self, event):
         chat_id = event["data"]["chat_id"]
@@ -258,7 +321,7 @@ class UserEventsConsumer(WebsocketConsumer):
         if is_blocked:
             return
         # security check: message should not be longueur than 255
-        if message is not None and len(message) > 255:
+        if message is not None and len(message) > settings.MAX_MESSAGE_LENGTH:
             logger.warning(
                 "Message too long (%d caracteres) from user %s in chat %s",
                 len(message), self.user.username, chat_id,
@@ -298,7 +361,6 @@ class UserEventsConsumer(WebsocketConsumer):
             "data": user_data,
         }))
 
-# <<<<<<< HEAD
     def user_status(self, event):
         """
         Handle user status messages from the channel layer.
@@ -661,13 +723,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 },
             ),
         )
-        # async_to_sync(self.channel_layer.group_send)(
-        #     f"user_{receiver_id}",
-        #     {
-        #         "action": "new_friend",
-        #         "data": notification_data,
-        #     },
-        # )
 
     def send_room_created(self, chat_id):
         try:

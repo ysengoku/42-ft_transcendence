@@ -138,96 +138,12 @@ class OnlineStatusConsumer(WebsocketConsumer):
             self.close()
             return
 
-        try:
-            self.user_profile = self.user.profile
-            max_connexions = 10
-
-            # Increment the number of active connexions and get the new value
-            with transaction.atomic():
-                self.user_profile.refresh_from_db()
-                if self.user_profile.nb_active_connexions >= max_connexions:
-                    logger.warning(
-                        "Too many simultaneous connexions for user %s", self.user.username)
-                    self.close()
-                    return
-                self.user_profile.nb_active_connexions = models.F(
-                    'nb_active_connexions') + 1
-                self.user_profile.is_online = True
-                self.user_profile.last_activity = timezone.now()
-                self.user_profile.save(
-                    update_fields=['nb_active_connexions', 'is_online', 'last_activity'])
-                self.user_profile.refresh_from_db()
-                self.user_profile.update_activity()
-            redis_status_manager.set_user_online(self.user.id)
-            logger.info("User %s connected, now has %i active connexions",
-                        self.user.username, self.user_profile.nb_active_connexions)
-
-            # Add user's channel to personal group to receive answers to invitations sent
-            async_to_sync(self.channel_layer.group_add)(
-                f"user_{self.user.id}",
-                self.channel_name,
-            )
-            async_to_sync(self.channel_layer.group_add)(
-                "online_users",
-                self.channel_name,
-            )
-            self.accept()
-
-            # Notifier tous les utilisateurs du changement de statut
-            self.notify_online_status("online", self.user_profile)
-            logger.info("User %s is now online with %i active connexions",
-                        self.user.username, self.user_profile.nb_active_connexions)
-
-        except DatabaseError as e:
-            logger.error("Database error during connect: %s", e)
-            self.close()
-
     def disconnect(self, close_code):
         """
         Handle WebSocket disconnection
         """
         if not hasattr(self, "user_profile"):
             return
-
-        try:
-            # Décrémenter le compteur de connexions et récupérer la nouvelle valeur
-            with transaction.atomic():
-                self.user_profile.refresh_from_db()
-                self.user_profile.nb_active_connexions = models.F(
-                    'nb_active_connexions') - 1
-                self.user_profile.save(update_fields=['nb_active_connexions'])
-                self.user_profile.refresh_from_db()
-
-                # S'assurer que le compteur ne devient pas négatif
-                if self.user_profile.nb_active_connexions < 0:
-                    self.user_profile.nb_active_connexions = 0
-                    self.user_profile.save(
-                        update_fields=['nb_active_connexions'])
-
-                # Marquer comme hors ligne uniquement si c'était la dernière connexion
-                if self.user_profile.nb_active_connexions == 0:
-                    self.user_profile.is_online = False
-                    self.user_profile.save(update_fields=['is_online'])
-                    redis_status_manager.set_user_offline(self.user.id)
-                    self.notify_online_status("offline", self.user_profile)
-                    logger.info("User %s is now offline (no more active connexions)",
-                                self.user.username)
-
-                    # Remove user from the groups only when they have no more active connections
-                    async_to_sync(self.channel_layer.group_discard)(
-                        f"user_{self.user.id}",
-                        self.channel_name,
-                    )
-                    async_to_sync(self.channel_layer.group_discard)(
-                        "online_users",
-                        self.channel_name,
-                    )
-                else:
-                    logger.info("User %s still has %i active connexions",
-                                self.user.username, self.user_profile.nb_active_connexions)
-
-        except DatabaseError as e:
-            logger.error("Database error during disconnect: %s", e)
 
     def notify_online_status(self, onlinestatus, user_profile=None):
         logger.info("function notify online status !")

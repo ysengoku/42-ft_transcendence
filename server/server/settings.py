@@ -62,6 +62,8 @@ env = environ.Env(
     FT_API_OAUTH_URL=(str, ""),
     ACCESS_TOKEN_SECRET_KEY=(str, ""),
     REFRESH_TOKEN_SECRET_KEY=(str, ""),
+    # value by default is set to 255, but env value overwrites it if present
+    MAX_MESSAGE_LENGTH=(int, 255),
     # TODO: See if we can avoid setting a default value before -->
     # TODO: for the docker to work without having the real value
     # TODO: of SECRET_KEY yet                                  <--
@@ -75,6 +77,8 @@ SECRET_KEY = env("SECRET_KEY")
 
 DEBUG = env("DEBUG")
 CRON_SECRET = env("CRON_SECRET")
+
+MAX_MESSAGE_LENGTH = env("MAX_MESSAGE_LENGTH")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
