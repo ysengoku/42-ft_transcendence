@@ -238,10 +238,11 @@ class UserEventsConsumer(WebsocketConsumer):
             return
         new_message = ChatMessage.objects.create(
             sender=self.user_profile, content=message, chat=chat)
+
         async_to_sync(self.channel_layer.group_send)(
             f"chat_{chat_id}",
             {
-                "type": "chat.message",
+                "type": "chat_message",
                 "message": json.dumps({
                     "action": "new_message",
                     "data": {
