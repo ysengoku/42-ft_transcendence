@@ -1,11 +1,7 @@
-from asgiref.sync import async_to_sync, sync_to_async
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.utils import timezone
 from ninja.errors import AuthenticationError
 
-from users.models import Profile
 from users.models.refresh_token import RefreshToken
 
 User = get_user_model()
@@ -42,7 +38,6 @@ class JWTAuthMiddleware:
         cookies = headers.get(b"cookie", b"").decode(
             "utf-8") if b"cookie" in headers else ""
         token = None
-        # user = None
         scope["user"] = None
 
         for cookie_part in cookies.split(";"):
@@ -65,5 +60,3 @@ class ActivityMiddleware:
         if request.user.is_authenticated:
             request.user.profile.update_activity()
         return self.get_response(request)
-
-

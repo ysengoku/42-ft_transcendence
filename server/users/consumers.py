@@ -1,7 +1,7 @@
 import json
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import redis
 from asgiref.sync import async_to_sync
@@ -9,9 +9,6 @@ from channels.generic.websocket import WebsocketConsumer
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import models, transaction
-from django.db.models import Q
-from django.db.utils import DatabaseError
 from django.utils import timezone
 
 from users.models import Profile
@@ -109,7 +106,7 @@ def check_inactive_users():
 
         user.is_online = False
         user.nb_active_connexions = 0
-        user.save(update_fields=['is_online', 'nb_active_connexions'])
+        user.save(update_fields=["is_online", "nb_active_connexions"])
         redis_status_manager.set_user_offline(user.id)
         logger.info("User set offline")
 
@@ -120,7 +117,7 @@ def check_inactive_users():
                 "action": "user_offline",
                 "data": {
                     "username": user.user.username,
-                    "nickname": user.nickname if hasattr(user, 'nickname') else user.user.username,
+                    "nickname": user.nickname if hasattr(user, "nickname") else user.user.username,
                     "status": "offline",
                     "date": timezone.now().isoformat(),
                 },
@@ -152,7 +149,7 @@ class OnlineStatusConsumer(WebsocketConsumer):
         user_data = {
             "username": self.user.username,
             "status": onlinestatus,
-            "date": timezone.now().isoformat()
+            "date": timezone.now().isoformat(),
         }
         async_to_sync(self.channel_layer.group_send)(
             "online_users",
@@ -172,7 +169,7 @@ class OnlineStatusConsumer(WebsocketConsumer):
         data = event.get("data", {})
         if action == "force_disconnect":
             logger.info("Forcing disconnect for user %s: %s",
-                        self.user.username, data.get('message', 'No reason provided'))
+                        self.user.username, data.get("message", "No reason provided"))
             self.close()
             return
         self.send(text_data=json.dumps({

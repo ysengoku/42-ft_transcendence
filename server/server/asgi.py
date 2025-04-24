@@ -17,10 +17,8 @@ from users.middleware import JWTAuthMiddleware
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django_asgi_app = get_asgi_application()
 
-from chat.routing import \
-    websocket_urlpatterns as chat_websocket_urlpatterns  # noqa: E402
-from pong.routing import \
-    websocket_urlpatterns as pong_websocket_urlpatterns  # noqa: E402
+from chat.routing import websocket_urlpatterns as chat_websocket_urlpatterns  # noqa: E402
+from pong.routing import websocket_urlpatterns as pong_websocket_urlpatterns  # noqa: E402
 
 combined_patterns = chat_websocket_urlpatterns + pong_websocket_urlpatterns
 
@@ -29,8 +27,8 @@ application = ProtocolTypeRouter(
         "http": django_asgi_app,
         "websocket": AllowedHostsOriginValidator(
             JWTAuthMiddleware(
-                URLRouter(combined_patterns)
-            )
+                URLRouter(combined_patterns),
+            ),
         ),
     },
 )
