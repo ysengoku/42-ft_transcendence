@@ -4,12 +4,11 @@ import magic
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
-from django.db.models import (Case, Count, Exists, ExpressionWrapper, F, Func,
-                              IntegerField, Q, Sum, Value, When)
+from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
 from django.db.models.lookups import Exact
 from django.utils import timezone
 from ninja.files import UploadedFile
-from asgiref.sync import async_to_sync
+
 from users.utils import merge_err_dicts
 
 

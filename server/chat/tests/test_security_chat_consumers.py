@@ -18,6 +18,7 @@ from users.models import Profile
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
+logging.getLogger("server").setLevel(logging.WARNING)
 application = ProtocolTypeRouter({
     "websocket": JWTAuthMiddleware(
         URLRouter(websocket_urlpatterns)

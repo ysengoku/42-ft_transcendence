@@ -7,7 +7,6 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
-from django.utils import timezone
 from ninja.files import UploadedFile
 
 from users.models import OauthConnection
@@ -115,7 +114,7 @@ class User(AbstractUser):
         Retourne le profil associé à cet utilisateur.
         Si aucun profil n'existe, il en crée un automatiquement.
         """
-        if not hasattr(self, '_profile'):
+        if not hasattr(self, "_profile"):
             self._profile, _ = Profile.objects.get_or_create(user=self)
         return self._profile
 
