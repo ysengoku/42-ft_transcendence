@@ -87,8 +87,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
         self.accept()
         self.user_profile.update_activity()
-        OnlineStatusConsumer.notify_online_status(
-            self, "online", self.user_profile)
+        OnlineStatusConsumer.notify_online_status(self, "online")
 
     def disconnect(self, close_code):
         if not hasattr(self, "user_profile"):
@@ -127,8 +126,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.user_profile.is_online = False
                     self.user_profile.save(update_fields=["is_online"])
                     redis_status_manager.set_user_offline(self.user.id)
-                    OnlineStatusConsumer.notify_online_status(
-                        self, "offline", self.user_profile)
+                    OnlineStatusConsumer.notify_online_status(self, "offline")
                     logger.info("User %s is now offline (no more active connexions)",
                                 self.user.username)
 

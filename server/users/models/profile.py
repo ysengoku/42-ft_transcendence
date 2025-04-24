@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path  # noqa: A005
 
 import magic
@@ -28,9 +29,12 @@ class ProfileQuerySet(models.QuerySet):
         Annotates friendship and block status regarding user <username>.
         """
         return self.annotate(
-            is_friend=Exists(curr_user.profile.friends.filter(user__username=username)),
-            is_blocked_user=Exists(curr_user.profile.blocked_users.filter(user__username=username)),
-            is_blocked_by_user=Exists(curr_user.profile.blocked_users_of.filter(user__username=username)),
+            is_friend=Exists(curr_user.profile.friends.filter(
+                user__username=username)),
+            is_blocked_user=Exists(
+                curr_user.profile.blocked_users.filter(user__username=username)),
+            is_blocked_by_user=Exists(
+                curr_user.profile.blocked_users_of.filter(user__username=username)),
             friends_count=Count("friends", distinct=True),
         )
 
@@ -102,7 +106,13 @@ class Profile(models.Model):
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now_add=True)
     nb_active_connexions = models.IntegerField(default=0)
-    active_channels = models.JSONField(default=list, blank=True)  # Stocke les noms des canaux actifs
+    # Stocke les noms des canaux actifs
+    active_channels = models.JSONField(default=list, blank=True)
+
+    objects = ProfileQuerySet.as_manager()
+
+    def __str__(self) -> str:
+        return f"Profile of {self.user.username}"
 
     def update_activity(self):
         self.last_activity = timezone.now()
@@ -113,11 +123,6 @@ class Profile(models.Model):
     @property
     def is_really_online(self):
         return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=2)
-
-    objects = ProfileQuerySet.as_manager()
-
-    def __str__(self) -> str:
-        return f"Profile of {self.user.username}"
 
     @property
     def avatar(self) -> str:
