@@ -239,11 +239,12 @@ export class GameOptions extends HTMLElement {
       margin: 0 auto 1.5rem;
       output {
         position: absolute;
-        padding: 0 0.5rem;
+        padding: 0 0.6rem 1px 0.6rem;
         top: 1.75rem;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(var(--pm-primary-500-rgb), 0.4);
+        color: var(--pm-primary-100);
+        background: var(--pm-primary-500);
         border-radius: 0.5rem;
       }
     }
@@ -281,6 +282,7 @@ export class GameOptions extends HTMLElement {
     .btn-check:checked + .btn-outline-duel-speedOptions,
     .btn-check:active + .btn-outline-duel-speedOptions,
     .btn-outline-duel-speedOptions.active {
+      color: var(--pm-primary-100);
       background-color: var(--pm-primary-500);
       border-color: var(--pm-primary-500);
     }
