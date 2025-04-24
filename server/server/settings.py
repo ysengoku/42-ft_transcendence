@@ -62,7 +62,10 @@ env = environ.Env(
     FT_API_OAUTH_URL=(str, ""),
     ACCESS_TOKEN_SECRET_KEY=(str, ""),
     REFRESH_TOKEN_SECRET_KEY=(str, ""),
-    SECRET_KEY=(str, ""),
+    # TODO: See if we can avoid setting a default value before -->
+    # TODO: for the docker to work without having the real value
+    # TODO: of SECRET_KEY yet                                  <--
+    SECRET_KEY=(str, "default"),
 )
 
 env.read_env(env_file=str(BASE_DIR / ".env"))
@@ -218,7 +221,8 @@ else:
 
 
 # Configuration for proxy
-CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173", "https://nginx:1026"]
+CSRF_TRUSTED_ORIGINS = ["https://localhost:1026",
+                        "http://localhost:5173", "https://nginx:1026"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
 
