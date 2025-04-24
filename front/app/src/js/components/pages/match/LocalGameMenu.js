@@ -1,10 +1,13 @@
+import { router } from '@router';
+
 export class LocalGameMenu extends HTMLElement {
   #state = {
-
+    options: null,
   };
 
   constructor() {
     super();
+    this.navigateToGame = this.navigateToGame.bind(this);
   }
 
   connectedCallback() {
@@ -12,6 +15,8 @@ export class LocalGameMenu extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.localPlayerButton?.removeEventListener('click', this.navigateToGame);
+    this.aiPlayerButton?.removeEventListener('click', this.navigateToGame);
   }
 
   render() {
@@ -19,6 +24,24 @@ export class LocalGameMenu extends HTMLElement {
 
     this.querySelector('.modal-title')?.classList.add('d-none');
     this.querySelector('#is-ranked-selector')?.classList.add('d-none');
+
+    this.localPlayerButton = this.querySelector('#local-game-classic');
+    this.aiPlayerButton = this.querySelector('#local-game-ai');
+
+    this.gameOptionsForm = this.querySelector('game-options');
+    this.localPlayerButton.addEventListener('click', this.navigateToGame);
+    this.aiPlayerButton.addEventListener('click', this.navigateToGame);
+  }
+
+  navigateToGame(event) {
+    event.preventDefault();
+    const gameOptions = this.gameOptionsForm.selectedOptions;
+    if (gameOptions) {
+      gameOptions.isRanked = false;
+    }
+    devLog('Game options:', gameOptions);
+    const gameType = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
+    router.navigate('/singleplayer-game');
   }
 
   template() {
