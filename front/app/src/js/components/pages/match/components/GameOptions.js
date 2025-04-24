@@ -17,12 +17,8 @@ export class GameOptions extends HTMLElement {
 
   constructor() {
     super();
-    // this._onConfirmCallback = null;
-
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
-    this.confirmOptions = this.confirmOptions.bind(this);
-    this.cancelOptionsSelection = this.cancelOptionsSelection.bind(this);
   }
 
   setOptions(options) {
@@ -36,12 +32,17 @@ export class GameOptions extends HTMLElement {
   }
 
   get selectedOptions() {
-    return this.#state.selectedOptions;
+    if (JSON.stringify(this.#state.selectedOptions) !== JSON.stringify(this.#state.defaultOptions)) {
+      return this.#state.selectedOptions;
+    }
+    return null;
   }
 
   connectedCallback() {
     if (!this.#state.selectedOptions) {
-      this.#state.selectedOptions = this.#state.defaultOptions;
+      this.#state.selectedOptions = {
+        ...this.#state.defaultOptions
+      };
     }
     this.render();
   }
@@ -112,24 +113,6 @@ export class GameOptions extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
-
-  confirmOptions() {
-    this._onConfirmCallback(this.#state.selectedOptions);
-    this.modal.hide();
-    this.duelMenuComponent?.removeChild(this);
-  }
-
-  cancelOptionsSelection() {
-    this.#state = {
-      scoreToWin: 20,
-      gameSpeed: 'normal',
-      isRanked: true,
-      timeLimitMinutes: 3,
-    };
-    this.modal.hide();
-    this.duelMenuComponent?.removeChild(this);
-  }
-
   updateOptions(event) {
     event.stopPropagation();
     event.preventDefault();
