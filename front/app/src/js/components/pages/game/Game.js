@@ -306,9 +306,9 @@ export class Game extends HTMLElement {
         keyMap["KeyA"] = false;
       }
     }
-
+    let step;
     function animate() {
-      requestAnimationFrame(animate);
+      step = requestAnimationFrame(animate);
       let someone_scored = false;
       let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * Ball.velocity.x);
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
@@ -362,20 +362,49 @@ export class Game extends HTMLElement {
                   else if (Bumpers[lastBumperCollided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf){
                       Bumpers[lastBumperCollided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
                   }
+                  let time = setTimeout(function(){
+                    Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+                    Bumpers[lastBumperCollided].lenghtHalf = 2.5;
+                    clearTimeout(time);
+                  }, 10000);
                 }
                 else if (choose == 2) {
                   Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 0.5;
                   Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
+                  let time = setTimeout(function(){
+                        Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 1;
+                        Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 2.5;
+                        if ((Bumpers[Math.abs(lastBumperCollided - 1)].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf)) {
+                          Bumpers[Math.abs(lastBumperCollided - 1)].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf - 0.1;
+                        }
+                        else if (Bumpers[Math.abs(lastBumperCollided - 1)].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf){
+                            Bumpers[Math.abs(lastBumperCollided - 1)].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf + 0.1;
+                        }
+                        clearTimeout(time);
+                  }, 10000);
                 }
                 else if (choose == 3){
                     Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
+                    let time = setTimeout(function(){
+                      Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = false;
+                      clearTimeout(time);
+                    }, 2000);
                 }
                 else{
                   Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
                   Bumpers[lastBumperCollided].widthHalf = 1.5;
+                  let time = setTimeout(function(){
+                      Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
+                      Bumpers[lastBumperCollided].widthHalf = 0.5;
+                      clearTimeout(time);
+                  }, 10000);
                 }
-                
-                Coin.cylinderUpdate.set(-9.25, 3, 0);
+                Coin.cylinderUpdate.set(-100, 3, 0);
+                let time = setTimeout(function(){
+                  Coin.cylinderUpdate.set(-9.25, 3, 0);
+                  clearTimeout(time);
+              }, 30000);
+              // visibilitychange;
           }
           // console.log();
           if (((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf))
@@ -408,7 +437,26 @@ export class Game extends HTMLElement {
       }
       renderer.render(scene, camera);
     }
-
+  //   var Timer = function(callback, delay) {
+  //     var timerId, start, remaining = delay;
+  
+  //     this.pause = function() {
+  //         window.clearTimeout(timerId);
+  //         timerId = null;
+  //         remaining -= Date.now() - start;
+  //     };
+  
+  //     this.resume = function() {
+  //         if (timerId) {
+  //             return;
+  //         }
+  
+  //         start = Date.now();
+  //         timerId = window.setTimeout(callback, remaining);
+  //     };
+  
+  //     this.resume();
+  // };
     document.addEventListener('keydown', onDocumentKeyDown, true);
     document.addEventListener('keyup', onDocumentKeyUp, true);
     function onDocumentKeyDown(event) {
@@ -427,6 +475,19 @@ export class Game extends HTMLElement {
       keyMap[keyCode] = false;
       event.preventDefault();
     }
+    let is_back = false;
+    window.addEventListener('visibilitychange', function() {
+      if (is_back == false)
+      {
+        cancelAnimationFrame(step);
+        is_back = true;
+      }
+      else
+      {
+        step = requestAnimationFrame(animate);
+        is_back = false;
+      }
+    });
   
     return [camera, renderer, animate];
   }
