@@ -26,7 +26,7 @@ logger = logging.getLogger("server")
 PLAYERS_REQUIRED = 2
 
 
-class GameRoomConsumer(WebsocketConsumer):
+class MatchmakingConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope.get("user")
         if not self.user:
