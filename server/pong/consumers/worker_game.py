@@ -1,12 +1,12 @@
 import asyncio
-import hashlib
 import json
+import logging
 import math
-import os
 from dataclasses import dataclass
 
 from channels.generic.websocket import AsyncConsumer
 
+logger = logging.getLogger("server")
 #### CONSTANTS ####
 BUMPER_1 = 1
 BUMPER_2 = 2
@@ -47,7 +47,6 @@ class Bumper(Vector2):
     moves_left: bool
     moves_right: bool
     dir_z: int
-    user_id: str
     player_id: str
 
 
@@ -69,7 +68,6 @@ class Pong:
         moves_left=False,
         moves_right=False,
         dir_z=1,
-        user_id="",
         player_id="",
     )
     bumper_2: Bumper = Bumper(
@@ -78,7 +76,6 @@ class Pong:
         moves_left=False,
         moves_right=False,
         dir_z=-1,
-        user_id="",
         player_id="",
     )
     ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
@@ -210,81 +207,44 @@ class GameConsumer(AsyncConsumer):
         super().__init__()
         self.matches = {}
         self.players = {}
+        asyncio.create_task(self.process_matches())
 
-    async def match_start(self, event):
+    async def player_connected(self, event):
         game_room_id = event["game_room_id"]
         player_id = event["player_id"]
-        user_id = event["player_id"]
-        if self.players[game_room_id]:
-            self.players[game_room_id].append({"player_id": player_id, "user_id": user_id})
-        else:
-            self.players[game_room_id] = [{"player_id": player_id, "user_id": user_id}]
+        if game_room_id not in self.players:
+            self.players[game_room_id].append({"player_id": player_id})
+            return
+
+        self.players[game_room_id] = [{"player_id": player_id}]
 
         if game_room_id in self.matches:
             return
 
         self.matches[game_room_id] = Pong()
 
-    async def connect(self):
-        self.match_name = self.scope["url_route"]["kwargs"]["match_name"]
-        self.match_group_name = f"match_{self.match_name}"
-        self.user = self.scope.get("user")
+    async def player_inputed(self, event):
+        """
+        Handles player input. There is no validation of the input, because it is a worker,
+        and event source is the server, which we can trust.
+        """
+        game_room_id = event["game_room_id"]
+        player_id = event["player_id"]
+        action = event["action"]
+        content = event["content"]
 
-        if not self.user:
-            await self.close(1000)
-            return
-
-        self.user_id = str(self.user.id)
-
-        await self.accept()
-        await self.channel_layer.group_add(self.match_group_name, self.channel_name)
-        self.state = Pong()
-        if not is_in_game:
-            player_ids[self.user_id] = hashlib.sha256(os.urandom(32)).hexdigest()
-            if len(player_ids) == 1:
-                self.state.bumper_1.user_id = self.user_id
-                self.state.bumper_1.player_id = player_ids[self.user_id]
-            elif len(player_ids) == MAX_PLAYERS:
-                self.state.bumper_2.user_id = self.user_id
-                self.state.bumper_2.player_id = player_ids[self.user_id]
-
-        await self.send(text_data=json.dumps({"event": "joined", "player_id": player_ids[self.user_id]}))
-
-        if len(player_ids) == MAX_PLAYERS:
-            await self.channel_layer.group_send(
-                self.match_group_name,
-                {"type": "state_update", "state": self.state.as_dict()},
-            )
-            asyncio.create_task(self.timer())
-
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.match_group_name, self.channel_name)
-
-    async def receive(self, text_data):
-        if len(player_ids) != MAX_PLAYERS:
-            return
-        text_data_json = json.loads(text_data)
-        action = text_data_json["action"]
         match action:
             case "move_left" | "move_right":
-                player_id, content = text_data_json["player_id"], text_data_json["content"]
-                if not bumpers.get(player_id):
-                    await self.disconnect(1000)
-                self.state.handle_input(player_id, action, content)
+                self.matches[game_room_id].handle_input(player_id, action, content)
 
-    def calculate_sleeping_time(self):
-        return 0.015
-
-    async def timer(self):
-        while len(player_ids) == MAX_PLAYERS:
-            await asyncio.sleep(self.calculate_sleeping_time())
-            await self.game_tick()
+    async def process_matches(self):
+        while True:
+            for match in self.matches.values():
+                await match.resolve_next_tick()
+                await self.channel_layer.group_send(self.match_group_name, {"type": "state_update"})
+            await asyncio.sleep(0.015)
 
     async def state_update(self, event):
+        # TODO: properly send the state back to the server
         await self.send(text_data=json.dumps({"event": "game_tick", "state": self.state.as_dict()}))
         self.state.someone_scored = False
-
-    async def game_tick(self):
-        self.state.resolve_next_tick()
-        await self.channel_layer.group_send(self.match_group_name, {"type": "state_update"})
-

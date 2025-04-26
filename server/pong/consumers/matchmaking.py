@@ -1,13 +1,11 @@
-import hashlib
 import json
 import logging
-import os
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.db import transaction
 
-from pong.models import GameRoom
+from pong.models import GameRoom, GameRoomPlayer
 
 """
 flowchart
@@ -33,9 +31,8 @@ class MatchmakingConsumer(WebsocketConsumer):
             self.game_room = None
             self.close()
             return
-        self.accept()
 
-        self.player_id = hashlib.sha256(os.urandom(32)).hexdigest()
+        self.accept()
 
         # transaction.atomic and .select_for_update are needed to prevent possible race condition
         with transaction.atomic():
@@ -44,12 +41,13 @@ class MatchmakingConsumer(WebsocketConsumer):
                 self.game_room = GameRoom.objects.create(players=[self.user.profile])
                 logger.info("[Matchmaking.connect]: game room {%s} was created", self.game_room)
             else:
+                GameRoomPlayer.objects.create(game_room=self.game_room, profile=self.user.profile)
                 self.game_room.players.add(self.user.profile)
                 logger.info(
                     "[Matchmaking.connect]: game room {%s} added profile {%s}", self.game_room, self.user.profile,
                 )
 
-            self.group_name = f"game_room_{self.game_room.id}"
+            self.group_name = f"matchmaking_{self.game_room.id}"
             async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
 
             if self.game_room.players.count() == PLAYERS_REQUIRED:
@@ -81,7 +79,9 @@ class MatchmakingConsumer(WebsocketConsumer):
                 self.close()
 
     def matchmaking_players_found(self, event):
-        opponent = self.game_room.players.exclude(user=self.user).first()
+        opponent = self.game_room.players.exclude(user=self.user.profile).first()
+        self.game_room.status = GameRoom.ONGOING
+        self.game_room.save()
         self.send(
             text_data=json.dumps(
                 {
@@ -92,12 +92,4 @@ class MatchmakingConsumer(WebsocketConsumer):
                     "avatar": opponent.avatar,
                 },
             ),
-        )
-        async_to_sync(self.channel_layer.send)(
-            "game",
-            {
-                "type": "match_start",
-                "user_id": str(self.user.id),
-                "player_id": self.player_id,
-            },
         )
