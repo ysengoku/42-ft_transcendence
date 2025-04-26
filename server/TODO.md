@@ -82,6 +82,9 @@
 - [ ] Add testing for `chat` endpoints.
 - [ ] Update the `populate_db` script. As for now, it uses raw models to add friends without creating appropriate notifications. We should extract friend addition logic to a specific function.
 
+### Things to test/fix
+- [ ] Everywhere where websocket expects valid JSON, check for the decoding errors.
+
 ## Docs
 - [ ] Update docsrings for endpoints that provide paginated data, which is reverse ordered.
 
