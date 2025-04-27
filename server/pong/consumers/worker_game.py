@@ -3,6 +3,7 @@ import json
 import logging
 import math
 from dataclasses import dataclass
+from channels.layers import get_channel_layer
 
 from channels.generic.websocket import AsyncConsumer
 
@@ -96,12 +97,10 @@ class Pong:
         }
 
     def handle_input(self, player_id: str, action: str, content: bool):
-        bumper_map = {
-            self.bumper_1.player_id: self.bumper_1,
-            self.bumper_2.player_id: self.bumper_2,
-        }
-        if player_id in bumper_map:
-            bumper = bumper_map[player_id]
+        if player_id == self.bumper_1.player_id:
+            bumper = self.bumper_1
+        elif player_id == self.bumper_2.player_id:
+            bumper = self.bumper_2
         else:
             return
 
@@ -206,8 +205,14 @@ class GameConsumer(AsyncConsumer):
     def __init__(self):
         super().__init__()
         self.matches = {}
+        self.match_tasks = {}
         self.players = {}
+        self.channel_layer = get_channel_layer()
         asyncio.create_task(self.process_matches())
+
+    def _to_group_name(self, game_room_id: str):
+        """Little function for avoiding typing errors."""
+        return f"game_room_{game_room_id}"
 
     async def player_connected(self, event):
         game_room_id = event["game_room_id"]
@@ -218,10 +223,12 @@ class GameConsumer(AsyncConsumer):
 
         self.players[game_room_id] = [{"player_id": player_id}]
 
-        if game_room_id in self.matches:
+        if game_room_id not in self.matches:
+            self.matches[game_room_id] = Pong()
+
+        else:
             return
 
-        self.matches[game_room_id] = Pong()
 
     async def player_inputed(self, event):
         """
@@ -240,8 +247,7 @@ class GameConsumer(AsyncConsumer):
     async def process_matches(self):
         while True:
             for match in self.matches.values():
-                await match.resolve_next_tick()
-                await self.channel_layer.group_send(self.match_group_name, {"type": "state_update"})
+                match.resolve_next_tick()
             await asyncio.sleep(0.015)
 
     async def state_update(self, event):
