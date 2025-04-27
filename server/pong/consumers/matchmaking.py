@@ -44,7 +44,9 @@ class MatchmakingConsumer(WebsocketConsumer):
                 GameRoomPlayer.objects.create(game_room=self.game_room, profile=self.user.profile)
                 self.game_room.players.add(self.user.profile)
                 logger.info(
-                    "[Matchmaking.connect]: game room {%s} added profile {%s}", self.game_room, self.user.profile,
+                    "[Matchmaking.connect]: game room {%s} added profile {%s}",
+                    self.game_room,
+                    self.user.profile,
                 )
 
             self.group_name = f"matchmaking_{self.game_room.id}"
@@ -54,7 +56,6 @@ class MatchmakingConsumer(WebsocketConsumer):
                 logger.info("[Matchmaking.connect]: game room {%s} both players were found")
                 self.game_room.close()
                 async_to_sync(self.channel_layer.group_send)(self.group_name, {"type": "matchmaking_players_found"})
-
 
     def disconnect(self, code: int):
         if not self.game_room:
