@@ -86,3 +86,17 @@ class GameRoomConsumer(WebsocketConsumer):
                     self.user.profile,
                     self.game_room_id,
                 )
+
+    def state_updated(self, event: dict):
+        """
+        Event handler for `state_updated`.
+        `state_updated` is sent from the game worker to this consumer on each game tick.
+        """
+        self.send(
+            text_data=json.dumps(
+                {
+                    "event": "game_tick",
+                    "state": event["state"],
+                },
+            ),
+        )
