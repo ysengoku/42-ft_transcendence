@@ -1,12 +1,17 @@
 import json
 import logging
 import time
+from datetime import timedelta
 
 import redis
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from users.models import Profile
 
 User = get_user_model()
 
@@ -42,7 +47,7 @@ class RedisUserStatusManager:
                 f"{self._online_users_key}:{user_id}",
                 self._timeout,
                 json.dumps(
-                    {"user_id": user_id, "timestamp": int(time.time())}),
+                    {"user_id": str(user_id), "timestamp": int(time.time())}),
             )
         except redis.RedisError as e:
             logger.debug("Error setting user online: %s ", e)
@@ -84,104 +89,92 @@ class RedisUserStatusManager:
 redis_status_manager = RedisUserStatusManager()
 
 
+def check_inactive_users():
+    logger.info("Checking for inactive users")
+    threshold = timezone.now() - timedelta(minutes=5)
+
+    inactive_users = Profile.objects.filter(
+        last_activity__lt=threshold,
+        is_online=True,
+    )
+
+    channel_layer = get_channel_layer()
+
+    for user in inactive_users:
+        logger.info("User %s is inactive (no activity for 5 minutes and no active connections)",
+                    user.user.username)
+
+        user.is_online = False
+        user.nb_active_connexions = 0
+        user.save(update_fields=["is_online", "nb_active_connexions"])
+        redis_status_manager.set_user_offline(user.id)
+        logger.info("User set offline")
+
+        async_to_sync(channel_layer.group_send)(
+            "online_users",
+            {
+                "type": "user_status",
+                "action": "user_offline",
+                "data": {
+                    "username": user.user.username,
+                    "nickname": user.nickname if hasattr(user, "nickname") else user.user.username,
+                    "status": "offline",
+                    "date": timezone.now().isoformat(),
+                },
+            },
+        )
+
+
 class OnlineStatusConsumer(WebsocketConsumer):
     def connect(self):
         """
-        Handle new WebSocket connection
+        Handle WebSocket connection
         """
-        self.user = self.scope["user"]
-
-        # Verify user authentication using Django's built-in auth
+        self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
-            logger.debug(
-                "WebSocket connection rejected: User not authenticated")
             self.close()
             return
-
-        # Add user to the online_users group
-        self.group_name = "online_users"
-        async_to_sync(self.channel_layer.group_add)(
-            self.group_name, self.channel_name)
-
-        # Accept the connection
-        self.accept()
-
-        # Update user's online status
-        self._set_user_online(True)
-
-        # Announce to other users
-        self._announce_status(True)
 
     def disconnect(self, close_code):
         """
         Handle WebSocket disconnection
         """
-        if not hasattr(self, "user") or not self.user or not self.user.is_authenticated:
+        if not hasattr(self, "user_profile"):
             return
 
-        # Update user's offline status
-        self._set_user_online(False)
-
-        # Announce to other users
-        self._announce_status(False)
-
-        # Remove user from the group
-        async_to_sync(self.channel_layer.group_discard)(
-            self.group_name, self.channel_name)
-
-    def receive(self, text_data):
-        """
-        Handle received WebSocket messages
-        Currently a no-op, but can be extended
-        """
+    def notify_online_status(self, onlinestatus):
+        logger.info("function notify online status !")
+        action = "user_online" if onlinestatus == "online" else "user_offline"
+        user_data = {
+            "username": self.user.username,
+            "status": onlinestatus,
+            "date": timezone.now().isoformat(),
+        }
+        async_to_sync(self.channel_layer.group_send)(
+            "online_users",
+            {
+                "type": "user_status",
+                "action": action,
+                "data": user_data,
+            },
+        )
 
     def user_status(self, event):
         """
-        Send status updates to the client
-
-        Args:
-            event (dict): Event containing user status information
-
+        Handle user status messages from the channel layer.
+        This method is called when a user's status changes (online/offline).
         """
-        self.send(
-            text_data=json.dumps(
-                {
-                    "type": "status_update",
-                    "user_id": event["user_id"],
-                    "username": event["username"],
-                    "online": event["online"],
-                },
-            ),
-        )
-
-    def _set_user_online(self, status):
-        """
-        Update user's online status
-
-        Args:
-            status (bool): Whether the user is online or offline
-
-        """
-        if status:
-            # Mark user as online
-            redis_status_manager.set_user_online(self.user.id)
-        else:
-            # Mark user as offline
-            redis_status_manager.set_user_offline(self.user.id)
-
-    def _announce_status(self, status):
-        """
-        Announce status change to all connected users
-
-        Args:
-            status (bool): Whether the user is online or offline
-
-        """
-        async_to_sync(self.channel_layer.group_send)(
-            self.group_name,
-            {"type": "user_status", "user_id": str(
-                self.user.id), "username": self.user.username, "online": status},
-        )
+        action = event.get("action")
+        data = event.get("data", {})
+        if action == "force_disconnect":
+            logger.info("Forcing disconnect for user %s: %s",
+                        self.user.username, data.get("message", "No reason provided"))
+            self.close()
+            return
+        self.send(text_data=json.dumps({
+            "action": action,
+            "data": data,
+        }))
 
 
 def get_online_users():

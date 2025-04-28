@@ -3,6 +3,8 @@ import os
 import sys
 from pathlib import Path
 
+import environ
+
 
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
@@ -23,17 +25,64 @@ if __name__ == "__main__":
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# TODO: Change the secret key in production
-SECRET_KEY = "your-secret-key"
-
 # Environment variables
+# Init django-environ
+env = environ.Env(
+    DEBUG=(bool, False),
+    IN_CONTAINER=(bool, False),
+    CRON_SECRET=(str, ""),
+    REDIS_HOST=(str, "redis"),
+    REDIS_PORT=(int, 6379),
+    POSTGRES_DB=(str, ""),
+    POSTGRES_USER=(str, ""),
+    POSTGRES_PASSWORD=(str, ""),
+    DATABASE_HOST=(str, "database"),
+    DATABASE_PORT=(str, "5432"),
+    EMAIL_BACKEND=(str, "django.core.mail.backends.smtp.EmailBackend"),
+    EMAIL_HOST=(str, "smtp.gmail.com"),
+    EMAIL_PORT=(int, 587),
+    EMAIL_USE_TLS=(bool, True),
+    EMAIL_USE_SSL=(bool, False),
+    EMAIL_HOST_USER=(str, ""),
+    EMAIL_HOST_PASSWORD=(str, ""),
+    DEFAULT_FROM_EMAIL=(str, ""),
+    GITHUB_CLIENT_ID=(str, ""),
+    GITHUB_CLIENT_SECRET=(str, ""),
+    GITHUB_REDIRECT_URI=(str, ""),
+    GITHUB_ACCESS_TOKEN_URL=(str, ""),
+    GITHUB_AUTHORIZE_URL=(str, ""),
+    GITHUB_USER_PROFILE_URL=(str, ""),
+    GITHUB_FT_API_URL=(str, ""),
+    API42_CLIENT_ID=(str, ""),
+    API42_CLIENT_SECRET=(str, ""),
+    FT_API_REDIRECT_URI=(str, ""),
+    FT_API_ACCESS_TOKEN_URL=(str, ""),
+    FT_API_AUTHORIZE_URL=(str, ""),
+    FT_API_USER_PROFILE_URL=(str, ""),
+    FT_API_OAUTH_URL=(str, ""),
+    ACCESS_TOKEN_SECRET_KEY=(str, ""),
+    REFRESH_TOKEN_SECRET_KEY=(str, ""),
+    # value by default is set to 255, but env value overwrites it if present
+    MAX_MESSAGE_LENGTH=(int, 255),
+    # TODO: See if we can avoid setting a default value before -->
+    # TODO: for the docker to work without having the real value
+    # TODO: of SECRET_KEY yet                                  <--
+    SECRET_KEY=(str, "default"),
+)
 
-DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
+env.read_env(env_file=str(BASE_DIR / ".env"))
 
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# TODO: Change the secret key in production
+SECRET_KEY = env("SECRET_KEY")
 
-IN_CONTAINER = int(os.environ.get("IN_CONTAINER", "0"))
+DEBUG = env("DEBUG")
+CRON_SECRET = env("CRON_SECRET")
+
+MAX_MESSAGE_LENGTH = env("MAX_MESSAGE_LENGTH")
+
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
+
+IN_CONTAINER = env("IN_CONTAINER")
 
 if not IN_CONTAINER:
     DATABASES = {
@@ -57,11 +106,11 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB"),
-            "USER": os.environ.get("POSTGRES_USER"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-            "HOST": os.environ.get("DATABASE_HOST", "database"),
-            "PORT": os.environ.get("DATABASE_PORT", "5432"),
+            "NAME": env("POSTGRES_DB"),
+            "USER": env("POSTGRES_USER"),
+            "PASSWORD": env("POSTGRES_PASSWORD"),
+            "HOST": env("DATABASE_HOST"),
+            "PORT": env("DATABASE_PORT"),
         },
     }
 
@@ -84,14 +133,17 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Profiling
     "silk",
+    # Testing frameworks
+    "rest_framework",
+    "rest_framework_simplejwt",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "silk.middleware.SilkyMiddleware",
@@ -152,8 +204,8 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
-REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
+REDIS_HOST = env("REDIS_HOST")
+REDIS_PORT = env("REDIS_PORT")
 # For the tests
 if "test" in sys.argv:
     CHANNEL_LAYERS = {
@@ -173,7 +225,8 @@ else:
 
 
 # Configuration for proxy
-CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
+CSRF_TRUSTED_ORIGINS = ["https://localhost:1026",
+                        "http://localhost:5173", "https://nginx:1026"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
 
@@ -194,31 +247,30 @@ AUTH_SETTINGS = {
     "check_is_alphanumeric": True,
 }
 
-ACCESS_TOKEN_SECRET_KEY = "secret"
-REFRESH_TOKEN_SECRET_KEY = "refresh_secret"
+ACCESS_TOKEN_SECRET_KEY = env("ACCESS_TOKEN_SECRET_KEY")
+REFRESH_TOKEN_SECRET_KEY = env("REFRESH_TOKEN_SECRET_KEY")
 
 NINJA_PAGINATION_PER_PAGE = 10
 
 APPEND_SLASH = False
 
 # OAuth
-
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
-GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
-GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
-GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
-GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
-GITHUB_FT_API_URL = "https://api.github.com"
+GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET")
+GITHUB_AUTHORIZE_URL = env("GITHUB_AUTHORIZE_URL")
+GITHUB_ACCESS_TOKEN_URL = env("GITHUB_ACCESS_TOKEN_URL")
+GITHUB_REDIRECT_URI = env("GITHUB_REDIRECT_URI")
+GITHUB_USER_PROFILE_URL = env("GITHUB_USER_PROFILE_URL")
+GITHUB_FT_API_URL = env("GITHUB_FT_API_URL")
 
 # OAuth 42
-API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
-API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
-FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
-FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
-FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")
-FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
-FT_API_OAUTH_URL = "https://api.intra.42.fr"
+API42_CLIENT_ID = env("API42_CLIENT_ID")
+API42_CLIENT_SECRET = env("API42_CLIENT_SECRET")
+FT_API_AUTHORIZE_URL = env("FT_API_AUTHORIZE_URL")
+FT_API_ACCESS_TOKEN_URL = env("FT_API_ACCESS_TOKEN_URL")
+FT_API_REDIRECT_URI = env("FT_API_REDIRECT_URI")
+FT_API_USER_PROFILE_URL = env("FT_API_USER_PROFILE_URL")
+FT_API_OAUTH_URL = env("FT_API_OAUTH_URL")
 
 HOME_REDIRECT_URL = "https://localhost:1026/home"
 FRONTEND_URL = "https://localhost:1026"
@@ -249,16 +301,14 @@ OAUTH_CONFIG = {
 }
 
 # email configuration for 2fa and password reset
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend",
-)
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_USE_SSL = env("EMAIL_USE_SSL")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 LOGGING = {
     "version": 1,
