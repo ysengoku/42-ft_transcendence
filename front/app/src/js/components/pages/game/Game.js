@@ -17,10 +17,7 @@ export class Game extends HTMLElement {
   game() {
     var keyMap = [];
     const WALL_WIDTH_HALF = 0.5;
-    let BUMPER_1_LENGTH_HALF = 2.5;
-    let BUMPER_2_LENGTH_HALF = 2.5;
-    const BUMPER_WIDTH = 1;
-    const BUMPER_WIDTH_HALF = BUMPER_WIDTH / 2;
+
     const BUMPER_1_BORDER = -10;
     const BUMPER_2_BORDER = -BUMPER_1_BORDER;
     const BUMPER_SPEED = 0.25;
@@ -99,9 +96,6 @@ export class Game extends HTMLElement {
     const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
     const velocity = new THREE.Vector3(0.001, 0, 0);
     let lenghtHalf = 0.25;
-    // let hasCollidedWithBumper1 = false;
-    // let hasCollidedWithBumper2 = false;
-    // let hasCollidedWithWall = false;
 
     return ({
 
@@ -110,9 +104,8 @@ export class Game extends HTMLElement {
         cylinderMesh,
         cylinderUpdate,
         velocity,
-        // temporalSpeed,
     });
-})(-9.25, 3, 0);
+    })(-9.25, 3, 0);
 
 	const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
@@ -176,7 +169,6 @@ export class Game extends HTMLElement {
       let   lenghtHalf = 2.5;
       let   widthHalf = 0.5;
       let   controlReverse = false;
-      // let   lenght = 5;
       let score = 0;
     
       return ({
@@ -306,10 +298,76 @@ export class Game extends HTMLElement {
         keyMap["KeyA"] = false;
       }
     }
+  
     let step;
+
+    var blob = new Blob([
+      "onmessage = function(e) { setTimeout(function(){postMessage([e.data[1]]); }, e.data[0])}"]);
+    var blobURL = window.URL.createObjectURL(blob);
+
+    var Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
+    Workers[0].onmessage = function(e) {
+      Bumpers[e.data[0]].cubeMesh.scale.x = 1;
+      Bumpers[e.data[0]].lenghtHalf = 2.5;
+    };
+    Workers[1].onmessage = function(e) {
+      Bumpers[Math.abs(e.data[0] - 1)].cubeMesh.scale.x = 1;
+      Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
+      if ((Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf)) {
+        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
+      }
+      else if (Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf){
+          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
+      }
+    };
+    Workers[2].onmessage = function(e) {
+      Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
+    };
+    Workers[3].onmessage = function(e) {
+      Bumpers[e.data[0]].cubeMesh.scale.z = 1;
+      Bumpers[e.data[0]].widthHalf = 0.5;
+    };
+    Workers[4].onmessage = function(e) {
+      Coin.cylinderUpdate.set(-9.25, 3, 0);
+    };
+
+    function  manageBuffAndDebuff() {
+      let chooseBuff = Math.floor(Math.random() * 4);
+      switch (chooseBuff)
+      {
+        case 1:
+          Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+          Bumpers[lastBumperCollided].lenghtHalf = 5;
+          if ((Bumpers[lastBumperCollided].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf)) {
+              Bumpers[lastBumperCollided].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
+          }
+          else if (Bumpers[lastBumperCollided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf){
+              Bumpers[lastBumperCollided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+          }
+          Workers[0].postMessage([10000, lastBumperCollided]);
+          break ;
+        case 2:
+          Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 0.5;
+          Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
+          Workers[1].postMessage([10000, lastBumperCollided]);
+          break ;
+        case 3:
+          Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
+          Workers[2].postMessage([2000, lastBumperCollided]);
+          break ;
+        default:
+          Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+          Bumpers[lastBumperCollided].widthHalf = 1.5;
+          Workers[3].postMessage([10000, lastBumperCollided]);
+          break ;
+      }
+      Coin.cylinderUpdate.set(-100, 3, 0);
+      Workers[4].postMessage([30000, -1]);
+    }
+
     function animate() {
       step = requestAnimationFrame(animate);
-      let someone_scored = false;
+      // let someone_scored = false;
       let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * Ball.velocity.x);
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
@@ -328,85 +386,29 @@ export class Game extends HTMLElement {
               Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
               Ball.velocity.x *= -1;
           }
-          if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)){
+          if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
             lastBumperCollided = 0;
             isCalculationDone = false;
             calculateNewDir(Bumpers[0]);
-            
           }
-          else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)){
+          else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
               lastBumperCollided = 1;
               isCalculationDone = true;
               calculateNewDir(Bumpers[1]);
           }
-
           if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
+              isCalculationDone = true;
               Bumpers[0].score++;
               resetBall(-1);
-              someone_scored = true;
           }
           else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
               isCalculationDone = false;
               Bumpers[1].score++;
               resetBall(1);
-              someone_scored = true;
           }
           if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
-                let choose = Math.floor(Math.random() * 4);
-                if (choose == 1) {
-                  Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
-                  Bumpers[lastBumperCollided].lenghtHalf = 5;
-                  if ((Bumpers[lastBumperCollided].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf)) {
-                      Bumpers[lastBumperCollided].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
-                  }
-                  else if (Bumpers[lastBumperCollided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf){
-                      Bumpers[lastBumperCollided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
-                  }
-                  let time = setTimeout(function(){
-                    Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
-                    Bumpers[lastBumperCollided].lenghtHalf = 2.5;
-                    clearTimeout(time);
-                  }, 10000);
-                }
-                else if (choose == 2) {
-                  Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 0.5;
-                  Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
-                  let time = setTimeout(function(){
-                        Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 1;
-                        Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 2.5;
-                        if ((Bumpers[Math.abs(lastBumperCollided - 1)].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf)) {
-                          Bumpers[Math.abs(lastBumperCollided - 1)].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf - 0.1;
-                        }
-                        else if (Bumpers[Math.abs(lastBumperCollided - 1)].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf){
-                            Bumpers[Math.abs(lastBumperCollided - 1)].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf + 0.1;
-                        }
-                        clearTimeout(time);
-                  }, 10000);
-                }
-                else if (choose == 3){
-                    Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
-                    let time = setTimeout(function(){
-                      Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = false;
-                      clearTimeout(time);
-                    }, 2000);
-                }
-                else{
-                  Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
-                  Bumpers[lastBumperCollided].widthHalf = 1.5;
-                  let time = setTimeout(function(){
-                      Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
-                      Bumpers[lastBumperCollided].widthHalf = 0.5;
-                      clearTimeout(time);
-                  }, 10000);
-                }
-                Coin.cylinderUpdate.set(-100, 3, 0);
-                let time = setTimeout(function(){
-                  Coin.cylinderUpdate.set(-9.25, 3, 0);
-                  clearTimeout(time);
-              }, 30000);
-              // visibilitychange;
+            manageBuffAndDebuff();
           }
-          // console.log();
           if (((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf))
               Bumpers[0].cubeUpdate.x += bumperSubtick;
           if (((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf))
@@ -420,7 +422,6 @@ export class Game extends HTMLElement {
           Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
           if ((Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf) || (Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf)) {
             Coin.velocity.x *= -1
-            console.log("oui")
           }
           Coin.cylinderUpdate.x += Coin.velocity.x;
           Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
@@ -437,26 +438,9 @@ export class Game extends HTMLElement {
       }
       renderer.render(scene, camera);
     }
-  //   var Timer = function(callback, delay) {
-  //     var timerId, start, remaining = delay;
-  
-  //     this.pause = function() {
-  //         window.clearTimeout(timerId);
-  //         timerId = null;
-  //         remaining -= Date.now() - start;
-  //     };
-  
-  //     this.resume = function() {
-  //         if (timerId) {
-  //             return;
-  //         }
-  
-  //         start = Date.now();
-  //         timerId = window.setTimeout(callback, remaining);
-  //     };
-  
-  //     this.resume();
-  // };
+
+    // var a = 0;
+    let isPaused = false;
     document.addEventListener('keydown', onDocumentKeyDown, true);
     document.addEventListener('keyup', onDocumentKeyUp, true);
     function onDocumentKeyDown(event) {
@@ -465,6 +449,19 @@ export class Game extends HTMLElement {
       }
       var keyCode = event.code;
       keyMap[keyCode] = true;
+      if (keyCode == "Escape")
+      {
+        if (isPaused == false)
+        {
+          cancelAnimationFrame(step);
+          isPaused = true;
+        }
+        else
+        {
+          isPaused = false;
+          step = requestAnimationFrame(animate);
+        }
+      }
       event.preventDefault();
     }
     function onDocumentKeyUp(event) {
@@ -475,19 +472,9 @@ export class Game extends HTMLElement {
       keyMap[keyCode] = false;
       event.preventDefault();
     }
-    let is_back = false;
-    window.addEventListener('visibilitychange', function() {
-      if (is_back == false)
-      {
-        cancelAnimationFrame(step);
-        is_back = true;
-      }
-      else
-      {
-        step = requestAnimationFrame(animate);
-        is_back = false;
-      }
-    });
+    // window.addEventListener('visibilitychange', function() {
+
+    // });
   
     return [camera, renderer, animate];
   }
