@@ -1,11 +1,11 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { BREAKPOINT } from '@utils';
 import './components/index.js';
 
 export class UserProfile extends HTMLElement {
   #state = {
     loggedInUsername: '',
-    // user: null,
   };
 
   constructor() {
@@ -71,7 +71,8 @@ export class UserProfile extends HTMLElement {
         username: this.user.username,
         nickname: this.user.nickname,
         join_date: this.user.date_joined,
-        titre: this.user.titre,
+        title: this.user.title,
+        price: this.user.price,
       };
     }
 
@@ -123,12 +124,13 @@ export class UserProfile extends HTMLElement {
 
     const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
     if (userEloProgressionChart) {
-      userEloProgressionChart.data = this.user.elo_history;
+      userEloProgressionChart.setData(this.user.username, this.user.elo_history);
     }
 
     const gameHistory = this.querySelector('user-game-history');
     if (gameHistory) {
       gameHistory.data = {
+        username: this.user.username,
         matches: this.user.match_history,
         // tournaments: this.user.tournament_history
       };
@@ -198,11 +200,6 @@ export class UserProfile extends HTMLElement {
                 <user-win-rate-pie-graph></user-win-rate-pie-graph>
               </div>               
               <div class="graph-wrapper flex-grow-1 p-2">
-                <div class="d-flex flex-row align-items-center">
-                  <p class="stat-label mx-4">Elo progression</p>
-                  <button class="btn-elo-history" id="btn-elo-history-prev" type="button">< prev</button>
-                  <button disabled class="btn-elo-history" id="btn-elo-history-next" type="button">next ></button>
-                </div>
                 <user-elo-progression-chart></user-elo-progression-chart>
               </div>
             </div>
@@ -286,7 +283,17 @@ export class UserProfile extends HTMLElement {
       padding-right: 0;
       padding-left: 0;
     }
-    @media (max-width: 576px) {
+    @media (max-width: ${BREAKPOINT.XL}px) and (min-width: ${BREAKPOINT.LG}px) {
+      .graphs-wrapper {
+        flex-wrap: wrap !important;
+      }
+    }
+    @media (max-width: ${BREAKPOINT.MD}px) {
+      .graphs-wrapper {
+        flex-wrap: wrap !important;
+      }
+    }
+    @media (max-width: ${BREAKPOINT.SM}px) {
       .row {
         margin-right: 0 !important;
         margin-left: 0 !important;

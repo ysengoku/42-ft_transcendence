@@ -30,6 +30,8 @@ export class Navbar extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.navbarBrand = this.querySelector('navbar-brand-component');
+    this.mobileUserActionsMenu = this.querySelector('user-actions-menu');
+
     this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
   }
@@ -67,11 +69,14 @@ export class Navbar extends HTMLElement {
     }
     this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
+    if (isMobile()) {
+      this.mobileUserActionsMenu.updateLoginStatus(this.#state.isLoggedin);
+    }
   }
 
   template() {
     return `
-    <nav class="navbar navbar-expand navbar-dark px-3">
+    <nav class="navbar navbar-expand navbar-dark fixed-top px-3">
       <user-actions-menu></user-actions-menu>
       <navbar-brand-component></navbar-brand-component>
       <div class="ms-auto d-flex align-items-center" id="navbar-actions-content">
@@ -92,11 +97,6 @@ export class Navbar extends HTMLElement {
         font-size: 1.5rem;
         color: var(--pm-primary-100);
       }
-    }
-    .dropdown-menu-end {
-      max-height: 75vh;
-      min-width: 360px;
-      padding-top: 0;
     }
     .dropdown-list-header {
       border-bottom: 1px solid var(--bs-border-color);

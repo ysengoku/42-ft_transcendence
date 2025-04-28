@@ -158,11 +158,16 @@ body {
 }
 
 .navbar {
+  height: 64px;
   z-index: 3;
 }
 
-h2, h3, h4, h5, h6, legend {
+h1, h2, h3, h4, h5, h6, legend {
   font-family: 'van dyke', serif;
+}
+
+#error-message-container {
+  margin-top: 64px;
 }
 
 #content {
@@ -180,6 +185,10 @@ h2, h3, h4, h5, h6, legend {
   z-index: 1050 !important; /* Keep dropdown always on top */
   border-radius: 0;
 }
+.dropdown-menu-end {
+  max-height: 75vh;
+  padding-top: 0;
+}
 
 .modal-backdrop {
   z-index: -1;
@@ -187,6 +196,10 @@ h2, h3, h4, h5, h6, legend {
 
 .tooltip {
   font-size: 12px;
+}
+
+.invisible {
+  visibility: hidden;
 }
 
 .avatar-xs,
@@ -218,7 +231,7 @@ h2, h3, h4, h5, h6, legend {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: grey;
+  background-color: var(--pm-gray-400);
 }
 .online-status.online {
   background-color: green;
@@ -370,28 +383,25 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
  }
 
 .btn-wood:before {
-  filter: url('/filters/wood-grain.svg#wave-filter-0');
-  --clrs1: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
-  --clrs2: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 20%);
-  --clrs3: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 60%);
-  --clrs4: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 98%);
-    position: absolute;
-    content: '';
-    inset: 0;
-    padding: .2em;
-    border: 4px double var(--pm-primary-600);
-    border-radius: .1em .2em / .5em .23em;
-    z-index: -1;
-    transition: .25s ease;
-    background: var(--pm-primary-500)
+  --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 50%);
+  --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 40%);
+  --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 60%);
+  --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 90%);
+  position: absolute;
+  content: '';
+  inset: 0;
+  padding: .2em;
+  border: 4px double var(--pm-primary-600);
+  border-radius: .1em .2em / .5em .23em;
+  z-index: -1;
+  transition: .25s ease;
+  background: var(--pm-primary-400)
     linear-gradient(178deg, 
       var(--clrs1),
-      var(--clrs2) 20% 70%,
+      var(--clrs2) 30% 70%,
       var(--clrs3) 90%,
       var(--clrs4)) 0 0 / 100% .3rem;
-}
-
-.search-submit-btn {
-  border: none;
-  background-color: transparent;
+  display: inline-block;
+  overflow: visible;
+  clip-path: url(#wave-clip)
 }

@@ -104,6 +104,10 @@ class UserEventsConsumer(WebsocketConsumer):
                     f"chat_{chat.id}",
                     self.channel_name,
                 )
+            async_to_sync(self.channel_layer.group_discard)(
+                f"user_{self.user.id}",
+                self.channel_name,
+            )
         try:
             # Décrémenter le compteur de connexions et récupérer la nouvelle valeur
             with transaction.atomic():
@@ -131,10 +135,6 @@ class UserEventsConsumer(WebsocketConsumer):
                                 self.user.username)
 
                     # Remove user from the groups only when they have no more active connections
-                    async_to_sync(self.channel_layer.group_discard)(
-                        f"user_{self.user.id}",
-                        self.channel_name,
-                    )
                     async_to_sync(self.channel_layer.group_discard)(
                         "online_users",
                         self.channel_name,

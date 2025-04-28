@@ -1,6 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { mockNotificationsData } from '@mock/functions/mockNotificationsData';
 
 export class NotificationsList extends HTMLElement {
   #state = {
@@ -114,8 +113,6 @@ export class NotificationsList extends HTMLElement {
     } else {
       return null;
     }
-    // const data = await mockNotificationsData();
-    // return data;
   }
 
   async toggleTab(event) {

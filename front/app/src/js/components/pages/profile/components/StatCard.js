@@ -42,11 +42,6 @@ export class UserStatCard extends HTMLElement {
     .stat-card {
       min-width: 128px;
       background-color: rgba(var(--pm-primary-600-rgb), 0.1);
-      /*
-        background-image: url(${sheriff});
-        background-size: cover;
-        background-position: center;
-        */
       }
     </style>
     `;

@@ -19,6 +19,7 @@ export class ChatUserSearch extends HTMLElement {
     this.handleInput = this.handleInput.bind(this);
     this.hideUserSearch = this.hideUserSearch.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.preventReloadBySubmit = this.preventReloadBySubmit.bind(this);
   }
 
   set user(value) {
@@ -27,6 +28,7 @@ export class ChatUserSearch extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.form?.removeEventListener('submit', this.preventReloadBySubmit);
     this.input?.removeEventListener('input', this.handleSubmit);
     this.searchBarToggleButton?.removeEventListener('click', this.hideUserSearch);
     this.listContainer?.removeEventListener('scrollend', this.loadMoreUsers);
@@ -41,9 +43,11 @@ export class ChatUserSearch extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.listContainer = this.querySelector('#chat-user-list');
+    this.form = this.querySelector('#chat-user-search-form');
     this.input = this.querySelector('input');
     this.searchBarToggleButton = document.querySelector('.new-chat');
 
+    this.form.addEventListener('submit', this.preventReloadBySubmit);
     this.input?.addEventListener('input', this.handleInput);
     this.searchBarToggleButton?.addEventListener('click', this.hideUserSearch);
     this.listContainer?.addEventListener('scrollend', this.loadMoreUsers);
@@ -107,7 +111,7 @@ export class ChatUserSearch extends HTMLElement {
     event.stopPropagation();
     event.preventDefault();
 
-   clearTimeout(this.#state.timeout);
+    clearTimeout(this.#state.timeout);
     this.#state.timeout = setTimeout( async () => {
       this.#state.userList = [];
       this.#state.totalUserCount = 0;
@@ -157,6 +161,10 @@ export class ChatUserSearch extends HTMLElement {
       this.#state.searchQuery = '';
       this.#state.userList = [];
     }
+  }
+
+  preventReloadBySubmit(event) {
+    event.preventDefault();
   }
 
   /* ------------------------------------------------------------------------ */
