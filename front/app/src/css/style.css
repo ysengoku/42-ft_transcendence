@@ -370,7 +370,7 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
 }
 
 /*--------------------------------------------------------------------------- */
-/*    Buttons                                                                 */
+/*    Wood grain                                                              */
 /*----------------------------------------------------------------------------*/
 .btn-wood {
   color: var(--pm-gray-100);
@@ -404,4 +404,36 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   display: inline-block;
   overflow: visible;
   clip-path: url(#wave-clip)
+}
+
+.wood-board {
+  padding: .5em 2em;
+  border: none;
+  filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
+  svg {
+    fill: var(--pm-primary-100);
+  }
+}
+
+.wood-board:before {
+  --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 50%);
+  --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 40%);
+  --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 60%);
+  --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 90%);
+  position: absolute;
+  content: '';
+  inset: 0;
+  padding: .2em;
+  border: 4px double var(--pm-primary-600);
+  border-radius: .1em .2em / .5em .23em;
+  z-index: -1;
+  transition: .25s ease;
+  background: var(--pm-primary-400)
+    linear-gradient(178deg, 
+      var(--clrs1),
+      var(--clrs2) 30% 70%,
+      var(--clrs3) 90%,
+      var(--clrs4)) 0 0 / 100% .3rem;
+  display: inline-block;
+  overflow: visible;
 }
