@@ -35,7 +35,8 @@ class JWTAuthMiddleware:
 
     async def __call__(self, scope, receive, send):
         headers = dict(scope["headers"])
-        cookies = headers.get(b"cookie", b"").decode("utf-8") if b"cookie" in headers else ""
+        cookies = headers.get(b"cookie", b"").decode(
+            "utf-8") if b"cookie" in headers else ""
         token = None
         scope["user"] = None
 
@@ -49,3 +50,13 @@ class JWTAuthMiddleware:
             scope["user"] = await authenticate_token(token)
 
         return await self.app(scope, receive, send)
+
+
+class ActivityMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            request.user.profile.update_activity()
+        return self.get_response(request)

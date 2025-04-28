@@ -1,11 +1,11 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import Count, Exists, ImageField, OuterRef, Q, Subquery, Value
-from django.db.models.functions import Coalesce, NullIf
+from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, ImageField, OuterRef, Q, Subquery, Value
+from django.db.models.functions import Coalesce, Now, NullIf
 from django.utils import timezone
 
 from users.models import Profile
@@ -57,31 +57,47 @@ class ChatQuerySet(models.QuerySet):
         ).order_by("-date")
 
         return self.annotate(
-            last_message=Subquery(latest_message_subquery.values("content")[:1]),
-            last_message_date=Subquery(latest_message_subquery.values("date")[:1]),
+            last_message=Subquery(
+                latest_message_subquery.values("content")[:1]),
+            last_message_date=Subquery(
+                latest_message_subquery.values("date")[:1]),
             last_message_id=Subquery(latest_message_subquery.values("pk")[:1]),
         ).order_by("-last_message_date")
 
     def with_other_user_profile_info(self, profile: Profile):
-        other_chat_participant_subquery = Profile.objects.filter(chats=OuterRef("pk")).exclude(
-            pk=profile.pk,
-        )[:1]
+        other_chat_participant_subquery = Profile.objects.filter(
+            chats=OuterRef("pk"),
+        ).exclude(pk=profile.pk)[:1]
         blocked_through = Profile.blocked_users.through
 
         return self.annotate(
-            username=Subquery(other_chat_participant_subquery.values("user__username")),
-            nickname=Subquery(other_chat_participant_subquery.values("user__nickname")),
+            username=Subquery(
+                other_chat_participant_subquery.values("user__username")),
+            nickname=Subquery(
+                other_chat_participant_subquery.values("user__nickname")),
             avatar=Coalesce(
                 # sets field to null if the profile_picture is an empty string
                 NullIf(
-                    Subquery(other_chat_participant_subquery.values("profile_picture")),
+                    Subquery(other_chat_participant_subquery.values(
+                        "profile_picture")),
                     Value("", output_field=ImageField()),
                 ),
                 Value(settings.DEFAULT_USER_AVATAR, output_field=ImageField()),
             ),
-            is_online=Subquery(other_chat_participant_subquery.values("is_online")),
-            other_profile_id=Subquery(other_chat_participant_subquery.values("pk")),
-            unread_messages_count=Count("messages", filter=~Q(messages__sender=profile) & Q(messages__is_read=False)),
+            last_activity=Subquery(
+                other_chat_participant_subquery.values("last_activity")),
+            is_online=Subquery(
+                other_chat_participant_subquery.values("is_online")),
+            real_online=ExpressionWrapper(
+                Q(last_activity__gte=Now() - timedelta(minutes=5)), output_field=BooleanField(),
+            ),
+            other_profile_id=Subquery(
+                other_chat_participant_subquery.values("pk")),
+            unread_messages_count=Count(
+                "messages",
+                filter=~Q(messages__sender=profile) & Q(
+                    messages__is_read=False),
+            ),
         ).annotate(
             is_blocked_user=Exists(
                 blocked_through.objects.filter(
@@ -102,6 +118,7 @@ class ChatQuerySet(models.QuerySet):
             Chat.objects.for_participants(profile)
             .with_and_order_by_last_message()
             .with_other_user_profile_info(profile)
+            # .annotate_real_online()
         )
 
 
@@ -120,7 +137,10 @@ class Chat(models.Model):
             return "Empty chat"
 
         max_participants_to_display = 20
-        participants_list = [p.user.username for p in self.participants.all()[:max_participants_to_display]]
+        participants_list = [
+            p.user.username
+            for p in self.participants.all()[:max_participants_to_display]
+        ]
         res = ", ".join(participants_list)
         if self.participants.count() > max_participants_to_display:
             res + " ..."
@@ -141,8 +161,10 @@ class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content = models.TextField(max_length=256)
     date = models.DateTimeField(default=timezone.now)
-    sender = models.ForeignKey(Profile, related_name="sent_messages", on_delete=models.CASCADE)
-    chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
+    sender = models.ForeignKey(
+        Profile, related_name="sent_messages", on_delete=models.CASCADE)
+    chat = models.ForeignKey(
+        Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
     is_liked = models.BooleanField(default=False)
 
@@ -193,11 +215,18 @@ class NotificationQuerySet(models.QuerySet):
 
         return self.create(receiver=receiver, data=data, action=notification_action)
 
-    def action_new_friend(self, receiver: Profile, sender: Profile, date: datetime = None):
+    def action_new_friend(
+        self, receiver: Profile, sender: Profile, date: datetime = None,
+    ):
         """
         May include additional operations like using the channel layer to send data with websocket.
         """
-        return self._create(receiver=receiver, sender=sender, notification_action=self.model.NEW_FRIEND, date=date)
+        return self._create(
+            receiver=receiver,
+            sender=sender,
+            notification_action=self.model.NEW_FRIEND,
+            date=date,
+        )
 
     def count_unread(self, profile: Profile):
         return self.filter(is_read=False).count()
@@ -219,7 +248,9 @@ class Notification(models.Model):
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    receiver = models.ForeignKey(Profile, related_name="notifications", on_delete=models.CASCADE)
+    receiver = models.ForeignKey(
+        Profile, related_name="notifications", on_delete=models.CASCADE,
+    )
     data = models.JSONField(encoder=DjangoJSONEncoder, null=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     is_read = models.BooleanField(default=False)
@@ -247,10 +278,17 @@ class GameInvitation(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
-    game_session = models.ForeignKey(GameSession, on_delete=models.PROTECT, related_name="game_invites")
-    recipient = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="received_invites")
-    status = models.CharField(max_length=11, blank=False, choices=INVITE_STATUS, default="pending")
+    sender = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, null=True, blank=True)
+    game_session = models.ForeignKey(
+        GameSession, on_delete=models.PROTECT, related_name="game_invites",
+    )
+    recipient = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="received_invites",
+    )
+    status = models.CharField(
+        max_length=11, blank=False, choices=INVITE_STATUS, default="pending",
+    )
 
     def __str__(self):
         return f"{self.game_session}:"
