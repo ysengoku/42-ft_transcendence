@@ -1,3 +1,4 @@
+
 FROM nginx:alpine
 
 # Install OpenSSL and generate certificates
