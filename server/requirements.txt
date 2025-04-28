@@ -33,4 +33,11 @@ qrcode[pil]
 
 # PostgreSQL adapter
 psycopg2==2.9.6
+
+# Colored logs
 colorlog==6.9.0
+# Secured env variables
+django-environ==0.12.0
+# Framework for test only
+djangorestframework==3.16.0
+djangorestframework_simplejwt==5.5.0
