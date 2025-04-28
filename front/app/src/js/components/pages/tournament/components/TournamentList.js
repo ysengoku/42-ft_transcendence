@@ -108,7 +108,6 @@ export class TournamentList extends HTMLElement {
       border-radius: 0.5rem !important;
       border: 0 !important;
     }
-
     .tournament-status {
       font-size: 0.9rem !important;
     }
@@ -117,15 +116,15 @@ export class TournamentList extends HTMLElement {
 
   rowTemplate() {
     return `
-    <li class="list-group-item d-flex flex-row justify-content-between align-items-center mb-2 py-3">
-      <div class="d-flex flex-row justify-content-start align-items-start h-100">
+    <li class="list-group-item d-flex flex-row justify-content-between mb-2 p-4">
+      <div class="d-flex flex-row justify-content-start">
         <img class="tournament-organizer-avatar avatar-m rounded-circle me-3">
-        <div class="d-flex flex-column">
+        <div class="d-flex flex-column justify-content-between">
           <p class="tournament-name fs-5 m-0"></p>
           <p class="tournament-organizer m-0"></p>
         </div>
       </div>
-      <div class="d-flex flex-column">
+      <div class="d-flex flex-column justify-content-between align-items-end">
         <p class="tournament-status m-0"></p>
         <p class="tournament-participants m-0"></p>
       </div>
