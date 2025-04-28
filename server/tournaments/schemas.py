@@ -17,6 +17,7 @@ class TournamentSchema(Schema):
     date: datetime
     rounds: List[RoundSchema]
     participants: List[ParticipantSchema]
+    required_participants: int
 
 
 class ParticipantSchema(Schema):
