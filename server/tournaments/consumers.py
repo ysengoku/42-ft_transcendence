@@ -6,6 +6,9 @@ import uuid
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.core.exceptions import ValidationError
+from django.db import transaction
+
+from .models import Tournament
 
 logger = logging.getLogger("server")
 
@@ -16,6 +19,8 @@ class TournamentConsumer(WebsocketConsumer):
     def connect(self):
         self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
+            logger.warning(
+                "TournamentConsumer : Unauthentificated user trying to connect")
             self.close()
             return
         self.tournament_id = self.scope['url_route']['kwargs'].get(
@@ -29,7 +34,7 @@ class TournamentConsumer(WebsocketConsumer):
         else:
             self.tournament_id = str(uuid.uuid4())
             self.tournaments[self.tournament_id] = {
-                'creator': self.scope['user'],
+                'creator': self.user,
                 'participants': {},
                 'status': 'start',
                 'rounds': []
@@ -43,6 +48,29 @@ class TournamentConsumer(WebsocketConsumer):
                 f"tournament_{self.tournament_id}",
                 self.channel_name
             )
+        async_to_sync(self.channel_layer.group_send)(
+            f"tournament_{self.tournament_id}",
+            {
+                "type": "tournament.broadcast",
+                "action": "user_left",
+                "data": {"user": self.user.username}
+            }
+        )
+
+    def create_tournament(self, data):
+        with transaction.atomic():
+            tournament = Tournament.objects.create(
+                name=data['tournament_name'],
+                creator=self.user,
+                max_participants=data['required_participants'],
+                status='lobby'
+            )
+            tournament.participants.add(self.user.profile)
+            self.tournament_id = str(tournament.id)
+        self.send(text_data=json.dumps({
+            'action': 'created',
+            'data': {'tournament_id': self.tournament_id}
+        }))
 
     def receive(self, text_data):
         try:
@@ -57,7 +85,7 @@ class TournamentConsumer(WebsocketConsumer):
             entire_data = text_data_json.get("data", {})
             required_fields = {
                 "create": ["tournament_name", "required_participants", "alias"],
-                "register": ["id", "chat_id"],
+                "register": ["alias"],
                 "start_round": ["id", "chat_id"],
                 "match_result": ["id", "chat_id"],
             }
@@ -138,37 +166,86 @@ class TournamentConsumer(WebsocketConsumer):
             'data': {'tournament_id': self.tournament_id}
         }))
 
+    def cancel_tournament(self, data):
+        """
+        TODO code this properly
+        When the organizer cancels the whole tournament
+        """
+        tournament_id = self.tournaments.get(self.tournament_id)
+        if not tournament_id:
+            self.send(text_data=json.dumps({
+                'action': 'tournament_cancel_fail',
+                'data': {'reason': 'This tournament does not exist'}
+            }))
+            logger.warning(
+                "%s tried to cancel the tournament %s but it does not exist", self.user.username, tournament_id)
+            return
+            # if user_id != organizer_id:
+            # self.send(text_data=json.dumps({
+            #     'action': 'tournament_cancel_fail',
+            #     'data': {'reason': 'Not the organizer'}
+            # }))
+            #     logger.warning(
+            #         "%s tried to cancel the tournament, but they're not the organizer !", user.username)
+            # if tournament id does not exist
+            # self.send(text_data=json.dumps({
+            #     'action': 'tournament_cancel_fail',
+            #     'data': {'reason': 'This tournament does not exist'}
+            # }))
+            #     logger.warning(
+            #         "%s tried to cancel the tournament %s but it does not exist", user.username, tournament_id)
+            #     return
+
+    def cancel_participant(self, data):
+        """
+        TODO code this properly
+        When the participant cancels their own participation
+        """
+
     def register_participant(self, data):
-        tournament = self.tournaments.get(self.tournament_id)
+        register_data = data.get("data", {})
+        alias = register_data.get("alias")
 
-        if not tournament:
-            raise ValidationError("Tournoi introuvable")
+        try:
+            with transaction.atomic():
+                tournament = Tournament.objects.get(id=self.tournament_id)
+                if tournament.name != alias:
+                    self.send(text_data=json.dumps({
+                        'action': 'register_fail',
+                        'data': {'reason': "Tournament's alias is invalid"}
+                    }))
+                    return
 
-        if len(tournament['participants']) >= tournament['max_participants']:
+                if tournament.participants.count() >= tournament.max_participants:
+                self.send(text_data=json.dumps({
+                    'action': 'register_fail',
+                    'data': {'reason': 'Tournament is full'}
+                }))
+                return
+
+                tournament.participants.add(self.user.profile)
+                tournament.save()
+
+                async_to_sync(self.channel_layer.group_send)(
+                    f"tournament_{self.tournament_id}",
+                    {
+                        'type': 'tournament.broadcast',
+                        'action': 'new_registration',
+                        'data': {
+                            'current_participants': len(tournament['participants']),
+                            'max_participants': tournament['max_participants']
+                        }
+                    }
+                )
+
+        except Tournament.DoesNotExist:
             self.send(text_data=json.dumps({
                 'action': 'register_fail',
-                'data': {'reason': 'Tournoi complet'}
+                'data': {'reason': 'Tournament does not exist'}
             }))
+            logger.warning(
+                "%s tried to register to a tournament that does not exist", self.user.username)
             return
-
-        user = self.scope['user']
-        tournament['participants'][str(user.id)] = {
-            'user': user,
-            'alias': data.get('alias', user.username),
-            'status': 'registered'
-        }
-
-        async_to_sync(self.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {
-                'type': 'tournament.broadcast',
-                'action': 'new_registration',
-                'data': {
-                    'current_participants': len(tournament['participants']),
-                    'max_participants': tournament['max_participants']
-                }
-            }
-        )
 
     def start_round(self, data):
         tournament = self.tournaments[self.tournament_id]
