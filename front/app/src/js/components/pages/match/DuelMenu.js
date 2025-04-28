@@ -404,9 +404,9 @@ export class DuelMenu extends HTMLElement {
     return `
     <div class="modal fade mt-5" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog pt-4">
-        <div class="modal-content btn-wood">
+        <div class="modal-content wood-board">
           <div class="modal-header border-0">
-            <button type="button" class="btn-close"></button>
+            <button type="button" class="btn-close btn-close-white" aria-label="Close"></button>
           </div>
           <div class="modal-body"></div>
           <div class="modal-footer border-0 mt-4">
