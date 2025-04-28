@@ -101,11 +101,16 @@ export class Landing extends HTMLElement {
       width: 16px;
       border-radius: 4px;
   
-      --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 50%);
-      --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 20%);
-      --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 60%);
-      --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 88%);
-      background: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
+      --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 50%);
+      --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 40%);
+      --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 60%);
+      --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 90%);
+      background: var(--pm-primary-400)
+        linear-gradient(88deg, 
+          var(--clrs1),
+          var(--clrs2) 40% 60%,
+          var(--clrs3) 90%,
+         var(--clrs4)) 0 0 / 100% 0.2rem;
     }
     </style>
     `;

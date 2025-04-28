@@ -53,3 +53,12 @@ export function getRelativeDateAndTime(time) {
   }).format(date);
   return `${formattedDate}, ${formattedTime}`;
 }
+
+export function formatDateMDY(dateDtring) {
+  const date = new Date(dateDtring);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+}
