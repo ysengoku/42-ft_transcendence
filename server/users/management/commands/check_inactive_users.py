@@ -2,7 +2,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from chat.consumers import check_inactive_users
+from users.consumers import check_inactive_users
 
 logger = logging.getLogger("server")
 
