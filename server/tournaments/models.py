@@ -34,11 +34,11 @@ class Tournament(models.Model):
 
 class Participant(models.Model):
     STATUS_CHOICES = [
-        ('registered', 'Inscrit'),
-        ('playing', 'En jeu'),
-        ('eliminated', 'Éliminé'),
-        ('winner', 'Vainqueur'),
-        ('unregistered', 'Désinscrit')
+        ('registered', 'Registered'),
+        ('playing', 'Playing'),
+        ('eliminated', 'Eliminated'),
+        ('winner', 'Winner'),
+        ('unregistered', 'Unregistered')
     ]
 
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
@@ -60,7 +60,7 @@ class Round(models.Model):
         Tournament, on_delete=models.CASCADE, related_name='rounds')
     number = models.PositiveIntegerField()
     status = models.CharField(max_length=7, choices=[(
-        'start', 'Début'), ('ongoing', 'En cours'), ('finished', 'Terminé')], default='start')
+        'start', 'Start'), ('ongoing', 'Ongoing'), ('finished', 'Finished')], default='start')
 
     class Meta:
         unique_together = ('tournament', 'number')
@@ -72,9 +72,9 @@ class Round(models.Model):
 
 class Bracket(models.Model):
     STATUS_CHOICES = [
-        ('start', 'Début'),
-        ('ongoing', 'En cours'),
-        ('finished', 'Terminé')
+        ('start', 'Start'),
+        ('ongoing', 'Ongoing'),
+        ('finished', 'Finished')
     ]
 
     round = models.ForeignKey(
