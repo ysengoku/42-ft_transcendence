@@ -8,7 +8,7 @@ from channels.generic.websocket import WebsocketConsumer
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from .models import Tournament
+from .models import Bracket, Participant, Round, Tournament
 
 logger = logging.getLogger("server")
 
