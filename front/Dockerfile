@@ -1,4 +1,4 @@
-FROM node:18-alpine AS production
+FROM node:22-alpine AS production
 
 WORKDIR /app
 
@@ -6,11 +6,10 @@ COPY ./app/package*.json ./
 RUN npm install
 COPY ./app ./app
 
-# Construire les fichiers statiques
+# Build static files
 RUN npm run build
 
-# Stage de développement
-FROM node:18-alpine AS development
+FROM node:22-alpine AS development
 
 COPY ./app /app
 WORKDIR /app

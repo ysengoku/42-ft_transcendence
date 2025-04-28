@@ -55,13 +55,13 @@
     - [x] Change the validation for the User in all places.
 - [x] Paginated endpoint for getting the elo points (by days).
     - [x] Also there is a need to change the existing fetched points for the user profile from being unorganized points to daily elo change.
-- [ ] Paginated endpoint for getting the match history.
-    - [ ] It should have an option to sort them by newest/oldest.
-    - [ ] It should have an option to filter them by loses/wins.
+- [x] Paginated endpoint for getting the match history.
+    - [x] It should have an option to sort them by newest/oldest.
+    - [x] It should have an option to filter them by loses/wins.
 - [~] Tweak the user profile. 
     - [x] Remove `friends` field.
-    - [ ] Add the price for the head. 
-    - [ ] Add the last ten matches of the user.
+    - [x] Add the price for the head. 
+    - [x] Add the last ten matches of the user.
 
 
 ### Chat

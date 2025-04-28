@@ -1,9 +1,14 @@
 import { ThemeController } from './ThemeController';
-import { isMobile } from './viewPort';
-import { getRelativeTime, getRelativeDateAndTime } from './dateFormat';
+import { isMobile, BREAKPOINT } from './viewPort';
 import { sanitizeHtml } from './sanitizeHtml';
 import { showFormErrorFeedback } from './formFeedback';
 import { showToastNotification } from './toastnotification';
+
+import {
+  getRelativeTime,
+  getRelativeDateAndTime,
+  formatDateMDY,
+} from './dateFormat';
 
 import {
   createClouds,
@@ -32,8 +37,10 @@ import {
 export {
   ThemeController,
   isMobile,
+  BREAKPOINT,
   getRelativeTime,
   getRelativeDateAndTime,
+  formatDateMDY,
   sanitizeHtml,
   showFormErrorFeedback,
   showToastNotification,
