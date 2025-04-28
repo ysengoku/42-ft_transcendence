@@ -87,7 +87,7 @@ const handlers = {
    * @param {object|null} data - The data to be sent with the request, for POST or PUT requests.
    * @param {boolean} isFileUpload - Whether the request involves file uploading.
    * @param {boolean} needToken - Whether a CSRF token is needed for the request.
-   * @param {string} csrfToken - The CSRF token.
+   * @param {string} csrfToken - The CSRF token for the request.
    * @return {Promise<Object>} An object containing the success status, response status, and response message.
    */
   401: async (method, endpoint, data, isFileUpload, needToken, csrfToken) => {

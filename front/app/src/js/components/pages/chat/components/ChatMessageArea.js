@@ -124,7 +124,9 @@ export class ChatMessageArea extends HTMLElement {
     if (this.#state.data.messages.length > 0) {
       this.renderMessages();
       // Scroll to the bottom of the chat messages
-      this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+      requestAnimationFrame(() => {
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+      });
       this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
     }
 
@@ -346,26 +348,25 @@ export class ChatMessageArea extends HTMLElement {
       <!-- Header -->
       <div class="d-flex flex-row justify-content-between align-items-center border-bottom ps-4 py-3 gap-3 sticky-top">
   
-      <div class="d-flex flex-row" id="chat-header">
-        <img class="avatar-m rounded-circle me-3 d-none" alt="User" id="chat-header-avatar"/>
+        <div class="d-flex flex-row" id="chat-header">
+          <img class="avatar-m rounded-circle me-3 d-none" alt="User" id="chat-header-avatar"/>
 
-        <div class="d-flex flex-column text-start gap-1">
-          <div class="d-flex flex-row gap-3">
-            <h4 class="mb-0" id="chat-header-nickname"></h4>
-            <p class="mb-0 fs-6" id="chat-header-username"></p>
-          </div>
-          <div class="d-flex flex-row align-items-center gap-2">
-            <span class="online-status d-none" id="chat-header-online-status-indicator"></span>
-            <div id="chat-header-online-status"></div>
+          <div class="d-flex flex-column text-start gap-1">
+            <div class="d-flex flex-row gap-3">
+              <h4 class="mb-0" id="chat-header-nickname"></h4>
+              <p class="mb-0 fs-6" id="chat-header-username"></p>
+            </div>
+            <div class="d-flex flex-row align-items-center gap-2">
+              <span class="online-status d-none" id="chat-header-online-status-indicator"></span>
+              <div id="chat-header-online-status"></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="align-self-end">
-        <button class="btn d-none" id="chat-invite-play-button">Invite to play</button>
-        <button class="btn" id="chat-block-user-button"></button>
-      </div>
-
+        <div class="align-self-end">
+          <button class="btn d-none" id="chat-invite-play-button">Invite to play</button>
+          <button class="btn" id="chat-block-user-button"></button>
+        </div>
       </div>
 
       <!-- Messages -->
@@ -374,8 +375,7 @@ export class ChatMessageArea extends HTMLElement {
         <p class="m-0">Every great partnership starts with a howdy.</p>
         <p class="m-0">Don\'t be shy now — send your first message.</p>
       </div>
-      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages">
-      </div>
+      <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages" lang="en"></div>
 
       <!-- Input -->
       <div id="chat-message-input-wrapper">
@@ -390,6 +390,10 @@ export class ChatMessageArea extends HTMLElement {
 	  <style>
       #chat-messages {
         min-height: 0;
+      }
+      .message {
+        overflow-wrap: anywhere;
+        hyphens: auto;
       }
       .left-align-message {
         padding-right: 32px;

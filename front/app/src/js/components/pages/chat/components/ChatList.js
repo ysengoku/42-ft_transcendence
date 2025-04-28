@@ -387,6 +387,7 @@ export class ChatList extends HTMLElement {
       .chat-list-item-last-message {
         overflow: hidden;
         text-overflow: ellipsis;
+        word-break: break-all;
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;

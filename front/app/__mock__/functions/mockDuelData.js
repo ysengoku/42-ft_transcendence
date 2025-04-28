@@ -39,23 +39,21 @@ function withoutResult(status) {
 }
 
 const finished = {
-  status: 'finished',
-  gameId: '1234567890',
-  player1: {
+  winner: {
+    username: 'evil_sherif',
+    nickname: 'evil_sherif',
+    avatar: '/img/default_avatar.png',
+    elo: 1033,
+    is_online: true,
+  },
+  loser: {
     username: 'Pedro',
     nickname: 'Pedro',
-    avatar: '/img/default-avatar.png',
-    elo: 1480,
+    avatar: '/img/default_avatar.png',
+    elo: 935,
     is_online: true,
   },
-  player2: {
-    username: 'Alice',
-    nickname: 'Alice',
-    avatar: '/img/default-avatar.png',
-    elo: 1500,
-    is_online: true,
-  },
-  winner_score: 5,
-  looser_score: 3,
-  date: '2025-04-02T09:00:00Z',
+  winners_score: 5,
+  losers_score: 1,
+  date: '2025-04-15T02:58:36.682Z',
 };

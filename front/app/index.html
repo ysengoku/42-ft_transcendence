@@ -23,18 +23,35 @@
 
     <!-- Error message container -->
     <div id="error-message-container" class="container-fluid"></div>
+
+    <svg width="0" height="0" style="position:absolute">
+      <defs>
+        <clipPath id="wave-clip" clipPathUnits="objectBoundingBox">
+          <path d="
+            M0,0.1 
+            C0.25,0 0.45,0.2 0.5,0.1
+            C0.55,0 0.75,0.2 0.8,0.1
+            C0.85,0 1,0.2 1,0.1
+
+            C1,0.2 0.99,0.4 1,0.7
+
+            C1,1 0.95,0.95 0.7,0.9
+            C0.5,0.94 0.4,0.99 0.3,0.97
+            C0.2,0.9 0.1,1 0,0.9
+
+            C0,0.8 0.02,0.5 0,0.4
+            C0,0.3 0.01,0.2 0,0.1
+            Z
+          "/>
+        </clipPath>
+      </defs>
+    </svg>
+
     <!-- Dynamic views -->
     <main id="content" class="container-fluid d-grid flex-grow-1"></main>
 
     <div id="toast-notification"></div>
   </div>
-
-  <!-- Bootstrap -->
-  <!--
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"></script>
-  -->
 
   <script type="module" src="./src/main.js"></script>
 </body>
