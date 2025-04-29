@@ -9,6 +9,7 @@ urlpatterns = [
     path("silk/", include("silk.urls", namespace="silk")),
     path("chat/", include("chat.urls")),
     path("pong/", include("pong.urls")),
+    path("tournaments/", include("tournaments.urls")),
 ]
 
 urlpatterns += static(settings.MEDIA_URL,
