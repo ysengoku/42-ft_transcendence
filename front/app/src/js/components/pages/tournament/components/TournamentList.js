@@ -13,7 +13,7 @@ export class TournamentList extends HTMLElement {
     super();
 
     this.renderList = this.renderList.bind(this);
-    this.toggleFilter = this.toggleFilter.bind(this);
+    this.filterTournament = this.filterTournament.bind(this);
   }
 
   connectedCallback() {
@@ -22,7 +22,9 @@ export class TournamentList extends HTMLElement {
 
   disconnectedCallback() {
     this.listWrapper?.removeEventListener('scrollend', this.renderList);
-    this.filterButton?.removeEventListener('click', this.toggleFilter);
+    this.filterButton?.removeEventListener('click', this.filterTournament);
+    this.filterOpenButton?.removeEventListener('click', this.filterTournament);
+    this.filterAllButton?.removeEventListener('click', this.filterTournament);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -34,16 +36,20 @@ export class TournamentList extends HTMLElement {
     this.listWrapper = this.querySelector('#tournament-list-wrapper');
     this.list = this.querySelector('#tournament-list');
     this.filterButton = this.querySelector('#game-history-filter');
+    this.filterOpenButton = this.querySelector('#tournament-filter-open');
+    this.filterAllButton = this.querySelector('#tournament-filter-all');
 
     this.listWrapper?.addEventListener('scrollend', this.renderList);
-    this.filterButton?.addEventListener('click', this.toggleFilter);
+    this.filterButton?.addEventListener('click', this.filterTournament);
+    this.filterOpenButton?.addEventListener('click', this.filterTournament);
+    this.filterAllButton?.addEventListener('click', this.filterTournament);
   
     this.renderList();
   }
 
   async renderList(event) {
     if (event) {
-
+      // TODO: Handle scroll event
     }
     if (this.#state.isLoading ||
       (this.#state.totalTournaments > 0 && this.#state.tournaments.length === this.#state.totalTournaments)) {
@@ -51,11 +57,10 @@ export class TournamentList extends HTMLElement {
     }
     this.#state.isLoading = true;
     await this.fetchTournamentList();
+    // this.#state.tournaments = []; // TEST
     if (this.#state.tournaments.length === 0) {
-      const item = document.createElement('li');
-      item.className = 'list-group-item text-center border-0';
-      item.textContent = 'No tournaments available';
-      this.list.appendChild(item);
+      this.renderNoItem();
+      this.#state.isLoading = false;
       return;
     }
     for (let i = this.#state.currentLastItemIndex; i < this.#state.tournaments.length; i++) {
@@ -64,6 +69,9 @@ export class TournamentList extends HTMLElement {
       }
       this.renderRow(this.#state.tournaments[i]);
       ++this.#state.currentLastItemIndex;
+    }
+    if (this.#state.filter === 'lobby' && this.#state.currentLastItemIndex === 0) {
+      this.renderNoItem();
     }
     this.#state.isLoading = false;
   }
@@ -93,11 +101,20 @@ export class TournamentList extends HTMLElement {
     this.list.appendChild(item);
   }
 
+  renderNoItem() {
+    const item = document.createElement('li');
+    item.className = 'list-group-item text-center border-0 bg-transparent py-3';
+    item.id = 'no-open-tournaments';
+    item.textContent = 'No tournaments available at the moment. Create a new one to get started.';
+    this.list.appendChild(item);
+    this.filterButton.classList.add('d-none');
+  }
+
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
   async fetchTournamentList() {
-    // For test
+    // TEST
     const response = await mockTournamentList();
     this.#state.tournaments = response.items;
     this.#state.totalTournaments = response.count;
@@ -107,7 +124,20 @@ export class TournamentList extends HTMLElement {
     // }
   }
 
-  toggleFilter() {
+  filterTournament(event) {
+    event.preventDefault();
+    const target = event.target.closest('button');
+    const filter = target?.getAttribute('filter');
+    if (!filter || filter === this.#state.filter) {
+      return;
+    }
+    this.#state.filter = filter;
+    this.filterButton.textContent = target.textContent;
+    this.#state.currentLastItemIndex = 0;
+    this.#state.totalTournaments = 0;
+    this.#state.tournaments = [];
+    this.list.innerHTML = '';
+    this.renderList();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -119,7 +149,7 @@ export class TournamentList extends HTMLElement {
       Open for entries
     </div>
     <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="game-history-filter">
-      <button class="dropdown-item text-center" id="tournament-filter-open">Open for entries</button>
+      <button class="dropdown-item text-center" id="tournament-filter-open" filter="lobby">Open for entries</button>
       <button class="dropdown-item text-center" id="tournament-filter-all" filter="all">All tournaments</button>
     </div>
 
