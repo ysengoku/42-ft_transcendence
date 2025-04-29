@@ -123,6 +123,7 @@ INSTALLED_APPS = [
     "users",
     "chat",
     "pong",
+    "tournaments",
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
