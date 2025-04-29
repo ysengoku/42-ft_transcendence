@@ -4,16 +4,12 @@ from uuid import UUID
 from ninja import Schema
 
 
-class TournamentSchema(Schema):
-    id: UUID
-    name: str
+class RoundSchema(Schema):
+    tournament: 'TournamentSchema'
+    tournament_id: UUID
+    number: int
+    brackets: list['BracketSchema']
     status: str
-    creator: str
-    winner: str
-    date: datetime
-    rounds: list[RoundSchema]
-    participants: list[ParticipantSchema]
-    required_participants: int
 
 
 class ParticipantSchema(Schema):
@@ -35,9 +31,17 @@ class BracketSchema(Schema):
     score_p2: int
 
 
-class RoundSchema(Schema):
-    tournament: TournamentSchema
-    tournament_id: UUID
-    number: int
-    brackets: list[BracketSchema]
+class TournamentSchema(Schema):
+    id: UUID
+    name: str
     status: str
+    creator: str
+    winner: str
+    date: datetime
+    rounds: list[RoundSchema]
+    participants: list[ParticipantSchema]
+    required_participants: int
+
+
+TournamentSchema.update_forward_refs()
+RoundSchema.update_forward_refs()
