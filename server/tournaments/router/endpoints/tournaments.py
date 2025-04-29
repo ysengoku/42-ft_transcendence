@@ -3,6 +3,7 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
@@ -10,6 +11,8 @@ from ninja.errors import HttpError
 from common.schemas import MessageSchema
 from tournaments.models import (Tournament, TournamentCreatedSchema,
                                 TournamentCreateSchema)
+from users.router.utils import _create_json_response_with_tokens
+from users.schemas import ProfileMinimalSchema
 
 tournaments_router = Router()
 
@@ -51,7 +54,12 @@ def create_tournament(request, data: TournamentCreateSchema):
             },
         },
     )
-    return 201, {"tournament_id": str(tournament.id)}
+    data = user.profile.to_profile_minimal_schema() | {
+        "tournament_id": str(tournament.id),
+        "tournament_name": data.tournament_name,
+        "required_participants": data.required_participants
+    }
+    return JsonResponse(data, status=201)
 
 
 @tournaments_router.get("/{tournament_id}", response=TournamentCreatedSchema)
