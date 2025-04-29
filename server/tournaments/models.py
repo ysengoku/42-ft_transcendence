@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from ninja import Field, Router, Schema
+from pydantic import validator
 
 from common.schemas import MessageSchema
 from users.models import Profile
@@ -66,7 +67,7 @@ class Participant(models.Model):
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     tournament = models.ForeignKey(
         Tournament, on_delete=models.CASCADE, related_name="participants")
-    alias = models.CharField(max_length=50)
+    alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
     status = models.CharField(
         max_length=12, choices=STATUS_CHOICES, default='registered')
     current_round = models.PositiveIntegerField(default=0)
@@ -82,7 +83,7 @@ class Round(models.Model):
     tournament = models.ForeignKey(
         Tournament, on_delete=models.CASCADE, related_name='rounds')
     number = models.PositiveIntegerField()
-    status = models.CharField(max_length=7, choices=[(
+    status = models.CharField(max_length=10, choices=[(
         'start', 'Start'), ('ongoing', 'Ongoing'), ('finished', 'Finished')], default='start')
 
     class Meta:
@@ -111,7 +112,7 @@ class Bracket(models.Model):
     winner = models.ForeignKey(
         Participant, on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(
-        max_length=7, choices=STATUS_CHOICES, default='start')
+        max_length=10, choices=STATUS_CHOICES, default='start')
     score = models.CharField(max_length=7, blank=True, null=True)
 
     def __str__(self):
@@ -120,11 +121,12 @@ class Bracket(models.Model):
 
 class TournamentCreateSchema(Schema):
     tournament_name: str = Field(..., min_length=1, max_length=50)
-    required_participants: int = Field(..., ge=4, le=16)
+    required_participants: int = Field(...,
+                                       ge=settings.MIN_REQUIRED_PARTICIPANTS, le=settings.MAX_REQUIRED_PARTICIPANTS)
 
     @validator("required_participants")
     def must_be_even(cls, num):
-       if num % 2 != 0:
+        if num % 2 != 0:
             raise ValueError("Number of participants must be even.")
         return num
 

@@ -57,6 +57,13 @@ class TournamentConsumer(WebsocketConsumer):
             }
         )
 
+    def tournament_broadcast(self, event):
+        # Send message to all connected clients
+        self.send_json({
+            "action": event["action"],
+            "data": event["data"],
+        })
+
     def create_tournament(self, data):
         with transaction.atomic():
             tournament = Tournament.objects.create(

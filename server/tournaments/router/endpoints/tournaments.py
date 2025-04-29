@@ -5,7 +5,8 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from common.schemas import MessageSchema
-from tournaments.models import Tournament, TournamentCreatedSchema, TournamentCreateSchema
+from tournaments.models import (Tournament, TournamentCreatedSchema,
+                                TournamentCreateSchema)
 
 tournaments_router = Router()
 
@@ -47,3 +48,12 @@ def create_tournament(request, data: TournamentCreateSchema):
         },
     )
     return 201, {"tournament_id": str(tournament.id)}
+
+
+@tournaments_router.get("/{tournament_id}", response=TournamentCreatedSchema)
+def get_tournament(request, tournament_id: str):
+    try:
+        tournament = Tournament.objects.get(id=tournament_id)
+    except Tournament.DoesNotExist:
+        return 404, {"message": "Tournament not found"}
+    return tournament
