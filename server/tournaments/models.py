@@ -1,8 +1,9 @@
 # server/tournament/models.py
 import uuid
 
+from asgiref.sync import async_to_sync
 from django.conf import settings
-from django.core.exceptions import ValidationError.
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from ninja import Field, Router, Schema
