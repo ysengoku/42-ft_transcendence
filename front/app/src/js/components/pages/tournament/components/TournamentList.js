@@ -11,27 +11,33 @@ export class TournamentList extends HTMLElement {
 
   constructor() {
     super();
+
+    this.renderList = this.renderList.bind(this);
+    this.toggleFilter = this.toggleFilter.bind(this);
   }
 
   connectedCallback() {
     this.render();
   }
 
-  async fetchTournamentList() {
-    // For test
-    const response = await mockTournamentList();
-    this.#state.tournaments = response.items;
-    this.#state.totalTournaments = response.count;
-
-    // if (response.success) {
-      // this.#state.tournaments = response.items;
-    // }
+  disconnectedCallback() {
+    this.listWrapper?.removeEventListener('scrollend', this.renderList);
+    this.filterButton?.removeEventListener('click', this.toggleFilter);
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Render                                                              */
+  /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template() + this.style();
 
+    this.listWrapper = this.querySelector('#tournament-list-wrapper');
     this.list = this.querySelector('#tournament-list');
+    this.filterButton = this.querySelector('#game-history-filter');
+
+    this.listWrapper?.addEventListener('scrollend', this.renderList);
+    this.filterButton?.addEventListener('click', this.toggleFilter);
+  
     this.renderList();
   }
 
@@ -53,33 +59,60 @@ export class TournamentList extends HTMLElement {
       return;
     }
     for (let i = this.#state.currentLastItemIndex; i < this.#state.tournaments.length; i++) {
-      console.log('TournamentList', i, this.#state.tournaments[i]);
-      if (this.#state.tournaments[i].status !== this.#state.filter) {
+      if (this.#state.filter === 'lobby' && this.#state.tournaments[i].status !== this.#state.filter) {
         continue;
       }
-      const item = document.createElement('li');
-      item.innerHTML = this.rowTemplate();
-
-      const tournament = this.#state.tournaments[i];
-      console.log('Tournament content', tournament);
-      const tournamentName = item.querySelector('.tournament-name');
-      const tournamentOrganizer = item.querySelector('.tournament-organizer');
-      const tournamentOrganizerAvatar = item.querySelector('.tournament-organizer-avatar');
-      const tournamentStatus = item.querySelector('.tournament-status');
-      const tournamentParticipants = item.querySelector('.tournament-participants');
-      tournamentName.textContent = tournament.name;
-      tournamentOrganizer.textContent = 'by ' + tournament.creator.user.nickname;
-      tournamentOrganizerAvatar.src = tournament.creator.user.avatar;
-      tournamentOrganizerAvatar.alt = tournament.creator.user.nickname;
-      tournamentStatus.textContent = this.tournamentStatus(tournament.status);
-      tournamentParticipants.textContent = `${tournament.participants.length} / ${tournament.required_participants} players`;
-
-      this.list.appendChild(item);
+      this.renderRow(this.#state.tournaments[i]);
       ++this.#state.currentLastItemIndex;
     }
     this.#state.isLoading = false;
   }
 
+  renderRow(tournament) {
+    console.log('Render tournament', tournament);
+    const item = document.createElement('li');
+    item.className = 'list-group-item d-flex flex-row justify-content-between mb-2 p-4';
+    item.innerHTML = this.rowTemplate();
+
+    const tournamentName = item.querySelector('.tournament-name');
+    const tournamentOrganizer = item.querySelector('.tournament-organizer');
+    const tournamentOrganizerAvatar = item.querySelector('.tournament-organizer-avatar');
+    const tournamentStatus = item.querySelector('.tournament-status');
+    const tournamentParticipants = item.querySelector('.tournament-participants');
+    tournamentName.textContent = tournament.name;
+    tournamentOrganizer.textContent = 'by ' + tournament.creator.user.nickname;
+    tournamentOrganizerAvatar.src = tournament.creator.user.avatar;
+    tournamentOrganizerAvatar.alt = tournament.creator.user.nickname;
+    tournamentStatus.textContent = this.tournamentStatus(tournament.status);
+    tournamentParticipants.textContent = `${tournament.participants.length} / ${tournament.required_participants} players`;
+
+    item.setAttribute('tournament-id', tournament.tournament_id);
+    item.setAttribute('tournament-name', tournament.name);
+    item.setAttribute('tournament-status', tournament.status);
+
+    this.list.appendChild(item);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Event handlers                                                      */
+  /* ------------------------------------------------------------------------ */
+  async fetchTournamentList() {
+    // For test
+    const response = await mockTournamentList();
+    this.#state.tournaments = response.items;
+    this.#state.totalTournaments = response.count;
+
+    // if (response.success) {
+      // this.#state.tournaments = response.items;
+    // }
+  }
+
+  toggleFilter() {
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Template & style                                                    */
+  /* ------------------------------------------------------------------------ */
   template() {
     return `
     <div class="dropdown-toggle text-end mb-2" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="game-history-filter">
@@ -116,27 +149,26 @@ export class TournamentList extends HTMLElement {
 
   rowTemplate() {
     return `
-    <li class="list-group-item d-flex flex-row justify-content-between mb-2 p-4">
-      <div class="d-flex flex-row justify-content-start">
-        <img class="tournament-organizer-avatar avatar-m rounded-circle me-3">
-        <div class="d-flex flex-column justify-content-between">
-          <p class="tournament-name fs-5 m-0"></p>
-          <p class="tournament-organizer m-0"></p>
-        </div>
+    <div class="d-flex flex-row justify-content-start">
+      <img class="tournament-organizer-avatar avatar-m rounded-circle me-3">
+      <div class="d-flex flex-column justify-content-between">
+        <p class="tournament-name fs-5 m-0"></p>
+        <p class="tournament-organizer m-0"></p>
       </div>
-      <div class="d-flex flex-column justify-content-between align-items-end">
-        <p class="tournament-status m-0"></p>
-        <p class="tournament-participants m-0"></p>
-      </div>
-    </li>
+    </div>
+    <div class="d-flex flex-column justify-content-between align-items-end">
+      <p class="tournament-status m-0"></p>
+      <p class="tournament-participants m-0"></p>
+    </div>
     `;
   }
 
   tournamentStatus(status) {
     const message = {
       lobby: 'Open for entries',
-      in_progress: 'In progress',
+      ongoing: 'Ongoing',
       finished: 'Finished',
+      cancelled: 'Cancelled',
     };
     return message[status] || 'Unknown';
   }

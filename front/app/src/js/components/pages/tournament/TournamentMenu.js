@@ -10,9 +10,14 @@ export class TournamentMenu extends HTMLElement {
 
   connectedCallback() {
     this.render();
+  
+    this.createNewTournament = this.createNewTournament.bind(this);
+    this.registerForTournament = this.registerForTournament.bind(this);
   }
 
   disconnectedCallback() {
+    this.createTournamentButton?.removeEventListener('click', this.createNewTournament);
+    this.list?.removeEventListener('register-tournament', this.registerForTournament);
   }
 
   render() {
@@ -20,6 +25,26 @@ export class TournamentMenu extends HTMLElement {
 
     this.createTournamentButton = this.querySelector('#create-tournament-button');
     this.list = this.querySelector('tournament-list');
+
+    this.createTournamentButton.addEventListener('click', this.createNewTournament);
+    this.list.addEventListener('click', this.registerForTournament);
+  }
+
+  createNewTournament() {
+    console.log('Create new tournament');
+  }
+
+  registerForTournament(event) {
+    console.log('Register for tournament');
+    const listItem = event.target.closest('li[tournament-id]');
+    if (!listItem) {
+      return;
+    }
+    const tournamentId = listItem.getAttribute('tournament-id');
+    const tournamentName = listItem.getAttribute('tournament-name');
+    const tournamentStatus = listItem.getAttribute('tournament-status');
+
+    console.log('Register for tournament', tournamentId, tournamentName, tournamentStatus);
   }
 
   template() {
@@ -38,12 +63,10 @@ export class TournamentMenu extends HTMLElement {
               <tournament-list></tournament-list>
             </div>
 
-            <div class="d-flex flex-row justify-content-center">
-              <a href="/home" class="btn">
-                <i class="bi bi-arrow-left"></i>
-                Back to home
-              </a>
-            </div>  
+            <a href="/home" class="btn">
+              <i class="bi bi-arrow-left"></i>
+              Back to home
+            </a>
           </div>
         </div>
       </div>
