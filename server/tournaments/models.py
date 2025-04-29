@@ -4,7 +4,9 @@ import uuid
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from ninja import Field, Router, Schema
 
+from common.schemas import MessageSchema
 from users.models import Profile
 
 
@@ -28,6 +30,14 @@ class Tournament(models.Model):
         'Participant', null=True, blank=True, on_delete=models.SET_NULL, related_name='won_tournaments'
     )
     required_participants = models.PositiveIntegerField()
+
+    def clean(self):
+        num = self.required_participants
+        if num % 2 != 0 or not (4 <= num <= 16):
+            raise ValidationError("Number of participants must be even.")
+        if Tournament.objects.filter(name__iexact=self.name).exclude(pk=self.pk).exists():
+            raise ValidationError(
+                "A tournament with this name already exists.")
 
     class Meta:
         ordering = ['-created_at']
@@ -106,3 +116,18 @@ class Bracket(models.Model):
 
     def __str__(self):
         return f"{self.participant1.alias} vs {self.participant2.alias} - Round {self.round.number}"
+
+
+class TournamentCreateSchema(Schema):
+    tournament_name: str = Field(..., min_length=1, max_length=50)
+    required_participants: int = Field(..., ge=4, le=16)
+
+    @validator("required_participants")
+    def must_be_even(cls, num):
+       if num % 2 != 0:
+            raise ValueError("Number of participants must be even.")
+        return num
+
+
+class TournamentCreatedSchema(Schema):
+    tournament_id: str
