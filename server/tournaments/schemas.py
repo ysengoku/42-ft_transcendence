@@ -1,11 +1,7 @@
 from datetime import datetime
-from typing import List, Optional
 from uuid import UUID
 
-from django.conf import settings
 from ninja import Schema
-
-from tournaments.models import Bracket, Participant, Round, Tournament
 
 
 class TournamentSchema(Schema):
@@ -15,8 +11,8 @@ class TournamentSchema(Schema):
     creator: str
     winner: str
     date: datetime
-    rounds: List[RoundSchema]
-    participants: List[ParticipantSchema]
+    rounds: list[RoundSchema]
+    participants: list[ParticipantSchema]
     required_participants: int
 
 
@@ -32,7 +28,7 @@ class BracketSchema(Schema):
     game_id: UUID
     participant1: ParticipantSchema
     participant2: ParticipantSchema
-    winner: Optional[ParticipantSchema]
+    winner: ParticipantSchema | None
     round: int
     status: str
     score_p1: int
@@ -43,5 +39,5 @@ class RoundSchema(Schema):
     tournament: TournamentSchema
     tournament_id: UUID
     number: int
-    brackets: List[BracketSchema]
+    brackets: list[BracketSchema]
     status: str
