@@ -1,6 +1,8 @@
 # server/tournaments/router/endpoints/tournaments.py
 
+from channels.layers import get_channel_layer
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
@@ -26,6 +28,7 @@ def create_tournament(request, data: TournamentCreateSchema):
         creator=user,
         required_participants=data.required_participants,
         status="lobby",
+        date=timezone.now()
     )
 
     try:
