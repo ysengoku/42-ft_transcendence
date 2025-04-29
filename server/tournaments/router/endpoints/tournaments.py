@@ -1,5 +1,6 @@
 # server/tournaments/router/endpoints/tournaments.py
 
+from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -45,8 +46,8 @@ def create_tournament(request, data: TournamentCreateSchema):
             "action": "tournament_created",
             "data": {
                     "tournament_id": str(tournament.id),
-                    "tournament_name": tournament_name,
-                    "required_participants": required_participants,
+                    "tournament_name": data.tournament_name,
+                    "required_participants": data.required_participants,
             },
         },
     )
