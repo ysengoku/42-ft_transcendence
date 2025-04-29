@@ -2,6 +2,7 @@
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import ValidationError.
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from ninja import Field, Router, Schema
