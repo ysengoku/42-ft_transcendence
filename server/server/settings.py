@@ -64,6 +64,10 @@ env = environ.Env(
     REFRESH_TOKEN_SECRET_KEY=(str, ""),
     # value by default is set to 255, but env value overwrites it if present
     MAX_MESSAGE_LENGTH=(int, 255),
+    MAX_ALIAS_LENGTH=(int, 12),
+    MAX_TOURNAMENT_NAME_LENGTH=(int, 50),
+    MIN_REQUIRED_PARTICIPANTS=(int, 4),
+    MAX_REQUIRED_PARTICIPANTS=(int, 8),
     # TODO: See if we can avoid setting a default value before -->
     # TODO: for the docker to work without having the real value
     # TODO: of SECRET_KEY yet                                  <--
@@ -78,7 +82,11 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 CRON_SECRET = env("CRON_SECRET")
 
+MAX_ALIAS_LENGTH = env("MAX_ALIAS_LENGTH")
+MAX_TOURNAMENT_NAME_LENGTH = env("MAX_TOURNAMENT_NAME_LENGTH")
 MAX_MESSAGE_LENGTH = env("MAX_MESSAGE_LENGTH")
+MIN_REQUIRED_PARTICIPANTS = env("MIN_REQUIRED_PARTICIPANTS")
+MAX_REQUIRED_PARTICIPANTS = env("MAX_REQUIRED_PARTICIPANTS")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
