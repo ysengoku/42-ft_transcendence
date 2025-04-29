@@ -278,6 +278,8 @@ class TournamentConsumer(WebsocketConsumer):
         }))
 
     def generate_brackets(self, participants):
-        # Implémentation de la logique de génération des brackets
+        """
+        Implémentation de la logique de génération des brackets
         # (ex: algorithme de tournoi à élimination directe)
+        """
         pass
