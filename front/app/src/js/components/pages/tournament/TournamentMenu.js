@@ -1,4 +1,5 @@
 import { Modal } from 'bootstrap';
+import { apiRequest, API_ENDPOINTS } from '@api'
 import './components/index.js';
 
 export class TournamentMenu extends HTMLElement {
@@ -11,7 +12,6 @@ export class TournamentMenu extends HTMLElement {
     newTournament: {
       name: '',
       requiredParticipants: this.#defaultRequiredParticipants,
-      tournamentId: '',
     },
     tounamentRegistration: {
       alias: '',
@@ -88,7 +88,7 @@ export class TournamentMenu extends HTMLElement {
       const modalTitle = this.modalBody.querySelector('.modal-title');
       const modalTournamentStatus = this.modalBody.querySelector('#modal-tournament-status');
       const modalRequiredParticipants = this.modalBody.querySelector('#modal-required-participants');
-      modalTitle.textContent = this.tournamentName;
+      modalTitle.textContent = this.selectedTournament.tournament_name;
       modalTournamentStatus.textContent = 'Open for entries';
 
       this.aliasInput = this.modalBody.querySelector('#tournament-alias');
@@ -140,37 +140,74 @@ export class TournamentMenu extends HTMLElement {
   }
 
   handleTournamentInputName(event) {
-    const tournamentName = this.modalBody.querySelector('#tournament-name');
-    const tournamentNameFeedback = this.modalBody.querySelector('#tournament-name-feedback');
+    this.tournamentName = this.modalBody.querySelector('#tournament-name');
+    this.tournamentNameFeedback = this.modalBody.querySelector('#tournament-name-feedback');
     if (event.target.value.length < 1) {
-      tournamentName.classList.add('is-invalid');
-      tournamentNameFeedback.textContent = `Tournament name must be at least 3 characters.`;
+      this.tournamentName.classList.add('is-invalid');
+      this.tournamentNameFeedback.textContent = `Tournament name must be at least 3 characters.`;
       this.confirmButton.disabled = true;
     } else if (event.target.value.length > this.#maxTournamentNameLength) {
-      tournamentName.classList.add('is-invalid');
-      tournamentNameFeedback.textContent = `Tournament name must be less than ${this.#maxTournamentNameLength} characters.`;
+      this.tournamentName.classList.add('is-invalid');
+      this.tournamentNameFeedback.textContent = `Tournament name must be less than ${this.#maxTournamentNameLength} characters.`;
       this.confirmButton.disabled = true;
     } else {
-      tournamentName.classList.remove('is-invalid');
-      tournamentNameFeedback.textContent = '';
+      this.tournamentName.classList.remove('is-invalid');
+      this.tournamentNameFeedback.textContent = '';
       this.confirmButton.disabled = false;
     }
   }
 
-  createTournament(event) {
+  async createTournament(event) {
     event.stopPropagation();
     this.#state.newTournament.name = this.tournamentNameInput.value;
     this.#state.newTournament.requiredParticipants = this.modalBody.querySelector('input[name="requiredParticipants"]:checked').value;
 
     console.log('Creating tournament:', this.#state.newTournament);
-    // const response = '';
+    const data = {
+      tournament_name: this.#state.newTournament.name,
+      required_participants: this.#state.newTournament.requiredParticipants,
+    };
+    const response = await apiRequest(
+        'POST',
+        API_ENDPOINTS.NEW_TOURNAMENT,
+        data, false, true);
+    console.log('Tournament creation response:', response);
     // TODO: API request to create tournament
-    // if (response.success) {
-    // If successful, update the tournament list
+    if (response.success) {
+      console.log('Tournament created successfully:', response.data);
+      // ----- Temporary solution ------------------------------------
+      const newTournament = {
+        tournament_id: response.data.tournament_id,
+        tournament_name: response.data.tournament_name,
+        date: '',
+        status: 'lobby',
+        required_participants: response.data.required_participants,
+        creator: {
+          username: response.data.username,
+          nickname: response.data.nickname,
+          avatar: response.data.avatar,
+        },
+        participants: [],
+        winner: null,
+      }
+      this.list.setNewTournament(newTournament);
+      // --------------------------------------------------------------
+      // this.list.setNewTournament(response.data);
+      this.#state.newTournament = {
+        name: '',
+        requiredParticipants: this.#defaultRequiredParticipants,
+      };
       this.modal.hide();
-    // } else {
-      // Show feedback
-    // }
+    } else if (response.status === 400) {
+      // if (response.msg === 'Tournament name already exists') {
+        this.tournamentName.classList.add('is-invalid');
+        this.tournamentNameFeedback.textContent = response.msg;
+        this.confirmButton.disabled = true;
+      // }
+      // TODO: Handle other message
+    } else if (response.status !== 401 || response.status !== 500) {
+      // TODO: Handle other error messages
+    }
   }
 
   /* ------------------------------------------------------------------------ */
@@ -182,7 +219,6 @@ export class TournamentMenu extends HTMLElement {
       return;
     }
     this.tournamentId = listItem.getAttribute('tournament-id');
-    // this.tournamentName = listItem.getAttribute('tournament-name');
     this.selectedTournament = this.list.getTournamentById(this.tournamentId);
     const tournamentStatus = this.selectedTournament.status;
     if (!this.tournamentId  || !tournamentStatus) {
