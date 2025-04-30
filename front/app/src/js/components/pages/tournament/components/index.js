@@ -1,3 +1,5 @@
-import { TournamentList } from "./TournamentList";
+import { TournamentList } from './TournamentList';
+import { TournamentCreation } from './TournamentCreation';
+import { TournamentRegistration } from './TournamentRegistration';
 
-export { TournamentList };
+export { TournamentList, TournamentCreation, TournamentRegistration };
