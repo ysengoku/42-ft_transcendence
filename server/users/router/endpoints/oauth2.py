@@ -11,10 +11,9 @@ from ninja.errors import HttpError
 
 from common.schemas import MessageSchema
 from users.models import OauthConnection, User
-from users.router.utils import create_redirect_to_home_page_response_with_tokens
-from users.schemas import (
-    OAuthCallbackParams,
-)
+from users.router.utils import \
+    create_redirect_to_home_page_response_with_tokens
+from users.schemas import OAuthCallbackParams
 
 oauth2_router = Router()
 
@@ -70,7 +69,8 @@ def oauth_authorize(request, platform: str):
     Raises 404 if the platform is unsupported (raised from def get_oauth_config).
     Raises 422 if the platform is not available (raised from def check_api_availability).
     """
-    is_available, error_msg = check_api_availability(platform, get_oauth_config(platform))
+    is_available, error_msg = check_api_availability(
+        platform, get_oauth_config(platform))
     if not is_available:
         return JsonResponse({"error": error_msg}, status=422)
 
@@ -105,7 +105,8 @@ def oauth_callback(  # noqa: PLR0911
     Handles the OAuth2 callback.
     Captures errors directly from the OAuth provider.
     """
-    is_available, error_msg = check_api_availability(platform, get_oauth_config(platform))
+    is_available, error_msg = check_api_availability(
+        platform, get_oauth_config(platform))
     if not is_available:
         return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_msg)}&code=404")
 
@@ -123,9 +124,11 @@ def oauth_callback(  # noqa: PLR0911
         error_message = quote("Missing code or state.")
         return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
 
-    oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
+    oauth_connection = OauthConnection.objects.for_state_and_pending_status(
+        state).first()
     if not oauth_connection:
-        raise HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error=Invalid state&code=422")
+        raise HttpResponseRedirect(
+            f"{settings.ERROR_REDIRECT_URL}?error=Invalid state&code=422")
 
     state_error = oauth_connection.check_state_and_validity(platform, state)
     if state_error:
@@ -134,12 +137,14 @@ def oauth_callback(  # noqa: PLR0911
 
     config = get_oauth_config(platform)
 
-    access_token, token_error = oauth_connection.request_access_token(config, code)
+    access_token, token_error = oauth_connection.request_access_token(
+        config, code)
     if token_error:
         error_message, status_code = token_error
         return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
-    user_info, user_error = oauth_connection.get_user_info(config, access_token)
+    user_info, user_error = oauth_connection.get_user_info(
+        config, access_token)
     if user_error:
         error_message, status_code = user_error
         return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
@@ -148,7 +153,8 @@ def oauth_callback(  # noqa: PLR0911
         error_message = quote("Unsupported platform")
         return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
 
-    user, user_creation_error = oauth_connection.create_or_update_user(user_info)
+    user, user_creation_error = oauth_connection.create_or_update_user(
+        user_info)
     if user_creation_error:
         error_message, status_code = user_creation_error
         return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
