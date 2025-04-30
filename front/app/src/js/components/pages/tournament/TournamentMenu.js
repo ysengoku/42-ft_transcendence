@@ -1,18 +1,11 @@
 import { Modal } from 'bootstrap';
-import { apiRequest, API_ENDPOINTS } from '@api'
+import { socketManager } from '@socket';
 import './components/index.js';
 
 export class TournamentMenu extends HTMLElement {
-  #requiredParticipantsOptions = [4, 8];
-  #defaultRequiredParticipants = this.#requiredParticipantsOptions[0];
-  #maxTournamentNameLength = Number(import.meta.env.VITE_MAX_TOURNAMENT_NAME_LENGTH) || 50;
   #maxAliasLength = Number(import.meta.env.VITE_MAX_ALIAS_LENGTH) || 12;
 
   #state = {
-    newTournament: {
-      name: '',
-      requiredParticipants: this.#defaultRequiredParticipants,
-    },
     tounamentRegistration: {
       alias: '',
       tournamentId: '',
@@ -24,11 +17,10 @@ export class TournamentMenu extends HTMLElement {
     super();
 
     this.showNewTournamentForm = this.showNewTournamentForm.bind(this);
-    this.handleTournamentInputName = this.handleTournamentInputName.bind(this);
-    this.createTournament = this.createTournament.bind(this);
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
     this.handleAliasInput = this.handleAliasInput.bind(this);
     this.confirmRegister = this.confirmRegister.bind(this);
+    this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
   }
 
@@ -40,12 +32,9 @@ export class TournamentMenu extends HTMLElement {
     this.createTournamentButton?.removeEventListener('click', this.showNewTournamentForm);
     this.list?.removeEventListener('register-tournament', this.showTournamentDetail);
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
+    document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
 
-    if (this.#state.modalType === 'create') {
-      this.tournamentNameInput?.removeEventListener('input', this.handleTournamentInputName);
-      this.confirmButton?.removeEventListener('click', this.createTournament);
-    }
     if (this.#state.modalType === 'register') {
       this.aliasInput?.removeEventListener('input', this.handleAliasInput);
       this.confirmButton?.removeEventListener('click', this.confirmRegister);
@@ -74,6 +63,7 @@ export class TournamentMenu extends HTMLElement {
     this.calcelButton = this.modalFooter.querySelector('.cancel-button');
     this.confirmButton = this.modalFooter.querySelector('.confirm-button');
 
+    document.addEventListener('hide-modal', this.hideModal);
     this.modalComponent.addEventListener('hide.bs.modal', this.handleCloseModal);
     window.requestAnimationFrame(() => {
       this.noOpenTournaments = document.getElementById('no-open-tournaments');
@@ -105,6 +95,14 @@ export class TournamentMenu extends HTMLElement {
     }
   };
 
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling                                                      */
+  /* ------------------------------------------------------------------------ */
+
+  hideModal() {
+    this.modal.hide();
+  }
+
   handleCloseModal() {
     if (this.modalComponent.contains(document.activeElement)) {
       document.activeElement.blur();
@@ -122,97 +120,17 @@ export class TournamentMenu extends HTMLElement {
     }
   }
 
-  /* ------------------------------------------------------------------------ */
-  /*      New tournament                                                      */
-  /* ------------------------------------------------------------------------ */
   showNewTournamentForm() {
     this.modalBody.innerHTML = '';
     this.#state.modalType = 'create';
 
-    this.modalBody.innerHTML = this.createTournamentForm();
+    const modalBodyContent = document.createElement('tournament-creation');
+    this.modalBody.appendChild(modalBodyContent);
     this.confirmButton.textContent = 'Create';
-    this.tournamentNameInput = this.modalBody.querySelector('#tournament-name');
-
-    this.tournamentNameInput.addEventListener('input', this.handleTournamentInputName);
-    this.confirmButton.addEventListener('click', this.createTournament);
 
     this.modal.show();
   }
 
-  handleTournamentInputName(event) {
-    this.tournamentName = this.modalBody.querySelector('#tournament-name');
-    this.tournamentNameFeedback = this.modalBody.querySelector('#tournament-name-feedback');
-    if (event.target.value.length < 1) {
-      this.tournamentName.classList.add('is-invalid');
-      this.tournamentNameFeedback.textContent = `Tournament name must be at least 3 characters.`;
-      this.confirmButton.disabled = true;
-    } else if (event.target.value.length > this.#maxTournamentNameLength) {
-      this.tournamentName.classList.add('is-invalid');
-      this.tournamentNameFeedback.textContent = `Tournament name must be less than ${this.#maxTournamentNameLength} characters.`;
-      this.confirmButton.disabled = true;
-    } else {
-      this.tournamentName.classList.remove('is-invalid');
-      this.tournamentNameFeedback.textContent = '';
-      this.confirmButton.disabled = false;
-    }
-  }
-
-  async createTournament(event) {
-    event.stopPropagation();
-    this.#state.newTournament.name = this.tournamentNameInput.value;
-    this.#state.newTournament.requiredParticipants = this.modalBody.querySelector('input[name="requiredParticipants"]:checked').value;
-
-    console.log('Creating tournament:', this.#state.newTournament);
-    const data = {
-      tournament_name: this.#state.newTournament.name,
-      required_participants: this.#state.newTournament.requiredParticipants,
-    };
-    const response = await apiRequest(
-        'POST',
-        API_ENDPOINTS.NEW_TOURNAMENT,
-        data, false, true);
-    console.log('Tournament creation response:', response);
-    // TODO: API request to create tournament
-    if (response.success) {
-      console.log('Tournament created successfully:', response.data);
-      // ----- Temporary solution ------------------------------------
-      const newTournament = {
-        tournament_id: response.data.tournament_id,
-        tournament_name: response.data.tournament_name,
-        date: '',
-        status: 'lobby',
-        required_participants: response.data.required_participants,
-        creator: {
-          username: response.data.username,
-          nickname: response.data.nickname,
-          avatar: response.data.avatar,
-        },
-        participants: [],
-        winner: null,
-      }
-      this.list.setNewTournament(newTournament);
-      // --------------------------------------------------------------
-      // this.list.setNewTournament(response.data);
-      this.#state.newTournament = {
-        name: '',
-        requiredParticipants: this.#defaultRequiredParticipants,
-      };
-      this.modal.hide();
-    } else if (response.status === 400) {
-      // if (response.msg === 'Tournament name already exists') {
-        this.tournamentName.classList.add('is-invalid');
-        this.tournamentNameFeedback.textContent = response.msg;
-        this.confirmButton.disabled = true;
-      // }
-      // TODO: Handle other message
-    } else if (response.status !== 401 || response.status !== 500) {
-      // TODO: Handle other error messages
-    }
-  }
-
-  /* ------------------------------------------------------------------------ */
-  /*      Existing tournaments                                                */
-  /* ------------------------------------------------------------------------ */
   showTournamentDetail(event) {
     const listItem = event.target.closest('li[tournament-id]');
     if (!listItem || !listItem.hasAttribute('tournament-id')) { 
@@ -251,15 +169,24 @@ export class TournamentMenu extends HTMLElement {
     event.stopPropagation();
     this.#state.tounamentRegistration.tournamentId = this.tournamentId;
     this.#state.tounamentRegistration.alias = this.aliasInput.value;
-    console.log('Registering for tournament:', this.tournamentId, this.#state.tounamentRegistration.alias);
 
-    // TODO: Open WebSocket connection
+    socketManager.openSocket('tournament', this.#state.tounamentRegistration.tournamentId);
+    const data = {
+      action: 'register',
+      data: { alias: this.#state.tounamentRegistration.alias },
+    }
+    socketManager.sendMessage('tournament', data);
+    console.log('Registering for tournament:', data);
 
     // If receive registered message
     // Navigate to tournament page
     this.modal.hide();
     // Else if the tournmant is full, show message
-    // Else if alias is already taken by another uer, show feedback
+
+  }
+    
+  connectToTournamentRoom(event) {
+
   }
 
   /* ------------------------------------------------------------------------ */
@@ -309,51 +236,6 @@ export class TournamentMenu extends HTMLElement {
       </div>
     </div>
     `;  
-  }
-
-  createTournamentForm() {
-    const option1 = this.#requiredParticipantsOptions[0];
-    const option2 = this.#requiredParticipantsOptions[1];
-    const idForOption1 = `required-participants-${this.#requiredParticipantsOptions[0]}`;
-    const idForOption2 = `required-participants-${this.#requiredParticipantsOptions[1]}`;
-
-    return `
-    <style>
-    .btn-outline-create-tournament {
-      border: 1px solid rgba(var(--bs-body-color-rgb), 0.4);
-      color: rgba(var(--bs-body-color-rgb), 0.6);
-    }
-    .btn-check:checked + .btn-outline-create-tournament,
-    .btn-check:active + .btn-outline-create-tournament,
-    .btn-outline-create-tournament.active {
-      color: var(--pm-primary-100);
-      font-weight: 600;
-      background-color: var(--pm-primary-500);
-      border-color: var(--pm-primary-500);
-    }
-    </style>
-    <div class="d-flex flex-column align-items-center px-4">
-      <h2 class="modal-title text-center pb-4">Create a tournament</h2>
-      <div id="create-tournament-form" class="d-flex flex-column w-100 gap-2">
-
-        <div class="mb-3">
-          <label for="tournament-name" class="form-label">Tournament name</label>
-          <input type="text" class="form-control" id="tournament-name" placeholder="Tournament name" required>
-          <div class="invalid-feedback" id="tournament-name-feedback"></div>
-        </div>
-
-        <div class="d-flex flex-column mb-3">
-          <label class="mb-2">Number of participants</label>
-          <div class="btn-group" role="group">
-            <input type="radio" class="btn-check" name="requiredParticipants" id="${idForOption1}" value="${option1}" ${option1 === this.#defaultRequiredParticipants ? 'checked' : ''}>
-            <label class="btn btn-outline-create-tournament py-0" for="${idForOption1}">${option1}</label>
-            <input type="radio" class="btn-check" name="requiredParticipants" id="${idForOption2}" value="${option2}" ${option2 === this.#defaultRequiredParticipants ? 'checked' : ''}>
-            <label class="btn btn-outline-create-tournament py-0" for="${idForOption2}">${option2}</label>
-          </div>
-        </div>
-      </div>
-    </div>
-    `;
   }
 
   registerForTournamentForm() {
