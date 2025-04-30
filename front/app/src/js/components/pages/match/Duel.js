@@ -188,7 +188,6 @@ export class Duel extends HTMLElement {
     const userConfirmed = await new Promise((resolve) => {
       confirmationModal.handleConfirm = () => {
         devLog('User confirmed to leave the page');
-        socketManager.closeSocket('matchmaking');
         // TODO: Send cancel duel message to server
         confirmationModal.remove();
         resolve(true);
