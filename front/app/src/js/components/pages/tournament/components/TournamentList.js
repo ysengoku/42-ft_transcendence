@@ -31,6 +31,20 @@ export class TournamentList extends HTMLElement {
     return this.#state.tournaments.find(item => item.tournament_id === id);
   }
 
+  setNewTournament(tournament) {
+    this.#state.tournaments.unshift(tournament);
+    console.log('New tournament added:', tournament);
+    this.#state.totalTournaments++;
+    const item = this.renderRow(tournament);
+    this.list.insertBefore(item, this.list.firstChild);
+    this.#state.currentLastItemIndex++;
+    this.filterButton.classList.remove('d-none');
+    const noItem = this.list.querySelector('#no-open-tournaments');
+    if (noItem) {
+      this.list.removeChild(noItem);
+    }
+  }
+
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
@@ -71,7 +85,8 @@ export class TournamentList extends HTMLElement {
       if (this.#state.filter === 'lobby' && this.#state.tournaments[i].status !== this.#state.filter) {
         continue;
       }
-      this.renderRow(this.#state.tournaments[i]);
+      const item = this.renderRow(this.#state.tournaments[i]);
+      this.list.appendChild(item);
       ++this.#state.currentLastItemIndex;
     }
     if (this.#state.filter === 'lobby' && this.#state.currentLastItemIndex === 0) {
@@ -90,10 +105,10 @@ export class TournamentList extends HTMLElement {
     const tournamentOrganizerAvatar = item.querySelector('.tournament-organizer-avatar');
     const tournamentStatus = item.querySelector('.tournament-status');
     const tournamentParticipants = item.querySelector('.tournament-participants');
-    tournamentName.textContent = tournament.name;
-    tournamentOrganizer.textContent = 'by ' + tournament.creator.user.nickname;
-    tournamentOrganizerAvatar.src = tournament.creator.user.avatar;
-    tournamentOrganizerAvatar.alt = tournament.creator.user.nickname;
+    tournamentName.textContent = tournament.tournament_name;
+    tournamentOrganizer.textContent = 'by ' + tournament.creator.nickname;
+    tournamentOrganizerAvatar.src = tournament.creator.avatar;
+    tournamentOrganizerAvatar.alt = tournament.creator.nickname;
     tournamentStatus.textContent = this.tournamentStatus(tournament.status);
     tournamentParticipants.textContent = `${tournament.participants.length} / ${tournament.required_participants} players`;
 
@@ -103,7 +118,7 @@ export class TournamentList extends HTMLElement {
     item.setAttribute('tournament-participants', tournament.participants.length);
     item.setAttribute('tournament-required-participants', tournament.required_participants);
 
-    this.list.appendChild(item);
+    return item;
   }
 
   renderNoItem() {
@@ -114,7 +129,7 @@ export class TournamentList extends HTMLElement {
     this.list.appendChild(item);
     this.filterButton.classList.add('d-none');
   }
-
+ 
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */

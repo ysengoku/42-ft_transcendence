@@ -7,6 +7,7 @@ const API_BASE_URL = `https://${location.host}/api/`;
 const API_USERS = 'users';
 const API_CHAT = 'chats';
 const API_GAME_STATS = 'game-stats';
+const API_TOURNAMENTS = 'tournaments';
 
 /**
  * API_ENDPOINTS
@@ -177,4 +178,16 @@ export const API_ENDPOINTS = {
    * @return {string} The full API URL for the match stats.
    * */
   MATCH_RESULT: (id) => `${API_BASE_URL}${API_GAME_STATS}/matches/${id}`,
+
+  /**
+   * POST: Creates a new tournament.
+   * @return {string} The full API URL for creating a new tournament.
+   * */
+  NEW_TOURNAMENT: `${API_BASE_URL}${API_TOURNAMENTS}`,
+
+  /**
+   * GET: Gets a specific tournament by id. Paginated by the limit and offset settings.
+   * @return {string} The full API URL for the tournaments list.
+   * */
+  TOURNAMENT: (id) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}`,
 };
