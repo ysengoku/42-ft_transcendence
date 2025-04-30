@@ -6,6 +6,7 @@ from users.consumers import check_inactive_users
 
 logger = logging.getLogger("server")
 
+
 class Command(BaseCommand):
     help = "Vérifie les utilisateurs inactifs toutes les 5 minutes"
 
