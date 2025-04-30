@@ -27,6 +27,10 @@ export class TournamentList extends HTMLElement {
     this.filterAllButton?.removeEventListener('click', this.filterTournament);
   }
 
+  getTournamentById(id) {
+    return this.#state.tournaments.find(item => item.tournament_id === id);
+  }
+
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
@@ -77,7 +81,6 @@ export class TournamentList extends HTMLElement {
   }
 
   renderRow(tournament) {
-    console.log('Render tournament', tournament);
     const item = document.createElement('li');
     item.className = 'list-group-item d-flex flex-row justify-content-between mb-2 p-4';
     item.innerHTML = this.rowTemplate();
@@ -97,6 +100,8 @@ export class TournamentList extends HTMLElement {
     item.setAttribute('tournament-id', tournament.tournament_id);
     item.setAttribute('tournament-name', tournament.name);
     item.setAttribute('tournament-status', tournament.status);
+    item.setAttribute('tournament-participants', tournament.participants.length);
+    item.setAttribute('tournament-required-participants', tournament.required_participants);
 
     this.list.appendChild(item);
   }
