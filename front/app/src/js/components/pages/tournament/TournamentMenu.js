@@ -1,25 +1,24 @@
 import { Modal } from 'bootstrap';
-import { socketManager } from '@socket';
 import './components/index.js';
 
 export class TournamentMenu extends HTMLElement {
-  #maxAliasLength = Number(import.meta.env.VITE_MAX_ALIAS_LENGTH) || 12;
+  // #maxAliasLength = Number(import.meta.env.VITE_MAX_ALIAS_LENGTH) || 12;
 
-  #state = {
-    tounamentRegistration: {
-      alias: '',
-      tournamentId: '',
-    },
-    modalType: '', // 'create' | 'register'
-  };
+  // #state = {
+    // tounamentRegistration: {
+    //   alias: '',
+    //   tournamentId: '',
+    // },
+  //   modalType: '', // 'create' | 'register'
+  // };
 
   constructor() {
     super();
 
     this.showNewTournamentForm = this.showNewTournamentForm.bind(this);
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
-    this.handleAliasInput = this.handleAliasInput.bind(this);
-    this.confirmRegister = this.confirmRegister.bind(this);
+    // this.handleAliasInput = this.handleAliasInput.bind(this);
+    // this.confirmRegister = this.confirmRegister.bind(this);
     this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
   }
@@ -34,11 +33,6 @@ export class TournamentMenu extends HTMLElement {
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
-
-    if (this.#state.modalType === 'register') {
-      this.aliasInput?.removeEventListener('input', this.handleAliasInput);
-      this.confirmButton?.removeEventListener('click', this.confirmRegister);
-    }
   }
 
   /* ------------------------------------------------------------------------ */
@@ -71,34 +65,9 @@ export class TournamentMenu extends HTMLElement {
     });
   }
 
-  tournamentDetail = {
-    lobby: () => {
-      this.#state.modalType = 'register';
-      this.modalBody.innerHTML = this.registerForTournamentForm();
-      const modalTitle = this.modalBody.querySelector('.modal-title');
-      const modalTournamentStatus = this.modalBody.querySelector('#modal-tournament-status');
-      const modalRequiredParticipants = this.modalBody.querySelector('#modal-required-participants');
-      modalTitle.textContent = this.selectedTournament.tournament_name;
-      modalTournamentStatus.textContent = 'Open for entries';
-
-      this.aliasInput = this.modalBody.querySelector('#tournament-alias');
-      this.aliasInput.addEventListener('input', this.handleAliasInput);
-  
-      this.confirmButton.textContent = 'Register';
-      this.confirmButton.addEventListener('click', this.confirmRegister);
-    },
-    ongoing: () => {
-    },
-    finished: () => {
-    },
-    cancelled: () => {
-    }
-  };
-
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
-
   hideModal() {
     this.modal.hide();
   }
@@ -109,20 +78,20 @@ export class TournamentMenu extends HTMLElement {
     }
 
     this.modalBody.innerHTML = '';
-    this.#state.modalType = '';
-    if (this.#state.modalType === 'create') {
-      this.tournamentNameInput?.removeEventListener('input', this.handleTournamentInputName);
-      this.confirmButton?.removeEventListener('click', this.createTournament);
-    }
-    if (this.#state.modalType === 'register') {
-      this.aliasInput?.removeEventListener('input', this.handleAliasInput);
-      this.confirmButton?.removeEventListener('click', this.confirmRegister);
-    }
+    // this.#state.modalType = '';
+    // if (this.#state.modalType === 'create') {
+    //   this.tournamentNameInput?.removeEventListener('input', this.handleTournamentInputName);
+    //   this.confirmButton?.removeEventListener('click', this.createTournament);
+    // }
+    // if (this.#state.modalType === 'register') {
+    //   this.aliasInput?.removeEventListener('input', this.handleAliasInput);
+    //   this.confirmButton?.removeEventListener('click', this.confirmRegister);
+    // }
   }
 
   showNewTournamentForm() {
     this.modalBody.innerHTML = '';
-    this.#state.modalType = 'create';
+    // this.#state.modalType = 'create';
 
     const modalBodyContent = document.createElement('tournament-creation');
     this.modalBody.appendChild(modalBodyContent);
@@ -147,47 +116,75 @@ export class TournamentMenu extends HTMLElement {
     this.modal.show();
   }
 
-  handleAliasInput(event) {
-    const tournamentAlias = this.modalBody.querySelector('#tournament-alias');
-    const tournamentAliasFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
-    if (event.target.value.length < 1) {
-      tournamentAlias.classList.add('is-invalid');
-      tournamentAliasFeedback.textContent = `Alias cannot be empty`;
-      this.confirmButton.disabled = true;
-    } else if (event.target.value.length > this.#maxAliasLength) {
-      tournamentAlias.classList.add('is-invalid');
-      tournamentAliasFeedback.textContent = `Alias must be less than ${this.#maxAliasLength} characters.`;
-      this.confirmButton.disabled = true;
-    } else {
-      tournamentAlias.classList.remove('is-invalid');
-      tournamentAliasFeedback.textContent = '';
-      this.confirmButton.disabled = false;
+
+  tournamentDetail = {
+    lobby: () => {
+      // this.#state.modalType = 'register';
+      const modalBodyContent = document.createElement('tournament-registration');
+      modalBodyContent.data = this.selectedTournament;
+      this.modalBody.appendChild(modalBodyContent);
+      // this.modalBody.innerHTML = this.registerForTournamentForm();
+      // const modalTitle = this.modalBody.querySelector('.modal-title');
+      // const modalTournamentStatus = this.modalBody.querySelector('#modal-tournament-status');
+      // const modalRequiredParticipants = this.modalBody.querySelector('#modal-required-participants');
+      // modalTitle.textContent = this.selectedTournament.tournament_name;
+      // modalTournamentStatus.textContent = 'Open for entries';
+
+      // this.aliasInput = this.modalBody.querySelector('#tournament-alias');
+      // this.aliasInput.addEventListener('input', this.handleAliasInput);
+  
+      // this.confirmButton.textContent = 'Register';
+      // this.confirmButton.addEventListener('click', this.confirmRegister);
+    },
+    ongoing: () => {
+    },
+    finished: () => {
+    },
+    cancelled: () => {
     }
-  }
+  };
 
-  confirmRegister(event) {
-    event.stopPropagation();
-    this.#state.tounamentRegistration.tournamentId = this.tournamentId;
-    this.#state.tounamentRegistration.alias = this.aliasInput.value;
+  // handleAliasInput(event) {
+  //   const tournamentAlias = this.modalBody.querySelector('#tournament-alias');
+  //   const tournamentAliasFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
+  //   if (event.target.value.length < 1) {
+  //     tournamentAlias.classList.add('is-invalid');
+  //     tournamentAliasFeedback.textContent = `Alias cannot be empty`;
+  //     this.confirmButton.disabled = true;
+  //   } else if (event.target.value.length > this.#maxAliasLength) {
+  //     tournamentAlias.classList.add('is-invalid');
+  //     tournamentAliasFeedback.textContent = `Alias must be less than ${this.#maxAliasLength} characters.`;
+  //     this.confirmButton.disabled = true;
+  //   } else {
+  //     tournamentAlias.classList.remove('is-invalid');
+  //     tournamentAliasFeedback.textContent = '';
+  //     this.confirmButton.disabled = false;
+  //   }
+  // }
 
-    socketManager.openSocket('tournament', this.#state.tounamentRegistration.tournamentId);
-    const data = {
-      action: 'register',
-      data: { alias: this.#state.tounamentRegistration.alias },
-    }
-    socketManager.sendMessage('tournament', data);
-    console.log('Registering for tournament:', data);
+  // confirmRegister(event) {
+  //   event.stopPropagation();
+  //   this.#state.tounamentRegistration.tournamentId = this.tournamentId;
+  //   this.#state.tounamentRegistration.alias = this.aliasInput.value;
 
-    // If receive registered message
-    // Navigate to tournament page
-    this.modal.hide();
-    // Else if the tournmant is full, show message
+  //   socketManager.openSocket('tournament', this.#state.tounamentRegistration.tournamentId);
+  //   const data = {
+  //     action: 'register',
+  //     data: { alias: this.#state.tounamentRegistration.alias },
+  //   }
+  //   socketManager.sendMessage('tournament', data);
+  //   console.log('Registering for tournament:', data);
 
-  }
+  //   // If receive registered message
+  //   // Navigate to tournament page
+  //   this.modal.hide();
+  //   // Else if the tournmant is full, show message
+
+  // }
     
-  connectToTournamentRoom(event) {
+  // connectToTournamentRoom(event) {
 
-  }
+  // }
 
   /* ------------------------------------------------------------------------ */
   /*      Template & style                                                    */
@@ -238,22 +235,22 @@ export class TournamentMenu extends HTMLElement {
     `;  
   }
 
-  registerForTournamentForm() {
-    return `
-    <div class="d-flex flex-column align-items-center px-4">
-      <h2 class="modal-title text-center"></h2>
-      <p class="text-center" id="modal-tournament-status"></p>
-      <p class="text-center" id="modal-required-participants"></p>
-      <div id="tournament-register-form" class="d-flex flex-column w-100 gap-2">
-        <div class="mb-3">
-          <label for="tournament-alias" class="form-label">Tournament Alias</label>
-          <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias for the tournament" required>
-          <div class="invalid-feedback" id="tournament-alias-feedback"></div>
-        </div>
-      </div>
-    </div>
-    `;
-  }
+  // registerForTournamentForm() {
+  //   return `
+  //   <div class="d-flex flex-column align-items-center px-4">
+  //     <h2 class="modal-title text-center"></h2>
+  //     <p class="text-center" id="modal-tournament-status"></p>
+  //     <p class="text-center" id="modal-required-participants"></p>
+  //     <div id="tournament-register-form" class="d-flex flex-column w-100 gap-2">
+  //       <div class="mb-3">
+  //         <label for="tournament-alias" class="form-label">Tournament Alias</label>
+  //         <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias for the tournament" required>
+  //         <div class="invalid-feedback" id="tournament-alias-feedback"></div>
+  //       </div>
+  //     </div>
+  //   </div>
+  //   `;
+  // }
 }
 
 customElements.define('tournament-menu', TournamentMenu);
