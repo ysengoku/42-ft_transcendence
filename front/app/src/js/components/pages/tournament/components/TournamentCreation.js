@@ -36,6 +36,10 @@ export class TournamentCreation extends HTMLElement {
     this.confirmButton?.removeEventListener('click', this.createTournament);
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Render                                                              */
+  /* ------------------------------------------------------------------------ */
+
   render() {
     this.innerHTML = this.template() + this.style();
 
@@ -49,6 +53,10 @@ export class TournamentCreation extends HTMLElement {
     this.tournamentNameInput.addEventListener('input', this.handleTournamentInputName);
     this.confirmButton.addEventListener('click', this.createTournament);
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling                                                      */
+  /* ------------------------------------------------------------------------ */
 
   handleTournamentInputName(event) {
     if (event.target.value.length < 1) {
@@ -118,6 +126,10 @@ export class TournamentCreation extends HTMLElement {
       // TODO: Handle other error messages
     }
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Template & style                                                    */
+  /* ------------------------------------------------------------------------ */
 
   template() {
     const option1 = this.#requiredParticipantsOptions[0];
