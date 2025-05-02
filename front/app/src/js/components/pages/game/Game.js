@@ -3,6 +3,9 @@ import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitCo
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import audiourl from '/audio/score_sound.mp3?url';
 import pedro from '/3d_models/lilguy.glb?url';
+import fontWin from '/fonts/Texas_Tango_BOLD_PERSONAL_USE_Regular.json?url';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import {TextGeometry} from 'three/addons/geometries/TextGeometry.js' 
 
 
 export class Game extends HTMLElement {
@@ -24,6 +27,8 @@ export class Game extends HTMLElement {
     const BALL_DIAMETER = 1;
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
+    let   BALL_INITIAL_VELOCITY = 0.25;
+    let   MAX_SCORE = 10;
     // const BOUNCING_ANGLE_DEGREES = 55;
     // const BALL_VELOCITY_CAP = 1
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
@@ -40,7 +45,8 @@ export class Game extends HTMLElement {
     const rendererHeight = renderer.domElement.offsetHeight;
 
     const scene = new THREE.Scene();
-    const loader = new GLTFLoader();
+    const loaderModel = new GLTFLoader();
+    const loaderFonts = new FontLoader();
 
     const camera = new THREE.PerspectiveCamera(45, rendererWidth / rendererHeight, 0.1, 2000);
     const orbit = new OrbitControls(camera, renderer.domElement);
@@ -52,7 +58,7 @@ export class Game extends HTMLElement {
     
     const playerglb = (() => {
       const pedro_model = new THREE.Object3D();
-      loader.load(
+      loaderModel.load(
           pedro,
           function(gltf) {
               const model = gltf.scene;
@@ -119,7 +125,7 @@ export class Game extends HTMLElement {
 
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
-      const velocity = new THREE.Vector3(0, 0, 0.25);
+      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY);
 
       let hasCollidedWithBumper1 = false;
       let hasCollidedWithBumper2 = false;
@@ -253,14 +259,44 @@ export class Game extends HTMLElement {
         if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
             Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
+    let loadedFont = null;
 
     function resetBall(direction) {
+        if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE)
+        {
+          if (loadedFont != null)
+            scene.remove(loadedFont);
+          console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa");
+          const playerWin = Bumpers[0].score == MAX_SCORE ? "P l a y e r   1   w i n" : "P l a y e r   2   w i n";
+          loaderFonts.load(fontWin, function (font) {
+            const geometry = new TextGeometry(playerWin, {
+              font: font,
+              size: 1,
+              depth: 0.5,
+              curveSegments: 12,
+            });
+          
+            loadedFont = new THREE.Mesh(geometry, [
+              new THREE.MeshPhongMaterial({ color: 0xad4000 }),
+              new THREE.MeshPhongMaterial({ color: 0x5c2301 })
+            ]);
+            loadedFont.doubleSided = true;
+            loadedFont.position.x = 9;
+            loadedFont.position.y = 5;
+            loadedFont.position.z = 0;
+            loadedFont.scale.x = -1;
+          
+            scene.add(loadedFont);
+          });
+          
+          // cancelAnimationFrame(step);
+        }
         Ball.temporalSpeed.x = 1;
         Ball.temporalSpeed.z = 1;
         Ball.sphereUpdate.x = 0;
         Ball.sphereUpdate.z = 0;
         Ball.velocity.x = 0;
-        Ball.velocity.z = 0.25;
+        Ball.velocity.z = BALL_INITIAL_VELOCITY;
         Ball.velocity.z *= direction;
     }
 
@@ -289,7 +325,10 @@ export class Game extends HTMLElement {
     }
     
     let isCalculationDone = false;
+
     function handleAiBehavior (){
+      //better calculation to put here
+
       if (!isCalculationDone)
         moveAiBumper(Ball.sphereMesh.position);
       else
@@ -409,6 +448,7 @@ export class Game extends HTMLElement {
           if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
             manageBuffAndDebuff();
           }
+
           if (((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf))
               Bumpers[0].cubeUpdate.x += bumperSubtick;
           if (((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf))
@@ -439,7 +479,6 @@ export class Game extends HTMLElement {
       renderer.render(scene, camera);
     }
 
-    // var a = 0;
     let isPaused = false;
     document.addEventListener('keydown', onDocumentKeyDown, true);
     document.addEventListener('keyup', onDocumentKeyUp, true);
@@ -448,7 +487,8 @@ export class Game extends HTMLElement {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
-      keyMap[keyCode] = true;
+      if (keyCode != 'KeyA' && keyCode != 'KeyD')
+        keyMap[keyCode] = true;
       if (keyCode == "Escape")
       {
         if (isPaused == false)
@@ -472,9 +512,6 @@ export class Game extends HTMLElement {
       keyMap[keyCode] = false;
       event.preventDefault();
     }
-    // window.addEventListener('visibilitychange', function() {
-
-    // });
   
     return [camera, renderer, animate];
   }
