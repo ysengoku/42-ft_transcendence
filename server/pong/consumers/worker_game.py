@@ -34,6 +34,7 @@ TEMPORAL_SPEED_DEFAULT = 1, 1
 TEMPORAL_SPEED_INCREASE = SUBTICK * 0
 TEMPORAL_SPEED_DECAY = 0.005
 GAME_TICK_INTERVAL = 1.0 / 30
+PLAYERS_REQUIRED = 2
 ###################
 
 
@@ -219,6 +220,7 @@ class Pong:
 
     def add_player(self, player_id: str):
         """
+        Adds player to the players dict.
         Assigns player to a random bumper.
         """
         available_player_slots = []
@@ -238,7 +240,6 @@ class GameConsumer(AsyncConsumer):
         super().__init__()
         self.matches = {}
         self.matches_tasks = {}
-        self.players = {}
         self.channel_layer = get_channel_layer()
 
     def _to_group_name(self, game_room_id: str):
@@ -248,21 +249,15 @@ class GameConsumer(AsyncConsumer):
     async def player_connected(self, event):
         game_room_id = event["game_room_id"]
         player_id = event["player_id"]
+
         if game_room_id not in self.players:
-            logger.info("[GameWorker]: player was added to game {%s}", game_room_id)
-            self.players[game_room_id].append({"player_id": player_id})
-            return
-
-        logger.info("[GameWorker]: player was added to game {%s}", game_room_id)
-        self.players[game_room_id] = [{"player_id": player_id}]
-
-        if game_room_id in self.matches:
+            logger.info("[GameWorker]: player was added to newly created game {%s}", game_room_id)
+            self.matches[game_room_id] = Pong()
             self.matches[game_room_id].add_player(player_id)
-            return
-
-        self.matches[game_room_id] = Pong()
-        self.matches[game_room_id].add_player(player_id)
-        self.matches_tasks[game_room_id] = asyncio.create_task(self.create_match_loop(game_room_id))
+        else:
+            logger.info("[GameWorker]: player was added to existing game {%s}", game_room_id)
+            self.matches[game_room_id].add_player(player_id)
+            self.matches_tasks[game_room_id] = asyncio.create_task(self.create_match_loop(game_room_id))
 
     async def create_match_loop(self, game_room_id: str):
         """Asynchrounous loop that runs one specific match."""
