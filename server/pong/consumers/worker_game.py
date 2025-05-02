@@ -115,10 +115,6 @@ class Pong:
         match action:
             case "move_left":
                 bumper.moves_left = content
-            case "move_left":
-                bumper.moves_left = content
-            case "move_right":
-                bumper.moves_right = content
             case "move_right":
                 bumper.moves_right = content
 
@@ -217,7 +213,7 @@ class Pong:
             self._check_ball_bumper_collision(ball_subtick_z, ball_subtick_x)
             self._check_ball_scored()
             self._move_bumpers(bumper_subtick)
-            self._move_ball()
+            self._move_ball(ball_subtick_z, ball_subtick_x)
 
             current_subtick += 1
 
