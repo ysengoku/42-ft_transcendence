@@ -39,6 +39,12 @@ PLAYERS_REQUIRED = 2
 
 
 @dataclass(slots=True)
+class Player:
+    id: str
+    is_connected: bool
+
+
+@dataclass(slots=True)
 class Vector2:
     x: float
     z: float
@@ -50,7 +56,7 @@ class Bumper(Vector2):
     moves_left: bool
     moves_right: bool
     dir_z: int
-    player_id: str
+    player: Player | None = None
 
 
 @dataclass(slots=True)
@@ -78,7 +84,6 @@ class Pong:
             moves_left=False,
             moves_right=False,
             dir_z=1,
-            player_id="",
         )
         self.bumper_2: Bumper = Bumper(
             *STARTING_BUMPER_2_POS,
@@ -86,7 +91,6 @@ class Pong:
             moves_left=False,
             moves_right=False,
             dir_z=-1,
-            player_id="",
         )
         self.ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
         self.scored_last: int = BUMPER_1
@@ -106,9 +110,9 @@ class Pong:
         }
 
     def handle_input(self, player_id: str, action: str, content: bool):
-        if player_id == self.bumper_1.player_id:
+        if player_id == self.bumper_1.player.id:
             bumper = self.bumper_1
-        elif player_id == self.bumper_2.player_id:
+        elif player_id == self.bumper_2.player.id:
             bumper = self.bumper_2
         else:
             return
@@ -180,16 +184,15 @@ class Pong:
             self._calculate_new_dir(self.bumper_2)
 
     def _move_bumpers(self, bumper_subtick):
-            if self.bumper_1.moves_left and not self.bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
-                self.bumper_1.x += bumper_subtick
-            if self.bumper_1.moves_right and not self.bumper_1.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
-                self.bumper_1.x -= bumper_subtick
+        if self.bumper_1.moves_left and not self.bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
+            self.bumper_1.x += bumper_subtick
+        if self.bumper_1.moves_right and not self.bumper_1.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
+            self.bumper_1.x -= bumper_subtick
 
-            if self.bumper_2.moves_left and not self.bumper_2.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
-                self.bumper_2.x += bumper_subtick
-            if self.bumper_2.moves_right and not self.bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
-                self.bumper_2.x -= bumper_subtick
-
+        if self.bumper_2.moves_left and not self.bumper_2.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
+            self.bumper_2.x += bumper_subtick
+        if self.bumper_2.moves_right and not self.bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
+            self.bumper_2.x -= bumper_subtick
 
     def _move_ball(self, ball_subtick_z, ball_subtick_x):
         self.ball.z += ball_subtick_z * self.ball.velocity.z
@@ -224,18 +227,19 @@ class Pong:
         Assigns player to a random bumper.
         """
         available_player_slots = []
-        if not self.bumper_1.player_id:
+        if not self.bumper_1.player:
             available_player_slots.append(self.bumper_1)
-        if not self.bumper_2.player_id:
+        if not self.bumper_2.player:
             available_player_slots.append(self.bumper_2)
         if not available_player_slots:
             return
 
         random.shuffle(available_player_slots)
-        available_player_slots.pop().player_id = player_id
+        available_player_slots.pop().player = Player(id=player_id, is_connected=True)
 
-    def _get_players(self) -> tuple[str, str]:
-        return self.bumper_1.player_id, self.bumper_2.player_id
+    def get_players(self) -> list[str, str]:
+        """Returns a list of players playing the match."""
+        return [p for p in [self.bumper_1.player, self.bumper_2.player] if p]
 
 
 class GameConsumer(AsyncConsumer):
@@ -253,14 +257,19 @@ class GameConsumer(AsyncConsumer):
         game_room_id = event["game_room_id"]
         player_id = event["player_id"]
 
-        if game_room_id not in self.players:
+        # create game room if there is no corresponding game room for the player
+        # join the player to the game room if it already exists
+        # otherwise do nothing
+        if game_room_id not in self.matches:
             logger.info("[GameWorker]: player was added to newly created game {%s}", game_room_id)
             self.matches[game_room_id] = Pong()
             self.matches[game_room_id].add_player(player_id)
-        else:
+        elif len(self.matches[game_room_id].get_players()) == PLAYERS_REQUIRED - 1:
             logger.info("[GameWorker]: player was added to existing game {%s}", game_room_id)
             self.matches[game_room_id].add_player(player_id)
             self.matches_tasks[game_room_id] = asyncio.create_task(self.create_match_loop(game_room_id))
+
+    # we don't need player_disconnected: on disconnect play the match until someone won
 
     async def create_match_loop(self, game_room_id: str):
         """Asynchrounous loop that runs one specific match."""
