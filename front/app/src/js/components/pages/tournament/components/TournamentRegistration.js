@@ -45,7 +45,8 @@ export class TournamentRegistration extends HTMLElement {
 
     modalTitle.textContent = this.#state.tournament.tournament_name;
     modalTournamentStatus.textContent = 'Open for entries';
-    this.modalRequiredParticipants.textContent = `${this.#state.tournament.participants.length} / ${this.#state.tournament.required_participants} players`;
+    const currentParticipants = this.#state.tournament.participants_count ? this.#state.tournament.participants_count : 0;
+    this.modalRequiredParticipants.textContent = `${currentParticipants} / ${this.#state.tournament.required_participants} players`;
     this.confirmButton.textContent = 'Register';
 
     this.aliasInput.addEventListener('input', this.handleAliasInput);
@@ -91,7 +92,7 @@ export class TournamentRegistration extends HTMLElement {
     document.addEventListener('tournamentRegisterFail', this.handleRegistrationFail);
   }
 
-  connectToTournamentRoom(event) {
+  connectToTournamentRoom() {
     // If receive registered message
     document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true,}));
     // TODO: Navigate to tournament page
@@ -110,7 +111,7 @@ export class TournamentRegistration extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   template() {
     return `
-    <div class="d-flex flex-column align-items-center px-4">
+    <div class="d-flex flex-column align-items-center px-4 w-100">
       <h2 class="modal-title text-center"></h2>
       <p class="text-center" id="modal-tournament-status"></p>
       <p class="text-center" id="modal-required-participants"></p>
@@ -123,7 +124,7 @@ export class TournamentRegistration extends HTMLElement {
       </div>
     </div>
     `;
-    }
+  }
 }
 
 customElements.define('tournament-registration', TournamentRegistration);

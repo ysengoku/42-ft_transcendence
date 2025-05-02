@@ -12,6 +12,12 @@ export class TournamentList extends HTMLElement {
   constructor() {
     super();
 
+    this.listWrapper = null;
+    this.list = null;
+    this.filterButton = null;
+    this.filterOpenButton = null;
+    this.filterAllButton = null;
+
     this.renderList = this.renderList.bind(this);
     this.filterTournament = this.filterTournament.bind(this);
   }
@@ -105,19 +111,15 @@ export class TournamentList extends HTMLElement {
     const tournamentOrganizerAvatar = item.querySelector('.tournament-organizer-avatar');
     const tournamentStatus = item.querySelector('.tournament-status');
     const tournamentParticipants = item.querySelector('.tournament-participants');
+    const currentParticipants = tournament.participants_count ? tournament.participants_count : 0;
     tournamentName.textContent = tournament.tournament_name;
     tournamentOrganizer.textContent = 'by ' + tournament.creator.nickname;
     tournamentOrganizerAvatar.src = tournament.creator.avatar;
     tournamentOrganizerAvatar.alt = tournament.creator.nickname;
     tournamentStatus.textContent = this.tournamentStatus(tournament.status);
-    tournamentParticipants.textContent = `${tournament.participants.length} / ${tournament.required_participants} players`;
+    tournamentParticipants.textContent = `${currentParticipants} / ${tournament.required_participants} players`;
 
     item.setAttribute('tournament-id', tournament.tournament_id);
-    item.setAttribute('tournament-name', tournament.name);
-    item.setAttribute('tournament-status', tournament.status);
-    item.setAttribute('tournament-participants', tournament.participants.length);
-    item.setAttribute('tournament-required-participants', tournament.required_participants);
-
     return item;
   }
 
@@ -191,6 +193,14 @@ export class TournamentList extends HTMLElement {
       border-radius: 0.5rem !important;
       border: 0 !important;
     }
+    .tournament-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-all;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+    }
     .tournament-status {
       font-size: 0.9rem !important;
     }
@@ -199,14 +209,14 @@ export class TournamentList extends HTMLElement {
 
   rowTemplate() {
     return `
-    <div class="d-flex flex-row justify-content-start">
-      <img class="tournament-organizer-avatar avatar-m rounded-circle me-3">
-      <div class="d-flex flex-column justify-content-between">
+    <div class="d-flex flex-row justify-content-start me-2">
+      <img class="tournament-organizer-avatar avatar-m rounded-circle me-3 flex-shrink-0">
+      <div class="d-flex flex-column justify-content-between flex-grow-1 flex-shrink-1">
         <p class="tournament-name fs-5 m-0"></p>
         <p class="tournament-organizer m-0"></p>
       </div>
     </div>
-    <div class="d-flex flex-column justify-content-between align-items-end">
+    <div class="d-flex flex-column justify-content-between align-items-end flex-shrink-0">
       <p class="tournament-status m-0"></p>
       <p class="tournament-participants m-0"></p>
     </div>
