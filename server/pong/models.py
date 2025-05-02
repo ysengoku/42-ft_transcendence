@@ -161,7 +161,7 @@ class GameRoomQuerySet(models.QuerySet):
         """
         Valid game room is a pending game room with less than 2 players.
         """
-        return self.filter(status=GameRoom.PENDING, players__count__lt=2)
+        return self.filter(status=GameRoom.PENDING, players__lt=2)
 
     def for_id(self, game_room_id: str):
         return self.filter(id=game_room_id)
