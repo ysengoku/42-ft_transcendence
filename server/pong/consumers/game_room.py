@@ -19,8 +19,18 @@ class GameRoomConsumer(WebsocketConsumer):
             self.close()
             return
 
-        self.game_room: GameRoom = GameRoom.for_id(self.game_room_id).for_players(self.user.profile).first()
-        if self.game_room is None:
+        game_room_qs: GameRoom = GameRoom.for_id(self.game_room_id)
+        if not game_room_qs.exists():
+            logger.info(
+                "[GameRoom.connect]: user {%s} tried to join non-existant game room {%s}",
+                self.user.profile,
+                self.game_room_id,
+            )
+            self.close()
+            return
+
+        self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).first()
+        if not self.game_room:
             logger.info(
                 "[GameRoom.connect]: illegal user {%s} tried to join game room {%s}",
                 self.user.profile,

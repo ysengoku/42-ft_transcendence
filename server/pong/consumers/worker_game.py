@@ -269,7 +269,9 @@ class GameConsumer(AsyncConsumer):
             self.matches[game_room_id].add_player(player_id)
             self.matches_tasks[game_room_id] = asyncio.create_task(self.create_match_loop(game_room_id))
 
-    # we don't need player_disconnected: on disconnect play the match until someone won
+    # TODO: give 10 seconds to disconnected player to reconnect. if they can't do it, remaining player wins
+    async def player_disconnected(self, event):
+        pass
 
     async def create_match_loop(self, game_room_id: str):
         """Asynchrounous loop that runs one specific match."""
@@ -300,9 +302,10 @@ class GameConsumer(AsyncConsumer):
         action = event["action"]
         content = event["content"]
 
+        match = self.matches[game_room_id]
         match action:
             case "move_left" | "move_right":
-                self.matches[game_room_id].handle_input(player_id, action, content)
+                match.handle_input(player_id, action, content)
 
     async def send_state_to_players(self, game_room_id: str, state: dict):
         group_name = self._to_group_name(game_room_id)
