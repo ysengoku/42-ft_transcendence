@@ -234,6 +234,9 @@ class Pong:
         random.shuffle(available_player_slots)
         available_player_slots.pop().player_id = player_id
 
+    def _get_players(self) -> tuple[str, str]:
+        return self.bumper_1.player_id, self.bumper_2.player_id
+
 
 class GameConsumer(AsyncConsumer):
     def __init__(self):
