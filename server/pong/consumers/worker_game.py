@@ -240,7 +240,6 @@ class GameConsumer(AsyncConsumer):
         self.matches_tasks = {}
         self.players = {}
         self.channel_layer = get_channel_layer()
-        asyncio.create_task(self.process_matches())
 
     def _to_group_name(self, game_room_id: str):
         """Little function for avoiding typing errors."""
