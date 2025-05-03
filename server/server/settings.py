@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -30,8 +31,7 @@ SECRET_KEY = "your-secret-key"
 
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 IN_CONTAINER = int(os.environ.get("IN_CONTAINER", "0"))
 
@@ -155,21 +155,17 @@ SOCIALACCOUNT_PROVIDERS = {
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
 REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
 # For the tests
-if "test" in sys.argv:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer",
-        },
-    }
-else:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [(REDIS_HOST, REDIS_PORT)],
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
+            "channel_capacity": {
+                re.compile(r"^websocket.send\!.+"): 5000,
             },
         },
-    }
+    },
+}
 
 
 # Configuration for proxy
@@ -250,7 +246,8 @@ OAUTH_CONFIG = {
 
 # email configuration for 2fa and password reset
 EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend",
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend",
 )
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
@@ -284,6 +281,6 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "DEBUG",
+        "level": "INFO",
     },
 }

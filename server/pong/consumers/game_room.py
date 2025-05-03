@@ -19,7 +19,7 @@ class GameRoomConsumer(WebsocketConsumer):
             self.close()
             return
 
-        game_room_qs: GameRoom = GameRoom.for_id(self.game_room_id)
+        game_room_qs: GameRoom = GameRoom.objects.for_id(self.game_room_id)
         if not game_room_qs.exists():
             logger.info(
                 "[GameRoom.connect]: user {%s} tried to join non-existant game room {%s}",
@@ -48,7 +48,8 @@ class GameRoomConsumer(WebsocketConsumer):
         )
         self.accept()
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
-        async_to_sync(self.channel_layer.group_send)(
+        self.send(text_data=json.dumps({"event": "joined", "player_id": str(self.player.id)}))
+        async_to_sync(self.channel_layer.send)(
             "game",
             {
                 "game_room_id": self.game_room_id,
@@ -60,6 +61,7 @@ class GameRoomConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         # TODO: logic of sending data to the game worker
+        logger.info("[GameRoom.disconnect]: player {%s} has left game room {%s}", self.user.profile, self.game_room_id)
         async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
 
     def receive(self, text_data):
@@ -79,7 +81,7 @@ class GameRoomConsumer(WebsocketConsumer):
                 "content": bool(content),
                 "player_id": str(player_id),
             }:
-                async_to_sync(self.channel_layer.group_send)(
+                async_to_sync(self.channel_layer.send)(
                     "game",
                     {
                         "game_room_id": self.game_room_id,
