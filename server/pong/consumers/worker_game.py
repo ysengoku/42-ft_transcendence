@@ -235,7 +235,12 @@ class Pong:
             return
 
         random.shuffle(available_player_slots)
-        available_player_slots.pop().player = Player(id=player_id, is_connected=True)
+        bumper = available_player_slots.pop()
+        bumper.player = Player(id=player_id, is_connected=True)
+        if bumper.dir_z == 1:
+            logger.info("[GameWorker]: player {%s} was assigned to bumper_1", player_id)
+        if bumper.dir_z == -1:
+            logger.info("[GameWorker]: player {%s} was assigned to bumper_2", player_id)
 
     def get_players(self) -> list[str, str]:
         """Returns a list of players playing the match."""
@@ -246,7 +251,7 @@ class GameConsumer(AsyncConsumer):
     def __init__(self):
         super().__init__()
         self.matches = {}
-        self.matches_tasks = {}
+        self.tasks = {}
         self.channel_layer = get_channel_layer()
 
     def _to_group_name(self, game_room_id: str):
@@ -261,13 +266,13 @@ class GameConsumer(AsyncConsumer):
         # join the player to the game room if it already exists
         # otherwise do nothing
         if game_room_id not in self.matches:
-            logger.info("[GameWorker]: player was added to newly created game {%s}", game_room_id)
+            logger.info("[GameWorker]: player {%s} was added to newly created game {%s}", player_id, game_room_id)
             self.matches[game_room_id] = Pong()
             self.matches[game_room_id].add_player(player_id)
         elif len(self.matches[game_room_id].get_players()) == PLAYERS_REQUIRED - 1:
-            logger.info("[GameWorker]: player was added to existing game {%s}", game_room_id)
+            logger.info("[GameWorker]: player {%s} was added to existing game {%s}", player_id, game_room_id)
             self.matches[game_room_id].add_player(player_id)
-            self.matches_tasks[game_room_id] = asyncio.create_task(self.create_match_loop(game_room_id))
+            self.tasks[game_room_id] = asyncio.create_task(self.create_match_loop(game_room_id))
 
     # TODO: give 10 seconds to disconnected player to reconnect. if they can't do it, remaining player wins
     async def player_disconnected(self, event):
@@ -286,13 +291,13 @@ class GameConsumer(AsyncConsumer):
                 tick_end_time = asyncio.get_event_loop().time()
                 time_taken_for_current_tick = tick_end_time - tick_start_time
                 # tick the game for this match 30 times a second
-                asyncio.sleep(max(GAME_TICK_INTERVAL - time_taken_for_current_tick, 0))
+                await asyncio.sleep(max(GAME_TICK_INTERVAL - time_taken_for_current_tick, 0))
         except asyncio.CancelledError as _:
             # TODO: Do something if the task was cancelled.
             pass
         # TODO: do the cleanup logic for the match
 
-    def player_inputed(self, event):
+    async def player_inputed(self, event):
         """
         Handles player input. There is no validation of the input, because it is a worker,
         and event source is the server, which we can trust.
@@ -309,5 +314,5 @@ class GameConsumer(AsyncConsumer):
 
     async def send_state_to_players(self, game_room_id: str, state: dict):
         group_name = self._to_group_name(game_room_id)
-        self.channel_layer.group_send(group_name, {"type": "state_updated", "state": state})
+        await self.channel_layer.group_send(group_name, {"type": "state_updated", "state": state})
         self.matches[game_room_id].someone_scored = False

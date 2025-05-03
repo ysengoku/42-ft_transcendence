@@ -255,7 +255,7 @@ export class MultiplayerGame extends HTMLElement {
       return hit_pos;
     }
 
-    const pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + 'asd' + '/');
+    const pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
 
     function updateState(data) {
       if (!data) return;
