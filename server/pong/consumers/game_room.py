@@ -47,7 +47,7 @@ class GameRoomConsumer(WebsocketConsumer):
             str(self.player.id),
         )
         self.accept()
-        self.channel_layer.group_add(self.game_room_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
         async_to_sync(self.channel_layer.group_send)(
             "game",
             {
@@ -60,7 +60,7 @@ class GameRoomConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         # TODO: logic of sending data to the game worker
-        self.channel_layer.group_discard(self.game_room_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
 
     def receive(self, text_data):
         try:
