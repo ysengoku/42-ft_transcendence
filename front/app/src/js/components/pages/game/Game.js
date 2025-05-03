@@ -28,7 +28,7 @@ export class Game extends HTMLElement {
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
     let   BALL_INITIAL_VELOCITY = 0.25;
-    let   MAX_SCORE = 10;
+    let   MAX_SCORE = 1;
     // const BOUNCING_ANGLE_DEGREES = 55;
     // const BALL_VELOCITY_CAP = 1
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
@@ -149,6 +149,50 @@ export class Game extends HTMLElement {
       });
   })(0, 1, 0);
 
+  let loadedFontP2 = null;
+  let loadedFontP1 = null;
+
+  loaderFonts.load(fontWin, function (font) {
+    const geometry = new TextGeometry("P l a y e r   2   w i n", {
+      font: font,
+      size: 1,
+      depth: 0.5,
+      curveSegments: 12,
+    });
+  
+    loadedFontP2 = new THREE.Mesh(geometry, [
+      new THREE.MeshPhongMaterial({ color: 0xad4000 }),
+      new THREE.MeshPhongMaterial({ color: 0x5c2301 })
+    ]);
+    loadedFontP2.doubleSided = true;
+    loadedFontP2.position.x = 100;
+    loadedFontP2.position.y = 5;
+    loadedFontP2.position.z = 0;
+    loadedFontP2.scale.x = -1;
+  
+    scene.add(loadedFontP2);
+  });
+
+  loaderFonts.load(fontWin, function (font) {
+    const geometry = new TextGeometry("P l a y e r   1   w i n", {
+      font: font,
+      size: 1,
+      depth: 0.5,
+      curveSegments: 12,
+    });
+  
+    loadedFontP1 = new THREE.Mesh(geometry, [
+      new THREE.MeshPhongMaterial({ color: 0xad4000 }),
+      new THREE.MeshPhongMaterial({ color: 0x5c2301 })
+    ]);
+    loadedFontP1.doubleSided = true;
+    loadedFontP1.position.x = 100;
+    loadedFontP1.position.y = 5;
+    loadedFontP1.position.z = 0;
+    loadedFontP1.scale.x = -1;
+  
+    scene.add(loadedFontP1);
+  });
   camera.position.set(10, 15, -22);
   orbit.update();
 
@@ -259,36 +303,26 @@ export class Game extends HTMLElement {
         if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
             Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
-    let loadedFont = null;
 
     function resetBall(direction) {
         if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE)
         {
-          if (loadedFont != null)
-            scene.remove(loadedFont);
           console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa");
-          const playerWin = Bumpers[0].score == MAX_SCORE ? "P l a y e r   1   w i n" : "P l a y e r   2   w i n";
-          loaderFonts.load(fontWin, function (font) {
-            const geometry = new TextGeometry(playerWin, {
-              font: font,
-              size: 1,
-              depth: 0.5,
-              curveSegments: 12,
-            });
-          
-            loadedFont = new THREE.Mesh(geometry, [
-              new THREE.MeshPhongMaterial({ color: 0xad4000 }),
-              new THREE.MeshPhongMaterial({ color: 0x5c2301 })
-            ]);
-            loadedFont.doubleSided = true;
-            loadedFont.position.x = 9;
-            loadedFont.position.y = 5;
-            loadedFont.position.z = 0;
-            loadedFont.scale.x = -1;
-          
-            scene.add(loadedFont);
-          });
-          
+          if (Bumpers[0].score == MAX_SCORE)
+          {
+            loadedFontP1.position.x = 9;
+            loadedFontP2.position.x = 100;
+            Bumpers[0].score = 0;
+            Bumpers[1].score = 0;
+          }
+          if (Bumpers[1].score == MAX_SCORE)
+          {
+            loadedFontP2.position.x = 9;
+            loadedFontP1.position.x = 100;
+            Bumpers[0].score = 0;
+            Bumpers[1].score = 0;
+          }
+
           // cancelAnimationFrame(step);
         }
         Ball.temporalSpeed.x = 1;
@@ -324,19 +358,41 @@ export class Game extends HTMLElement {
       }
     }
     
-    let isCalculationDone = false;
+    let isMovementDone = false;
+    let BallPredictedPos;
+    let isCalculationNeeded = true
 
-    function handleAiBehavior (){
-      //better calculation to put here
-
-      if (!isCalculationDone)
-        moveAiBumper(Ball.sphereMesh.position);
-      else
+    function handleAiBehavior (BallPos, BallVelocity){
+    //better calculation to put here
+    if (isCalculationNeeded)
+    {
+      BallPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
+      let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);;
+      let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
+      while (BallPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf)
       {
-        keyMap["KeyD"] = false;
-        keyMap["KeyA"] = false;
+        let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * BallPredictedVelocity.x);
+        if (BallPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
+          BallPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+          BallPredictedVelocity.x *= -1;
+        }
+        if (BallPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
+          BallPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+          BallPredictedVelocity.x *= -1;
+        }
+        BallPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
+        BallPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
       }
+      isCalculationNeeded = false;
     }
+    if (!isMovementDone)
+      moveAiBumper(BallPredictedPos);
+    else
+    {
+      keyMap["KeyD"] = false;
+      keyMap["KeyA"] = false;
+    }
+  }
   
     let step;
 
@@ -401,7 +457,7 @@ export class Game extends HTMLElement {
           break ;
       }
       Coin.cylinderUpdate.set(-100, 3, 0);
-      Workers[4].postMessage([30000, -1]);
+      Workers[4].postMessage([3000, -1]);
     }
 
     function animate() {
@@ -427,21 +483,23 @@ export class Game extends HTMLElement {
           }
           if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
             lastBumperCollided = 0;
-            isCalculationDone = false;
+            isMovementDone = false;
+            isCalculationNeeded = true;
             calculateNewDir(Bumpers[0]);
           }
           else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
               lastBumperCollided = 1;
-              isCalculationDone = true;
+              isMovementDone = true;
               calculateNewDir(Bumpers[1]);
           }
           if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
-              isCalculationDone = true;
+              isMovementDone = true;
               Bumpers[0].score++;
               resetBall(-1);
           }
           else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
-              isCalculationDone = false;
+              isMovementDone = false;
+              isCalculationNeeded = true;
               Bumpers[1].score++;
               resetBall(1);
           }
@@ -465,7 +523,7 @@ export class Game extends HTMLElement {
           }
           Coin.cylinderUpdate.x += Coin.velocity.x;
           Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
-          handleAiBehavior();
+          handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
           current_subtick++;
       }
       Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
