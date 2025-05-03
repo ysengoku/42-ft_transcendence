@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from django.db import models
-from django.db.models import Case, F, OuterRef, Q, Subquery, Sum, Value, When
+from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
@@ -144,9 +144,7 @@ class Match(models.Model):
 
 # Define the intermediate model
 class GameRoomPlayer(models.Model):
-    """
-    Intermediate model for GameRoom and Profile, storing room-specific player data.
-    """
+    """Intermediate model for GameRoom and Profile, storing room-specific player data."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     game_room = models.ForeignKey("GameRoom", on_delete=models.CASCADE)
@@ -158,10 +156,8 @@ class GameRoomPlayer(models.Model):
 
 class GameRoomQuerySet(models.QuerySet):
     def for_valid_game_room(self):
-        """
-        Valid game room is a pending game room with less than 2 players.
-        """
-        return self.filter(status=GameRoom.PENDING, players__lt=2)
+        """Valid game room is a pending game room with less than 2 players."""
+        return self.annotate(players_count=Count("players")).filter(status=GameRoom.PENDING, players_count__lt=2)
 
     def for_id(self, game_room_id: str):
         return self.filter(id=game_room_id)
