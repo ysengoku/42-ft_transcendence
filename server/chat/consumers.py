@@ -62,9 +62,9 @@ class UserEventsConsumer(WebsocketConsumer):
                     update_fields=["nb_active_connexions", "is_online", "last_activity"])
                 self.user_profile.refresh_from_db()
                 self.user_profile.update_activity()
-            redis_status_manager.set_user_online(self.user.id)
-            logger.info("User %s connected, now has %i active connexions",
-                        self.user.username, self.user_profile.nb_active_connexions)
+                redis_status_manager.set_user_online(self.user.id)
+                logger.info("User %s connected, now has %i active connexions",
+                            self.user.username, self.user_profile.nb_active_connexions)
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
             self.close()
