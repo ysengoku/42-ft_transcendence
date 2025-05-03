@@ -83,11 +83,11 @@ class MatchmakingConsumer(WebsocketConsumer):
                 )
 
     def disconnect(self, code: int):
-        async_to_sync(self.channel_layer.group_discard)(self.matchmaking_group_name, self.channel_name)
         if not self.game_room:
             return
 
         normal_close_code = 1000
+        async_to_sync(self.channel_layer.group_discard)(self.matchmaking_group_name, self.channel_name)
         if code == normal_close_code:
             logger.info(
                 "[Matchmaking.disconnect]: players were found for game room {%s}, connection is closed normally",
