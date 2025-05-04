@@ -213,18 +213,23 @@ h1, h2, h3, h4, h5, h6, legend {
 }
 .avatar-xs {
   width: 36px;
+  height: 36px;
 }
 .avatar-s {
   width: 40px;
+  height: 40px;
 }
 .avatar-m {
   width: 56px;
+  height: 56px;
 }
 .avatar-l {
   width: 88px;
+  height: 88px;
 }
 .avatar-xl {
   width: 120px;
+  height: 88px;
 }
 
 .online-status {
