@@ -9,11 +9,8 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from common.schemas import MessageSchema
-from tournaments.models import (
-    Tournament,
-    TournamentCreatedSchema,
-    TournamentCreateSchema,
-)
+from tournaments.models import (Tournament, TournamentCreatedSchema,
+                                TournamentCreateSchema)
 from users.router.utils import _create_json_response_with_tokens
 from users.schemas import ProfileMinimalSchema
 
@@ -42,7 +39,8 @@ def create_tournament(request, data: TournamentCreateSchema):
         tournament.full_clean()  # Call clean() and all models validations
         tournament.save()
     except ValidationError as e:
-        raise HttpError(422, str(e))
+        msg = e.messages[0] if len(e.messages) == 1 else " ".join(e.messages)
+        raise HttpError(422, msg)
 
     creator = user.profile.to_profile_minimal_schema()
     data = {
