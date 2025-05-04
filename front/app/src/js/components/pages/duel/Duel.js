@@ -151,7 +151,6 @@ export class Duel extends HTMLElement {
       avatar,
       elo,
     }
-    console.log(this.#state.opponent)
     this.startDuel();
   }
 
