@@ -3,14 +3,13 @@ import logging
 import math
 import random
 from dataclasses import dataclass
+from enum import Enum
 
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
 logger = logging.getLogger("server")
 #### CONSTANTS ####
-BUMPER_1 = 1
-BUMPER_2 = 2
 WALL_LEFT_X = 10
 WALL_RIGHT_X = -WALL_LEFT_X
 WALL_WIDTH_HALF = 0.5
@@ -33,10 +32,9 @@ BALL_VELOCITY_CAP = 1
 TEMPORAL_SPEED_DEFAULT = 1, 1
 TEMPORAL_SPEED_INCREASE = SUBTICK * 0
 TEMPORAL_SPEED_DECAY = 0.005
-GAME_TICK_INTERVAL = 1.0 / 30
+GAME_TICK_INTERVAL = 1.0 / 60
 PLAYERS_REQUIRED = 2
 ###################
-
 
 @dataclass(slots=True)
 class Player:
@@ -55,6 +53,7 @@ class Bumper(Vector2):
     score: int
     moves_left: bool
     moves_right: bool
+    number: int                  # 1 or 2
     dir_z: int
     player: Player | None = None
 
@@ -68,13 +67,12 @@ class Ball(Vector2):
 class Pong:
     """
     Stores and modifies the state of the game.
-    BUMPER_1 and BUMPER_2 are symbolic constants that represent specific bumpers.
     """
 
     bumper_1: Bumper
     bumper_2: Bumper
     ball: Ball
-    scored_last: int
+    bumper_number_scored_last: int
     someone_scored: bool
 
     def __init__(self):
@@ -83,6 +81,7 @@ class Pong:
             score=0,
             moves_left=False,
             moves_right=False,
+            number=1,
             dir_z=1,
         )
         self.bumper_2: Bumper = Bumper(
@@ -90,10 +89,11 @@ class Pong:
             score=0,
             moves_left=False,
             moves_right=False,
+            number=2,
             dir_z=-1,
         )
         self.ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
-        self.scored_last: int = BUMPER_1
+        self.scored_last: int = self.bumper_1.number
         self.someone_scored: bool = False
 
     def as_dict(self):
@@ -105,7 +105,7 @@ class Pong:
                 "z": self.ball.z,
                 "velocity": {"x": self.ball.velocity.x, "z": self.ball.velocity.z},
             },
-            "scored_last": self.scored_last,
+            "scored_last": self.scored_last.value,
             "someone_scored": self.someone_scored,
         }
 
@@ -242,9 +242,16 @@ class Pong:
         if bumper.dir_z == -1:
             logger.info("[GameWorker]: player {%s} was assigned to bumper_2", player_id)
 
-    def get_players(self) -> list[str, str]:
+    def get_players(self) -> list[Player, Player]:
         """Returns a list of players playing the match."""
         return [p for p in [self.bumper_1.player, self.bumper_2.player] if p]
+
+    def get_player(self, player_id: str) -> Player:
+        if self.bumper_1.player.id == player_id:
+            return self.bumper_1
+        if self.bumper_2.player.id == player_id:
+            return self.bumper_2
+        return None
 
 
 class GameConsumer(AsyncConsumer):
@@ -276,6 +283,11 @@ class GameConsumer(AsyncConsumer):
 
     # TODO: give 10 seconds to disconnected player to reconnect. if they can't do it, remaining player wins
     async def player_disconnected(self, event):
+        # logger.info("[GameWorker]: player {%s} has disconnected from the game {%s}", player_id, game_room_id)
+        #
+        # game_room_id = event["game_room_id"]
+        # player_id = event["player_id"]
+        # self.tasks["asd"] = await asyncio.create_task(asyncio.sleep(10))
         pass
 
     async def create_match_loop(self, game_room_id: str):
