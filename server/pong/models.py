@@ -165,6 +165,9 @@ class GameRoomQuerySet(models.QuerySet):
     def for_players(self, *players: Profile):
         return self.filter(players__in=players)
 
+    def for_ongoing_status(self):
+        return self.filter(status=self.model.ONGOING)
+
 
 class GameRoom(models.Model):
     """
