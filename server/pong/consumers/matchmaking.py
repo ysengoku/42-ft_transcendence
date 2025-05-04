@@ -23,6 +23,9 @@ logger = logging.getLogger("server")
 
 PLAYERS_REQUIRED = 2
 
+class MatchmakingCloseCodes:
+    PLAYERS_FOUND = 3000
+
 
 class MatchmakingConsumer(WebsocketConsumer):
     def _with_db_lock_find_valid_game_room(self):
@@ -86,9 +89,8 @@ class MatchmakingConsumer(WebsocketConsumer):
         if not self.game_room:
             return
 
-        normal_close_code = 1000
         async_to_sync(self.channel_layer.group_discard)(self.matchmaking_group_name, self.channel_name)
-        if code == normal_close_code:
+        if code == MatchmakingCloseCodes.PLAYERS_FOUND:
             logger.info(
                 "[Matchmaking.disconnect]: players were found for game room {%s}, connection is closed normally",
                 self.game_room,
@@ -132,7 +134,8 @@ class MatchmakingConsumer(WebsocketConsumer):
                     "username": opponent.user.username,
                     "nickname": opponent.user.nickname,
                     "avatar": opponent.avatar,
+                    "elo": opponent.elo,
                 },
             ),
         )
-        self.close(1000)
+        self.close(MatchmakingCloseCodes.PLAYERS_FOUND)
