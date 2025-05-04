@@ -282,11 +282,13 @@ class GameConsumer(AsyncConsumer):
 
     # TODO: give 10 seconds to disconnected player to reconnect. if they can't do it, remaining player wins
     async def player_disconnected(self, event):
+        """
         logger.info("[GameWorker]: player {%s} has disconnected from the game {%s}", player_id, game_room_id)
 
         game_room_id = event["game_room_id"]
         player_id = event["player_id"]
         self.tasks["asd"] = await asyncio.create_task(asyncio.sleep(10))
+        """
 
     async def create_match_loop(self, game_room_id: str):
         """Asynchrounous loop that runs one specific match."""
