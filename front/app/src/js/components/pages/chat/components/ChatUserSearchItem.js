@@ -87,9 +87,9 @@ export class ChatUserSearchItem extends HTMLElement {
           <img class="chat-user-search-avatar avatar-s rounded-circle me-3" alt="Avatar">
           <span class="online-status chat-user-search-status-indicator ${this.#state.user.is_online ? 'online' : ''} ms-3"></span>
         </div>
-        <div class="d-flex flex-wrap flex-grow-1 gap-2">
-          <p class="userlist-nickname m-0 fw-bolder"></P>
-          <p class="userlist-username m-0 fs-light"></p>
+        <div class="d-flex flex-wrap flex-grow-1 gap-2 overflow-hidden">
+          <p class="userlist-nickname m-0 fw-bolder flex-wrap"></P>
+          <p class="userlist-username m-0 fs-light flex-nowrap flex-grow-1"></p>
         </div>
       <div>
     </li>
@@ -106,6 +106,11 @@ export class ChatUserSearchItem extends HTMLElement {
       border: 1px solid var(--bs-body-bg);
       width: 12px;
       height: 12px;
+    }
+    .userlist-nickname,
+    .userlist-username {
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     </style>
     `;
