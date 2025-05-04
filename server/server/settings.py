@@ -160,8 +160,9 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [(REDIS_HOST, REDIS_PORT)],
+            "expiry": 10,
             "channel_capacity": {
-                re.compile(r"^websocket.send\!.+"): 5000,
+                re.compile(r"^websocket.send\!.+"): 1500,
             },
         },
     },
