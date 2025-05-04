@@ -29,12 +29,12 @@ class GameRoomConsumer(WebsocketConsumer):
             self.close()
             return
 
-        self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).first()
+        self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).for_ongoing_status().first()
         if not self.game_room:
             logger.info(
                 "[GameRoom.connect]: illegal user {%s} tried to join game room {%s}",
                 self.user.profile,
-                self.game_room.id,
+                self.game_room_id,
             )
             self.close()
             return
