@@ -64,7 +64,7 @@ export class TournamentCreation extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   handleTournamentInputName(event) {
-	this.alert.classList.add('d-none');
+	  this.alert.classList.add('d-none');
     if (event.target.value.length < 1) {
       this.tournamentNameInput.classList.add('is-invalid');
       this.tournamentNameFeedback.textContent = `Tournament name must be at least 3 characters.`;
