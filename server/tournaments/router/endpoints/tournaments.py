@@ -1,4 +1,5 @@
 # server/tournaments/router/endpoints/tournaments.py
+from uuid import UUID
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -63,16 +64,23 @@ def create_tournament(request, data: TournamentCreateSchema):
     return JsonResponse(data, status=201)
 
 
-@tournaments_router.get("/{tournament_id}", response=TournamentSchema)
+@tournaments_router.get(
+    "/{tournament_id}",
+    response={
+        200: TournamentSchema,
+        400: MessageSchema,
+        404: MessageSchema
+    }
+)
 def get_tournament(request, tournament_id: str):
     try:
         tournament_uuid = UUID(tournament_id)
     except ValueError:
-        return 400, {"message": "Invalid tournament id format"}
+        return 400, {"msg": "Invalid tournament id format"}
     try:
         tournament = Tournament.objects.get(id=tournament_id)
     except Tournament.DoesNotExist:
-        return 404, {"message": "Tournament not found"}
+        return 404, {"msg": "Tournament not found"}
     return tournament
 
 
