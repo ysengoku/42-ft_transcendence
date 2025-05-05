@@ -387,6 +387,10 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
  }
 
+ .btn-wood:hover {
+  color: var(--pm-primary-300);
+ }
+
 .btn-wood:before {
   --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 50%);
   --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 40%);
