@@ -81,7 +81,7 @@ export class ChatUserSearchItem extends HTMLElement {
 
   template() {
     return `
-    <li class="chat-user-search-list-item dropdown-item border-0 ps-3 py-2">
+    <li class="chat-user-search-list-item dropdown-item border-0 ps-3 py-3">
       <div class="d-flex flex-row align-items-center">
         <div class="position-relative d-inline-block me-2">
           <img class="chat-user-search-avatar avatar-s rounded-circle me-3" alt="Avatar">
