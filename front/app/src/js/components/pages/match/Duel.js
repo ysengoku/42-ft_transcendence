@@ -136,6 +136,15 @@ export class Duel extends HTMLElement {
       elo: 1500,
     };
     // ================================
+
+    // TODO: Activate the following line and remove the test code after merge
+    // const { username, nickname, avatar, elo } = event.detail
+    // this.#state.opponent = {
+    //   username,
+    //   nickname,
+    //   avatar,
+    //   elo,
+    // }
     this.startDuel();
   }
 
