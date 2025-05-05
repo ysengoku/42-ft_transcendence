@@ -359,34 +359,44 @@ export class Game extends HTMLElement {
     }
     
     let isMovementDone = false;
-    let BallPredictedPos;
-    let isCalculationNeeded = true
+    let ballPredictedPos;
+    let isCalculationNeeded = true;
+    let choosePos;
 
     function handleAiBehavior (BallPos, BallVelocity){
     //better calculation to put here
     if (isCalculationNeeded)
     {
-      BallPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
+      ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
       let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);;
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
-      while (BallPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf)
+      while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf)
       {
         let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * BallPredictedVelocity.x);
-        if (BallPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-          BallPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+        if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
+          ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
           BallPredictedVelocity.x *= -1;
         }
-        if (BallPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-          BallPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+        if (ballPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
+          ballPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
           BallPredictedVelocity.x *= -1;
         }
-        BallPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
-        BallPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
+        ballPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
+        ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
       }
       isCalculationNeeded = false;
+      console.log(ballPredictedPos.x);
+      choosePos = Math.floor(Math.random() * 3);
+      if (choosePos == 1)
+        ballPredictedPos.x -= Math.random() * 3.5;
+      else if (choosePos == 2)
+        ballPredictedPos.x += Math.random() * 3.5;
+      else
+        ballPredictedPos = BallPos;
+      // console.log(ballPredictedPos.x);
     }
-    if (!isMovementDone)
-      moveAiBumper(BallPredictedPos);
+    if (!isMovementDone && ((BallPos.z >= 0 && (choosePos != 3 && choosePos != 0)) || (choosePos == 3 || choosePos == 0)))
+      moveAiBumper(ballPredictedPos);
     else
     {
       keyMap["KeyD"] = false;
@@ -397,7 +407,10 @@ export class Game extends HTMLElement {
     let step;
 
     var blob = new Blob([
-      "onmessage = function(e) { setTimeout(function(){postMessage([e.data[1]]); }, e.data[0])}"]);
+      "let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;" + 
+      "remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};" +
+      "this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == \"pause\" && pauseTimer != null) {pauseTimer.pause();}" + 
+      "else if (e.data[2] == \"create\"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == \"resume\" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}"]);
     var blobURL = window.URL.createObjectURL(blob);
 
     var Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
@@ -439,25 +452,25 @@ export class Game extends HTMLElement {
           else if (Bumpers[lastBumperCollided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf){
               Bumpers[lastBumperCollided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
           }
-          Workers[0].postMessage([10000, lastBumperCollided]);
+          Workers[0].postMessage([10000, lastBumperCollided, "create"]);
           break ;
         case 2:
           Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 0.5;
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
-          Workers[1].postMessage([10000, lastBumperCollided]);
+          Workers[1].postMessage([10000, lastBumperCollided, "create"]);
           break ;
         case 3:
           Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
-          Workers[2].postMessage([2000, lastBumperCollided]);
+          Workers[2].postMessage([2000, lastBumperCollided, "create"]);
           break ;
         default:
           Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
           Bumpers[lastBumperCollided].widthHalf = 1.5;
-          Workers[3].postMessage([10000, lastBumperCollided]);
+          Workers[3].postMessage([10000, lastBumperCollided, "create"]);
           break ;
       }
       Coin.cylinderUpdate.set(-100, 3, 0);
-      Workers[4].postMessage([3000, -1]);
+      Workers[4].postMessage([30000, -1, "create"]);
     }
 
     function animate() {
@@ -552,10 +565,22 @@ export class Game extends HTMLElement {
         if (isPaused == false)
         {
           cancelAnimationFrame(step);
+          let i = 0;
+          while (i <= 4)
+          {
+            Workers[i].postMessage([-1, -1, "pause"]);
+            i++;
+          }
           isPaused = true;
         }
         else
         {
+          let i = 0;
+          while (i <= 4)
+          {
+            Workers[i].postMessage([-1, -1, "resume"]);
+            i++;
+          }
           isPaused = false;
           step = requestAnimationFrame(animate);
         }
