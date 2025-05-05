@@ -36,7 +36,7 @@ export class TournamentMenu extends HTMLElement {
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
-    if (this.selectedTournament.staus === 'finished') {
+    if (this.selectedTournament && this.selectedTournament.staus === 'finished') {
       this.confirmButton?.removeEventListener('click', this.navigateToResults);
     }
   }
