@@ -29,7 +29,7 @@ export class SettingsButton extends HTMLElement {
   template() {
     return `
       <div id="home-settings-button">
-        <div class="btn">Settings</div>
+        <div class="btn home-btn-s">Settings</div>
       </div>
     `;
   }
