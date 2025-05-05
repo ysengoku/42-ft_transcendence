@@ -166,6 +166,10 @@ h1, h2, h3, h4, h5, h6, legend {
   font-family: 'van dyke', serif;
 }
 
+.btn:not(.btn-wood):hover {
+  transform: scale(1.1);
+}
+
 #error-message-container {
   margin-top: 64px;
 }
@@ -295,14 +299,16 @@ h1, h2, h3, h4, h5, h6, legend {
 /*--------------------------------------------------------------------------- */
 /*    Cursor                                                                  */
 /*----------------------------------------------------------------------------*/
-a, button, div [role="button"], input[type="submit"], input[type="button"] {
+a,
+button,
+.btn:hover,
+.btn-wood:hover,
+div [role="button"],
+input[type="submit"],
+input[type="button"] {
   cursor: url('/img/gun.png') 4 4, auto !important;
 }
 
-/* html:active,
-body:active {
-  cursor: url('/img/sample-cursor-active.png') 4 4, auto;
-} */
 a:active, button:active, 
 div [role="button"]:active, input[type="submit"]:active, input[type="button"]:active {
   cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
@@ -387,8 +393,9 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
  }
 
- .btn-wood:hover {
-  color: var(--pm-primary-300);
+ .btn-wood:not(.landing-btn-1):not(.landing-btn-2):hover {
+  color: var(--pm-gray-300);
+  transform: scale(1.05);
  }
 
 .btn-wood:before {
