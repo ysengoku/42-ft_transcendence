@@ -11,6 +11,7 @@ from ninja.errors import HttpError
 from common.schemas import MessageSchema
 from tournaments.models import (Tournament, TournamentCreatedSchema,
                                 TournamentCreateSchema)
+from tournaments.schemas import TournamentSchema
 from users.router.utils import _create_json_response_with_tokens
 from users.schemas import ProfileMinimalSchema
 
@@ -19,7 +20,7 @@ tournaments_router = Router()
 
 @tournaments_router.post(
     "",
-    response={201: TournamentCreatedSchema, 400: MessageSchema},
+    response={201: TournamentSchema, 400: MessageSchema},
 )
 def create_tournament(request, data: TournamentCreateSchema):
     user = request.auth
@@ -62,10 +63,19 @@ def create_tournament(request, data: TournamentCreateSchema):
     return JsonResponse(data, status=201)
 
 
-@tournaments_router.get("/{tournament_id}", response=TournamentCreatedSchema)
+@tournaments_router.get("/{tournament_id}", response=TournamentSchema)
 def get_tournament(request, tournament_id: str):
+    try:
+        tournament_uuid = UUID(tournament_id)
+    except ValueError:
+        return 400, {"message": "Invalid tournament id format"}
     try:
         tournament = Tournament.objects.get(id=tournament_id)
     except Tournament.DoesNotExist:
         return 404, {"message": "Tournament not found"}
     return tournament
+
+
+@tournaments_router.get("/", response=TournamentSchema)
+def get_all_tournaments(request):
+    return ("coucou")
