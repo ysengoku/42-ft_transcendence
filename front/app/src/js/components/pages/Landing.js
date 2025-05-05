@@ -93,6 +93,16 @@ export class Landing extends HTMLElement {
       right: 20%;
       clip-path: polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%, 0% 50%);
     }
+    .landing-btn-1:hover,
+     .landing-btn-2:hover {
+      color: var(--pm-gray-300);
+    }
+    .landing-btn-1:hover {
+      transform: perspective(240px) rotateY(-45deg);
+    }
+    .landing-btn-2:hover {
+      transform: perspective(240px) rotateY(45deg);
+    }
     .pole {
       display: block;
       position: relative;

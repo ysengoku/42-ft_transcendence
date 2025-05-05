@@ -64,9 +64,6 @@ export class Home extends HTMLElement {
     #home-logo {
       max-width: 320px;
     }
-    .home-btn-s::hover {
-      background-color: rgba(var(--bs-body-color-rgb), 0.3) !important;
-    }
     </style>
     `;
   }
