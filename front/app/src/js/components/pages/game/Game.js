@@ -23,7 +23,7 @@ export class Game extends HTMLElement {
 
     const BUMPER_1_BORDER = -10;
     const BUMPER_2_BORDER = -BUMPER_1_BORDER;
-    const BUMPER_SPEED = 0.25;
+    // const BUMPER_SPEED = 0.25;
     const BALL_DIAMETER = 1;
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
@@ -219,12 +219,15 @@ export class Game extends HTMLElement {
       let   lenghtHalf = 2.5;
       let   widthHalf = 0.5;
       let   controlReverse = false;
-      let score = 0;
+      let   speed = 0.25;
+      let   score = 0;
     
       return ({
           cubeMesh,
           cubeUpdate,
 
+          get speed() { return speed; },
+          set speed(newSpeed) { speed = newSpeed; },
           get score() { return score; },
           set score(newScore) { score = newScore; },
           get controlReverse() { return controlReverse; },
@@ -341,7 +344,8 @@ export class Game extends HTMLElement {
     // -> move to the best position
   
     let calculatedBumperPos = Bumpers[1].cubeMesh.position;
-    let bumperSubtick = 0;
+    let bumperP1Subtick = 0;
+    let bumperP2Subtick = 0;
 
     function moveAiBumper(calculatedPos) {
       keyMap["KeyA"] = false;
@@ -349,12 +353,12 @@ export class Game extends HTMLElement {
       if (calculatedBumperPos.x <= calculatedPos.x )
       {
         keyMap["KeyA"] = true;
-        calculatedBumperPos.x += bumperSubtick;
+        calculatedBumperPos.x += bumperP2Subtick;
       }
       else if (calculatedBumperPos.x >= calculatedPos.x )
       {
         keyMap["KeyD"] = true;
-        calculatedBumperPos.x -= bumperSubtick;
+        calculatedBumperPos.x -= bumperP2Subtick;
       }
     }
     
@@ -413,7 +417,7 @@ export class Game extends HTMLElement {
       "else if (e.data[2] == \"create\"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == \"resume\" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}"]);
     var blobURL = window.URL.createObjectURL(blob);
 
-    var Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
+    var Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
     Workers[0].onmessage = function(e) {
       Bumpers[e.data[0]].cubeMesh.scale.x = 1;
       Bumpers[e.data[0]].lenghtHalf = 2.5;
@@ -432,15 +436,19 @@ export class Game extends HTMLElement {
       Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
     };
     Workers[3].onmessage = function(e) {
+      Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
+    };
+    Workers[4].onmessage = function(e) {
       Bumpers[e.data[0]].cubeMesh.scale.z = 1;
       Bumpers[e.data[0]].widthHalf = 0.5;
     };
-    Workers[4].onmessage = function(e) {
+    Workers[5].onmessage = function(e) {
       Coin.cylinderUpdate.set(-9.25, 3, 0);
     };
 
     function  manageBuffAndDebuff() {
-      let chooseBuff = Math.floor(Math.random() * 4);
+      let chooseBuff = 4;//Math.floor(Math.random() * 5)
+      //slowing down opponent 
       switch (chooseBuff)
       {
         case 1:
@@ -463,14 +471,18 @@ export class Game extends HTMLElement {
           Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
           Workers[2].postMessage([2000, lastBumperCollided, "create"]);
           break ;
+        case 4:
+          Bumpers[Math.abs(lastBumperCollided - 1)].speed = 0.1;
+          Workers[3].postMessage([5000, lastBumperCollided, "create"]);
+          break ;
         default:
           Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
           Bumpers[lastBumperCollided].widthHalf = 1.5;
-          Workers[3].postMessage([10000, lastBumperCollided, "create"]);
+          Workers[4].postMessage([10000, lastBumperCollided, "create"]);
           break ;
       }
       Coin.cylinderUpdate.set(-100, 3, 0);
-      Workers[4].postMessage([30000, -1, "create"]);
+      Workers[5].postMessage([30000, -1, "create"]);
     }
 
     function animate() {
@@ -484,7 +496,8 @@ export class Game extends HTMLElement {
       ballSubtickZ = SUBTICK;
       let totalSubticks = totalDistanceZ / ballSubtickZ;
       ballSubtickX = totalDistanceX / totalSubticks;
-      bumperSubtick = BUMPER_SPEED / totalSubticks;
+      bumperP1Subtick = Bumpers[0].speed / totalSubticks;
+      bumperP2Subtick = Bumpers[1].speed / totalSubticks;
       while (current_subtick <= totalSubticks) {
           if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
               Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
@@ -521,14 +534,14 @@ export class Game extends HTMLElement {
           }
 
           if (((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf))
-              Bumpers[0].cubeUpdate.x += bumperSubtick;
+              Bumpers[0].cubeUpdate.x += bumperP1Subtick;
           if (((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf))
-              Bumpers[0].cubeUpdate.x -= bumperSubtick;
+              Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
 
           if (((keyMap['KeyD'] == true && Bumpers[1].controlReverse) || (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) && !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf))
-            Bumpers[1].cubeUpdate.x += bumperSubtick;
+            Bumpers[1].cubeUpdate.x += bumperP2Subtick;
           if (((keyMap['KeyA'] == true && Bumpers[1].controlReverse) || (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) && !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf))
-            Bumpers[1].cubeUpdate.x -= bumperSubtick;
+            Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
 
           Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
           if ((Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf) || (Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf)) {
@@ -566,7 +579,7 @@ export class Game extends HTMLElement {
         {
           cancelAnimationFrame(step);
           let i = 0;
-          while (i <= 4)
+          while (i <= 5)
           {
             Workers[i].postMessage([-1, -1, "pause"]);
             i++;
@@ -576,7 +589,7 @@ export class Game extends HTMLElement {
         else
         {
           let i = 0;
-          while (i <= 4)
+          while (i <= 5)
           {
             Workers[i].postMessage([-1, -1, "resume"]);
             i++;
