@@ -118,7 +118,7 @@ export class TournamentRegistration extends HTMLElement {
       <div id="tournament-register-form" class="d-flex flex-column w-100 gap-2">
       <div class="mb-3">
         <label for="tournament-alias" class="form-label">Tournament Alias</label>
-        <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias for the tournament" required>
+        <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias for the tournament" autocomplete="off" required>
         <div class="invalid-feedback" id="tournament-alias-feedback"></div>
       </div>
       </div>
