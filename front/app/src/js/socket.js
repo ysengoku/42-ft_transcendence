@@ -36,6 +36,11 @@ class WebSocketManager {
     this.socket.onerror = (event) => console.error('WebSocket error: ', this.name, event);
     this.socket.onclose = (event) => {
       devLog('WebSocket closed: ', this.name, event);
+      if (event.code === 3000) {
+        devLog(`WebSocket (${this.name}) closed intentionally by server with code 3000.`);
+        return;
+      }
+      devLog(`WebSocket (${this.name}) closed unexpectedly. Attempting to reconnect...`);
       setTimeout(() => this.reconnect(), 1000);
     };
   }
