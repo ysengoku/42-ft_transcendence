@@ -52,7 +52,6 @@ export class UserTournamentHistory extends HTMLElement {
   }
 
   createRow(item) {
-    console.log(item);
     const row = document.createElement('tr');
     row.innerHTML = this.rowTemplate() + this.rowStyle();
 
