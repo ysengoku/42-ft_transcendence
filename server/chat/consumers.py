@@ -489,19 +489,7 @@ class UserEventsConsumer(WebsocketConsumer):
         }))
 
     def read_notification(self, data):
-        logger.info("HANDLE NOTIFICATION FUNCTION")
-        logger.info(data)
-        logger.info(data["data"])
-        logger.info("END OF DATAS")
-
-        # notification_data = data["data"]["message"]
-        # notification_type = data["data"]["type"]
         notification_id = data["data"].get("id")
-        #
-        # if not notification_data or not notification_type:
-        #     logger.warning("Incomplete notifications datas")
-        #     return
-        #
         try:
             with transaction.atomic():
                 notification = Notification.objects.get(id=notification_id)
@@ -509,16 +497,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 notification.save(update_fields=["is_read"])
         except Notification.DoesNotExist:
             logger.debug("Notification %s does not exist", notification_id)
-    #
-    # self.send(
-    #     text_data=json.dumps(
-    #         {
-    #             "action": "notification",
-    #             "data": notification_data,
-    #             "type_notification": notification_type,
-    #         },
-    #     ),
-    # )
 
     def reply_game_invite(self, data):
 
