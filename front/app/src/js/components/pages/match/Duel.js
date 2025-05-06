@@ -85,7 +85,6 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
-
   render() {
     this.innerHTML = this.template() + this.style();
     console.log('Status:', this.#state.status);

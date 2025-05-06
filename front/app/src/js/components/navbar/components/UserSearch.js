@@ -18,6 +18,7 @@ export class UserSearch extends HTMLElement {
     this.handleInput = this.handleInput.bind(this);
     this.handleDropdownHidden = this.handleDropdownHidden.bind(this);
     this.showMoreUsers = this.showMoreUsers.bind(this);
+    this.preventReloadBySubmit = this.preventReloadBySubmit.bind(this);
   }
 
   connectedCallback() {
@@ -27,12 +28,16 @@ export class UserSearch extends HTMLElement {
   disconnectedCallback() {
     this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
     this.form?.removeEventListener('click', this.clearUserList);
+    this.form?.removeEventListener('submit', this.preventReloadBySubmit);
     this.input?.removeEventListener('click', this.clearUserList);
     this.input?.removeEventListener('input', this.handleInput);
     this.dropdown?.removeEventListener('scrollend', this.showMoreUsers);
     this.dropdownMobile?.removeEventListener('scrollend', this.showMoreUsers);
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*     Render                                                               */
+  /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template();
 
@@ -46,6 +51,7 @@ export class UserSearch extends HTMLElement {
 
     this.form ? (
       this.form.addEventListener('click', this.clearUserList),
+      this.form.addEventListener('submit', this.preventReloadBySubmit),
       this.input = this.form.querySelector('input')
     ) : (devErrorLog('User search form not found'));
     this.input ? (
@@ -59,6 +65,32 @@ export class UserSearch extends HTMLElement {
     this.dropdownMobile?.addEventListener('scrollend', this.showMoreUsers);
   }
 
+  renderUserList() {
+    if (this.#state.userList.length === 0) {
+      this.renderNoUserFound();
+      return;
+    }
+    for (let i = this.#state.currentListLength; i < this.#state.userList.length; i++) {
+      const listItem = document.createElement('user-list-item');
+      listItem.data = this.#state.userList[i];
+      if (i === 0) {
+        const firstItem = listItem.querySelector('.list-group-item');
+        firstItem.classList.add('border-top-0');
+      }
+      this.listContainer.appendChild(listItem);
+      this.#state.currentListLength++;
+    }
+  }
+
+  renderNoUserFound() {
+    const noUser = document.createElement('li');
+    noUser.innerHTML = this.noUserFoundTemplate();
+    this.listContainer.appendChild(noUser);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Event handling                                                       */
+  /* ------------------------------------------------------------------------ */
   clearUserList(event) {
     event?.stopPropagation();
     if (this.input.value === '') {
@@ -135,29 +167,13 @@ export class UserSearch extends HTMLElement {
     }
   }
 
-  renderUserList() {
-    if (this.#state.userList.length === 0) {
-      this.renderNoUserFound();
-      return;
-    }
-    for (let i = this.#state.currentListLength; i < this.#state.userList.length; i++) {
-      const listItem = document.createElement('user-list-item');
-      listItem.data = this.#state.userList[i];
-      if (i === 0) {
-        const firstItem = listItem.querySelector('.list-group-item');
-        firstItem.classList.add('border-top-0');
-      }
-      this.listContainer.appendChild(listItem);
-      this.#state.currentListLength++;
-    }
+  preventReloadBySubmit(event) {
+    event.preventDefault();
   }
 
-  renderNoUserFound() {
-    const noUser = document.createElement('li');
-    noUser.innerHTML = this.noUserFoundTemplate();
-    this.listContainer.appendChild(noUser);
-  }
-
+  /* ------------------------------------------------------------------------ */
+  /*     Template & style                                                     */
+  /* ------------------------------------------------------------------------ */
   template() {
     return `
     <form class="d-flex mx-3 mt-3 mb-2" role="search" id="user-search-form">
