@@ -1,0 +1,105 @@
+export async function mockTournamentList() {
+  const data = [
+    {
+      tournament_id: 'kagerhnpewn16461gdsga',
+      tournament_name: 'Peacemakers Cup',
+      date: null,
+      status: 'lobby',
+      creator: {
+        username: 'Pedro',
+        nickname: 'Pedro',
+        avatar: '/__mock__/img/sample-pic2.png',
+        elo: 1500,
+        is_online: true,
+      },
+      required_participants: 8,
+      participants_count: 3,
+    },
+    {
+      tournament_id: 'bqwerty123451234qwe',
+      tournament_name: 'Valor Clash',
+      date: '2025-05-10T15:00:00Z',
+      status: 'ongoing',
+      creator: {
+        username: 'SarahConnor',
+        nickname: 'Time Traveler',
+        avatar: '/__mock__/img/sample-pic3.png',
+        elo: 1600,
+        is_online: true,
+      },
+      required_participants: 8,
+      participants_count: 8,
+    },
+    {
+      tournament_id: 'cultimate78904567abcdef',
+      tournament_name: 'Ultimate Throwdown',
+      date: '2025-04-20T18:00:00Z',
+      status: 'finished',
+      creator: {
+        username: 'Morgan',
+        nickname: 'The Whisper',
+        avatar: '/__mock__/img/sample-pic1.jpg',
+        elo: 1450,
+        is_online: false,
+      },
+      required_participants: 4,
+      participants_count: 4,
+      winner: {
+        alias: 'SpeedFreak',
+          user: {
+          username: 'Tommy',
+          nickname: 'Speedster',
+          avatar: '/__mock__/img/sample-pic2.png',
+          elo: 1550,
+          is_online: false,
+        }
+      },
+    },
+    {
+      tournament_id: 'dgladiator123asdasd',
+      tournament_name: "Gladiator's Arena",
+      date: null,
+      status: 'lobby',
+      creator: {
+        username: 'Olivia',
+        nickname: 'The Hammer',
+        avatar: '/__mock__/img/sample-pic3.png',
+        elo: 1700,
+        is_online: true,
+      },
+      required_participants: 4,
+      participants_count: 0,
+    },
+    {
+      tournament_id: 'esniper45678zxcvbnm',
+      tournament_name: 'Sniper Showdown',
+      date: null,
+      status: 'lobby',
+      creator: {
+        username: 'Daniel',
+        nickname: 'Eagle Eye',
+        avatar: '/__mock__/img/sample-pic1.jpg',
+        elo: 1520,
+        is_online: false,
+      },
+      required_participants: 8,
+      participants_count: 2,
+    },
+    {
+      tournament_id: 'fnexus99999poiuytrewq',
+      tournament_name: 'Nexus Battle',
+      date: null,
+      status: 'lobby',
+      creator: {
+        username: 'Bruce',
+        nickname: 'The Bat',
+        avatar: '/__mock__/img/sample-pic3.png',
+        elo: 1800,
+        is_online: true,
+      },
+      required_participants: 4,
+      participants_count: 0,
+    },
+  ];
+  return { items: data, count: data.length };
+};

@@ -35,12 +35,12 @@ export class LocalGameMenu extends HTMLElement {
 
   navigateToGame(event) {
     event.preventDefault();
-    const gameOptions = this.gameOptionsForm.selectedOptions;
-    if (gameOptions) {
-      gameOptions.isRanked = false;
+    this.#state.options = this.gameOptionsForm.selectedOptions;
+    if (this.#state.options) {
+      this.#state.options.isRanked = false;
     }
-    devLog('Game options:', gameOptions);
     const gameType = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
+    devLog('Game options:', this.#state.options, ' Game type: ', gameType);
     router.navigate('/singleplayer-game');
   }
 

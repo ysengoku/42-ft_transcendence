@@ -157,10 +157,12 @@ export class NotificationsList extends HTMLElement {
     event.preventDefault();
     const element = event.target.closest('notifications-list-item');
     if (element.classList.contains('unread')) {
-      const notificationId = element.id.split('-')[1];
+      const notificationId = element.id.split(/-(.*)/s)[1];
       const message = {
         action: 'read_notification',
-        id: notificationId,
+        data: {
+          id: notificationId,
+        }
       };
       socketManager.sendMessage('livechat', message);
       element.removeEventListener('click', this.readNotification);
