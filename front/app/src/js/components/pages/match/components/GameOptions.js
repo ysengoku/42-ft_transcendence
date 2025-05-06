@@ -239,7 +239,7 @@ export class GameOptions extends HTMLElement {
       background: none;
     }
     .form-range::-webkit-slider-runnable-track {
-      background-color: var(--pm-gray-500);
+      background-color: var(--pm-gray-400);
     }
     .form-range::-webkit-slider-thumb {
       background-color: var(--pm-primary-500);
@@ -258,22 +258,29 @@ export class GameOptions extends HTMLElement {
       border: none;
     }
     .btn-outline-duel-speedOptions {
-      border: 1px solid var(--pm-gray-500);
-      background-color: var(--pm-gray-500);
+      border: 1px solid var(--pm-gray-400);
+      background-color: var(--pm-gray-400);
       color: var(--pm-primary-100);
     }
     .btn-check:checked + .btn-outline-duel-speedOptions,
-    .btn-check:active + .btn-outline-duel-speedOptions,
     .btn-outline-duel-speedOptions.active {
       color: var(--pm-primary-100);
       background-color: var(--pm-primary-500);
       border-color: var(--pm-primary-500);
     }
+    .btn-outline-duel-speedOptions:hover {
+      background-color: var(--pm-gray-400) !important;
+      color: var(--pm-primary-100) !important;
+    }
+    .btn-check:checked + .btn-outline-duel-speedOptions:hover,
+    .btn-outline-duel-speedOptions.active {
+      background-color: var(--pm-primary-500) !important;
+    }
     .form-check-input,
     .form-check-input:checked,
     .form-check-input:focus,
     .form-check-input:active {
-      background-color: var(--pm-gray-500);
+      background-color: var(--pm-gray-400);
       border: none;
       box-shadow: none;
     }
