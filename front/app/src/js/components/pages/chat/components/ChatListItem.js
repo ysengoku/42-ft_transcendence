@@ -103,9 +103,9 @@ export class ChatListItem extends HTMLElement {
         </div>
 
         <div class="chat-list-item-content d-flex flex-column justify-content-start px-3 py-2 gap-1 flex-grow-1">
-          <div class="d-flex flex-wrap justify-content-between align-items-center">
+          <div class="d-flex flex-wrap justify-content-between align-items-center flex-shrink-0 flex-nowrap">
             <p class="chat-list-item-nickname fs-5 m-0"></p>
-            <p class="chat-list-item-last-message-time m-0 fs-6"></p>
+            <p class="chat-list-item-last-message-time m-0 ms-2 fs-6 flex-shrink-0 flex-nowrap"></p>
           </div>
           <p class="chat-list-item-last-message m-0 fs-6"></p>
         </div>

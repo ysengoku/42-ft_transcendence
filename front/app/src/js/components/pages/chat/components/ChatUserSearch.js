@@ -189,7 +189,7 @@ export class ChatUserSearch extends HTMLElement {
     return `
     <style>
     #chat-user-list {
-      max-height: 50vh;
+      max-height: 400px;
       border: none;
       top: 100%;
     }
