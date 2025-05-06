@@ -496,7 +496,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
         # notification_data = data["data"]["message"]
         # notification_type = data["data"]["type"]
-        notification_id = data.get("notification_id")
+        notification_id = data["data"].get("id")
         #
         # if not notification_data or not notification_type:
         #     logger.warning("Incomplete notifications datas")
@@ -505,8 +505,8 @@ class UserEventsConsumer(WebsocketConsumer):
         try:
             with transaction.atomic():
                 notification = Notification.objects.get(id=notification_id)
-                notification.read = True
-                notification.save()
+                notification.is_read = True
+                notification.save(update_fields=["is_read"])
         except Notification.DoesNotExist:
             logger.debug("Notification %s does not exist", notification_id)
     #
@@ -702,8 +702,10 @@ class UserEventsConsumer(WebsocketConsumer):
         # Verify if not already friend
         if not sender.friends.filter(id=receiver.id).exists():
             sender.friends.add(receiver)
+        notification = Notification.objects.action_new_friend(receiver, sender)
+
         notification_data = get_user_data(sender)
-        Notification.objects.action_new_friend(receiver, sender)
+        notification_data["id"] = str(notification.id)
 
         self.send(
             text_data=json.dumps(
