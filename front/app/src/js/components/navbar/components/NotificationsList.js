@@ -69,6 +69,7 @@ export class NotificationsList extends HTMLElement {
   }
 
   async renderList() {
+    this.clearList();
     this.button?.querySelector('.notification-badge')?.classList.add('d-none');
 
     const read = this.#state.currentTab === 'unread' ? 'false' : 'all';
@@ -124,7 +125,6 @@ export class NotificationsList extends HTMLElement {
     const clickedTab = event.target.id === 'unread-notifications-tab' ? 'unread' : 'all';
     if (clickedTab !== this.#state.currentTab) {
       this.#state.currentTab = clickedTab;
-      this.clearList();
       if (clickedTab === 'unread') {
         this.unreadTab.classList.add('active');
         this.allTab.classList.remove('active');
@@ -187,7 +187,6 @@ export class NotificationsList extends HTMLElement {
       listLength += list.items.length;
       totalCount = list.count;
     } while (listLength < totalCount);
-    console.log('unreadList', unreadList);
     unreadList.forEach((item) => {
       const message = {
         action: 'read_notification',
