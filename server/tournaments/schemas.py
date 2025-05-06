@@ -3,6 +3,8 @@ from uuid import UUID
 
 from ninja import Schema
 
+from common.schemas import ProfileMinimalSchema
+
 
 class RoundSchema(Schema):
     tournament: 'TournamentSchema'
@@ -14,7 +16,7 @@ class RoundSchema(Schema):
 
 class ParticipantSchema(Schema):
     tournament_id: UUID
-    user: str
+    user: ProfileMinimalSchema
     alias: str
     status: str
     round: int
@@ -35,8 +37,8 @@ class TournamentSchema(Schema):
     id: UUID
     name: str
     status: str
-    creator: str
-    winner: str
+    creator: ProfileMinimalSchema
+    winner: ParticipantSchema | None
     date: datetime
     rounds: list[RoundSchema]
     participants: list[ParticipantSchema]
