@@ -691,20 +691,19 @@ class UserEventsConsumer(WebsocketConsumer):
         )
 
     def add_new_friend(self, data):
-        # sender_id = data["sender_id"]
-        # receiver_id = data["receiver_id"]
-        sender_id = data["data"].get("sender_id")  # Accès via data["data"]
+        sender_id = data["data"].get("sender_id")
         receiver_id = data["data"].get("receiver_id")
-        # Add direclty in friendlist
         sender = Profile.objects.get(id=sender_id)
         receiver = Profile.objects.get(id=receiver_id)
 
         # Verify if not already friend
         if not sender.friends.filter(id=receiver.id).exists():
             sender.friends.add(receiver)
+        # Create notification
         notification = Notification.objects.action_new_friend(receiver, sender)
 
         notification_data = get_user_data(sender)
+        # Add id to the notification data
         notification_data["id"] = str(notification.id)
 
         self.send(
