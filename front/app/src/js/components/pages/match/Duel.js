@@ -136,6 +136,15 @@ export class Duel extends HTMLElement {
       elo: 1500,
     };
     // ================================
+
+    // TODO: Activate the following line and remove the test code after merge
+    // const { username, nickname, avatar, elo } = event.detail
+    // this.#state.opponent = {
+    //   username,
+    //   nickname,
+    //   avatar,
+    //   elo,
+    // }
     this.startDuel();
   }
 
@@ -188,7 +197,6 @@ export class Duel extends HTMLElement {
     const userConfirmed = await new Promise((resolve) => {
       confirmationModal.handleConfirm = () => {
         devLog('User confirmed to leave the page');
-        socketManager.closeSocket('matchmaking');
         // TODO: Send cancel duel message to server
         confirmationModal.remove();
         resolve(true);

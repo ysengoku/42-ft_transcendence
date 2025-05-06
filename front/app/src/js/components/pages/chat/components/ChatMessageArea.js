@@ -351,19 +351,19 @@ export class ChatMessageArea extends HTMLElement {
         <div class="d-flex flex-row" id="chat-header">
           <img class="avatar-m rounded-circle me-3 d-none" alt="User" id="chat-header-avatar"/>
 
-          <div class="d-flex flex-column text-start gap-1">
-            <div class="d-flex flex-row gap-3">
-              <h4 class="mb-0" id="chat-header-nickname"></h4>
+          <div class="d-flex flex-column text-start gap-1 flex-grow-1">
+            <div class="d-flex flex-row flex-grow-1 flex-wrap flex-shrink-1" id="chat-header-names">
+              <h4 class="mb-0 me-3" id="chat-header-nickname"></h4>
               <p class="mb-0 fs-6" id="chat-header-username"></p>
             </div>
-            <div class="d-flex flex-row align-items-center gap-2">
+            <div class="d-flex flex-row align-items-center gap-2 flex-shrink-0">
               <span class="online-status d-none" id="chat-header-online-status-indicator"></span>
               <div id="chat-header-online-status"></div>
             </div>
           </div>
         </div>
 
-        <div class="align-self-end">
+        <div class="align-self-end flex-shrink-0">
           <button class="btn d-none" id="chat-invite-play-button">Invite to play</button>
           <button class="btn" id="chat-block-user-button"></button>
         </div>
@@ -388,6 +388,10 @@ export class ChatMessageArea extends HTMLElement {
   style() {
     return `
 	  <style>
+      #chat-header-names {
+      overflow-wrap: anywhere;
+      hyphens: auto;
+      }
       #chat-messages {
         min-height: 0;
       }
