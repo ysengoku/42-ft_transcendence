@@ -24,7 +24,19 @@ export class DuelMenu extends HTMLElement {
   constructor() {
     super();
 
+    this.optionsButton = null;
     this.gameOptionsModal = null;
+    this.form = null;
+    this.searchInput = null;
+    this.userList = null;
+    this.inviteButton = null;
+    this.requestMatchmakingButton = null;
+    this.opponentNickname = null;
+    this.opponentUsername = null;
+    this.opponentElo = null;
+    this.opponentAvatar = null;
+    this.opponentOnlineStatus = null;
+
     this.openGameOptionsModal = this.openGameOptionsModal.bind(this);
     this.closeGameOptionsModal = this.closeGameOptionsModal.bind(this);
     this.saveSelectedOptions = this.saveSelectedOptions.bind(this);
@@ -34,6 +46,7 @@ export class DuelMenu extends HTMLElement {
     this.selectOpponent = this.selectOpponent.bind(this);
     this.inviteToDuel = this.inviteToDuel.bind(this);
     this.requestMatchMaking = this.requestMatchMaking.bind(this);
+    this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
   }
 
   connectedCallback() {
@@ -48,6 +61,7 @@ export class DuelMenu extends HTMLElement {
   disconnectedCallback() {
     this.optionsButton?.removeEventListener('click', this.openGameOptionsModal);
     this.searchInput?.removeEventListener('input', this.handleSearchInput);
+    this.searchInput?.removeEventListener('keydown', this.ignoreEnterKeyPress);
     this.userList?.removeEventListener('scrollend', this.loadMoreUsers);
     document.removeEventListener('click', this.hideUserList);
     this.inviteButton?.removeEventListener('click', this.inviteToDuel);
@@ -81,6 +95,7 @@ export class DuelMenu extends HTMLElement {
 
     this.optionsButton.addEventListener('click', this.openGameOptionsModal);
     this.searchInput.addEventListener('input', this.handleSearchInput);
+    this.searchInput.addEventListener('keydown', this.ignoreEnterKeyPress);
     document.addEventListener('click', this.hideUserList);
     this.inviteButton.addEventListener('click', this.inviteToDuel);
     this.requestMatchmakingButton.addEventListener('click', this.requestMatchMaking);
@@ -286,6 +301,13 @@ export class DuelMenu extends HTMLElement {
     this.#usersearch.currentListLength = 0;
     this.#usersearch.searchQuery = '';
     this.searchInput.value = '';
+  }
+
+  ignoreEnterKeyPress(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      // event.stopPropagation();
+    }
   }
 
   /* ------------------------------------------------------------------------ */
