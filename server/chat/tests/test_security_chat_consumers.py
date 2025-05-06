@@ -199,6 +199,15 @@ class UserEventsConsumerTests(TransactionTestCase):
         # Vérification base
         notif_count = await database_sync_to_async(Notification.objects.count)()
         self.assertEqual(notif_count, 1)
+
+        notification_id = response["data"]["id"]
+        await communicator.send_json_to({
+            "action": "read_notification",
+            "data": {"id": notification_id}
+        })
         # Vérification création notification
         notif_count = await database_sync_to_async(Notification.objects.count)()
         self.assertEqual(notif_count, 1)
+
+        notification = await database_sync_to_async(Notification.objects.get)()
+        self.assertTrue(notification.is_read)
