@@ -3,11 +3,12 @@ import { showToastNotification } from '@utils';
 /**
  * WebSocket endpoint URL paths for different features.
  * @readonly
- * @enum {string}
+ * @enum {string|function}
  */
 const WS_PATH = {
   livechat: '/ws/events/',
   matchmaking: '/ws/matchmaking/',
+  tournament: (id) => `/ws/tournaments/${id}`,
 };
 
 /**
@@ -35,6 +36,11 @@ class WebSocketManager {
     this.socket.onerror = (event) => console.error('WebSocket error: ', this.name, event);
     this.socket.onclose = (event) => {
       devLog('WebSocket closed: ', this.name, event);
+      if (event.code === 3000) {
+        devLog(`WebSocket (${this.name}) closed intentionally by server with code 3000.`);
+        return;
+      }
+      devLog(`WebSocket (${this.name}) closed unexpectedly. Attempting to reconnect...`);
       setTimeout(() => this.reconnect(), 1000);
     };
   }
@@ -61,6 +67,7 @@ class WebSocketManager {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.close();
       this.socketOpen = false;
+      devLog('WebSocket closed: ', this.name);
     }
   }
 
@@ -100,6 +107,7 @@ class WebSocketManager {
 const socketManager = (() => {
   class SocketsManager {
     constructor() {
+      this.configs = new Map();
       this.sockets = new Map();
     }
 
@@ -109,25 +117,38 @@ const socketManager = (() => {
      * @param {Object<string, Function>} listeners - The action handlers for this socket.
      */
     addSocket(name, listeners) {
-      if (this.sockets.has(name)) {
-        devErrorLog('Socket already exists:', name);
+      if (this.configs.has(name)) {
+        devErrorLog('Socket type already registered:', name);
         return;
       }
       const path = WS_PATH[name];
-      const ws = new WebSocketManager(name, path, listeners);
-      this.sockets.set(name, ws);
+      if (!path) {
+        devErrorLog('Unknown socket path:', name);
+        return;
+      }
+      this.configs.set(name, { path, listeners });
+      // const ws = new WebSocketManager(name, path, listeners);
+      // this.sockets.set(name, ws);
     }
 
     /**
-     * Opens the WebSocket connection by name.
+     * Create a new WebSocket instance and connect it.
      * @param {string} name - The name of the socket to open.
+     * @param {string|number} [id] - Optional identifier for the socket (e.g., tournament ID).
      */
-    openSocket(name) {
-      const socket = this.sockets.get(name);
-      if (!socket) {
-        devErrorLog('Socket not found:', name);
+    openSocket(name, id=null) {
+      const config = this.configs.get(name);
+      if (!config) {
+        devErrorLog('Socket not registered:', name);
         return;
       }
+      if (this.sockets.has(name)) {
+        return;
+      }
+      const path = typeof config.path === 'function' ? config.path(id) : config.path;
+      const listeners = config.listeners;
+      const socket = new WebSocketManager(name, path, listeners);
+      this.sockets.set(name, socket);
       socket.connect();
     }
 
@@ -138,12 +159,12 @@ const socketManager = (() => {
     closeSocket(name) {
       const socket = this.sockets.get(name);
       if (!socket) {
-        devErrorLog('Socket not found:', name);
         return;
       }
       socket.close();
       socket.socketOpen = false;
       socket.socket = null;
+      this.sockets.delete(name);
     }
 
     closeAllSockets() {
@@ -151,6 +172,7 @@ const socketManager = (() => {
         socket.close();
         socket.socketOpen = false;
         socket.socket = null;
+        this.sockets.delete(socket.name);
       });
     }
 
@@ -175,7 +197,6 @@ const socketManager = (() => {
 // Socket registration for livechat module including Chat, Notifications, and Onlie status
 socketManager.addSocket('livechat', {
   new_message: (data) => {
-    devLog('New chat message:', data);
     if (window.location.pathname === '/chat') {
       const customEvent = new CustomEvent('newChatMessage', { detail: data, bubbles: true });
       document.dispatchEvent(customEvent);
@@ -187,7 +208,6 @@ socketManager.addSocket('livechat', {
     return;
   },
   like_message: (data) => {
-    devLog('Message liked:', data);
     if (window.location.pathname !== '/chat') {
       return;
     }
@@ -198,7 +218,6 @@ socketManager.addSocket('livechat', {
     document.dispatchEvent(customEvent);
   },
   unlike_message: (data) => {
-    devLog('Message unliked:', data);
     if (window.location.pathname !== '/chat') {
       return;
     }
@@ -209,25 +228,21 @@ socketManager.addSocket('livechat', {
     document.dispatchEvent(customEvent);
   },
   game_invite: (data) => {
-    devLog('Game invite received:', data);
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
     showToastNotification(`${data.nickname} challenges you to a duel.`);
   },
   new_tournament: (data) => {
-    devLog('New tournament received:', data);
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
     showToastNotification(`${data.nickname} is calling all gunslingers to a new tournament.`);
   },
   new_friend: (data) => {
-    devLog('New friend received:', data);
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
     showToastNotification(`${data.nickname} just roped you in as a friend.`);
   },
   user_online: (data) => {
-    devLog('User online:', data);
     const customEvent = new CustomEvent('onlineStatus', {
       detail: { data, online: true },
       bubbles: true,
@@ -235,7 +250,6 @@ socketManager.addSocket('livechat', {
     document.dispatchEvent(customEvent);
   },
   user_offline: (data) => {
-    devLog('User offline:', data);
     const customEvent = new CustomEvent('onlineStatus', {
       detail: { data, online: false },
       bubbles: true,
@@ -247,10 +261,33 @@ socketManager.addSocket('livechat', {
 // Socket registration for matchmaking
 socketManager.addSocket('matchmaking', {
   game_found: (data) => {
-    devLog('Game found:', data);
     const customEvent = new CustomEvent('gameFound', { detail: data, bubbles: true });
     document.dispatchEvent(customEvent);
   },
 });
+
+// Socket registration for tournament
+const tournamentEvents = [
+  { action: 'registered', event: 'tournamentRegistered' },
+  { action: 'register_fail', event: 'tournamentRegisterFail' },
+  { action: 'tournament_cancelled', event: 'tournamentCancelled' },
+  { action: 'new_registration', event: 'newTournamentRegistration' },
+  { action: 'registration_cancelled', event: 'tournamentRegistrationCancelled' },
+  { action: 'round_start', event: 'tournamentRoundStart' },
+  { action: 'match_finished', event: 'tournamentMatchFinished' },
+  { action: 'matchResult', event: 'tournamentMatchResult' },
+  { action: 'round_end', event: 'tournamentRoundEnd' },
+  { action: 'tournament_end', event: 'tournamentEnd' },
+];
+
+const tournamentListeners = tournamentEvents.reduce((acc, { action, event }) => {
+  acc[action] = (data) => {
+    const customEvent = new CustomEvent(event, { detail: data, bubbles: true });
+    document.dispatchEvent(customEvent);
+  };
+  return acc;
+}, {});
+
+socketManager.addSocket('tournament', tournamentListeners);
 
 export { socketManager };

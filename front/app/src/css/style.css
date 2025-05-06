@@ -166,6 +166,10 @@ h1, h2, h3, h4, h5, h6, legend {
   font-family: 'van dyke', serif;
 }
 
+.btn:not(.btn-wood):hover {
+  transform: scale(1.1);
+}
+
 #error-message-container {
   margin-top: 64px;
 }
@@ -213,18 +217,23 @@ h1, h2, h3, h4, h5, h6, legend {
 }
 .avatar-xs {
   width: 36px;
+  height: 36px;
 }
 .avatar-s {
   width: 40px;
+  height: 40px;
 }
 .avatar-m {
   width: 56px;
+  height: 56px;
 }
 .avatar-l {
   width: 88px;
+  height: 88px;
 }
 .avatar-xl {
   width: 120px;
+  height: 120px;
 }
 
 .online-status {
@@ -290,14 +299,16 @@ h1, h2, h3, h4, h5, h6, legend {
 /*--------------------------------------------------------------------------- */
 /*    Cursor                                                                  */
 /*----------------------------------------------------------------------------*/
-a, button, div [role="button"], input[type="submit"], input[type="button"] {
+a,
+button,
+.btn:hover,
+.btn-wood:hover,
+div [role="button"],
+input[type="submit"],
+input[type="button"] {
   cursor: url('/img/gun.png') 4 4, auto !important;
 }
 
-/* html:active,
-body:active {
-  cursor: url('/img/sample-cursor-active.png') 4 4, auto;
-} */
 a:active, button:active, 
 div [role="button"]:active, input[type="submit"]:active, input[type="button"]:active {
   cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
@@ -370,7 +381,7 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
 }
 
 /*--------------------------------------------------------------------------- */
-/*    Buttons                                                                 */
+/*    Wood grain                                                              */
 /*----------------------------------------------------------------------------*/
 .btn-wood {
   color: var(--pm-gray-100);
@@ -380,6 +391,11 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   border: none;
   position: relative;
   filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
+ }
+
+ .btn-wood:not(.landing-btn-1):not(.landing-btn-2):hover {
+  color: var(--pm-gray-300);
+  transform: scale(1.05);
  }
 
 .btn-wood:before {
@@ -404,4 +420,36 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   display: inline-block;
   overflow: visible;
   clip-path: url(#wave-clip)
+}
+
+.wood-board {
+  padding: .5em 2em;
+  border: none;
+  filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
+  svg {
+    fill: var(--pm-primary-100);
+  }
+}
+
+.wood-board:before {
+  --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 50%);
+  --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 40%);
+  --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 60%);
+  --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 90%);
+  position: absolute;
+  content: '';
+  inset: 0;
+  padding: .2em;
+  border: 4px double var(--pm-primary-600);
+  border-radius: .1em .2em / .5em .23em;
+  z-index: -1;
+  transition: .25s ease;
+  background: var(--pm-primary-400)
+    linear-gradient(178deg, 
+      var(--clrs1),
+      var(--clrs2) 30% 70%,
+      var(--clrs3) 90%,
+      var(--clrs4)) 0 0 / 100% .3rem;
+  display: inline-block;
+  overflow: visible;
 }
