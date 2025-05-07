@@ -21,3 +21,10 @@ def get_notifications(request: HttpRequest, is_read: str = "all"):
     if is_read == "all":
         return Notification.objects.filter(receiver=request.auth.profile.id)
     return Notification.objects.filter(receiver=request.auth.profile.id, is_read=(is_read != "false"))
+
+
+@notifications_router.post("/mark_all_as_read", response={200: MessageSchema})
+def mark_all_notifications_read(request):
+    profile = request.auth.profile
+    Notification.objects.mark_all_read(profile)
+    return 200, {"msg": "All notifications marked as read"}
