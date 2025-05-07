@@ -18,19 +18,38 @@ export class Game extends HTMLElement {
   }
 
   game() {
+    (() => {
+      let oldPushState = history.pushState;
+      history.pushState = function pushState() {
+          let ret = oldPushState.apply(this, arguments);
+          window.dispatchEvent(new Event('pushstate'));
+          window.dispatchEvent(new Event('locationchange'));
+          return ret;
+      };
+  
+      let oldReplaceState = history.replaceState;
+      history.replaceState = function replaceState() {
+          let ret = oldReplaceState.apply(this, arguments);
+          window.dispatchEvent(new Event('replacestate'));
+          window.dispatchEvent(new Event('locationchange'));
+          return ret;
+      };
+  
+      window.addEventListener('popstate', () => {
+          window.dispatchEvent(new Event('locationchange'));
+      });
+    })();
+    let gamePlaying = true;
     var keyMap = [];
     const WALL_WIDTH_HALF = 0.5;
 
     const BUMPER_1_BORDER = -10;
     const BUMPER_2_BORDER = -BUMPER_1_BORDER;
-    // const BUMPER_SPEED = 0.25;
     const BALL_DIAMETER = 1;
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
     let   BALL_INITIAL_VELOCITY = 0.25;
     let   MAX_SCORE = 1;
-    // const BOUNCING_ANGLE_DEGREES = 55;
-    // const BALL_VELOCITY_CAP = 1
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
     const TEMPORAL_SPEED_DECAY = 0.005;
 
@@ -40,6 +59,8 @@ export class Game extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     document.querySelector('#content').appendChild(renderer.domElement);
+    // const canvas = document.getElementById('content');
+    // // canvas.focus();
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
@@ -306,11 +327,24 @@ export class Game extends HTMLElement {
         if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
             Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
+      
+    var step = null;
 
+    function start() {
+      if (!step && gamePlaying) {
+         step = requestAnimationFrame(animate);
+      }
+    }
+    function stop() {
+      if (step) {
+         cancelAnimationFrame(step);
+         step = null;
+      }
+    }
     function resetBall(direction) {
         if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE)
         {
-          console.log("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaa");
+          console.log("aaaa");
           if (Bumpers[0].score == MAX_SCORE)
           {
             loadedFontP1.position.x = 9;
@@ -325,8 +359,7 @@ export class Game extends HTMLElement {
             Bumpers[0].score = 0;
             Bumpers[1].score = 0;
           }
-
-          // cancelAnimationFrame(step);
+          gamePlaying = false;
         }
         Ball.temporalSpeed.x = 1;
         Ball.temporalSpeed.z = 1;
@@ -407,9 +440,9 @@ export class Game extends HTMLElement {
       keyMap["KeyA"] = false;
     }
   }
-  
-    let step;
-
+  var Workers = [];
+  function firstStart()
+  {
     var blob = new Blob([
       "let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;" + 
       "remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};" +
@@ -417,7 +450,7 @@ export class Game extends HTMLElement {
       "else if (e.data[2] == \"create\"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == \"resume\" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}"]);
     var blobURL = window.URL.createObjectURL(blob);
 
-    var Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
+    Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
     Workers[0].onmessage = function(e) {
       Bumpers[e.data[0]].cubeMesh.scale.x = 1;
       Bumpers[e.data[0]].lenghtHalf = 2.5;
@@ -445,10 +478,11 @@ export class Game extends HTMLElement {
     Workers[5].onmessage = function(e) {
       Coin.cylinderUpdate.set(-9.25, 3, 0);
     };
+    start();
+  }
 
     function  manageBuffAndDebuff() {
-      let chooseBuff = 4;//Math.floor(Math.random() * 5)
-      //slowing down opponent 
+      let chooseBuff = Math.floor(Math.random() * 5);
       switch (chooseBuff)
       {
         case 1:
@@ -485,9 +519,10 @@ export class Game extends HTMLElement {
       Workers[5].postMessage([30000, -1, "create"]);
     }
 
+
+
     function animate() {
-      step = requestAnimationFrame(animate);
-      // let someone_scored = false;
+      step = null;
       let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * Ball.velocity.x);
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
@@ -561,13 +596,13 @@ export class Game extends HTMLElement {
         mixer.update(delta);
       }
       renderer.render(scene, camera);
+      start();
     }
-
+    
     let isPaused = false;
-    document.addEventListener('keydown', onDocumentKeyDown, true);
-    document.addEventListener('keyup', onDocumentKeyUp, true);
-    function onDocumentKeyDown(event) {
-      if (event.defaultPrevented) {
+
+    let onDocumentKeyDown = function (event) {
+      if (event.defaultPrevented || !gamePlaying) {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
@@ -577,53 +612,65 @@ export class Game extends HTMLElement {
       {
         if (isPaused == false)
         {
-          cancelAnimationFrame(step);
+          stop();
           let i = 0;
           while (i <= 5)
-          {
-            Workers[i].postMessage([-1, -1, "pause"]);
-            i++;
-          }
+            Workers[i++].postMessage([-1, -1, "pause"]);
           isPaused = true;
         }
         else
         {
           let i = 0;
           while (i <= 5)
-          {
-            Workers[i].postMessage([-1, -1, "resume"]);
-            i++;
-          }
+            Workers[i++].postMessage([-1, -1, "resume"]);
           isPaused = false;
-          step = requestAnimationFrame(animate);
+          start();
         }
       }
       event.preventDefault();
     }
-    function onDocumentKeyUp(event) {
-      if (event.defaultPrevented) {
+
+    let onDocumentKeyUp = function (event) {
+      if (event.defaultPrevented || !gamePlaying) {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
       keyMap[keyCode] = false;
       event.preventDefault();
     }
-  
-    return [camera, renderer, animate];
+    function linkChange() {
+      stop();
+      gamePlaying = false;
+      let i = 0;
+      while (i <= 5)
+        Workers[i++].terminate();
+      const currentUrl = window.location.href;
+      if (currentUrl == "https://localhost:1026/singleplayer-game")
+      {
+        gamePlaying = true;
+        firstStart();
+      }
+    };
+    window.addEventListener('keydown', onDocumentKeyDown, true);
+    window.addEventListener('locationchange', linkChange);
+    window.addEventListener('keyup', onDocumentKeyUp, true);
+
+    return [camera, renderer, firstStart];
   }
 
   render() {
     this.innerHTML = ``;
 
-    const [camera, renderer, animate] = this.game();
+    const [camera, renderer, start] = this.game();
     window.addEventListener('resize', function() {
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        let rendererWidth = renderer.domElement.offsetWidth;
-        let rendererHeight = renderer.domElement.offsetHeight;
-        camera.aspect = rendererWidth / rendererHeight;
-        camera.updateProjectionMatrix();
-    });
-    animate()
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      let rendererWidth = renderer.domElement.offsetWidth;
+      let rendererHeight = renderer.domElement.offsetHeight;
+      camera.aspect = rendererWidth / rendererHeight;
+      camera.updateProjectionMatrix();
+  });
+  start();
+
   }
 }
 
