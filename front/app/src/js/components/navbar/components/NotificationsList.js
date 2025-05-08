@@ -1,5 +1,6 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
+import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class NotificationsList extends HTMLElement {
   #state = {
@@ -175,27 +176,13 @@ export class NotificationsList extends HTMLElement {
     event.stopPropagation();
     event.preventDefault();
 
-    let listLength = 0;
-    let totalCount = 0;
-    const unreadList = [];
-    do {
-      const list = await this.fetchNotifications(false, 10, listLength);
-      if (!list) {
-        return;
-      }
-      unreadList.push(...list.items);
-      listLength += list.items.length;
-      totalCount = list.count;
-    } while (listLength < totalCount);
-    unreadList.forEach((item) => {
-      const message = {
-        action: 'read_notification',
-        data: {
-          id: item.id,
-        }
-      };
-      socketManager.sendMessage('livechat', message);
-    });
+    const response = await apiRequest('POST', API_ENDPOINTS.NOTIDICATIONS_READ, null, false, true);
+    if (response.status === 401 || response.status === 500) {
+      return;
+    } else if (!response.success) {
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+      return;
+    }
     this.#state.isLoading = true;
     await this.renderList();
     this.#state.isLoading = false;
