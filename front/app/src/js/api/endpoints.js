@@ -6,6 +6,7 @@ const API_BASE_URL = `https://${location.host}/api/`;
 // API sub-resources
 const API_USERS = 'users';
 const API_CHAT = 'chats';
+const API_NOTIFICATIONS = 'notifications';
 const API_GAME_STATS = 'game-stats';
 const API_TOURNAMENTS = 'tournaments';
 
@@ -147,7 +148,13 @@ export const API_ENDPOINTS = {
    * @param {number} offset - The offset for pagination.
    * @return {string} The full API URL for the user's notifications.
    */
-  NOTIFICATIONS: (isread, limit, offset) => `${API_BASE_URL}notifications?is_read=${isread}&limit=${limit}&offset=${offset}`,
+  NOTIFICATIONS: (isread, limit, offset) => `${API_BASE_URL}${API_NOTIFICATIONS}?is_read=${isread}&limit=${limit}&offset=${offset}`,
+
+  /**
+   * POST: Marks all notifications as read.
+   * @return {string} The full API URL for marking notifications as read.
+   */
+  NOTIDICATIONS_READ: `${API_BASE_URL}${API_NOTIFICATIONS}/mark_all_as_read`,
 
   /**
   * GET: Gets daily elo change statistics for a specific user in the form of overall elo gained across last days.
