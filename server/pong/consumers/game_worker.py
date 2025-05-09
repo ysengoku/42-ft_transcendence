@@ -3,6 +3,7 @@ import logging
 import math
 import random
 from dataclasses import dataclass
+from enum import Enum, auto
 
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
@@ -35,6 +36,13 @@ GAME_TICK_INTERVAL = 1.0 / 60
 PLAYERS_REQUIRED = 2
 ###################
 
+
+class PongMatchState(Enum):
+    PENDING = auto()
+    ONGOING = auto()
+    ENDED = auto()
+
+
 @dataclass(slots=True)
 class Player:
     id: str
@@ -52,7 +60,6 @@ class Bumper(Vector2):
     score: int
     moves_left: bool
     moves_right: bool
-    number: int                  # 1 or 2
     dir_z: int
     player: Player | None = None
 
@@ -63,7 +70,7 @@ class Ball(Vector2):
     temporal_speed: Vector2
 
 
-class Pong:
+class PongMatch:
     """
     Stores and modifies the state of the game.
     """
@@ -71,29 +78,28 @@ class Pong:
     bumper_1: Bumper
     bumper_2: Bumper
     ball: Ball
-    bumper_number_scored_last: int
+    state: PongMatchState
+    scored_last: Bumper | None = None
     someone_scored: bool
 
     def __init__(self):
-        self.bumper_1: Bumper = Bumper(
+        self.bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             score=0,
             moves_left=False,
             moves_right=False,
-            number=1,
             dir_z=1,
         )
-        self.bumper_2: Bumper = Bumper(
+        self.bumper_2 = Bumper(
             *STARTING_BUMPER_2_POS,
             score=0,
             moves_left=False,
             moves_right=False,
-            number=2,
             dir_z=-1,
         )
-        self.ball: Ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
-        self.scored_last: int = self.bumper_1.number
-        self.someone_scored: bool = False
+        self.ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
+        self.is_someone_scored = False
+        self.state = PongMatchState.PENDING
 
     def as_dict(self):
         return {
@@ -104,8 +110,8 @@ class Pong:
                 "z": self.ball.z,
                 "velocity": {"x": self.ball.velocity.x, "z": self.ball.velocity.z},
             },
-            "scored_last": self.scored_last,
-            "someone_scored": self.someone_scored,
+            "scored_last": self.scored_last.id if self.scored_last else None,
+            "is_someone_scored": self.is_someone_scored,
         }
 
     def handle_input(self, player_id: str, action: str, content: bool):
@@ -162,11 +168,11 @@ class Pong:
         if self.ball.z >= BUMPER_2_BORDER:
             self.bumper_1.score += 1
             self._reset_ball(-1)
-            self.someone_scored = True
+            self.is_someone_scored = True
         elif self.ball.z <= BUMPER_1_BORDER:
             self.bumper_2.score += 1
             self._reset_ball(1)
-            self.someone_scored = True
+            self.is_someone_scored = True
 
     def _check_ball_wall_collision(self):
         if self.ball.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF:
@@ -273,7 +279,7 @@ class GameConsumer(AsyncConsumer):
         # otherwise do nothing
         if game_room_id not in self.matches:
             logger.info("[GameWorker]: player {%s} was added to newly created game {%s}", player_id, game_room_id)
-            self.matches[game_room_id] = Pong()
+            self.matches[game_room_id] = PongMatch()
             self.matches[game_room_id].add_player(player_id)
         elif len(self.matches[game_room_id].get_players()) == PLAYERS_REQUIRED - 1:
             logger.info("[GameWorker]: player {%s} was added to existing game {%s}", player_id, game_room_id)
@@ -282,11 +288,10 @@ class GameConsumer(AsyncConsumer):
 
     # TODO: give 10 seconds to disconnected player to reconnect. if they can't do it, remaining player wins
     async def player_disconnected(self, event):
-        """
-        logger.info("[GameWorker]: player {%s} has disconnected from the game {%s}", player_id, game_room_id)
-
         game_room_id = event["game_room_id"]
         player_id = event["player_id"]
+        logger.info("[GameWorker]: player {%s} has disconnected from the game {%s}", player_id, game_room_id)
+        """
         self.tasks["asd"] = await asyncio.create_task(asyncio.sleep(10))
         """
 
