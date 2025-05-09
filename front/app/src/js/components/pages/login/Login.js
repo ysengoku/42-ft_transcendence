@@ -43,13 +43,13 @@ export class Login extends HTMLElement {
     return `
       <div class="container my-3">
         <div class="row justify-content-center py-4">
-          <div class="form-container col-12 col-md-4 p-4"> 
+          <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4"> 
             <div id="login-failed-feedback"></div>
 
             <login-form></login-form>
 
             <div class="container d-flex flex-column justify-content-center align-items-center">
-              <button class="btn w-100 py-2 mb-2" type="button" id="forgot-password-button">
+              <button class="btn w-100 py-2 mb-2 fs-5" type="button" id="forgot-password-button">
                 Forgot password?
               </button>
 
@@ -62,7 +62,7 @@ export class Login extends HTMLElement {
               </div>
 
               <div class="mb-3">
-                <button class="btn w-100 py-2" type="button" id="link-to-register">
+                <button class="btn w-100 py-2 fs-5" type="button" id="link-to-register">
                   Not registered yet?  <strong>Sign up now</strong>
                 </button>
               </div>

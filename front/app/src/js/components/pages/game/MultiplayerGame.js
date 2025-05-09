@@ -5,13 +5,23 @@ import pedro from '/3d_models/lilguy.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
 
 export class MultiplayerGame extends HTMLElement {
-    constructor() {
-        super();
-    }
+  #state = {
+    gameId: '',
+  };
 
-    connectedCallback() {
-        this.render();
+  constructor() {
+    super();
+  }
+
+  setParam(param) {
+    if (!param.id) {
+      const notFound = document.createElement('page-not-found');
+      this.innerHTML = notFound.outerHTML;
+      return;
     }
+    this.#state.gameId = param.id;
+    this.render();
+  }
 
     game() {
         const audio = new Audio(audiourl);
@@ -154,13 +164,7 @@ export class MultiplayerGame extends HTMLElement {
 
         const clock = new THREE.Clock();
 
-        const pongSocket = new WebSocket(
-            'wss://'
-            + window.location.host
-            + '/ws/pong/'
-            + 'asd'
-            + '/'
-        );
+        const pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
 
         function updateState(data) {
             if (!data)
@@ -251,21 +255,21 @@ export class MultiplayerGame extends HTMLElement {
         }
 
         return [camera, renderer, animate];
-    }
+  }
 
-    render() {
-        this.innerHTML = ``;
+  render() {
+    this.innerHTML = ``;
 
-        const [camera, renderer, animate] = this.game();
-        window.addEventListener('resize', function() {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            let rendererWidth = renderer.domElement.offsetWidth;
-            let rendererHeight = renderer.domElement.offsetHeight;
-            camera.aspect = rendererWidth / rendererHeight;
-            camera.updateProjectionMatrix();
-        });
-        animate()
-    }
+    const [camera, renderer, animate] = this.game();
+    window.addEventListener('resize', function () {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      let rendererWidth = renderer.domElement.offsetWidth;
+      let rendererHeight = renderer.domElement.offsetHeight;
+      camera.aspect = rendererWidth / rendererHeight;
+      camera.updateProjectionMatrix();
+    });
+    animate();
+  }
 }
 
 customElements.define('multiplayer-game', MultiplayerGame);

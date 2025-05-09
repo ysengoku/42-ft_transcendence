@@ -1,38 +1,35 @@
 export class OnlineStatusIndicator extends HTMLElement {
+  #state = {
+    isOnline: false,
+  };
+
   constructor() {
     super();
-    this.isOnline = false;
-    this.statusIndicator = null;
   }
 
-  static get observedAttributes() {
-    return ['online'];
+  setStatus(isOnline) {
+    this.#state.isOnline = isOnline;
+    this.render();
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'online') {
-      this.isOnline = newValue === 'true';
-      this.updateStatus();
-    }
-  }
-
-  connectedCallback() {
-    this.statusIndicator = document.createElement('span');
-    this.statusIndicator.className = 'online-status-indicator mx-2';
-
-    this.appendChild(this.statusIndicator);
+  render() {
+    this.innerHTML = this.template();
+    this.statusIndicator = this.querySelector('.online-status-indicator');
     this.updateStatus();
   }
 
   updateStatus() {
-    if (!this.statusIndicator) {
-      return;
-    }
-    this.statusIndicator.className = `online-status-indicator mx-2 ${this.isOnline ? 'online' : 'offline'}`;
+    this.#state.isOnline ?
+      this.statusIndicator.classList.add('online') :
+      this.statusIndicator.classList.remove('online');
   }
 
-  setStatus(isOnline) {
-    this.setAttribute('online', isOnline ? 'true' : 'false');
+  template() {
+    return `
+    <div class="mt-2">
+      <span class="online-status-indicator mx-2"></span>
+    </div>
+    `;
   }
 }
 

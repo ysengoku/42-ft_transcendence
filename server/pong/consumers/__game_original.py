@@ -286,14 +286,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.user = self.scope.get("user")
 
         if not self.user:
-            await self.disconnect(1000)
+            await self.close(1000)
             return
 
         self.user_id = str(self.user.id)
         is_in_game = is_player_in_the_game(self.user_id)
 
         if not is_in_game and len(player_ids) > MAX_PLAYERS:
-            await self.disconnect(1000)
+            await self.close(1000)
             return
 
         await self.accept()

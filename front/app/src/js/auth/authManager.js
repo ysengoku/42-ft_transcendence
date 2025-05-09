@@ -2,7 +2,7 @@ import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
 import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
-import onlineStatus from '../utils/onlineStatus';
+import { socketManager } from '@socket';
 
 /**
  * @module authManager
@@ -14,26 +14,33 @@ import onlineStatus from '../utils/onlineStatus';
  */
 const auth = (() => {
   class AuthManager {
-    constructor() {
-      // Écouteur pour les changements de statut utilisateur
-      document.addEventListener('userStatusChange', (event) => {
-        if (event.detail && event.detail.username) {
-          // Utilisateur connecté, initialiser la connexion WebSocket
-          onlineStatus.connect();
-        } else {
-          // Utilisateur déconnecté, fermer la connexion WebSocket
-          onlineStatus.disconnect();
-        }
-      });
-    }
-
     /**
      * Set the user object in session storage and dispatch a custom event to notify
      * @param {Object} user - The user object to store in session storage
      * @return {void}
      */
     storeUser(user) {
-      sessionStorage.setItem('user', JSON.stringify(user));
+      const currentUser = this.getStoredUser();
+      if (!currentUser || currentUser.username !== user.username ||
+        currentUser.unread_messages_count !== user.unread_messages_count ||
+        currentUser.unread_notifications_count !== user.unread_notifications_count) {
+        sessionStorage.setItem('user', JSON.stringify(user));
+        const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
+        document.dispatchEvent(event);
+      }
+      socketManager.openSocket('livechat');
+    }
+
+    updateStoredUser(user) {
+      const currentUser = this.getStoredUser();
+      const updatedUser = {
+        username: user.username,
+        nickname: user.nickname,
+        avatar: user.avatar,
+        unread_messages_count: currentUser.unread_messages_count,
+        unread_notifications_count: currentUser.unread_notifications_count,
+      };
+      sessionStorage.setItem('user', JSON.stringify(updatedUser));
       const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
       document.dispatchEvent(event);
     }
@@ -43,12 +50,10 @@ const auth = (() => {
      * @return {void}
      */
     clearStoredUser() {
-      // Déconnecter le WebSocket avant de supprimer l'utilisateur
-      onlineStatus.disconnect();
-      
       sessionStorage.removeItem('user');
       const event = new CustomEvent('userStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
+      socketManager.closeAllSockets();
     }
 
     /**
@@ -68,7 +73,7 @@ const auth = (() => {
      * @return { Promise<Object> } Object including success: bool & user data on success or status code on failure
      */
     async fetchAuthStatus() {
-      console.log('Fetching user login status...');
+      devLog('Fetching user login status...');
       const CSRFToken = getCSRFTokenfromCookies();
       const request = {
         method: 'GET',
@@ -81,12 +86,8 @@ const auth = (() => {
       const response = await fetch(API_ENDPOINTS.SELF, request);
       if (response.ok) {
         const data = await response.json();
-        console.log('User is logged in: ', data);
+        devLog('User is logged in: ', data);
         this.storeUser(data);
-        
-        // Établir la connexion WebSocket lorsque l'utilisateur est connecté
-        onlineStatus.connect();
-        
         return { success: true, response: data };
       } else if (response.status === 401) {
         const refreshTokenResponse = await refreshAccessToken(CSRFToken);
@@ -95,14 +96,11 @@ const auth = (() => {
             case 204:
               return this.fetchAuthStatus();
             case 401:
-              // Déconnecter le WebSocket si l'utilisateur n'est pas authentifié
-              onlineStatus.disconnect();
               return { success: false, status: 401 };
             case 500:
-              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR, 3000);
+              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
               break;
             default:
-              console.log('Unknown error.');
               showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
               return { success: false, status: refreshTokenResponse.status };
           }

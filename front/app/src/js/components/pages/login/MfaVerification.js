@@ -130,7 +130,7 @@ export class MfaVerification extends HTMLElement {
   template() {
     return `
     <div class="row justify-content-center m-4">
-      <div class="form-container col-12 col-md-4 p-4"> 
+      <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4"> 
         <div id="mfa-failed-feedback"></div>
         <div class="container d-flex flex-column justify-content-center align-items-center">
           <form class="text-center w-100" id="mfa-verification-form">
@@ -146,7 +146,7 @@ export class MfaVerification extends HTMLElement {
               <input type="text" maxlength="1" class="otp-input form-control" id="otp-5" autocomplete="off" />
             </div>
 
-            <button type="submit" id="otp-submit" class="btn btn-primary w-100 disabled">Login</button>
+            <button type="submit" id="otp-submit" class="btn btn-wood w-100 disabled">Login</button>
           </form>
 
           <button class="btn w-100 mt-4" id="resend-mfacode-button">

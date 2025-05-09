@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - live_chat
   pull_request:
     branches:
       - main
@@ -34,18 +35,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Check and fix style errors
-        working-directory: server/
-        run: |
-          ruff check --fix ./users
-          ruff format ./users
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff
+          pip install ruff pytest
           pip install -r server/requirements.txt
+      - name: Check and fix style errors
+        working-directory: server/
+        run: |
+          ruff check --fix . #./users
+          ruff format . #./users
           
       - name: Run Django migrations
         working-directory: server/
