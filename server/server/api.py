@@ -49,10 +49,30 @@ def handle_authentication_error(request: HttpRequest, exc: AuthenticationError):
 @api.exception_handler(ValidationError)
 def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
     err_response = []
-    for key in exc.message_dict:
-        err_response.extend(
-            {"type": "validation_error", "loc": ["body", "payload", key], "msg": msg} for msg in exc.message_dict[key]
-        )
+
+    if hasattr(exc, "message_dict"):
+        for key in exc.message_dict:
+            err_response.extend(
+                {
+                    "type": "validation_error",
+                    "loc": ["body", key],
+                    "msg": msg
+                }
+                for msg in exc.message_dict[key]
+            )
+    elif hasattr(exc, "messages"):
+        for msg in exc.messages:
+            err_response.append({
+                "type": "validation_error",
+                "loc": ["body"],
+                "msg": msg
+            })
+    else:
+        err_response.append({
+            "type": "validation_error",
+            "loc": ["body"],
+            "msg": str(exc)
+        })
 
     return api.create_response(request, err_response, status=422)
 

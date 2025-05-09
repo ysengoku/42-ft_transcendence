@@ -24,8 +24,10 @@ class Tournament(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     date = models.DateTimeField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="lobby")
-    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default="lobby")
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     winner = models.ForeignKey(
         "Participant",
@@ -40,13 +42,15 @@ class Tournament(models.Model):
         num = self.required_participants
         options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if num not in options:
-            raise ValueError(f"Number of participants must be one of: {options}")
+            raise ValueError(
+                f"Number of participants must be one of: {options}")
         if (
             Tournament.objects.filter(name__iexact=self.name)
             .exclude(pk=self.pk)
             .exists()
         ):
-            raise ValidationError("A tournament with this name already exists.")
+            raise ValidationError(
+                "A tournament with this name already exists.")
 
     class Meta:
         ordering = ["-created_at"]
@@ -61,6 +65,9 @@ class Tournament(models.Model):
     @property
     def rounds(self):
         return self.rounds.all()
+
+    # def return_tournaments(self):
+    #     return self.tournament.all()
 
 
 class Participant(models.Model):
@@ -96,7 +103,8 @@ class Round(models.Model):
     number = models.PositiveIntegerField()
     status = models.CharField(
         max_length=10,
-        choices=[("start", "Start"), ("ongoing", "Ongoing"), ("finished", "Finished")],
+        choices=[("start", "Start"), ("ongoing", "Ongoing"),
+                 ("finished", "Finished")],
         default="start",
     )
 
@@ -115,7 +123,8 @@ class Bracket(models.Model):
         ("finished", "Finished"),
     ]
 
-    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="brackets")
+    round = models.ForeignKey(
+        Round, on_delete=models.CASCADE, related_name="brackets")
     participant1 = models.ForeignKey(
         Participant, on_delete=models.CASCADE, related_name="brackets_p1"
     )
@@ -127,7 +136,8 @@ class Bracket(models.Model):
     winner = models.ForeignKey(
         Participant, on_delete=models.SET_NULL, null=True, blank=True
     )
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="start")
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default="start")
     score = models.CharField(max_length=7, blank=True, null=True)
 
     def __str__(self):
@@ -144,7 +154,8 @@ class TournamentCreateSchema(Schema):
     def check_participants(cls, v):
         options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if v not in options:
-            raise ValueError(f"Number of participants must be one of: {options}")
+            raise ValueError(
+                f"Number of participants must be one of: {options}")
         return v
 
 

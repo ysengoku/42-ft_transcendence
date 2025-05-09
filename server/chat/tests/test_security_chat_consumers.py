@@ -176,23 +176,38 @@ class UserEventsConsumerTests(TransactionTestCase):
         # first notification is user_online
         user_status = await communicator.receive_json_from()
         self.assertEqual(user_status["action"], "user_online")
+
+        new_user = await database_sync_to_async(get_user_model().objects.create_user)(
+            username="targetuser",
+            password="testpass"
+        )
+        target_user = await database_sync_to_async(Profile.objects.get)(user=new_user)
+
         notification_data = {
-            "action": "notification",
+            "action": "add_new_friend",
             "data": {
-                "message": "Test notification",
-                "type": "info"
+                "sender_id": str(self.profile.id),
+                "receiver_id": str(target_user.id)
             }
         }
-
         await communicator.send_json_to(notification_data)
 
         # Attendre la réponse du consumer
         response = await communicator.receive_json_from()
-        self.assertEqual(response["action"], "notification")
+        self.assertEqual(response["action"], "new_friend")
 
         # Vérification base
         notif_count = await database_sync_to_async(Notification.objects.count)()
         self.assertEqual(notif_count, 1)
+
+        notification_id = response["data"]["id"]
+        await communicator.send_json_to({
+            "action": "read_notification",
+            "data": {"id": notification_id}
+        })
         # Vérification création notification
         notif_count = await database_sync_to_async(Notification.objects.count)()
         self.assertEqual(notif_count, 1)
+
+        notification = await database_sync_to_async(Notification.objects.get)()
+        self.assertTrue(notification.is_read)
