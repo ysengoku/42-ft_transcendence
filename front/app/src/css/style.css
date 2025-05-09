@@ -162,12 +162,16 @@ body {
   z-index: 3;
 }
 
+.navbar-brand:hover {
+  transform: scale(1.05);
+}
+
 h1, h2, h3, h4, h5, h6, legend {
   font-family: 'van dyke', serif;
 }
 
 .btn:not(.btn-wood):hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 #error-message-container {

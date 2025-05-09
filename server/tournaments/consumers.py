@@ -79,6 +79,36 @@ class TournamentConsumer(WebsocketConsumer):
             'data': {'tournament_id': self.tournament_id}
         }))
 
+    def cancel_tournament(self, data):
+        """
+        TODO code this properly
+        When the organizer cancels the whole tournament
+        """
+        tournament_id = self.tournaments.get(self.tournament_id)
+        if not tournament_id:
+            self.send(text_data=json.dumps({
+                'action': 'tournament_cancel_fail',
+                'data': {'reason': 'This tournament does not exist'}
+            }))
+            logger.warning(
+                "%s tried to cancel the tournament %s but it does not exist", self.user.username, tournament_id)
+            return
+            # if user_id != organizer_id:
+            # self.send(text_data=json.dumps({
+            #     'action': 'tournament_cancel_fail',
+            #     'data': {'reason': 'Not the organizer'}
+            # }))
+            #     logger.warning(
+            #         "%s tried to cancel the tournament, but they're not the organizer !", user.username)
+            # if tournament id does not exist
+            # self.send(text_data=json.dumps({
+            #     'action': 'tournament_cancel_fail',
+            #     'data': {'reason': 'This tournament does not exist'}
+            # }))
+            #     logger.warning(
+            #         "%s tried to cancel the tournament %s but it does not exist", user.username, tournament_id)
+            #     return
+
     def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
@@ -172,36 +202,6 @@ class TournamentConsumer(WebsocketConsumer):
             'action': 'created',
             'data': {'tournament_id': self.tournament_id}
         }))
-
-    def cancel_tournament(self, data):
-        """
-        TODO code this properly
-        When the organizer cancels the whole tournament
-        """
-        tournament_id = self.tournaments.get(self.tournament_id)
-        if not tournament_id:
-            self.send(text_data=json.dumps({
-                'action': 'tournament_cancel_fail',
-                'data': {'reason': 'This tournament does not exist'}
-            }))
-            logger.warning(
-                "%s tried to cancel the tournament %s but it does not exist", self.user.username, tournament_id)
-            return
-            # if user_id != organizer_id:
-            # self.send(text_data=json.dumps({
-            #     'action': 'tournament_cancel_fail',
-            #     'data': {'reason': 'Not the organizer'}
-            # }))
-            #     logger.warning(
-            #         "%s tried to cancel the tournament, but they're not the organizer !", user.username)
-            # if tournament id does not exist
-            # self.send(text_data=json.dumps({
-            #     'action': 'tournament_cancel_fail',
-            #     'data': {'reason': 'This tournament does not exist'}
-            # }))
-            #     logger.warning(
-            #         "%s tried to cancel the tournament %s but it does not exist", user.username, tournament_id)
-            #     return
 
     def cancel_participant(self, data):
         """
