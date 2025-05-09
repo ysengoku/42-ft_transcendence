@@ -9,6 +9,7 @@
 ## Fixes
 - [x] Fix friends and blocked users: they shouldn't be able to add themselves.
 - [x] Fix friends and blocked users: you can't add blocked user as a friend.
+- [ ] Fix the bug where I can find a match against myself in matchmaking.
 
 ## Features
 ### User Management & Auth
