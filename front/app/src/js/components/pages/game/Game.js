@@ -397,11 +397,13 @@ export class Game extends HTMLElement {
     
     let isMovementDone = false;
     let ballPredictedPos;
+    // let posToGoTo;
     let isCalculationNeeded = true;
     let choosePos;
 
     function handleAiBehavior (BallPos, BallVelocity){
     //better calculation to put here
+    // posToGoTo = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
     if (isCalculationNeeded)
     {
       ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
@@ -423,17 +425,33 @@ export class Game extends HTMLElement {
       }
       isCalculationNeeded = false;
       console.log(ballPredictedPos.x);
-      choosePos = Math.floor(Math.random() * 3);
-      if (choosePos == 1)
-        ballPredictedPos.x -= Math.random() * 3.5;
-      else if (choosePos == 2)
-        ballPredictedPos.x += Math.random() * 3.5;
+      // if ()
+      // {
+
+      // }
+      if (BallVelocity.z >= 0.38)
+          choosePos = Math.floor(Math.random() * 1);
       else
-        ballPredictedPos = BallPos;
-      // console.log(ballPredictedPos.x);
+        choosePos = 2;
+      if (choosePos == 0)
+        ballPredictedPos.x -= Math.random() * 3.2;
+      else if (choosePos == 1)
+        ballPredictedPos.x += Math.random() * 3.2;
     }
-    if (!isMovementDone && ((BallPos.z >= 0 && (choosePos != 3 && choosePos != 0)) || (choosePos == 3 || choosePos == 0)))
-      moveAiBumper(ballPredictedPos);
+    // if (BallPos.z >= 0)
+    //   posToGoTo.x = ballPredictedPos.x;
+    // else
+    //   posToGoTo.x = BallPos.x;
+    if (choosePos == 2)
+    {
+      let choosePos = Math.floor(Math.random() * 1);
+      if (choosePos == 0)
+        ballPredictedPos.x = BallPos.x + 1;
+      else
+        ballPredictedPos.x = BallPos.x - 1;
+    }
+    if (!isMovementDone && ((BallPos.z >= 0 && (choosePos != 2)) || (choosePos == 2)))
+      moveAiBumper(ballPredictedPos); //posToGoTo
     else
     {
       keyMap["KeyD"] = false;
@@ -527,6 +545,7 @@ export class Game extends HTMLElement {
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
+      console.log(Ball.velocity);
       let current_subtick = 0;
       ballSubtickZ = SUBTICK;
       let totalSubticks = totalDistanceZ / ballSubtickZ;
@@ -631,8 +650,31 @@ export class Game extends HTMLElement {
       {
         stop();
         resetBall(-1);
+        let i = 0;
+        while (i <= 5)
+          Workers[i++].terminate();
+        i = 0
+        Coin.cylinderUpdate.set(-9.25, 3, 0);
+        while (i < 2)
+        {
+          Bumpers[i].widthHalf = 0.5;
+          Bumpers[i].cubeMesh.scale.z = 1;
+          Bumpers[i].lenghtHalf = 2.5;
+          Bumpers[i].cubeMesh.scale.x = 1;
+          Bumpers[i].controlReverse = false;
+          Bumpers[i].cubeUpdate.set(0, 1, i == 1 ? 9 : -9);
+          Bumpers[i].speed = 0.25;
+          i++;
+        }
+        loadedFontP1.position.x = 100;
+        keyMap["KeyD"] = false;
+        keyMap["KeyA"] = false;
+        keyMap["ArrowRight"] = false;
+        keyMap["ArrowLeft"] = false;
+        loadedFontP2.position.x = 100;
+
         gamePlaying = true;
-        start();
+        initGame();
       }
       event.preventDefault();
     }
