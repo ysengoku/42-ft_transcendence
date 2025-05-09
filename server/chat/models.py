@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, ImageField, OuterRef, Q, Subquery, Value
+from django.db.models import (BooleanField, Count, Exists, ExpressionWrapper,
+                              ImageField, OuterRef, Q, Subquery, Value)
 from django.db.models.functions import Coalesce, Now, NullIf
 from django.utils import timezone
 
@@ -229,7 +230,10 @@ class NotificationQuerySet(models.QuerySet):
         )
 
     def count_unread(self, profile: Profile):
-        return self.filter(is_read=False).count()
+        return self.filter(is_read=False, receiver=profile).count()
+
+    def mark_all_read(self, profile: Profile):
+        self.filter(is_read=False, receiver=profile).update(is_read=True)
 
 
 class Notification(models.Model):

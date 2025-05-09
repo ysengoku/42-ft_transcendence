@@ -1,5 +1,6 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
+import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class NotificationsList extends HTMLElement {
   #state = {
@@ -69,6 +70,7 @@ export class NotificationsList extends HTMLElement {
   }
 
   async renderList() {
+    this.clearList();
     this.button?.querySelector('.notification-badge')?.classList.add('d-none');
 
     const read = this.#state.currentTab === 'unread' ? 'false' : 'all';
@@ -124,7 +126,6 @@ export class NotificationsList extends HTMLElement {
     const clickedTab = event.target.id === 'unread-notifications-tab' ? 'unread' : 'all';
     if (clickedTab !== this.#state.currentTab) {
       this.#state.currentTab = clickedTab;
-      this.clearList();
       if (clickedTab === 'unread') {
         this.unreadTab.classList.add('active');
         this.allTab.classList.remove('active');
@@ -167,11 +168,7 @@ export class NotificationsList extends HTMLElement {
       socketManager.sendMessage('livechat', message);
       element.removeEventListener('click', this.readNotification);
       element.classList.remove('unread');
-      const currentList = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
-      const currentItem = currentList.notifications.find((notification) => notification.id === element.id);
-      if (currentItem) {
-        currentItem.is_read = true;
-      }
+      this.resetList();
     }
   }
 
@@ -179,26 +176,13 @@ export class NotificationsList extends HTMLElement {
     event.stopPropagation();
     event.preventDefault();
 
-    let listLength = 0;
-    let totalCount = 0;
-    const unreadList = [];
-    do {
-      const list = await this.fetchNotifications(false, 10, listLength);
-      if (!list) {
-        return;
-      }
-      unreadList.push(...list.items);
-      listLength += list.items.length;
-      totalCount = list.count;
-    } while (listLength < totalCount);
-    console.log('unreadList', unreadList);
-    unreadList.forEach((item) => {
-      const message = {
-        action: 'read_notification',
-        id: item.id,
-      };
-      socketManager.sendMessage('livechat', message);
-    });
+    const response = await apiRequest('POST', API_ENDPOINTS.NOTIDICATIONS_READ, null, false, true);
+    if (response.status === 401 || response.status === 500) {
+      return;
+    } else if (!response.success) {
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+      return;
+    }
     this.#state.isLoading = true;
     await this.renderList();
     this.#state.isLoading = false;

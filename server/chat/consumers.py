@@ -62,9 +62,9 @@ class UserEventsConsumer(WebsocketConsumer):
                     update_fields=["nb_active_connexions", "is_online", "last_activity"])
                 self.user_profile.refresh_from_db()
                 self.user_profile.update_activity()
-            redis_status_manager.set_user_online(self.user.id)
-            logger.info("User %s connected, now has %i active connexions",
-                        self.user.username, self.user_profile.nb_active_connexions)
+                redis_status_manager.set_user_online(self.user.id)
+                logger.info("User %s connected, now has %i active connexions",
+                            self.user.username, self.user_profile.nb_active_connexions)
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
             self.close()
@@ -254,10 +254,8 @@ class UserEventsConsumer(WebsocketConsumer):
             match action:
                 case "new_message":
                     self.handle_message(text_data_json)
-                case "notification":
-                    self.handle_notification(text_data_json)
                 case "read_notification":
-                    self.handle_notification(text_data_json)
+                    self.read_notification(text_data_json)
                 case ("user_offline", "user_online"):
                     self.handle_online_status(text_data_json)
                 case "like_message":
@@ -490,43 +488,19 @@ class UserEventsConsumer(WebsocketConsumer):
             "data": message_data["data"],
         }))
 
-    def handle_notification(self, data):
-        notification_data = data["data"]["message"]
-        notification_type = data["data"]["type"]
-        notification_id = data.get("notification_id")
-
-        if not notification_data or not notification_type:
-            logger.warning("Incomplete notifications datas")
-            return
-
-        # Create the notification in the db
-        if notification_id is None:
-            Notification.objects.create(
-                receiver=self.user_profile,
-                data={"message": notification_data, "type": notification_type},
-                action=notification_type,
-            )
-        else:
-            try:
+    def read_notification(self, data):
+        notification_id = data["data"].get("id")
+        try:
+            with transaction.atomic():
                 notification = Notification.objects.get(id=notification_id)
-                notification.read = True
-                notification.save()
-            except Notification.DoesNotExist:
-                logger.debug("Notification %s does not exist", notification_id)
-
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "notification",
-                    "data": notification_data,
-                    "type_notification": notification_type,
-                },
-            ),
-        )
+                notification.is_read = True
+                notification.save(update_fields=["is_read"])
+        except Notification.DoesNotExist:
+            logger.debug("Notification %s does not exist", notification_id)
 
     def reply_game_invite(self, data):
 
-        invitation_id = data["id"]
+        invitation_id = data["data"].get["id"]
         try:
             invitation = GameInvitation.objects.get(id=invitation_id)
             invitation.status = "accepted"
@@ -563,7 +537,7 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
     def accept_game_invite(self, data):
-        invitation_id = data["id"]
+        invitation_id = data["data"].get["id"]
         try:
             invitation = GameInvitation.objects.get(id=invitation_id)
             invitation.status = "accepted"
@@ -600,7 +574,7 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
     def decline_game_invite(self, data):
-        invitation_id = data["id"]
+        invitation_id = data["data"].get["id"]
         try:
             invitation = GameInvitation.objects.get(id=invitation_id)
             invitation.status = "declined"
@@ -636,8 +610,8 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
     def send_game_invite(self, data):
-        sender_id = data["sender_id"]
-        receiver_id = data["receiver_id"]
+        sender_id = data["data"].get["sender_id"]
+        receiver_id = data["data"].get["receiver_id"]
 
         if not sender_id or not receiver_id:
             logger.warning("IDs missing for the game_invite")
@@ -673,9 +647,9 @@ class UserEventsConsumer(WebsocketConsumer):
         )
 
     def handle_new_tournament(self, data):
-        tournament_id = data["tournament_id"]
-        tournament_name = data["tournament_name"]
-        organizer_id = data["organizer_id"]
+        tournament_id = data["data"].get["tournament_id"]
+        tournament_name = data["data"].get["tournament_name"]
+        organizer_id = data["data"].get["organizer_id"]
 
         organizer = Profile.objects.get(id=organizer_id)
 
@@ -695,17 +669,20 @@ class UserEventsConsumer(WebsocketConsumer):
         )
 
     def add_new_friend(self, data):
-        sender_id = data["sender_id"]
-        receiver_id = data["receiver_id"]
-
-        # Add direclty in friendlist
+        sender_id = data["data"].get("sender_id")
+        receiver_id = data["data"].get("receiver_id")
         sender = Profile.objects.get(id=sender_id)
         receiver = Profile.objects.get(id=receiver_id)
 
         # Verify if not already friend
         if not sender.friends.filter(id=receiver.id).exists():
             sender.friends.add(receiver)
+        # Create notification
+        notification = Notification.objects.action_new_friend(receiver, sender)
+
         notification_data = get_user_data(sender)
+        # Add id to the notification data
+        notification_data["id"] = str(notification.id)
 
         self.send(
             text_data=json.dumps(
