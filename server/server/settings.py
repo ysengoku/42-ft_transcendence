@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -28,11 +29,11 @@ SECRET_KEY = "your-secret-key"
 
 # Environment variables
 
-DEBUG = os.environ.get("DEBUG", True)
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
+IN_CONTAINER = int(os.environ.get("IN_CONTAINER", "0"))
 
 if not IN_CONTAINER:
     DATABASES = {
@@ -73,7 +74,6 @@ INSTALLED_APPS = [
     "users",
     "chat",
     "pong",
-
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -139,7 +139,7 @@ AUTHENTICATION_BACKENDS = [
 # CUSTOM USER MODEL
 
 AUTH_USER_MODEL = "users.User"
-
+DEFAULT_USER_AVATAR = "/img/default_avatar.png"
 
 # Configuration OAuth 42
 SOCIALACCOUNT_PROVIDERS = {
@@ -153,16 +153,20 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
-REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
+REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
+# For the tests
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [(REDIS_HOST, REDIS_PORT)],
+            "expiry": 3,
+            "channel_capacity": {
+                "game": 5000,
+            },
         },
     },
- }
-
+}
 
 
 # Configuration for proxy
@@ -242,11 +246,42 @@ OAUTH_CONFIG = {
 }
 
 # email configuration for 2fa and password reset
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.smtp.EmailBackend",
+)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "colored": {
+            "()": "colorlog.ColoredFormatter",
+            "format": "%(log_color)s%(levelname)s: %(message)s",
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "colorlog.StreamHandler",
+            "formatter": "colored",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}

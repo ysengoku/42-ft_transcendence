@@ -9,6 +9,7 @@
 ## Fixes
 - [x] Fix friends and blocked users: they shouldn't be able to add themselves.
 - [x] Fix friends and blocked users: you can't add blocked user as a friend.
+- [ ] Fix the bug where I can find a match against myself in matchmaking.
 
 ## Features
 ### User Management & Auth
@@ -53,14 +54,40 @@
 - [x] Elo system.
 - [~] Redo the User model to make it compatible with OAuth.
     - [x] Change the validation for the User in all places.
+- [x] Paginated endpoint for getting the elo points (by days).
+    - [x] Also there is a need to change the existing fetched points for the user profile from being unorganized points to daily elo change.
+- [x] Paginated endpoint for getting the match history.
+    - [x] It should have an option to sort them by newest/oldest.
+    - [x] It should have an option to filter them by loses/wins.
+- [~] Tweak the user profile. 
+    - [x] Remove `friends` field.
+    - [x] Add the price for the head. 
+    - [x] Add the last ten matches of the user.
+
 
 ### Chat
-- [ ] Add authentication support to the consumers.
+- [x] Add authentication support to the consumers.
 - [ ] It is possible to determine how the connection was closed based on the status code.
     - `1001` is send automatically on closing or refreshing the browser tab.
     - `1006` means that the connection was closed due to the network error or by any other abnormal means.
     - `websocketInstance.close({status_code})` can be sent from the client.
         - `1000` means `NORMAL_CLOSURE`, that the client intentionally closed the connection.
+- [x] Add notifications endpoint.
+
+### Multiplayer
+- [x] Make the multiplayer game compatible with matchmaking.
+- [x] Allow more than 1 match to be played at the same time.
+
+## Testing
+- [ ] Add testing for `users` endpoints.
+- [ ] Add testing for `chat` endpoints.
+- [ ] Update the `populate_db` script. As for now, it uses raw models to add friends without creating appropriate notifications. We should extract friend addition logic to a specific function.
+
+### Things to test/fix
+- [ ] Everywhere where websocket expects valid JSON, check for the decoding errors.
+
+## Docs
+- [ ] Update docsrings for endpoints that provide paginated data, which is reverse ordered.
 
 ## Reworks
 - [x] `username`'s are not slugified, like `slug_id`

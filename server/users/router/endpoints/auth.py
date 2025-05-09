@@ -1,11 +1,11 @@
 import hashlib
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
@@ -21,6 +21,7 @@ from users.schemas import (
     LoginSchema,
     PasswordValidationSchema,
     ProfileMinimalSchema,
+    SelfSchema,
     SignUpSchema,
     ValidationErrorMessageSchema,
 )
@@ -30,7 +31,7 @@ auth_router = Router()
 TOKEN_EXPIRY = 10
 
 
-@auth_router.get("self", response={200: ProfileMinimalSchema, 401: MessageSchema})
+@auth_router.get("self", response={200: SelfSchema, 401: MessageSchema})
 def check_self(request: HttpRequest):
     """
     Checks authentication status of the user.
@@ -138,7 +139,10 @@ def logout(request: HttpRequest, response: HttpResponse):
     return 204, None
 
 
-@auth_router.delete("/users/{username}/delete", response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema})
+@auth_router.delete(
+    "/users/{username}/delete",
+    response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema},
+)
 def delete_account(request, username: str, response: HttpResponse):
     """
     Delete definitely the user account and the associated profile, including friends relations and avatar.
@@ -162,6 +166,7 @@ def delete_account(request, username: str, response: HttpResponse):
 
     return {"msg": "Account successfully deleted."}
 
+
 @auth_router.post("/forgot-password", response={200: MessageSchema}, auth=None)
 @csrf_exempt
 def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any]:
@@ -173,7 +178,7 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
     token = hashlib.sha256(os.urandom(32)).hexdigest()
     user.forgot_password_token = token
-    user.forgot_password_token_date = datetime.now(timezone.utc)
+    user.forgot_password_token_date = timezone.now()
     user.save()
 
     reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
@@ -203,7 +208,7 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
     if not user:
         raise AuthenticationError
 
-    now = datetime.now(timezone.utc)
+    now = timezone.now()
     if user.forgot_password_token_date + timedelta(minutes=TOKEN_EXPIRY) < now:
         user.forgot_password_token = ""
         user.forgot_password_token_date = None

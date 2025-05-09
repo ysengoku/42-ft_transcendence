@@ -1,6 +1,7 @@
 from pathlib import Path  # noqa: A005
 
 import magic
+from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
 from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
@@ -29,6 +30,7 @@ class ProfileQuerySet(models.QuerySet):
             is_friend=Exists(curr_user.profile.friends.filter(user__username=username)),
             is_blocked_user=Exists(curr_user.profile.blocked_users.filter(user__username=username)),
             is_blocked_by_user=Exists(curr_user.profile.blocked_users_of.filter(user__username=username)),
+            friends_count=Count("friends", distinct=True),
         )
 
     def with_wins_and_loses_and_total_matches(self):
@@ -76,9 +78,9 @@ class ProfileQuerySet(models.QuerySet):
             return (
                 self.prefetch_related("user")
                 .filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
-                .order_by("-is_online")
+                .order_by("-is_online", "user__nickname")
             )
-        return Profile.objects.prefetch_related("user").all().order_by("-is_online")
+        return Profile.objects.prefetch_related("user").all().order_by("-is_online", "user__nickname")
 
 
 class Profile(models.Model):
@@ -102,7 +104,7 @@ class Profile(models.Model):
     def avatar(self) -> str:
         if self.profile_picture:
             return self.profile_picture.url
-        return "/img/default_avatar.png"
+        return settings.DEFAULT_USER_AVATAR
 
     @property
     def matches(self):
@@ -110,7 +112,27 @@ class Profile(models.Model):
 
     @property
     def dialogues(self):
-        self.dialogues_as_user1 | self.dialogues_as_user2
+        return self.dialogues_as_user1 | self.dialogues_as_user2
+
+    def get_title_and_price(self):  # noqa: PLR0911
+        # ruff: noqa: PLR2004
+        if self.elo > 2700:
+            return "Wild West Legend", 1000000
+        if self.elo > 2300:
+          return "Star Criminal", 500000
+        if self.elo > 2000:
+          return "Ace Outlaw", 100000
+        if self.elo > 1700:
+          return "Big Shot", 10000
+        if self.elo > 1400:
+          return "El Bandito", 1000
+        if self.elo > 1100:
+          return "Goon", 100
+        if self.elo > 800:
+            return "Troublemaker", 50
+        if self.elo > 500:
+            return "Petty Criminal", 10
+        return "Damsel", 0
 
     def get_scored_balls(self):
         return (
@@ -146,12 +168,6 @@ class Profile(models.Model):
             "loses": res["loses"],
             "winrate": calculate_winrate(res["wins"], res["loses"]),
         }
-
-    def get_elo_data_points(self):
-        return self.matches.annotate(
-            elo_change_signed=Case(When(winner=self, then=F("elo_change")), When(loser=self, then=-F("elo_change"))),
-            elo_result=Case(When(winner=self, then=F("winners_elo")), When(loser=self, then=F("losers_elo"))),
-        ).values("elo_change_signed", "elo_result", "date")
 
     def delete_avatar(self) -> None:
         self.profile_picture.delete()
@@ -220,11 +236,15 @@ class Profile(models.Model):
         self.blocked_users.remove(blocked_user_to_remove)
         return None
 
-    def to_profile_minimal_schema(self):
+    def to_username_nickname_avatar_schema(self):
         return {
             "username": self.user.username,
             "nickname": self.user.nickname,
             "avatar": self.avatar,
+        }
+
+    def to_profile_minimal_schema(self):
+        return self.to_username_nickname_avatar_schema() | {
             "elo": self.elo,
             "is_online": self.is_online,
         }

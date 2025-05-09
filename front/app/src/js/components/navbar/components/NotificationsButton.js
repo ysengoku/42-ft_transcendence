@@ -14,16 +14,15 @@ export class NotificationsButton extends HTMLElement {
   template() {
     return `
     <div class="nav-link" id="navbar-notifications-button" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-		  <button class="navbar-button btn me-2">
-			  <i class="bi bi-bell"></i>
-		  </button>
+      <button class="navbar-button btn position-relative me-2">
+        <i class="bi bi-bell"></i>
+        <span class="notification-badge d-none"></span>
+      </button>
     </div>
-    <div class="dropdown-menu dropdown-menu-end px-3">
+    <div class="dropdown-menu dropdown-menu-end px-3" id="notifications-dropdown">
       <notifications-list></notifications-list>
-	  </div>
-		`;
-
-    // Add notifications functions
+    </div>
+    `;
   }
 }
 customElements.define('notifications-button', NotificationsButton);

@@ -23,7 +23,7 @@ export function showAlertMessage(type, message) {
   if (alertContainer) {
     alertContainer.innerHTML = '';
     const alertMessage = document.createElement('div');
-    alertMessage.className = `alert ${type} alert-dismissible fade show`;
+    alertMessage.className = `alert ${type} alert-dismissible fade show mt-2`;
     alertMessage.role = 'alert';
 
     const alertContent = document.createElement('div');
@@ -47,7 +47,7 @@ export function showAlertMessage(type, message) {
  * @param {string} message - The message to display in the alert.
  * @param {number} duration - The duration (in milliseconds) to display the alert.
  */
-export function showAlertMessageForDuration(type, message, duration) {
+export function showAlertMessageForDuration(type, message, duration=3000) {
   showAlertMessage(type, message);
   setTimeout(() => {
     removeAlert();

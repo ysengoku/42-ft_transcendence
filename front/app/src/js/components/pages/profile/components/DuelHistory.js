@@ -106,7 +106,7 @@ export class UserDuelHistory extends HTMLElement {
     <tr>
       <td>
         <div class="d-flex flex-row align-items-center">
-          <img class="user-game-history-avatar" />
+          <img class="user-game-history-avatar avatar-s rounded-circle me-2" />
           <div class="opponent-nickname"></div>
         </div>
       </td>

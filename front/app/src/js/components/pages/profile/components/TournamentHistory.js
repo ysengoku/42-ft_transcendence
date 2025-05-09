@@ -105,7 +105,7 @@ export class UserTournamentHistory extends HTMLElement {
       <td class="tounament-date"></td>
       <td> 
         <div class="d-flex flex-row justify-content-center align-items-center">
-          <img class="user-game-history-avatar d-none" src="" alt="winner avatar">
+          <img class="user-game-history-avatar avatar-s rounded-circle me-2 d-none" src="" alt="winner avatar">
           <div class="winner-nickname"></div>
         </div>
       </td>
