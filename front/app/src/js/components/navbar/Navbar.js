@@ -2,15 +2,20 @@ import { auth } from '@auth';
 import { isMobile } from '@utils';
 
 export class Navbar extends HTMLElement {
+  #state = {
+    user: '',
+    isLoggedin: false,
+  };
+
   constructor() {
     super();
-    this.isLoggedin = false;
-    this.loginStatusHandler = this.updateNavbar.bind(this);
+    this.updateNavbar = this.updateNavbar.bind(this);
   }
 
-  async connectedCallback() {
-    document.addEventListener('userStatusChange', this.loginStatusHandler);
-    this.isLoggedin = auth.getStoredUser() ? true : false;
+  connectedCallback() {
+    document.addEventListener('userStatusChange', this.updateNavbar);
+    this.#state.user = auth.getStoredUser();
+    this.#state.isLoggedin = this.#state.user ? true : false;
     this.render();
     window.addEventListener('resize', () => {
       this.render();
@@ -18,40 +23,50 @@ export class Navbar extends HTMLElement {
   }
 
   disconnectedCallback() {
-    document.removeEventListener('userStatusChange', this.loginStatusHandler);
+    document.removeEventListener('userStatusChange', this.updateNavbar);
   }
 
   render() {
     this.innerHTML = this.template() + this.style();
 
-    const navbarBrand = this.querySelector('navbar-brand-component');
-    navbarBrand.setLoginStatus(this.isLoggedin);
+    this.navbarBrand = this.querySelector('navbar-brand-component');
+    this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
   }
 
   renderNavbarActions() {
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
-    if (this.isLoggedin) {
+    if (this.#state.isLoggedin) {
       if (!isMobile()) {
         const searchUserButtotn = document.createElement('user-search-button');
         const friendsButton = document.createElement('friends-button');
-        const chatButton = document.createElement('chat-button');
         navbarActions.appendChild(searchUserButtotn);
         navbarActions.appendChild(friendsButton);
-        navbarActions.appendChild(chatButton);
       }
+      const chatButton = document.createElement('chat-button');
       const notificationsButton = document.createElement('notifications-button');
+      navbarActions.appendChild(chatButton);
       navbarActions.appendChild(notificationsButton);
+      if (this.#state.user.unread_messages_count > 0 && window.location.pathname !== '/chat') {
+        chatButton.querySelector('.notification-badge').classList.remove('d-none');
+      }
+      if (this.#state.user.unread_notifications_count > 0) {
+        notificationsButton.querySelector('.notification-badge').classList.remove('d-none');
+      }
     }
     const dropdownMenu = document.createElement('navbar-dropdown-menu');
-    dropdownMenu.setLoginStatus(this.isLoggedin);
+    dropdownMenu.setLoginStatus(this.#state.isLoggedin);
     navbarActions.appendChild(dropdownMenu);
   }
 
   updateNavbar(event) {
-    this.isLoggedin = event.detail.user !== null;
-    this.render();
+    this.#state.isLoggedin = event.detail.user !== null;
+    if (this.#state.isLoggedin) {
+      this.#state.user =auth.getStoredUser();
+    }
+    this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
+    this.renderNavbarActions();
   }
 
   template() {
@@ -69,13 +84,18 @@ export class Navbar extends HTMLElement {
     return `
     <style>
     .navbar {
-      background-color: rgba(59, 59, 59, 0.6);
+      background-color: rgba(var(--pm-primary-600-rgb), 0.7);
     }
-    .navbar-button i {
-      font-size: 1.5rem;  
+    .navbar-button {
+      padding: 0.5rem;
+      i {
+        font-size: 1.5rem;
+        color: var(--pm-primary-100);
+      }
     }
-    .dropdown-menu {
+    .dropdown-menu-end {
       max-height: 75vh;
+      min-width: 360px;
       padding-top: 0;
     }
     .dropdown-list-header {
@@ -91,28 +111,16 @@ export class Navbar extends HTMLElement {
       padding: 16px 8px;
       position: relative;
     }
-    .dropdown-list-avatar-container {
-      position: relative;
-      display: inline-block;
-      margin-right: 10px;
-    }
-    .dropdown-list-avatar {
-      width: 56px;
-      height: 56px;
-      object-fit: cover;
-    }
-    /*
-    .badge {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 10px;
-      height: 10px;
-      background-color: red;
-      border-radius: 50%;
+    .notification-badge {
       display: block;
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background-color: var(--pm-red-400);
+      border-radius: 50%;
+      top: 8px;
+      right: 4px;
     }
-    */
     </style>
     `;
   }

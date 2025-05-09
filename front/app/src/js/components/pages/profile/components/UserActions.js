@@ -21,6 +21,7 @@ export class ProfileUserActions extends HTMLElement {
 
   constructor() {
     super();
+    this.sendMessage = this.sendMessage.bind(this);
     this.addFriend = this.addFriend.bind(this);
     this.removeFriend = this.removeFriend.bind(this);
     this.blockUser = this.blockUser.bind(this);
@@ -35,21 +36,22 @@ export class ProfileUserActions extends HTMLElement {
 
   disconnectedCallback() {
     if (this.#state.isMyProfile) {
-      this.editProfileButton.removeEventListener('click', this.handleEditProfile);
+      this.editProfileButton?.removeEventListener('click', this.handleEditProfile);
       return;
     }
     if (!this.#state.data.isBlocked) {
       if (this.#state.data.isFriend) {
-        this.addFriendButton.removeEventListener('click', this.removeFriend);
+        this.addFriendButton?.removeEventListener('click', this.removeFriend);
       } else {
-        this.addFriendButton.removeEventListener('click', this.addFriend);
+        this.addFriendButton?.removeEventListener('click', this.addFriend);
       }
     }
     if (this.#state.data.isBlocked) {
-      this.blockUserButton.removeEventListener('click', this.unblockUser);
+      this.blockUserButton?.removeEventListener('click', this.unblockUser);
     } else {
-      this.blockUserButton.removeEventListener('click', this.blockUser);
+      this.blockUserButton?.removeEventListener('click', this.blockUser);
     }
+    this.sendMessageButton?.removeEventListener('click', this.sendMessage);
   }
 
   render() {
@@ -68,7 +70,7 @@ export class ProfileUserActions extends HTMLElement {
     if (!this.#state.data.isBlocked) {
       this.sendMessageButton = this.querySelector('#send-message-button');
       this.sendMessageButton.style.display = 'block';
-      // TODO: Handle send message
+      this.sendMessageButton.addEventListener('click', this.sendMessage);
 
       this.addFriendButton = this.querySelector('#add-friend-button');
       this.addFriendButton.style.display = 'block';
@@ -90,6 +92,11 @@ export class ProfileUserActions extends HTMLElement {
       this.blockUserButton.textContent = 'Block user';
       this.blockUserButton.addEventListener('click', this.blockUser);
     }
+  }
+
+  sendMessage() {
+    const enocdedUsername = encodeURIComponent(this.#state.data.shownUsername);
+    router.navigate('/chat', { username: enocdedUsername });
   }
 
   async addFriend() {
@@ -170,11 +177,11 @@ export class ProfileUserActions extends HTMLElement {
   template() {
     return `
     <div class="d-flex flex-row justify-content-center m-4">
-      <button class="btn btn-primary mx-1 profile-user-action-button" id="edit-profile-button">Edit Profile</button>
+      <button class="btn btn-wood mx-1 profile-user-action-button" id="edit-profile-button">Edit Profile</button>
 
-      <button class="btn btn-primary mx-1 profile-user-action-button" id="add-friend-button"></button>
-      <button class="btn btn-primary mx-1 profile-user-action-button" id="send-message-button">Send Message</button>
-      <button class="btn btn-primary mx-1 profile-user-action-button" id="block-user-button"></button>
+      <button class="btn btn-wood mx-1 profile-user-action-button" id="add-friend-button"></button>
+      <button class="btn btn-wood mx-1 profile-user-action-button" id="send-message-button">Send Message</button>
+      <button class="btn btn-wood mx-1 profile-user-action-button" id="block-user-button"></button>
     </div>
     `;
   }

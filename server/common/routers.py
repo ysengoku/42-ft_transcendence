@@ -17,10 +17,10 @@ def allow_only_for_self(request: HttpRequest, username: str):
 
 
 def get_queryset_by_username_or_404(model: models.Model, username: str):
-    user = model.objects.for_username(username)
-    if not user.exists():
+    user_or_profile = model.objects.for_username(username)
+    if not user_or_profile.exists():
         raise HttpError(404, f"User {username} not found.")
-    return user
+    return user_or_profile
 
 
 def get_user_queryset_by_username_or_404(username: str):

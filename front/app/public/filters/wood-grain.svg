@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+  <defs>
+    <filter id="wave-filter-0">
+      <feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="0" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" />
+    </filter>
+    <filter id="wave-filter-5">
+      <feTurbulence baseFrequency="0.02" numOctaves="3" result="noise" seed="9" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" />
+    </filter>
+    <filter id="wave-filter-10">
+      <feTurbulence baseFrequency="0.02" numOctaves="8" seed="1" />
+      <feDisplacementMap in="SourceGraphic" scale="12" />
+    </filter>
+  </defs>
+</svg>

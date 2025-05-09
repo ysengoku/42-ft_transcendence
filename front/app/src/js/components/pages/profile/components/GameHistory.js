@@ -18,8 +18,8 @@ export class UserGameHistory extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.duelsTab.removeEventListener('click', this.handleDuelTabClick);
-    this.tournamentsTab.removeEventListener('click', this.handleTournamentTabClick);
+    this.duelsTab?.removeEventListener('click', this.handleDuelTabClick);
+    this.tournamentsTab?.removeEventListener('click', this.handleTournamentTabClick);
   }
 
   render() {
@@ -60,7 +60,7 @@ export class UserGameHistory extends HTMLElement {
 
   template() {
     return `
-    <div class="card text-center px-2">
+    <div class="game-history-card card text-center px-2">
       <div class="card-header">
         <p class="stat-label text-center">Game History</p>
         <ul class="nav nav-tabs card-header-tabs">
@@ -82,23 +82,18 @@ export class UserGameHistory extends HTMLElement {
   style() {
     return `
     <style>
-      .card {
-        background-color:rgba(97, 51, 4, 0.1);
-        color: #351901;
-      }
-      .nav-link {
-        color: #351901;
-        font-weight: bold;
-      }
-      .card-header-tabs .nav-link.active {
-        color: #351901;
-        background-color: transparent !important;
-        border: none;
-        border-bottom: 4px solid #613304;
+      .game-history-card {
+        background-color:rgba(var(--pm-primary-600), 0.1);
+        color: var(--pm-primary-700);
+        .card-header-tabs .nav-link {
+          color: var(--pm-primary-700);
+          font-weight: bold;
+          border: none;
+          background-color: transparent !important;
         }
-      .nav-link:hover{
-        color: #613304;
-        border: none;
+        .card-header-tabs .nav-link.active {
+          border-bottom: 4px solid var(--pm-primary-600);
+        }
       }
       .user-game-history-table {
         font-size: 14px;
@@ -109,14 +104,6 @@ export class UserGameHistory extends HTMLElement {
         background-color: transparent;
         color: black;
         padding: 1rem 0 1rem 0.5rem;
-      }
-      .user-game-history-avatar {
-        width: 36px;
-        aspect-ratio: 1;
-        object-fit: cover;
-        border-radius: 50%;
-        background-color: grey;
-        margin-right: 8px;
       }
       .bi-arrow-up-right {
         color: green;
@@ -129,7 +116,7 @@ export class UserGameHistory extends HTMLElement {
         overflow-y: auto;
       }
       .table-container thead th {
-        --bs-table-bg: #351901;
+        --bs-table-bg: var(--pm-primary-700);
         --bs-table-color: white;
         font-weight:normal;
         position: sticky;
@@ -140,10 +127,10 @@ export class UserGameHistory extends HTMLElement {
         width: 4px;
       }
       .table-container::-webkit-scrollbar-track {
-        background: #898380;
+        background: var(--pm-gray-400);
       }
       .table-container::-webkit-scrollbar-thumb {
-        background: #351901;
+        background: var(--pm-primary-700);
         border-radius: 4px;
       }
       td {

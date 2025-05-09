@@ -5,7 +5,10 @@ from django.core.exceptions import ValidationError
 from ninja import Field, Schema
 from pydantic import model_validator
 
-from common.schemas import MessageSchema
+from chat.models import ChatMessage, Notification
+from common.schemas import MessageSchema, ProfileMinimalSchema
+from pong.models import Match
+from pong.schemas import EloDataPointSchema, ProfileMatchPreviewSchema
 
 from .models import Profile, User
 
@@ -20,6 +23,15 @@ class UsernameSchema(Schema):
     username: str
 
 
+class UsernameNicknameAvatarSchema(UsernameSchema):
+    """
+    For payloads where it's needed to know the most basic data about the user.
+    """
+
+    nickname: str
+    avatar: str
+
+
 class ValidationErrorMessageSchema(MessageSchema):
     type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
     loc: list[str] = Field(
@@ -30,19 +42,24 @@ class ValidationErrorMessageSchema(MessageSchema):
 
 class LoginResponseSchema(Schema):
     mfa_required: bool
-    username: str  # ou les autres champs nécessaires du ProfileMinimalSchema
+    username: str
 
 
-class ProfileMinimalSchema(Schema):
+class SelfSchema(ProfileMinimalSchema):
     """
-    Represents the bare minimum information about the user for preview in searches, friend lists etc.
+    Like ProfileMinimalSchema, but contains private information like the count of unread notifications and messages.
     """
 
-    username: str = Field(alias="user.username")
-    nickname: str = Field(alias="user.nickname")
-    avatar: str
-    elo: int
-    is_online: bool
+    unread_messages_count: int
+    unread_notifications_count: int
+
+    @staticmethod
+    def resolve_unread_messages_count(obj: Profile):
+        return ChatMessage.objects.count_unread(obj)
+
+    @staticmethod
+    def resolve_unread_notifications_count(obj: Profile):
+        return Notification.objects.count_unread(obj)
 
 
 class UserSettingsSchema(Schema):
@@ -81,16 +98,6 @@ class OpponentProfileAndStatsSchema(Schema):
     winrate: int
 
 
-class EloDataPointSchema(Schema):
-    """
-    Represents a single point on the graph of the user's elo history.
-    """
-
-    date: datetime
-    elo_change_signed: int = Field(description="How much elo user gained or lost from this match.")
-    elo_result: int = Field(description="Resulting elo after elo gain or loss from this match.")
-
-
 class ProfileFullSchema(ProfileMinimalSchema):
     """
     Represents all the data for the full user's profile page.
@@ -109,13 +116,17 @@ class ProfileFullSchema(ProfileMinimalSchema):
     )
     scored_balls: int = Field(description="How many balls player scored overall.")
     elo_history: list[EloDataPointSchema] = Field(
-        description="List of data points for elo changes of the last 10 games.",
+        description="List of data points for elo changes of the last 7 days.",
     )
-    friends: list[ProfileMinimalSchema] = Field(description="List of first ten friends.", max_length=10)
+    match_history: list[ProfileMatchPreviewSchema] = Field(
+        description="List of last 10 played matches.",
+    )
     friends_count: int
     is_friend: bool
     is_blocked_user: bool
     is_blocked_by_user: bool
+    title: str
+    price: int
 
     @staticmethod
     def resolve_worst_enemy(obj: Profile):
@@ -137,15 +148,19 @@ class ProfileFullSchema(ProfileMinimalSchema):
 
     @staticmethod
     def resolve_elo_history(obj: Profile):
-        return obj.get_elo_data_points()[:10]
+        return Match.objects.get_elo_points_by_day(obj)[:7]
 
     @staticmethod
-    def resolve_friends(obj: Profile):
-        return obj.friends.all()[:10]
+    def resolve_match_history(obj: Profile):
+        return Match.objects.get_match_preview(obj)[:10]
 
     @staticmethod
-    def resolve_friends_count(obj: Profile):
-        return obj.friends.count()
+    def resolve_title(obj: Profile):
+        return obj.get_title_and_price()[0]
+
+    @staticmethod
+    def resolve_price(obj: Profile):
+        return obj.get_title_and_price()[1]
 
 
 class PasswordValidationSchema(Schema):
