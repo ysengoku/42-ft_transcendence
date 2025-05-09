@@ -26,7 +26,7 @@ export class DropdownMenu extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.template();
 
     this.avatarImg = this.querySelector('#avatar-img');
     this.avatarImg.src = this.#state.user ? this.#state.user.avatar : `${anonymousavatar}`;
@@ -64,11 +64,11 @@ export class DropdownMenu extends HTMLElement {
 
     return `
     <div class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      <img id="avatar-img" alt="user" class="d-inline-block align-top rounded-circle">
+      <img id="avatar-img" alt="user" class="d-inline-block align-top avatar-s rounded-circle">
     </div>
-    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+    <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="navbarDropdown">
       ${ this.#state.isLoggedIn ? `
-        <a class="dropdown-item" id="dropdown-item-profile">Your profile</a>
+        <a class="dropdown-item" id="dropdown-item-profile">My profile</a>
         <a href="/settings" class="dropdown-item">Settings</a>
       ` : `
         <a href="/login" class="dropdown-item">Login</a>
@@ -83,18 +83,6 @@ export class DropdownMenu extends HTMLElement {
         <div class="dropdown-item" id="dropdown-item-logout">Logout</div>
       ` : `` }
     </div>
-    `;
-  }
-
-  style() {
-    return `
-    <style>
-      #avatar-img {
-        width: 40px;
-        height: 40px;
-        object-fit: cover;
-      }
-    </style>
     `;
   }
 }

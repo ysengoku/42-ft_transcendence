@@ -3,7 +3,8 @@ export class ProfileUserInfo extends HTMLElement {
     username: null,
     nickname: null,
     join_date: null,
-    titre: null,
+    title: null,
+    price: null,
   };
 
   constructor() {
@@ -25,27 +26,26 @@ export class ProfileUserInfo extends HTMLElement {
 
     this.innerHTML = this.template() + this.style();
 
-    // Temporay
-    this.#state.titre = '$5000';
-
     this.querySelector('#profile-nickname').textContent = this.#state.nickname;
     this.querySelector('#profile-username').textContent = `@${this.#state.username}`;
-    this.querySelector('#profile-titre').textContent = this.#state.titre;
+    this.querySelector('#profile-title').textContent = this.#state.title;
+    this.querySelector('#profile-price').textContent = `$${this.#state.price}`;
   }
 
   template() {
     return `
-			<div class="d-flex flex-row justify-content-center align-items-center gap-3">
-				<div class="d-flex flex-column justify-content-center px-3 pt-3">
+			<div class="d-flex flex-wrap flex-row justify-content-center align-items-center gap-3">
+				<div class="d-flex flex-column justify-content-center px-3 pt-2">
           <div class="d-flex flex-row align-items-center">
-					  <h2 class="m-0 pe-3 pt-2" id="profile-nickname"></h2>
-            <p class="m-0" id="profile-username"></p>
+					  <p class="m-0 text-center pe-3 fs-1 text-break flex-grow-1" id="profile-nickname"></p>
+            <p class="fs-5 m-0 text-center text-break" id="profile-username"></p>
           </div>
-					<p class="m-0">Joined on ${this.formatedDate}</p>
+					<p class="m-0 text-center fw-bold">Joined on ${this.formatedDate}</p>
 				</div>
-				<div class="text-center px-3 pt-3">
-					<h2 class="m-0" id="profile-titre"></h2>
-				</div>
+        <div class="d-flex flex-column justify-content-center px-3 pt-3">
+          <p class="text-center m-0 fs-1" id="profile-price"></p>
+				  <p class="text-center fs-5 m-0" id="profile-title"></p>
+        </div>
 			</div>
 		`;
   }
@@ -53,10 +53,17 @@ export class ProfileUserInfo extends HTMLElement {
   style() {
     return `
     <style>
-      h2 {
-        font-family: 'van dyke', serif;
-        color: #351904;
-      }
+    #profile-nickname,
+    #profile-title,
+    #profile-price {
+      font-family: 'van dyke', serif;
+    }
+    #profile-username {
+      min-width: 88px;
+    }
+    #profile-price {
+      margin-bottom: -8px !important;
+    }
     </style>
     `;
   }

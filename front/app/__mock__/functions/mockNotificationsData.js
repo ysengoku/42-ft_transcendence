@@ -1,35 +1,81 @@
 export async function mockNotificationsData() {
-  const data = [
+  const items = [
     {
-      type: 'game_invite',
+      id: 'aggehs135',
+      action: 'game_invite',
       data: {
-        id: '100',
-        date: '2025-03-13T08:00:00Z',
         username: 'alice123',
         nickname: 'Alice',
         avatar: '/__mock__/img/sample-pic1.jpg',
+        date: '2025-03-13T08:00:00Z',
+        game_id: '100',
       },
+      is_read: false,
     },
     {
-      type: 'new_tournament',
+      id: 'angsfee456',
+      action: 'new_tournament',
       data: {
-        id: '25',
-        date: '2025-03-11T11:32:00Z',
-        tournament_name: 'Peacemakers Cup',
         nickname: 'JohnDoe',
         avatar: '/__mock__/img/sample-pic2.png',
+        date: '2025-03-11T11:32:00Z',
+        tournament_id: '25',
+        tournament_name: 'Peacemakers Cup',
       },
+      is_read: false,
     },
     {
-      type: 'new_friend',
+      id: 'aggehs135',
+      action: 'new_friend',
       data: {
-        date: '2025-03-04T08:25:00Z',
-        username: 'perdo',
-        nickname: 'Pedro',
+        username: 'perdo1',
+        nickname: 'Pedro1',
         avatar: '/__mock__/img/sample-pic3.png',
+        date: '2025-03-04T08:25:00Z',
       },
+      is_read: false,
+    },
+    {
+      id: 'aggehs135',
+      action: 'game_invite',
+      data: {
+        username: 'alice123',
+        nickname: 'Alice',
+        avatar: '/__mock__/img/sample-pic1.jpg',
+        date: '2025-03-13T08:00:00Z',
+        game_id: '100',
+      },
+      is_read: false,
+    },
+    {
+      id: 'angsfee456',
+      action: 'new_tournament',
+      data: {
+        nickname: 'JohnDoe',
+        avatar: '/__mock__/img/sample-pic2.png',
+        date: '2025-03-11T11:32:00Z',
+        tournament_id: '25',
+        tournament_name: 'Peacemakers Cup',
+      },
+      is_read: false,
+    },
+    {
+      id: 'aggehs135',
+      action: 'new_friend',
+      data: {
+        username: 'perdo2',
+        nickname: 'Pedro2',
+        avatar: '/__mock__/img/sample-pic3.png',
+        date: '2025-03-04T08:25:00Z',
+      },
+      is_read: false,
     },
   ];
 
+  const data = {
+    items: items,
+    // count: items.length,
+    count: 20,
+  };
   return data;
 }

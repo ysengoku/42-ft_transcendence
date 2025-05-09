@@ -1,17 +1,34 @@
-import { mockNotificationsData } from '@mock/functions/mockNotificationsData';
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { socketManager } from '@socket';
 
 export class NotificationsList extends HTMLElement {
   #state = {
+    currentTab: 'all',
+    isLoading: false,
+  };
+
+  #unread = {
     notifications: [],
-    totalNotificationsCount: 0,
+    totalCount: 0,
+    listLength: 0,
+  };
+
+  #all = {
+    notifications: [],
+    totalCount: 0,
     listLength: 0,
   };
 
   constructor() {
     super();
 
-    this.fetchNotifications = this.fetchNotifications.bind(this);
-    this.clearList = this.clearList.bind(this);
+    this.renderList = this.renderList.bind(this);
+    this.loadMoreNotifications = this.loadMoreNotifications.bind(this);
+    this.toggleTab = this.toggleTab.bind(this);
+    this.readNotification = this.readNotification.bind(this);
+    this.markAllAsRead = this.markAllAsRead.bind(this);
+    this.preventListClose = this.preventListClose.bind(this);
+    this.resetList = this.resetList.bind(this);
   }
 
   connectedCallback() {
@@ -19,98 +36,220 @@ export class NotificationsList extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.button?.removeEventListener('shown.bs.dropdown', this.fetchNotifications);
-    this.button?.removeEventListener('hidden.bs.dropdown', this.clearList);
+    this.button?.removeEventListener('shown.bs.dropdown', this.renderList);
+    this.button?.removeEventListener('hidden.bs.dropdown', this.resetList);
+    this.dropdown?.removeEventListener('scrollend', this.loadMoreNotifications);
+    this.dropdown?.removeEventListener('click', this.preventListClose);
+    this.unreadTab?.removeEventListener('click', this.toggleTab);
+    this.allTab?.removeEventListener('click', this.toggleTab);
+    this.markAllAsReadButton?.removeEventListener('click', this.markAllAsRead);
   }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Render                                                               */
+  /* ------------------------------------------------------------------------ */
 
   render() {
     this.innerHTML = this.template() + this.style();
 
     this.button = document.getElementById('navbar-notifications-button');
+    this.dropdown = document.getElementById('notifications-dropdown');
     this.list = this.querySelector('#notifications-list');
+    this.allTab = this.querySelector('#all-notifications-tab');
+    this.unreadTab = this.querySelector('#unread-notifications-tab');
+    this.markAllAsReadButton = this.querySelector('#mark-all-as-read');
 
-    // TODO: Handle websocket events (Add new notification to the list)
-
-    this.button?.addEventListener('shown.bs.dropdown', this.fetchNotifications);
-    this.button?.addEventListener('hidden.bs.dropdown', this.clearList);
+    this.dropdown?.addEventListener('scrollend', this.loadMoreNotifications);
+    this.dropdown?.addEventListener('click', this.preventListClose);
+    this.button?.addEventListener('shown.bs.dropdown', this.renderList);
+    this.button?.addEventListener('hidden.bs.dropdown', this.resetList);
+    this.allTab?.addEventListener('click', this.toggleTab);
+    this.unreadTab?.addEventListener('click', this.toggleTab);
+    this.markAllAsReadButton?.addEventListener('click', this.markAllAsRead);
   }
 
-  async fetchNotifications() {
-    this.#state.listLength = this.#state.notifications.length;
-    // TODO: Replace by API request
-    const data = await mockNotificationsData();
+  async renderList() {
+    this.button?.querySelector('.notification-badge')?.classList.add('d-none');
 
-    data.forEach((item) => {
-      const notification = {};
-      notification.type = item.type;
-      notification.date = item.data.date;
-      notification.nickname = item.data.nickname;
-      notification.avatar = item.data.avatar;
-      notification.content = {};
-      switch (notification.type) {
-        case 'game_invite':
-          notification.content.id = item.data.id;
-          notification.content.username = item.data.username;
-          break;
-        case 'new_tournament':
-          notification.content.id = item.data.id;
-          notification.content.tournament_name = item.data.tournament_name;
-          break;
-        case 'new_friend':
-          notification.content.username = item.data.username;
-          break;
-      }
-      this.#state.notifications.push(notification);
-    });
-
-    this.renderList();
-  }
-
-  renderList() {
-    this.list.innerHTML = '';
-    if (this.#state.notifications.length === 0) {
+    const read = this.#state.currentTab === 'unread' ? 'false' : 'all';
+    const listData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
+    const data = await this.fetchNotifications(read, 10, listData.listLength);
+    if (!data) {
+      return;
+    }
+    listData.totalCount = data.count;
+    listData.notifications.push(...data.items);
+    if (listData.notifications.length === 0) {
       this.list.innerHTML = this.noNotificationTemplate();
     }
-
-    for (let i = this.#state.listLength; i < this.#state.notifications.length; i++) {
+    for (let i = listData.listLength; i < listData.notifications.length; i++) {
       const item = document.createElement('notifications-list-item');
-      item.data = this.#state.notifications[i];
+      item.data = listData.notifications[i];
       if (i === 0) {
-        item.querySelector('.list-group-item')?.classList.add('border-top-0');
+        item.querySelector('.dropdown-list-item').classList.add('border-top-0');
+      }
+      if (!listData.notifications[i].is_read) {
+        item.addEventListener('click', this.readNotification);
+        item.id = `notification-${listData.notifications[i].id}`;
+        item.classList.add('unread');
       }
       this.list.appendChild(item);
-      this.#state.listLength++;
+      listData.listLength++;
     }
+  }
 
-    if (this.#state.totalNotificationsCount > this.#state.listLength) {
-      this.renderShowMoreButton();
+  /* ------------------------------------------------------------------------ */
+  /*     Event handlers                                                       */
+  /* ------------------------------------------------------------------------ */
+
+  async fetchNotifications(read, limit, offset) {
+    const response = await apiRequest(
+        'GET',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
+        null, false, true);
+    if (response.success) {
+      return response.data;
+    } else {
+      return null;
     }
+  }
+
+  async toggleTab(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.#state.isLoading) {
+      return;
+    }
+    const clickedTab = event.target.id === 'unread-notifications-tab' ? 'unread' : 'all';
+    if (clickedTab !== this.#state.currentTab) {
+      this.#state.currentTab = clickedTab;
+      this.clearList();
+      if (clickedTab === 'unread') {
+        this.unreadTab.classList.add('active');
+        this.allTab.classList.remove('active');
+      } else {
+        this.allTab.classList.add('active');
+        this.unreadTab.classList.remove('active');
+      }
+      this.#state.isLoading = true;
+      await this.renderList();
+      this.#state.isLoading = false;
+    }
+  };
+
+  async loadMoreNotifications(event) {
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    const threshold = 5;
+    const totalCount = this.#state.currentTab === 'unread' ? this.#unread.totalCount : this.#all.totalCount;
+    const listLength = this.#state.currentTab === 'unread' ? this.#unread.listLength : this.#all.listLength;
+    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold || totalCount <= listLength ||
+      this.#state.isLoading) {
+      return;
+    }
+    this.#state.isLoading = true;
+    await this.renderList();
+    this.#state.isLoading = false;
+  }
+
+  readNotification(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const element = event.target.closest('notifications-list-item');
+    if (element.classList.contains('unread')) {
+      const notificationId = element.id.split('-')[1];
+      const message = {
+        action: 'read_notification',
+        id: notificationId,
+      };
+      socketManager.sendMessage('livechat', message);
+      element.removeEventListener('click', this.readNotification);
+      element.classList.remove('unread');
+      const currentList = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
+      const currentItem = currentList.notifications.find((notification) => notification.id === element.id);
+      if (currentItem) {
+        currentItem.is_read = true;
+      }
+    }
+  }
+
+  async markAllAsRead(event) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    let listLength = 0;
+    let totalCount = 0;
+    const unreadList = [];
+    do {
+      const list = await this.fetchNotifications(false, 10, listLength);
+      if (!list) {
+        return;
+      }
+      unreadList.push(...list.items);
+      listLength += list.items.length;
+      totalCount = list.count;
+    } while (listLength < totalCount);
+    console.log('unreadList', unreadList);
+    unreadList.forEach((item) => {
+      const message = {
+        action: 'read_notification',
+        id: item.id,
+      };
+      socketManager.sendMessage('livechat', message);
+    });
+    this.#state.isLoading = true;
+    await this.renderList();
+    this.#state.isLoading = false;
+  }
+
+  preventListClose(event) {
+    event.stopPropagation();
+    event.preventDefault();
   }
 
   clearList() {
+    const listItems = this.querySelectorAll('notifications-list-item');
+    listItems.forEach((item) => {
+      item.removeEventListener('click', this.readNotification);
+    });
     this.list.innerHTML = '';
-    this.#state.notifications = [];
-    this.#state.listLength = 0;
-    this.#state.totalNotificationsCount = 0;
+    this.#unread.notifications = [];
+    this.#unread.listLength = 0;
+    this.#unread.totalCount = 0;
+    this.#all.notifications = [];
+    this.#all.listLength = 0;
+    this.#all.totalCount = 0;
   }
 
-  renderShowMoreButton() {
-    const showMoreButtonContainer = document.createElement('li');
-    showMoreButtonContainer.innerHTML = this.showMoreButtonTemplate();
-    this.list.appendChild(showMoreButtonContainer);
-
-    this.showMoreButton = showMoreButtonContainer.querySelector('#show-more-notifications');
-    this.showMoreButton?.addEventListener('click', this.handleShowMoreNotifications);
+  resetList() {
+    this.allTab.classList.add('active');
+    this.unreadTab.classList.remove('active');
+    this.#state.currentTab = 'all';
+    this.clearList();
   }
 
-  handleShowMoreNotifications() {
-    // TODO
-  }
+  /* ------------------------------------------------------------------------ */
+  /*     Template & style                                                     */
+  /* ------------------------------------------------------------------------ */
 
   template() {
     return `
-    <div class="d-flex flex-column justify-content-start ps-3 pe-4">
-      <h6 class="py-4 dropdown-list-header" sticky>Notifications</h6>
+    <div class="notifications-wrapper d-flex flex-column justify-content-start border-0 px-2">
+      <div class="pt-4 pb-2 dropdown-list-header border-0" sticky>
+        <h6>Notifications</h6>
+        <ul class="d-flex justify-content-between nav nav-tabs card-header-tabs border-0">
+          <div class="d-flex">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="true" id="all-notifications-tab">All</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="unread-notifications-tab">Unread</a>
+            </li>
+          </div>
+          <button class="btn" id="mark-all-as-read">Mark all as read</button>
+        </ul>
+      </div>
+
       <ul class="dropdown-list list-group mb-2" id="notifications-list"></ul>
     </div>
     `;
@@ -119,18 +258,35 @@ export class NotificationsList extends HTMLElement {
   style() {
     return `
     <style>
+    .notifications-wrapper {
+      .card-header-tabs .nav-link {
+        color: var(--bs-body-color);
+        border: none;
+        background-color: transparent !important;
+        }
+      .card-header-tabs .nav-link.active {
+        border-bottom: 4px solid var(--bs-body-color);
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+    }
     #notifications-list {
       max-height: 75vh;
       max-width: 480px;
     }
-	  .notifications-list-avatar {
-	    width: 64px;
-      height: 64px;
-      object-fit: cover;
-	  }
+    .notification-time {
+      color: var(--pm-gray-400);
+    }
     .call-to-action-groupe button {
       border: none;
       background: none;
+    }
+    .unread-badge {
+      display: none;
+    }
+    .unread .unread-badge {
+      color: var(--pm-primary-500);
+      display: block;
     }
     </style>
     `;

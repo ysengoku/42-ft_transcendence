@@ -3,6 +3,8 @@ Has global api object that gathers routes from all of the applications.
 Contains the default exception handlers for some of the possible errors.
 """
 
+import logging
+
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from ninja import NinjaAPI
@@ -10,13 +12,16 @@ from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
 
 from chat.router import chat_app_router
-from users.jwt_cookie_auth import JwtCookieAuth
+from pong.router import pong_app_router
+from users.jwt_cookie_auth import JWTCookieAuth
 from users.router import users_app_router
 
-api = NinjaAPI(auth=JwtCookieAuth(), csrf=True)
+api = NinjaAPI(auth=JWTCookieAuth(), csrf=True)
 api.add_router("", router=users_app_router)
 api.add_router("", router=chat_app_router)
+api.add_router("", router=pong_app_router)
 
+logger = logging.getLogger("server")
 
 
 @api.exception_handler(HttpError)
@@ -31,6 +36,7 @@ def handle_http_error_error(request: HttpRequest, exc: HttpError):
 @api.exception_handler(AuthenticationError)
 def handle_authentication_error(request: HttpRequest, exc: AuthenticationError):
     message = str(exc) if str(exc) else "Unauthorized."
+    logger.info("Auth error: %s", exc)
     return api.create_response(
         request,
         {"msg": message},

@@ -1,7 +1,12 @@
 import uuid
+from datetime import datetime
 
+from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import Count, Exists, OuterRef, Q, Subquery
+from django.db.models import Count, Exists, ImageField, OuterRef, Q, Subquery, Value
+from django.db.models.functions import Coalesce, NullIf
+from django.utils import timezone
 
 from users.models import Profile
 
@@ -47,12 +52,14 @@ class ChatQuerySet(models.QuerySet):
         Annotates Chats with the last message and last message date and sorts them by the latter.
         Chat messages are sorted by the date by default, so there is no need to call 'order_by'.
         """
-        latest_message_subquery = ChatMessage.objects.all()[:1]
+        latest_message_subquery = ChatMessage.objects.filter(
+            chat=OuterRef("pk"),
+        ).order_by("-date")
 
         return self.annotate(
-            last_message=Subquery(latest_message_subquery.values("content")),
-            last_message_date=Subquery(latest_message_subquery.values("date")),
-            last_message_id=Subquery(latest_message_subquery.values("pk")),
+            last_message=Subquery(latest_message_subquery.values("content")[:1]),
+            last_message_date=Subquery(latest_message_subquery.values("date")[:1]),
+            last_message_id=Subquery(latest_message_subquery.values("pk")[:1]),
         ).order_by("-last_message_date")
 
     def with_other_user_profile_info(self, profile: Profile):
@@ -64,7 +71,14 @@ class ChatQuerySet(models.QuerySet):
         return self.annotate(
             username=Subquery(other_chat_participant_subquery.values("user__username")),
             nickname=Subquery(other_chat_participant_subquery.values("user__nickname")),
-            avatar=Subquery(other_chat_participant_subquery.values("profile_picture")),
+            avatar=Coalesce(
+                # sets field to null if the profile_picture is an empty string
+                NullIf(
+                    Subquery(other_chat_participant_subquery.values("profile_picture")),
+                    Value("", output_field=ImageField()),
+                ),
+                Value(settings.DEFAULT_USER_AVATAR, output_field=ImageField()),
+            ),
             is_online=Subquery(other_chat_participant_subquery.values("is_online")),
             other_profile_id=Subquery(other_chat_participant_subquery.values("pk")),
             unread_messages_count=Count("messages", filter=~Q(messages__sender=profile) & Q(messages__is_read=False)),
@@ -119,11 +133,14 @@ class ChatMessageQuerySet(models.QuerySet):
         new_message.save()
         return new_message
 
+    def count_unread(self, profile: Profile):
+        return self.filter(is_read=False, chat__participants=profile).exclude(sender=profile).count()
+
 
 class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    content = models.CharField(max_length=256)
-    date = models.DateTimeField(auto_now_add=True)
+    content = models.TextField(max_length=256)
+    date = models.DateTimeField(default=timezone.now)
     sender = models.ForeignKey(Profile, related_name="sent_messages", on_delete=models.CASCADE)
     chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
@@ -140,3 +157,100 @@ class ChatMessage(models.Model):
             f"{self.date} {self.sender.user.username}: "
             f"{self.content[:max_msg_len] + ' ...' if len(self.content) > max_msg_len else self.content}"
         )
+
+
+class NotificationQuerySet(models.QuerySet):
+    def _create(
+        self,
+        receiver: Profile,
+        sender: Profile,
+        notification_action: str,
+        notification_data={},  # noqa: B006
+        date: datetime = None,
+    ):
+        """
+        `notification_data` is a data specific to the notification of the `notification_action`.
+
+        Notification.NEW_FRIEND:     no additional data required
+        Notification.GAME_INVITE:    `game_id`
+        Notification.NEW_TOURNAMENT: `tournament_id`, `tournament_name`
+        """
+        data = sender.to_username_nickname_avatar_schema() | notification_data
+        data["date"] = date or timezone.now()
+
+        match notification_action:
+            case self.model.GAME_INVITE:
+                if not notification_data.get("game_id"):
+                    raise ValueError(
+                        "notification_action is Notification.GAME_INVITE, but no game_id in notification_data",
+                    )
+            case self.model.NEW_TOURNAMENT:
+                if not notification_data.get("tournament_id") or not notification_data.get("tournament_name"):
+                    raise ValueError(
+                        "notification_action is Notification.NEW_TOURNAMENT, but no tournament_id or "
+                        "tournament_name in notification_data",
+                    )
+
+        return self.create(receiver=receiver, data=data, action=notification_action)
+
+    def action_new_friend(self, receiver: Profile, sender: Profile, date: datetime = None):
+        """
+        May include additional operations like using the channel layer to send data with websocket.
+        """
+        return self._create(receiver=receiver, sender=sender, notification_action=self.model.NEW_FRIEND, date=date)
+
+    def count_unread(self, profile: Profile):
+        return self.filter(is_read=False).count()
+
+
+class Notification(models.Model):
+    GAME_INVITE = "game_invite"
+    REPLY_GAME_INVITE = "reply_game_invite"
+    NEW_TOURNAMENT = "new_tournament"
+    NEW_FRIEND = "new_friend"
+    MESSAGE = "message"
+
+    ACTION_CHOICES = (
+        (GAME_INVITE, "Game invite"),
+        (REPLY_GAME_INVITE, "Reply to game invite"),
+        (NEW_TOURNAMENT, "New tournament"),
+        (NEW_FRIEND, "New friend"),
+        (MESSAGE, "Message received"),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    receiver = models.ForeignKey(Profile, related_name="notifications", on_delete=models.CASCADE)
+    data = models.JSONField(encoder=DjangoJSONEncoder, null=True)
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    is_read = models.BooleanField(default=False)
+
+    objects = NotificationQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["-data__date"]
+
+    def __str__(self):
+        return f"Notification {self.action} for {self.receiver.user.username}"
+
+
+class GameSession(models.Model):  # noqa: DJ008
+    """
+    Currently a no-op, but can be extended
+    """
+
+
+class GameInvitation(models.Model):
+    INVITE_STATUS = [
+        ("pending", "Pending"),
+        ("accepted", "Accepted"),
+        ("declined", "Declined"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
+    game_session = models.ForeignKey(GameSession, on_delete=models.PROTECT, related_name="game_invites")
+    recipient = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="received_invites")
+    status = models.CharField(max_length=11, blank=False, choices=INVITE_STATUS, default="pending")
+
+    def __str__(self):
+        return f"{self.game_session}:"

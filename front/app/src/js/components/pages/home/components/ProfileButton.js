@@ -33,9 +33,7 @@ export class ProfileButton extends HTMLElement {
 
   template() {
     return `
-    <div id="home-profile-button">
-      <div class="btn btn-outline-primary btn-lg">My profile</div>
-    </div>
+    <div class="btn btn-wood btn-lg w-100" id="home-profile-button">My profile</div>
     `;
   }
 }

@@ -1,11 +1,18 @@
+// Will be replaced by PUT /api/chats/{username}
 import { auth } from '@auth';
 
 export async function mockChatMessagesData(username) {
   const myUsername = auth.getStoredUser().username;
   const chatMessages = [
     {
+      chat_id: '1',
       username: 'alice123',
-      items: [
+      nickname: 'Alice',
+      avatar: '/__mock__/img/sample-pic1.jpg',
+      is_online: true,
+      is_blocked_user: true,
+      is_blocked_by_user: true,
+      messages: [
         {
           sender: myUsername,
           content: 'Nope. See you tomorrow, snackless one! 😆',
@@ -93,8 +100,14 @@ export async function mockChatMessagesData(username) {
       ],
     },
     {
+      chat_id: '2',
       username: 'johndoe1',
-      items: [
+      nickname: 'JohnDoe',
+      avatar: '/__mock__/img/sample-pic2.png',
+      is_online: true,
+      is_blocked_user: true,
+      is_blocked_by_user: true,
+      messages: [
         {
           sender: myUsername,
           content: 'Bye!',
@@ -119,8 +132,14 @@ export async function mockChatMessagesData(username) {
       ],
     },
     {
+      chat_id: '3',
       username: 'george55',
-      items: [
+      nickname: 'George',
+      avatar: '/__mock__/img/sample-pic3.png',
+      is_online: true,
+      is_blocked_user: true,
+      is_blocked_by_user: true,
+      messages: [
         {
           sender: 'george55',
           content: 'Great, thanks!',
@@ -148,7 +167,7 @@ export async function mockChatMessagesData(username) {
 
   for (const chat of chatMessages) {
     if (chat.username === username) {
-      return chat.items;
+      return chat;
     }
   }
 }
