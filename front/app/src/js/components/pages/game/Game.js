@@ -441,7 +441,7 @@ export class Game extends HTMLElement {
     }
   }
   var Workers = [];
-  function firstStart()
+  function initGame()
   {
     var blob = new Blob([
       "let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;" + 
@@ -602,7 +602,7 @@ export class Game extends HTMLElement {
     let isPaused = false;
 
     let onDocumentKeyDown = function (event) {
-      if (event.defaultPrevented || !gamePlaying) {
+      if (event.defaultPrevented || (!gamePlaying && isPaused)) {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
@@ -627,11 +627,18 @@ export class Game extends HTMLElement {
           start();
         }
       }
+      if (keyCode == "KeyR")
+      {
+        stop();
+        resetBall(-1);
+        gamePlaying = true;
+        start();
+      }
       event.preventDefault();
     }
 
     let onDocumentKeyUp = function (event) {
-      if (event.defaultPrevented || !gamePlaying) {
+      if (event.defaultPrevented || (!gamePlaying && !isPaused)) {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
@@ -648,14 +655,14 @@ export class Game extends HTMLElement {
       if (currentUrl == "https://localhost:1026/singleplayer-game")
       {
         gamePlaying = true;
-        firstStart();
+        initGame();
       }
     };
     window.addEventListener('keydown', onDocumentKeyDown, true);
     window.addEventListener('locationchange', linkChange);
     window.addEventListener('keyup', onDocumentKeyUp, true);
 
-    return [camera, renderer, firstStart];
+    return [camera, renderer, initGame];
   }
 
   render() {
