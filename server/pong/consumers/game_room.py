@@ -11,6 +11,7 @@ logger = logging.getLogger("server")
 
 class GameRoomConsumer(WebsocketConsumer):
     def connect(self):
+        self.player = None
         self.user = self.scope.get("user")
         self.game_room_id = self.scope["url_route"]["kwargs"]["game_room_id"]
         self.game_room_group_name = f"game_room_{self.game_room_id}"
@@ -57,10 +58,17 @@ class GameRoomConsumer(WebsocketConsumer):
                 "type": "player_connected",
             },
         )
-        # TODO: logic of sending data to the game worker
 
     def disconnect(self, close_code):
-        # TODO: logic of sending data to the game worker
+        if self.player:
+            async_to_sync(self.channel_layer.send)(
+                "game",
+                {
+                    "game_room_id": self.game_room_id,
+                    "player_id": str(self.player.id),
+                    "type": "player_disconnected",
+                },
+            )
         logger.info("[GameRoom.disconnect]: player {%s} has left game room {%s}", self.user.profile, self.game_room_id)
         async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
 
