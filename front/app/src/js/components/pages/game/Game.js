@@ -323,16 +323,22 @@ export class Game extends HTMLElement {
         Ball.velocity.z = (Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dir_z);
         Ball.velocity.x = Ball.velocity.z * -Math.tan(bounce_angle_radians) * bumper.dir_z;
         Ball.velocity.x = Math.max(Math.abs(Ball.velocity.x), 0.05) * Math.sign(Ball.velocity.x);
-
+        if (bumper.dir_z == 1 && bounce_angle_radians >= 0.92 || bounce_angle_radians <= -0.92)
+          sideBump++;
+        else if (bumper.dir_z == 1)
+          sideBump = 0;
+        console.log(bounce_angle_radians);
         if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
             Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
       
     var step = null;
+    let canRestart;
 
     function start() {
       if (!step && gamePlaying) {
-         step = requestAnimationFrame(animate);
+        canRestart = true;
+        step = requestAnimationFrame(animate);
       }
     }
     function stop() {
@@ -397,9 +403,9 @@ export class Game extends HTMLElement {
     
     let isMovementDone = false;
     let ballPredictedPos;
-    // let posToGoTo;
     let isCalculationNeeded = true;
     let choosePos;
+    let sideBump = 0;
 
     function handleAiBehavior (BallPos, BallVelocity){
     //better calculation to put here
@@ -424,12 +430,12 @@ export class Game extends HTMLElement {
         ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
       }
       isCalculationNeeded = false;
-      console.log(ballPredictedPos.x);
+      // console.log(ballPredictedPos.x);
       // if ()
       // {
 
       // }
-      if (BallVelocity.z >= 0.38)
+      if (BallVelocity.z >= 0.38 || sideBump > 2)
           choosePos = Math.floor(Math.random() * 1);
       else
         choosePos = 2;
@@ -545,7 +551,6 @@ export class Game extends HTMLElement {
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
-      console.log(Ball.velocity);
       let current_subtick = 0;
       ballSubtickZ = SUBTICK;
       let totalSubticks = totalDistanceZ / ballSubtickZ;
@@ -570,6 +575,7 @@ export class Game extends HTMLElement {
           else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
               lastBumperCollided = 1;
               isMovementDone = true;
+              // sideBump = false;
               calculateNewDir(Bumpers[1]);
           }
           if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
@@ -621,7 +627,7 @@ export class Game extends HTMLElement {
     let isPaused = false;
 
     let onDocumentKeyDown = function (event) {
-      if (event.defaultPrevented || (!gamePlaying && isPaused)) {
+      if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
@@ -653,7 +659,7 @@ export class Game extends HTMLElement {
         let i = 0;
         while (i <= 5)
           Workers[i++].terminate();
-        i = 0
+        i = 0;
         Coin.cylinderUpdate.set(-9.25, 3, 0);
         while (i < 2)
         {
@@ -678,11 +684,11 @@ export class Game extends HTMLElement {
       }
       event.preventDefault();
     }
-
     let onDocumentKeyUp = function (event) {
-      if (event.defaultPrevented || (!gamePlaying && !isPaused)) {
+      if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
         return; // Do noplayerglb if the event was already processed
       }
+      console.log("oui");
       var keyCode = event.code;
       keyMap[keyCode] = false;
       event.preventDefault();
@@ -690,11 +696,12 @@ export class Game extends HTMLElement {
     function linkChange() {
       stop();
       gamePlaying = false;
+      canRestart = false;
       let i = 0;
       while (i <= 5)
         Workers[i++].terminate();
       const currentUrl = window.location.href;
-      if (currentUrl == "https://localhost:1026/singleplayer-game")
+      if (currentUrl == "https://localhost:1026/singleplayer-game/")
       {
         gamePlaying = true;
         initGame();
