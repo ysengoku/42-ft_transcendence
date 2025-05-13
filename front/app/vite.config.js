@@ -28,7 +28,7 @@ export default defineConfig({
         return html.replace(
           /(<head[^>]*>)/i,
           `$1
-          <script src='src/js/theme.js'></script>`
+          <script src='/src/js/theme.js'></script>`
         );
       }
     }
