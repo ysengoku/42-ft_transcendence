@@ -60,6 +60,10 @@ class GameRoomConsumer(WebsocketConsumer):
         )
 
     def disconnect(self, close_code):
+        # TODO: put close code to enum, make it prettier
+        if close_code == 3000:
+            return
+
         if self.player:
             async_to_sync(self.channel_layer.send)(
                 "game",
@@ -107,6 +111,9 @@ class GameRoomConsumer(WebsocketConsumer):
                     self.game_room_id,
                 )
 
+    ##############################
+    # GAME WORKER EVENT HANDLERS #
+    ##############################
     def state_updated(self, event: dict):
         """
         Event handler for `state_updated`.
@@ -120,3 +127,18 @@ class GameRoomConsumer(WebsocketConsumer):
                 },
             ),
         )
+
+    def game_cancelled(self, _: dict):
+        """
+        Event handler for `game_cancelled`.
+        `game_cancelled` is sent from the game worker to this consumer when players fail to connect to the game.
+        """
+        self.send(
+            text_data=json.dumps(
+                {
+                    "event": "game_cancelled",
+                },
+            ),
+        )
+        # TODO: add close codes to enum
+        self.close(3000)
