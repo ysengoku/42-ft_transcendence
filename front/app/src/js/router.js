@@ -259,7 +259,7 @@ router.addRoute('/duel', 'duel-page');
 router.addRoute('/duel-result/:id', 'duel-result', true);
 router.addRoute('/local-game-menu', 'local-game-menu');
 router.addRoute('/tournament-menu', 'tournament-menu');
-router.addRoute('/tournament/:id', 'tournament', true);
+router.addRoute('/tournament/:id', 'tournament-room', true);
 router.addRoute('/tournament-overview/:id', 'tournament-overview', true);
 router.addRoute('/multiplayer-game/:id', 'multiplayer-game', true);
 router.addRoute('/singleplayer-game', 'singleplayer-game');

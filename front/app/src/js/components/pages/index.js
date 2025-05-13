@@ -15,6 +15,7 @@ import { Duel } from './match/Duel.js';
 import { DuelResult } from './match/DuelResult.js';
 import { LocalGameMenu } from './match/LocalGameMenu.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
+import { Tournament } from './tournament/Tournament.js';
 import { TournamentOverview } from './tournament/TournamentOverview.js';
 import { Game } from './game/Game.js';
 import { MultiplayerGame } from './game/MultiplayerGame.js';
@@ -39,6 +40,7 @@ export {
   DuelResult,
   LocalGameMenu,
   TournamentMenu,
+  Tournament,
   TournamentOverview,
   Game,
   MultiplayerGame,
