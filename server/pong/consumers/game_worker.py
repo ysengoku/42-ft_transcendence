@@ -40,6 +40,7 @@ PLAYERS_REQUIRED = 2
 class PongMatchState(Enum):
     PENDING = auto()
     ONGOING = auto()
+    PAUSED = auto()
     ENDED = auto()
 
 
@@ -360,6 +361,9 @@ class GameConsumer(AsyncConsumer):
         try:
             # TODO: tweak the condition for the running of the game loop
             while True:
+                while match.state == PongMatchState.PAUSED:
+                    asyncio.sleep(0.25)
+                match.someone_scored = False
                 tick_start_time = asyncio.get_event_loop().time()
                 match.resolve_next_tick()
                 await self.send_state_to_players(game_room_id, match.as_dict())
@@ -391,7 +395,6 @@ class GameConsumer(AsyncConsumer):
     async def send_state_to_players(self, game_room_id: str, state: dict):
         group_name = self._to_group_name(game_room_id)
         await self.channel_layer.group_send(group_name, {"type": "state_updated", "state": state})
-        self.matches[game_room_id].someone_scored = False
 
     async def _wait_for_other_player(self, game_room_id: str):
         try:
