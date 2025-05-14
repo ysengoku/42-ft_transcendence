@@ -73,8 +73,10 @@ class GameRoomConsumer(WebsocketConsumer):
                     "type": "player_disconnected",
                 },
             )
-        logger.info("[GameRoom.disconnect]: player {%s} has left game room {%s}", self.user.profile, self.game_room_id)
-        async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
+            logger.info(
+                "[GameRoom.disconnect]: player {%s} has left game room {%s}", self.user.profile, self.game_room_id,
+            )
+            async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
 
     def receive(self, text_data):
         try:
@@ -124,6 +126,21 @@ class GameRoomConsumer(WebsocketConsumer):
                 {
                     "event": "game_tick",
                     "state": event["state"],
+                },
+            ),
+        )
+
+    def resignation(self, event: dict):
+        """
+        Event handler for `resignation`.
+        `resignation` is sent from the game worker to this consumer when one the players resigned,
+        by disconnect, for example.
+        """
+        self.send(
+            text_data=json.dumps(
+                {
+                    "event": "resignation",
+                    "winner": event["winner"],
                 },
             ),
         )
