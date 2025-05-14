@@ -18,6 +18,10 @@ export class TournamentWaiting extends HTMLElement {
     this.render();
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Render                                                              */
+  /* ------------------------------------------------------------------------ */
+
   render() {
     this.innerHTML = this.template() + this.style();
 
@@ -25,7 +29,6 @@ export class TournamentWaiting extends HTMLElement {
     this.requiredParticipants = this.querySelector('#required-participants');
     this.participantsWrapper = this.querySelector('#participants-wrapper');
 
-    this.#state.requiredParticipants = 8; // For test
     this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
     this.requiredParticipants.textContent = ` / ${this.#state.requiredParticipants}`;
 
@@ -33,19 +36,39 @@ export class TournamentWaiting extends HTMLElement {
       this.addParticipant(participant);
     });
   }
-
+  
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling                                                      */
+  /* ------------------------------------------------------------------------ */
   addParticipant(data) {
     // TODO: listen websocket message new_registration
     const participant = document.createElement('div');
     participant.innerHTML = this.participantTemplate();
 
-	const avatarElement = participant.querySelector('.participant-avatar');
+	  const avatarElement = participant.querySelector('.participant-avatar');
     const aliasElement = participant.querySelector('.participant-alias');
-	avatarElement.src = data.user.avatar;
+	  avatarElement.src = data.user.avatar;
     aliasElement.textContent = data.alias;
+    participant.id = `participant-${data.alias}`;
 
     this.participantsWrapper.appendChild(participant);
   }
+
+  removeParticipant(data) {
+    // TODO: listen websocket message registration_canceled
+    const participant = this.participantsWrapper.querySelector(`#participant-${data.alias}`);
+    if (participant) {
+      this.participantsWrapper.removeChild(participant);
+    }
+    const participantData = this.#state.participants.find((p) => p.alias === data.alias);
+    if (participantData) {
+      this.#state.participants.splice(this.#state.participants.indexOf(participantData), 1);
+    }
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Template & style                                                    */
+  /* ------------------------------------------------------------------------ */
 
   template() {
     return `
@@ -69,10 +92,6 @@ export class TournamentWaiting extends HTMLElement {
     #required-participants {
       font-family: 'van dyke', serif;
     }
-    .sheriff {
-      width: 20px;
-      height: 20px;
-    }
     #cancel-registration-button {
 	  color: rgba(var(--bs-body-color-rgb), 0.7)
     }
@@ -83,7 +102,7 @@ export class TournamentWaiting extends HTMLElement {
   participantTemplate() {
     return `
     <div class="d-flex flex-row justify-content-center align-items-center mx-4 my-2 gap-2">
-      <img class="participant-avatar avatar-xs rounded-circle" src="/img/default_avatar.png" />
+      <img class="participant-avatar avatar-xxs rounded-circle" src="/img/default_avatar.png" />
       <p class="participant-alias m-0"></p>
     </div>
     `;

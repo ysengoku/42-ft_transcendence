@@ -1,10 +1,15 @@
+import { fetchAuthStatus } from '@auth';
 import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
+import { mockRoundStartData } from '@mock/functions/mockTournamentWs';
+import { auth } from '../../../auth/authManager';
 
 export class Tournament extends HTMLElement {
   #state = {
-    status: '', // waiting, starting, roundStart, waitingNextRound, roundFinished, finished
+    status: '', // Status for UI: waiting, roundStart, waitingNextRound, roundFinished, finished
     tournamentId: '',
     tournament: null,
+    currentRoundNumber: 1,
+    currentRound: null,
   }
 
   // Convert the status fetched from the server to the status used in the component
@@ -23,9 +28,14 @@ export class Tournament extends HTMLElement {
 
   async setParam(param) {
     if (!param.id) {
-      const notFound = document.createElement('page-not-found');
-      this.innerHTML = notFound.outerHTML;
-      return;
+      const authCheck = await auth.fetchAuthStatus();
+      if (!authCheck.success) {
+        // get tournament id from auth data
+      } else {
+        const notFound = document.createElement('page-not-found');
+        this.innerHTML = notFound.outerHTML;
+        return;
+      }
     }
     this.#state.tournamentId = param.id;
     await this.fetchTournamentData();
@@ -39,6 +49,9 @@ export class Tournament extends HTMLElement {
     this.render();
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Render                                                              */
+  /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template() + this.style();
 
@@ -53,6 +66,10 @@ export class Tournament extends HTMLElement {
     } else {
       devErrorLog(`Tournament status not found: ${this.#state.status}`);
     }
+
+    // ----- Test for round_start -----
+    // const dataMock = mockRoundStartData();
+    // this.handleRoundStart(dataMock);
   }
 
   tournamentContent = {
@@ -64,24 +81,84 @@ export class Tournament extends HTMLElement {
       };
       return tournamentWaiting;
     },
-    starting:() => {
-
-    },
     roundStart:() => {
-
+      const tournamentRoundStart = document.createElement('tournament-round-start');
+      tournamentRoundStart.data = {
+        round_number: this.#state.currentRoundNumber,
+        round: this.#state.currentRound,
+      };
+      return tournamentRoundStart;
     },
     waitingNextRound:() => {
+      // Show status/result of all matches of the current round
     },
     roundFinished:() => {
+      // Show result of all matches of the current round
     },
     finished:() => {
-
+      // Show the final result of the tournament with tree
     },
   }
 
-  updateStatus() {
+  updateTournamentStatus() {
+    if (this.tournamentContentWrapper.firstChild) {
+      this.tournamentContentWrapper.removeChild(this.tournamentContentWrapper.firstChild);
+    }
+    const content = this.tournamentContent[this.#state.status]();
+    if (content) {
+      this.tournamentContentWrapper.appendChild(content);
+    } else {
+      devErrorLog(`Tournament status not found: ${this.#state.status}`);
+    }
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling                                                      */
+  /* ------------------------------------------------------------------------ */
+  handleRoundStart(data) {
+    // Handle round_start message with [ROUND] data via ws
+
+    // In scoketManager
+    // If the user is not in the tournament, automatically navigate to the tournament page
+
+    this.#state.currentRoundNumber = data.round.number;
+    this.#state.currentRound = data.round;
+    
+    if (this.#state.currentRoundNumber === 1) {
+      this.#state.tournament.status = 'ongoing';
+    }
+    this.#state.status = 'roundStart';
+    this.updateTournamentStatus();
+  }
+
+  handleMatchFinished() {
+    // User comes back from the match
+    // Receive match_finished message via ws with ROUND and user's own result
+
+    // ??? If we change the URL tournament - match
+    // In socketManager
+    // Navigate to this page (tournament/id)
+
+    // In this page
+    // fetch tournament to get the tournament data
+  }
+
+  updateMatchResult(data) {
+    // Handle match_result message with ROUND via ws
+  }
+
+  handleRoundEnd(data) {
+    // Handle round_start message with [ROUND] data
+  }
+
+  handleTournamentFinished() {
+    // Handle tournament_finished message via ws
+    // fetch tournament to get the tournament data
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Template & style                                                    */
+  /* ------------------------------------------------------------------------ */
   template() {
     return `
     <div class="container">
@@ -123,3 +200,9 @@ customElements.define('tournament-room', Tournament);
 
 // Status: finished
 // - tournament_finished message via WebSocket --> [OverviewFinished view]?
+
+// Integrate Game component in this page
+// const game = document.createElement('multiplayer-game');
+// this.appendChild(game);
+// this.innerHTML = '';
+// game.setParam({ id: this.#state.tournamentId });
