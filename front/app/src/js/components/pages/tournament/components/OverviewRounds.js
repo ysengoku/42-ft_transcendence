@@ -1,9 +1,7 @@
 import { BREAKPOINT } from '@utils';
 
-export class TournamentOverviewFinished extends HTMLElement {
+export class TournamentOverviewRounds extends HTMLElement {
   #state = {
-    status: '', // ongoing, finished
-    // roundsCount: 0,
     rounds: null,
   }
 
@@ -14,7 +12,6 @@ export class TournamentOverviewFinished extends HTMLElement {
   set data(data) {
     this.#state.status = data.status;
     this.#state.rounds = data.rounds;
-    // this.#state.roundsCount = this.#state.rounds.length;
     this.render();
   }
 
@@ -22,37 +19,56 @@ export class TournamentOverviewFinished extends HTMLElement {
     this.innerHTML = this.template() + this.style();
     this.tournamentOverviewContent = this.querySelector('#tournament-overview-content-wrapper');
 
-    this.#state.rounds.forEach((round) => {
+    for (let i = 0; i < this.#state.rounds.length; i++) {
+      const round = this.#state.rounds[i];
       this.renderBrackets(round);
-    });
+      if (i === this.#state.rounds.length - 1) {
+        const lastRoundElement = this.querySelector('.round-wrapper:last-child');
+        const connectors = lastRoundElement.querySelectorAll('.brackets-connector');
+        connectors.forEach((connector) => {
+          connector.classList.add('d-none');
+        });
+      }
+    };
   }
   
   renderBrackets(round) {
-    // console.log('renderBrackets', round);
     const roundElement = document.createElement('div');
     roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');    
     const bracketPairsCount = Math.floor(round.brackets.length / 2);
     let bracketIndex = 0;
-    // console.log('Bracket pairs count', bracketPairsCount);
     if (bracketPairsCount !== 0) {
       for(let i = 0; i < bracketPairsCount; i++) {
-        const bracketPairElement = document.createElement('div');
-        bracketPairElement.innerHTML = this.bracketsPairTemplate();
+        const temp = document.createElement('div');
+        temp.innerHTML = this.bracketsPairTemplate();
+        const bracketPairElement = temp.firstElementChild
         const bracketsWrapper = bracketPairElement.querySelector('.brackets-wrapper');
   
         const bracket1 = round.brackets[bracketIndex];
         const bracket2 = round.brackets[bracketIndex + 1];
+        bracketIndex += 2;
         const bracket1Element = this.createBracketElement(bracket1);
         const bracket2Element = this.createBracketElement(bracket2);
         bracketsWrapper.appendChild(bracket1Element);
         bracketsWrapper.appendChild(bracket2Element);
         roundElement.appendChild(bracketPairElement);
-        bracketIndex += 2;
+
+        const merger = bracketPairElement.querySelector('.brackets-connector-merger');
+        const line   = bracketPairElement.querySelector('.brackets-connector-line');
+        const bracketWrapper1 = bracketsWrapper.children[0];
+        const bracketWrapper2 = bracketsWrapper.children[1];
+        requestAnimationFrame(() => {
+          const pairTop = bracketPairElement.getBoundingClientRect().top;
+          const y1 = bracketWrapper1.getBoundingClientRect().top + bracketWrapper1.offsetHeight / 2 - pairTop;
+          const y2 = bracketWrapper2.getBoundingClientRect().top + bracketWrapper2.offsetHeight / 2 - pairTop;
+          merger.style.setProperty('--y1', `${y1}px`);
+          merger.style.setProperty('--y2', `${y2}px`);
+          const mid = (y1 + y2) / 2;
+          line.style.top = `${mid}px`;
+        });
       }
     } else {
-      console.log('Final Bracket', bracketIndex, round.brackets[bracketIndex]);
       const finalBracketElement = this.createBracketElement(round.brackets[bracketIndex]);
-      console.log('Final Bracket Element', finalBracketElement);
       roundElement.appendChild(finalBracketElement);
     }
     this.tournamentOverviewContent.appendChild(roundElement);
@@ -66,7 +82,6 @@ export class TournamentOverviewFinished extends HTMLElement {
   }
 
   createBracketElement(bracket) {
-    // console.log('Bracket', bracket);
     const bracketElement = document.createElement('div');
     bracketElement.classList.add('d-flex', 'flex-column', 'align-items-start', 'w-100', 'mb-3');
     const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1);
@@ -96,7 +111,7 @@ export class TournamentOverviewFinished extends HTMLElement {
 
   template() {
     return `
-    <div class="d-flex flex-row justify-content-center align-items-center w-100 gap-5" id="tournament-overview-content-wrapper"></div>
+    <div class="d-flex flex-row justify-content-center align-items-center w-100  mt-4 gap-5" id="tournament-overview-content-wrapper"></div>
     `;
   }
 
@@ -104,40 +119,49 @@ export class TournamentOverviewFinished extends HTMLElement {
     return `
     <style>
     .bracket-pair {
-      div {
-        display: inline-block;
-        vertical-align: middle;
-      }
+      padding-right: 2.5rem; 
     }
-    .brackets-connector .brackets-connector-merger,
-    .brackets-connector .brackets-connector-line {
-      box-sizing: border-box;
-      display: inline-block;
-      vertical-align: top;
+    .brackets-wrapper {
+      flex: 0 0 auto;
+    }
+    .brackets-connector {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 2rem
+    }
+    .brackets-connector-merger {
       width: 2rem;
+      left: 0;
+      top: var(--y1);
+      height: calc(var(--y2) - var(--y1));
+      border-right: 1.5px solid var(--bs-body-color);
     }
-    .brackets-connector .brackets-connector-line {
-      border-bottom: thin solid var(--bs-body-color);
-    }
-    .brackets-connector .brackets-connector-merger {
-      position: relative;
-    }
-    .brackets-connector .brackets-connector-merger::before,
-    .brackets-connector .brackets-connector-merger::after {
+    .brackets-connector-merger::before,
+    .brackets-connector-merger::after {
       content: "";
-      display: block;
-      box-sizing: border-box;
+      position: absolute;
+      left: 0;
       width: 100%;
-      height: 50%;
-      border: 0 solid var(--bs-body-color);
+      box-sizing: border-box;
     }
-    .brackets-connector .brackets-connector-merger::before {
-      border-right-width: thin;
-      border-top-width: thin;
+    .brackets-connector-merger::before {
+      top: 0;
+      border-top: 1.5px solid var(--bs-body-color);
     }
-    .brackets-connector .brackets-connector-merger::after {
-      border-right-width: thin;
-      border-bottom-width: thin;
+    .brackets-connector-merger::after {
+      bottom: 0;
+      border-bottom: 1.5px solid var(--bs-body-color);
+    }
+    .brackets-connector-line {
+      left: 100%;
+      top: var(--mid);
+      width: 2rem;
+      height: 0;
+      border-top: 1.5px solid var(--bs-body-color);
     }
     .bracket-player {
       background-color: rgba(var(--bs-body-bg-rgb), 0.6);
@@ -171,11 +195,11 @@ export class TournamentOverviewFinished extends HTMLElement {
 
   bracketsPairTemplate() {
     return `
-    <div class="bracket-pair w-100">
-      <div class="brackets-wrapper"></div>
-      <div class="brackets-connector">
-        <div class="brackets-connector-merger"></div>
-        <div class="brackets-connector-line"></div>
+    <div class="bracket-pair d-flex position-relative align-items-center w-100 h-100">
+      <div class="brackets-wrapper d-flex flex-column justify-content-around h-100"></div>
+      <div class="brackets-connector position-absolute h-100">
+        <div class="brackets-connector-merger position-absolute"></div>
+        <div class="brackets-connector-line position-absolute"></div>
       </div>
     </div>
     `;
@@ -194,4 +218,4 @@ export class TournamentOverviewFinished extends HTMLElement {
   }
 }
 
-customElements.define('tournament-overview-finished', TournamentOverviewFinished);
+customElements.define('tournament-overview-rounds', TournamentOverviewRounds);
