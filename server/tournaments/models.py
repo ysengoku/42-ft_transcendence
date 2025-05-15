@@ -36,6 +36,14 @@ class Tournament(models.Model):
         on_delete=models.SET_NULL,
         related_name="won_tournaments",
     )
+    participants = models.ManyToManyField(
+        "Participant",
+        related_name='tournaments_m2m'
+    )
+    # rounds = models.ManyToManyField(
+    #     "Round",
+    #     related_name='tournament_rounds'
+    # )
     required_participants = models.PositiveIntegerField()
 
     def clean(self):
@@ -58,13 +66,8 @@ class Tournament(models.Model):
     def __str__(self):
         return f"{self.name} ({self.status})"
 
-    @property
-    def participants(self):
-        return self.participants.all()
-
-    @property
-    def rounds(self):
-        return self.rounds.all()
+    def get_rounds(self):
+        return self.rounds.all().prefetch_related('brackets')
 
     # def return_tournaments(self):
     #     return self.tournament.all()
@@ -81,7 +84,7 @@ class Participant(models.Model):
 
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     tournament = models.ForeignKey(
-        Tournament, on_delete=models.CASCADE, related_name="participants"
+        Tournament, on_delete=models.CASCADE, related_name="tournament_participants"
     )
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
     status = models.CharField(
@@ -98,9 +101,9 @@ class Participant(models.Model):
 
 class Round(models.Model):
     tournament = models.ForeignKey(
-        Tournament, on_delete=models.CASCADE, related_name="rounds"
+        Tournament, on_delete=models.CASCADE, related_name="tournament_rounds"
     )
-    number = models.PositiveIntegerField()
+    number = models.PositiveIntegerField(editable=False)
     status = models.CharField(
         max_length=10,
         choices=[("start", "Start"), ("ongoing", "Ongoing"),

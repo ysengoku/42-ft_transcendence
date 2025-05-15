@@ -9,12 +9,11 @@ from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
-from common.schemas import MessageSchema
+from common.schemas import MessageSchema, ProfileMinimalSchema
 from tournaments.models import (Tournament, TournamentCreatedSchema,
                                 TournamentCreateSchema)
 from tournaments.schemas import TournamentSchema
 from users.router.utils import _create_json_response_with_tokens
-from users.schemas import ProfileMinimalSchema
 
 tournaments_router = Router()
 
@@ -72,16 +71,14 @@ def create_tournament(request, data: TournamentCreateSchema):
         404: MessageSchema
     }
 )
-def get_tournament(request, tournament_id: str):
-    try:
-        tournament_uuid = UUID(tournament_id)
-    except ValueError:
-        return 400, {"msg": "Invalid tournament id format"}
+def get_tournament(request, tournament_id: UUID):
     try:
         tournament = Tournament.objects.get(id=tournament_id)
+        return 200, tournament
+    except ValueError:
+        return 400, {"msg": "Invalid tournament id format"}
     except Tournament.DoesNotExist:
         return 404, {"msg": "Tournament not found"}
-    return tournament
 
 
 @tournaments_router.get("/", response=TournamentSchema)
