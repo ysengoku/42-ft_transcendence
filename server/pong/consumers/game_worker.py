@@ -85,54 +85,54 @@ class PongMatch:
     Stores and modifies the state of the game.
     """
 
-    game_id: str = "No id"
-    bumper_1: Bumper
-    bumper_2: Bumper
-    ball: Ball
+    id: str = "No id"
     state: PongMatchState
-    scored_last: Bumper | None = None
-    someone_scored: bool
-    pause = asyncio.Event
+    pause_event = asyncio.Event
+    _bumper_1: Bumper
+    _bumper_2: Bumper
+    _ball: Ball
+    _scored_last: Bumper | None = None
+    _someone_scored: bool
 
     def __init__(self, game_id: str):
-        self.game_id = game_id
-        self.bumper_1 = Bumper(
+        self.id = game_id
+        self.state = PongMatchState.PENDING
+        self.pause_event = asyncio.Event()
+        self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
         )
-        self.bumper_2 = Bumper(
+        self._bumper_2 = Bumper(
             *STARTING_BUMPER_2_POS,
             dir_z=-1,
         )
-        self.ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
-        self.is_someone_scored = False
-        self.state = PongMatchState.PENDING
-        self.pause = asyncio.Event()
+        self._ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
+        self._is_someone_scored = False
 
     def __str__(self):
-        return self.game_id
+        return self.id
 
     def __repr__(self):
-        return f"{self.state.name.capitalize()} game {self.game_id}"
+        return f"{self.state.name.capitalize()} game {self.id}"
 
     def as_dict(self):
         return {
-            "bumper_1": {"x": self.bumper_1.x, "z": self.bumper_1.z},
-            "bumper_2": {"x": self.bumper_2.x, "z": self.bumper_2.z},
+            "bumper_1": {"x": self._bumper_1.x, "z": self._bumper_1.z},
+            "bumper_2": {"x": self._bumper_2.x, "z": self._bumper_2.z},
             "ball": {
-                "x": self.ball.x,
-                "z": self.ball.z,
-                "velocity": {"x": self.ball.velocity.x, "z": self.ball.velocity.z},
+                "x": self._ball.x,
+                "z": self._ball.z,
+                "velocity": {"x": self._ball.velocity.x, "z": self._ball.velocity.z},
             },
-            "scored_last": self.scored_last.id if self.scored_last else None,
-            "is_someone_scored": self.is_someone_scored,
+            "scored_last": self._scored_last.id if self._scored_last else None,
+            "is_someone_scored": self._is_someone_scored,
         }
 
     def handle_input(self, player_id: str, action: str, content: bool):
-        if player_id == self.bumper_1.player.id:
-            bumper = self.bumper_1
-        elif player_id == self.bumper_2.player.id:
-            bumper = self.bumper_2
+        if player_id == self._bumper_1.player.id:
+            bumper = self._bumper_1
+        elif player_id == self._bumper_2.player.id:
+            bumper = self._bumper_2
         else:
             return
 
@@ -143,10 +143,10 @@ class PongMatch:
                 bumper.moves_right = content
 
     def _reset_ball(self, direction: int):
-        self.ball.temporal_speed.x, self.ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
-        self.ball.x, self.ball.z = STARTING_BALL_POS
-        self.ball.velocity.x, self.ball.velocity.z = STARTING_BALL_VELOCITY
-        self.ball.velocity.z *= direction
+        self._ball.temporal_speed.x, self._ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
+        self._ball.x, self._ball.z = STARTING_BALL_POS
+        self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCITY
+        self._ball.velocity.z *= direction
 
     def _is_collided_with_ball(self, bumper, ball_subtick_z, ball_subtick_x):
         """
@@ -154,78 +154,79 @@ class PongMatch:
         parameter to this function.
         """
         return (
-            (self.ball.x - BALL_RADIUS + ball_subtick_x * self.ball.velocity.x <= bumper.x + BUMPER_LENGTH_HALF)
-            and (self.ball.x + BALL_RADIUS + ball_subtick_x * self.ball.velocity.x >= bumper.x - BUMPER_LENGTH_HALF)
-            and (self.ball.z - BALL_RADIUS + ball_subtick_z * self.ball.velocity.z <= bumper.z + BUMPER_WIDTH_HALF)
-            and (self.ball.z + BALL_RADIUS + ball_subtick_z * self.ball.velocity.z >= bumper.z - BUMPER_WIDTH_HALF)
+            (self._ball.x - BALL_RADIUS + ball_subtick_x * self._ball.velocity.x <= bumper.x + BUMPER_LENGTH_HALF)
+            and (self._ball.x + BALL_RADIUS + ball_subtick_x * self._ball.velocity.x >= bumper.x - BUMPER_LENGTH_HALF)
+            and (self._ball.z - BALL_RADIUS + ball_subtick_z * self._ball.velocity.z <= bumper.z + BUMPER_WIDTH_HALF)
+            and (self._ball.z + BALL_RADIUS + ball_subtick_z * self._ball.velocity.z >= bumper.z - BUMPER_WIDTH_HALF)
         )
 
     def _calculate_new_dir(self, bumper):
-        collision_pos_x = bumper.x - self.ball.x
+        collision_pos_x = bumper.x - self._ball.x
         normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + BUMPER_LENGTH_HALF)
         bounce_angle_radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos_x)
-        self.ball.velocity.z = (
-            min(BALL_VELOCITY_CAP, abs(self.ball.velocity.z * 1.025 * self.ball.temporal_speed.z)) * bumper.dir_z
+        self._ball.velocity.z = (
+            min(BALL_VELOCITY_CAP, abs(self._ball.velocity.z * 1.025 * self._ball.temporal_speed.z)) * bumper.dir_z
         )
-        self.ball.velocity.x = self.ball.velocity.z * -math.tan(bounce_angle_radians) * bumper.dir_z
-        self.ball.velocity.x = math.copysign(max(abs(self.ball.velocity.x), 0.05), self.ball.velocity.x)
+        self._ball.velocity.x = self._ball.velocity.z * -math.tan(bounce_angle_radians) * bumper.dir_z
+        self._ball.velocity.x = math.copysign(max(abs(self._ball.velocity.x), 0.05), self._ball.velocity.x)
 
-        collision_pos_z = bumper.z - self.ball.z
+        collision_pos_z = bumper.z - self._ball.z
         normalized_collision_pos_z = collision_pos_z / (BALL_RADIUS + BUMPER_WIDTH_HALF)
         normalized_collision_pos_z
-        if (self.ball.z - BALL_RADIUS * self.ball.velocity.z <= bumper.z + BUMPER_WIDTH_HALF) and (
-            self.ball.z + BALL_RADIUS * self.ball.velocity.z >= bumper.z - BUMPER_WIDTH_HALF
+        if (self._ball.z - BALL_RADIUS * self._ball.velocity.z <= bumper.z + BUMPER_WIDTH_HALF) and (
+            self._ball.z + BALL_RADIUS * self._ball.velocity.z >= bumper.z - BUMPER_WIDTH_HALF
         ):
-            self.ball.temporal_speed.x += TEMPORAL_SPEED_INCREASE
+            self._ball.temporal_speed.x += TEMPORAL_SPEED_INCREASE
 
     def _check_ball_scored(self):
-        if self.ball.z >= BUMPER_2_BORDER:
-            self.bumper_1.score += 1
+        if self._ball.z >= BUMPER_2_BORDER:
+            self._bumper_1.score += 1
             self._reset_ball(-1)
-            self.is_someone_scored = True
-        elif self.ball.z <= BUMPER_1_BORDER:
-            self.bumper_2.score += 1
+            self._is_someone_scored = True
+        elif self._ball.z <= BUMPER_1_BORDER:
+            self._bumper_2.score += 1
             self._reset_ball(1)
-            self.is_someone_scored = True
+            self._is_someone_scored = True
 
     def _check_ball_wall_collision(self):
-        if self.ball.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF:
-            self.ball.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
-            self.ball.velocity.x *= -1
-        if self.ball.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF:
-            self.ball.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
-            self.ball.velocity.x *= -1
+        if self._ball.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF:
+            self._ball.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
+            self._ball.velocity.x *= -1
+        if self._ball.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF:
+            self._ball.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
+            self._ball.velocity.x *= -1
 
     def _check_ball_bumper_collision(self, ball_subtick_z, ball_subtick_x):
-        if self.ball.velocity.z <= 0 and self._is_collided_with_ball(self.bumper_1, ball_subtick_z, ball_subtick_x):
-            self._calculate_new_dir(self.bumper_1)
-        elif self.ball.velocity.z > 0 and self._is_collided_with_ball(self.bumper_2, ball_subtick_z, ball_subtick_x):
-            self._calculate_new_dir(self.bumper_2)
+        if self._ball.velocity.z <= 0 and self._is_collided_with_ball(self._bumper_1, ball_subtick_z, ball_subtick_x):
+            self._calculate_new_dir(self._bumper_1)
+        elif self._ball.velocity.z > 0 and self._is_collided_with_ball(self._bumper_2, ball_subtick_z, ball_subtick_x):
+            self._calculate_new_dir(self._bumper_2)
 
     def _move_bumpers(self, bumper_subtick):
-        if self.bumper_1.moves_left and not self.bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
-            self.bumper_1.x += bumper_subtick
-        if self.bumper_1.moves_right and not self.bumper_1.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
-            self.bumper_1.x -= bumper_subtick
+        if self._bumper_1.moves_left and not self._bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
+            self._bumper_1.x += bumper_subtick
+        if self._bumper_1.moves_right and not self._bumper_1.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
+            self._bumper_1.x -= bumper_subtick
 
-        if self.bumper_2.moves_left and not self.bumper_2.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
-            self.bumper_2.x += bumper_subtick
-        if self.bumper_2.moves_right and not self.bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
-            self.bumper_2.x -= bumper_subtick
+        if self._bumper_2.moves_left and not self._bumper_2.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
+            self._bumper_2.x += bumper_subtick
+        if self._bumper_2.moves_right and not self._bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
+            self._bumper_2.x -= bumper_subtick
 
     def _move_ball(self, ball_subtick_z, ball_subtick_x):
-        self.ball.z += ball_subtick_z * self.ball.velocity.z
-        self.ball.x += ball_subtick_x * self.ball.velocity.x
+        self._ball.z += ball_subtick_z * self._ball.velocity.z
+        self._ball.x += ball_subtick_x * self._ball.velocity.x
 
     def resolve_next_tick(self):
         """
         Moves the objects in the game by one subtick at a time.
         This approach is called Conservative Advancement.
         """
-        total_distance_x = abs((self.ball.temporal_speed.x) * self.ball.velocity.x)
-        total_distance_z = abs((self.ball.temporal_speed.z) * self.ball.velocity.z)
-        self.ball.temporal_speed.x = max(TEMPORAL_SPEED_DEFAULT[0], self.ball.temporal_speed.x - TEMPORAL_SPEED_DECAY)
-        self.ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self.ball.temporal_speed.z - TEMPORAL_SPEED_DECAY)
+        self._someone_scored = False
+        total_distance_x = abs((self._ball.temporal_speed.x) * self._ball.velocity.x)
+        total_distance_z = abs((self._ball.temporal_speed.z) * self._ball.velocity.z)
+        self._ball.temporal_speed.x = max(TEMPORAL_SPEED_DEFAULT[0], self._ball.temporal_speed.x - TEMPORAL_SPEED_DECAY)
+        self._ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self._ball.temporal_speed.z - TEMPORAL_SPEED_DECAY)
         current_subtick = 0
         ball_subtick_z = SUBTICK
         total_subticks = total_distance_z / ball_subtick_z
@@ -246,10 +247,10 @@ class PongMatch:
         Assigns player to a random bumper.
         """
         available_player_slots = []
-        if self.bumper_1.player.connection == PlayerConnectionState.NOT_CONNECTED:
-            available_player_slots.append(self.bumper_1)
-        if self.bumper_2.player.connection == PlayerConnectionState.NOT_CONNECTED:
-            available_player_slots.append(self.bumper_2)
+        if self._bumper_1.player.connection == PlayerConnectionState.NOT_CONNECTED:
+            available_player_slots.append(self._bumper_1)
+        if self._bumper_2.player.connection == PlayerConnectionState.NOT_CONNECTED:
+            available_player_slots.append(self._bumper_2)
         if not available_player_slots:
             return
 
@@ -264,19 +265,19 @@ class PongMatch:
 
     def get_players_based_on_connection(self, connection: PlayerConnectionState) -> list[Player, Player]:
         """Returns a list of players based on their connection state."""
-        return [p for p in [self.bumper_1.player, self.bumper_2.player] if p.connection == connection]
+        return [p for p in [self._bumper_1.player, self._bumper_2.player] if p.connection == connection]
 
     def get_player(self, player_id: str) -> Player | None:
-        if self.bumper_1.player.id == player_id:
-            return self.bumper_1.player
-        if self.bumper_2.player.id == player_id:
-            return self.bumper_2.player
+        if self._bumper_1.player.id == player_id:
+            return self._bumper_1.player
+        if self._bumper_2.player.id == player_id:
+            return self._bumper_2.player
         return None
 
     def get_other_player(self, player_id: str) -> Player:
-        if player_id == self.bumper_1.player.id:
-            return self.bumper_1.player
-        return self.bumper_2.player
+        if player_id == self._bumper_1.player.id:
+            return self._bumper_1.player
+        return self._bumper_2.player
 
 
 class GameConsumer(AsyncConsumer):
@@ -300,7 +301,7 @@ class GameConsumer(AsyncConsumer):
             self.matches[game_room_id] = PongMatch(game_room_id)
             self.matches[game_room_id].add_player(player_id)
             # TODO: create a timer that gives the other player 5 seconds to connect
-            self.timer_tasks["waiting_" + game_room_id] = asyncio.create_task(self._wait_for_both_player(game_room_id))
+            self._start_waiting_for_players_timer(game_room_id)
             logger.info("[GameWorker]: player {%s} was added to newly created game {%s}", player_id, game_room_id)
             return
 
@@ -312,30 +313,14 @@ class GameConsumer(AsyncConsumer):
             and len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) == PLAYERS_REQUIRED - 1
         ):
             match.add_player(player_id)
-            self.timer_tasks["waiting_" + game_room_id].cancel()
+            self._stop_waiting_for_players_timer(game_room_id)
             self.matches_tasks[game_room_id] = asyncio.create_task(self._start_match_game_loop(game_room_id))
             logger.info("[GameWorker]: player {%s} has been added to existing game {%s}", player_id, game_room_id)
 
         ### RECONNECTION OF ONE OF THE PLAYERS TO THE MATCH ###
         elif match.state in {PongMatchState.PENDING, PongMatchState.ONGOING, PongMatchState.PAUSED}:
-            player = match.get_player(player_id)
-            if not player:
-                logger.warning(
-                    "[GameWorker]: illegal player {%s} tried to connect to the ongoing game {%s}",
-                    player_id,
-                    game_room_id,
-                )
-                return
-            pause_task = self.timer_tasks.get(f"reconnection_wait_{game_room_id}_{player.id}")
-            if pause_task and not pause_task.cancelled():
-                pause_task.cancel()
-                self.timer_tasks.pop(f"reconnection_wait_{game_room_id}_{player.id}")
-            player.connection = PlayerConnectionState.CONNECTED
-            match.pause.set()
-            # TODO: reconnection logic
-            logger.info("[GameWorker]: player {%s} has been reconnected to the game {%s}", player_id, game_room_id)
+            self._reconnect_player(player_id, match)
 
-    # TODO: give 10 seconds to disconnected player to reconnect. if they can't do it, remaining player wins
     async def player_disconnected(self, event: dict):
         game_room_id = event["game_room_id"]
         player_id = event["player_id"]
@@ -372,12 +357,10 @@ class GameConsumer(AsyncConsumer):
             player_id,
             game_room_id,
         )
-        match.state = PongMatchState.PAUSED
-        match.pause.clear()
-        self.timer_tasks[f"reconnection_wait_{game_room_id}_{disconnected_player.id}"] = asyncio.create_task(
-            self._wait_for_reconnection(match, disconnected_player),
-        )
+        self._pause(match)
+        self._start_waiting_for_reconnection_timer(match, disconnected_player)
 
+        # TODO: handle the case where both players disconnect
         if not match.get_players_based_on_connection(PlayerConnectionState.CONNECTED):
             self._cleanup_match(game_room_id)
             # TODO: add the match result to the db
@@ -392,8 +375,7 @@ class GameConsumer(AsyncConsumer):
             # TODO: tweak the condition for the running of the game loop
             while match.state != PongMatchState.ENDED:
                 if match.state == PongMatchState.PAUSED:
-                    await match.pause.wait()
-                match.someone_scored = False
+                    await match.pause_event.wait()
                 tick_start_time = asyncio.get_event_loop().time()
                 match.resolve_next_tick()
                 await self.send_state_to_players(game_room_id, match.as_dict())
@@ -489,10 +471,58 @@ class GameConsumer(AsyncConsumer):
         except asyncio.CancelledError:
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
 
+    def _reconnect_player(self, player_id: str, match: PongMatch):
+        """
+        Sets the player as reconnected.
+        Stops the reconnection timer and unpauses the game.
+        """
+        player = match.get_player(player_id)
+        if not player:
+            logger.warning(
+                "[GameWorker]: illegal player {%s} tried to connect to the ongoing game {%s}",
+                player_id,
+                match.id,
+            )
+            return
+        player.connection = PlayerConnectionState.CONNECTED
+        self._stop_waiting_for_reconnection_timer(match, player)
+        self._unpause(match)
+        logger.info("[GameWorker]: player {%s} has been reconnected to the game {%s}", player_id, match.id)
+
     def _cleanup_match(self, game_room_id: str):
         """Cleans up after the match. Stops its game loop, removes from `matches` and `tasks` dicts."""
-        match_task = self.matches_tasks.get(game_room_id)
+        match_task = self.matches_tasks.pop(game_room_id, None)
         if match_task and not match_task.cancelled():
             match_task.cancel()
         self.matches.pop(game_room_id, None)
-        self.matches_tasks.pop(game_room_id, None)
+
+    def _start_waiting_for_players_timer(self, game_room_id: str):
+        self.timer_tasks["waiting_for_players_timer_" + game_room_id] = asyncio.create_task(
+            self._wait_for_both_player(game_room_id),
+        )
+
+    def _stop_waiting_for_players_timer(self, game_room_id: str):
+        task = self.timer_tasks.pop("waiting_for_players_timer_" + game_room_id, None)
+        if task and not task.cancelled():
+            task.cancel()
+
+    def _start_waiting_for_reconnection_timer(self, match: PongMatch, disconnected_player: Player):
+        self.timer_tasks[f"reconnection_timer_{match.id}_{disconnected_player.id}"] = asyncio.create_task(
+            self._wait_for_reconnection(match, disconnected_player),
+        )
+
+    def _stop_waiting_for_reconnection_timer(self, match: PongMatch, reconnected_player: Player):
+        task = self.timer_tasks.pop(f"reconnection_timer_{match.id}_{reconnected_player.id}", None)
+        if task and not task.cancelled():
+            task.cancel()
+
+    def _pause(self, match: PongMatch):
+        match.state = PongMatchState.PAUSED
+        match.pause_event.clear()
+        logger.info("[GameWorker]: game {%s} has been paused", match.id)
+
+    def _unpause(self, match: PongMatch):
+        match.state = PongMatchState.ONGOING
+        if not match.pause_event.is_set():
+            match.pause_event.set()
+        logger.info("[GameWorker]: game {%s} has been unpaused", match.id)
