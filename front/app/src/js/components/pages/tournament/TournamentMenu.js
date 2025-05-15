@@ -24,7 +24,7 @@ export class TournamentMenu extends HTMLElement {
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
     this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
-    this.navigateToResults = this.navigateToResults.bind(this);
+    this.navigateToOverview = this.navigateToOverview.bind(this);
   }
 
   async connectedCallback() {
@@ -32,7 +32,7 @@ export class TournamentMenu extends HTMLElement {
     if (!authStatus.success) {
       return;
     }
-    authStatus.response.tournament_id = '1234'; // For test
+    // authStatus.response.tournament_id = '1234'; // For test
     if (authStatus.response.tournament_id) {
       this.redirectToActiveTournament(authStatus.response.tournament_id);
       return;
@@ -46,8 +46,8 @@ export class TournamentMenu extends HTMLElement {
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
-    if (this.selectedTournament && this.selectedTournament.staus === 'finished') {
-      this.confirmButton?.removeEventListener('click', this.navigateToResults);
+    if (this.selectedTournament && this.selectedTournament.staus !== 'lobby') {
+      this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
   }
 
@@ -157,7 +157,9 @@ export class TournamentMenu extends HTMLElement {
       modalTitle.textContent = this.selectedTournament.tournament_name;
       modalRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants} players`;
 
-      this.confirmButton.classList.add('d-none');
+      this.confirmButton.textContent = 'Check progress';
+      this.confirmButton.disabled = false;
+      this.confirmButton.addEventListener('click', this.navigateToOverview);
       this.calcelButton.textContent = 'Close';
     },
     finished: () => {
@@ -175,15 +177,14 @@ export class TournamentMenu extends HTMLElement {
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
-      this.confirmButton.addEventListener('click', this.navigateToResults);
+      this.confirmButton.addEventListener('click', this.navigateToOverview);
       this.calcelButton.textContent = 'Close';
     },
   };
 
-  navigateToResults() {
+  navigateToOverview() {
     this.modal.hide();
-    // TODO: Activate after tournament result page is implemented
-    // router.navigate(`/tournament-result/${this.selectedTournament.tournament_id}`);
+    router.navigate(`/tournament-overview/${this.selectedTournament.tournament_id}`);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -236,9 +237,9 @@ export class TournamentMenu extends HTMLElement {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body"></div>
-          <div class="modal-footer border-0 my-2 px-4">
+          <div class="modal-footer border-0 my-2 px-5">
             <button type="button" class="cancel-button btn me-3" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="confirm-button btn btn-wood fw-bolder fs-5 ms-3" disabled></button>
+            <button type="button" class="confirm-button btn fw-bolder ms-2" disabled></button>
           </div>
         </div>
       </div>
