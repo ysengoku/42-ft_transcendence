@@ -107,7 +107,7 @@ class GameRoomConsumer(WebsocketConsumer):
                 )
 
             case _:
-                logger.info(
+                logger.warning(
                     "[GameRoom.receive]: user {%s} sent invalid action to the game room {%s}",
                     self.user.profile,
                     self.game_room_id,
