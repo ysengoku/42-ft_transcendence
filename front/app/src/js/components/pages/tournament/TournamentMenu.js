@@ -1,7 +1,8 @@
 import { Modal } from 'bootstrap';
 import { router } from '@router';
-import './components/index.js';
+import { auth } from '@auth';
 import { formatDateMDY } from '@utils';
+import './components/index.js';
 
 export class TournamentMenu extends HTMLElement {
   constructor() {
@@ -26,7 +27,16 @@ export class TournamentMenu extends HTMLElement {
     this.navigateToResults = this.navigateToResults.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      return;
+    }
+    authStatus.response.tournament_id = '1234'; // For test
+    if (authStatus.response.tournament_id) {
+      this.redirectToActiveTournament(authStatus.response.tournament_id);
+      return;
+    }
     this.render();
   }
 
@@ -39,6 +49,27 @@ export class TournamentMenu extends HTMLElement {
     if (this.selectedTournament && this.selectedTournament.staus === 'finished') {
       this.confirmButton?.removeEventListener('click', this.navigateToResults);
     }
+  }
+
+  redirectToActiveTournament(id) {
+    devLog('Active tournament session found. Redirect to the tournament', id);
+    const modalTemplate = document.createElement('template');
+    modalTemplate.innerHTML = this.modalTemplate();
+    const modalHeader = modalTemplate.content.querySelector('.modal-header');
+    const modalBody = modalTemplate.content.querySelector('.modal-body');
+    modalBody.innerHTML = this.redirectToOngoingTournamentTemplate();
+    const modalFooter = modalTemplate.content.querySelector('.modal-footer');
+    modalHeader.classList.add('d-none');
+    modalFooter.classList.add('d-none');
+    this.modalComponent = modalTemplate.content.querySelector('.modal');
+    document.body.appendChild(this.modalComponent);
+    this.modal = new Modal(this.modalComponent);
+
+    this.modal.show();
+    setTimeout(() => {
+      this.modal.hide();
+      router.navigate(`/tournament/${id}`);
+    }, 3000);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -236,6 +267,15 @@ export class TournamentMenu extends HTMLElement {
         <img class="avatar-m rounded-circle" id="tournament-winner-avatar" alt="Winner's avatar">
         <p class="fs-5" id="tournament-winner-alias"></p>
       </div>
+    </div>
+    `;
+  }
+
+  redirectToOngoingTournamentTemplate() {
+    return `
+    <div class="d-flex flex-column align-items-center px-4">
+      <p class="text-center m-0 mt-3">You have an active tournament session.</p>
+      <p class="text-center m-0 mb-3">Taking you there now!</p>
     </div>
     `;
   }
