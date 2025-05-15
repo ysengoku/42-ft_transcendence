@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.models import Prefetch
 from ninja import Field, Router, Schema
 from pydantic import validator
 
@@ -69,6 +70,13 @@ class Tournament(models.Model):
     def get_rounds(self):
         return self.rounds.all().prefetch_related('brackets')
 
+    def get_prefetched(self):
+        return Tournament.objects.prefetch_related(
+            Prefetch('tournament_participants',
+                     queryset=Participant.objects.select_related('user__user')),
+            Prefetch('tournament_rounds',
+                     queryset=Round.objects.prefetch_related('brackets'))
+        ).get(pk=self.pk)
     # def return_tournaments(self):
     #     return self.tournament.all()
 
