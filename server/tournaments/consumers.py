@@ -255,16 +255,11 @@ class TournamentConsumer(WebsocketConsumer):
             return
 
     def start_round(self, data):
-        tournament = self.tournaments[self.tournament_id]
-        current_round = len(tournament['rounds']) + 1
+        tournament = Tournament.objects.get(id=self.tournament_id)
 
-        brackets = self.generate_brackets(tournament['participants'])
+        new_round = Round.objects.create(tournament=tournament)
 
-        tournament['rounds'].append({
-            'number': current_round,
-            'brackets': brackets,
-            'status': 'ongoing'
-        })
+        brackets = self.generate_brackets(tournament.participants.all())
 
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
@@ -272,11 +267,35 @@ class TournamentConsumer(WebsocketConsumer):
                 'type': 'tournament.broadcast',
                 'action': 'round_start',
                 'data': {
-                    'round_number': current_round,
+                    'round_number': new_round.number,
                     'brackets': brackets
                 }
             }
         )
+
+    # def start_round(self, data):
+    #     tournament = self.tournaments[self.tournament_id]
+    #     current_round = len(tournament['rounds']) + 1
+    #
+    #     brackets = self.generate_brackets(tournament['participants'])
+    #
+    #     tournament['rounds'].append({
+    #         'number': current_round,
+    #         'brackets': brackets,
+    #         'status': 'ongoing'
+    #     })
+    #
+    #     async_to_sync(self.channel_layer.group_send)(
+    #         f"tournament_{self.tournament_id}",
+    #         {
+    #             'type': 'tournament.broadcast',
+    #             'action': 'round_start',
+    #             'data': {
+    #                 'round_number': current_round,
+    #                 'brackets': brackets
+    #             }
+    #         }
+    #     )
 
     def tournament_broadcast(self, event):
         self.send(text_data=json.dumps({
