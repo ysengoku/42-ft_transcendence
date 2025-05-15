@@ -67,18 +67,28 @@ def create_tournament(request, data: TournamentCreateSchema):
     "/{tournament_id}",
     response={
         200: TournamentSchema,
-        400: MessageSchema,
+        # 400: MessageSchema,
         404: MessageSchema
     }
 )
 def get_tournament(request, tournament_id: UUID):
     try:
-        tournament = Tournament.objects.get(id=tournament_id)
+        tournament = Tournament.objects.select_related(
+            'creator__profile__user'
+        ).get(id=tournament_id).get_prefetched()
         return 200, tournament
-    except ValueError:
-        return 400, {"msg": "Invalid tournament id format"}
     except Tournament.DoesNotExist:
         return 404, {"msg": "Tournament not found"}
+
+#
+# def get_tournament(request, tournament_id: UUID):
+#     try:
+#         tournament = Tournament.objects.get(id=tournament_id)
+#         return 200, tournament
+#     except ValueError:
+#         return 400, {"msg": "Invalid tournament id format"}
+#     except Tournament.DoesNotExist:
+#         return 404, {"msg": "Tournament not found"}
 
 
 @tournaments_router.get("/", response=TournamentSchema)
