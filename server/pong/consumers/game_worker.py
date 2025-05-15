@@ -9,6 +9,7 @@ from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
 logger = logging.getLogger("server")
+logging.getLogger("asyncio").setLevel(logging.WARNING)
 #### CONSTANTS ####
 WALL_LEFT_X = 10
 WALL_RIGHT_X = -WALL_LEFT_X
@@ -378,7 +379,7 @@ class GameConsumer(AsyncConsumer):
         )
 
         if not match.get_players_based_on_connection(PlayerConnectionState.CONNECTED):
-            self._end_match(game_room_id)
+            self._cleanup_match(game_room_id)
             # TODO: add the match result to the db
             logger.info("[GameWorker]: no players are left in the game {%s}. Closing", game_room_id)
 
@@ -436,7 +437,7 @@ class GameConsumer(AsyncConsumer):
             await asyncio.sleep(5)
             match = self.matches[game_room_id]
             if len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) < PLAYERS_REQUIRED:
-                self._end_match(game_room_id)
+                self._cleanup_match(game_room_id)
                 await self.channel_layer.group_send(self._to_group_name(game_room_id), {"type": "game_cancelled"})
                 logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", game_room_id)
 
@@ -454,7 +455,7 @@ class GameConsumer(AsyncConsumer):
                 await asyncio.sleep(0.2)
                 player.reconnection_time -= 0.2
                 logger.info(
-                    "[GameWorker]: {%s} seconds left for player {%s}",
+                    "[GameWorker]: {%.1f} seconds left for player {%s}",
                     player.reconnection_time,
                     player.id,
                 )
@@ -466,7 +467,7 @@ class GameConsumer(AsyncConsumer):
                 )
                 return
 
-            self._end_match(match)
+            self._cleanup_match(match)
 
             # TODO: move this line to ._end_match(), refactor it to accept match directly
             match.state = PongMatchState.ENDED
@@ -488,7 +489,7 @@ class GameConsumer(AsyncConsumer):
         except asyncio.CancelledError:
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
 
-    def _end_match(self, game_room_id: str):
+    def _cleanup_match(self, game_room_id: str):
         """Cleans up after the match. Stops its game loop, removes from `matches` and `tasks` dicts."""
         match_task = self.matches_tasks.get(game_room_id)
         if match_task and not match_task.cancelled():
