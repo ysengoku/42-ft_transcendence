@@ -6,6 +6,7 @@ import { TournamentRoundStart } from './TournamentRoundStart';
 import { TournamentRoundWaiting } from './TournamentRoundWaiting';
 import { TournamentRoundFinished } from './TournamentRoundFinished';
 import { TournamentCanceled } from './TournamentCanceled';
+import { TournamentOverviewFinished } from './OverviewFinished';
 
 export {
 	TournamentList,
@@ -16,4 +17,5 @@ export {
 	TournamentRoundWaiting,
 	TournamentRoundFinished,
 	TournamentCanceled,
+	TournamentOverviewFinished,
 };

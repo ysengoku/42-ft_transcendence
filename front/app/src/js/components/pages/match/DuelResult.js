@@ -106,7 +106,7 @@ export class DuelResult extends HTMLElement {
           <div class="mb-3" id="duel-loser"></div>
         </div>
         <div class="d-flex flex-row justify-content-center mt-5 gap-4" id="game-result-cta-buttons">
-          <button class="btn btn-wood" id="go-to-home-button">Go to Home</button>
+          <button class="btn btn-wood" id="go-to-home-button">Go to Saloon</button>
           <button class="btn btn-wood" id="go-to-profile-button">See my profile</button>
         </div>
       </div>

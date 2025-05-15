@@ -47,7 +47,7 @@ export class Error extends HTMLElement {
         </div>
         <div class="d-flex flex-row justify-content-center align-items-center mt-2 mb-4">
           <i class="bi bi-arrow-left fw-bold"></i>
-          <a class="btn fw-bold" href="/home" role="button">Go back to Home</a>
+          <a class="btn fw-bold" href="/home" role="button">Go back to Saloon</a>
         </div>
       </div>
 	  `;
