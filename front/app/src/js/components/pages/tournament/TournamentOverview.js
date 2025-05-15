@@ -47,19 +47,17 @@ export class TournamentOverview extends HTMLElement {
     this.tournamentWinnerAvatar = this.querySelector('#tournament-winner-avatar');
     this.tournamentWinnerAlias = this.querySelector('#tournament-winner-alias');
     this.tournamentOverviewContent = this.querySelector('#tournament-overview-content');
-    let content = null;
 
     this.tournamentName.textContent = this.#state.tournament.name;
     this.#state.tournament.status === 'ongoing' ? (
       this.tournamentStatus.textContent = 'Ongoing',
-      this.tournamentWinnerWrapper.classList.add('d-none'),
-      content = document.createElement('tournament-overview-ongoing')
+      this.tournamentWinnerWrapper.classList.add('d-none')
     ) : (
       this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`,
       this.tournamentWinnerAvatar.src = this.#state.tournament.winner.user.avatar,
-      this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias,
-      content = document.createElement('tournament-overview-finished')
+      this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias
     );
+    const content = document.createElement('tournament-overview-rounds');
     content.data = {rounds: this.#state.tournament.rounds, status: this.#state.tournament.status};
     this.tournamentOverviewContent.appendChild(content);
   }
@@ -69,7 +67,7 @@ export class TournamentOverview extends HTMLElement {
     <div class="container">
       <div class="row justify-content-center py-4">
         <div class="form-container col-12 col-xl-10 p-3">
-          <div class="d-flex flex-column justify-content-center align-items-center w-100 px-4 mb-4">
+          <div class="d-flex flex-column justify-content-center align-items-center w-100 px-4 my-3">
             <h2 class="text-center m-0 pt-2 w-100" id="tournament-name"></h2>
             <p class="text-center m-0 mb-3 w-100" id="tournament-status"></p>
 
@@ -84,7 +82,7 @@ export class TournamentOverview extends HTMLElement {
 
           <div id="tournament-overview-content"></div>
           
-          <div class="d-flex flex-row justify-content-center mt-5">
+          <div class="d-flex flex-row justify-content-center mt-4">
             <a href="/tournament-menu" class="btn">
               <i class="bi bi-arrow-left"></i>
               Back to Tournament menu
