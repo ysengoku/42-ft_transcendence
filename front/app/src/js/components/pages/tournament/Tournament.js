@@ -1,7 +1,6 @@
-import { fetchAuthStatus } from '@auth';
+import { auth } from '@auth';
 import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 import { mockRoundStartData } from '@mock/functions/mockTournamentWs';
-import { auth } from '../../../auth/authManager';
 
 export class Tournament extends HTMLElement {
   #state = {
@@ -28,17 +27,13 @@ export class Tournament extends HTMLElement {
 
   async setParam(param) {
     if (!param.id) {
-      const authCheck = await auth.fetchAuthStatus();
-      if (!authCheck.success) {
-        // get tournament id from auth data
-      } else {
-        const notFound = document.createElement('page-not-found');
-        this.innerHTML = notFound.outerHTML;
-        return;
-      }
+      const notFound = document.createElement('page-not-found');
+      this.innerHTML = notFound.outerHTML;
+      return;
     }
     this.#state.tournamentId = param.id;
     await this.fetchTournamentData();
+    // TODO: open ws for this tournament
   }
   
   async fetchTournamentData() {
