@@ -83,7 +83,8 @@ class Ball(Vector2):
 class PongMatch:
     """
     Pong engine. Stores, advances and modifies the state of the game.
-    It's the base class designed to be pure and not coupled with the code related Django channels.
+    It's the base class designed to be pure and not coupled with the code related to async or Django channels.
+    Can be plugged into any engine.
     """
 
     id: str = "No id"
@@ -141,6 +142,37 @@ class PongMatch:
 
             current_subtick += 1
 
+    def as_dict(self):
+        """
+        Serializes the game state as Python dict for using it for some other purpose, like rendering or sending
+        through websockets.
+        """
+        return {
+            "bumper_1": {"x": self._bumper_1.x, "z": self._bumper_1.z},
+            "bumper_2": {"x": self._bumper_2.x, "z": self._bumper_2.z},
+            "ball": {
+                "x": self._ball.x,
+                "z": self._ball.z,
+                "velocity": {"x": self._ball.velocity.x, "z": self._ball.velocity.z},
+            },
+            "scored_last": self._scored_last.id if self._scored_last else None,
+            "is_someone_scored": self._is_someone_scored,
+        }
+
+    def handle_input(self, player_id: str, action: str, content: bool):
+        if player_id == self._bumper_1.player.id:
+            bumper = self._bumper_1
+        elif player_id == self._bumper_2.player.id:
+            bumper = self._bumper_2
+        else:
+            return
+
+        match action:
+            case "move_left":
+                bumper.moves_left = content
+            case "move_right":
+                bumper.moves_right = content
+
     def add_player(self, player_id: str):
         """
         Adds player to the players dict.
@@ -178,34 +210,6 @@ class PongMatch:
         if player_id == self._bumper_1.player.id:
             return self._bumper_1.player
         return self._bumper_2.player
-
-    def as_dict(self):
-        """Converts current state of the pong to the dict for purposes like sending over websocket connection."""
-        return {
-            "bumper_1": {"x": self._bumper_1.x, "z": self._bumper_1.z},
-            "bumper_2": {"x": self._bumper_2.x, "z": self._bumper_2.z},
-            "ball": {
-                "x": self._ball.x,
-                "z": self._ball.z,
-                "velocity": {"x": self._ball.velocity.x, "z": self._ball.velocity.z},
-            },
-            "scored_last": self._scored_last.id if self._scored_last else None,
-            "is_someone_scored": self._is_someone_scored,
-        }
-
-    def handle_input(self, player_id: str, action: str, content: bool):
-        if player_id == self._bumper_1.player.id:
-            bumper = self._bumper_1
-        elif player_id == self._bumper_2.player.id:
-            bumper = self._bumper_2
-        else:
-            return
-
-        match action:
-            case "move_left":
-                bumper.moves_left = content
-            case "move_right":
-                bumper.moves_right = content
 
     def _reset_ball(self, direction: int):
         self._ball.temporal_speed.x, self._ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
@@ -435,7 +439,8 @@ class GameConsumer(AsyncConsumer):
 
             if match.state == PongMatchState.ENDED:
                 return logger.warning(
-                    "[GameWorker]: players didn't reconnect to non-existent or ended game {%s}. Closing", match,
+                    "[GameWorker]: players didn't reconnect to non-existent or ended game {%s}. Closing",
+                    match,
                 )
 
             self._cleanup_match(match)
@@ -499,6 +504,7 @@ class GameConsumer(AsyncConsumer):
             match_task.cancel()
         self.matches.pop(match_id, None)
 
+    ### Functions for managing timer and pause. ###
     def _start_waiting_for_players_timer(self, match_id: str):
         self.timer_tasks[self._to_waiting_for_players_timer_name(match_id)] = asyncio.create_task(
             self._wait_for_both_player(match_id),
