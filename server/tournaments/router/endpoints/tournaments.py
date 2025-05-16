@@ -69,7 +69,6 @@ def create_tournament(request, data: TournamentCreateSchema):
     "/{tournament_id}",
     response={
         200: TournamentSchema,
-        # 400: MessageSchema,
         404: MessageSchema
     }
 )
@@ -85,16 +84,6 @@ def get_tournament(request, tournament_id: UUID):
     except Tournament.DoesNotExist:
         return 404, {"msg": "Tournament not found"}
 
-#
-# def get_tournament(request, tournament_id: UUID):
-#     try:
-#         tournament = Tournament.objects.get(id=tournament_id)
-#         return 200, tournament
-#     except ValueError:
-#         return 400, {"msg": "Invalid tournament id format"}
-#     except Tournament.DoesNotExist:
-#         return 404, {"msg": "Tournament not found"}
-
 
 @tournaments_router.get("/", response={200: list[TournamentSchema], 204: None})
 def get_all_tournaments(request):
@@ -109,19 +98,24 @@ def get_all_tournaments(request):
     return 200, tournaments
 
 
-# @tournaments_router.get("/", response={200: list[TournamentSchema], 204: None})
-# def get_all_tournaments(request):
-#     tournaments = Tournament.objects.prefetch_related(
-#         "tournament_rounds__brackets",
-#         "tournament_participants__user__profile"
-#     ).all()
-#     if not tournaments.exists():
-#         return 204, None
-#     return 200, [TournamentSchema.from_orm(t) for t in tournaments]
+@tournaments_router.delete(
+    "/{tournament_id}",
+    response={204: None, 401: MessageSchema,
+              403: MessageSchema, 404: MessageSchema},
+)
+def delete_tournament(request, tournament_id: UUID):
+    user = request.auth
+    if not user:
+        raise HttpError(401, "Authentication required")
 
+    try:
+        tournament = Tournament.objects.get(id=tournament_id)
+    except Tournament.DoesNotExist:
+        raise HttpError(404, "Tournament not found")
 
-# @tournaments_router.get("/", response=TournamentSchema)
-# def get_all_tournaments(request):
-#     tournaments = Tournament.objects.prefetch_related(
-#         'tournament_rounds', 'tournament_participants').all()
-#     return tournaments
+    # Seul le créateur peut supprimer le tournoi
+    if tournament.creator != user:
+        raise HttpError(403, "You are not allowed to delete this tournament.")
+
+    tournament.delete()
+    return 204, None
