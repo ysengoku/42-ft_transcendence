@@ -17,6 +17,9 @@ class RoundSchema(ModelSchema):
         model = Round
         model_fields = ["number", "status"]
 
+    @staticmethod
+    def resolve_brackets(obj: Round):
+        return [BracketSchema.from_orm(b) for b in obj.brackets.all()]
     # status: str
 
 
@@ -56,10 +59,14 @@ class TournamentSchema(ModelSchema):
         model = Tournament
         model_fields = ["id", "name", "status",
                         "date", "required_participants"]
+        model_fields_rename = {
+            "id": "tournament_id",
+            "name": "tournament_name"
+        }
 
     @staticmethod
-    def resolve_creator(obj: Tournament):
-        return ProfileMinimalSchema.from_orm(obj.creator.profile)
+    def resolve_creator(obj: Tournament) -> dict:
+        return ProfileMinimalSchema.from_orm(obj.creator.profile.user).dict()
 
     @staticmethod
     def resolve_rounds(obj: Tournament):
@@ -74,49 +81,3 @@ class TournamentSchema(ModelSchema):
             ParticipantSchema.from_orm(p)
             for p in obj.tournament_participants.all()
         ]
-
-
-# class TournamentSchema(Schema):
-#     creator: ProfileMinimalSchema
-#     tournament_id: UUID
-#     tournament_name: str
-#     required_participants: int
-#     status: str
-#     participants: list["ParticipantSchema"]
-#     rounds: list["RoundSchema"]
-#
-#     # class Config:
-#     #     model = Tournament
-#     #     model_fields = ["id", "name", "status",
-#     #                     "date", "required_participants"]
-#
-#     @staticmethod
-#     def resolve_creator(obj: Tournament) -> dict:
-#         return {
-#             "user.username": obj.creator.username,
-#             "user.nickname": obj.creator.nickname,
-#             "avatar": obj.creator.profile.avatar.url if obj.creator.profile.avatar else settings.DEFAULT_USER_AVATAR,
-#             "elo": obj.creator.profile.elo,
-#             "is_online": obj.creator.profile.is_online,
-#         }
-#
-#     @staticmethod
-#     def resolve_rounds(obj: Tournament) -> list:
-#         return [
-#             RoundSchema.from_orm(r).dict()
-#             for r in obj.rounds.all().prefetch_related("brackets")
-#         ]
-#
-#     @staticmethod
-#     def resolve_participants(obj: Tournament) -> list:
-#         return [
-#             ParticipantSchema.from_orm(p).dict()
-#             for p in obj.participants.all().select_related("user")
-#         ]
-#
-#     @staticmethod
-#     def resolve_winner(obj: Tournament):
-#         return obj.winner
-#
-        # TournamentSchema.update_forward_refs()
-        # RoundSchema.update_forward_refs()
