@@ -4,13 +4,15 @@ from uuid import UUID
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.exceptions import ValidationError
+from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
 from common.schemas import MessageSchema, ProfileMinimalSchema
-from tournaments.models import (Tournament, TournamentCreatedSchema,
+from tournaments.models import (Participant, Round, Tournament,
+                                TournamentCreatedSchema,
                                 TournamentCreateSchema)
 from tournaments.schemas import TournamentSchema
 from users.router.utils import _create_json_response_with_tokens
@@ -94,6 +96,32 @@ def get_tournament(request, tournament_id: UUID):
 #         return 404, {"msg": "Tournament not found"}
 
 
-@tournaments_router.get("/", response=TournamentSchema)
+@tournaments_router.get("/", response={200: list[TournamentSchema], 204: None})
 def get_all_tournaments(request):
-    return ("coucou")
+    tournaments = Tournament.objects.prefetch_related(
+        Prefetch('tournament_rounds',
+                 queryset=Round.objects.prefetch_related('brackets')),
+        Prefetch('tournament_participants',
+                 queryset=Participant.objects.select_related('user'))
+    ).all()
+    if not tournaments.exists():
+        return 204, None
+    return 200, tournaments
+
+
+# @tournaments_router.get("/", response={200: list[TournamentSchema], 204: None})
+# def get_all_tournaments(request):
+#     tournaments = Tournament.objects.prefetch_related(
+#         "tournament_rounds__brackets",
+#         "tournament_participants__user__profile"
+#     ).all()
+#     if not tournaments.exists():
+#         return 204, None
+#     return 200, [TournamentSchema.from_orm(t) for t in tournaments]
+
+
+# @tournaments_router.get("/", response=TournamentSchema)
+# def get_all_tournaments(request):
+#     tournaments = Tournament.objects.prefetch_related(
+#         'tournament_rounds', 'tournament_participants').all()
+#     return tournaments
