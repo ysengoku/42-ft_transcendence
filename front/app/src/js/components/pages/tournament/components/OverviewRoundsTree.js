@@ -1,6 +1,6 @@
 import { BREAKPOINT } from '@utils';
 
-export class TournamentOverviewRounds extends HTMLElement {
+export class TournamentOverviewTree extends HTMLElement {
   #state = {
     rounds: null,
   }
@@ -11,8 +11,7 @@ export class TournamentOverviewRounds extends HTMLElement {
   }
 
   set data(data) {
-    this.#state.status = data.status;
-    this.#state.rounds = data.rounds;
+    this.#state.rounds = data;
     this.render();
   }
 
@@ -170,29 +169,11 @@ export class TournamentOverviewRounds extends HTMLElement {
       height: 0;
       border-top: 1.5px solid var(--bs-body-color);
     }
-    .bracket-player {
-      background-color: rgba(var(--bs-body-bg-rgb), 0.6);
-      border-radius: .4rem;
-      margin-top: .1rem;
-      margin-bottom: .1rem;
-    }
-    .bracket-player-winner {
-      .bracket-player {
-        background-color: var(--pm-primary-500);
-      }
-      .player-alias {
-        color: var(--pm-primary-100);
-      }
-    }
-    .player-alias {
-      font-size: 0.8rem;
-      min-width: 96px;
-    }
     .player-score {
       width: 1.5rem;
       margin-left: 0.1rem !important;
     }
-    @media (max-width: ${BREAKPOINT.MD}px) {
+    @media (max-width: ${BREAKPOINT.LG}px) {
       .player-avatar {
         display: none;
       }
@@ -226,4 +207,4 @@ export class TournamentOverviewRounds extends HTMLElement {
   }
 }
 
-customElements.define('tournament-overview-rounds', TournamentOverviewRounds);
+customElements.define('tournament-overview-tree', TournamentOverviewTree);
