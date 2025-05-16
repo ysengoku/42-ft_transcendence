@@ -14,9 +14,15 @@ export class DropdownMenu extends HTMLElement {
     this.handleThemeChange = this.handleThemeChange.bind(this);
   }
 
-  setLoginStatus(value) {
+  async setLoginStatus(value) {
     this.#state.isLoggedIn = value;
     this.#state.user = auth.getStoredUser();
+    if (this.#state.isLoggedIn && !this.#state.user) {
+      this.#state.user = await auth.getUser();
+      if (!this.#state.user) {
+        this.#state.isLoggedIn = false;
+      }
+    }
     this.render();
   }
 
