@@ -121,7 +121,7 @@ export class Game extends HTMLElement {
     cylinderMesh.castShadow = true;
     scene.add(cylinderMesh);
     const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
-    const velocity = new THREE.Vector3(0.001, 0, 0);
+    const velocity = new THREE.Vector3(0.01, 0, 0);
     let lenghtHalf = 0.25;
 
     return ({
@@ -325,9 +325,8 @@ export class Game extends HTMLElement {
         Ball.velocity.x = Math.max(Math.abs(Ball.velocity.x), 0.05) * Math.sign(Ball.velocity.x);
         if (bumper.dir_z == 1 && bounce_angle_radians >= 0.92 || bounce_angle_radians <= -0.92)
           sideBump++;
-        else if (bumper.dir_z == 1)
-          sideBump = 0;
-        console.log(bounce_angle_radians);
+        // else if (bumper.dir_z == 1)
+        //   sideBump = 0;
         if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
             Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
@@ -350,7 +349,6 @@ export class Game extends HTMLElement {
     function resetBall(direction) {
         if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE)
         {
-          console.log("aaaa");
           if (Bumpers[0].score == MAX_SCORE)
           {
             loadedFontP1.position.x = 9;
@@ -385,16 +383,18 @@ export class Game extends HTMLElement {
     let calculatedBumperPos = Bumpers[1].cubeMesh.position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
+    let i = 0;
 
     function moveAiBumper(calculatedPos) {
       keyMap["KeyA"] = false;
       keyMap["KeyD"] = false;
-      if (calculatedBumperPos.x <= calculatedPos.x )
+      i++;
+      if (calculatedBumperPos.x < calculatedPos.x && i % 2 == 0)
       {
         keyMap["KeyA"] = true;
         calculatedBumperPos.x += bumperP2Subtick;
       }
-      else if (calculatedBumperPos.x >= calculatedPos.x )
+      else if (calculatedBumperPos.x > calculatedPos.x && i % 2 == 0)
       {
         keyMap["KeyD"] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
@@ -406,57 +406,65 @@ export class Game extends HTMLElement {
     let isCalculationNeeded = true;
     let choosePos;
     let sideBump = 0;
+    let closeness = 0;
+    let difficultyLvl = 10;
+    // let i = 0;
 
     function handleAiBehavior (BallPos, BallVelocity){
     //better calculation to put here
-    // posToGoTo = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
+    closeness = (BallPos.z - calculatedBumperPos.z) / 18; //-((BallPos.z - calculatedBumperPos.z)) / ((18 - BUMPER_1_BORDER) - BUMPER_2_BORDER);
+    let error = difficultyLvl * closeness;
     if (isCalculationNeeded)
     {
+      // console.log(closeness);
       ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
       let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);;
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
-      while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf)
+      if (BallPredictedVelocity.z > 0)
       {
-        let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * BallPredictedVelocity.x);
-        if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-          ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
-          BallPredictedVelocity.x *= -1;
+        while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf)
+        {
+          let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * BallPredictedVelocity.x);
+          if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
+            ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+            BallPredictedVelocity.x *= -1;
+          }
+          if (ballPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
+            ballPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+            BallPredictedVelocity.x *= -1;
+          }
+          ballPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
+          ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
         }
-        if (ballPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-          ballPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
-          BallPredictedVelocity.x *= -1;
-        }
-        ballPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
-        ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
       }
       isCalculationNeeded = false;
-      // console.log(ballPredictedPos.x);
-      // if ()
-      // {
+      
+      let timeooutId = setTimeout(() => {
+        if (BallVelocity.z > 0)
+        {
+          isCalculationNeeded = true;
+          clearTimeout(timeooutId);
+        }
 
-      // }
-      if (BallVelocity.z >= 0.38 || sideBump > 2)
-          choosePos = Math.floor(Math.random() * 1);
-      else
-        choosePos = 2;
-      if (choosePos == 0)
-        ballPredictedPos.x -= Math.random() * 3.2;
-      else if (choosePos == 1)
-        ballPredictedPos.x += Math.random() * 3.2;
+      }, 500);
+
+      ballPredictedPos.x += (-error + (Math.round(Math.random()) * (error - (-error))));
+      // console.log(ballPredictedPos.x);
     }
-    // if (BallPos.z >= 0)
-    //   posToGoTo.x = ballPredictedPos.x;
-    // else
-    //   posToGoTo.x = BallPos.x;
+    // i++;
+    // if (i % 500 == 0)
+    // {
+    //   console.log(error);
+    // }
     if (choosePos == 2)
     {
-      let choosePos = Math.floor(Math.random() * 1);
-      if (choosePos == 0)
-        ballPredictedPos.x = BallPos.x + 1;
-      else
+      if (ballPredictedPos.x >= Bumpers[1].cubeMesh.position.x + 1 && ballPredictedPos.x <= Bumpers[1].cubeMesh.position.x + 2)
         ballPredictedPos.x = BallPos.x - 1;
+      else
+        ballPredictedPos.x = BallPos.x + 1;
+      // console.log(ballPredictedPos.x - BallPos.x);
     }
-    if (!isMovementDone && ((BallPos.z >= 0 && (choosePos != 2)) || (choosePos == 2)))
+    if (!isMovementDone)
       moveAiBumper(ballPredictedPos); //posToGoTo
     else
     {
@@ -561,10 +569,14 @@ export class Game extends HTMLElement {
           if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
               Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
               Ball.velocity.x *= -1;
+              if (lastBumperCollided == 0)
+                isCalculationNeeded = true;
           }
           if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
               Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
               Ball.velocity.x *= -1;
+              if (lastBumperCollided == 0)
+                isCalculationNeeded = true;
           }
           if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
             lastBumperCollided = 0;
@@ -575,12 +587,12 @@ export class Game extends HTMLElement {
           else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
               lastBumperCollided = 1;
               isMovementDone = true;
-              // sideBump = false;
               calculateNewDir(Bumpers[1]);
           }
           if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
               isMovementDone = true;
               Bumpers[0].score++;
+              sideBump = 0;
               resetBall(-1);
           }
           else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
@@ -655,7 +667,7 @@ export class Game extends HTMLElement {
       if (keyCode == "KeyR")
       {
         stop();
-        resetBall(-1);
+        resetBall(1);
         let i = 0;
         while (i <= 5)
           Workers[i++].terminate();
@@ -673,11 +685,11 @@ export class Game extends HTMLElement {
           i++;
         }
         loadedFontP1.position.x = 100;
+        loadedFontP2.position.x = 100;
         keyMap["KeyD"] = false;
         keyMap["KeyA"] = false;
         keyMap["ArrowRight"] = false;
         keyMap["ArrowLeft"] = false;
-        loadedFontP2.position.x = 100;
 
         gamePlaying = true;
         initGame();
@@ -688,7 +700,7 @@ export class Game extends HTMLElement {
       if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
         return; // Do noplayerglb if the event was already processed
       }
-      console.log("oui");
+      // console.log("oui");
       var keyCode = event.code;
       keyMap[keyCode] = false;
       event.preventDefault();
