@@ -109,7 +109,9 @@ class Participant(models.Model):
 
 class Round(models.Model):
     tournament = models.ForeignKey(
-        Tournament, on_delete=models.CASCADE, related_name="tournament_rounds"
+        Tournament,
+        on_delete=models.CASCADE,
+        related_name="tournament_rounds"
     )
     number = models.PositiveIntegerField(editable=False)
     status = models.CharField(
@@ -118,6 +120,11 @@ class Round(models.Model):
                  ("finished", "Finished")],
         default="start",
     )
+    # brackets = models.ForeignKey(
+    #     "Bracket",
+    #     on_delete=models.CASCADE,
+    #     related_name='round_brackets'
+    # )
 
     class Meta:
         unique_together = ("tournament", "number")
@@ -135,7 +142,7 @@ class Bracket(models.Model):
     ]
 
     round = models.ForeignKey(
-        Round, on_delete=models.CASCADE, related_name="brackets")
+        Round, on_delete=models.CASCADE, related_name="rounds")
     participant1 = models.ForeignKey(
         Participant, on_delete=models.CASCADE, related_name="brackets_p1"
     )
