@@ -46,7 +46,7 @@ export async function mockTournamentDetail(id) {
       rounds: [
         {
           number: 1,
-          status: 'finished',
+          status: 'ongoing',
           brackets: [
             {
               game_id: 'game1',
@@ -85,7 +85,7 @@ export async function mockTournamentDetail(id) {
               },
               round: 1,
               status: 'finished',
-              score_p1: 10,
+              score_p1: 15,
               score_p2: 5
             },
             {
@@ -127,7 +127,7 @@ export async function mockTournamentDetail(id) {
                   is_online: true
                 },
                 alias: 'DirtyHarry',
-                status: 'winner',
+                status: 'eliminated',
               },
               participant2: {
                 user: {
@@ -138,7 +138,7 @@ export async function mockTournamentDetail(id) {
                   is_online: true
                 },
                 alias: 'CactusJack',
-                status: 'eliminated',
+                status: 'winner',
               },
               winner: {
                 user: {
@@ -148,12 +148,12 @@ export async function mockTournamentDetail(id) {
                   elo: 1350,
                   is_online: true
                 },
-                alias: 'DirtyHarry',
+                alias: 'CactusJack',
               },
               round: 1,
               status: 'finished',
               score_p1: 2,
-              score_p2: 1
+              score_p2: 15
             },
             {
               game_id: 'game4',
@@ -191,7 +191,7 @@ export async function mockTournamentDetail(id) {
               },
               round: 1,
               status: 'finished',
-              score_p1: 2,
+              score_p1: 15,
               score_p2: 0
             }
           ]
@@ -216,7 +216,155 @@ export async function mockTournamentDetail(id) {
           alias: 'Rustler', status: 'eliminated', round: 1 }
       ],
       'required_participants': 8
+    },
+    mockidongoing2: {
+      id: 'mockidongoing2',
+      name: 'Spring Championship',
+      status: 'ongoing',
+      creator: {
+        username: 'pedro',
+        nickname: 'Pedro',
+        avatar: '/__mock__/img/sample-pic3.png',
+        elo: 2000,
+        is_online: true
       },
+      winner: {},
+      date: '2025-05-09T11:43:42.045Z',
+      rounds: [
+        {
+          number: 1,
+          status: 'finished',
+          brackets: [
+            {
+              game_id: 'game1',
+              participant1: {
+                user: {
+                  username: 'user1',
+                  nickname: 'MidnightRider',
+                  avatar: '/__mock__/img/sample-pic3.png',
+                  elo: 1500,
+                  is_online: false
+                },
+                alias: 'MidnightRider',
+                status: 'winner',
+              },
+              participant2: {
+                user: {
+                  username: 'user2',
+                  nickname: 'Player Two',
+                  avatar: '/__mock__/img/sample-pic3.png',
+                  elo: 1400,
+                  is_online: true
+                },
+                alias: 'Lone Cactus',
+                status: 'eliminated',
+              },
+              winner: {
+                user: {
+                  username: 'user1',
+                  nickname: 'MidnightRider',
+                  avatar: '/__mock__/img/sample-pic2.png',
+                  elo: 1500,
+                  is_online: false
+                },
+                alias: 'MidnightRider',
+                status: 'winner',
+              },
+              round: 1,
+              status: 'finished',
+              score_p1: 15,
+              score_p2: 5
+            },
+            {
+              game_id: 'game2',
+              participant1: {
+                user: {
+                  username: 'user3',
+                  nickname: 'Player Three',
+                  avatar: '/__mock__/img/sample-pic3.png',
+                  elo: 1450,
+                  is_online: true
+                },
+                status: 'eliminated',
+                alias: 'LazyFox',
+              },
+              participant2: {
+                user: {
+                  username: 'user4',
+                  nickname: 'Player Four',
+                  avatar: '/__mock__/img/sample-pic2.png',
+                  elo: 1300,
+                  is_online: false
+                },
+                status: 'winner',
+                alias: 'DuskDevil',
+              },
+              winner: {
+                user: {
+                  username: 'user4',
+                  nickname: 'Player Four',
+                  avatar: '/__mock__/img/sample-pic2.png',
+                  elo: 1300,
+                  is_online: false
+                },
+                alias: 'DuskDevil',
+              },
+              round: 1,
+              status: 'ongoing',
+              score_p1: 7,
+              score_p2: 15
+            },
+          ]
+        },
+        {
+          number: 2,
+          status: 'ongoing',
+          brackets: [
+            {
+              game_id: 'game1',
+              participant1: {
+                user: {
+                  username: 'user1',
+                  nickname: 'MidnightRider',
+                  avatar: '/__mock__/img/sample-pic3.png',
+                  elo: 1500,
+                  is_online: false
+                },
+                alias: 'MidnightRider',
+                status: '',
+              },
+              participant2: {
+                user: {
+                  username: 'user2',
+                  nickname: 'Player Two',
+                  avatar: '/__mock__/img/sample-pic3.png',
+                  elo: 1400,
+                  is_online: true
+                },
+                alias: 'DuskDevil',
+                status: '',
+              },
+              winner: {},
+              round: 2,
+              status: 'ongoing',
+              score_p1: 5,
+              score_p2: 5
+            },
+          ]
+        },
+      ],
+      participants: [
+        { user: { username: 'user1', nickname: 'MidnightRider', avatar: '/__mock__/img/sample-pic3.png', elo: 1500, is_online: false },
+          alias: 'MidnightRider', status: 'active', round: 2 },
+        { user: { username: 'user2', nickname: 'Player Two', avatar: '/__mock__/img/sample-pic3.png', elo: 1400, is_online: true },
+          alias: 'Lone Cactus', status: 'eliminated', round: 1 },
+        { user: { username: 'user3', nickname: 'Player Three', avatar: '/__mock__/img/sample-pic2.png', elo: 1450, is_online: true },
+          alias: 'LazyFox', status: 'active', round: 2 },
+        { user: { username: 'user4', nickname: 'Player Four', avatar: '/__mock__/img/sample-pic3.png', elo: 1300, is_online: false },
+          alias: 'DuskDevil', status: 'eliminated', round: 1 },
+      ],
+      'required_participants': 4
+    },
 	  mockidfinished: {
       id: 'mockidfinished',
       name: 'Spring Championship',

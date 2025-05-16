@@ -1,4 +1,5 @@
 import { formatDateMDY } from '@utils';
+import { isMobile } from '@utils';
 import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 
 export class TournamentOverview extends HTMLElement {
@@ -6,6 +7,7 @@ export class TournamentOverview extends HTMLElement {
     tournament_id: '',
     status: '', // ongoing, finished
     tournament: null,
+    isMobile: false,
   }
 
   constructor() {
@@ -17,6 +19,9 @@ export class TournamentOverview extends HTMLElement {
     this.tournamentWinnerAvatar = null;
     this.tournamentWinnerAlias = null;
     this.tournamentOverviewContent = null;
+
+    this.#state.isMobile = isMobile();
+    this.handleResize = this.handleResize.bind(this);
   }
 
   setParam(param) {
@@ -27,14 +32,24 @@ export class TournamentOverview extends HTMLElement {
       return;
     }
     this.fetchTournamentrData();
+    window.addEventListener('resize', this.handleResize);
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('resize', this.handleResize);
   }
 
   async fetchTournamentrData() {
     // For test
     // this.#state.tournament = await mockTournamentDetail('mockidongoing');
-    this.#state.tournament = await mockTournamentDetail('mockidfinished');
+    this.#state.tournament = await mockTournamentDetail('mockidongoing2');
+    // this.#state.tournament = await mockTournamentDetail('mockidfinished');
 
-    // TODO: Check tournament status
+    if (!(this.#state.tournament.status === 'ongoing' || this.#state.tournament.status === 'finished')) {
+      const notFound = document.createElement('page-not-found');
+      this.innerHTML = notFound.outerHTML;
+      return;
+    }
     this.render();
   }
 
@@ -57,16 +72,26 @@ export class TournamentOverview extends HTMLElement {
       this.tournamentWinnerAvatar.src = this.#state.tournament.winner.user.avatar,
       this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias
     );
-    const content = document.createElement('tournament-overview-rounds');
-    content.data = {rounds: this.#state.tournament.rounds, status: this.#state.tournament.status};
+ 
+    const content = isMobile() ? document.createElement('tournament-overview-table') : document.createElement('tournament-overview-tree');
+    content.data = this.#state.tournament.rounds;
     this.tournamentOverviewContent.appendChild(content);
+  }
+
+  handleResize() {
+    const isMobileSize = isMobile();
+    if (isMobileSize === this.#state.isMobile) {
+      return;
+    }
+    this.#state.isMobile = isMobileSize;
+    this.render();
   }
 
   template() {
     return `
     <div class="container">
       <div class="row justify-content-center py-4">
-        <div class="form-container col-12 col-xl-10 p-3">
+        <div class="form-container col-lg-12 col-xl-10 p-3">
           <div class="d-flex flex-column justify-content-center align-items-center w-100 px-4 my-3">
             <h2 class="text-center m-0 pt-2 w-100" id="tournament-name"></h2>
             <p class="text-center m-0 mb-3 w-100" id="tournament-status"></p>
@@ -88,7 +113,7 @@ export class TournamentOverview extends HTMLElement {
               Back to Tournament menu
             </a>
           </div>
-          <div class="btn-container d-flex flex-row justify-content-center align-items-center my-2 gap-3">
+          <div class="btn-container d-flex flex-row justify-content-center align-items-center mt-3 mb-4 gap-2">
             <a class="btn btn-wood" href="/home" role="button">Go to Saloon</a>
             <a class="btn btn-wood" role="button">See my Profile</a>
           </div>
@@ -101,6 +126,27 @@ export class TournamentOverview extends HTMLElement {
   style() {
     return `
     <style>
+    .bracket-player {
+      background-color: rgba(var(--bs-body-bg-rgb), 0.6);
+      border-radius: .4rem;
+      margin-top: .1rem;
+      margin-bottom: .1rem;
+    }
+    .bracket-player-winner {
+      .bracket-player {
+        background-color: var(--pm-primary-500);
+      }
+      .player-alias {
+        color: var(--pm-primary-100);
+      }
+    }
+    .bracket-player-loser {
+      opacity: 0.5;
+    }
+    .player-alias {
+      font-size: 0.8rem;
+      min-width: 96px;
+    }
     </style>
     `;
   }
