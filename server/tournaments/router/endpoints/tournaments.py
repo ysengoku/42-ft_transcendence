@@ -75,7 +75,7 @@ def get_tournament(request, tournament_id: UUID):
     try:
         tournament = Tournament.objects.select_related(
             'creator__profile__user'
-        ).get(id=tournament_id).get_prefetched()
+        ).get(id=tournament_id)
         return 200, tournament
     except Tournament.DoesNotExist:
         return 404, {"msg": "Tournament not found"}
