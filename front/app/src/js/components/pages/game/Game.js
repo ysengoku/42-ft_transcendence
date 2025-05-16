@@ -389,12 +389,12 @@ export class Game extends HTMLElement {
       keyMap["KeyA"] = false;
       keyMap["KeyD"] = false;
       i++;
-      if (calculatedBumperPos.x < calculatedPos.x && i % 3 == 0)
+      if (calculatedBumperPos.x < calculatedPos.x && i % 2 == 0)
       {
         keyMap["KeyA"] = true;
         calculatedBumperPos.x += bumperP2Subtick;
       }
-      else if (calculatedBumperPos.x > calculatedPos.x && i % 3 == 0)
+      else if (calculatedBumperPos.x > calculatedPos.x && i % 2 == 0)
       {
         keyMap["KeyD"] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
@@ -407,15 +407,16 @@ export class Game extends HTMLElement {
     let choosePos;
     let sideBump = 0;
     let closeness = 0;
-    let difficultyLvl = 5;
+    let difficultyLvl = 10;
     // let i = 0;
 
     function handleAiBehavior (BallPos, BallVelocity){
     //better calculation to put here
-    closeness = -(BallPos.z - calculatedBumperPos.z) / ((18 - BUMPER_1_BORDER) - BUMPER_2_BORDER);
+    closeness = (BallPos.z - calculatedBumperPos.z) / 18; //-((BallPos.z - calculatedBumperPos.z)) / ((18 - BUMPER_1_BORDER) - BUMPER_2_BORDER);
     let error = difficultyLvl * closeness;
     if (isCalculationNeeded)
     {
+      // console.log(closeness);
       ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
       let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);;
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
@@ -436,8 +437,6 @@ export class Game extends HTMLElement {
           ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
         }
       }
-      // console.log(); 
-      BallVelocity.z 
       isCalculationNeeded = false;
       
       let timeooutId = setTimeout(() => {
@@ -447,7 +446,7 @@ export class Game extends HTMLElement {
           clearTimeout(timeooutId);
         }
 
-      }, BallVelocity.z * closeness * 2500);
+      }, 500);
 
       ballPredictedPos.x += (-error + (Math.round(Math.random()) * (error - (-error))));
       // console.log(ballPredictedPos.x);
