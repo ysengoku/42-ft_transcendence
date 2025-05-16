@@ -51,14 +51,6 @@ class PlayerConnectionState(Enum):
     DISCONNECTED = auto()
 
 
-@dataclass
-class Player:
-    id: str = ""
-    connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
-    # TODO: move time to constants
-    reconnection_time = 10
-
-
 @dataclass(slots=True)
 class Vector2:
     x: float
@@ -71,7 +63,22 @@ class Bumper(Vector2):
     score: int = 0
     moves_left: bool = False
     moves_right: bool = False
-    player: Player = field(default_factory=Player)
+
+
+@dataclass
+class Player:
+    bumper: Bumper
+    id: str = ""
+    connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
+    # TODO: move time to constants
+    reconnection_time: int = 10
+    reconnection_timer: asyncio.Task | None = None
+
+    def stop_waiting_for_reconnection_timer(self):
+        task = self.reconnection_timer
+        if task and not task.cancelled():
+            task.cancel()
+        self.reconnection_timer = None
 
 
 @dataclass(slots=True)
@@ -80,26 +87,20 @@ class Ball(Vector2):
     temporal_speed: Vector2
 
 
-class PongMatch:
+class BasePong:
     """
     Pong engine. Stores, advances and modifies the state of the game.
     It's the base class designed to be pure and not coupled with the code related to async or Django channels.
-    Can be plugged into any engine.
+    Can be plugged into any engine like PyGame.
     """
 
-    id: str = "No id"
-    state: PongMatchState
-    pause_event = asyncio.Event
     _bumper_1: Bumper
     _bumper_2: Bumper
     _ball: Ball
     _scored_last: Bumper | None = None
     _someone_scored: bool
 
-    def __init__(self, game_id: str):
-        self.id = game_id
-        self.state = PongMatchState.PENDING
-        self.pause_event = asyncio.Event()
+    def __init__(self):
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
@@ -110,12 +111,6 @@ class PongMatch:
         )
         self._ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
         self._is_someone_scored = False
-
-    def __str__(self):
-        return self.id
-
-    def __repr__(self):
-        return f"{self.state.name.capitalize()} game {self.id}"
 
     def resolve_next_tick(self):
         """
@@ -159,58 +154,7 @@ class PongMatch:
             "is_someone_scored": self._is_someone_scored,
         }
 
-    def handle_input(self, player_id: str, action: str, content: bool):
-        if player_id == self._bumper_1.player.id:
-            bumper = self._bumper_1
-        elif player_id == self._bumper_2.player.id:
-            bumper = self._bumper_2
-        else:
-            return
-
-        match action:
-            case "move_left":
-                bumper.moves_left = content
-            case "move_right":
-                bumper.moves_right = content
-
-    def add_player(self, player_id: str):
-        """
-        Adds player to the players dict.
-        Assigns player to a random bumper.
-        """
-        available_player_slots = []
-        if self._bumper_1.player.connection == PlayerConnectionState.NOT_CONNECTED:
-            available_player_slots.append(self._bumper_1)
-        if self._bumper_2.player.connection == PlayerConnectionState.NOT_CONNECTED:
-            available_player_slots.append(self._bumper_2)
-        if not available_player_slots:
-            return
-
-        random.shuffle(available_player_slots)
-        bumper = available_player_slots.pop()
-        bumper.player.id = player_id
-        bumper.player.connection = PlayerConnectionState.CONNECTED
-        if bumper.dir_z == 1:
-            logger.info("[GameWorker]: player {%s} was assigned to bumper_1", player_id)
-        if bumper.dir_z == -1:
-            logger.info("[GameWorker]: player {%s} was assigned to bumper_2", player_id)
-
-    def get_players_based_on_connection(self, connection: PlayerConnectionState) -> list[Player, Player]:
-        """Returns a list of players based on their connection state."""
-        return [p for p in [self._bumper_1.player, self._bumper_2.player] if p.connection == connection]
-
-    def get_player(self, player_id: str) -> Player | None:
-        if self._bumper_1.player.id == player_id:
-            return self._bumper_1.player
-        if self._bumper_2.player.id == player_id:
-            return self._bumper_2.player
-        return None
-
-    def get_other_player(self, player_id: str) -> Player:
-        if player_id == self._bumper_1.player.id:
-            return self._bumper_1.player
-        return self._bumper_2.player
-
+    ### Private game logic functions where actual stuff happens. ###
     def _reset_ball(self, direction: int):
         self._ball.temporal_speed.x, self._ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
         self._ball.x, self._ball.z = STARTING_BALL_POS
@@ -287,12 +231,106 @@ class PongMatch:
         self._ball.x += ball_subtick_x * self._ball.velocity.x
 
 
+class MultiplayerPongMatch(BasePong):
+    """
+    Adaptated interface for the pong engine for the purposes of being managed by the GameConsumer in concurrent manner
+    for the purposes of being sent to the client via websockets.
+    Connects the pong enging to actual players, their inputs and state. Manages players, their connection status,
+    as well as the background tasks needed for the proper management of the game loop and connection/reconnection of
+    the players.
+    """
+
+    id: str
+    game_loop_task: asyncio.Task | None
+    waiting_for_players_timer: asyncio.Task | None
+    state: PongMatchState = PongMatchState.PENDING
+    pause_event: asyncio.Event
+    _player_1: Player
+    _player_2: Player
+
+    def __init__(self, game_id: str):
+        super().__init__()
+        self.id = game_id
+        self.pause_event = asyncio.Event()
+        self.game_loop_task = None
+        self.waiting_for_players_timer = None
+        self._player_1 = Player(self._bumper_1)
+        self._player_2 = Player(self._bumper_2)
+
+    def __str__(self):
+        return self.id
+
+    def __repr__(self):
+        return f"{self.state.name.capitalize()} game {self.id}"
+
+    def handle_input(self, player_id: str, action: str, content: bool):
+        if player_id == self._player_1.id:
+            bumper = self._player_1.bumper
+        elif player_id == self._player_2.id:
+            bumper = self._player_2.bumper
+        else:
+            return
+
+        match action:
+            case "move_left":
+                bumper.moves_left = content
+            case "move_right":
+                bumper.moves_right = content
+
+    def add_player(self, player_id: str):
+        """
+        Adds player to the players dict.
+        Assigns player to a random bumper.
+        """
+        available_player_slots = []
+        if self._player_1.connection == PlayerConnectionState.NOT_CONNECTED:
+            available_player_slots.append(self._player_1)
+        if self._player_2.connection == PlayerConnectionState.NOT_CONNECTED:
+            available_player_slots.append(self._player_2)
+        if not available_player_slots:
+            return
+
+        random.shuffle(available_player_slots)
+        player = available_player_slots.pop()
+        player.id = player_id
+        player.connection = PlayerConnectionState.CONNECTED
+        if player.bumper.dir_z == 1:
+            logger.info("[GameWorker]: player {%s} was assigned to player_1", player_id)
+        if player.bumper.dir_z == -1:
+            logger.info("[GameWorker]: player {%s} was assigned to player_2", player_id)
+
+    def get_players_based_on_connection(self, connection: PlayerConnectionState) -> list[Player, Player]:
+        """Returns a list of players based on their connection state."""
+        return [p for p in [self._player_1, self._player_2] if p.connection == connection]
+
+    def get_player(self, player_id: str) -> Player | None:
+        if self._player_1.id == player_id:
+            return self._player_1
+        if self._player_2.id == player_id:
+            return self._player_2
+        return None
+
+    def get_other_player(self, player_id: str) -> Player:
+        if player_id == self._player_1.id:
+            return self._player_1
+        return self._player_2
+
+    def stop_waiting_for_players_timer(self):
+        timer = self.waiting_for_players_timer
+        if timer and not timer.cancelled():
+            timer.cancel()
+        self.waiting_for_players_timer = None
+
+
 class GameConsumer(AsyncConsumer):
+    """
+    Manages multiple concurrent pong matches. Receives inputs from `GameRoomConsumer` and sends back different events
+    based on what happened in the match.
+    """
+
     def __init__(self):
         super().__init__()
-        self.matches: dict[str, PongMatch] = {}
-        self.matches_tasks: dict[str, asyncio.Task] = {}
-        self.timer_tasks: dict[str, asyncio.Task] = {}
+        self.matches: dict[str, MultiplayerPongMatch] = {}
         self.channel_layer = get_channel_layer()
 
     async def player_connected(self, event: dict):
@@ -318,79 +356,59 @@ class GameConsumer(AsyncConsumer):
             self._reconnect_player(player_id, match)
 
     async def player_disconnected(self, event: dict):
-        game_room_id = event["game_room_id"]
+        match_id = event["game_room_id"]
         player_id = event["player_id"]
 
-        match = self.matches.get(game_room_id)
+        match = self.matches.get(match_id)
         if match is None or match.state == PongMatchState.ENDED:
             logger.warning(
                 "[GameWorker]: player {%s} disconnected from the non-existent or ended game {%s}",
                 player_id,
-                game_room_id,
+                match_id,
             )
             return
 
-        disconnected_player = match.get_player(player_id)
-        if disconnected_player is None:
+        player = match.get_player(player_id)
+        if player is None:
             logger.warning(
                 "[GameWorker]: disconnected player {%s} not found in the game {%s}",
                 player_id,
-                game_room_id,
+                match_id,
             )
             return
 
-        disconnected_player.connection = PlayerConnectionState.DISCONNECTED
+        player.connection = PlayerConnectionState.DISCONNECTED
         if match.state == PongMatchState.PENDING:
             logger.info(
                 "[GameWorker]: player {%s} has been disconnected from the pending game {%s}",
                 player_id,
-                game_room_id,
+                match_id,
             )
             return
 
+        self._pause(match)
+        player.reconnection_timer = asyncio.create_task(self._wait_for_reconnection_task(match, player))
         logger.info(
             "[GameWorker]: player {%s} has been disconnected from the ongoing game {%s}",
             player_id,
-            game_room_id,
+            match_id,
         )
-        self._pause(match)
-        self._start_waiting_for_reconnection_timer(match, disconnected_player)
 
         # TODO: handle the case where both players disconnect
         if not match.get_players_based_on_connection(PlayerConnectionState.CONNECTED):
-            self._cleanup_match(game_room_id)
+            self._cleanup_match(match)
             # TODO: add the match result to the db
-            logger.info("[GameWorker]: no players are left in the game {%s}. Closing", game_room_id)
-
-    async def _start_match_game_loop(self, game_room_id: str):
-        """Asynchrounous loop that runs one specific match."""
-        match = self.matches[game_room_id]
-        logger.info("[GameWorker]: match {%s} has been started", game_room_id)
-        try:
-            # TODO: tweak the condition for the running of the game loop
-            while match.state != PongMatchState.ENDED:
-                if match.state == PongMatchState.PAUSED:
-                    await match.pause_event.wait()
-                tick_start_time = asyncio.get_event_loop().time()
-                match.resolve_next_tick()
-                await self.send_state_to_players(game_room_id, match.as_dict())
-                tick_end_time = asyncio.get_event_loop().time()
-                time_taken_for_current_tick = tick_end_time - tick_start_time
-                # tick the game for this match 30 times a second
-                await asyncio.sleep(max(GAME_TICK_INTERVAL - time_taken_for_current_tick, 0))
-            logger.info("[GameWorker]: task for game {%s} has been done", game_room_id)
-        except asyncio.CancelledError:
-            logger.info("[GameWorker]: task for game {%s} has been cancelled", game_room_id)
+            logger.info("[GameWorker]: no players are left in the game {%s}. Closing", match_id)
 
     async def player_inputed(self, event: dict):
         """
         Handles player input. There is no validation of the input, because it is a worker,
         and event source is the server, which we can trust.
         """
-        game_room_id = event["game_room_id"]
-        match = self.matches.get(game_room_id)
+        match_id = event["game_room_id"]
+        match = self.matches.get(match_id)
         if match is None or match.state != PongMatchState.ONGOING:
-            logger.warning("[GameWorker]: input was sent for not running game {%s}", game_room_id)
+            logger.warning("[GameWorker]: input was sent for not running game {%s}", match_id)
 
         player_id = event["player_id"]
         action = event["action"]
@@ -400,28 +418,48 @@ class GameConsumer(AsyncConsumer):
             case "move_left" | "move_right":
                 match.handle_input(player_id, action, content)
 
-    async def send_state_to_players(self, game_room_id: str, state: dict):
-        group_name = self._to_group_name(game_room_id)
+    async def send_state_to_players(self, match: MultiplayerPongMatch, state: dict):
+        group_name = self._to_group_name(match)
         await self.channel_layer.group_send(group_name, {"type": "state_updated", "state": state})
 
-    async def _wait_for_both_player(self, game_room_id: str):
+    ######
+
+    ### Background tasks for `asyncio.create_task()` ###
+    async def _match_game_loop_task(self, match: MultiplayerPongMatch):
+        """Asynchrounous loop that runs one specific match."""
+        logger.info("[GameWorker]: match {%s} has been started", match)
+        try:
+            while match.state != PongMatchState.ENDED:
+                if match.state == PongMatchState.PAUSED:
+                    await match.pause_event.wait()
+                tick_start_time = asyncio.get_event_loop().time()
+                match.resolve_next_tick()
+                await self.send_state_to_players(match, match.as_dict())
+                tick_end_time = asyncio.get_event_loop().time()
+                time_taken_for_current_tick = tick_end_time - tick_start_time
+                # tick the game for this match 30 times a second
+                await asyncio.sleep(max(GAME_TICK_INTERVAL - time_taken_for_current_tick, 0))
+            logger.info("[GameWorker]: task for game {%s} has been done", match)
+        except asyncio.CancelledError:
+            logger.info("[GameWorker]: task for game {%s} has been cancelled", match)
+
+    async def _wait_for_both_player_task(self, match: MultiplayerPongMatch):
         """
         Called with `asyncio.create_task`. Waits for both players to be connected to the game.
         Cancels the game if the players do not manage to connect in time.
         """
         try:
-            logger.info("[GameWorker]: waiting for players to connect to the game {%s}", game_room_id)
+            logger.info("[GameWorker]: waiting for players to connect to the game {%s}", match)
             await asyncio.sleep(5)
-            match = self.matches[game_room_id]
             if len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) < PLAYERS_REQUIRED:
-                self._cleanup_match(game_room_id)
-                await self.channel_layer.group_send(self._to_group_name(game_room_id), {"type": "game_cancelled"})
-                logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", game_room_id)
+                self._cleanup_match(match)
+                await self.channel_layer.group_send(self._to_group_name(match), {"type": "game_cancelled"})
+                logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", match)
 
         except asyncio.CancelledError:
-            logger.info("[GameWorker]: task for timer {%s} has been cancelled", game_room_id)
+            logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
 
-    async def _wait_for_reconnection(self, match: PongMatch, player: Player):
+    async def _wait_for_reconnection_task(self, match: MultiplayerPongMatch, player: Player):
         try:
             logger.info(
                 "[GameWorker]: waiting for the player {%s} to connect to the game {%s}",
@@ -431,11 +469,7 @@ class GameConsumer(AsyncConsumer):
             while player.reconnection_time > 0:
                 await asyncio.sleep(0.2)
                 player.reconnection_time -= 0.2
-                logger.info(
-                    "[GameWorker]: {%.1f} seconds left for player {%s}",
-                    player.reconnection_time,
-                    player.id,
-                )
+                logger.info("[GameWorker]: {%.1f} seconds left for player {%s}", player.reconnection_time, player.id)
 
             if match.state == PongMatchState.ENDED:
                 return logger.warning(
@@ -464,22 +498,24 @@ class GameConsumer(AsyncConsumer):
 
         except asyncio.CancelledError:
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
+    ### End for background tasks for `asyncio.create_task()` ###
 
+    ### Player management methods ###
     def _add_player_and_create_pending_match(self, player_id: str, match_id: str):
-        self.matches[match_id] = PongMatch(match_id)
-        self.matches[match_id].add_player(player_id)
-        self._start_waiting_for_players_timer(match_id)
+        match = self.matches[match_id] = MultiplayerPongMatch(match_id)
+        match.add_player(player_id)
+        match.waiting_for_players_timer = asyncio.create_task(self._wait_for_both_player_task(match))
         logger.info("[GameWorker]: player {%s} was added to newly created game {%s}", player_id, match_id)
 
-    def _add_player_and_start_match(self, player_id: str, match: PongMatch):
+    def _add_player_and_start_match(self, player_id: str, match: MultiplayerPongMatch):
         """Cancels waiting for players timer, and starts the game loop for this match."""
         match.add_player(player_id)
-        self._stop_waiting_for_players_timer(match.id)
+        match.stop_waiting_for_players_timer()
         match.state = PongMatchState.ONGOING
-        self.matches_tasks[match.id] = asyncio.create_task(self._start_match_game_loop(match.id))
+        match.game_loop_task = asyncio.create_task(self._match_game_loop_task(match))
         logger.info("[GameWorker]: player {%s} has been added to existing game {%s}", player_id, match.id)
 
-    def _reconnect_player(self, player_id: str, match: PongMatch):
+    def _reconnect_player(self, player_id: str, match: MultiplayerPongMatch):
         """
         Sets the player as reconnected.
         Stops the reconnection timer and unpauses the game.
@@ -489,59 +525,33 @@ class GameConsumer(AsyncConsumer):
             logger.warning(
                 "[GameWorker]: illegal player {%s} tried to connect to the ongoing game {%s}",
                 player_id,
-                match.id,
+                match,
             )
             return
         player.connection = PlayerConnectionState.CONNECTED
-        self._stop_waiting_for_reconnection_timer(match, player)
+        player.stop_waiting_for_reconnection_timer()
         self._unpause(match)
         logger.info("[GameWorker]: player {%s} has been reconnected to the game {%s}", player_id, match.id)
+    ### End player management methods ###
 
-    def _cleanup_match(self, match_id: str):
+    def _cleanup_match(self, match: MultiplayerPongMatch):
         """Cleans up after the match. Stops its game loop, removes from `matches` and `tasks` dicts."""
-        match_task = self.matches_tasks.pop(match_id, None)
-        if match_task and not match_task.cancelled():
-            match_task.cancel()
-        self.matches.pop(match_id, None)
+        self.matches.pop(str(match), None)
+        if match.game_loop_task and not match.game_loop_task.cancelled():
+            match.game_loop_task.cancel()
 
-    ### Functions for managing timer and pause. ###
-    def _start_waiting_for_players_timer(self, match_id: str):
-        self.timer_tasks[self._to_waiting_for_players_timer_name(match_id)] = asyncio.create_task(
-            self._wait_for_both_player(match_id),
-        )
-
-    def _stop_waiting_for_players_timer(self, match_id: str):
-        task = self.timer_tasks.pop(self._to_waiting_for_players_timer_name(match_id), None)
-        if task and not task.cancelled():
-            task.cancel()
-
-    def _start_waiting_for_reconnection_timer(self, match: PongMatch, disconnected_player: Player):
-        self.timer_tasks[self._to_reconnection_timer_name(match.id, disconnected_player.id)] = asyncio.create_task(
-            self._wait_for_reconnection(match, disconnected_player),
-        )
-
-    def _stop_waiting_for_reconnection_timer(self, match: PongMatch, reconnected_player: Player):
-        task = self.timer_tasks.pop(self._to_reconnection_timer_name(match.id, reconnected_player.id), None)
-        if task and not task.cancelled():
-            task.cancel()
-
-    def _pause(self, match: PongMatch):
+    def _pause(self, match: MultiplayerPongMatch):
         match.state = PongMatchState.PAUSED
         match.pause_event.clear()
         logger.info("[GameWorker]: game {%s} has been paused", match.id)
 
-    def _unpause(self, match: PongMatch):
+    def _unpause(self, match: MultiplayerPongMatch):
         match.state = PongMatchState.ONGOING
         if not match.pause_event.is_set():
             match.pause_event.set()
         logger.info("[GameWorker]: game {%s} has been unpaused", match.id)
 
     ### Functions for avoiding typing errors, for objects that need specific strings to be used. ###
-    def _to_group_name(self, match_id: str):
-        return f"game_room_{match_id}"
-
-    def _to_reconnection_timer_name(self, match_id: str, player_id: str):
-        return f"reconnection_timer_{match_id}_{player_id}"
-
-    def _to_waiting_for_players_timer_name(self, match_id: str):
-        return "waiting_for_players_timer_" + match_id
+    def _to_group_name(self, match: MultiplayerPongMatch):
+        return f"game_room_{match}"
+    ### End for functions for avoiding typing errors, for objects that need specific strings to be used. ###
