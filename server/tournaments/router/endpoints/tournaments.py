@@ -113,7 +113,6 @@ def delete_tournament(request, tournament_id: UUID):
     except Tournament.DoesNotExist:
         raise HttpError(404, "Tournament not found")
 
-    # Seul le créateur peut supprimer le tournoi
     if tournament.creator != user:
         raise HttpError(403, "You are not allowed to delete this tournament.")
 
