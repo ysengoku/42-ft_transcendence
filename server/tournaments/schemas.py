@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from django.db.models import Prefetch
 from ninja import Field, ModelSchema, Schema
 
 from common.schemas import ProfileMinimalSchema
@@ -52,32 +53,59 @@ class TournamentSchema(ModelSchema):
     creator: ProfileMinimalSchema = Field(..., alias="creator.profile")
     tournament_id: UUID = Field(..., alias="id")
     tournament_name: str = Field(..., alias="name")
-    rounds: list["RoundSchema"]
-    participants: list["ParticipantSchema"]
+    rounds: list[RoundSchema] = Field(default_factory=list)
+    participants: list[ParticipantSchema] = Field(default_factory=list)
+    # rounds: list["RoundSchema"]
+    # participants: list["ParticipantSchema"]
 
     class Config:
         model = Tournament
-        model_fields = ["id", "name", "status",
-                        "date", "required_participants"]
-        model_fields_rename = {
-            "id": "tournament_id",
-            "name": "tournament_name"
-        }
+        # model_fields = ["id", "name", "status",
+        #                 "date", "required_participants"]
+        model_fields = [
+            "id",
+            "name",
+            "status",
+            "date",
+            "required_participants",
+            "creator"
+        ]
 
     @staticmethod
-    def resolve_creator(obj: Tournament) -> dict:
-        return ProfileMinimalSchema.from_orm(obj.creator.profile.user).dict()
+    def resolve_creator(obj: Tournament):
+        return ProfileMinimalSchema.from_orm(obj.creator.profile)
 
     @staticmethod
     def resolve_rounds(obj: Tournament):
-        return [
-            RoundSchema.from_orm(r).dict()
-            for r in obj.tournament_rounds.all()
-        ]
+        return [RoundSchema.from_orm(r) for r in obj.tournament_rounds.all()]
 
     @staticmethod
     def resolve_participants(obj: Tournament):
-        return [
-            ParticipantSchema.from_orm(p)
-            for p in obj.tournament_participants.all()
-        ]
+        return [ParticipantSchema.from_orm(p) for p in obj.tournament_participants.all()]
+
+    # class Config:
+    #     model = Tournament
+    #     model_fields = ["id", "name", "status",
+    #                     "date", "required_participants"]
+    #     model_fields_rename = {
+    #         "id": "tournament_id",
+    #         "name": "tournament_name"
+    #     }
+    #
+    # @staticmethod
+    # def resolve_creator(obj: Tournament) -> dict:
+    #     return ProfileMinimalSchema.from_orm(obj.creator.profile.user).dict()
+    #
+    # @staticmethod
+    # def resolve_rounds(obj: Tournament):
+    #     return [
+    #         RoundSchema.from_orm(r).dict()
+    #         for r in obj.tournament_rounds.all()
+    #     ]
+    #
+    # @staticmethod
+    # def resolve_participants(obj: Tournament):
+    #     return [
+    #         ParticipantSchema.from_orm(p)
+    #         for p in obj.tournament_participants.all()
+    #     ]
