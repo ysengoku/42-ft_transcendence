@@ -142,7 +142,7 @@ class Bracket(models.Model):
     ]
 
     round = models.ForeignKey(
-        Round, on_delete=models.CASCADE, related_name="rounds")
+        Round, on_delete=models.CASCADE, related_name="brackets")
     participant1 = models.ForeignKey(
         Participant, on_delete=models.CASCADE, related_name="brackets_p1"
     )
