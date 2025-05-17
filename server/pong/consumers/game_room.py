@@ -10,6 +10,11 @@ logger = logging.getLogger("server")
 
 
 class GameRoomConsumer(WebsocketConsumer):
+    """
+    Interface between game worker, which runs an actual game, and the client, to which it sends updates from the
+    worker with websocket connection.
+    """
+
     def connect(self):
         self.player = None
         self.user = self.scope.get("user")
@@ -61,7 +66,8 @@ class GameRoomConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         # TODO: put close code to enum, make it prettier
-        if close_code == 3000:
+        ok_close_code = 3000
+        if close_code == ok_close_code:
             return
 
         if self.player:
@@ -74,7 +80,9 @@ class GameRoomConsumer(WebsocketConsumer):
                 },
             )
             logger.info(
-                "[GameRoom.disconnect]: player {%s} has left game room {%s}", self.user.profile, self.game_room_id,
+                "[GameRoom.disconnect]: player {%s} has left game room {%s}",
+                self.user.profile,
+                self.game_room_id,
             )
             async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
 
@@ -121,41 +129,47 @@ class GameRoomConsumer(WebsocketConsumer):
         Event handler for `state_updated`.
         `state_updated` is sent from the game worker to this consumer on each game tick.
         """
-        self.send(
-            text_data=json.dumps(
-                {
-                    "event": "game_tick",
-                    "state": event["state"],
-                },
-            ),
-        )
+        self.send(text_data=json.dumps({"event": "game_tick", "state": event["state"]}))
 
-    def resignation(self, event: dict):
+    def player_won(self, event: dict):
         """
-        Event handler for `resignation`.
-        `resignation` is sent from the game worker to this consumer when one the players resigned,
+        Event handler for `player_won`.
+        `player_won` is sent from the game worker to this consumer when one the players resigned,
         by disconnect, for example.
         """
-        self.send(
-            text_data=json.dumps(
-                {
-                    "event": "resignation",
-                    "winner": event["winner"],
-                },
-            ),
-        )
+        self.send(text_data=json.dumps({"event": "player_won", "winner": event["winner"]}))
+        # TODO: add close codes to enum
+        self.close(3000)
+
+    def player_resigned(self, event: dict):
+        """
+        Event handler for `player_resigned`.
+        `player_resigned` is sent from the game worker to this consumer when one the players resigned,
+        by disconnect, for example.
+        """
+        self.send(text_data=json.dumps({"event": "player_resigned", "winner": event["winner"]}))
+        # TODO: add close codes to enum
+        self.close(3000)
 
     def game_cancelled(self, _: dict):
         """
         Event handler for `game_cancelled`.
         `game_cancelled` is sent from the game worker to this consumer when players fail to connect to the game.
         """
-        self.send(
-            text_data=json.dumps(
-                {
-                    "event": "game_cancelled",
-                },
-            ),
-        )
+        self.send(text_data=json.dumps({"event": "game_cancelled"}))
         # TODO: add close codes to enum
         self.close(3000)
+
+    def game_paused(self, _: dict):
+        """
+        Event handler for `game_paused`.
+        `game_paused` is sent from the game worker to this consumer when the game unters the paused state.
+        """
+        self.send(text_data=json.dumps({"event": "game_paused"}))
+
+    def game_unpaused(self, _: dict):
+        """
+        Event handler for `game_unpaused`.
+        `game_unpaused` is sent from the game worker to this consumer when the game unters the paused state.
+        """
+        self.send(text_data=json.dumps({"event": "game_unpaused"}))
