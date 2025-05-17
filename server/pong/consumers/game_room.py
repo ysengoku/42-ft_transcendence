@@ -134,8 +134,8 @@ class GameRoomConsumer(WebsocketConsumer):
     def player_won(self, event: dict):
         """
         Event handler for `player_won`.
-        `player_won` is sent from the game worker to this consumer when one the players resigned,
-        by disconnect, for example.
+        `player_won` is sent from the game worker to this consumer when the game is ended and one of the players won
+        the game.
         """
         self.send(text_data=json.dumps({"event": "player_won", "winner": event["winner"]}))
         # TODO: add close codes to enum
