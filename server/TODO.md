@@ -63,6 +63,7 @@
     - [x] Remove `friends` field.
     - [x] Add the price for the head. 
     - [x] Add the last ten matches of the user.
+- [x] Add `game_id`, which is the currently active game for the user, to `/self`.
 
 
 ### Chat
@@ -78,8 +79,8 @@
 - [x] Make the multiplayer game compatible with matchmaking.
 - [x] Allow more than 1 match to be played at the same time.
 - [x] Add reconnection logic for the matches.
-- [~] Add win condition for the matches.
-    - [ ] Record the wins and loses with the database.
+- [x] Add win condition for the matches.
+- [ ] Record the wins and loses with the database.
 
 ## Testing
 - [ ] Add testing for `users` endpoints.
