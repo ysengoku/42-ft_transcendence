@@ -77,6 +77,9 @@
 ### Multiplayer
 - [x] Make the multiplayer game compatible with matchmaking.
 - [x] Allow more than 1 match to be played at the same time.
+- [x] Add reconnection logic for the matches.
+- [~] Add win condition for the matches.
+    - [ ] Record the wins and loses with the database.
 
 ## Testing
 - [ ] Add testing for `users` endpoints.
