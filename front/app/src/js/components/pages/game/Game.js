@@ -407,12 +407,13 @@ export class Game extends HTMLElement {
     let choosePos;
     let sideBump = 0;
     let closeness = 0;
-    let difficultyLvl = 10;
-    // let i = 0;
+    let difficultyLvl = 0;
+    let reactionTime = 500;
+    //1 && 500 / 5 && 500 / 8 && 750
 
     function handleAiBehavior (BallPos, BallVelocity){
     //better calculation to put here
-    closeness = (BallPos.z - calculatedBumperPos.z) / 18; //-((BallPos.z - calculatedBumperPos.z)) / ((18 - BUMPER_1_BORDER) - BUMPER_2_BORDER);
+    closeness = (BallPos.z - calculatedBumperPos.z) / 18;
     let error = difficultyLvl * closeness;
     if (isCalculationNeeded)
     {
@@ -445,8 +446,7 @@ export class Game extends HTMLElement {
           isCalculationNeeded = true;
           clearTimeout(timeooutId);
         }
-
-      }, 500);
+      }, reactionTime);
 
       ballPredictedPos.x += (-error + (Math.round(Math.random()) * (error - (-error))));
       // console.log(ballPredictedPos.x);
