@@ -323,10 +323,10 @@ export class Game extends HTMLElement {
         Ball.velocity.z = (Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dir_z);
         Ball.velocity.x = Ball.velocity.z * -Math.tan(bounce_angle_radians) * bumper.dir_z;
         Ball.velocity.x = Math.max(Math.abs(Ball.velocity.x), 0.05) * Math.sign(Ball.velocity.x);
-        if (bumper.dir_z == 1 && bounce_angle_radians >= 0.92 || bounce_angle_radians <= -0.92)
-          sideBump++;
+        // if (bumper.dir_z == 1 && bounce_angle_radians >= 0.92 || bounce_angle_radians <= -0.92)
+          // sideBump++;
         // else if (bumper.dir_z == 1)
-        //   sideBump = 0;
+          // sideBump = 0;
         if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
             Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
@@ -401,23 +401,20 @@ export class Game extends HTMLElement {
       }
     }
     
+    let choosenDifficulty = 0;
+
     let isMovementDone = false;
     let ballPredictedPos;
     let isCalculationNeeded = true;
-    let choosePos;
-    let sideBump = 0;
-    let closeness = 0;
-    let difficultyLvl = 0;
-    let reactionTime = 500;
+    // let sideBump = 0;
+    let difficultyLvl = [[8, 750], [5, 500], [1, 500]];
     //1 && 500 / 5 && 500 / 8 && 750
 
     function handleAiBehavior (BallPos, BallVelocity){
-    //better calculation to put here
-    closeness = (BallPos.z - calculatedBumperPos.z) / 18;
-    let error = difficultyLvl * closeness;
     if (isCalculationNeeded)
     {
-      // console.log(closeness);
+      let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
+      let error = difficultyLvl[choosenDifficulty][0] * closeness;
       ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
       let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);;
       let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
@@ -439,39 +436,37 @@ export class Game extends HTMLElement {
         }
       }
       isCalculationNeeded = false;
-      
       let timeooutId = setTimeout(() => {
         if (BallVelocity.z > 0)
         {
           isCalculationNeeded = true;
           clearTimeout(timeooutId);
         }
-      }, reactionTime);
+      }, difficultyLvl[choosenDifficulty][1]);
 
       ballPredictedPos.x += (-error + (Math.round(Math.random()) * (error - (-error))));
-      // console.log(ballPredictedPos.x);
     }
     // i++;
     // if (i % 500 == 0)
     // {
     //   console.log(error);
     // }
-    if (choosePos == 2)
-    {
-      if (ballPredictedPos.x >= Bumpers[1].cubeMesh.position.x + 1 && ballPredictedPos.x <= Bumpers[1].cubeMesh.position.x + 2)
-        ballPredictedPos.x = BallPos.x - 1;
-      else
-        ballPredictedPos.x = BallPos.x + 1;
-      // console.log(ballPredictedPos.x - BallPos.x);
-    }
+    // if (choosePos == 2)
+    // {
+    //   if (ballPredictedPos.x >= Bumpers[1].cubeMesh.position.x + 1 && ballPredictedPos.x <= Bumpers[1].cubeMesh.position.x + 2)
+    //     ballPredictedPos.x = BallPos.x - 1;
+    //   else
+    //     ballPredictedPos.x = BallPos.x + 1;
+    // }
     if (!isMovementDone)
-      moveAiBumper(ballPredictedPos); //posToGoTo
+      moveAiBumper(ballPredictedPos);
     else
     {
       keyMap["KeyD"] = false;
       keyMap["KeyA"] = false;
     }
   }
+
   var Workers = [];
   function initGame()
   {
@@ -592,7 +587,7 @@ export class Game extends HTMLElement {
           if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
               isMovementDone = true;
               Bumpers[0].score++;
-              sideBump = 0;
+              // sideBump = 0;
               resetBall(-1);
           }
           else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
