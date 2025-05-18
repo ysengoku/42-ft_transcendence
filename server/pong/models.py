@@ -188,7 +188,7 @@ class GameRoom(models.Model):
     players = models.ManyToManyField(Profile, related_name="game_rooms", through=GameRoomPlayer)
     date = models.DateTimeField(default=timezone.now)
 
-    objects = GameRoomQuerySet.as_manager()
+    objects: GameRoomQuerySet = GameRoomQuerySet.as_manager()
 
     class Meta:
         ordering = ["-date"]
