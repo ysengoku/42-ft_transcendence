@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.db.models import Prefetch
 from ninja import Field, Router, Schema
 from pydantic import validator
 
@@ -36,6 +37,14 @@ class Tournament(models.Model):
         on_delete=models.SET_NULL,
         related_name="won_tournaments",
     )
+    participants = models.ManyToManyField(
+        "Participant",
+        related_name='tournaments_m2m'
+    )
+    # rounds = models.ManyToManyField(
+    #     "Round",
+    #     related_name='tournament_rounds'
+    # )
     required_participants = models.PositiveIntegerField()
 
     def clean(self):
@@ -58,14 +67,16 @@ class Tournament(models.Model):
     def __str__(self):
         return f"{self.name} ({self.status})"
 
-    @property
-    def participants(self):
-        return self.participants.all()
+    def get_rounds(self):
+        return self.rounds.all().prefetch_related('brackets')
 
-    @property
-    def rounds(self):
-        return self.rounds.all()
-
+    def get_prefetched(self):
+        return Tournament.objects.prefetch_related(
+            Prefetch('tournament_participants',
+                     queryset=Participant.objects.select_related('user__user')),
+            Prefetch('tournament_rounds',
+                     queryset=Round.objects.prefetch_related('brackets'))
+        ).get(pk=self.pk)
     # def return_tournaments(self):
     #     return self.tournament.all()
 
@@ -81,7 +92,7 @@ class Participant(models.Model):
 
     user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     tournament = models.ForeignKey(
-        Tournament, on_delete=models.CASCADE, related_name="participants"
+        Tournament, on_delete=models.CASCADE, related_name="tournament_participants"
     )
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
     status = models.CharField(
@@ -98,15 +109,22 @@ class Participant(models.Model):
 
 class Round(models.Model):
     tournament = models.ForeignKey(
-        Tournament, on_delete=models.CASCADE, related_name="rounds"
+        Tournament,
+        on_delete=models.CASCADE,
+        related_name="tournament_rounds"
     )
-    number = models.PositiveIntegerField()
+    number = models.PositiveIntegerField(editable=False)
     status = models.CharField(
         max_length=10,
         choices=[("start", "Start"), ("ongoing", "Ongoing"),
                  ("finished", "Finished")],
         default="start",
     )
+    # brackets = models.ForeignKey(
+    #     "Bracket",
+    #     on_delete=models.CASCADE,
+    #     related_name='round_brackets'
+    # )
 
     class Meta:
         unique_together = ("tournament", "number")

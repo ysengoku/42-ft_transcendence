@@ -4,17 +4,18 @@ from uuid import UUID
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.exceptions import ValidationError
+from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
-from common.schemas import MessageSchema
-from tournaments.models import (Tournament, TournamentCreatedSchema,
+from common.schemas import MessageSchema, ProfileMinimalSchema
+from tournaments.models import (Participant, Round, Tournament,
+                                TournamentCreatedSchema,
                                 TournamentCreateSchema)
 from tournaments.schemas import TournamentSchema
 from users.router.utils import _create_json_response_with_tokens
-from users.schemas import ProfileMinimalSchema
 
 tournaments_router = Router()
 
@@ -68,22 +69,52 @@ def create_tournament(request, data: TournamentCreateSchema):
     "/{tournament_id}",
     response={
         200: TournamentSchema,
-        400: MessageSchema,
         404: MessageSchema
     }
 )
-def get_tournament(request, tournament_id: str):
+def get_tournament(request, tournament_id: UUID):
     try:
-        tournament_uuid = UUID(tournament_id)
-    except ValueError:
-        return 400, {"msg": "Invalid tournament id format"}
+        tournament = Tournament.objects.select_related(
+            'creator__profile__user'
+        ).prefetch_related(
+            'tournament_rounds__brackets_rounds',
+            'tournament_participants__user__profile',
+        ).get(id=tournament_id)
+        return 200, tournament
+    except Tournament.DoesNotExist:
+        return 404, {"msg": "Tournament not found"}
+
+
+@tournaments_router.get("/", response={200: list[TournamentSchema], 204: None})
+def get_all_tournaments(request):
+    tournaments = Tournament.objects.prefetch_related(
+        Prefetch('tournament_rounds',
+                 queryset=Round.objects.prefetch_related('brackets')),
+        Prefetch('tournament_participants',
+                 queryset=Participant.objects.select_related('user'))
+    ).all()
+    if not tournaments.exists():
+        return 204, None
+    return 200, tournaments
+
+
+@tournaments_router.delete(
+    "/{tournament_id}",
+    response={204: None, 401: MessageSchema,
+              403: MessageSchema, 404: MessageSchema},
+)
+def delete_tournament(request, tournament_id: UUID):
+    user = request.auth
+    if not user:
+        raise HttpError(401, "Authentication required")
+
     try:
         tournament = Tournament.objects.get(id=tournament_id)
     except Tournament.DoesNotExist:
-        return 404, {"msg": "Tournament not found"}
-    return tournament
+        raise HttpError(404, "Tournament not found")
 
+    if tournament.creator != user:
+        raise HttpError(403, "You are not allowed to delete this tournament.")
 
-@tournaments_router.get("/", response=TournamentSchema)
-def get_all_tournaments(request):
-    return ("coucou")
+    tournament.delete()
+    return 204, None
