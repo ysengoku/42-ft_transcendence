@@ -194,7 +194,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
                 continue
             alias = available_aliases.pop(randint(0, len(available_aliases)-1))
             part = Participant.objects.create(
-                user=p,
+                profile=p,
                 tournament=tournament,
                 alias=alias,
                 status='registered',
