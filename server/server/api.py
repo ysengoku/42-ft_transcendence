@@ -14,10 +14,10 @@ from ninja.errors import ValidationError as NinjaValidationError
 from chat.router import chat_app_router
 from pong.router import pong_app_router
 from tournaments.router import tournaments_app_router
-from users.jwt_cookie_auth import JWTCookieAuth
+from users.middleware import JWTEndpointsAuthMiddleware
 from users.router import users_app_router
 
-api = NinjaAPI(auth=JWTCookieAuth(), csrf=True)
+api = NinjaAPI(auth=JWTEndpointsAuthMiddleware(), csrf=True)
 api.add_router("", router=users_app_router)
 api.add_router("", router=chat_app_router)
 api.add_router("", router=pong_app_router)
