@@ -13,9 +13,6 @@ export class TournamentRegistration extends HTMLElement {
     super();
 
     this.handleAliasInput = this.handleAliasInput.bind(this);
-    this.confirmRegister = this.confirmRegister.bind(this);
-    this.connectToTournamentRoom = this.connectToTournamentRoom.bind(this);
-    this.handleRegistrationFail = this.handleRegistrationFail.bind(this);
   }
 
   set data(tournament) {
@@ -25,7 +22,6 @@ export class TournamentRegistration extends HTMLElement {
 
   disconnectedCallback() {
     this.aliasInput?.removeEventListener('input', this.handleAliasInput);
-    this.confirmButton?.removeEventListener('click', this.confirmRegister);
     document.removeEventListener('tournamentRegistered', this.connectToTournamentRoom);
     document.removeEventListener('tournamentRegisterFail', this.handleRegistrationFail);
   }
@@ -47,10 +43,8 @@ export class TournamentRegistration extends HTMLElement {
     modalTournamentStatus.textContent = 'Open for entries';
     const currentParticipants = this.#state.tournament.participants_count ? this.#state.tournament.participants_count : 0;
     this.modalRequiredParticipants.textContent = `${currentParticipants} / ${this.#state.tournament.required_participants} players`;
-    this.confirmButton.textContent = 'Register';
 
     this.aliasInput.addEventListener('input', this.handleAliasInput);
-    this.confirmButton.addEventListener('click', this.confirmRegister);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -72,38 +66,6 @@ export class TournamentRegistration extends HTMLElement {
       tournamentAliasFeedback.textContent = '';
       this.confirmButton.disabled = false;
     }
-  }
-
-  confirmRegister(event) {
-    event.stopPropagation();
-    this.#state.alias = this.aliasInput.value;
-
-    // --- Waiting for the server to be ready to handle ws connections ---
-    // socketManager.openSocket('tournament', this.#state.tournament.tournament_id);
-    const data = {
-      action: 'register',
-      data: { alias: this.#state.alias },
-    }
-    // --- Waiting for the server to be ready to handle ws connections ---
-    // socketManager.sendMessage('tournament', data);
-    console.log('Registering for tournament:', data);
-
-    document.addEventListener('tournamentRegistered', this.connectToTournamentRoom);
-    document.addEventListener('tournamentRegisterFail', this.handleRegistrationFail);
-  }
-
-  connectToTournamentRoom() {
-    // If receive registered message
-    document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true,}));
-    // TODO: Navigate to tournament page
-	// router.navigate(`/tournament/${this.#state.tournament.tournament_id}`);
-  }
-
-  handleRegistrationFail(event) {
-	const reason = event.detail.reason;
-    // If alias is already taken, show message
-    // Else if the tournmant is full, show message and close modal
-    document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true,}));
   }
 
   /* ------------------------------------------------------------------------ */
