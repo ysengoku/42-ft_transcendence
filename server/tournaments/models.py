@@ -83,7 +83,7 @@ class Tournament(models.Model):
     def get_prefetched(self):
         return Tournament.objects.prefetch_related(
             Prefetch('tournament_participants',
-                     queryset=Participant.objects.select_related('user__user')),
+                     queryset=Participant.objects.select_related('profile__user')),
             Prefetch('tournament_rounds',
                      queryset=Round.objects.prefetch_related('brackets'))
         ).get(pk=self.pk)
@@ -100,7 +100,7 @@ class Participant(models.Model):
         ("unregistered", "Unregistered"),
     ]
 
-    user = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     tournament = models.ForeignKey(
         Tournament, on_delete=models.CASCADE, related_name="tournament_participants"
     )
@@ -111,7 +111,7 @@ class Participant(models.Model):
     current_round = models.PositiveIntegerField(default=0)
 
     class Meta:
-        unique_together = (("user", "tournament"), ("tournament", "alias"))
+        unique_together = (("profile", "tournament"), ("tournament", "alias"))
 
     def __str__(self):
         return f"{self.alias} ({self.tournament.name})"
@@ -121,7 +121,7 @@ class Round(models.Model):
     tournament = models.ForeignKey(
         Tournament,
         on_delete=models.CASCADE,
-        related_name="tournament_rounds"
+        related_name="rounds"
     )
     number = models.PositiveIntegerField(editable=False)
     status = models.CharField(
