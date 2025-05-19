@@ -4,7 +4,7 @@ from uuid import UUID
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.exceptions import ValidationError
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.utils import timezone
 from ninja import Router
@@ -12,7 +12,7 @@ from ninja.errors import HttpError
 from ninja.pagination import paginate
 
 from common.schemas import MessageSchema, ProfileMinimalSchema
-from tournaments.models import (Participant, Round, Tournament,
+from tournaments.models import (Bracket, Participant, Round, Tournament,
                                 TournamentCreatedSchema,
                                 TournamentCreateSchema)
 from tournaments.schemas import TournamentSchema
@@ -86,24 +86,46 @@ def get_tournament(request, tournament_id: UUID):
         return 404, {"msg": "Tournament not found"}
 
 
-@tournaments_router.get(
-    "",
-    response={200: list[TournamentSchema], 204: None},
-)
+# @tournaments_router.get(
+#     "",
+#     response={200: list[TournamentSchema], 204: None},
+# )
+# @paginate
+# def get_all_tournaments(request, status: str = "all"):
+#     qs = Tournament.objects.prefetch_related(
+#         Prefetch('tournament_rounds',
+#                  queryset=Round.objects.prefetch_related('brackets')),
+#         Prefetch('tournament_participants',
+#                  queryset=Participant.objects.select_related('user'))
+#     ).with_status(status)
+#     if not qs.exists():
+#         return 204, None
+#     return qs
+
+
+@tournaments_router.get("", response={200: list[TournamentSchema], 204: None})
 @paginate
 def get_all_tournaments(request, status: str = "all"):
     """
     Gets tournaments, paginated. Filter by status if provided.
     """
-    qs = Tournament.objects.prefetch_related(
-        Prefetch('tournament_rounds',
-                 queryset=Round.objects.prefetch_related('brackets')),
+    base_qs = Tournament.objects.prefetch_related(
         Prefetch('tournament_participants',
-                 queryset=Participant.objects.select_related('user'))
-    ).with_status(status)
-    if not qs.exists():
+                 queryset=Round.objects.prefetch_related('brackets')),
+        Prefetch('tournament_rounds__brackets',
+                 queryset=Bracket.objects.select_related(
+                     'participant1__user__user',
+                     'participant2__user__user'
+                 ))
+    )
+
+    # Filtre dynamique
+    if status != "all":
+        base_qs = base_qs.filter(status=status)
+
+    if not base_qs.exists():
         return 204, None
-    return qs
+    return base_qs
 
 
 # @paginate
