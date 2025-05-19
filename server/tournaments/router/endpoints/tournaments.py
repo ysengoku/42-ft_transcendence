@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
+from ninja.pagination import paginate
 
 from common.schemas import MessageSchema, ProfileMinimalSchema
 from tournaments.models import (Participant, Round, Tournament,
@@ -85,17 +86,37 @@ def get_tournament(request, tournament_id: UUID):
         return 404, {"msg": "Tournament not found"}
 
 
-@tournaments_router.get("/", response={200: list[TournamentSchema], 204: None})
-def get_all_tournaments(request):
-    tournaments = Tournament.objects.prefetch_related(
+@tournaments_router.get(
+    "",
+    response={200: list[TournamentSchema], 204: None},
+)
+@paginate
+def get_all_tournaments(request, status: str = "all"):
+    """
+    Gets tournaments, paginated. Filter by status if provided.
+    """
+    qs = Tournament.objects.prefetch_related(
         Prefetch('tournament_rounds',
                  queryset=Round.objects.prefetch_related('brackets')),
         Prefetch('tournament_participants',
                  queryset=Participant.objects.select_related('user'))
-    ).all()
-    if not tournaments.exists():
+    ).with_status(status)
+    if not qs.exists():
         return 204, None
-    return 200, tournaments
+    return qs
+
+
+# @paginate
+# def get_all_tournaments(request):
+#     tournaments = Tournament.objects.prefetch_related(
+#         Prefetch('tournament_rounds',
+#                  queryset=Round.objects.prefetch_related('brackets')),
+#         Prefetch('tournament_participants',
+#                  queryset=Participant.objects.select_related('user'))
+#     ).all()
+#     if not tournaments.exists():
+#         return 204, None
+#     return 200, tournaments
 
 
 @tournaments_router.delete(

@@ -14,6 +14,14 @@ from common.schemas import MessageSchema
 from users.models import Profile
 
 
+class TournamentQuerySet(models.QuerySet):
+    def with_status(self, status: str = "all"):
+        qs = self
+        if status != "all":
+            qs = qs.filter(status=status)
+        return qs.order_by("-created_at")
+
+
 class Tournament(models.Model):
     STATUS_CHOICES = [
         ("lobby", "Lobby"),
@@ -46,6 +54,8 @@ class Tournament(models.Model):
     #     related_name='tournament_rounds'
     # )
     required_participants = models.PositiveIntegerField()
+
+    objects = TournamentQuerySet.as_manager()
 
     def clean(self):
         num = self.required_participants
