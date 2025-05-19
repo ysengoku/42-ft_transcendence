@@ -21,7 +21,6 @@ export class TournamentWaiting extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
-
   render() {
     this.innerHTML = this.template() + this.style();
 
@@ -40,8 +39,8 @@ export class TournamentWaiting extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
+  // ws new_registration listener
   addParticipant(data) {
-    // TODO: listen websocket message new_registration
     const participant = document.createElement('div');
     participant.innerHTML = this.participantTemplate();
 
@@ -54,8 +53,8 @@ export class TournamentWaiting extends HTMLElement {
     this.participantsWrapper.appendChild(participant);
   }
 
+  // ws registration_canceled listener
   removeParticipant(data) {
-    // TODO: listen websocket message registration_canceled
     const participant = this.participantsWrapper.querySelector(`#participant-${data.alias}`);
     if (participant) {
       this.participantsWrapper.removeChild(participant);
