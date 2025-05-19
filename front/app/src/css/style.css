@@ -210,6 +210,7 @@ h1, h2, h3, h4, h5, h6, legend {
   visibility: hidden;
 }
 
+.avatar-xxs,
 .avatar-xs,
 .avatar-s,
 .avatar-m,
@@ -218,6 +219,10 @@ h1, h2, h3, h4, h5, h6, legend {
   object-fit: cover;
   aspect-ratio: 1;
   background-color: var(--pm-gray-500-rgb);
+}
+.avatar-xxs {
+  width: 24px;
+  height: 24px;
 }
 .avatar-xs {
   width: 36px;

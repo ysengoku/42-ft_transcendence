@@ -274,7 +274,7 @@ const tournamentEvents = [
   { action: 'new_registration', event: 'newTournamentRegistration' },
   { action: 'registration_cancelled', event: 'tournamentRegistrationCancelled' },
   { action: 'round_start', event: 'tournamentRoundStart' },
-  { action: 'match_finished', event: 'tournamentMatchFinished' },
+  { action: 'match_finished', event: 'tournamentMatchFinished' }, // TODO: Automatically navigate to the tournament page
   { action: 'matchResult', event: 'tournamentMatchResult' },
   { action: 'round_end', event: 'tournamentRoundEnd' },
   { action: 'tournament_end', event: 'tournamentEnd' },

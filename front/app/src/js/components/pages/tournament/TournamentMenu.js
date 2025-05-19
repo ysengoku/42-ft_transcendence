@@ -1,7 +1,8 @@
 import { Modal } from 'bootstrap';
 import { router } from '@router';
-import './components/index.js';
+import { auth } from '@auth';
 import { formatDateMDY } from '@utils';
+import './components/index.js';
 
 export class TournamentMenu extends HTMLElement {
   constructor() {
@@ -23,10 +24,19 @@ export class TournamentMenu extends HTMLElement {
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
     this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
-    this.navigateToResults = this.navigateToResults.bind(this);
+    this.navigateToOverview = this.navigateToOverview.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      return;
+    }
+    // authStatus.response.tournament_id = '1234'; // For test
+    if (authStatus.response.tournament_id) {
+      this.redirectToActiveTournament(authStatus.response.tournament_id);
+      return;
+    }
     this.render();
   }
 
@@ -36,9 +46,30 @@ export class TournamentMenu extends HTMLElement {
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
-    if (this.selectedTournament && this.selectedTournament.staus === 'finished') {
-      this.confirmButton?.removeEventListener('click', this.navigateToResults);
+    if (this.selectedTournament && this.selectedTournament.staus !== 'lobby') {
+      this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
+  }
+
+  redirectToActiveTournament(id) {
+    devLog('Active tournament session found. Redirect to the tournament', id);
+    const modalTemplate = document.createElement('template');
+    modalTemplate.innerHTML = this.modalTemplate();
+    const modalHeader = modalTemplate.content.querySelector('.modal-header');
+    const modalBody = modalTemplate.content.querySelector('.modal-body');
+    modalBody.innerHTML = this.redirectToOngoingTournamentTemplate();
+    const modalFooter = modalTemplate.content.querySelector('.modal-footer');
+    modalHeader.classList.add('d-none');
+    modalFooter.classList.add('d-none');
+    this.modalComponent = modalTemplate.content.querySelector('.modal');
+    document.body.appendChild(this.modalComponent);
+    this.modal = new Modal(this.modalComponent);
+
+    this.modal.show();
+    setTimeout(() => {
+      this.modal.hide();
+      router.navigate(`/tournament/${id}`);
+    }, 3000);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -126,7 +157,9 @@ export class TournamentMenu extends HTMLElement {
       modalTitle.textContent = this.selectedTournament.tournament_name;
       modalRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants} players`;
 
-      this.confirmButton.classList.add('d-none');
+      this.confirmButton.textContent = 'Check progress';
+      this.confirmButton.disabled = false;
+      this.confirmButton.addEventListener('click', this.navigateToOverview);
       this.calcelButton.textContent = 'Close';
     },
     finished: () => {
@@ -144,15 +177,14 @@ export class TournamentMenu extends HTMLElement {
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
-      this.confirmButton.addEventListener('click', this.navigateToResults);
+      this.confirmButton.addEventListener('click', this.navigateToOverview);
       this.calcelButton.textContent = 'Close';
     },
   };
 
-  navigateToResults() {
+  navigateToOverview() {
     this.modal.hide();
-    // TODO: Activate after tournament result page is implemented
-    // router.navigate(`/tournament-result/${this.selectedTournament.tournament_id}`);
+    router.navigate(`/tournament-overview/${this.selectedTournament.tournament_id}`);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -205,9 +237,9 @@ export class TournamentMenu extends HTMLElement {
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body"></div>
-          <div class="modal-footer border-0 my-2 px-4">
+          <div class="modal-footer border-0 my-2 px-5">
             <button type="button" class="cancel-button btn me-3" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="confirm-button btn btn-wood fw-bolder fs-5 ms-3" disabled></button>
+            <button type="button" class="confirm-button btn fw-bolder ms-2" disabled></button>
           </div>
         </div>
       </div>
@@ -236,6 +268,15 @@ export class TournamentMenu extends HTMLElement {
         <img class="avatar-m rounded-circle" id="tournament-winner-avatar" alt="Winner's avatar">
         <p class="fs-5" id="tournament-winner-alias"></p>
       </div>
+    </div>
+    `;
+  }
+
+  redirectToOngoingTournamentTemplate() {
+    return `
+    <div class="d-flex flex-column align-items-center px-4">
+      <p class="text-center m-0 mt-3">You have an active tournament session.</p>
+      <p class="text-center m-0 mb-3">Taking you there now!</p>
     </div>
     `;
   }
