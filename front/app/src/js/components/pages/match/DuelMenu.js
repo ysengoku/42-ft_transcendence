@@ -358,7 +358,7 @@ export class DuelMenu extends HTMLElement {
                 <div class="d-flex flex-row justify-content-center mt-5">
                   <a href="/home" class="btn">
                     <i class="bi bi-arrow-left"></i>
-                    Back to home
+                    Back to Saloon
                   </a>
                 </div>
               </form>
