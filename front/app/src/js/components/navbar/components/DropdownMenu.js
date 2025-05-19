@@ -14,9 +14,15 @@ export class DropdownMenu extends HTMLElement {
     this.handleThemeChange = this.handleThemeChange.bind(this);
   }
 
-  setLoginStatus(value) {
+  async setLoginStatus(value) {
     this.#state.isLoggedIn = value;
     this.#state.user = auth.getStoredUser();
+    if (this.#state.isLoggedIn && !this.#state.user) {
+      this.#state.user = await auth.getUser();
+      if (!this.#state.user) {
+        this.#state.isLoggedIn = false;
+      }
+    }
     this.render();
   }
 
@@ -68,7 +74,7 @@ export class DropdownMenu extends HTMLElement {
     </div>
     <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="navbarDropdown">
       ${ this.#state.isLoggedIn ? `
-        <a href="/home" class="dropdown-item">Hub</a>
+        <a href="/home" class="dropdown-item">Saloon</a>
         <a class="dropdown-item" id="dropdown-item-profile">My profile</a>
         <a href="/settings" class="dropdown-item">Settings</a>
       ` : `
