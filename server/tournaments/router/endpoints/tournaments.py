@@ -31,7 +31,7 @@ def create_tournament(request, data: TournamentCreateSchema):
 
     # Instanciation without save to check if everything's ok before saving
     tournament: Tournament = Tournament(
-        name=data.tournament_name,
+        name=data.name,
         creator=user,
         required_participants=data.required_participants,
         status="lobby",
@@ -46,8 +46,8 @@ def create_tournament(request, data: TournamentCreateSchema):
     creator = user.profile.to_profile_minimal_schema()
     data = {
         "creator": creator,
-        "tournament_id": str(tournament.id),
-        "tournament_name": data.tournament_name,
+        "id": str(tournament.id),
+        "name": data.name,
         "required_participants": data.required_participants,
         "status": "lobby",
     }
