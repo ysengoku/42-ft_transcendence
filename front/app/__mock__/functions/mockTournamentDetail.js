@@ -25,8 +25,6 @@ export async function mockTournamentDetail(id) {
           alias: 'Whiskey Bandit',},
         { user: { username: 'user5', nickname: 'Player Five', avatar: '/__mock__/img/sample-pic3.png', elo: 1350, is_online: true },
           alias: 'LazyFox',},
-        { user: { username: 'user6', nickname: 'Player Six', avatar: '/__mock__/img/sample-pic1.jpg', elo: 1200, is_online: true },
-          alias: 'DuskDevil',},
       ],
       'required_participants': 8
     },
