@@ -27,14 +27,14 @@ class RoundSchema(Schema):
 
 class TournamentSchema(Schema):
     creator: ProfileMinimalSchema = Field(alias="creator.profile")
-    tournament_id: UUID = Field(alias="id")
-    tournament_name: str = Field(alias="name")
+    id: UUID
+    name: str = Field(alias="name")
     rounds: list[RoundSchema] = Field(default_factory=list)
     participants: list[ParticipantSchema] = Field(default_factory=list)
 
 
 class TournamentCreateSchema(Schema):
-    tournament_name: str = Field(min_length=1, max_length=settings.MAX_TOURNAMENT_NAME_LENGTH)
+    name: str = Field(min_length=1, max_length=settings.MAX_TOURNAMENT_NAME_LENGTH)
     required_participants: int
 
     @model_validator(mode="after")
@@ -42,6 +42,10 @@ class TournamentCreateSchema(Schema):
         options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if self.required_participants not in options:
             raise ValidationError(
-                f"Number of participants must be one of: {', '.join(settings.REQUIRED_PARTICIPANTS_OPTIONS)}",
+                {
+                    "required_participants": [
+                        f"Number of participants must be one of: {', '.join(settings.REQUIRED_PARTICIPANTS_OPTIONS)}",
+                    ],
+                },
             )
         return self
