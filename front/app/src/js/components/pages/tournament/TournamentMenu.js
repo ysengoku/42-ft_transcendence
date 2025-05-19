@@ -200,41 +200,41 @@ export class TournamentMenu extends HTMLElement {
     devLog('Registering for tournament:', this.selectedTournament.tournament_id, aliasInput.value);
   
     // For tetst
-    const alias = aliasInput.value;
     const response = {
       success: true,
       data: {
         tournament_id: this.selectedTournament.tournament_id,
-        alias: alias,
       },
     }
 
     if (response.success) {
       this.modal.hide();
-      router.navigate(`/tournament/${this.selectedTournament.tournament_id}`);
-    } else if (response.status === 422) {
-      const tournamentAliasFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
-      tournamentAliasFeedback.textContent = `Alias ${alias} is already taken.`;
-      aliasInput.classList.add('is-invalid');
+      this.connectToTournamentRoom();
+    } else {
+      // TODO: Handle registration failure
+      const reason = response.reason; // For Test (Need to adjust to the server implementation)
 
+      this.handleRegistrationFail[reason]();
     }
   }
 
-
   connectToTournamentRoom() {
     this.modal.hide();
-    // TODO: Open websocket connection to tournament room
-    // TODO: Navigate to tournament page
-	  // router.navigate(`/tournament/${this.#state.tournament.tournament_id}`);
+	  router.navigate(`/tournament/${this.selectedTournament.tournament_id}`);
   }
 
-  handleRegistrationFail(event) {
-	const reason = event.detail.reason;
-    // If alias is already taken, show message
-    // Else if the tournmant is full, show message and close modal
-    document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true,}));
+  handleRegistrationFail = {
+    duplicateAlias: () => {
+      // const tournamentAliasFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
+      // tournamentAliasFeedback.textContent = `Alias is already taken.`;
+      // aliasInput.classList.add('is-invalid');
+    },
+    full: () => {
+      // TODO: Show message tournament is full
+      this.modal.hide();
+      this.list.render();
+    }
   }
-
 
   navigateToOverview() {
     this.modal.hide();
