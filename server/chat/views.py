@@ -4,7 +4,6 @@ from django.shortcuts import render
 from common.schemas import MessageSchema
 from server.api import api
 from users.consumers import check_inactive_users
-from users.jwt_cookie_auth import JWTCookieAuth
 
 from .models import Chat, Notification
 
@@ -22,7 +21,7 @@ def notifications_view(request):
     return render(request, "chat/notifications.html", {"notifications": notifications})
 
 
-@api.post("/users/offline", auth=JWTCookieAuth(), response={200: MessageSchema})
+@api.post("/users/offline", response={200: MessageSchema})
 def set_offline(request):
     profile = request.user.profile
     profile.is_online = False
