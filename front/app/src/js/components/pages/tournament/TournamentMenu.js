@@ -262,7 +262,7 @@ export class TournamentMenu extends HTMLElement {
 
             <a href="/home" class="btn">
               <i class="bi bi-arrow-left"></i>
-              Back to home
+              Back to Saloon
             </a>
           </div>
         </div>
