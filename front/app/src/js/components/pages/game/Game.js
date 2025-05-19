@@ -59,8 +59,6 @@ export class Game extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     document.querySelector('#content').appendChild(renderer.domElement);
-    // const canvas = document.getElementById('content');
-    // // canvas.focus();
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
@@ -317,16 +315,11 @@ export class Game extends HTMLElement {
     }
 
     function calculateNewDir(bumper) {
-        let collision_pos_x = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
-        let normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + bumper.lenghtHalf);
-        let bounce_angle_radians = degreesToRadians(55 * normalized_collision_pos_x);
+        let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
+        let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lenghtHalf);
+        let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
         Ball.velocity.z = (Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dir_z);
-        Ball.velocity.x = Ball.velocity.z * -Math.tan(bounce_angle_radians) * bumper.dir_z;
-        Ball.velocity.x = Math.max(Math.abs(Ball.velocity.x), 0.05) * Math.sign(Ball.velocity.x);
-        // if (bumper.dir_z == 1 && bounce_angle_radians >= 0.92 || bounce_angle_radians <= -0.92)
-          // sideBump++;
-        // else if (bumper.dir_z == 1)
-          // sideBump = 0;
+        Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dir_z;
         if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
             Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
@@ -389,25 +382,29 @@ export class Game extends HTMLElement {
       keyMap["KeyA"] = false;
       keyMap["KeyD"] = false;
       i++;
-      if (calculatedBumperPos.x < calculatedPos.x && i % 2 == 0)
+      if (calculatedBumperPos.x < calculatedPos.x -0.1 && calculatedBumperPos.x < calculatedPos.x - 0.2 && i % 2 == 0)
       {
         keyMap["KeyA"] = true;
         calculatedBumperPos.x += bumperP2Subtick;
       }
-      else if (calculatedBumperPos.x > calculatedPos.x && i % 2 == 0)
+      else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2 && i % 2 == 0)
       {
         keyMap["KeyD"] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
       }
+      else
+      {
+        keyMap["KeyA"] = false;
+        keyMap["KeyD"] = false;
+      }
     }
     
-    let choosenDifficulty = 0;
+    let choosenDifficulty = 2;
 
     let isMovementDone = false;
     let ballPredictedPos;
     let isCalculationNeeded = true;
-    // let sideBump = 0;
-    let difficultyLvl = [[8, 750], [5, 500], [1, 500]];
+    let difficultyLvl = [[10, 750], [8, 750], [5, 500], [3, 500], [0, 500]];
     //1 && 500 / 5 && 500 / 8 && 750
 
     function handleAiBehavior (BallPos, BallVelocity){
@@ -446,18 +443,6 @@ export class Game extends HTMLElement {
 
       ballPredictedPos.x += (-error + (Math.round(Math.random()) * (error - (-error))));
     }
-    // i++;
-    // if (i % 500 == 0)
-    // {
-    //   console.log(error);
-    // }
-    // if (choosePos == 2)
-    // {
-    //   if (ballPredictedPos.x >= Bumpers[1].cubeMesh.position.x + 1 && ballPredictedPos.x <= Bumpers[1].cubeMesh.position.x + 2)
-    //     ballPredictedPos.x = BallPos.x - 1;
-    //   else
-    //     ballPredictedPos.x = BallPos.x + 1;
-    // }
     if (!isMovementDone)
       moveAiBumper(ballPredictedPos);
     else
@@ -587,7 +572,6 @@ export class Game extends HTMLElement {
           if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
               isMovementDone = true;
               Bumpers[0].score++;
-              // sideBump = 0;
               resetBall(-1);
           }
           else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
@@ -679,6 +663,7 @@ export class Game extends HTMLElement {
           Bumpers[i].speed = 0.25;
           i++;
         }
+        isPaused = false;
         loadedFontP1.position.x = 100;
         loadedFontP2.position.x = 100;
         keyMap["KeyD"] = false;
