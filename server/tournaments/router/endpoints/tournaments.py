@@ -79,66 +79,64 @@ def get_tournament(request, tournament_id: UUID):
             'creator__profile__user'
         ).prefetch_related(
             'tournament_rounds__brackets_rounds',
-            'tournament_participants__user__profile',
+            'tournament_participants__profile__profile',
         ).get(id=tournament_id)
         return 200, tournament
     except Tournament.DoesNotExist:
         return 404, {"msg": "Tournament not found"}
 
 
-# @tournaments_router.get(
-#     "",
-#     response={200: list[TournamentSchema], 204: None},
-# )
-# @paginate
-# def get_all_tournaments(request, status: str = "all"):
-#     qs = Tournament.objects.prefetch_related(
-#         Prefetch('tournament_rounds',
-#                  queryset=Round.objects.prefetch_related('brackets')),
-#         Prefetch('tournament_participants',
-#                  queryset=Participant.objects.select_related('user'))
-#     ).with_status(status)
-#     if not qs.exists():
-#         return 204, None
-#     return qs
-
-
 @tournaments_router.get("", response={200: list[TournamentSchema], 204: None})
 @paginate
 def get_all_tournaments(request, status: str = "all"):
-    """
-    Gets tournaments, paginated. Filter by status if provided.
-    """
-    base_qs = Tournament.objects.prefetch_related(
-        Prefetch('tournament_participants',
-                 queryset=Round.objects.prefetch_related('brackets')),
-        Prefetch('tournament_rounds__brackets',
-                 queryset=Bracket.objects.select_related(
-                     'participant1__user__user',
-                     'participant2__user__user'
-                 ))
-    )
+    return {}
+    # base_qs = Tournament.objects.prefetch_related(
+    #     Prefetch(
+    #         'tournament_participants',
+    #         queryset=Participant.objects.select_related('profile__user')
+    #     ),
+    #     Prefetch(
+    #         'tournament_rounds__brackets',
+    #         queryset=Bracket.objects.select_related(
+    #             'participant1__profile__user',
+    #             'participant2__profile__user'
+    #         )
+    #     )
+    # )
+    # # for t in base_qs:
+    # #     for p in t.tournament_participants.all():
+    # #         print("Participant:", p.alias, "Profile:", p.user, "User:", getattr(
+    # #             p.user, 'user', None), "Username:", getattr(getattr(p.user, 'user', None), 'username', None))
+    # if status != "all":
+    #     base_qs = base_qs.filter(status=status)
+    #
+    # if not base_qs.exists():
+    #     return 204, None
+    # return base_qs
 
-    # Filtre dynamique
-    if status != "all":
-        base_qs = base_qs.filter(status=status)
-
-    if not base_qs.exists():
-        return 204, None
-    return base_qs
-
-
-# @paginate
-# def get_all_tournaments(request):
-#     tournaments = Tournament.objects.prefetch_related(
-#         Prefetch('tournament_rounds',
-#                  queryset=Round.objects.prefetch_related('brackets')),
-#         Prefetch('tournament_participants',
-#                  queryset=Participant.objects.select_related('user'))
-#     ).all()
-#     if not tournaments.exists():
-#         return 204, None
-#     return 200, tournaments
+    # @tournaments_router.get("", response={200: list[TournamentSchema], 204: None})
+    # @paginate
+    # def get_all_tournaments(request, status: str = "all"):
+    #     """
+    #     Gets tournaments, paginated. Filter by status if provided.
+    #     """
+    #     base_qs = Tournament.objects.prefetch_related(
+    #         Prefetch('participants',
+    #                  queryset=Participant.objects.prefetch_related('user__user')),
+    #         Prefetch('tournament_rounds__brackets',
+    #                  queryset=Bracket.objects.select_related(
+    #                      'participant1__user__user',
+    #                      'participant2__user__user'
+    #                  ))
+    #     )
+    #
+    #     if status != "all":
+    #         base_qs = base_qs.filter(status=status)
+    #
+    #     if not base_qs.exists():
+    #         return 204, None
+    #     return base_qs
+    #
 
 
 @tournaments_router.delete(

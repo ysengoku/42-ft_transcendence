@@ -24,14 +24,24 @@ class RoundSchema(ModelSchema):
     # status: str
 
 
+# class ParticipantSchema(ModelSchema):
+#     user: ProfileMinimalSchema
+#     alias: str  # Champ supplémentaire non présent dans le modèle
+#
+#     class Config:
+#         model = Participant
+#         fields = ["user", "alias", "status", "current_round"]
+#
+
 class ParticipantSchema(ModelSchema):
     # tournament_id: UUID
-    user: ProfileMinimalSchema
+    profile: ProfileMinimalSchema  # = Field(..., alias="user")
+    alias: str
 
     class Config:
         model = Participant
-        model_fields = ["alias", "status", "current_round"]
-
+        model_fields = ["profile", "alias", "status", "current_round"]
+#
     # alias: str
     # status:
     #     str
@@ -39,14 +49,15 @@ class ParticipantSchema(ModelSchema):
 
 
 class BracketSchema(ModelSchema):
-    game_id: UUID
+    game_id: UUID | None = None
     participant1: ParticipantSchema
     participant2: ParticipantSchema
-    winner: ParticipantSchema | None
+    winner: ParticipantSchema | None = None
 
     class Config:
         model = Bracket
-        model_fields = ["round", "status", "score_p1", "score_p2"]
+        model_fields = ["id", "status", "score"]
+        # model_fields = ["round", "status", "score_p1", "score_p2"]
 
 
 class TournamentSchema(ModelSchema):
