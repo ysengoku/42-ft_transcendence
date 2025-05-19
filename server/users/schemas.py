@@ -199,6 +199,7 @@ class PasswordValidationSchema(Schema):
         ):
             err_dict["password"].append("Password should have at least 1 letter and 1 digit.")
 
+        # clean empty lists from the dict
         return {k: v for k, v in err_dict.items() if v}
 
 
