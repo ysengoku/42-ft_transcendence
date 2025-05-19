@@ -193,7 +193,6 @@ def generate_tournaments(users: dict[str, User]) -> None:
             )
             participant_objs.append(part)
 
-        # ongoing/finished の場合はラウンド生成・状態更新
         if status in ('ongoing', 'finished'):
             total_rounds = 2 if required == 4 else 3
             current = participant_objs.copy()
@@ -279,7 +278,7 @@ def generate_empty_tournament(creator: User) -> Tournament:
     tournament = Tournament.objects.create(
         name="Empty Tournament",
         date=generate_random_date(),
-        status='lobby',
+        status = choice(['lobby', 'ongoing', 'finished']),
         creator=creator,
         required_participants=0,
     )
@@ -295,8 +294,10 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
-        generate_tournaments(users)
-        #generate_empty_tournament(life_enjoyer)
+
+        #generate_tournaments(users)
+        for _ in range(15):
+            generate_empty_tournament(choice(list(users.values())))
 
         # MFA users
         mfa_users = [
