@@ -150,7 +150,8 @@ class Bracket(models.Model):
         ("ongoing", "Ongoing"),
         ("finished", "Finished"),
     ]
-
+    game = models.ForeignKey(
+        'pong.Match', on_delete=models.SET_NULL, null=True)
     round = models.ForeignKey(
         Round, on_delete=models.CASCADE, related_name="brackets")
     participant1 = models.ForeignKey(
