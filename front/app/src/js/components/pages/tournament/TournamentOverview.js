@@ -1,3 +1,4 @@
+import { apiRequest, API_ENDPOINTS } from '@api';
 import { formatDateMDY } from '@utils';
 import { isMobile } from '@utils';
 import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
@@ -40,10 +41,29 @@ export class TournamentOverview extends HTMLElement {
   }
 
   async fetchTournamentrData() {
-    // For test
+    // For rendering test
     // this.#state.tournament = await mockTournamentDetail('mockidongoing');
-    this.#state.tournament = await mockTournamentDetail('mockidongoing2');
-    // this.#state.tournament = await mockTournamentDetail('mockidfinished');
+    // this.#state.tournament = await mockTournamentDetail('mockidongoing2');
+    this.#state.tournament = await mockTournamentDetail('mockidfinished');
+  
+    // For error handling Test
+    // this.#state.tournament_id = 'fb68695b-5645-4ad6-ac8a-8ee018475cae'
+
+    // Decomment after API is ready
+    // const response = await apiRequest(
+    //     'GET',
+    //     API_ENDPOINTS.TOURNAMENT(this.#state.tournament_id),
+    //     null, false, true);
+    // if (!response.success) {
+    //   if (response.status === 404) {
+    //     const notFound = document.createElement('page-not-found');
+    //     this.innerHTML = notFound.outerHTML;
+    //   } else {
+    //     console.error('Error fetching tournament data');
+    //   }
+    //   return;
+    // }
+    // this.#state.tournament = response.data;
 
     if (!(this.#state.tournament.status === 'ongoing' || this.#state.tournament.status === 'finished')) {
       const notFound = document.createElement('page-not-found');
