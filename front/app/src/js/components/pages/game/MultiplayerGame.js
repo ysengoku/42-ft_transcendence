@@ -258,7 +258,9 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = ``;
+    // this.innerHTML = ``;
+    this.innerHTML = this.overlayTemplate();
+    this.overlay = this.querySelector('#overlay');
 
     const [camera, renderer, animate] = this.game();
     window.addEventListener('resize', function () {
@@ -269,6 +271,21 @@ export class MultiplayerGame extends HTMLElement {
       camera.updateProjectionMatrix();
     });
     animate();
+  }
+
+  overlayTemplate() {
+    return `
+    <style>
+    #overlay {
+      background-color: rgba(var(--pm-gray-700-rgb), 0.8);
+      z-index: 10;
+      top: 0;
+      left: 0;
+    }
+    </style>
+    <div id="overlay" class="position-absolute w-100 h-100">
+    </div>
+    `;
   }
 }
 
