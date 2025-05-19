@@ -127,27 +127,18 @@ export class Duel extends HTMLElement {
   handleGameFound(event) {
     devLog('Game found event:', event.detail);
     this.#state.gameId = event.detail.game_room_id;
-    // ===== For test ================
+    const { username, nickname, avatar, elo } = event.detail
     this.#state.opponent = {
-      username: 'Alice',
-      nickname: 'Alice',
-      avatar: '/__mock__/img/sample-pic2.png',
-      elo: 1500,
-    };
-    // ================================
-
-    // TODO: Activate the following line and remove the test code after merge
-    // const { username, nickname, avatar, elo } = event.detail
-    // this.#state.opponent = {
-    //   username,
-    //   nickname,
-    //   avatar,
-    //   elo,
-    // }
+      username,
+      nickname,
+      avatar,
+      elo,
+    }
     this.startDuel();
   }
 
   handleInviteResponse(event) {
+    // TODO: handle invite response
   }
 
   cancelDuel() {
