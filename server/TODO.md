@@ -9,6 +9,7 @@
 ## Fixes
 - [x] Fix friends and blocked users: they shouldn't be able to add themselves.
 - [x] Fix friends and blocked users: you can't add blocked user as a friend.
+- [ ] Fix the bug where I can find a match against myself in matchmaking.
 
 ## Features
 ### User Management & Auth
@@ -62,6 +63,7 @@
     - [x] Remove `friends` field.
     - [x] Add the price for the head. 
     - [x] Add the last ten matches of the user.
+- [x] Add `game_id`, which is the currently active game for the user, to `/self`.
 
 
 ### Chat
@@ -74,13 +76,19 @@
 - [x] Add notifications endpoint.
 
 ### Multiplayer
-- [ ] Make the multiplayer game compatible with matchmaking.
-- [ ] Allow more than 1 match to be played at the same time.
+- [x] Make the multiplayer game compatible with matchmaking.
+- [x] Allow more than 1 match to be played at the same time.
+- [x] Add reconnection logic for the matches.
+- [x] Add win condition for the matches.
+- [ ] Record the wins and loses with the database.
 
 ## Testing
 - [ ] Add testing for `users` endpoints.
 - [ ] Add testing for `chat` endpoints.
 - [ ] Update the `populate_db` script. As for now, it uses raw models to add friends without creating appropriate notifications. We should extract friend addition logic to a specific function.
+
+### Things to test/fix
+- [ ] Everywhere where websocket expects valid JSON, check for the decoding errors.
 
 ## Docs
 - [ ] Update docsrings for endpoints that provide paginated data, which is reverse ordered.
