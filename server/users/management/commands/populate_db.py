@@ -155,7 +155,6 @@ def generate_matches(users: dict[str, User], life_enjoyer: User):
 
 
 def generate_tournaments(users: dict[str, User]) -> None:
-    print("Generating tournaments...")
     dummy_aliases = [
         "RedFalcon", "BlueTiger", "SilverWolf", "GoldenEagle", "ShadowFox", "RedDragon",
         "EmeraldLion", "NightHawk", "MysticBear", "StormRider", "CosmicWhale", "PhantomCat"
@@ -274,13 +273,19 @@ def generate_tournaments(users: dict[str, User]) -> None:
                 tournament.winner = champ
                 tournament.save()
 
+
 def generate_empty_tournament(creator: User) -> Tournament:
+    names = [
+        "Pong Stampede", "Cowboy Cup", "Pixel Rodeo", "Western Series", "Paddle Quest", 
+        "Rusty Rally", "Sheriff Showdown","Cactus Cup", "Ranch Rumble", "Outlaw Open", 
+        "Giddy UpGames", "HighNoon League", "Frontier Finals", "Spur Series", "Buffalo Bracket"]
+
     tournament = Tournament.objects.create(
-        name="Empty Tournament",
+        name=choice(names),
         date=generate_random_date(),
         status = choice(['lobby', 'ongoing', 'finished']),
         creator=creator,
-        required_participants=0,
+        required_participants=choice([4, 8]),
     )
     return tournament
 
