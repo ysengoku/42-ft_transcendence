@@ -78,7 +78,7 @@ def get_tournament(request, tournament_id: UUID):
         tournament = Tournament.objects.select_related(
             'creator__profile__user'
         ).prefetch_related(
-            'tournament_rounds__brackets_rounds',
+            'rounds__brackets_rounds',
             'tournament_participants__profile__profile',
         ).get(id=tournament_id)
         return 200, tournament
