@@ -273,6 +273,7 @@ export class MultiplayerGame extends HTMLElement {
     animate();
   }
 
+  // On ws actions received, remove d-done class from the #overlay
   overlayTemplate() {
     return `
     <style>
@@ -282,8 +283,17 @@ export class MultiplayerGame extends HTMLElement {
       top: 0;
       left: 0;
     }
+    #game-status-message {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(var(--pm-gray-100-rgb), 0.9);
+      background-color: rgba(var(--pm-gray-700-rgb), 0.8);
+      padding: 20px;
+    }
     </style>
     <div id="overlay" class="position-absolute w-100 h-100">
+      <div id="game-status-message" class="position-absolute text-center fs-3">Test</div>
     </div>
     `;
   }
