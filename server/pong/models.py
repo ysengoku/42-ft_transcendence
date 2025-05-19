@@ -142,17 +142,31 @@ class Match(models.Model):
         return f"{winner} - {loser}"
 
 
-class GameRoomManager(models.Manager):
-    def get_valid_game_room(self):
-        """
-        Valid game room is a pending game room with less than 2 players.
-        """
-        return (
-            self.filter(status=GameRoom.PENDING)
-            .annotate(players_num=Count("players"))
-            .filter(players_num__lt=2)
-            .first()
-        )
+# Define the intermediate model
+class GameRoomPlayer(models.Model):
+    """Intermediate model for GameRoom and Profile, storing room-specific player data."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    game_room = models.ForeignKey("GameRoom", on_delete=models.CASCADE)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.profile.user.username} in Room {self.game_room.id}"
+
+
+class GameRoomQuerySet(models.QuerySet):
+    def for_valid_game_room(self):
+        """Valid game room is a pending game room with less than 2 players."""
+        return self.annotate(players_count=Count("players")).filter(status=GameRoom.PENDING, players_count__lt=2)
+
+    def for_id(self, game_room_id: str):
+        return self.filter(id=game_room_id)
+
+    def for_players(self, *players: Profile):
+        return self.filter(players__in=players)
+
+    def for_ongoing_status(self):
+        return self.filter(status=self.model.ONGOING)
 
 
 class GameRoom(models.Model):
@@ -161,18 +175,20 @@ class GameRoom(models.Model):
     """
 
     PENDING = "pending"
+    ONGOING = "ongoing"
     CLOSED = "closed"
     STATUS_CHOICES = (
         (PENDING, "Pending"),
+        (ONGOING, "Ongoing"),
         (CLOSED, "Closed"),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
-    players = models.ManyToManyField(Profile, related_name="game_rooms")
+    players = models.ManyToManyField(Profile, related_name="game_rooms", through=GameRoomPlayer)
     date = models.DateTimeField(default=timezone.now)
 
-    objects = GameRoomManager()
+    objects: GameRoomQuerySet = GameRoomQuerySet.as_manager()
 
     class Meta:
         ordering = ["-date"]
