@@ -24,6 +24,7 @@ export class TournamentMenu extends HTMLElement {
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
     this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
+    this.confirmRegister = this.confirmRegister.bind(this);
     this.navigateToOverview = this.navigateToOverview.bind(this);
   }
 
@@ -117,6 +118,9 @@ export class TournamentMenu extends HTMLElement {
     this.confirmButton.classList.remove('d-none');
     this.confirmButton.disabled = true;
     this.calcelButton.textContent = 'Cancel';
+
+    this.confirmButton.removeEventListener('click', this.confirmRegister);
+    this.confirmButton.removeEventListener('click', this.navigateToOverview);
   }
 
   showNewTournamentForm() {
@@ -149,6 +153,8 @@ export class TournamentMenu extends HTMLElement {
       const modalBodyContent = document.createElement('tournament-registration');
       modalBodyContent.data = this.selectedTournament;
       this.modalBody.appendChild(modalBodyContent);
+      this.confirmButton.textContent = 'Register';
+      this.confirmButton.addEventListener('click', this.confirmRegister);
     },
     ongoing: () => {
       this.modalBody.innerHTML = this.ongoingTournamentTemplate();
@@ -172,8 +178,12 @@ export class TournamentMenu extends HTMLElement {
       modalTitle.textContent = this.selectedTournament.tournament_name;
       modalRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants} players`;
       modalTournamentStatus.textContent = `Finished on ${formatDateMDY(this.selectedTournament.date)}`;
-      tournamentWinnerAvatar.src = this.selectedTournament.winner.user.avatar;
-      tournamentWinnerAlias.textContent = this.selectedTournament.winner.alias;
+      if (this.selectedTournament.winner && this.selectedTournament.winner.user && this.selectedTournament.winner.user.avatar) {
+        tournamentWinnerAvatar.src = this.selectedTournament.winner.user.avatar;
+      } else {
+        tournamentWinnerAvatar.classList.add('d-none');
+      }
+      tournamentWinnerAlias.textContent = this.selectedTournament.winner ? this.selectedTournament.winner.alias : 'Data not available';
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
@@ -181,6 +191,50 @@ export class TournamentMenu extends HTMLElement {
       this.calcelButton.textContent = 'Close';
     },
   };
+
+  confirmRegister(event) {
+    event.stopPropagation();
+    const aliasInput = this.modalBody.querySelector('#tournament-alias');
+
+   // Send API request to register for the tournament
+    devLog('Registering for tournament:', this.selectedTournament.tournament_id, aliasInput.value);
+  
+    // For tetst
+    const alias = aliasInput.value;
+    const response = {
+      success: true,
+      data: {
+        tournament_id: this.selectedTournament.tournament_id,
+        alias: alias,
+      },
+    }
+
+    if (response.success) {
+      this.modal.hide();
+      router.navigate(`/tournament/${this.selectedTournament.tournament_id}`);
+    } else if (response.status === 422) {
+      const tournamentAliasFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
+      tournamentAliasFeedback.textContent = `Alias ${alias} is already taken.`;
+      aliasInput.classList.add('is-invalid');
+
+    }
+  }
+
+
+  connectToTournamentRoom() {
+    this.modal.hide();
+    // TODO: Open websocket connection to tournament room
+    // TODO: Navigate to tournament page
+	  // router.navigate(`/tournament/${this.#state.tournament.tournament_id}`);
+  }
+
+  handleRegistrationFail(event) {
+	const reason = event.detail.reason;
+    // If alias is already taken, show message
+    // Else if the tournmant is full, show message and close modal
+    document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true,}));
+  }
+
 
   navigateToOverview() {
     this.modal.hide();
@@ -265,7 +319,7 @@ export class TournamentMenu extends HTMLElement {
       <p class="text-center" id="modal-tournament-status"></p>
       <div class="d-flex flex-column align-items-center mt-4">
         <h3 class="text-center mt-3">Winner</h3>
-        <img class="avatar-m rounded-circle" id="tournament-winner-avatar" alt="Winner's avatar">
+        <img class="avatar-m rounded-circle" id="tournament-winner-avatar" alt="champion-avatar">
         <p class="fs-5" id="tournament-winner-alias"></p>
       </div>
     </div>
