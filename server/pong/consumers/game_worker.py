@@ -352,7 +352,7 @@ class GameConsumer(AsyncConsumer):
             match.state == MultiplayerPongMatchState.PENDING
             and len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) == PLAYERS_REQUIRED - 1
         ):
-            self._add_player_and_start_match(player_id, match)
+            await self._add_player_and_start_match(player_id, match)
 
         ### RECONNECTION OF ONE OF THE PLAYERS TO THE MATCH ###
         elif match.state in {MultiplayerPongMatchState.PENDING, MultiplayerPongMatchState.PAUSED}:
@@ -389,7 +389,7 @@ class GameConsumer(AsyncConsumer):
             )
             return
 
-        await self._pause(match)
+        await self._pause(match, player)
         player.reconnection_timer = asyncio.create_task(self._wait_for_reconnection_task(match, player))
         logger.info(
             "[GameWorker]: player {%s} has been disconnected from the ongoing game {%s}",
@@ -508,12 +508,13 @@ class GameConsumer(AsyncConsumer):
         match.waiting_for_players_timer = asyncio.create_task(self._wait_for_both_player_task(match))
         logger.info("[GameWorker]: player {%s} was added to newly created game {%s}", player_id, match_id)
 
-    def _add_player_and_start_match(self, player_id: str, match: MultiplayerPongMatch):
+    async def _add_player_and_start_match(self, player_id: str, match: MultiplayerPongMatch):
         """Cancels waiting for players timer, and starts the game loop for this match."""
         match.add_player(player_id)
         match.stop_waiting_for_players_timer()
         match.state = MultiplayerPongMatchState.ONGOING
         match.game_loop_task = asyncio.create_task(self._match_game_loop_task(match))
+        await self.channel_layer.group_send(self._to_group_name(match), {"type": "game_started"})
         logger.info("[GameWorker]: player {%s} has been added to existing game {%s}", player_id, match.id)
 
     async def _reconnect_player(self, player_id: str, match: MultiplayerPongMatch):
@@ -541,8 +542,11 @@ class GameConsumer(AsyncConsumer):
         if match.game_loop_task and not match.game_loop_task.cancelled():
             match.game_loop_task.cancel()
 
-    async def _pause(self, match: MultiplayerPongMatch):
-        await self.channel_layer.group_send(self._to_group_name(match), {"type": "game_paused"})
+    async def _pause(self, match: MultiplayerPongMatch, disconnected_player: Player):
+        await self.channel_layer.group_send(
+            self._to_group_name(match),
+            {"type": "game_paused", "remaining_time": int(disconnected_player.reconnection_time)},
+        )
         match.state = MultiplayerPongMatchState.PAUSED
         match.pause_event.clear()
         logger.info("[GameWorker]: game {%s} has been paused", match.id)
