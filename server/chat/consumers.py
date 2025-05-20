@@ -56,12 +56,9 @@ class UserEventsConsumer(WebsocketConsumer):
                     return
                 self.user_profile.nb_active_connexions = models.F(
                     "nb_active_connexions") + 1
-                self.user_profile.is_online = True
-                self.user_profile.last_activity = timezone.now()
-                self.user_profile.save(
-                    update_fields=["nb_active_connexions", "is_online", "last_activity"])
-                self.user_profile.refresh_from_db()
                 self.user_profile.update_activity()
+                self.user_profile.save(update_fields=["nb_active_connexions"])
+                self.user_profile.refresh_from_db()
                 redis_status_manager.set_user_online(self.user.id)
                 logger.info("User %s connected, now has %i active connexions",
                             self.user.username, self.user_profile.nb_active_connexions)
@@ -86,8 +83,6 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
         self.accept()
-        self.user_profile.update_activity()
-        OnlineStatusConsumer.notify_online_status(self, "online")
 
     def disconnect(self, close_code):
         if not hasattr(self, "user_profile"):
