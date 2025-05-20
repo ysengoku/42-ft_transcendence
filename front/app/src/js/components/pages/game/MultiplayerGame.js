@@ -3,19 +3,23 @@ import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitCo
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import pedro from '/3d_models/lilguy.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
+import { router } from '@router'
 
 export class MultiplayerGame extends HTMLElement {
   #state = {
     gameId: '',
   };
 
-  #message = {
-    pause: 'Game paused',
-    cancel: 'Game canceled',
-  }
-
   constructor() {
     super();
+
+    this.overlay = null;
+    this.overlayMessageWrapper = null;
+    this.overlayButton1 = null;
+    this.overlayButton2 = null;
+
+    this.requestNewMatchmaking = this.requestNewMatchmaking.bind(this);
+    this.navigateToHome = this.navigateToHome.bind(this);
   }
 
   setParam(param) {
@@ -278,7 +282,9 @@ export class MultiplayerGame extends HTMLElement {
     // this.innerHTML = ``;
     this.innerHTML = this.overlayTemplate();
     this.overlay = this.querySelector('#overlay');
-    this.overlayMessage = this.querySelector('#game-status-message');
+    this.overlayMessageWrapper = this.querySelector('#game-status-message-wrapper');
+    this.overlayButton1 = this.querySelector('#overlay-button1');
+    this.overlayButton2 = this.querySelector('#overlay-button2');
 
     const [camera, renderer, animate] = this.game();
     window.addEventListener('resize', function () {
@@ -290,27 +296,58 @@ export class MultiplayerGame extends HTMLElement {
     });
     animate();
 
-    // For testing purposes
+    // ----- TEST ---------------
     setTimeout(() => {
     this.showOverlay('pause')
     }, 2000);
     setTimeout(() => {
       this.hideOverlay()
     }, 4000);
+    setTimeout(() => {
+    this.showOverlay('cancel');
+    }, 6000);
+    // --------------------------
   }
 
   showOverlay(status) {
-    const message = this.#message[status];
+    const element = document.createElement('div');
+    element.innerHTML = this.overlayContentTemplate[status];
+    this.overlayMessageWrapper.appendChild(element);
     this.overlay.classList.remove('d-none');
-    this.overlayMessage.innerText = message;
+
+    switch (status) {
+      case 'pause':
+        // TODO:
+        // Add the disconnected user's nickname & avatar
+        // Set timer
+        break;
+      case 'cancel':
+        this.overlayButton1 = this.querySelector('#overlay-button1');
+        this.overlayButton2 = this.querySelector('#overlay-button2');
+        this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
+        this.overlayButton2.addEventListener('click', this.navigateToHome);
+        break;
+    }
   }
 
   hideOverlay() {
-    this.overlayMessage.innerText = '';
     this.overlay.classList.add('d-none');
+    this.overlayMessageWrapper.innerHTML = '';
+
+    this.overlayButton1?.removeEventListener('click', this.requestNewMatchmaking);
+    this.overlayButton2?.removeEventListener('click', this.navigateToHome);
+    this.overlayButton1 = null;
+    this.overlayButton2 = null;
   }
 
-  // On ws actions received, remove d-done class from the #overlay
+  requestNewMatchmaking() {
+    router.navigate('/duel', { status: 'matchmaking' });
+  }
+
+  navigateToHome() {
+    router.navigate('/home')
+  }
+
   overlayTemplate() {
     return `
     <style>
@@ -320,20 +357,38 @@ export class MultiplayerGame extends HTMLElement {
       top: 0;
       left: 0;
     }
-    #game-status-message {
+    #game-status-message-wrapper {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       color: rgba(var(--pm-gray-100-rgb), 0.9);
       background-color: rgba(var(--pm-gray-700-rgb), 0.8);
-      padding: 40px;
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+    #game-status-message {
       font-family: 'van dyke';
     }
     </style>
     <div id="overlay" class="position-absolute w-100 h-100 d-none">
-      <div id="game-status-message" class="position-absolute text-center fs-2"></div>
+      <div id="game-status-message-wrapper" class="position-absolute text-center wood-board pt-5 pb-3"></div>
     </div>
     `;
+  }
+
+  overlayContentTemplate = {
+    pause: `
+      <div id="game-status-message" class="fs-2">Game paused</div>
+      <div id="game-status-submessage" class="py-2">Show more message here</div>
+      `,
+    cancel:`
+      <div id="game-status-message" class="fs-2">Game canceled</div>
+      <div id="game-status-submessage" class="mb-3">Player failed to connect.</div>
+      <div class="d-flex flex-column mt-5">
+        <button id="overlay-button1" class="btn fw-bold">Bring me another rival</button>
+        <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
+      </div>
+    `,
   }
 }
 

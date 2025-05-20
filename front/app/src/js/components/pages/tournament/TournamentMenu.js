@@ -37,6 +37,9 @@ export class TournamentMenu extends HTMLElement {
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        router.navigate('/login');
+      }
       return;
     }
     // authStatus.response.tournament_id = '1234'; // For test
@@ -333,7 +336,7 @@ export class TournamentMenu extends HTMLElement {
     }
     #registration-fail-feedback {
       background-color: var(--pm-red-400);
-
+      border-radius: 0.25rem;
     }
     </style>
     `;
@@ -367,7 +370,7 @@ export class TournamentMenu extends HTMLElement {
         <p class="text-center fs-4 m-0" id="modal-required-participants"></p>
         <p class="text-center fs-6 m-0 pe-1">players</p>
       </div>
-      <div class="mb-2 px-4 py-2 d-none" role="alert" id="registration-fail-feedback"></div>
+      <div class="mb-2 px-3 py-2 d-none w-75" role="alert" id="registration-fail-feedback"></div>
       <div id="tournament-register-form" class="d-flex flex-column w-100 mb-3">
         <label for="tournament-alias" class="form-label">Set your tournament alias</label>
         <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias for the tournament" autocomplete="off" required>
