@@ -5,8 +5,7 @@ import magic
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
-from django.db.models import (Case, Count, Exists, ExpressionWrapper, F, Func,
-                              IntegerField, Q, Sum, Value, When)
+from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
 from django.db.models.lookups import Exact
 from django.utils import timezone
 from ninja.files import UploadedFile
@@ -107,7 +106,6 @@ class Profile(models.Model):
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now_add=True)
     nb_active_connexions = models.IntegerField(default=0)
-    # Stocke les noms des canaux actifs
     active_channels = models.JSONField(default=list, blank=True)
 
     objects = ProfileQuerySet.as_manager()
@@ -116,8 +114,6 @@ class Profile(models.Model):
         return f"Profile of {self.user.username}"
 
     def update_activity(self):
-        print("UPDATE ACTIVITY :D :D :D :D For : %s", self.user.username)
-        print("Last activity : ", self.last_activity)
         self.last_activity = timezone.now()
         if not self.is_online:
             self.is_online = True
