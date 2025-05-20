@@ -89,7 +89,7 @@ export class Navbar extends HTMLElement {
     return `
     <style>
     .navbar {
-      background-color: rgba(var(--pm-primary-600-rgb), 0.7);
+      background-color: rgba(var(--pm-primary-600-rgb), 1.0);
     }
     .navbar-button {
       padding: 0.5rem;
