@@ -5,7 +5,8 @@ import magic
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
-from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
+from django.db.models import (Case, Count, Exists, ExpressionWrapper, F, Func,
+                              IntegerField, Q, Sum, Value, When)
 from django.db.models.lookups import Exact
 from django.utils import timezone
 from ninja.files import UploadedFile
@@ -115,6 +116,8 @@ class Profile(models.Model):
         return f"Profile of {self.user.username}"
 
     def update_activity(self):
+        print("UPDATE ACTIVITY :D :D :D :D For : %s", self.user.username)
+        print("Last activity : ", self.last_activity)
         self.last_activity = timezone.now()
         if not self.is_online:
             self.is_online = True
@@ -143,15 +146,15 @@ class Profile(models.Model):
         if self.elo > 2700:
             return "Wild West Legend", 1000000
         if self.elo > 2300:
-          return "Star Criminal", 500000
+            return "Star Criminal", 500000
         if self.elo > 2000:
-          return "Ace Outlaw", 100000
+            return "Ace Outlaw", 100000
         if self.elo > 1700:
-          return "Big Shot", 10000
+            return "Big Shot", 10000
         if self.elo > 1400:
-          return "El Bandito", 1000
+            return "El Bandito", 1000
         if self.elo > 1100:
-          return "Goon", 100
+            return "Goon", 100
         if self.elo > 800:
             return "Troublemaker", 50
         if self.elo > 500:
