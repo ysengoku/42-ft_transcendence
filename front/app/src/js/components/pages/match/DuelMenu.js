@@ -57,10 +57,11 @@ export class DuelMenu extends HTMLElement {
       }
       return;
     }
-    if (authStatus.response.game_id) {
-      // TODO: Redirect to multiplayer game page
-      return;
-    }
+    // if (authStatus.response.game_id) {
+    //   // TODO: Redirect to multiplayer game page
+    //   return;
+    // }
+
     this.render();
   }
 
@@ -81,6 +82,7 @@ export class DuelMenu extends HTMLElement {
   /*      Rendering                                                           */
   /* ------------------------------------------------------------------------ */
   render() {
+    console.log('Rendering DuelMenu');
     this.innerHTML = this.template() + this.style();
 
     this.optionsButton = this.querySelector('#game-options-button');

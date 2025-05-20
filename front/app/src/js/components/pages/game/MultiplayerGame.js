@@ -297,15 +297,15 @@ export class MultiplayerGame extends HTMLElement {
     animate();
 
     // ----- TEST ---------------
-    setTimeout(() => {
-    this.showOverlay('pause')
-    }, 2000);
-    setTimeout(() => {
-      this.hideOverlay()
-    }, 4000);
-    setTimeout(() => {
-    this.showOverlay('cancel');
-    }, 6000);
+    // setTimeout(() => {
+    // this.showOverlay('pause')
+    // }, 2000);
+    // setTimeout(() => {
+    //   this.hideOverlay()
+    // }, 4000);
+    // setTimeout(() => {
+    // this.showOverlay('cancel');
+    // }, 6000);
     // --------------------------
   }
 
