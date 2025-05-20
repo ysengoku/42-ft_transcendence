@@ -57,6 +57,10 @@ export class DuelMenu extends HTMLElement {
       }
       return;
     }
+    if (authStatus.response.game_id) {
+      // TODO: Redirect to multiplayer game page
+      return;
+    }
     this.render();
   }
 
@@ -286,7 +290,7 @@ export class DuelMenu extends HTMLElement {
     router.navigate('/duel', queryParams);
   }
 
-  async requestMatchMaking(event) {
+  requestMatchMaking(event) {
     event.preventDefault();
     router.navigate('/duel', { status: 'matchmaking' });
   }
