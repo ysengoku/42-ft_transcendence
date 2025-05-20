@@ -74,12 +74,26 @@ class Player:
     # TODO: move time to constants
     reconnection_time: int = 10
     reconnection_timer: asyncio.Task | None = None
+    profile_id: str = ""
+    name: str = ""
+    avatar: str = ""
+    elo: int = 0
 
     def stop_waiting_for_reconnection_timer(self):
         task = self.reconnection_timer
         if task and not task.cancelled():
             task.cancel()
         self.reconnection_timer = None
+
+    def as_dict(self):
+        return {
+            "id": self.id,
+            "profile_id": self.profile_id,
+            "name": self.name,
+            "avatar": self.avatar,
+            "elo": self.elo,
+            "number": 1 if self.bumper.z == 1 else 2,
+        }
 
 
 @dataclass(slots=True)
@@ -272,11 +286,12 @@ class MultiplayerPongMatch(BasePong):
             case "move_right":
                 bumper.moves_right = content
 
-    def add_player(self, player_id: str):
+    def add_player(self, player_connected_event: dict):
         """
         Adds player to the players dict.
         Assigns player to a random bumper.
         """
+        player_id = player_connected_event["player_id"]
         available_player_slots = []
         if self._player_1.connection == PlayerConnectionState.NOT_CONNECTED:
             available_player_slots.append(self._player_1)
@@ -289,6 +304,10 @@ class MultiplayerPongMatch(BasePong):
         player = available_player_slots.pop()
         player.id = player_id
         player.connection = PlayerConnectionState.CONNECTED
+        player.profile_id = player_connected_event["profile_id"]
+        player.name = player_connected_event["name"]
+        player.avatar = player_connected_event["avatar"]
+        player.elo = player_connected_event["elo"]
         if player.bumper.dir_z == 1:
             logger.info("[GameWorker]: player {%s} was assigned to player_1", player_id)
         if player.bumper.dir_z == -1:
@@ -342,7 +361,7 @@ class GameConsumer(AsyncConsumer):
 
         ### CONNECTION OF THE FIRST PLAYER TO NOT YET CREATED MATCH ###
         if match_id not in self.matches:
-            self._add_player_and_create_pending_match(player_id, match_id)
+            self._add_player_and_create_pending_match(event)
             return
 
         match = self.matches[match_id]
@@ -502,15 +521,21 @@ class GameConsumer(AsyncConsumer):
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
 
     ##### PLAYER MANAGEMENT METHODS #####
-    def _add_player_and_create_pending_match(self, player_id: str, match_id: str):
+    def _add_player_and_create_pending_match(self, match_id: str, player_connected_event: dict):
+        player_id = player_connected_event["player_id"]
         match = self.matches[match_id] = MultiplayerPongMatch(match_id)
-        match.add_player(player_id)
+        match.add_player(player_connected_event)
         match.waiting_for_players_timer = asyncio.create_task(self._wait_for_both_player_task(match))
-        logger.info("[GameWorker]: player {%s} was added to newly created game {%s}", player_id, match_id)
+        logger.info(
+            "[GameWorker]: player {%s} was added to newly created game {%s}",
+            player_id,
+            match_id,
+        )
 
-    async def _add_player_and_start_match(self, player_id: str, match: MultiplayerPongMatch):
+    async def _add_player_and_start_match(self, match: MultiplayerPongMatch, player_connected_event: dict):
         """Cancels waiting for players timer, and starts the game loop for this match."""
-        match.add_player(player_id)
+        player_id = player_connected_event["player_id"]
+        match.add_player(player_connected_event)
         match.stop_waiting_for_players_timer()
         match.state = MultiplayerPongMatchState.ONGOING
         match.game_loop_task = asyncio.create_task(self._match_game_loop_task(match))
