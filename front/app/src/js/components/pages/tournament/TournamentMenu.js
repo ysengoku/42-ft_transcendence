@@ -197,13 +197,13 @@ export class TournamentMenu extends HTMLElement {
     const aliasInput = this.modalBody.querySelector('#tournament-alias');
 
    // Send API request to register for the tournament
-    devLog('Registering for tournament:', this.selectedTournament.tournament_id, aliasInput.value);
+    devLog('Registering for tournament:', this.selectedTournament.id, aliasInput.value);
   
     // For tetst
     const response = {
       success: true,
       data: {
-        tournament_id: this.selectedTournament.tournament_id,
+        id: this.selectedTournament.id,
       },
     }
 
@@ -220,7 +220,7 @@ export class TournamentMenu extends HTMLElement {
 
   connectToTournamentRoom() {
     this.modal.hide();
-	  router.navigate(`/tournament/${this.selectedTournament.tournament_id}`);
+	  router.navigate(`/tournament/${this.selectedTournament.id}`);
   }
 
   handleRegistrationFail = {
@@ -238,7 +238,7 @@ export class TournamentMenu extends HTMLElement {
 
   navigateToOverview() {
     this.modal.hide();
-    router.navigate(`/tournament-overview/${this.selectedTournament.tournament_id}`);
+    router.navigate(`/tournament-overview/${this.selectedTournament.id}`);
   }
 
   /* ------------------------------------------------------------------------ */
