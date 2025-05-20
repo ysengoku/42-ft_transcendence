@@ -1,13 +1,19 @@
-# server/tournament/models.py
 import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from ninja import Field, Schema
-from pydantic import validator
+from django.db.models import Prefetch
 
 from users.models import Profile
+
+
+class TournamentQuerySet(models.QuerySet):
+    def with_status(self, status: str = "all"):
+        qs = self
+        if status != "all":
+            qs = qs.filter(status=status)
+        return qs.order_by("-created_at")
 
 
 class Tournament(models.Model):
@@ -31,7 +37,10 @@ class Tournament(models.Model):
         on_delete=models.SET_NULL,
         related_name="won_tournaments",
     )
+    participants = models.ManyToManyField("Participant", related_name="tournaments_m2m")
     required_participants = models.PositiveIntegerField()
+
+    objects = TournamentQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -43,20 +52,18 @@ class Tournament(models.Model):
         num = self.required_participants
         options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if num not in options:
-            raise ValueError(f"Number of participants must be one of: {options}")
+            raise ValidationError({"required_participants": [f"Number of participants must be one of: {options}"]})
         if Tournament.objects.filter(name__iexact=self.name).exclude(pk=self.pk).exists():
-            raise ValidationError("A tournament with this name already exists.")
+            raise ValidationError({"name": ["A tournament with this name already exists."]})
 
-    @property
-    def participants(self):
-        return self.participants.all()
+    def get_rounds(self):
+        return self.rounds.all().prefetch_related("brackets")
 
-    @property
-    def rounds(self):
-        return self.rounds.all()
-
-    # def return_tournaments(self):
-    #     return self.tournament.all()
+    def get_prefetched(self):
+        return Tournament.objects.prefetch_related(
+            Prefetch("tournament_participants", queryset=Participant.objects.select_related("profile__user")),
+            Prefetch("tournament_rounds", queryset=Round.objects.prefetch_related("brackets")),
+        ).get(pk=self.pk)
 
 
 class Participant(models.Model):
@@ -68,18 +75,14 @@ class Participant(models.Model):
         ("unregistered", "Unregistered"),
     ]
 
-    user = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    tournament = models.ForeignKey(
-        Tournament,
-        on_delete=models.CASCADE,
-        related_name="participants",
-    )
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name="tournament_participants")
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="registered")
     current_round = models.PositiveIntegerField(default=0)
 
     class Meta:
-        unique_together = (("user", "tournament"), ("tournament", "alias"))
+        unique_together = (("profile", "tournament"), ("tournament", "alias"))
 
     def __str__(self):
         return f"{self.alias} ({self.tournament.name})"
@@ -87,7 +90,7 @@ class Participant(models.Model):
 
 class Round(models.Model):
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name="rounds")
-    number = models.PositiveIntegerField()
+    number = models.PositiveIntegerField(editable=False)
     status = models.CharField(
         max_length=10,
         choices=[("start", "Start"), ("ongoing", "Ongoing"), ("finished", "Finished")],
@@ -108,7 +111,7 @@ class Bracket(models.Model):
         ("ongoing", "Ongoing"),
         ("finished", "Finished"),
     ]
-
+    game = models.ForeignKey("pong.Match", on_delete=models.SET_NULL, null=True)
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="brackets")
     participant1 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p1")
     participant2 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p2")
@@ -120,19 +123,3 @@ class Bracket(models.Model):
 
     def __str__(self):
         return f"{self.participant1.alias} vs {self.participant2.alias} - Round {self.round.number}"
-
-
-class TournamentCreateSchema(Schema):
-    tournament_name: str = Field(..., min_length=1, max_length=settings.MAX_TOURNAMENT_NAME_LENGTH)
-    required_participants: int = Field(...)
-
-    @validator("required_participants")
-    def check_participants(cls, v):
-        options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
-        if v not in options:
-            raise ValueError(f"Number of participants must be one of: {options}")
-        return v
-
-
-class TournamentCreatedSchema(Schema):
-    tournament_id: str
