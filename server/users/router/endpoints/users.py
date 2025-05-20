@@ -5,16 +5,13 @@ from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
-from common.routers import allow_only_for_self, get_profile_queryset_by_username_or_404
+from common.routers import (allow_only_for_self,
+                            get_profile_queryset_by_username_or_404)
 from common.schemas import MessageSchema
 from users.models import Profile
-from users.schemas import (
-    ProfileFullSchema,
-    ProfileMinimalSchema,
-    UpdateUserChema,
-    UserSettingsSchema,
-    ValidationErrorMessageSchema,
-)
+from users.schemas import (ProfileFullSchema, ProfileMinimalSchema,
+                           UpdateUserChema, UserSettingsSchema,
+                           ValidationErrorMessageSchema)
 
 users_router = Router()
 
@@ -63,7 +60,8 @@ def update_user_settings(
     request: HttpRequest,
     username: str,
     data: Form[UpdateUserChema],
-    new_profile_picture: UploadedFile | None = File(description="User profile picture.", default=None),
+    new_profile_picture: UploadedFile | None = File(
+        description="User profile picture.", default=None),
 ):
     """
     Udates settings of the user.
@@ -74,6 +72,15 @@ def update_user_settings(
     try:
         user.update_user(data, new_profile_picture)
     except RequestDataTooBig as exc:
-        raise HttpError(413, "File is too big. Please upload a file that weights less than 10mb.") from exc
+        raise HttpError(
+            413, "File is too big. Please upload a file that weights less than 10mb.") from exc
 
     return user.profile
+
+
+@users_router.post("{username}/update-activity", response={200: MessageSchema})
+def update_activity(request):
+    if not request.auth or not request.auth.is_authenticated:
+        raise HttpError(401, "Authentication required")
+    request.auth.profile.update_activity()
+    return 200, {"msg": "Activity updated"}
