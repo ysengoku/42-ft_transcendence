@@ -6,8 +6,9 @@ from django.utils import timezone
 
 from chat.models import Chat, ChatMessage, Notification
 from pong.models import Match
+from tournaments.models import Bracket, Participant, Round, Tournament
 from users.models import OauthConnection, Profile, User
-from tournaments.models import Tournament, Participant, Round, Bracket
+
 
 # ruff: noqa: S106, S311
 def choice_except(seq, value):
@@ -45,7 +46,8 @@ def clean_database():
 
 def generate_users() -> tuple[list[User], User]:
     # special user who is winning at life
-    life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123")
+    life_enjoyer = User.objects.create_user(
+        "LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123")
     life_enjoyer.profile.elo = 2800
     life_enjoyer.profile.save()
 
@@ -78,7 +80,8 @@ def generate_users() -> tuple[list[User], User]:
     ]
 
     for name, elo in names_and_elo:
-        user = User.objects.create_user(f"{name}", email=f"{name}@gmail.com", password="123")
+        user = User.objects.create_user(
+            f"{name}", email=f"{name}@gmail.com", password="123")
         user.profile.elo = elo
         user.profile.save()
         users[user.username] = user
@@ -103,7 +106,8 @@ def generate_users() -> tuple[list[User], User]:
     sad_hampter.profile.add_friend(celiastral.profile)
 
     for i in range(10):
-        user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
+        user = User.objects.create_user(
+            f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
         if randint(0, 1):
             life_enjoyer.profile.block_user(user.profile)
         else:
@@ -159,8 +163,10 @@ def generate_tournaments(users: dict[str, User]) -> None:
         "RedFalcon", "BlueTiger", "SilverWolf", "GoldenEagle", "ShadowFox", "RedDragon",
         "EmeraldLion", "NightHawk", "MysticBear", "StormRider", "CosmicWhale", "PhantomCat"
     ]
-    options = [int(x) for x in __import__('django.conf').conf.settings.REQUIRED_PARTICIPANTS_OPTIONS]
-    profiles = [u.profile for u in users.values()]
+    options = [int(x) for x in __import__(
+        'django.conf').conf.settings.REQUIRED_PARTICIPANTS_OPTIONS]
+    profiles = [u.profile for u in users.values() if hasattr(
+        u, 'profile') and u.profile.user is not None]
 
     for i in range(15):
         name = f"Tournament {i+1}"
@@ -182,9 +188,12 @@ def generate_tournaments(users: dict[str, User]) -> None:
         participants = sample(profiles, k=required)
         participant_objs = []
         for p in participants:
+            if not hasattr(p, 'user') or p.user is None:
+                print(f"Profile {p} has no user, skipping.")
+                continue
             alias = available_aliases.pop(randint(0, len(available_aliases)-1))
             part = Participant.objects.create(
-                user=p,
+                profile=p,
                 tournament=tournament,
                 alias=alias,
                 status='registered',
@@ -225,7 +234,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
                     )
 
                     if bracket_status == 'finished':
-                        s1, s2 = randint(0,3), randint(0,3)
+                        s1, s2 = randint(0, 3), randint(0, 3)
                         if s1 == s2:
                             s1 += 1
                         bracket.score_p1, bracket.score_p2 = s1, s2
@@ -238,14 +247,15 @@ def generate_tournaments(users: dict[str, User]) -> None:
                         winner.status = 'playing' if rnd < total_rounds else 'winner'
                         loser.status = 'eliminated'
                         loser.current_round = rnd
-                        winner.current_round = rnd + (0 if rnd < total_rounds else rnd)
+                        winner.current_round = rnd + \
+                            (0 if rnd < total_rounds else rnd)
                         winner.save()
                         loser.save()
 
                         next_round.append(winner)
                     elif status == 'ongoing':
-                        if randint(0,1):
-                            s1, s2 = randint(0,3), randint(0,3)
+                        if randint(0, 1):
+                            s1, s2 = randint(0, 3), randint(0, 3)
                             if s1 == s2:
                                 s2 += 1
                             bracket.score_p1, bracket.score_p2 = s1, s2
@@ -266,7 +276,8 @@ def generate_tournaments(users: dict[str, User]) -> None:
                             next_round.append(winner)
                 current = next_round
 
-            final = Round.objects.get(tournament=tournament, number=total_rounds)
+            final = Round.objects.get(
+                tournament=tournament, number=total_rounds)
             finished_brackets = final.brackets.filter(status='finished')
             if finished_brackets.exists():
                 champ = finished_brackets.order_by('?').first().winner
@@ -299,10 +310,8 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
-
-        #generate_tournaments(users)
-        for _ in range(15):
-            generate_empty_tournament(choice(list(users.values())))
+        generate_tournaments(users)
+        # generate_empty_tournament(life_enjoyer)
 
         # MFA users
         mfa_users = [
@@ -313,7 +322,8 @@ class Command(BaseCommand):
             ("fanny", "boussard.fanny@gmail.com"),
         ]
         for username, email in mfa_users:
-            user = User.objects.create_user(username, email=email, password="123")
+            user = User.objects.create_user(
+                username, email=email, password="123")
             user.mfa_enabled = True
             user.save()
 
@@ -461,11 +471,13 @@ Keep soaring high, superstar!""",
                 chat, _ = Chat.objects.get_or_create(profile, other_profile)
                 for _ in range(10):
                     random_message_content = choice(chat_messages_content)  # noqa: S311
-                    ChatMessage.objects.create(content=random_message_content, sender=profile, chat=chat)
+                    ChatMessage.objects.create(
+                        content=random_message_content, sender=profile, chat=chat)
             for _ in range(15):
                 sender = choice_except(profiles, profile)
                 if sender:
-                    notification = Notification.objects.action_new_friend(receiver=profile, sender=sender)
+                    notification = Notification.objects.action_new_friend(
+                        receiver=profile, sender=sender)
                     if randint(0, 1):  # noqa: S311
                         notification.is_read = True
                         notification.save()

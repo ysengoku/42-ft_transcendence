@@ -1,111 +1,51 @@
-from datetime import datetime
 from uuid import UUID
 
-from django.db.models import Prefetch
-from ninja import Field, ModelSchema, Schema
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from ninja import Field, Schema
+from pydantic import model_validator
 
 from common.schemas import ProfileMinimalSchema
-from tournaments.models import Bracket, Participant, Round, Tournament
 
 
-class RoundSchema(ModelSchema):
-    # tournament: "TournamentSchema"
-    # tournament_id: UUID
-    # number: int
-    brackets: list["BracketSchema"]
-
-    class Config:
-        model = Round
-        model_fields = ["number", "status"]
-
-    @staticmethod
-    def resolve_brackets(obj: Round):
-        return [BracketSchema.from_orm(b) for b in obj.brackets.all()]
-    # status: str
+class ParticipantSchema(Schema):
+    profile: ProfileMinimalSchema
+    alias: str
 
 
-class ParticipantSchema(ModelSchema):
-    # tournament_id: UUID
-    user: ProfileMinimalSchema
-
-    class Config:
-        model = Participant
-        model_fields = ["alias", "status", "current_round"]
-
-    # alias: str
-    # status:
-    #     str
-    # round: int
-
-
-class BracketSchema(ModelSchema):
-    game_id: UUID
+class BracketSchema(Schema):
+    game_id: UUID | None = None
     participant1: ParticipantSchema
     participant2: ParticipantSchema
-    winner: ParticipantSchema | None
-
-    class Config:
-        model = Bracket
-        model_fields = ["round", "status", "score_p1", "score_p2"]
+    winner: ParticipantSchema | None = None
 
 
-class TournamentSchema(ModelSchema):
-    creator: ProfileMinimalSchema = Field(..., alias="creator.profile")
-    tournament_id: UUID = Field(..., alias="id")
-    tournament_name: str = Field(..., alias="name")
+class RoundSchema(Schema):
+    number: int
+    brackets: list[BracketSchema]
+
+
+class TournamentSchema(Schema):
+    creator: ProfileMinimalSchema = Field(alias="creator.profile")
+    id: UUID
+    name: str = Field(alias="name")
     rounds: list[RoundSchema] = Field(default_factory=list)
     participants: list[ParticipantSchema] = Field(default_factory=list)
-    # rounds: list["RoundSchema"]
-    # participants: list["ParticipantSchema"]
 
-    class Config:
-        model = Tournament
-        # model_fields = ["id", "name", "status",
-        #                 "date", "required_participants"]
-        model_fields = [
-            "id",
-            "name",
-            "status",
-            "date",
-            "required_participants",
-            "creator"
-        ]
 
-    @staticmethod
-    def resolve_creator(obj: Tournament):
-        return ProfileMinimalSchema.from_orm(obj.creator.profile)
+class TournamentCreateSchema(Schema):
+    name: str = Field(min_length=1, max_length=settings.MAX_TOURNAMENT_NAME_LENGTH)
+    required_participants: int
 
-    @staticmethod
-    def resolve_rounds(obj: Tournament):
-        return [RoundSchema.from_orm(r) for r in obj.tournament_rounds.all()]
-
-    @staticmethod
-    def resolve_participants(obj: Tournament):
-        return [ParticipantSchema.from_orm(p) for p in obj.tournament_participants.all()]
-
-    # class Config:
-    #     model = Tournament
-    #     model_fields = ["id", "name", "status",
-    #                     "date", "required_participants"]
-    #     model_fields_rename = {
-    #         "id": "tournament_id",
-    #         "name": "tournament_name"
-    #     }
-    #
-    # @staticmethod
-    # def resolve_creator(obj: Tournament) -> dict:
-    #     return ProfileMinimalSchema.from_orm(obj.creator.profile.user).dict()
-    #
-    # @staticmethod
-    # def resolve_rounds(obj: Tournament):
-    #     return [
-    #         RoundSchema.from_orm(r).dict()
-    #         for r in obj.tournament_rounds.all()
-    #     ]
-    #
-    # @staticmethod
-    # def resolve_participants(obj: Tournament):
-    #     return [
-    #         ParticipantSchema.from_orm(p)
-    #         for p in obj.tournament_participants.all()
-    #     ]
+    @model_validator(mode="after")
+    def check_participants(self):
+        options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
+        if self.required_participants not in options:
+            raise ValidationError(
+                {
+                    "required_participants": [
+                        f"Number of participants must be one of: {', '.join(settings.REQUIRED_PARTICIPANTS_OPTIONS)}",
+                    ],
+                },
+            )
+        return self
