@@ -55,13 +55,25 @@ class GameRoomConsumer(WebsocketConsumer):
         )
         self.accept()
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
-        self.send(text_data=json.dumps({"action": "player_joined", "player_id": str(self.player.id)}))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "player_joined",
+                    "player_id": str(self.player.id),
+                },
+            ),
+        )
+        profile = self.user.profile
         async_to_sync(self.channel_layer.send)(
             "game",
             {
+                "type": "player_connected",
                 "game_room_id": self.game_room_id,
                 "player_id": str(self.player.id),
-                "type": "player_connected",
+                "profile_id": str(profile.id),
+                "name": self.user.nickname if self.user.nickname else self.user.username,
+                "avatar": profile.avatar,
+                "elo": profile.elo,
             },
         )
 
@@ -128,13 +140,6 @@ class GameRoomConsumer(WebsocketConsumer):
     ##############################
     # GAME WORKER EVENT HANDLERS #
     ##############################
-    def state_updated(self, event: dict):
-        """
-        Event handler for `state_updated`.
-        `state_updated` is sent from the game worker to this consumer on each game tick.
-        """
-        self.send(text_data=json.dumps({"action": "state_updated", "state": event["state"]}))
-
     def game_cancelled(self, _: dict):
         """
         Event handler for `game_cancelled`.
@@ -150,12 +155,23 @@ class GameRoomConsumer(WebsocketConsumer):
         """
         self.send(text_data=json.dumps({"action": "game_started"}))
 
+    def state_updated(self, event: dict):
+        """
+        Event handler for `state_updated`.
+        `state_updated` is sent from the game worker to this consumer on each game tick.
+        """
+        self.send(text_data=json.dumps({"action": "state_updated", "state": event["state"]}))
+
     def game_paused(self, event: dict):
         """
         Event handler for `game_paused`.
         `game_paused` is sent from the game worker to this consumer when the game unters the paused state.
         """
-        self.send(text_data=json.dumps({"action": "game_paused", "remaining_time": event["remaining_time"]}))
+        self.send(
+            text_data=json.dumps(
+                {"action": "game_paused", "remaining_time": event["remaining_time"], "name": event["name"]},
+            ),
+        )
 
     def game_unpaused(self, _: dict):
         """
@@ -170,7 +186,16 @@ class GameRoomConsumer(WebsocketConsumer):
         `player_won` is sent from the game worker to this consumer when the game is ended and one of the players won
         the game.
         """
-        self.send(text_data=json.dumps({"action": "player_won", "winner": event["winner"]}))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "player_won",
+                    "winner": event["winner"],
+                    "loser": event["loser"],
+                    "elo_change": event["elo_change"],
+                },
+            ),
+        )
         self.close(PongCloseCodes.NORMAL_CLOSURE)
 
     def player_resigned(self, event: dict):
@@ -179,5 +204,14 @@ class GameRoomConsumer(WebsocketConsumer):
         `player_resigned` is sent from the game worker to this consumer when one the players resigned,
         by disconnect, for example.
         """
-        self.send(text_data=json.dumps({"action": "player_resigned", "winner": event["winner"]}))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "player_won",
+                    "winner": event["winner"],
+                    "loser": event["loser"],
+                    "elo_change": event["elo_change"],
+                },
+            ),
+        )
         self.close(PongCloseCodes.NORMAL_CLOSURE)
