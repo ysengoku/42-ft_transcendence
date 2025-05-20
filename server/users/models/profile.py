@@ -2,10 +2,13 @@ from datetime import timedelta
 from pathlib import Path  # noqa: A005
 
 import magic
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import WebsocketConsumer
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
-from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
+from django.db.models import (Case, Count, Exists, ExpressionWrapper, F, Func,
+                              IntegerField, Q, Sum, Value, When)
 from django.db.models.lookups import Exact
 from django.utils import timezone
 from ninja.files import UploadedFile
@@ -117,11 +120,27 @@ class Profile(models.Model):
         self.last_activity = timezone.now()
         if not self.is_online:
             self.is_online = True
-        self.save()
+            self.save(update_fields=["is_online", "last_activity"])
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "online_users",
+                {
+                    "type": "user_status",
+                    "action": "user_online",
+                    "data": {
+                        "username": self.user.username,
+                        "nickname": getattr(self, "nickname", self.user.username),
+                        "status": "online",
+                        "date": timezone.now().isoformat(),
+                    },
+                },
+            )
+        else:
+            self.save(update_fields=["last_activity"])
 
     @property
     def is_really_online(self):
-        return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=2)
+        return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=30)
 
     @property
     def avatar(self) -> str:
