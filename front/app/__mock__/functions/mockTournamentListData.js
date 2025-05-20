@@ -2,7 +2,7 @@ export async function mockTournamentList() {
   const data = [
     {
       id: 'kagerhnpewn16461gdsga',
-      tournament_name: 'Peacemakers Cup',
+      name: 'Peacemakers Cup',
       date: null,
       status: 'lobby',
       creator: {
@@ -17,7 +17,7 @@ export async function mockTournamentList() {
     },
     {
       id: 'bqwerty123451234qwe',
-      tournament_name: 'Valor Clash',
+      name: 'Valor Clash',
       date: '2025-05-10T15:00:00Z',
       status: 'ongoing',
       creator: {
@@ -32,7 +32,7 @@ export async function mockTournamentList() {
     },
     {
       id: 'cultimate78904567abcdef',
-      tournament_name: 'Ultimate Throwdown',
+      name: 'Ultimate Throwdown',
       date: '2025-04-20T18:00:00Z',
       status: 'finished',
       creator: {
@@ -57,7 +57,7 @@ export async function mockTournamentList() {
     },
     {
       id: 'dgladiator123asdasd',
-      tournament_name: "Gladiator's Arena",
+      name: "Gladiator's Arena",
       date: null,
       status: 'lobby',
       creator: {
@@ -72,7 +72,7 @@ export async function mockTournamentList() {
     },
     {
       id: 'esniper45678zxcvbnm',
-      tournament_name: 'Sniper Showdown',
+      name: 'Sniper Showdown',
       date: null,
       status: 'lobby',
       creator: {
@@ -87,7 +87,7 @@ export async function mockTournamentList() {
     },
     {
       id: 'fnexus99999poiuytrewq',
-      tournament_name: 'Nexus Battle',
+      name: 'Nexus Battle',
       date: null,
       status: 'lobby',
       creator: {

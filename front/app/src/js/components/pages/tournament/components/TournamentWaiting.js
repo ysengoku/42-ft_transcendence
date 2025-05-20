@@ -71,14 +71,14 @@ export class TournamentWaiting extends HTMLElement {
 
   template() {
     return `
-    <div class="d-flex flex-column justify-content-center mt-3">
+    <div class="d-flex flex-column justify-content-center align-items-center mt-3">
       <p class="text-center m-1">Gathering Gunslingers...</p>
       <div class="d-flex flex-row justify-content-center align-items-center mb-2">
         <p class="m-0 pe-1 fs-2" id="current-participants-count"></p>
         <p class="m-0 fs-4" id="required-participants"></p>
       </div>
-      <p class="text-center mt-4 mb-2 fs-4 fw-bold">Gunslingers in the Arena</p>
-      <div class="d-flex flex-row flex-wrap justify-content-center px-4" id="participants-wrapper"></div>
+      <p class="text-center mt-4 mb-2 fs-5 fw-bold">Gunslingers in the Arena</p>
+      <div class="d-flex flex-row flex-wrap justify-content-center w-75" id="participants-wrapper"></div>
       <div class="btn mt-4" id="cancel-registration-button">Cancel registration</div>
     </div>
     `;
