@@ -1,5 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-// import { mockTournamentList } from '@mock/functions/mockTournamentListData.js'; // For Test
+import { mockTournamentList } from '@mock/functions/mockTournamentListData.js'; // For Test
 
 export class TournamentList extends HTMLElement {
   #state = {
@@ -37,7 +37,7 @@ export class TournamentList extends HTMLElement {
   }
 
   getTournamentById(id) {
-    return this.#state.tournaments.find(item => item.tournament_id === id);
+    return this.#state.tournaments.find(item => item.id === id);
   }
 
   setNewTournament(tournament) {
@@ -88,9 +88,9 @@ export class TournamentList extends HTMLElement {
     }
     for (let i = this.#state.currentLastItemIndex; i < this.#state.tournaments.length; i++) {
       console.log('Render tournament:', this.#state.tournaments[i]);
-      // if (this.#state.filter === 'lobby' && this.#state.tournaments[i].status !== this.#state.filter) {
-      //   continue;
-      // }
+      if (this.#state.filter === 'lobby' && this.#state.tournaments[i].status !== this.#state.filter) {
+        continue;
+      }
       const item = this.renderRow(this.#state.tournaments[i]);
       this.list.appendChild(item);
       ++this.#state.currentLastItemIndex;
@@ -138,18 +138,20 @@ export class TournamentList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   async fetchTournamentList() {
     // TEST
-    // const response = await mockTournamentList();
+    const response = await mockTournamentList();
+    this.#state.tournaments.push(...response.items);
+    this.#state.totalTournaments = this.#state.tournaments.length;
 
-    const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.TOURNAMENTS(this.#state.filter, 10, this.#state.currentLastItemIndex),
-        null, false, true);
-    if (!response.success) {
-      return;
-    }
-    this.#state.tournaments.push(...response.data.items);
-    this.#state.totalTournaments = response.data.count;
+    // const response = await apiRequest(
+    //     'GET',
+    //     /* eslint-disable-next-line new-cap */
+    //     API_ENDPOINTS.TOURNAMENTS(this.#state.filter, 10, this.#state.currentLastItemIndex),
+    //     null, false, true);
+    // if (!response.success) {
+    //   return;
+    // }
+    // this.#state.tournaments.push(...response.data.items);
+    // this.#state.totalTournaments = response.data.count;
   }
 
   filterTournament(event) {
@@ -249,7 +251,6 @@ export class TournamentList extends HTMLElement {
       lobby: 'Open for entries',
       ongoing: 'Ongoing',
       finished: 'Finished',
-      cancelled: 'Cancelled',
     };
     return message[status] || 'Unknown';
   }
