@@ -162,17 +162,17 @@ def generate_tournaments(users: dict[str, User]) -> None:
     print("Generating tournaments...")
     dummy_aliases = [
         "RedFalcon", "BlueTiger", "SilverWolf", "GoldenEagle", "ShadowFox", "RedDragon",
-        "EmeraldLion", "NightHawk", "MysticBear", "StormRider", "CosmicWhale", "PhantomCat"
+        "EmeraldLion", "NightHawk", "MysticBear", "StormRider", "CosmicWhale", "PhantomCat",
     ]
     options = [int(x) for x in __import__(
-        'django.conf').conf.settings.REQUIRED_PARTICIPANTS_OPTIONS]
+        "django.conf").conf.settings.REQUIRED_PARTICIPANTS_OPTIONS]
     profiles = [u.profile for u in users.values() if hasattr(
-        u, 'profile') and u.profile.user is not None]
+        u, "profile") and u.profile.user is not None]
 
     for i in range(15):
         name = f"Tournament {i+1}"
         date = generate_random_date()
-        status = choice(['lobby', 'ongoing', 'finished'])
+        status = choice(["lobby", "ongoing", "finished"])
         creator = choice(list(users.values()))
         required = choice(options)
 
@@ -189,7 +189,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
         participants = sample(profiles, k=required)
         participant_objs = []
         for p in participants:
-            if not hasattr(p, 'user') or p.user is None:
+            if not hasattr(p, "user") or p.user is None:
                 print(f"Profile {p} has no user, skipping.")
                 continue
             alias = available_aliases.pop(randint(0, len(available_aliases)-1))
@@ -197,25 +197,25 @@ def generate_tournaments(users: dict[str, User]) -> None:
                 profile=p,
                 tournament=tournament,
                 alias=alias,
-                status='registered',
+                status="registered",
                 current_round=0,
             )
             participant_objs.append(part)
 
         # ongoing/finished の場合はラウンド生成・状態更新
-        if status in ('ongoing', 'finished'):
+        if status in ("ongoing", "finished"):
             total_rounds = 2 if required == 4 else 3
             current = participant_objs.copy()
 
             for rnd in range(1, total_rounds + 1):
                 for part in current:
-                    part.status = 'playing'
+                    part.status = "playing"
                     part.current_round = rnd
                     part.save()
 
                 rnd_status = (
-                    'finished' if status == 'finished' or (status == 'ongoing' and rnd < total_rounds)
-                    else 'start'
+                    "finished" if status == "finished" or (status == "ongoing" and rnd < total_rounds)
+                    else "start"
                 )
                 rnd_obj = Round.objects.create(
                     tournament=tournament,
@@ -227,7 +227,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
                 for j in range(0, len(current), 2):
                     p1 = current[j]
                     p2 = current[j+1]
-                    bracket_status = 'finished' if rnd_status == 'finished' else 'ongoing'
+                    bracket_status = "finished" if rnd_status == "finished" else "ongoing"
                     bracket = Bracket.objects.create(
                         round=rnd_obj,
                         participant1=p1,
@@ -235,7 +235,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
                         status=bracket_status,
                     )
 
-                    if bracket_status == 'finished':
+                    if bracket_status == "finished":
                         s1, s2 = randint(0, 3), randint(0, 3)
                         if s1 == s2:
                             s1 += 1
@@ -246,8 +246,8 @@ def generate_tournaments(users: dict[str, User]) -> None:
                         bracket.score = f"{s1}-{s2}"
                         bracket.save()
 
-                        winner.status = 'playing' if rnd < total_rounds else 'winner'
-                        loser.status = 'eliminated'
+                        winner.status = "playing" if rnd < total_rounds else "winner"
+                        loser.status = "eliminated"
                         loser.current_round = rnd
                         winner.current_round = rnd + \
                             (0 if rnd < total_rounds else rnd)
@@ -255,7 +255,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
                         loser.save()
 
                         next_round.append(winner)
-                    elif status == 'ongoing':
+                    elif status == "ongoing":
                         if randint(0, 1):
                             s1, s2 = randint(0, 3), randint(0, 3)
                             if s1 == s2:
@@ -265,11 +265,11 @@ def generate_tournaments(users: dict[str, User]) -> None:
                             loser = p2 if s1 > s2 else p1
                             bracket.winner = winner
                             bracket.score = f"{s1}-{s2}"
-                            bracket.status = 'finished'
+                            bracket.status = "finished"
                             bracket.save()
 
-                            winner.status = 'playing'
-                            loser.status = 'eliminated'
+                            winner.status = "playing"
+                            loser.status = "eliminated"
                             winner.current_round = rnd
                             loser.current_round = rnd
                             winner.save()
@@ -280,9 +280,9 @@ def generate_tournaments(users: dict[str, User]) -> None:
 
             final = Round.objects.get(
                 tournament=tournament, number=total_rounds)
-            finished_brackets = final.brackets.filter(status='finished')
+            finished_brackets = final.brackets.filter(status="finished")
             if finished_brackets.exists():
-                champ = finished_brackets.order_by('?').first().winner
+                champ = finished_brackets.order_by("?").first().winner
                 tournament.winner = champ
                 tournament.save()
 
@@ -291,7 +291,7 @@ def generate_empty_tournament(creator: User) -> Tournament:
     tournament = Tournament.objects.create(
         name="Empty Tournament",
         date=generate_random_date(),
-        status='lobby',
+        status="lobby",
         creator=creator,
         required_participants=0,
     )
