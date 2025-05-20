@@ -1,49 +1,51 @@
-from datetime import datetime
 from uuid import UUID
 
-from ninja import Schema
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from ninja import Field, Schema
+from pydantic import model_validator
 
 from common.schemas import ProfileMinimalSchema
 
 
-class RoundSchema(Schema):
-    tournament: 'TournamentSchema'
-    tournament_id: UUID
-    number: int
-    brackets: list['BracketSchema']
-    status: str
-
-
 class ParticipantSchema(Schema):
-    tournament_id: UUID
-    user: ProfileMinimalSchema
+    profile: ProfileMinimalSchema
     alias: str
-    status: str
-    round: int
 
 
 class BracketSchema(Schema):
-    game_id: UUID
+    game_id: UUID | None = None
     participant1: ParticipantSchema
     participant2: ParticipantSchema
-    winner: ParticipantSchema | None
-    round: int
-    status: str
-    score_p1: int
-    score_p2: int
+    winner: ParticipantSchema | None = None
+
+
+class RoundSchema(Schema):
+    number: int
+    brackets: list[BracketSchema]
 
 
 class TournamentSchema(Schema):
+    creator: ProfileMinimalSchema = Field(alias="creator.profile")
     id: UUID
-    name: str
-    status: str
-    creator: ProfileMinimalSchema
-    winner: ParticipantSchema | None
-    date: datetime
-    rounds: list[RoundSchema]
-    participants: list[ParticipantSchema]
+    name: str = Field(alias="name")
+    rounds: list[RoundSchema] = Field(default_factory=list)
+    participants: list[ParticipantSchema] = Field(default_factory=list)
+
+
+class TournamentCreateSchema(Schema):
+    name: str = Field(min_length=1, max_length=settings.MAX_TOURNAMENT_NAME_LENGTH)
     required_participants: int
 
-
-TournamentSchema.update_forward_refs()
-RoundSchema.update_forward_refs()
+    @model_validator(mode="after")
+    def check_participants(self):
+        options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
+        if self.required_participants not in options:
+            raise ValidationError(
+                {
+                    "required_participants": [
+                        f"Number of participants must be one of: {', '.join(settings.REQUIRED_PARTICIPANTS_OPTIONS)}",
+                    ],
+                },
+            )
+        return self
