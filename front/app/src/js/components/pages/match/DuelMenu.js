@@ -49,10 +49,12 @@ export class DuelMenu extends HTMLElement {
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
   }
 
-  connectedCallback() {
-    this.#state.user = auth.getStoredUser();
-    if (!this.#state.user) {
-      router.navigate('/login');
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        router.navigate('/login');
+      }
       return;
     }
     this.render();
