@@ -201,13 +201,13 @@ export class MultiplayerGame extends HTMLElement {
     let player_id = '';
     pongSocket.addEventListener('message', function(e) {
       data = JSON.parse(e.data)
-      switch (data.event) {
+      switch (data.action) {
         case 'game_tick':
           updateState(data.state);
           // if (data.state.someone_scored)
           //     audio.cloneNode().play();
           break;
-        case 'joined':
+        case 'player_joined':
           player_id = data.player_id;
           break;
         case 'game_paused':
