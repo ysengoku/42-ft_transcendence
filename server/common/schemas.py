@@ -20,7 +20,6 @@ class ProfileMinimalSchema(Schema):
     elo: int
     is_online: bool
 
-# TODO: use this schema in users app, delete this schema from users/schemas.py
 class ValidationErrorMessageSchema(MessageSchema):
     type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
     loc: list[str] = Field(
