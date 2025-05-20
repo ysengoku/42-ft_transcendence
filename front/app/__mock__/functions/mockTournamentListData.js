@@ -1,7 +1,7 @@
 export async function mockTournamentList() {
   const data = [
     {
-      tournament_id: 'kagerhnpewn16461gdsga',
+      id: 'kagerhnpewn16461gdsga',
       tournament_name: 'Peacemakers Cup',
       date: null,
       status: 'lobby',
@@ -16,7 +16,7 @@ export async function mockTournamentList() {
       participants_count: 3,
     },
     {
-      tournament_id: 'bqwerty123451234qwe',
+      id: 'bqwerty123451234qwe',
       tournament_name: 'Valor Clash',
       date: '2025-05-10T15:00:00Z',
       status: 'ongoing',
@@ -31,7 +31,7 @@ export async function mockTournamentList() {
       participants_count: 8,
     },
     {
-      tournament_id: 'cultimate78904567abcdef',
+      id: 'cultimate78904567abcdef',
       tournament_name: 'Ultimate Throwdown',
       date: '2025-04-20T18:00:00Z',
       status: 'finished',
@@ -56,7 +56,7 @@ export async function mockTournamentList() {
       },
     },
     {
-      tournament_id: 'dgladiator123asdasd',
+      id: 'dgladiator123asdasd',
       tournament_name: "Gladiator's Arena",
       date: null,
       status: 'lobby',
@@ -71,7 +71,7 @@ export async function mockTournamentList() {
       participants_count: 0,
     },
     {
-      tournament_id: 'esniper45678zxcvbnm',
+      id: 'esniper45678zxcvbnm',
       tournament_name: 'Sniper Showdown',
       date: null,
       status: 'lobby',
@@ -86,7 +86,7 @@ export async function mockTournamentList() {
       participants_count: 2,
     },
     {
-      tournament_id: 'fnexus99999poiuytrewq',
+      id: 'fnexus99999poiuytrewq',
       tournament_name: 'Nexus Battle',
       date: null,
       status: 'lobby',
