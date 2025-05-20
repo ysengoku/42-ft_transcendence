@@ -3,36 +3,33 @@ from uuid import UUID
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.core.exceptions import ValidationError
-from django.db.models import Prefetch, Q
-from django.http import JsonResponse
+from django.db.models import Prefetch
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
-from pydantic import validator
 
-from common.schemas import MessageSchema, ProfileMinimalSchema
-from tournaments.models import Bracket, Participant, Round, Tournament
+from common.schemas import MessageSchema, ValidationErrorMessageSchema
+from tournaments.models import Bracket, Participant, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
-from users.router.utils import _create_json_response_with_tokens
 
 tournaments_router = Router()
 
 
 @tournaments_router.post(
     "",
-    response={201: TournamentSchema, 400: MessageSchema, 422: dict},
+    response={201: TournamentSchema, 400: MessageSchema, 401: MessageSchema, 422: ValidationErrorMessageSchema},
 )
 def create_tournament(request, data: TournamentCreateSchema):
+    """
+    Creates a tournament. The `required_participants` should be either 4 or 8.
+    """
     user = request.auth
-    if not user:
-        raise HttpError(401, "Authentication required")
 
     # Instanciation without save to check if everything's ok before saving
     tournament: Tournament = Tournament(
         name=data.name,
-        creator=user,
+        creator=user.profile,
         required_participants=data.required_participants,
         status="lobby",
         date=timezone.now(),
@@ -40,8 +37,8 @@ def create_tournament(request, data: TournamentCreateSchema):
 
     tournament.full_clean()  # Call clean() and all models validations
     tournament.save()
-        # msg = e.messages[0] if len(e.messages) == 1 else " ".join(e.messages)
-        # raise HttpError(422, msg)
+
+    tournament.add_participant(user.profile)
 
     creator = user.profile.to_profile_minimal_schema()
     data = {
@@ -60,17 +57,16 @@ def create_tournament(request, data: TournamentCreateSchema):
             "data": data,
         },
     )
-    return JsonResponse(data, status=201)
-
+    return 201, tournament
 
 @tournaments_router.get("/{tournament_id}", response={200: TournamentSchema, 404: MessageSchema})
 def get_tournament(request, tournament_id: UUID):
     try:
         tournament = (
-            Tournament.objects.select_related("creator__profile__user")
+            Tournament.objects.select_related("creator__user")
             .prefetch_related(
-                "rounds__brackets_rounds",
-                "tournament_participants__profile__profile",
+                "rounds__brackets",
+                "participants__profile",
             )
             .get(id=tournament_id)
         )

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from ninja import Field, Schema
+from ninja import Schema
 from pydantic import model_validator
 
 from common.schemas import ProfileMinimalSchema
@@ -26,19 +26,31 @@ class RoundSchema(Schema):
 
 
 class TournamentSchema(Schema):
-    creator: ProfileMinimalSchema = Field(alias="creator.profile")
+    creator: ProfileMinimalSchema
     id: UUID
-    name: str = Field(alias="name")
-    rounds: list[RoundSchema] = Field(default_factory=list)
-    participants: list[ParticipantSchema] = Field(default_factory=list)
+    name: str
+    rounds: list[RoundSchema]
+    participants: list[ParticipantSchema]
 
 
 class TournamentCreateSchema(Schema):
-    name: str = Field(min_length=1, max_length=settings.MAX_TOURNAMENT_NAME_LENGTH)
+    name: str
     required_participants: int
 
     @model_validator(mode="after")
-    def check_participants(self):
+    def validate_tournament_schema(self):
+        if len(self.name) < 1:
+            raise ValidationError({"name": ["Tournament name should have at least 1 character."]})
+
+        if len(self.name) > settings.MAX_TOURNAMENT_NAME_LENGTH:
+            raise ValidationError(
+                {
+                    "name": [
+                        f"Tournament name should not exceed {settings.MAX_TOURNAMENT_NAME_LENGTH} characters.",
+                    ],
+                },
+            )
+
         options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if self.required_participants not in options:
             raise ValidationError(
