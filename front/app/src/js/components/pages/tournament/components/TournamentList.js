@@ -87,9 +87,10 @@ export class TournamentList extends HTMLElement {
       return;
     }
     for (let i = this.#state.currentLastItemIndex; i < this.#state.tournaments.length; i++) {
-      if (this.#state.filter === 'lobby' && this.#state.tournaments[i].status !== this.#state.filter) {
-        continue;
-      }
+      console.log('Render tournament:', this.#state.tournaments[i]);
+      // if (this.#state.filter === 'lobby' && this.#state.tournaments[i].status !== this.#state.filter) {
+      //   continue;
+      // }
       const item = this.renderRow(this.#state.tournaments[i]);
       this.list.appendChild(item);
       ++this.#state.currentLastItemIndex;
@@ -101,6 +102,7 @@ export class TournamentList extends HTMLElement {
   }
 
   renderRow(tournament) {
+    console.log('Render tournament:', tournament);
     const item = document.createElement('li');
     item.className = 'list-group-item d-flex flex-row justify-content-between mb-2 p-4';
     item.innerHTML = this.rowTemplate();
@@ -111,14 +113,14 @@ export class TournamentList extends HTMLElement {
     const tournamentStatus = item.querySelector('.tournament-status');
     const tournamentParticipants = item.querySelector('.tournament-participants');
     const currentParticipants = tournament.participants_count ? tournament.participants_count : 0;
-    tournamentName.textContent = tournament.tournament_name;
+    tournamentName.textContent = tournament.name;
     tournamentOrganizer.textContent = 'by ' + tournament.creator.nickname;
     tournamentOrganizerAvatar.src = tournament.creator.avatar;
     tournamentOrganizerAvatar.alt = tournament.creator.nickname;
     tournamentStatus.textContent = this.tournamentStatus(tournament.status);
     tournamentParticipants.textContent = `${currentParticipants} / ${tournament.required_participants} players`;
 
-    item.setAttribute('tournament-id', tournament.tournament_id);
+    item.setAttribute('tournament-id', tournament.id);
     return item;
   }
 

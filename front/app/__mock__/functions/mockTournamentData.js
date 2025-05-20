@@ -1,7 +1,7 @@
 export async function mockTournamentData(status) {
   const data = {
     lobby: {
-      tournament_id: 'kagerhnpewn16461gdsga',
+      id: 'kagerhnpewn16461gdsga',
       tournament_name: 'Peacemakers Cup',
       date: '2025-05-01T12:00:00Z',
       status: 'lobby',
@@ -48,7 +48,7 @@ export async function mockTournamentData(status) {
       winner: null,
     },
     ongoing: {
-      tournament_id: 'bqwerty123451234qwe',
+      id: 'bqwerty123451234qwe',
       tournament_name: 'Valor Clash',
       date: '2025-06-10T15:00:00Z',
       status: 'ongoing',
@@ -145,7 +145,7 @@ export async function mockTournamentData(status) {
       winner: null,
     },
     finished: {
-      tournament_id: 'cultimate78904567abcdef',
+      id: 'cultimate78904567abcdef',
       tournament_name: 'Ultimate Throwdown',
       date: '2025-04-20T18:00:00Z',
       status: 'finished',
