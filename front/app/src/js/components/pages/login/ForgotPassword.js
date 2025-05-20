@@ -103,7 +103,7 @@ export class ForgotPassword extends HTMLElement {
                 Reset password
               </button>
               <button class="btn w-100 mt-3" type="button" id="cancel-forgot-password">
-                <i class="bi bi-arrow-left"></i> Go back to Login
+                <i class="bi bi-arrow-left"></i> Back to Login
               </button>
             </form>
           </div>

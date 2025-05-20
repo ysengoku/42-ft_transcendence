@@ -145,7 +145,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         If room was found, use it's id to get an actually locked room.
         Revalidate it.
         """
-        candidate_room = GameRoom.objects.for_valid_game_room().first()
+        candidate_room = GameRoom.objects.for_valid_game_room(self.user.profile).first()
         if candidate_room:
             locked_candidate_room = (
                 GameRoom.objects.select_for_update().filter(id=candidate_room.id, status=GameRoom.PENDING).first()

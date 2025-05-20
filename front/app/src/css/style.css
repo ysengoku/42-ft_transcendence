@@ -402,7 +402,7 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
  }
 
- .btn-wood:not(.landing-btn-1):not(.landing-btn-2):hover {
+.btn-wood:not(.landing-btn-1):not(.landing-btn-2):hover {
   color: var(--pm-gray-300);
   transform: scale(1.05);
  }

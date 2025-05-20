@@ -201,4 +201,4 @@ class GameRoom(models.Model):
         self.save()
 
     def has_player(self, profile: Profile):
-        return self.players.filter(players=profile).exists()
+        return self.players.filter(id=profile.id).exists()
