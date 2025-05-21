@@ -278,6 +278,8 @@ class GameInvitation(models.Model):
         GameSession,
         on_delete=models.PROTECT,
         related_name="game_invites",
+        null=True,
+        blank=True
     )
     recipient = models.ForeignKey(
         Profile,
