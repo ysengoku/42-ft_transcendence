@@ -13,7 +13,7 @@ export class Tournament extends HTMLElement {
 
   // Convert the status fetched from the server to the status used in the component
   status = {
-    lobby: 'waiting',
+    pending: 'waiting',
     ongoing: 'waitingNextRound',
     finished: 'finished',
   };
@@ -39,6 +39,14 @@ export class Tournament extends HTMLElement {
   async fetchTournamentData() {
     // For test
     this.#state.tournament = await mockTournamentDetail('mockidlobby');
+
+    const response = await auth.apiRequest('GET', `/tournament/${this.#state.tournamentId}`, null, false, true);
+    console.log('Tournament data:', response);
+    if (!response.success) {
+      // TODO: handle error
+      return;
+    }
+    this.#state.tournament = response.data;
     
     this.#state.status = this.status[this.#state.tournament.status];
     this.render();
@@ -177,7 +185,7 @@ export class Tournament extends HTMLElement {
 
 customElements.define('tournament-room', Tournament);
 
-// Status: lobby
+// Status: pending
 // - redirected from tournament menu --> [TournamentWaiting view]
 // - new_registration message via WebSocket
 
