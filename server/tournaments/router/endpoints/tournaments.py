@@ -9,7 +9,7 @@ from ninja.errors import HttpError
 from ninja.pagination import paginate
 
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
-from tournaments.models import Bracket, Participant, Tournament
+from tournaments.models import Bracket, Participant, Round, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
 
 tournaments_router = Router()
@@ -17,7 +17,11 @@ tournaments_router = Router()
 
 @tournaments_router.post(
     "",
-    response={201: TournamentSchema, frozenset({400, 401}): MessageSchema, 422: ValidationErrorMessageSchema},
+    response={
+        201: TournamentSchema,
+        frozenset({400, 401}): MessageSchema,
+        422: ValidationErrorMessageSchema,
+    },
 )
 def create_tournament(request, data: TournamentCreateSchema):
     """
@@ -25,7 +29,9 @@ def create_tournament(request, data: TournamentCreateSchema):
     """
     user = request.auth
 
-    tournament = Tournament.objects.validate_and_create(data.name, user.profile, data.required_participants)
+    tournament = Tournament.objects.validate_and_create(
+        data.name, user.profile, data.required_participants
+    )
     creator = user.profile.to_profile_minimal_schema()
     data = {
         "creator": creator,
@@ -34,6 +40,12 @@ def create_tournament(request, data: TournamentCreateSchema):
         "required_participants": data.required_participants,
         "status": "lobby",
     }
+    # Rounds creation
+    num_rounds = 2 if data.required_participants == 4 else 3
+    for round_num in range(1, num_rounds + 1):
+        Round.objects.create(
+            tournament=tournament, number=round_num, status=Round.PENDING
+        )
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "tournament_global",
@@ -46,7 +58,9 @@ def create_tournament(request, data: TournamentCreateSchema):
     return 201, tournament
 
 
-@tournaments_router.get("/{tournament_id}", response={200: TournamentSchema, 404: MessageSchema})
+@tournaments_router.get(
+    "/{tournament_id}", response={200: TournamentSchema, 404: MessageSchema}
+)
 def get_tournament(request, tournament_id: UUID):
     try:
         tournament = (
@@ -61,14 +75,19 @@ def get_tournament(request, tournament_id: UUID):
     except Tournament.DoesNotExist:
         return 404, {"msg": "Tournament not found"}
 
+
 @tournaments_router.get("", response={200: list[TournamentSchema], 204: None})
 @paginate
 def get_all_tournaments(request, status: str = "all"):
     base_qs = Tournament.objects.prefetch_related(
-        Prefetch("participants", queryset=Participant.objects.select_related("profile__user")),
+        Prefetch(
+            "participants", queryset=Participant.objects.select_related("profile__user")
+        ),
         Prefetch(
             "rounds__brackets",
-            queryset=Bracket.objects.select_related("participant1__profile__user", "participant2__profile__user"),
+            queryset=Bracket.objects.select_related(
+                "participant1__profile__user", "participant2__profile__user"
+            ),
         ),
     )
     # for t in base_qs:
