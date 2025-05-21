@@ -18,7 +18,7 @@ tournaments_router = Router()
 
 @tournaments_router.post(
     "",
-    response={201: TournamentSchema, 400: MessageSchema, 401: MessageSchema, 422: ValidationErrorMessageSchema},
+    response={201: TournamentSchema, frozenset({400, 401}): MessageSchema, 422: ValidationErrorMessageSchema},
 )
 def create_tournament(request, data: TournamentCreateSchema):
     """
@@ -26,20 +26,7 @@ def create_tournament(request, data: TournamentCreateSchema):
     """
     user = request.auth
 
-    # Instanciation without save to check if everything's ok before saving
-    tournament: Tournament = Tournament(
-        name=data.name,
-        creator=user.profile,
-        required_participants=data.required_participants,
-        status="lobby",
-        date=timezone.now(),
-    )
-
-    tournament.full_clean()  # Call clean() and all models validations
-    tournament.save()
-
-    tournament.add_participant(user.profile)
-
+    tournament = Tournament.objects.validate_and_create(data.name, user.profile, data.required_participants)
     creator = user.profile.to_profile_minimal_schema()
     data = {
         "creator": creator,
@@ -59,11 +46,12 @@ def create_tournament(request, data: TournamentCreateSchema):
     )
     return 201, tournament
 
+
 @tournaments_router.get("/{tournament_id}", response={200: TournamentSchema, 404: MessageSchema})
 def get_tournament(request, tournament_id: UUID):
     try:
         tournament = (
-            Tournament.objects.select_related("creator__user")
+            Tournament.objects.select_related("creator", "creator__user")
             .prefetch_related(
                 "rounds__brackets",
                 "participants__profile",
@@ -73,7 +61,6 @@ def get_tournament(request, tournament_id: UUID):
         return 200, tournament
     except Tournament.DoesNotExist:
         return 404, {"msg": "Tournament not found"}
-
 
 @tournaments_router.get("", response={200: list[TournamentSchema], 204: None})
 @paginate
@@ -96,33 +83,10 @@ def get_all_tournaments(request, status: str = "all"):
         return 204, None
     return base_qs
 
-    # @tournaments_router.get("", response={200: list[TournamentSchema], 204: None})
-    # @paginate
-    # def get_all_tournaments(request, status: str = "all"):
-    #     """
-    #     Gets tournaments, paginated. Filter by status if provided.
-    #     """
-    #     base_qs = Tournament.objects.prefetch_related(
-    #         Prefetch('participants',
-    #                  queryset=Participant.objects.prefetch_related('user__user')),
-    #         Prefetch('tournament_rounds__brackets',
-    #                  queryset=Bracket.objects.select_related(
-    #                      'participant1__user__user',
-    #                      'participant2__user__user'
-    #                  ))
-    #     )
-    #
-    #     if status != "all":
-    #         base_qs = base_qs.filter(status=status)
-    #
-    #     if not base_qs.exists():
-    #         return 204, None
-    #     return base_qs
-
 
 @tournaments_router.delete(
     "/{tournament_id}",
-    response={204: None, 401: MessageSchema, 403: MessageSchema, 404: MessageSchema},
+    response={204: None, frozenset({401, 403}): MessageSchema, 404: MessageSchema},
 )
 def delete_tournament(request, tournament_id: UUID):
     user = request.auth
@@ -131,8 +95,8 @@ def delete_tournament(request, tournament_id: UUID):
 
     try:
         tournament = Tournament.objects.get(id=tournament_id)
-    except Tournament.DoesNotExist:
-        raise HttpError(404, "Tournament not found")
+    except Tournament.DoesNotExist as e:
+        raise HttpError(404, "Tournament not found") from e
 
     if tournament.creator != user:
         raise HttpError(403, "You are not allowed to delete this tournament.")
