@@ -68,11 +68,16 @@ export class MultiplayerGame extends HTMLElement {
     let mixer;
     const normalMaterial = new THREE.MeshNormalMaterial();
 
-    const ligths = [new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff)];
+    const ligths = [
+      new THREE.DirectionalLight(0xffffff),
+      new THREE.DirectionalLight(0xffffff),
+      new THREE.DirectionalLight(0xffffff),
+      new THREE.DirectionalLight(0xffffff)
+    ];
 
     const playerglb = (() => {
-      const pedro_model = new THREE.Object3D();
-        loader.load(
+      const pedroModel = new THREE.Object3D();
+      loader.load(
           pedro,
           function(gltf) {
             const model = gltf.scene;
@@ -90,16 +95,16 @@ export class MultiplayerGame extends HTMLElement {
                 .play();
             idleAction.play();
             idleAction2.play();
-            pedro_model.add(gltf.scene);
+            pedroModel.add(gltf.scene);
           },
           undefined,
           function(error) {
             console.error(error);
           },
-        );
-        pedro_model.scale.set(0.1, 0.1, 0.1);
-        scene.add(pedro_model);
-        return pedro_model;
+      );
+      pedroModel.scale.set(0.1, 0.1, 0.1);
+      scene.add(pedroModel);
+      return pedroModel;
     })();
 
     const Ball = ((posX, posY, posZ) => {
@@ -118,14 +123,26 @@ export class MultiplayerGame extends HTMLElement {
 
       return ({
 
-        get hasCollidedWithBumper1() { return hasCollidedWithBumper1 },
-        set hasCollidedWithBumper1(newHasCollidedWithBumper1) { hasCollidedWithBumper1 = newHasCollidedWithBumper1 },
+        get hasCollidedWithBumper1() {
+          return hasCollidedWithBumper1;
+        },
+        set hasCollidedWithBumper1(newHasCollidedWithBumper1) {
+          hasCollidedWithBumper1 = newHasCollidedWithBumper1
+        },
 
-        get hasCollidedWithBumper2() { return hasCollidedWithBumper2 },
-        set hasCollidedWithBumper2(newHasCollidedWithBumper2) { hasCollidedWithBumper2 = newHasCollidedWithBumper2 },
+        get hasCollidedWithBumper2() {
+          return hasCollidedWithBumper2;
+        },
+        set hasCollidedWithBumper2(newHasCollidedWithBumper2) {
+          hasCollidedWithBumper2 = newHasCollidedWithBumper2;
+        },
 
-        get hasCollidedWithWall() { return hasCollidedWithWall },
-        set hasCollidedWithWall(newHasCollidedWithWall) { hasCollidedWithWall = newHasCollidedWithWall },
+        get hasCollidedWithWall() {
+          return hasCollidedWithWall;
+        },
+        set hasCollidedWithWall(newHasCollidedWithWall) {
+          hasCollidedWithWall = newHasCollidedWithWall;
+        },
 
         sphereMesh,
         sphereUpdate,
@@ -139,8 +156,9 @@ export class MultiplayerGame extends HTMLElement {
     ligths[1].position.set(10, 0, 30);
     ligths[2].position.set(0, 10, -30);
     ligths[3].position.set(0, -10, 0);
-    for (let i = 0; i < 4; i++)
+    for (let i = 0; i < 4; i++) {
       scene.add(ligths[i]);
+    }
 
     const BumperFactory = (posX, posY, posZ) => {
       const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
@@ -156,11 +174,16 @@ export class MultiplayerGame extends HTMLElement {
         cubeMesh,
         cubeGeometry,
 
-        get score() { return score; },
-        set score(newScore) { score = newScore; },
+        get score() {
+          return score;
+        },
+        set score(newScore) {
+          score = newScore;
+        },
       });
-    }
+    };
 
+    /* eslint-disable-next-line new-cap */
     const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
     const WallFactory = (posX, posY, posZ) => {
@@ -176,7 +199,8 @@ export class MultiplayerGame extends HTMLElement {
       return ({
         wallMesh,
       });
-    }
+    };
+    /* eslint-disable-next-line new-cap */
     const Walls = [WallFactory(10, 2.5, 0), WallFactory(-10, 2.5, 0)];
 
     (() => {
@@ -193,8 +217,9 @@ export class MultiplayerGame extends HTMLElement {
     const pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
 
     function updateState(data) {
-      if (!data)
+      if (!data) {
         return;
+      }
       Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
       Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
       Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
@@ -207,17 +232,17 @@ export class MultiplayerGame extends HTMLElement {
 
       Bumpers[1].score = data.bumper_2.score;
       Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
-            // lastScore = data.last_score;
+      // lastScore = data.last_score;
     }
 
     pongSocket.addEventListener('open', function(_) {
-      console.log('Success! :3 ')
+      console.log('Success! :3 ');
     });
 
     let data;
-    let player_id = '';
-    pongSocket.addEventListener('message', function(e) {
-      data = JSON.parse(e.data)
+    let playerId = '';
+    pongSocket.addEventListener('message', (e) => {
+      data = JSON.parse(e.data);
       switch (data.action) {
         case 'state_updated':
           updateState(data.state);
@@ -225,7 +250,7 @@ export class MultiplayerGame extends HTMLElement {
           //     audio.cloneNode().play();
           break;
         case 'player_joined':
-          player_id = data.player_id;
+          playerId = data.player_id;
           break;
         case 'game_paused':
           devLog('Game paused');
@@ -245,7 +270,7 @@ export class MultiplayerGame extends HTMLElement {
     });
 
     pongSocket.addEventListener('close', function(_) {
-        console.log('PONG socket was nice! :3');
+      console.log('PONG socket was nice! :3');
     });
 
     function animate() {
@@ -254,7 +279,7 @@ export class MultiplayerGame extends HTMLElement {
 
       Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
       if (mixer) {
-          mixer.update(delta);
+        mixer.update(delta);
       }
       renderer.render(scene, camera);
     }
@@ -266,14 +291,18 @@ export class MultiplayerGame extends HTMLElement {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
-      if (keyCode == 'ArrowLeft')
-          pongSocket.send(JSON.stringify({ action: 'move_left', content: true, player_id }))
-      if (keyCode == 'ArrowRight')
-          pongSocket.send(JSON.stringify({ action: 'move_right', content: true, player_id }))
-      if (keyCode == 'KeyA')
-          pongSocket.send(JSON.stringify({ action: 'move_left', content: true, player_id }))
-      if (keyCode == 'KeyD')
-          pongSocket.send(JSON.stringify({ action: 'move_right', content: true, player_id }))
+      if (keyCode == 'ArrowLeft') {
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+      }
+      if (keyCode == 'ArrowRight') {
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+      }
+      if (keyCode == 'KeyA') {
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+      }
+      if (keyCode == 'KeyD') {
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+      }
       event.preventDefault();
     }
     function onDocumentKeyUp(event) {
@@ -281,14 +310,18 @@ export class MultiplayerGame extends HTMLElement {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
-      if (keyCode == 'ArrowLeft')
-          pongSocket.send(JSON.stringify({ action: 'move_left', content: false, player_id }))
-      if (keyCode == 'ArrowRight')
-          pongSocket.send(JSON.stringify({ action: 'move_right', content: false, player_id }))
-      if (keyCode == 'KeyA')
-          pongSocket.send(JSON.stringify({ action: 'move_left', content: false, player_id }))
-      if (keyCode == 'KeyD')
-          pongSocket.send(JSON.stringify({ action: 'move_right', content: false, player_id }))
+      if (keyCode == 'ArrowLeft') {
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+      }
+      if (keyCode == 'ArrowRight') {
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+      }
+      if (keyCode == 'KeyA') {
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+      }
+      if (keyCode == 'KeyD') {
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+      }
       event.preventDefault();
     }
 
@@ -306,10 +339,10 @@ export class MultiplayerGame extends HTMLElement {
 
     const navbarHight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
-    window.addEventListener('resize', function () {
+    window.addEventListener('resize', function() {
       renderer.setSize(window.innerWidth, window.innerHeight - navbarHight);
-      let rendererWidth = renderer.domElement.offsetWidth;
-      let rendererHeight = renderer.domElement.offsetHeight;
+      const rendererWidth = renderer.domElement.offsetWidth;
+      const rendererHeight = renderer.domElement.offsetHeight;
       camera.aspect = rendererWidth / rendererHeight;
       camera.updateProjectionMatrix();
     });
@@ -341,7 +374,7 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayMessageWrapper.appendChild(element);
     this.overlay.classList.add('overlay-dark');
     this.overlayMessageWrapper.classList.remove('d-none');
-    
+
     switch (action) {
       case 'pause':
         let remainingTime = state.remaining_time;
@@ -376,7 +409,7 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   navigateToHome() {
-    router.navigate('/home')
+    router.navigate('/home');
   }
 
   overlayTemplate() {
@@ -423,7 +456,7 @@ export class MultiplayerGame extends HTMLElement {
         <div>&nbspseconds</div>
       </div>
       `,
-    cancel:`
+    cancel: `
       <div id="overlay-message-title" class="fs-2">Game canceled</div>
       <div id="overlay-message-content" class="mb-3">Player failed to connect.</div>
       <div class="d-flex flex-column mt-5">
@@ -431,7 +464,7 @@ export class MultiplayerGame extends HTMLElement {
         <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
       </div>
     `,
-  }
+  };
 }
 
 customElements.define('multiplayer-game', MultiplayerGame);

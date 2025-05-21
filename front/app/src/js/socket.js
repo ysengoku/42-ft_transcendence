@@ -43,7 +43,7 @@ class WebSocketManager {
       setTimeout(() => this.reconnect(), 1000);
     };
   }
-  
+
   reconnect() {
     if (!this.socketOpen) {
       return;

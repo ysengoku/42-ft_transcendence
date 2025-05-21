@@ -128,13 +128,13 @@ export class Duel extends HTMLElement {
   handleGameFound(event) {
     devLog('Game found event:', event.detail);
     this.#state.gameId = event.detail.game_room_id;
-    const { username, nickname, avatar, elo } = event.detail
+    const { username, nickname, avatar, elo } = event.detail;
     this.#state.opponent = {
       username,
       nickname,
       avatar,
       elo,
-    }
+    };
     this.startDuel();
   }
 
@@ -143,7 +143,7 @@ export class Duel extends HTMLElement {
   }
 
   cancelMatchmaking() {
-    const message = { action: 'cancel'};
+    const message = { action: 'cancel' };
     devLog('Canceling matchmaking', message);
     socketManager.sendMessage('matchmaking', message);
     router.removeBeforeunloadCallback();
@@ -192,7 +192,7 @@ export class Duel extends HTMLElement {
     const userConfirmed = await new Promise((resolve) => {
       confirmationModal.handleConfirm = () => {
         devLog('User confirmed to leave the page');
-        const message = { action: 'cancel'};
+        const message = { action: 'cancel' };
         devLog('Canceling matchmaking', message);
         socketManager.sendMessage('matchmaking', message);
         confirmationModal.remove();
