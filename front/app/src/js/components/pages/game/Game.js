@@ -48,7 +48,7 @@ export class Game extends HTMLElement {
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
     let   BALL_INITIAL_VELOCITY = 0.25;
-    let   MAX_SCORE = 1;
+    let   MAX_SCORE = 10;
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
     const TEMPORAL_SPEED_DECAY = 0.005;
 
@@ -691,7 +691,7 @@ export class Game extends HTMLElement {
       while (i <= 5)
         Workers[i++].terminate();
       const currentUrl = window.location.href;
-      if (currentUrl == "https://localhost:1026/singleplayer-game/")
+      if (currentUrl == "https://localhost:1026/singleplayer-game")
       {
         gamePlaying = true;
         initGame();
