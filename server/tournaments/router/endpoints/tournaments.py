@@ -4,7 +4,6 @@ from uuid import UUID
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.db.models import Prefetch
-from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
