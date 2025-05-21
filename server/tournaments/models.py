@@ -62,7 +62,7 @@ class Tournament(models.Model):
     FINISHED = "finished"
     CANCELLED = "cancelled"
     STATUS_CHOICES = [
-        (PENDING, "Lobby"),
+        (PENDING, "Pending"),
         (ONGOING, "Ongoing"),
         (FINISHED, "Finished"),
         (CANCELLED, "Cancelled"),
