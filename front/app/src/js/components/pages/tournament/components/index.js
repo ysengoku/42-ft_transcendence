@@ -9,13 +9,13 @@ import { TournamentOverviewTree } from './OverviewRoundsTree';
 import { TournamentOverviewTable } from './OverviewRoundsTable';
 
 export {
-	TournamentList,
-	TournamentCreation,
-	TournamentWaiting,
-	TournamentRoundStart,
-	TournamentRoundWaiting,
-	TournamentRoundFinished,
-	TournamentCanceled,
-	TournamentOverviewTree,
-	TournamentOverviewTable,
+  TournamentList,
+  TournamentCreation,
+  TournamentWaiting,
+  TournamentRoundStart,
+  TournamentRoundWaiting,
+  TournamentRoundFinished,
+  TournamentCanceled,
+  TournamentOverviewTree,
+  TournamentOverviewTable,
 };

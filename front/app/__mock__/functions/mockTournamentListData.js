@@ -46,18 +46,18 @@ export async function mockTournamentList() {
       participants_count: 4,
       winner: {
         alias: 'SpeedFreak',
-          user: {
+        user: {
           username: 'Tommy',
           nickname: 'Speedster',
           avatar: '/__mock__/img/sample-pic2.png',
           elo: 1550,
           is_online: false,
-        }
+        },
       },
     },
     {
       id: 'dgladiator123asdasd',
-      name: "Gladiator's Arena",
+      name: 'Gladiator\'s Arena',
       date: null,
       status: 'lobby',
       creator: {
@@ -102,4 +102,4 @@ export async function mockTournamentList() {
     },
   ];
   return { items: data, count: data.length };
-};
+}

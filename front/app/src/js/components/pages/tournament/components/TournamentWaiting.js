@@ -2,7 +2,7 @@ export class TournamentWaiting extends HTMLElement {
   #state = {
     requiredParticipants: 0,
     participants: [],
-  }
+  };
 
   constructor() {
     super();
@@ -35,7 +35,7 @@ export class TournamentWaiting extends HTMLElement {
       this.addParticipant(participant);
     });
   }
-  
+
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
@@ -44,9 +44,9 @@ export class TournamentWaiting extends HTMLElement {
     const participant = document.createElement('div');
     participant.innerHTML = this.participantTemplate();
 
-	  const avatarElement = participant.querySelector('.participant-avatar');
+    const avatarElement = participant.querySelector('.participant-avatar');
     const aliasElement = participant.querySelector('.participant-alias');
-	  avatarElement.src = data.user.avatar;
+    avatarElement.src = data.user.avatar;
     aliasElement.textContent = data.alias;
     participant.id = `participant-${data.alias}`;
 

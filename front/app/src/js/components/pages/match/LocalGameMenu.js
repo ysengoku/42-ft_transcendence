@@ -35,7 +35,7 @@ export class LocalGameMenu extends HTMLElement {
     const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
     anyOptions.forEach((item) => {
       item.classList.add('d-none');
-    })
+    });
   }
 
   navigateToGame(event) {
