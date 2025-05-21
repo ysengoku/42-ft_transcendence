@@ -12,6 +12,7 @@ export class TournamentOverviewTree extends HTMLElement {
 
   set data(data) {
     this.#state.rounds = data;
+    console.log('Tournament rounds:', this.#state.rounds);
     this.render();
   }
 
@@ -90,8 +91,19 @@ export class TournamentOverviewTree extends HTMLElement {
   createBracketElement(bracket) {
     const bracketElement = document.createElement('div');
     bracketElement.classList.add('d-flex', 'flex-column', 'align-items-center', 'w-100', 'my-2');
-    const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1);
-    const player2 = this.createPlayerElement(bracket.participant2, bracket.score_p2);
+    const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1, bracket.winner.alias);
+    const player2 = this.createPlayerElement(bracket.participant2, bracket.score_p2, bracket.winner.alias);
+
+    if (bracket.status === 'finished') {
+      const winnerAlias = bracket.winner.alias;
+      if (player1.alias === winnerAlias) {
+        player1.classList.add('bracket-player-winner');
+        player2.classList.add('bracket-player-loser');
+      } else if (player2.alias === winnerAlias) {
+        player1.classList.add('bracket-player-loser');
+        player2.classList.add('bracket-player-winner');
+      }
+    }
     bracketElement.appendChild(player1);
     bracketElement.appendChild(player2);
     return bracketElement;
@@ -102,14 +114,14 @@ export class TournamentOverviewTree extends HTMLElement {
     element.innerHTML = this.playerTemplate();
     element.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'w-100');
     const avatarElement = element.querySelector('img');
-    avatarElement.src = player.user.avatar;
+    avatarElement.src = player.profile.avatar;
     const aliasElement = element.querySelector('.player-alias');
     aliasElement.textContent = player.alias;
-    if (player.status === 'winner') {
-      element.classList.add('bracket-player-winner')
-    } else if (player.status === 'eliminated') {
-      element.classList.add('bracket-player-loser')
-    }
+    // if (player.status === 'winner') {
+    //   element.classList.add('bracket-player-winner')
+    // } else if (player.status === 'eliminated') {
+    //   element.classList.add('bracket-player-loser')
+    // }
     const scoreElement = element.querySelector('.player-score');
     scoreElement.textContent = score;
     return element;
