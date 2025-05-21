@@ -4,8 +4,12 @@ import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.
 import pedro from '/3d_models/lilguy.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
 import { router } from '@router'
+import { auth } from '@auth';
+import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class MultiplayerGame extends HTMLElement {
+  #navbarHeight = 64;
+
   #state = {
     gameId: '',
   };
@@ -22,20 +26,33 @@ export class MultiplayerGame extends HTMLElement {
     this.navigateToHome = this.navigateToHome.bind(this);
   }
 
-  setParam(param) {
+  async setParam(param) {
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED);
+      router.navigate('/login');
+      return;
+    }
     if (!param.id) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
       return;
     }
+    const navbar = document.querySelector('.navbar');
+    this.#navbarHeight = navbar.offsetHeight;
+
     this.#state.gameId = param.id;
     this.render();
+  }
+
+  disconnectedCallback() {
+    document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
   }
 
   game() {
     const audio = new Audio(audiourl);
     const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
     document.querySelector('#content').appendChild(renderer.domElement);
 
@@ -212,7 +229,7 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'game_paused':
           devLog('Game paused');
-          this.showOverlay('pause');
+          this.showOverlay('pause', data.state);
           break;
         case 'game_unpaused':
           devLog('Game unpaused');
@@ -280,15 +297,17 @@ export class MultiplayerGame extends HTMLElement {
 
   render() {
     // this.innerHTML = ``;
+    document.querySelector('#content').classList.add('position-relative');
     this.innerHTML = this.overlayTemplate();
     this.overlay = this.querySelector('#overlay');
-    this.overlayMessageWrapper = this.querySelector('#game-status-message-wrapper');
+    this.overlayMessageWrapper = this.querySelector('#overlay-message-wrapper');
     this.overlayButton1 = this.querySelector('#overlay-button1');
     this.overlayButton2 = this.querySelector('#overlay-button2');
 
+    const navbarHight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
     window.addEventListener('resize', function () {
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(window.innerWidth, window.innerHeight - navbarHight);
       let rendererWidth = renderer.domElement.offsetWidth;
       let rendererHeight = renderer.domElement.offsetHeight;
       camera.aspect = rendererWidth / rendererHeight;
@@ -297,8 +316,15 @@ export class MultiplayerGame extends HTMLElement {
     animate();
 
     // ----- TEST ---------------
+    // mock data
+    // const data = {
+    //   state: {
+    //     name: 'Alice',
+    //     remaining_time: 10,
+    //   }
+    // }
     // setTimeout(() => {
-    // this.showOverlay('pause')
+    // this.showOverlay('pause', data.state)
     // }, 2000);
     // setTimeout(() => {
     //   this.hideOverlay()
@@ -309,17 +335,21 @@ export class MultiplayerGame extends HTMLElement {
     // --------------------------
   }
 
-  showOverlay(status) {
+  showOverlay(action, state = null) {
     const element = document.createElement('div');
-    element.innerHTML = this.overlayContentTemplate[status];
+    element.innerHTML = this.overlayContentTemplate[action];
     this.overlayMessageWrapper.appendChild(element);
-    this.overlay.classList.remove('d-none');
-
-    switch (status) {
+    this.overlay.classList.add('overlay-dark');
+    this.overlayMessageWrapper.classList.remove('d-none');
+    
+    switch (action) {
       case 'pause':
-        // TODO:
-        // Add the disconnected user's nickname & avatar
-        // Set timer
+        let remainingTime = state.remaining_time;
+        this.overlayMessageContent = this.querySelector('#overlay-message-content');
+        this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
+        this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
+        this.overlayMessageTimer.textContent = remainingTime;
+        // TODO: Set timer
         break;
       case 'cancel':
         this.overlayButton1 = this.querySelector('#overlay-button1');
@@ -331,7 +361,8 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   hideOverlay() {
-    this.overlay.classList.add('d-none');
+    this.overlay.classList.remove('overlay-dark');
+    this.overlayMessageWrapper.classList.add('d-none');
     this.overlayMessageWrapper.innerHTML = '';
 
     this.overlayButton1?.removeEventListener('click', this.requestNewMatchmaking);
@@ -352,38 +383,49 @@ export class MultiplayerGame extends HTMLElement {
     return `
     <style>
     #overlay {
-      background-color: rgba(var(--pm-gray-700-rgb), 0.8);
       z-index: 10;
       top: 0;
       left: 0;
     }
-    #game-status-message-wrapper {
+    .overlay-dark {
+      background-color: rgba(var(--pm-gray-700-rgb), 0.8);
+    }
+    #overlay-message-wrapper {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: rgba(var(--pm-gray-100-rgb), 0.9);
+      color: rgba(var(--pm-gray-100-rgb), 0.9) !important;
       background-color: rgba(var(--pm-gray-700-rgb), 0.8);
       padding-left: 40px;
       padding-right: 40px;
     }
-    #game-status-message {
+    #overlay-message-title {
       font-family: 'van dyke';
     }
+    #overlay-button1,
+    #overlay-button2 {
+      color: rgba(var(--pm-gray-100-rgb), 0.9) !important;
+    }
     </style>
-    <div id="overlay" class="position-absolute w-100 h-100 d-none">
-      <div id="game-status-message-wrapper" class="position-absolute text-center wood-board pt-5 pb-3"></div>
+    <div id="overlay" class="position-absolute w-100 h-100">
+      <div id="overlay-message-wrapper" class="position-absolute text-center wood-board pt-5 pb-3 d-none"></div>
     </div>
     `;
   }
 
   overlayContentTemplate = {
     pause: `
-      <div id="game-status-message" class="fs-2">Game paused</div>
-      <div id="game-status-submessage" class="py-2">Show more message here</div>
+      <div id="overlay-message-title" class="fs-2">Game paused</div>
+      <div id="overlay-message-content" class="mb-5"></div>
+      <div class="d-flex flex-row align-items-center my-3">
+        <div>Game will end in &nbsp</div>
+        <div id="overlat-message-timer" class="fs-4 m-0"></div>
+        <div>&nbspseconds</div>
+      </div>
       `,
     cancel:`
-      <div id="game-status-message" class="fs-2">Game canceled</div>
-      <div id="game-status-submessage" class="mb-3">Player failed to connect.</div>
+      <div id="overlay-message-title" class="fs-2">Game canceled</div>
+      <div id="overlay-message-content" class="mb-3">Player failed to connect.</div>
       <div class="d-flex flex-column mt-5">
         <button id="overlay-button1" class="btn fw-bold">Bring me another rival</button>
         <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
