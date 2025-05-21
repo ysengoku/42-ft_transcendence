@@ -4,8 +4,36 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
+from django.utils import timezone
 
 from users.models import Profile
+
+
+class Participant(models.Model):
+    REGISTERED = "registered"
+    PLAYING = "playing"
+    ELIMINATED = "eliminated"
+    WINNER = "winner"
+    UNREGISTERED = "unregistered"
+    STATUS_CHOICES = [
+        (REGISTERED, "Registered"),
+        (PLAYING, "Playing"),
+        (ELIMINATED, "Eliminated"),
+        (WINNER, "Winner"),
+        (UNREGISTERED, "Unregistered"),
+    ]
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    tournament = models.ForeignKey("Tournament", on_delete=models.CASCADE, related_name="participants")
+    alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="registered")
+    current_round = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = (("profile", "tournament"), ("tournament", "alias"))
+
+    def __str__(self):
+        return f"{self.alias} ({self.tournament.name})"
 
 
 class TournamentQuerySet(models.QuerySet):
@@ -15,32 +43,47 @@ class TournamentQuerySet(models.QuerySet):
             qs = qs.filter(status=status)
         return qs.order_by("-created_at")
 
+    def validate_and_create(self, name: str, creator: Profile, required_participants: int):
+        tournament = self.model(
+            name=name,
+            creator=creator,
+            required_participants=required_participants,
+            status=self.model.PENDING,
+        )
+        tournament.full_clean()
+        tournament.save()
+        tournament.add_participant(creator)
+        return tournament
+
 
 class Tournament(models.Model):
+    PENDING = "pending"
+    ONGOING = "ongoing"
+    FINISHED = "finished"
+    CANCELLED = "cancelled"
     STATUS_CHOICES = [
-        ("lobby", "Lobby"),
-        ("ongoing", "Ongoing"),
-        ("finished", "Finished"),
-        ("canceled", "Canceled"),
+        (PENDING, "Pending"),
+        (ONGOING, "Ongoing"),
+        (FINISHED, "Finished"),
+        (CANCELLED, "Cancelled"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    date = models.DateTimeField()
+    date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="lobby")
-    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    creator = models.ForeignKey(Profile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     winner = models.ForeignKey(
-        "Participant",
+        Participant,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="won_tournaments",
     )
-    participants = models.ManyToManyField("Participant", related_name="tournaments_m2m")
     required_participants = models.PositiveIntegerField()
 
-    objects = TournamentQuerySet.as_manager()
+    objects: TournamentQuerySet = TournamentQuerySet.as_manager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -65,36 +108,35 @@ class Tournament(models.Model):
             Prefetch("tournament_rounds", queryset=Round.objects.prefetch_related("brackets")),
         ).get(pk=self.pk)
 
+    def add_participant(self, profile: Profile, alias: str | None = None):
+        participant_alias = alias if alias else profile.user.nickname
+        # TODO: validated participant_alias for uniqueness
 
-class Participant(models.Model):
-    STATUS_CHOICES = [
-        ("registered", "Registered"),
-        ("playing", "Playing"),
-        ("eliminated", "Eliminated"),
-        ("winner", "Winner"),
-        ("unregistered", "Unregistered"),
-    ]
+        participant = Participant(
+            profile=profile,
+            alias=participant_alias,
+            tournament=self,
+        )
 
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name="tournament_participants")
-    alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
-    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="registered")
-    current_round = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        unique_together = (("profile", "tournament"), ("tournament", "alias"))
-
-    def __str__(self):
-        return f"{self.alias} ({self.tournament.name})"
+        participant.save()
 
 
 class Round(models.Model):
+    PENDING = "pending"
+    ONGOING = "ongoing"
+    FINISHED = "finished"
+    STATUS_CHOICES = [
+        (PENDING, "Pending"),
+        (ONGOING, "Ongoing"),
+        (FINISHED, "Finished"),
+    ]
+
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name="rounds")
     number = models.PositiveIntegerField(editable=False)
     status = models.CharField(
         max_length=10,
-        choices=[("start", "Start"), ("ongoing", "Ongoing"), ("finished", "Finished")],
-        default="start",
+        choices=STATUS_CHOICES,
+        default=PENDING,
     )
 
     class Meta:
@@ -106,11 +148,15 @@ class Round(models.Model):
 
 
 class Bracket(models.Model):
+    START = "start"
+    ONGOING = "ongoing"
+    FINISHED = "finished"
     STATUS_CHOICES = [
-        ("start", "Start"),
-        ("ongoing", "Ongoing"),
-        ("finished", "Finished"),
+        (START, "Start"),
+        (ONGOING, "Ongoing"),
+        (FINISHED, "Finished"),
     ]
+
     game = models.ForeignKey("pong.Match", on_delete=models.SET_NULL, null=True)
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="brackets")
     participant1 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p1")

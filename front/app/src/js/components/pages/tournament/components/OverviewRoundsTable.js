@@ -60,7 +60,7 @@ export class TournamentOverviewTable extends HTMLElement {
     element.innerHTML = this.playerTemplate();
     element.classList.add('d-flex', 'justify-content-center', 'align-items-center');
     const avatarElement = element.querySelector('img');
-    avatarElement.src = player.user.avatar;
+    avatarElement.src = player.profile.avatar;
     const aliasElement = element.querySelector('.player-alias');
     aliasElement.textContent = player.alias;
     if (player.status === 'winner') {

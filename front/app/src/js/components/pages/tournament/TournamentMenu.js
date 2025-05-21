@@ -56,7 +56,7 @@ export class TournamentMenu extends HTMLElement {
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
-    if (this.selectedTournament && this.selectedTournament.staus !== 'lobby') {
+    if (this.selectedTournament && this.selectedTournament.staus !== 'pending') {
       this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
   }
@@ -157,12 +157,13 @@ export class TournamentMenu extends HTMLElement {
       return;
     }
     this.modalBody.innerHTML = '';
+    console.log('Selected tournament:', this.selectedTournament);
     this.tournamentDetail[tournamentStatus]();
     this.modal.show();
   }
 
   tournamentDetail = {
-    lobby: () => {
+    pending: () => {
       this.modalBody.innerHTML = this.registerTournamentTemplate();
       const modalTitle = this.modalBody.querySelector('.modal-title');
       const modatRequiredParticipants = this.modalBody.querySelector('#modal-required-participants');
