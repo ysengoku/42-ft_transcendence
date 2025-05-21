@@ -27,6 +27,7 @@ export class TournamentOverview extends HTMLElement {
 
   setParam(param) {
     this.#state.tournament_id = param.id;
+    console.log('Tournament ID:', this.#state.tournament_id);
     if (this.#state.tournament_id === '') {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
@@ -44,26 +45,26 @@ export class TournamentOverview extends HTMLElement {
     // For rendering test
     // this.#state.tournament = await mockTournamentDetail('mockidongoing');
     // this.#state.tournament = await mockTournamentDetail('mockidongoing2');
-    this.#state.tournament = await mockTournamentDetail('mockidfinished');
+    // this.#state.tournament = await mockTournamentDetail('mockidfinished');
   
     // For error handling Test
     // this.#state.tournament_id = 'fb68695b-5645-4ad6-ac8a-8ee018475cae'
 
-    // Decomment after API is ready
-    // const response = await apiRequest(
-    //     'GET',
-    //     API_ENDPOINTS.TOURNAMENT(this.#state.tournament_id),
-    //     null, false, true);
-    // if (!response.success) {
-    //   if (response.status === 404) {
-    //     const notFound = document.createElement('page-not-found');
-    //     this.innerHTML = notFound.outerHTML;
-    //   } else {
-    //     console.error('Error fetching tournament data');
-    //   }
-    //   return;
-    // }
-    // this.#state.tournament = response.data;
+    const response = await apiRequest(
+        'GET',
+        API_ENDPOINTS.TOURNAMENT(this.#state.tournament_id),
+        null, false, true);
+    if (!response.success) {
+      if (response.status === 404) {
+        const notFound = document.createElement('page-not-found');
+        this.innerHTML = notFound.outerHTML;
+      } else {
+        console.error('Error fetching tournament data');
+      }
+      return;
+    }
+    this.#state.tournament = response.data;
+    console.log('Tournament data:', this.#state.tournament);
 
     if (!(this.#state.tournament.status === 'ongoing' || this.#state.tournament.status === 'finished')) {
       const notFound = document.createElement('page-not-found');
@@ -84,14 +85,16 @@ export class TournamentOverview extends HTMLElement {
     this.tournamentOverviewContent = this.querySelector('#tournament-overview-content');
 
     this.tournamentName.textContent = this.#state.tournament.name;
-    this.#state.tournament.status === 'ongoing' ? (
-      this.tournamentStatus.textContent = 'Ongoing',
-      this.tournamentWinnerWrapper.classList.add('d-none')
-    ) : (
-      this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`,
-      this.tournamentWinnerAvatar.src = this.#state.tournament.winner.user.avatar,
-      this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias
-    );
+    if (this.#state.tournament.status === 'ongoing') {
+      this.tournamentStatus.textContent = 'Ongoing';
+      this.tournamentWinnerWrapper.classList.add('d-none');
+    } else if (this.#state.tournament.status === 'finished') {
+      this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`;
+      if (this.#state.tournament.winner) {
+        this.tournamentWinnerAvatar.src = this.#state.tournament.winner.user.avatar;
+        this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias;
+      }
+    }
  
     const content = isMobile() ? document.createElement('tournament-overview-table') : document.createElement('tournament-overview-tree');
     content.data = this.#state.tournament.rounds;
