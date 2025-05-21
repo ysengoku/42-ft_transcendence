@@ -23,6 +23,8 @@ BUMPER_SPEED = 0.25
 BALL_DIAMETER = 1
 BALL_RADIUS = BALL_DIAMETER / 2
 STARTING_BUMPER_1_POS = 0, -9
+STARTING_COIN_POS = -9.25, 3
+STARTING_COIN_VELOCITY = 0.01, 0
 STARTING_BUMPER_2_POS = 0, 9
 STARTING_BALL_POS = 0, 0
 Z_VELOCITY = 0.25
@@ -33,7 +35,7 @@ BALL_VELOCITY_CAP = 1
 TEMPORAL_SPEED_DEFAULT = 1, 1
 TEMPORAL_SPEED_INCREASE = SUBTICK * 0
 TEMPORAL_SPEED_DECAY = 0.005
-GAME_TICK_INTERVAL = 1.0 / 60
+GAME_TICK_INTERVAL = 1.0 / 120
 PLAYERS_REQUIRED = 2
 SCORE_TO_WIN = 3
 ###################
@@ -61,7 +63,11 @@ class Vector2:
 @dataclass(slots=True)
 class Bumper(Vector2):
     dir_z: int
+    width_half: int = 0.5
+    lenght_half: int = 2.5
     score: int = 0
+    speed: int = 0.25
+    control_reversed: bool = False
     moves_left: bool = False
     moves_right: bool = False
 
@@ -81,6 +87,9 @@ class Player:
             task.cancel()
         self.reconnection_timer = None
 
+@dataclass(slots=True)
+class Coin(Vector2):
+    velocity: Vector2
 
 @dataclass(slots=True)
 class Ball(Vector2):
@@ -101,7 +110,12 @@ class BasePong:
     _ball: Ball
 
     def __init__(self):
+        self._coin = Coin(
+            *STARTING_COIN_POS,
+            Vector2(*STARTING_COIN_VELOCITY)
+        )
         self._is_someone_scored = False
+        self._last_bumper_collided = 0
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
@@ -111,6 +125,46 @@ class BasePong:
             dir_z=-1,
         )
         self._ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
+
+# Workers[0].onmessage = function(e) {
+#       Bumpers[e.data[0]].cubeMesh.scale.x = 1;
+#       Bumpers[e.data[0]].lenghtHalf = 2.5;
+#     };
+#     Workers[1].onmessage = function(e) {
+#       Bumpers[Math.abs(e.data[0] - 1)].cubeMesh.scale.x = 1;
+#       Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
+#       if ((Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf)) {
+#         Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
+#       }
+#       else if (Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf){
+#           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
+#       }
+#     };
+#     Workers[2].onmessage = function(e) {
+#       Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
+#     };
+#     Workers[3].onmessage = function(e) {
+#       Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
+#     };
+#     Workers[4].onmessage = function(e) {
+#       Bumpers[e.data[0]].cubeMesh.scale.z = 1;
+#       Bumpers[e.data[0]].widthHalf = 0.5;
+#     };
+#     Workers[5].onmessage = function(e) {
+#       Coin.cylinderUpdate.set(-9.25, 3, 0);
+#     };
+
+
+
+
+
+#   if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
+#     manageBuffAndDebuff();
+#    }
+#           if ((Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf) || (Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf)) {
+#             Coin.velocity.x *= -1
+#           }
+#           Coin.cylinderUpdate.x += Coin.velocity.x;
 
     def resolve_next_tick(self):
         """
@@ -162,15 +216,35 @@ class BasePong:
         parameter to this function.
         """
         return (
-            (self._ball.x - BALL_RADIUS + ball_subtick_x * self._ball.velocity.x <= bumper.x + BUMPER_LENGTH_HALF)
-            and (self._ball.x + BALL_RADIUS + ball_subtick_x * self._ball.velocity.x >= bumper.x - BUMPER_LENGTH_HALF)
-            and (self._ball.z - BALL_RADIUS + ball_subtick_z * self._ball.velocity.z <= bumper.z + BUMPER_WIDTH_HALF)
-            and (self._ball.z + BALL_RADIUS + ball_subtick_z * self._ball.velocity.z >= bumper.z - BUMPER_WIDTH_HALF)
+            (self._ball.x - BALL_RADIUS + ball_subtick_x * self._ball.velocity.x <= bumper.x + bumper.lenght_half)
+            and (self._ball.x + BALL_RADIUS + ball_subtick_x * self._ball.velocity.x >= bumper.x - bumper.lenght_half)
+            and (self._ball.z - BALL_RADIUS + ball_subtick_z * self._ball.velocity.z <= bumper.z + bumper.width_half)
+            and (self._ball.z + BALL_RADIUS + ball_subtick_z * self._ball.velocity.z >= bumper.z - bumper.width_half)
         )
+
+#     function isCoinCollidedWithBall(coin, ballSubtickZ, ballSubtickX) {
+#       return (
+#           (Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= coin.cylinderUpdate.x + 0.25)
+#           && (Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= coin.cylinderUpdate.x - 0.25)
+#           && (Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= coin.cylinderUpdate.z + 0.05)
+#           && (Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= coin.cylinderUpdate.z - 0.05));
+#   }
+
+    def _is_collided_with_coin(self, ball_subtick_z, ball_subtick_x):
+        """
+        Calculates rectangle-on-rectangle collision between the ball and the coin.
+        """
+        return (
+            (self._ball.x - BALL_RADIUS + ball_subtick_x * self._ball.velocity.x <= self._coin.x + 0.25)
+            and (self._ball.x + BALL_RADIUS + ball_subtick_x * self._ball.velocity.x >= self._coin.x - 0.25)
+            and (self._ball.z - BALL_RADIUS + ball_subtick_z * self._ball.velocity.z <= self._coin.z + 0.05)
+            and (self._ball.z + BALL_RADIUS + ball_subtick_z * self._ball.velocity.z >= self._coin.z - 0.05)
+        )
+
 
     def _calculate_new_dir(self, bumper):
         collision_pos_x = bumper.x - self._ball.x
-        normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + BUMPER_LENGTH_HALF)
+        normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + bumper.lenght_half)
         bounce_angle_radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos_x)
         self._ball.velocity.z = (
             min(BALL_VELOCITY_CAP, abs(self._ball.velocity.z * 1.025 * self._ball.temporal_speed.z)) * bumper.dir_z
@@ -178,11 +252,11 @@ class BasePong:
         self._ball.velocity.x = self._ball.velocity.z * -math.tan(bounce_angle_radians) * bumper.dir_z
         self._ball.velocity.x = math.copysign(max(abs(self._ball.velocity.x), 0.05), self._ball.velocity.x)
 
-        collision_pos_z = bumper.z - self._ball.z
-        normalized_collision_pos_z = collision_pos_z / (BALL_RADIUS + BUMPER_WIDTH_HALF)
-        normalized_collision_pos_z
-        if (self._ball.z - BALL_RADIUS * self._ball.velocity.z <= bumper.z + BUMPER_WIDTH_HALF) and (
-            self._ball.z + BALL_RADIUS * self._ball.velocity.z >= bumper.z - BUMPER_WIDTH_HALF
+        # collision_pos_z = bumper.z - self._ball.z
+        # normalized_collision_pos_z = collision_pos_z / (BALL_RADIUS + BUMPER_WIDTH_HALF)
+        # normalized_collision_pos_z
+        if (self._ball.z - BALL_RADIUS * self._ball.velocity.z <= bumper.z + bumper.width_half) and (
+            self._ball.z + BALL_RADIUS * self._ball.velocity.z >= bumper.z - bumper.width_half
         ):
             self._ball.temporal_speed.x += TEMPORAL_SPEED_INCREASE
 
@@ -206,19 +280,84 @@ class BasePong:
 
     def _check_ball_bumper_collision(self, ball_subtick_z, ball_subtick_x):
         if self._ball.velocity.z <= 0 and self._is_collided_with_ball(self._bumper_1, ball_subtick_z, ball_subtick_x):
+            self.lastBumperCollided = 0
             self._calculate_new_dir(self._bumper_1)
         elif self._ball.velocity.z > 0 and self._is_collided_with_ball(self._bumper_2, ball_subtick_z, ball_subtick_x):
+            self.lastBumperCollided = 1
             self._calculate_new_dir(self._bumper_2)
 
+# function  manageBuffAndDebuff() {
+#       let chooseBuff = Math.floor(Math.random() * 5);
+#       switch (chooseBuff)
+#       {
+#         case 1:
+#           Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+#           Bumpers[lastBumperCollided].lenghtHalf = 5;
+#           if ((Bumpers[lastBumperCollided].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf)) {
+#               Bumpers[lastBumperCollided].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
+#           }
+#           else if (Bumpers[lastBumperCollided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf){
+#               Bumpers[lastBumperCollided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+#           }
+#           Workers[0].postMessage([10000, lastBumperCollided, "create"]);
+#           break ;
+#         case 2:
+#           Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 0.5;
+#           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
+#           Workers[1].postMessage([10000, lastBumperCollided, "create"]);
+#           break ;
+#         case 3:
+#           Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
+#           Workers[2].postMessage([2000, lastBumperCollided, "create"]);
+#           break ;
+#         case 4:
+#           Bumpers[Math.abs(lastBumperCollided - 1)].speed = 0.1;
+#           Workers[3].postMessage([5000, lastBumperCollided, "create"]);
+#           break ;
+#         default:
+#           Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+#           Bumpers[lastBumperCollided].widthHalf = 1.5;
+#           Workers[4].postMessage([10000, lastBumperCollided, "create"]);
+#           break ;
+#       }
+#       Coin.cylinderUpdate.set(-100, 3, 0);
+#       Workers[5].postMessage([30000, -1, "create"]);
+#     }
+
+
+    def _manage_buff_and_debuff(self, last_bumper_collided):
+        chooseBuff = randrange(5)
+        # match chooseBuff:
+        #     case 0:
+        #         Bumpers[last_bumper_collided].cubeMesh.scale.x = 2;
+        #         Bumpers[last_bumper_collided].lenghtHalf = 5;
+        #         if ((Bumpers[last_bumper_collided].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[last_bumper_collided].lenghtHalf)) {
+        #             Bumpers[last_bumper_collided].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[last_bumper_collided].lenghtHalf - 0.1;
+        #         }
+        #         else if (Bumpers[last_bumper_collided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[last_bumper_collided].lenghtHalf){
+        #             Bumpers[last_bumper_collided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[last_bumper_collided].lenghtHalf + 0.1;
+        #         }
+                # Workers[0].postMessage([10000, lastBumperCollided, "create"]);
+                # break ;
+
+
+    def _check_ball_coin_collision(self, ball_subtick_z, ball_subtick_x):
+        if self._is_collided_with_coin(ball_subtick_z, ball_subtick_x):
+            self._manage_buff_and_debuff(self._last_bumper_collided)
+            # lastBumperCollided = 0;
+        # elif self._ball.velocity.z > 0 and self._is_collided_with_coin(self._bumper_2, ball_subtick_z, ball_subtick_x):
+        #     # lastBumperCollided = 1;
+        #     self._calculate_new_dir(self._bumper_2)
+
     def _move_bumpers(self, bumper_subtick):
-        if self._bumper_1.moves_left and not self._bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
+        if self._bumper_1.moves_left and not self._bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - self._bumper_1.lenght_half:
             self._bumper_1.x += bumper_subtick
-        if self._bumper_1.moves_right and not self._bumper_1.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
+        if self._bumper_1.moves_right and not self._bumper_1.x < WALL_RIGHT_X + WALL_WIDTH_HALF + self._bumper_1.lenght_half:
             self._bumper_1.x -= bumper_subtick
 
-        if self._bumper_2.moves_left and not self._bumper_2.x > WALL_LEFT_X - WALL_WIDTH_HALF - BUMPER_LENGTH_HALF:
+        if self._bumper_2.moves_left and not self._bumper_2.x > WALL_LEFT_X - WALL_WIDTH_HALF - self._bumper_2.lenght_half:
             self._bumper_2.x += bumper_subtick
-        if self._bumper_2.moves_right and not self._bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + BUMPER_LENGTH_HALF:
+        if self._bumper_2.moves_right and not self._bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + self._bumper_2.lenght_half:
             self._bumper_2.x -= bumper_subtick
 
     def _move_ball(self, ball_subtick_z, ball_subtick_x):
