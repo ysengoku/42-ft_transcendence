@@ -1,6 +1,6 @@
 import { auth } from '@auth';
 import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
-import { mockRoundStartData } from '@mock/functions/mockTournamentWs';
+// import { mockRoundStartData } from '@mock/functions/mockTournamentWs';
 
 export class Tournament extends HTMLElement {
   #state = {
@@ -9,7 +9,7 @@ export class Tournament extends HTMLElement {
     tournament: null,
     currentRoundNumber: 1,
     currentRound: null,
-  }
+  };
 
   // Convert the status fetched from the server to the status used in the component
   status = {
@@ -35,7 +35,7 @@ export class Tournament extends HTMLElement {
     await this.fetchTournamentData();
     // TODO: open ws for this tournament
   }
-  
+
   async fetchTournamentData() {
     // For test
     this.#state.tournament = await mockTournamentDetail('mockidlobby');
@@ -47,7 +47,7 @@ export class Tournament extends HTMLElement {
       return;
     }
     this.#state.tournament = response.data;
-    
+
     this.#state.status = this.status[this.#state.tournament.status];
     this.render();
   }
@@ -76,15 +76,15 @@ export class Tournament extends HTMLElement {
   }
 
   tournamentContent = {
-    waiting:() => {
+    waiting: () => {
       const tournamentWaiting = document.createElement('tournament-waiting');
       tournamentWaiting.data = {
         required_participants: this.#state.tournament.required_participants,
-        participants: this.#state.tournament.participants
+        participants: this.#state.tournament.participants,
       };
       return tournamentWaiting;
     },
-    roundStart:() => {
+    roundStart: () => {
       const tournamentRoundStart = document.createElement('tournament-round-start');
       tournamentRoundStart.data = {
         round_number: this.#state.currentRoundNumber,
@@ -92,16 +92,16 @@ export class Tournament extends HTMLElement {
       };
       return tournamentRoundStart;
     },
-    waitingNextRound:() => {
+    waitingNextRound: () => {
       // Show status/result of all matches of the current round
     },
-    roundFinished:() => {
+    roundFinished: () => {
       // Show result of all matches of the current round
     },
-    finished:() => {
+    finished: () => {
       // Show the final result of the tournament with tree
     },
-  }
+  };
 
   updateTournamentStatus() {
     if (this.tournamentContentWrapper.firstChild) {
@@ -126,7 +126,7 @@ export class Tournament extends HTMLElement {
 
     this.#state.currentRoundNumber = data.round.number;
     this.#state.currentRound = data.round;
-    
+
     if (this.#state.currentRoundNumber === 1) {
       this.#state.tournament.status = 'ongoing';
     }
@@ -195,7 +195,8 @@ customElements.define('tournament-room', Tournament);
 // - round_start message via WebSocket --> [RoundStart view]
 // countdown, then redirected to the match page
 
-// - match_finished message via WebSocket (receive on Game page when the user's own match is finished) --> [RoundWaiting view]
+// - match_finished message via WebSocket
+// (receive on Game page when the user's own match is finished) --> [RoundWaiting view]
 // - match_result message via WebSocket --> Update [RoundWaiting view] adding new result
 // - round_end message via WebSocket --> Update [RoundWaiting view] with the result of the round
 

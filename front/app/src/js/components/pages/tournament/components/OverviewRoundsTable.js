@@ -2,7 +2,7 @@ export class TournamentOverviewTable extends HTMLElement {
   #state = {
     rounds: null,
     roundsCount: 0,
-  }
+  };
 
   constructor() {
     super();
@@ -64,9 +64,9 @@ export class TournamentOverviewTable extends HTMLElement {
     const aliasElement = element.querySelector('.player-alias');
     aliasElement.textContent = player.alias;
     if (player.status === 'winner') {
-      element.classList.add('bracket-player-winner')
+      element.classList.add('bracket-player-winner');
     } else if (player.status === 'eliminated') {
-      element.classList.add('bracket-player-loser')
+      element.classList.add('bracket-player-loser');
     }
     const scoreElement = element.querySelector('.player-score');
     scoreElement.textContent = score;

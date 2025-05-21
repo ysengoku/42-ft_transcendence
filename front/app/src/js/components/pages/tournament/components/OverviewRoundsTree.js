@@ -3,7 +3,7 @@ import { BREAKPOINT } from '@utils';
 export class TournamentOverviewTree extends HTMLElement {
   #state = {
     rounds: null,
-  }
+  };
 
   constructor() {
     super();
@@ -32,19 +32,19 @@ export class TournamentOverviewTree extends HTMLElement {
       }
     };
   }
-  
+
   renderBrackets(round) {
     const roundElement = document.createElement('div');
-    roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');    
+    roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');
     const bracketPairsCount = Math.floor(round.brackets.length / 2);
     let bracketIndex = 0;
     if (bracketPairsCount !== 0) {
-      for(let i = 0; i < bracketPairsCount; i++) {
+      for (let i = 0; i < bracketPairsCount; i++) {
         const temp = document.createElement('div');
         temp.innerHTML = this.bracketsPairTemplate();
-        const bracketPairElement = temp.firstElementChild
+        const bracketPairElement = temp.firstElementChild;
         const bracketsWrapper = bracketPairElement.querySelector('.brackets-wrapper');
-  
+
         const bracket1 = round.brackets[bracketIndex];
         const bracket2 = round.brackets[bracketIndex + 1];
         bracketIndex += 2;
@@ -56,7 +56,7 @@ export class TournamentOverviewTree extends HTMLElement {
 
         requestAnimationFrame(() => {
           const incomingLines = bracketPairElement.querySelector('.brackets-connector-incoming');
-          const outboundLine   = bracketPairElement.querySelector('.brackets-connector-outbound');
+          const outboundLine = bracketPairElement.querySelector('.brackets-connector-outbound');
           const bracketWrapper1 = bracketsWrapper.children[0];
           const bracketWrapper2 = bracketsWrapper.children[1];
 
@@ -81,7 +81,7 @@ export class TournamentOverviewTree extends HTMLElement {
     this.tournamentOverviewContent.appendChild(roundElement);
     const roundElements = this.querySelectorAll('.round-wrapper');
     requestAnimationFrame(() => {
-    const roundElementHeight = roundElements[0].offsetHeight;
+      const roundElementHeight = roundElements[0].offsetHeight;
       for (let i = 1; i < roundElements.length; i++) {
         roundElements[i].style.height = `${roundElementHeight}px`;
       }
