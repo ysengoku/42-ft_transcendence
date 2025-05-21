@@ -33,7 +33,7 @@ def create_tournament(request, data: TournamentCreateSchema):
         data.name, user.profile, data.required_participants
     )
     creator = user.profile.to_profile_minimal_schema()
-    data = {
+    ws_data = {
         "creator": creator,
         "id": str(tournament.id),
         "name": data.name,
@@ -52,7 +52,7 @@ def create_tournament(request, data: TournamentCreateSchema):
         {
             "type": "tournament.broadcast",
             "action": "tournament_created",
-            "data": data,
+            "data": ws_data,
         },
     )
     return 201, tournament
