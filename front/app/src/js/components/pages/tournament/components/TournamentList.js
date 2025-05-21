@@ -1,5 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { mockTournamentList } from '@mock/functions/mockTournamentListData.js'; // For Test
+// import { mockTournamentList } from '@mock/functions/mockTournamentListData.js'; // For Test
 
 export class TournamentList extends HTMLElement {
   #state = {
@@ -37,7 +37,7 @@ export class TournamentList extends HTMLElement {
   }
 
   getTournamentById(id) {
-    return this.#state.tournaments.find(item => item.id === id);
+    return this.#state.tournaments.find((item) => item.id === id);
   }
 
   setNewTournament(tournament) {
@@ -70,7 +70,7 @@ export class TournamentList extends HTMLElement {
     this.filterButton?.addEventListener('click', this.filterTournament);
     this.filterOpenButton?.addEventListener('click', this.filterTournament);
     this.filterAllButton?.addEventListener('click', this.filterTournament);
-  
+
     this.renderList();
   }
 
@@ -130,7 +130,7 @@ export class TournamentList extends HTMLElement {
     this.list.appendChild(item);
     this.filterButton.classList.add('d-none');
   }
- 
+
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */

@@ -203,6 +203,7 @@ export const API_ENDPOINTS = {
 
   /**
    * GET: Gets a specific tournament by id. Paginated by the limit and offset settings.
+   * @param {string} id - The id of the tournament to retrieve.
    * @return {string} The full API URL for the tournaments list.
    * */
   TOURNAMENT: (id) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}`,

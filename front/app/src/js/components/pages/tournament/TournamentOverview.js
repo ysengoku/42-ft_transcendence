@@ -1,7 +1,7 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { formatDateMDY } from '@utils';
 import { isMobile } from '@utils';
-import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
+// import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 
 export class TournamentOverview extends HTMLElement {
   #state = {
@@ -9,11 +9,11 @@ export class TournamentOverview extends HTMLElement {
     status: '', // ongoing, finished
     tournament: null,
     isMobile: false,
-  }
+  };
 
   constructor() {
     super();
-  
+
     this.tournamentName = null;
     this.tournamentStatus = null;
     this.tournamentWinnerWrapper = null;
@@ -46,12 +46,13 @@ export class TournamentOverview extends HTMLElement {
     // this.#state.tournament = await mockTournamentDetail('mockidongoing');
     // this.#state.tournament = await mockTournamentDetail('mockidongoing2');
     // this.#state.tournament = await mockTournamentDetail('mockidfinished');
-  
+
     // For error handling Test
     // this.#state.tournament_id = 'fb68695b-5645-4ad6-ac8a-8ee018475cae'
 
     const response = await apiRequest(
         'GET',
+        /* eslint-disable-next-line new-cap */
         API_ENDPOINTS.TOURNAMENT(this.#state.tournament_id),
         null, false, true);
     if (!response.success) {
@@ -95,8 +96,10 @@ export class TournamentOverview extends HTMLElement {
         this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias;
       }
     }
- 
-    const content = isMobile() ? document.createElement('tournament-overview-table') : document.createElement('tournament-overview-tree');
+
+    const content = isMobile() ?
+      document.createElement('tournament-overview-table') :
+      document.createElement('tournament-overview-tree');
     content.data = this.#state.tournament.rounds;
     this.tournamentOverviewContent.appendChild(content);
   }
