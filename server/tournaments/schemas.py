@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from django.conf import settings
@@ -6,6 +7,7 @@ from ninja import Schema
 from pydantic import model_validator
 
 from common.schemas import ProfileMinimalSchema
+from tournaments.models import Tournament
 
 
 class ParticipantSchema(Schema):
@@ -26,14 +28,26 @@ class RoundSchema(Schema):
 
 
 class TournamentSchema(Schema):
+    """Schema that represents a singular Tournament."""
+
     creator: ProfileMinimalSchema
     id: UUID
     name: str
     rounds: list[RoundSchema]
     participants: list[ParticipantSchema]
+    status: str
+    required_participants: int
+    date: datetime
+    participants_count: int | None
+
+    @staticmethod
+    def resolve_participants_count(obj: Tournament):
+        return Tournament.objects.get(id=obj.id).participants.count() or None
 
 
 class TournamentCreateSchema(Schema):
+    """Schema that represents the necessary data to create a Tournament."""
+
     name: str
     required_participants: int
 

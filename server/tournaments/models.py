@@ -4,25 +4,23 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
+from django.utils import timezone
 
 from users.models import Profile
 
 
-class TournamentQuerySet(models.QuerySet):
-    def with_status(self, status: str = "all"):
-        qs = self
-        if status != "all":
-            qs = qs.filter(status=status)
-        return qs.order_by("-created_at")
-
-
 class Participant(models.Model):
+    REGISTERED = "registered"
+    PLAYING = "playing"
+    ELIMINATED = "eliminated"
+    WINNER = "winner"
+    UNREGISTERED = "unregistered"
     STATUS_CHOICES = [
-        ("registered", "Registered"),
-        ("playing", "Playing"),
-        ("eliminated", "Eliminated"),
-        ("winner", "Winner"),
-        ("unregistered", "Unregistered"),
+        (REGISTERED, "Registered"),
+        (PLAYING, "Playing"),
+        (ELIMINATED, "Eliminated"),
+        (WINNER, "Winner"),
+        (UNREGISTERED, "Unregistered"),
     ]
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
@@ -38,17 +36,41 @@ class Participant(models.Model):
         return f"{self.alias} ({self.tournament.name})"
 
 
+class TournamentQuerySet(models.QuerySet):
+    def with_status(self, status: str = "all"):
+        qs = self
+        if status != "all":
+            qs = qs.filter(status=status)
+        return qs.order_by("-created_at")
+
+    def validate_and_create(self, name: str, creator: Profile, required_participants: int):
+        tournament = self.model(
+            name=name,
+            creator=creator,
+            required_participants=required_participants,
+            status=self.model.PENDING,
+        )
+        tournament.full_clean()
+        tournament.save()
+        tournament.add_participant(creator)
+        return tournament
+
+
 class Tournament(models.Model):
+    PENDING = "pending"
+    ONGOING = "ongoing"
+    FINISHED = "finished"
+    CANCELLED = "cancelled"
     STATUS_CHOICES = [
-        ("lobby", "Lobby"),
-        ("ongoing", "Ongoing"),
-        ("finished", "Finished"),
-        ("canceled", "Canceled"),
+        (PENDING, "Lobby"),
+        (ONGOING, "Ongoing"),
+        (FINISHED, "Finished"),
+        (CANCELLED, "Cancelled"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    date = models.DateTimeField()
+    date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="lobby")
     creator = models.ForeignKey(Profile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -100,12 +122,21 @@ class Tournament(models.Model):
 
 
 class Round(models.Model):
+    PENDING = "pending"
+    ONGOING = "ongoing"
+    FINISHED = "finished"
+    STATUS_CHOICES = [
+        (PENDING, "Pending"),
+        (ONGOING, "Ongoing"),
+        (FINISHED, "Finished"),
+    ]
+
     tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name="rounds")
     number = models.PositiveIntegerField(editable=False)
     status = models.CharField(
         max_length=10,
-        choices=[("start", "Start"), ("ongoing", "Ongoing"), ("finished", "Finished")],
-        default="start",
+        choices=STATUS_CHOICES,
+        default=PENDING,
     )
 
     class Meta:
@@ -117,11 +148,15 @@ class Round(models.Model):
 
 
 class Bracket(models.Model):
+    START = "start"
+    ONGOING = "ongoing"
+    FINISHED = "finished"
     STATUS_CHOICES = [
-        ("start", "Start"),
-        ("ongoing", "Ongoing"),
-        ("finished", "Finished"),
+        (START, "Start"),
+        (ONGOING, "Ongoing"),
+        (FINISHED, "Finished"),
     ]
+
     game = models.ForeignKey("pong.Match", on_delete=models.SET_NULL, null=True)
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="brackets")
     participant1 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p1")
