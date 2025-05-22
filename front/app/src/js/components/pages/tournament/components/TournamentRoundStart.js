@@ -2,7 +2,7 @@ export class TournamentRoundStart extends HTMLElement {
   #state = {
     roundNumber: 1,
     round: null,
-  }
+  };
 
   #countdown = 5;
 

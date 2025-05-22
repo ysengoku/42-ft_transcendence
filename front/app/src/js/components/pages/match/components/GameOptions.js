@@ -42,7 +42,7 @@ export class GameOptions extends HTMLElement {
   connectedCallback() {
     if (!this.#state.selectedOptions) {
       this.#state.selectedOptions = {
-        ...this.#state.defaultOptionValue
+        ...this.#state.defaultOptionValue,
       };
     }
     this.render();

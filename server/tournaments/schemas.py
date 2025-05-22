@@ -1,11 +1,13 @@
+from datetime import datetime
 from uuid import UUID
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from ninja import Field, Schema
+from ninja import Schema
 from pydantic import model_validator
 
 from common.schemas import ProfileMinimalSchema
+from tournaments.models import Tournament
 
 
 class ParticipantSchema(Schema):
@@ -26,19 +28,43 @@ class RoundSchema(Schema):
 
 
 class TournamentSchema(Schema):
-    creator: ProfileMinimalSchema = Field(alias="creator.profile")
+    """Schema that represents a singular Tournament."""
+
+    creator: ProfileMinimalSchema
     id: UUID
-    name: str = Field(alias="name")
-    rounds: list[RoundSchema] = Field(default_factory=list)
-    participants: list[ParticipantSchema] = Field(default_factory=list)
+    name: str
+    rounds: list[RoundSchema]
+    participants: list[ParticipantSchema]
+    status: str
+    required_participants: int
+    date: datetime
+    participants_count: int | None
+
+    @staticmethod
+    def resolve_participants_count(obj: Tournament):
+        return Tournament.objects.get(id=obj.id).participants.count() or None
 
 
 class TournamentCreateSchema(Schema):
-    name: str = Field(min_length=1, max_length=settings.MAX_TOURNAMENT_NAME_LENGTH)
+    """Schema that represents the necessary data to create a Tournament."""
+
+    name: str
     required_participants: int
 
     @model_validator(mode="after")
-    def check_participants(self):
+    def validate_tournament_schema(self):
+        if len(self.name) < 1:
+            raise ValidationError({"name": ["Tournament name should have at least 1 character."]})
+
+        if len(self.name) > settings.MAX_TOURNAMENT_NAME_LENGTH:
+            raise ValidationError(
+                {
+                    "name": [
+                        f"Tournament name should not exceed {settings.MAX_TOURNAMENT_NAME_LENGTH} characters.",
+                    ],
+                },
+            )
+
         options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if self.required_participants not in options:
             raise ValidationError(
