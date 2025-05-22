@@ -99,7 +99,7 @@ export class MultiplayerGame extends HTMLElement {
                 cylinderUpdate,
                 velocity,
             });
-        })(-9.25, 3, 0);
+        })(-9.25, 1, 0);
 
 
         const Ball = ((posX, posY, posZ) => {
@@ -222,6 +222,7 @@ export class MultiplayerGame extends HTMLElement {
             Ball.sphereUpdate.z = data.ball.z;
             Ball.sphereUpdate.x = data.ball.x;
 
+            
             Coin.cylinderUpdate.z = data.coin.z;
             Coin.cylinderUpdate.x = data.coin.x;
 
@@ -231,8 +232,12 @@ export class MultiplayerGame extends HTMLElement {
             Bumpers[1].score = data.bumper_2.score;
             Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
 
-            if 
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+            if (data.current_buff_or_debuff == 0)
+                Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+            if (data.current_buff_or_debuff == 1)
+                Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
+            if (data.current_buff_or_debuff == 4)
+                Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
 
             // lastScore = data.last_score;
         }
@@ -268,7 +273,8 @@ export class MultiplayerGame extends HTMLElement {
             let delta = Math.min(clock.getDelta(), 0.1);
 
             Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-            Coin.cylinderMesh.position.set(Coin.cylinderMesh.x, 1, Coin.cylinderMesh.z)
+            Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+            // console.log(Coin.cylinderMesh.position);
             if (mixer) {
                 mixer.update(delta);
             }

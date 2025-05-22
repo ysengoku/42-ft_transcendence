@@ -130,7 +130,7 @@ export class Game extends HTMLElement {
         cylinderUpdate,
         velocity,
     });
-    })(-9.25, 3, 0);
+    })(-9.25, 1, 0);
 
 	const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
