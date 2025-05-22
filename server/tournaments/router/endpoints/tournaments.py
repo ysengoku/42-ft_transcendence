@@ -8,6 +8,7 @@ from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
 
+from django.db import transaction
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from tournaments.models import Bracket, Participant, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
@@ -25,21 +26,27 @@ def create_tournament(request, data: TournamentCreateSchema):
     """
     user = request.auth
 
-    tournament = Tournament.objects.validate_and_create(data.name, user.profile, data.required_participants)
-    creator = user.profile.to_profile_minimal_schema()
+    tournament = Tournament.objects.validate_and_create(
+        tournament_name=data.name,
+        creator=user.profile,
+        required_participants=data.required_participants,
+        alias=data.alias,
+    )
     data = {
-        "creator": creator,
+        "creator": {
+            "alias": data.alias,
+            "avatar": user.profile.avatar,
+        },
         "id": str(tournament.id),
         "name": data.name,
         "required_participants": data.required_participants,
-        "status": "lobby",
+        "status": Tournament.PENDING,
     }
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "tournament_global",
         {
-            "type": "tournament.broadcast",
-            "action": "tournament_created",
+            "type": "tournament_broadcast",
             "data": data,
         },
     )
@@ -49,7 +56,7 @@ def create_tournament(request, data: TournamentCreateSchema):
 @tournaments_router.get("/{tournament_id}", response={200: TournamentSchema, 404: MessageSchema})
 def get_tournament(request, tournament_id: UUID):
     try:
-        tournament = (
+        tournament: Tournament = (
             Tournament.objects.select_related("creator", "creator__user")
             .prefetch_related(
                 "rounds__brackets",
@@ -61,7 +68,8 @@ def get_tournament(request, tournament_id: UUID):
     except Tournament.DoesNotExist:
         return 404, {"msg": "Tournament not found"}
 
-@tournaments_router.get("", response={200: list[TournamentSchema], 204: None})
+
+@tournaments_router.get("", response={200: list[TournamentSchema]})
 @paginate
 def get_all_tournaments(request, status: str = "all"):
     base_qs = Tournament.objects.prefetch_related(
@@ -71,34 +79,114 @@ def get_all_tournaments(request, status: str = "all"):
             queryset=Bracket.objects.select_related("participant1__profile__user", "participant2__profile__user"),
         ),
     )
-    # for t in base_qs:
-    #     for p in t.tournament_participants.all():
-    #         print("Participant:", p.alias, "Profile:", p.user, "User:", getattr(
-    #             p.user, 'user', None), "Username:", getattr(getattr(p.user, 'user', None), 'username', None))
-    if status != "all":
+    if status in [x[0] for x in Tournament.STATUS_CHOICES]:
         base_qs = base_qs.filter(status=status)
 
-    if not base_qs.exists():
-        return 204, None
+    if status != Tournament.CANCELLED:
+        base_qs = base_qs.exclude(status=Tournament.CANCELLED)
+
     return base_qs
 
 
 @tournaments_router.delete(
     "/{tournament_id}",
-    response={204: None, frozenset({401, 403}): MessageSchema, 404: MessageSchema},
+    response={204: None, frozenset({401, 403, 404}): MessageSchema},
 )
 def delete_tournament(request, tournament_id: UUID):
     user = request.auth
-    if not user:
-        raise HttpError(401, "Authentication required")
 
     try:
         tournament = Tournament.objects.get(id=tournament_id)
     except Tournament.DoesNotExist as e:
-        raise HttpError(404, "Tournament not found") from e
+        raise HttpError(404, "Tournament not found.") from e
 
-    if tournament.creator != user:
-        raise HttpError(403, "You are not allowed to delete this tournament.")
+    if tournament.creator != user.profile:
+        raise HttpError(403, "You are not allowed to cancel this tournament.")
 
-    tournament.delete()
+    tournament.status = Tournament.CANCELLED
+    tournament.save()
+    return 204, None
+
+
+@tournaments_router.post(
+    "/{tournament_id}/register",
+    response={204: None, frozenset({401, 403, 404}): MessageSchema},
+)
+def register_for_tournament(request, tournament_id: UUID, alias: str):
+    user = request.auth
+
+    with transaction.atomic():
+        try:
+            tournament: Tournament = Tournament.objects.select_for_update().get(id=tournament_id)
+        except Tournament.DoesNotExist as e:
+            raise HttpError(404, "Tournament not found.") from e
+
+        if tournament.status != Tournament.PENDING:
+            raise HttpError(403, "Tournament is not open.")
+
+        if tournament.participants.count() >= tournament.required_participants:
+            raise HttpError(403, "Tournament is full.")
+
+        participant_or_error_str: Participant | str = tournament.add_participant(user.profile, alias)
+        if type(participant_or_error_str) is str:
+            raise HttpError(403, participant_or_error_str)
+
+        channel_layer = get_channel_layer()
+        if tournament.participants.count() == tournament.required_participants:
+            tournament.status = Tournament.ONGOING
+            tournament.save()
+            async_to_sync(channel_layer.group_send)(
+                f"tournament_{tournament_id}",
+                {
+                    "type": "last_registration",
+                    "data": {
+                        "avatar": user.profile.avatar,
+                        "alias": alias,
+                    },
+                },
+            )
+        else:
+            async_to_sync(channel_layer.group_send)(
+                f"tournament_{tournament_id}",
+                {
+                    "type": "new_registration",
+                    "data": {
+                        "avatar": user.profile.avatar,
+                        "alias": alias,
+                    },
+                },
+            )
+
+    return 204, None
+
+
+# unregister: be removed as a participant
+@tournaments_router.delete(
+    "/{tournament_id}/unregister",
+    response={204: None, frozenset({401, 403, 404}): MessageSchema},
+)
+def unregister_for_tournament(request, tournament_id: UUID):
+    user = request.auth
+
+    with transaction.atomic():
+        try:
+            tournament: Tournament = Tournament.objects.select_for_update().get(id=tournament_id)
+        except Tournament.DoesNotExist as e:
+            raise HttpError(404, "Tournament not found.") from e
+
+        if tournament.status != Tournament.PENDING:
+            raise HttpError(403, "Cannot unregister from non-open tournament.")
+
+        participant_or_error_str: dict | str = tournament.remove_participant(user.profile)
+        if type(participant_or_error_str) is str:
+            raise HttpError(403, participant_or_error_str)
+
+        channel_layer = get_channel_layer()
+        if tournament.participants.count() < 1:
+            tournament.status = Tournament.CANCELLED
+            tournament.save()
+            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
+        else:
+            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "user_left"})
+
     return 204, None
