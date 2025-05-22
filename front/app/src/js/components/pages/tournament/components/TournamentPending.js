@@ -1,4 +1,4 @@
-export class TournamentWaiting extends HTMLElement {
+export class TournamentPending extends HTMLElement {
   #state = {
     requiredParticipants: 0,
     participants: [],
@@ -46,7 +46,7 @@ export class TournamentWaiting extends HTMLElement {
 
     const avatarElement = participant.querySelector('.participant-avatar');
     const aliasElement = participant.querySelector('.participant-alias');
-    avatarElement.src = data.user.avatar;
+    avatarElement.src = data.profile.avatar;
     aliasElement.textContent = data.alias;
     participant.id = `participant-${data.alias}`;
 
@@ -73,13 +73,13 @@ export class TournamentWaiting extends HTMLElement {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center mt-3">
       <p class="text-center m-1">Gathering Gunslingers...</p>
-      <div class="d-flex flex-row justify-content-center align-items-center mb-2">
+      <div class="d-flex flex-row justify-content-center align-items-center mb-5">
         <p class="m-0 pe-1 fs-2" id="current-participants-count"></p>
         <p class="m-0 fs-4" id="required-participants"></p>
       </div>
       <p class="text-center mt-4 mb-2 fs-5 fw-bold">Gunslingers in the Arena</p>
       <div class="d-flex flex-row flex-wrap justify-content-center w-75" id="participants-wrapper"></div>
-      <div class="btn mt-4" id="cancel-registration-button">Cancel registration</div>
+      <div class="btn mt-5" id="cancel-registration-button">Cancel registration</div>
     </div>
     `;
   }
@@ -92,7 +92,7 @@ export class TournamentWaiting extends HTMLElement {
       font-family: 'van dyke', serif;
     }
     #cancel-registration-button {
-	  color: rgba(var(--bs-body-color-rgb), 0.7)
+	    color: var(--pm-text-danger);
     }
     </style>
     `;
@@ -102,10 +102,10 @@ export class TournamentWaiting extends HTMLElement {
     return `
     <div class="d-flex flex-row justify-content-center align-items-center mx-4 my-2 gap-2">
       <img class="participant-avatar avatar-xxs rounded-circle" src="/img/default_avatar.png" />
-      <p class="participant-alias m-0"></p>
+      <p class="participant-alias m-0 fs-5"></p>
     </div>
     `;
   }
 }
 
-customElements.define('tournament-waiting', TournamentWaiting);
+customElements.define('tournament-pending', TournamentPending);

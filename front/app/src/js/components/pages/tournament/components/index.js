@@ -1,6 +1,6 @@
 import { TournamentList } from './TournamentList';
 import { TournamentCreation } from './TournamentCreation';
-import { TournamentWaiting } from './TournamentWaiting';
+import { TournamentPending } from './TournamentPending';
 import { TournamentRoundStart } from './TournamentRoundStart';
 import { TournamentRoundWaiting } from './TournamentRoundWaiting';
 import { TournamentRoundFinished } from './TournamentRoundFinished';
@@ -11,7 +11,7 @@ import { TournamentOverviewTable } from './OverviewRoundsTable';
 export {
   TournamentList,
   TournamentCreation,
-  TournamentWaiting,
+  TournamentPending,
   TournamentRoundStart,
   TournamentRoundWaiting,
   TournamentRoundFinished,
