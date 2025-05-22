@@ -65,7 +65,7 @@ class SelfSchema(ProfileMinimalSchema):
 
     @staticmethod
     def resolve_tournament_id(obj: Profile):
-        t: Participant | None = Participant.objects.filter(profile=obj, tournament__status=Tournament.ONGOING).first()
+        t: Tournament | None = Tournament.objects.get_active_tournament(obj)
         if t:
             return str(t.id)
         return t
