@@ -7,6 +7,7 @@ from django.db.models import Prefetch
 from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
+from pydantic import validator
 
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from tournaments.models import Bracket, Participant, Round, Tournament
