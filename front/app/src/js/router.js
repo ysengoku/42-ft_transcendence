@@ -27,6 +27,9 @@ const router = (() => {
       this.isFristLoad = true;
       this.currentComponent = null;
       this.beforeunloadCallback = null;
+
+      // const entry = performance.getEntriesByType('navigation')[0];
+      // console.log(entry);
     }
 
     /** Add a new route to the router.

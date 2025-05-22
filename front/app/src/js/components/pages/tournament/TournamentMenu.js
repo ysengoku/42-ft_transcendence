@@ -7,6 +7,10 @@ import './components/index.js';
 export class TournamentMenu extends HTMLElement {
   #maxAliasLength = Number(import.meta.env.VITE_MAX_ALIAS_LENGTH) || 12;
 
+  #state = {
+    nickname: '',
+  };
+
   constructor() {
     super();
 
@@ -47,6 +51,8 @@ export class TournamentMenu extends HTMLElement {
       this.redirectToActiveTournament(authStatus.response.tournament_id);
       return;
     }
+    this.#state.nickname = authStatus.response.nickname;
+    console.log('User nickname:', this.#state.nickname);
     this.render();
   }
 
@@ -175,6 +181,8 @@ export class TournamentMenu extends HTMLElement {
       this.registrationFailFeedback = this.modalBody.querySelector('#registration-fail-feedback');
       this.aliasInput.addEventListener('input', this.handleAliasInput);
 
+      this.aliasInput.value = this.#state.nickname;
+      this.confirmButton.disabled = false;
       this.confirmButton.textContent = 'Register';
       this.confirmButton.addEventListener('click', this.confirmRegister);
     },

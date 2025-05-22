@@ -2,6 +2,7 @@ import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
+import { socketManager } from '@socket';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
@@ -9,7 +10,12 @@ export class DuelMenu extends HTMLElement {
   #state = {
     user: null,
     opponentUsername: '',
-    options: null,
+    options: {
+      scoreToWin: 15,
+      gameSpeed: 'normal',
+      isRanked: true,
+      timeLimitMinutes: 3,
+    },
   };
 
   #usersearch = {
@@ -26,6 +32,7 @@ export class DuelMenu extends HTMLElement {
 
     this.optionsButton = null;
     this.gameOptionsModal = null;
+    this.gameOptionComponent = null;
     this.form = null;
     this.searchInput = null;
     this.userList = null;
@@ -58,11 +65,11 @@ export class DuelMenu extends HTMLElement {
       return;
     }
     this.#state.user = authStatus.response;
-    // if (authStatus.response.game_id) {
-    //   // TODO: Redirect to multiplayer game page
-    //   return;
-    // }
-
+    if (authStatus.response.game_id) {
+      devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
+      router.navigate(`multiplayer-game/${authStatus.response.game_id}`);
+      return;
+    }
     this.render();
   }
 
@@ -175,6 +182,8 @@ export class DuelMenu extends HTMLElement {
     this.modalSaveButton.addEventListener('click', this.saveSelectedOptions);
     this.modalCancelButton.addEventListener('click', this.closeGameOptionsModal);
     this.modalCloseButton.addEventListener('click', this.closeGameOptionsModal);
+
+    this.gameOptionComponent = this.modalElement.querySelector('game-options');
   }
 
   saveSelectedOptions() {
@@ -185,6 +194,10 @@ export class DuelMenu extends HTMLElement {
 
   closeGameOptionsModal() {
     if (this.gameOptionsModal) {
+      const options = this.modalBodyContent.selectedOptions;
+      if (options) {
+        this.#state.options = options;
+      }
       this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
       this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
       this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
@@ -273,17 +286,31 @@ export class DuelMenu extends HTMLElement {
     this.#usersearch.searchQuery = '';
     this.searchInput.value = '';
 
-    this.#state.opponentUsername = username;
+    this.#state.opponentUsername = username.substring(1);
     this.inviteButton.classList.remove('disabled');
   }
 
-  async inviteToDuel(event) {
+  inviteToDuel(event) {
     event.preventDefault();
     if (!this.#state.opponentUsername) {
       const errorMessage = 'Opponent not selected';
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 5000);
       return;
     }
+    const message = {
+      action: 'game_invite',
+      data: {
+        username: this.#state.opponentUsername,
+        options: {
+          score_to_win: this.#state.options.scoreToWin,
+          game_speed: this.#state.options.gameSpeed,
+          is_ranked: this.#state.options.isRanked,
+          time_limit_minutes: this.#state.options.timeLimitMinutes,
+        },
+      },
+    };
+    devLog('Sending duel invite:', message);
+    socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
       username: this.#state.opponentUsername,
@@ -316,7 +343,6 @@ export class DuelMenu extends HTMLElement {
   ignoreEnterKeyPress(event) {
     if (event.key === 'Enter') {
       event.preventDefault();
-      // event.stopPropagation();
     }
   }
 
