@@ -40,19 +40,19 @@ export class TournamentList extends HTMLElement {
     return this.#state.tournaments.find((item) => item.id === id);
   }
 
-  setNewTournament(tournament) {
-    this.#state.tournaments.unshift(tournament);
-    console.log('New tournament added:', tournament);
-    this.#state.totalTournaments++;
-    const item = this.renderRow(tournament);
-    this.list.insertBefore(item, this.list.firstChild);
-    this.#state.currentLastItemIndex++;
-    this.filterButton.classList.remove('d-none');
-    const noItem = this.list.querySelector('#no-open-tournaments');
-    if (noItem) {
-      this.list.removeChild(noItem);
-    }
-  }
+  // setNewTournament(tournament) {
+  //   this.#state.tournaments.unshift(tournament);
+  //   console.log('New tournament added:', tournament);
+  //   this.#state.totalTournaments++;
+  //   const item = this.renderRow(tournament);
+  //   this.list.insertBefore(item, this.list.firstChild);
+  //   this.#state.currentLastItemIndex++;
+  //   this.filterButton.classList.remove('d-none');
+  //   const noItem = this.list.querySelector('#no-open-tournaments');
+  //   if (noItem) {
+  //     this.list.removeChild(noItem);
+  //   }
+  // }
 
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */

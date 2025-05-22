@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class TournamentCreation extends HTMLElement {
   #requiredParticipantsOptions = [4, 8];
@@ -126,17 +127,14 @@ export class TournamentCreation extends HTMLElement {
     const data = {
       name: this.#state.newTournament.name,
       required_participants: this.#state.newTournament.requiredParticipants,
+      alias: this.#state.newTournament.alias,
     };
     const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
-    // console.log('Tournament creation response:', response);
     if (response.success) {
-      // console.log('Tournament created successfully:', response.data);
-      this.list.setNewTournament(response.data);
-      this.#state.newTournament = {
-        name: '',
-        requiredParticipants: this.#defaultRequiredParticipants,
-      };
       document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true }));
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament created successfully!', 5000);
+      const tournamentId = response.data.id;
+      router.navigate(`/tournament/${tournamentId}`);
     } else if (response.status === 422) {
       this.alert.textContent = response.msg;
       this.alert.classList.remove('d-none');
