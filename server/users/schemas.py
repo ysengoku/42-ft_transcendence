@@ -6,9 +6,10 @@ from ninja import Field, Schema
 from pydantic import model_validator
 
 from chat.models import ChatMessage, Notification
-from common.schemas import MessageSchema, ProfileMinimalSchema
+from common.schemas import ProfileMinimalSchema
 from pong.models import GameRoom, Match
 from pong.schemas import EloDataPointSchema, ProfileMatchPreviewSchema
+from tournaments.models import Tournament
 
 from .models import Profile, User
 
@@ -45,6 +46,7 @@ class SelfSchema(ProfileMinimalSchema):
     unread_messages_count: int
     unread_notifications_count: int
     game_id: str | None
+    tournament_id: str | None
 
     @staticmethod
     def resolve_unread_messages_count(obj: Profile):
@@ -56,10 +58,17 @@ class SelfSchema(ProfileMinimalSchema):
 
     @staticmethod
     def resolve_game_id(obj: Profile):
-        g = GameRoom.objects.for_players(obj).for_ongoing_status().first()
+        g: GameRoom | None = GameRoom.objects.for_players(obj).for_ongoing_status().first()
         if g:
             return str(g.id)
         return g
+
+    @staticmethod
+    def resolve_tournament_id(obj: Profile):
+        t: Tournament | None = Tournament.objects.get_active_tournament(obj)
+        if t:
+            return str(t.id)
+        return t
 
 
 class UserSettingsSchema(Schema):
