@@ -115,7 +115,7 @@ class BasePong:
             Vector2(*STARTING_COIN_VELOCITY)
         )
         self._is_someone_scored = False
-        self._last_bumper_collided = 0
+        self._last_bumper_collided = ""
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
@@ -200,7 +200,10 @@ class BasePong:
             "bumper_1": {"x": self._bumper_1.x, "z": self._bumper_1.z, "score": self._bumper_1.score},
             "bumper_2": {"x": self._bumper_2.x, "z": self._bumper_2.z, "score": self._bumper_2.score},
             "ball": {"x": self._ball.x, "z": self._ball.z},
+            "coin": {"x": self._coin.x, "z": self._coin.z},
             "is_someone_scored": self._is_someone_scored,
+            "last_bumper_collided": self._last_bumper_collided,
+            "current_buff_or_debuff": self._chooseBuff,
         }
 
     ##### Private game logic functions where actual stuff happens. #####
@@ -252,9 +255,6 @@ class BasePong:
         self._ball.velocity.x = self._ball.velocity.z * -math.tan(bounce_angle_radians) * bumper.dir_z
         self._ball.velocity.x = math.copysign(max(abs(self._ball.velocity.x), 0.05), self._ball.velocity.x)
 
-        # collision_pos_z = bumper.z - self._ball.z
-        # normalized_collision_pos_z = collision_pos_z / (BALL_RADIUS + BUMPER_WIDTH_HALF)
-        # normalized_collision_pos_z
         if (self._ball.z - BALL_RADIUS * self._ball.velocity.z <= bumper.z + bumper.width_half) and (
             self._ball.z + BALL_RADIUS * self._ball.velocity.z >= bumper.z - bumper.width_half
         ):
@@ -280,15 +280,15 @@ class BasePong:
 
     def _check_ball_bumper_collision(self, ball_subtick_z, ball_subtick_x):
         if self._ball.velocity.z <= 0 and self._is_collided_with_ball(self._bumper_1, ball_subtick_z, ball_subtick_x):
-            self.lastBumperCollided = 0
+            self._last_bumper_collided = "_bumper_1"
             self._calculate_new_dir(self._bumper_1)
         elif self._ball.velocity.z > 0 and self._is_collided_with_ball(self._bumper_2, ball_subtick_z, ball_subtick_x):
-            self.lastBumperCollided = 1
+            self._last_bumper_collided = "_bumper_2"
             self._calculate_new_dir(self._bumper_2)
 
 # function  manageBuffAndDebuff() {
-#       let chooseBuff = Math.floor(Math.random() * 5);
-#       switch (chooseBuff)
+#       let _chooseBuff = Math.floor(Math.random() * 5);
+#       switch (_chooseBuff)
 #       {
 #         case 1:
 #           Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
@@ -326,17 +326,33 @@ class BasePong:
 
 
     def _manage_buff_and_debuff(self, last_bumper_collided):
-        chooseBuff = randrange(5)
-        # match chooseBuff:
-        #     case 0:
-        #         Bumpers[last_bumper_collided].cubeMesh.scale.x = 2;
-        #         Bumpers[last_bumper_collided].lenghtHalf = 5;
-        #         if ((Bumpers[last_bumper_collided].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[last_bumper_collided].lenghtHalf)) {
-        #             Bumpers[last_bumper_collided].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[last_bumper_collided].lenghtHalf - 0.1;
-        #         }
-        #         else if (Bumpers[last_bumper_collided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[last_bumper_collided].lenghtHalf){
-        #             Bumpers[last_bumper_collided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[last_bumper_collided].lenghtHalf + 0.1;
-        #         }
+        self._chooseBuff = randrange(5)
+        match self._chooseBuff:
+            case 0:
+                self.__dict__[last_bumper_collided].lenghtHalf = 5
+                if ((self.__dict__[last_bumper_collided].x < -10 + WALL_WIDTH_HALF + self.__dict__[last_bumper_collided].lenghtHalf)) :
+                    self.__dict__[last_bumper_collided].x = -10 + WALL_WIDTH_HALF + self.__dict__[last_bumper_collided].lenghtHalf - 0.1
+                elif (self.__dict__[last_bumper_collided].x > 10 - WALL_WIDTH_HALF - self.__dict__[last_bumper_collided].lenghtHalf) :
+                    self.__dict__[last_bumper_collided].x = 10 - WALL_WIDTH_HALF - self.__dict__[last_bumper_collided].lenghtHalf + 0.1
+                
+            case 1:
+                last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
+                self.__dict__[last_bumper_collided].lenghtHalf = 1.25
+                
+            case 2:
+                last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
+                self.__dict__[last_bumper_collided].controlReverse = true
+                
+            case 3:
+                last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
+                self.__dict__[last_bumper_collided].speed = 0.1
+                
+            case 4:
+                self.__dict__[last_bumper_collided].widthHalf = 1.5
+                
+        self._coin.x, self._coin.z = -100, 3
+                #Bumpers[last_bumper_collided].cubeMesh.scale.x = 2;
+                #Bumpers[last_bumper_collided].lenghtHalf = 5;
                 # Workers[0].postMessage([10000, lastBumperCollided, "create"]);
                 # break ;
 

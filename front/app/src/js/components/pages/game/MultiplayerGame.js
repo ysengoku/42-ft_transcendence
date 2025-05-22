@@ -76,6 +76,32 @@ export class MultiplayerGame extends HTMLElement {
             return pedro_model;
         })();
 
+        const Coin = ((posX, posY, posZ) => {
+            const cylinderGeometry = new THREE.CylinderGeometry(0.5,0.5,0.1);
+            const cylinderMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
+        
+            cylinderMesh.position.x = posX;
+            cylinderMesh.position.y = posY;
+            cylinderMesh.position.z = posZ;
+            cylinderMesh.rotation.z = -Math.PI / 2;
+            cylinderMesh.rotation.y = -Math.PI / 2;
+            cylinderMesh.castShadow = true;
+            scene.add(cylinderMesh);
+            const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
+            const velocity = new THREE.Vector3(0.01, 0, 0);
+            let lenghtHalf = 0.25;
+
+            return ({
+
+                get lenghtHalf() { return lenghtHalf; },
+                set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+                cylinderMesh,
+                cylinderUpdate,
+                velocity,
+            });
+        })(-9.25, 3, 0);
+
+
         const Ball = ((posX, posY, posZ) => {
             const sphereGeometry = new THREE.SphereGeometry(0.5);
             const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
@@ -119,19 +145,36 @@ export class MultiplayerGame extends HTMLElement {
         const BumperFactory = (posX, posY, posZ) => {
             const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
             const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
+
             cubeMesh.position.x = posX;
             cubeMesh.position.y = posY;
             cubeMesh.position.z = posZ;
             cubeMesh.castShadow = true;
             scene.add(cubeMesh);
 
-            let score = 0;
+            const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
+            const dir_z = -Math.sign(posZ);
+            // let   lenghtHalf = 2.5;
+            // let   widthHalf = 0.5;
+            // let   controlReverse = false;
+            let   speed = 0.25;
+            let   score = 0;
+            
             return ({
                 cubeMesh,
-                cubeGeometry,
+                cubeUpdate,
 
+                get speed() { return speed; },
+                set speed(newSpeed) { speed = newSpeed; },
                 get score() { return score; },
                 set score(newScore) { score = newScore; },
+                // get controlReverse() { return controlReverse; },
+                // set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
+                // get lenghtHalf() { return lenghtHalf; },
+                // set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+                // get widthHalf() { return widthHalf; },
+                // set widthHalf(newWidthHalf) { widthHalf = newWidthHalf; },
+                get dir_z() { return dir_z; },
             });
         }
 
@@ -166,9 +209,12 @@ export class MultiplayerGame extends HTMLElement {
 
         const pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
 
+        let lastBumperCollided;
         function updateState(data) {
             if (!data)
                 return;
+            data.lastBumperCollided == "bumper_1" ? lastBumperCollided = 0 : lastBumperCollided = 1;
+            
             Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
             Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
             Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
@@ -176,11 +222,18 @@ export class MultiplayerGame extends HTMLElement {
             Ball.sphereUpdate.z = data.ball.z;
             Ball.sphereUpdate.x = data.ball.x;
 
+            Coin.cylinderUpdate.z = data.coin.z;
+            Coin.cylinderUpdate.x = data.coin.x;
+
             Bumpers[0].score = data.bumper_1.score;
             Bumpers[0].cubeMesh.position.x = data.bumper_1.x;
 
             Bumpers[1].score = data.bumper_2.score;
             Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
+
+            if 
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+
             // lastScore = data.last_score;
         }
 
@@ -215,6 +268,7 @@ export class MultiplayerGame extends HTMLElement {
             let delta = Math.min(clock.getDelta(), 0.1);
 
             Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+            Coin.cylinderMesh.position.set(Coin.cylinderMesh.x, 1, Coin.cylinderMesh.z)
             if (mixer) {
                 mixer.update(delta);
             }
