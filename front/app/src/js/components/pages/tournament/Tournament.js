@@ -1,9 +1,11 @@
+import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
-// import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
-// import { mockRoundStartData } from '@mock/functions/mockTournamentWs';
+import { auth } from '@auth';
+import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class Tournament extends HTMLElement {
   #state = {
+    user: null,
     status: '', // Status for UI: pending, roundStart, waitingNextRound, roundFinished, finished
     tournamentId: '',
     tournament: null,
@@ -31,7 +33,17 @@ export class Tournament extends HTMLElement {
       this.innerHTML = notFound.outerHTML;
       return;
     }
+    const user = await auth.fetchAuthStatus();
+    if (!user) {
+      showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+      router.navigate('/login');
+      return;
+    }
     this.#state.tournamentId = param.id;
+    if (user.tournament_id !== this.#state.tournamentId) {
+      devLog('User is not in this tournament');
+      // router.navigate(`/tournament/${this.#state.tournamentId}`);
+    }
     await this.fetchTournamentData();
     // TODO: open ws for this tournament
   }
@@ -83,6 +95,7 @@ export class Tournament extends HTMLElement {
     pending: () => {
       const tournamentWaiting = document.createElement('tournament-pending');
       tournamentWaiting.data = {
+        id: this.#state.tournamentId,
         required_participants: this.#state.tournament.required_participants,
         participants: this.#state.tournament.participants,
       };
