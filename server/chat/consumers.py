@@ -617,14 +617,19 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
     def send_game_invite(self, data):
-        options = data.get("options", {})
-        receiver_username = data["data"].get["username"]
+        options = data["data"].get("options", {})
+        receiver_username = data.get["username"]
 
-        if not sender_id or not receiver_id:
-            logger.warning("IDs missing for the game_invite")
+        sender_id = data["data"].get["sender_id"]
+        if not sender_id:
+            logger.warning("Sender id missing for the game_invite")
             return
         sender = Profile.objects.get(id=sender_id)
-        receiver = Profile.objects.get(id=receiver_id)
+        receiver = Profile.objects.get(username=receiver_username)
+        receiver_id = receiver.id
+        if not receiver_id:
+            logger.warning("Receiver id missing for the game_invite")
+            return
 
         invitation = GameInvitation.objects.create(
             sender=sender,
