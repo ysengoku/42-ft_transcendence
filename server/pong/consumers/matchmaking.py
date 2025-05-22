@@ -35,18 +35,32 @@ class MatchmakingConsumer(WebsocketConsumer):
         with transaction.atomic():
             self.game_room: GameRoom = self._with_db_lock_find_valid_game_room()
 
-            if self.game_room and not self.game_room.has_player(self.user.profile):
+            if not self.game_room:
+                self.game_room = GameRoom.objects.create()
+                GameRoomPlayer.objects.create(game_room=self.game_room, profile=self.user.profile)
+                logger.info("[Matchmaking.connect]: game room {%s} was created", self.game_room)
+
+            elif not self.game_room.has_player(self.user.profile):
                 GameRoomPlayer.objects.create(game_room=self.game_room, profile=self.user.profile)
                 logger.info(
                     "[Matchmaking.connect]: game room {%s} added profile {%s}",
                     self.game_room,
                     self.user.profile,
                 )
-            else:
-                self.game_room = GameRoom.objects.create()
-                GameRoomPlayer.objects.create(game_room=self.game_room, profile=self.user.profile)
-                logger.info("[Matchmaking.connect]: game room {%s} was created", self.game_room)
 
+            else:
+                game_room_player: GameRoomPlayer = GameRoomPlayer.objects.filter(
+                    game_room=self.game_room,
+                    profile=self.user.profile,
+                ).first()
+                game_room_player.inc_number_of_connections()
+
+            logger.info(
+                "[Matchmaking.connect]: player {%s} connected to the game room {%s} {%s} times",
+                self.user.profile,
+                self.game_room,
+                game_room_player.number_of_connections,
+            )
             self.matchmaking_group_name = f"matchmaking_{self.game_room.id}"
             async_to_sync(self.channel_layer.group_add)(self.matchmaking_group_name, self.channel_name)
 
@@ -78,12 +92,24 @@ class MatchmakingConsumer(WebsocketConsumer):
 
         with transaction.atomic():
             room_to_clean: GameRoom = GameRoom.objects.select_for_update().filter(id=self.game_room.id).first()
-            room_to_clean.players.remove(self.user.profile)
+            disconnected_player: GameRoomPlayer = GameRoomPlayer.objects.filter(
+                game_room=self.game_room,
+                profile=self.user.profile,
+            ).first()
+            disconnected_player.dec_number_of_connections()
             logger.info(
-                "[Matchmaking.disconnect]: game room {%s} removed player {%s}",
-                room_to_clean,
+                "[Matchmaking.connect]: player {%s} connected to the game room {%s} {%s} times",
                 self.user.profile,
+                self.game_room,
+                disconnected_player.number_of_connections,
             )
+            if disconnected_player.number_of_connections == 0:
+                room_to_clean.players.remove(self.user.profile)
+                logger.info(
+                    "[Matchmaking.disconnect]: game room {%s} removed player {%s}",
+                    room_to_clean,
+                    self.user.profile,
+                )
             if self.game_room.players.count() < 1:
                 room_to_clean.close()
                 logger.info("[Matchmaking.disconnect]: game room {%s} closed", room_to_clean)
