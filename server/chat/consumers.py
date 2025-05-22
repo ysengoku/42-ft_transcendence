@@ -537,15 +537,22 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
     def accept_game_invite(self, data):
-        invitation_id = data["data"].get["id"]
+        invitation_id = data["data"].get("id")
         try:
             invitation = GameInvitation.objects.get(id=invitation_id)
+            # Create game session only if accepted
+            game_session = GameSession.objects.create()
+            # Link game session to invitation
+            invitation.game_session = game_session
             invitation.status = "accepted"
             invitation.save()
             # send notif to sender of the game invitation with receivers' infos
             notification_data = get_user_data(self.user_profile)
-            notification_data.update(
-                {"id": str(invitation_id), "status": "accepted"})
+            notification_data.update({
+                "id": str(invitation_id),
+                "game_id": str(game_session.id),
+                "status": "accepted"
+            })
             async_to_sync(self.channel_layer.group_send)(
                 f"user_{invitation.sender.id}",
                 {
@@ -558,7 +565,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 text_data=json.dumps(
                     {
                         "action": "game_invite",
-                        "data": {"id": invitation_id, "status": "accepted"},
+                        "data": notification_data,
                     },
                 ),
             )

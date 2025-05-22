@@ -10,7 +10,7 @@ from ninja.errors import HttpError
 from ninja.pagination import paginate
 
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
-from tournaments.models import Bracket, Participant, Tournament
+from tournaments.models import Bracket, Participant, Round, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
 
 tournaments_router = Router()
@@ -18,7 +18,11 @@ tournaments_router = Router()
 
 @tournaments_router.post(
     "",
-    response={201: TournamentSchema, frozenset({400, 401}): MessageSchema, 422: ValidationErrorMessageSchema},
+    response={
+        201: TournamentSchema,
+        frozenset({400, 401}): MessageSchema,
+        422: ValidationErrorMessageSchema,
+    },
 )
 def create_tournament(request, data: TournamentCreateSchema):
     """
@@ -32,7 +36,7 @@ def create_tournament(request, data: TournamentCreateSchema):
         required_participants=data.required_participants,
         alias=data.alias,
     )
-    data = {
+    ws_data = {
         "creator": {
             "alias": data.alias,
             "avatar": user.profile.avatar,
@@ -42,12 +46,16 @@ def create_tournament(request, data: TournamentCreateSchema):
         "required_participants": data.required_participants,
         "status": Tournament.PENDING,
     }
+    # Rounds creation
+    num_rounds = 2 if data.required_participants == 4 else 3
+    for round_num in range(1, num_rounds + 1):
+        Round.objects.create(tournament=tournament, number=round_num, status=Round.PENDING)
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "tournament_global",
         {
             "type": "tournament_broadcast",
-            "data": data,
+            "data": ws_data,
         },
     )
     return 201, tournament
