@@ -35,7 +35,7 @@ export class LocalGameMenu extends HTMLElement {
     const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
     anyOptions.forEach((item) => {
       item.classList.add('d-none');
-    })
+    });
   }
 
   navigateToGame(event) {
@@ -63,7 +63,7 @@ export class LocalGameMenu extends HTMLElement {
               <div class="d-flex flex-row justify-content-center mt-5">
                 <a href="/home" class="btn">
                   <i class="bi bi-arrow-left"></i>
-                  Back to home
+                  Back to Saloon
                 </a>
               </div>              
             </div>
