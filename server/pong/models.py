@@ -155,7 +155,7 @@ class GameRoomPlayer(models.Model):
 
 
 class GameRoomQuerySet(models.QuerySet):
-    def for_valid_game_room(self):
+    def for_valid_game_room(self, profile: Profile):
         """Valid game room is a pending game room with less than 2 players."""
         return self.annotate(players_count=Count("players")).filter(status=GameRoom.PENDING, players_count__lt=2)
 
@@ -199,3 +199,6 @@ class GameRoom(models.Model):
     def close(self):
         self.status = GameRoom.CLOSED
         self.save()
+
+    def has_player(self, profile: Profile):
+        return self.players.filter(id=profile.id).exists()

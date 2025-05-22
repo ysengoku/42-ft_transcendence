@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -85,7 +84,8 @@ MAX_ALIAS_LENGTH = env("MAX_ALIAS_LENGTH")
 MAX_TOURNAMENT_NAME_LENGTH = env("MAX_TOURNAMENT_NAME_LENGTH")
 MAX_MESSAGE_LENGTH = env("MAX_MESSAGE_LENGTH")
 REQUIRED_PARTICIPANTS_OPTIONS = env.list(
-    "REQUIRED_PARTICIPANTS_OPTIONS", default=["4", "8"]
+    "REQUIRED_PARTICIPANTS_OPTIONS",
+    default=["4", "8"],
 )
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
