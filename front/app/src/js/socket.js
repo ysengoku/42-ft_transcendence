@@ -36,11 +36,10 @@ class WebSocketManager {
     this.socket.onerror = (event) => console.error('WebSocket error: ', this.name, event);
     this.socket.onclose = (event) => {
       devLog('WebSocket closed: ', this.name, event);
-      if (event.code === 3000) {
+      if (event.code >= 3000) {
         devLog(`WebSocket (${this.name}) closed intentionally by server with code 3000.`);
         return;
       }
-      devLog(`WebSocket (${this.name}) closed unexpectedly. Attempting to reconnect...`);
       setTimeout(() => this.reconnect(), 1000);
     };
   }
@@ -49,7 +48,7 @@ class WebSocketManager {
     if (!this.socketOpen) {
       return;
     }
-    devLog('Reconnecting to WebSocket to ', this.url);
+    devLog(`WebSocket (${this.name}) closed unexpectedly. Attempting to reconnect...`);
     this.socket = new WebSocket(this.url);
     this.socket.onopen = (event) => devLog('WebSocket opened to ', this.url, event);
     this.socket.onmessage = (event) => this.handleAction(event);
@@ -67,7 +66,6 @@ class WebSocketManager {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.close();
       this.socketOpen = false;
-      devLog('WebSocket closed: ', this.name);
     }
   }
 

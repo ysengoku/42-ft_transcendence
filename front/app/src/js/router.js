@@ -24,6 +24,7 @@ const router = (() => {
   class Router {
     constructor() {
       this.routes = new Map();
+      this.isFristLoad = true;
       this.currentComponent = null;
       this.beforeunloadCallback = null;
     }
@@ -195,11 +196,11 @@ const router = (() => {
         queryParamsObject = queryParams;
       }
 
-      if (path === '/user-not-found') {
-        window.history.replaceState({}, '', path);
-      } else {
-        window.history.pushState({}, '', path);
-      }
+      const historyUpdateMethod = this.isFristLoad ?
+        'replaceState' :
+        (path === `'/user-not-found'` ? 'replaceState' : 'pushState');
+      window.history[historyUpdateMethod]({}, '', path);
+      this.isFristLoad = false;
       this.handleRoute(queryParamsObject);
     }
 

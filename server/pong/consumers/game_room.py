@@ -4,6 +4,7 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
+from pong.consumers.common import PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
@@ -22,7 +23,7 @@ class GameRoomConsumer(WebsocketConsumer):
         self.game_room_group_name = f"game_room_{self.game_room_id}"
         if not self.user:
             logger.info("[GameRoom.connect]: anonymous user tried to join game room {%s}", self.game_room_id)
-            self.close()
+            self.close(PongCloseCodes.ILLEGAL_CONNECTION)
             return
 
         game_room_qs: GameRoom = GameRoom.objects.for_id(self.game_room_id)
@@ -32,7 +33,7 @@ class GameRoomConsumer(WebsocketConsumer):
                 self.user.profile,
                 self.game_room_id,
             )
-            self.close()
+            self.close(PongCloseCodes.ILLEGAL_CONNECTION)
             return
 
         self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).for_ongoing_status().first()
@@ -42,7 +43,7 @@ class GameRoomConsumer(WebsocketConsumer):
                 self.user.profile,
                 self.game_room_id,
             )
-            self.close()
+            self.close(PongCloseCodes.ILLEGAL_CONNECTION)
             return
 
         self.player = GameRoomPlayer.objects.filter(profile=self.user.profile, game_room=self.game_room).first()
@@ -54,13 +55,25 @@ class GameRoomConsumer(WebsocketConsumer):
         )
         self.accept()
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
-        self.send(text_data=json.dumps({"event": "joined", "player_id": str(self.player.id)}))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "player_joined",
+                    "player_id": str(self.player.id),
+                },
+            ),
+        )
+        profile = self.user.profile
         async_to_sync(self.channel_layer.send)(
             "game",
             {
+                "type": "player_connected",
                 "game_room_id": self.game_room_id,
                 "player_id": str(self.player.id),
-                "type": "player_connected",
+                "profile_id": str(profile.id),
+                "name": self.user.nickname if self.user.nickname else self.user.username,
+                "avatar": profile.avatar,
+                "elo": profile.elo,
             },
         )
 
@@ -90,7 +103,8 @@ class GameRoomConsumer(WebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
         except json.JSONDecodeError:
-            logger.info(
+            self.close(PongCloseCodes.BAD_DATA)
+            logger.warning(
                 "[GameRoom.receive]: user {%s} sent invalid json to the game room {%s}",
                 self.user.profile,
                 self.game_room_id,
@@ -114,22 +128,57 @@ class GameRoomConsumer(WebsocketConsumer):
                     },
                 )
 
-            case _:
+            case unknown:
+                self.close(PongCloseCodes.BAD_DATA)
                 logger.warning(
-                    "[GameRoom.receive]: user {%s} sent invalid action to the game room {%s}",
+                    "[GameRoom.receive]: user {%s} sent an invalid action {%s} to the game room {%s}",
                     self.user.profile,
+                    unknown,
                     self.game_room_id,
                 )
 
     ##############################
     # GAME WORKER EVENT HANDLERS #
     ##############################
+    def game_cancelled(self, _: dict):
+        """
+        Event handler for `game_cancelled`.
+        `game_cancelled` is sent from the game worker to this consumer when players fail to connect to the game.
+        """
+        self.send(text_data=json.dumps({"action": "game_cancelled"}))
+        self.close(PongCloseCodes.CANCELLED)
+
+    def game_started(self, _: dict):
+        """
+        Event handler for `game_started`.
+        `game_started` is sent from the game worker to this consumer when both players connected to the game.
+        """
+        self.send(text_data=json.dumps({"action": "game_started"}))
+
     def state_updated(self, event: dict):
         """
         Event handler for `state_updated`.
         `state_updated` is sent from the game worker to this consumer on each game tick.
         """
-        self.send(text_data=json.dumps({"event": "game_tick", "state": event["state"]}))
+        self.send(text_data=json.dumps({"action": "state_updated", "state": event["state"]}))
+
+    def game_paused(self, event: dict):
+        """
+        Event handler for `game_paused`.
+        `game_paused` is sent from the game worker to this consumer when the game unters the paused state.
+        """
+        self.send(
+            text_data=json.dumps(
+                {"action": "game_paused", "remaining_time": event["remaining_time"], "name": event["name"]},
+            ),
+        )
+
+    def game_unpaused(self, _: dict):
+        """
+        Event handler for `game_unpaused`.
+        `game_unpaused` is sent from the game worker to this consumer when the game unters the paused state.
+        """
+        self.send(text_data=json.dumps({"action": "game_unpaused"}))
 
     def player_won(self, event: dict):
         """
@@ -137,9 +186,17 @@ class GameRoomConsumer(WebsocketConsumer):
         `player_won` is sent from the game worker to this consumer when the game is ended and one of the players won
         the game.
         """
-        self.send(text_data=json.dumps({"event": "player_won", "winner": event["winner"]}))
-        # TODO: add close codes to enum
-        self.close(3000)
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "player_won",
+                    "winner": event["winner"],
+                    "loser": event["loser"],
+                    "elo_change": event["elo_change"],
+                },
+            ),
+        )
+        self.close(PongCloseCodes.NORMAL_CLOSURE)
 
     def player_resigned(self, event: dict):
         """
@@ -147,29 +204,14 @@ class GameRoomConsumer(WebsocketConsumer):
         `player_resigned` is sent from the game worker to this consumer when one the players resigned,
         by disconnect, for example.
         """
-        self.send(text_data=json.dumps({"event": "player_resigned", "winner": event["winner"]}))
-        # TODO: add close codes to enum
-        self.close(3000)
-
-    def game_cancelled(self, _: dict):
-        """
-        Event handler for `game_cancelled`.
-        `game_cancelled` is sent from the game worker to this consumer when players fail to connect to the game.
-        """
-        self.send(text_data=json.dumps({"event": "game_cancelled"}))
-        # TODO: add close codes to enum
-        self.close(3000)
-
-    def game_paused(self, _: dict):
-        """
-        Event handler for `game_paused`.
-        `game_paused` is sent from the game worker to this consumer when the game unters the paused state.
-        """
-        self.send(text_data=json.dumps({"event": "game_paused"}))
-
-    def game_unpaused(self, _: dict):
-        """
-        Event handler for `game_unpaused`.
-        `game_unpaused` is sent from the game worker to this consumer when the game unters the paused state.
-        """
-        self.send(text_data=json.dumps({"event": "game_unpaused"}))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "player_won",
+                    "winner": event["winner"],
+                    "loser": event["loser"],
+                    "elo_change": event["elo_change"],
+                },
+            ),
+        )
+        self.close(PongCloseCodes.NORMAL_CLOSURE)
