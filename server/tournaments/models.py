@@ -37,12 +37,6 @@ class Participant(models.Model):
 
 
 class TournamentQuerySet(models.QuerySet):
-    def with_status(self, status: str = "all"):
-        qs = self
-        if status != "all":
-            qs = qs.filter(status=status)
-        return qs.order_by("-created_at")
-
     def validate_and_create(self, creator: Profile, tournament_name: str, required_participants: int, alias: str):
         tournament = self.model(
             name=tournament_name,
@@ -54,6 +48,11 @@ class TournamentQuerySet(models.QuerySet):
         tournament.save()
         tournament.add_participant(creator, alias)
         return tournament
+
+    def get_active_tournament(self, profile: Profile):
+        return self.filter(
+            participants__profile=profile, status__in=[self.model.PENDING, self.model.ONGOING],
+        ).first()
 
 
 class Tournament(models.Model):
