@@ -9,7 +9,7 @@ from chat.models import ChatMessage, Notification
 from common.schemas import ProfileMinimalSchema
 from pong.models import GameRoom, Match
 from pong.schemas import EloDataPointSchema, ProfileMatchPreviewSchema
-from tournaments.models import Participant, Tournament
+from tournaments.models import Tournament
 
 from .models import Profile, User
 
