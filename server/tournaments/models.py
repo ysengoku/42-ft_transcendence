@@ -43,17 +43,22 @@ class TournamentQuerySet(models.QuerySet):
             qs = qs.filter(status=status)
         return qs.order_by("-created_at")
 
-    def validate_and_create(self, name: str, creator: Profile, required_participants: int):
+    def validate_and_create(self, creator: Profile, tournament_name: str, required_participants: int, alias: str):
         tournament = self.model(
-            name=name,
+            name=tournament_name,
             creator=creator,
             required_participants=required_participants,
             status=self.model.PENDING,
         )
         tournament.full_clean()
         tournament.save()
-        tournament.add_participant(creator)
+        tournament.add_participant(creator, alias)
         return tournament
+
+
+# GET LAST ACTIVE TOURNAMENT
+# SOMEONE CREATED TOURNAMENT COWBOY ALLSTARS
+# THEY CANCELLED COWBOY ALLSTARS
 
 
 class Tournament(models.Model):
@@ -71,7 +76,7 @@ class Tournament(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     date = models.DateTimeField(default=timezone.now)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="lobby")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     creator = models.ForeignKey(Profile, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     winner = models.ForeignKey(
@@ -108,17 +113,36 @@ class Tournament(models.Model):
             Prefetch("tournament_rounds", queryset=Round.objects.prefetch_related("brackets")),
         ).get(pk=self.pk)
 
-    def add_participant(self, profile: Profile, alias: str | None = None):
+    def add_participant(self, profile: Profile, alias: str | None = None) -> Participant | str:
+        """Returns a Participant instance if everything is good, error string otherwise."""
         participant_alias = alias if alias else profile.user.nickname
-        # TODO: validated participant_alias for uniqueness
+        if self.is_alias_occupied(alias):
+            return "Someone with that alias is already in the tournament."
+
+        if self.has_participant(profile):
+            return "You are already registered for this tournament."
 
         participant = Participant(
             profile=profile,
             alias=participant_alias,
             tournament=self,
         )
-
         participant.save()
+        return participant
+
+    def remove_participant(self, profile: Profile) -> dict | str:
+        """Returns a dict if everything is good, error string otherwise."""
+        participant = Participant.objects.filter(tournament=self, profile=profile).first()
+        if not participant:
+            return "No participant was found in this tournament."
+
+        return participant.delete()
+
+    def is_alias_occupied(self, alias: str):
+        return self.participants.filter(alias=alias).exists()
+
+    def has_participant(self, profile: Profile):
+        return self.participants.filter(profile=profile).exists()
 
 
 class Round(models.Model):
