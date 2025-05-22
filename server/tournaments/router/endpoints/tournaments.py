@@ -20,7 +20,7 @@ tournaments_router = Router()
     "",
     response={
         201: TournamentSchema,
-        frozenset({400, 401}): MessageSchema,
+        frozenset({400, 401, 403}): MessageSchema,
         422: ValidationErrorMessageSchema,
     },
 )
@@ -29,6 +29,9 @@ def create_tournament(request, data: TournamentCreateSchema):
     Creates a tournament. The `required_participants` should be either 4 or 8.
     """
     user = request.auth
+
+    if Tournament.objects.get_active_tournament(user.profile):
+        raise HttpError(403, "You can't be a participant in multiple active tournaments.")
 
     tournament = Tournament.objects.validate_and_create(
         tournament_name=data.name,
@@ -47,7 +50,8 @@ def create_tournament(request, data: TournamentCreateSchema):
         "status": Tournament.PENDING,
     }
     # Rounds creation
-    num_rounds = 2 if data.required_participants == 4 else 3
+    minimum_num_participants = 4
+    num_rounds = 2 if data.required_participants == minimum_num_participants else 3
     for round_num in range(1, num_rounds + 1):
         Round.objects.create(tournament=tournament, number=round_num, status=Round.PENDING)
     channel_layer = get_channel_layer()
@@ -128,6 +132,9 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
             tournament: Tournament = Tournament.objects.select_for_update().get(id=tournament_id)
         except Tournament.DoesNotExist as e:
             raise HttpError(404, "Tournament not found.") from e
+
+        if Tournament.objects.get_active_tournament(user.profile):
+            raise HttpError(403, "You can't be a participant in multiple active tournaments.")
 
         if tournament.status != Tournament.PENDING:
             raise HttpError(403, "Tournament is not open.")
