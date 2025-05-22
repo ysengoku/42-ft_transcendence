@@ -163,7 +163,7 @@ export class NotificationsList extends HTMLElement {
         action: 'read_notification',
         data: {
           id: notificationId,
-        }
+        },
       };
       socketManager.sendMessage('livechat', message);
       element.removeEventListener('click', this.readNotification);
