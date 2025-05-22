@@ -60,11 +60,7 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(choices=[('lobby', 'Lobby'), ('ongoing', 'Ongoing'), ('finished', 'Finished'), ('canceled', 'Canceled')], default='lobby', max_length=10)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('required_participants', models.PositiveIntegerField()),
-<<<<<<< HEAD
                 ('creator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='users.profile')),
-=======
-                ('creator', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
->>>>>>> dev
                 ('participants', models.ManyToManyField(related_name='tournaments_m2m', to='tournaments.participant')),
                 ('winner', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='won_tournaments', to='tournaments.participant')),
             ],
