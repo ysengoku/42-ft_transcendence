@@ -3,12 +3,12 @@ from uuid import UUID
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db import transaction
 from django.db.models import Prefetch
 from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
 
-from django.db import transaction
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from tournaments.models import Bracket, Participant, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
@@ -160,7 +160,6 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
     return 204, None
 
 
-# unregister: be removed as a participant
 @tournaments_router.delete(
     "/{tournament_id}/unregister",
     response={204: None, frozenset({401, 403, 404}): MessageSchema},
