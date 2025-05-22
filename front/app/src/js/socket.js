@@ -230,10 +230,20 @@ socketManager.addSocket('livechat', {
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
     showToastNotification(`${data.nickname} challenges you to a duel.`);
   },
+  game_accepted: (data) => {
+    // Navigate to the game page
+    const gameId = data.game_id;
+  },
+  game_declined: (data) => {
+  },
   new_tournament: (data) => {
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
     showToastNotification(`${data.nickname} is calling all gunslingers to a new tournament.`);
+    if (window.location.pathname === '/tournament-menu') {
+      const element = document.querySelector('tournament-menu');
+      element.render();
+    }
   },
   new_friend: (data) => {
     const notificationButton = document.querySelector('notifications-button');
