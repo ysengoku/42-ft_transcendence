@@ -56,11 +56,6 @@ class TournamentQuerySet(models.QuerySet):
         return tournament
 
 
-# GET LAST ACTIVE TOURNAMENT
-# SOMEONE CREATED TOURNAMENT COWBOY ALLSTARS
-# THEY CANCELLED COWBOY ALLSTARS
-
-
 class Tournament(models.Model):
     PENDING = "pending"
     ONGOING = "ongoing"
