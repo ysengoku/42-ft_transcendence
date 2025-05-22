@@ -33,25 +33,24 @@ export class Tournament extends HTMLElement {
       this.innerHTML = notFound.outerHTML;
       return;
     }
+    this.#state.tournamentId = param.id;
+    // TODO: open ws for this tournament
     const user = await auth.fetchAuthStatus();
     if (!user) {
       showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
       router.navigate('/login');
       return;
     }
-    this.#state.tournamentId = param.id;
-    if (user.tournament_id !== this.#state.tournamentId) {
+    if (user.response.tournament_id !== this.#state.tournamentId) {
       devLog('User is not in this tournament');
-      // router.navigate(`/tournament/${this.#state.tournamentId}`);
+      // Redirect to tournament menu
+      router.navigate('/tournament-menu');
+      return;
     }
     await this.fetchTournamentData();
-    // TODO: open ws for this tournament
   }
 
   async fetchTournamentData() {
-    // For test
-    // this.#state.tournament = await mockTournamentDetail('mockidlobby');
-
     const response = await apiRequest(
         'GET',
         /* eslint-disable-next-line new-cap */
