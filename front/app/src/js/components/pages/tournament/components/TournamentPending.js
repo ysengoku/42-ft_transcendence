@@ -1,5 +1,10 @@
+import { router } from '@router';
+import { apiRequest, API_ENDPOINTS } from '@api';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+
 export class TournamentPending extends HTMLElement {
   #state = {
+    id: '',
     requiredParticipants: 0,
     participants: [],
   };
@@ -10,12 +15,21 @@ export class TournamentPending extends HTMLElement {
     this.currentParticipantsCount = null;
     this.requiredParticipants = null;
     this.participantsWrapper = null;
+    this.unregisterButton = null;
+
+    this.unregisterTournament = this.unregisterTournament.bind(this);
   }
 
   set data(data) {
+    this.#state.id = data.id;
     this.#state.requiredParticipants = data.required_participants;
     this.#state.participants = data.participants;
     this.render();
+  }
+
+  disconnectedCallback() {
+    this.unregisterButton?.removeEventListener('click', this.unregisterTournament);
+    this.currentParticipantsCount = null;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -27,6 +41,7 @@ export class TournamentPending extends HTMLElement {
     this.currentParticipantsCount = this.querySelector('#current-participants-count');
     this.requiredParticipants = this.querySelector('#required-participants');
     this.participantsWrapper = this.querySelector('#participants-wrapper');
+    this.unregisterButton = this.querySelector('#cancel-registration-button');
 
     this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
     this.requiredParticipants.textContent = ` / ${this.#state.requiredParticipants}`;
@@ -34,6 +49,8 @@ export class TournamentPending extends HTMLElement {
     this.#state.participants.forEach((participant) => {
       this.addParticipant(participant);
     });
+
+    this.unregisterButton.addEventListener('click', this.unregisterTournament);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -63,6 +80,25 @@ export class TournamentPending extends HTMLElement {
     if (participantData) {
       this.#state.participants.splice(this.#state.participants.indexOf(participantData), 1);
     }
+  }
+
+  async unregisterTournament() {
+    const response = await apiRequest(
+        'DELETE',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.TOURNAMENT_UNREGISTER(this.#state.id),
+        null, false, true,
+    );
+    if (!response.success) {
+      if (response.status === 403) {
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
+        return;
+      }
+    }
+    showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Unregistered from tournament successfully.');
+    setTimeout(() => {
+      router.navigate('/home');
+    }, 3000);
   }
 
   /* ------------------------------------------------------------------------ */
