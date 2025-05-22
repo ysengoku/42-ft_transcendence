@@ -1,5 +1,6 @@
 import { Modal } from 'bootstrap';
 import { router } from '@router';
+import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { formatDateMDY } from '@utils';
 import './components/index.js';
@@ -46,13 +47,11 @@ export class TournamentMenu extends HTMLElement {
       }
       return;
     }
-    // authStatus.response.tournament_id = '1234'; // For test
     if (authStatus.response.tournament_id) {
       this.redirectToActiveTournament(authStatus.response.tournament_id);
       return;
     }
     this.#state.nickname = authStatus.response.nickname;
-    console.log('User nickname:', this.#state.nickname);
     this.render();
   }
 
@@ -179,6 +178,7 @@ export class TournamentMenu extends HTMLElement {
       this.aliasInput = this.modalBody.querySelector('#tournament-alias');
       this.aliasInputFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
       this.registrationFailFeedback = this.modalBody.querySelector('#registration-fail-feedback');
+      this.registrationFailFeedbackMessage = this.modalBody.querySelector('#registration-fail-feedback-message');
       this.aliasInput.addEventListener('input', this.handleAliasInput);
 
       this.aliasInput.value = this.#state.nickname;
@@ -237,36 +237,44 @@ export class TournamentMenu extends HTMLElement {
     }
   }
 
-  confirmRegister(event) {
+  async confirmRegister(event) {
     event.stopPropagation();
-
-    // Send API request to register for the tournament
     devLog('Registering for tournament:', this.selectedTournament.id, this.aliasInput.value);
-
-    // For tetst
-    // const response = {
-    //   success: true,
-    //   data: {
-    //     id: this.selectedTournament.id,
-    //   },
-    // }
-    const response = {
-      success: false,
-      data: {
-        reason: 'The alias is already taken.',
-      },
-    };
+    const response = await apiRequest(
+        'POST',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.TOURNAMENT_REGISTER(this.selectedTournament.id, this.aliasInput.value),
+        null, false, true);
 
     if (response.success) {
       this.modal.hide();
       this.connectToTournamentRoom();
     } else {
-      // TODO: Handle registration failure
-      const reason = response.data.reason; // For Test (Need to adjust to the server implementation)
+      const alertWrapper = this.modalBody.querySelector('#registration-fail-alert-wrapper');
+      alertWrapper.innerHTML = '';
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-danger alert-dismissible show';
 
-      this.registrationFailFeedback.classList.remove('d-none');
-      this.registrationFailFeedback.textContent = reason;
-      // this.handleRegistrationFail[reason]();
+      const alertMessage = document.createElement('p');
+      alertMessage.className = 'm-0';
+      alertMessage.textContent = response.msg;
+
+      const dismissButton = document.createElement('button');
+      dismissButton.type = 'button';
+      dismissButton.className = 'btn-close';
+      dismissButton.setAttribute('data-bs-dismiss', 'alert');
+      dismissButton.setAttribute('aria-label', 'Close');
+
+      alert.appendChild(alertMessage);
+      alert.appendChild(dismissButton);
+      alertWrapper.appendChild(alert);
+
+      if (response.msg === 'Tournament is full.') {
+        this.render();
+        setTimeout(() => {
+          this.modal.hide();
+        }, 3000);
+      }
     }
   }
 
@@ -274,19 +282,6 @@ export class TournamentMenu extends HTMLElement {
     this.modal.hide();
     router.navigate(`/tournament/${this.selectedTournament.id}`);
   }
-
-  // handleRegistrationFail = {
-  //   duplicateAlias: () => {
-  //     // const this.aliasInputFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
-  //     // this.aliasInputFeedback.textContent = `Alias is already taken.`;
-  //     // aliasInput.classList.add('is-invalid');
-  //   },
-  //   full: () => {
-  //     // TODO: Show message tournament is full
-  //     this.modal.hide();
-  //     this.list.render();
-  //   }
-  // }
 
   navigateToOverview() {
     this.modal.hide();
@@ -346,10 +341,6 @@ export class TournamentMenu extends HTMLElement {
     .invalid-feedback {
       color: var(--pm-red-300) !important;
     }
-    #registration-fail-feedback {
-      background-color: var(--pm-red-400);
-      border-radius: 0.25rem;
-    }
     </style>
     `;
   }
@@ -382,7 +373,7 @@ export class TournamentMenu extends HTMLElement {
         <p class="text-center fs-4 m-0" id="modal-required-participants"></p>
         <p class="text-center fs-6 m-0 pe-1">players</p>
       </div>
-      <div class="mb-2 px-3 py-2 d-none w-75" role="alert" id="registration-fail-feedback"></div>
+      <div id="registration-fail-alert-wrapper"></div>
       <div id="tournament-register-form" class="d-flex flex-column w-100 mb-3">
         <label for="tournament-alias" class="form-label">Set your tournament alias</label>
         <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias for the tournament" autocomplete="off" required>
