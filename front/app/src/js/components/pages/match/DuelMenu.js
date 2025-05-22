@@ -57,6 +57,7 @@ export class DuelMenu extends HTMLElement {
       }
       return;
     }
+    this.#state.user = authStatus.response;
     // if (authStatus.response.game_id) {
     //   // TODO: Redirect to multiplayer game page
     //   return;
@@ -110,6 +111,7 @@ export class DuelMenu extends HTMLElement {
   }
 
   renderUserList() {
+    console.log('Rendering user list:', this.#usersearch.list);
     for (let i = this.#usersearch.currentListLength; i < this.#usersearch.list.length; i++) {
       if (this.#usersearch.list[i].username !== this.#state.user.username) {
         this.renderUserListItem(this.#usersearch.list[i]);
@@ -220,6 +222,7 @@ export class DuelMenu extends HTMLElement {
         false,
         true,
     );
+    console.log('User search response:', response);
     if (response.success && response.data) {
       if (response.data.count === 0) {
         this.renderNoUserFound();
