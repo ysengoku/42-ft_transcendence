@@ -1,10 +1,10 @@
-import { auth } from '@auth';
-import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
+import { apiRequest, API_ENDPOINTS } from '@api';
+// import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 // import { mockRoundStartData } from '@mock/functions/mockTournamentWs';
 
 export class Tournament extends HTMLElement {
   #state = {
-    status: '', // Status for UI: waiting, roundStart, waitingNextRound, roundFinished, finished
+    status: '', // Status for UI: pending, roundStart, waitingNextRound, roundFinished, finished
     tournamentId: '',
     tournament: null,
     currentRoundNumber: 1,
@@ -13,7 +13,7 @@ export class Tournament extends HTMLElement {
 
   // Convert the status fetched from the server to the status used in the component
   status = {
-    pending: 'waiting',
+    pending: 'pending',
     ongoing: 'waitingNextRound',
     finished: 'finished',
   };
@@ -38,9 +38,13 @@ export class Tournament extends HTMLElement {
 
   async fetchTournamentData() {
     // For test
-    this.#state.tournament = await mockTournamentDetail('mockidlobby');
+    // this.#state.tournament = await mockTournamentDetail('mockidlobby');
 
-    const response = await auth.apiRequest('GET', `/tournament/${this.#state.tournamentId}`, null, false, true);
+    const response = await apiRequest(
+        'GET',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
+        null, false, true);
     console.log('Tournament data:', response);
     if (!response.success) {
       // TODO: handle error
@@ -76,8 +80,8 @@ export class Tournament extends HTMLElement {
   }
 
   tournamentContent = {
-    waiting: () => {
-      const tournamentWaiting = document.createElement('tournament-waiting');
+    pending: () => {
+      const tournamentWaiting = document.createElement('tournament-pending');
       tournamentWaiting.data = {
         required_participants: this.#state.tournament.required_participants,
         participants: this.#state.tournament.participants,
@@ -179,6 +183,11 @@ export class Tournament extends HTMLElement {
 
   style() {
     return `
+    <style>
+    .tournament-status {
+      color: var(--pm-text-green);
+    }
+    </style>
     `;
   }
 }
