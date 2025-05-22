@@ -50,6 +50,7 @@ class TournamentCreateSchema(Schema):
 
     name: str
     required_participants: int
+    alias: str
 
     @model_validator(mode="after")
     def validate_tournament_schema(self):
