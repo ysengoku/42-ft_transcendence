@@ -49,12 +49,19 @@ export class DuelMenu extends HTMLElement {
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
   }
 
-  connectedCallback() {
-    this.#state.user = auth.getStoredUser();
-    if (!this.#state.user) {
-      router.navigate('/login');
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        router.navigate('/login');
+      }
       return;
     }
+    // if (authStatus.response.game_id) {
+    //   // TODO: Redirect to multiplayer game page
+    //   return;
+    // }
+
     this.render();
   }
 
@@ -284,7 +291,7 @@ export class DuelMenu extends HTMLElement {
     router.navigate('/duel', queryParams);
   }
 
-  async requestMatchMaking(event) {
+  requestMatchMaking(event) {
     event.preventDefault();
     router.navigate('/duel', { status: 'matchmaking' });
   }
@@ -358,7 +365,7 @@ export class DuelMenu extends HTMLElement {
                 <div class="d-flex flex-row justify-content-center mt-5">
                   <a href="/home" class="btn">
                     <i class="bi bi-arrow-left"></i>
-                    Back to home
+                    Back to Saloon
                   </a>
                 </div>
               </form>

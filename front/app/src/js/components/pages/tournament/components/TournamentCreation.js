@@ -1,4 +1,4 @@
-import { apiRequest, API_ENDPOINTS } from '@api'
+import { apiRequest, API_ENDPOINTS } from '@api';
 
 export class TournamentCreation extends HTMLElement {
   #requiredParticipantsOptions = [4, 8];
@@ -10,14 +10,14 @@ export class TournamentCreation extends HTMLElement {
       name: '',
       requiredParticipants: this.#defaultRequiredParticipants,
     },
-  }
+  };
   constructor() {
     super();
-	  this.tournamentMenu = document.querySelector('tournament-menu');
+    this.tournamentMenu = document.querySelector('tournament-menu');
     this.list = document.querySelector('tournament-list');
     this.modalComponent = document.querySelector('.modal');
     this.confirmButton = null;
-	  this.alert = null;
+    this.alert = null;
     this.tournamentNameInput = null;
     this.tournamentNameFeedback = null;
 
@@ -53,7 +53,7 @@ export class TournamentCreation extends HTMLElement {
     this.confirmButton = this.modalComponent.querySelector('.confirm-button');
     this.tournamentNameInput = this.querySelector('#tournament-name');
     this.tournamentNameFeedback = this.querySelector('#tournament-name-feedback');
-	  this.alert = this.querySelector('.alert');
+    this.alert = this.querySelector('.alert');
 
     this.tournamentNameInput.addEventListener('input', this.handleTournamentInputName);
     this.confirmButton.addEventListener('click', this.createTournament);
@@ -64,7 +64,7 @@ export class TournamentCreation extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   handleTournamentInputName(event) {
-	this.alert.classList.add('d-none');
+    this.alert.classList.add('d-none');
     if (event.target.value.length < 1) {
       this.tournamentNameInput.classList.add('is-invalid');
       this.tournamentNameFeedback.textContent = `Tournament name must be at least 3 characters.`;
@@ -83,17 +83,16 @@ export class TournamentCreation extends HTMLElement {
   async createTournament(event) {
     event.stopPropagation();
     this.#state.newTournament.name = this.tournamentNameInput.value;
-    this.#state.newTournament.requiredParticipants = this.querySelector('input[name="requiredParticipants"]:checked').value;
+    this.#state.newTournament.requiredParticipants = this.querySelector(
+        'input[name="requiredParticipants"]:checked',
+    ).value;
 
     console.log('Creating tournament:', this.#state.newTournament);
     const data = {
       tournament_name: this.#state.newTournament.name,
       required_participants: this.#state.newTournament.requiredParticipants,
     };
-    const response = await apiRequest(
-        'POST',
-        API_ENDPOINTS.NEW_TOURNAMENT,
-        data, false, true);
+    const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
     console.log('Tournament creation response:', response);
     if (response.success) {
       console.log('Tournament created successfully:', response.data);
@@ -102,10 +101,10 @@ export class TournamentCreation extends HTMLElement {
         name: '',
         requiredParticipants: this.#defaultRequiredParticipants,
       };
-    document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true,}));
+      document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true }));
     } else if (response.status === 422) {
       this.alert.textContent = response.msg;
-	    this.alert.classList.remove('d-none');
+      this.alert.classList.remove('d-none');
       this.confirmButton.disabled = true;
     } else if (response.status !== 401 && response.status !== 500) {
       // TODO: Handle other error messages
@@ -121,7 +120,7 @@ export class TournamentCreation extends HTMLElement {
     const option2 = this.#requiredParticipantsOptions[1];
     const idForOption1 = `required-participants-${this.#requiredParticipantsOptions[0]}`;
     const idForOption2 = `required-participants-${this.#requiredParticipantsOptions[1]}`;
-    
+
     return `
     <div class="d-flex flex-column align-items-center px-4">
       <h2 class="modal-title text-center text-wrap pb-4">Create a tournament</h2>

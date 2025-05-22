@@ -22,14 +22,14 @@ export class Duel extends HTMLElement {
     opponent: null,
   };
 
-  #countdown = 5;
+  #countdown = 3;
 
   constructor() {
     super();
 
     this.handleGameFound = this.handleGameFound.bind(this);
     this.handleInviteResponse = this.handleInviteResponse.bind(this);
-    this.cancelDuel = this.cancelDuel.bind(this);
+    this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
     this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
 
@@ -76,7 +76,7 @@ export class Duel extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('gameFound', this.handleGameFound);
-    this.cancelButton?.removeEventListener('click', this.cancelDuel);
+    this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     socketManager.closeSocket('matchmaking');
@@ -87,7 +87,7 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template() + this.style();
-    console.log('Status:', this.#state.status);
+    devLog('Status:', this.#state.status);
     this.header = this.querySelector('#duel-header');
     this.content = this.querySelector('#duel-content');
     this.contentElement = document.createElement('duel-preview');
@@ -113,6 +113,7 @@ export class Duel extends HTMLElement {
       this.timer.classList.remove('d-none');
       this.startDuel();
     }
+    this.cancelButton?.addEventListener('click', this.cancelMatchmaking);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -127,13 +128,13 @@ export class Duel extends HTMLElement {
   handleGameFound(event) {
     devLog('Game found event:', event.detail);
     this.#state.gameId = event.detail.game_room_id;
-    const { username, nickname, avatar, elo } = event.detail
+    const { username, nickname, avatar, elo } = event.detail;
     this.#state.opponent = {
       username,
       nickname,
       avatar,
       elo,
-    }
+    };
     this.startDuel();
   }
 
@@ -141,8 +142,12 @@ export class Duel extends HTMLElement {
     // TODO: handle invite response
   }
 
-  cancelDuel() {
-    // TODO: Send cancel duel message to server
+  cancelMatchmaking() {
+    const message = { action: 'cancel' };
+    devLog('Canceling matchmaking', message);
+    socketManager.sendMessage('matchmaking', message);
+    router.removeBeforeunloadCallback();
+    router.navigate('/duel-menu');
   }
 
   startDuel() {
@@ -187,7 +192,9 @@ export class Duel extends HTMLElement {
     const userConfirmed = await new Promise((resolve) => {
       confirmationModal.handleConfirm = () => {
         devLog('User confirmed to leave the page');
-        // TODO: Send cancel duel message to server
+        const message = { action: 'cancel' };
+        devLog('Canceling matchmaking', message);
+        socketManager.sendMessage('matchmaking', message);
         confirmationModal.remove();
         resolve(true);
       };
