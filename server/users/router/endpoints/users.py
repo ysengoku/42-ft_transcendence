@@ -6,14 +6,13 @@ from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
 from common.routers import allow_only_for_self, get_profile_queryset_by_username_or_404
-from common.schemas import MessageSchema
+from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from users.models import Profile
 from users.schemas import (
     ProfileFullSchema,
     ProfileMinimalSchema,
     UpdateUserChema,
     UserSettingsSchema,
-    ValidationErrorMessageSchema,
 )
 
 users_router = Router()

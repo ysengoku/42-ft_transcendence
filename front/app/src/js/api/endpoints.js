@@ -194,7 +194,7 @@ export const API_ENDPOINTS = {
 
   /**
    * GET: Gets a list of tournaments. Filtered by status. Paginated by the limit and offset settings.
-   * @param {string} status - The status of the tournaments (all or lobby).
+   * @param {string} status - The status of the tournaments (all or ongoing).
    * @param {number} limit - The maximum number of tournaments to return.
    * @param {number} offset - The offset for pagination.
    * @return {string} The full API URL for the tournaments list.
@@ -203,6 +203,7 @@ export const API_ENDPOINTS = {
 
   /**
    * GET: Gets a specific tournament by id. Paginated by the limit and offset settings.
+   * @param {string} id - The id of the tournament to retrieve.
    * @return {string} The full API URL for the tournaments list.
    * */
   TOURNAMENT: (id) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}`,
