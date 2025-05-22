@@ -54,17 +54,13 @@ export class Duel extends HTMLElement {
       router.navigate('/login');
       return;
     }
-    router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
-    window.addEventListener('beforeunload', this.confirmLeavePage);
-
     if (!this.#state.status) {
-      const notFound = document.createElement('page-not-found');
-      this.innerHTML = '';
-      this.appendChild(notFound);
-      router.removeBeforeunloadCallback();
-      window.removeEventListener('beforeunload', this.confirmLeavePage);
+      // Redirect to duel menu
+      router.navigate('/duel-menu');
       return;
     }
+    router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
+    window.addEventListener('beforeunload', this.confirmLeavePage);
 
     this.render();
     if (this.#state.status === 'matchmaking') {
@@ -102,11 +98,12 @@ export class Duel extends HTMLElement {
     if (this.#state.status === 'matchmaking' || this.#state.status === 'inviting') {
       this.animation.classList.remove('d-none');
       // ==== For test ================
-      // if (this.#state.status === 'inviting') {
-      //   setTimeout(() => {
-      //     this.startDuel();
-      //   }, 5000);
-      // }
+      if (this.#state.status === 'inviting') {
+        this.#state.gameId = 'test-game-id';
+        setTimeout(() => {
+          this.startDuel();
+        }, 5000);
+      }
       // ================================
     } else if (this.#state.status === 'starting') {
       this.animation.classList.add('d-none');
@@ -139,7 +136,8 @@ export class Duel extends HTMLElement {
   }
 
   handleInviteResponse(event) {
-    // TODO: handle invite response
+    this.#state.gameId = event.detail.game_id;
+    this.startDuel();
   }
 
   cancelMatchmaking() {
