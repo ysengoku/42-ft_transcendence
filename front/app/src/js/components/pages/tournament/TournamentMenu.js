@@ -2,6 +2,7 @@ import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import { formatDateMDY } from '@utils';
 import './components/index.js';
 
@@ -250,6 +251,12 @@ export class TournamentMenu extends HTMLElement {
       this.modal.hide();
       this.connectToTournamentRoom();
     } else {
+      if (response.msg === 'Tournament is full.') {
+        this.modal.hide();
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
+        this.render();
+        return;
+      }
       const alertWrapper = this.modalBody.querySelector('#registration-fail-alert-wrapper');
       alertWrapper.innerHTML = '';
       const alert = document.createElement('div');
@@ -268,13 +275,6 @@ export class TournamentMenu extends HTMLElement {
       alert.appendChild(alertMessage);
       alert.appendChild(dismissButton);
       alertWrapper.appendChild(alert);
-
-      if (response.msg === 'Tournament is full.') {
-        this.render();
-        setTimeout(() => {
-          this.modal.hide();
-        }, 3000);
-      }
     }
   }
 
