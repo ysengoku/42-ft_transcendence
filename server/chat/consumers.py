@@ -620,6 +620,7 @@ class UserEventsConsumer(WebsocketConsumer):
         sender_id = data["data"].get["sender_id"]
         receiver_id = data["data"].get["receiver_id"]
 
+        logger.info(f"Game invitation request: {sender_id} -> {receiver_id}")
         if not sender_id or not receiver_id:
             logger.warning("IDs missing for the game_invite")
             return
