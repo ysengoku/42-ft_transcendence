@@ -142,16 +142,29 @@ class Match(models.Model):
         return f"{winner} - {loser}"
 
 
-# Define the intermediate model
 class GameRoomPlayer(models.Model):
     """Intermediate model for GameRoom and Profile, storing room-specific player data."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     game_room = models.ForeignKey("GameRoom", on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    number_of_connections = models.IntegerField(default=1)
 
     def __str__(self):
         return f"{self.profile.user.username} in Room {self.game_room.id}"
+
+    def inc_number_of_connections(self) -> int:
+        self.number_of_connections = F("number_of_connections") + 1
+        self.save()
+        self.refresh_from_db()
+        return self.number_of_connections
+
+    def dec_number_of_connections(self) -> int:
+        if self.number_of_connections > 0:
+            self.number_of_connections = F("number_of_connections") - 1
+            self.save()
+            self.refresh_from_db()
+        return self.number_of_connections
 
 
 class GameRoomQuerySet(models.QuerySet):
