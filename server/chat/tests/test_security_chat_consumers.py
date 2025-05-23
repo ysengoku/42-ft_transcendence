@@ -8,17 +8,19 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
 from django.test import TransactionTestCase
-from rest_framework_simplejwt.tokens import AccessToken
 
 from chat.consumers import UserEventsConsumer
-from chat.middleware import JWTAuthMiddleware
+# from chat.middleware import JWTAuthMiddleware
 from chat.models import Chat, ChatMessage, Notification
 from chat.routing import websocket_urlpatterns
-from users.models import Profile
-import logging
+from users.middleware import JWTWebsocketAuthMiddleware
+from users.models import Profile, RefreshToken, User
 
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import AuthenticationFailed, InvalidToken
+# from rest_framework_simplejwt.authentication import JWTAuthentication
+# from rest_framework_simplejwt.exceptions import (AuthenticationFailed,
+#                                                  InvalidToken)
+# from rest_framework_simplejwt.tokens import AccessToken
+
 
 class JWTAuthMiddleware:
 
@@ -31,17 +33,31 @@ class JWTAuthMiddleware:
             "&") if "=" in param).get("token", None)
 
         if token:
-            try:
-                auth = JWTAuthentication()
-                validated_token = auth.get_validated_token(token)
-                user = await database_sync_to_async(auth.get_user)(validated_token)
-                scope["user"] = user
-            except (InvalidToken, AuthenticationFailed):
-                scope["user"] = None
+            user = await self.get_user_from_token(token)
+            scope["user"] = user
         else:
             scope["user"] = None
-
         return await self.inner(scope, receive, send)
+
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        try:
+            payload = RefreshToken.objects.verify_access_token(token)
+            return User.objects.for_id(payload["sub"]).first()
+        except Exception:
+            return None
+        #    try:
+        #         auth = JWTAuthentication()
+        #         validated_token = auth.get_validated_token(token)
+        #         user = await database_sync_to_async(auth.get_user)(validated_token)
+        #         scope["user"] = user
+        #     except (InvalidToken, AuthenticationFailed):
+        #         scope["user"] = None
+        # else:
+        #     scope["user"] = None
+        #
+        # return await self.inner(scope, receive, send)
+
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -53,13 +69,13 @@ application = ProtocolTypeRouter({
 })
 
 # only for automatic tests
-application = ProtocolTypeRouter({
-    "websocket": SessionMiddlewareStack(  # Ajout du middleware de session
-        JWTAuthMiddleware(
-            URLRouter(websocket_urlpatterns),
-        ),
-    ),
-})
+# application = ProtocolTypeRouter({
+#     "websocket": SessionMiddlewareStack(  # Ajout du middleware de session
+#         JWTAuthMiddleware(
+#             URLRouter(websocket_urlpatterns),
+#         ),
+#     ),
+# })
 
 
 class UserEventsConsumerTests(TransactionTestCase):
@@ -74,16 +90,25 @@ class UserEventsConsumerTests(TransactionTestCase):
         await database_sync_to_async(lambda: list(self.chat.participants.all()))()
         await database_sync_to_async(lambda: list(Chat.objects.all()))()
         # Token JWT
-        access_token = AccessToken.for_user(self.user)
+        access_token, _ = await database_sync_to_async(RefreshToken.objects.create)(self.user)
 
-        # Connexion WebSocket
         communicator = WebsocketCommunicator(
-            application,  # Use application ASGI configured for test
+            application,
             f"/ws/events/?token={access_token}"
         )
         connected, _ = await communicator.connect()
         self.assertTrue(connected, "Connexion to the WebSocket failed")
         return communicator
+        # access_token = AccessToken.for_user(self.user)
+        #
+        # # Connexion WebSocket
+        # communicator = WebsocketCommunicator(
+        #     application,  # Use application ASGI configured for test
+        #     f"/ws/events/?token={access_token}"
+        # )
+        # connected, _ = await communicator.connect()
+        # self.assertTrue(connected, "Connexion to the WebSocket failed")
+        # return communicator
 
     async def test_unauthenticated_connection_rejected(self):
         # Connexion attemps without token
