@@ -1,6 +1,7 @@
 # tests/test_consumers.py
 
 import logging
+from urllib.parse import parse_qs
 
 from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
@@ -29,8 +30,10 @@ class JWTAuthMiddleware:
 
     async def __call__(self, scope, receive, send):
         query_string = scope.get("query_string", b"").decode()
-        token = dict(param.split("=") for param in query_string.split(
-            "&") if "=" in param).get("token", None)
+        token_params = parse_qs(query_string).get('token', [])
+        token = token_params[0] if token_params else None
+        # token = dict(param.split("=") for param in query_string.split(
+        #     "&") if "=" in param).get("token", None)
 
         if token:
             user = await self.get_user_from_token(token)
@@ -130,13 +133,15 @@ class UserEventsConsumerTests(TransactionTestCase):
                 "chat_id": str(self.chat.id)
             }
         }
-        await communicator.send_json_to(invalid_data)
+        # await communicator.send_json_to(invalid_data)
 
         # Vérification des logs
         with self.assertLogs('server', level='WARNING') as logs:
-            await communicator.receive_nothing()
-            self.assertTrue(
-                any("Message too long" in log for log in logs.output))
+            await communicator.send_json_to(invalid_data)
+            await communicator.receive_nothing(timeout=0.1)
+        
+        self.assertTrue(
+            any("Message too long" in log for log in logs.output))
 
         await communicator.disconnect()
 
