@@ -316,7 +316,7 @@ export class DuelMenu extends HTMLElement {
       username: this.#state.opponentUsername,
       nickname: this.opponentNickname.textContent,
       avatar: this.opponentAvatar.src,
-      elo: this.opponentElo.textContent,
+      elo: this.opponentElo.textContent.substring(4),
     };
     router.navigate('/duel', queryParams);
   }
