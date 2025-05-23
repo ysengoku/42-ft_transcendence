@@ -1,4 +1,4 @@
-import { router } from '../../../../router';
+import { router } from '@router';
 import anonymousavatar from '/img/anonymous-avatar.png?url';
 
 export class DuelPreview extends HTMLElement {
@@ -10,6 +10,14 @@ export class DuelPreview extends HTMLElement {
 
   constructor() {
     super();
+
+    this.player1 = null;
+    this.player2 = null;
+    this.goToHomeButton = null;
+    this.goToDuelMenuButton = null;
+
+    this.navigateToHome = this.navigateToHome.bind(this);
+    this.navigateToDuelMenu = this.navigateToDuelMenu.bind(this);
   }
 
   setData(duelStatus, user1, user2) {
@@ -32,10 +40,28 @@ export class DuelPreview extends HTMLElement {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.goToHomeButton.removeEventListener('click', this.navigateToHome);
+    this.goToDuelMenuButton.removeEventListener('click', this.navigateToDuelMenu);
+  }
+
   render() {
     console.log('Status', this.#state.status);
-    this.innerHTML = this.template() + this.style();
+    if (this.#state.status === 'canceled' || this.#state.status === 'declied') {
+      this.innerHTML = this.canceledTemplate();
 
+      const cancelMessage = this.querySelector('#cancel-message');
+      cancelMessage.textContent = this.#state.status === 'canceled' ?
+        'You\'ve canceled the duel.' :
+        `${this.#state.user2.nickname} declined the duel.`;
+
+      this.goToHomeButton = this.querySelector('#btn-go-to-home');
+      this.goToDuelMenuButton = this.querySelector('#btn-go-to-duel');
+      this.goToHomeButton.addEventListener('click', this.navigateToHome);
+      this.goToDuelMenuButton.addEventListener('click', this.navigateToDuelMenu);
+      return;
+    }
+    this.innerHTML = this.template() + this.style();
     this.player1 = this.querySelector('#duel-player1');
     this.player2 = this.querySelector('#duel-player2');
 
@@ -56,14 +82,22 @@ export class DuelPreview extends HTMLElement {
     );
   }
 
+  navigateToHome() {
+    router.navigate('/home');
+  }
+
+  navigateToDuelMenu() {
+    router.navigate('/duel');
+  }
+
   template() {
     return `
     <div class="d-flex flex-row justify-content-center align-items-center gap-3">
-	    <div id="duel-player1"></div>
+      <div id="duel-player1"></div>
       <p class="fs-1 fw-bolder">VS</p>
-	    <div id="duel-player2"></div>
-	  </div>
-	`;
+      <div id="duel-player2"></div>
+    </div>
+  `;
   }
 
   userProfileTemplate() {
@@ -76,6 +110,18 @@ export class DuelPreview extends HTMLElement {
     </div>`;
   }
 
+  canceledTemplate() {
+    return `
+    <div class="d-flex flex-column justify-content-center align-items-center gap-3">
+      <div class="mt-2" id="cancel-message"></div>
+      <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">
+        <button class="btn btn-wood" id="btn-go-to-home">Back to Saloon</button>
+        <button class="btn btn-wood" id="btn-go-to-duel">Find another duel</button>
+      </div>
+    </div>
+    `;
+  }
+
   style() {
     return `
     <style>
@@ -83,7 +129,7 @@ export class DuelPreview extends HTMLElement {
       background-color: var(--pm-primary-600);
     }
     </style>
-	`;
+  `;
   }
 }
 

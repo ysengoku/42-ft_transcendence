@@ -40,20 +40,6 @@ export class TournamentList extends HTMLElement {
     return this.#state.tournaments.find((item) => item.id === id);
   }
 
-  // setNewTournament(tournament) {
-  //   this.#state.tournaments.unshift(tournament);
-  //   console.log('New tournament added:', tournament);
-  //   this.#state.totalTournaments++;
-  //   const item = this.renderRow(tournament);
-  //   this.list.insertBefore(item, this.list.firstChild);
-  //   this.#state.currentLastItemIndex++;
-  //   this.filterButton.classList.remove('d-none');
-  //   const noItem = this.list.querySelector('#no-open-tournaments');
-  //   if (noItem) {
-  //     this.list.removeChild(noItem);
-  //   }
-  // }
-
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
@@ -123,10 +109,11 @@ export class TournamentList extends HTMLElement {
   }
 
   renderNoItem() {
+    const message = 'No tournaments available at the moment. Create a new one to get started.';
     const item = document.createElement('li');
     item.className = 'list-group-item text-center border-0 bg-transparent py-3';
     item.id = 'no-open-tournaments';
-    item.textContent = 'No tournaments available at the moment. Create a new one to get started.';
+    item.textContent = message;
     this.list.appendChild(item);
     this.filterButton.classList.add('d-none');
   }
