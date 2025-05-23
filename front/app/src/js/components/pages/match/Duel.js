@@ -16,7 +16,7 @@ import './components/index.js';
 
 export class Duel extends HTMLElement {
   #state = {
-    status: '', // inviting, matchmaking, starting, canceled(?)
+    status: '', // inviting, matchmaking, starting, canceled, declied
     gameId: '',
     loggedInUser: null,
     opponent: null,
@@ -28,12 +28,13 @@ export class Duel extends HTMLElement {
     super();
 
     this.handleGameFound = this.handleGameFound.bind(this);
-    this.handleInviteResponse = this.handleInviteResponse.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
+    this.cancelInvitation = this.cancelInvitation.bind(this);
     this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
 
   setQueryParam(param) {
+    console.log('Query param:', param);
     this.#state.status = param.get('status');
     if (this.#state.status === 'inviting') {
       this.#state.opponent = {
@@ -45,6 +46,7 @@ export class Duel extends HTMLElement {
       console.log('Opponent:', this.#state.opponent);
     } else if (this.#state.status === 'starting') {
       // TODO: set necessary information
+      this.#state.gameId = param.get('gameId');
     }
   }
 
@@ -65,17 +67,19 @@ export class Duel extends HTMLElement {
     this.render();
     if (this.#state.status === 'matchmaking') {
       this.requestMatchmaking();
-    } else if (this.#state.status === 'inviting') {
-      // TODO: Add listener for response to duel invitation
     }
   }
 
   disconnectedCallback() {
     document.removeEventListener('gameFound', this.handleGameFound);
-    this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
-    socketManager.closeSocket('matchmaking');
+    if (this.#state.status === 'matchmaking') {
+      this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
+      socketManager.closeSocket('matchmaking');
+    } else if (this.#state.status === 'inviting') {
+      this.cancelButton?.removeEventListener('click', this.cancelInvitation);
+    }
   }
 
   /* ------------------------------------------------------------------------ */
@@ -98,19 +102,25 @@ export class Duel extends HTMLElement {
     if (this.#state.status === 'matchmaking' || this.#state.status === 'inviting') {
       this.animation.classList.remove('d-none');
       // ==== For test ================
-      if (this.#state.status === 'inviting') {
-        this.#state.gameId = 'test-game-id';
-        setTimeout(() => {
-          this.startDuel();
-        }, 5000);
-      }
+      // setTimeout(() => {
+      //   const data = {
+      //     gameId: 'test-game-id',
+      //   };
+      //   this.invitationAccepted(data);
+      // }, 5000);
       // ================================
     } else if (this.#state.status === 'starting') {
       this.animation.classList.add('d-none');
       this.timer.classList.remove('d-none');
       this.startDuel();
     }
-    this.cancelButton?.addEventListener('click', this.cancelMatchmaking);
+    if (this.#state.status === 'inviting') {
+      this.cancelButton?.addEventListener('click', this.cancelInvitation);
+    } else if (this.#state.status === 'matchmaking') {
+      this.cancelButton?.addEventListener('click', this.cancelMatchmaking);
+    } else {
+      this.cancelButton?.classList.add('d-none');
+    }
   }
 
   /* ------------------------------------------------------------------------ */
@@ -135,17 +145,38 @@ export class Duel extends HTMLElement {
     this.startDuel();
   }
 
-  handleInviteResponse(event) {
-    this.#state.gameId = event.detail.game_id;
-    this.startDuel();
-  }
-
   cancelMatchmaking() {
+    devLog('Canceling matchmaking');
     const message = { action: 'cancel' };
-    devLog('Canceling matchmaking', message);
     socketManager.sendMessage('matchmaking', message);
     router.removeBeforeunloadCallback();
     router.navigate('/duel-menu');
+  }
+
+  invitationAccepted(data) {
+    this.#state.status = 'starting';
+    this.#state.gameId = data.gameId;
+    this.render();
+  }
+
+  invitationDeclined(data) {
+    if (data.username !== this.#state.opponent.username) {
+      return;
+    }
+    router.removeBeforeunloadCallback();
+    window.removeEventListener('beforeunload', this.confirmLeavePage);
+    this.#state.status = 'decliend';
+    this.render();
+  }
+
+  cancelInvitation() {
+    devLog('Canceling invitation');
+    const message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
+    socketManager.sendMessage('livechat', message);
+    router.removeBeforeunloadCallback();
+    window.removeEventListener('beforeunload', this.confirmLeavePage);
+    this.#state.status = 'canceled';
+    this.render();
   }
 
   startDuel() {

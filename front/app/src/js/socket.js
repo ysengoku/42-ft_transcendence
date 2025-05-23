@@ -1,4 +1,5 @@
-import { showToastNotification } from '@utils';
+import { router } from '@router';
+import { showToastNotification, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 /**
  * WebSocket endpoint URL paths for different features.
@@ -231,10 +232,34 @@ socketManager.addSocket('livechat', {
     showToastNotification(`${data.nickname} challenges you to a duel.`);
   },
   game_accepted: (data) => {
-    // Navigate to the game page
-    const gameId = data.game_id;
+    if (window.location.pathname === '/duel') {
+      const duelPage = document.querySelector('duel-page');
+      duelPage?.invitationAccepted(data);
+      return;
+    }
+    const param = {
+      status: 'starting',
+      gameId: data.game_id,
+      username: data.username,
+      nickname: data.nickname,
+      avatar: data.avatar,
+      elo: data.elo,
+    };
+    showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Duel accepted. Redirecting to the Duel page.', 2000);
+    setTimeout(() => {
+      router.navigate('/duel', param);
+    }, 2000);
   },
   game_declined: (data) => {
+    if (window.location.pathname === '/duel') {
+      const duelPage = document.querySelector('duel-page');
+      duelPage?.invitationDeclined(data);
+    }
+  },
+  game_invite_canceled: (data) => {
+    const notificationButton = document.querySelector('notifications-button');
+    notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
+    showToastNotification(`${data.nickname} cancelled the duel invitation.`);
   },
   new_tournament: (data) => {
     const notificationButton = document.querySelector('notifications-button');
