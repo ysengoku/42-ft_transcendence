@@ -11,16 +11,10 @@ from django.contrib.auth import get_user_model
 from django.test import TransactionTestCase
 
 from chat.consumers import UserEventsConsumer
-# from chat.middleware import JWTAuthMiddleware
 from chat.models import Chat, ChatMessage, Notification
 from chat.routing import websocket_urlpatterns
 from users.middleware import JWTWebsocketAuthMiddleware
 from users.models import Profile, RefreshToken, User
-
-# from rest_framework_simplejwt.authentication import JWTAuthentication
-# from rest_framework_simplejwt.exceptions import (AuthenticationFailed,
-#                                                  InvalidToken)
-# from rest_framework_simplejwt.tokens import AccessToken
 
 
 class JWTAuthMiddleware:
@@ -32,8 +26,6 @@ class JWTAuthMiddleware:
         query_string = scope.get("query_string", b"").decode()
         token_params = parse_qs(query_string).get('token', [])
         token = token_params[0] if token_params else None
-        # token = dict(param.split("=") for param in query_string.split(
-        #     "&") if "=" in param).get("token", None)
 
         if token:
             user = await self.get_user_from_token(token)
@@ -49,36 +41,16 @@ class JWTAuthMiddleware:
             return User.objects.for_id(payload["sub"]).first()
         except Exception:
             return None
-        #    try:
-        #         auth = JWTAuthentication()
-        #         validated_token = auth.get_validated_token(token)
-        #         user = await database_sync_to_async(auth.get_user)(validated_token)
-        #         scope["user"] = user
-        #     except (InvalidToken, AuthenticationFailed):
-        #         scope["user"] = None
-        # else:
-        #     scope["user"] = None
-        #
-        # return await self.inner(scope, receive, send)
 
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
-logging.getLogger("server").setLevel(logging.WARNING)
+logging.getLogger("server").setLevel(logging.CRITICAL)
 application = ProtocolTypeRouter({
     "websocket": JWTAuthMiddleware(
         URLRouter(websocket_urlpatterns)
     )
 })
-
-# only for automatic tests
-# application = ProtocolTypeRouter({
-#     "websocket": SessionMiddlewareStack(  # Ajout du middleware de session
-#         JWTAuthMiddleware(
-#             URLRouter(websocket_urlpatterns),
-#         ),
-#     ),
-# })
 
 
 class UserEventsConsumerTests(TransactionTestCase):
@@ -102,16 +74,6 @@ class UserEventsConsumerTests(TransactionTestCase):
         connected, _ = await communicator.connect()
         self.assertTrue(connected, "Connexion to the WebSocket failed")
         return communicator
-        # access_token = AccessToken.for_user(self.user)
-        #
-        # # Connexion WebSocket
-        # communicator = WebsocketCommunicator(
-        #     application,  # Use application ASGI configured for test
-        #     f"/ws/events/?token={access_token}"
-        # )
-        # connected, _ = await communicator.connect()
-        # self.assertTrue(connected, "Connexion to the WebSocket failed")
-        # return communicator
 
     async def test_unauthenticated_connection_rejected(self):
         # Connexion attemps without token
@@ -125,7 +87,6 @@ class UserEventsConsumerTests(TransactionTestCase):
     async def test_invalid_message_length(self):
         communicator = await self.get_authenticated_communicator()
 
-        # Message de 257 caractères
         invalid_data = {
             "action": "new_message",
             "data": {
@@ -133,15 +94,11 @@ class UserEventsConsumerTests(TransactionTestCase):
                 "chat_id": str(self.chat.id)
             }
         }
-        # await communicator.send_json_to(invalid_data)
+        await communicator.send_json_to(invalid_data)
+        await communicator.receive_nothing(timeout=0.1)
 
-        # Vérification des logs
-        with self.assertLogs('server', level='WARNING') as logs:
-            await communicator.send_json_to(invalid_data)
-            await communicator.receive_nothing(timeout=0.1)
-        
-        self.assertTrue(
-            any("Message too long" in log for log in logs.output))
+        msg_count = await database_sync_to_async(ChatMessage.objects.count)()
+        self.assertEqual(msg_count, 0)
 
         await communicator.disconnect()
 
