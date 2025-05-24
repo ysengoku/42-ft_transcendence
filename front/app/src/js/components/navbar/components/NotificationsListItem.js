@@ -92,12 +92,10 @@ export class NotificationsListItem extends HTMLElement {
   }
 
   handleAcceptDuel() {
-    console.log('Duel accepted');
     this.replyGameInvite(true);
   }
 
   handleDeclineDuel() {
-    console.log('Duel declined');
     this.replyGameInvite(false);
   }
 

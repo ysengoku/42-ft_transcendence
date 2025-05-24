@@ -46,7 +46,6 @@ export class DuelPreview extends HTMLElement {
   }
 
   render() {
-    console.log('Status', this.#state.status);
     if (this.#state.status === 'canceled' || this.#state.status === 'declied') {
       this.innerHTML = this.canceledTemplate();
 

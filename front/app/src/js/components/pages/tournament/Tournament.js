@@ -56,7 +56,6 @@ export class Tournament extends HTMLElement {
         /* eslint-disable-next-line new-cap */
         API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
         null, false, true);
-    console.log('Tournament data:', response);
     if (!response.success) {
       // TODO: handle error
       return;

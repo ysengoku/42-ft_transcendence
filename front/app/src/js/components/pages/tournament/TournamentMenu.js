@@ -163,7 +163,6 @@ export class TournamentMenu extends HTMLElement {
       return;
     }
     this.modalBody.innerHTML = '';
-    console.log('Selected tournament:', this.selectedTournament);
     this.tournamentDetail[tournamentStatus]();
     this.modal.show();
   }

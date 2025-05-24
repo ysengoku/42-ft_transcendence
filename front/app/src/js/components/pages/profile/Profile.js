@@ -141,7 +141,6 @@ export class UserProfile extends HTMLElement {
     if (event.detail.data.username.toLowerCase() !== this.user.username.toLowerCase()) {
       return;
     }
-    console.log('Update online status:', event.detail);
     this.user.is_online = event.detail.online;
     this.onlineStatusIndicator.setStatus(this.user.is_online);
   }

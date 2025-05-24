@@ -53,7 +53,6 @@ export class InviteGameModal extends HTMLElement {
   }
 
   showModal(opponent) {
-	console.log('Showing invite game modal for:', opponent);
     this.#state.opponent = opponent;
     this.render();
     this.modal.show();
