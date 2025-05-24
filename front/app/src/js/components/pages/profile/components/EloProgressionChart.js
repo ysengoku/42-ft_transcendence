@@ -244,7 +244,6 @@ export class UserEloProgressionChart extends HTMLElement {
 
   lineChartTemplate() {
     const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
-    console.log('points', points);
     const yLabelPosition = {
       min: this.#yCoordinate.max,
       max: this.#yCoordinate.min + 2,

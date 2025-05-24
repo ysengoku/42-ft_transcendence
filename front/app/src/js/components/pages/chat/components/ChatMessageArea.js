@@ -5,7 +5,7 @@
  *              loading more messages, and toggling likes on messages.
  * @module ChatMessageArea
  */
-import { Tooltip, Modal } from 'bootstrap';
+import { Tooltip } from 'bootstrap';
 import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -283,7 +283,6 @@ export class ChatMessageArea extends HTMLElement {
       nickname: this.#state.data.nickname,
       avatar: this.#state.data.avatar,
     };
-    console.log('Opening game invitation modal for user:', user);
     this.gameInvitationModal.showModal(user);
   }
 
@@ -371,7 +370,6 @@ export class ChatMessageArea extends HTMLElement {
    * @return {void}
    * */
   updateOnlineStatus(data) {
-    console.log('Updating online status:', data);
     this.headerOnlineStatusIndicator.classList.toggle('online', data.online);
     this.headerOnlineStatus.textContent = data.online ? 'online' : 'offline';
   }
