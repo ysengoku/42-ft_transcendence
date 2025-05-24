@@ -1,12 +1,7 @@
 export class GameOptions extends HTMLElement {
   #state = {
     selectedOptions: null,
-    defaultOptionValue: {
-      scoreToWin: 15,
-      gameSpeed: 'normal',
-      isRanked: true,
-      timeLimitMinutes: 3,
-    },
+    defaultOptionValue: null,
     range: {
       minScoreToWin: 3,
       maxScoreToWin: 20,
@@ -17,21 +12,17 @@ export class GameOptions extends HTMLElement {
 
   constructor() {
     super();
-    // const defaultOptions = JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS);
-    // this.#state.defaultOptionValue.scoreToWin = defaultOptions.scoreToWin || 15;
-    // this.#state.defaultOptionValue.gameSpeed = defaultOptions.gameSpeed || 'normal';
-    // this.#state.defaultOptionValue.isRanked = defaultOptions.isRanked || true;
-    // this.#state.defaultOptionValue.timeLimitMinutes = defaultOptions.timeLimitMinutes || 3;
+    const defaultOptions = JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS);
+    this.#state.defaultOptionValue = {
+      scoreToWin: defaultOptions.scoreToWin || 15,
+      gameSpeed: defaultOptions.gameSpeed || 'normal',
+      isRanked: defaultOptions.isRanked || true,
+      timeLimitMinutes: defaultOptions.timeLimitMinutes || 3,
+    };
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
     this.toggleOptionOptout = this.toggleOptionOptout.bind(this);
   }
-
-  // setOptions(options) {
-  //   if (options) {
-  //     this.#state.selectedOptions = options;
-  //   }
-  // }
 
   set selectedOptions(options) {
     this.#state.selectedOptions = options;
@@ -188,7 +179,6 @@ export class GameOptions extends HTMLElement {
 
     const id = target.id.replace('optout-', '');
     this.#state.selectedOptions[id] = target.checked ? 'any' : this.#state.defaultOptionValue[id];
-    console.log('toggleOptionOptout', this.#state.selectedOptions);
   }
 
   /* ------------------------------------------------------------------------ */

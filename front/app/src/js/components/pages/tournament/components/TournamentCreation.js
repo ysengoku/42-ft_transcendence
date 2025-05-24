@@ -123,7 +123,6 @@ export class TournamentCreation extends HTMLElement {
     ).value;
     this.#state.newTournament.alias = this.tournamentAliasInput.value;
 
-    console.log('Creating tournament:', this.#state.newTournament);
     const data = {
       name: this.#state.newTournament.name,
       required_participants: this.#state.newTournament.requiredParticipants,
