@@ -213,7 +213,8 @@ export class MultiplayerGame extends HTMLElement {
         function updateState(data) {
             if (!data)
                 return;
-            data.lastBumperCollided == "bumper_1" ? lastBumperCollided = 0 : lastBumperCollided = 1;
+            data.last_bumper_collided == "_bumper_1" ? lastBumperCollided = 0 : lastBumperCollided = 1;
+            console.log(data.last_bumper_collided)
             
             Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
             Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
@@ -222,7 +223,6 @@ export class MultiplayerGame extends HTMLElement {
             Ball.sphereUpdate.z = data.ball.z;
             Ball.sphereUpdate.x = data.ball.x;
 
-            
             Coin.cylinderUpdate.z = data.coin.z;
             Coin.cylinderUpdate.x = data.coin.x;
 
@@ -232,15 +232,35 @@ export class MultiplayerGame extends HTMLElement {
             Bumpers[1].score = data.bumper_2.score;
             Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
 
-            if (data.current_buff_or_debuff == 0)
-                Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
-            if (data.current_buff_or_debuff == 1)
-                Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
-            if (data.current_buff_or_debuff == 4)
-                Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
-
-            // lastScore = data.last_score;
+            console.log(data.current_buff_or_debuff);
+            if (data.current_buff_or_debuff != -1)
+            {
+                if (data.current_buff_or_debuff == 2)
+                    Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
+                else if (data.current_buff_or_debuff == 3)
+                    Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+                else if (data.current_buff_or_debuff == 4)
+                    Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+                else if (data.current_buff_or_debuff == -2)
+                    Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+                else if (data.current_buff_or_debuff == -3)
+                    Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+                else if (data.current_buff_or_debuff == -4)
+                    Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
+            }
         }
+
+        // function updateBuff(data)
+        // {
+        //     if (!data)
+        //         return;
+
+        //     
+        //     if (data.current_buff_or_debuff != -1)
+        //     {
+
+        //     }
+        // }
 
         pongSocket.addEventListener("open", function(_) {
             console.log('Success! :3 ')
@@ -258,7 +278,11 @@ export class MultiplayerGame extends HTMLElement {
                     break;
                 case "joined":
                     player_id = data.player_id;
+                    console.log(player_id)
                     break;
+                // case "":
+                //     updateBuff(data.state)
+                //     break;
                 default:
                     break;
             }
