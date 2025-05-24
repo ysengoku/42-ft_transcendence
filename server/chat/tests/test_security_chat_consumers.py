@@ -54,11 +54,17 @@ application = ProtocolTypeRouter({
 
 
 class UserEventsConsumerTests(TransactionTestCase):
-    async def get_authenticated_communicator(self):
-        self.user = await database_sync_to_async(get_user_model().objects.create_user)(
-            username="testuser",
-            password="testpass"
-        )
+    async def get_authenticated_communicator(self, user=None, username=None, password=None):
+        if not user:
+            self.user = await database_sync_to_async(get_user_model().objects.create_user)(
+                username="testuser",
+                password="testpass"
+            )
+        else:
+            self.user = await database_sync_to_async(get_user_model().objects.create_user)(
+                username=username,
+                password=password
+            )
         self.profile = await database_sync_to_async(Profile.objects.get)(user=self.user)
         self.chat = await database_sync_to_async(Chat.objects.create)()
         await database_sync_to_async(self.chat.participants.add)(self.user.profile)
