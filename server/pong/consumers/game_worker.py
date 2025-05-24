@@ -37,7 +37,7 @@ TEMPORAL_SPEED_INCREASE = SUBTICK * 0
 TEMPORAL_SPEED_DECAY = 0.005
 GAME_TICK_INTERVAL = 1.0 / 120
 PLAYERS_REQUIRED = 2
-SCORE_TO_WIN = 3
+SCORE_TO_WIN = 1000
 ###################
 
 
@@ -117,6 +117,7 @@ class BasePong:
         self._is_someone_scored = False
         self._last_bumper_collided = ""
         self._choose_buff = -1
+        self._time_to_wait = 0
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
@@ -182,13 +183,16 @@ class BasePong:
         ball_subtick_z = SUBTICK
         total_subticks = total_distance_z / ball_subtick_z
         ball_subtick_x = total_distance_x / total_subticks
-        bumper_subtick = BUMPER_SPEED / total_subticks
+        # bumper_subtick = 
+        bumper_1_subtick = self._bumper_1.speed / total_subticks
+        bumper_2_subtick = self._bumper_2.speed / total_subticks
+        self._choose_buff = -1
         while current_subtick <= total_subticks:
             self._check_ball_wall_collision()
             self._check_ball_bumper_collision(ball_subtick_z, ball_subtick_x)
             self._check_ball_coin_collision(ball_subtick_z, ball_subtick_x)
             self._check_ball_scored()
-            self._move_bumpers(bumper_subtick)
+            self._move_bumpers(bumper_1_subtick, bumper_2_subtick)
             self._move_ball(ball_subtick_z, ball_subtick_x)
             self._move_coin()
 
@@ -328,32 +332,38 @@ class BasePong:
 #     }
 
 
-    def _manage_buff_and_debuff(self, last_bumper_collided):
+    def _manage_buff_and_debuff(self):
         # print(self._ball.x)
+        # print(self._last_bumper_collided)
         self._choose_buff = random.randrange(5)
+        # self._choose_buff = 0
         match self._choose_buff:
             case 0:
-                self.__dict__[last_bumper_collided].lenght_half = 5
-                if ((self.__dict__[last_bumper_collided].x < -10 + WALL_WIDTH_HALF + self.__dict__[last_bumper_collided].lenght_half)) :
-                    self.__dict__[last_bumper_collided].x = -10 + WALL_WIDTH_HALF + self.__dict__[last_bumper_collided].lenght_half - 0.1
-                elif (self.__dict__[last_bumper_collided].x > 10 - WALL_WIDTH_HALF - self.__dict__[last_bumper_collided].lenght_half) :
-                    self.__dict__[last_bumper_collided].x = 10 - WALL_WIDTH_HALF - self.__dict__[last_bumper_collided].lenght_half + 0.1
-                
+                self._last_bumper_collided = "_bumper_1" if self._last_bumper_collided == "_bumper_2" else "_bumper_2"
+                self.__dict__[self._last_bumper_collided].control_reversed = True
+                self._time_to_wait = 2
+                            
             case 1:
-                last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
-                self.__dict__[last_bumper_collided].lenght_half = 1.25
+                self._last_bumper_collided = "_bumper_1" if self._last_bumper_collided == "_bumper_2" else "_bumper_2"
+                self.__dict__[self._last_bumper_collided].speed = 0.1
+                self._time_to_wait = 5
                 
             case 2:
-                last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
-                self.__dict__[last_bumper_collided].control_reversed = true
+                self._last_bumper_collided = "_bumper_1" if self._last_bumper_collided == "_bumper_2" else "_bumper_2"
+                self.__dict__[self._last_bumper_collided].lenght_half = 1.25
+                self._time_to_wait = 10
                 
             case 3:
-                last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
-                self.__dict__[last_bumper_collided].speed = 0.1
+                self.__dict__[self._last_bumper_collided].lenght_half = 5
+                if ((self.__dict__[self._last_bumper_collided].x < -10 + WALL_WIDTH_HALF + self.__dict__[self._last_bumper_collided].lenght_half)) :
+                    self.__dict__[self._last_bumper_collided].x = -10 + WALL_WIDTH_HALF + self.__dict__[self._last_bumper_collided].lenght_half - 0.1
+                elif (self.__dict__[self._last_bumper_collided].x > 10 - WALL_WIDTH_HALF - self.__dict__[self._last_bumper_collided].lenght_half) :
+                    self.__dict__[self._last_bumper_collided].x = 10 - WALL_WIDTH_HALF - self.__dict__[self._last_bumper_collided].lenght_half + 0.1
+                self._time_to_wait = 10
                 
             case 4:
-                self.__dict__[last_bumper_collided].width_half = 1.5
-
+                self.__dict__[self._last_bumper_collided].width_half = 1.5
+                self._time_to_wait = 10
         self._coin.x, self._coin.z = -100, 1
             # case 5:
                 
@@ -365,18 +375,18 @@ class BasePong:
 
     def _check_ball_coin_collision(self, ball_subtick_z, ball_subtick_x):
         if self._is_collided_with_coin(ball_subtick_z, ball_subtick_x):
-            self._manage_buff_and_debuff(self._last_bumper_collided)
+            self._manage_buff_and_debuff()
 
-    def _move_bumpers(self, bumper_subtick):
+    def _move_bumpers(self, bumper_1_subtick, bumper_2_subtick):
         if self._bumper_1.moves_left and not self._bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - self._bumper_1.lenght_half:
-            self._bumper_1.x += bumper_subtick
+            self._bumper_1.x += bumper_1_subtick
         if self._bumper_1.moves_right and not self._bumper_1.x < WALL_RIGHT_X + WALL_WIDTH_HALF + self._bumper_1.lenght_half:
-            self._bumper_1.x -= bumper_subtick
+            self._bumper_1.x -= bumper_1_subtick
 
         if self._bumper_2.moves_left and not self._bumper_2.x > WALL_LEFT_X - WALL_WIDTH_HALF - self._bumper_2.lenght_half:
-            self._bumper_2.x += bumper_subtick
+            self._bumper_2.x += bumper_2_subtick
         if self._bumper_2.moves_right and not self._bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + self._bumper_2.lenght_half:
-            self._bumper_2.x -= bumper_subtick
+            self._bumper_2.x -= bumper_2_subtick
 
     def _move_ball(self, ball_subtick_z, ball_subtick_x):
         self._ball.z += ball_subtick_z * self._ball.velocity.z
@@ -426,6 +436,9 @@ class MultiplayerPongMatch(BasePong):
             bumper = self._player_2.bumper
         else:
             return
+        # final_action = action
+        if bumper.control_reversed == True :
+            action = "move_left" if action == "move_right" else "move_right"
 
         match action:
             case "move_left":
@@ -592,6 +605,10 @@ class GameConsumer(AsyncConsumer):
                     await match.pause_event.wait()
                 tick_start_time = asyncio.get_event_loop().time()
                 match.resolve_next_tick()
+                if match._choose_buff != -1:
+                    # print(match._time_to_wait)
+                    asyncio.create_task(self._wait_for_end_of_buff(match, match._time_to_wait, match._last_bumper_collided, match._choose_buff))
+                    asyncio.create_task(self._wait_for_end_of_buff(match, 12, "non", 5))
                 if winner := match.get_winner():
                     await self.channel_layer.group_send(
                         self._to_group_name(match),
@@ -626,6 +643,55 @@ class GameConsumer(AsyncConsumer):
 
         except asyncio.CancelledError:
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
+
+    async def _wait_for_end_of_buff(self, match: MultiplayerPongMatch, time_to_wait: int, last_bumper_collided: str, choose_buff: int):
+        # try:
+        # print(time_to_wait)
+        # print(last_bumper_collided)
+        while time_to_wait > 0:
+            await asyncio.sleep(0.2)
+            time_to_wait -= 0.2
+        
+
+        # print(choose_buff)
+        match choose_buff:
+            case 0:
+                # last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
+                match.__dict__[last_bumper_collided].control_reversed = False
+                            
+            case 1:
+                # last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
+                match.__dict__[last_bumper_collided].speed = 0.25
+                
+            case 2:
+                # last_bumper_collided = "_bumper_1" if last_bumper_collided == "_bumper_2" else "_bumper_2"
+                match.__dict__[last_bumper_collided].lenght_half = 2.5
+                if ((match.__dict__[last_bumper_collided].x < -10 + WALL_WIDTH_HALF + match.__dict__[last_bumper_collided].lenght_half)) :
+                    match.__dict__[last_bumper_collided].x = -10 + WALL_WIDTH_HALF + match.__dict__[last_bumper_collided].lenght_half - 0.1
+                elif (match.__dict__[last_bumper_collided].x > 10 - WALL_WIDTH_HALF - match.__dict__[last_bumper_collided].lenght_half) :
+                    match.__dict__[last_bumper_collided].x = 10 - WALL_WIDTH_HALF - match.__dict__[last_bumper_collided].lenght_half + 0.1
+                match._choose_buff = -choose_buff
+
+            case 3:
+                match.__dict__[last_bumper_collided].lenght_half = 2.5
+                match._choose_buff = -choose_buff
+                
+            case 4:
+                match.__dict__[last_bumper_collided].width_half = 0.5
+                match._choose_buff = -choose_buff
+            
+            case 5:
+                match._coin.x, match._coin.z = STARTING_COIN_POS
+        match._last_bumper_collided = last_bumper_collided
+        await self.channel_layer.group_send(
+            self._to_group_name(match.id),
+            {"type": "state_updated", "state": match.as_dict()},
+        )
+        # match._last_bumper_collided = last_bumper_collided
+        # print(match._choose_buff)
+        # except asyncio.CancelledError:
+        #     logger.info("[GameWorker]: task for timer {%s} has been cancelled AAAAAA", match)
+
 
     async def _wait_for_reconnection_task(self, match: MultiplayerPongMatch, player: Player):
         try:
