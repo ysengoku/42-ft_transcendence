@@ -233,7 +233,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 "unlike_message": ["id", "chat_id"],
                 "read_message": ["id"],
                 # TODO : check game_invite and reply_game_invite
-                "game_invite": ["sender_id", "receiver_id"],
+                "game_invite": ["receiver_id"],
                 "reply_game_invite": ["id", "accept"],
                 "game_accepted": ["invitation_id"],
                 "game_declined": ["invitation_id"],
@@ -617,50 +617,107 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
     def send_game_invite(self, data):
-        sender_id = data["data"].get("sender_id")
         receiver_id = data["data"].get("receiver_id")
 
-        logger.info(f"Game invitation request: {sender_id} -> {receiver_id}")
-        if not sender_id or not receiver_id:
-            logger.warning("IDs missing for the game_invite")
+        if not receiver_id:
+            logger.warning("receiver_id missing for the game_invite")
             return
+
         try:
-            sender = Profile.objects.get(id=sender_id)
             receiver = Profile.objects.get(id=receiver_id)
 
             invitation = GameInvitation.objects.create(
-                sender=sender,
+                sender=self.user_profile,  # ✓ Direct
                 game_session=None,
                 recipient=receiver,
             )
 
-            # Envoyer une notification au destinataire
-            notification_data = get_user_data(sender)
-            notification_data.update({"id": str(invitation.id)})
+            # Créer notification (utilise déjà to_username_nickname_avatar_schema)
+            notification_data = {"game_id": str(invitation.id)}
+            notification = Notification.objects._create(
+                receiver=receiver,
+                sender=self.user_profile,
+                notification_action=Notification.GAME_INVITE,
+                notification_data=notification_data
+            )
 
+            # Confirmation à l'expéditeur
+            self.send(text_data=json.dumps({
+                "action": "game_invite",
+                "data": {"id": str(invitation.id), "receiver": receiver.user.username}
+            }))
+
+            # Notification au destinataire
             async_to_sync(self.channel_layer.group_send)(
                 f"user_{receiver_id}",
-                # f"user_{receiver_id}",
                 {
+                    "type": "chat_message",  # ✓ Bon type
                     "action": "game_invite",
-                    "data": notification_data,
-                },
+                    "data": notification.data,
+                }
             )
 
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite",
-                        "data": notification_data,
-                    },
-                ),
-            )
         except Profile.DoesNotExist as e:
             logger.error("Profile does not exist : %s", str(e))
-            self.send(json.dumps({
+            self.send(text_data=json.dumps({
                 "action": "error",
                 "message": "Invalid profile"
             }))
+
+    # def send_game_invite(self, data):
+    #     sender_id = self.user_profile.id
+    #     receiver_id = data["data"].get("receiver_id")
+    #
+    #     logger.info(f"Game invitation request: {sender_id} -> {receiver_id}")
+    #     if not receiver_id:
+    #         logger.warning("IDs missing for the game_invite")
+    #         return
+    #     try:
+    #         sender = self.user_profile
+    #         # sender = Profile.objects.get(id=sender_id)
+    #         receiver = Profile.objects.get(id=receiver_id)
+    #
+    #         invitation = GameInvitation.objects.create(
+    #             sender=sender,
+    #             game_session=None,
+    #             recipient=receiver,
+    #         )
+    #         sender_data = {
+    #             "id": str(invitation.id),
+    #             "receiver": receiver.user.username,
+    #         }
+    #         self.send(text_data=json.dumps({
+    #             "action": "game_invite",
+    #             "data": sender_data
+    #         }))
+    #         # Envoyer une notification au destinataire
+    #         notification_data = get_user_data(self.user_profile)
+    #         notification_data.update({"id": str(invitation.id)})
+    #
+    #         async_to_sync(self.channel_layer.group_send)(
+    #             f"user_{receiver_id}",
+    #             # f"user_{receiver_id}",
+    #             {
+    #                 "type": "chat_message",
+    #                 "action": "game_invite",
+    #                 "data": notification_data,
+    #             },
+    #         )
+    #
+    #         # self.send(
+    #         #     text_data=json.dumps(
+    #         #         {
+    #         #             "action": "game_invite",
+    #         #             "data": notification_data,
+    #         #         },
+    #         #     ),
+    #         # )
+    #     except Profile.DoesNotExist as e:
+    #         logger.error("Profile does not exist : %s", str(e))
+    #         self.send(json.dumps({
+    #             "action": "error",
+    #             "message": "Invalid profile"
+    #         }))
 
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]
