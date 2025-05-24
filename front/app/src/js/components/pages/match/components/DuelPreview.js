@@ -41,8 +41,8 @@ export class DuelPreview extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.goToHomeButton.removeEventListener('click', this.navigateToHome);
-    this.goToDuelMenuButton.removeEventListener('click', this.navigateToDuelMenu);
+    this.goToHomeButton?.removeEventListener('click', this.navigateToHome);
+    this.goToDuelMenuButton?.removeEventListener('click', this.navigateToDuelMenu);
   }
 
   render() {
@@ -69,7 +69,6 @@ export class DuelPreview extends HTMLElement {
     this.player1.querySelector('.player-avatar').src = this.#state.user1.avatar;
     this.player1.querySelector('.player-nickname').innerHTML = this.#state.user1.nickname;
     this.player1.querySelector('.player-username').innerHTML = `@${this.#state.user1.username}`;
-    this.player1.querySelector('.player-elo').innerHTML = `Elo: ${this.#state.user1.elo}`;
 
     this.player2.innerHTML = this.userProfileTemplate(),
     this.#state.status === 'matchmaking' ? (
@@ -77,8 +76,7 @@ export class DuelPreview extends HTMLElement {
       ) : (
       this.player2.querySelector('.player-avatar').src = this.#state.user2.avatar,
       this.player2.querySelector('.player-nickname').innerHTML = this.#state.user2.nickname,
-      this.player2.querySelector('.player-username').innerHTML = this.#state.user2.username,
-      this.player2.querySelector('.player-elo').innerHTML = `Elo: ${this.#state.user2.elo}`
+      this.player2.querySelector('.player-username').innerHTML = `@${this.#state.user2.username}`
     );
   }
 
@@ -106,7 +104,6 @@ export class DuelPreview extends HTMLElement {
       <img class="player-avatar avatar-xl img-fluid rounded-circle" alt="palyer">
       <p class="player-nickname m-0 mt-1 fs-4 fw-bold"></p>
       <p class="player-username m-0"></p>
-      <span class="player-elo badge mt-3 p-2"></span> 
     </div>`;
   }
 
