@@ -3,17 +3,6 @@ import { auth } from '@auth';
 import { socketManager } from '@socket';
 import './components/index.js';
 
-// Status === matchmaking
-// Establishes websocket connection to /ws/matchmaking
-// listen WebSocket message (action 'game_found' with 'game_room_id')
-// Show starting view
-// After 5 seconds, redirect to Game
-
-// Status === inviting
-// listen WebSocket message (action ? with 'game_room_id')
-// Show starting view
-// After 5 seconds, redirect to Game
-
 export class Duel extends HTMLElement {
   #state = {
     status: '', // inviting, matchmaking, starting, canceled, declied
@@ -34,19 +23,18 @@ export class Duel extends HTMLElement {
   }
 
   setQueryParam(param) {
-    console.log('Query param:', param);
     this.#state.status = param.get('status');
+    if (this.#state.status !== 'inviting' && this.#state.status !== 'matchmaking') {
+      this.#state.status = '';
+      return;
+    }
     if (this.#state.status === 'inviting') {
       this.#state.opponent = {
         username: param.get('username'),
         nickname: param.get('nickname'),
         avatar: param.get('avatar'),
-        elo: param.get('elo'),
       };
       console.log('Opponent:', this.#state.opponent);
-    } else if (this.#state.status === 'starting') {
-      // TODO: set necessary information
-      this.#state.gameId = param.get('gameId');
     }
   }
 
