@@ -34,7 +34,6 @@ export class Duel extends HTMLElement {
         nickname: param.get('nickname'),
         avatar: param.get('avatar'),
       };
-      console.log('Opponent:', this.#state.opponent);
     }
   }
 
@@ -194,7 +193,6 @@ export class Duel extends HTMLElement {
     if (event) {
       event.preventDefault();
       router.removeBeforeunloadCallback();
-      console.log('Beforeunload event');
       return;
     }
 

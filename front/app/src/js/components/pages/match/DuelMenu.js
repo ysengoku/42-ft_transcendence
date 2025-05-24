@@ -57,7 +57,6 @@ export class DuelMenu extends HTMLElement {
   }
 
   async connectedCallback() {
-    console.log('DuelMenu connected');
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
@@ -119,7 +118,6 @@ export class DuelMenu extends HTMLElement {
   }
 
   renderUserList() {
-    console.log('Rendering user list:', this.#usersearch.list);
     for (let i = this.#usersearch.currentListLength; i < this.#usersearch.list.length; i++) {
       if (this.#usersearch.list[i].username !== this.#state.user.username) {
         this.renderUserListItem(this.#usersearch.list[i]);
@@ -234,7 +232,6 @@ export class DuelMenu extends HTMLElement {
         false,
         true,
     );
-    console.log('User search response:', response);
     if (response.success && response.data) {
       if (response.data.count === 0) {
         this.renderNoUserFound();
