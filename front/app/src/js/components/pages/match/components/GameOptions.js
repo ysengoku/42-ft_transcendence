@@ -17,26 +17,31 @@ export class GameOptions extends HTMLElement {
 
   constructor() {
     super();
+    // const defaultOptions = JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS);
+    // this.#state.defaultOptionValue.scoreToWin = defaultOptions.scoreToWin || 15;
+    // this.#state.defaultOptionValue.gameSpeed = defaultOptions.gameSpeed || 'normal';
+    // this.#state.defaultOptionValue.isRanked = defaultOptions.isRanked || true;
+    // this.#state.defaultOptionValue.timeLimitMinutes = defaultOptions.timeLimitMinutes || 3;
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
     this.toggleOptionOptout = this.toggleOptionOptout.bind(this);
   }
 
-  setOptions(options) {
-    if (options) {
-      this.#state.selectedOptions = options;
-    }
-  }
+  // setOptions(options) {
+  //   if (options) {
+  //     this.#state.selectedOptions = options;
+  //   }
+  // }
 
   set selectedOptions(options) {
     this.#state.selectedOptions = options;
   }
 
   get selectedOptions() {
-    if (JSON.stringify(this.#state.selectedOptions) !== JSON.stringify(this.#state.defaultOptionValue)) {
+    // if (JSON.stringify(this.#state.selectedOptions) !== JSON.stringify(this.#state.defaultOptionValue)) {
       return this.#state.selectedOptions;
-    }
-    return null;
+    // }
+    // return null;
   }
 
   connectedCallback() {
@@ -192,7 +197,7 @@ export class GameOptions extends HTMLElement {
 
   template() {
     return `
-    <h2 class="modal-title text-center pb-4">Game Options</h2>
+    <h2 class="modal-title text-center pb-3">Game Options</h2>
     <div class="form-group d-flex flex-column gap-4">
       <div class="option-input-wrapper pb-2">
         <div class="d-flex justify-content-between pb-1">
@@ -215,7 +220,7 @@ export class GameOptions extends HTMLElement {
         </div>
       </div>
 
-      <div class="option-input-wrapper d-flex flex-column pb-4 gap-2">
+      <div class="option-input-wrapper d-flex flex-column pb-3 gap-2">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="game-speed" class="fs-5 fw-bold">Game Speed</label>
           <div class="opt-out-option form-check pt-1">
@@ -237,7 +242,7 @@ export class GameOptions extends HTMLElement {
         </div>
       </div>
               
-      <div class="option-input-wrapper pb-4" id="is-ranked-selector">
+      <div class="option-input-wrapper pb-3" id="is-ranked-selector">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="is-ranked" class="fs-5 fw-bold">Ranked</label>
           <div class="opt-out-option form-check pt-1">

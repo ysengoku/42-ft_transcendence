@@ -73,7 +73,7 @@ const router = (() => {
           this.renderStaticUrlComponent(componentTag, queryParams);
         }
       } else {
-        console.error(`Route not found for: ${path}`);
+        devErrorLog('Route not found:', path);
         this.renderStaticUrlComponent('page-not-found');
       }
     }

@@ -298,6 +298,7 @@ export class Chat extends HTMLElement {
   template() {
     return `
     <div class="container-fluid d-flex flex-row flex-grow-1 p-0" id="chat-component-container">
+      <invite-game-modal></invite-game-modal>
       <div class="chat-list-wrapper col-12 col-md-4" id="chat-list-container">
           <chat-list-component></chat-list-component>
       </div>
