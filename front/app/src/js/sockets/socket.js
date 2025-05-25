@@ -1,3 +1,5 @@
+import { showToastNotification } from '@utils';
+
 /**
  * WebSocket endpoint URL paths for different features.
  * @readonly
@@ -38,8 +40,9 @@ class WebSocketManager {
         devLog(`WebSocket (${this.name}) closed intentionally by server with code 3000.`);
         return;
       }
-      if (event.code === 1006) {
-        devLog(`WebSocket (${this.name}) closed. Server did not respond.`);
+      if (event.code === 1006 || event.code === 1011) {
+        showToastNotification('Connection to server lost.');
+        console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
         this.socketOpen = false;
         return;
       }
@@ -58,6 +61,12 @@ class WebSocketManager {
     this.socket.onerror = (event) => console.error('WebSocket error (', this.name, ') ', event);
     this.socket.onclose = (event) => {
       devLog('WebSocket closed (', this.name, ') ', event);
+            if (event.code === 1006 || event.code === 1011) {
+        showToastNotification('Connection to server lost.');
+        console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
+        this.socketOpen = false;
+        return;
+      }
       setTimeout(() => this.reconnect(), 1000);
     };
   }
@@ -186,6 +195,10 @@ const socketManager = (() => {
       const socket = this.sockets.get(name);
       if (!socket) {
         devErrorLog('Socket not found:', name);
+        return;
+      }
+      if (socket.socket.readyState !== WebSocket.OPEN) {
+        devErrorLog('WebSocket is not open:', name);
         return;
       }
       devLog('Sending message via WebSocket:', message);
