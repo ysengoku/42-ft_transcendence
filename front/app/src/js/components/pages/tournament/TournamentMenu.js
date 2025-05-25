@@ -62,6 +62,7 @@ export class TournamentMenu extends HTMLElement {
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
+    this.modalComponent.removeEventListener('hidden.bs.modal', this.handleCloseModal);
     if (this.selectedTournament && this.selectedTournament.staus !== 'pending') {
       this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
@@ -112,6 +113,7 @@ export class TournamentMenu extends HTMLElement {
 
     document.addEventListener('hide-modal', this.hideModal);
     this.modalComponent.addEventListener('hide.bs.modal', this.handleCloseModal);
+    this.modalComponent.addEventListener('hidden.bs.modal', this.handleCloseModal);
     window.requestAnimationFrame(() => {
       this.noOpenTournaments = document.getElementById('no-open-tournaments');
       this.noOpenTournaments?.addEventListener('click', this.showNewTournamentForm);
@@ -247,7 +249,6 @@ export class TournamentMenu extends HTMLElement {
         null, false, true);
 
     if (response.success) {
-      this.modal.hide();
       this.connectToTournamentRoom();
     } else {
       if (response.msg === 'Tournament is full.') {
@@ -278,13 +279,17 @@ export class TournamentMenu extends HTMLElement {
   }
 
   connectToTournamentRoom() {
+    this.modalComponent.addEventListener('hidden.bs.modal', () => {
+      router.navigate(`/tournament/${this.selectedTournament.id}`);
+    }, { once: true });
     this.modal.hide();
-    router.navigate(`/tournament/${this.selectedTournament.id}`);
   }
 
   navigateToOverview() {
+    this.modalComponent.addEventListener('hidden.bs.modal', () => {
+      router.navigate(`/tournament-overview/${this.selectedTournament.id}`);
+    }, { once: true });
     this.modal.hide();
-    router.navigate(`/tournament-overview/${this.selectedTournament.id}`);
   }
 
   /* ------------------------------------------------------------------------ */

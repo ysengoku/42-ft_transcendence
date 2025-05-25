@@ -22,6 +22,7 @@ export class Home extends HTMLElement {
 
   render() {
     if (!this.#state.isLoggedin) {
+      // Redirect
       router.navigate('/');
       return;
     }
