@@ -31,6 +31,7 @@ export class DuelMenu extends HTMLElement {
     super();
 
     this.optionsButton = null;
+    this.modalElement = null;
     this.gameOptionsModal = null;
     this.gameOptionComponent = null;
     this.form = null;
@@ -46,6 +47,7 @@ export class DuelMenu extends HTMLElement {
 
     this.openGameOptionsModal = this.openGameOptionsModal.bind(this);
     this.closeGameOptionsModal = this.closeGameOptionsModal.bind(this);
+    this.clearFocusInModal = this.clearFocusInModal.bind(this);
     this.saveSelectedOptions = this.saveSelectedOptions.bind(this);
     this.handleSearchInput = this.handleSearchInput.bind(this);
     this.loadMoreUsers = this.loadMoreUsers.bind(this);
@@ -179,6 +181,7 @@ export class DuelMenu extends HTMLElement {
     this.modalSaveButton.addEventListener('click', this.saveSelectedOptions);
     this.modalCancelButton.addEventListener('click', this.closeGameOptionsModal);
     this.modalCloseButton.addEventListener('click', this.closeGameOptionsModal);
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
 
     this.gameOptionComponent = this.modalElement.querySelector('game-options');
   }
@@ -190,17 +193,27 @@ export class DuelMenu extends HTMLElement {
   }
 
   closeGameOptionsModal() {
-    if (this.gameOptionsModal) {
-      const options = this.modalBodyContent.selectedOptions;
-      if (options) {
-        this.#state.options = options;
-      }
-      this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
-      this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
-      this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
-      this.gameOptionsModal.hide();
+    if (!this.gameOptionsModal) {
+      return;
+    }
+    const options = this.modalBodyContent.selectedOptions;
+    if (options) {
+      this.#state.options = options;
+    }
+    this.modalElement.addEventListener('hidden.bs.modal', () => {
+      this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
       document.body.removeChild(this.modalElement);
       this.gameOptionsModal = null;
+    }, { once: true });
+    this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
+    this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
+    this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
+    this.gameOptionsModal.hide();
+  }
+
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
     }
   }
 
