@@ -148,8 +148,8 @@ export class UserProfile extends HTMLElement {
   template() {
     return `
     <div class="container-fluid">
-      <game-result-modal></game-result-modal>
-      <div class="row">
+    <div class="row">
+    <game-result-modal></game-result-modal>
 
         <!-- Container Left -->
         <div class="d-flex col-12 col-lg-6 py-4">
