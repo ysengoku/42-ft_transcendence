@@ -5,7 +5,7 @@ import './components/index.js';
 
 export class Duel extends HTMLElement {
   #state = {
-    status: '', // inviting, matchmaking, starting, canceled, declied
+    status: '', // inviting, matchmaking, starting, canceled, declied, finished?
     gameId: '',
     loggedInUser: null,
     opponent: null,
@@ -82,24 +82,34 @@ export class Duel extends HTMLElement {
     this.animation = this.querySelector('.pongAnimation');
     this.timer = this.querySelector('#timer');
 
+    this.renderContent();
+      // ==== For test ================
+      // setTimeout(() => {
+      //   const data = {
+      //     // gameId: 'test-game-id',
+      //     username: this.#state.opponent.username,
+      //   };
+        // this.invitationAccepted(data);
+      //   this.invitationDeclined(data);
+      // }, 5000);
+      // ================================
+  }
+
+  renderContent() {
+    this.content.innerHTML = '';
     this.header.textContent = this.headerTemplate();
     this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
     this.content.appendChild(this.contentElement);
 
     if (this.#state.status === 'matchmaking' || this.#state.status === 'inviting') {
       this.animation.classList.remove('d-none');
-      // ==== For test ================
-      // setTimeout(() => {
-      //   const data = {
-      //     gameId: 'test-game-id',
-      //   };
-      //   this.invitationAccepted(data);
-      // }, 5000);
-      // ================================
     } else if (this.#state.status === 'starting') {
       this.animation.classList.add('d-none');
       this.timer.classList.remove('d-none');
       this.startDuel();
+    } else {
+      this.animation.classList.add('d-none');
+      this.timer.classList.add('d-none');
     }
     if (this.#state.status === 'inviting') {
       this.cancelButton?.addEventListener('click', this.cancelInvitation);
@@ -120,7 +130,7 @@ export class Duel extends HTMLElement {
   }
 
   handleGameFound(event) {
-    devLog('Game found event:', event.detail);
+    devLog('Game found:', event.detail);
     this.#state.gameId = event.detail.game_room_id;
     const { username, nickname, avatar, elo } = event.detail;
     this.#state.opponent = {
@@ -137,33 +147,36 @@ export class Duel extends HTMLElement {
     const message = { action: 'cancel' };
     socketManager.sendMessage('matchmaking', message);
     router.removeBeforeunloadCallback();
+    window.removeEventListener('beforeunload', this.confirmLeavePage);
     router.navigate('/duel-menu');
+    socketManager.closeSocket('matchmaking'); 
   }
 
   invitationAccepted(data) {
     this.#state.status = 'starting';
     this.#state.gameId = data.gameId;
-    this.render();
+    this.startDuel();
   }
 
   invitationDeclined(data) {
+    devLog('Invitation declined:', data);
     if (data.username !== this.#state.opponent.username) {
       return;
     }
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
-    this.#state.status = 'decliend';
-    this.render();
+    this.#state.status = 'declined';
+    this.renderContent();
   }
 
   cancelInvitation() {
-    devLog('Canceling invitation');
+    devLog('Canceling game invitation');
     const message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
     socketManager.sendMessage('livechat', message);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     this.#state.status = 'canceled';
-    this.render();
+    this.renderContent();
   }
 
   startDuel() {
@@ -189,7 +202,7 @@ export class Duel extends HTMLElement {
   }
 
   async confirmLeavePage(event) {
-    const message = 'If you leave this page, the duel will be canceled.\nDo you want to continue?';
+    const confirmationMessage = 'If you leave this page, the duel will be canceled.\nDo you want to continue?';
     if (event) {
       event.preventDefault();
       router.removeBeforeunloadCallback();
@@ -199,7 +212,7 @@ export class Duel extends HTMLElement {
     const confirmationModal = document.createElement('confirmation-modal');
     this.appendChild(confirmationModal);
     confirmationModal.render();
-    confirmationModal.querySelector('.confirmation-message').textContent = message;
+    confirmationModal.querySelector('.confirmation-message').textContent = confirmationMessage;
     confirmationModal.querySelector('.confirm-button').textContent = 'Leave this page';
     confirmationModal.querySelector('.cancel-button').textContent = 'Stay';
     confirmationModal.showModal();
@@ -207,9 +220,18 @@ export class Duel extends HTMLElement {
     const userConfirmed = await new Promise((resolve) => {
       confirmationModal.handleConfirm = () => {
         devLog('User confirmed to leave the page');
-        const message = { action: 'cancel' };
-        devLog('Canceling matchmaking', message);
-        socketManager.sendMessage('matchmaking', message);
+        let message = '';
+        let wsName = '';
+        if (this.#state.status === 'matchmaking') {
+          message = { action: 'cancel' };
+          wsName = 'matchmaking';
+          devLog('Canceling matchmaking', message);
+        } else if (this.#state.status === 'inviting') {
+          message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
+          wsName = 'livechat';
+          devLog('Canceling game invitation', message);
+        }
+        socketManager.sendMessage(wsName, message);
         confirmationModal.remove();
         resolve(true);
       };
@@ -234,7 +256,7 @@ export class Duel extends HTMLElement {
     return `
     <div class="row justify-content-center m-2">
       <div class="form-container col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 d-flex flex-column justify-content-center align-items-center p-4">
-        <p class="fs-4 my-2" id="duel-header"></p>
+        <p class="fs-4 fw-bold my-2" id="duel-header"></p>
         <div class="pongAnimation d-none"></div>
         <div class="" id="timer"></div>
         <div id="duel-content"></div>
@@ -278,6 +300,8 @@ export class Duel extends HTMLElement {
       case 'starting':
         return 'Both gunslingers are here. Time to duel!';
       case 'canceled':
+        return 'This duel has been canceled.';
+      case 'declined':
         return 'This duel has been canceled.';
     }
   }

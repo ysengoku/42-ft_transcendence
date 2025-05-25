@@ -46,7 +46,7 @@ export class DuelPreview extends HTMLElement {
   }
 
   render() {
-    if (this.#state.status === 'canceled' || this.#state.status === 'declied') {
+    if (this.#state.status === 'canceled' || this.#state.status === 'declined') {
       this.innerHTML = this.canceledTemplate();
 
       const cancelMessage = this.querySelector('#cancel-message');
@@ -55,7 +55,7 @@ export class DuelPreview extends HTMLElement {
         `${this.#state.user2.nickname} declined the duel.`;
 
       this.goToHomeButton = this.querySelector('#btn-go-to-home');
-      this.goToDuelMenuButton = this.querySelector('#btn-go-to-duel');
+      this.goToDuelMenuButton = this.querySelector('#btn-go-to-duelmenu');
       this.goToHomeButton.addEventListener('click', this.navigateToHome);
       this.goToDuelMenuButton.addEventListener('click', this.navigateToDuelMenu);
       return;
@@ -110,9 +110,9 @@ export class DuelPreview extends HTMLElement {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center gap-3">
       <div class="mt-2" id="cancel-message"></div>
-      <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">
-        <button class="btn btn-wood" id="btn-go-to-home">Back to Saloon</button>
-        <button class="btn btn-wood" id="btn-go-to-duel">Find another duel</button>
+      <div class="d-flex flex-row justify-content-center align-items-center mt-5 gap-3">
+        <button class="btn fw-bold" id="btn-go-to-home">Go back to Saloon</button>
+        <button class="btn fw-bold" id="btn-go-to-duelmenu">Find another duel</button>
       </div>
     </div>
     `;
