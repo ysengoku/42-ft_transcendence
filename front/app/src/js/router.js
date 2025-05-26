@@ -10,6 +10,9 @@ const router = (() => {
   class Router {
     constructor() {
       this.routes = new Map();
+      this.pathToReplace = new Set(
+        ['/reset-password', '/mfa-verification', '/user-not-found']
+      )
       this.isFristLoad = true;
       this.currentComponent = null;
       this.beforeunloadCallback = null;
@@ -186,12 +189,14 @@ const router = (() => {
         queryParamsObject = queryParams;
       }
 
-      let historyUpdateMethod = '';
-      if (redirect || this.isFristLoad || path === '/user-not-found') {
-        historyUpdateMethod = 'replaceState';
-      } else {
-        historyUpdateMethod = 'pushState';
-      }
+      // let historyUpdateMethod = '';
+      // if (redirect || this.isFristLoad || path === '/user-not-found') {
+      //     historyUpdateMethod = 'replaceState';
+      // } else {
+      //   historyUpdateMethod = 'pushState';
+      // }
+      const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
+      const historyUpdateMethod = shouldReplace ? 'replaceState' : 'pushState';
       window.history[historyUpdateMethod]({}, '', path);
       this.isFristLoad = false;
       this.handleRoute(queryParamsObject);
