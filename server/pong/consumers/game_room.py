@@ -5,6 +5,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
 from pong.consumers.common import PongCloseCodes
+from pong.consumers.game_protocol import GameRoomToClientEvents, GameRoomToGameWorkerEvents
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
@@ -57,24 +58,24 @@ class GameRoomConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
         self.send(
             text_data=json.dumps(
-                {
-                    "action": "player_joined",
-                    "player_id": str(self.player.id),
-                },
+                GameRoomToClientEvents.PlayerJoined(
+                    action="player_joined",
+                    player_id=str(self.player.id),
+                ),
             ),
         )
         profile = self.user.profile
         async_to_sync(self.channel_layer.send)(
             "game",
-            {
-                "type": "player_connected",
-                "game_room_id": self.game_room_id,
-                "player_id": str(self.player.id),
-                "profile_id": str(profile.id),
-                "name": self.user.nickname if self.user.nickname else self.user.username,
-                "avatar": profile.avatar,
-                "elo": profile.elo,
-            },
+            GameRoomToGameWorkerEvents.PlayerConnected(
+                type="player_connected",
+                game_room_id=self.game_room_id,
+                player_id=str(self.player.id),
+                profile_id=str(profile.id),
+                name=self.user.nickname if self.user.nickname else self.user.username,
+                avatar=profile.avatar,
+                elo=profile.elo,
+            ),
         )
 
     def disconnect(self, close_code):
@@ -86,11 +87,11 @@ class GameRoomConsumer(WebsocketConsumer):
         if self.player:
             async_to_sync(self.channel_layer.send)(
                 "game",
-                {
-                    "game_room_id": self.game_room_id,
-                    "player_id": str(self.player.id),
-                    "type": "player_disconnected",
-                },
+                GameRoomToGameWorkerEvents.PlayerDisconnected(
+                    type="player_disconnected",
+                    game_room_id=self.game_room_id,
+                    player_id=str(self.player.id),
+                ),
             )
             logger.info(
                 "[GameRoom.disconnect]: player {%s} has left game room {%s}",
@@ -119,13 +120,13 @@ class GameRoomConsumer(WebsocketConsumer):
             }:
                 async_to_sync(self.channel_layer.send)(
                     "game",
-                    {
-                        "game_room_id": self.game_room_id,
-                        "player_id": player_id,
-                        "action": action,
-                        "content": content,
-                        "type": "player_inputed",
-                    },
+                    GameRoomToGameWorkerEvents.PlayerInputed(
+                        type="player_inputed",
+                        action=action,
+                        game_room_id=self.game_room_id,
+                        player_id=player_id,
+                        content=content,
+                    ),
                 )
 
             case unknown:

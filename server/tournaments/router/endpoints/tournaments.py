@@ -102,7 +102,7 @@ def get_all_tournaments(request, status: str = "all"):
     if not base_qs.exists():
         return 204, None
 
-    if status != Tournament.CANCELLED:
+   if status != Tournament.CANCELLED:
         base_qs = base_qs.exclude(status=Tournament.CANCELLED)
 
     return base_qs

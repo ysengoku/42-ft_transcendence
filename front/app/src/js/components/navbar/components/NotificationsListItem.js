@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { socketManager } from '@socket';
 import { getRelativeTime } from '@utils';
 
 export class NotificationsListItem extends HTMLElement {
@@ -8,9 +9,9 @@ export class NotificationsListItem extends HTMLElement {
   };
 
   message = {
-    gameInvitation: (username) => `${username} challenges you to a duel.`,
-    newTournament: (username, tournamentName) => `${username} is calling all gunslingers to a new tournament - ${tournamentName}!`,
-    newFriend: (username) =>`${username} just roped you in as a friend.`,
+    gameInvitation: (nickname) => `${nickname} challenges you to a duel.`,
+    newTournament: (nickname, tournamentName) => `${nickname} is calling all gunslingers to a new tournament - ${tournamentName}!`,
+    newFriend: (nickname) =>`${nickname} just roped you in as a friend.`,
   };
 
   constructor() {
@@ -61,7 +62,7 @@ export class NotificationsListItem extends HTMLElement {
 
       case 'new_tournament':
         this.querySelector('.notification-content').textContent =
-          this.message.newTournament(this.#state.data.nickname, this.#state.data.tournament_name);
+          this.message.newTournament(this.#state.data.nickname, this.#state.data.name);
 
         this.participateButton = document.createElement('button');
         this.participateButton.textContent = 'Participate';
@@ -79,12 +80,23 @@ export class NotificationsListItem extends HTMLElement {
     }
   }
 
+  replyGameInvite(accept) {
+    const message = {
+      action: 'reply_game_invite',
+      data: {
+        username: this.#state.data.username,
+        accept: accept,
+      },
+    };
+    socketManager.sendMessage('livechat', message);
+  }
+
   handleAcceptDuel() {
-    console.log('Duel accepted');
+    this.replyGameInvite(true);
   }
 
   handleDeclineDuel() {
-    console.log('Duel declined');
+    this.replyGameInvite(false);
   }
 
   handleParticipateTournament() {

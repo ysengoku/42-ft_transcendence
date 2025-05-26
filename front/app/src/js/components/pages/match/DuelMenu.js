@@ -2,6 +2,7 @@ import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
+import { socketManager } from '@socket';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
@@ -9,7 +10,12 @@ export class DuelMenu extends HTMLElement {
   #state = {
     user: null,
     opponentUsername: '',
-    options: null,
+    options: {
+      scoreToWin: 15,
+      gameSpeed: 'normal',
+      isRanked: true,
+      timeLimitMinutes: 3,
+    },
   };
 
   #usersearch = {
@@ -25,7 +31,9 @@ export class DuelMenu extends HTMLElement {
     super();
 
     this.optionsButton = null;
+    this.modalElement = null;
     this.gameOptionsModal = null;
+    this.gameOptionComponent = null;
     this.form = null;
     this.searchInput = null;
     this.userList = null;
@@ -39,6 +47,7 @@ export class DuelMenu extends HTMLElement {
 
     this.openGameOptionsModal = this.openGameOptionsModal.bind(this);
     this.closeGameOptionsModal = this.closeGameOptionsModal.bind(this);
+    this.clearFocusInModal = this.clearFocusInModal.bind(this);
     this.saveSelectedOptions = this.saveSelectedOptions.bind(this);
     this.handleSearchInput = this.handleSearchInput.bind(this);
     this.loadMoreUsers = this.loadMoreUsers.bind(this);
@@ -57,11 +66,12 @@ export class DuelMenu extends HTMLElement {
       }
       return;
     }
-    // if (authStatus.response.game_id) {
-    //   // TODO: Redirect to multiplayer game page
-    //   return;
-    // }
-
+    this.#state.user = authStatus.response;
+    if (authStatus.response.game_id) {
+      devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
+      router.navigate(`multiplayer-game/${authStatus.response.game_id}`);
+      return;
+    }
     this.render();
   }
 
@@ -76,6 +86,7 @@ export class DuelMenu extends HTMLElement {
     this.userList?.querySelectorAll('li').forEach((item) => {
       item.removeEventListener('click', this.selectOpponent);
     });
+    this.closeGameOptionsModal();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -85,8 +96,6 @@ export class DuelMenu extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.optionsButton = this.querySelector('#game-options-button');
-    this.gameOptionsModal = this.querySelector('game-options-modal');
-
     this.searchInput = this.querySelector('input');
     this.userList = this.querySelector('#duel-user-list');
     this.inviteButton = this.querySelector('#invite-button');
@@ -95,6 +104,7 @@ export class DuelMenu extends HTMLElement {
     this.opponentNickname = this.querySelector('.opponent-nickname');
     this.opponentUsername = this.querySelector('.opponent-username');
     this.opponentElo = this.querySelector('.opponent-elo');
+    this.opponentAvatarWraper = this.querySelector('.opponent-avatar-wrapper');
     this.opponentAvatar = this.querySelector('.opponent-avatar');
     this.opponentOnlineStatus = this.querySelector('.opponent-status-indicator');
 
@@ -160,10 +170,8 @@ export class DuelMenu extends HTMLElement {
       // TODO: handle error
       return;
     }
-    const modalBody = this.modalElement.querySelector('.modal-body');
-    this.modalBodyContent = document.createElement('game-options');
+    this.modalBodyContent = document.querySelector('game-options');
     this.modalBodyContent.selectedOptions = this.#state.options;
-    modalBody.appendChild(this.modalBodyContent);
     this.gameOptionsModal.show();
 
     this.modalSaveButton = this.modalElement.querySelector('.confirm-button');
@@ -173,6 +181,9 @@ export class DuelMenu extends HTMLElement {
     this.modalSaveButton.addEventListener('click', this.saveSelectedOptions);
     this.modalCancelButton.addEventListener('click', this.closeGameOptionsModal);
     this.modalCloseButton.addEventListener('click', this.closeGameOptionsModal);
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
+
+    this.gameOptionComponent = this.modalElement.querySelector('game-options');
   }
 
   saveSelectedOptions() {
@@ -182,13 +193,27 @@ export class DuelMenu extends HTMLElement {
   }
 
   closeGameOptionsModal() {
-    if (this.gameOptionsModal) {
-      this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
-      this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
-      this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
-      this.gameOptionsModal.hide();
+    if (!this.gameOptionsModal) {
+      return;
+    }
+    const options = this.modalBodyContent.selectedOptions;
+    if (options) {
+      this.#state.options = options;
+    }
+    this.modalElement.addEventListener('hidden.bs.modal', () => {
+      this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
       document.body.removeChild(this.modalElement);
       this.gameOptionsModal = null;
+    }, { once: true });
+    this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
+    this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
+    this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
+    this.gameOptionsModal.hide();
+  }
+
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
     }
   }
 
@@ -255,6 +280,7 @@ export class DuelMenu extends HTMLElement {
     this.opponentNickname.textContent = nickname;
     this.opponentUsername.textContent = username;
     this.opponentElo.textContent = elo;
+    this.opponentAvatarWraper.classList.remove('d-none');
 
     const onlineStatusIndicator = selectedUser.querySelector('.duel-usersearch-status-indicator');
     const online = onlineStatusIndicator.classList.contains('online');
@@ -270,23 +296,37 @@ export class DuelMenu extends HTMLElement {
     this.#usersearch.searchQuery = '';
     this.searchInput.value = '';
 
-    this.#state.opponentUsername = username;
+    this.#state.opponentUsername = username.substring(1);
     this.inviteButton.classList.remove('disabled');
   }
 
-  async inviteToDuel(event) {
+  inviteToDuel(event) {
     event.preventDefault();
     if (!this.#state.opponentUsername) {
       const errorMessage = 'Opponent not selected';
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 5000);
       return;
     }
+    const message = {
+      action: 'game_invite',
+      data: {
+        username: this.#state.opponentUsername,
+        options: {
+          score_to_win: this.#state.options.scoreToWin,
+          game_speed: this.#state.options.gameSpeed,
+          is_ranked: this.#state.options.isRanked,
+          time_limit_minutes: this.#state.options.timeLimitMinutes,
+        },
+      },
+    };
+    devLog('Sending duel invite:', message);
+    socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
       username: this.#state.opponentUsername,
       nickname: this.opponentNickname.textContent,
       avatar: this.opponentAvatar.src,
-      elo: this.opponentElo.textContent,
+      // elo: this.opponentElo.textContent.substring(4),
     };
     router.navigate('/duel', queryParams);
   }
@@ -313,7 +353,6 @@ export class DuelMenu extends HTMLElement {
   ignoreEnterKeyPress(event) {
     if (event.key === 'Enter') {
       event.preventDefault();
-      // event.stopPropagation();
     }
   }
 
@@ -345,7 +384,7 @@ export class DuelMenu extends HTMLElement {
                     <p class="opponent-username m-0 text-break"></p>
                   </div>
                   <span class="opponent-elo badge ms-2 my-1"></span>
-                  <div class="position-relative d-inline-block mt-2">
+                  <div class="opponent-avatar-wrapper position-relative d-inline-block mt-2 d-none">
                     <img class="opponent-avatar" />
                     <span class="online-status opponent-status-indicator position-absolute ms-3 d-none"></span>
                   </div>
@@ -438,13 +477,15 @@ export class DuelMenu extends HTMLElement {
 
   gameOptionsModalTemplate() {
     return `
-    <div class="modal fade mt-5" tabindex="-1" aria-hidden="true">
+    <div class="modal fade mt-2" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog pt-4">
         <div class="modal-content wood-board">
           <div class="modal-header border-0">
             <button type="button" class="btn-close btn-close-white" aria-label="Close"></button>
           </div>
-          <div class="modal-body"></div>
+          <div class="modal-body">
+            <game-options></game-options>
+          </div>
           <div class="modal-footer border-0 mt-4">
             <button type="button" class="cancel-button btn" data-bs-dismiss="modal">Cancel</button>
             <button type="button" class="confirm-button btn fw-bolder fs-5" data-bs-dismiss="modal">Save choice</button>

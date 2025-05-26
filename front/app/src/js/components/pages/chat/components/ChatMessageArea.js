@@ -5,7 +5,6 @@
  *              loading more messages, and toggling likes on messages.
  * @module ChatMessageArea
  */
-// import 'bootstrap';
 import { Tooltip } from 'bootstrap';
 import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
@@ -40,7 +39,22 @@ export class ChatMessageArea extends HTMLElement {
 
   constructor() {
     super();
+
+    // Initialize components
+    this.header = null;
+    this.headerAvatar = null;
+    this.headerNickname = null;
+    this.headerUsername = null;
+    this.headerOnlineStatusIndicator = null;
+    this.headerOnlineStatus = null;
+    this.invitePlayButton = null;
+    this.gameInvitationModal = null;
+    this.blockButoon = null;
+    this.chatMessages = null;
+
+    // Bind methods to the component instance
     this.navigateToProfile = this.navigateToProfile.bind(this);
+    this.openGameInvitationModal = this.openGameInvitationModal.bind(this);
     this.blockUser = this.blockUser.bind(this);
     this.unblockUser = this.unblockUser.bind(this);
     this.loadMoreMessages = this.loadMoreMessages.bind(this);
@@ -72,9 +86,12 @@ export class ChatMessageArea extends HTMLElement {
   disconnectedCallback() {
     this.header?.removeEventListener('click', this.navigateToProfile);
     if (this.#state.data) {
-      this.#state.data.is_blocked_user ?
-        this.blockButoon?.removeEventListener('click', this.unblockUser) :
-        this.blockButoon?.removeEventListener('click', this.blockUser);
+      this.#state.data.is_blocked_user ? (
+        this.blockButoon?.removeEventListener('click', this.unblockUser)
+      ) : (
+        this.invitePlayButton?.removeEventListener('click', this.openGameInvitationModal),
+        this.blockButoon?.removeEventListener('click', this.blockUser)
+      );
       this.#state.data.messages.forEach = (message, index) => {
         message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
       };
@@ -85,7 +102,6 @@ export class ChatMessageArea extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
-
   render() {
     this.innerHTML = this.template() + this.style();
     this.messageInput = this.querySelector('#chat-message-input-wrapper');
@@ -97,7 +113,7 @@ export class ChatMessageArea extends HTMLElement {
       return;
     }
 
-    // Initialize elements
+    // Select components from the template.
     this.header = this.querySelector('#chat-header');
     this.headerAvatar = this.querySelector('#chat-header-avatar');
     this.headerNickname = this.querySelector('#chat-header-nickname');
@@ -105,6 +121,7 @@ export class ChatMessageArea extends HTMLElement {
     this.headerOnlineStatusIndicator = this.querySelector('#chat-header-online-status-indicator');
     this.headerOnlineStatus = this.querySelector('#chat-header-online-status');
     this.invitePlayButton = this.querySelector('#chat-invite-play-button');
+    this.gameInvitationModal = document.querySelector('invite-game-modal');
     this.blockButoon = this.querySelector('#chat-block-user-button');
     this.chatMessages = this.querySelector('#chat-messages');
 
@@ -139,6 +156,7 @@ export class ChatMessageArea extends HTMLElement {
       this.messageInput.classList.remove('d-none');
       this.invitePlayButton.classList.remove('d-none');
       this.blockButoon.textContent = 'Block user';
+      this.invitePlayButton.addEventListener('click', this.openGameInvitationModal);
       this.blockButoon.addEventListener('click', this.blockUser);
     }
   }
@@ -255,9 +273,17 @@ export class ChatMessageArea extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Event handlers                                                       */
   /* ------------------------------------------------------------------------ */
-
   navigateToProfile() {
     router.navigate(`/profile/${this.#state.data.username}`);
+  }
+
+  openGameInvitationModal() {
+    const user = {
+      username: this.#state.data.username,
+      nickname: this.#state.data.nickname,
+      avatar: this.#state.data.avatar,
+    };
+    this.gameInvitationModal.showModal(user);
   }
 
   /**
@@ -321,6 +347,11 @@ export class ChatMessageArea extends HTMLElement {
     }
   }
 
+  /**
+   * Toggle the like status of a message.
+   * @param {Event} event - The click event on the message bubble.
+   * @return {void}
+   */
   toggleLikeMessage(event) {
     const messageBubble = event.target.closest('.bubble');
     if (!messageBubble) {
@@ -332,8 +363,13 @@ export class ChatMessageArea extends HTMLElement {
     this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, messageData.is_liked);
   }
 
+  /**
+   * Update the online status of the user in the chat header.
+   * @param {Object} data - The data containing the online status.
+   * @property {boolean} data.online - The online status of the user.
+   * @return {void}
+   * */
   updateOnlineStatus(data) {
-    console.log('Updating online status:', data);
     this.headerOnlineStatusIndicator.classList.toggle('online', data.online);
     this.headerOnlineStatus.textContent = data.online ? 'online' : 'offline';
   }
@@ -341,7 +377,6 @@ export class ChatMessageArea extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Template & style                                                     */
   /* ------------------------------------------------------------------------ */
-
   template() {
     return `
     <div class="d-flex flex-column h-100">

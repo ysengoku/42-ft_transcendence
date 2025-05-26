@@ -35,7 +35,6 @@ export class TournamentOverviewTable extends HTMLElement {
 
     const bracketsWrapper = roundElement.querySelector('.brackets-wrapper');
     const brackets = this.#state.rounds[index].brackets;
-    console.log(brackets);
     brackets.forEach((bracket) => {
       const bracketElement = this.createBracketElement(bracket);
       bracketsWrapper.appendChild(bracketElement);

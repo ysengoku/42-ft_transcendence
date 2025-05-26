@@ -4,6 +4,7 @@ import { ChatUserSearchItem } from './ChatUserSearchItem';
 import { ChatListItem } from './ChatListItem';
 import { ChatMessageArea } from './ChatMessageArea';
 import { ChatMessageInput } from './ChatMessageInput';
+import { InviteGameModal } from './InviteGameModal';
 
 export {
   ChatList,
@@ -12,4 +13,5 @@ export {
   ChatListItem,
   ChatMessageArea,
   ChatMessageInput,
+  InviteGameModal,
 };

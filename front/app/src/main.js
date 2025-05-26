@@ -4,6 +4,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import '@components/navbar/index.js';
 import '@components/pages/index.js';
+import '@socket';
 import '@css/style.css';
 import { createClouds, createStars } from '@utils';
 
@@ -50,17 +51,3 @@ window.devErrorLog = (...args) => {
     console.log('%c[ERROR]', 'color: red; font-weight: bold;', ...args, ` (${location})`);
   }
 };
-
-// window.devLog = (level, ...args) => {
-//   if (process.env.NODE_ENV === 'development') {
-//     const stack = new Error().stack.split('\n')[2].trim();
-//     const match = stack.match(/([^\/\\]+:\d+:\d+)/);
-//     let location = match ? match[1] : 'unknown';
-//     location = location.replace(/\?t=\d+/, '');
-//     if (level === `DEBUG`) {
-//       console.log('%c[DEV LOG]', 'color: green; font-weight: bold;', ...args, ` (${location})`);
-//     } else if (level === 'ERROR') {
-//       console.log('%c[ERROR]', 'color: red; font-weight: bold;', ...args, ` (${location})`);
-//     }
-//   }
-// };

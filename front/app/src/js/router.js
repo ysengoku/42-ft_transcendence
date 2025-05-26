@@ -1,24 +1,10 @@
 import { auth } from '@auth';
 import { addDissmissAlertListener } from '@utils';
 import { createClouds, createStars } from '@utils';
-// import { CubeTexture } from 'three/src/Three.Core.js';
 
 /**
  * Router module for handling client-side navigation.
  * @module router
- * @requires module:landing-page
- * @requires module:login-page
- * @requires module:register-form
- * @requires module:user-home
- * @requires module:user-profile
- * @requires module:user-not-found
- * @requires module:user-settings
- * @requires module:duel-menu
- * @requires module:duel
- * @requires module:duel-result
- * @requires module:tournament-menu
- * @requires module:tournament
- * @requires module:chat-page
  */
 const router = (() => {
   class Router {
@@ -27,6 +13,9 @@ const router = (() => {
       this.isFristLoad = true;
       this.currentComponent = null;
       this.beforeunloadCallback = null;
+
+      // const entry = performance.getEntriesByType('navigation')[0];
+      // console.log(entry);
     }
 
     /** Add a new route to the router.
@@ -84,7 +73,7 @@ const router = (() => {
           this.renderStaticUrlComponent(componentTag, queryParams);
         }
       } else {
-        console.error(`Route not found for: ${path}`);
+        devErrorLog('Route not found:', path);
         this.renderStaticUrlComponent('page-not-found');
       }
     }
