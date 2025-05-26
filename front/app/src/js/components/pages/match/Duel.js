@@ -37,6 +37,11 @@ export class Duel extends HTMLElement {
     }
   }
 
+  set status(status) {
+    this.#state.status = status;
+    this.renderContent();
+  }
+
   async connectedCallback() {
     this.#state.loggedInUser = await auth.getUser();
     if (!this.#state.loggedInUser) {

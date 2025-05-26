@@ -51,7 +51,7 @@ export class DuelPreview extends HTMLElement {
 
       const cancelMessage = this.querySelector('#cancel-message');
       cancelMessage.textContent = this.#state.status === 'canceled' ?
-        'You\'ve canceled the duel.' :
+        'Your invitation has been canceled.' :
         `${this.#state.user2.nickname} declined the duel.`;
 
       this.goToHomeButton = this.querySelector('#btn-go-to-home');
