@@ -6,6 +6,7 @@ from channels.generic.websocket import WebsocketConsumer
 from django.db import transaction
 
 from pong.consumers.common import PongCloseCodes
+from pong.consumers.game_protocol import MatchmakingToClientEvents
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
@@ -37,11 +38,17 @@ class MatchmakingConsumer(WebsocketConsumer):
 
             if not self.game_room:
                 self.game_room = GameRoom.objects.create()
-                GameRoomPlayer.objects.create(game_room=self.game_room, profile=self.user.profile)
+                game_room_player: GameRoomPlayer = GameRoomPlayer.objects.create(
+                    game_room=self.game_room,
+                    profile=self.user.profile,
+                )
                 logger.info("[Matchmaking.connect]: game room {%s} was created", self.game_room)
 
             elif not self.game_room.has_player(self.user.profile):
-                GameRoomPlayer.objects.create(game_room=self.game_room, profile=self.user.profile)
+                game_room_player: GameRoomPlayer = GameRoomPlayer.objects.create(
+                    game_room=self.game_room,
+                    profile=self.user.profile,
+                )
                 logger.info(
                     "[Matchmaking.connect]: game room {%s} added profile {%s}",
                     self.game_room,
@@ -69,7 +76,7 @@ class MatchmakingConsumer(WebsocketConsumer):
                 self.game_room.close()
                 async_to_sync(self.channel_layer.group_send)(
                     self.matchmaking_group_name,
-                    {"type": "matchmaking_players_found"},
+                    {"type": "game_found"},
                 )
 
     def disconnect(self, code: int):
@@ -141,29 +148,31 @@ class MatchmakingConsumer(WebsocketConsumer):
                     unknown,
                 )
 
-    def matchmaking_players_found(self, event):
+    def game_found(self, event):
         """
-        Event handler for `matchmaking_players_found`.
-        `matchmaking_players_found` triggers by the matchmaking consumer itself when the second player joins pending
+        Event handler for `game_found`.
+        `game_found` is triggered by the matchmaking consumer itself when the second player joins pending
         game room.
         """
-        opponent = self.game_room.players.exclude(user=self.user).first()
-        logger.info("[Matchmaking.players_found]: {%s} vs {%s}", self.user.profile, opponent)
+        opponent: GameRoomPlayer = self.game_room.players.exclude(user=self.user).first()
         self.game_room.status = GameRoom.ONGOING
         self.game_room.save()
         self.send(
             text_data=json.dumps(
-                {
-                    "action": "game_found",
-                    "game_room_id": str(self.game_room.id),
-                    "username": opponent.user.username,
-                    "nickname": opponent.user.nickname,
-                    "avatar": opponent.avatar,
-                    "elo": opponent.elo,
-                },
+                MatchmakingToClientEvents.GameFound(
+                    {
+                        "action": "game_found",
+                        "game_room_id": str(self.game_room.id),
+                        "username": opponent.user.username,
+                        "nickname": opponent.user.nickname,
+                        "avatar": opponent.avatar,
+                        "elo": opponent.elo,
+                    },
+                ),
             ),
         )
         self.close(PongCloseCodes.NORMAL_CLOSURE)
+        logger.info("[Matchmaking.game_found]: {%s} vs {%s}", self.user.profile, opponent)
 
     def _with_db_lock_find_valid_game_room(self):
         """
