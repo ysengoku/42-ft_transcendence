@@ -671,8 +671,11 @@ class UserEventsConsumer(WebsocketConsumer):
 
     # TODO : deal with case when user cancels invitation send
     def cancel_game_invite(self, data):
-        logger.critical(data)
         receiver_username = data["data"].get("username")
+        invitation = GameInvitation.objects.get(
+            sender=self.user.profile, status=GameInvitation.PENDING)
+        invitation.status = GameInvitation.CANCELLED
+        invitation.save()
 
         # if (self.profile.user) ==
 
