@@ -91,7 +91,7 @@ export class ChatMessageArea extends HTMLElement {
       ) : (
         this.invitePlayButton?.removeEventListener('click', this.openGameInvitationModal),
         this.blockButoon?.removeEventListener('click', this.blockUser)
-      )
+      );
       this.#state.data.messages.forEach = (message, index) => {
         message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
       };
@@ -350,7 +350,7 @@ export class ChatMessageArea extends HTMLElement {
   /**
    * Toggle the like status of a message.
    * @param {Event} event - The click event on the message bubble.
-   * @returns {void}
+   * @return {void}
    */
   toggleLikeMessage(event) {
     const messageBubble = event.target.closest('.bubble');
