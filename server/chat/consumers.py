@@ -173,7 +173,7 @@ class UserEventsConsumer(WebsocketConsumer):
             "read_notification": {"id": str},
             "notification": {"message": str, "type": str},
             # TODO : replace game_invite by reply_game_invite
-            "game_invite": {"id": str, "accept": bool},
+            # "game_invite": {"id": str, "accept": bool},
         }
 
         uuid_fields = {
@@ -183,7 +183,7 @@ class UserEventsConsumer(WebsocketConsumer):
             "read_message": ["id"],
             "read_notification": ["id"],
             # TODO : replace game_invite by reply_game_invite -->
-            "game_invite": ["id"],
+            # "game_invite": ["id"],
             "game_accepted": ["id"],
             "game_declined": ["id"],
             # TODO : replace game_invite by reply_game_invite <--
@@ -233,7 +233,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 "unlike_message": ["id", "chat_id"],
                 "read_message": ["id"],
                 # TODO : check game_invite and reply_game_invite
-                "game_invite": ["receiver_id"],
+                # "game_invite": ["receiver_id"],
                 "reply_game_invite": ["id", "accept"],
                 "game_accepted": ["invitation_id"],
                 "game_declined": ["invitation_id"],
@@ -618,52 +618,11 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
-        receiver_username = data.get["username"]
-
-        sender_id = data["data"].get["sender_id"]
-        if not sender_id:
-            logger.warning("Sender id missing for the game_invite")
-            return
-        sender = Profile.objects.get(id=sender_id)
-        receiver = Profile.objects.get(username=receiver_username)
-        receiver_id = receiver.id
-        if not receiver_id:
-            logger.warning("Receiver id missing for the game_invite")
-            return
+        receiver_username = data["data"].get("username")
+        # sender = Profile.objects.get(id=sender_id)
 
         try:
-            receiver = Profile.objects.get(id=receiver_id)
-
-            invitation = GameInvitation.objects.create(
-                sender=self.user_profile,  # ✓ Direct
-                game_session=None,
-                recipient=receiver,
-            )
-
-            # Créer notification (utilise déjà to_username_nickname_avatar_schema)
-            notification_data = {"game_id": str(invitation.id)}
-            notification = Notification.objects._create(
-                receiver=receiver,
-                sender=self.user_profile,
-                notification_action=Notification.GAME_INVITE,
-                notification_data=notification_data
-            )
-
-            # Confirmation à l'expéditeur
-            self.send(text_data=json.dumps({
-                "action": "game_invite",
-                "data": {"id": str(invitation.id), "receiver": receiver.user.username}
-            }))
-
-            # Notification au destinataire
-            async_to_sync(self.channel_layer.group_send)(
-                f"user_{receiver_id}",
-                {
-                    "type": "chat_message",  # ✓ Bon type
-                    "action": "game_invite",
-                    "data": notification.data,
-                }
-            )
+            receiver = Profile.objects.get(user__username=receiver_username)
 
         except Profile.DoesNotExist as e:
             logger.error("Profile does not exist : %s", str(e))
@@ -671,6 +630,40 @@ class UserEventsConsumer(WebsocketConsumer):
                 "action": "error",
                 "message": "Invalid profile"
             }))
+
+        invitation = GameInvitation.objects.create(
+            sender=self.user_profile,  # ✓ Direct
+            game_session=None,
+            recipient=receiver,
+            options=options,
+        )
+
+        # Créer notification (utilise déjà to_username_nickname_avatar_schema)
+        notification_data = {"game_id": str(invitation.id)}
+        notification = Notification.objects.create(
+            receiver=receiver,
+            # sender=self.user_profile,
+            action=Notification.GAME_INVITE,
+            data=notification_data
+        )
+
+        # Confirmation à l'expéditeur
+        self.send(text_data=json.dumps({
+            "action": "game_invite",
+            "data": {"id": str(invitation.id), "receiver": receiver.user.username}
+        }))
+
+        # Notification au destinataire
+        async_to_sync(self.channel_layer.group_send)(
+            f"user_{receiver.id}",
+            {
+                "type": "chat_message",  # ✓ Bon type
+                "message": json.dumps({
+                    "action": "game_invite",
+                    "data": notification.data,
+                })
+            }
+        )
 
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]
