@@ -38,13 +38,12 @@ export class Tournament extends HTMLElement {
     const user = await auth.fetchAuthStatus();
     if (!user) {
       showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
-      router.navigate('/login');
+      router.redirect('/login');
       return;
     }
     if (user.response.tournament_id !== this.#state.tournamentId) {
       devLog('User is not in this tournament');
-      // Redirect to tournament menu
-      router.navigate('/tournament-menu');
+      router.redirect('/tournament-menu');
       return;
     }
     await this.fetchTournamentData();

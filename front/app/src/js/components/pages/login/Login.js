@@ -12,8 +12,8 @@ export class Login extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     this.isLoggedin = authStatus.success;
     if (this.isLoggedin) {
-      // Redirect
-      router.navigate('/home');
+      router.redirect('/home');
+      return;
     }
     this.render();
   }

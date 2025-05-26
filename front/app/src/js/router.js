@@ -164,9 +164,10 @@ const router = (() => {
      * Navigates to the specified path.
      * @param {string} [path=window.location.pathname] - The path to navigate to.
      * @param {string} [queryParams=''] - The query parameters to include in the URL.
+     * @param {boolean} [redirect=false] - Whether to replace the current history entry or push a new one.
      * @return {void}
      */
-    async navigate(path = window.location.pathname, queryParams = '') {
+    async navigate(path = window.location.pathname, queryParams = '', redirect = false) {
       devLog('Navigating to:', path);
       if (this.beforeunloadCallback) {
         const response = await this.beforeunloadCallback();
@@ -185,12 +186,26 @@ const router = (() => {
         queryParamsObject = queryParams;
       }
 
-      const historyUpdateMethod = this.isFristLoad ?
-        'replaceState' :
-        (path === `'/user-not-found'` ? 'replaceState' : 'pushState');
+      let historyUpdateMethod = '';
+      if (redirect || this.isFristLoad || path === '/user-not-found') {
+        historyUpdateMethod = 'replaceState';
+      } else {
+        historyUpdateMethod = 'pushState';
+      }
       window.history[historyUpdateMethod]({}, '', path);
       this.isFristLoad = false;
       this.handleRoute(queryParamsObject);
+    }
+
+    /**
+     * Redirects to a new path. The old path is replaced by the redirection destination in the history stack.
+    * @param {string} [path=window.location.pathname] - The path to navigate to.
+     * @param {string} [queryParams=''] - The query parameters to include in the URL.
+     * @return {void}
+     */
+    async redirect(path = window.location.pathname, queryParams = '') {
+      devLog('Redirecting');
+      this.navigate(path, queryParams, true);
     }
 
     /**
