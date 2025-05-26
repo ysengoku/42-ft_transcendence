@@ -24,7 +24,7 @@ export class MultiplayerGame extends HTMLElement {
 
     this.onDocumentKeyDown = this.onDocumentKeyDown.bind(this);
     this.onDocumentKeyUp = this.onDocumentKeyUp.bind(this);
-    this.windowResize = this.windowResize.bind(this);
+    // this.windowResize = this.windowResize.bind(this);
     this.requestNewMatchmaking = this.requestNewMatchmaking.bind(this);
     this.navigateToHome = this.navigateToHome.bind(this);
   }
@@ -52,7 +52,7 @@ export class MultiplayerGame extends HTMLElement {
     document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
     document.removeEventListener('keydown', this.onDocumentKeyDown, true);
     document.removeEventListener('keyup', this.onDocumentKeyUp, true);
-    window.removeEventListener('resize', this.windowResize);
+    // window.removeEventListener('resize', this.windowResize);
   }
 
   onDocumentKeyDown(event) {
