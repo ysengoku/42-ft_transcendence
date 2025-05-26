@@ -1,5 +1,6 @@
 import { socketManager } from './socket';
 import { router } from '@router';
+import { auth } from '@auth';
 import { showToastNotification, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 // Socket registration for livechat module including Chat, Notifications, and Onlie status
@@ -41,7 +42,7 @@ socketManager.addSocket('livechat', {
     showToastNotification(`${data.nickname} challenges you to a duel.`);
   },
   game_accepted: (data) => {
-    if (window.location.pathname === '/duel') {
+    if (window.location.pathname !== '/duel') {
       const duelPage = document.querySelector('duel-page');
       duelPage?.invitationAccepted(data);
       return;
@@ -63,9 +64,20 @@ socketManager.addSocket('livechat', {
     if (window.location.pathname === '/duel') {
       const duelPage = document.querySelector('duel-page');
       duelPage?.invitationDeclined(data);
+      return;
     }
+    showToastNotification(`${data.nickname} declined the duel invitation.`);
   },
-  game_invite_canceled: (data) => {
+  game_invite_canceled: async (data) => {
+    if (window.location.pathname === '/duel') {
+      const duelPage = document.querySelector('duel-page');
+      duelPage.status = 'canceled';
+    }
+    const user = await auth.getStoredUser();
+    if (user.username === data.username) {
+      showToastNotification('Your duel invitation has been canceled.');
+      return;
+    }
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
     showToastNotification(`${data.nickname} cancelled the duel invitation.`);
