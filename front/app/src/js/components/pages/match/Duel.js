@@ -83,16 +83,16 @@ export class Duel extends HTMLElement {
     this.timer = this.querySelector('#timer');
 
     this.renderContent();
-      // ==== For test ================
-      // setTimeout(() => {
-      //   const data = {
-      //     // gameId: 'test-game-id',
-      //     username: this.#state.opponent.username,
-      //   };
-        // this.invitationAccepted(data);
-      //   this.invitationDeclined(data);
-      // }, 5000);
-      // ================================
+    // ==== For test ================
+    // setTimeout(() => {
+    //   const data = {
+    //     // gameId: 'test-game-id',
+    //     username: this.#state.opponent.username,
+    //   };
+    // this.invitationAccepted(data);
+    //   this.invitationDeclined(data);
+    // }, 5000);
+    // ================================
   }
 
   renderContent() {
@@ -149,7 +149,7 @@ export class Duel extends HTMLElement {
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     router.navigate('/duel-menu');
-    socketManager.closeSocket('matchmaking'); 
+    socketManager.closeSocket('matchmaking');
   }
 
   invitationAccepted(data) {
