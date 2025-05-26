@@ -154,19 +154,21 @@ class MatchmakingConsumer(WebsocketConsumer):
         `game_found` is triggered by the matchmaking consumer itself when the second player joins pending
         game room.
         """
-        opponent: GameRoomPlayer = self.game_room.players.exclude(profile=self.user.profile).first()
+        opponent: GameRoomPlayer = self.game_room.players.exclude(user=self.user).first()
         self.game_room.status = GameRoom.ONGOING
         self.game_room.save()
         self.send(
             text_data=json.dumps(
-                MatchmakingToClientEvents.GameFound({
-                    "action": "game_found",
-                    "game_room_id": str(self.game_room.id),
-                    "username": opponent.profile.user.username,
-                    "nickname": opponent.profile.user.nickname,
-                    "avatar": opponent.profile.avatar,
-                    "elo": opponent.profile.elo,
-                })
+                MatchmakingToClientEvents.GameFound(
+                    {
+                        "action": "game_found",
+                        "game_room_id": str(self.game_room.id),
+                        "username": opponent.user.username,
+                        "nickname": opponent.user.nickname,
+                        "avatar": opponent.avatar,
+                        "elo": opponent.elo,
+                    },
+                ),
             ),
         )
         self.close(PongCloseCodes.NORMAL_CLOSURE)
