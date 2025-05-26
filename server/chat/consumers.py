@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
@@ -242,7 +243,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 "user_online": ["username"],
                 "user_offline": ["username"],
             }
-
 
             if action in required_fields:
                 for field in required_fields[action]:
@@ -640,6 +640,7 @@ class UserEventsConsumer(WebsocketConsumer):
             options=options,
         )
 
+        # TODO : deal with case when user cancels invitation send
         # Create notification
         # notification_data["game_id"] = str(invitation.id)
         notification = Notification.objects.action_send_game_invite(
@@ -649,7 +650,9 @@ class UserEventsConsumer(WebsocketConsumer):
         )
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
-
+        # Correction : conversion du champ 'date' en chaîne ISO si présent
+        if "date" in notification_data and isinstance(notification_data["date"], datetime):
+            notification_data["date"] = notification_data["date"].isoformat()
         # # Confirmation à l'expéditeur
         self.send(text_data=json.dumps({
             "action": "game_invite",
