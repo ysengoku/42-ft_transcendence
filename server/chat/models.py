@@ -280,7 +280,6 @@ class Notification(models.Model):
     data = models.JSONField(encoder=DjangoJSONEncoder, null=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     is_read = models.BooleanField(default=False)
-    is_replied = False
 
     objects = NotificationQuerySet.as_manager()
 
@@ -298,10 +297,15 @@ class GameSession(models.Model):  # noqa: DJ008
 
 
 class GameInvitation(models.Model):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    CANCELLED = "cancelled"
     INVITE_STATUS = [
-        ("pending", "Pending"),
-        ("accepted", "Accepted"),
-        ("declined", "Declined"),
+        (PENDING, "Pending"),
+        (ACCEPTED, "Accepted"),
+        (DECLINED, "Declined"),
+        (CANCELLED, "Cancelled"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -325,7 +329,7 @@ class GameInvitation(models.Model):
         choices=INVITE_STATUS,
         default="pending",
     )
-
+    is_replied = False
     options = models.JSONField(null=True, blank=True)
 
     def __str__(self):

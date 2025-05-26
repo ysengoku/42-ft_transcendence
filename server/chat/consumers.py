@@ -272,6 +272,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.accept_game_invite(text_data_json)
                 case "game_declined":
                     self.decline_game_invite(text_data_json)
+                case "cancel_game_invite":
+                    self.cancel_game_invite(text_data_json)
                 # TODO : check game_invite and reply_game_invite <--
                 case "new_tournament":
                     self.handle_new_tournament(text_data_json)
@@ -619,7 +621,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     },
                 ),
             )
-
+  
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         receiver_username = data["data"].get("username")
@@ -640,9 +642,6 @@ class UserEventsConsumer(WebsocketConsumer):
             options=options,
         )
 
-        # TODO : deal with case when user cancels invitation send
-        # Create notification
-        # notification_data["game_id"] = str(invitation.id)
         notification = Notification.objects.action_send_game_invite(
             receiver=receiver,
             sender=self.user_profile,
@@ -669,6 +668,12 @@ class UserEventsConsumer(WebsocketConsumer):
                     notification.data)
         logger.info("NOTIFICATION DATA SEND GAME INVITE : %s",
                     notification)
+
+    # TODO : deal with case when user cancels invitation send
+    def cancel_game_invite(self, content):
+        receiver_username = data["data"].get("username")
+
+        if (self.profile.user) == 
 
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]
