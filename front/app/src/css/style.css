@@ -112,6 +112,9 @@
   --bs-text-light: var(--pm-gray-600);
   --bs-black-rgb: 34, 32, 31;
 
+  --pm-text-green: var(--pm-green-500);
+  --pm-text-danger: var(--pm-red-500);
+
   #content {
     background: url('/img/bg-day.png') no-repeat center center;
     background-size: cover;
@@ -130,6 +133,9 @@
   --bs-body-bg-rgb: var(--pm-gray-700-rgb);
   --bs-text-light: var(--pm-gray-200);
   --bs-black-rgb: 241, 240, 240;
+
+  --pm-text-green: var(--pm-green-200);
+  --pm-text-danger: var(--pm-red-400); 
 
   #content {
     background: url('/img/bg-night.png') no-repeat center center;
@@ -175,12 +181,28 @@ h1, h2, h3, h4, h5, h6, legend {
 }
 
 #error-message-container {
-  margin-top: 64px;
+  z-index: 1050;
+  font-weight: bold;
+}
+.alert-success {
+  background-color: var(--pm-green-300);
+  color: var(--pm-primary-100);
+  border: none !important;
+}
+.alert-danger {
+  background-color: var(--pm-red-400);
+  color: var(--pm-primary-100);
+  border: none !important;
+}
+.alert-light {
+  background-color: var(--pm-gray-500);
+  color: var(--pm-primary-100);
+  border: none !important;
 }
 
 #content {
   max-width: 100%;
-  padding: 0;
+  padding: 64px 0 0 0;
   flex-grow: 1;
   display: flex;
   flex-direction: column;

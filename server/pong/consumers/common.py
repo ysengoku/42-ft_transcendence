@@ -1,7 +1,5 @@
-from enum import IntEnum
 
-
-class PongCloseCodes(IntEnum):
+class PongCloseCodes:
     """
     Shared enum between different consumers for definition the unified close codes.
     Normal closure     -> the process was finished normally.

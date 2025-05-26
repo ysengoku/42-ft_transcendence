@@ -12,8 +12,10 @@ export class UserGameResultModal extends HTMLElement {
   constructor() {
     super();
     this.modal = null;
+    this.modalElement = null;
 
     this.navigateToProfile = this.navigateToProfile.bind(this);
+    this.clearFocusInModal = this.clearFocusInModal.bind(this);
   }
 
   async showModal(type, id) {
@@ -43,6 +45,7 @@ export class UserGameResultModal extends HTMLElement {
   disconnectedCallback() {
     this.modal?.hide();
 
+    this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
     this.duelWinner?.removeEventListener('click', this.navigateToProfile);
     this.duelLoser?.removeEventListener('click', this.navigateToProfile);
   }
@@ -50,9 +53,11 @@ export class UserGameResultModal extends HTMLElement {
   render() {
     this.innerHTML = this.template() + this.style();
 
+    this.modalElement = this.querySelector('.modal');
     this.gameResultContent = this.querySelector('#game-result-content');
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
     this.#state.type === 'duel' ? this.renderDuelResult() : this.renderTournamentResult();
-    this.modal = new Modal(this.querySelector('.modal'));
+    this.modal = new Modal(this.modalElement);
   }
 
   renderDuelResult() {
@@ -99,13 +104,22 @@ export class UserGameResultModal extends HTMLElement {
     const target = event.target;
     const userWrapper = target.closest('[username]');
     const username = userWrapper.getAttribute('username');
-    router.navigate(`/profile/${username}`);
+    this.modalElement.addEventListener('hidden.bs.modal', () => {
+      router.navigate(`/profile/${username}`);
+    }, { once: true });
+    this.modal.hide();
+  }
+
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
   }
 
   template() {
     return `
     <div class="modal fade" id="game-result-modal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -124,7 +138,7 @@ export class UserGameResultModal extends HTMLElement {
     return `
     <style>
     .modal {
-      top: 16%;
+      top: 24px;
     }
     .modal-header {
       border-bottom: none;

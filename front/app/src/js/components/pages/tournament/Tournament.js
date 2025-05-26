@@ -1,10 +1,12 @@
+import { router } from '@router';
+import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
-import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
-// import { mockRoundStartData } from '@mock/functions/mockTournamentWs';
+import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class Tournament extends HTMLElement {
   #state = {
-    status: '', // Status for UI: waiting, roundStart, waitingNextRound, roundFinished, finished
+    user: null,
+    status: '', // Status for UI: pending, roundStart, waitingNextRound, roundFinished, finished
     tournamentId: '',
     tournament: null,
     currentRoundNumber: 1,
@@ -13,7 +15,7 @@ export class Tournament extends HTMLElement {
 
   // Convert the status fetched from the server to the status used in the component
   status = {
-    pending: 'waiting',
+    pending: 'pending',
     ongoing: 'waitingNextRound',
     finished: 'finished',
   };
@@ -32,16 +34,28 @@ export class Tournament extends HTMLElement {
       return;
     }
     this.#state.tournamentId = param.id;
-    await this.fetchTournamentData();
     // TODO: open ws for this tournament
+    const user = await auth.fetchAuthStatus();
+    if (!user) {
+      showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+      router.navigate('/login');
+      return;
+    }
+    if (user.response.tournament_id !== this.#state.tournamentId) {
+      devLog('User is not in this tournament');
+      // Redirect to tournament menu
+      router.navigate('/tournament-menu');
+      return;
+    }
+    await this.fetchTournamentData();
   }
 
   async fetchTournamentData() {
-    // For test
-    this.#state.tournament = await mockTournamentDetail('mockidlobby');
-
-    const response = await auth.apiRequest('GET', `/tournament/${this.#state.tournamentId}`, null, false, true);
-    console.log('Tournament data:', response);
+    const response = await apiRequest(
+        'GET',
+        /* eslint-disable-next-line new-cap */
+        API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
+        null, false, true);
     if (!response.success) {
       // TODO: handle error
       return;
@@ -76,9 +90,10 @@ export class Tournament extends HTMLElement {
   }
 
   tournamentContent = {
-    waiting: () => {
-      const tournamentWaiting = document.createElement('tournament-waiting');
+    pending: () => {
+      const tournamentWaiting = document.createElement('tournament-pending');
       tournamentWaiting.data = {
+        id: this.#state.tournamentId,
         required_participants: this.#state.tournament.required_participants,
         participants: this.#state.tournament.participants,
       };
@@ -179,6 +194,11 @@ export class Tournament extends HTMLElement {
 
   style() {
     return `
+    <style>
+    .tournament-status {
+      color: var(--pm-text-green);
+    }
+    </style>
     `;
   }
 }

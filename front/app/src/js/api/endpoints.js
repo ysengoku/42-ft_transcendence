@@ -203,8 +203,24 @@ export const API_ENDPOINTS = {
 
   /**
    * GET: Gets a specific tournament by id. Paginated by the limit and offset settings.
+   * DELETE: Cancels a specific tournament by id.
    * @param {string} id - The id of the tournament to retrieve.
    * @return {string} The full API URL for the tournaments list.
    * */
   TOURNAMENT: (id) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}`,
+
+  /**
+   * POST: Registers the user to a specific tournament by id.
+   * @param {string} id - The id of the tournament to register to.
+   * @param {string} alias - The alias of the user to register.
+   * @return {string} The full API URL for registering to the tournament.
+   * */
+  TOURNAMENT_REGISTER: (id, alias) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}/register?alias=${alias}`,
+
+  /**
+   * DELETE: Unregisters the user from a specific tournament by id.
+   * @param {string} id - The id of the tournament to unregister from.
+   * @return {string} The full API URL for unregistering from the tournament.
+   */
+  TOURNAMENT_UNREGISTER: (id) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}/unregister`,
 };

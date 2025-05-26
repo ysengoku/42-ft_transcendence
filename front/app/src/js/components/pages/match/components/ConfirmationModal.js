@@ -7,6 +7,13 @@ export class ConfirmationModal extends HTMLElement {
 
     this.handleConfirm = null;
     this.handleDancel = null;
+
+    this.modal = null;
+    this.modalElement = null;
+    this.confirmButton = null;
+    this.cancelButton = null;
+
+    this.clearFocusInModal = this.clearFocusInModal.bind(this);
   }
 
   set handleConfirm(callback) {
@@ -20,16 +27,19 @@ export class ConfirmationModal extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.confirmButton.removeEventListener('click', this._handleConfirm);
-    this.cancelButton.removeEventListener('click', this._handleCancel);
+    this.confirmButton?.removeEventListener('click', this._handleConfirm);
+    this.cancelButton?.removeEventListener('click', this._handleCancel);
+    this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
   }
 
   render() {
     this.innerHTML = this.template();
     this.modal = new Modal(this.querySelector('.modal'));
 
+    this.modalElement = this.querySelector('.modal');
     this.confirmButton = this.querySelector('.confirm-button');
     this.cancelButton = this.querySelector('.cancel-button');
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
     this.confirmButton.addEventListener('click', this._handleConfirm);
     this.cancelButton.addEventListener('click', this._handleCancel);
   }
@@ -40,19 +50,25 @@ export class ConfirmationModal extends HTMLElement {
     }
   }
 
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+  }
+
   template() {
     return `
     <div class="modal fade mt-5" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-              <div class="confirmation-message modal-body py-4"></div>
-              <div class="modal-footer">
-                <button type="button" class="cancel-button btn" data-bs-dismiss="modal"></button>
-                <button type="button" class="confirm-button btn btn-danger" data-bs-dismiss="modal"></button>
-              </div>
+      <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="confirmation-message modal-body py-4"></div>
+            <div class="modal-footer">
+              <button type="button" class="cancel-button btn" data-bs-dismiss="modal"></button>
+              <button type="button" class="confirm-button btn btn-danger" data-bs-dismiss="modal"></button>
             </div>
-        <div>
-      </div>
+          </div>
+      <div>
+    </div>
     `;
   }
 }

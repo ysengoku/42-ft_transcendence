@@ -162,7 +162,6 @@ export class Settings extends HTMLElement {
       auth.updateStoredUser(this.#state.currentUserData);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 2000);
     } else {
-      console.log('Error updating settings', response);
       if (response.status === 401) {
         return;
       }
