@@ -16,6 +16,9 @@ export class Game extends HTMLElement {
     this.render();
   }
 
+  // disconnectedCallback() {
+  // }
+
   game() {
     (() => {
       let oldPushState = history.pushState;
@@ -678,28 +681,25 @@ export class Game extends HTMLElement {
       if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
         return; // Do noplayerglb if the event was already processed
       }
-      // console.log("oui");
       var keyCode = event.code;
       keyMap[keyCode] = false;
       event.preventDefault();
     }
     function linkChange() {
-      stop();
-      gamePlaying = false;
-      canRestart = false;
-      let i = 0;
-      while (i <= 5)
-        Workers[i++].terminate();
       const currentUrl = window.location.href;
-      if (currentUrl == "https://localhost:1026/singleplayer-game")
+      if (!(currentUrl == "https://localhost:1026/singleplayer-game"))
       {
-        gamePlaying = true;
-        initGame();
+        gamePlaying = false;
+        canRestart = false;
+        let i = 0;
+        while (i <= 5)
+          Workers[i++].terminate();
+        stop(step);
       }
     };
     window.addEventListener('keydown', onDocumentKeyDown, true);
-    window.addEventListener('locationchange', linkChange);
     window.addEventListener('keyup', onDocumentKeyUp, true);
+    window.addEventListener('locationchange', linkChange);
 
     return [camera, renderer, initGame];
   }
