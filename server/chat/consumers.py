@@ -621,7 +621,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     },
                 ),
             )
-  
+
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         receiver_username = data["data"].get("username")
@@ -670,10 +670,11 @@ class UserEventsConsumer(WebsocketConsumer):
                     notification)
 
     # TODO : deal with case when user cancels invitation send
-    def cancel_game_invite(self, content):
+    def cancel_game_invite(self, data):
+        logger.critical(data)
         receiver_username = data["data"].get("username")
 
-        if (self.profile.user) == 
+        # if (self.profile.user) ==
 
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]

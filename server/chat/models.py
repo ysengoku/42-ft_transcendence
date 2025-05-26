@@ -280,6 +280,7 @@ class Notification(models.Model):
     data = models.JSONField(encoder=DjangoJSONEncoder, null=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     is_read = models.BooleanField(default=False)
+    is_replied = False
 
     objects = NotificationQuerySet.as_manager()
 
@@ -329,7 +330,6 @@ class GameInvitation(models.Model):
         choices=INVITE_STATUS,
         default="pending",
     )
-    is_replied = False
     options = models.JSONField(null=True, blank=True)
 
     def __str__(self):
