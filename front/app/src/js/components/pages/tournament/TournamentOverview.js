@@ -27,7 +27,6 @@ export class TournamentOverview extends HTMLElement {
 
   setParam(param) {
     this.#state.tournament_id = param.id;
-    console.log('Tournament ID:', this.#state.tournament_id);
     if (this.#state.tournament_id === '') {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
@@ -65,7 +64,6 @@ export class TournamentOverview extends HTMLElement {
       return;
     }
     this.#state.tournament = response.data;
-    console.log('Tournament data:', this.#state.tournament);
 
     if (!(this.#state.tournament.status === 'ongoing' || this.#state.tournament.status === 'finished')) {
       const notFound = document.createElement('page-not-found');

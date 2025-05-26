@@ -68,7 +68,6 @@ export class Register extends HTMLElement {
     const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
 
     if (response.success) {
-      console.log('Registration successful:', response);
       if (response.status === 200) {
         const userInformation = {
           username: response.data.username,
