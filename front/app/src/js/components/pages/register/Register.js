@@ -12,7 +12,7 @@ export class Register extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     this.isLoggedin = authStatus.success;
     if (this.isLoggedin) {
-      router.navigate('/home');
+      router.redirect('/home');
     }
     this.render();
   }
