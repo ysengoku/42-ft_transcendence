@@ -243,6 +243,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 "user_offline": ["username"],
             }
 
+
             if action in required_fields:
                 for field in required_fields[action]:
                     if field not in entire_data:
@@ -545,6 +546,7 @@ class UserEventsConsumer(WebsocketConsumer):
             # Link game session to invitation
             invitation.game_session = game_session
             invitation.status = "accepted"
+            invitation.is_replied = True
             invitation.save()
             # send notif to sender of the game invitation with receivers' infos
             notification_data = get_user_data(self.user_profile)
@@ -581,10 +583,12 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
     def decline_game_invite(self, data):
+        logger.critical(data)
         invitation_id = data["data"].get["id"]
         try:
             invitation = GameInvitation.objects.get(id=invitation_id)
             invitation.status = "declined"
+            invitation.is_replied = True
             invitation.save()
             # send notif to sender of the game invitation
             notification_data = get_user_data(self.user_profile)
@@ -619,11 +623,9 @@ class UserEventsConsumer(WebsocketConsumer):
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         receiver_username = data["data"].get("username")
-        # sender = Profile.objects.get(id=sender_id)
 
         try:
             receiver = Profile.objects.get(user__username=receiver_username)
-
         except Profile.DoesNotExist as e:
             logger.error("Profile does not exist : %s", str(e))
             self.send(text_data=json.dumps({
@@ -632,38 +634,43 @@ class UserEventsConsumer(WebsocketConsumer):
             }))
 
         invitation = GameInvitation.objects.create(
-            sender=self.user_profile,  # ✓ Direct
-            game_session=None,
+            sender=self.user_profile,
             recipient=receiver,
+            game_session=None,
             options=options,
         )
 
-        # Créer notification (utilise déjà to_username_nickname_avatar_schema)
-        notification_data = {"game_id": str(invitation.id)}
-        notification = Notification.objects.create(
+        # Create notification
+        # notification_data["game_id"] = str(invitation.id)
+        notification = Notification.objects.action_send_game_invite(
             receiver=receiver,
-            # sender=self.user_profile,
-            action=Notification.GAME_INVITE,
-            data=notification_data
+            sender=self.user_profile,
+            notification_data={"game_id": str(invitation.id)},
         )
+        notification_data = notification.data.copy()
+        notification_data["id"] = str(notification.id)
 
-        # Confirmation à l'expéditeur
+        # # Confirmation à l'expéditeur
         self.send(text_data=json.dumps({
             "action": "game_invite",
             "data": {"id": str(invitation.id), "receiver": receiver.user.username}
         }))
-
-        # Notification au destinataire
+        # Envoi au receiver (en temps réel, sans refresh)
         async_to_sync(self.channel_layer.group_send)(
-            f"user_{receiver.id}",
+            f"user_{receiver.user.id}",
             {
-                "type": "chat_message",  # ✓ Bon type
+                "type": "chat_message",
                 "message": json.dumps({
                     "action": "game_invite",
-                    "data": notification.data,
-                })
-            }
+                    "data": notification_data,
+                }),
+            },
         )
+
+        logger.info("NOTIFICATION DATA SEND GAME INVITE : %s",
+                    notification.data)
+        logger.info("NOTIFICATION DATA SEND GAME INVITE : %s",
+                    notification)
 
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]
