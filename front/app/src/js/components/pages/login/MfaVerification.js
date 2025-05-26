@@ -17,16 +17,34 @@ export class MfaVerification extends HTMLElement {
     this.resendMfaCode = this.resendMfaCode.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (authStatus.success) {
+      // Redirect
+      router.navigate('/home');
+      return;
+    }
+    if (this.#state.username === '') {
+      // Redirect
+      router.navigate('/login');
+      return;
+    }
     this.render();
   }
 
+  setQueryParam(queryParams) {
+    this.#state.username = queryParams.get('username') || '';
+  }
+
   disconnectedCallback() {
+    if (!this.otpInputs) {
+      return;
+    }
     this.otpInputs.forEach((input) => {
       input.removeEventListener('input', this.handleInput);
     });
-    this.mfaVerificationForm.removeEventListener('submit', this.handleSubmit);
-    this.resendButton.removeEventListener('click', this.resendMfaCode);
+    this.mfaVerificationForm?.removeEventListener('submit', this.handleSubmit);
+    this.resendButton?.removeEventListener('click', this.resendMfaCode);
   }
 
   render() {
