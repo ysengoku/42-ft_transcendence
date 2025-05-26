@@ -8,6 +8,8 @@ from enum import Enum, auto
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
+from pong.consumers.game_protocol import GameRoomToGameWorkerEvents, SerializedGameState
+
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 #### CONSTANTS ####
@@ -151,7 +153,7 @@ class BasePong:
 
             current_subtick += 1
 
-    def as_dict(self):
+    def as_dict(self) -> SerializedGameState:
         """
         Serializes the game state as Python dict for using it for some other purpose, like rendering or sending
         through websockets.
@@ -355,38 +357,38 @@ class GameConsumer(AsyncConsumer):
         self.channel_layer = get_channel_layer()
 
     ##### EVENT HANDLERS AND CHANNEL METHODS #####
-    async def player_connected(self, event: dict):
-        match_id = event["game_room_id"]  # reuse id of the game room as an id for the match
+    async def player_connected(self, event: GameRoomToGameWorkerEvents.PlayerConnected):
+        game_room_id = event["game_room_id"]
         player_id = event["player_id"]
 
         ### CONNECTION OF THE FIRST PLAYER TO NOT YET CREATED MATCH ###
-        if match_id not in self.matches:
+        if game_room_id not in self.matches:
             self._add_player_and_create_pending_match(event)
             return
 
-        match = self.matches[match_id]
+        match = self.matches[game_room_id]
 
         ### CONNECTION OF THE SECOND PLAYER TO THE PENDING MATCH ###
         if (
             match.state == MultiplayerPongMatchState.PENDING
             and len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) == PLAYERS_REQUIRED - 1
         ):
-            await self._add_player_and_start_match(player_id, match)
+            await self._add_player_and_start_match(match, event)
 
         ### RECONNECTION OF ONE OF THE PLAYERS TO THE MATCH ###
         elif match.state in {MultiplayerPongMatchState.PENDING, MultiplayerPongMatchState.PAUSED}:
             await self._reconnect_player(player_id, match)
 
     async def player_disconnected(self, event: dict):
-        match_id = event["game_room_id"]
+        game_room_id = event["game_room_id"]
         player_id = event["player_id"]
 
-        match = self.matches.get(match_id)
+        match = self.matches.get(game_room_id)
         if match is None or match.state == MultiplayerPongMatchState.ENDED:
             logger.warning(
                 "[GameWorker]: player {%s} disconnected from the non-existent or ended game {%s}",
                 player_id,
-                match_id,
+                game_room_id,
             )
             return
 
@@ -395,7 +397,7 @@ class GameConsumer(AsyncConsumer):
             logger.warning(
                 "[GameWorker]: disconnected player {%s} not found in the game {%s}",
                 player_id,
-                match_id,
+                game_room_id,
             )
             return
 
@@ -404,7 +406,7 @@ class GameConsumer(AsyncConsumer):
             logger.info(
                 "[GameWorker]: player {%s} has been disconnected from the pending game {%s}",
                 player_id,
-                match_id,
+                game_room_id,
             )
             return
 
@@ -413,24 +415,24 @@ class GameConsumer(AsyncConsumer):
         logger.info(
             "[GameWorker]: player {%s} has been disconnected from the ongoing game {%s}",
             player_id,
-            match_id,
+            game_room_id,
         )
 
         # TODO: handle the case where both players disconnect
         if not match.get_players_based_on_connection(PlayerConnectionState.CONNECTED):
             self._cleanup_match(match)
             # TODO: add the match result to the db
-            logger.info("[GameWorker]: no players are left in the game {%s}. Closing", match_id)
+            logger.info("[GameWorker]: no players are left in the game {%s}. Closing", game_room_id)
 
     async def player_inputed(self, event: dict):
         """
         Handles player input. There is no validation of the input, because it is a worker,
         and event source is the server, which we can trust.
         """
-        match_id = event["game_room_id"]
-        match = self.matches.get(match_id)
+        game_room_id = event["game_room_id"]
+        match = self.matches.get(game_room_id)
         if match is None or match.state != MultiplayerPongMatchState.ONGOING:
-            logger.warning("[GameWorker]: input was sent for not running game {%s}", match_id)
+            logger.warning("[GameWorker]: input was sent for not running game {%s}", game_room_id)
 
         player_id = event["player_id"]
         action = event["action"]
@@ -521,21 +523,24 @@ class GameConsumer(AsyncConsumer):
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
 
     ##### PLAYER MANAGEMENT METHODS #####
-    def _add_player_and_create_pending_match(self, match_id: str, player_connected_event: dict):
-        player_id = player_connected_event["player_id"]
-        match = self.matches[match_id] = MultiplayerPongMatch(match_id)
-        match.add_player(player_connected_event)
+    def _add_player_and_create_pending_match(self, event: GameRoomToGameWorkerEvents.PlayerConnected):
+        player_id = event["player_id"]
+        game_room_id = event["game_room_id"]
+        match = self.matches[game_room_id] = MultiplayerPongMatch(game_room_id)
+        match.add_player(event)
         match.waiting_for_players_timer = asyncio.create_task(self._wait_for_both_player_task(match))
         logger.info(
             "[GameWorker]: player {%s} was added to newly created game {%s}",
             player_id,
-            match_id,
+            game_room_id,
         )
 
-    async def _add_player_and_start_match(self, match: MultiplayerPongMatch, player_connected_event: dict):
+    async def _add_player_and_start_match(
+        self, match: MultiplayerPongMatch, event: GameRoomToGameWorkerEvents.PlayerConnected,
+    ):
         """Cancels waiting for players timer, and starts the game loop for this match."""
-        player_id = player_connected_event["player_id"]
-        match.add_player(player_connected_event)
+        player_id = event["player_id"]
+        match.add_player(event)
         match.stop_waiting_for_players_timer()
         match.state = MultiplayerPongMatchState.ONGOING
         match.game_loop_task = asyncio.create_task(self._match_game_loop_task(match))
