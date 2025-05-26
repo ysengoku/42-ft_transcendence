@@ -3,7 +3,7 @@ import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitCo
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import pedro from '/3d_models/lilguy.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
-import { router } from '@router'
+import { router } from '@router';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 

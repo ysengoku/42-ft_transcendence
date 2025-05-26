@@ -1,4 +1,4 @@
-import { socketManager } from "./socket";
+import { socketManager } from '@socket';
 
 // Socket registration for tournament
 const tournamentEvents = [
