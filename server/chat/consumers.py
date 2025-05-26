@@ -650,15 +650,10 @@ class UserEventsConsumer(WebsocketConsumer):
         )
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
-        # Correction : conversion du champ 'date' en chaîne ISO si présent
+        # Convert date in good format
         if "date" in notification_data and isinstance(notification_data["date"], datetime):
             notification_data["date"] = notification_data["date"].isoformat()
-        # # Confirmation à l'expéditeur
-        self.send(text_data=json.dumps({
-            "action": "game_invite",
-            "data": {"id": str(invitation.id), "receiver": receiver.user.username}
-        }))
-        # Envoi au receiver (en temps réel, sans refresh)
+
         async_to_sync(self.channel_layer.group_send)(
             f"user_{receiver.user.id}",
             {
