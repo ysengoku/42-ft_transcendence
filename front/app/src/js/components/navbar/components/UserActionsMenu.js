@@ -32,7 +32,6 @@ export class UserActionsMenu extends HTMLElement {
   }
 
   updateLoginStatus(isLoggedin) {
-    console.log('updateLoginStatus', isLoggedin);
     this.#state.isLoggedin = isLoggedin;
     this.render();
   }

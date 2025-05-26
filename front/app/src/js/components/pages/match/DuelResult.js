@@ -33,7 +33,6 @@ export class DuelResult extends HTMLElement {
 
     // TODO: Replace by api call
     this.#state.duelData = mockDuelData('finished');
-    console.log('Duel data:', this.#state.duelData);
     this.render();
   }
 
@@ -77,7 +76,6 @@ export class DuelResult extends HTMLElement {
       userData = this.#state.duelData.loser,
       score = this.#state.duelData.losers_score
     );
-    console.log('User data:', userData);
     userWrapper.innerHTML = this.userTemplate();
     userWrapper.querySelector('.duel-score').innerHTML = score;
     userWrapper.querySelector('.avatar-l').src = userData.avatar;

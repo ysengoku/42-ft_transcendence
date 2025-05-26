@@ -40,6 +40,12 @@ class WebSocketManager {
         devLog(`WebSocket (${this.name}) closed intentionally by server with code 3000.`);
         return;
       }
+      if (event.code === 1006 || event.code === 1011) {
+        showToastNotification('Connection to server lost.');
+        console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
+        this.socketOpen = false;
+        return;
+      }
       setTimeout(() => this.reconnect(), 1000);
     };
   }
@@ -55,6 +61,12 @@ class WebSocketManager {
     this.socket.onerror = (event) => console.error('WebSocket error (', this.name, ') ', event);
     this.socket.onclose = (event) => {
       devLog('WebSocket closed (', this.name, ') ', event);
+      if (event.code === 1006 || event.code === 1011) {
+        showToastNotification('Connection to server lost.');
+        console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
+        this.socketOpen = false;
+        return;
+      }
       setTimeout(() => this.reconnect(), 1000);
     };
   }
@@ -88,9 +100,7 @@ class WebSocketManager {
     }
     const matchedListener = this.listeners[message.action];
     if (matchedListener) {
-      message.data ?
-        matchedListener(message.data) :
-        matchedListener(message);
+      message.data ? matchedListener(message.data) : matchedListener(message);
     } else {
       devErrorLog('No listeners set for this action:', message.action);
       return;
@@ -134,7 +144,7 @@ const socketManager = (() => {
      * @param {string} name - The name of the socket to open.
      * @param {string|number} [id] - Optional identifier for the socket (e.g., tournament ID).
      */
-    openSocket(name, id=null) {
+    openSocket(name, id = null) {
       const config = this.configs.get(name);
       if (!config) {
         devErrorLog('Socket not registered:', name);
@@ -185,107 +195,15 @@ const socketManager = (() => {
         devErrorLog('Socket not found:', name);
         return;
       }
+      if (socket.socket.readyState !== WebSocket.OPEN) {
+        devErrorLog('WebSocket is not open:', name);
+        return;
+      }
       devLog('Sending message via WebSocket:', message);
       socket.socket.send(JSON.stringify(message));
     }
   }
   return new SocketsManager();
 })();
-
-// Socket registration for livechat module including Chat, Notifications, and Onlie status
-socketManager.addSocket('livechat', {
-  new_message: (data) => {
-    if (window.location.pathname === '/chat') {
-      const customEvent = new CustomEvent('newChatMessage', { detail: data, bubbles: true });
-      document.dispatchEvent(customEvent);
-    } else {
-      const chatButton = document.querySelector('chat-button');
-      chatButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-      showToastNotification('New message just rode in.');
-    }
-    return;
-  },
-  like_message: (data) => {
-    if (window.location.pathname !== '/chat') {
-      return;
-    }
-    const customEvent = new CustomEvent('toggleLikeChatMessage', {
-      detail: { data, is_liked: true },
-      bubbles: true,
-    });
-    document.dispatchEvent(customEvent);
-  },
-  unlike_message: (data) => {
-    if (window.location.pathname !== '/chat') {
-      return;
-    }
-    const customEvent = new CustomEvent('toggleLikeChatMessage', {
-      detail: { data, is_liked: false },
-      bubbles: true,
-    });
-    document.dispatchEvent(customEvent);
-  },
-  game_invite: (data) => {
-    const notificationButton = document.querySelector('notifications-button');
-    notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-    showToastNotification(`${data.nickname} challenges you to a duel.`);
-  },
-  new_tournament: (data) => {
-    const notificationButton = document.querySelector('notifications-button');
-    notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-    showToastNotification(`${data.nickname} is calling all gunslingers to a new tournament.`);
-  },
-  new_friend: (data) => {
-    const notificationButton = document.querySelector('notifications-button');
-    notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-    showToastNotification(`${data.nickname} just roped you in as a friend.`);
-  },
-  user_online: (data) => {
-    const customEvent = new CustomEvent('onlineStatus', {
-      detail: { data, online: true },
-      bubbles: true,
-    });
-    document.dispatchEvent(customEvent);
-  },
-  user_offline: (data) => {
-    const customEvent = new CustomEvent('onlineStatus', {
-      detail: { data, online: false },
-      bubbles: true,
-    });
-    document.dispatchEvent(customEvent);
-  },
-});
-
-// Socket registration for matchmaking
-socketManager.addSocket('matchmaking', {
-  game_found: (data) => {
-    const customEvent = new CustomEvent('gameFound', { detail: data, bubbles: true });
-    document.dispatchEvent(customEvent);
-  },
-});
-
-// Socket registration for tournament
-const tournamentEvents = [
-  { action: 'registered', event: 'tournamentRegistered' },
-  { action: 'register_fail', event: 'tournamentRegisterFail' },
-  { action: 'tournament_cancelled', event: 'tournamentCancelled' },
-  { action: 'new_registration', event: 'newTournamentRegistration' },
-  { action: 'registration_cancelled', event: 'tournamentRegistrationCancelled' },
-  { action: 'round_start', event: 'tournamentRoundStart' },
-  { action: 'match_finished', event: 'tournamentMatchFinished' }, // TODO: Automatically navigate to the tournament page
-  { action: 'matchResult', event: 'tournamentMatchResult' },
-  { action: 'round_end', event: 'tournamentRoundEnd' },
-  { action: 'tournament_end', event: 'tournamentEnd' },
-];
-
-const tournamentListeners = tournamentEvents.reduce((acc, { action, event }) => {
-  acc[action] = (data) => {
-    const customEvent = new CustomEvent(event, { detail: data, bubbles: true });
-    document.dispatchEvent(customEvent);
-  };
-  return acc;
-}, {});
-
-socketManager.addSocket('tournament', tournamentListeners);
 
 export { socketManager };

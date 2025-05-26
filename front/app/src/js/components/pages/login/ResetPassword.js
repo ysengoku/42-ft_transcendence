@@ -50,7 +50,6 @@ export class ResetPassword extends HTMLElement {
 
   async handleResetPassword(event) {
     event.preventDefault();
-    console.log('new password:', this.passwordField.value);
     if (!passwordFeedback(this.passwordField, this.passwordRepeatField,
         this.passwordFeedback, this.passwordRepeatFeedback)) {
       return;

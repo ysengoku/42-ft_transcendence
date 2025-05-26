@@ -12,7 +12,6 @@ export class TournamentOverviewTree extends HTMLElement {
 
   set data(data) {
     this.#state.rounds = data;
-    console.log('Tournament rounds:', this.#state.rounds);
     this.render();
   }
 
