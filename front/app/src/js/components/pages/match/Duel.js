@@ -44,8 +44,7 @@ export class Duel extends HTMLElement {
       return;
     }
     if (!this.#state.status) {
-      // Redirect to duel menu
-      router.navigate('/duel-menu');
+      router.redirect('/duel-menu');
       return;
     }
     router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));

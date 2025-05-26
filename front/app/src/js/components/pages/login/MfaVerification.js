@@ -20,13 +20,11 @@ export class MfaVerification extends HTMLElement {
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
-      // Redirect
-      router.navigate('/home');
+      router.redirect('/home');
       return;
     }
     if (this.#state.username === '') {
-      // Redirect
-      router.navigate('/login');
+      router.redirect('/login');
       return;
     }
     this.render();

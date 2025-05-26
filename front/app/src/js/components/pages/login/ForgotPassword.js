@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessage, ALERT_TYPE } from '@utils';
 import { emailFeedback, removeInputFeedback } from '@utils';
@@ -15,7 +16,12 @@ export class ForgotPassword extends HTMLElement {
     this.handleRemoveInputFeedback = this.handleRemoveInputFeedback.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (authStatus.success) {
+      router.redirect('/home');
+      return;
+    }
     this.render();
   }
 

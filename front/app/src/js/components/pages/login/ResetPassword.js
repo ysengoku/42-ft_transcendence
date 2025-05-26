@@ -18,7 +18,7 @@ export class ResetPassword extends HTMLElement {
     this.#state.token = param.token;
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
-      router.navigate('/home');
+      router.redirect('/home');
     } else {
       this.render();
     }
