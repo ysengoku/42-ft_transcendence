@@ -231,6 +231,24 @@ class NotificationQuerySet(models.QuerySet):
             date=date,
         )
 
+    def action_send_game_invite(
+        self,
+        receiver: Profile,
+        sender: Profile,
+        notification_data={"game_id": str()},
+        date: datetime = None,
+    ):
+        """
+        May include additional operations like using the channel layer to send data with websocket.
+        """
+        return self._create(
+            receiver=receiver,
+            sender=sender,
+            notification_action=self.model.GAME_INVITE,
+            notification_data=notification_data,
+            date=date,
+        )
+
     def count_unread(self, profile: Profile):
         return self.filter(is_read=False, receiver=profile).count()
 
@@ -262,6 +280,7 @@ class Notification(models.Model):
     data = models.JSONField(encoder=DjangoJSONEncoder, null=True)
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     is_read = models.BooleanField(default=False)
+    is_replied = False
 
     objects = NotificationQuerySet.as_manager()
 
@@ -306,6 +325,7 @@ class GameInvitation(models.Model):
         choices=INVITE_STATUS,
         default="pending",
     )
+
     options = models.JSONField(null=True, blank=True)
 
     def __str__(self):

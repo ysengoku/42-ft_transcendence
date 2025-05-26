@@ -12,7 +12,7 @@ from users.models import Profile
 
 logger = logging.getLogger("server")
 
-logging.getLogger("server").setLevel(logging.CRITICAL)
+logging.getLogger("server").setLevel(logging.INFO)
 
 # Search in every action and prints them if level logging is info
 # Set Logging level to critical to avoid logs
