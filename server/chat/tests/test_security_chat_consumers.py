@@ -1,6 +1,7 @@
 # tests/test_consumers.py
 
 import logging
+from urllib.parse import parse_qs
 
 from channels.auth import AuthMiddlewareStack
 from channels.db import database_sync_to_async
@@ -8,17 +9,13 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
 from django.test import TransactionTestCase
-from rest_framework_simplejwt.tokens import AccessToken
 
 from chat.consumers import UserEventsConsumer
-from chat.middleware import JWTAuthMiddleware
 from chat.models import Chat, ChatMessage, Notification
 from chat.routing import websocket_urlpatterns
-from users.models import Profile
-import logging
+from users.middleware import JWTWebsocketAuthMiddleware
+from users.models import Profile, RefreshToken, User
 
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import AuthenticationFailed, InvalidToken
 
 class JWTAuthMiddleware:
 
@@ -27,58 +24,57 @@ class JWTAuthMiddleware:
 
     async def __call__(self, scope, receive, send):
         query_string = scope.get("query_string", b"").decode()
-        token = dict(param.split("=") for param in query_string.split(
-            "&") if "=" in param).get("token", None)
+        token_params = parse_qs(query_string).get('token', [])
+        token = token_params[0] if token_params else None
 
         if token:
-            try:
-                auth = JWTAuthentication()
-                validated_token = auth.get_validated_token(token)
-                user = await database_sync_to_async(auth.get_user)(validated_token)
-                scope["user"] = user
-            except (InvalidToken, AuthenticationFailed):
-                scope["user"] = None
+            user = await self.get_user_from_token(token)
+            scope["user"] = user
         else:
             scope["user"] = None
-
         return await self.inner(scope, receive, send)
+
+    @database_sync_to_async
+    def get_user_from_token(self, token):
+        try:
+            payload = RefreshToken.objects.verify_access_token(token)
+            return User.objects.for_id(payload["sub"]).first()
+        except Exception:
+            return None
+
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
-logging.getLogger("server").setLevel(logging.WARNING)
+logging.getLogger("server").setLevel(logging.CRITICAL)
 application = ProtocolTypeRouter({
     "websocket": JWTAuthMiddleware(
         URLRouter(websocket_urlpatterns)
     )
 })
 
-# only for automatic tests
-application = ProtocolTypeRouter({
-    "websocket": SessionMiddlewareStack(  # Ajout du middleware de session
-        JWTAuthMiddleware(
-            URLRouter(websocket_urlpatterns),
-        ),
-    ),
-})
-
 
 class UserEventsConsumerTests(TransactionTestCase):
-    async def get_authenticated_communicator(self):
-        self.user = await database_sync_to_async(get_user_model().objects.create_user)(
-            username="testuser",
-            password="testpass"
-        )
+    async def get_authenticated_communicator(self, username=None, password=None):
+        if not username or not password:
+            self.user = await database_sync_to_async(get_user_model().objects.create_user)(
+                username="testuser",
+                password="testpass"
+            )
+        else:
+            self.user = await database_sync_to_async(get_user_model().objects.create_user)(
+                username=username,
+                password=password
+            )
         self.profile = await database_sync_to_async(Profile.objects.get)(user=self.user)
         self.chat = await database_sync_to_async(Chat.objects.create)()
         await database_sync_to_async(self.chat.participants.add)(self.user.profile)
         await database_sync_to_async(lambda: list(self.chat.participants.all()))()
         await database_sync_to_async(lambda: list(Chat.objects.all()))()
         # Token JWT
-        access_token = AccessToken.for_user(self.user)
+        access_token, _ = await database_sync_to_async(RefreshToken.objects.create)(self.user)
 
-        # Connexion WebSocket
         communicator = WebsocketCommunicator(
-            application,  # Use application ASGI configured for test
+            application,
             f"/ws/events/?token={access_token}"
         )
         connected, _ = await communicator.connect()
@@ -97,7 +93,6 @@ class UserEventsConsumerTests(TransactionTestCase):
     async def test_invalid_message_length(self):
         communicator = await self.get_authenticated_communicator()
 
-        # Message de 257 caractères
         invalid_data = {
             "action": "new_message",
             "data": {
@@ -106,12 +101,10 @@ class UserEventsConsumerTests(TransactionTestCase):
             }
         }
         await communicator.send_json_to(invalid_data)
+        await communicator.receive_nothing(timeout=0.1)
 
-        # Vérification des logs
-        with self.assertLogs('server', level='WARNING') as logs:
-            await communicator.receive_nothing()
-            self.assertTrue(
-                any("Message too long" in log for log in logs.output))
+        msg_count = await database_sync_to_async(ChatMessage.objects.count)()
+        self.assertEqual(msg_count, 0)
 
         await communicator.disconnect()
 
