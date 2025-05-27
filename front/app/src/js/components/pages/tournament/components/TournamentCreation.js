@@ -85,7 +85,7 @@ export class TournamentCreation extends HTMLElement {
     this.alert.classList.add('d-none');
     if (event.target.value.length < 1) {
       this.tournamentNameInput.classList.add('is-invalid');
-      this.tournamentNameFeedback.textContent = `Tournament name must be at least 1 character.`;
+      this.tournamentNameFeedback.textContent = 'Tournament name must be at least 1 character.';
       this.confirmButton.disabled = true;
     } else if (event.target.value.length > this.#maxTournamentNameLength) {
       this.tournamentNameInput.classList.add('is-invalid');
@@ -102,7 +102,7 @@ export class TournamentCreation extends HTMLElement {
     this.alert.classList.add('d-none');
     if (event.target.value.length < 1) {
       this.tournamentAliasInput.classList.add('is-invalid');
-      this.tournamentAliasFeedback.textContent = `Alias must be at least 1 character.`;
+      this.tournamentAliasFeedback.textContent = 'Alias must be at least 1 character.';
       this.confirmButton.disabled = true;
     } else if (event.target.value.length > this.#maxTournamentAliasLength) {
       this.tournamentAliasInput.classList.add('is-invalid');
@@ -119,7 +119,7 @@ export class TournamentCreation extends HTMLElement {
     event.stopPropagation();
     this.#state.newTournament.name = this.tournamentNameInput.value;
     this.#state.newTournament.requiredParticipants = this.querySelector(
-        'input[name="requiredParticipants"]:checked',
+      'input[name="requiredParticipants"]:checked',
     ).value;
     this.#state.newTournament.alias = this.tournamentAliasInput.value;
 

@@ -82,12 +82,12 @@ export class ChatUserSearch extends HTMLElement {
 
   async searchUsers() {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SEARCH(this.#state.searchQuery, 10, this.#state.currentListLength),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_SEARCH(this.#state.searchQuery, 10, this.#state.currentListLength),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       if (response.data) {

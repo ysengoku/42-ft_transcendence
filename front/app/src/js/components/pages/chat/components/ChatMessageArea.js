@@ -181,12 +181,12 @@ export class ChatMessageArea extends HTMLElement {
         const previousHeight = this.chatMessages.scrollHeight;
 
         const response = await apiRequest(
-            'GET',
-            /* eslint-disable-next-line new-cap */
-            API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
-            null,
-            false,
-            true,
+          'GET',
+          /* eslint-disable-next-line new-cap */
+          API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
+          null,
+          false,
+          true,
         );
         if (response.success) {
           this.#state.data.messages.push(...response.data.items);
@@ -228,12 +228,12 @@ export class ChatMessageArea extends HTMLElement {
 
     if (message.sender === this.#state.data.username) {
       messageElement.classList.add(
-          'left-align-message',
-          'd-flex',
-          'flex-row',
-          'justify-content-start',
-          'align-items-center',
-          'gap-3',
+        'left-align-message',
+        'd-flex',
+        'flex-row',
+        'justify-content-start',
+        'align-items-center',
+        'gap-3',
       );
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
@@ -251,11 +251,11 @@ export class ChatMessageArea extends HTMLElement {
       }
     } else {
       messageElement.classList.add(
-          'right-align-message',
-          'd-flex',
-          'flex-row',
-          'justify-content-end',
-          'align-items-center',
+        'right-align-message',
+        'd-flex',
+        'flex-row',
+        'justify-content-end',
+        'align-items-center',
       );
       messageContent.classList.add('ms-5');
       messageElement.querySelector('.chat-message-avatar').remove();
@@ -295,12 +295,12 @@ export class ChatMessageArea extends HTMLElement {
   async blockUser() {
     const request = { username: this.#state.data.username };
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.loggedInUsername),
-        request,
-        false,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.loggedInUsername),
+      request,
+      false,
+      true,
     );
     const successMessage = 'User blocked successfully.';
     const errorMessage = 'Failed to block user. Please try again later.';
@@ -326,12 +326,12 @@ export class ChatMessageArea extends HTMLElement {
    */
   async unblockUser() {
     const response = await apiRequest(
-        'DELETE',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.loggedInUsername, this.#state.data.username),
-        null,
-        false,
-        true,
+      'DELETE',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.loggedInUsername, this.#state.data.username),
+      null,
+      false,
+      true,
     );
     const successMessage = 'User unblocked successfully.';
     const errorMessage = 'Failed to unblock user. Please try again later.';

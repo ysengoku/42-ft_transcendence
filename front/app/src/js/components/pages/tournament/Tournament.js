@@ -38,13 +38,12 @@ export class Tournament extends HTMLElement {
     const user = await auth.fetchAuthStatus();
     if (!user) {
       showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
-      router.navigate('/login');
+      router.redirect('/login');
       return;
     }
     if (user.response.tournament_id !== this.#state.tournamentId) {
       devLog('User is not in this tournament');
-      // Redirect to tournament menu
-      router.navigate('/tournament-menu');
+      router.redirect('/tournament-menu');
       return;
     }
     await this.fetchTournamentData();
@@ -52,10 +51,13 @@ export class Tournament extends HTMLElement {
 
   async fetchTournamentData() {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
-        null, false, true);
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
+      null,
+      false,
+      true,
+    );
     if (!response.success) {
       // TODO: handle error
       return;
@@ -152,11 +154,9 @@ export class Tournament extends HTMLElement {
   handleMatchFinished() {
     // User comes back from the match
     // Receive match_finished message via ws with ROUND and user's own result
-
     // ??? If we change the URL tournament - match
     // In socketManager
     // Navigate to this page (tournament/id)
-
     // In this page
     // fetch tournament to get the tournament data
   }
