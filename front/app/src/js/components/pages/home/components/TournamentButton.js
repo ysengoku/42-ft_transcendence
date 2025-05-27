@@ -1,8 +1,11 @@
 import { router } from '@router';
+import { auth } from '@auth';
 
 export class TournamentButton extends HTMLElement {
   constructor() {
     super();
+
+    this.homeElement = document.querySelector('user-home');
     this.handleClick = this.handleClick.bind(this);
   }
 
@@ -21,8 +24,14 @@ export class TournamentButton extends HTMLElement {
     this.button.addEventListener('click', this.handleClick);
   }
 
-  handleClick(event) {
+  async handleClick(event) {
     event.preventDefault();
+    const authStatus = await auth.fetchAuthStatus();
+    if (authStatus.success && authStatus.response.tournament_id) {
+      devLog('Ongoing tournament found. Redirect to tournament page', authStatus.response.tournament_id);
+      router.navigate(`tournament/${authStatus.response.tournament_id}`);
+      return;
+    }
     router.navigate('/tournament-menu');
   }
 
