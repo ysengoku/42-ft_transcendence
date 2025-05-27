@@ -16,7 +16,7 @@ export async function mockTournamentData(status) {
       participants: [
         {
           alias: 'WhiskeyDuke',
-          user: {
+          profile: {
             username: 'GeorgeLucas',
             nickname: 'The Legend',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -26,7 +26,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'LoneStar',
-          user: {
+          profile: {
             username: 'Alex',
             nickname: 'Jedi Master',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -36,7 +36,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'ShadowFang',
-          user: {
+          profile: {
             username: 'ShadowFang',
             nickname: 'The Phantom',
             avatar: '/__mock__/img/sample-pic1.jpg',
@@ -63,7 +63,7 @@ export async function mockTournamentData(status) {
       participants: [
         {
           alias: 'WhiskeyDuke',
-          user: {
+          profile: {
             username: 'GeorgeLucas',
             nickname: 'The Legend',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -73,7 +73,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'LoneStar',
-          user: {
+          profile: {
             username: 'Alex',
             nickname: 'Jedi Master',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -83,7 +83,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'ShadowFang',
-          user: {
+          profile: {
             username: 'ShadowFang',
             nickname: 'The Phantom',
             avatar: '/__mock__/img/sample-pic1.jpg',
@@ -93,7 +93,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'SpeedFreak',
-          user: {
+          profile: {
             username: 'Tommy',
             nickname: 'Speedster',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -103,7 +103,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'QuickSilver',
-          user: {
+          profile: {
             username: 'Sam',
             nickname: 'Blitz',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -113,7 +113,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'SilentStorm',
-          user: {
+          profile: {
             username: 'Morgan',
             nickname: 'The Whisper',
             avatar: '/__mock__/img/sample-pic1.jpg',
@@ -123,7 +123,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'LoneStar',
-          user: {
+          profile: {
             username: 'Sammy',
             nickname: 'Blitz',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -133,7 +133,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'StormBreaker',
-          user: {
+          profile: {
             username: 'Morganv',
             nickname: 'The Whisper',
             avatar: '/__mock__/img/sample-pic1.jpg',
@@ -160,7 +160,7 @@ export async function mockTournamentData(status) {
       participants: [
         {
           alias: 'SpeedFreak',
-          user: {
+          profile: {
             username: 'Tommy',
             nickname: 'Speedster',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -170,7 +170,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'QuickSilver',
-          user: {
+          profile: {
             username: 'Sam',
             nickname: 'Blitz',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -180,7 +180,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'SilentStorm',
-          user: {
+          profile: {
             username: 'Morgan',
             nickname: 'The Whisper',
             avatar: '/__mock__/img/sample-pic1.jpg',
@@ -190,7 +190,7 @@ export async function mockTournamentData(status) {
         },
         {
           alias: 'ShadowFang',
-          user: {
+          profile: {
             username: 'ShadowFang',
             nickname: 'The Phantom',
             avatar: '/__mock__/img/sample-pic1.jpg',
@@ -201,7 +201,7 @@ export async function mockTournamentData(status) {
       ],
       winner: {
         alias: 'SpeedFreak',
-        user: {
+        profile: {
           username: 'Tommy',
           nickname: 'Speedster',
           avatar: '/__mock__/img/sample-pic2.png',
