@@ -297,16 +297,16 @@ export class Duel extends HTMLElement {
 
   headerTemplate() {
     switch (this.#state.status) {
-      case 'inviting':
-        return 'Waiting for your opponent to ride in...';
-      case 'matchmaking':
-        return 'Searching for your dream opponent...';
-      case 'starting':
-        return 'Both gunslingers are here. Time to duel!';
-      case 'canceled':
-        return 'This duel has been canceled.';
-      case 'declined':
-        return 'This duel has been canceled.';
+    case 'inviting':
+      return 'Waiting for your opponent to ride in...';
+    case 'matchmaking':
+      return 'Searching for your dream opponent...';
+    case 'starting':
+      return 'Both gunslingers are here. Time to duel!';
+    case 'canceled':
+      return 'This duel has been canceled.';
+    case 'declined':
+      return 'This duel has been canceled.';
     }
   }
 }

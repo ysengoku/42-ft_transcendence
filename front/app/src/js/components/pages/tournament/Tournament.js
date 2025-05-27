@@ -51,10 +51,13 @@ export class Tournament extends HTMLElement {
 
   async fetchTournamentData() {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
-        null, false, true);
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
+      null,
+      false,
+      true,
+    );
     if (!response.success) {
       // TODO: handle error
       return;
@@ -151,11 +154,9 @@ export class Tournament extends HTMLElement {
   handleMatchFinished() {
     // User comes back from the match
     // Receive match_finished message via ws with ROUND and user's own result
-
     // ??? If we change the URL tournament - match
     // In socketManager
     // Navigate to this page (tournament/id)
-
     // In this page
     // fetch tournament to get the tournament data
   }

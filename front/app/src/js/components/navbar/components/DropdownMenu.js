@@ -88,7 +88,7 @@ export class DropdownMenu extends HTMLElement {
       ${ this.#state.isLoggedIn ? `
         <div class="dropdown-divider"></div>
         <div class="dropdown-item" id="dropdown-item-logout">Logout</div>
-      ` : `` }
+      ` : '' }
     </div>
     `;
   }

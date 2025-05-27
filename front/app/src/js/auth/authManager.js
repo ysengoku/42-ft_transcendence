@@ -112,16 +112,16 @@ const auth = (() => {
         const refreshTokenResponse = await refreshAccessToken(CSRFToken);
         if (refreshTokenResponse.status) {
           switch (refreshTokenResponse.status) {
-            case 204:
-              return this.fetchAuthStatus();
-            case 401:
-              return { success: false, status: 401 };
-            case 500:
-              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
-              break;
-            default:
-              showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
-              return { success: false, status: refreshTokenResponse.status };
+          case 204:
+            return this.fetchAuthStatus();
+          case 401:
+            return { success: false, status: 401 };
+          case 500:
+            showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
+            break;
+          default:
+            showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+            return { success: false, status: refreshTokenResponse.status };
           }
         }
         return { success: false, status: response.status };
