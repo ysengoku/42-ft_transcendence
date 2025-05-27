@@ -295,6 +295,7 @@ class GameSession(models.Model):  # noqa: DJ008
     """
     Currently a no-op, but can be extended
     """
+    game_id = models.UUIDField(default=uuid.uuid4, editable=False)
 
 
 class GameInvitation(models.Model):
