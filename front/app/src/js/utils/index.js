@@ -14,6 +14,7 @@ import {
   createClouds,
   createStars,
   loader,
+  flyAway,
 } from './animations';
 
 import {
@@ -48,6 +49,7 @@ export {
   createClouds,
   createStars,
   loader,
+  flyAway,
   INPUT_FEEDBACK,
   emailFeedback,
   passwordFeedback,
