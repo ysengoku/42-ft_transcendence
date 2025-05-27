@@ -2,10 +2,13 @@ from datetime import timedelta
 from pathlib import Path  # noqa: A005
 
 import magic
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import WebsocketConsumer
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
-from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
+from django.db.models import (Case, Count, Exists, ExpressionWrapper, F, Func,
+                              IntegerField, Q, Sum, Value, When)
 from django.db.models.lookups import Exact
 from django.utils import timezone
 from ninja.files import UploadedFile
@@ -106,7 +109,6 @@ class Profile(models.Model):
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now_add=True)
     nb_active_connexions = models.IntegerField(default=0)
-    # Stocke les noms des canaux actifs
     active_channels = models.JSONField(default=list, blank=True)
 
     objects = ProfileQuerySet.as_manager()
@@ -118,11 +120,27 @@ class Profile(models.Model):
         self.last_activity = timezone.now()
         if not self.is_online:
             self.is_online = True
-        self.save()
+            self.save(update_fields=["is_online", "last_activity"])
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "online_users",
+                {
+                    "type": "user_status",
+                    "action": "user_online",
+                    "data": {
+                        "username": self.user.username,
+                        "nickname": getattr(self, "nickname", self.user.username),
+                        "status": "online",
+                        "date": timezone.now().isoformat(),
+                    },
+                },
+            )
+        else:
+            self.save(update_fields=["last_activity"])
 
     @property
     def is_really_online(self):
-        return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=2)
+        return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=30)
 
     @property
     def avatar(self) -> str:
@@ -143,15 +161,15 @@ class Profile(models.Model):
         if self.elo > 2700:
             return "Wild West Legend", 1000000
         if self.elo > 2300:
-          return "Star Criminal", 500000
+            return "Star Criminal", 500000
         if self.elo > 2000:
-          return "Ace Outlaw", 100000
+            return "Ace Outlaw", 100000
         if self.elo > 1700:
-          return "Big Shot", 10000
+            return "Big Shot", 10000
         if self.elo > 1400:
-          return "El Bandito", 1000
+            return "El Bandito", 1000
         if self.elo > 1100:
-          return "Goon", 100
+            return "Goon", 100
         if self.elo > 800:
             return "Troublemaker", 50
         if self.elo > 500:
