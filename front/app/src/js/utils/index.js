@@ -2,7 +2,7 @@ import { ThemeController } from './ThemeController';
 import { isMobile, BREAKPOINT } from './viewPort';
 import { sanitizeHtml } from './sanitizeHtml';
 import { showFormErrorFeedback } from './formFeedback';
-import { showToastNotification } from './toastnotification';
+import { showToastNotification, TOAST_TYPES } from './toastnotification';
 
 import {
   getRelativeTime,
@@ -44,6 +44,7 @@ export {
   sanitizeHtml,
   showFormErrorFeedback,
   showToastNotification,
+  TOAST_TYPES,
   createClouds,
   createStars,
   loader,
