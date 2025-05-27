@@ -113,6 +113,7 @@ export class Tournament extends HTMLElement {
       // if starting -> roundStarting
       // if finished -> roundFinished
       // if ongoing && Current user's bracket === finished -> waitingNextRound
+
       // Temporary status for ongoing tournaments
       this.#state.status = 'waitingNextRound';
     },
@@ -126,17 +127,11 @@ export class Tournament extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template() + this.style();
-
     this.tournamentName = this.querySelector('#tournament-name');
     this.tournamentContentWrapper = this.querySelector('#tournament-content');
 
     this.tournamentName.textContent = this.#state.tournament.name;
-    const content = this.tournamentContent[this.#state.status]();
-    if (content) {
-      this.tournamentContentWrapper.appendChild(content);
-    } else {
-      devErrorLog(`Tournament status not found: ${this.#state.status}`);
-    }
+    this.updateTournamentStatus();
 
     // ----- Test for round_start -----
     // const dataMock = mockRoundStartData();
@@ -161,17 +156,14 @@ export class Tournament extends HTMLElement {
       };
       return tournamentRoundStart;
     },
-    waitingNextRound: () => {
-      // Show status/result of all matches of the current round
-      const tournamentRoundWaiting = document.createElement('tournament-round-waiting');
-      tournamentRoundWaiting.data = {
+    roundOngoing: () => {
+      const tournamentRoundOngoing = document.createElement('tournament-round-ongoing');
+      tournamentRoundOngoing.data = {
         round_number: this.#state.currentRoundNumber,
         round: this.#state.currentRound,
+        status: this.#state.status,
       };
-      return tournamentRoundWaiting;
-    },
-    roundFinished: () => {
-      // Show result of all matches of the current round
+      return tournamentRoundOngoing;
     },
     finished: () => {
       // Show the final result of the tournament with tree
@@ -182,7 +174,16 @@ export class Tournament extends HTMLElement {
     if (this.tournamentContentWrapper.firstChild) {
       this.tournamentContentWrapper.removeChild(this.tournamentContentWrapper.firstChild);
     }
-    const content = this.tournamentContent[this.#state.status]();
+    if (this.#state.status === 'finished') {
+      router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
+      return;
+    }
+    let content = null;
+    if (this.#state.status === 'waitingNextRound' || this.#state.status === 'roundFinished') {
+      content = this.tournamentContent.roundOngoing();
+    } else {
+      content = this.tournamentContent[this.#state.status]();
+    }
     if (content) {
       this.tournamentContentWrapper.appendChild(content);
     } else {
