@@ -4,17 +4,17 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-from pong.consumers.common import PongCloseCodes
-from pong.consumers.game_protocol import GameRoomToClientEvents, GameRoomToGameWorkerEvents
+from pong.consumers.game_protocol import GameWSServerToClientEvents, GameWSServerToGameWorkerEvents, PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
 
 
-class GameRoomConsumer(WebsocketConsumer):
+class GameWSServerConsumer(WebsocketConsumer):
     """
-    Interface between game worker, which runs an actual game, and the client, to which it sends updates from the
-    worker with websocket connection.
+    Interface between game worker, which runs an actual game, and the client.
+    Sends to the worker events of player inputs and their connecction state for handling.
+    Sends to the client the data it receives from the game worker.
     """
 
     def connect(self):
@@ -58,7 +58,7 @@ class GameRoomConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
         self.send(
             text_data=json.dumps(
-                GameRoomToClientEvents.PlayerJoined(
+                GameWSServerToClientEvents.PlayerJoined(
                     action="player_joined",
                     player_id=str(self.player.id),
                 ),
@@ -67,7 +67,7 @@ class GameRoomConsumer(WebsocketConsumer):
         profile = self.user.profile
         async_to_sync(self.channel_layer.send)(
             "game",
-            GameRoomToGameWorkerEvents.PlayerConnected(
+            GameWSServerToGameWorkerEvents.PlayerConnected(
                 type="player_connected",
                 game_room_id=self.game_room_id,
                 player_id=str(self.player.id),
@@ -87,7 +87,7 @@ class GameRoomConsumer(WebsocketConsumer):
         if self.player:
             async_to_sync(self.channel_layer.send)(
                 "game",
-                GameRoomToGameWorkerEvents.PlayerDisconnected(
+                GameWSServerToGameWorkerEvents.PlayerDisconnected(
                     type="player_disconnected",
                     game_room_id=self.game_room_id,
                     player_id=str(self.player.id),
@@ -120,7 +120,7 @@ class GameRoomConsumer(WebsocketConsumer):
             }:
                 async_to_sync(self.channel_layer.send)(
                     "game",
-                    GameRoomToGameWorkerEvents.PlayerInputed(
+                    GameWSServerToGameWorkerEvents.PlayerInputed(
                         type="player_inputed",
                         action=action,
                         game_room_id=self.game_room_id,
