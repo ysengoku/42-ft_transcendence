@@ -128,10 +128,13 @@ export class TournamentList extends HTMLElement {
     // this.#state.totalTournaments = this.#state.tournaments.length;
 
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.TOURNAMENTS(this.#state.filter, 10, this.#state.currentLastItemIndex),
-        null, false, true);
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENTS(this.#state.filter, 10, this.#state.currentLastItemIndex),
+      null,
+      false,
+      true,
+    );
     if (!response.success) {
       return;
     }
@@ -161,8 +164,10 @@ export class TournamentList extends HTMLElement {
     }
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 10;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.totalTournaments <= this.#state.currentLastItemIndex) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalTournaments <= this.#state.currentLastItemIndex
+    ) {
       return;
     }
     this.#state.isLoading = true;

@@ -51,8 +51,10 @@ export class ForgotPassword extends HTMLElement {
     }
     this.#state.email = this.emailField.value;
     const response = await apiRequest(
-        'POST', API_ENDPOINTS.FORGOT_PASSWORD, { email: this.#state.email },
-        false, false,
+      'POST',
+      API_ENDPOINTS.FORGOT_PASSWORD,
+      { email: this.#state.email },
+      false, false,
     );
     if (response.success) {
       this.renderEmailSentMessage();
@@ -77,8 +79,10 @@ export class ForgotPassword extends HTMLElement {
   async handleResendRequest(event) {
     event.preventDefault();
     const response = await apiRequest(
-        'POST', API_ENDPOINTS.FORGOT_PASSWORD, { email: this.#state.email },
-        false, false,
+      'POST',
+      API_ENDPOINTS.FORGOT_PASSWORD,
+      { email: this.#state.email },
+      false, false,
     );
     if (response.success) {
       showAlertMessage(ALERT_TYPE.SUCCESS, 'Email resent successfully.');

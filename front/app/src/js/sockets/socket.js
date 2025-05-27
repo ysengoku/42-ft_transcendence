@@ -91,7 +91,7 @@ class WebSocketManager {
     try {
       message = JSON.parse(event.data);
     } catch (error) {
-      devErrorLog('Invalid JSON:', event.data);
+      devErrorLog('Invalid JSON:', error);
       return;
     }
     if (!message.action) {
