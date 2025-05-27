@@ -48,10 +48,10 @@ export class TournamentMenu extends HTMLElement {
       }
       return;
     }
-    if (authStatus.response.tournament_id) {
-      this.redirectToActiveTournament(authStatus.response.tournament_id);
-      return;
-    }
+    // if (authStatus.response.tournament_id) {
+    //   this.redirectToActiveTournament(authStatus.response.tournament_id);
+    //   return;
+    // }
     this.#state.nickname = authStatus.response.nickname;
     this.render();
   }

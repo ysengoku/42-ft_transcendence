@@ -7,6 +7,7 @@ import { TournamentRoundFinished } from './TournamentRoundFinished';
 import { TournamentCanceled } from './TournamentCanceled';
 import { TournamentOverviewTree } from './OverviewRoundsTree';
 import { TournamentOverviewTable } from './OverviewRoundsTable';
+import { participantElement } from './ParticipantElement';
 
 export {
   TournamentList,
@@ -18,4 +19,5 @@ export {
   TournamentCanceled,
   TournamentOverviewTree,
   TournamentOverviewTable,
+  participantElement,
 };

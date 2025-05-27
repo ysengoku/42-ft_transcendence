@@ -16,7 +16,7 @@ export async function mockTournamentDetail(id) {
       rounds: [],
       participants: [
         {
-          user: {
+          profile: {
             username: 'alex',
             nickname: 'Alex',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -26,7 +26,7 @@ export async function mockTournamentDetail(id) {
           alias: 'Nightmare',
         },
         {
-          user: {
+          profile: {
             username: 'user2',
             nickname: 'Player Two',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -36,7 +36,7 @@ export async function mockTournamentDetail(id) {
           alias: 'Lone Cactus',
         },
         {
-          user: {
+          profile: {
             username: 'user3',
             nickname: 'Player Three',
             avatar: '/__mock__/img/sample-pic1.jpg',
@@ -46,7 +46,7 @@ export async function mockTournamentDetail(id) {
           alias: 'Midnight Rider',
         },
         {
-          user: {
+          profile: {
             username: 'user4',
             nickname: 'Player Four',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -56,7 +56,7 @@ export async function mockTournamentDetail(id) {
           alias: 'Whiskey Bandit',
         },
         {
-          user: {
+          profile: {
             username: 'user5',
             nickname: 'Player Five',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -89,18 +89,18 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game1',
               participant1: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user2',
                   nickname: 'Player Two',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -111,7 +111,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -119,7 +119,7 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 1,
               status: 'finished',
@@ -129,7 +129,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game2',
               participant1: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -139,7 +139,7 @@ export async function mockTournamentDetail(id) {
                 alias: 'LazyFox',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user4',
                   nickname: 'Player Four',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -157,7 +157,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game3',
               participant1: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -168,7 +168,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user6',
                   nickname: 'Player Six',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -176,10 +176,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'CactusJack',
-                status: 'winner',
+                status: 'qualified',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -196,7 +196,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game4',
               participant1: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -204,10 +204,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'Gunslinger',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user8',
                   nickname: 'Player Eight',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -218,7 +218,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -237,19 +237,19 @@ export async function mockTournamentDetail(id) {
       ],
       participants: [
         {
-          user: {
-            username: 'user1',
+          profile: {
+            username: 'pedro',
             nickname: 'MidnightRider',
             avatar: '/__mock__/img/sample-pic3.png',
             elo: 1500,
             is_online: false,
           },
           alias: 'MidnightRider',
-          status: 'active',
+          status: 'qualified',
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user2',
             nickname: 'Player Two',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -261,7 +261,7 @@ export async function mockTournamentDetail(id) {
           round: 1,
         },
         {
-          user: {
+          profile: {
             username: 'user3',
             nickname: 'Player Three',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -269,11 +269,11 @@ export async function mockTournamentDetail(id) {
             is_online: true,
           },
           alias: 'LazyFox',
-          status: 'active',
+          status: 'qualified',
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user4',
             nickname: 'Player Four',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -285,7 +285,7 @@ export async function mockTournamentDetail(id) {
           round: 1,
         },
         {
-          user: {
+          profile: {
             username: 'user5',
             nickname: 'Player Five',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -293,11 +293,11 @@ export async function mockTournamentDetail(id) {
             is_online: true,
           },
           alias: 'DirtyHarry',
-          status: 'active',
+          status: 'qualified',
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user6',
             nickname: 'Player Six',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -309,7 +309,7 @@ export async function mockTournamentDetail(id) {
           round: 1,
         },
         {
-          user: {
+          profile: {
             username: 'user7',
             nickname: 'Player Seven',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -317,11 +317,11 @@ export async function mockTournamentDetail(id) {
             is_online: true,
           },
           alias: 'Gunslinger',
-          status: 'active',
+          status: 'qualified',
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user8',
             nickname: 'Player Eight',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -356,7 +356,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game1',
               participant1: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -364,10 +364,10 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user2',
                   nickname: 'Player Two',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -378,7 +378,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -386,7 +386,7 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 1,
               status: 'finished',
@@ -396,7 +396,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game2',
               participant1: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -407,7 +407,7 @@ export async function mockTournamentDetail(id) {
                 alias: 'LazyFox',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user4',
                   nickname: 'Player Four',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -418,7 +418,7 @@ export async function mockTournamentDetail(id) {
                 alias: 'DuskDevil',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user4',
                   nickname: 'Player Four',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -441,7 +441,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game1',
               participant1: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -452,7 +452,7 @@ export async function mockTournamentDetail(id) {
                 status: '',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user2',
                   nickname: 'Player Two',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -473,7 +473,7 @@ export async function mockTournamentDetail(id) {
       ],
       participants: [
         {
-          user: {
+          profile: {
             username: 'user1',
             nickname: 'MidnightRider',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -481,11 +481,11 @@ export async function mockTournamentDetail(id) {
             is_online: false,
           },
           alias: 'MidnightRider',
-          status: 'active',
+          status: 'qualified',
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user2',
             nickname: 'Player Two',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -497,7 +497,7 @@ export async function mockTournamentDetail(id) {
           round: 1,
         },
         {
-          user: {
+          profile: {
             username: 'user3',
             nickname: 'Player Three',
             avatar: '/__mock__/img/sample-pic2.png',
@@ -505,11 +505,11 @@ export async function mockTournamentDetail(id) {
             is_online: true,
           },
           alias: 'LazyFox',
-          status: 'active',
+          status: 'qualified',
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user4',
             nickname: 'Player Four',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -535,7 +535,7 @@ export async function mockTournamentDetail(id) {
         is_online: true,
       },
       winner: {
-        user: {
+        profile: {
           username: 'user1',
           nickname: 'MidnightRider',
           avatar: '/__mock__/img/sample-pic2.png',
@@ -555,7 +555,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game1',
               participant1: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -563,10 +563,10 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user2',
                   nickname: 'Player Two',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -577,7 +577,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -585,7 +585,7 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 1,
               status: 'finished',
@@ -595,7 +595,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game2',
               participant1: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -603,10 +603,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'LazyFox',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user4',
                   nickname: 'Player Four',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -617,7 +617,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -625,7 +625,7 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'LazyFox',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 1,
               status: 'finished',
@@ -635,7 +635,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game3',
               participant1: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic1.jpg',
@@ -643,10 +643,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'DirtyHarry',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user6',
                   nickname: 'Player Six',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -657,7 +657,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -674,7 +674,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game4',
               participant1: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -682,10 +682,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'Gunslinger',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user8',
                   nickname: 'Player Eight',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -696,7 +696,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -719,7 +719,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game5',
               participant1: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -727,10 +727,10 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -741,7 +741,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -749,7 +749,7 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 2,
               status: 'finished',
@@ -759,7 +759,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game6',
               participant1: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -767,10 +767,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'DirtyHarry',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic1.jpg',
@@ -781,7 +781,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -789,7 +789,7 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'DirtyHarry',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 2,
               status: 'finished',
@@ -805,7 +805,7 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'final',
               participant1: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -813,10 +813,10 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -827,7 +827,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user1',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -835,7 +835,7 @@ export async function mockTournamentDetail(id) {
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 3,
               status: 'finished',
@@ -847,7 +847,7 @@ export async function mockTournamentDetail(id) {
       ],
       participants: [
         {
-          user: {
+          profile: {
             username: 'user1',
             nickname: 'MidnightRider',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -855,11 +855,11 @@ export async function mockTournamentDetail(id) {
             is_online: false,
           },
           alias: 'MidnightRider',
-          status: 'active',
+          status: 'qualified',
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user2',
             nickname: 'Player Two',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -871,7 +871,7 @@ export async function mockTournamentDetail(id) {
           round: 1,
         },
         {
-          user: {
+          profile: {
             username: 'user3',
             nickname: 'Player Three',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -883,7 +883,7 @@ export async function mockTournamentDetail(id) {
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user4',
             nickname: 'Player Four',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -895,7 +895,7 @@ export async function mockTournamentDetail(id) {
           round: 1,
         },
         {
-          user: {
+          profile: {
             username: 'user5',
             nickname: 'Player Five',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -907,7 +907,7 @@ export async function mockTournamentDetail(id) {
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user6',
             nickname: 'Player Six',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -919,7 +919,7 @@ export async function mockTournamentDetail(id) {
           round: 1,
         },
         {
-          user: {
+          profile: {
             username: 'user7',
             nickname: 'Player Seven',
             avatar: '/__mock__/img/sample-pic3.png',
@@ -931,7 +931,7 @@ export async function mockTournamentDetail(id) {
           round: 2,
         },
         {
-          user: {
+          profile: {
             username: 'user8',
             nickname: 'Player Eight',
             avatar: '/__mock__/img/sample-pic3.png',
