@@ -8,7 +8,7 @@ from enum import Enum, auto
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
-from pong.consumers.game_protocol import GameRoomToGameWorkerEvents, SerializedGameState
+from pong.consumers.game_protocol import GameWSServerToGameWorkerEvents, SerializedGameState
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -345,7 +345,7 @@ class MultiplayerPongMatch(BasePong):
         return None
 
 
-class GameConsumer(AsyncConsumer):
+class GameWorkerConsumer(AsyncConsumer):
     """
     Manages multiple concurrent pong matches. Receives inputs from `GameRoomConsumer` and sends back different events
     based on what happened in the match.
@@ -357,7 +357,7 @@ class GameConsumer(AsyncConsumer):
         self.channel_layer = get_channel_layer()
 
     ##### EVENT HANDLERS AND CHANNEL METHODS #####
-    async def player_connected(self, event: GameRoomToGameWorkerEvents.PlayerConnected):
+    async def player_connected(self, event: GameWSServerToGameWorkerEvents.PlayerConnected):
         game_room_id = event["game_room_id"]
         player_id = event["player_id"]
 
@@ -523,7 +523,7 @@ class GameConsumer(AsyncConsumer):
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
 
     ##### PLAYER MANAGEMENT METHODS #####
-    def _add_player_and_create_pending_match(self, event: GameRoomToGameWorkerEvents.PlayerConnected):
+    def _add_player_and_create_pending_match(self, event: GameWSServerToGameWorkerEvents.PlayerConnected):
         player_id = event["player_id"]
         game_room_id = event["game_room_id"]
         match = self.matches[game_room_id] = MultiplayerPongMatch(game_room_id)
@@ -536,7 +536,7 @@ class GameConsumer(AsyncConsumer):
         )
 
     async def _add_player_and_start_match(
-        self, match: MultiplayerPongMatch, event: GameRoomToGameWorkerEvents.PlayerConnected,
+        self, match: MultiplayerPongMatch, event: GameWSServerToGameWorkerEvents.PlayerConnected,
     ):
         """Cancels waiting for players timer, and starts the game loop for this match."""
         player_id = event["player_id"]
