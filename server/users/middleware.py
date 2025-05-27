@@ -14,12 +14,9 @@ class JWTEndpointsAuthMiddleware(APIKeyCookie):
     param_name = "access_token"
 
     def authenticate(self, request, access_token: str):
-        payload = RefreshToken.objects.select_related(
-            "profile").verify_access_token(access_token)
+        payload = RefreshToken.objects.select_related("profile").verify_access_token(access_token)
 
-        user = User.objects.for_id(payload["sub"]).first()
-        user.profile.update_activity()
-        return user
+        return User.objects.for_id(payload["sub"]).first()
 
 
 class JWTWebsocketAuthMiddleware:
@@ -29,7 +26,7 @@ class JWTWebsocketAuthMiddleware:
     """
 
     def __init__(self, app):
-        self.app = app  # ASGI app
+        self.app = app # ASGI app
 
     async def __call__(self, scope, receive, send):
         headers = dict(scope["headers"])
@@ -56,3 +53,13 @@ class JWTWebsocketAuthMiddleware:
             return User.objects.select_related("profile", "oauth_connection").filter(id=payload["sub"]).first()
         except (AuthenticationError, User.DoesNotExist):
             return None
+
+
+class ActivityMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.user.is_authenticated:
+            request.user.profile.update_activity()
+        return self.get_response(request)
