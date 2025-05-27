@@ -78,7 +78,7 @@ export class MfaVerification extends HTMLElement {
       inputs[index + 1].focus();
     } else if (currentInput.value.length < 1 && index > 0) {
       inputs[index - 1].focus();
-    };
+    }
   }
 
   fetchInput() {
@@ -98,18 +98,18 @@ export class MfaVerification extends HTMLElement {
   async handleSubmit(event) {
     event.preventDefault();
     await this.handleMfaVerification();
-  };
+  }
 
   async handleMfaVerification() {
     this.#state.username = sessionStorage.getItem('username');
     const otpInput = this.#state.otp;
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.MFA_VERIFICATION(this.#state.username),
-        { token: otpInput },
-        false,
-        false,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.MFA_VERIFICATION(this.#state.username),
+      { token: otpInput },
+      false,
+      false,
     );
     if (response.success) {
       const userInformation = {
@@ -118,7 +118,7 @@ export class MfaVerification extends HTMLElement {
         avatar: response.data.avatar,
       };
       auth.storeUser(userInformation);
-      router.navigate(`/home`, response.user);
+      router.navigate('/home', response.user);
       sessionStorage.removeItem('username');
     } else {
       this.feedbackField = this.querySelector('#mfa-failed-feedback');
@@ -130,12 +130,12 @@ export class MfaVerification extends HTMLElement {
   async resendMfaCode() {
     this.#state.username = sessionStorage.getItem('username');
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.MFA_RESEND_CODE(this.#state.username),
-        null,
-        false,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.MFA_RESEND_CODE(this.#state.username),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Email resent successfully', 3000);

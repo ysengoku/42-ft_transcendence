@@ -147,13 +147,12 @@ export class Settings extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, 'No changes to save', 2000);
       return;
     }
-    /* eslint-disable-next-line new-cap */
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SETTINGS(this.#state.username),
-        formData,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_SETTINGS(this.#state.username),
+      formData,
+      true,
     );
     if (response.success) {
       this.#state.username = response.data.username;
