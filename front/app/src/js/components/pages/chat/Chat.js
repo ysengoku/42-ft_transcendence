@@ -163,12 +163,12 @@ export class Chat extends HTMLElement {
 
   async fetchChatList(offset = 0) {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT_LIST(10, offset),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.CHAT_LIST(10, offset),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       devLog('Chat list response:', response);
@@ -178,12 +178,12 @@ export class Chat extends HTMLElement {
 
   async fetchChatData() {
     const response = await apiRequest(
-        'PUT',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT(this.#state.currentChatUsername),
-        null,
-        false,
-        true,
+      'PUT',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.CHAT(this.#state.currentChatUsername),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       devLog('Chat data response:', response);

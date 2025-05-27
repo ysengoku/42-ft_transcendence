@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessage, ALERT_TYPE } from '@utils';
 import { emailFeedback, removeInputFeedback } from '@utils';
@@ -15,7 +16,12 @@ export class ForgotPassword extends HTMLElement {
     this.handleRemoveInputFeedback = this.handleRemoveInputFeedback.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (authStatus.success) {
+      router.redirect('/home');
+      return;
+    }
     this.render();
   }
 
@@ -45,8 +51,10 @@ export class ForgotPassword extends HTMLElement {
     }
     this.#state.email = this.emailField.value;
     const response = await apiRequest(
-        'POST', API_ENDPOINTS.FORGOT_PASSWORD, { email: this.#state.email },
-        false, false,
+      'POST',
+      API_ENDPOINTS.FORGOT_PASSWORD,
+      { email: this.#state.email },
+      false, false,
     );
     if (response.success) {
       this.renderEmailSentMessage();
@@ -71,8 +79,10 @@ export class ForgotPassword extends HTMLElement {
   async handleResendRequest(event) {
     event.preventDefault();
     const response = await apiRequest(
-        'POST', API_ENDPOINTS.FORGOT_PASSWORD, { email: this.#state.email },
-        false, false,
+      'POST',
+      API_ENDPOINTS.FORGOT_PASSWORD,
+      { email: this.#state.email },
+      false, false,
     );
     if (response.success) {
       showAlertMessage(ALERT_TYPE.SUCCESS, 'Email resent successfully.');
