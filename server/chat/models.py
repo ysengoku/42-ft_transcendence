@@ -4,8 +4,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import (BooleanField, Count, Exists, ExpressionWrapper,
-                              ImageField, OuterRef, Q, Subquery, Value)
+from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, ImageField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, Now, NullIf
 from django.utils import timezone
 
@@ -238,9 +237,10 @@ class NotificationQuerySet(models.QuerySet):
         notification_data={"game_id": str()},
         date: datetime = None,
     ):
-        """
-        May include additional operations like using the channel layer to send data with websocket.
-        """
+        from chat.models import GameInvitation
+        invitation = GameInvitation.objects.get(id=notification_data["game_id"])
+        notification_data = notification_data.copy()
+        notification_data["status"] = invitation.status
         return self._create(
             receiver=receiver,
             sender=sender,
@@ -334,3 +334,12 @@ class GameInvitation(models.Model):
 
     def __str__(self):
         return f"{self.game_session}:"
+
+    def sync_notification_status(self):
+        notifications = Notification.objects.filter(
+            data__game_id=str(self.id),
+            action=Notification.GAME_INVITE
+        )
+        for notif in notifications:
+            notif.data["status"] = self.status
+            notif.save(update_fields=["data"])
