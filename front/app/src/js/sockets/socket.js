@@ -1,4 +1,4 @@
-import { showToastNotification, TOAST_TYPES } from '@utils';
+import { showToastNotification } from '@utils';
 
 /**
  * WebSocket endpoint URL paths for different features.
@@ -41,7 +41,7 @@ class WebSocketManager {
         return;
       }
       if (event.code === 1006 || event.code === 1011) {
-        showToastNotification('Connection to server lost.', TOAST_TYPES.error);
+        showToastNotification('Connection to server lost.');
         console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
         this.socketOpen = false;
         return;
