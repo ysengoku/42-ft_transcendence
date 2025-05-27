@@ -9,7 +9,7 @@ export class TournamentRoundStart extends HTMLElement {
   constructor() {
     super();
 
-    this.roundNumber = null;
+    this.roundNumberElement = null;
     this.timer = null;
     this.roundContentWrapper = null;
   }
@@ -36,10 +36,10 @@ export class TournamentRoundStart extends HTMLElement {
       return;
     }
     this.innerHTML = this.template() + this.style();
-    this.roundNumber = this.querySelector('#round-number');
+    this.roundNumberElement = this.querySelector('#round-number');
     this.bracketsWrapper = this.querySelector('#brackets-wrapper');
 
-    this.roundNumber.textContent = `Round ${this.#state.roundNumber}`;
+    this.roundNumberElement.textContent = `Round ${this.#state.roundNumber}`;
     this.renderBrackets();
     this.countDownTimer();
   }
