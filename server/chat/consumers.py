@@ -504,49 +504,13 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.debug("Notification %s does not exist", notification_id)
 
     def reply_game_invite(self, data):
-        response = data["data"].get(accept)
+        response = data["data"].get("accept")
         if response == True:
             self.accept_game_invite(data)
         elif response == False:
             self.decline_game_invite(data)
         else:
             logger.critical("WHAT THE FUCK IS GOING ON WITH THE BOOLEAN ?")
-        return
-        invitation_id = data["data"].get["id"]
-        try:
-            invitation = GameInvitation.objects.get(id=invitation_id)
-            invitation.status = "accepted"
-            invitation.save()
-            # send notif to sender of the game invitation with receivers' infos
-            notification_data = get_user_data(self.user_profile)
-            notification_data.update(
-                {"id": str(invitation_id), "status": "accepted"})
-            async_to_sync(self.channel_layer.group_send)(
-                f"user_{invitation.sender.id}",
-                {
-                    "action": "game_invite",
-                    "data": notification_data,
-                },
-            )
-
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite",
-                        "data": {"id": invitation_id, "status": "accepted"},
-                    },
-                ),
-            )
-        except GameInvitation.DoesNotExist:
-            logger.debug("Invitation %s does not exist.", invitation_id)
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "error",
-                        "message": "Invitation not found.",
-                    },
-                ),
-            )
 
     def accept_game_invite(self, data):
         invitation_id = data["data"].get("id")
@@ -593,44 +557,80 @@ class UserEventsConsumer(WebsocketConsumer):
                 ),
             )
 
+    # TODO : security checks
     def decline_game_invite(self, data):
-        logger.critical(data)
-        sender = data["data"].get("username")
-        try:
-            invitation = GameInvitation.objects.get(
-                sender=sender, receiver=self.user.profile, status=GameInvitation.PENDING)
-            invitation.status = GameInvitation.DECLINED
-            invitation.save()
-            invitation.sync_notification_status()
-            # send notif to sender of the game invitation
-            notification_data = get_user_data(self.user_profile)
-            notification_data.update(
-                {"id": str(invitation_id), "status": "declined"})
-            async_to_sync(self.channel_layer.group_send)(
-                f"user_{invitation.sender.id}",
-                {
-                    "action": "game_invite",
-                    "data": notification_data,
+        sender_name = data["data"].get("username")
+        sender = Profile.objects.get(user__username=sender_name)
+        invitations = GameInvitation.objects.filter(
+            sender=sender,
+            recipient=self.user.profile,
+            status=GameInvitation.PENDING
+        )
+        if not invitations.exists():
+            logger.debug("No pending invitations sent by %s to cancel for user %s", sender, self.user.username)
+            self.send(
+                text_data=json.dumps({
+                    "action": "error",
+                    "message": "No pending invitations found.",
+                })
+            )
+            return
+        with transaction.atomic():
+            count = 0
+            for invitation in invitations:
+                invitation.status = GameInvitation.DECLINED
+                invitation.save()
+                invitation.sync_notification_status()
+                count += 1
+            logger.info("Declined %d pending invitations from %s to %s", count, sender_name, self.user.username)
+        self.send(
+            text_data=json.dumps({
+                "action": "decline_game_invite",
+                "message": "You declined the game invitation.",
+            })
+        )
+        notification_data = get_user_data(self.user_profile)
+        notification_data.update({"status": "declined"})
+        async_to_sync(self.channel_layer.group_send)(
+            f"user_{invitation.sender.user.id}",
+            {
+                "type": "user_status",
+                "action": "game_invite_canceled",
+                "data": {
+                    "username": self.user.username,
+                    "nickname": self.user.nickname,
                 },
-            )
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite",
-                        "data": {"id": invitation_id, "status": "declined"},
-                    },
-                ),
-            )
-        except GameInvitation.DoesNotExist:
-            logger.debug("Invitation %s does not exist.", invitation_id)
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "error",
-                        "message": "Invitation not found.",
-                    },
-                ),
-            )
+                "message": f"Game invite has been declined by  {self.user.username}"
+            },
+        )
+        # self.send(
+        #     text_data=json.dumps(
+        #         {
+        #             "action": "game_invite",
+        #             "data": {"id": invitation_id, "status": "declined"},
+        #         },
+        #     ),
+        # )
+        # try:
+        #     invitation = GameInvitation.objects.get(
+        #         sender=sender, receiver=self.user.profile, status=GameInvitation.PENDING)
+        #     invitation.status = GameInvitation.DECLINED
+        #     invitation.save()
+        #     invitation.sync_notification_status()
+        #     # send notif to sender of the game invitation
+        #     notification_data = get_user_data(self.user_profile)
+        #     notification_data.update(
+        #         {"id": str(invitation_id), "status": "declined"})
+        # except GameInvitation.DoesNotExist:
+        #     logger.debug("Invitation %s does not exist.", invitation_id)
+        #     self.send(
+        #         text_data=json.dumps(
+        #             {
+        #                 "action": "error",
+        #                 "message": "Invitation not found.",
+        #             },
+        #         ),
+        #     )
 
     # TODO : security checks
     def send_game_invite(self, data):
