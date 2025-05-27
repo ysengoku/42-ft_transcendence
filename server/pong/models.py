@@ -120,6 +120,10 @@ class MatchQuerySet(models.QuerySet):
 
 
 class Match(models.Model):
+    """
+    Represents a finished match between two players.
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
     loser = models.ForeignKey(Profile, related_name="lost_matches", on_delete=models.SET_NULL, null=True, blank=True)
@@ -184,7 +188,8 @@ class GameRoomQuerySet(models.QuerySet):
 
 class GameRoom(models.Model):
     """
-    Gets created when user starts matchmaking search.
+    Represents a game room where the players either look for an opponent or play a match.
+    Created after successeful matchmaking and used by the GameWSServerConsumer and GameWorkerConsumer.
     """
 
     PENDING = "pending"
