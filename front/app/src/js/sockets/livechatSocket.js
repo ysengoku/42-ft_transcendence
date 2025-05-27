@@ -42,7 +42,7 @@ socketManager.addSocket('livechat', {
     showToastNotification(`${data.nickname} challenges you to a duel.`);
   },
   game_accepted: (data) => {
-    if (window.location.pathname !== '/duel') {
+    if (window.location.pathname === '/duel') {
       const duelPage = document.querySelector('duel-page');
       duelPage?.invitationAccepted(data);
       return;
@@ -70,7 +70,7 @@ socketManager.addSocket('livechat', {
       duelPage?.invitationDeclined(data);
       return;
     }
-    const nickname = data.username === authStatus.response.username ? 'You' : data.nickname;
+    const nickname = data.username.toLowerCase() === authStatus.response.username.toLowerCase() ? 'You' : data.nickname;
     showToastNotification(`${nickname} have declined the duel invitation.`);
   },
   game_invite_canceled: async (data) => {
@@ -86,7 +86,7 @@ socketManager.addSocket('livechat', {
       showToastNotification(data.message, TOAST_TYPES.ERROR);
       return;
     }
-    const nickname = data.username === authStatus.response.username ? 'You' : data.nickname;
+    const nickname = data.username.toLowerCase() === authStatus.response.username.toLowerCase() ? 'You' : data.nickname;
     const notificationButton = document.querySelector('notifications-button');
     showToastNotification(`${nickname} have cancelled the duel invitation.`);
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
