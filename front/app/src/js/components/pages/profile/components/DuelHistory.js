@@ -138,8 +138,11 @@ export class UserDuelHistory extends HTMLElement {
   }
 
   async loadMoreItems(event) {
-    if (!this.duelsTab.classList.contains('active') || this.#state.isLoading ||
-    (this.#state.totalMatches && this.#state.totalMatches <= this.#state.currentLastItemIndex + 1)) {
+    if (
+      !this.duelsTab.classList.contains('active') ||
+      this.#state.isLoading ||
+      (this.#state.totalMatches && this.#state.totalMatches <= this.#state.currentLastItemIndex + 1)
+    ) {
       return;
     }
     const { scrollTop, scrollHeight, clientHeight } = event.target;
@@ -212,8 +215,13 @@ export class UserDuelHistory extends HTMLElement {
     const order = this.#state.orderedLatest ? 'desc' : 'asc';
     const endpoint =
       /* eslint-disable-next-line new-cap */
-      API_ENDPOINTS.MATCHES(this.#state.username, order, this.#state.filter,
-          this.#fetchLimit, this.#state.currentLastItemIndex);
+      API_ENDPOINTS.MATCHES(
+        this.#state.username,
+        order,
+        this.#state.filter,
+        this.#fetchLimit,
+        this.#state.currentLastItemIndex,
+      );
     const response = await apiRequest('GET', endpoint, null, false, true);
     if (response.success) {
       this.#state.totalMatches = response.data.count;
