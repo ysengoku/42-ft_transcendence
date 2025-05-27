@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import audiourl from '/audio/score_sound.mp3?url';
 import pedro from '/3d_models/lilguy.glb?url';
@@ -66,9 +67,8 @@ export class Game extends HTMLElement {
     const loaderModel = new GLTFLoader();
     const loaderFonts = new FontLoader();
 
-    var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
-    camera.position.set(0, 15, -20);
-    camera.lookAt(new THREE.Vector3(0,0,0));
+    const camera = new THREE.PerspectiveCamera(45, rendererWidth / rendererHeight, 0.1, 2000);
+    const orbit = new OrbitControls(camera, renderer.domElement);
 
     let mixer;
     const normalMaterial = new THREE.MeshNormalMaterial();
@@ -212,6 +212,8 @@ export class Game extends HTMLElement {
   
     scene.add(loadedFontP1);
   });
+  camera.position.set(10, 15, -22);
+  orbit.update();
 
   ligths[0].position.set(0, 10, 30);
   ligths[1].position.set(10, 0, 30);

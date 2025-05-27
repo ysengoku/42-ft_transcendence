@@ -62,7 +62,8 @@ def update_user_settings(
     request: HttpRequest,
     username: str,
     data: Form[UpdateUserChema],
-    new_profile_picture: UploadedFile | None = File(description="User profile picture.", default=None),
+    new_profile_picture: UploadedFile | None = File(
+        description="User profile picture.", default=None),
 ):
     """
     Udates settings of the user.
@@ -73,6 +74,7 @@ def update_user_settings(
     try:
         user.update_user(data, new_profile_picture)
     except RequestDataTooBig as exc:
-        raise HttpError(413, "File is too big. Please upload a file that weights less than 10mb.") from exc
+        raise HttpError(
+            413, "File is too big. Please upload a file that weights less than 10mb.") from exc
 
     return user.profile
