@@ -49,12 +49,12 @@ export class ChatUserSearchItem extends HTMLElement {
 
   async fetchChatRoom(username = this.#state.user.username) {
     const response = await apiRequest(
-        'PUT',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT(username),
-        null,
-        false,
-        true,
+      'PUT',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.CHAT(username),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       if (response.data.is_blocked_by_user) {
