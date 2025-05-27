@@ -50,10 +50,13 @@ export class TournamentOverview extends HTMLElement {
     // this.#state.tournament_id = 'fb68695b-5645-4ad6-ac8a-8ee018475cae'
 
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.TOURNAMENT(this.#state.tournament_id),
-        null, false, true);
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT(this.#state.tournament_id),
+      null,
+      false,
+      true,
+    );
     if (!response.success) {
       if (response.status === 404) {
         const notFound = document.createElement('page-not-found');

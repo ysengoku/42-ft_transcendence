@@ -106,10 +106,10 @@ export class NotificationsList extends HTMLElement {
 
   async fetchNotifications(read, limit, offset) {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
-        null, false, true);
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
+      null, false, true);
     if (response.success) {
       return response.data;
     } else {
