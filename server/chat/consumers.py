@@ -585,8 +585,11 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.info("Declined %d pending invitations from %s to %s", count, sender_name, self.user.username)
         self.send(
             text_data=json.dumps({
-                "action": "decline_game_invite",
-                "message": "You declined the game invitation.",
+                "action": "game_declined",
+                "data": {
+                    "username": self.user.username,
+                    "nickname": self.user.nickname,
+                },
             })
         )
         notification_data = get_user_data(self.user_profile)
@@ -595,19 +598,18 @@ class UserEventsConsumer(WebsocketConsumer):
             f"user_{invitation.sender.user.id}",
             {
                 "type": "user_status",
-                "action": "game_invite_canceled",
+                "action": "game_declined",
                 "data": {
                     "username": self.user.username,
                     "nickname": self.user.nickname,
                 },
-                "message": f"Game invite has been declined by  {self.user.username}"
             },
         )
         # self.send(
         #     text_data=json.dumps(
         #         {
-        #             "action": "game_invite",
-        #             "data": {"id": invitation_id, "status": "declined"},
+        #             "action": "game_declined",
+        #             "data": {"username": self.user.username, "nickname": self.user.nickname},
         #         },
         #     ),
         # )
@@ -700,15 +702,32 @@ class UserEventsConsumer(WebsocketConsumer):
             count = 0
             for invitation in invitations:
                 invitation.status = GameInvitation.CANCELLED
+                receiver = invitation.recipient
                 invitation.save()
                 invitation.sync_notification_status()
                 count += 1
             logger.info("Cancelled %d pending invitations for user %s", count, self.user.username)
         self.send(
             text_data=json.dumps({
-                "action": "cancel_game_invite",
-                "message": "You cancelled the game invitation.",
+                "action": "game_invite_canceled",
+                "data": {
+                    "username": self.user.username,
+                    "nickname": self.user.nickname,
+                }
             })
+        )
+        async_to_sync(self.channel_layer.group_send)(
+            f"user_{receiver.user.id}",
+            {
+                "type": "chat_message",
+                "message": json.dumps({
+                    "action": "game_invite_canceled",
+                    "data": {
+                        "username": self.user.username,
+                        "nickname": self.user.nickname
+                    }
+                }),
+            },
         )
 
     def handle_new_tournament(self, data):
