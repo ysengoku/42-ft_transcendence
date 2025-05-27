@@ -37,16 +37,23 @@ class MatchQuerySet(models.QuerySet):
 
     def resolve(
         self,
-        winner: Profile,
-        loser: Profile,
+        winner_profile_or_id: Profile | int,
+        loser_profile_or_id: Profile | int,
         winners_score: int,
         losers_score: int,
         date: datetime = timezone.now(),
-    ):
+    ) -> tuple["Match", Profile, Profile]:
         """
         Resolves all elo calculations, updates profiles of players,
         creates a new match record and saves everything into the database.
+        Accepts either model instances directly or their ID's.
+        Returns resolved match, winner and loser model instances.
         """
+        if (isinstance(winner_profile_or_id, int)):
+            winner = Profile.objects.get(id=winner_profile_or_id)
+        if (isinstance(loser_profile_or_id, int)):
+            loser = Profile.objects.get(id=loser_profile_or_id)
+
         elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
         if (loser.elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
             elo_change = loser.elo - MatchQuerySet.MINUMUM_ELO
@@ -55,8 +62,8 @@ class MatchQuerySet(models.QuerySet):
         winner.elo += elo_change
         loser.elo -= elo_change
         resolved_match = Match(
-            winner=winner,
-            loser=loser,
+            winner=winner.id,
+            loser=loser.id,
             winners_score=winners_score,
             losers_score=losers_score,
             elo_change=elo_change,
@@ -67,7 +74,7 @@ class MatchQuerySet(models.QuerySet):
         resolved_match.save()
         winner.save()
         loser.save()
-        return resolved_match
+        return resolved_match, winner, loser
 
     def get_elo_points_by_day(self, profile: Profile):
         # annotate with day without time and elo change of the specific player

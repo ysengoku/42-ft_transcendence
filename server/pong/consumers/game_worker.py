@@ -536,7 +536,9 @@ class GameWorkerConsumer(AsyncConsumer):
         )
 
     async def _add_player_and_start_match(
-        self, match: MultiplayerPongMatch, event: GameWSServerToGameWorkerEvents.PlayerConnected,
+        self,
+        match: MultiplayerPongMatch,
+        event: GameWSServerToGameWorkerEvents.PlayerConnected,
     ):
         """Cancels waiting for players timer, and starts the game loop for this match."""
         player_id = event["player_id"]
@@ -575,7 +577,11 @@ class GameWorkerConsumer(AsyncConsumer):
     async def _pause(self, match: MultiplayerPongMatch, disconnected_player: Player):
         await self.channel_layer.group_send(
             self._to_group_name(match),
-            {"type": "game_paused", "remaining_time": int(disconnected_player.reconnection_time)},
+            {
+                "type": "game_paused",
+                "remaining_time": int(disconnected_player.reconnection_time),
+                "name": disconnected_player.name,
+            },
         )
         match.state = MultiplayerPongMatchState.PAUSED
         match.pause_event.clear()
