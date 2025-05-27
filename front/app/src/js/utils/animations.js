@@ -111,3 +111,23 @@ export function loader() {
   </div>
   `;
 }
+
+export function triggerRotateMoveShrink(el, duration = 1500) {
+  el.classList.add('rotateMoveShrink');
+
+  setTimeout(() => {
+    el.style.visibility = 'hidden';
+  }, duration);
+}
+
+export function flyAway(el, duration = 1000) {
+  if (getComputedStyle(el).position === 'static') {
+    el.style.position = 'relative';
+  }
+  el.classList.add('fly-away');
+
+  setTimeout(() => {
+    // el.classList.remove('fly-away');
+    el.style.visibility = 'hidden';
+  }, duration);
+}
