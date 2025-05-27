@@ -1,5 +1,6 @@
-import { socketManager } from './socket';
 import { router } from '@router';
+import { auth } from '@auth';
+import { socketManager } from './socket';
 import { showToastNotification, TOAST_TYPES, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 // Socket registration for livechat module including Chat, Notifications, and Onlie status
@@ -59,15 +60,24 @@ socketManager.addSocket('livechat', {
       router.navigate('/duel', param);
     }, 2000);
   },
-  game_declined: (data) => {
+  game_declined: async (data) => {
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      return;
+    }
     if (window.location.pathname === '/duel') {
       const duelPage = document.querySelector('duel-page');
       duelPage?.invitationDeclined(data);
       return;
     }
-    showToastNotification(`${data.nickname} declined the duel invitation.`);
+    const nickname = data.username === authStatus.response.username ? 'You' : data.nickname;
+    showToastNotification(`${nickname} have declined the duel invitation.`);
   },
-  game_invite_canceled: (data) => {
+  game_invite_canceled: async (data) => {
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      return;
+    }
     if (window.location.pathname === '/duel') {
       const duelPage = document.querySelector('duel-page');
       duelPage.status = 'canceled';
@@ -76,9 +86,10 @@ socketManager.addSocket('livechat', {
       showToastNotification(data.message, TOAST_TYPES.ERROR);
       return;
     }
+    const nickname = data.username === authStatus.response.username ? 'You' : data.nickname;
     const notificationButton = document.querySelector('notifications-button');
+    showToastNotification(`${nickname} have cancelled the duel invitation.`);
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-    showToastNotification(`${data.nickname} cancelled the duel invitation.`);
   },
   new_tournament: (data) => {
     const notificationButton = document.querySelector('notifications-button');
