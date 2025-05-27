@@ -33,6 +33,9 @@ ON ANY OTHER JSON:
   - `content`: bool.
   - `player_id`: id of the player.
 
+`resign`: player resigns the game.
+  - `player_id`: id of the player.
+
 ON ANY OTHER JSON:
   -> Server closes connection with the special code 3100.
 
