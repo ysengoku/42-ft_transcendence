@@ -13,7 +13,7 @@ from django.utils import timezone
 from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
 
-from .models import Chat, ChatMessage, GameInvitation, Notification
+from .models import Chat, ChatMessage, GameInvitation, GameSession, Notification
 
 logger = logging.getLogger("server")
 
@@ -513,41 +513,17 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.critical("WHAT THE FUCK IS GOING ON WITH THE BOOLEAN ?")
 
     def accept_game_invite(self, data):
-        invitation_id = data["data"].get("id")
+        sender_name = data["data"].get("username")
+        sender = Profile.objects.get(user__username=sender_name)
         try:
-            invitation = GameInvitation.objects.get(id=invitation_id)
-            # Create game session only if accepted
-            game_session = GameSession.objects.create()
-            # Link game session to invitation
-            invitation.game_session = game_session
-            invitation.status = GameInvitation.ACCEPTED
-            invitation.save()
-            invitation.sync_notification_status()
-            # send notif to sender of the game invitation with receivers' infos
-            notification_data = get_user_data(self.user_profile)
-            notification_data.update({
-                "id": str(invitation_id),
-                "game_id": str(game_session.id),
-                "status": "accepted"
-            })
-            async_to_sync(self.channel_layer.group_send)(
-                f"user_{invitation.sender.id}",
-                {
-                    "action": "game_invite",
-                    "data": notification_data,
-                },
-            )
-
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite",
-                        "data": notification_data,
-                    },
-                ),
+            invitation = GameInvitation.objects.get(
+                sender=sender,
+                recipient=self.user.profile,
+                status=GameInvitation.PENDING
             )
         except GameInvitation.DoesNotExist:
-            logger.debug("Invitation %s does not exist.", invitation_id)
+            logger.debug("No pending invitations sent by %s to cancel for user %s",
+                         sender.user.username, self.user.username)
             self.send(
                 text_data=json.dumps(
                     {
@@ -556,6 +532,39 @@ class UserEventsConsumer(WebsocketConsumer):
                     },
                 ),
             )
+            return
+        except GameInvitation.MultipleObjectsReturned:
+            logger.warning("Multiple invitations sent by %s to user %s have the PENDING status !",
+                           sender.user.username, self.user.username)
+            return
+        game_session = GameSession.objects.create()
+        # Link game session to invitation
+        invitation.game_session = game_session
+        invitation.status = GameInvitation.ACCEPTED
+        invitation.save()
+        invitation.sync_notification_status()
+        # send notif to sender of the game invitation with receivers' infos
+        notification_data = get_user_data(self.user_profile)
+        notification_data.update({
+            "game_id": str(game_session.id),
+            "status": "accepted"
+        })
+        async_to_sync(self.channel_layer.group_send)(
+            f"user_{invitation.sender.user.id}",
+            {
+                "type": "user_status",
+                "action": "game_accepted",
+                "data": notification_data,
+            },
+        )
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "game_accepted",
+                    "data": notification_data,
+                },
+            ),
+        )
 
     # TODO : security checks
     def decline_game_invite(self, data):
