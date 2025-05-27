@@ -235,7 +235,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 "read_message": ["id"],
                 # TODO : check game_invite and reply_game_invite
                 # "game_invite": ["receiver_id"],
-                "reply_game_invite": ["id", "accept"],
+                # "reply_game_invite": ["id", "accept"],
                 "game_accepted": ["invitation_id"],
                 "game_declined": ["invitation_id"],
                 "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
@@ -268,6 +268,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 # TODO : check game_invite and reply_game_invite -->
                 case "game_invite":
                     self.send_game_invite(text_data_json)
+                case "reply_game_invite":
+                    self.reply_game_invite(text_data_json)
                 case "game_accepted":
                     self.accept_game_invite(text_data_json)
                 case "game_declined":
@@ -502,7 +504,14 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.debug("Notification %s does not exist", notification_id)
 
     def reply_game_invite(self, data):
-
+        response = data["data"].get(accept)
+        if response == True:
+            self.accept_game_invite(data)
+        elif response == False:
+            self.decline_game_invite(data)
+        else:
+            logger.critical("WHAT THE FUCK IS GOING ON WITH THE BOOLEAN ?")
+        return
         invitation_id = data["data"].get["id"]
         try:
             invitation = GameInvitation.objects.get(id=invitation_id)
@@ -547,9 +556,9 @@ class UserEventsConsumer(WebsocketConsumer):
             game_session = GameSession.objects.create()
             # Link game session to invitation
             invitation.game_session = game_session
-            invitation.status = "accepted"
-            invitation.is_replied = True
+            invitation.status = GameInvitation.ACCEPTED
             invitation.save()
+            invitation.sync_notification_status()
             # send notif to sender of the game invitation with receivers' infos
             notification_data = get_user_data(self.user_profile)
             notification_data.update({
@@ -586,12 +595,13 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def decline_game_invite(self, data):
         logger.critical(data)
-        invitation_id = data["data"].get["id"]
+        sender = data["data"].get("username")
         try:
-            invitation = GameInvitation.objects.get(id=invitation_id)
-            invitation.status = "declined"
-            invitation.is_replied = True
+            invitation = GameInvitation.objects.get(
+                sender=sender, receiver=self.user.profile, status=GameInvitation.PENDING)
+            invitation.status = GameInvitation.DECLINED
             invitation.save()
+            invitation.sync_notification_status()
             # send notif to sender of the game invitation
             notification_data = get_user_data(self.user_profile)
             notification_data.update(
@@ -622,6 +632,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 ),
             )
 
+    # TODO : security checks
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         receiver_username = data["data"].get("username")
@@ -634,7 +645,13 @@ class UserEventsConsumer(WebsocketConsumer):
                 "action": "error",
                 "message": "Invalid profile"
             }))
-
+        if (GameInvitation.objects.filter(sender=self.user_profile, status=GameInvitation.PENDING).exists()):
+            logger.warning("Error : user %s has more than one pending invitation.", self.user.username)
+            self.send(text_data=json.dumps({
+                "action": "game_invite_canceled",
+                "message": "You have one invitation pending"
+            }))
+            return
         invitation = GameInvitation.objects.create(
             sender=self.user_profile,
             recipient=receiver,
@@ -664,20 +681,35 @@ class UserEventsConsumer(WebsocketConsumer):
             },
         )
 
-        logger.info("NOTIFICATION DATA SEND GAME INVITE : %s",
-                    notification.data)
-        logger.info("NOTIFICATION DATA SEND GAME INVITE : %s",
-                    notification)
-
-    # TODO : deal with case when user cancels invitation send
+    # TODO : security checks
     def cancel_game_invite(self, data):
-        receiver_username = data["data"].get("username")
-        invitation = GameInvitation.objects.get(
-            sender=self.user.profile, status=GameInvitation.PENDING)
-        invitation.status = GameInvitation.CANCELLED
-        invitation.save()
-
-        # if (self.profile.user) ==
+        invitations = GameInvitation.objects.filter(
+            sender=self.user.profile,
+            status=GameInvitation.PENDING
+        )
+        if not invitations.exists():
+            logger.debug("No pending invitations to cancel for user %s", self.user.username)
+            self.send(
+                text_data=json.dumps({
+                    "action": "error",
+                    "message": "No pending invitations found.",
+                })
+            )
+            return
+        with transaction.atomic():
+            count = 0
+            for invitation in invitations:
+                invitation.status = GameInvitation.CANCELLED
+                invitation.save()
+                invitation.sync_notification_status()
+                count += 1
+            logger.info("Cancelled %d pending invitations for user %s", count, self.user.username)
+        self.send(
+            text_data=json.dumps({
+                "action": "cancel_game_invite",
+                "message": "You cancelled the game invitation.",
+            })
+        )
 
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]
