@@ -11,7 +11,8 @@ from ninja.errors import HttpError
 
 from common.schemas import MessageSchema
 from users.models import OauthConnection, User
-from users.router.utils import create_redirect_to_home_page_response_with_tokens
+from users.router.utils import \
+    create_redirect_to_home_page_response_with_tokens
 from users.schemas import OAuthCallbackParams
 
 oauth2_router = Router()

@@ -91,7 +91,7 @@ redis_status_manager = RedisUserStatusManager()
 
 def check_inactive_users():
     logger.info("Checking for inactive users")
-    threshold = timezone.now() - timedelta(minutes=30)
+    threshold = timezone.now() - timedelta(minutes=5)
 
     inactive_users = Profile.objects.filter(
         last_activity__lt=threshold,
