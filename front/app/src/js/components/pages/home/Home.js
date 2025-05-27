@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import './components/index.js';
+import { showToastNotification } from '@utils';
 import logo from '/img/logo.svg?url';
 
 export class Home extends HTMLElement {
@@ -29,6 +30,12 @@ export class Home extends HTMLElement {
 
     const profileButton = this.querySelector('home-profile-button');
     profileButton.username = this.#state.user.username;
+
+    if (this.#state.user.game_id) {
+      showToastNotification('You have an ongoing game. Please click on Duel button to continue.');
+    } else if (this.#state.user.tournament_id) {
+      showToastNotification('You are currently in a tournament. Click on Tournament button to continue.');
+    }
   }
 
   template() {
