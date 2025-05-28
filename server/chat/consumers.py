@@ -166,6 +166,59 @@ class UserEventsConsumer(WebsocketConsumer):
         except ValueError:
             return False
 
+    def check_str_option(self, name, option, dict_options):
+        if option is not None:
+            if isinstance(option, str) and option == "any":
+                return True
+            if not isinstance(option, str) or option not in dict_options:
+                logger.warning("%s must be one of %s", name, dict_options)
+                return False
+        return True
+
+    def check_bool_option(self, name, option):
+        if option is not None:
+            if isinstance(option, str) and option == "any":
+                return True
+            if not isinstance(option, bool):
+                logger.warning("%s must be a boolean", name)
+                return False
+        return True
+
+    def check_int_option(self, name, option, min, max):
+        if option is not None:
+            if isinstance(option, str) and option == "any":
+                return True
+            if not isinstance(option, int) or not (min <= option <= max):
+                logger.warning("%s must be an int between %d and %d", name, min, max)
+                return False
+        return True
+
+    def validate_options(self, options):
+        schema = {"game_speed", "is_ranked", "score_to_win", "time_limit_minutes"}
+        for field in schema:
+            if field not in options:
+                logger.warning(
+                    "Missing field [{%s}] for action game_invite", field)
+                return False
+            if options.get(field) is None:
+                logger.warning(
+                    "Field [{%s}] if None for action game_invite", field)
+                return False
+
+        allowed_game_speeds = {"slow", "normal", "fast"}
+        min_score, max_score = 3, 20
+        min_time, max_time = 1, 5
+
+        if not self.check_str_option("game_speed", options.get("game_speed"), allowed_game_speeds):
+            return False
+        if not self.check_bool_option("is_ranked", options.get("is_ranked")):
+            return False
+        if not self.check_int_option("score_to_win", options.get("score_to_win"), min_score, max_score):
+            return False
+        if not self.check_int_option("time_limit_minutes", options.get("time_limit_minutes"), min_time, max_time):
+            return False
+        return True
+
     def validate_action_data(self, action, data):
         expected_types = {
             "new_message": {"content": str, "chat_id": str},
@@ -174,8 +227,10 @@ class UserEventsConsumer(WebsocketConsumer):
             "read_message": {"id": str},
             "read_notification": {"id": str},
             "notification": {"message": str, "type": str},
-            # TODO : replace game_invite by reply_game_invite
-            # "game_invite": {"id": str, "accept": bool},
+            "game_invite": {"username": str, "options": dict},
+            "reply_game_invite": {"accept": bool, "username": str},
+            "game_accepted": {"accept": bool},
+            "game_declined": {"accept": bool},
         }
 
         uuid_fields = {
@@ -184,11 +239,6 @@ class UserEventsConsumer(WebsocketConsumer):
             "unlike_message": ["id", "chat_id"],
             "read_message": ["id"],
             "read_notification": ["id"],
-            # TODO : replace game_invite by reply_game_invite -->
-            # "game_invite": ["id"],
-            "game_accepted": ["id"],
-            "game_declined": ["id"],
-            # TODO : replace game_invite by reply_game_invite <--
             # TODO : check these ids
             "new_tournament": ["id", "organizer_id"],
             "add_new_friend": ["id"],
@@ -234,10 +284,10 @@ class UserEventsConsumer(WebsocketConsumer):
                 "unlike_message": ["id", "chat_id"],
                 "read_message": ["id"],
                 # TODO : check game_invite and reply_game_invite
-                # "game_invite": ["receiver_id"],
-                # "reply_game_invite": ["id", "accept"],
-                "game_accepted": ["invitation_id"],
-                "game_declined": ["invitation_id"],
+                "game_invite": ["username"],
+                "reply_game_invite": ["username", "accept"],
+                "game_accepted": ["username"],
+                "game_declined": ["username"],
                 "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
                 "add_new_friend": ["sender_id", "receiver_id"],
                 "user_online": ["username"],
@@ -514,7 +564,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 "nickname": player.user.nickname,
                 "avatar": player.profile_picture.url if player.profile_picture else settings.DEFAULT_USER_AVATAR,
                 "elo": player.elo,
-            }
+            },
         }
 
     def accept_game_invite(self, data):
@@ -524,7 +574,7 @@ class UserEventsConsumer(WebsocketConsumer):
             invitation = GameInvitation.objects.get(
                 sender=sender,
                 recipient=self.user.profile,
-                status=GameInvitation.PENDING
+                status=GameInvitation.PENDING,
             )
         except GameInvitation.DoesNotExist:
             logger.debug("No pending invitations sent by %s to cancel for user %s",
@@ -558,7 +608,7 @@ class UserEventsConsumer(WebsocketConsumer):
         invitations = GameInvitation.objects.filter(
             sender=sender,
             recipient=self.user.profile,
-            status=GameInvitation.PENDING
+            status=GameInvitation.PENDING,
         )
         if not invitations.exists():
             logger.debug("No pending invitations sent by %s to cancel for user %s", sender, self.user.username)
@@ -566,7 +616,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 text_data=json.dumps({
                     "action": "game_invite_canceled",
                     "message": "No pending invitations found.",
-                })
+                }),
             )
             return
         with transaction.atomic():
@@ -584,7 +634,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     "username": self.user.username,
                     "nickname": self.user.nickname,
                 },
-            })
+            }),
         )
         notification_data = get_user_data(self.user_profile)
         notification_data.update({"status": "declined"})
@@ -603,6 +653,8 @@ class UserEventsConsumer(WebsocketConsumer):
     # TODO : security checks
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
+        if not self.validate_options(options):
+            return
         receiver_username = data["data"].get("username")
 
         try:
@@ -613,7 +665,7 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.warning("Error : user %s has more than one pending invitation.", self.user.username)
             self.send(text_data=json.dumps({
                 "action": "game_invite_canceled",
-                "message": "You have one invitation pending"
+                "message": "You have one invitation pending",
             }))
             return
         invitation = GameInvitation.objects.create(
@@ -648,7 +700,7 @@ class UserEventsConsumer(WebsocketConsumer):
     def cancel_game_invite(self, data):
         invitations = GameInvitation.objects.filter(
             sender=self.user.profile,
-            status=GameInvitation.PENDING
+            status=GameInvitation.PENDING,
         )
         if not invitations.exists():
             logger.debug("No pending invitations to cancel for user %s", self.user.username)
@@ -668,8 +720,8 @@ class UserEventsConsumer(WebsocketConsumer):
                 "data": {
                     "username": self.user.username,
                     "nickname": self.user.nickname,
-                }
-            })
+                },
+            }),
         )
         async_to_sync(self.channel_layer.group_send)(
             f"user_{receiver.user.id}",
@@ -679,8 +731,8 @@ class UserEventsConsumer(WebsocketConsumer):
                     "action": "game_invite_canceled",
                     "data": {
                         "username": self.user.username,
-                        "nickname": self.user.nickname
-                    }
+                        "nickname": self.user.nickname,
+                    },
                 }),
             },
         )
