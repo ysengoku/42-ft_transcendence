@@ -283,9 +283,6 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.add_new_friend(text_data_json)
                 case "join_chat":
                     self.join_chat(text_data_json)
-                case "room_created":
-                    self.send_room_created(
-                        text_data_json.get("data", {}).get("chat_id"))
                 case _:
                     logger.warning("Unknown action : %s", action)
                     self.close()
@@ -735,23 +732,3 @@ class UserEventsConsumer(WebsocketConsumer):
                 },
             ),
         )
-
-    def send_room_created(self, chat_id):
-        try:
-            chat = Chat.objects.get(id=chat_id)
-            participants = [p.user.username for p in chat.participants.all()]
-
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "room_created",
-                        "data": {
-                            "chat_id": str(chat.id),
-                            "participants": participants,
-                            "message": f"Room {chat.id} created successfully!",
-                        },
-                    },
-                ),
-            )
-        except Chat.DoesNotExist:
-            logger.debug("Chat Room %s does not exist.", chat_id)
