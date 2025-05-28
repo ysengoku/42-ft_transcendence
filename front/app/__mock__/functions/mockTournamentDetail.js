@@ -112,7 +112,7 @@ export async function mockTournamentDetail(id) {
               },
               winner: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1500,
@@ -357,7 +357,7 @@ export async function mockTournamentDetail(id) {
               game_id: 'game1',
               participant1: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
@@ -379,7 +379,7 @@ export async function mockTournamentDetail(id) {
               },
               winner: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1500,
@@ -442,7 +442,7 @@ export async function mockTournamentDetail(id) {
               game_id: 'game1',
               participant1: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
@@ -474,7 +474,7 @@ export async function mockTournamentDetail(id) {
       participants: [
         {
           profile: {
-            username: 'user1',
+            username: 'pedro',
             nickname: 'MidnightRider',
             avatar: '/__mock__/img/sample-pic3.png',
             elo: 1500,
@@ -536,7 +536,7 @@ export async function mockTournamentDetail(id) {
       },
       winner: {
         profile: {
-          username: 'user1',
+          username: 'pedro',
           nickname: 'MidnightRider',
           avatar: '/__mock__/img/sample-pic2.png',
           elo: 1500,
@@ -556,7 +556,7 @@ export async function mockTournamentDetail(id) {
               game_id: 'game1',
               participant1: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
@@ -578,7 +578,7 @@ export async function mockTournamentDetail(id) {
               },
               winner: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
@@ -720,7 +720,7 @@ export async function mockTournamentDetail(id) {
               game_id: 'game5',
               participant1: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
@@ -742,7 +742,7 @@ export async function mockTournamentDetail(id) {
               },
               winner: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
@@ -806,7 +806,7 @@ export async function mockTournamentDetail(id) {
               game_id: 'final',
               participant1: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
@@ -828,7 +828,7 @@ export async function mockTournamentDetail(id) {
               },
               winner: {
                 profile: {
-                  username: 'user1',
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1500,
@@ -848,7 +848,7 @@ export async function mockTournamentDetail(id) {
       participants: [
         {
           profile: {
-            username: 'user1',
+            username: 'pedro',
             nickname: 'MidnightRider',
             avatar: '/__mock__/img/sample-pic3.png',
             elo: 1500,
