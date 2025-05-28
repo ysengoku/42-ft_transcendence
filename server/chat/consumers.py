@@ -184,12 +184,12 @@ class UserEventsConsumer(WebsocketConsumer):
                 return False
         return True
 
-    def check_int_option(self, name, option, min, max):
+    def check_int_option(self, name, option, val_min, val_max):
         if option is not None:
             if isinstance(option, str) and option == "any":
                 return True
-            if not isinstance(option, int) or not (min <= option <= max):
-                logger.warning("%s must be an int between %d and %d", name, min, max)
+            if not isinstance(option, int) or not (val_min <= option <= val_max):
+                logger.warning("%s must be an int between %d and %d", name, val_min, val_max)
                 return False
         return True
 
@@ -215,9 +215,7 @@ class UserEventsConsumer(WebsocketConsumer):
             return False
         if not self.check_int_option("score_to_win", options.get("score_to_win"), min_score, max_score):
             return False
-        if not self.check_int_option("time_limit_minutes", options.get("time_limit_minutes"), min_time, max_time):
-            return False
-        return True
+        return self.check_int_option("time_limit_minutes", options.get("time_limit_minutes"), min_time, max_time)
 
     def validate_action_data(self, action, data):
         expected_types = {
@@ -538,9 +536,9 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def reply_game_invite(self, data):
         response = data["data"].get("accept")
-        if response == True:
+        if response is True:
             self.accept_game_invite(data)
-        elif response == False:
+        elif response is False:
             self.decline_game_invite(data)
         else:
             logger.critical("WHAT THE FUCK IS GOING ON WITH THE BOOLEAN ?")
@@ -661,6 +659,8 @@ class UserEventsConsumer(WebsocketConsumer):
             receiver = Profile.objects.get(user__username=receiver_username)
         except Profile.DoesNotExist as e:
             logger.error("Profile does not exist : %s", str(e))
+            self.close()
+            return
         if (GameInvitation.objects.filter(sender=self.user_profile, status=GameInvitation.PENDING).exists()):
             logger.warning("Error : user %s has more than one pending invitation.", self.user.username)
             self.send(text_data=json.dumps({
