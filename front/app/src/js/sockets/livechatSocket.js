@@ -69,18 +69,28 @@ socketManager.addSocket('livechat', {
     showToastNotification(`${data.nickname} declined the duel invitation.`);
   },
   game_invite_canceled: async (data) => {
-    if (window.location.pathname === '/duel') {
+    const user = await auth.getStoredUser();
+    if (!user.username) {
+      return;
+    }
+    let message = 'Game invitation has been canceled.';
+    if (!data.username && data.message) {
+      message = data.message;
+    } else if (data.username && data.username.toLowerCase() === user.username.toLowerCase()) {
+      message = 'Your duel invitation has successfully been canceled.';
+    } else if (data.username && data.nickname) {
+      message = `${data.nickname} canceled the duel invitation.`;
+    }
+    showToastNotification(message);
+    if (window.location.pathname !== '/duel') {
+      return;
+    }
+    if (data.username && data.username.toLowerCase() === user.username.toLowerCase()) {
       const duelPage = document.querySelector('duel-page');
       duelPage.status = 'canceled';
     }
-    const user = await auth.getStoredUser();
-    if (user.username === data.username) {
-      showToastNotification('Your duel invitation has been canceled.');
-      return;
-    }
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-    showToastNotification(`${data.nickname} cancelled the duel invitation.`);
   },
   new_tournament: (data) => {
     const notificationButton = document.querySelector('notifications-button');

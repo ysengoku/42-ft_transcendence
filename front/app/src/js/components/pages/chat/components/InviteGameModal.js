@@ -67,7 +67,7 @@ export class InviteGameModal extends HTMLElement {
 
   sendInvitation() {
     const message = {
-      action: 'invite_game',
+      action: 'game_invite',
       data: {
         username: this.#state.opponent.username,
         options: this.gameOptionsForm.selectedOptions,
