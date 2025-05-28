@@ -268,7 +268,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 # TODO : check game_invite and reply_game_invite -->
                 case "game_invite":
                     self.send_game_invite(text_data_json)
-                case reply_game_invite":
+                case "reply_game_invite":
                     self.reply_game_invite(text_data_json)
                 case "game_accepted":
                     self.accept_game_invite(text_data_json)
@@ -741,7 +741,6 @@ class UserEventsConsumer(WebsocketConsumer):
             chat = Chat.objects.get(id=chat_id)
             participants = [p.user.username for p in chat.participants.all()]
 
-            # Send confirmation to client
             self.send(
                 text_data=json.dumps(
                     {
