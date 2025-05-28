@@ -15,5 +15,5 @@ export function getCSRFTokenfromCookies() {
 }
 
 export function clearCSRFToken() {
-  document.cookie = `csrftoken=; Max-Age=0; path=/;`;
+  document.cookie = 'csrftoken=; Max-Age=0; path=/;';
 }

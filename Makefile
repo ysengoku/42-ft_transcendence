@@ -124,5 +124,8 @@ update-nginx:
 populate-db:
 	docker exec server ./manage.py populate_db
 
+delete_invites:
+	docker exec server ./manage.py delete_pending_invitations
+
 clean-db:
 	docker exec server ./manage.py flush --no-input
