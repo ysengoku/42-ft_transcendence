@@ -119,6 +119,8 @@ export class Duel extends HTMLElement {
     } else {
       this.animation.classList.add('d-none');
       this.timer.classList.add('d-none');
+      router.removeBeforeunloadCallback();
+      window.removeEventListener('beforeunload', this.confirmLeavePage);
     }
     if (this.#state.status === 'inviting') {
       this.cancelButton?.addEventListener('click', this.cancelInvitation);
@@ -162,7 +164,7 @@ export class Duel extends HTMLElement {
   }
 
   invitationAccepted(data) {
-    console.log('Invitation accepted:', data);
+    devLog('Invitation accepted:', data);
     this.#state.status = 'starting';
     this.#state.gameId = data.game_id;
     this.startDuel();
@@ -173,8 +175,6 @@ export class Duel extends HTMLElement {
     if (data.username !== this.#state.opponent.username) {
       return;
     }
-    router.removeBeforeunloadCallback();
-    window.removeEventListener('beforeunload', this.confirmLeavePage);
     this.#state.status = 'declined';
     this.renderContent();
   }
@@ -183,8 +183,6 @@ export class Duel extends HTMLElement {
     devLog('Canceling game invitation');
     const message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
     socketManager.sendMessage('livechat', message);
-    router.removeBeforeunloadCallback();
-    window.removeEventListener('beforeunload', this.confirmLeavePage);
     this.#state.status = 'canceled';
     this.renderContent();
   }

@@ -1,6 +1,11 @@
 import { Toast } from 'bootstrap';
 
-export function showToastNotification(message) {
+export const TOAST_TYPES = {
+  info: 'info',
+  error: 'error',
+};
+
+export function showToastNotification(message, type = TOAST_TYPES.info) {
   const toastContainer = document.getElementById('toast-notification');
   if (!toastContainer) {
     return;
@@ -9,9 +14,6 @@ export function showToastNotification(message) {
     <style>
     .toast-container {
       top: 56px;
-    }
-    .toast {
-      background-color: var(--pm-primary-500);
     }
     .toast-body-wrapper {
       background-color: var(--pm-primary-500);
@@ -32,6 +34,11 @@ export function showToastNotification(message) {
   const toastBody = document.querySelector('.toast-body');
   toastBody.textContent = message;
   const toast = document.querySelector('.toast');
+  if (type === TOAST_TYPES.error) {
+    toast.style.backgroundColor = 'var(--pm-red-500)';
+  } else {
+    toast.style.backgroundColor = 'var(--pm-primary-500)';
+  }
   const toastBootstrap = Toast.getOrCreateInstance(toast);
   toastBootstrap.show();
 }
