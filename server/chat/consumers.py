@@ -288,10 +288,13 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.send_room_created(
                         text_data_json.get("data", {}).get("chat_id"))
                 case _:
-                    logger.debug("Unknown action : %s", action)
+                    logger.warning("Unknown action : %s", action)
+                    self.close()
 
         except json.JSONDecodeError:
             logger.warning("Invalid JSON message")
+            # must close connection
+            self.close()
 
     def handle_message(self, data):
         message_data = data.get("data", {})
@@ -560,50 +563,14 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.warning("Multiple invitations sent by %s to user %s have the PENDING status !",
                            sender.user.username, self.user.username)
             return
-        # game_session = GameSession.objects.create()
-        # Link game session to invitation
-        # invitation.game_session = game_session
         game_room = self.create_game_room(sender, self.user.profile)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save()
         invitation.sync_notification_status()
-        # send notif to sender of the game invitation with receivers' infos
-        # notification_data = get_user_data(self.user_profile)
-        # notification_data.update({
-        #     "status": "accepted"
-        # })
-        # async_to_sync(self.channel_layer.group_send)(
-        #     f"user_{invitation.sender.user.id}",
-        #     {
-        #         "type": "user_status",
-        #         "action": "game_accepted",
-        #         "data": notification_data,
-        #     },
-        # )
-        # self.send(
-        #     text_data=json.dumps(
-        #         {
-        #             "action": "game_accepted",
-        #             "data": notification_data,
-        #         },
-        #     ),
-        # )
         sender_data = self.data_for_game_found(sender, game_room.id)
         receiver_data = self.data_for_game_found(self.user.profile, game_room.id)
         async_to_sync(self.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
         async_to_sync(self.channel_layer.group_send)(f"user_{self.user.id}", sender_data)
-
-        # # Envoie aussi la confirmation au client qui accepte
-        # self.send(
-        #     text_data=json.dumps({
-        #         "action": "room_created",
-        #         "data": {
-        #             "room_id": str(game_room.id),
-        #             "participants": [sender.user.username, self.user.username],
-        #             "message": f"GameRoom {game_room.id} created successfully!",
-        #         },
-        #     }),
-        # )
 
     # TODO : security checks
     def decline_game_invite(self, data):
