@@ -10,10 +10,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, models, transaction
 from django.utils import timezone
 
+from pong.models import GameRoom, GameRoomPlayer
 from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
 
-from .models import Chat, ChatMessage, GameInvitation, GameSession, Notification
+from .models import Chat, ChatMessage, GameInvitation, Notification
 
 logger = logging.getLogger("server")
 
@@ -485,7 +486,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def chat_like_update(self, event):
         """
-        Gère les mises à jour de like envoyées au groupe de chat
+        Handle actions send to chat websocket
         """
         message_data = json.loads(event["message"])
         self.send(text_data=json.dumps({
@@ -512,6 +513,28 @@ class UserEventsConsumer(WebsocketConsumer):
         else:
             logger.critical("WHAT THE FUCK IS GOING ON WITH THE BOOLEAN ?")
 
+    def game_found(self, event):
+        self.send(text_data=json.dumps(event["data"]))
+
+    def create_game_room(self, profile1, profile2):
+        gameroom = GameRoom.objects.create()
+        GameRoomPlayer.objects.create(game_room=gameroom, profile=profile1)
+        GameRoomPlayer.objects.create(game_room=gameroom, profile=profile2)
+        return gameroom
+
+    def data_for_game_found(self, player, game_id):
+        return {
+            "type": "game_found",
+            "data": {
+                "action": "game_accepted",
+                "game_id": str(game_id),
+                "username": player.user.username,
+                "nickname": player.user.nickname,
+                "avatar": player.profile_picture.url if player.profile_picture else settings.DEFAULT_USER_AVATAR,
+                "elo": player.elo,
+            }
+        }
+
     def accept_game_invite(self, data):
         sender_name = data["data"].get("username")
         sender = Profile.objects.get(user__username=sender_name)
@@ -537,34 +560,50 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.warning("Multiple invitations sent by %s to user %s have the PENDING status !",
                            sender.user.username, self.user.username)
             return
-        game_session = GameSession.objects.create()
+        # game_session = GameSession.objects.create()
         # Link game session to invitation
-        invitation.game_session = game_session
+        # invitation.game_session = game_session
+        game_room = self.create_game_room(sender, self.user.profile)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save()
         invitation.sync_notification_status()
         # send notif to sender of the game invitation with receivers' infos
-        notification_data = get_user_data(self.user_profile)
-        notification_data.update({
-            "game_id": str(game_session.id),
-            "status": "accepted"
-        })
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{invitation.sender.user.id}",
-            {
-                "type": "user_status",
-                "action": "game_accepted",
-                "data": notification_data,
-            },
-        )
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "game_accepted",
-                    "data": notification_data,
-                },
-            ),
-        )
+        # notification_data = get_user_data(self.user_profile)
+        # notification_data.update({
+        #     "status": "accepted"
+        # })
+        # async_to_sync(self.channel_layer.group_send)(
+        #     f"user_{invitation.sender.user.id}",
+        #     {
+        #         "type": "user_status",
+        #         "action": "game_accepted",
+        #         "data": notification_data,
+        #     },
+        # )
+        # self.send(
+        #     text_data=json.dumps(
+        #         {
+        #             "action": "game_accepted",
+        #             "data": notification_data,
+        #         },
+        #     ),
+        # )
+        sender_data = self.data_for_game_found(sender, game_room.id)
+        receiver_data = self.data_for_game_found(self.user.profile, game_room.id)
+        async_to_sync(self.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
+        async_to_sync(self.channel_layer.group_send)(f"user_{self.user.id}", sender_data)
+
+        # # Envoie aussi la confirmation au client qui accepte
+        # self.send(
+        #     text_data=json.dumps({
+        #         "action": "room_created",
+        #         "data": {
+        #             "room_id": str(game_room.id),
+        #             "participants": [sender.user.username, self.user.username],
+        #             "message": f"GameRoom {game_room.id} created successfully!",
+        #         },
+        #     }),
+        # )
 
     # TODO : security checks
     def decline_game_invite(self, data):
@@ -666,7 +705,6 @@ class UserEventsConsumer(WebsocketConsumer):
         invitation = GameInvitation.objects.create(
             sender=self.user_profile,
             recipient=receiver,
-            game_session=None,
             options=options,
         )
 
