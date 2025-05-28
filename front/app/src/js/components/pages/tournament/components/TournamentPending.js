@@ -84,10 +84,12 @@ export class TournamentPending extends HTMLElement {
 
   async unregisterTournament() {
     const response = await apiRequest(
-        'DELETE',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.TOURNAMENT_UNREGISTER(this.#state.id),
-        null, false, true,
+      'DELETE',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT_UNREGISTER(this.#state.id),
+      null,
+      false,
+      true,
     );
     if (!response.success) {
       if (response.status === 403) {

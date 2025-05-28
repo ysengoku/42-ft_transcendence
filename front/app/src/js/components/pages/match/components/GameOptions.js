@@ -12,7 +12,22 @@ export class GameOptions extends HTMLElement {
 
   constructor() {
     super();
-    const defaultOptions = JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS);
+
+    this.duelMenuComponent = null;
+    this.closeButton = null;
+    this.scoreToWinInput = null;
+    this.gameSpeedInputs = null;
+    this.isRankedInput = null;
+    this.timeLimitInput = null;
+    this.scoreToWinOptout = null;
+    this.gameSpeedOptout = null;
+    this.isRankedOptout = null;
+    this.timeLimitOptout = null;
+    this.confirmButton = null;
+    this.cancelButton = null;
+
+    const defaultOptionsFromEnv = import.meta.env.VITE_DEFAULT_GAME_OPTIONS;
+    const defaultOptions = defaultOptionsFromEnv ? JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS) : {};
     this.#state.defaultOptionValue = {
       scoreToWin: defaultOptions.scoreToWin || 15,
       gameSpeed: defaultOptions.gameSpeed || 'normal',
@@ -29,10 +44,7 @@ export class GameOptions extends HTMLElement {
   }
 
   get selectedOptions() {
-    // if (JSON.stringify(this.#state.selectedOptions) !== JSON.stringify(this.#state.defaultOptionValue)) {
-      return this.#state.selectedOptions;
-    // }
-    // return null;
+    return this.#state.selectedOptions;
   }
 
   connectedCallback() {

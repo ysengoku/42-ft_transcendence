@@ -3,7 +3,7 @@ import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitCo
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import pedro from '/3d_models/lilguy.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
-import { router } from '@router'
+import { router } from '@router';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
@@ -22,6 +22,9 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayButton1 = null;
     this.overlayButton2 = null;
 
+    this.onDocumentKeyDown = this.onDocumentKeyDown.bind(this);
+    this.onDocumentKeyUp = this.onDocumentKeyUp.bind(this);
+    // this.windowResize = this.windowResize.bind(this);
     this.requestNewMatchmaking = this.requestNewMatchmaking.bind(this);
     this.navigateToHome = this.navigateToHome.bind(this);
   }
@@ -47,6 +50,49 @@ export class MultiplayerGame extends HTMLElement {
 
   disconnectedCallback() {
     document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
+    document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+    document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+    // window.removeEventListener('resize', this.windowResize);
+  }
+
+  onDocumentKeyDown(event) {
+    if (event.defaultPrevented) {
+      return; // Do noplayerglb if the event was already processed
+    }
+    var keyCode = event.code;
+    if (keyCode == 'ArrowLeft') {
+      pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+    }
+    if (keyCode == 'ArrowRight') {
+      pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+    }
+    if (keyCode == 'KeyA') {
+      pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+    }
+    if (keyCode == 'KeyD') {
+      pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+    }
+    event.preventDefault();
+  }
+
+  onDocumentKeyUp(event) {
+    if (event.defaultPrevented) {
+      return; // Do noplayerglb if the event was already processed
+    }
+    var keyCode = event.code;
+    if (keyCode == 'ArrowLeft') {
+      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+    }
+    if (keyCode == 'ArrowRight') {
+      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+    }
+    if (keyCode == 'KeyA') {
+      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+    }
+    if (keyCode == 'KeyD') {
+      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+    }
+    event.preventDefault();
   }
 
   game() {
@@ -284,49 +330,62 @@ export class MultiplayerGame extends HTMLElement {
       renderer.render(scene, camera);
     }
 
-    document.addEventListener('keydown', onDocumentKeyDown, true);
-    document.addEventListener('keyup', onDocumentKeyUp, true);
-    function onDocumentKeyDown(event) {
-      if (event.defaultPrevented) {
-        return; // Do noplayerglb if the event was already processed
-      }
-      var keyCode = event.code;
-      if (keyCode == 'ArrowLeft') {
-        pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-      }
-      if (keyCode == 'ArrowRight') {
-        pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-      }
-      if (keyCode == 'KeyA') {
-        pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-      }
-      if (keyCode == 'KeyD') {
-        pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-      }
-      event.preventDefault();
-    }
-    function onDocumentKeyUp(event) {
-      if (event.defaultPrevented) {
-        return; // Do noplayerglb if the event was already processed
-      }
-      var keyCode = event.code;
-      if (keyCode == 'ArrowLeft') {
-        pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-      }
-      if (keyCode == 'ArrowRight') {
-        pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-      }
-      if (keyCode == 'KeyA') {
-        pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-      }
-      if (keyCode == 'KeyD') {
-        pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-      }
-      event.preventDefault();
-    }
+    document.addEventListener('keydown', this.onDocumentKeyDown, true);
+    document.addEventListener('keyup', this.onDocumentKeyUp, true);
+    // function onDocumentKeyDown(event) {
+    //   if (event.defaultPrevented) {
+    //     return; // Do noplayerglb if the event was already processed
+    //   }
+    //   var keyCode = event.code;
+    //   if (keyCode == 'ArrowLeft') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+    //   }
+    //   if (keyCode == 'ArrowRight') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+    //   }
+    //   if (keyCode == 'KeyA') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+    //   }
+    //   if (keyCode == 'KeyD') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+    //   }
+    //   event.preventDefault();
+    // }
+    // function onDocumentKeyUp(event) {
+    //   if (event.defaultPrevented) {
+    //     return; // Do noplayerglb if the event was already processed
+    //   }
+    //   var keyCode = event.code;
+    //   if (keyCode == 'ArrowLeft') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+    //   }
+    //   if (keyCode == 'ArrowRight') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+    //   }k
+    //   if (keyCode == 'KeyA') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+    //   }
+    //   if (keyCode == 'KeyD') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+    //   }
+    //   event.preventDefault();
+    // }
 
     return [camera, renderer, animate];
   }
+
+  // windowResize() {
+  //   console.log(1);
+  //   const [camera, renderer, animate] = this.game();
+  //   console.log('Camera', camera);
+  //   renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
+  //   console.log(this.#navbarHeight);
+  //   const rendererWidth = renderer.domElement.offsetWidth;
+  //   const rendererHeight = renderer.domElement.offsetHeight;
+  //   console.log(rendererWidth, rendererHeight);
+  //   camera.aspect = rendererWidth / rendererHeight;
+  //   camera.updateProjectionMatrix();
+  // }
 
   render() {
     // this.innerHTML = ``;
@@ -337,15 +396,16 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayButton1 = this.querySelector('#overlay-button1');
     this.overlayButton2 = this.querySelector('#overlay-button2');
 
-    const navbarHight = this.#navbarHeight;
+    const navbarHeight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
     window.addEventListener('resize', function() {
-      renderer.setSize(window.innerWidth, window.innerHeight - navbarHight);
+      renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
       const rendererHeight = renderer.domElement.offsetHeight;
       camera.aspect = rendererWidth / rendererHeight;
       camera.updateProjectionMatrix();
     });
+    // window.addEventListener('resize', this.windowResize);
     animate();
 
     // ----- TEST ---------------

@@ -61,7 +61,7 @@ export class ProfileUserActions extends HTMLElement {
       this.editProfileButton = this.querySelector('#edit-profile-button');
       this.editProfileButton.style.display = 'block';
       this.handleEditProfile = () => {
-        router.navigate(`/settings`);
+        router.navigate('/settings');
       };
       this.editProfileButton.addEventListener('click', this.handleEditProfile);
       return;
@@ -102,12 +102,12 @@ export class ProfileUserActions extends HTMLElement {
   async addFriend() {
     const request = { username: this.#state.data.shownUsername };
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_FRIENDS(this.#state.data.loggedInUsername),
-        request,
-        false,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_FRIENDS(this.#state.data.loggedInUsername),
+      request,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.data.isFriend = true;
@@ -120,12 +120,12 @@ export class ProfileUserActions extends HTMLElement {
 
   async removeFriend() {
     const response = await apiRequest(
-        'DELETE',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_REMOVE_FRIEND(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
-        null,
-        false,
-        true,
+      'DELETE',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_REMOVE_FRIEND(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.data.isFriend = false;
@@ -139,12 +139,12 @@ export class ProfileUserActions extends HTMLElement {
   async blockUser() {
     const request = { username: this.#state.data.shownUsername };
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.data.loggedInUsername),
-        request,
-        false,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.data.loggedInUsername),
+      request,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.data.isBlocked = true;
@@ -158,12 +158,12 @@ export class ProfileUserActions extends HTMLElement {
 
   async unblockUser() {
     const response = await apiRequest(
-        'DELETE',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
-        null,
-        false,
-        true,
+      'DELETE',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.data.isBlocked = false;
