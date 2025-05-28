@@ -402,6 +402,11 @@ class MultiplayerPongMatch(BasePong):
             return self._player_2
         return None
 
+# Logic for client side prediction :
+# - do inputs
+# - send timestamp + control
+# - get input and timestamp and put it inside an array on the server
+# - do the actions with the timestamp, while sending the movement to only the right user. and confirmation of movement for the other one
 
 class GameConsumer(AsyncConsumer):
     """
