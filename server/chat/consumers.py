@@ -584,10 +584,10 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(
             text_data=json.dumps({
                 "action": "game_declined",
-                "data": {https: // localhost: 1026 /
-                         "username": self.user.username,
-                         "nickname": self.user.nickname,
-                         },
+                "data": {
+                    "username": self.user.username,
+                    "nickname": self.user.nickname,
+                },
             })
         )
         notification_data = get_user_data(self.user_profile)
