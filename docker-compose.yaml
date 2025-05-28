@@ -4,7 +4,7 @@ services:
     build:
       context: ./front
       dockerfile: Dockerfile
-      target: ${NODE_ENV:-development} # Utilise le stage 'dev' par défaut, ou 'build' en prod
+      target: ${NODE_ENV:-development} # Use the 'dev' stage by default, or 'build' in production
     volumes:
       - ./front/app/src:/app/src
     ports:
@@ -23,8 +23,8 @@ services:
   server:
     container_name: server
     build:
-      context: ./server # Contexte de la construction (répertoire contenant le Dockerfile de server)
-      dockerfile: Dockerfile # Fichier Dockerfile pour ce service
+      context: ./server # Build context (directory containing the Dockerfile for server)
+      dockerfile: Dockerfile # Dockerfile for this service
     command: >
       sh -c "python manage.py makemigrations --noinput &&
             python manage.py migrate --noinput &&
@@ -85,8 +85,8 @@ services:
   database:
     container_name: database
     build:
-      context: ./database # Contexte de la construction (répertoire contenant le Dockerfile pour la base de données)
-      dockerfile: Dockerfile # Fichier Dockerfile pour ce service
+      context: ./database # Build context (directory containing the Dockerfile for the database)
+      dockerfile: Dockerfile # Dockerfile for this service
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -96,7 +96,7 @@ services:
     restart: always
     volumes:
       - db_volume:/var/lib/postgresql/data
-    ports: # non exposé en prod, connecté par Django via postgres://user:password@db:5432/dbname
+    ports: # Not exposed in production, Django connects via postgres://user:password@db:5432/dbname
       - "5432:5432"
     expose:
       - "5432"
@@ -109,9 +109,9 @@ services:
       context: ./nginx
     volumes:
       - ./front/app:/app/
-      - media_volume:/app/media/ # Dossier contenant les fichiers médias de l'application
-      - static_volume:/app/static/ # Dossier contenant les fichiers statiques de l'application
-      - db_volume:/var/lib/postgresql/data/ # Dossier contenant les fichiers de la base de données
+      - media_volume:/app/media/ # Directory containing the application's media files
+      - static_volume:/app/static/ # Directory containing the application's static files
+      - db_volume:/var/lib/postgresql/data/ # Directory containing the database files
     ports:
       - "1026:1026"
     expose:
@@ -149,23 +149,21 @@ volumes:
 networks:
   transcendance_network:
     driver: bridge
-#Pour static_volume :
 
-# Django collecte ses fichiers statiques dans ce volume via collectstatic
-# Ces fichiers sont générés dynamiquement à partir de différentes applications Django
-# Nginx a besoin d'accéder à ces fichiers pour les servir
-# Le volume partagé permet à Django et Nginx d'accéder aux mêmes fichiers
+# For static_volume:
+# Django collects its static files into this volume using collectstatic
+# These files are dynamically generated from various Django apps
+# Nginx needs to access these files to serve them
+# The shared volume allows both Django and Nginx to access the same files
 
-# Pour media_volume :
+# For media_volume:
+# Media files are uploaded by users
+# Django stores these files in this volume
+# Nginx must be able to serve them
+# The volume is shared because it changes dynamically (new uploads, deletions, etc.)
 
-# Les fichiers médias sont uploadés par les utilisateurs
-# Django stocke ces fichiers dans ce volume
-# Nginx doit pouvoir les servir
-# Le volume est partagé car il est modifié dynamiquement (nouveaux uploads, suppressions, etc.)
-
-# En contraste, pour les fichiers front :
-
-# Ils sont statiques (définis à l'avance)
-# Ne changent pas dynamiquement
-# Peuvent être montés directement depuis le système de fichiers
-# C'est pourquoi le montage direct suffit pour le front, mais les volumes partagés sont nécessaires pour le server et les médias.
+# In contrast, for front-end files:
+# They are static (predefined)
+# They do not change dynamically
+# They can be mounted directly from the filesystem
+# That’s why direct mount is sufficient for the front-end, but shared volumes are needed for the server and media.

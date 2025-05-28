@@ -61,16 +61,16 @@ export class MultiplayerGame extends HTMLElement {
     }
     var keyCode = event.code;
     if (keyCode == 'ArrowLeft') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+      pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }));
     }
     if (keyCode == 'ArrowRight') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+      pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }));
     }
     if (keyCode == 'KeyA') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+      pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }));
     }
     if (keyCode == 'KeyD') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+      pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }));
     }
     event.preventDefault();
   }
@@ -81,16 +81,16 @@ export class MultiplayerGame extends HTMLElement {
     }
     var keyCode = event.code;
     if (keyCode == 'ArrowLeft') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }));
     }
     if (keyCode == 'ArrowRight') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }));
     }
     if (keyCode == 'KeyA') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }));
     }
     if (keyCode == 'KeyD') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }));
     }
     event.preventDefault();
   }
@@ -118,35 +118,35 @@ export class MultiplayerGame extends HTMLElement {
       new THREE.DirectionalLight(0xffffff),
       new THREE.DirectionalLight(0xffffff),
       new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff)
+      new THREE.DirectionalLight(0xffffff),
     ];
 
     const playerglb = (() => {
       const pedroModel = new THREE.Object3D();
       loader.load(
-          pedro,
-          function(gltf) {
-            const model = gltf.scene;
-            model.position.y = 7;
-            model.position.z = 0;
-            model.position.x = 0;
-            mixer = new THREE.AnimationMixer(model);
-            const idleAction = mixer
-                .clipAction(THREE.AnimationUtils.subclip(gltf.animations[0], 'idle', 0, 221))
-                .setDuration(6)
-                .play();
-            const idleAction2 = mixer
-                .clipAction(THREE.AnimationUtils.subclip(gltf.animations[1], 'idle', 0, 221))
-                .setDuration(6)
-                .play();
-            idleAction.play();
-            idleAction2.play();
-            pedroModel.add(gltf.scene);
-          },
-          undefined,
-          function(error) {
-            console.error(error);
-          },
+        pedro,
+        function(gltf) {
+          const model = gltf.scene;
+          model.position.y = 7;
+          model.position.z = 0;
+          model.position.x = 0;
+          mixer = new THREE.AnimationMixer(model);
+          const idleAction = mixer
+            .clipAction(THREE.AnimationUtils.subclip(gltf.animations[0], 'idle', 0, 221))
+            .setDuration(6)
+            .play();
+          const idleAction2 = mixer
+            .clipAction(THREE.AnimationUtils.subclip(gltf.animations[1], 'idle', 0, 221))
+            .setDuration(6)
+            .play();
+          idleAction.play();
+          idleAction2.play();
+          pedroModel.add(gltf.scene);
+        },
+        undefined,
+        function(error) {
+          console.error(error);
+        },
       );
       pedroModel.scale.set(0.1, 0.1, 0.1);
       scene.add(pedroModel);
@@ -173,7 +173,7 @@ export class MultiplayerGame extends HTMLElement {
           return hasCollidedWithBumper1;
         },
         set hasCollidedWithBumper1(newHasCollidedWithBumper1) {
-          hasCollidedWithBumper1 = newHasCollidedWithBumper1
+          hasCollidedWithBumper1 = newHasCollidedWithBumper1;
         },
 
         get hasCollidedWithBumper2() {
@@ -290,28 +290,28 @@ export class MultiplayerGame extends HTMLElement {
     pongSocket.addEventListener('message', (e) => {
       data = JSON.parse(e.data);
       switch (data.action) {
-        case 'state_updated':
-          updateState(data.state);
-          // if (data.state.someone_scored)
-          //     audio.cloneNode().play();
-          break;
-        case 'player_joined':
-          playerId = data.player_id;
-          break;
-        case 'game_paused':
-          devLog('Game paused');
-          this.showOverlay('pause', data.state);
-          break;
-        case 'game_unpaused':
-          devLog('Game unpaused');
-          this.hideOverlay();
-          break;
-        case 'game_cancelled':
-          devLog('Game cancelled');
-          this.showOverlay('cancel');
-          break;
-        default:
-          break;
+      case 'state_updated':
+        updateState(data.state);
+        // if (data.state.someone_scored)
+        //     audio.cloneNode().play();
+        break;
+      case 'player_joined':
+        playerId = data.player_id;
+        break;
+      case 'game_paused':
+        devLog('Game paused');
+        this.showOverlay('pause', data.state);
+        break;
+      case 'game_unpaused':
+        devLog('Game unpaused');
+        this.hideOverlay();
+        break;
+      case 'game_cancelled':
+        devLog('Game cancelled');
+        this.showOverlay('cancel');
+        break;
+      default:
+        break;
       }
     });
 
@@ -436,20 +436,20 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayMessageWrapper.classList.remove('d-none');
 
     switch (action) {
-      case 'pause':
-        let remainingTime = state.remaining_time;
-        this.overlayMessageContent = this.querySelector('#overlay-message-content');
-        this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
-        this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
-        this.overlayMessageTimer.textContent = remainingTime;
-        // TODO: Set timer
-        break;
-      case 'cancel':
-        this.overlayButton1 = this.querySelector('#overlay-button1');
-        this.overlayButton2 = this.querySelector('#overlay-button2');
-        this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
-        this.overlayButton2.addEventListener('click', this.navigateToHome);
-        break;
+    case 'pause':
+      let remainingTime = state.remaining_time;
+      this.overlayMessageContent = this.querySelector('#overlay-message-content');
+      this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
+      this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
+      this.overlayMessageTimer.textContent = remainingTime;
+      // TODO: Set timer
+      break;
+    case 'cancel':
+      this.overlayButton1 = this.querySelector('#overlay-button1');
+      this.overlayButton2 = this.querySelector('#overlay-button2');
+      this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
+      this.overlayButton2.addEventListener('click', this.navigateToHome);
+      break;
     }
   }
 
