@@ -24,16 +24,21 @@ export class Duel extends HTMLElement {
 
   setQueryParam(param) {
     this.#state.status = param.get('status');
-    if (this.#state.status !== 'inviting' && this.#state.status !== 'matchmaking') {
+    if (this.#state.status !== 'inviting' &&
+      this.#state.status !== 'matchmaking' &&
+      this.#state.status !== 'starting') {
       this.#state.status = '';
       return;
     }
-    if (this.#state.status === 'inviting') {
+    if (this.#state.status === 'inviting' || this.#state.status === 'starting') {
       this.#state.opponent = {
         username: param.get('username'),
         nickname: param.get('nickname'),
         avatar: param.get('avatar'),
       };
+    }
+    if (this.#state.status === 'starting') {
+      this.#state.gameId = param.get('gameId');
     }
   }
 
@@ -157,8 +162,9 @@ export class Duel extends HTMLElement {
   }
 
   invitationAccepted(data) {
+    console.log('Invitation accepted:', data);
     this.#state.status = 'starting';
-    this.#state.gameId = data.gameId;
+    this.#state.gameId = data.game_id;
     this.startDuel();
   }
 
