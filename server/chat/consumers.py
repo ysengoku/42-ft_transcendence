@@ -216,7 +216,6 @@ class UserEventsConsumer(WebsocketConsumer):
 
         return True
 
-    # Receive message from WebSocket
     def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
@@ -269,7 +268,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 # TODO : check game_invite and reply_game_invite -->
                 case "game_invite":
                     self.send_game_invite(text_data_json)
-                case "reply_game_invite":
+                case reply_game_invite":
                     self.reply_game_invite(text_data_json)
                 case "game_accepted":
                     self.accept_game_invite(text_data_json)
@@ -400,14 +399,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 )
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist.", message_id)
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "error",
-                        "message": "Message not found.",
-                    },
-                ),
-            )
 
     def handle_unlike_message(self, data):
         message_data = data.get("data", {})
@@ -442,14 +433,6 @@ class UserEventsConsumer(WebsocketConsumer):
                     )
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist", message_id)
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "error",
-                        "message": "Message not found.",
-                    },
-                ),
-            )
 
     def send_like_update(self, chat_id, message_id, is_liked):
         async_to_sync(self.channel_layer.group_send)(
@@ -553,7 +536,7 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(
                 text_data=json.dumps(
                     {
-                        "action": "error",
+                        "action": "game_invite_canceled",
                         "message": "Invitation not found.",
                     },
                 ),
@@ -585,7 +568,7 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.debug("No pending invitations sent by %s to cancel for user %s", sender, self.user.username)
             self.send(
                 text_data=json.dumps({
-                    "action": "error",
+                    "action": "game_invite_canceled",
                     "message": "No pending invitations found.",
                 })
             )
@@ -601,10 +584,10 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(
             text_data=json.dumps({
                 "action": "game_declined",
-                "data": {
-                    "username": self.user.username,
-                    "nickname": self.user.nickname,
-                },
+                "data": {https: // localhost: 1026 /
+                         "username": self.user.username,
+                         "nickname": self.user.nickname,
+                         },
             })
         )
         notification_data = get_user_data(self.user_profile)
@@ -620,34 +603,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 },
             },
         )
-        # self.send(
-        #     text_data=json.dumps(
-        #         {
-        #             "action": "game_declined",
-        #             "data": {"username": self.user.username, "nickname": self.user.nickname},
-        #         },
-        #     ),
-        # )
-        # try:
-        #     invitation = GameInvitation.objects.get(
-        #         sender=sender, receiver=self.user.profile, status=GameInvitation.PENDING)
-        #     invitation.status = GameInvitation.DECLINED
-        #     invitation.save()
-        #     invitation.sync_notification_status()
-        #     # send notif to sender of the game invitation
-        #     notification_data = get_user_data(self.user_profile)
-        #     notification_data.update(
-        #         {"id": str(invitation_id), "status": "declined"})
-        # except GameInvitation.DoesNotExist:
-        #     logger.debug("Invitation %s does not exist.", invitation_id)
-        #     self.send(
-        #         text_data=json.dumps(
-        #             {
-        #                 "action": "error",
-        #                 "message": "Invitation not found.",
-        #             },
-        #         ),
-        #     )
 
     # TODO : security checks
     def send_game_invite(self, data):
@@ -658,10 +613,6 @@ class UserEventsConsumer(WebsocketConsumer):
             receiver = Profile.objects.get(user__username=receiver_username)
         except Profile.DoesNotExist as e:
             logger.error("Profile does not exist : %s", str(e))
-            self.send(text_data=json.dumps({
-                "action": "error",
-                "message": "Invalid profile"
-            }))
         if (GameInvitation.objects.filter(sender=self.user_profile, status=GameInvitation.PENDING).exists()):
             logger.warning("Error : user %s has more than one pending invitation.", self.user.username)
             self.send(text_data=json.dumps({
@@ -705,12 +656,6 @@ class UserEventsConsumer(WebsocketConsumer):
         )
         if not invitations.exists():
             logger.debug("No pending invitations to cancel for user %s", self.user.username)
-            self.send(
-                text_data=json.dumps({
-                    "action": "error",
-                    "message": "No pending invitations found.",
-                })
-            )
             return
         with transaction.atomic():
             count = 0
