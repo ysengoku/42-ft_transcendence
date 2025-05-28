@@ -289,7 +289,6 @@ class UserEventsConsumer(WebsocketConsumer):
 
         except json.JSONDecodeError:
             logger.warning("Invalid JSON message")
-            # must close connection
             self.close()
 
     def handle_message(self, data):
