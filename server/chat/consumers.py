@@ -520,7 +520,7 @@ class UserEventsConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps(event["data"]))
 
     def create_game_room(self, profile1, profile2):
-        gameroom = GameRoom.objects.create()
+        gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
         GameRoomPlayer.objects.create(game_room=gameroom, profile=profile1)
         GameRoomPlayer.objects.create(game_room=gameroom, profile=profile2)
         return gameroom
