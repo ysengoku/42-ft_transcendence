@@ -10,6 +10,7 @@ const router = (() => {
   class Router {
     constructor() {
       this.routes = new Map();
+      this.pathToReplace = new Set(['/reset-password', '/mfa-verification', '/user-not-found']);
       this.isFristLoad = true;
       this.currentComponent = null;
       this.beforeunloadCallback = null;
@@ -164,9 +165,10 @@ const router = (() => {
      * Navigates to the specified path.
      * @param {string} [path=window.location.pathname] - The path to navigate to.
      * @param {string} [queryParams=''] - The query parameters to include in the URL.
+     * @param {boolean} [redirect=false] - Whether to replace the current history entry or push a new one.
      * @return {void}
      */
-    async navigate(path = window.location.pathname, queryParams = '') {
+    async navigate(path = window.location.pathname, queryParams = '', redirect = false) {
       devLog('Navigating to:', path);
       if (this.beforeunloadCallback) {
         const response = await this.beforeunloadCallback();
@@ -185,12 +187,28 @@ const router = (() => {
         queryParamsObject = queryParams;
       }
 
-      const historyUpdateMethod = this.isFristLoad ?
-        'replaceState' :
-        (path === `'/user-not-found'` ? 'replaceState' : 'pushState');
+      // let historyUpdateMethod = '';
+      // if (redirect || this.isFristLoad || path === '/user-not-found') {
+      //     historyUpdateMethod = 'replaceState';
+      // } else {
+      //   historyUpdateMethod = 'pushState';
+      // }
+      const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
+      const historyUpdateMethod = shouldReplace ? 'replaceState' : 'pushState';
       window.history[historyUpdateMethod]({}, '', path);
       this.isFristLoad = false;
       this.handleRoute(queryParamsObject);
+    }
+
+    /**
+     * Redirects to a new path. The old path is replaced by the redirection destination in the history stack.
+     * @param {string} [path=window.location.pathname] - The path to navigate to.
+     * @param {string} [queryParams=''] - The query parameters to include in the URL.
+     * @return {void}
+     */
+    async redirect(path = window.location.pathname, queryParams = '') {
+      devLog('Redirecting');
+      this.navigate(path, queryParams, true);
     }
 
     /**
@@ -263,7 +281,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.documentElement.getAttribute('data-bs-theme') === 'light' ? (
     document.getElementById('stars') ? document.body.removeChild(stars) : null,
     document.body.style.backgroundImage = `linear-gradient(rgba(170,79,236, 0.8) 0%, rgba(236,79,84, 0.8) 50%, rgba(236,79,84, 0.8) 100%)`,
-      createClouds()) : (
+    createClouds()) : (
     document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
     document.body.style.backgroundImage = `linear-gradient(rgb(23, 18, 40) 0%, rgb(62, 52, 97) 16%, rgb(95, 83, 138) 40%, #6670A2 100%)`,
     createStars());

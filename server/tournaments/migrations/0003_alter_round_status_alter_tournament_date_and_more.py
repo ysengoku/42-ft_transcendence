@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='round',
             name='status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('ongoing', 'Ongoing'), ('finished', 'Finished')], default='pending', max_length=10),
+            field=models.CharField(choices=[('pending', 'Pending'), ('ongoing', 'Ongoing'), (
+                'finished', 'Finished')], default='pending', max_length=10),
         ),
         migrations.AlterField(
             model_name='tournament',
@@ -24,6 +25,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='tournament',
             name='status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('ongoing', 'Ongoing'), ('finished', 'Finished'), ('cancelled', 'Cancelled')], default='lobby', max_length=10),
+            field=models.CharField(choices=[('pending', 'Pending'), ('ongoing', 'Ongoing'), (
+                'finished', 'Finished'), ('cancelled', 'Cancelled')], default='lobby', max_length=10),
         ),
     ]

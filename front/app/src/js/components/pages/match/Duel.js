@@ -24,17 +24,27 @@ export class Duel extends HTMLElement {
 
   setQueryParam(param) {
     this.#state.status = param.get('status');
-    if (this.#state.status !== 'inviting' && this.#state.status !== 'matchmaking') {
+    if (this.#state.status !== 'inviting' &&
+      this.#state.status !== 'matchmaking' &&
+      this.#state.status !== 'starting') {
       this.#state.status = '';
       return;
     }
-    if (this.#state.status === 'inviting') {
+    if (this.#state.status === 'inviting' || this.#state.status === 'starting') {
       this.#state.opponent = {
         username: param.get('username'),
         nickname: param.get('nickname'),
         avatar: param.get('avatar'),
       };
     }
+    if (this.#state.status === 'starting') {
+      this.#state.gameId = param.get('gameId');
+    }
+  }
+
+  set status(status) {
+    this.#state.status = status;
+    this.renderContent();
   }
 
   async connectedCallback() {
@@ -44,8 +54,7 @@ export class Duel extends HTMLElement {
       return;
     }
     if (!this.#state.status) {
-      // Redirect to duel menu
-      router.navigate('/duel-menu');
+      router.redirect('/duel-menu');
       return;
     }
     router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
@@ -83,16 +92,16 @@ export class Duel extends HTMLElement {
     this.timer = this.querySelector('#timer');
 
     this.renderContent();
-      // ==== For test ================
-      // setTimeout(() => {
-      //   const data = {
-      //     // gameId: 'test-game-id',
-      //     username: this.#state.opponent.username,
-      //   };
-        // this.invitationAccepted(data);
-      //   this.invitationDeclined(data);
-      // }, 5000);
-      // ================================
+    // ==== For test ================
+    // setTimeout(() => {
+    //   const data = {
+    //     // gameId: 'test-game-id',
+    //     username: this.#state.opponent.username,
+    //   };
+    // this.invitationAccepted(data);
+    //   this.invitationDeclined(data);
+    // }, 5000);
+    // ================================
   }
 
   renderContent() {
@@ -149,12 +158,13 @@ export class Duel extends HTMLElement {
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     router.navigate('/duel-menu');
-    socketManager.closeSocket('matchmaking'); 
+    socketManager.closeSocket('matchmaking');
   }
 
   invitationAccepted(data) {
+    console.log('Invitation accepted:', data);
     this.#state.status = 'starting';
-    this.#state.gameId = data.gameId;
+    this.#state.gameId = data.game_id;
     this.startDuel();
   }
 
@@ -293,16 +303,16 @@ export class Duel extends HTMLElement {
 
   headerTemplate() {
     switch (this.#state.status) {
-      case 'inviting':
-        return 'Waiting for your opponent to ride in...';
-      case 'matchmaking':
-        return 'Searching for your dream opponent...';
-      case 'starting':
-        return 'Both gunslingers are here. Time to duel!';
-      case 'canceled':
-        return 'This duel has been canceled.';
-      case 'declined':
-        return 'This duel has been canceled.';
+    case 'inviting':
+      return 'Waiting for your opponent to ride in...';
+    case 'matchmaking':
+      return 'Searching for your dream opponent...';
+    case 'starting':
+      return 'Both gunslingers are here. Time to duel!';
+    case 'canceled':
+      return 'This duel has been canceled.';
+    case 'declined':
+      return 'This duel has been canceled.';
     }
   }
 }

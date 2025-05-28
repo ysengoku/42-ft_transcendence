@@ -44,8 +44,8 @@ export class ChatMessageInput extends HTMLElement {
       const message = this.messageInput.value;
       if (message.length > this.#maxChar) {
         showAlertMessageForDuration(
-            ALERT_TYPE.ERROR,
-            `Cannot send the message. It exceeds maximum length of ${this>this.#maxChar} characters.`,
+          ALERT_TYPE.ERROR,
+          `Cannot send the message. It exceeds maximum length of ${this>this.#maxChar} characters.`,
         );
         this.messageInput.value = '';
         return;

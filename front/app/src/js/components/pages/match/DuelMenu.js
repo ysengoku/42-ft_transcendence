@@ -238,12 +238,12 @@ export class DuelMenu extends HTMLElement {
 
   async searchUser() {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SEARCH(this.#usersearch.searchQuery, 10, this.#usersearch.currentListLength),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_SEARCH(this.#usersearch.searchQuery, 10, this.#usersearch.currentListLength),
+      null,
+      false,
+      true,
     );
     if (response.success && response.data) {
       if (response.data.count === 0) {
