@@ -1,5 +1,6 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { socketManager } from '@socket';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
@@ -7,7 +8,7 @@ import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 export class Tournament extends HTMLElement {
   #state = {
     user: null,
-    status: '', // Status for UI: pending, roundStart, waitingNextRound, roundFinished, finished
+    status: '', // Status for UI: pending, roundStart, bracketOngoing, waitingNextRound, roundFinished, finished
     tournamentId: '',
     tournament: null,
     currentRoundNumber: 1,
@@ -60,9 +61,9 @@ export class Tournament extends HTMLElement {
     // }
     // this.#state.tournament = response.data;
 
-    // For test
+    // =========== For test ================================================
     this.#state.tournament = await mockTournamentDetail('mockidongoing');
-    console.log('Tournament data fetched:', this.#state.tournament);
+    // =====================================================================
 
     this.#state.currentRoundNumber = this.#state.tournament.rounds.length;
     this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
@@ -71,10 +72,15 @@ export class Tournament extends HTMLElement {
         bracket.participant2.profile.username.toLowerCase() === this.#state.user.username.toLowerCase());
     });
     this.setTournamentStatus[this.#state.tournament.status]();
-
+    if (this.#state.status === 'bracketOngoing') {
+      const gameId = this.#state.currentUserBracket.game_id;
+      router.redirect(`multiplayer-game/${gameId}`);
+      return;
+    }
     this.#state.userDataInTournament = this.#state.tournament.participants.find((participant) => {
       return participant.profile.username.toLowerCase() === this.#state.user.username.toLowerCase();
     });
+    devLog('User data in tournament:', this.#state);
     if (!this.#state.userDataInTournament) {
       devLog('User is not in this tournament');
       router.redirect('/tournament-menu');
@@ -86,7 +92,7 @@ export class Tournament extends HTMLElement {
     }
 
     this.render();
-    // TODO: open ws for this tournament if not already opened
+    socketManager.openSocket('tournament', this.#state.tournamentId);
   }
 
   checkUserStatus() {
@@ -97,6 +103,7 @@ export class Tournament extends HTMLElement {
       return false;
     case 'eliminated':
       showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'You have been eliminated from the tournament.');
+      socketManager.closeSocket('tournament', this.#state.tournamentId);
       router.navigate('/tournament-menu');
       return false;
     case 'qualified':
@@ -109,13 +116,21 @@ export class Tournament extends HTMLElement {
       this.#state.status = 'pending';
     },
     ongoing: () => {
-      // Current round
-      // if starting -> roundStarting
-      // if finished -> roundFinished
-      // if ongoing && Current user's bracket === finished -> waitingNextRound
-
-      // Temporary status for ongoing tournaments
-      this.#state.status = 'waitingNextRound';
+      switch (this.#state.currentRound.status) {
+      case 'starting':
+        this.#state.status = 'roundStarting';
+        break;
+      case 'finished':
+        this.#state.status = 'roundFinished';
+        break;
+      case 'ongoing':
+        if (this.#state.currentUserBracket.status === 'finished') {
+          this.#state.status = 'waitingNextRound';
+        } else {
+          this.#state.status = 'bracketOngoing';
+        }
+        break;
+      }
     },
     finished: () => {
       this.#state.status = 'finished';
@@ -165,9 +180,6 @@ export class Tournament extends HTMLElement {
       };
       return tournamentRoundOngoing;
     },
-    finished: () => {
-      // Show the final result of the tournament with tree
-    },
   };
 
   updateTournamentStatus() {
@@ -175,6 +187,7 @@ export class Tournament extends HTMLElement {
       this.tournamentContentWrapper.removeChild(this.tournamentContentWrapper.firstChild);
     }
     if (this.#state.status === 'finished') {
+      socketManager.closeSocket('tournament', this.#state.tournamentId);
       router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
       return;
     }

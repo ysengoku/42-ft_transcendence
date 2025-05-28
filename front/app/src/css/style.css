@@ -475,6 +475,7 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   svg {
     fill: var(--pm-primary-100);
   }
+  color: var(--pm-gray-100);
 }
 
 .wood-board:before {
