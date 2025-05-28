@@ -411,6 +411,21 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   }
 }
 
+@keyframes flyAway {
+  0% {
+    transform: rotate(0deg) scale(1) translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(240deg) scale(0) translate(40px, -40px);
+    opacity: 0;
+  }
+}
+
+.fly-away {
+  animation: flyAway 1.0s ease-out forwards;
+}
+
 /*--------------------------------------------------------------------------- */
 /*    Wood grain                                                              */
 /*----------------------------------------------------------------------------*/
