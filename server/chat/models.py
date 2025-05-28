@@ -291,13 +291,6 @@ class Notification(models.Model):
         return f"Notification {self.action} for {self.receiver.user.username}"
 
 
-# class GameSession(models.Model):  # noqa: DJ008
-#     """
-#     Currently a no-op, but can be extended
-#     """
-#     game_id = models.UUIDField(default=uuid.uuid4, editable=False)
-
-
 class GameInvitation(models.Model):
     PENDING = "pending"
     ACCEPTED = "accepted"
@@ -313,13 +306,6 @@ class GameInvitation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(
         Profile, on_delete=models.CASCADE, null=True, blank=True)
-    # game_session = models.ForeignKey(
-    #     GameSession,
-    #     on_delete=models.PROTECT,
-    #     related_name="game_invites",
-    #     null=True,
-    #     blank=True
-    # )
     recipient = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
