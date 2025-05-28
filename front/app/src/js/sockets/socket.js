@@ -8,7 +8,7 @@ import { showToastNotification } from '@utils';
 const WS_PATH = {
   livechat: '/ws/events/',
   matchmaking: '/ws/matchmaking/',
-  tournament: (id) => `/ws/tournaments/${id}`,
+  tournament: (id) => `/ws/tournament/${id}`,
 };
 
 /**
@@ -151,6 +151,7 @@ const socketManager = (() => {
         return;
       }
       if (this.sockets.has(name)) {
+        devLog('Socket already open:', name);
         return;
       }
       const path = typeof config.path === 'function' ? config.path(id) : config.path;

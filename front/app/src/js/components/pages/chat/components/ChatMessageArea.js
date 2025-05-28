@@ -92,11 +92,19 @@ export class ChatMessageArea extends HTMLElement {
         this.invitePlayButton?.removeEventListener('click', this.openGameInvitationModal),
         this.blockButoon?.removeEventListener('click', this.blockUser)
       );
-      this.#state.data.messages.forEach = (message, index) => {
+      this.#state.data.messages.forEach((message, index) => {
         message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
-      };
+      });
     }
     this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+
+    const tooltipElements = this.querySelectorAll('.message');
+    tooltipElements.forEach((element) => {
+      const tooltipInstance = Tooltip.getInstance(element);
+      if (tooltipInstance) {
+        tooltipInstance.dispose();
+      }
+    });
   }
 
   /* ------------------------------------------------------------------------ */
