@@ -279,6 +279,7 @@ export class MultiplayerGame extends HTMLElement {
                 case "joined":
                     player_id = data.player_id;
                     console.log(player_id)
+                    // console.log(data.bumper)
                     break;
                 // case "":
                 //     updateBuff(data.state)
