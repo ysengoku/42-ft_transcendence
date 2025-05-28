@@ -42,7 +42,7 @@ socketManager.addSocket('livechat', {
     showToastNotification(`${data.nickname} challenges you to a duel.`);
   },
   game_accepted: (data) => {
-    if (window.location.pathname !== '/duel') {
+    if (window.location.pathname === '/duel') {
       const duelPage = document.querySelector('duel-page');
       duelPage?.invitationAccepted(data);
       return;
