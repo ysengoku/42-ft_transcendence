@@ -674,7 +674,7 @@ class UserEventsConsumer(WebsocketConsumer):
             recipient=receiver,
             options=options,
         )
-
+        self.user_profile.refresh_from_db()
         notification = Notification.objects.action_send_game_invite(
             receiver=receiver,
             sender=self.user_profile,
