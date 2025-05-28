@@ -151,6 +151,7 @@ const socketManager = (() => {
         return;
       }
       if (this.sockets.has(name)) {
+        devLog('Socket already open:', name);
         return;
       }
       const path = typeof config.path === 'function' ? config.path(id) : config.path;
