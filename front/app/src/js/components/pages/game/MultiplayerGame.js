@@ -154,6 +154,7 @@ export class MultiplayerGame extends HTMLElement {
 
             const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
             const dir_z = -Math.sign(posZ);
+            const inputQueue = [];
             // let   lenghtHalf = 2.5;
             // let   widthHalf = 0.5;
             // let   controlReverse = false;
@@ -168,6 +169,7 @@ export class MultiplayerGame extends HTMLElement {
                 set speed(newSpeed) { speed = newSpeed; },
                 get score() { return score; },
                 set score(newScore) { score = newScore; },
+                get inputQueue() { return inputQueue; },
                 // get controlReverse() { return controlReverse; },
                 // set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
                 // get lenghtHalf() { return lenghtHalf; },
@@ -267,6 +269,7 @@ export class MultiplayerGame extends HTMLElement {
         });
 
         let data;
+        let ourBumper;
         let player_id = '';
         pongSocket.addEventListener("message", function(e) {
             data = JSON.parse(e.data)
@@ -314,6 +317,7 @@ export class MultiplayerGame extends HTMLElement {
             }
             var keyCode = event.code;
             if (keyCode == 'ArrowLeft')
+                
                 pongSocket.send(JSON.stringify({ action: "move_left", content: true, player_id }))
             if (keyCode == 'ArrowRight')
                 pongSocket.send(JSON.stringify({ action: "move_right", content: true, player_id }))
