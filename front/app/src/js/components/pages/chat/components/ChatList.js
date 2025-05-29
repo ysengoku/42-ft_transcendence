@@ -31,7 +31,7 @@ export class ChatList extends HTMLElement {
     currentListItemCount: 0,
     fetchedItemCount: 0,
     displayedItemCount: 0,
-    totalItemCount: 0,
+    totalItemCount: -1,
     items: [],
   };
 
@@ -64,6 +64,13 @@ export class ChatList extends HTMLElement {
     }
     console.timeEnd('ChatList setData');
     this.render();
+    if (this.#state.totalItemCount === 0) {
+      const noChatsMessage = document.createElement('li');
+      noChatsMessage.classList.add('list-group-item', 'text-center', 'border-0', 'pt-5', 'pe-5', 'no-chats-message');
+      noChatsMessage.style.backgroundColor = 'transparent';
+      noChatsMessage.textContent = 'You have no conversations yet.';
+      this.list.appendChild(noChatsMessage);
+    }
   }
 
   disconnectedCallback() {
@@ -91,8 +98,8 @@ export class ChatList extends HTMLElement {
     if (this.#state.totalItemCount > 0) {
       this.list.innerHTML = '';
       this.renderListItems();
+      this.listContainer.addEventListener('scrollend', this.handleScrollEnd);
     }
-    this.listContainer.addEventListener('scrollend', this.handleScrollEnd);
 
     // Load more items if needed to reach the minimum display count
     while (this.#state.currentListItemCount < this.#state.totalItemCount &&
@@ -139,6 +146,10 @@ export class ChatList extends HTMLElement {
   }
 
   prependNewListItem(newItemData) {
+    const noChatsMessage = this.list.querySelector('.no-chats-message');
+    if (noChatsMessage) {
+      noChatsMessage.remove();
+    }
     const listItem = document.createElement('chat-list-item-component');
     listItem.setData(newItemData, this.#state.loggedInUsername);
     listItem.querySelector('.chat-list-item').classList.add('active');

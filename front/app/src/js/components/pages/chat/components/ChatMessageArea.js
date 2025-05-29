@@ -10,7 +10,7 @@ import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE, getRelativeDateAndTime, loader } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, showToastNotification, TOAST_TYPES, getRelativeDateAndTime, loader } from '@utils';
 
 /**
  * @class ChatMessageArea
@@ -84,6 +84,14 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   disconnectedCallback() {
+    const tooltipElements = this.querySelectorAll('.message');
+    tooltipElements.forEach((element) => {
+      const tooltipInstance = Tooltip.getInstance(element);
+      if (tooltipInstance) {
+        tooltipInstance.hide();
+        tooltipInstance.dispose();
+      }
+    });
     this.header?.removeEventListener('click', this.navigateToProfile);
     if (this.#state.data) {
       this.#state.data.is_blocked_user ? (
@@ -92,19 +100,9 @@ export class ChatMessageArea extends HTMLElement {
         this.invitePlayButton?.removeEventListener('click', this.openGameInvitationModal),
         this.blockButoon?.removeEventListener('click', this.blockUser)
       );
-      this.#state.data.messages.forEach((message, index) => {
-        message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
-      });
     }
     this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
-
-    const tooltipElements = this.querySelectorAll('.message');
-    tooltipElements.forEach((element) => {
-      const tooltipInstance = Tooltip.getInstance(element);
-      if (tooltipInstance) {
-        tooltipInstance.dispose();
-      }
-    });
+    this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -153,6 +151,10 @@ export class ChatMessageArea extends HTMLElement {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       });
       this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
+      this.chatMessages.addEventListener('click', this.toggleLikeMessage);
+    } else {
+      this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+      this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
     }
 
     // Toggle input and block button based on block status.
@@ -201,7 +203,7 @@ export class ChatMessageArea extends HTMLElement {
           this.#state.totalMessagesCount = response.data.count;
           this.renderMessages();
         } else {
-          // TODO: Handle error
+          showToastNotification('Failed to load more messages.', TOAST_TYPES.ERROR);
         }
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight - previousHeight;
       }
@@ -245,7 +247,7 @@ export class ChatMessageArea extends HTMLElement {
       );
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
-      messageElement.addEventListener('click', this.toggleLikeMessage);
+      messageContent.classList.add('received-message');
       if (!message.is_read) {
         const readMessage = {
           action: 'read_message',
@@ -362,7 +364,7 @@ export class ChatMessageArea extends HTMLElement {
    */
   toggleLikeMessage(event) {
     const messageBubble = event.target.closest('.bubble');
-    if (!messageBubble) {
+    if (!messageBubble || !messageBubble.classList.contains('received-message')) {
       return;
     }
     const messageId = messageBubble.getAttribute('id');
