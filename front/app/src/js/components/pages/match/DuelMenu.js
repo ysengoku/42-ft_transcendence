@@ -307,6 +307,7 @@ export class DuelMenu extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 5000);
       return;
     }
+    const clientInstanceId = socketManager.getClientInstanceId('livechat');
     const message = {
       action: 'game_invite',
       data: {
@@ -317,6 +318,7 @@ export class DuelMenu extends HTMLElement {
           is_ranked: this.#state.options.isRanked,
           time_limit_minutes: this.#state.options.timeLimitMinutes,
         },
+        client_id: clientInstanceId,
       },
     };
     devLog('Sending duel invite:', message);
