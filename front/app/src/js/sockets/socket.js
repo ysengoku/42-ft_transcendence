@@ -22,6 +22,11 @@ class WebSocketManager {
     this.listeners = listeners;
     this.socket = null;
     this.socketOpen = false;
+
+    const timestamp = new Date().getTime();
+    const randomUUID = crypto.randomUUID();
+    this.instanceId = `${timestamp}-${randomUUID}`;
+    devLog(`WebSocketManager created for ${this.name} with instance ID: ${this.instanceId}`);
   }
 
   connect() {
@@ -202,6 +207,20 @@ const socketManager = (() => {
       }
       devLog('Sending message via WebSocket:', message);
       socket.socket.send(JSON.stringify(message));
+    }
+
+    /**
+     * Get the client instance id
+     * @param {string} name - The name of the socket.
+     * @returns {string} - A unique identifier for the client instance.
+     */
+    getClientInstanceId(name) {
+      const socket = this.sockets.get(name);
+      if (!socket) {
+        devErrorLog('Socket not found:', name);
+        return null;
+      }
+      return socket.instanceId;
     }
   }
   return new SocketsManager();
