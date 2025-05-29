@@ -85,6 +85,8 @@ export class NotificationsListItem extends HTMLElement {
       },
     };
     socketManager.sendMessage('livechat', message);
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
   }
 
   handleAcceptDuel() {
@@ -97,6 +99,8 @@ export class NotificationsListItem extends HTMLElement {
 
   handleParticipateTournament() {
     console.log('Participating in tournament');
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
   }
 
   navigateToProfile() {
