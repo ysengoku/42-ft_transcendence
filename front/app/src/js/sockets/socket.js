@@ -62,7 +62,7 @@ class WebSocketManager {
     this.socket.onclose = (event) => {
       devLog('WebSocket closed (', this.name, ') ', event);
       if (event.code === 1006 || event.code === 1011) {
-        showToastNotification('Connection to server lost.');
+        showToastNotification('Connection to server lost.', TOAST_TYPES.ERROR);
         console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
         this.socketOpen = false;
         return;
