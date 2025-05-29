@@ -6,7 +6,6 @@ export const TOAST_TYPES = {
 };
 
 export function showToastNotification(message, type = TOAST_TYPES.INFO) {
-  console.log('showToastNotification', message, type);
   const toastContainer = document.getElementById('toast-notification');
   if (!toastContainer) {
     return;
@@ -40,9 +39,8 @@ export function showToastNotification(message, type = TOAST_TYPES.INFO) {
   const toast = document.querySelector('.toast');
   const toastBodyWrapper = document.querySelector('.toast-body-wrapper');
   toastBodyWrapper.style.backgroundColor = type === TOAST_TYPES.ERROR ?
-    'var(--pm-red-400)' :
-    'var(--pm-primary-500)';
-  console.log('toast', toast);
+    'var(--pm-bg-danger)' :
+    'var(--pm-bg-success)';
   const toastBootstrap = Toast.getOrCreateInstance(toast);
   toastBootstrap.show();
 }

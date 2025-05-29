@@ -5,6 +5,7 @@ import './components/index.js';
 
 export class Duel extends HTMLElement {
   #state = {
+    clientId: '',
     status: '', // inviting, matchmaking, starting, canceled, declied, finished?
     gameId: '',
     loggedInUser: null,
@@ -15,6 +16,7 @@ export class Duel extends HTMLElement {
 
   constructor() {
     super();
+    this.#state.clientId = socketManager.getClientInstanceId('livechat'),
 
     this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
@@ -45,6 +47,10 @@ export class Duel extends HTMLElement {
   set status(status) {
     this.#state.status = status;
     this.renderContent();
+  }
+
+  get clientId() {
+    return this.#state.clientId;
   }
 
   async connectedCallback() {
