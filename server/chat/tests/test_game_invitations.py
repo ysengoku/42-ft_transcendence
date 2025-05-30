@@ -42,18 +42,36 @@ def accept_invite(sender_name):
     return accept_invite
 
 
-async def log_invitations(profile_player, invite_status):
-    infos = await database_sync_to_async(
-        lambda: [
-            {
-                "id": inv.id,
-                "sender": inv.sender.user.username,
-                "recipient": inv.recipient.user.username,
-                "status": inv.status,
-            }
-            for inv in GameInvitation.objects.filter(sender=profile_player, status=invite_status).select_related("sender__user", "recipient__user")
-        ]
-    )()
+async def fill_log_invitations_info(invite_status, profile_player=None):
+    if profile_player:
+        infos = await database_sync_to_async(
+            lambda: [
+                {
+                    "id": inv.id,
+                    "sender": inv.sender.user.username,
+                    "recipient": inv.recipient.user.username,
+                    "status": inv.status,
+                }
+                for inv in GameInvitation.objects.filter(sender=profile_player, status=invite_status).select_related("sender__user", "recipient__user")
+            ]
+        )()
+    else:
+        infos = await database_sync_to_async(
+            lambda: [
+                {
+                    "id": inv.id,
+                    "sender": inv.sender.user.username,
+                    "recipient": inv.recipient.user.username,
+                    "status": inv.status,
+                }
+                for inv in GameInvitation.objects.filter(status=invite_status).select_related("sender__user", "recipient__user")
+            ]
+        )()
+    return infos
+
+
+async def log_invitations(invite_status, profile_player=None):
+    infos = await fill_log_invitations_info(invite_status, profile_player)
 
     for info in infos:
         logger.critical(
@@ -384,8 +402,6 @@ class GameInvitationTests(UserEventsConsumerTests):
         accepted_invitations = await database_sync_to_async(
             lambda: list(GameInvitation.objects.filter(sender=john_profile, status="accepted")),
         )()
-        await log_invitations(john_profile, "pending")
-        await log_invitations(john_profile, "accepted")
         assert len(accepted_invitations) == 0, f"The invitation has been accepted: {accepted_invitations}"
 
         await communicator.disconnect()
