@@ -323,7 +323,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 case "game_declined":
                     self.decline_game_invite(text_data_json)
                 case "cancel_game_invite":
-                    self.cancel_game_invite(text_data_json)
+                    self.cancel_game_invite()
                 # TODO : check game_invite and reply_game_invite <--
                 case "new_tournament":
                     self.handle_new_tournament(text_data_json)
@@ -566,6 +566,7 @@ class UserEventsConsumer(WebsocketConsumer):
     def accept_game_invite(self, data):
         sender_name = data["data"].get("username")
         sender = Profile.objects.get(user__username=sender_name)
+        client_id = data["data"].get("client_id")
         if sender == self.user.profile:
             logger.warning("Error : user %s wanted to accept a game with themself.", self.user.username)
             self.send(text_data=json.dumps({
@@ -609,6 +610,8 @@ class UserEventsConsumer(WebsocketConsumer):
         invitation.status = GameInvitation.ACCEPTED
         invitation.save()
         invitation.sync_notification_status()
+        # if any invitations were send by the user, they are cancelled because they are in a game now
+        self.cancel_game_invite()
         sender_data = self.data_for_game_found(sender, game_room.id)
         receiver_data = self.data_for_game_found(self.user.profile, game_room.id)
         async_to_sync(self.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
@@ -719,7 +722,6 @@ class UserEventsConsumer(WebsocketConsumer):
         # Convert date in good format
         if "date" in notification_data and isinstance(notification_data["date"], datetime):
             notification_data["date"] = notification_data["date"].isoformat()
-
         async_to_sync(self.channel_layer.group_send)(
             f"user_{receiver.user.id}",
             {
@@ -732,7 +734,7 @@ class UserEventsConsumer(WebsocketConsumer):
         )
 
     # TODO : security checks
-    def cancel_game_invite(self, data):
+    def cancel_game_invite(self):
         invitations = GameInvitation.objects.filter(
             sender=self.user.profile,
             status=GameInvitation.PENDING,
