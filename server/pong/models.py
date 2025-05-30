@@ -192,6 +192,9 @@ class GameRoomQuerySet(models.QuerySet):
     def for_ongoing_status(self):
         return self.filter(status=self.model.ONGOING)
 
+    def for_pending_or_ongoing_status(self):
+        return self.filter(Q(status=self.model.PENDING) | Q(status=self.model.ONGOING))
+
 
 class GameRoom(models.Model):
     """
