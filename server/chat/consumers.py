@@ -225,7 +225,7 @@ class UserEventsConsumer(WebsocketConsumer):
             "read_message": {"id": str},
             "read_notification": {"id": str},
             "notification": {"message": str, "type": str},
-            "game_invite": {"username": str, "options": dict},
+            "game_invite": {"client_id": str, "username": str, "options": dict},
             "reply_game_invite": {"accept": bool, "username": str},
             "game_accepted": {"accept": bool},
             "game_declined": {"accept": bool},
@@ -259,7 +259,7 @@ class UserEventsConsumer(WebsocketConsumer):
             for field in uuid_fields[action]:
                 value = data.get(field)
                 if value and not self.is_valid_uuid(value):
-                    logger.warning("Invalid UUID format for '%s'", field)
+                    logger.warning("Invalid UUID format for '%s', the value is %s", field, value)
                     return False
 
         return True
@@ -540,8 +540,6 @@ class UserEventsConsumer(WebsocketConsumer):
             self.accept_game_invite(data)
         elif response is False:
             self.decline_game_invite(data)
-        else:
-            logger.critical("WHAT THE FUCK IS GOING ON WITH THE BOOLEAN ?")
 
     def game_found(self, event):
         self.send(text_data=json.dumps(event["data"]))
@@ -654,6 +652,7 @@ class UserEventsConsumer(WebsocketConsumer):
         if not self.validate_options(options):
             return
         receiver_username = data["data"].get("username")
+        client_id = data["data"].get("client_id")
 
         try:
             receiver = Profile.objects.get(user__username=receiver_username)
@@ -666,6 +665,7 @@ class UserEventsConsumer(WebsocketConsumer):
             self.send(text_data=json.dumps({
                 "action": "game_invite_canceled",
                 "message": "You have one invitation pending",
+                "client_id": client_id,
             }))
             return
         invitation = GameInvitation.objects.create(
@@ -677,7 +677,7 @@ class UserEventsConsumer(WebsocketConsumer):
         notification = Notification.objects.action_send_game_invite(
             receiver=receiver,
             sender=self.user_profile,
-            notification_data={"game_id": str(invitation.id)},
+            notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
         )
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
