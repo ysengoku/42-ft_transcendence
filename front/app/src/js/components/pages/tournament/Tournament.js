@@ -68,8 +68,10 @@ export class Tournament extends HTMLElement {
     this.#state.currentRoundNumber = this.#state.tournament.rounds.length;
     this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
     this.#state.currentUserBracket = this.#state.currentRound.brackets.find((bracket) => {
-      return (bracket.participant1.profile.username.toLowerCase() === this.#state.user.username.toLowerCase() ||
-        bracket.participant2.profile.username.toLowerCase() === this.#state.user.username.toLowerCase());
+      return (
+        bracket.participant1.profile.username.toLowerCase() === this.#state.user.username.toLowerCase() ||
+        bracket.participant2.profile.username.toLowerCase() === this.#state.user.username.toLowerCase()
+      );
     });
     this.setTournamentStatus[this.#state.tournament.status]();
     if (this.#state.status === 'bracketOngoing') {
@@ -97,17 +99,17 @@ export class Tournament extends HTMLElement {
 
   checkUserStatus() {
     switch (this.#state.userDataInTournament.status) {
-    case 'playing':
-      const gameId = this.#state.currentUserBracket.game_id;
-      router.navigate(`multiplayer-game/${gameId}`);
-      return false;
-    case 'eliminated':
-      showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'You have been eliminated from the tournament.');
-      socketManager.closeSocket('tournament', this.#state.tournamentId);
-      router.navigate('/tournament-menu');
-      return false;
-    case 'qualified':
-      return true;
+      case 'playing':
+        const gameId = this.#state.currentUserBracket.game_id;
+        router.navigate(`multiplayer-game/${gameId}`);
+        return false;
+      case 'eliminated':
+        showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'You have been eliminated from the tournament.');
+        socketManager.closeSocket('tournament', this.#state.tournamentId);
+        router.navigate('/tournament-menu');
+        return false;
+      case 'qualified':
+        return true;
     }
   }
 
@@ -117,19 +119,19 @@ export class Tournament extends HTMLElement {
     },
     ongoing: () => {
       switch (this.#state.currentRound.status) {
-      case 'starting':
-        this.#state.status = 'roundStarting';
-        break;
-      case 'finished':
-        this.#state.status = 'roundFinished';
-        break;
-      case 'ongoing':
-        if (this.#state.currentUserBracket.status === 'finished') {
-          this.#state.status = 'waitingNextRound';
-        } else {
-          this.#state.status = 'bracketOngoing';
-        }
-        break;
+        case 'starting':
+          this.#state.status = 'roundStarting';
+          break;
+        case 'finished':
+          this.#state.status = 'roundFinished';
+          break;
+        case 'ongoing':
+          if (this.#state.currentUserBracket.status === 'finished') {
+            this.#state.status = 'waitingNextRound';
+          } else {
+            this.#state.status = 'bracketOngoing';
+          }
+          break;
       }
     },
     finished: () => {
