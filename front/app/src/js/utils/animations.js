@@ -1,9 +1,8 @@
-
 export function createClouds() {
   const cloud = document.createElement('div');
   cloud.id = 'cloud';
   document.body.appendChild(cloud);
-};
+}
 
 export function createStars() {
   const starContainer = document.createElement('div');
@@ -42,7 +41,7 @@ export function createStars() {
 
   setInterval(createShootingStar, 2000);
   document.body.appendChild(starContainer);
-};
+}
 
 export function loader() {
   return `
@@ -110,4 +109,24 @@ export function loader() {
     <span>.</span>
   </div>
   `;
+}
+
+export function triggerRotateMoveShrink(el, duration = 1500) {
+  el.classList.add('rotateMoveShrink');
+
+  setTimeout(() => {
+    el.style.visibility = 'hidden';
+  }, duration);
+}
+
+export function flyAway(el, duration = 1000) {
+  if (getComputedStyle(el).position === 'static') {
+    el.style.position = 'relative';
+  }
+  el.classList.add('fly-away');
+
+  setTimeout(() => {
+    // el.classList.remove('fly-away');
+    el.style.visibility = 'hidden';
+  }, duration);
 }

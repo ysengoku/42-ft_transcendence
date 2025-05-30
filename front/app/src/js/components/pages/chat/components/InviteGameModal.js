@@ -1,47 +1,47 @@
 import { Modal } from 'bootstrap';
-import { router } from '@router';	
-import { socketManager } from "@socket";
+import { router } from '@router';
+import { socketManager } from '@socket';
 
 export class InviteGameModal extends HTMLElement {
   #state = {
     opponent: null,
     options: null,
-  }
+  };
 
   constructor() {
     super();
     this.modal = null;
-	this.modalElement = null;
-    
+    this.modalElement = null;
+
     this.gameOptionsForm = null;
     this.inviteButton = null;
-	this.cancelButton = null;
-	this.closeButton = null;
+    this.cancelButton = null;
+    this.closeButton = null;
 
     this.sendInvitation = this.sendInvitation.bind(this);
     this.closeModal = this.closeModal.bind(this);
   }
 
   disconnectedCallback() {
-	this.inviteButton?.removeEventListener('click', this.sendInvitation);
-	this.cancelButton?.removeEventListener('click', this.closeModal);
-	this.closeButton?.removeEventListener('click', this.closeModal);
-	this.modal?.dispose();
+    this.inviteButton?.removeEventListener('click', this.sendInvitation);
+    this.cancelButton?.removeEventListener('click', this.closeModal);
+    this.closeButton?.removeEventListener('click', this.closeModal);
+    this.modal?.dispose();
   }
 
   render() {
     this.innerHTML = this.template();
 
-	this.modalElement = this.querySelector('.modal');
+    this.modalElement = this.querySelector('.modal');
     this.gameOptionsForm = this.querySelector('game-options');
-	this.inviteButton = this.querySelector('.confirm-button');
-	this.cancelButton = this.querySelector('.cancel-button');
-	this.closeButton = this.querySelector('.btn-close');
+    this.inviteButton = this.querySelector('.confirm-button');
+    this.cancelButton = this.querySelector('.cancel-button');
+    this.closeButton = this.querySelector('.btn-close');
     this.inviteButton.addEventListener('click', this.sendInvitation);
-	this.cancelButton.addEventListener('click', this.closeModal);
-	this.closeButton.addEventListener('click', this.closeModal);
+    this.cancelButton.addEventListener('click', this.closeModal);
+    this.closeButton.addEventListener('click', this.closeModal);
 
-	const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
+    const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
     anyOptions.forEach((item) => {
       item.classList.add('d-none');
     });
@@ -67,12 +67,12 @@ export class InviteGameModal extends HTMLElement {
 
   sendInvitation() {
     const message = {
-      action: 'invite_game',
+      action: 'game_invite',
       data: {
         username: this.#state.opponent.username,
         options: this.gameOptionsForm.selectedOptions,
       },
-    }
+    };
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
@@ -81,11 +81,13 @@ export class InviteGameModal extends HTMLElement {
       avatar: this.#state.opponent.avatar,
     };
     this.modalElement.addEventListener(
-      'hidden.bs.modal', () => {
+      'hidden.bs.modal',
+      () => {
         router.navigate('/duel', queryParams);
-      }, { once: true }
+      },
+      { once: true },
     );
-	this.closeModal();
+    this.closeModal();
   }
 
   template() {

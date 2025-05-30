@@ -55,8 +55,10 @@ export class ChatUserSearch extends HTMLElement {
   }
 
   renderUserList() {
-    if (this.#state.userList.length === 0 ||
-      (this.#state.userList.length === 1 && this.#state.userList[0].username === this.#state.loggedinUsername)) {
+    if (
+      this.#state.userList.length === 0 ||
+      (this.#state.userList.length === 1 && this.#state.userList[0].username === this.#state.loggedinUsername)
+    ) {
       this.renderNoUserFound();
       return;
     }
@@ -82,12 +84,12 @@ export class ChatUserSearch extends HTMLElement {
 
   async searchUsers() {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SEARCH(this.#state.searchQuery, 10, this.#state.currentListLength),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_SEARCH(this.#state.searchQuery, 10, this.#state.currentListLength),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       if (response.data) {
@@ -112,7 +114,7 @@ export class ChatUserSearch extends HTMLElement {
     event.preventDefault();
 
     clearTimeout(this.#state.timeout);
-    this.#state.timeout = setTimeout( async () => {
+    this.#state.timeout = setTimeout(async () => {
       this.#state.userList = [];
       this.#state.totalUserCount = 0;
       this.#state.currentListLength = 0;
@@ -131,8 +133,11 @@ export class ChatUserSearch extends HTMLElement {
   async loadMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-    this.#state.totalUserCount === this.#state.currentListLength || this.#state.isLoading) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalUserCount === this.#state.currentListLength ||
+      this.#state.isLoading
+    ) {
       return;
     }
     this.#state.isLoading = true;

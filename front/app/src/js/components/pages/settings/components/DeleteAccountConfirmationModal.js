@@ -12,7 +12,7 @@ export class DeleteAccountConfirmationModal extends HTMLElement {
   connectedCallback() {
     this.render();
   }
-  
+
   disconnectedCallback() {
     this.deleteButton?.removeEventListener('click', this.handleDeleteAccount);
     this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);

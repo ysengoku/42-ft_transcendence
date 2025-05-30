@@ -55,7 +55,7 @@ export class LoginForm extends HTMLElement {
           sessionStorage.setItem('username', response.data.username);
           router.navigate('/mfa-verification', response.data);
         } else {
-          router.navigate(`/home`, response.user);
+          router.navigate('/home', response.user);
         }
       }
     } else {
