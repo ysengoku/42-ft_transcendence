@@ -61,8 +61,9 @@ export class LocalGameMenu extends HTMLElement {
               <h2 class="text-start m-0 pt-2 pb-4 w-75">Local Game</h2>
               <game-options></game-options>
               <button type="submit" id="local-game-classic" class="btn btn-wood btn-lg mt-5 w-100">Local player battle</button>
-              <button type="submit" id="local-game-ai" class="btn btn-wood btn-lg my-4 w-100">AI Challenge</button>
-              <div class="d-flex flex-row justify-content-center mt-5">
+              <button type="submit" id="local-game-ai" class="btn btn-wood btn-lg mt-3 mb-5 w-100">AI Challenge</button>
+              <game-instruction></game-instruction>
+              <div class="d-flex flex-row justify-content-center mt-4">
                 <a href="/home" class="btn">
                   <i class="bi bi-arrow-left"></i>
                   Back to Saloon
