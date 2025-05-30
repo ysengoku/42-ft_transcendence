@@ -49,10 +49,17 @@ class MatchQuerySet(models.QuerySet):
         Accepts either model instances directly or their ID's.
         Returns resolved match, winner and loser model instances.
         """
-        if (isinstance(winner_profile_or_id, int)):
-            winner = Profile.objects.get(id=winner_profile_or_id)
-        if (isinstance(loser_profile_or_id, int)):
-            loser = Profile.objects.get(id=loser_profile_or_id)
+        winner: Profile = (
+            Profile.objects.get(id=winner_profile_or_id)
+            if isinstance(winner_profile_or_id, int)
+            else winner_profile_or_id
+        )
+
+        loser: Profile = (
+            Profile.objects.get(id=loser_profile_or_id)
+            if isinstance(loser_profile_or_id, int)
+            else loser_profile_or_id
+        )
 
         elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
         if (loser.elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
@@ -62,8 +69,8 @@ class MatchQuerySet(models.QuerySet):
         winner.elo += elo_change
         loser.elo -= elo_change
         resolved_match = Match(
-            winner=winner.id,
-            loser=loser.id,
+            winner=winner,
+            loser=loser,
             winners_score=winners_score,
             losers_score=losers_score,
             elo_change=elo_change,
@@ -141,7 +148,7 @@ class Match(models.Model):
     losers_elo = models.IntegerField()
     date = models.DateTimeField(default=timezone.now)
 
-    objects = MatchQuerySet.as_manager()
+    objects: MatchQuerySet = MatchQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = "matches"
