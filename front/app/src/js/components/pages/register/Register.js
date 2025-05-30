@@ -12,7 +12,7 @@ export class Register extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     this.isLoggedin = authStatus.success;
     if (this.isLoggedin) {
-      router.navigate('/home');
+      router.redirect('/home');
     }
     this.render();
   }
@@ -75,7 +75,7 @@ export class Register extends HTMLElement {
           avatar: response.data.avatar,
         };
         auth.storeUser(userInformation);
-        router.navigate(`/home`, response.user);
+        router.navigate('/home', response.user);
       }
     } else {
       console.error('Registration failed:', response.msg);
@@ -90,8 +90,12 @@ export class Register extends HTMLElement {
     isFormValid = isFieldFilled(this.usernameField, this.usernameFeedback, INPUT_FEEDBACK.EMPTY_USERNAME);
     isFormValid = isFieldFilled(this.emailField, this.emailFeedback, INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
     isFormValid =
-      passwordFeedback(this.passwordField, this.passwordRepeatField,
-          this.passwordFeedback, this.passwordRepeatFeedback) && isFormValid;
+      passwordFeedback(
+        this.passwordField,
+        this.passwordRepeatField,
+        this.passwordFeedback,
+        this.passwordRepeatFeedback,
+      ) && isFormValid;
 
     return isFormValid;
   }

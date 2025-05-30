@@ -83,7 +83,7 @@ function alertContentTemplate(type) {
   return `
     <div class="alert ${type} alert-dismissible fade show mt-2" role="alert">
       <div class="d-flex flex-column align-items-center ms-5 me-3 p-4">
-        <i id="alert-icon" class="class="bi mb-2" style="font-size: 4rem"></i>
+        <i id="alert-icon" class="class="bi mb-2" style="font-size: 3rem"></i>
         <div id="alert-header" class="fs-4 fw-bold mb-2"></div>
         <div id="alert-message"></div>
       </div>

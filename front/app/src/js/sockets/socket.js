@@ -1,4 +1,4 @@
-import { showToastNotification } from '@utils';
+import { showToastNotification, TOAST_TYPES } from '@utils';
 
 /**
  * WebSocket endpoint URL paths for different features.
@@ -8,7 +8,7 @@ import { showToastNotification } from '@utils';
 const WS_PATH = {
   livechat: '/ws/events/',
   matchmaking: '/ws/matchmaking/',
-  tournament: (id) => `/ws/tournaments/${id}`,
+  tournament: (id) => `/ws/tournament/${id}`,
 };
 
 /**
@@ -22,6 +22,11 @@ class WebSocketManager {
     this.listeners = listeners;
     this.socket = null;
     this.socketOpen = false;
+
+    const timestamp = new Date().getTime();
+    const randomUUID = crypto.randomUUID();
+    this.instanceId = `${timestamp}-${randomUUID}`;
+    devLog(`WebSocketManager created for ${this.name} with instance ID: ${this.instanceId}`);
   }
 
   connect() {
@@ -41,7 +46,7 @@ class WebSocketManager {
         return;
       }
       if (event.code === 1006 || event.code === 1011) {
-        showToastNotification('Connection to server lost.');
+        showToastNotification('Connection to server lost.', TOAST_TYPES.ERROR);
         console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
         this.socketOpen = false;
         return;
@@ -61,8 +66,8 @@ class WebSocketManager {
     this.socket.onerror = (event) => console.error('WebSocket error (', this.name, ') ', event);
     this.socket.onclose = (event) => {
       devLog('WebSocket closed (', this.name, ') ', event);
-            if (event.code === 1006 || event.code === 1011) {
-        showToastNotification('Connection to server lost.');
+      if (event.code === 1006 || event.code === 1011) {
+        showToastNotification('Connection to server lost.', TOAST_TYPES.ERROR);
         console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
         this.socketOpen = false;
         return;
@@ -91,7 +96,7 @@ class WebSocketManager {
     try {
       message = JSON.parse(event.data);
     } catch (error) {
-      devErrorLog('Invalid JSON:', event.data);
+      devErrorLog('Invalid JSON:', error);
       return;
     }
     if (!message.action) {
@@ -100,9 +105,7 @@ class WebSocketManager {
     }
     const matchedListener = this.listeners[message.action];
     if (matchedListener) {
-      message.data ?
-        matchedListener(message.data) :
-        matchedListener(message);
+      message.data ? matchedListener(message.data) : matchedListener(message);
     } else {
       devErrorLog('No listeners set for this action:', message.action);
       return;
@@ -146,13 +149,14 @@ const socketManager = (() => {
      * @param {string} name - The name of the socket to open.
      * @param {string|number} [id] - Optional identifier for the socket (e.g., tournament ID).
      */
-    openSocket(name, id=null) {
+    openSocket(name, id = null) {
       const config = this.configs.get(name);
       if (!config) {
         devErrorLog('Socket not registered:', name);
         return;
       }
       if (this.sockets.has(name)) {
+        devLog('Socket already open:', name);
         return;
       }
       const path = typeof config.path === 'function' ? config.path(id) : config.path;
@@ -203,6 +207,20 @@ const socketManager = (() => {
       }
       devLog('Sending message via WebSocket:', message);
       socket.socket.send(JSON.stringify(message));
+    }
+
+    /**
+     * Get the client instance id
+     * @param {string} name - The name of the socket.
+     * @returns {string} - A unique identifier for the client instance.
+     */
+    getClientInstanceId(name) {
+      const socket = this.sockets.get(name);
+      if (!socket) {
+        devErrorLog('Socket not found:', name);
+        return null;
+      }
+      return socket.instanceId;
     }
   }
   return new SocketsManager();
