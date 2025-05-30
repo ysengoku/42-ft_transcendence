@@ -145,7 +145,6 @@ export class ChatMessageArea extends HTMLElement {
 
     // Render messages
     this.chatMessages.innerHTML = '';
-    this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
     if (this.#state.data.messages.length > 0) {
       this.renderMessages();
       // Scroll to the bottom of the chat messages
@@ -153,10 +152,11 @@ export class ChatMessageArea extends HTMLElement {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       });
       this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
+      this.chatMessages.addEventListener('click', this.toggleLikeMessage);
     } else {
       this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+      this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
     }
-    this.chatMessages.addEventListener('click', this.toggleLikeMessage);
 
     // Toggle input and block button based on block status.
     if (this.#state.data.is_blocked_user) {
