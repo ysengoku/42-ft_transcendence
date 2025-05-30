@@ -42,11 +42,8 @@ def accept_invite(sender_name):
     return accept_invite
 
 
-async def log_pending_invitations(profile_player, name):
-    pending_invitations = await database_sync_to_async(
-        lambda: list(GameInvitation.objects.filter(sender=profile_player, status="pending")),
-    )()
-    pending_infos = await database_sync_to_async(
+async def log_invitations(profile_player, invite_status):
+    infos = await database_sync_to_async(
         lambda: [
             {
                 "id": inv.id,
@@ -54,11 +51,11 @@ async def log_pending_invitations(profile_player, name):
                 "recipient": inv.recipient.user.username,
                 "status": inv.status,
             }
-            for inv in GameInvitation.objects.filter(status="pending").select_related("sender__user", "recipient__user")
+            for inv in GameInvitation.objects.filter(sender=profile_player, status=invite_status).select_related("sender__user", "recipient__user")
         ]
     )()
 
-    for info in pending_infos:
+    for info in infos:
         logger.critical(
             "INVITATION: id=%s sender=%s recipient=%s status=%s",
             info["id"], info["sender"], info["recipient"], info["status"]
@@ -384,10 +381,12 @@ class GameInvitationTests(UserEventsConsumerTests):
 
         john_user = await database_sync_to_async(get_user_model().objects.get)(username="john")
         john_profile = await database_sync_to_async(Profile.objects.get)(user=john_user)
-        pending_invitations = await database_sync_to_async(
+        accepted_invitations = await database_sync_to_async(
             lambda: list(GameInvitation.objects.filter(sender=john_profile, status="accepted")),
         )()
-        assert len(pending_invitations) == 0, f"john still has pending invitations: {pending_invitations}"
+        await log_invitations(john_profile, "pending")
+        await log_invitations(john_profile, "accepted")
+        assert len(accepted_invitations) == 0, f"The invitation has been accepted: {accepted_invitations}"
 
         await communicator.disconnect()
         await john.disconnect()
