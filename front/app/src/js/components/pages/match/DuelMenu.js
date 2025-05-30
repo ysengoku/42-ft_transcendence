@@ -412,7 +412,9 @@ export class DuelMenu extends HTMLElement {
                 </div>
 
                 <p class="fs-5 fw-bolder m-0 mb-3">Let fate decide opponent</p>
-                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg mb-1 w-100">Bring me my rival</button>
+                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg mb-5 w-100">Bring me my rival</button>
+
+                <game-instruction></game-instruction>
 
                 <div class="d-flex flex-row justify-content-center mt-5">
                   <a href="/home" class="btn">
