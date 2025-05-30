@@ -373,28 +373,22 @@ class GameInvitationTests(UserEventsConsumerTests):
         communicator = await self.get_authenticated_communicator(
             username="communicator", password="testpass",
         )
-        invite_playing_joe = invite_player("playing_joe")
-        await communicator.send_json_to(invite_playing_joe)
+        await communicator.send_json_to(invite_player("playing_joe"))
         await communicator.receive_nothing(timeout=0.1)
         await asyncio.sleep(0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
         assert count == 1
 
-        accepted_invite_from_communicator = accept_invite("communicator")
-
-        await playing_joe.send_json_to(accepted_invite_from_communicator)
-        await playing_joe.receive_nothing(timeout=0.1)
-
-        invite_communicator = invite_player("communicator")
-
-        await john.send_json_to(invite_communicator)
+        await john.send_json_to(invite_player("communicator"))
         await john.receive_nothing(timeout=0.1)
         await asyncio.sleep(0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
         assert count == 2
 
-        accepted_invite_from_john = accept_invite("john")
-        await communicator.send_json_to(accepted_invite_from_john)
+        await playing_joe.send_json_to(accept_invite("communicator"))
+        await playing_joe.receive_nothing(timeout=0.1)
+
+        await communicator.send_json_to(accept_invite("john"))
         await communicator.receive_nothing(timeout=0.1)
 
         john_user = await database_sync_to_async(get_user_model().objects.get)(username="john")
@@ -403,6 +397,42 @@ class GameInvitationTests(UserEventsConsumerTests):
             lambda: list(GameInvitation.objects.filter(sender=john_profile, status="accepted")),
         )()
         assert len(accepted_invitations) == 0, f"The invitation has been accepted: {accepted_invitations}"
+
+        await communicator.disconnect()
+        await john.disconnect()
+        await playing_joe.disconnect()
+
+    async def test_game_invite_not_send_if_target_in_game(self):
+        john = await self.get_authenticated_communicator(
+            username="john", password="testpass",
+        )
+        playing_joe = await self.get_authenticated_communicator(
+            username="playing_joe", password="testpass",
+        )
+        communicator = await self.get_authenticated_communicator(
+            username="communicator", password="testpass",
+        )
+        await communicator.send_json_to(invite_player("playing_joe"))
+        await communicator.receive_nothing(timeout=0.1)
+        await asyncio.sleep(0.1)
+        count = await database_sync_to_async(GameInvitation.objects.count)()
+        assert count == 1
+
+        await playing_joe.send_json_to(accept_invite("communicator"))
+        await playing_joe.receive_nothing(timeout=0.1)
+
+        await john.send_json_to(invite_player("playing_joe"))
+        await john.receive_nothing(timeout=0.1)
+        await asyncio.sleep(0.1)
+        count = await database_sync_to_async(GameInvitation.objects.count)()
+        assert count == 1
+
+        john_user = await database_sync_to_async(get_user_model().objects.get)(username="john")
+        john_profile = await database_sync_to_async(Profile.objects.get)(user=john_user)
+        accepted_invitations = await database_sync_to_async(
+            lambda: list(GameInvitation.objects.filter(sender=john_profile, status="pending")),
+        )()
+        assert len(accepted_invitations) == 0, f"The invitation has been sent: {accepted_invitations}"
 
         await communicator.disconnect()
         await john.disconnect()
