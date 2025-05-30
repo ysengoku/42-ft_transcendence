@@ -5,12 +5,15 @@ export class AvatarUploadModal extends HTMLElement {
   constructor() {
     super();
     this.modal = null;
+    this.modalElement = null;
     this.selectedFile = null;
     this.onConfirm = null;
+
     this.readURL = this.readURL.bind(this);
     this.handleConfirm = this.handleConfirm.bind(this);
     this.removeFeedback = this.removeFeedback.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
+    this.clearFocusInModal = this.clearFocusInModal.bind(this);
   }
 
   connectedCallback() {
@@ -22,17 +25,25 @@ export class AvatarUploadModal extends HTMLElement {
     this.cancelButton.removeEventListener('click', this.handleCancel);
     this.avatarUploadField.removeEventListener('change', this.readURL);
     this.confirmButton.removeEventListener('click', this.handleConfirm);
+    if (this.modalElement) {
+      this.clearFocusInModal();
+    }
+    this.modal?.hide();
+    this.modalElement.removeEventListener('hide.bs.modal', this.clearFocusInModal);
   }
 
   render() {
     this.innerHTML = this.style() + this.template();
     this.modal = new Modal(this.querySelector('#avatar-upload-modal'));
 
+    this.modalElement = this.querySelector('.modal');
     this.avatarUploadField = this.querySelector('#avatar-upload-input');
     this.avatarPreview = this.querySelector('#avatar-upload-preview');
     this.confirmButton = this.querySelector('#confirm-avatar-button');
     this.cancelButton = this.querySelector('#cancel-avatar-upload');
 
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
+    this.avatarPreview.src = avatarPlaceholder;
     this.avatarUploadField.addEventListener('input', this.removeFeedback);
     this.cancelButton.addEventListener('click', this.handleCancel);
     this.avatarUploadField.addEventListener('change', this.readURL);
@@ -84,6 +95,12 @@ export class AvatarUploadModal extends HTMLElement {
       this.onConfirm(this.selectedFile);
     }
     this.modal.hide();
+  }
+
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
   }
 
   template() {

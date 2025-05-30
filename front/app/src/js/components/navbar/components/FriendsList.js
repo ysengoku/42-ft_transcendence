@@ -47,12 +47,12 @@ export class FriendsList extends HTMLElement {
     this.#state.username = auth.getStoredUser().username;
     this.#state.listLength = this.#state.friendsList.length;
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_FRIENDS_LIST(this.#state.username, 10, this.#state.listLength),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_FRIENDS_LIST(this.#state.username, 10, this.#state.listLength),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       if (response.data) {
@@ -103,8 +103,10 @@ export class FriendsList extends HTMLElement {
   async showMoreFriends(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.totalFriendsCount === this.#state.listLength) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalFriendsCount === this.#state.listLength
+    ) {
       return;
     }
     await this.fetchFriendsData();

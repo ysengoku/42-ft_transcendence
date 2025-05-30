@@ -37,16 +37,23 @@ class MatchQuerySet(models.QuerySet):
 
     def resolve(
         self,
-        winner: Profile,
-        loser: Profile,
+        winner_profile_or_id: Profile | int,
+        loser_profile_or_id: Profile | int,
         winners_score: int,
         losers_score: int,
         date: datetime = timezone.now(),
-    ):
+    ) -> tuple["Match", Profile, Profile]:
         """
         Resolves all elo calculations, updates profiles of players,
         creates a new match record and saves everything into the database.
+        Accepts either model instances directly or their ID's.
+        Returns resolved match, winner and loser model instances.
         """
+        if (isinstance(winner_profile_or_id, int)):
+            winner = Profile.objects.get(id=winner_profile_or_id)
+        if (isinstance(loser_profile_or_id, int)):
+            loser = Profile.objects.get(id=loser_profile_or_id)
+
         elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
         if (loser.elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
             elo_change = loser.elo - MatchQuerySet.MINUMUM_ELO
@@ -55,8 +62,8 @@ class MatchQuerySet(models.QuerySet):
         winner.elo += elo_change
         loser.elo -= elo_change
         resolved_match = Match(
-            winner=winner,
-            loser=loser,
+            winner=winner.id,
+            loser=loser.id,
             winners_score=winners_score,
             losers_score=losers_score,
             elo_change=elo_change,
@@ -67,7 +74,7 @@ class MatchQuerySet(models.QuerySet):
         resolved_match.save()
         winner.save()
         loser.save()
-        return resolved_match
+        return resolved_match, winner, loser
 
     def get_elo_points_by_day(self, profile: Profile):
         # annotate with day without time and elo change of the specific player
@@ -120,6 +127,10 @@ class MatchQuerySet(models.QuerySet):
 
 
 class Match(models.Model):
+    """
+    Represents a finished match between two players.
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
     loser = models.ForeignKey(Profile, related_name="lost_matches", on_delete=models.SET_NULL, null=True, blank=True)
@@ -142,20 +153,33 @@ class Match(models.Model):
         return f"{winner} - {loser}"
 
 
-# Define the intermediate model
 class GameRoomPlayer(models.Model):
     """Intermediate model for GameRoom and Profile, storing room-specific player data."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     game_room = models.ForeignKey("GameRoom", on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    number_of_connections = models.IntegerField(default=1)
 
     def __str__(self):
         return f"{self.profile.user.username} in Room {self.game_room.id}"
 
+    def inc_number_of_connections(self) -> int:
+        self.number_of_connections = F("number_of_connections") + 1
+        self.save()
+        self.refresh_from_db()
+        return self.number_of_connections
+
+    def dec_number_of_connections(self) -> int:
+        if self.number_of_connections > 0:
+            self.number_of_connections = F("number_of_connections") - 1
+            self.save()
+            self.refresh_from_db()
+        return self.number_of_connections
+
 
 class GameRoomQuerySet(models.QuerySet):
-    def for_valid_game_room(self):
+    def for_valid_game_room(self, profile: Profile):
         """Valid game room is a pending game room with less than 2 players."""
         return self.annotate(players_count=Count("players")).filter(status=GameRoom.PENDING, players_count__lt=2)
 
@@ -171,7 +195,8 @@ class GameRoomQuerySet(models.QuerySet):
 
 class GameRoom(models.Model):
     """
-    Gets created when user starts matchmaking search.
+    Represents a game room where the players either look for an opponent or play a match.
+    Created after successeful matchmaking and used by the GameWSServerConsumer and GameWorkerConsumer.
     """
 
     PENDING = "pending"
@@ -199,3 +224,6 @@ class GameRoom(models.Model):
     def close(self):
         self.status = GameRoom.CLOSED
         self.save()
+
+    def has_player(self, profile: Profile):
+        return self.players.filter(id=profile.id).exists()

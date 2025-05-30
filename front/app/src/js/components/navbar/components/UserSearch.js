@@ -49,15 +49,15 @@ export class UserSearch extends HTMLElement {
     this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
     this.dropdown?.addEventListener('scrollend', this.showMoreUsers);
 
-    this.form ? (
-      this.form.addEventListener('click', this.clearUserList),
-      this.form.addEventListener('submit', this.preventReloadBySubmit),
-      this.input = this.form.querySelector('input')
-    ) : (devErrorLog('User search form not found'));
-    this.input ? (
-      this.input.addEventListener('click', this.clearUserList),
-      this.input.addEventListener('input', this.handleInput)
-    ) : devErrorLog('User search input not found');
+    this.form
+      ? (this.form.addEventListener('click', this.clearUserList),
+        this.form.addEventListener('submit', this.preventReloadBySubmit),
+        (this.input = this.form.querySelector('input')))
+      : devErrorLog('User search form not found');
+    this.input
+      ? (this.input.addEventListener('click', this.clearUserList),
+        this.input.addEventListener('input', this.handleInput))
+      : devErrorLog('User search input not found');
 
     this.buttonMobile = document.getElementById('dropdown-item-user-search');
     this.dropdownMobile = document.getElementById('dropdown-user-search');
@@ -117,8 +117,7 @@ export class UserSearch extends HTMLElement {
       } else {
         this.#state.searchQuery = '';
       }
-    }
-    , 500);
+    }, 500);
   }
 
   handleDropdownHidden() {
@@ -132,8 +131,11 @@ export class UserSearch extends HTMLElement {
   async showMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-    this.#state.totalUsersCount === this.#state.currentListLength || this.#state.isLoading) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalUsersCount === this.#state.currentListLength ||
+      this.#state.isLoading
+    ) {
       return;
     }
     this.#state.isLoading = true;
@@ -143,12 +145,12 @@ export class UserSearch extends HTMLElement {
 
   async searchUser() {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SEARCH(this.#state.searchQuery, 10, this.#state.currentListLength),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_SEARCH(this.#state.searchQuery, 10, this.#state.currentListLength),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       if (response.data) {

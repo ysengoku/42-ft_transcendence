@@ -1,12 +1,7 @@
 export class GameOptions extends HTMLElement {
   #state = {
     selectedOptions: null,
-    defaultOptionValue: {
-      scoreToWin: 15,
-      gameSpeed: 'normal',
-      isRanked: true,
-      timeLimitMinutes: 3,
-    },
+    defaultOptionValue: null,
     range: {
       minScoreToWin: 3,
       maxScoreToWin: 20,
@@ -17,15 +12,31 @@ export class GameOptions extends HTMLElement {
 
   constructor() {
     super();
+
+    this.duelMenuComponent = null;
+    this.closeButton = null;
+    this.scoreToWinInput = null;
+    this.gameSpeedInputs = null;
+    this.isRankedInput = null;
+    this.timeLimitInput = null;
+    this.scoreToWinOptout = null;
+    this.gameSpeedOptout = null;
+    this.isRankedOptout = null;
+    this.timeLimitOptout = null;
+    this.confirmButton = null;
+    this.cancelButton = null;
+
+    const defaultOptionsFromEnv = import.meta.env.VITE_DEFAULT_GAME_OPTIONS;
+    const defaultOptions = defaultOptionsFromEnv ? JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS) : {};
+    this.#state.defaultOptionValue = {
+      scoreToWin: defaultOptions.scoreToWin || 15,
+      gameSpeed: defaultOptions.gameSpeed || 'normal',
+      isRanked: defaultOptions.isRanked || true,
+      timeLimitMinutes: defaultOptions.timeLimitMinutes || 3,
+    };
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
     this.toggleOptionOptout = this.toggleOptionOptout.bind(this);
-  }
-
-  setOptions(options) {
-    if (options) {
-      this.#state.selectedOptions = options;
-    }
   }
 
   set selectedOptions(options) {
@@ -33,16 +44,13 @@ export class GameOptions extends HTMLElement {
   }
 
   get selectedOptions() {
-    if (JSON.stringify(this.#state.selectedOptions) !== JSON.stringify(this.#state.defaultOptionValue)) {
-      return this.#state.selectedOptions;
-    }
-    return null;
+    return this.#state.selectedOptions;
   }
 
   connectedCallback() {
     if (!this.#state.selectedOptions) {
       this.#state.selectedOptions = {
-        ...this.#state.defaultOptionValue
+        ...this.#state.defaultOptionValue,
       };
     }
     this.render();
@@ -179,11 +187,10 @@ export class GameOptions extends HTMLElement {
     const target = event.target;
     const optionWrapper = target.closest('.option-input-wrapper');
     const input = optionWrapper.querySelector('.option-input');
-    target.checked ? (input.classList.add('d-none')) : (input.classList.remove('d-none'));
+    target.checked ? input.classList.add('d-none') : input.classList.remove('d-none');
 
     const id = target.id.replace('optout-', '');
     this.#state.selectedOptions[id] = target.checked ? 'any' : this.#state.defaultOptionValue[id];
-    console.log('toggleOptionOptout', this.#state.selectedOptions);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -192,7 +199,7 @@ export class GameOptions extends HTMLElement {
 
   template() {
     return `
-    <h2 class="modal-title text-center pb-4">Game Options</h2>
+    <h2 class="modal-title text-center pb-3">Game Options</h2>
     <div class="form-group d-flex flex-column gap-4">
       <div class="option-input-wrapper pb-2">
         <div class="d-flex justify-content-between pb-1">
@@ -215,7 +222,7 @@ export class GameOptions extends HTMLElement {
         </div>
       </div>
 
-      <div class="option-input-wrapper d-flex flex-column pb-4 gap-2">
+      <div class="option-input-wrapper d-flex flex-column pb-3 gap-2">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="game-speed" class="fs-5 fw-bold">Game Speed</label>
           <div class="opt-out-option form-check pt-1">
@@ -237,7 +244,7 @@ export class GameOptions extends HTMLElement {
         </div>
       </div>
               
-      <div class="option-input-wrapper pb-4" id="is-ranked-selector">
+      <div class="option-input-wrapper pb-3" id="is-ranked-selector">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="is-ranked" class="fs-5 fw-bold">Ranked</label>
           <div class="opt-out-option form-check pt-1">
@@ -283,10 +290,10 @@ export class GameOptions extends HTMLElement {
   style() {
     const knobColor = getComputedStyle(document.documentElement).getPropertyValue('--pm-primary-500');
     const knobUrl =
-      'data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\'' +
-      ' viewBox=\'-4 -4 8 8\'%3e%3ccircle r=\'3\' fill=\'' +
+      "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg'" +
+      " viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='" +
       encodeURIComponent(knobColor) +
-      '\'/%3e%3c/svg%3e';
+      "'/%3e%3c/svg%3e";
 
     return `
     <style>

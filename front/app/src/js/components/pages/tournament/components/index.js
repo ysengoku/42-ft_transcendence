@@ -1,23 +1,21 @@
 import { TournamentList } from './TournamentList';
 import { TournamentCreation } from './TournamentCreation';
-import { TournamentRegistration } from './TournamentRegistration';
-import { TournamentWaiting } from './TournamentWaiting';
+import { TournamentPending } from './TournamentPending';
 import { TournamentRoundStart } from './TournamentRoundStart';
-import { TournamentRoundWaiting } from './TournamentRoundWaiting';
-import { TournamentRoundFinished } from './TournamentRoundFinished';
+import { TournamentRoundOngoing } from './TournamentRoundOngoing';
 import { TournamentCanceled } from './TournamentCanceled';
 import { TournamentOverviewTree } from './OverviewRoundsTree';
 import { TournamentOverviewTable } from './OverviewRoundsTable';
+import { participantElement } from './ParticipantElement';
 
 export {
-	TournamentList,
-	TournamentCreation,
-	TournamentRegistration,
-	TournamentWaiting,
-	TournamentRoundStart,
-	TournamentRoundWaiting,
-	TournamentRoundFinished,
-	TournamentCanceled,
-	TournamentOverviewTree,
-	TournamentOverviewTable,
+  TournamentList,
+  TournamentCreation,
+  TournamentPending,
+  TournamentRoundStart,
+  TournamentRoundOngoing,
+  TournamentCanceled,
+  TournamentOverviewTree,
+  TournamentOverviewTable,
+  participantElement,
 };

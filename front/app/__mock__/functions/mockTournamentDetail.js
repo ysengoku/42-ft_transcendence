@@ -1,34 +1,72 @@
 export async function mockTournamentDetail(id) {
   const data = {
-    mockidlobby: {
-      id: 'mockidlobby',
+    mockidpending: {
+      id: 'mockidpending',
       name: 'Spring Championship',
-      status: 'lobby',
+      status: 'pending',
       creator: {
         username: 'pedro',
         nickname: 'pedro',
         avatar: '/__mock__/img/sample-pic2.png',
         elo: 2000,
-        is_online: true
+        is_online: true,
       },
       winner: {},
       date: '',
       rounds: [],
       participants: [
-        { user: { username: 'alex', nickname: 'Alex', avatar: '/__mock__/img/sample-pic3.png', elo: 1500, is_online: false },
-          alias: 'Nightmare', },
-        { user: { username: 'user2', nickname: 'Player Two', avatar: '/__mock__/img/sample-pic2.png', elo: 1400, is_online: true },
-          alias: 'Lone Cactus',},
-        { user: { username: 'user3', nickname: 'Player Three', avatar: '/__mock__/img/sample-pic1.jpg', elo: 1450, is_online: true },
-          alias: 'Midnight Rider',},
-        { user: { username: 'user4', nickname: 'Player Four', avatar: '/__mock__/img/sample-pic2.png', elo: 1300, is_online: false },
-          alias: 'Whiskey Bandit',},
-        { user: { username: 'user5', nickname: 'Player Five', avatar: '/__mock__/img/sample-pic3.png', elo: 1350, is_online: true },
-          alias: 'LazyFox',},
-        { user: { username: 'user6', nickname: 'Player Six', avatar: '/__mock__/img/sample-pic1.jpg', elo: 1200, is_online: true },
-          alias: 'DuskDevil',},
+        {
+          profile: {
+            username: 'alex',
+            nickname: 'Alex',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1500,
+            is_online: false,
+          },
+          alias: 'Nightmare',
+        },
+        {
+          profile: {
+            username: 'user2',
+            nickname: 'Player Two',
+            avatar: '/__mock__/img/sample-pic2.png',
+            elo: 1400,
+            is_online: true,
+          },
+          alias: 'Lone Cactus',
+        },
+        {
+          profile: {
+            username: 'user3',
+            nickname: 'Player Three',
+            avatar: '/__mock__/img/sample-pic1.jpg',
+            elo: 1450,
+            is_online: true,
+          },
+          alias: 'Midnight Rider',
+        },
+        {
+          profile: {
+            username: 'user4',
+            nickname: 'Player Four',
+            avatar: '/__mock__/img/sample-pic2.png',
+            elo: 1300,
+            is_online: false,
+          },
+          alias: 'Whiskey Bandit',
+        },
+        {
+          profile: {
+            username: 'user5',
+            nickname: 'Player Five',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1350,
+            is_online: true,
+          },
+          alias: 'LazyFox',
+        },
       ],
-      'required_participants': 8
+      required_participants: 8,
     },
     mockidongoing: {
       id: 'mockidongoing',
@@ -39,7 +77,7 @@ export async function mockTournamentDetail(id) {
         nickname: 'Pedro',
         avatar: '/__mock__/img/sample-pic3.png',
         elo: 2000,
-        is_online: true
+        is_online: true,
       },
       winner: {},
       date: '2025-05-09T11:43:42.045Z',
@@ -51,62 +89,62 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game1',
               participant1: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user2',
                   nickname: 'Player Two',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1400,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'Lone Cactus',
                 status: 'eliminated',
               },
               winner: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 1,
               status: 'finished',
               score_p1: 15,
-              score_p2: 5
+              score_p2: 5,
             },
             {
               game_id: 'game2',
               participant1: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1450,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'LazyFox',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user4',
                   nickname: 'Player Four',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1300,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'DuskDevil',
               },
@@ -114,51 +152,51 @@ export async function mockTournamentDetail(id) {
               round: 1,
               status: 'ongoing',
               score_p1: 7,
-              score_p2: 5
+              score_p2: 5,
             },
             {
               game_id: 'game3',
               participant1: {
-                user: {
-                username: 'user5',
+                profile: {
+                  username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1350,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'DirtyHarry',
                 status: 'eliminated',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user6',
                   nickname: 'Player Six',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1200,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'CactusJack',
-                status: 'winner',
+                status: 'qualified',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1350,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'CactusJack',
               },
               round: 1,
               status: 'finished',
               score_p1: 2,
-              score_p2: 15
+              score_p2: 15,
             },
             {
               game_id: 'game4',
               participant1: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -166,10 +204,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'Gunslinger',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user8',
                   nickname: 'Player Eight',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -180,42 +218,122 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1250,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'Gunslinger',
               },
               round: 1,
               status: 'finished',
               score_p1: 15,
-              score_p2: 0
-            }
-          ]
+              score_p2: 0,
+            },
+          ],
         },
       ],
       participants: [
-        { user: { username: 'user1', nickname: 'MidnightRider', avatar: '/__mock__/img/sample-pic3.png', elo: 1500, is_online: false },
-          alias: 'MidnightRider', status: 'active', round: 2 },
-        { user: { username: 'user2', nickname: 'Player Two', avatar: '/__mock__/img/sample-pic3.png', elo: 1400, is_online: true },
-          alias: 'Lone Cactus', status: 'eliminated', round: 1 },
-        { user: { username: 'user3', nickname: 'Player Three', avatar: '/__mock__/img/sample-pic2.png', elo: 1450, is_online: true },
-          alias: 'LazyFox', status: 'active', round: 2 },
-        { user: { username: 'user4', nickname: 'Player Four', avatar: '/__mock__/img/sample-pic3.png', elo: 1300, is_online: false },
-          alias: 'DuskDevil', status: 'eliminated', round: 1 },
-        { user: { username: 'user5', nickname: 'Player Five', avatar: '/__mock__/img/sample-pic3.png', elo: 1350, is_online: true },
-          alias: 'DirtyHarry', status: 'active', round: 2 },
-        { user: { username: 'user6', nickname: 'Player Six', avatar: '/__mock__/img/sample-pic2.png', elo: 1200, is_online: true },
-          alias: 'CactusJack', status: 'eliminated', round: 1 },
-        { user: { username: 'user7', nickname: 'Player Seven', avatar: '/__mock__/img/sample-pic3.png', elo: 1250, is_online: true },
-          alias: 'Gunslinger', status: 'active', round: 2 },
-        { user: { username: 'user8', nickname: 'Player Eight', avatar: '/__mock__/img/sample-pic3.png', elo: 1100, is_online: false },
-          alias: 'Rustler', status: 'eliminated', round: 1 }
+        {
+          profile: {
+            username: 'pedro',
+            nickname: 'MidnightRider',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1500,
+            is_online: false,
+          },
+          alias: 'MidnightRider',
+          status: 'qualified',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user2',
+            nickname: 'Player Two',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1400,
+            is_online: true,
+          },
+          alias: 'Lone Cactus',
+          status: 'eliminated',
+          round: 1,
+        },
+        {
+          profile: {
+            username: 'user3',
+            nickname: 'Player Three',
+            avatar: '/__mock__/img/sample-pic2.png',
+            elo: 1450,
+            is_online: true,
+          },
+          alias: 'LazyFox',
+          status: 'qualified',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user4',
+            nickname: 'Player Four',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1300,
+            is_online: false,
+          },
+          alias: 'DuskDevil',
+          status: 'eliminated',
+          round: 1,
+        },
+        {
+          profile: {
+            username: 'user5',
+            nickname: 'Player Five',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1350,
+            is_online: true,
+          },
+          alias: 'DirtyHarry',
+          status: 'qualified',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user6',
+            nickname: 'Player Six',
+            avatar: '/__mock__/img/sample-pic2.png',
+            elo: 1200,
+            is_online: true,
+          },
+          alias: 'CactusJack',
+          status: 'eliminated',
+          round: 1,
+        },
+        {
+          profile: {
+            username: 'user7',
+            nickname: 'Player Seven',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1250,
+            is_online: true,
+          },
+          alias: 'Gunslinger',
+          status: 'qualified',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user8',
+            nickname: 'Player Eight',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1100,
+            is_online: false,
+          },
+          alias: 'Rustler',
+          status: 'eliminated',
+          round: 1,
+        },
       ],
-      'required_participants': 8
+      required_participants: 8,
     },
     mockidongoing2: {
       id: 'mockidongoing2',
@@ -226,7 +344,7 @@ export async function mockTournamentDetail(id) {
         nickname: 'Pedro',
         avatar: '/__mock__/img/sample-pic3.png',
         elo: 2000,
-        is_online: true
+        is_online: true,
       },
       winner: {},
       date: '2025-05-09T11:43:42.045Z',
@@ -238,83 +356,83 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game1',
               participant1: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user2',
                   nickname: 'Player Two',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1400,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'Lone Cactus',
                 status: 'eliminated',
               },
               winner: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 1,
               status: 'finished',
               score_p1: 15,
-              score_p2: 5
+              score_p2: 5,
             },
             {
               game_id: 'game2',
               participant1: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1450,
-                  is_online: true
+                  is_online: true,
                 },
                 status: 'eliminated',
                 alias: 'LazyFox',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user4',
                   nickname: 'Player Four',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1300,
-                  is_online: false
+                  is_online: false,
                 },
                 status: 'winner',
                 alias: 'DuskDevil',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user4',
                   nickname: 'Player Four',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1300,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'DuskDevil',
               },
               round: 1,
               status: 'ongoing',
               score_p1: 7,
-              score_p2: 15
+              score_p2: 15,
             },
-          ]
+          ],
         },
         {
           number: 2,
@@ -323,23 +441,23 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game1',
               participant1: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
                 status: '',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user2',
                   nickname: 'Player Two',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1400,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'DuskDevil',
                 status: '',
@@ -348,24 +466,64 @@ export async function mockTournamentDetail(id) {
               round: 2,
               status: 'ongoing',
               score_p1: 5,
-              score_p2: 5
+              score_p2: 5,
             },
-          ]
+          ],
         },
       ],
       participants: [
-        { user: { username: 'user1', nickname: 'MidnightRider', avatar: '/__mock__/img/sample-pic3.png', elo: 1500, is_online: false },
-          alias: 'MidnightRider', status: 'active', round: 2 },
-        { user: { username: 'user2', nickname: 'Player Two', avatar: '/__mock__/img/sample-pic3.png', elo: 1400, is_online: true },
-          alias: 'Lone Cactus', status: 'eliminated', round: 1 },
-        { user: { username: 'user3', nickname: 'Player Three', avatar: '/__mock__/img/sample-pic2.png', elo: 1450, is_online: true },
-          alias: 'LazyFox', status: 'active', round: 2 },
-        { user: { username: 'user4', nickname: 'Player Four', avatar: '/__mock__/img/sample-pic3.png', elo: 1300, is_online: false },
-          alias: 'DuskDevil', status: 'eliminated', round: 1 },
+        {
+          profile: {
+            username: 'pedro',
+            nickname: 'MidnightRider',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1500,
+            is_online: false,
+          },
+          alias: 'MidnightRider',
+          status: 'qualified',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user2',
+            nickname: 'Player Two',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1400,
+            is_online: true,
+          },
+          alias: 'Lone Cactus',
+          status: 'eliminated',
+          round: 1,
+        },
+        {
+          profile: {
+            username: 'user3',
+            nickname: 'Player Three',
+            avatar: '/__mock__/img/sample-pic2.png',
+            elo: 1450,
+            is_online: true,
+          },
+          alias: 'LazyFox',
+          status: 'qualified',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user4',
+            nickname: 'Player Four',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1300,
+            is_online: false,
+          },
+          alias: 'DuskDevil',
+          status: 'eliminated',
+          round: 1,
+        },
       ],
-      'required_participants': 4
+      required_participants: 4,
     },
-	  mockidfinished: {
+    mockidfinished: {
       id: 'mockidfinished',
       name: 'Spring Championship',
       status: 'finished',
@@ -374,19 +532,19 @@ export async function mockTournamentDetail(id) {
         nickname: 'Pedro',
         avatar: '/__mock__/img/sample-pic2.png',
         elo: 2000,
-        is_online: true
+        is_online: true,
       },
       winner: {
-        user: {
-        username: 'user1',
-        nickname: 'MidnightRider',
-        avatar: '/__mock__/img/sample-pic2.png',
-        elo: 1500,
-        is_online: false
+        profile: {
+          username: 'pedro',
+          nickname: 'MidnightRider',
+          avatar: '/__mock__/img/sample-pic2.png',
+          elo: 1500,
+          is_online: false,
         },
         alias: 'MidnightRider',
         status: 'winner',
-        round: 3
+        round: 3,
       },
       date: '2025-05-09T11:43:42.045Z',
       rounds: [
@@ -397,126 +555,126 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game1',
               participant1: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user2',
                   nickname: 'Player Two',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1400,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'Lone Cactus',
                 status: 'eliminated',
               },
               winner: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 1,
               status: 'finished',
               score_p1: 10,
-              score_p2: 5
+              score_p2: 5,
             },
             {
               game_id: 'game2',
               participant1: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1450,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'LazyFox',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user4',
                   nickname: 'Player Four',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1300,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'DuskDevil',
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1450,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'LazyFox',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 1,
               status: 'finished',
               score_p1: 10,
-              score_p2: 5
+              score_p2: 5,
             },
             {
               game_id: 'game3',
               participant1: {
-                user: {
-                username: 'user5',
+                profile: {
+                  username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic1.jpg',
                   elo: 1350,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'DirtyHarry',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user6',
                   nickname: 'Player Six',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1200,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'CactusJack',
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1350,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'DirtyHarry',
               },
               round: 1,
               status: 'finished',
               score_p1: 2,
-              score_p2: 1
+              score_p2: 1,
             },
             {
               game_id: 'game4',
               participant1: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -524,10 +682,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'Gunslinger',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user8',
                   nickname: 'Player Eight',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -538,21 +696,21 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1250,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'Gunslinger',
               },
               round: 1,
               status: 'finished',
               score_p1: 2,
-              score_p2: 0
-            }
-          ]
+              score_p2: 0,
+            },
+          ],
         },
         {
           number: 2,
@@ -561,47 +719,47 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'game5',
               participant1: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user3',
                   nickname: 'Player Three',
                   avatar: '/__mock__/img/sample-pic2.png',
                   elo: 1450,
-                  is_online: true
+                  is_online: true,
                 },
                 alias: 'LazyFox',
                 status: 'eliminated',
               },
               winner: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
-                  is_online: false
+                  is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 2,
               status: 'finished',
               score_p1: 2,
-              score_p2: 1
+              score_p2: 1,
             },
             {
               game_id: 'game6',
               participant1: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic3.png',
@@ -609,10 +767,10 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'DirtyHarry',
-                status: 'winner',
+                status: 'qualified',
               },
               participant2: {
-                user: {
+                profile: {
                   username: 'user7',
                   nickname: 'Player Seven',
                   avatar: '/__mock__/img/sample-pic1.jpg',
@@ -623,7 +781,7 @@ export async function mockTournamentDetail(id) {
                 status: 'eliminated',
               },
               winner: {
-                user: {
+                profile: {
                   username: 'user5',
                   nickname: 'Player Five',
                   avatar: '/__mock__/img/sample-pic2.png',
@@ -631,14 +789,14 @@ export async function mockTournamentDetail(id) {
                   is_online: true,
                 },
                 alias: 'DirtyHarry',
-                status: 'winner',
+                status: 'qualified',
               },
               round: 2,
               status: 'finished',
               score_p1: 2,
-              score_p2: 0
-            }
-          ]
+              score_p2: 0,
+            },
+          ],
         },
         {
           number: 3,
@@ -647,67 +805,147 @@ export async function mockTournamentDetail(id) {
             {
               game_id: 'final',
               participant1: {
-                user: {
-                  username: 'user1',
+                profile: {
+                  username: 'pedro',
                   nickname: 'MidnightRider',
                   avatar: '/__mock__/img/sample-pic3.png',
                   elo: 1500,
                   is_online: false,
                 },
                 alias: 'MidnightRider',
-                status: 'winner',
-            },
-            participant2: {
-              user: {
-                username: 'user5',
-                nickname: 'Player Five',
-                avatar: '/__mock__/img/sample-pic3.png',
-                elo: 1350,
-                is_online: true,
+                status: 'qualified',
               },
-              alias: 'DirtyHarry',
-              status: 'eliminated',
-            },
-            winner: {
-              user: {
-                username: 'user1',
-                nickname: 'MidnightRider',
-                avatar: '/__mock__/img/sample-pic2.png',
-                elo: 1500,
-                is_online: false,
+              participant2: {
+                profile: {
+                  username: 'user5',
+                  nickname: 'Player Five',
+                  avatar: '/__mock__/img/sample-pic3.png',
+                  elo: 1350,
+                  is_online: true,
+                },
+                alias: 'DirtyHarry',
+                status: 'eliminated',
               },
-              alias: 'MidnightRider',
-              status: 'winner',
+              winner: {
+                profile: {
+                  username: 'pedro',
+                  nickname: 'MidnightRider',
+                  avatar: '/__mock__/img/sample-pic2.png',
+                  elo: 1500,
+                  is_online: false,
+                },
+                alias: 'MidnightRider',
+                status: 'qualified',
+              },
+              round: 3,
+              status: 'finished',
+              score_p1: 2,
+              score_p2: 1,
             },
-            round: 3,
-            status: 'finished',
-            score_p1: 2,
-            score_p2: 1
-            }
-          ]
-        }
+          ],
+        },
       ],
       participants: [
-        { user: { username: 'user1', nickname: 'MidnightRider', avatar: '/__mock__/img/sample-pic3.png', elo: 1500, is_online: false },
-          alias: 'MidnightRider', status: 'active', round: 2 },
-        { user: { username: 'user2', nickname: 'Player Two', avatar: '/__mock__/img/sample-pic3.png', elo: 1400, is_online: true },
-          alias: 'Lone Cactus', status: 'eliminated', round: 1 },
-        { user: { username: 'user3', nickname: 'Player Three', avatar: '/__mock__/img/sample-pic3.png', elo: 1450, is_online: true },
-          alias: 'LazyFox', status: 'eliminated', round: 2 },
-        { user: { username: 'user4', nickname: 'Player Four', avatar: '/__mock__/img/sample-pic3.png', elo: 1300, is_online: false },
-          alias: 'DuskDevil', status: 'eliminated', round: 1 },
-        { user: { username: 'user5', nickname: 'Player Five', avatar: '/__mock__/img/sample-pic3.png', elo: 1350, is_online: true },
-          alias: 'DirtyHarry', status: 'eliminated', round: 2 },
-        { user: { username: 'user6', nickname: 'Player Six', avatar: '/__mock__/img/sample-pic3.png', elo: 1200, is_online: true },
-          alias: 'CactusJack', status: 'eliminated', round: 1 },
-        { user: { username: 'user7', nickname: 'Player Seven', avatar: '/__mock__/img/sample-pic3.png', elo: 1250, is_online: true },
-          alias: 'Gunslinger', status: 'eliminated', round: 2 },
-        { user: { username: 'user8', nickname: 'Player Eight', avatar: '/__mock__/img/sample-pic3.png', elo: 1100, is_online: false },
-          alias: 'Rustler', status: 'eliminated', round: 1 }
+        {
+          profile: {
+            username: 'pedro',
+            nickname: 'MidnightRider',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1500,
+            is_online: false,
+          },
+          alias: 'MidnightRider',
+          status: 'qualified',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user2',
+            nickname: 'Player Two',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1400,
+            is_online: true,
+          },
+          alias: 'Lone Cactus',
+          status: 'eliminated',
+          round: 1,
+        },
+        {
+          profile: {
+            username: 'user3',
+            nickname: 'Player Three',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1450,
+            is_online: true,
+          },
+          alias: 'LazyFox',
+          status: 'eliminated',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user4',
+            nickname: 'Player Four',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1300,
+            is_online: false,
+          },
+          alias: 'DuskDevil',
+          status: 'eliminated',
+          round: 1,
+        },
+        {
+          profile: {
+            username: 'user5',
+            nickname: 'Player Five',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1350,
+            is_online: true,
+          },
+          alias: 'DirtyHarry',
+          status: 'eliminated',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user6',
+            nickname: 'Player Six',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1200,
+            is_online: true,
+          },
+          alias: 'CactusJack',
+          status: 'eliminated',
+          round: 1,
+        },
+        {
+          profile: {
+            username: 'user7',
+            nickname: 'Player Seven',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1250,
+            is_online: true,
+          },
+          alias: 'Gunslinger',
+          status: 'eliminated',
+          round: 2,
+        },
+        {
+          profile: {
+            username: 'user8',
+            nickname: 'Player Eight',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1100,
+            is_online: false,
+          },
+          alias: 'Rustler',
+          status: 'eliminated',
+          round: 1,
+        },
       ],
-      'required_participants': 8
-      }, 
-	};
+      required_participants: 8,
+    },
+  };
 
-	return data[id];
+  return data[id];
 }

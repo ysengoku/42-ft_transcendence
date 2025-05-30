@@ -51,8 +51,11 @@ export class PasswordUpdate extends HTMLElement {
 
     let isValid = true;
     isValid = passwordFeedback(
-        this.newPasswordField, this.newPasswordRepeatField,
-        this.newPasswordFeedback, this.newPasswordRepeatFeedback);
+      this.newPasswordField,
+      this.newPasswordRepeatField,
+      this.newPasswordFeedback,
+      this.newPasswordRepeatFeedback,
+    );
     if (!isValid) {
       return false;
     }
