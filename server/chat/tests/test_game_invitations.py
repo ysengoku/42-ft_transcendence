@@ -11,7 +11,58 @@ from users.models import Profile
 logger = logging.getLogger("server")
 
 logging.getLogger("server").setLevel(logging.CRITICAL)
-logging.getLogger("server").setLevel(logging.INFO)
+
+
+def invite_player(player_name):
+    invite = {
+        "action": "game_invite",
+        "data": {
+            "username": player_name,
+            "client_id": "client_id",
+            "options": {
+                "game_speed": "any",
+                "is_ranked": "any",
+                "score_to_win": "any",
+                "time_limit_minutes": "any",
+            },
+        },
+    }
+    return invite
+
+
+def accept_invite(sender_name):
+    accept_invite = {
+        "action": "reply_game_invite",
+        "data": {
+            "accept": True,
+            "username": sender_name,
+            "client_id": "client_id",
+        },
+    }
+    return accept_invite
+
+
+async def log_pending_invitations(profile_player, name):
+    pending_invitations = await database_sync_to_async(
+        lambda: list(GameInvitation.objects.filter(sender=profile_player, status="pending")),
+    )()
+    pending_infos = await database_sync_to_async(
+        lambda: [
+            {
+                "id": inv.id,
+                "sender": inv.sender.user.username,
+                "recipient": inv.recipient.user.username,
+                "status": inv.status,
+            }
+            for inv in GameInvitation.objects.filter(status="pending").select_related("sender__user", "recipient__user")
+        ]
+    )()
+
+    for info in pending_infos:
+        logger.critical(
+            "INVITATION: id=%s sender=%s recipient=%s status=%s",
+            info["id"], info["sender"], info["recipient"], info["status"]
+        )
 
 
 class GameInvitationTests(UserEventsConsumerTests):
@@ -258,7 +309,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         await communicator.disconnect()
         await target_user.disconnect()
 
-    async def test_game_invite_valid_canceled_after_accept_other(self):
+    async def test_send_game_invite_canceled_if_other_is_accepted(self):
         john = await self.get_authenticated_communicator(
             username="john", password="testpass",
         )
@@ -268,33 +319,8 @@ class GameInvitationTests(UserEventsConsumerTests):
         communicator = await self.get_authenticated_communicator(
             username="communicator", password="testpass",
         )
-        invite_sleepy_joe = {
-            "action": "game_invite",
-            "data": {
-                "username": "sleepy_joe",
-                "client_id": "client_id",
-                "options": {
-                    "game_speed": "any",
-                    "is_ranked": "any",
-                    "score_to_win": "any",
-                    "time_limit_minutes": "any",
-                },
-            },
-        }
-
-        invite_communicator = {
-            "action": "game_invite",
-            "data": {
-                "username": "communicator",
-                "client_id": "client_id",
-                "options": {
-                    "game_speed": "any",
-                    "is_ranked": "any",
-                    "score_to_win": "any",
-                    "time_limit_minutes": "any",
-                },
-            },
-        }
+        invite_sleepy_joe = invite_player("sleepy_joe")
+        invite_communicator = invite_player("communicator")
 
         await communicator.send_json_to(invite_sleepy_joe)
         await communicator.receive_nothing(timeout=0.1)
@@ -308,15 +334,8 @@ class GameInvitationTests(UserEventsConsumerTests):
         count = await database_sync_to_async(GameInvitation.objects.count)()
         assert count == 2
 
-        accept_invite = {
-            "action": "reply_game_invite",
-            "data": {
-                "accept": True,
-                "username": "john",
-                "client_id": "client_id",
-            },
-        }
-        await communicator.send_json_to(accept_invite)
+        accepted_invite_from_john = accept_invite("john")
+        await communicator.send_json_to(accepted_invite_from_john)
         await communicator.receive_nothing(timeout=0.1)
         communicator_user = await database_sync_to_async(get_user_model().objects.get)(username="communicator")
         communicator_profile = await database_sync_to_async(Profile.objects.get)(user=communicator_user)
@@ -328,3 +347,48 @@ class GameInvitationTests(UserEventsConsumerTests):
         await communicator.disconnect()
         await john.disconnect()
         await sleepy_joe.disconnect()
+
+    async def test_game_invite_not_accepted_if_already_in_game(self):
+        john = await self.get_authenticated_communicator(
+            username="john", password="testpass",
+        )
+        playing_joe = await self.get_authenticated_communicator(
+            username="playing_joe", password="testpass",
+        )
+        communicator = await self.get_authenticated_communicator(
+            username="communicator", password="testpass",
+        )
+        invite_playing_joe = invite_player("playing_joe")
+        await communicator.send_json_to(invite_playing_joe)
+        await communicator.receive_nothing(timeout=0.1)
+        await asyncio.sleep(0.1)
+        count = await database_sync_to_async(GameInvitation.objects.count)()
+        assert count == 1
+
+        accepted_invite_from_communicator = accept_invite("communicator")
+
+        await playing_joe.send_json_to(accepted_invite_from_communicator)
+        await playing_joe.receive_nothing(timeout=0.1)
+
+        invite_communicator = invite_player("communicator")
+
+        await john.send_json_to(invite_communicator)
+        await john.receive_nothing(timeout=0.1)
+        await asyncio.sleep(0.1)
+        count = await database_sync_to_async(GameInvitation.objects.count)()
+        assert count == 2
+
+        accepted_invite_from_john = accept_invite("john")
+        await communicator.send_json_to(accepted_invite_from_john)
+        await communicator.receive_nothing(timeout=0.1)
+
+        john_user = await database_sync_to_async(get_user_model().objects.get)(username="john")
+        john_profile = await database_sync_to_async(Profile.objects.get)(user=john_user)
+        pending_invitations = await database_sync_to_async(
+            lambda: list(GameInvitation.objects.filter(sender=john_profile, status="accepted")),
+        )()
+        assert len(pending_invitations) == 0, f"john still has pending invitations: {pending_invitations}"
+
+        await communicator.disconnect()
+        await john.disconnect()
+        await playing_joe.disconnect()
