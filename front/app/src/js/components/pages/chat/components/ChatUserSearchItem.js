@@ -58,7 +58,11 @@ export class ChatUserSearchItem extends HTMLElement {
     );
     if (response.success) {
       if (response.data.is_blocked_by_user) {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, `Chat with ${response.data.nickname} @${response.data.username} is currently unavailable.`, 3000);
+        showAlertMessageForDuration(
+          ALERT_TYPE.ERROR,
+          `Chat with ${response.data.nickname} @${response.data.username} is currently unavailable.`,
+          3000,
+        );
         this.chatList.hideUserSearchBar();
         return;
       }

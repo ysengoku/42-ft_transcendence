@@ -16,8 +16,7 @@ export class Duel extends HTMLElement {
 
   constructor() {
     super();
-    this.#state.clientId = socketManager.getClientInstanceId('livechat'),
-
+    this.#state.clientId = socketManager.getClientInstanceId('livechat');
     this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
     this.cancelInvitation = this.cancelInvitation.bind(this);
@@ -26,9 +25,11 @@ export class Duel extends HTMLElement {
 
   setQueryParam(param) {
     this.#state.status = param.get('status');
-    if (this.#state.status !== 'inviting' &&
+    if (
+      this.#state.status !== 'inviting' &&
       this.#state.status !== 'matchmaking' &&
-      this.#state.status !== 'starting') {
+      this.#state.status !== 'starting'
+    ) {
       this.#state.status = '';
       return;
     }
@@ -307,16 +308,16 @@ export class Duel extends HTMLElement {
 
   headerTemplate() {
     switch (this.#state.status) {
-    case 'inviting':
-      return 'Waiting for your opponent to ride in...';
-    case 'matchmaking':
-      return 'Searching for your dream opponent...';
-    case 'starting':
-      return 'Both gunslingers are here. Time to duel!';
-    case 'canceled':
-      return 'This duel has been canceled.';
-    case 'declined':
-      return 'This duel has been canceled.';
+      case 'inviting':
+        return 'Waiting for your opponent to ride in...';
+      case 'matchmaking':
+        return 'Searching for your dream opponent...';
+      case 'starting':
+        return 'Both gunslingers are here. Time to duel!';
+      case 'canceled':
+        return 'This duel has been canceled.';
+      case 'declined':
+        return 'This duel has been canceled.';
     }
   }
 }

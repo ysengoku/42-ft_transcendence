@@ -80,9 +80,13 @@ export class InviteGameModal extends HTMLElement {
       nickname: this.#state.opponent.nickname,
       avatar: this.#state.opponent.avatar,
     };
-    this.modalElement.addEventListener('hidden.bs.modal', () => {
-      router.navigate('/duel', queryParams);
-    }, { once: true });
+    this.modalElement.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        router.navigate('/duel', queryParams);
+      },
+      { once: true },
+    );
     this.closeModal();
   }
 

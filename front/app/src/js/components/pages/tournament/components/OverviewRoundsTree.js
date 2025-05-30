@@ -29,7 +29,7 @@ export class TournamentOverviewTree extends HTMLElement {
           connector.classList.add('d-none');
         });
       }
-    };
+    }
   }
 
   renderBrackets(round) {
