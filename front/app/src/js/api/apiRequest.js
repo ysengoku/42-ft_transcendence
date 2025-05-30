@@ -151,7 +151,9 @@ const handlers = {
     } else if (typeof errorData === 'object' && errorData.msg) {
       errorMsg = errorData.msg;
     }
-    unknowknErrorToast();
+    if (response.status !== 403) {
+      unknowknErrorToast();
+    }
     return { success: false, status: response.status, msg: errorMsg };
   },
 
