@@ -5,7 +5,6 @@ import pedro from '/3d_models/lilguy.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
 import { router } from '@router';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class MultiplayerGame extends HTMLElement {
   #navbarHeight = 64;
@@ -30,9 +29,8 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   async setParam(param) {
-    const authStatus = await auth.fetchAuthStatus();
-    if (!authStatus.success) {
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED);
+    const user = await auth.getUser();
+    if (!user) {
       router.navigate('/login');
       return;
     }
@@ -52,7 +50,6 @@ export class MultiplayerGame extends HTMLElement {
     document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
     document.removeEventListener('keydown', this.onDocumentKeyDown, true);
     document.removeEventListener('keyup', this.onDocumentKeyUp, true);
-    // window.removeEventListener('resize', this.windowResize);
   }
 
   onDocumentKeyDown(event) {
@@ -332,44 +329,6 @@ export class MultiplayerGame extends HTMLElement {
 
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
-    // function onDocumentKeyDown(event) {
-    //   if (event.defaultPrevented) {
-    //     return; // Do noplayerglb if the event was already processed
-    //   }
-    //   var keyCode = event.code;
-    //   if (keyCode == 'ArrowLeft') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'ArrowRight') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'KeyA') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'KeyD') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-    //   }
-    //   event.preventDefault();
-    // }
-    // function onDocumentKeyUp(event) {
-    //   if (event.defaultPrevented) {
-    //     return; // Do noplayerglb if the event was already processed
-    //   }
-    //   var keyCode = event.code;
-    //   if (keyCode == 'ArrowLeft') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-    //   }
-    //   if (keyCode == 'ArrowRight') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-    //   }k
-    //   if (keyCode == 'KeyA') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-    //   }
-    //   if (keyCode == 'KeyD') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-    //   }
-    //   event.preventDefault();
-    // }
 
     return [camera, renderer, animate];
   }

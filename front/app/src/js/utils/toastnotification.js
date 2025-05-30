@@ -42,3 +42,13 @@ export function showToastNotification(message, type = TOAST_TYPES.INFO) {
   const toastBootstrap = Toast.getOrCreateInstance(toast);
   toastBootstrap.show();
 }
+
+export function sessionExpiredToast() {
+  const message = 'Your session has expired. Please log in again.';
+  showToastNotification(message, TOAST_TYPES.ERROR);
+}
+
+export function unknowknErrorToast() {
+  const message = 'An unexpected error occurred. Please try again later.';
+  showToastNotification(message, TOAST_TYPES.ERROR);
+}
