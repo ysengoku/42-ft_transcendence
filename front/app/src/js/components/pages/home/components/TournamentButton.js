@@ -1,5 +1,6 @@
 import { router } from '@router';
 import { auth } from '@auth';
+import { sessionExpiredToast } from '@utils';
 
 export class TournamentButton extends HTMLElement {
   constructor() {
@@ -27,6 +28,13 @@ export class TournamentButton extends HTMLElement {
   async handleClick(event) {
     event.preventDefault();
     const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
+      router.redirect('/login');
+      return;
+    }
     if (authStatus.success && authStatus.response.tournament_id) {
       devLog('Ongoing tournament found. Redirect to tournament page', authStatus.response.tournament_id);
       router.navigate(`tournament/${authStatus.response.tournament_id}`);

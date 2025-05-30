@@ -1,6 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class NotificationsList extends HTMLElement {
   #state = {
@@ -183,10 +182,7 @@ export class NotificationsList extends HTMLElement {
     event.preventDefault();
 
     const response = await apiRequest('POST', API_ENDPOINTS.NOTIDICATIONS_READ, null, false, true);
-    if (response.status === 401 || response.status === 500) {
-      return;
-    } else if (!response.success) {
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+    if (!response.success) {
       return;
     }
     this.#state.isLoading = true;

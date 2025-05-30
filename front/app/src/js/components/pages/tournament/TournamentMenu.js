@@ -2,7 +2,7 @@ import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { formatDateMDY } from '@utils';
 import './components/index.js';
 
@@ -44,14 +44,11 @@ export class TournamentMenu extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
-        router.navigate('/login');
+        sessionExpiredToast();
       }
+      router.navigate('/login');
       return;
     }
-    // if (authStatus.response.tournament_id) {
-    //   this.redirectToActiveTournament(authStatus.response.tournament_id);
-    //   return;
-    // }
     this.#state.nickname = authStatus.response.nickname;
     this.render();
   }

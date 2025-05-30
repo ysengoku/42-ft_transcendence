@@ -1,22 +1,16 @@
 import { router } from '@router';
 import { auth } from '@auth';
-import { showAlertMessage, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import pedro from '/img/pedro.png?url';
 
 export class UserNotFound extends HTMLElement {
-  #state = {
-    isLoggedIn: false,
-  };
-
   constructor() {
     super();
   }
 
   async connectedCallback() {
-    this.#state.isLoggedIn = auth.getStoredUser() ? true : false;
-    if (!this.#state.isLoggedIn) {
-      showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED);
-      router.navigate('/');
+    const user = await auth.getUser();
+    if (!user) {
+      router.redirect('/login');
       return;
     }
     this.render();
@@ -45,13 +39,6 @@ export class UserNotFound extends HTMLElement {
         <a class="btn m-0 fw-bold" href="/home" role="button">Back to Saloon</a>
       </div>
     </div>
-    `;
-  }
-  style() {
-    return `
-    <style>
-
-    </style>
     `;
   }
 }

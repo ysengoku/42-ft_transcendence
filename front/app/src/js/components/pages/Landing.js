@@ -11,8 +11,8 @@ export class Landing extends HTMLElement {
   }
 
   async connectedCallback() {
-    const user = await auth.getUser();
-    this.#state.isLoggedIn = user ? true : false;
+    const authStatus = await auth.fetchAuthStatus();
+    this.#state.isLoggedIn = authStatus.success ? true : false;
     this.render();
   }
 

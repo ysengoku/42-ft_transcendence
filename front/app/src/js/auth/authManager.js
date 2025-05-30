@@ -1,8 +1,8 @@
 import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
-import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import { socketManager } from '@socket';
+import { internalServerErrorAlert, sessionExpiredToast, unknowknErrorToast } from '@utils';
 
 /**
  * @module authManager
@@ -84,6 +84,7 @@ const auth = (() => {
           user = response.response;
           this.storeUser(user);
         } else if (response.status === 401) {
+          sessionExpiredToast();
           return null;
         }
       }
@@ -120,10 +121,10 @@ const auth = (() => {
             case 401:
               return { success: false, status: 401 };
             case 500:
-              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
+              internalServerErrorAlert();
               break;
             default:
-              showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+              unknowknErrorToast();
               return { success: false, status: refreshTokenResponse.status };
           }
         }
