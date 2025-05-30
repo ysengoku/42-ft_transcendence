@@ -215,18 +215,25 @@ SOCIALACCOUNT_PROVIDERS = {
 REDIS_HOST = env("REDIS_HOST")
 REDIS_PORT = env("REDIS_PORT")
 # For the tests
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [(REDIS_HOST, REDIS_PORT)],
-            "expiry": 3,
-            "channel_capacity": {
-                "game": 5000,
+if 'test' in sys.argv:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer"
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(REDIS_HOST, REDIS_PORT)],
+                "expiry": 3,
+                "channel_capacity": {
+                    "game": 5000,
+                },
             },
         },
-    },
-}
+    }
 
 
 # Configuration for proxy
@@ -338,6 +345,14 @@ LOGGING = {
         "console": {
             "class": "colorlog.StreamHandler",
             "formatter": "colored",
+            "level": "DEBUG",
+        },
+    },
+    "loggers": {
+        "server": {
+            "handlers": ["console"],
+            "level": "DEBUG",  # Niveau du logger
+            "propagate": False,  # Empêche la propagation vers le root logger
         },
     },
     "root": {

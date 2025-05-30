@@ -18,7 +18,7 @@ export class ResetPassword extends HTMLElement {
     this.#state.token = param.token;
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
-      router.navigate('/home');
+      router.redirect('/home');
     } else {
       this.render();
     }
@@ -50,18 +50,25 @@ export class ResetPassword extends HTMLElement {
 
   async handleResetPassword(event) {
     event.preventDefault();
-    if (!passwordFeedback(this.passwordField, this.passwordRepeatField,
-        this.passwordFeedback, this.passwordRepeatFeedback)) {
+    if (
+      !passwordFeedback(
+        this.passwordField,
+        this.passwordRepeatField,
+        this.passwordFeedback,
+        this.passwordRepeatFeedback,
+      )
+    ) {
       return;
     }
     this.#state.newPassword = this.passwordField.value;
     this.#state.newPasswordRepeat = this.passwordRepeatField.value;
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.RESET_PASSWORD(this.#state.token),
-        { password: this.#state.newPassword, password_repeat: this.#state.newPasswordRepeat },
-        false, false,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.RESET_PASSWORD(this.#state.token),
+      { password: this.#state.newPassword, password_repeat: this.#state.newPasswordRepeat },
+      false,
+      false,
     );
     if (response.success) {
       const successMessage = 'Password reset successful. You can now login with your new password.';

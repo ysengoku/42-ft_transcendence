@@ -48,10 +48,10 @@ export class TournamentMenu extends HTMLElement {
       }
       return;
     }
-    if (authStatus.response.tournament_id) {
-      this.redirectToActiveTournament(authStatus.response.tournament_id);
-      return;
-    }
+    // if (authStatus.response.tournament_id) {
+    //   this.redirectToActiveTournament(authStatus.response.tournament_id);
+    //   return;
+    // }
     this.#state.nickname = authStatus.response.nickname;
     this.render();
   }
@@ -206,15 +206,18 @@ export class TournamentMenu extends HTMLElement {
       const tournamentWinnerAlias = this.modalBody.querySelector('#tournament-winner-alias');
       modalTitle.textContent = this.selectedTournament.name;
       modalTournamentStatus.textContent = `Finished on ${formatDateMDY(this.selectedTournament.date)}`;
-      if (this.selectedTournament.winner && this.selectedTournament.winner.user &&
-        this.selectedTournament.winner.user.avatar) {
+      if (
+        this.selectedTournament.winner &&
+        this.selectedTournament.winner.user &&
+        this.selectedTournament.winner.user.avatar
+      ) {
         tournamentWinnerAvatar.src = this.selectedTournament.winner.user.avatar;
       } else {
         tournamentWinnerAvatar.classList.add('d-none');
       }
-      tournamentWinnerAlias.textContent = this.selectedTournament.winner ?
-        this.selectedTournament.winner.alias :
-        'Data not available';
+      tournamentWinnerAlias.textContent = this.selectedTournament.winner
+        ? this.selectedTournament.winner.alias
+        : 'Data not available';
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
@@ -226,7 +229,7 @@ export class TournamentMenu extends HTMLElement {
   handleAliasInput(event) {
     if (event.target.value.length < 1) {
       this.aliasInput.classList.add('is-invalid');
-      this.aliasInputFeedback.textContent = `Alias cannot be empty`;
+      this.aliasInputFeedback.textContent = 'Alias cannot be empty';
       this.confirmButton.disabled = true;
     } else if (event.target.value.length > this.#maxAliasLength) {
       this.aliasInput.classList.add('is-invalid');
@@ -243,10 +246,13 @@ export class TournamentMenu extends HTMLElement {
     event.stopPropagation();
     devLog('Registering for tournament:', this.selectedTournament.id, this.aliasInput.value);
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.TOURNAMENT_REGISTER(this.selectedTournament.id, this.aliasInput.value),
-        null, false, true);
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT_REGISTER(this.selectedTournament.id, this.aliasInput.value),
+      null,
+      false,
+      true,
+    );
 
     if (response.success) {
       this.connectToTournamentRoom();
@@ -279,16 +285,24 @@ export class TournamentMenu extends HTMLElement {
   }
 
   connectToTournamentRoom() {
-    this.modalComponent.addEventListener('hidden.bs.modal', () => {
-      router.navigate(`/tournament/${this.selectedTournament.id}`);
-    }, { once: true });
+    this.modalComponent.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        router.navigate(`/tournament/${this.selectedTournament.id}`);
+      },
+      { once: true },
+    );
     this.modal.hide();
   }
 
   navigateToOverview() {
-    this.modalComponent.addEventListener('hidden.bs.modal', () => {
-      router.navigate(`/tournament-overview/${this.selectedTournament.id}`);
-    }, { once: true });
+    this.modalComponent.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        router.navigate(`/tournament-overview/${this.selectedTournament.id}`);
+      },
+      { once: true },
+    );
     this.modal.hide();
   }
 

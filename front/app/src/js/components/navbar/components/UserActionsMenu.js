@@ -126,7 +126,8 @@ export class UserActionsMenu extends HTMLElement {
     return `
     <style>
       #navbar-user-actions i {
-        font-size: 40px
+        font-size: 40px;
+        color: var(--pm-primary-100);
       }
       .dropdown-menu {
         position: absolute;
