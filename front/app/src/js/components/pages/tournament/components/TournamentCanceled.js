@@ -1,4 +1,4 @@
-export class TournamentCanceled extends HTMLElement{
+export class TournamentCanceled extends HTMLElement {
 
 }
 
