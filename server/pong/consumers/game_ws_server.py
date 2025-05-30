@@ -115,7 +115,7 @@ class GameWSServerConsumer(WebsocketConsumer):
         match text_data_json:
             case {
                 "action": "move_left" | "move_right" as action,
-                "content": bool(content),
+                "content": int(content),
                 "player_id": str(player_id),
             }:
                 async_to_sync(self.channel_layer.send)(
@@ -216,3 +216,6 @@ class GameWSServerConsumer(WebsocketConsumer):
             ),
         )
         self.close(PongCloseCodes.NORMAL_CLOSURE)
+
+    def player_moved(self, event: dict):
+        self.send(text_data=json.dumps(event))

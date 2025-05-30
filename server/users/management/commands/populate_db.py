@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from chat.models import Chat, ChatMessage, Notification
-from pong.models import Match
+from pong.models import GameRoom, GameRoomPlayer, Match
 from tournaments.models import Bracket, Participant, Round, Tournament
 from users.models import OauthConnection, Profile, User
 
@@ -42,12 +42,13 @@ def clean_database():
     Chat.objects.all().delete()
     ChatMessage.objects.all().delete()
     Notification.objects.all().delete()
+    GameRoom.objects.all().delete()
+    GameRoomPlayer.objects.all().delete()
 
 
 def generate_users() -> tuple[list[User], User]:
     # special user who is winning at life
-    life_enjoyer = User.objects.create_user(
-        "LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123")
+    life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123")
     life_enjoyer.profile.elo = 2800
     life_enjoyer.profile.save()
 
@@ -80,8 +81,7 @@ def generate_users() -> tuple[list[User], User]:
     ]
 
     for name, elo in names_and_elo:
-        user = User.objects.create_user(
-            f"{name}", email=f"{name}@gmail.com", password="123")
+        user = User.objects.create_user(f"{name}", email=f"{name}@gmail.com", password="123")
         user.profile.elo = elo
         user.profile.save()
         users[user.username] = user
@@ -106,8 +106,7 @@ def generate_users() -> tuple[list[User], User]:
     sad_hampter.profile.add_friend(celiastral.profile)
 
     for i in range(10):
-        user = User.objects.create_user(
-            f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
+        user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
         if randint(0, 1):
             life_enjoyer.profile.block_user(user.profile)
         else:
@@ -254,8 +253,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
                         winner.status = "playing" if rnd < total_rounds else "winner"
                         loser.status = "eliminated"
                         loser.current_round = rnd
-                        winner.current_round = rnd + \
-                            (0 if rnd < total_rounds else rnd)
+                        winner.current_round = rnd + (0 if rnd < total_rounds else rnd)
                         winner.save()
                         loser.save()
 
@@ -321,8 +319,7 @@ class Command(BaseCommand):
             ("fanny", "boussard.fanny@gmail.com"),
         ]
         for username, email in mfa_users:
-            user = User.objects.create_user(
-                username, email=email, password="123")
+            user = User.objects.create_user(username, email=email, password="123")
             user.mfa_enabled = True
             user.save()
 
@@ -470,13 +467,11 @@ Keep soaring high, superstar!""",
                 chat, _ = Chat.objects.get_or_create(profile, other_profile)
                 for _ in range(10):
                     random_message_content = choice(chat_messages_content)  # noqa: S311
-                    ChatMessage.objects.create(
-                        content=random_message_content, sender=profile, chat=chat)
+                    ChatMessage.objects.create(content=random_message_content, sender=profile, chat=chat)
             for _ in range(15):
                 sender = choice_except(profiles, profile)
                 if sender:
-                    notification = Notification.objects.action_new_friend(
-                        receiver=profile, sender=sender)
+                    notification = Notification.objects.action_new_friend(receiver=profile, sender=sender)
                     if randint(0, 1):  # noqa: S311
                         notification.is_read = True
                         notification.save()
