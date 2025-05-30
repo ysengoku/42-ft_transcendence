@@ -9,7 +9,7 @@ from enum import Enum, IntEnum, auto
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
-from pong.consumers.game_protocol import GameWSServerToGameWorkerEvents, SerializedGameState
+from pong.consumers.game_protocol import GameWSServerToClientEvents, GameWSServerToGameWorkerEvents, SerializedGameState
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -380,7 +380,7 @@ class MultiplayerPongMatch(BasePong):
     def __repr__(self):
         return f"{self.state.name.capitalize()} game {self.id}"
 
-    def handle_input(self, player_id: str, action: str, content: bool):
+    def handle_input(self, player_id: str, action: str, content: int):
         if player_id == self._player_1.id:
             bumper = self._player_1.bumper
         elif player_id == self._player_2.id:
@@ -393,9 +393,19 @@ class MultiplayerPongMatch(BasePong):
 
         match action:
             case "move_left":
-                bumper.moves_left = content
+                bumper.moves_left = content > 0
+                return GameWSServerToClientEvents.InputConfirmation(
+                    action=action,
+                    content=content,
+                    player_id=player_id,
+                )
             case "move_right":
-                bumper.moves_right = content
+                bumper.moves_right = content > 0
+                return GameWSServerToClientEvents.InputConfirmation(
+                    action=action,
+                    content=content,
+                    player_id=player_id,
+                )
 
     def add_player(self, player_connected_event: dict):
         """
@@ -558,6 +568,7 @@ class GameWorkerConsumer(AsyncConsumer):
         match = self.matches.get(game_room_id)
         if match is None or match.state != MultiplayerPongMatchState.ONGOING:
             logger.warning("[GameWorker]: input was sent for not running game {%s}", game_room_id)
+            return
 
         player_id = event["player_id"]
         action = event["action"]
@@ -565,7 +576,13 @@ class GameWorkerConsumer(AsyncConsumer):
 
         match action:
             case "move_left" | "move_right":
-                match.handle_input(player_id, action, content)
+                # TODO: what if player_id is empty
+                confirmation = match.handle_input(player_id, action, content)
+                # TODO: this is unsafe, need to send data only to a specific player
+                await self.channel_layer.group_send(
+                    self._to_group_name(match),
+                    {"type": "player_moved"} | confirmation,
+                )
 
     ##### BACKGROUND TASKS #####
     async def _match_game_loop_task(self, match: MultiplayerPongMatch):
@@ -682,7 +699,8 @@ class GameWorkerConsumer(AsyncConsumer):
             winner = match.get_other_player(player.id)
             await self.channel_layer.group_send(
                 self._to_group_name(match),
-                {"type": "player_resigned", "winner": winner.id},
+                # TODO: fix loser id
+                {"type": "player_resigned", "winner": winner.id, "loser": "asdasd", "elo_change": -1309742834},
             )
             logger.info(
                 "[GameWorker]: player {%s} resigned by disconnecting in the game {%s}. Winner is {%s}",

@@ -15,6 +15,7 @@ class PongCloseCodes:
     ILLEGAL_CONNECTION = 3002
     BAD_DATA = 3100
 
+
 class SerializedGameState(TypedDict):
     """State of the particular pong game represented in the JSON format."""
 
@@ -103,6 +104,14 @@ class GameWSServerToClientEvents:
     class PlayerResigned(PlayerWon):
         """When the player has resigned. Contains the same data as `PlayerWon`."""
 
+    class InputConfirmation(TypedDict):
+        """Confirmation of the input from the player."""
+
+        action: Literal["move_left", "move_right"]
+        content: int
+        player_id: str
+        pos: float
+
 
 class GameWSServerFromClientEvents:
     class MoveLeft(TypedDict):
@@ -149,4 +158,4 @@ class GameWSServerToGameWorkerEvents:
         action: Literal["move_left", "move_right"]
         game_room_id: str
         player_id: str
-        content: bool
+        content: int

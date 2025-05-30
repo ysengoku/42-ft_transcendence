@@ -22,8 +22,6 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayButton1 = null;
     this.overlayButton2 = null;
 
-    this.onDocumentKeyDown = this.onDocumentKeyDown.bind(this);
-    this.onDocumentKeyUp = this.onDocumentKeyUp.bind(this);
     // this.windowResize = this.windowResize.bind(this);
     this.requestNewMatchmaking = this.requestNewMatchmaking.bind(this);
     this.navigateToHome = this.navigateToHome.bind(this);
@@ -50,61 +48,72 @@ export class MultiplayerGame extends HTMLElement {
 
   disconnectedCallback() {
     document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
-    document.removeEventListener('keydown', this.onDocumentKeyDown, true);
-    document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+    if (this.onDocumentKeyDown)
+      document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+    if (this.onDocumentKeyUp)
+      document.removeEventListener('keyup', this.onDocumentKeyUp, true);
     // window.removeEventListener('resize', this.windowResize);
   }
 
-  onDocumentKeyDown(event) {
-    if (event.defaultPrevented) {
-      return; // Do noplayerglb if the event was already processed
-    }
-    var keyCode = event.code;
-    if (keyCode == 'ArrowLeft') {
-      let now = -Date.now();
+  createOnDocumentKeyDown(pongSocket, bumper, playerIdContainer) {
+    return (e) => {
+      if (e.defaultPrevented) {
+        return; // Do noplayerglb if the event was already processed
+      }
+      var keyCode = e.code;
+      const now = Date.now();
       console.log(now);
-      Bumpers[1].inputQueue.push(now);
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: now, playerId }));
+      if (keyCode == 'ArrowLeft') {
+        bumper.cubeMesh.position.x += 1;
+        bumper.inputQueue.push(["move_left", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if (keyCode == 'ArrowRight') {
+        bumper.cubeMesh.position.x -= 1;
+        bumper.inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if (keyCode == 'KeyA') {
+        bumper.cubeMesh.position.x += 1;
+        bumper.inputQueue.push(["move_left", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if (keyCode == 'KeyD') {
+        bumper.cubeMesh.position.x -= 1;
+        bumper.inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+      }
+      e.preventDefault();
     }
-    if (keyCode == 'ArrowRight') {
-      let now = Date.now();
-      console.log(now);
-      Bumpers[1].inputQueue.push(now);
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: now, playerId }));
-    }
-    if (keyCode == 'KeyA') {
-      let now = -Date.now();
-      console.log(now);
-      Bumpers[1].inputQueue.push(now);
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: now, playerId }));
-    }
-    if (keyCode == 'KeyD') {
-      let now = Date.now();
-      console.log(now);
-      Bumpers[1].inputQueue.push(now);
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: now, playerId }));
-    }
-    event.preventDefault();
   }
 
-  onDocumentKeyUp(event) {
-    if (event.defaultPrevented) {
-      return; // Do noplayerglb if the event was already processed
+  createOnDocumentKeyUp(pongSocket, bumper, playerIdContainer) {
+    return (e) => {
+      if (e.defaultPrevented) {
+        return; // Do noplayerglb if the event was already processed
+      }
+      console.log(bumper)
+      console.log(bumper.inputQueue)
+      var keyCode = e.code;
+      const now = -Date.now();
+      if (keyCode == 'ArrowLeft') {
+        bumper.inputQueue.push(["move_left", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if (keyCode == 'ArrowRight') {
+        bumper.inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if (keyCode == 'KeyA') {
+        bumper.inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if (keyCode == 'KeyD') {
+        bumper.inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+      }
+      e.preventDefault();
     }
-    var keyCode = event.code;
-    if (keyCode == 'ArrowLeft') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }));
-    }
-    if (keyCode == 'ArrowRight') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }));
-    }
-    if (keyCode == 'KeyA') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }));
-    }
-    if (keyCode == 'KeyD') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }));
-    }
-    event.preventDefault();
   }
 
   game() {
@@ -133,62 +142,62 @@ export class MultiplayerGame extends HTMLElement {
       new THREE.DirectionalLight(0xffffff),
     ];
 
-        const playerglb = (() => {
-            const pedro_model = new THREE.Object3D();
-            loader.load(
-                pedro,
-                function(gltf) {
-                    const model = gltf.scene;
-                    model.position.y = 7;
-                    model.position.z = 0;
-                    model.position.x = 0;
-                    mixer = new THREE.AnimationMixer(model);
-                    const idleAction = mixer
-                        .clipAction(THREE.AnimationUtils.subclip(gltf.animations[0], 'idle', 0, 221))
-                        .setDuration(6)
-                        .play();
-                    const idleAction2 = mixer
-                        .clipAction(THREE.AnimationUtils.subclip(gltf.animations[1], 'idle', 0, 221))
-                        .setDuration(6)
-                        .play();
-                    idleAction.play();
-                    idleAction2.play();
-                    pedro_model.add(gltf.scene);
-                },
-                undefined,
-                function(error) {
-                    console.error(error);
-                },
-            );
-            pedro_model.scale.set(0.1, 0.1, 0.1);
-            scene.add(pedro_model);
-            return pedro_model;
-        })();
+    const playerglb = (() => {
+      const pedro_model = new THREE.Object3D();
+      loader.load(
+        pedro,
+        function(gltf) {
+          const model = gltf.scene;
+          model.position.y = 7;
+          model.position.z = 0;
+          model.position.x = 0;
+          mixer = new THREE.AnimationMixer(model);
+          const idleAction = mixer
+            .clipAction(THREE.AnimationUtils.subclip(gltf.animations[0], 'idle', 0, 221))
+            .setDuration(6)
+            .play();
+          const idleAction2 = mixer
+            .clipAction(THREE.AnimationUtils.subclip(gltf.animations[1], 'idle', 0, 221))
+            .setDuration(6)
+            .play();
+          idleAction.play();
+          idleAction2.play();
+          pedro_model.add(gltf.scene);
+        },
+        undefined,
+        function(error) {
+          console.error(error);
+        },
+      );
+      pedro_model.scale.set(0.1, 0.1, 0.1);
+      scene.add(pedro_model);
+      return pedro_model;
+    })();
 
-        const Coin = ((posX, posY, posZ) => {
-            const cylinderGeometry = new THREE.CylinderGeometry(0.5,0.5,0.1);
-            const cylinderMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
-        
-            cylinderMesh.position.x = posX;
-            cylinderMesh.position.y = posY;
-            cylinderMesh.position.z = posZ;
-            cylinderMesh.rotation.z = -Math.PI / 2;
-            cylinderMesh.rotation.y = -Math.PI / 2;
-            cylinderMesh.castShadow = true;
-            scene.add(cylinderMesh);
-            const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
-            const velocity = new THREE.Vector3(0.01, 0, 0);
-            let lenghtHalf = 0.25;
+    const Coin = ((posX, posY, posZ) => {
+      const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
+      const cylinderMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
 
-            return ({
+      cylinderMesh.position.x = posX;
+      cylinderMesh.position.y = posY;
+      cylinderMesh.position.z = posZ;
+      cylinderMesh.rotation.z = -Math.PI / 2;
+      cylinderMesh.rotation.y = -Math.PI / 2;
+      cylinderMesh.castShadow = true;
+      scene.add(cylinderMesh);
+      const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
+      const velocity = new THREE.Vector3(0.01, 0, 0);
+      let lenghtHalf = 0.25;
 
-                get lenghtHalf() { return lenghtHalf; },
-                set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
-                cylinderMesh,
-                cylinderUpdate,
-                velocity,
-            });
-        })(-9.25, 1, 0);
+      return ({
+
+        get lenghtHalf() { return lenghtHalf; },
+        set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+        cylinderMesh,
+        cylinderUpdate,
+        velocity,
+      });
+    })(-9.25, 1, 0);
 
 
     const Ball = ((posX, posY, posZ) => {
@@ -244,47 +253,47 @@ export class MultiplayerGame extends HTMLElement {
       scene.add(ligths[i]);
     }
 
-        const BumperFactory = (posX, posY, posZ) => {
-            const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
-            const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
+    const BumperFactory = (posX, posY, posZ) => {
+      const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
+      const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
 
-            cubeMesh.position.x = posX;
-            cubeMesh.position.y = posY;
-            cubeMesh.position.z = posZ;
-            cubeMesh.castShadow = true;
-            scene.add(cubeMesh);
+      cubeMesh.position.x = posX;
+      cubeMesh.position.y = posY;
+      cubeMesh.position.z = posZ;
+      cubeMesh.castShadow = true;
+      scene.add(cubeMesh);
 
-            const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
-            const dir_z = -Math.sign(posZ);
-            const inputQueue = [];
-            // let   lenghtHalf = 2.5;
-            // let   widthHalf = 0.5;
-            // let   controlReverse = false;
-            let   speed = 0.25;
-            let   score = 0;
-            
-            return ({
-                cubeMesh,
-                cubeUpdate,
+      const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
+      const dir_z = -Math.sign(posZ);
+      const inputQueue = [];
+      // let   lenghtHalf = 2.5;
+      // let   widthHalf = 0.5;
+      // let   controlReverse = false;
+      let speed = 0.25;
+      let score = 0;
 
-                get speed() { return speed; },
-                set speed(newSpeed) { speed = newSpeed; },
-                get score() { return score; },
-                set score(newScore) { score = newScore; },
-                get inputQueue() { return inputQueue; },
-                // get controlReverse() { return controlReverse; },
-                // set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
-                // get lenghtHalf() { return lenghtHalf; },
-                // set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
-                // get widthHalf() { return widthHalf; },
-                // set widthHalf(newWidthHalf) { widthHalf = newWidthHalf; },
-                get dir_z() { return dir_z; },
-            });
-        }
+      return ({
+        cubeMesh,
+        cubeUpdate,
 
-      const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
+        get speed() { return speed; },
+        set speed(newSpeed) { speed = newSpeed; },
+        get score() { return score; },
+        set score(newScore) { score = newScore; },
+        get inputQueue() { return inputQueue; },
+        // get controlReverse() { return controlReverse; },
+        // set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
+        // get lenghtHalf() { return lenghtHalf; },
+        // set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+        // get widthHalf() { return widthHalf; },
+        // set widthHalf(newWidthHalf) { widthHalf = newWidthHalf; },
+        get dir_z() { return dir_z; },
+      });
+    }
 
-      const WallFactory = (posX, posY, posZ) => {
+    const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
+
+    const WallFactory = (posX, posY, posZ) => {
       const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
       const wallMesh = new THREE.Mesh(wallGeometry, normalMaterial);
       wallMesh.position.x = posX;
@@ -314,12 +323,24 @@ export class MultiplayerGame extends HTMLElement {
     const pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
     let lastBumperCollided;
 
+    function confirmInputs(data) {
+      const {action, content} = data;
+      for (let [i, input] of Bumpers[1].inputQueue.entries())
+      {
+        if (input[0] === action && input[1] <= content) {
+          Bumpers[1].inputQueue.splice(i, 1);
+          return true;
+        }
+      }
+      return false;
+    }
+
     function updateState(data) {
       if (!data) {
         return;
       }
       data.last_bumper_collided == "_bumper_1" ? lastBumperCollided = 0 : lastBumperCollided = 1;
-            
+
       Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
       Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
       Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
@@ -334,26 +355,26 @@ export class MultiplayerGame extends HTMLElement {
       Bumpers[0].cubeMesh.position.x = data.bumper_1.x;
 
       Bumpers[1].score = data.bumper_2.score;
-      Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
 
-      if (data.current_buff_or_debuff != -1)
-      {
+
+      if (data.current_buff_or_debuff != -1) {
         if (data.current_buff_or_debuff == 2)
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
+          Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
         else if (data.current_buff_or_debuff == 3)
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+          Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
         else if (data.current_buff_or_debuff == 4)
-            Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+          Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
         else if (data.current_buff_or_debuff == -2)
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+          Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
         else if (data.current_buff_or_debuff == -3)
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+          Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
         else if (data.current_buff_or_debuff == -4)
-            Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
+          Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
       }
       Bumpers[1].score = data.bumper_2.score;
       Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
     }
+    console.log(Bumpers)
 
     pongSocket.addEventListener('open', function(_) {
       console.log('Success! :3 ');
@@ -361,7 +382,13 @@ export class MultiplayerGame extends HTMLElement {
 
     let data;
     let ourBumper;
-    let playerId = '';
+    let playerIdContainer = (() => {
+      let actualPlayerId = '';
+      return ({
+        get playerId() { return actualPlayerId },
+        set playerId(newPlayerId) { actualPlayerId = newPlayerId }
+      })
+    })();
     pongSocket.addEventListener('message', (e) => {
       data = JSON.parse(e.data);
       switch (data.action) {
@@ -370,12 +397,19 @@ export class MultiplayerGame extends HTMLElement {
           // if (data.state.someone_scored)
           //     audio.cloneNode().play();
           break;
+        case 'move_left':
+        case 'move_right':
+          console.log(data)
+          if (data.player_id == playerIdContainer.playerId && !confirmInputs(data)) {
+            Bumpers[1].cubeMesh.position.x = data.position_x;
+          }
+          break;
         case 'player_joined':
-          playerId = data.player_id;
+          playerIdContainer.playerId = data.player_id;
           break;
         case 'game_paused':
           devLog('Game paused');
-          this.showOverlay('pause', data.state);
+          this.showOverlay('pause', data);
           break;
         case 'game_unpaused':
           devLog('Game unpaused');
@@ -384,7 +418,6 @@ export class MultiplayerGame extends HTMLElement {
         case 'game_cancelled':
           devLog('Game cancelled');
           this.showOverlay('cancel');
-          console.log(playerId)
           break;
 
         default:
@@ -402,16 +435,18 @@ export class MultiplayerGame extends HTMLElement {
 
       Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
       Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
-            // console.log(Coin.cylinderMesh.position);
+      // console.log(Coin.cylinderMesh.position);
       if (mixer) {
         mixer.update(delta);
       }
       renderer.render(scene, camera);
     }
 
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(pongSocket, Bumpers[1], playerIdContainer).bind(this)
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(pongSocket, Bumpers[1], playerIdContainer).bind(this)
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
- 
+
 
     return [camera, renderer, animate];
   }
@@ -427,7 +462,7 @@ export class MultiplayerGame extends HTMLElement {
 
     const navbarHeight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
-    window.addEventListener('resize', function () {
+    window.addEventListener('resize', function() {
       renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
       const rendererHeight = renderer.domElement.offsetHeight;
