@@ -24,16 +24,11 @@ def get_user_data(self):
         "date": timezone.now().isoformat(),
         "username": self.user.username,
         "nickname": self.user.nickname,
-        "avatar": (
-            self.profile_picture.url
-            if self.profile_picture
-            else settings.DEFAULT_USER_AVATAR
-        ),
+        "avatar": (self.profile_picture.url if self.profile_picture else settings.DEFAULT_USER_AVATAR),
     }
 
 
 class UserEventsConsumer(WebsocketConsumer):
-
     def connect(self):
         self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
@@ -52,21 +47,21 @@ class UserEventsConsumer(WebsocketConsumer):
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
                 if self.user_profile.nb_active_connexions >= max_connexions:
-                    logger.warning(
-                        "Too many simultaneous connexions for user %s", self.user.username)
+                    logger.warning("Too many simultaneous connexions for user %s", self.user.username)
                     self.close()
                     return
-                self.user_profile.nb_active_connexions = models.F(
-                    "nb_active_connexions") + 1
+                self.user_profile.nb_active_connexions = models.F("nb_active_connexions") + 1
                 self.user_profile.is_online = True
                 self.user_profile.last_activity = timezone.now()
-                self.user_profile.save(
-                    update_fields=["nb_active_connexions", "is_online", "last_activity"])
+                self.user_profile.save(update_fields=["nb_active_connexions", "is_online", "last_activity"])
                 self.user_profile.refresh_from_db()
                 self.user_profile.update_activity()
                 redis_status_manager.set_user_online(self.user.id)
-                logger.info("User %s connected, now has %i active connexions",
-                            self.user.username, self.user_profile.nb_active_connexions)
+                logger.info(
+                    "User %s connected, now has %i active connexions",
+                    self.user.username,
+                    self.user_profile.nb_active_connexions,
+                )
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
             self.close()
@@ -94,8 +89,7 @@ class UserEventsConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         if not hasattr(self, "user_profile"):
             return
-        logger.info("User %s has %s active connexions",
-                    self.user.username, self.user_profile.nb_active_connexions)
+        logger.info("User %s has %s active connexions", self.user.username, self.user_profile.nb_active_connexions)
         if not Profile.objects.filter(pk=self.user_profile.pk).exists():
             logger.info("User profile does not exist. Possibly deleted.")
             return
@@ -114,27 +108,25 @@ class UserEventsConsumer(WebsocketConsumer):
             # Décrémenter le compteur de connexions et récupérer la nouvelle valeur
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
-                self.user_profile.nb_active_connexions = models.F(
-                    "nb_active_connexions") - 1
+                self.user_profile.nb_active_connexions = models.F("nb_active_connexions") - 1
                 self.user_profile.save(update_fields=["nb_active_connexions"])
                 self.user_profile.refresh_from_db()
 
                 # S'assurer que le compteur ne devient pas négatif
                 if self.user_profile.nb_active_connexions < 0:
                     self.user_profile.nb_active_connexions = 0
-                    self.user_profile.save(
-                        update_fields=["nb_active_connexions"])
+                    self.user_profile.save(update_fields=["nb_active_connexions"])
 
-                logger.info("User %s has %s active connexions",
-                            self.user.username, self.user_profile.nb_active_connexions)
+                logger.info(
+                    "User %s has %s active connexions", self.user.username, self.user_profile.nb_active_connexions,
+                )
                 # Marquer comme hors ligne uniquement si c'était la dernière connexion
                 if self.user_profile.nb_active_connexions == 0:
                     self.user_profile.is_online = False
                     self.user_profile.save(update_fields=["is_online"])
                     redis_status_manager.set_user_offline(self.user.id)
                     OnlineStatusConsumer.notify_online_status(self, "offline")
-                    logger.info("User %s is now offline (no more active connexions)",
-                                self.user.username)
+                    logger.info("User %s is now offline (no more active connexions)", self.user.username)
 
                     # Remove user from the groups only when they have no more active connections
                     async_to_sync(self.channel_layer.group_discard)(
@@ -142,8 +134,11 @@ class UserEventsConsumer(WebsocketConsumer):
                         self.channel_name,
                     )
                 else:
-                    logger.info("User %s still has %i active connexions",
-                                self.user.username, self.user_profile.nb_active_connexions)
+                    logger.info(
+                        "User %s still has %i active connexions",
+                        self.user.username,
+                        self.user_profile.nb_active_connexions,
+                    )
 
         except DatabaseError as e:
             logger.error("Database error during disconnect: %s", e)
@@ -156,8 +151,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.channel_name,
             )
         except Chat.DoesNotExist:
-            logger.debug("Acces denied to the chat %s for %s",
-                         chat_id, self.user.username)
+            logger.debug("Acces denied to the chat %s for %s", chat_id, self.user.username)
 
     def is_valid_uuid(self, val):
         try:
@@ -197,12 +191,10 @@ class UserEventsConsumer(WebsocketConsumer):
         schema = {"game_speed", "is_ranked", "score_to_win", "time_limit_minutes"}
         for field in schema:
             if field not in options:
-                logger.warning(
-                    "Missing field [{%s}] for action game_invite", field)
+                logger.warning("Missing field [{%s}] for action game_invite", field)
                 return False
             if options.get(field) is None:
-                logger.warning(
-                    "Field [{%s}] if None for action game_invite", field)
+                logger.warning("Field [{%s}] if None for action game_invite", field)
                 return False
 
         allowed_game_speeds = {"slow", "normal", "fast"}
@@ -243,14 +235,16 @@ class UserEventsConsumer(WebsocketConsumer):
             "join_chat": ["chat_id"],
             "room_created": ["chat_id"],
         }
-       # Types verification
+        # Types verification
         if action in expected_types:
             for field, expected_type in expected_types[action].items():
                 value = data.get(field)
                 if not isinstance(value, expected_type):
                     logger.warning(
                         "Invalid type for '%s' (waited for %s, received %s)",
-                        field, expected_type.__name__, type(value).__name__,
+                        field,
+                        expected_type.__name__,
+                        type(value).__name__,
                     )
                     return False
 
@@ -295,8 +289,7 @@ class UserEventsConsumer(WebsocketConsumer):
             if action in required_fields:
                 for field in required_fields[action]:
                     if field not in entire_data:
-                        logger.warning(
-                            "Missing field [{%s}] for action {%s}", field, action)
+                        logger.warning("Missing field [{%s}] for action {%s}", field, action)
                         return
             if not self.validate_action_data(action, entire_data):
                 return
@@ -346,8 +339,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
         # security check: chat should exist
         chat = (
-            Chat.objects
-            .for_participants(self.user_profile)
+            Chat.objects.for_participants(self.user_profile)
             .with_other_user_profile_info(self.user_profile)
             .filter(id=chat_id)
             .first()
@@ -366,28 +358,31 @@ class UserEventsConsumer(WebsocketConsumer):
         if message is not None and len(message) > settings.MAX_MESSAGE_LENGTH:
             logger.warning(
                 "Message too long (%d caracteres) from user %s in chat %s",
-                len(message), self.user.username, chat_id,
+                len(message),
+                self.user.username,
+                chat_id,
             )
             return
-        new_message = ChatMessage.objects.create(
-            sender=self.user_profile, content=message, chat=chat)
+        new_message = ChatMessage.objects.create(sender=self.user_profile, content=message, chat=chat)
 
         async_to_sync(self.channel_layer.group_send)(
             f"chat_{chat_id}",
             {
                 "type": "chat_message",
-                "message": json.dumps({
-                    "action": "new_message",
-                    "data": {
-                        "chat_id": str(chat.id),
-                        "id": str(new_message.pk),
-                        "content": message,
-                        "date": new_message.date.isoformat(),
-                        "sender": self.user_profile.user.username,
-                        "is_read": False,
-                        "is_liked": False,
+                "message": json.dumps(
+                    {
+                        "action": "new_message",
+                        "data": {
+                            "chat_id": str(chat.id),
+                            "id": str(new_message.pk),
+                            "content": message,
+                            "date": new_message.date.isoformat(),
+                            "sender": self.user_profile.user.username,
+                            "is_read": False,
+                            "is_liked": False,
+                        },
                     },
-                }),
+                ),
             },
         )
 
@@ -398,20 +393,28 @@ class UserEventsConsumer(WebsocketConsumer):
         action = event.get("action")
         user_data = event.get("data", {})
 
-        self.send(text_data=json.dumps({
-            "action": action,
-            "data": user_data,
-        }))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": action,
+                    "data": user_data,
+                },
+            ),
+        )
 
     def user_status(self, event):
         """
         Handle user status messages from the channel layer.
         This method is called when a user's status changes (online/offline).
         """
-        self.send(text_data=json.dumps({
-            "action": event.get("action"),
-            "data": event.get("data"),
-        }))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": event.get("action"),
+                    "data": event.get("data"),
+                },
+            ),
+        )
 
     def handle_like_message(self, data):
         message_data = data.get("data", {})
@@ -428,8 +431,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     message.is_liked = True
                     message.save(update_fields=["is_liked"])
                     message.refresh_from_db()
-                    transaction.on_commit(
-                        lambda: self.send_like_update(chat_id, message_id, True))
+                    transaction.on_commit(lambda: self.send_like_update(chat_id, message_id, True))
                 self.send(
                     text_data=json.dumps(
                         {
@@ -460,8 +462,7 @@ class UserEventsConsumer(WebsocketConsumer):
                     message.save(update_fields=["is_liked"])
 
                     message.refresh_from_db()
-                    transaction.on_commit(
-                        lambda: self.send_like_update(chat_id, message_id, False))
+                    transaction.on_commit(lambda: self.send_like_update(chat_id, message_id, False))
 
                     message.refresh_from_db()
                     self.send(
@@ -483,14 +484,16 @@ class UserEventsConsumer(WebsocketConsumer):
             f"chat_{chat_id}",
             {
                 "type": "chat.like_update",
-                "message": json.dumps({
-                    "action": "like_message",
-                    "data": {
-                        "id": str(message_id),
-                        "chat_id": str(chat_id),
-                        "is_liked": is_liked,
+                "message": json.dumps(
+                    {
+                        "action": "like_message",
+                        "data": {
+                            "id": str(message_id),
+                            "chat_id": str(chat_id),
+                            "is_liked": is_liked,
+                        },
                     },
-                }),
+                ),
             },
         )
 
@@ -519,10 +522,14 @@ class UserEventsConsumer(WebsocketConsumer):
         Handle actions send to chat websocket
         """
         message_data = json.loads(event["message"])
-        self.send(text_data=json.dumps({
-            "action": message_data["action"],
-            "data": message_data["data"],
-        }))
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": message_data["action"],
+                    "data": message_data["data"],
+                },
+            ),
+        )
 
     def read_notification(self, data):
         notification_id = data["data"].get("id")
@@ -569,21 +576,30 @@ class UserEventsConsumer(WebsocketConsumer):
         client_id = data["data"].get("client_id")
         if sender == self.user.profile:
             logger.warning("Error : user %s wanted to accept a game with themself.", self.user.username)
+            self.send(
+                text_data=json.dumps(
+                    {
+                        "action": "game_invite_canceled",
+                        "message": "You can't accept invitations from yourself to a game !",
+                        "client_id": client_id,
+                    },
+                ),
+            )
+            return
+
+        is_in_game: bool = (
+            GameRoom.objects.for_players(self.user_profile).for_pending_or_ongoing_status().exists()
+        )
+        if is_in_game:
+            logger.warning("Error : user %s is in a game : can't accept invites.", self.user.username)
             self.send(text_data=json.dumps({
                 "action": "game_invite_canceled",
-                "message": "You can't accept invitations from yourself to a game !",
+                "message": "You are in an ongoing game",
                 "client_id": client_id,
             }))
             return
         # TODO: verify if user is in a game actually, if yes, no acceptations
         # if self.user_profile.resolve_game_id() is not None:
-        #     logger.warning("Error : user %s is in a game : can't accept invites.", self.user.username)
-        #     self.send(text_data=json.dumps({
-        #         "action": "game_invite_canceled",
-        #         "message": "You are in an ongoing game",
-        #         "client_id": client_id,
-        #     }))
-        #     return
         try:
             invitation = GameInvitation.objects.get(
                 sender=sender,
@@ -591,8 +607,9 @@ class UserEventsConsumer(WebsocketConsumer):
                 status=GameInvitation.PENDING,
             )
         except GameInvitation.DoesNotExist:
-            logger.debug("No pending invitations sent by %s to cancel for user %s",
-                         sender.user.username, self.user.username)
+            logger.debug(
+                "No pending invitations sent by %s to cancel for user %s", sender.user.username, self.user.username,
+            )
             self.send(
                 text_data=json.dumps(
                     {
@@ -603,8 +620,11 @@ class UserEventsConsumer(WebsocketConsumer):
             )
             return
         except GameInvitation.MultipleObjectsReturned:
-            logger.warning("Multiple invitations sent by %s to user %s have the PENDING status !",
-                           sender.user.username, self.user.username)
+            logger.warning(
+                "Multiple invitations sent by %s to user %s have the PENDING status !",
+                sender.user.username,
+                self.user.username,
+            )
             return
         game_room = self.create_game_room(sender, self.user.profile)
         invitation.status = GameInvitation.ACCEPTED
@@ -629,10 +649,12 @@ class UserEventsConsumer(WebsocketConsumer):
         if not invitations.exists():
             logger.debug("No pending invitations sent by %s to cancel for user %s", sender, self.user.username)
             self.send(
-                text_data=json.dumps({
-                    "action": "game_invite_canceled",
-                    "message": "No pending invitations found.",
-                }),
+                text_data=json.dumps(
+                    {
+                        "action": "game_invite_canceled",
+                        "message": "No pending invitations found.",
+                    },
+                ),
             )
             return
         with transaction.atomic():
@@ -644,13 +666,15 @@ class UserEventsConsumer(WebsocketConsumer):
                 count += 1
             logger.info("Declined %d pending invitations from %s to %s", count, sender_name, self.user.username)
         self.send(
-            text_data=json.dumps({
-                "action": "game_declined",
-                "data": {
-                    "username": self.user.username,
-                    "nickname": self.user.nickname,
+            text_data=json.dumps(
+                {
+                    "action": "game_declined",
+                    "data": {
+                        "username": self.user.username,
+                        "nickname": self.user.nickname,
+                    },
                 },
-            }),
+            ),
         )
         notification_data = get_user_data(self.user_profile)
         notification_data.update({"status": "declined"})
@@ -674,11 +698,15 @@ class UserEventsConsumer(WebsocketConsumer):
         receiver_username = data["data"].get("username")
         if receiver_username == self.user.username:
             logger.warning("Error : user %s wanted to play with themself.", self.user.username)
-            self.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "You can't invite yourself to a game !",
-                "client_id": client_id,
-            }))
+            self.send(
+                text_data=json.dumps(
+                    {
+                        "action": "game_invite_canceled",
+                        "message": "You can't invite yourself to a game !",
+                        "client_id": client_id,
+                    },
+                ),
+            )
             return
 
         client_id = data["data"].get("client_id")
@@ -698,13 +726,17 @@ class UserEventsConsumer(WebsocketConsumer):
         #         "client_id": client_id,
         #     }))
         #     return
-        if (GameInvitation.objects.filter(sender=self.user_profile, status=GameInvitation.PENDING).exists()):
+        if GameInvitation.objects.filter(sender=self.user_profile, status=GameInvitation.PENDING).exists():
             logger.warning("Error : user %s has more than one pending invitation.", self.user.username)
-            self.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "You have one invitation pending",
-                "client_id": client_id,
-            }))
+            self.send(
+                text_data=json.dumps(
+                    {
+                        "action": "game_invite_canceled",
+                        "message": "You have one invitation pending",
+                        "client_id": client_id,
+                    },
+                ),
+            )
             return
         invitation = GameInvitation.objects.create(
             sender=self.user_profile,
@@ -726,10 +758,12 @@ class UserEventsConsumer(WebsocketConsumer):
             f"user_{receiver.user.id}",
             {
                 "type": "chat_message",
-                "message": json.dumps({
-                    "action": "game_invite",
-                    "data": notification_data,
-                }),
+                "message": json.dumps(
+                    {
+                        "action": "game_invite",
+                        "data": notification_data,
+                    },
+                ),
             },
         )
 
@@ -752,25 +786,29 @@ class UserEventsConsumer(WebsocketConsumer):
                 count += 1
             logger.info("Cancelled %d pending invitations for user %s", count, self.user.username)
         self.send(
-            text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "data": {
-                    "username": self.user.username,
-                    "nickname": self.user.nickname,
-                },
-            }),
-        )
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{receiver.user.id}",
-            {
-                "type": "chat_message",
-                "message": json.dumps({
+            text_data=json.dumps(
+                {
                     "action": "game_invite_canceled",
                     "data": {
                         "username": self.user.username,
                         "nickname": self.user.nickname,
                     },
-                }),
+                },
+            ),
+        )
+        async_to_sync(self.channel_layer.group_send)(
+            f"user_{receiver.user.id}",
+            {
+                "type": "chat_message",
+                "message": json.dumps(
+                    {
+                        "action": "game_invite_canceled",
+                        "data": {
+                            "username": self.user.username,
+                            "nickname": self.user.nickname,
+                        },
+                    },
+                ),
             },
         )
 
