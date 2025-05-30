@@ -139,7 +139,8 @@ export const API_ENDPOINTS = {
    * @param {number} offset - The offset for pagination.
    * @return {string} The full API URL for the chat messages.
    */
-  CHAT_MESSAGES: (username, limit, offset) => `${API_BASE_URL}${API_CHAT}/${username}/messages?limit=${limit}&offset=${offset}`,
+  CHAT_MESSAGES: (username, limit, offset) =>
+    `${API_BASE_URL}${API_CHAT}/${username}/messages?limit=${limit}&offset=${offset}`,
 
   /**
    * GET: Gets notifications of the user who is currently logged in. Paginated by the limit and offset settings.
@@ -148,7 +149,8 @@ export const API_ENDPOINTS = {
    * @param {number} offset - The offset for pagination.
    * @return {string} The full API URL for the user's notifications.
    */
-  NOTIFICATIONS: (isread, limit, offset) => `${API_BASE_URL}${API_NOTIFICATIONS}?is_read=${isread}&limit=${limit}&offset=${offset}`,
+  NOTIFICATIONS: (isread, limit, offset) =>
+    `${API_BASE_URL}${API_NOTIFICATIONS}?is_read=${isread}&limit=${limit}&offset=${offset}`,
 
   /**
    * POST: Marks all notifications as read.
@@ -157,15 +159,15 @@ export const API_ENDPOINTS = {
   NOTIDICATIONS_READ: `${API_BASE_URL}${API_NOTIFICATIONS}/mark_all_as_read`,
 
   /**
-  * GET: Gets daily elo change statistics for a specific user in the form of overall elo gained across last days.
-  * Paginated by the limit and offset settings.
-  * @param {string} username - The username of the user to retrieve daily elo statistics for.
-  * @param {number} limit - The maximum number of daily elo statistics to return.
-  * @param {number} offset - The offset for pagination.
-  * @return {string} The full API URL for the user's daily elo statistics.
-  */
-  DAILY_ELO: (username, limit, offset) => `${API_BASE_URL}${API_GAME_STATS}/${username}/daily-elo?limit=${limit}&offset=${offset}`,
-
+   * GET: Gets daily elo change statistics for a specific user in the form of overall elo gained across last days.
+   * Paginated by the limit and offset settings.
+   * @param {string} username - The username of the user to retrieve daily elo statistics for.
+   * @param {number} limit - The maximum number of daily elo statistics to return.
+   * @param {number} offset - The offset for pagination.
+   * @return {string} The full API URL for the user's daily elo statistics.
+   */
+  DAILY_ELO: (username, limit, offset) =>
+    `${API_BASE_URL}${API_GAME_STATS}/${username}/daily-elo?limit=${limit}&offset=${offset}`,
 
   /**
    * GET: Gets match history of a specific user. Paginated by the limit and offset settings.
@@ -177,7 +179,8 @@ export const API_ENDPOINTS = {
    * @return {string} The full API URL for the user's match history.
    * @description
    * */
-  MATCHES: (username, order, result, limit, offset) => `${API_BASE_URL}${API_GAME_STATS}/${username}/matches?order=${order}&result=${result}&limit=${limit}&offset=${offset}`,
+  MATCHES: (username, order, result, limit, offset) =>
+    `${API_BASE_URL}${API_GAME_STATS}/${username}/matches?order=${order}&result=${result}&limit=${limit}&offset=${offset}`,
 
   /**
    * GET: Gets full stats of a specific match by its id.
@@ -193,8 +196,35 @@ export const API_ENDPOINTS = {
   NEW_TOURNAMENT: `${API_BASE_URL}${API_TOURNAMENTS}`,
 
   /**
+   * GET: Gets a list of tournaments. Filtered by status. Paginated by the limit and offset settings.
+   * @param {string} status - The status of the tournaments (all or ongoing).
+   * @param {number} limit - The maximum number of tournaments to return.
+   * @param {number} offset - The offset for pagination.
+   * @return {string} The full API URL for the tournaments list.
+   * */
+  TOURNAMENTS: (status, limit, offset) =>
+    `${API_BASE_URL}${API_TOURNAMENTS}?status=${status}&limit=${limit}&offset=${offset}`,
+
+  /**
    * GET: Gets a specific tournament by id. Paginated by the limit and offset settings.
+   * DELETE: Cancels a specific tournament by id.
+   * @param {string} id - The id of the tournament to retrieve.
    * @return {string} The full API URL for the tournaments list.
    * */
   TOURNAMENT: (id) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}`,
+
+  /**
+   * POST: Registers the user to a specific tournament by id.
+   * @param {string} id - The id of the tournament to register to.
+   * @param {string} alias - The alias of the user to register.
+   * @return {string} The full API URL for registering to the tournament.
+   * */
+  TOURNAMENT_REGISTER: (id, alias) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}/register?alias=${alias}`,
+
+  /**
+   * DELETE: Unregisters the user from a specific tournament by id.
+   * @param {string} id - The id of the tournament to unregister from.
+   * @return {string} The full API URL for unregistering from the tournament.
+   */
+  TOURNAMENT_UNREGISTER: (id) => `${API_BASE_URL}${API_TOURNAMENTS}/${id}/unregister`,
 };

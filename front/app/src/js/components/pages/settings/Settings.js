@@ -98,9 +98,11 @@ export class Settings extends HTMLElement {
     const userIdentity = this.userIdentityField.newUserIdentity;
     const newEmail = this.emailField.newEmail;
 
-    if (this.#state.currentUserData.connection_type === 'regular' &&
-       (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) ||
-        !this.passwordField.checkPasswordInput())) {
+    if (
+      this.#state.currentUserData.connection_type === 'regular' &&
+      (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) ||
+        !this.passwordField.checkPasswordInput())
+    ) {
       return;
     }
 
@@ -147,13 +149,12 @@ export class Settings extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, 'No changes to save', 2000);
       return;
     }
-    /* eslint-disable-next-line new-cap */
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SETTINGS(this.#state.username),
-        formData,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_SETTINGS(this.#state.username),
+      formData,
+      true,
     );
     if (response.success) {
       this.#state.username = response.data.username;
@@ -162,7 +163,6 @@ export class Settings extends HTMLElement {
       auth.updateStoredUser(this.#state.currentUserData);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 2000);
     } else {
-      console.log('Error updating settings', response);
       if (response.status === 401) {
         return;
       }

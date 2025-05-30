@@ -1,16 +1,20 @@
 import { router } from '@router';
+import { socketManager } from '@socket';
 import { getRelativeTime } from '@utils';
 
 export class NotificationsListItem extends HTMLElement {
   #state = {
+    username: '',
     action: '',
     data: null,
   };
 
   message = {
-    gameInvitation: (username) => `${username} challenges you to a duel.`,
-    newTournament: (username, tournamentName) => `${username} is calling all gunslingers to a new tournament - ${tournamentName}!`,
-    newFriend: (username) =>`${username} just roped you in as a friend.`,
+    gameInvitation: (nickname) => `${nickname} challenges you to a duel.`,
+    pendingGameInvitation: (nickname) => `You've challenged '${nickname} to a duel.`,
+    newTournament: (nickname, tournamentName) =>
+      `${nickname} is calling all gunslingers to a new tournament - ${tournamentName}!`,
+    newFriend: (nickname) => `${nickname} just roped you in as a friend.`,
   };
 
   constructor() {
@@ -18,6 +22,7 @@ export class NotificationsListItem extends HTMLElement {
 
     this.handleAcceptDuel = this.handleAcceptDuel.bind(this);
     this.handleDeclineDuel = this.handleDeclineDuel.bind(this);
+    this.cancelDuelInvitation = this.cancelDuelInvitation.bind(this);
     this.handleParticipateTournament = this.handleParticipateTournament.bind(this);
     this.navigateToProfile = this.navigateToProfile.bind(this);
   }
@@ -31,6 +36,8 @@ export class NotificationsListItem extends HTMLElement {
   disconnectedCallback() {
     this.acceptButton?.removeEventListener('click', this.handleAcceptDuel);
     this.declineButton?.removeEventListener('click', this.handleDeclineDuel);
+    this.cancelInviteButton?.removeEventListener('click', this.cancelDuelInvitation);
+    this.seeProfileButton?.removeEventListener('click', this.navigateToProfile);
     this.participateButton?.removeEventListener('click', this.handleParticipateTournament);
     if (this.#state.action === 'new_friend') {
       this.removeEventListener('click', this.navigateToProfile);
@@ -47,28 +54,38 @@ export class NotificationsListItem extends HTMLElement {
     this.buttonWrapper = this.querySelector('.call-to-action-groupe');
     switch (this.#state.action) {
       case 'game_invite':
-        this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
-
-        this.acceptButton = document.createElement('button');
-        this.acceptButton.textContent = 'Accept';
-        this.acceptButton.addEventListener('click', this.handleAcceptDuel);
-        this.declineButton = document.createElement('button');
-        this.declineButton.textContent = 'Decline';
-        this.declineButton.addEventListener('click', this.handleDeclineDuel);
-        this.buttonWrapper.appendChild(this.acceptButton);
-        this.buttonWrapper.appendChild(this.declineButton);
+        this.seeProfileButton = document.createElement('button');
+        this.seeProfileButton.textContent = 'See profile';
+        this.seeProfileButton.addEventListener('click', this.navigateToProfile);
+        this.buttonWrapper.appendChild(this.seeProfileButton);
+        if (this.#state.data.username !== this.#state.username) {
+          this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
+          this.acceptButton = document.createElement('button');
+          this.acceptButton.textContent = 'Accept';
+          this.acceptButton.addEventListener('click', this.handleAcceptDuel);
+          this.declineButton = document.createElement('button');
+          this.declineButton.textContent = 'Decline';
+          this.declineButton.addEventListener('click', this.handleDeclineDuel);
+          this.buttonWrapper.appendChild(this.acceptButton);
+          this.buttonWrapper.appendChild(this.declineButton);
+        } else {
+          this.content.textContent = this.message.pendingGameInvitation(this.#state.data.nickname);
+          this.cancelInviteButton = document.createElement('button');
+          this.cancelInviteButton.textContent = 'Cancel';
+          this.cancelInviteButton.addEventListener('click', this.cancelDuelInvitation);
+          this.buttonWrapper.appendChild(this.cancelInviteButton);
+        }
         break;
-
       case 'new_tournament':
-        this.querySelector('.notification-content').textContent =
-          this.message.newTournament(this.#state.data.nickname, this.#state.data.tournament_name);
-
+        this.querySelector('.notification-content').textContent = this.message.newTournament(
+          this.#state.data.nickname,
+          this.#state.data.name,
+        );
         this.participateButton = document.createElement('button');
         this.participateButton.textContent = 'Participate';
         this.participateButton.addEventListener('click', this.handleParticipateTournament);
         this.buttonWrapper.appendChild(this.participateButton);
         break;
-
       case 'new_friend':
         this.querySelector('.notification-content').textContent = this.message.newFriend(this.#state.data.nickname);
         this.seeProfileButton = document.createElement('button');
@@ -79,16 +96,43 @@ export class NotificationsListItem extends HTMLElement {
     }
   }
 
+  replyGameInvite(accept) {
+    const message = {
+      action: 'reply_game_invite',
+      data: {
+        username: this.#state.data.username,
+        accept: accept,
+      },
+    };
+    socketManager.sendMessage('livechat', message);
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
+  }
+
   handleAcceptDuel() {
-    console.log('Duel accepted');
+    this.replyGameInvite(true);
   }
 
   handleDeclineDuel() {
-    console.log('Duel declined');
+    this.replyGameInvite(false);
+  }
+
+  cancelDuelInvitation() {
+    const message = {
+      action: 'cancel_game_invite',
+      data: {
+        username: this.#state.data.username,
+      },
+    };
+    socketManager.sendMessage('livechat', message);
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
   }
 
   handleParticipateTournament() {
     console.log('Participating in tournament');
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
   }
 
   navigateToProfile() {

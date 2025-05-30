@@ -1,9 +1,10 @@
-import { mockTournamentList } from '@mock/functions/mockTournamentListData.js';
+import { apiRequest, API_ENDPOINTS } from '@api';
+// import { mockTournamentList } from '@mock/functions/mockTournamentListData.js'; // For Test
 
 export class TournamentList extends HTMLElement {
   #state = {
     tournaments: [],
-    filter: 'lobby',
+    filter: 'pending',
     totalTournaments: 0,
     currentLastItemIndex: 0,
     isLoading: false,
@@ -20,6 +21,7 @@ export class TournamentList extends HTMLElement {
 
     this.renderList = this.renderList.bind(this);
     this.filterTournament = this.filterTournament.bind(this);
+    this.loadMoreItems = this.loadMoreItems.bind(this);
   }
 
   connectedCallback() {
@@ -31,24 +33,11 @@ export class TournamentList extends HTMLElement {
     this.filterButton?.removeEventListener('click', this.filterTournament);
     this.filterOpenButton?.removeEventListener('click', this.filterTournament);
     this.filterAllButton?.removeEventListener('click', this.filterTournament);
+    this.listWrapper?.removeEventListener('scrollend', this.loadMoreItems);
   }
 
   getTournamentById(id) {
-    return this.#state.tournaments.find(item => item.tournament_id === id);
-  }
-
-  setNewTournament(tournament) {
-    this.#state.tournaments.unshift(tournament);
-    console.log('New tournament added:', tournament);
-    this.#state.totalTournaments++;
-    const item = this.renderRow(tournament);
-    this.list.insertBefore(item, this.list.firstChild);
-    this.#state.currentLastItemIndex++;
-    this.filterButton.classList.remove('d-none');
-    const noItem = this.list.querySelector('#no-open-tournaments');
-    if (noItem) {
-      this.list.removeChild(noItem);
-    }
+    return this.#state.tournaments.find((item) => item.id === id);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -59,24 +48,20 @@ export class TournamentList extends HTMLElement {
 
     this.listWrapper = this.querySelector('#tournament-list-wrapper');
     this.list = this.querySelector('#tournament-list');
-    this.filterButton = this.querySelector('#game-history-filter');
+    this.filterButton = this.querySelector('#tournament-list-filter');
     this.filterOpenButton = this.querySelector('#tournament-filter-open');
     this.filterAllButton = this.querySelector('#tournament-filter-all');
 
-    this.listWrapper?.addEventListener('scrollend', this.renderList);
+    this.listWrapper?.addEventListener('scrollend', this.loadMoreItems);
     this.filterButton?.addEventListener('click', this.filterTournament);
     this.filterOpenButton?.addEventListener('click', this.filterTournament);
     this.filterAllButton?.addEventListener('click', this.filterTournament);
-  
+
     this.renderList();
   }
 
-  async renderList(event) {
-    if (event) {
-      // TODO: Handle scroll event
-    }
-    if (this.#state.isLoading ||
-      (this.#state.totalTournaments > 0 && this.#state.tournaments.length === this.#state.totalTournaments)) {
+  async renderList() {
+    if (this.#state.totalTournaments > 0 && this.#state.tournaments.length === this.#state.totalTournaments) {
       return;
     }
     this.#state.isLoading = true;
@@ -88,14 +73,14 @@ export class TournamentList extends HTMLElement {
       return;
     }
     for (let i = this.#state.currentLastItemIndex; i < this.#state.tournaments.length; i++) {
-      if (this.#state.filter === 'lobby' && this.#state.tournaments[i].status !== this.#state.filter) {
+      if (this.#state.filter === 'pending' && this.#state.tournaments[i].status !== this.#state.filter) {
         continue;
       }
       const item = this.renderRow(this.#state.tournaments[i]);
       this.list.appendChild(item);
       ++this.#state.currentLastItemIndex;
     }
-    if (this.#state.filter === 'lobby' && this.#state.currentLastItemIndex === 0) {
+    if (this.#state.filter === 'pending' && this.#state.currentLastItemIndex === 0) {
       this.renderNoItem();
     }
     this.#state.isLoading = false;
@@ -112,38 +97,49 @@ export class TournamentList extends HTMLElement {
     const tournamentStatus = item.querySelector('.tournament-status');
     const tournamentParticipants = item.querySelector('.tournament-participants');
     const currentParticipants = tournament.participants_count ? tournament.participants_count : 0;
-    tournamentName.textContent = tournament.tournament_name;
+    tournamentName.textContent = tournament.name;
     tournamentOrganizer.textContent = 'by ' + tournament.creator.nickname;
     tournamentOrganizerAvatar.src = tournament.creator.avatar;
     tournamentOrganizerAvatar.alt = tournament.creator.nickname;
     tournamentStatus.textContent = this.tournamentStatus(tournament.status);
     tournamentParticipants.textContent = `${currentParticipants} / ${tournament.required_participants} players`;
 
-    item.setAttribute('tournament-id', tournament.tournament_id);
+    item.setAttribute('tournament-id', tournament.id);
     return item;
   }
 
   renderNoItem() {
+    const message = 'No tournaments available at the moment. Create a new one to get started.';
     const item = document.createElement('li');
     item.className = 'list-group-item text-center border-0 bg-transparent py-3';
     item.id = 'no-open-tournaments';
-    item.textContent = 'No tournaments available at the moment. Create a new one to get started.';
+    item.textContent = message;
     this.list.appendChild(item);
     this.filterButton.classList.add('d-none');
   }
- 
+
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
   async fetchTournamentList() {
-    // TEST
-    const response = await mockTournamentList();
-    this.#state.tournaments = response.items;
-    this.#state.totalTournaments = response.count;
+    // // TEST
+    // const response = await mockTournamentList();
+    // this.#state.tournaments.push(...response.items);
+    // this.#state.totalTournaments = this.#state.tournaments.length;
 
-    // if (response.success) {
-      // this.#state.tournaments = response.items;
-    // }
+    const response = await apiRequest(
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENTS(this.#state.filter, 10, this.#state.currentLastItemIndex),
+      null,
+      false,
+      true,
+    );
+    if (!response.success) {
+      return;
+    }
+    this.#state.tournaments.push(...response.data.items);
+    this.#state.totalTournaments = response.data.count;
   }
 
   filterTournament(event) {
@@ -162,16 +158,33 @@ export class TournamentList extends HTMLElement {
     this.renderList();
   }
 
+  async loadMoreItems(event) {
+    if (this.#state.isLoading) {
+      return;
+    }
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+    const threshold = 10;
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalTournaments <= this.#state.currentLastItemIndex
+    ) {
+      return;
+    }
+    this.#state.isLoading = true;
+    await this.renderList(event);
+    this.#state.isLoading = false;
+  }
+
   /* ------------------------------------------------------------------------ */
   /*      Template & style                                                    */
   /* ------------------------------------------------------------------------ */
   template() {
     return `
-    <div class="dropdown-toggle text-end mb-2" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="game-history-filter">
+    <div class="dropdown-toggle text-end mb-2" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="tournament-list-filter">
       Open for entries
     </div>
-    <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="game-history-filter">
-      <button class="dropdown-item text-center" id="tournament-filter-open" filter="lobby">Open for entries</button>
+    <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="tournament-list-filter">
+      <button class="dropdown-item text-center" id="tournament-filter-open" filter="pending">Open for entries</button>
       <button class="dropdown-item text-center" id="tournament-filter-all" filter="all">All tournaments</button>
     </div>
 
@@ -225,10 +238,9 @@ export class TournamentList extends HTMLElement {
 
   tournamentStatus(status) {
     const message = {
-      lobby: 'Open for entries',
+      pending: 'Open for entries',
       ongoing: 'Ongoing',
       finished: 'Finished',
-      cancelled: 'Cancelled',
     };
     return message[status] || 'Unknown';
   }

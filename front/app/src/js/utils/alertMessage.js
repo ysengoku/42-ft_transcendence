@@ -13,6 +13,18 @@ export const ALERT_TYPE = {
   LIGHT: 'alert-light',
 };
 
+const HEADER = {
+  'alert-success': 'Mighty fine!',
+  'alert-danger': 'Oops!',
+  'alert-light': 'Careful!',
+};
+
+const ICON = {
+  'alert-success': 'bi-hand-thumbs-up',
+  'alert-danger': 'bi-x-octagon',
+  'alert-light': 'bi-exclamation-octagon',
+};
+
 /**
  * Displays an alert message in the specified container.
  * @param {string} type - The type of alert (e.g., 'alert-success', 'alert-danger', 'alert-light').
@@ -23,20 +35,14 @@ export function showAlertMessage(type, message) {
   if (alertContainer) {
     alertContainer.innerHTML = '';
     const alertMessage = document.createElement('div');
-    alertMessage.className = `alert ${type} alert-dismissible fade show mt-2`;
-    alertMessage.role = 'alert';
 
-    const alertContent = document.createElement('div');
-    alertContent.textContent = message;
-
-    const dismissButton = document.createElement('button');
-    dismissButton.type = 'button';
-    dismissButton.className = 'btn-close';
-    dismissButton.setAttribute('data-bs-dismiss', 'alert');
-    dismissButton.setAttribute('aria-label', 'close');
-
-    alertMessage.appendChild(alertContent);
-    alertMessage.appendChild(dismissButton);
+    alertMessage.innerHTML = alertContentTemplate(type);
+    const iconElement = alertMessage.querySelector('#alert-icon');
+    const headerElement = alertMessage.querySelector('#alert-header');
+    const messageElement = alertMessage.querySelector('#alert-message');
+    iconElement.classList.add(ICON[type]);
+    headerElement.textContent = HEADER[type];
+    messageElement.textContent = message;
     alertContainer.appendChild(alertMessage);
   }
 }
@@ -47,7 +53,7 @@ export function showAlertMessage(type, message) {
  * @param {string} message - The message to display in the alert.
  * @param {number} duration - The duration (in milliseconds) to display the alert.
  */
-export function showAlertMessageForDuration(type, message, duration=3000) {
+export function showAlertMessageForDuration(type, message, duration = 3000) {
   showAlertMessage(type, message);
   setTimeout(() => {
     removeAlert();
@@ -71,4 +77,17 @@ export function addDissmissAlertListener() {
   document.addEventListener('click', removeAlert);
   window.addEventListener('popstate', removeAlert);
   window.addEventListener('pushstate', removeAlert);
+}
+
+function alertContentTemplate(type) {
+  return `
+    <div class="alert ${type} alert-dismissible fade show mt-2" role="alert">
+      <div class="d-flex flex-column align-items-center ms-5 me-3 p-4">
+        <i id="alert-icon" class="class="bi mb-2" style="font-size: 3rem"></i>
+        <div id="alert-header" class="fs-4 fw-bold mb-2"></div>
+        <div id="alert-message"></div>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
 }

@@ -163,12 +163,12 @@ export class Chat extends HTMLElement {
 
   async fetchChatList(offset = 0) {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT_LIST(10, offset),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.CHAT_LIST(10, offset),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       devLog('Chat list response:', response);
@@ -178,12 +178,12 @@ export class Chat extends HTMLElement {
 
   async fetchChatData() {
     const response = await apiRequest(
-        'PUT',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT(this.#state.currentChatUsername),
-        null,
-        false,
-        true,
+      'PUT',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.CHAT(this.#state.currentChatUsername),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       devLog('Chat data response:', response);
@@ -298,6 +298,7 @@ export class Chat extends HTMLElement {
   template() {
     return `
     <div class="container-fluid d-flex flex-row flex-grow-1 p-0" id="chat-component-container">
+      <invite-game-modal></invite-game-modal>
       <div class="chat-list-wrapper col-12 col-md-4" id="chat-list-container">
           <chat-list-component></chat-list-component>
       </div>
