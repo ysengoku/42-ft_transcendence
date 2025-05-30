@@ -27,9 +27,9 @@ jobs:
         working-directory: ./front/app
         run: npm install
 
-      # - name: Format with Prettier
-      #   working-directory: ./front/app
-      #   run: npm run format
+      - name: Format with Prettier
+        working-directory: ./front/app
+        run: npm run format
 
       - name: Run linter and fix
         working-directory: ./front/app/
