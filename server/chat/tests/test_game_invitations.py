@@ -1,13 +1,17 @@
+import asyncio
 import logging
 
 from channels.db import database_sync_to_async
+from django.contrib.auth import get_user_model
 
 from chat.models import GameInvitation
 from chat.tests.test_security_chat_consumers import UserEventsConsumerTests
+from users.models import Profile
 
 logger = logging.getLogger("server")
 
 logging.getLogger("server").setLevel(logging.CRITICAL)
+logging.getLogger("server").setLevel(logging.INFO)
 
 
 class GameInvitationTests(UserEventsConsumerTests):
@@ -253,3 +257,74 @@ class GameInvitationTests(UserEventsConsumerTests):
 
         await communicator.disconnect()
         await target_user.disconnect()
+
+    async def test_game_invite_valid_canceled_after_accept_other(self):
+        john = await self.get_authenticated_communicator(
+            username="john", password="testpass",
+        )
+        sleepy_joe = await self.get_authenticated_communicator(
+            username="sleepy_joe", password="testpass",
+        )
+        communicator = await self.get_authenticated_communicator(
+            username="communicator", password="testpass",
+        )
+        invite_sleepy_joe = {
+            "action": "game_invite",
+            "data": {
+                "username": "sleepy_joe",
+                "client_id": "client_id",
+                "options": {
+                    "game_speed": "any",
+                    "is_ranked": "any",
+                    "score_to_win": "any",
+                    "time_limit_minutes": "any",
+                },
+            },
+        }
+
+        invite_communicator = {
+            "action": "game_invite",
+            "data": {
+                "username": "communicator",
+                "client_id": "client_id",
+                "options": {
+                    "game_speed": "any",
+                    "is_ranked": "any",
+                    "score_to_win": "any",
+                    "time_limit_minutes": "any",
+                },
+            },
+        }
+
+        await communicator.send_json_to(invite_sleepy_joe)
+        await communicator.receive_nothing(timeout=0.1)
+        await asyncio.sleep(0.1)  # Need sleeps for the count to be ok
+        count = await database_sync_to_async(GameInvitation.objects.count)()
+        assert count == 1
+
+        await john.send_json_to(invite_communicator)
+        await john.receive_nothing(timeout=0.1)
+        await asyncio.sleep(0.1)
+        count = await database_sync_to_async(GameInvitation.objects.count)()
+        assert count == 2
+
+        accept_invite = {
+            "action": "reply_game_invite",
+            "data": {
+                "accept": True,
+                "username": "john",
+                "client_id": "client_id",
+            },
+        }
+        await communicator.send_json_to(accept_invite)
+        await communicator.receive_nothing(timeout=0.1)
+        communicator_user = await database_sync_to_async(get_user_model().objects.get)(username="communicator")
+        communicator_profile = await database_sync_to_async(Profile.objects.get)(user=communicator_user)
+        pending_invitations = await database_sync_to_async(
+            lambda: list(GameInvitation.objects.filter(sender=communicator_profile, status="pending")),
+        )()
+        assert len(pending_invitations) == 0, f"Communicator still has pending invitations: {pending_invitations}"
+
+        await communicator.disconnect()
+        await john.disconnect()
+        await sleepy_joe.disconnect()
