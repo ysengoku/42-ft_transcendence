@@ -57,7 +57,7 @@ export async function mockTournamentList() {
     },
     {
       id: 'dgladiator123asdasd',
-      name: 'Gladiator\'s Arena',
+      name: "Gladiator's Arena",
       date: null,
       status: 'lobby',
       creator: {

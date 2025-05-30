@@ -215,9 +215,9 @@ export class TournamentMenu extends HTMLElement {
       } else {
         tournamentWinnerAvatar.classList.add('d-none');
       }
-      tournamentWinnerAlias.textContent = this.selectedTournament.winner ?
-        this.selectedTournament.winner.alias :
-        'Data not available';
+      tournamentWinnerAlias.textContent = this.selectedTournament.winner
+        ? this.selectedTournament.winner.alias
+        : 'Data not available';
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
