@@ -216,7 +216,6 @@ export class MultiplayerGame extends HTMLElement {
             if (!data)
                 return;
             data.last_bumper_collided == "_bumper_1" ? lastBumperCollided = 0 : lastBumperCollided = 1;
-            console.log(data.last_bumper_collided)
             
             Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
             Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
@@ -234,7 +233,6 @@ export class MultiplayerGame extends HTMLElement {
             Bumpers[1].score = data.bumper_2.score;
             Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
 
-            console.log(data.current_buff_or_debuff);
             if (data.current_buff_or_debuff != -1)
             {
                 if (data.current_buff_or_debuff == 2)
@@ -316,15 +314,30 @@ export class MultiplayerGame extends HTMLElement {
                 return; // Do noplayerglb if the event was already processed
             }
             var keyCode = event.code;
-            if (keyCode == 'ArrowLeft')
-                
-                pongSocket.send(JSON.stringify({ action: "move_left", content: true, player_id }))
-            if (keyCode == 'ArrowRight')
-                pongSocket.send(JSON.stringify({ action: "move_right", content: true, player_id }))
-            if (keyCode == 'KeyA')
-                pongSocket.send(JSON.stringify({ action: "move_left", content: true, player_id }))
-            if (keyCode == 'KeyD')
-                pongSocket.send(JSON.stringify({ action: "move_right", content: true, player_id }))
+            if (keyCode == 'ArrowLeft') {1
+                let now = Date.now();
+                console.log(now);
+                Bumpers[1].inputQueue.push(now);
+                pongSocket.send(JSON.stringify({ action: "move_left", content: now, player_id }))
+            }
+            if (keyCode == 'ArrowRight') {
+                let now = -Date.now();
+                console.log(now);
+                Bumpers[1].inputQueue.push(now);
+                pongSocket.send(JSON.stringify({ action: "move_right", content: now, player_id }))
+            }
+            if (keyCode == 'KeyA') {
+                let now = Date.now();
+                console.log(now);
+                Bumpers[1].inputQueue.push(now);
+                pongSocket.send(JSON.stringify({ action: "move_left", content: now, player_id }))
+            }
+            if (keyCode == 'KeyD') {
+                let now = -Date.now();
+                console.log(now);
+                Bumpers[1].inputQueue.push(now);
+                pongSocket.send(JSON.stringify({ action: "move_right", content: now, player_id }))
+            }
             event.preventDefault();
         }
         function onDocumentKeyUp(event) {
