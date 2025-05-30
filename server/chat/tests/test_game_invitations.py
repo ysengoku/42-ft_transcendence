@@ -19,6 +19,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "action": "game_invite",
             "data": {
                 "username": "targetuser",
+                "client_id": "client_id",
                 "options": "bullshit",
             },
         }
@@ -30,6 +31,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         # 2. Invalid game_speed
         invalid_data_2 = {
             "action": "game_invite",
+            "client_id": "client_id",
             "data": {
                 "username": "targetuser",
                 "options": {
@@ -48,6 +50,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         # 3. Invalid is_ranked
         invalid_data_2 = {
             "action": "game_invite",
+            "client_id": "client_id",
             "data": {
                 "username": "targetuser",
                 "options": {
@@ -66,6 +69,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         # 4. Invalid score_to_win
         invalid_data_2 = {
             "action": "game_invite",
+            "client_id": "client_id",
             "data": {
                 "username": "targetuser",
                 "options": {
@@ -84,6 +88,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         # 5. Invalid time_limit_minutes
         invalid_data_2 = {
             "action": "game_invite",
+            "client_id": "client_id",
             "data": {
                 "username": "targetuser",
                 "options": {
@@ -102,6 +107,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         # 6. A value is None
         invalid_data_2 = {
             "action": "game_invite",
+            "client_id": "client_id",
             "data": {
                 "username": "targetuser",
                 "options": {
@@ -120,6 +126,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         # 7. Incomplete dict
         invalid_data_3 = {
             "action": "game_invite",
+            "client_id": "client_id",
             "data": {
                 "username": "targetuser",
                 "options": {
@@ -145,6 +152,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "action": "game_invite",
             "data": {
                 "username": "target_user",
+                "client_id": "client_id",
                 "options": {
                     "game_speed": "slow",
                     "is_ranked": False,
@@ -172,6 +180,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "action": "game_invite",
             "data": {
                 "username": "target_user",
+                "client_id": "client_id",
                 "options": {
                     "game_speed": "normal",
                     "is_ranked": True,
@@ -199,10 +208,12 @@ class GameInvitationTests(UserEventsConsumerTests):
             "action": "game_invite",
             "data": {
                 "username": "target_user",
+                "client_id": "client_id",
                 "options": {
                     "game_speed": "fast",
                     "is_ranked": True,
                     "score_to_win": 20,
+                    "username": "target_user",
                     "time_limit_minutes": 5,
                 },
             },
@@ -226,6 +237,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "action": "game_invite",
             "data": {
                 "username": "target_user",
+                "client_id": "client_id",
                 "options": {
                     "game_speed": "any",
                     "is_ranked": "any",
