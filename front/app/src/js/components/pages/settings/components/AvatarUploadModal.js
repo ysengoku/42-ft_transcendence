@@ -27,7 +27,7 @@ export class AvatarUploadModal extends HTMLElement {
     this.confirmButton.removeEventListener('click', this.handleConfirm);
     if (this.modalElement) {
       this.clearFocusInModal();
-    };
+    }
     this.modal?.hide();
     this.modalElement.removeEventListener('hide.bs.modal', this.clearFocusInModal);
   }

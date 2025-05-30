@@ -114,9 +114,9 @@ export class UserDuelHistory extends HTMLElement {
       duelResult.classList.add('duel-lost');
     }
     eloResult.textContent = item.elo_result;
-    const indicator = item.is_winner ?
-      '<i class="bi bi-arrow-up-right ps-1"></i>' :
-      '<i class="bi bi-arrow-down-right ps-1"></i>';
+    const indicator = item.is_winner
+      ? '<i class="bi bi-arrow-up-right ps-1"></i>'
+      : '<i class="bi bi-arrow-down-right ps-1"></i>';
     eloChangeIndicator.innerHTML = indicator;
 
     row.addEventListener('click', this.showDuelDetail);
