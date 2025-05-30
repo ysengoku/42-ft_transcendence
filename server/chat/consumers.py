@@ -566,6 +566,23 @@ class UserEventsConsumer(WebsocketConsumer):
     def accept_game_invite(self, data):
         sender_name = data["data"].get("username")
         sender = Profile.objects.get(user__username=sender_name)
+        if sender == self.user.profile:
+            logger.warning("Error : user %s wanted to accept a game with themself.", self.user.username)
+            self.send(text_data=json.dumps({
+                "action": "game_invite_canceled",
+                "message": "You can't accept invitations from yourself to a game !",
+                "client_id": client_id,
+            }))
+            return
+        # TODO: verify if user is in a game actually, if yes, no acceptations
+        # if self.user_profile.resolve_game_id() is not None:
+        #     logger.warning("Error : user %s is in a game : can't accept invites.", self.user.username)
+        #     self.send(text_data=json.dumps({
+        #         "action": "game_invite_canceled",
+        #         "message": "You are in an ongoing game",
+        #         "client_id": client_id,
+        #     }))
+        #     return
         try:
             invitation = GameInvitation.objects.get(
                 sender=sender,
@@ -652,6 +669,15 @@ class UserEventsConsumer(WebsocketConsumer):
         if not self.validate_options(options):
             return
         receiver_username = data["data"].get("username")
+        if receiver_username == self.user.username:
+            logger.warning("Error : user %s wanted to play with themself.", self.user.username)
+            self.send(text_data=json.dumps({
+                "action": "game_invite_canceled",
+                "message": "You can't invite yourself to a game !",
+                "client_id": client_id,
+            }))
+            return
+
         client_id = data["data"].get("client_id")
 
         try:
@@ -660,6 +686,15 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.error("Profile does not exist : %s", str(e))
             self.close()
             return
+        # TODO: verify if user is in a game actually, if yes, no invitation
+        # if self.user_profile.resolve_game_id() is not None:
+        #     logger.warning("Error : user %s is in a game : can't send invites.", self.user.username)
+        #     self.send(text_data=json.dumps({
+        #         "action": "game_invite_canceled",
+        #         "message": "You are in an ongoing game",
+        #         "client_id": client_id,
+        #     }))
+        #     return
         if (GameInvitation.objects.filter(sender=self.user_profile, status=GameInvitation.PENDING).exists()):
             logger.warning("Error : user %s has more than one pending invitation.", self.user.username)
             self.send(text_data=json.dumps({
