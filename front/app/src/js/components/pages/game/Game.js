@@ -52,7 +52,7 @@ export class Game extends HTMLElement {
     const BALL_DIAMETER = 1;
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
-    let   GAME_TIME = 60*100;
+    let   GAME_TIME = 60*10000000;
     let   BALL_INITIAL_VELOCITY = 0.25;
     let   MAX_SCORE = 10;
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
