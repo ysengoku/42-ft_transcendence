@@ -103,8 +103,10 @@ export class FriendsList extends HTMLElement {
   async showMoreFriends(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.totalFriendsCount === this.#state.listLength) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalFriendsCount === this.#state.listLength
+    ) {
       return;
     }
     await this.fetchFriendsData();

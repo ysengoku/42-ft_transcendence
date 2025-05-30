@@ -90,8 +90,12 @@ export class Register extends HTMLElement {
     isFormValid = isFieldFilled(this.usernameField, this.usernameFeedback, INPUT_FEEDBACK.EMPTY_USERNAME);
     isFormValid = isFieldFilled(this.emailField, this.emailFeedback, INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
     isFormValid =
-      passwordFeedback(this.passwordField, this.passwordRepeatField,
-        this.passwordFeedback, this.passwordRepeatFeedback) && isFormValid;
+      passwordFeedback(
+        this.passwordField,
+        this.passwordRepeatField,
+        this.passwordFeedback,
+        this.passwordRepeatFeedback,
+      ) && isFormValid;
 
     return isFormValid;
   }

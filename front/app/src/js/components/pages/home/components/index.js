@@ -5,11 +5,4 @@ import { DuelButton } from './DuelButton';
 import { TournamentButton } from './TournamentButton';
 import { LogoutButton } from './LogoutButton';
 
-export {
-  ProfileButton,
-  SettingsButton,
-  DuelButton,
-  LocalGameButton,
-  TournamentButton,
-  LogoutButton,
-};
+export { ProfileButton, SettingsButton, DuelButton, LocalGameButton, TournamentButton, LogoutButton };

@@ -1,9 +1,8 @@
-
 export function createClouds() {
   const cloud = document.createElement('div');
   cloud.id = 'cloud';
   document.body.appendChild(cloud);
-};
+}
 
 export function createStars() {
   const starContainer = document.createElement('div');
@@ -42,7 +41,7 @@ export function createStars() {
 
   setInterval(createShootingStar, 2000);
   document.body.appendChild(starContainer);
-};
+}
 
 export function loader() {
   return `

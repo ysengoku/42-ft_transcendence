@@ -46,5 +46,5 @@ export default [
       'prettier/prettier': 'error',
     },
   },
-  ...compat.extends('prettier'),
+  ...compat.extends('plugin:prettier/recommended'),
 ];
