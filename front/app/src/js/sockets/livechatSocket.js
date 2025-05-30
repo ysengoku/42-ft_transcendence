@@ -44,21 +44,11 @@ socketManager.addSocket('livechat', {
   game_accepted: (data) => {
     if (window.location.pathname === '/duel') {
       const duelPage = document.querySelector('duel-page');
-      duelPage?.invitationAccepted(data);
+      if (duelPage?.status === 'inviting') {
+        duelPage?.invitationAccepted(data);
+      }
       return;
     }
-    const param = {
-      status: 'starting',
-      gameId: data.game_id,
-      username: data.username,
-      nickname: data.nickname,
-      avatar: data.avatar,
-      elo: data.elo,
-    };
-    showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Duel accepted. Redirecting to the Duel page.', 2000);
-    setTimeout(() => {
-      router.navigate('/duel', param);
-    }, 2000);
   },
   game_declined: async (data) => {
     const user = await auth.getStoredUser();
@@ -67,8 +57,10 @@ socketManager.addSocket('livechat', {
     }
     if (window.location.pathname === '/duel') {
       const duelPage = document.querySelector('duel-page');
-      duelPage?.invitationDeclined(data);
-      return;
+      if (duelPage?.status === 'inviting') {
+        duelPage?.invitationDeclined(data);
+        return;
+      }
     }
     const nickname = data.username.toLowerCase() === user.username.toLowerCase() ? 'You' : data.nickname;
     showToastNotification(`${nickname} have declined the duel invitation.`, TOAST_TYPES.INFO);
@@ -84,21 +76,21 @@ socketManager.addSocket('livechat', {
     let message;
     let type = TOAST_TYPES.INFO;
     switch (isCurrentTab) {
-    case true:
-      if (window.location.pathname === '/duel') {
-        duelPageElement.status = 'canceled';
-      }
-      if (!data.username) {
-        data.message ? message = data.message : message = 'Game invitation has been canceled.';
-        type = TOAST_TYPES.ERROR;
-      } else if (data.username === user.username) {
-        message = 'Your duel invitation has successfully been canceled.';
-      }
-      break;
-    case false:
-      if (data.username && data.username === user.username && data.nickname) {
-        message = `${data.nickname} canceled the duel invitation.`;
-      }
+      case true:
+        if (window.location.pathname === '/duel') {
+          duelPageElement.status = 'canceled';
+        }
+        if (!data.username) {
+          data.message ? (message = data.message) : (message = 'Game invitation has been canceled.');
+          type = TOAST_TYPES.ERROR;
+        } else if (data.username === user.username) {
+          message = 'Your duel invitation has successfully been canceled.';
+        }
+        break;
+      case false:
+        if (data.username && data.username === user.username && data.nickname) {
+          message = `${data.nickname} canceled the duel invitation.`;
+        }
     }
     if (message) {
       showToastNotification(message, type);

@@ -16,7 +16,7 @@ export class Duel extends HTMLElement {
 
   constructor() {
     super();
-    this.#state.clientId = socketManager.getClientInstanceId('livechat'),
+    this.#state.clientId = socketManager.getClientInstanceId('livechat');
 
     this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
@@ -49,6 +49,10 @@ export class Duel extends HTMLElement {
     this.renderContent();
   }
 
+  get status() {
+    return this.#state.status;
+  }
+
   get clientId() {
     return this.#state.clientId;
   }
@@ -60,7 +64,8 @@ export class Duel extends HTMLElement {
       return;
     }
     if (!this.#state.status) {
-      router.redirect('/duel-menu');
+      const notFound = document.createElement('page-not-found');
+      this.innerHTML = notFound.outerHTML;
       return;
     }
     router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
@@ -89,7 +94,6 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template() + this.style();
-    devLog('Status:', this.#state.status);
     this.header = this.querySelector('#duel-header');
     this.content = this.querySelector('#duel-content');
     this.contentElement = document.createElement('duel-preview');
@@ -98,16 +102,6 @@ export class Duel extends HTMLElement {
     this.timer = this.querySelector('#timer');
 
     this.renderContent();
-    // ==== For test ================
-    // setTimeout(() => {
-    //   const data = {
-    //     // gameId: 'test-game-id',
-    //     username: this.#state.opponent.username,
-    //   };
-    // this.invitationAccepted(data);
-    //   this.invitationDeclined(data);
-    // }, 5000);
-    // ================================
   }
 
   renderContent() {
@@ -307,16 +301,16 @@ export class Duel extends HTMLElement {
 
   headerTemplate() {
     switch (this.#state.status) {
-    case 'inviting':
-      return 'Waiting for your opponent to ride in...';
-    case 'matchmaking':
-      return 'Searching for your dream opponent...';
-    case 'starting':
-      return 'Both gunslingers are here. Time to duel!';
-    case 'canceled':
-      return 'This duel has been canceled.';
-    case 'declined':
-      return 'This duel has been canceled.';
+      case 'inviting':
+        return 'Waiting for your opponent to ride in...';
+      case 'matchmaking':
+        return 'Searching for your dream opponent...';
+      case 'starting':
+        return 'Both gunslingers are here. Time to duel!';
+      case 'canceled':
+        return 'This duel has been canceled.';
+      case 'declined':
+        return 'This duel has been canceled.';
     }
   }
 }

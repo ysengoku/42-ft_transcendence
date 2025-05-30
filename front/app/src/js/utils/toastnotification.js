@@ -38,9 +38,7 @@ export function showToastNotification(message, type = TOAST_TYPES.INFO) {
   toastBody.textContent = message;
   const toast = document.querySelector('.toast');
   const toastBodyWrapper = document.querySelector('.toast-body-wrapper');
-  toastBodyWrapper.style.backgroundColor = type === TOAST_TYPES.ERROR ?
-    'var(--pm-bg-danger)' :
-    'var(--pm-bg-success)';
+  toastBodyWrapper.style.backgroundColor = type === TOAST_TYPES.ERROR ? 'var(--pm-bg-danger)' : 'var(--pm-bg-success)';
   const toastBootstrap = Toast.getOrCreateInstance(toast);
   toastBootstrap.show();
 }
