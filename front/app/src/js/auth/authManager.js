@@ -21,9 +21,12 @@ const auth = (() => {
      */
     storeUser(user) {
       const currentUser = this.getStoredUser();
-      if (!currentUser || currentUser.username !== user.username ||
+      if (
+        !currentUser ||
+        currentUser.username !== user.username ||
         currentUser.unread_messages_count !== user.unread_messages_count ||
-        currentUser.unread_notifications_count !== user.unread_notifications_count) {
+        currentUser.unread_notifications_count !== user.unread_notifications_count
+      ) {
         sessionStorage.setItem('user', JSON.stringify(user));
         const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
         document.dispatchEvent(event);

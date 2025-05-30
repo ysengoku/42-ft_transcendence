@@ -98,9 +98,9 @@ export class TournamentOverview extends HTMLElement {
       }
     }
 
-    const content = isMobile() ?
-      document.createElement('tournament-overview-table') :
-      document.createElement('tournament-overview-tree');
+    const content = isMobile()
+      ? document.createElement('tournament-overview-table')
+      : document.createElement('tournament-overview-tree');
     content.data = this.#state.tournament.rounds;
     this.tournamentOverviewContent.appendChild(content);
   }

@@ -10,8 +10,14 @@ import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE, showToastNotification, TOAST_TYPES,
-  getRelativeDateAndTime, loader } from '@utils';
+import {
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+  showToastNotification,
+  TOAST_TYPES,
+  getRelativeDateAndTime,
+  loader,
+} from '@utils';
 
 /**
  * @class ChatMessageArea
@@ -95,12 +101,10 @@ export class ChatMessageArea extends HTMLElement {
     });
     this.header?.removeEventListener('click', this.navigateToProfile);
     if (this.#state.data) {
-      this.#state.data.is_blocked_user ? (
-        this.blockButoon?.removeEventListener('click', this.unblockUser)
-      ) : (
-        this.invitePlayButton?.removeEventListener('click', this.openGameInvitationModal),
-        this.blockButoon?.removeEventListener('click', this.blockUser)
-      );
+      this.#state.data.is_blocked_user
+        ? this.blockButoon?.removeEventListener('click', this.unblockUser)
+        : (this.invitePlayButton?.removeEventListener('click', this.openGameInvitationModal),
+          this.blockButoon?.removeEventListener('click', this.blockUser));
     }
     this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
     this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
@@ -133,8 +137,9 @@ export class ChatMessageArea extends HTMLElement {
     this.chatMessages = this.querySelector('#chat-messages');
 
     // Set header information and avatar.
-    this.#state.data.avatar ?
-      (this.headerAvatar.src = this.#state.data.avatar) : (this.headerAvatar.src = defaultAvatar);
+    this.#state.data.avatar
+      ? (this.headerAvatar.src = this.#state.data.avatar)
+      : (this.headerAvatar.src = defaultAvatar);
     this.headerAvatar.classList.remove('d-none');
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
