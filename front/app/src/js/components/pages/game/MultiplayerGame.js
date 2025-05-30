@@ -290,28 +290,28 @@ export class MultiplayerGame extends HTMLElement {
     pongSocket.addEventListener('message', (e) => {
       data = JSON.parse(e.data);
       switch (data.action) {
-      case 'state_updated':
-        updateState(data.state);
-        // if (data.state.someone_scored)
-        //     audio.cloneNode().play();
-        break;
-      case 'player_joined':
-        playerId = data.player_id;
-        break;
-      case 'game_paused':
-        devLog('Game paused');
-        this.showOverlay('pause', data.state);
-        break;
-      case 'game_unpaused':
-        devLog('Game unpaused');
-        this.hideOverlay();
-        break;
-      case 'game_cancelled':
-        devLog('Game cancelled');
-        this.showOverlay('cancel');
-        break;
-      default:
-        break;
+        case 'state_updated':
+          updateState(data.state);
+          // if (data.state.someone_scored)
+          //     audio.cloneNode().play();
+          break;
+        case 'player_joined':
+          playerId = data.player_id;
+          break;
+        case 'game_paused':
+          devLog('Game paused');
+          this.showOverlay('pause', data.state);
+          break;
+        case 'game_unpaused':
+          devLog('Game unpaused');
+          this.hideOverlay();
+          break;
+        case 'game_cancelled':
+          devLog('Game cancelled');
+          this.showOverlay('cancel');
+          break;
+        default:
+          break;
       }
     });
 
@@ -374,19 +374,6 @@ export class MultiplayerGame extends HTMLElement {
     return [camera, renderer, animate];
   }
 
-  // windowResize() {
-  //   console.log(1);
-  //   const [camera, renderer, animate] = this.game();
-  //   console.log('Camera', camera);
-  //   renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
-  //   console.log(this.#navbarHeight);
-  //   const rendererWidth = renderer.domElement.offsetWidth;
-  //   const rendererHeight = renderer.domElement.offsetHeight;
-  //   console.log(rendererWidth, rendererHeight);
-  //   camera.aspect = rendererWidth / rendererHeight;
-  //   camera.updateProjectionMatrix();
-  // }
-
   render() {
     // this.innerHTML = ``;
     document.querySelector('#content').classList.add('position-relative');
@@ -398,14 +385,13 @@ export class MultiplayerGame extends HTMLElement {
 
     const navbarHeight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
       renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
       const rendererHeight = renderer.domElement.offsetHeight;
       camera.aspect = rendererWidth / rendererHeight;
       camera.updateProjectionMatrix();
     });
-    // window.addEventListener('resize', this.windowResize);
     animate();
 
     // ----- TEST ---------------
@@ -436,20 +422,20 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayMessageWrapper.classList.remove('d-none');
 
     switch (action) {
-    case 'pause':
-      let remainingTime = state.remaining_time;
-      this.overlayMessageContent = this.querySelector('#overlay-message-content');
-      this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
-      this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
-      this.overlayMessageTimer.textContent = remainingTime;
-      // TODO: Set timer
-      break;
-    case 'cancel':
-      this.overlayButton1 = this.querySelector('#overlay-button1');
-      this.overlayButton2 = this.querySelector('#overlay-button2');
-      this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
-      this.overlayButton2.addEventListener('click', this.navigateToHome);
-      break;
+      case 'pause':
+        let remainingTime = state.remaining_time;
+        this.overlayMessageContent = this.querySelector('#overlay-message-content');
+        this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
+        this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
+        this.overlayMessageTimer.textContent = remainingTime;
+        // TODO: Set timer
+        break;
+      case 'cancel':
+        this.overlayButton1 = this.querySelector('#overlay-button1');
+        this.overlayButton2 = this.querySelector('#overlay-button2');
+        this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
+        this.overlayButton2.addEventListener('click', this.navigateToHome);
+        break;
     }
   }
 

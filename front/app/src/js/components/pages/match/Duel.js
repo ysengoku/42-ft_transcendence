@@ -17,7 +17,6 @@ export class Duel extends HTMLElement {
   constructor() {
     super();
     this.#state.clientId = socketManager.getClientInstanceId('livechat');
-
     this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
     this.cancelInvitation = this.cancelInvitation.bind(this);
@@ -26,9 +25,11 @@ export class Duel extends HTMLElement {
 
   setQueryParam(param) {
     this.#state.status = param.get('status');
-    if (this.#state.status !== 'inviting' &&
+    if (
+      this.#state.status !== 'inviting' &&
       this.#state.status !== 'matchmaking' &&
-      this.#state.status !== 'starting') {
+      this.#state.status !== 'starting'
+    ) {
       this.#state.status = '';
       return;
     }

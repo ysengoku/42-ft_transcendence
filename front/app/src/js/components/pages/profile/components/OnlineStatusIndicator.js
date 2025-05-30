@@ -19,9 +19,9 @@ export class OnlineStatusIndicator extends HTMLElement {
   }
 
   updateStatus() {
-    this.#state.isOnline ?
-      this.statusIndicator.classList.add('online') :
-      this.statusIndicator.classList.remove('online');
+    this.#state.isOnline
+      ? this.statusIndicator.classList.add('online')
+      : this.statusIndicator.classList.remove('online');
   }
 
   template() {
