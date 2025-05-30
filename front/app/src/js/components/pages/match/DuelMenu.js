@@ -3,7 +3,13 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE, showToastNotification, TOAST_TYPES } from '@utils';
+import {
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+  showToastNotification,
+  TOAST_TYPES,
+  sessionExpiredToast,
+} from '@utils';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
@@ -62,8 +68,9 @@ export class DuelMenu extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
-        router.navigate('/login');
+        sessionExpiredToast();
       }
+      router.navigate('/login');
       return;
     }
     this.#state.user = authStatus.response;

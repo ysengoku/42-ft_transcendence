@@ -1,5 +1,4 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class ChatUserSearch extends HTMLElement {
   #state = {
@@ -99,13 +98,7 @@ export class ChatUserSearch extends HTMLElement {
       this.renderUserList();
       this.listContainer.classList.add('show');
     } else {
-      if (response.status === 401) {
-        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
-        router.navigate('/login');
-      } else {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR, 5000);
-        router.navigate('/');
-      }
+      router.navigate('/login');
     }
   }
 

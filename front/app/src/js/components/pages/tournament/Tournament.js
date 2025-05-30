@@ -2,7 +2,7 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 
 export class Tournament extends HTMLElement {
@@ -33,7 +33,9 @@ export class Tournament extends HTMLElement {
     this.#state.tournamentId = param.id;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
-      showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
       router.redirect('/login');
       return;
     }
