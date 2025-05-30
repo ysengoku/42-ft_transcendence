@@ -1,7 +1,7 @@
 import { socketManager } from './socket';
-import { router } from '@router';
 import { auth } from '@auth';
-import { showToastNotification, TOAST_TYPES, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { router } from '@router';
+import { showToastNotification, TOAST_TYPES } from '@utils';
 
 // Socket registration for livechat module including Chat, Notifications, and Onlie status
 socketManager.addSocket('livechat', {
@@ -41,7 +41,7 @@ socketManager.addSocket('livechat', {
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
     showToastNotification(`${data.nickname} challenges you to a duel.`, TOAST_TYPES.INFO);
   },
-  game_accepted: (data) => {
+  game_accepted: async (data) => {
     if (window.location.pathname === '/duel') {
       const duelPage = document.querySelector('duel-page');
       if (duelPage?.status === 'inviting') {
@@ -49,6 +49,20 @@ socketManager.addSocket('livechat', {
       }
       return;
     }
+    const user = await auth.getUser();
+    if (!user || data.username === user.username) {
+      return;
+    }
+    showToastNotification('You have accepted the duel invitation.', TOAST_TYPES.SUCCESS);
+    const param = {
+      status: 'starting',
+      gameId: data.game_id,
+      username: data.username,
+      nickname: data.nickname,
+      avatar: data.avatar,
+    };
+    router.navigate('/duel', param);
+    return;
   },
   game_declined: async (data) => {
     const user = await auth.getStoredUser();
