@@ -46,6 +46,8 @@ export class LocalGameMenu extends HTMLElement {
     }
     const gameType = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
     devLog('Game options:', this.#state.options, ' Game type: ', gameType);
+    sessionStorage.setItem('gameOptions', JSON.stringify(this.#state.options));
+    sessionStorage.setItem('gameType', gameType);
     router.navigate('/singleplayer-game');
   }
 
