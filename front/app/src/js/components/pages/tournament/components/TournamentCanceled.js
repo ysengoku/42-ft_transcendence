@@ -1,5 +1,3 @@
-export class TournamentCanceled extends HTMLElement{
-
-}
+export class TournamentCanceled extends HTMLElement {}
 
 customElements.define('tournament-canceled', TournamentCanceled);

@@ -50,9 +50,10 @@ export class DuelPreview extends HTMLElement {
       this.innerHTML = this.canceledTemplate();
 
       const cancelMessage = this.querySelector('#cancel-message');
-      cancelMessage.textContent = this.#state.status === 'canceled' ?
-        'You\'ve canceled the duel.' :
-        `${this.#state.user2.nickname} declined the duel.`;
+      cancelMessage.textContent =
+        this.#state.status === 'canceled'
+          ? 'Your invitation has been canceled.'
+          : `${this.#state.user2.nickname} declined the duel.`;
 
       this.goToHomeButton = this.querySelector('#btn-go-to-home');
       this.goToDuelMenuButton = this.querySelector('#btn-go-to-duelmenu');
@@ -69,14 +70,12 @@ export class DuelPreview extends HTMLElement {
     this.player1.querySelector('.player-nickname').innerHTML = this.#state.user1.nickname;
     this.player1.querySelector('.player-username').innerHTML = `@${this.#state.user1.username}`;
 
-    this.player2.innerHTML = this.userProfileTemplate(),
-    this.#state.status === 'matchmaking' ? (
-      this.player2.querySelector('.player-avatar').src = anonymousavatar
-      ) : (
-      this.player2.querySelector('.player-avatar').src = this.#state.user2.avatar,
-      this.player2.querySelector('.player-nickname').innerHTML = this.#state.user2.nickname,
-      this.player2.querySelector('.player-username').innerHTML = `@${this.#state.user2.username}`
-    );
+    (this.player2.innerHTML = this.userProfileTemplate()),
+      this.#state.status === 'matchmaking'
+        ? (this.player2.querySelector('.player-avatar').src = anonymousavatar)
+        : ((this.player2.querySelector('.player-avatar').src = this.#state.user2.avatar),
+          (this.player2.querySelector('.player-nickname').innerHTML = this.#state.user2.nickname),
+          (this.player2.querySelector('.player-username').innerHTML = `@${this.#state.user2.username}`));
   }
 
   navigateToHome() {

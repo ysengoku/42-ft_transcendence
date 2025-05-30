@@ -5,6 +5,7 @@ import './components/index.js';
 
 export class Duel extends HTMLElement {
   #state = {
+    clientId: '',
     status: '', // inviting, matchmaking, starting, canceled, declied, finished?
     gameId: '',
     loggedInUser: null,
@@ -15,7 +16,7 @@ export class Duel extends HTMLElement {
 
   constructor() {
     super();
-
+    this.#state.clientId = socketManager.getClientInstanceId('livechat');
     this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
     this.cancelInvitation = this.cancelInvitation.bind(this);
@@ -24,17 +25,37 @@ export class Duel extends HTMLElement {
 
   setQueryParam(param) {
     this.#state.status = param.get('status');
-    if (this.#state.status !== 'inviting' && this.#state.status !== 'matchmaking') {
+    if (
+      this.#state.status !== 'inviting' &&
+      this.#state.status !== 'matchmaking' &&
+      this.#state.status !== 'starting'
+    ) {
       this.#state.status = '';
       return;
     }
-    if (this.#state.status === 'inviting') {
+    if (this.#state.status === 'inviting' || this.#state.status === 'starting') {
       this.#state.opponent = {
         username: param.get('username'),
         nickname: param.get('nickname'),
         avatar: param.get('avatar'),
       };
     }
+    if (this.#state.status === 'starting') {
+      this.#state.gameId = param.get('gameId');
+    }
+  }
+
+  set status(status) {
+    this.#state.status = status;
+    this.renderContent();
+  }
+
+  get status() {
+    return this.#state.status;
+  }
+
+  get clientId() {
+    return this.#state.clientId;
   }
 
   async connectedCallback() {
@@ -44,8 +65,8 @@ export class Duel extends HTMLElement {
       return;
     }
     if (!this.#state.status) {
-      // Redirect to duel menu
-      router.navigate('/duel-menu');
+      const notFound = document.createElement('page-not-found');
+      this.innerHTML = notFound.outerHTML;
       return;
     }
     router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
@@ -74,7 +95,6 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template() + this.style();
-    devLog('Status:', this.#state.status);
     this.header = this.querySelector('#duel-header');
     this.content = this.querySelector('#duel-content');
     this.contentElement = document.createElement('duel-preview');
@@ -83,16 +103,6 @@ export class Duel extends HTMLElement {
     this.timer = this.querySelector('#timer');
 
     this.renderContent();
-      // ==== For test ================
-      // setTimeout(() => {
-      //   const data = {
-      //     // gameId: 'test-game-id',
-      //     username: this.#state.opponent.username,
-      //   };
-        // this.invitationAccepted(data);
-      //   this.invitationDeclined(data);
-      // }, 5000);
-      // ================================
   }
 
   renderContent() {
@@ -110,6 +120,8 @@ export class Duel extends HTMLElement {
     } else {
       this.animation.classList.add('d-none');
       this.timer.classList.add('d-none');
+      router.removeBeforeunloadCallback();
+      window.removeEventListener('beforeunload', this.confirmLeavePage);
     }
     if (this.#state.status === 'inviting') {
       this.cancelButton?.addEventListener('click', this.cancelInvitation);
@@ -149,12 +161,13 @@ export class Duel extends HTMLElement {
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     router.navigate('/duel-menu');
-    socketManager.closeSocket('matchmaking'); 
+    socketManager.closeSocket('matchmaking');
   }
 
   invitationAccepted(data) {
+    devLog('Invitation accepted:', data);
     this.#state.status = 'starting';
-    this.#state.gameId = data.gameId;
+    this.#state.gameId = data.game_id;
     this.startDuel();
   }
 
@@ -163,8 +176,6 @@ export class Duel extends HTMLElement {
     if (data.username !== this.#state.opponent.username) {
       return;
     }
-    router.removeBeforeunloadCallback();
-    window.removeEventListener('beforeunload', this.confirmLeavePage);
     this.#state.status = 'declined';
     this.renderContent();
   }
@@ -173,8 +184,6 @@ export class Duel extends HTMLElement {
     devLog('Canceling game invitation');
     const message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
     socketManager.sendMessage('livechat', message);
-    router.removeBeforeunloadCallback();
-    window.removeEventListener('beforeunload', this.confirmLeavePage);
     this.#state.status = 'canceled';
     this.renderContent();
   }

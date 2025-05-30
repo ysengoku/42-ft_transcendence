@@ -106,10 +106,13 @@ export class NotificationsList extends HTMLElement {
 
   async fetchNotifications(read, limit, offset) {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
-        null, false, true);
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
+      null,
+      false,
+      true,
+    );
     if (response.success) {
       return response.data;
     } else {
@@ -137,15 +140,18 @@ export class NotificationsList extends HTMLElement {
       await this.renderList();
       this.#state.isLoading = false;
     }
-  };
+  }
 
   async loadMoreNotifications(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
     const totalCount = this.#state.currentTab === 'unread' ? this.#unread.totalCount : this.#all.totalCount;
     const listLength = this.#state.currentTab === 'unread' ? this.#unread.listLength : this.#all.listLength;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold || totalCount <= listLength ||
-      this.#state.isLoading) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      totalCount <= listLength ||
+      this.#state.isLoading
+    ) {
       return;
     }
     this.#state.isLoading = true;
