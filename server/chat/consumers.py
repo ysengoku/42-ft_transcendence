@@ -275,7 +275,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 "like_message": ["id", "chat_id"],
                 "unlike_message": ["id", "chat_id"],
                 "read_message": ["id"],
-                # TODO : check game_invite and reply_game_invite
                 "game_invite": ["username"],
                 "reply_game_invite": ["username", "accept"],
                 "game_accepted": ["username"],
@@ -306,7 +305,6 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.handle_unlike_message(text_data_json)
                 case "read_message":
                     self.handle_read_message(text_data_json)
-                # TODO : check game_invite and reply_game_invite -->
                 case "game_invite":
                     self.send_game_invite(text_data_json)
                 case "reply_game_invite":
@@ -317,7 +315,6 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.decline_game_invite(text_data_json)
                 case "cancel_game_invite":
                     self.cancel_game_invite()
-                # TODO : check game_invite and reply_game_invite <--
                 case "new_tournament":
                     self.handle_new_tournament(text_data_json)
                 case "add_new_friend":
@@ -691,6 +688,7 @@ class UserEventsConsumer(WebsocketConsumer):
         )
 
     # TODO : security checks
+
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         if not self.validate_options(options):
@@ -717,15 +715,30 @@ class UserEventsConsumer(WebsocketConsumer):
             logger.error("Profile does not exist : %s", str(e))
             self.close()
             return
-        # TODO: verify if user is in a game actually, if yes, no invitation
-        # if self.user_profile.resolve_game_id() is not None:
-        #     logger.warning("Error : user %s is in a game : can't send invites.", self.user.username)
-        #     self.send(text_data=json.dumps({
-        #         "action": "game_invite_canceled",
-        #         "message": "You are in an ongoing game",
-        #         "client_id": client_id,
-        #     }))
-        #     return
+
+        is_in_game: bool = (
+            GameRoom.objects.for_players(self.user_profile).for_pending_or_ongoing_status().exists()
+        )
+        if is_in_game:
+            logger.warning("Error : user %s is in a game : can't send invites.", self.user.username)
+            self.send(text_data=json.dumps({
+                "action": "game_invite_canceled",
+                "message": "You are in an ongoing game",
+                "client_id": client_id,
+            }))
+            return
+        target_is_in_game: bool = (
+            GameRoom.objects.for_players(receiver).for_pending_or_ongoing_status().exists()
+        )
+        if target_is_in_game:
+            logger.warning("Error : user %s is in a game : can't receive invites.", receiver_username)
+            self.send(text_data=json.dumps({
+                "action": "game_invite_canceled",
+                "message": "Your target is in an ongoing game",
+                "client_id": client_id,
+            }))
+            return
+
         if GameInvitation.objects.filter(sender=self.user_profile, status=GameInvitation.PENDING).exists():
             logger.warning("Error : user %s has more than one pending invitation.", self.user.username)
             self.send(
@@ -767,7 +780,6 @@ class UserEventsConsumer(WebsocketConsumer):
             },
         )
 
-    # TODO : security checks
     def cancel_game_invite(self):
         invitations = GameInvitation.objects.filter(
             sender=self.user.profile,
