@@ -21,9 +21,12 @@ const auth = (() => {
      */
     storeUser(user) {
       const currentUser = this.getStoredUser();
-      if (!currentUser || currentUser.username !== user.username ||
+      if (
+        !currentUser ||
+        currentUser.username !== user.username ||
         currentUser.unread_messages_count !== user.unread_messages_count ||
-        currentUser.unread_notifications_count !== user.unread_notifications_count) {
+        currentUser.unread_notifications_count !== user.unread_notifications_count
+      ) {
         sessionStorage.setItem('user', JSON.stringify(user));
         const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
         document.dispatchEvent(event);
@@ -112,16 +115,16 @@ const auth = (() => {
         const refreshTokenResponse = await refreshAccessToken(CSRFToken);
         if (refreshTokenResponse.status) {
           switch (refreshTokenResponse.status) {
-          case 204:
-            return this.fetchAuthStatus();
-          case 401:
-            return { success: false, status: 401 };
-          case 500:
-            showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
-            break;
-          default:
-            showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
-            return { success: false, status: refreshTokenResponse.status };
+            case 204:
+              return this.fetchAuthStatus();
+            case 401:
+              return { success: false, status: 401 };
+            case 500:
+              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
+              break;
+            default:
+              showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+              return { success: false, status: refreshTokenResponse.status };
           }
         }
         return { success: false, status: response.status };

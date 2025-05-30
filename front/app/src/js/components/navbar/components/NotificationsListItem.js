@@ -12,8 +12,9 @@ export class NotificationsListItem extends HTMLElement {
   message = {
     gameInvitation: (nickname) => `${nickname} challenges you to a duel.`,
     pendingGameInvitation: (nickname) => `You've challenged '${nickname} to a duel.`,
-    newTournament: (nickname, tournamentName) => `${nickname} is calling all gunslingers to a new tournament - ${tournamentName}!`,
-    newFriend: (nickname) =>`${nickname} just roped you in as a friend.`,
+    newTournament: (nickname, tournamentName) =>
+      `${nickname} is calling all gunslingers to a new tournament - ${tournamentName}!`,
+    newFriend: (nickname) => `${nickname} just roped you in as a friend.`,
   };
 
   constructor() {
@@ -52,44 +53,46 @@ export class NotificationsListItem extends HTMLElement {
     this.content = this.querySelector('.notification-content');
     this.buttonWrapper = this.querySelector('.call-to-action-groupe');
     switch (this.#state.action) {
-    case 'game_invite':
-      this.seeProfileButton = document.createElement('button');
-      this.seeProfileButton.textContent = 'See profile';
-      this.seeProfileButton.addEventListener('click', this.navigateToProfile);
-      this.buttonWrapper.appendChild(this.seeProfileButton);
-      if (this.#state.data.username !== this.#state.username) {
-        this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
-        this.acceptButton = document.createElement('button');
-        this.acceptButton.textContent = 'Accept';
-        this.acceptButton.addEventListener('click', this.handleAcceptDuel);
-        this.declineButton = document.createElement('button');
-        this.declineButton.textContent = 'Decline';
-        this.declineButton.addEventListener('click', this.handleDeclineDuel);
-        this.buttonWrapper.appendChild(this.acceptButton);
-        this.buttonWrapper.appendChild(this.declineButton);
-      } else {
-        this.content.textContent = this.message.pendingGameInvitation(this.#state.data.nickname);
-        this.cancelInviteButton = document.createElement('button');
-        this.cancelInviteButton.textContent = 'Cancel';
-        this.cancelInviteButton.addEventListener('click', this.cancelDuelInvitation);
-        this.buttonWrapper.appendChild(this.cancelInviteButton);
-      }
-      break;
-    case 'new_tournament':
-      this.querySelector('.notification-content').textContent =
-        this.message.newTournament(this.#state.data.nickname, this.#state.data.name);
-      this.participateButton = document.createElement('button');
-      this.participateButton.textContent = 'Participate';
-      this.participateButton.addEventListener('click', this.handleParticipateTournament);
-      this.buttonWrapper.appendChild(this.participateButton);
-      break;
-    case 'new_friend':
-      this.querySelector('.notification-content').textContent = this.message.newFriend(this.#state.data.nickname);
-      this.seeProfileButton = document.createElement('button');
-      this.seeProfileButton.textContent = 'See profile';
-      this.buttonWrapper.appendChild(this.seeProfileButton);
-      this.addEventListener('click', this.navigateToProfile);
-      break;
+      case 'game_invite':
+        this.seeProfileButton = document.createElement('button');
+        this.seeProfileButton.textContent = 'See profile';
+        this.seeProfileButton.addEventListener('click', this.navigateToProfile);
+        this.buttonWrapper.appendChild(this.seeProfileButton);
+        if (this.#state.data.username !== this.#state.username) {
+          this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
+          this.acceptButton = document.createElement('button');
+          this.acceptButton.textContent = 'Accept';
+          this.acceptButton.addEventListener('click', this.handleAcceptDuel);
+          this.declineButton = document.createElement('button');
+          this.declineButton.textContent = 'Decline';
+          this.declineButton.addEventListener('click', this.handleDeclineDuel);
+          this.buttonWrapper.appendChild(this.acceptButton);
+          this.buttonWrapper.appendChild(this.declineButton);
+        } else {
+          this.content.textContent = this.message.pendingGameInvitation(this.#state.data.nickname);
+          this.cancelInviteButton = document.createElement('button');
+          this.cancelInviteButton.textContent = 'Cancel';
+          this.cancelInviteButton.addEventListener('click', this.cancelDuelInvitation);
+          this.buttonWrapper.appendChild(this.cancelInviteButton);
+        }
+        break;
+      case 'new_tournament':
+        this.querySelector('.notification-content').textContent = this.message.newTournament(
+          this.#state.data.nickname,
+          this.#state.data.name,
+        );
+        this.participateButton = document.createElement('button');
+        this.participateButton.textContent = 'Participate';
+        this.participateButton.addEventListener('click', this.handleParticipateTournament);
+        this.buttonWrapper.appendChild(this.participateButton);
+        break;
+      case 'new_friend':
+        this.querySelector('.notification-content').textContent = this.message.newFriend(this.#state.data.nickname);
+        this.seeProfileButton = document.createElement('button');
+        this.seeProfileButton.textContent = 'See profile';
+        this.buttonWrapper.appendChild(this.seeProfileButton);
+        this.addEventListener('click', this.navigateToProfile);
+        break;
     }
   }
 
