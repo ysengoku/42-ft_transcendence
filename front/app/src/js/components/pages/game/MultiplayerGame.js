@@ -428,7 +428,15 @@ export class MultiplayerGame extends HTMLElement {
         this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
         this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
         this.overlayMessageTimer.textContent = remainingTime;
-        // TODO: Set timer
+        setInterval(() => {
+          remainingTime -= 1;
+          this.overlayMessageTimer.textContent = remainingTime;
+          if (remainingTime <= 0) {
+            clearInterval(this);
+            this.hideOverlay();
+            // TODO: Game over
+          }
+        }, 1000);
         break;
       case 'cancel':
         this.overlayButton1 = this.querySelector('#overlay-button1');
