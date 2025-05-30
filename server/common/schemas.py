@@ -19,3 +19,10 @@ class ProfileMinimalSchema(Schema):
     avatar: str
     elo: int
     is_online: bool
+
+class ValidationErrorMessageSchema(MessageSchema):
+    type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
+    loc: list[str] = Field(
+        description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
+        "the list is the name of failed field.",
+    )

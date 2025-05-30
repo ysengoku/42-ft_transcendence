@@ -21,9 +21,12 @@ const auth = (() => {
      */
     storeUser(user) {
       const currentUser = this.getStoredUser();
-      if (!currentUser || currentUser.username !== user.username ||
+      if (
+        !currentUser ||
+        currentUser.username !== user.username ||
         currentUser.unread_messages_count !== user.unread_messages_count ||
-        currentUser.unread_notifications_count !== user.unread_notifications_count) {
+        currentUser.unread_notifications_count !== user.unread_notifications_count
+      ) {
         sessionStorage.setItem('user', JSON.stringify(user));
         const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
         document.dispatchEvent(event);
@@ -70,7 +73,7 @@ const auth = (() => {
 
     /**
      * Get the user stored in session storage. If not found, fetch the user from the server
-     * and store it in session storage. If the user is not logged in, redirect to the login page.
+     * and store it in session storage. If the user is not logged in, return null.
      * @return { Promise<Object> } The user object
      * */
     async getUser() {
@@ -81,7 +84,7 @@ const auth = (() => {
           user = response.response;
           this.storeUser(user);
         } else if (response.status === 401) {
-          showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+          return null;
         }
       }
       return JSON.parse(user);

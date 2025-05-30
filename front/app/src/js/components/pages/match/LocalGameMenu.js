@@ -20,7 +20,7 @@ export class LocalGameMenu extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.template();
 
     this.querySelector('.modal-title')?.classList.add('d-none');
     this.querySelector('#is-ranked-selector')?.classList.add('d-none');
@@ -35,7 +35,7 @@ export class LocalGameMenu extends HTMLElement {
     const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
     anyOptions.forEach((item) => {
       item.classList.add('d-none');
-    })
+    });
   }
 
   navigateToGame(event) {
@@ -63,7 +63,7 @@ export class LocalGameMenu extends HTMLElement {
               <div class="d-flex flex-row justify-content-center mt-5">
                 <a href="/home" class="btn">
                   <i class="bi bi-arrow-left"></i>
-                  Back to home
+                  Back to Saloon
                 </a>
               </div>              
             </div>
@@ -72,10 +72,6 @@ export class LocalGameMenu extends HTMLElement {
       </div>
     </div>
   `;
-  }
-
-  style() {
-    return ``;
   }
 }
 

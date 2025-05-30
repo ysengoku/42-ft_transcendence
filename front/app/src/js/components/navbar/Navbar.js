@@ -65,7 +65,7 @@ export class Navbar extends HTMLElement {
   updateNavbar(event) {
     this.#state.isLoggedin = event.detail.user !== null;
     if (this.#state.isLoggedin) {
-      this.#state.user =auth.getStoredUser();
+      this.#state.user = auth.getStoredUser();
     }
     this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
@@ -89,7 +89,7 @@ export class Navbar extends HTMLElement {
     return `
     <style>
     .navbar {
-      background-color: rgba(var(--pm-primary-600-rgb), 0.7);
+      background-color: rgba(var(--pm-primary-600-rgb), 1.0);
     }
     .navbar-button {
       padding: 0.5rem;

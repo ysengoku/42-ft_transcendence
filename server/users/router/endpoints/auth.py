@@ -11,7 +11,7 @@ from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
 from common.routers import allow_only_for_self
-from common.schemas import MessageSchema
+from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from users.models import RefreshToken, User
 from users.router.endpoints.mfa import handle_mfa_code
 from users.router.utils import _create_json_response_with_tokens
@@ -23,7 +23,6 @@ from users.schemas import (
     ProfileMinimalSchema,
     SelfSchema,
     SignUpSchema,
-    ValidationErrorMessageSchema,
 )
 
 auth_router = Router()

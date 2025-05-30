@@ -1,8 +1,8 @@
 export async function mockTournamentList() {
   const data = [
     {
-      tournament_id: 'kagerhnpewn16461gdsga',
-      tournament_name: 'Peacemakers Cup',
+      id: 'kagerhnpewn16461gdsga',
+      name: 'Peacemakers Cup',
       date: null,
       status: 'lobby',
       creator: {
@@ -16,8 +16,8 @@ export async function mockTournamentList() {
       participants_count: 3,
     },
     {
-      tournament_id: 'bqwerty123451234qwe',
-      tournament_name: 'Valor Clash',
+      id: 'bqwerty123451234qwe',
+      name: 'Valor Clash',
       date: '2025-05-10T15:00:00Z',
       status: 'ongoing',
       creator: {
@@ -31,8 +31,8 @@ export async function mockTournamentList() {
       participants_count: 8,
     },
     {
-      tournament_id: 'cultimate78904567abcdef',
-      tournament_name: 'Ultimate Throwdown',
+      id: 'cultimate78904567abcdef',
+      name: 'Ultimate Throwdown',
       date: '2025-04-20T18:00:00Z',
       status: 'finished',
       creator: {
@@ -46,18 +46,18 @@ export async function mockTournamentList() {
       participants_count: 4,
       winner: {
         alias: 'SpeedFreak',
-          user: {
+        user: {
           username: 'Tommy',
           nickname: 'Speedster',
           avatar: '/__mock__/img/sample-pic2.png',
           elo: 1550,
           is_online: false,
-        }
+        },
       },
     },
     {
-      tournament_id: 'dgladiator123asdasd',
-      tournament_name: "Gladiator's Arena",
+      id: 'dgladiator123asdasd',
+      name: "Gladiator's Arena",
       date: null,
       status: 'lobby',
       creator: {
@@ -71,8 +71,8 @@ export async function mockTournamentList() {
       participants_count: 0,
     },
     {
-      tournament_id: 'esniper45678zxcvbnm',
-      tournament_name: 'Sniper Showdown',
+      id: 'esniper45678zxcvbnm',
+      name: 'Sniper Showdown',
       date: null,
       status: 'lobby',
       creator: {
@@ -86,8 +86,8 @@ export async function mockTournamentList() {
       participants_count: 2,
     },
     {
-      tournament_id: 'fnexus99999poiuytrewq',
-      tournament_name: 'Nexus Battle',
+      id: 'fnexus99999poiuytrewq',
+      name: 'Nexus Battle',
       date: null,
       status: 'lobby',
       creator: {
@@ -102,4 +102,4 @@ export async function mockTournamentList() {
     },
   ];
   return { items: data, count: data.length };
-};
+}

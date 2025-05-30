@@ -2,27 +2,13 @@ import { ThemeController } from './ThemeController';
 import { isMobile, BREAKPOINT } from './viewPort';
 import { sanitizeHtml } from './sanitizeHtml';
 import { showFormErrorFeedback } from './formFeedback';
-import { showToastNotification } from './toastnotification';
+import { showToastNotification, TOAST_TYPES } from './toastnotification';
 
-import {
-  getRelativeTime,
-  getRelativeDateAndTime,
-  formatDateMDY,
-} from './dateFormat';
+import { getRelativeTime, getRelativeDateAndTime, formatDateMDY } from './dateFormat';
 
-import {
-  createClouds,
-  createStars,
-  loader,
-} from './animations';
+import { createClouds, createStars, loader, flyAway } from './animations';
 
-import {
-  INPUT_FEEDBACK,
-  emailFeedback,
-  passwordFeedback,
-  isFieldFilled,
-  removeInputFeedback,
-} from './inputFeedback';
+import { INPUT_FEEDBACK, emailFeedback, passwordFeedback, isFieldFilled, removeInputFeedback } from './inputFeedback';
 
 import {
   ALERT_TYPE,
@@ -32,7 +18,6 @@ import {
   removeAlert,
   addDissmissAlertListener,
 } from './alertMessage';
-
 
 export {
   ThemeController,
@@ -44,9 +29,11 @@ export {
   sanitizeHtml,
   showFormErrorFeedback,
   showToastNotification,
+  TOAST_TYPES,
   createClouds,
   createStars,
   loader,
+  flyAway,
   INPUT_FEEDBACK,
   emailFeedback,
   passwordFeedback,

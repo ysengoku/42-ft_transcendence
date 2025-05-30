@@ -1,10 +1,18 @@
 import { Modal } from 'bootstrap';
 import { router } from '@router';
+import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import { formatDateMDY } from '@utils';
 import './components/index.js';
 
 export class TournamentMenu extends HTMLElement {
+  #maxAliasLength = Number(import.meta.env.VITE_MAX_ALIAS_LENGTH) || 12;
+
+  #state = {
+    nickname: '',
+  };
+
   constructor() {
     super();
 
@@ -19,24 +27,32 @@ export class TournamentMenu extends HTMLElement {
     this.modalFooter = null;
     this.calcelButton = null;
     this.confirmButton = null;
+    this.aliasInput = null;
+    this.aliasInputFeedback = null;
+    this.registrationFailFeedback = null;
 
     this.showNewTournamentForm = this.showNewTournamentForm.bind(this);
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
     this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
+    this.handleAliasInput = this.handleAliasInput.bind(this);
+    this.confirmRegister = this.confirmRegister.bind(this);
     this.navigateToOverview = this.navigateToOverview.bind(this);
   }
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        router.navigate('/login');
+      }
       return;
     }
-    // authStatus.response.tournament_id = '1234'; // For test
-    if (authStatus.response.tournament_id) {
-      this.redirectToActiveTournament(authStatus.response.tournament_id);
-      return;
-    }
+    // if (authStatus.response.tournament_id) {
+    //   this.redirectToActiveTournament(authStatus.response.tournament_id);
+    //   return;
+    // }
+    this.#state.nickname = authStatus.response.nickname;
     this.render();
   }
 
@@ -46,7 +62,8 @@ export class TournamentMenu extends HTMLElement {
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
-    if (this.selectedTournament && this.selectedTournament.staus !== 'lobby') {
+    this.modalComponent.removeEventListener('hidden.bs.modal', this.handleCloseModal);
+    if (this.selectedTournament && this.selectedTournament.staus !== 'pending') {
       this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
   }
@@ -80,7 +97,7 @@ export class TournamentMenu extends HTMLElement {
 
     this.createTournamentButton = this.querySelector('#create-tournament-button');
     this.list = this.querySelector('tournament-list');
-    
+
     this.createTournamentButton.addEventListener('click', this.showNewTournamentForm);
     this.list.addEventListener('click', this.showTournamentDetail);
 
@@ -96,6 +113,7 @@ export class TournamentMenu extends HTMLElement {
 
     document.addEventListener('hide-modal', this.hideModal);
     this.modalComponent.addEventListener('hide.bs.modal', this.handleCloseModal);
+    this.modalComponent.addEventListener('hidden.bs.modal', this.handleCloseModal);
     window.requestAnimationFrame(() => {
       this.noOpenTournaments = document.getElementById('no-open-tournaments');
       this.noOpenTournaments?.addEventListener('click', this.showNewTournamentForm);
@@ -117,6 +135,13 @@ export class TournamentMenu extends HTMLElement {
     this.confirmButton.classList.remove('d-none');
     this.confirmButton.disabled = true;
     this.calcelButton.textContent = 'Cancel';
+
+    this.aliasInput?.removeEventListener('input', this.handleAliasInput);
+    this.confirmButton.removeEventListener('click', this.confirmRegister);
+    this.confirmButton.removeEventListener('click', this.navigateToOverview);
+
+    this.aliasInput = null;
+    this.aliasInputFeedback = null;
   }
 
   showNewTournamentForm() {
@@ -130,13 +155,13 @@ export class TournamentMenu extends HTMLElement {
 
   showTournamentDetail(event) {
     const listItem = event.target.closest('li[tournament-id]');
-    if (!listItem || !listItem.hasAttribute('tournament-id')) { 
+    if (!listItem || !listItem.hasAttribute('tournament-id')) {
       return;
     }
     const tournamentId = listItem.getAttribute('tournament-id');
     this.selectedTournament = this.list.getTournamentById(tournamentId);
     const tournamentStatus = this.selectedTournament.status;
-    if (!tournamentId  || !tournamentStatus) {
+    if (!tournamentId || !tournamentStatus) {
       return;
     }
     this.modalBody.innerHTML = '';
@@ -145,17 +170,28 @@ export class TournamentMenu extends HTMLElement {
   }
 
   tournamentDetail = {
-    lobby: () => {
-      const modalBodyContent = document.createElement('tournament-registration');
-      modalBodyContent.data = this.selectedTournament;
-      this.modalBody.appendChild(modalBodyContent);
+    pending: () => {
+      this.modalBody.innerHTML = this.registerTournamentTemplate();
+      const modalTitle = this.modalBody.querySelector('.modal-title');
+      const modatRequiredParticipants = this.modalBody.querySelector('#modal-required-participants');
+      modalTitle.textContent = this.selectedTournament.name;
+      modatRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants}`;
+
+      this.aliasInput = this.modalBody.querySelector('#tournament-alias');
+      this.aliasInputFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
+      this.registrationFailFeedback = this.modalBody.querySelector('#registration-fail-feedback');
+      this.registrationFailFeedbackMessage = this.modalBody.querySelector('#registration-fail-feedback-message');
+      this.aliasInput.addEventListener('input', this.handleAliasInput);
+
+      this.aliasInput.value = this.#state.nickname;
+      this.confirmButton.disabled = false;
+      this.confirmButton.textContent = 'Register';
+      this.confirmButton.addEventListener('click', this.confirmRegister);
     },
     ongoing: () => {
       this.modalBody.innerHTML = this.ongoingTournamentTemplate();
       const modalTitle = this.modalBody.querySelector('.modal-title');
-      const modalRequiredParticipants = this.modalBody.querySelector('#modal-required-participants');
-      modalTitle.textContent = this.selectedTournament.tournament_name;
-      modalRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants} players`;
+      modalTitle.textContent = this.selectedTournament.name;
 
       this.confirmButton.textContent = 'Check progress';
       this.confirmButton.disabled = false;
@@ -165,15 +201,23 @@ export class TournamentMenu extends HTMLElement {
     finished: () => {
       this.modalBody.innerHTML = this.finishedTournamentTemplate();
       const modalTitle = this.modalBody.querySelector('.modal-title');
-      const modalRequiredParticipants = this.modalBody.querySelector('#modal-required-participants');
       const modalTournamentStatus = this.modalBody.querySelector('#modal-tournament-status');
       const tournamentWinnerAvatar = this.modalBody.querySelector('#tournament-winner-avatar');
       const tournamentWinnerAlias = this.modalBody.querySelector('#tournament-winner-alias');
-      modalTitle.textContent = this.selectedTournament.tournament_name;
-      modalRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants} players`;
+      modalTitle.textContent = this.selectedTournament.name;
       modalTournamentStatus.textContent = `Finished on ${formatDateMDY(this.selectedTournament.date)}`;
-      tournamentWinnerAvatar.src = this.selectedTournament.winner.user.avatar;
-      tournamentWinnerAlias.textContent = this.selectedTournament.winner.alias;
+      if (
+        this.selectedTournament.winner &&
+        this.selectedTournament.winner.user &&
+        this.selectedTournament.winner.user.avatar
+      ) {
+        tournamentWinnerAvatar.src = this.selectedTournament.winner.user.avatar;
+      } else {
+        tournamentWinnerAvatar.classList.add('d-none');
+      }
+      tournamentWinnerAlias.textContent = this.selectedTournament.winner
+        ? this.selectedTournament.winner.alias
+        : 'Data not available';
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
@@ -182,9 +226,84 @@ export class TournamentMenu extends HTMLElement {
     },
   };
 
-  navigateToOverview() {
+  handleAliasInput(event) {
+    if (event.target.value.length < 1) {
+      this.aliasInput.classList.add('is-invalid');
+      this.aliasInputFeedback.textContent = 'Alias cannot be empty';
+      this.confirmButton.disabled = true;
+    } else if (event.target.value.length > this.#maxAliasLength) {
+      this.aliasInput.classList.add('is-invalid');
+      this.aliasInputFeedback.textContent = `Alias must be less than ${this.#maxAliasLength} characters.`;
+      this.confirmButton.disabled = true;
+    } else {
+      this.aliasInput.classList.remove('is-invalid');
+      this.aliasInputFeedback.textContent = '';
+      this.confirmButton.disabled = false;
+    }
+  }
+
+  async confirmRegister(event) {
+    event.stopPropagation();
+    devLog('Registering for tournament:', this.selectedTournament.id, this.aliasInput.value);
+    const response = await apiRequest(
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT_REGISTER(this.selectedTournament.id, this.aliasInput.value),
+      null,
+      false,
+      true,
+    );
+
+    if (response.success) {
+      this.connectToTournamentRoom();
+    } else {
+      if (response.msg === 'Tournament is full.') {
+        this.modal.hide();
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
+        this.render();
+        return;
+      }
+      const alertWrapper = this.modalBody.querySelector('#registration-fail-alert-wrapper');
+      alertWrapper.innerHTML = '';
+      const alert = document.createElement('div');
+      alert.className = 'alert alert-danger alert-dismissible show';
+
+      const alertMessage = document.createElement('p');
+      alertMessage.className = 'm-0';
+      alertMessage.textContent = response.msg;
+
+      const dismissButton = document.createElement('button');
+      dismissButton.type = 'button';
+      dismissButton.className = 'btn-close';
+      dismissButton.setAttribute('data-bs-dismiss', 'alert');
+      dismissButton.setAttribute('aria-label', 'Close');
+
+      alert.appendChild(alertMessage);
+      alert.appendChild(dismissButton);
+      alertWrapper.appendChild(alert);
+    }
+  }
+
+  connectToTournamentRoom() {
+    this.modalComponent.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        router.navigate(`/tournament/${this.selectedTournament.id}`);
+      },
+      { once: true },
+    );
     this.modal.hide();
-    router.navigate(`/tournament-overview/${this.selectedTournament.tournament_id}`);
+  }
+
+  navigateToOverview() {
+    this.modalComponent.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        router.navigate(`/tournament-overview/${this.selectedTournament.id}`);
+      },
+      { once: true },
+    );
+    this.modal.hide();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -208,7 +327,7 @@ export class TournamentMenu extends HTMLElement {
 
             <a href="/home" class="btn">
               <i class="bi bi-arrow-left"></i>
-              Back to home
+              Back to Saloon
             </a>
           </div>
         </div>
@@ -220,9 +339,25 @@ export class TournamentMenu extends HTMLElement {
   style() {
     return `
     <style>
+    .modal-content {
+      color: var(--pm-primary-100);
+      button {
+        color: var(--pm-primary-100);
+      }
+      button:disabled {
+        color: rgba(var(--pm-primary-100-rgb), 0.5);
+        border: none;
+      }
+    }
     .modal-title {
       overflow-wrap: anywhere;
       hyphens: auto;
+    }
+    #modal-tournament-status {
+      color: var(--pm-green-200);
+    }
+    .invalid-feedback {
+      color: var(--pm-red-300) !important;
     }
     </style>
     `;
@@ -232,26 +367,45 @@ export class TournamentMenu extends HTMLElement {
     return `
     <div class="modal fade mt-5" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog pt-4">
-        <div class="modal-content">
+        <div class="modal-content wood-board">
           <div class="modal-header border-0">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body"></div>
-          <div class="modal-footer border-0 my-2 px-5">
+          <div class="modal-footer border-0 my-2 px-3">
             <button type="button" class="cancel-button btn me-3" data-bs-dismiss="modal">Cancel</button>
             <button type="button" class="confirm-button btn fw-bolder ms-2" disabled></button>
           </div>
         </div>
       </div>
     </div>
-    `;  
+    `;
+  }
+
+  registerTournamentTemplate() {
+    return `
+    <div class="d-flex flex-column align-items-center px-4 w-100">
+      <h2 class="modal-title text-center"></h2>
+      <p class="text-center fs-6 m-0" id="modal-tournament-status">Open for entries</p>
+      <div class="d-flex flex-row justify-content-center align-items-center mb-5 pb-2 gap-2">
+        <p class="text-center fs-4 m-0" id="modal-required-participants"></p>
+        <p class="text-center fs-6 m-0 pe-1">players</p>
+      </div>
+      <div id="registration-fail-alert-wrapper"></div>
+      <div id="tournament-register-form" class="d-flex flex-column w-100 mb-3">
+        <label for="tournament-alias" class="form-label">Set your tournament alias</label>
+        <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias for the tournament" autocomplete="off" required>
+        <div class="invalid-feedback" id="tournament-alias-feedback"></div>
+      </div>
+    </div>
+    `;
   }
 
   ongoingTournamentTemplate() {
     return `
     <div class="d-flex flex-column align-items-center px-4">
       <h2 class="modal-title text-center"></h2>
-      <p class="text-center" id="modal-required-participants"></p>
+      <p class="text-center" id="modal-tournament-status">Ongoing</p>
       <p class="text-center mt-3">This tournament is ongoing. You can not register.</p>
     </div>
     `;
@@ -261,11 +415,10 @@ export class TournamentMenu extends HTMLElement {
     return `
     <div class="d-flex flex-column align-items-center px-4">
       <h2 class="modal-title text-center"></h2>
-      <p class="text-center" id="modal-required-participants"></p>
       <p class="text-center" id="modal-tournament-status"></p>
       <div class="d-flex flex-column align-items-center mt-4">
-        <h3 class="text-center mt-3">Winner</h3>
-        <img class="avatar-m rounded-circle" id="tournament-winner-avatar" alt="Winner's avatar">
+        <h3 class="text-center mt-3">Champion</h3>
+        <img class="avatar-m rounded-circle" id="tournament-winner-avatar" alt="champion-avatar">
         <p class="fs-5" id="tournament-winner-alias"></p>
       </div>
     </div>

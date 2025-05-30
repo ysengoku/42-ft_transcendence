@@ -1,15 +1,16 @@
 from datetime import datetime, timedelta
-from random import choice, randint, randrange
+from random import choice, randint, randrange, sample
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from chat.models import Chat, ChatMessage, Notification
 from pong.models import Match
+from tournaments.models import Bracket, Participant, Round, Tournament
 from users.models import OauthConnection, Profile, User
 
 
-# ruff: noqa: S106, S311
+# ruff: noqa: S106, S311, T201, PLR2004
 def choice_except(seq, value):
     res = choice(seq)
     while res == value:
@@ -33,6 +34,10 @@ def clean_database():
     User.objects.all().delete()
     Profile.objects.all().delete()
     Match.objects.all().delete()
+    Tournament.objects.all().delete()
+    Bracket.objects.all().delete()
+    Round.objects.all().delete()
+    Participant.objects.all().delete()
     OauthConnection.objects.all().delete()
     Chat.objects.all().delete()
     ChatMessage.objects.all().delete()
@@ -41,7 +46,8 @@ def clean_database():
 
 def generate_users() -> tuple[list[User], User]:
     # special user who is winning at life
-    life_enjoyer = User.objects.create_user("LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123")
+    life_enjoyer = User.objects.create_user(
+        "LifeEnjoyer", email="lifeenjoyer@gmail.com", password="123")
     life_enjoyer.profile.elo = 2800
     life_enjoyer.profile.save()
 
@@ -74,7 +80,8 @@ def generate_users() -> tuple[list[User], User]:
     ]
 
     for name, elo in names_and_elo:
-        user = User.objects.create_user(f"{name}", email=f"{name}@gmail.com", password="123")
+        user = User.objects.create_user(
+            f"{name}", email=f"{name}@gmail.com", password="123")
         user.profile.elo = elo
         user.profile.save()
         users[user.username] = user
@@ -99,7 +106,8 @@ def generate_users() -> tuple[list[User], User]:
     sad_hampter.profile.add_friend(celiastral.profile)
 
     for i in range(10):
-        user = User.objects.create_user(f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
+        user = User.objects.create_user(
+            f"Pedro{i}", email=f"Pedro{i}@gmail.com", password="123")
         if randint(0, 1):
             life_enjoyer.profile.block_user(user.profile)
         else:
@@ -150,6 +158,149 @@ def generate_matches(users: dict[str, User], life_enjoyer: User):
                 )
 
 
+def generate_tournaments(users: dict[str, User]) -> None:
+    dummy_aliases = [
+        "RedFalcon",
+        "BlueTiger",
+        "SilverWolf",
+        "GoldenEagle",
+        "ShadowFox",
+        "RedDragon",
+        "EmeraldLion",
+        "NightHawk",
+        "MysticBear",
+        "StormRider",
+        "CosmicWhale",
+        "PhantomCat",
+    ]
+    options = [int(x) for x in __import__("django.conf").conf.settings.REQUIRED_PARTICIPANTS_OPTIONS]
+    profiles = [u.profile for u in users.values() if hasattr(u, "profile") and u.profile.user is not None]
+
+    for i in range(15):
+        name = f"Tournament {i + 1}"
+        date = generate_random_date()
+        status = choice([Tournament.PENDING, Tournament.ONGOING, Tournament.FINISHED])
+        user = choice(list(users.values()))
+        required = choice(options)
+
+        tournament = Tournament.objects.create(
+            name=name,
+            date=date,
+            status=status,
+            creator=user.profile,
+            required_participants=required,
+        )
+
+        available_aliases = dummy_aliases.copy()
+
+        participants = sample(profiles, k=required)
+        participant_objs = []
+        for p in participants:
+            alias = available_aliases.pop(randint(0, len(available_aliases) - 1))
+            part = Participant.objects.create(
+                profile=p,
+                tournament=tournament,
+                alias=alias,
+                status="registered",
+                current_round=0,
+            )
+            participant_objs.append(part)
+
+        # ongoing/finished の場合はラウンド生成・状態更新
+        if status in (Tournament.ONGOING, Tournament.FINISHED):
+            total_rounds = 2 if required == 4 else 3
+            current = participant_objs.copy()
+
+            for rnd in range(1, total_rounds + 1):
+                for part in current:
+                    part.status = "playing"
+                    part.current_round = rnd
+                    part.save()
+
+                rnd_status = (
+                    Tournament.FINISHED
+                    if status == Tournament.FINISHED or (status == Tournament.ONGOING and rnd < total_rounds)
+                    else Tournament.PENDING
+                )
+                rnd_obj = Round.objects.create(
+                    tournament=tournament,
+                    number=rnd,
+                    status=rnd_status,
+                )
+
+                next_round = []
+                for j in range(0, len(current), 2):
+                    p1 = current[j]
+                    p2 = current[j + 1]
+                    bracket_status = Tournament.FINISHED if rnd_status == Tournament.FINISHED else Tournament.ONGOING
+                    bracket = Bracket.objects.create(
+                        round=rnd_obj,
+                        participant1=p1,
+                        participant2=p2,
+                        status=bracket_status,
+                    )
+
+                    if bracket_status == Tournament.FINISHED:
+                        s1, s2 = randint(0, 3), randint(0, 3)
+                        if s1 == s2:
+                            s1 += 1
+                        bracket.score_p1, bracket.score_p2 = s1, s2
+                        winner = p1 if s1 > s2 else p2
+                        loser = p2 if s1 > s2 else p1
+                        bracket.winner = winner
+                        bracket.score = f"{s1}-{s2}"
+                        bracket.save()
+
+                        winner.status = "playing" if rnd < total_rounds else "winner"
+                        loser.status = "eliminated"
+                        loser.current_round = rnd
+                        winner.current_round = rnd + \
+                            (0 if rnd < total_rounds else rnd)
+                        winner.save()
+                        loser.save()
+
+                        next_round.append(winner)
+                    elif status == Tournament.ONGOING:
+                        if randint(0, 1):
+                            s1, s2 = randint(0, 3), randint(0, 3)
+                            if s1 == s2:
+                                s2 += 1
+                            bracket.score_p1, bracket.score_p2 = s1, s2
+                            winner = p1 if s1 > s2 else p2
+                            loser = p2 if s1 > s2 else p1
+                            bracket.winner = winner
+                            bracket.score = f"{s1}-{s2}"
+                            bracket.status = Bracket.FINISHED
+                            bracket.save()
+
+                            winner.status = Participant.PLAYING
+                            loser.status = Participant.ELIMINATED
+                            winner.current_round = rnd
+                            loser.current_round = rnd
+                            winner.save()
+                            loser.save()
+
+                            next_round.append(winner)
+                current = next_round
+
+            final = Round.objects.get(tournament=tournament, number=total_rounds)
+            finished_brackets = final.brackets.filter(status=Tournament.FINISHED)
+            if finished_brackets.exists():
+                champ = finished_brackets.order_by("?").first().winner
+                tournament.winner = champ
+                tournament.save()
+
+
+def generate_empty_tournament(user: User) -> Tournament:
+    return Tournament.objects.create(
+        name="Empty Tournament",
+        date=generate_random_date(),
+        status=Tournament.PENDING,
+        creator=user.profile,
+        required_participants=0,
+    )
+
+
 class Command(BaseCommand):
     help = "Populates db with a dummy data"
 
@@ -159,6 +310,8 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
+        generate_tournaments(users)
+
         # MFA users
         mfa_users = [
             ("secure_bob", "secure_bob@gmail.com"),
@@ -168,7 +321,8 @@ class Command(BaseCommand):
             ("fanny", "boussard.fanny@gmail.com"),
         ]
         for username, email in mfa_users:
-            user = User.objects.create_user(username, email=email, password="123")
+            user = User.objects.create_user(
+                username, email=email, password="123")
             user.mfa_enabled = True
             user.save()
 
@@ -316,11 +470,13 @@ Keep soaring high, superstar!""",
                 chat, _ = Chat.objects.get_or_create(profile, other_profile)
                 for _ in range(10):
                     random_message_content = choice(chat_messages_content)  # noqa: S311
-                    ChatMessage.objects.create(content=random_message_content, sender=profile, chat=chat)
+                    ChatMessage.objects.create(
+                        content=random_message_content, sender=profile, chat=chat)
             for _ in range(15):
                 sender = choice_except(profiles, profile)
                 if sender:
-                    notification = Notification.objects.action_new_friend(receiver=profile, sender=sender)
+                    notification = Notification.objects.action_new_friend(
+                        receiver=profile, sender=sender)
                     if randint(0, 1):  # noqa: S311
                         notification.is_read = True
                         notification.save()
