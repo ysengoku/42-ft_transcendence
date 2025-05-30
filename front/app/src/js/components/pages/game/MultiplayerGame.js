@@ -384,7 +384,7 @@ export class MultiplayerGame extends HTMLElement {
         case 'game_cancelled':
           devLog('Game cancelled');
           this.showOverlay('cancel');
-          console.log(player_id)
+          console.log(playerId)
           break;
 
         default:
