@@ -6,9 +6,10 @@ from ninja import Field, Schema
 from pydantic import model_validator
 
 from chat.models import ChatMessage, Notification
-from common.schemas import MessageSchema, ProfileMinimalSchema
+from common.schemas import ProfileMinimalSchema
 from pong.models import GameRoom, Match
 from pong.schemas import EloDataPointSchema, ProfileMatchPreviewSchema
+from tournaments.models import Tournament
 
 from .models import Profile, User
 
@@ -32,14 +33,6 @@ class UsernameNicknameAvatarSchema(UsernameSchema):
     avatar: str
 
 
-class ValidationErrorMessageSchema(MessageSchema):
-    type: str = Field(description="Type of the error. can be missing, validation_error or some kind of type error.")
-    loc: list[str] = Field(
-        description="Location of the error. It can be from path, from JSON payload or from anything else. Last item in "
-        "the list is the name of failed field.",
-    )
-
-
 class LoginResponseSchema(Schema):
     mfa_required: bool
     username: str
@@ -53,6 +46,7 @@ class SelfSchema(ProfileMinimalSchema):
     unread_messages_count: int
     unread_notifications_count: int
     game_id: str | None
+    tournament_id: str | None
 
     @staticmethod
     def resolve_unread_messages_count(obj: Profile):
@@ -64,10 +58,17 @@ class SelfSchema(ProfileMinimalSchema):
 
     @staticmethod
     def resolve_game_id(obj: Profile):
-        g = GameRoom.objects.for_players(obj).for_ongoing_status().first()
+        g: GameRoom | None = GameRoom.objects.for_players(obj).for_ongoing_status().first()
         if g:
             return str(g.id)
         return g
+
+    @staticmethod
+    def resolve_tournament_id(obj: Profile):
+        t: Tournament | None = Tournament.objects.get_active_tournament(obj)
+        if t:
+            return str(t.id)
+        return t
 
 
 class UserSettingsSchema(Schema):
@@ -199,6 +200,7 @@ class PasswordValidationSchema(Schema):
         ):
             err_dict["password"].append("Password should have at least 1 letter and 1 digit.")
 
+        # clean empty lists from the dict
         return {k: v for k, v in err_dict.items() if v}
 
 

@@ -5,13 +5,19 @@
  *              loading more messages, and toggling likes on messages.
  * @module ChatMessageArea
  */
-// import 'bootstrap';
 import { Tooltip } from 'bootstrap';
 import defaultAvatar from '/img/default_avatar.png?url';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE, getRelativeDateAndTime, loader } from '@utils';
+import {
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+  showToastNotification,
+  TOAST_TYPES,
+  getRelativeDateAndTime,
+  loader,
+} from '@utils';
 
 /**
  * @class ChatMessageArea
@@ -40,7 +46,22 @@ export class ChatMessageArea extends HTMLElement {
 
   constructor() {
     super();
+
+    // Initialize components
+    this.header = null;
+    this.headerAvatar = null;
+    this.headerNickname = null;
+    this.headerUsername = null;
+    this.headerOnlineStatusIndicator = null;
+    this.headerOnlineStatus = null;
+    this.invitePlayButton = null;
+    this.gameInvitationModal = null;
+    this.blockButoon = null;
+    this.chatMessages = null;
+
+    // Bind methods to the component instance
     this.navigateToProfile = this.navigateToProfile.bind(this);
+    this.openGameInvitationModal = this.openGameInvitationModal.bind(this);
     this.blockUser = this.blockUser.bind(this);
     this.unblockUser = this.unblockUser.bind(this);
     this.loadMoreMessages = this.loadMoreMessages.bind(this);
@@ -70,22 +91,28 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   disconnectedCallback() {
+    const tooltipElements = this.querySelectorAll('.message');
+    tooltipElements.forEach((element) => {
+      const tooltipInstance = Tooltip.getInstance(element);
+      if (tooltipInstance) {
+        tooltipInstance.hide();
+        tooltipInstance.dispose();
+      }
+    });
     this.header?.removeEventListener('click', this.navigateToProfile);
     if (this.#state.data) {
-      this.#state.data.is_blocked_user ?
-        this.blockButoon?.removeEventListener('click', this.unblockUser) :
-        this.blockButoon?.removeEventListener('click', this.blockUser);
-      this.#state.data.messages.forEach = (message, index) => {
-        message.querySelector('.bubble')?.removeEventListener('click', this.toggleLikeMessage(index));
-      };
+      this.#state.data.is_blocked_user
+        ? this.blockButoon?.removeEventListener('click', this.unblockUser)
+        : (this.invitePlayButton?.removeEventListener('click', this.openGameInvitationModal),
+          this.blockButoon?.removeEventListener('click', this.blockUser));
     }
     this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+    this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
   }
 
   /* ------------------------------------------------------------------------ */
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
-
   render() {
     this.innerHTML = this.template() + this.style();
     this.messageInput = this.querySelector('#chat-message-input-wrapper');
@@ -97,7 +124,7 @@ export class ChatMessageArea extends HTMLElement {
       return;
     }
 
-    // Initialize elements
+    // Select components from the template.
     this.header = this.querySelector('#chat-header');
     this.headerAvatar = this.querySelector('#chat-header-avatar');
     this.headerNickname = this.querySelector('#chat-header-nickname');
@@ -105,12 +132,14 @@ export class ChatMessageArea extends HTMLElement {
     this.headerOnlineStatusIndicator = this.querySelector('#chat-header-online-status-indicator');
     this.headerOnlineStatus = this.querySelector('#chat-header-online-status');
     this.invitePlayButton = this.querySelector('#chat-invite-play-button');
+    this.gameInvitationModal = document.querySelector('invite-game-modal');
     this.blockButoon = this.querySelector('#chat-block-user-button');
     this.chatMessages = this.querySelector('#chat-messages');
 
     // Set header information and avatar.
-    this.#state.data.avatar ?
-      (this.headerAvatar.src = this.#state.data.avatar) : (this.headerAvatar.src = defaultAvatar);
+    this.#state.data.avatar
+      ? (this.headerAvatar.src = this.#state.data.avatar)
+      : (this.headerAvatar.src = defaultAvatar);
     this.headerAvatar.classList.remove('d-none');
     this.headerNickname.textContent = this.#state.data.nickname;
     this.headerUsername.textContent = `@${this.#state.data.username}`;
@@ -128,6 +157,10 @@ export class ChatMessageArea extends HTMLElement {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       });
       this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
+      this.chatMessages.addEventListener('click', this.toggleLikeMessage);
+    } else {
+      this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+      this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
     }
 
     // Toggle input and block button based on block status.
@@ -139,6 +172,7 @@ export class ChatMessageArea extends HTMLElement {
       this.messageInput.classList.remove('d-none');
       this.invitePlayButton.classList.remove('d-none');
       this.blockButoon.textContent = 'Block user';
+      this.invitePlayButton.addEventListener('click', this.openGameInvitationModal);
       this.blockButoon.addEventListener('click', this.blockUser);
     }
   }
@@ -163,19 +197,19 @@ export class ChatMessageArea extends HTMLElement {
         const previousHeight = this.chatMessages.scrollHeight;
 
         const response = await apiRequest(
-            'GET',
-            /* eslint-disable-next-line new-cap */
-            API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
-            null,
-            false,
-            true,
+          'GET',
+          /* eslint-disable-next-line new-cap */
+          API_ENDPOINTS.CHAT_MESSAGES(this.#state.data.username, 30, this.#state.renderedMessagesCount),
+          null,
+          false,
+          true,
         );
         if (response.success) {
           this.#state.data.messages.push(...response.data.items);
           this.#state.totalMessagesCount = response.data.count;
           this.renderMessages();
         } else {
-          // TODO: Handle error
+          showToastNotification('Failed to load more messages.', TOAST_TYPES.ERROR);
         }
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight - previousHeight;
       }
@@ -210,16 +244,16 @@ export class ChatMessageArea extends HTMLElement {
 
     if (message.sender === this.#state.data.username) {
       messageElement.classList.add(
-          'left-align-message',
-          'd-flex',
-          'flex-row',
-          'justify-content-start',
-          'align-items-center',
-          'gap-3',
+        'left-align-message',
+        'd-flex',
+        'flex-row',
+        'justify-content-start',
+        'align-items-center',
+        'gap-3',
       );
       messageContent.classList.add('me-5');
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
-      messageElement.addEventListener('click', this.toggleLikeMessage);
+      messageContent.classList.add('received-message');
       if (!message.is_read) {
         const readMessage = {
           action: 'read_message',
@@ -233,11 +267,11 @@ export class ChatMessageArea extends HTMLElement {
       }
     } else {
       messageElement.classList.add(
-          'right-align-message',
-          'd-flex',
-          'flex-row',
-          'justify-content-end',
-          'align-items-center',
+        'right-align-message',
+        'd-flex',
+        'flex-row',
+        'justify-content-end',
+        'align-items-center',
       );
       messageContent.classList.add('ms-5');
       messageElement.querySelector('.chat-message-avatar').remove();
@@ -255,9 +289,17 @@ export class ChatMessageArea extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Event handlers                                                       */
   /* ------------------------------------------------------------------------ */
-
   navigateToProfile() {
     router.navigate(`/profile/${this.#state.data.username}`);
+  }
+
+  openGameInvitationModal() {
+    const user = {
+      username: this.#state.data.username,
+      nickname: this.#state.data.nickname,
+      avatar: this.#state.data.avatar,
+    };
+    this.gameInvitationModal.showModal(user);
   }
 
   /**
@@ -269,12 +311,12 @@ export class ChatMessageArea extends HTMLElement {
   async blockUser() {
     const request = { username: this.#state.data.username };
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.loggedInUsername),
-        request,
-        false,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.loggedInUsername),
+      request,
+      false,
+      true,
     );
     const successMessage = 'User blocked successfully.';
     const errorMessage = 'Failed to block user. Please try again later.';
@@ -300,12 +342,12 @@ export class ChatMessageArea extends HTMLElement {
    */
   async unblockUser() {
     const response = await apiRequest(
-        'DELETE',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.loggedInUsername, this.#state.data.username),
-        null,
-        false,
-        true,
+      'DELETE',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.loggedInUsername, this.#state.data.username),
+      null,
+      false,
+      true,
     );
     const successMessage = 'User unblocked successfully.';
     const errorMessage = 'Failed to unblock user. Please try again later.';
@@ -321,9 +363,14 @@ export class ChatMessageArea extends HTMLElement {
     }
   }
 
+  /**
+   * Toggle the like status of a message.
+   * @param {Event} event - The click event on the message bubble.
+   * @return {void}
+   */
   toggleLikeMessage(event) {
     const messageBubble = event.target.closest('.bubble');
-    if (!messageBubble) {
+    if (!messageBubble || !messageBubble.classList.contains('received-message')) {
       return;
     }
     const messageId = messageBubble.getAttribute('id');
@@ -332,8 +379,13 @@ export class ChatMessageArea extends HTMLElement {
     this.#sendToggleLikeEvent(this.#state.data.chat_id, messageId, messageData.is_liked);
   }
 
+  /**
+   * Update the online status of the user in the chat header.
+   * @param {Object} data - The data containing the online status.
+   * @property {boolean} data.online - The online status of the user.
+   * @return {void}
+   * */
   updateOnlineStatus(data) {
-    console.log('Updating online status:', data);
     this.headerOnlineStatusIndicator.classList.toggle('online', data.online);
     this.headerOnlineStatus.textContent = data.online ? 'online' : 'offline';
   }
@@ -341,7 +393,6 @@ export class ChatMessageArea extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Template & style                                                     */
   /* ------------------------------------------------------------------------ */
-
   template() {
     return `
     <div class="d-flex flex-column h-100">

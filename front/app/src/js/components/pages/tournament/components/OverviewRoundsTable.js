@@ -2,7 +2,7 @@ export class TournamentOverviewTable extends HTMLElement {
   #state = {
     rounds: null,
     roundsCount: 0,
-  }
+  };
 
   constructor() {
     super();
@@ -35,7 +35,6 @@ export class TournamentOverviewTable extends HTMLElement {
 
     const bracketsWrapper = roundElement.querySelector('.brackets-wrapper');
     const brackets = this.#state.rounds[index].brackets;
-    console.log(brackets);
     brackets.forEach((bracket) => {
       const bracketElement = this.createBracketElement(bracket);
       bracketsWrapper.appendChild(bracketElement);
@@ -60,13 +59,13 @@ export class TournamentOverviewTable extends HTMLElement {
     element.innerHTML = this.playerTemplate();
     element.classList.add('d-flex', 'justify-content-center', 'align-items-center');
     const avatarElement = element.querySelector('img');
-    avatarElement.src = player.user.avatar;
+    avatarElement.src = player.profile.avatar;
     const aliasElement = element.querySelector('.player-alias');
     aliasElement.textContent = player.alias;
     if (player.status === 'winner') {
-      element.classList.add('bracket-player-winner')
+      element.classList.add('bracket-player-winner');
     } else if (player.status === 'eliminated') {
-      element.classList.add('bracket-player-loser')
+      element.classList.add('bracket-player-loser');
     }
     const scoreElement = element.querySelector('.player-score');
     scoreElement.textContent = score;
