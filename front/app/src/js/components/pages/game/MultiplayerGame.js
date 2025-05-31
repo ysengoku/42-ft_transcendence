@@ -266,8 +266,6 @@ export class MultiplayerGame extends HTMLElement {
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dir_z = -Math.sign(posZ);
       const inputQueue = [];
-      // let   lenghtHalf = 2.5;
-      // let   widthHalf = 0.5;
       let controlReverse = false;
       let speed = 0.25;
       let score = 0;
@@ -283,10 +281,6 @@ export class MultiplayerGame extends HTMLElement {
         get inputQueue() { return inputQueue; },
         get controlReverse() { return controlReverse; },
         set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
-        // get lenghtHalf() { return lenghtHalf; },
-        // set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
-        // get widthHalf() { return widthHalf; },
-        // set widthHalf(newWidthHalf) { widthHalf = newWidthHalf; },
         get dir_z() { return dir_z; },
       });
     }
@@ -358,29 +352,41 @@ export class MultiplayerGame extends HTMLElement {
 
 
       if (data.current_buff_or_debuff != 0) {
-        if (data.current_buff_or_debuff == 1)
-          Bumpers[lastBumperCollided].controlReverse = true;
-        else if (data.current_buff_or_debuff == 2)
-          Bumpers[lastBumperCollided].speed = 0.1;
-        else if (data.current_buff_or_debuff == 3)
-          Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
-        else if (data.current_buff_or_debuff == 4)
-          Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
-        else if (data.current_buff_or_debuff == 5)
-          Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
-        else if (data.current_buff_or_debuff == -1)
-          Bumpers[lastBumperCollided].controlReverse = false;
-        else if (data.current_buff_or_debuff == -2)
-          Bumpers[lastBumperCollided].speed = 0.25;
-        else if (data.current_buff_or_debuff == -3)
-          Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
-        else if (data.current_buff_or_debuff == -4)
-          Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
-        else if (data.current_buff_or_debuff == -5)
-          Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
-      }
+        switch (data.current_buff_or_debuff) {
+          case 1:
+            Bumpers[lastBumperCollided].controlReverse = true;
+            break ;
+          case 2:
+            Bumpers[lastBumperCollided].speed = 0.1;
+            break;
+          case 3:
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
+            break;
+          case 4:
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+            break;
+          case 5:
+            Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+            break;
+          case -1:
+            Bumpers[lastBumperCollided].controlReverse = false;
+            break;
+          case -2:
+            Bumpers[lastBumperCollided].speed = 0.25;
+            break;
+          case -3:
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+            break;
+          case -4:
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+            break;
+          case -5:
+            Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
+            break;
+        }
       Bumpers[1].score = data.bumper_2.score;
       Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
+      }
     }
     console.log(Bumpers)
 
