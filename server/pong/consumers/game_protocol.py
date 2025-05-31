@@ -19,22 +19,29 @@ class PongCloseCodes:
 class SerializedGameState(TypedDict):
     """State of the particular pong game represented in the JSON format."""
 
-    class _Bumper(TypedDict):
+    class _Vector2(TypedDict):
         x: float
         z: float
+
+    class _Bumper(_Vector2):
         score: int
 
-    class _Ball(TypedDict):
-        x: float
-        z: float
+    class _Ball(_Vector2):
+        pass
+
+    class _Coin(_Vector2):
+        pass
 
     bumpter_1: _Bumper
     bumpter_2: _Bumper
     ball: _Ball
+    coin: _Coin
     is_someone_scored: bool
+    last_bumper_collided: Literal["_bumper_1", "_bumper_2"]
+    current_buff_or_debuff: int
 
 
-class MatchmakingToClientEvents:
+class MatchmakingToClient:
     class GameFound(TypedDict):
         """Matchmaking found two players to play against each other."""
 
@@ -46,19 +53,29 @@ class MatchmakingToClientEvents:
         elo: int
 
 
-class MatchmakingFromClientEvents:
+class ClientToMatchmaking:
     class Cancel(TypedDict):
         """Player cancelled his matchmaking search."""
 
         action: Literal["cancel"]
 
 
-class GameWSServerToClientEvents:
+class GameServerToClient:
     class PlayerJoined(TypedDict):
-        """Player joined the game, and received its unique id for the identification purposes."""
+        """
+        Player joined the game, and received number of their bumper as well as their unique id for the
+        identification purposes.
+        """
 
         action: Literal["player_joined"]
         player_id: str
+        player_number: Literal[1, 2]
+
+    class PlayerAssigned(TypedDict):
+        """Player joined the game, and received its unique id for the identification purposes."""
+
+        action: Literal["player_assigned"]
+        number: int
 
     class GameCancelled(TypedDict):
         """Both of the players failed to connect to the game, so it was cancelled."""
@@ -95,8 +112,9 @@ class GameWSServerToClientEvents:
             name: str
             avatar: str
             elo: int
-            number: Literal[1, 2]
+            player_number: Literal[1, 2]
 
+        action: Literal["player_won"]
         winner: _Player
         loser: _Player
         elo_change: int
@@ -104,16 +122,16 @@ class GameWSServerToClientEvents:
     class PlayerResigned(PlayerWon):
         """When the player has resigned. Contains the same data as `PlayerWon`."""
 
-    class InputConfirmation(TypedDict):
+    class InputConfirmed(TypedDict):
         """Confirmation of the input from the player."""
 
         action: Literal["move_left", "move_right"]
         content: int
         player_id: str
-        pos: float
+        position_x: float
 
 
-class GameWSServerFromClientEvents:
+class ClientToGameServer:
     class MoveLeft(TypedDict):
         """Player moves to the left."""
 
@@ -132,11 +150,10 @@ class GameWSServerFromClientEvents:
         player_id: str
 
 
-class GameWSServerToGameWorkerEvents:
+class GameServerToGameWorker:
     class PlayerConnected(TypedDict):
         """Player is connected to websocket server, and it sends the player information to the worker."""
 
-        type: Literal["player_connected"]
         game_room_id: str
         player_id: str
         profile_id: str
@@ -144,18 +161,16 @@ class GameWSServerToGameWorkerEvents:
         avatar: str
         elo: int
 
-    class PlayerDisconnected(TypedDict):
-        """Player is disconnected from the websocket server, and it sends the relevant IDs to the worker."""
-
-        type: Literal["player_disconnected"]
-        game_room_id: str
-        player_id: str
-
     class PlayerInputed(TypedDict):
         """Player has inputed the controls, websocket server sends it to the game worker."""
 
-        type: Literal["player_inputed"]
         action: Literal["move_left", "move_right"]
         game_room_id: str
         player_id: str
         content: int
+
+    class PlayerDisconnected(TypedDict):
+        """Player is disconnected from the websocket server, and it sends the relevant IDs to the worker."""
+
+        game_room_id: str
+        player_id: str
