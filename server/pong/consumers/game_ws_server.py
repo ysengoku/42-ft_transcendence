@@ -4,13 +4,13 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-from pong.consumers.game_protocol import GameWSServerToClientEvents, GameWSServerToGameWorkerEvents, PongCloseCodes
+from pong.consumers.game_protocol import GameServerToClient, GameServerToGameWorker, PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
 
 
-class GameWSServerConsumer(WebsocketConsumer):
+class GameServerConsumer(WebsocketConsumer):
     """
     Interface between game worker, which runs an actual game, and the client.
     Sends to the worker events of player inputs and their connecction state for handling.
@@ -55,22 +55,17 @@ class GameWSServerConsumer(WebsocketConsumer):
             str(self.player.id),
         )
         self.accept()
-        async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
-        self.send(
-            text_data=json.dumps(
-                GameWSServerToClientEvents.PlayerJoined(
-                    action="player_joined",
-                    player_id=str(self.player.id),
-                ),
-            ),
-        )
         profile = self.user.profile
+        player_id = str(self.player.id)
+        async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_add)(f"player_{player_id}", self.channel_name)
+        print(f"player_{player_id}")
         async_to_sync(self.channel_layer.send)(
             "game",
-            GameWSServerToGameWorkerEvents.PlayerConnected(
+            GameServerToGameWorker.PlayerConnected(
                 type="player_connected",
                 game_room_id=self.game_room_id,
-                player_id=str(self.player.id),
+                player_id=player_id,
                 profile_id=str(profile.id),
                 name=self.user.nickname if self.user.nickname else self.user.username,
                 avatar=profile.avatar,
@@ -79,6 +74,9 @@ class GameWSServerConsumer(WebsocketConsumer):
         )
 
     def disconnect(self, close_code):
+        if close_code != PongCloseCodes.ILLEGAL_CONNECTION:
+            async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
+            async_to_sync(self.channel_layer.group_discard)(f"player_{str(self.player.id)}", self.channel_name)
         # TODO: put close code to enum, make it prettier
         ok_close_code = 3000
         if close_code == ok_close_code:
@@ -87,7 +85,7 @@ class GameWSServerConsumer(WebsocketConsumer):
         if self.player:
             async_to_sync(self.channel_layer.send)(
                 "game",
-                GameWSServerToGameWorkerEvents.PlayerDisconnected(
+                GameServerToGameWorker.PlayerDisconnected(
                     type="player_disconnected",
                     game_room_id=self.game_room_id,
                     player_id=str(self.player.id),
@@ -98,7 +96,6 @@ class GameWSServerConsumer(WebsocketConsumer):
                 self.user.profile,
                 self.game_room_id,
             )
-            async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
 
     def receive(self, text_data):
         try:
@@ -120,7 +117,7 @@ class GameWSServerConsumer(WebsocketConsumer):
             }:
                 async_to_sync(self.channel_layer.send)(
                     "game",
-                    GameWSServerToGameWorkerEvents.PlayerInputed(
+                    GameServerToGameWorker.PlayerInputed(
                         type="player_inputed",
                         action=action,
                         game_room_id=self.game_room_id,
@@ -148,6 +145,20 @@ class GameWSServerConsumer(WebsocketConsumer):
         """
         self.send(text_data=json.dumps({"action": "game_cancelled"}))
         self.close(PongCloseCodes.CANCELLED)
+
+    def player_joined(self, event: GameServerToClient.PlayerJoined):
+        print(event)
+        player_id = event["player_id"]
+        player_number = event["player_number"]
+        self.send(
+            text_data=json.dumps(
+                GameServerToClient.PlayerJoined(
+                    action="player_joined",
+                    player_id=player_id,
+                    player_number=player_number,
+                ),
+            ),
+        )
 
     def game_started(self, _: dict):
         """
@@ -217,5 +228,6 @@ class GameWSServerConsumer(WebsocketConsumer):
         )
         self.close(PongCloseCodes.NORMAL_CLOSURE)
 
-    def player_moved(self, event: dict):
+    def movement_confirmed(self, event: GameServerToClient.InputConfirmed):
+        print(event)
         self.send(text_data=json.dumps(event))
