@@ -63,23 +63,23 @@ export class MultiplayerGame extends HTMLElement {
       var keyCode = e.code;
       const now = Date.now();
       console.log(now);
-      if (keyCode == 'ArrowLeft') {
-        bumper.cubeMesh.position.x += 1;
+      if ((keyCode == 'ArrowLeft' && !bumper.controlReverse) || (keyCode == 'ArrowRight' && bumper.controlReverse)) {
+        bumper.cubeMesh.position.x += bumper.speed;
         bumper.inputQueue.push(["move_left", now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
       }
-      if (keyCode == 'ArrowRight') {
-        bumper.cubeMesh.position.x -= 1;
+      if ((keyCode == 'ArrowRight' && !bumper.controlReverse) || (keyCode == 'ArrowLeft' && bumper.controlReverse)) {
+        bumper.cubeMesh.position.x -= bumper.speed;
         bumper.inputQueue.push(["move_right", now]);
         pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
       }
-      if (keyCode == 'KeyA') {
-        bumper.cubeMesh.position.x += 1;
+      if ((keyCode == 'KeyA' && !bumper.controlReverse) || (keyCode == 'KeyD' && bumper.controlReverse)) {
+        bumper.cubeMesh.position.x += bumper.speed;
         bumper.inputQueue.push(["move_left", now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
       }
-      if (keyCode == 'KeyD') {
-        bumper.cubeMesh.position.x -= 1;
+      if ((keyCode == 'KeyD' && !bumper.controlReverse) || (keyCode == 'KeyA' && bumper.controlReverse)) {
+        bumper.cubeMesh.position.x -= bumper.speed;
         bumper.inputQueue.push(["move_right", now]);
         pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
       }
@@ -96,19 +96,19 @@ export class MultiplayerGame extends HTMLElement {
       console.log(bumper.inputQueue)
       var keyCode = e.code;
       const now = -Date.now();
-      if (keyCode == 'ArrowLeft') {
+      if ((keyCode == 'ArrowLeft' && !bumper.controlReverse) || (keyCode == 'ArrowRight' && bumper.controlReverse)) {
         bumper.inputQueue.push(["move_left", now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
       }
-      if (keyCode == 'ArrowRight') {
+      if ((keyCode == 'ArrowRight' && !bumper.controlReverse) || (keyCode == 'ArrowLeft' && bumper.controlReverse)) {
         bumper.inputQueue.push(["move_right", now]);
         pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
       }
-      if (keyCode == 'KeyA') {
+      if ((keyCode == 'KeyA' && !bumper.controlReverse) || (keyCode == 'KeyD' && bumper.controlReverse)) {
         bumper.inputQueue.push(["move_right", now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
       }
-      if (keyCode == 'KeyD') {
+      if ((keyCode == 'KeyD' && !bumper.controlReverse) || (keyCode == 'KeyA' && bumper.controlReverse)) {
         bumper.inputQueue.push(["move_right", now]);
         pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
       }
@@ -268,7 +268,7 @@ export class MultiplayerGame extends HTMLElement {
       const inputQueue = [];
       // let   lenghtHalf = 2.5;
       // let   widthHalf = 0.5;
-      // let   controlReverse = false;
+      let controlReverse = false;
       let speed = 0.25;
       let score = 0;
 
@@ -281,8 +281,8 @@ export class MultiplayerGame extends HTMLElement {
         get score() { return score; },
         set score(newScore) { score = newScore; },
         get inputQueue() { return inputQueue; },
-        // get controlReverse() { return controlReverse; },
-        // set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
+        get controlReverse() { return controlReverse; },
+        set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
         // get lenghtHalf() { return lenghtHalf; },
         // set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
         // get widthHalf() { return widthHalf; },
@@ -325,10 +325,10 @@ export class MultiplayerGame extends HTMLElement {
 
     function confirmInputs(data) {
       const {action, content} = data;
-      for (let [i, input] of Bumpers[1].inputQueue.entries())
+      for (let [i, input] of Bumpers[0].inputQueue.entries())
       {
         if (input[0] === action && input[1] <= content) {
-          Bumpers[1].inputQueue.splice(i, 1);
+          Bumpers[0].inputQueue.splice(i, 1);
           return true;
         }
       }
@@ -357,18 +357,26 @@ export class MultiplayerGame extends HTMLElement {
       Bumpers[1].score = data.bumper_2.score;
 
 
-      if (data.current_buff_or_debuff != -1) {
-        if (data.current_buff_or_debuff == 2)
-          Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
+      if (data.current_buff_or_debuff != 0) {
+        if (data.current_buff_or_debuff == 1)
+          Bumpers[lastBumperCollided].controlReverse = true;
+        else if (data.current_buff_or_debuff == 2)
+          Bumpers[lastBumperCollided].speed = 0.1;
         else if (data.current_buff_or_debuff == 3)
-          Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+          Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
         else if (data.current_buff_or_debuff == 4)
+          Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+        else if (data.current_buff_or_debuff == 5)
           Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+        else if (data.current_buff_or_debuff == -1)
+          Bumpers[lastBumperCollided].controlReverse = false;
         else if (data.current_buff_or_debuff == -2)
-          Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+          Bumpers[lastBumperCollided].speed = 0.25;
         else if (data.current_buff_or_debuff == -3)
           Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
         else if (data.current_buff_or_debuff == -4)
+          Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+        else if (data.current_buff_or_debuff == -5)
           Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
       }
       Bumpers[1].score = data.bumper_2.score;
@@ -401,7 +409,7 @@ export class MultiplayerGame extends HTMLElement {
         case 'move_right':
           console.log(data)
           if (data.player_id == playerIdContainer.playerId && !confirmInputs(data)) {
-            Bumpers[1].cubeMesh.position.x = data.position_x;
+            Bumpers[0].cubeMesh.position.x = data.position_x;
           }
           break;
         case 'player_joined':
@@ -442,8 +450,8 @@ export class MultiplayerGame extends HTMLElement {
       renderer.render(scene, camera);
     }
 
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(pongSocket, Bumpers[1], playerIdContainer).bind(this)
-    this.onDocumentKeyUp = this.createOnDocumentKeyUp(pongSocket, Bumpers[1], playerIdContainer).bind(this)
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(pongSocket, Bumpers[0], playerIdContainer).bind(this)
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(pongSocket, Bumpers[0], playerIdContainer).bind(this)
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
