@@ -53,7 +53,7 @@ class MultiplayerPongMatchState(Enum):
 
 
 class Buffs(IntEnum):
-    CONTROL_REVERSE_ENEMY = 0
+    CONTROL_REVERSE_ENEMY = auto()
     SPEED_DECREASE_ENEMY = auto()
     SHORTEN_ENEMY = auto()
     ELONGATE_PLAYER = auto()
@@ -145,7 +145,7 @@ class BasePong:
         )
         self._is_someone_scored = False
         self.last_bumper_collided: Bumper | None = None
-        self.choose_buff = -1
+        self.choose_buff = 0
         self.time_to_wait = 0
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
@@ -174,7 +174,7 @@ class BasePong:
         ball_subtick_x = total_distance_x / total_subticks
         bumper_1_subtick = self._bumper_1.speed / total_subticks
         bumper_2_subtick = self._bumper_2.speed / total_subticks
-        self.choose_buff = -1
+        self.choose_buff = 0
         while current_subtick <= total_subticks:
             self._check_ball_wall_collision()
             self._check_ball_bumper_collision(ball_subtick_z, ball_subtick_x)
@@ -273,7 +273,7 @@ class BasePong:
             self._calculate_new_dir(self._bumper_2)
 
     def _manage_buff_and_debuff(self):
-        self.choose_buff = random.randrange(5)  # noqa: S311
+        self.choose_buff = random.randrange(1, 6)  # noqa: S311
 
         match self.choose_buff:
             case Buffs.CONTROL_REVERSE_ENEMY:
@@ -388,8 +388,8 @@ class MultiplayerPongMatch(BasePong):
         else:
             return
         # final_action = action
-        if bumper.control_reversed is True:
-            action = "move_left" if action == "move_right" else "move_right"
+        # if bumper.control_reversed is True:
+        #     action = "move_left" if action == "move_right" else "move_right"
 
         match action:
             case "move_left":
@@ -594,7 +594,7 @@ class GameWorkerConsumer(AsyncConsumer):
                     await match.pause_event.wait()
                 tick_start_time = asyncio.get_event_loop().time()
                 match.resolve_next_tick()
-                if match.choose_buff != -1:
+                if match.choose_buff != 0:
                     asyncio.create_task(
                         self._wait_for_end_of_buff(match, match.last_bumper_collided),
                     )
@@ -644,9 +644,11 @@ class GameWorkerConsumer(AsyncConsumer):
         match choose_buff:
             case Buffs.CONTROL_REVERSE_ENEMY:
                 match.last_bumper_collided.control_reversed = False
+                match.choose_buff = -choose_buff
 
             case Buffs.SPEED_DECREASE_ENEMY:
                 match.last_bumper_collided.speed = 0.25
+                match.choose_buff = -choose_buff
 
             case Buffs.SHORTEN_ENEMY:
                 match.last_bumper_collided.lenght_half = 2.5
