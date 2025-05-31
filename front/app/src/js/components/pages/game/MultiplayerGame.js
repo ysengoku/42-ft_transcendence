@@ -405,6 +405,7 @@ export class MultiplayerGame extends HTMLElement {
           }
           break;
         case 'player_joined':
+          console.log(data)
           playerIdContainer.playerId = data.player_id;
           break;
         case 'game_paused':
