@@ -51,20 +51,10 @@ export class OAuth extends HTMLElement {
 
   template() {
     return `
-      <div class="container">
-        <div class="row justify-content-center">
-          <div class="col-12">
-            <div class="d-grid gap-3">
-              <button class="btn btn-wood btn-lg btn-42">
-                Sign in with 42
-              </button>
-              <button class="btn btn-wood btn-lg btn-github">
-                  Sign in with GitHub
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="container d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
+      <button class="btn btn-wood btn-42 w-100">Sign in with 42</button>
+      <button class="btn btn-wood btn-github w-100">Sign in with GitHub</button>
+    </div>
     `;
   }
 }
