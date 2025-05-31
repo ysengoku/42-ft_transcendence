@@ -151,7 +151,8 @@ const handlers = {
     } else if (typeof errorData === 'object' && errorData.msg) {
       errorMsg = errorData.msg;
     }
-    if (response.status !== 403) {
+    const excludedStatusCodes = [401, 403, 422, 429];
+    if (!excludedStatusCodes.includes(response.status)) {
       unknowknErrorToast();
     }
     return { success: false, status: response.status, msg: errorMsg };
