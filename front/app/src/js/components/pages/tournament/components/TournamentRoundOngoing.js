@@ -75,13 +75,9 @@ export class TournamentRoundOngoing extends HTMLElement {
       score: scoreP2,
     };
     if (bracket.winner.profile) {
-      bracket.winner.profile.username === bracket.participant1.profile.username ? (
-        player1.classList.add('bracket-player-winner'),
-        player2.classList.add('bracket-player-loser')
-      ) : (
-        player1.classList.add('bracket-player-loser'),
-        player2.classList.add('bracket-player-winner')
-      );
+      bracket.winner.profile.username === bracket.participant1.profile.username
+        ? (player1.classList.add('bracket-player-winner'), player2.classList.add('bracket-player-loser'))
+        : (player1.classList.add('bracket-player-loser'), player2.classList.add('bracket-player-winner'));
     }
     bracketElement.appendChild(player1);
     bracketElement.appendChild(player2);
@@ -99,13 +95,9 @@ export class TournamentRoundOngoing extends HTMLElement {
     const player2 = bracketElement.querySelector('.bracket-player-2');
     const scoreP2 = player2.querySelector('.player-score');
     if (matchData.winner.profile) {
-      matchData.winner.profile.username === matchData.participant1.username ? (
-        player1.classList.add('bracket-player-winner'),
-        player2.classList.add('bracket-player-loser')
-      ) : (
-        player1.classList.add('bracket-player-loser'),
-        player2.classList.add('bracket-player-winner')
-      );
+      matchData.winner.profile.username === matchData.participant1.username
+        ? (player1.classList.add('bracket-player-winner'), player2.classList.add('bracket-player-loser'))
+        : (player1.classList.add('bracket-player-loser'), player2.classList.add('bracket-player-winner'));
     }
     scoreP1.textContent = matchData.score_p1;
     scoreP2.textContent = matchData.score_p2;
@@ -113,8 +105,10 @@ export class TournamentRoundOngoing extends HTMLElement {
     scoreP2.classList.remove('d-none');
     for (let i = 0; i < this.#state.round.brackets.length; i++) {
       const bracket = this.#state.round.brackets[i];
-      if (bracket.participant1.profile.username === matchData.participant1.username &&
-          bracket.participant2.profile.username === matchData.participant2.username) {
+      if (
+        bracket.participant1.profile.username === matchData.participant1.username &&
+        bracket.participant2.profile.username === matchData.participant2.username
+      ) {
         bracket.status = 'finished';
         bracket.winner = matchData.winner;
         bracket.score_p1 = matchData.score_p1;

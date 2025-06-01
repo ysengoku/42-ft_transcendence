@@ -3,7 +3,13 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import {
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+  showToastNotification,
+  TOAST_TYPES,
+  sessionExpiredToast,
+} from '@utils';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
@@ -62,8 +68,9 @@ export class DuelMenu extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
-        router.navigate('/login');
+        sessionExpiredToast();
       }
+      router.navigate('/login');
       return;
     }
     this.#state.user = authStatus.response;
@@ -167,7 +174,7 @@ export class DuelMenu extends HTMLElement {
     document.body.appendChild(this.modalElement);
     this.gameOptionsModal = new Modal(this.modalElement);
     if (!this.gameOptionsModal) {
-      // TODO: handle error
+      showToastNotification('Game options are momentarily unavailable', TOAST_TYPES.ERROR);
       return;
     }
     this.modalBodyContent = document.querySelector('game-options');
@@ -200,11 +207,15 @@ export class DuelMenu extends HTMLElement {
     if (options) {
       this.#state.options = options;
     }
-    this.modalElement.addEventListener('hidden.bs.modal', () => {
-      this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
-      document.body.removeChild(this.modalElement);
-      this.gameOptionsModal = null;
-    }, { once: true });
+    this.modalElement.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
+        document.body.removeChild(this.modalElement);
+        this.gameOptionsModal = null;
+      },
+      { once: true },
+    );
     this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
     this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
     this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
@@ -221,7 +232,7 @@ export class DuelMenu extends HTMLElement {
     event.preventDefault();
     event.stopPropagation();
     clearTimeout(this.#usersearch.searchTimeout);
-    this.#usersearch.searchTimeout = setTimeout( async () => {
+    this.#usersearch.searchTimeout = setTimeout(async () => {
       this.#usersearch.list = [];
       this.#usersearch.totalUsersCount = 0;
       this.#usersearch.currentListLength = 0;
@@ -259,9 +270,11 @@ export class DuelMenu extends HTMLElement {
   async loadMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
       this.#usersearch.totalUsersCount === this.#usersearch.currentListLength ||
-      this.#usersearch.isLoading) {
+      this.#usersearch.isLoading
+    ) {
       return;
     }
     this.#usersearch.isLoading = true;
@@ -284,9 +297,7 @@ export class DuelMenu extends HTMLElement {
 
     const onlineStatusIndicator = selectedUser.querySelector('.duel-usersearch-status-indicator');
     const online = onlineStatusIndicator.classList.contains('online');
-    online ?
-      this.opponentOnlineStatus.classList.add('online') :
-      this.opponentOnlineStatus.classList.remove('online');
+    online ? this.opponentOnlineStatus.classList.add('online') : this.opponentOnlineStatus.classList.remove('online');
     this.opponentOnlineStatus.classList.remove('d-none');
 
     this.userList.innerHTML = '';
@@ -401,7 +412,9 @@ export class DuelMenu extends HTMLElement {
                 </div>
 
                 <p class="fs-5 fw-bolder m-0 mb-3">Let fate decide opponent</p>
-                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg mb-1 w-100">Bring me my rival</button>
+                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg mb-5 w-100">Bring me my rival</button>
+
+                <game-instruction></game-instruction>
 
                 <div class="d-flex flex-row justify-content-center mt-5">
                   <a href="/home" class="btn">

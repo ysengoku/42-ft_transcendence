@@ -1,8 +1,8 @@
 import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
-import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import { socketManager } from '@socket';
+import { internalServerErrorAlert, sessionExpiredToast, unknowknErrorToast } from '@utils';
 
 /**
  * @module authManager
@@ -21,9 +21,12 @@ const auth = (() => {
      */
     storeUser(user) {
       const currentUser = this.getStoredUser();
-      if (!currentUser || currentUser.username !== user.username ||
+      if (
+        !currentUser ||
+        currentUser.username !== user.username ||
         currentUser.unread_messages_count !== user.unread_messages_count ||
-        currentUser.unread_notifications_count !== user.unread_notifications_count) {
+        currentUser.unread_notifications_count !== user.unread_notifications_count
+      ) {
         sessionStorage.setItem('user', JSON.stringify(user));
         const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
         document.dispatchEvent(event);
@@ -51,6 +54,8 @@ const auth = (() => {
      */
     clearStoredUser() {
       sessionStorage.removeItem('user');
+      localStorage.removeItem('gameOptions');
+      localStorage.removeItem('gameType');
       const event = new CustomEvent('userStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
       socketManager.closeAllSockets();
@@ -70,7 +75,7 @@ const auth = (() => {
 
     /**
      * Get the user stored in session storage. If not found, fetch the user from the server
-     * and store it in session storage. If the user is not logged in, redirect to the login page.
+     * and store it in session storage. If the user is not logged in, return null.
      * @return { Promise<Object> } The user object
      * */
     async getUser() {
@@ -81,7 +86,8 @@ const auth = (() => {
           user = response.response;
           this.storeUser(user);
         } else if (response.status === 401) {
-          showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+          sessionExpiredToast();
+          return null;
         }
       }
       return JSON.parse(user);
@@ -112,16 +118,16 @@ const auth = (() => {
         const refreshTokenResponse = await refreshAccessToken(CSRFToken);
         if (refreshTokenResponse.status) {
           switch (refreshTokenResponse.status) {
-          case 204:
-            return this.fetchAuthStatus();
-          case 401:
-            return { success: false, status: 401 };
-          case 500:
-            showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
-            break;
-          default:
-            showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
-            return { success: false, status: refreshTokenResponse.status };
+            case 204:
+              return this.fetchAuthStatus();
+            case 401:
+              return { success: false, status: 401 };
+            case 500:
+              internalServerErrorAlert();
+              break;
+            default:
+              unknowknErrorToast();
+              return { success: false, status: refreshTokenResponse.status };
           }
         }
         return { success: false, status: response.status };

@@ -50,11 +50,9 @@ export class DuelResult extends HTMLElement {
     this.navigateToProfileButton = this.querySelector('#go-to-profile-button');
 
     const title = this.querySelector('#duel-result-title');
-    this.#state.duelData.winner.username === this.#state.loggedInUser.username ? (
-      title.textContent = 'You won!' ) : (
-      title.textContent = 'You lost!',
-      title.classList.add('title-duel-lost')
-    );
+    this.#state.duelData.winner.username === this.#state.loggedInUser.username
+      ? (title.textContent = 'You won!')
+      : ((title.textContent = 'You lost!'), title.classList.add('title-duel-lost'));
 
     this.navigateToHomeButton.addEventListener('click', this.navigateToHome);
     this.navigateToProfileButton.addEventListener('click', this.navigateToProfile);
@@ -67,15 +65,13 @@ export class DuelResult extends HTMLElement {
     let userWrapper = null;
     let userData = null;
     let score = 0;
-    winner ? (
-      userWrapper =this.winner,
-      userData = this.#state.duelData.winner,
-      score = this.#state.duelData.winners_score
-    ) : (
-      userWrapper = this.loser,
-      userData = this.#state.duelData.loser,
-      score = this.#state.duelData.losers_score
-    );
+    winner
+      ? ((userWrapper = this.winner),
+        (userData = this.#state.duelData.winner),
+        (score = this.#state.duelData.winners_score))
+      : ((userWrapper = this.loser),
+        (userData = this.#state.duelData.loser),
+        (score = this.#state.duelData.losers_score));
     userWrapper.innerHTML = this.userTemplate();
     userWrapper.querySelector('.duel-score').innerHTML = score;
     userWrapper.querySelector('.avatar-l').src = userData.avatar;
