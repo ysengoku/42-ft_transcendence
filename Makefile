@@ -127,5 +127,8 @@ populate-db:
 delete_invites:
 	docker exec server ./manage.py delete_pending_invitations
 
+delete_games:
+	docker exec server ./manage.py delete_games
+
 clean-db:
 	docker exec server ./manage.py flush --no-input
