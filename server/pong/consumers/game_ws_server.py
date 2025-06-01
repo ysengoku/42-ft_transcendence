@@ -137,13 +137,14 @@ class GameServerConsumer(WebsocketConsumer):
     ##############################
     # GAME WORKER EVENT HANDLERS #
     ##############################
+    # Simple handlers to propagate data from the game worker to the clients.
+    # The handlers filter out "type" key from the dicts to avoid leaking implementation details.
+    # DO NOT CALL THE `del` ON `type` KEY. This breaks Django Channels.
     def worker_to_client_close(self, event: GameServerToClient.WorkerToClientClose):
         """Send data to the client and close connection."""
-        del event["type"]
-        self.send(text_data=json.dumps(event))
+        self.send(text_data=json.dumps({k: v for k, v in event.items() if k != "type"}))
         self.close(event["close_code"])
 
     def worker_to_client_open(self, event: GameServerToClient.WorkerToClientOpen):
         """Send data to the client without closing connection."""
-        del event["type"]
-        self.send(text_data=json.dumps(event))
+        self.send(text_data=json.dumps({k: v for k, v in event.items() if k != "type"}))
