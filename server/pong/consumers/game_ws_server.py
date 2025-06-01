@@ -137,94 +137,13 @@ class GameServerConsumer(WebsocketConsumer):
     ##############################
     # GAME WORKER EVENT HANDLERS #
     ##############################
-    def game_cancelled(self, _: dict):
-        """
-        Event handler for `game_cancelled`.
-        `game_cancelled` is sent from the game worker to this consumer when players fail to connect to the game.
-        """
-        self.send(text_data=json.dumps({"action": "game_cancelled"}))
-        self.close(PongCloseCodes.CANCELLED)
+    def worker_to_client_close(self, event: GameServerToClient.WorkerToClientClose):
+        """Send data to the client and close connection."""
+        del event["type"]
+        self.send(text_data=json.dumps(event))
+        self.close(event["close_code"])
 
-    def player_joined(self, event: GameServerToClient.PlayerJoined):
-        player_id = event["player_id"]
-        player_number = event["player_number"]
-        self.send(
-            text_data=json.dumps(
-                GameServerToClient.PlayerJoined(
-                    action="player_joined",
-                    player_id=player_id,
-                    player_number=player_number,
-                ),
-            ),
-        )
-
-    def game_started(self, _: dict):
-        """
-        Event handler for `game_started`.
-        `game_started` is sent from the game worker to this consumer when both players connected to the game.
-        """
-        self.send(text_data=json.dumps({"action": "game_started"}))
-
-    def state_updated(self, event: dict):
-        """
-        Event handler for `state_updated`.
-        `state_updated` is sent from the game worker to this consumer on each game tick.
-        """
-        self.send(text_data=json.dumps({"action": "state_updated", "state": event["state"]}))
-
-    def game_paused(self, event: dict):
-        """
-        Event handler for `game_paused`.
-        `game_paused` is sent from the game worker to this consumer when the game unters the paused state.
-        """
-        self.send(
-            text_data=json.dumps(
-                {"action": "game_paused", "remaining_time": event["remaining_time"], "name": event["name"]},
-            ),
-        )
-
-    def game_unpaused(self, _: dict):
-        """
-        Event handler for `game_unpaused`.
-        `game_unpaused` is sent from the game worker to this consumer when the game unters the paused state.
-        """
-        self.send(text_data=json.dumps({"action": "game_unpaused"}))
-
-    def player_won(self, event: dict):
-        """
-        Event handler for `player_won`.
-        `player_won` is sent from the game worker to this consumer when the game is ended and one of the players won
-        the game.
-        """
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "player_won",
-                    "winner": event["winner"],
-                    "loser": event["loser"],
-                    "elo_change": event["elo_change"],
-                },
-            ),
-        )
-        self.close(PongCloseCodes.NORMAL_CLOSURE)
-
-    def player_resigned(self, event: dict):
-        """
-        Event handler for `player_resigned`.
-        `player_resigned` is sent from the game worker to this consumer when one the players resigned,
-        by disconnect, for example.
-        """
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "player_won",
-                    "winner": event["winner"],
-                    "loser": event["loser"],
-                    "elo_change": event["elo_change"],
-                },
-            ),
-        )
-        self.close(PongCloseCodes.NORMAL_CLOSURE)
-
-    def movement_confirmed(self, event: GameServerToClient.InputConfirmed):
+    def worker_to_client_open(self, event: GameServerToClient.WorkerToClientOpen):
+        """Send data to the client without closing connection."""
+        del event["type"]
         self.send(text_data=json.dumps(event))

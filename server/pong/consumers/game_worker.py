@@ -13,6 +13,7 @@ from channels.layers import get_channel_layer
 from pong.consumers.game_protocol import (
     GameServerToClient,
     GameServerToGameWorker,
+    PongCloseCodes,
     SerializedGameState,
 )
 
@@ -582,7 +583,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 await self.channel_layer.group_send(
                     f"player_{player_id}",
                     GameServerToClient.InputConfirmed(
-                        type="movement_confirmed",
+                        type="worker_to_client_open",
                         action=action,
                         player_id=player_id,
                         content=content,
@@ -609,11 +610,12 @@ class GameWorkerConsumer(AsyncConsumer):
                     await self.channel_layer.group_send(
                         self._to_group_name(match),
                         GameServerToClient.PlayerWon(
-                            type="player_won",
+                            type="worker_to_client_close",
                             action="player_won",
                             winner=winner.as_dict(),
                             loser=loser.as_dict(),
                             elo_change=100,  # TODO: insert actual elo change number
+                            close_code=PongCloseCodes.NORMAL_CLOSURE,
                         ),
                     )
                     logger.info("[GameWorker]: player {%s} has won the game {%s}", winner.id, match)
@@ -621,7 +623,8 @@ class GameWorkerConsumer(AsyncConsumer):
                 await self.channel_layer.group_send(
                     self._to_group_name(match.id),
                     GameServerToClient.StateUpdated(
-                        type="state_updated",
+                        type="worker_to_client_open",
+                        action="state_updated",
                         state=match.as_dict(),
                     ),
                 )
@@ -645,7 +648,9 @@ class GameWorkerConsumer(AsyncConsumer):
                 self._cleanup_match(match)
                 await self.channel_layer.group_send(
                     self._to_group_name(match),
-                    GameServerToClient.GameCancelled(type="game_cancelled"),
+                    GameServerToClient.GameCancelled(
+                        type="worker_to_client_close", action="game_cancelled", close_code=PongCloseCodes.CANCELLED,
+                    ),
                 )
                 logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", match)
 
@@ -692,7 +697,8 @@ class GameWorkerConsumer(AsyncConsumer):
         await self.channel_layer.group_send(
             self._to_group_name(match.id),
             GameServerToClient.StateUpdated(
-                type="state_updated",
+                type="worker_to_client_open",
+                action="state_updated",
                 state=match.as_dict(),
             ),
         )
@@ -722,11 +728,12 @@ class GameWorkerConsumer(AsyncConsumer):
                 self._to_group_name(match),
                 # TODO: fix loser id
                 GameServerToClient.PlayerResigned(
-                    type="player_won",
-                    action="player_won",
+                    type="worker_to_client_close",
+                    action="player_resigned",
                     winner=winner.as_dict(),
                     loser=player.as_dict(),
                     elo_change=100,  # TODO: insert actual elo change number
+                    close_code=PongCloseCodes.NORMAL_CLOSURE,
                 ),
             )
             logger.info(
@@ -749,7 +756,7 @@ class GameWorkerConsumer(AsyncConsumer):
         await self.channel_layer.group_send(
             f"player_{player_id}",
             GameServerToClient.PlayerJoined(
-                type="player_joined",
+                type="worker_to_client_open",
                 action="player_joined",
                 player_id=player_id,
                 player_number=player_number,
@@ -773,7 +780,7 @@ class GameWorkerConsumer(AsyncConsumer):
         await self.channel_layer.group_send(
             f"player_{player_id}",
             GameServerToClient.PlayerJoined(
-                type="player_joined",
+                type="worker_to_client_open",
                 action="player_joined",
                 player_id=player_id,
                 player_number=player_number,
@@ -783,7 +790,7 @@ class GameWorkerConsumer(AsyncConsumer):
         match.game_loop_task = asyncio.create_task(self._match_game_loop_task(match))
         await self.channel_layer.group_send(
             self._to_group_name(match),
-            GameServerToClient.GameStarted(type="game_started"),
+            GameServerToClient.GameStarted(type="worker_to_client_open", action="game_started"),
         )
         logger.info("[GameWorker]: player {%s} has been added to existing game {%s}", player_id, match.id)
 
@@ -806,7 +813,7 @@ class GameWorkerConsumer(AsyncConsumer):
         await self.channel_layer.group_send(
             f"player_{player_id}",
             GameServerToClient.PlayerJoined(
-                type="player_joined",
+                type="worker_to_client_open",
                 action="player_joined",
                 player_id=player_id,
                 player_number=1 if player.bumper.dir_z == 1 else 2,
@@ -826,7 +833,8 @@ class GameWorkerConsumer(AsyncConsumer):
         await self.channel_layer.group_send(
             self._to_group_name(match),
             GameServerToClient.GamePaused(
-                type="game_paused",
+                type="worker_to_client_open",
+                action="game_paused",
                 remaining_time=int(disconnected_player.reconnection_time),
                 name=disconnected_player.name,
             ),
@@ -837,7 +845,8 @@ class GameWorkerConsumer(AsyncConsumer):
 
     async def _unpause(self, match: MultiplayerPongMatch):
         await self.channel_layer.group_send(
-            self._to_group_name(match), GameServerToClient.GameUnpaused(type="game_unpaused"),
+            self._to_group_name(match),
+            GameServerToClient.GameUnpaused(type="worker_to_client_open", actio="game_unpaused"),
         )
         match.state = MultiplayerPongMatchState.ONGOING
         if not match.pause_event.is_set():
