@@ -59,7 +59,6 @@ class GameServerConsumer(WebsocketConsumer):
         player_id = str(self.player.id)
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"player_{player_id}", self.channel_name)
-        print(f"player_{player_id}")
         async_to_sync(self.channel_layer.send)(
             "game",
             GameServerToGameWorker.PlayerConnected(
