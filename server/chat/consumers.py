@@ -14,19 +14,12 @@ from pong.models import GameRoom, GameRoomPlayer
 from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
 
+from .chat_utils import ChatUtils
 from .models import Chat, ChatMessage, GameInvitation, Notification
 from .validator import Validator
+from .duel_events import DuelEvent
 
 logger = logging.getLogger("server")
-
-
-def get_user_data(self):
-    return {
-        "date": timezone.now().isoformat(),
-        "username": self.user.username,
-        "nickname": self.user.nickname,
-        "avatar": (self.profile_picture.url if self.profile_picture else settings.DEFAULT_USER_AVATAR),
-    }
 
 
 class UserEventsConsumer(WebsocketConsumer):
@@ -182,17 +175,23 @@ class UserEventsConsumer(WebsocketConsumer):
                 case "read_message":
                     self.handle_read_message(text_data_json)
                 case "game_invite":
-                    self.send_game_invite(text_data_json)
+                    duel = DuelEvent(self)
+                    duel.send_game_invite(text_data_json)
                 case "reply_game_invite":
-                    self.reply_game_invite(text_data_json)
+                    duel = DuelEvent(self)
+                    duel.reply_game_invite(text_data_json)
                 case "game_accepted":
-                    self.accept_game_invite(text_data_json)
+                    duel = DuelEvent(self)
+                    duel.accept_game_invite(text_data_json)
                 case "game_declined":
-                    self.decline_game_invite(text_data_json)
+                    duel = DuelEvent(self)
+                    duel.decline_game_invite(text_data_json)
                 case "cancel_game_invite":
-                    self.cancel_game_invite()
+                    duel = DuelEvent(self)
+                    duel.cancel_game_invite()
                 case "new_tournament":
-                    self.handle_new_tournament(text_data_json)
+                    duel = DuelEvent(self)
+                    duel.handle_new_tournament(text_data_json)
                 case "add_new_friend":
                     self.add_new_friend(text_data_json)
                 case "join_chat":
@@ -414,328 +413,6 @@ class UserEventsConsumer(WebsocketConsumer):
         except Notification.DoesNotExist:
             logger.debug("Notification %s does not exist", notification_id)
 
-    def reply_game_invite(self, data):
-        response = data["data"].get("accept")
-        if response is True:
-            self.accept_game_invite(data)
-        elif response is False:
-            self.decline_game_invite(data)
-
-    def game_found(self, event):
-        self.send(text_data=json.dumps(event["data"]))
-
-    def create_game_room(self, profile1, profile2):
-        gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=profile1)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=profile2)
-        return gameroom
-
-    def data_for_game_found(self, player, game_id):
-        return {
-            "type": "game_found",
-            "data": {
-                "action": "game_accepted",
-                "game_id": str(game_id),
-                "username": player.user.username,
-                "nickname": player.user.nickname,
-                "avatar": player.profile_picture.url if player.profile_picture else settings.DEFAULT_USER_AVATAR,
-                "elo": player.elo,
-            },
-        }
-
-    def self_or_sender_already_in_game(self, sender, sender_name, client_id):
-        is_in_game: bool = (
-            GameRoom.objects.for_players(self.user_profile).for_pending_or_ongoing_status().exists()
-        )
-        if is_in_game:
-            logger.warning("Error : user %s is in a game : can't accept invites.", self.user.username)
-            self.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "You are in an ongoing game",
-                "client_id": client_id,
-            }))
-            return True
-        target_is_in_game: bool = (
-            GameRoom.objects.for_players(sender).for_pending_or_ongoing_status().exists()
-        )
-        if target_is_in_game:
-            logger.warning("Error : user %s is in a game : can't join a game right now.", sender_name)
-            self.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "Your target is in an ongoing game",
-                "client_id": client_id,
-            }))
-            return True
-        return False
-
-    def accept_game_invite(self, data):
-        sender_name = data["data"].get("username")
-        sender = Profile.objects.get(user__username=sender_name)
-        client_id = data["data"].get("client_id")
-        if sender == self.user.profile:
-            logger.warning("Error : user %s wanted to accept a game with themself.", self.user.username)
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "You can't accept invitations from yourself to a game !",
-                        "client_id": client_id,
-                    },
-                ),
-            )
-            return
-
-        if self.self_or_sender_already_in_game(sender, sender_name, client_id):
-            return
-        try:
-            invitation = GameInvitation.objects.get(
-                sender=sender,
-                recipient=self.user.profile,
-                status=GameInvitation.PENDING,
-            )
-        except GameInvitation.DoesNotExist:
-            logger.debug(
-                "No pending invitations sent by %s to cancel for user %s", sender.user.username, self.user.username,
-            )
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "Invitation not found.",
-                    },
-                ),
-            )
-            return
-        except GameInvitation.MultipleObjectsReturned:
-            logger.warning(
-                "Multiple invitations sent by %s to user %s have the PENDING status !",
-                sender.user.username,
-                self.user.username,
-            )
-            return
-        game_room = self.create_game_room(sender, self.user.profile)
-        invitation.status = GameInvitation.ACCEPTED
-        invitation.save()
-        invitation.sync_notification_status()
-        # if any invitations were send by the user, they are cancelled because they are in a game now
-        self.cancel_game_invite()
-        sender_data = self.data_for_game_found(sender, game_room.id)
-        receiver_data = self.data_for_game_found(self.user.profile, game_room.id)
-        async_to_sync(self.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
-        async_to_sync(self.channel_layer.group_send)(f"user_{self.user.id}", sender_data)
-
-    # TODO : security checks
-    def decline_game_invite(self, data):
-        sender_name = data["data"].get("username")
-        sender = Profile.objects.get(user__username=sender_name)
-        invitations = GameInvitation.objects.filter(
-            sender=sender,
-            recipient=self.user.profile,
-            status=GameInvitation.PENDING,
-        )
-        if not invitations.exists():
-            logger.debug("No pending invitations sent by %s to cancel for user %s", sender, self.user.username)
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "No pending invitations found.",
-                    },
-                ),
-            )
-            return
-        with transaction.atomic():
-            count = 0
-            for invitation in invitations:
-                invitation.status = GameInvitation.DECLINED
-                invitation.save()
-                invitation.sync_notification_status()
-                count += 1
-            logger.info("Declined %d pending invitations from %s to %s", count, sender_name, self.user.username)
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "game_declined",
-                    "data": {
-                        "username": self.user.username,
-                        "nickname": self.user.nickname,
-                    },
-                },
-            ),
-        )
-        notification_data = get_user_data(self.user_profile)
-        notification_data.update({"status": "declined"})
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{invitation.sender.user.id}",
-            {
-                "type": "user_status",
-                "action": "game_declined",
-                "data": {
-                    "username": self.user.username,
-                    "nickname": self.user.nickname,
-                },
-            },
-        )
-
-    # TODO : security checks
-
-    def send_game_invite(self, data):
-        options = data["data"].get("options", {})
-        if not Validator.validate_options(options):
-            return
-        receiver_username = data["data"].get("username")
-        if receiver_username == self.user.username:
-            logger.warning("Error : user %s wanted to play with themself.", self.user.username)
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "You can't invite yourself to a game !",
-                        "client_id": client_id,
-                    },
-                ),
-            )
-            return
-
-        client_id = data["data"].get("client_id")
-
-        try:
-            receiver = Profile.objects.get(user__username=receiver_username)
-        except Profile.DoesNotExist as e:
-            logger.error("Profile does not exist : %s", str(e))
-            self.close()
-            return
-
-        is_in_game: bool = (
-            GameRoom.objects.for_players(self.user_profile).for_pending_or_ongoing_status().exists()
-        )
-        if is_in_game:
-            logger.warning("Error : user %s is in a game : can't send invites.", self.user.username)
-            self.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "You are in an ongoing game",
-                "client_id": client_id,
-            }))
-            return
-        target_is_in_game: bool = (
-            GameRoom.objects.for_players(receiver).for_pending_or_ongoing_status().exists()
-        )
-        if target_is_in_game:
-            logger.warning("Error : user %s is in a game : can't receive invites.", receiver_username)
-            self.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "Your target is in an ongoing game",
-                "client_id": client_id,
-            }))
-            return
-
-        if GameInvitation.objects.filter(sender=self.user_profile, status=GameInvitation.PENDING).exists():
-            logger.warning("Error : user %s has more than one pending invitation.", self.user.username)
-            self.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "You have one invitation pending",
-                        "client_id": client_id,
-                    },
-                ),
-            )
-            return
-        invitation = GameInvitation.objects.create(
-            sender=self.user_profile,
-            recipient=receiver,
-            options=options,
-        )
-        self.user_profile.refresh_from_db()
-        notification = Notification.objects.action_send_game_invite(
-            receiver=receiver,
-            sender=self.user_profile,
-            notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
-        )
-        notification_data = notification.data.copy()
-        notification_data["id"] = str(notification.id)
-        # Convert date in good format
-        if "date" in notification_data and isinstance(notification_data["date"], datetime):
-            notification_data["date"] = notification_data["date"].isoformat()
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{receiver.user.id}",
-            {
-                "type": "chat_message",
-                "message": json.dumps(
-                    {
-                        "action": "game_invite",
-                        "data": notification_data,
-                    },
-                ),
-            },
-        )
-
-    def cancel_game_invite(self):
-        invitations = GameInvitation.objects.filter(
-            sender=self.user.profile,
-            status=GameInvitation.PENDING,
-        )
-        if not invitations.exists():
-            logger.debug("No pending invitations to cancel for user %s", self.user.username)
-            return
-        with transaction.atomic():
-            count = 0
-            for invitation in invitations:
-                invitation.status = GameInvitation.CANCELLED
-                receiver = invitation.recipient
-                invitation.save()
-                invitation.sync_notification_status()
-                count += 1
-            logger.info("Cancelled %d pending invitations for user %s", count, self.user.username)
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "game_invite_canceled",
-                    "data": {
-                        "username": self.user.username,
-                        "nickname": self.user.nickname,
-                    },
-                },
-            ),
-        )
-        async_to_sync(self.channel_layer.group_send)(
-            f"user_{receiver.user.id}",
-            {
-                "type": "chat_message",
-                "message": json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "data": {
-                            "username": self.user.username,
-                            "nickname": self.user.nickname,
-                        },
-                    },
-                ),
-            },
-        )
-
-    def handle_new_tournament(self, data):
-        tournament_id = data["data"].get["tournament_id"]
-        tournament_name = data["data"].get["tournament_name"]
-        organizer_id = data["data"].get["organizer_id"]
-
-        organizer = Profile.objects.get(id=organizer_id)
-
-        # send notification to concerned users
-        notification_data = get_user_data(organizer)
-        notification_data.update(
-            {"id": tournament_id, "tournament_name": tournament_name},
-        )
-
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "new_tournament",
-                    "data": notification_data,
-                },
-            ),
-        )
-
     def add_new_friend(self, data):
         sender_id = data["data"].get("sender_id")
         receiver_id = data["data"].get("receiver_id")
@@ -748,7 +425,7 @@ class UserEventsConsumer(WebsocketConsumer):
         # Create notification
         notification = Notification.objects.action_new_friend(receiver, sender)
 
-        notification_data = get_user_data(sender)
+        notification_data = ChatUtils.get_user_data(sender)
         # Add id to the notification data
         notification_data["id"] = str(notification.id)
 
@@ -760,3 +437,5 @@ class UserEventsConsumer(WebsocketConsumer):
                 },
             ),
         )
+    def game_found(self, event):
+        self.send(text_data=json.dumps(event["data"]))
