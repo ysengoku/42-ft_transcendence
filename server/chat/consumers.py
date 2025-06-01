@@ -567,6 +567,31 @@ class UserEventsConsumer(WebsocketConsumer):
             },
         }
 
+    def self_or_sender_already_in_game(self, sender, sender_name, client_id):
+        is_in_game: bool = (
+            GameRoom.objects.for_players(self.user_profile).for_pending_or_ongoing_status().exists()
+        )
+        if is_in_game:
+            logger.warning("Error : user %s is in a game : can't accept invites.", self.user.username)
+            self.send(text_data=json.dumps({
+                "action": "game_invite_canceled",
+                "message": "You are in an ongoing game",
+                "client_id": client_id,
+            }))
+            return True
+        target_is_in_game: bool = (
+            GameRoom.objects.for_players(sender).for_pending_or_ongoing_status().exists()
+        )
+        if target_is_in_game:
+            logger.warning("Error : user %s is in a game : can't join a game right now.", sender_name)
+            self.send(text_data=json.dumps({
+                "action": "game_invite_canceled",
+                "message": "Your target is in an ongoing game",
+                "client_id": client_id,
+            }))
+            return True
+        return False
+
     def accept_game_invite(self, data):
         sender_name = data["data"].get("username")
         sender = Profile.objects.get(user__username=sender_name)
@@ -584,16 +609,7 @@ class UserEventsConsumer(WebsocketConsumer):
             )
             return
 
-        is_in_game: bool = (
-            GameRoom.objects.for_players(self.user_profile).for_pending_or_ongoing_status().exists()
-        )
-        if is_in_game:
-            logger.warning("Error : user %s is in a game : can't accept invites.", self.user.username)
-            self.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "You are in an ongoing game",
-                "client_id": client_id,
-            }))
+        if self.self_or_sender_already_in_game(sender, sender_name, client_id):
             return
         # TODO: verify if user is in a game actually, if yes, no acceptations
         # if self.user_profile.resolve_game_id() is not None:
