@@ -26,8 +26,8 @@ export default defineConfig({
       name: 'inject-theme-init',
       transformIndexHtml(html) {
         return html.replace(
-            /(<head[^>]*>)/i,
-            `$1
+          /(<head[^>]*>)/i,
+          `$1
           <script src='/src/js/theme.js'></script>`,
         );
       },

@@ -187,7 +187,7 @@ export class GameOptions extends HTMLElement {
     const target = event.target;
     const optionWrapper = target.closest('.option-input-wrapper');
     const input = optionWrapper.querySelector('.option-input');
-    target.checked ? (input.classList.add('d-none')) : (input.classList.remove('d-none'));
+    target.checked ? input.classList.add('d-none') : input.classList.remove('d-none');
 
     const id = target.id.replace('optout-', '');
     this.#state.selectedOptions[id] = target.checked ? 'any' : this.#state.defaultOptionValue[id];
@@ -290,10 +290,10 @@ export class GameOptions extends HTMLElement {
   style() {
     const knobColor = getComputedStyle(document.documentElement).getPropertyValue('--pm-primary-500');
     const knobUrl =
-      'data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\'' +
-      ' viewBox=\'-4 -4 8 8\'%3e%3ccircle r=\'3\' fill=\'' +
+      "data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg'" +
+      " viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='" +
       encodeURIComponent(knobColor) +
-      '\'/%3e%3c/svg%3e';
+      "'/%3e%3c/svg%3e";
 
     return `
     <style>

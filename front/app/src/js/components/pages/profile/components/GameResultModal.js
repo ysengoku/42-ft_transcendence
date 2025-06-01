@@ -104,9 +104,13 @@ export class UserGameResultModal extends HTMLElement {
     const target = event.target;
     const userWrapper = target.closest('[username]');
     const username = userWrapper.getAttribute('username');
-    this.modalElement.addEventListener('hidden.bs.modal', () => {
-      router.navigate(`/profile/${username}`);
-    }, { once: true });
+    this.modalElement.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        router.navigate(`/profile/${username}`);
+      },
+      { once: true },
+    );
     this.modal.hide();
   }
 
@@ -219,9 +223,7 @@ export class UserGameResultModal extends HTMLElement {
       return `
       `;
     },
-    tournamentParticipant: () => {
-
-    },
+    tournamentParticipant: () => {},
   };
 }
 

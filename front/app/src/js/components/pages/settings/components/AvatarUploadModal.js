@@ -2,12 +2,15 @@ import { Modal } from 'bootstrap';
 import avatarPlaceholder from '/img/avatar-placeholder.svg?url';
 
 export class AvatarUploadModal extends HTMLElement {
+  #MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
   constructor() {
     super();
     this.modal = null;
     this.modalElement = null;
     this.selectedFile = null;
     this.onConfirm = null;
+    this.currentBlobUrl = null;
 
     this.readURL = this.readURL.bind(this);
     this.handleConfirm = this.handleConfirm.bind(this);
@@ -27,7 +30,7 @@ export class AvatarUploadModal extends HTMLElement {
     this.confirmButton.removeEventListener('click', this.handleConfirm);
     if (this.modalElement) {
       this.clearFocusInModal();
-    };
+    }
     this.modal?.hide();
     this.modalElement.removeEventListener('hide.bs.modal', this.clearFocusInModal);
   }
@@ -75,12 +78,33 @@ export class AvatarUploadModal extends HTMLElement {
     if (input && input.files && input.files.length > 0) {
       const file = input.files[0];
       if (file) {
+        if (!file.type.startsWith('image/')) {
+          this.avatarUploadField.classList.add('is-invalid');
+          this.querySelector('#avatar-feedback').textContent = 'Please select a valid image file.';
+          this.selectedFile = null;
+          return;
+        }
+        if (file.size > this.#MAX_FILE_SIZE) {
+          this.avatarUploadField.classList.add('is-invalid');
+          const maxSizeMB = this.#MAX_FILE_SIZE / (1024 * 1024);
+          this.querySelector('#avatar-feedback').textContent =
+            `Selected file is too large. Please choose one smaller than ${maxSizeMB}MB.`;
+          this.selectedFile = null;
+          return;
+        }
         this.selectedFile = file;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.avatarPreview.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+        if (this.currentBlobUrl) {
+          URL.revokeObjectURL(this.currentBlobUrl);
+        }
+        const blobUrl = URL.createObjectURL(file);
+        this.currentBlobUrl = blobUrl;
+        this.avatarPreview.src = blobUrl;
+        this.modalElement.addEventListener('hide.bs.modal', () => {
+          if (this.currentBlobUrl) {
+            URL.revokeObjectURL(this.currentBlobUrl);
+            this.currentBlobUrl = null;
+          }
+        }, { once: true });
       }
     }
   }
@@ -121,14 +145,14 @@ export class AvatarUploadModal extends HTMLElement {
             </div>
 					  <div class="mb-3">
   					  <label for="avatar-upload-input" class="form-label">Select file</label>
-  					  <input class="form-control" type="file" id="avatar-upload-input" accept="image/jpeg, image/png, image/webp" readonly>
+  					  <input class="form-control" type="file" id="avatar-upload-input" accept="image/jpeg, image/png, image/webp">
 						  <div class='invalid-feedback' id='avatar-feedback'></div>
 						</div>
 					</div>
 
 					<div class="modal-footer">
         		<button type="button" class="btn" data-bs-dismiss="modal" id="cancel-avatar-upload">Cancel</button>
-        		<button type="button" class="btn btn-wood" id="confirm-avatar-button">Confirm</button>
+        		<button type="button" class="btn fw-bold" id="confirm-avatar-button">Confirm</button>
       		</div>
 				</div>
 			</div>

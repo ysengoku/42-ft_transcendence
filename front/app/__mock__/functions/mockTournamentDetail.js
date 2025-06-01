@@ -27,8 +27,8 @@ export async function mockTournamentDetail(id) {
         },
         {
           profile: {
-            username: 'user2',
-            nickname: 'Player Two',
+            username: 'pedro',
+            nickname: 'pedro',
             avatar: '/__mock__/img/sample-pic2.png',
             elo: 1400,
             is_online: true,
