@@ -109,8 +109,54 @@ export class NotificationsListItem extends HTMLElement {
     dropdown.classList.remove('show');
   }
 
-  handleAcceptDuel() {
+  async handleAcceptDuel() {
+    const currentPath = window.location.pathname;
+    let duelPage;
+    if (currentPath === '/duel') {
+      duelPage = document.querySelector('duel-page');
+      if (!duelPage) {
+        return;
+      }
+      const status = duelPage.status;
+      switch (status) {
+        case 'inviting' :
+          duelPage.cancelInvitation();
+          router.removeBeforeunloadCallback();
+          window.removeEventListener('beforeunload', this.confirmLeavePage);
+          break;
+        
+        case 'matchmaking':
+          duelPage.cancelMatchmaking();
+          router.removeBeforeunloadCallback();
+          window.removeEventListener('beforeunload', this.confirmLeavePage);
+          break;
+
+        case 'starting':
+          // Show error (you are already in a duel)
+          return;
+      }
+    }
     this.replyGameInvite(true);
+    // wait for duelInvitationAccepted event
+    const confirmationFromServer = new Promise((resolve) => {
+      document.addEventListener('duelInvitationAccepted', (event) => {
+        resolve(event.detail);
+      }, { once: true });
+    });
+    const data = await confirmationFromServer;
+    console.log('Duel invitation accepted:', data);
+    duelPage ? (
+      duelPage.handleInvitationAccepted(data)
+    ) : (
+      router.navigate('/duel',
+        {
+          status: 'starting',
+          gameId: data.game_id,
+          username: data.username,
+          nickname: data.nickname,
+          avatar: data.avatar,
+        })
+    );
   }
 
   handleDeclineDuel() {
