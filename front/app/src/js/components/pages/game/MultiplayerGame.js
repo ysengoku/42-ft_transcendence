@@ -21,6 +21,7 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayMessageWrapper = null;
     this.overlayButton1 = null;
     this.overlayButton2 = null;
+    this.intervalGameId = null;
 
     // this.windowResize = this.windowResize.bind(this);
     this.requestNewMatchmaking = this.requestNewMatchmaking.bind(this);
@@ -410,9 +411,11 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'game_paused':
           devLog('Game paused');
+          console.log(data)
           this.showOverlay('pause', data);
           break;
         case 'game_unpaused':
+          console.log(data)
           devLog('Game unpaused');
           this.hideOverlay();
           break;
@@ -492,21 +495,29 @@ export class MultiplayerGame extends HTMLElement {
     // --------------------------
   }
 
-  showOverlay(action, state = null) {
+  clearGameInterval() {
+    if (this.intervalGameId) {
+      clearInterval(this.intervalGameId)
+      this.intervalGameId = null;
+    }
+  }
+
+  showOverlay(action, data = null) {
     const element = document.createElement('div');
     element.innerHTML = this.overlayContentTemplate[action];
     this.overlayMessageWrapper.appendChild(element);
     this.overlay.classList.add('overlay-dark');
     this.overlayMessageWrapper.classList.remove('d-none');
+    this.clearGameInterval()
 
     switch (action) {
       case 'pause':
-        let remainingTime = state.remaining_time;
+        let remainingTime = data.remaining_time;
         this.overlayMessageContent = this.querySelector('#overlay-message-content');
         this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
-        this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
+        this.overlayMessageContent.textContent = `Player ${data.name} disconnected.`;
         this.overlayMessageTimer.textContent = remainingTime;
-        setInterval(() => {
+        this.intervalGameId = setInterval(() => {
           remainingTime -= 1;
           this.overlayMessageTimer.textContent = remainingTime;
           if (remainingTime <= 0) {
@@ -526,6 +537,8 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   hideOverlay() {
+    if (this.intervalGameId)
+      clearInterval(this.intervalGameId)
     this.overlay.classList.remove('overlay-dark');
     this.overlayMessageWrapper.classList.add('d-none');
     this.overlayMessageWrapper.innerHTML = '';
