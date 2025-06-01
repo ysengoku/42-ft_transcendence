@@ -104,11 +104,6 @@ class Player:
             task.cancel()
         self.reconnection_timer = None
 
-
-@dataclass(slots=True)
-class Coin(Vector2):
-    velocity: Vector2
-
     def as_dict(self):
         return {
             "id": self.id,
@@ -118,6 +113,10 @@ class Coin(Vector2):
             "elo": self.elo,
             "number": 1 if self.bumper.z == 1 else 2,
         }
+
+@dataclass(slots=True)
+class Coin(Vector2):
+    velocity: Vector2
 
 
 @dataclass(slots=True)
