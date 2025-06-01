@@ -32,8 +32,8 @@ class SerializedGameState(TypedDict):
     class _Coin(_Vector2):
         pass
 
-    bumpter_1: _Bumper
-    bumpter_2: _Bumper
+    bumper_1: _Bumper
+    bumper_2: _Bumper
     ball: _Ball
     coin: _Coin
     is_someone_scored: bool
@@ -81,6 +81,7 @@ class GameServerToClient:
         action: Literal["player_joined"]
         player_id: str
         player_number: Literal[1, 2]
+        is_paused: bool
 
     class GameCancelled(WorkerToClientClose):
         """Both of the players failed to connect to the game, so it was cancelled."""
@@ -119,7 +120,6 @@ class GameServerToClient:
             elo: int
             player_number: Literal[1, 2]
 
-        type: Literal["player_won"]
         action: Literal["player_won"]
         winner: _Player
         loser: _Player
