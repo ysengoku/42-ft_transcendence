@@ -19,6 +19,7 @@ export class Duel extends HTMLElement {
     this.#state.clientId = socketManager.getClientInstanceId('livechat');
     this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
+    this.handleInvitationAccepted = this.handleInvitationAccepted.bind(this);
     this.cancelInvitation = this.cancelInvitation.bind(this);
     this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
@@ -80,6 +81,7 @@ export class Duel extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('gameFound', this.handleGameFound);
+    document.removeEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     if (this.#state.status === 'matchmaking') {
@@ -124,6 +126,7 @@ export class Duel extends HTMLElement {
       window.removeEventListener('beforeunload', this.confirmLeavePage);
     }
     if (this.#state.status === 'inviting') {
+      document.addEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
       this.cancelButton?.addEventListener('click', this.cancelInvitation);
     } else if (this.#state.status === 'matchmaking') {
       this.cancelButton?.addEventListener('click', this.cancelMatchmaking);
@@ -164,8 +167,25 @@ export class Duel extends HTMLElement {
     socketManager.closeSocket('matchmaking');
   }
 
-  invitationAccepted(data) {
+  /**
+   * Handles the event when a duel invitation is accepted.
+   * @param {Event|Object} input 
+   * @return {void}
+   */
+  handleInvitationAccepted(input) {
+    let data;
+    if (input instanceof CustomEvent) {
+      data = input.detail;
+    } else {
+      data = input;
+    }
     devLog('Invitation accepted:', data);
+    if (this.#state.status === 'inviting' && data.username !== this.#state.opponent.username) {
+      return;
+    }
+    // if (this.#state.status === 'inviting' && data.invitee.username !== this.#state.opponent.username) {
+    //   return;
+    // }
     this.#state.status = 'starting';
     this.#state.gameId = data.game_id;
     this.startDuel();
