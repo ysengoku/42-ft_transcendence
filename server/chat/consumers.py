@@ -154,55 +154,6 @@ class UserEventsConsumer(WebsocketConsumer):
         except Chat.DoesNotExist:
             logger.debug("Acces denied to the chat %s for %s", chat_id, self.user.username)
 
-    def validate_action_data(self, action, data):
-        expected_types = {
-            "new_message": {"content": str, "chat_id": str},
-            "like_message": {"id": str, "chat_id": str},
-            "unlike_message": {"id": str, "chat_id": str},
-            "read_message": {"id": str},
-            "read_notification": {"id": str},
-            "notification": {"message": str, "type": str},
-            "game_invite": {"client_id": str, "username": str, "options": dict},
-            "reply_game_invite": {"accept": bool, "username": str},
-            "game_accepted": {"accept": bool},
-            "game_declined": {"accept": bool},
-        }
-
-        uuid_fields = {
-            "new_message": ["chat_id"],
-            "like_message": ["id", "chat_id"],
-            "unlike_message": ["id", "chat_id"],
-            "read_message": ["id"],
-            "read_notification": ["id"],
-            # TODO : check these ids
-            "new_tournament": ["id", "organizer_id"],
-            "add_new_friend": ["id"],
-            "join_chat": ["chat_id"],
-            "room_created": ["chat_id"],
-        }
-        # Types verification
-        if action in expected_types:
-            for field, expected_type in expected_types[action].items():
-                value = data.get(field)
-                if not isinstance(value, expected_type):
-                    logger.warning(
-                        "Invalid type for '%s' (waited for %s, received %s)",
-                        field,
-                        expected_type.__name__,
-                        type(value).__name__,
-                    )
-                    return False
-
-        # UUID verification
-        if action in uuid_fields:
-            for field in uuid_fields[action]:
-                value = data.get(field)
-                if value and not Validator.is_valid_uuid(value):
-                    logger.warning("Invalid UUID format for '%s', the value is %s", field, value)
-                    return False
-
-        return True
-
     def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
@@ -214,28 +165,8 @@ class UserEventsConsumer(WebsocketConsumer):
 
             text_data_json.get("data", {})
             entire_data = text_data_json.get("data", {})
-            required_fields = {
-                "new_message": ["content", "chat_id"],
-                "notification": ["message", "type"],
-                "like_message": ["id", "chat_id"],
-                "unlike_message": ["id", "chat_id"],
-                "read_message": ["id"],
-                "game_invite": ["username"],
-                "reply_game_invite": ["username", "accept"],
-                "game_accepted": ["username"],
-                "game_declined": ["username"],
-                "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
-                "add_new_friend": ["sender_id", "receiver_id"],
-                "user_online": ["username"],
-                "user_offline": ["username"],
-            }
-
-            if action in required_fields:
-                for field in required_fields[action]:
-                    if field not in entire_data:
-                        logger.warning("Missing field [{%s}] for action {%s}", field, action)
-                        return
-            if not self.validate_action_data(action, entire_data):
+            if not Validator.validate_action_data(action, entire_data):
+                self.close()
                 return
             match action:
                 case "new_message":
