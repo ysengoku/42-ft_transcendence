@@ -38,9 +38,17 @@ export function showToastNotification(message, type = TOAST_TYPES.INFO) {
   toastBody.textContent = message;
   const toast = document.querySelector('.toast');
   const toastBodyWrapper = document.querySelector('.toast-body-wrapper');
-  toastBodyWrapper.style.backgroundColor = type === TOAST_TYPES.ERROR ?
-    'var(--pm-bg-danger)' :
-    'var(--pm-bg-success)';
+  toastBodyWrapper.style.backgroundColor = type === TOAST_TYPES.ERROR ? 'var(--pm-bg-danger)' : 'var(--pm-bg-success)';
   const toastBootstrap = Toast.getOrCreateInstance(toast);
   toastBootstrap.show();
+}
+
+export function sessionExpiredToast() {
+  const message = 'Your session has expired. Please log in again.';
+  showToastNotification(message, TOAST_TYPES.ERROR);
+}
+
+export function unknowknErrorToast() {
+  const message = 'An unexpected error occurred. Please try again later.';
+  showToastNotification(message, TOAST_TYPES.ERROR);
 }

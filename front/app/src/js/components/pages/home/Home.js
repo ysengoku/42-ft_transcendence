@@ -1,12 +1,11 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import './components/index.js';
-import { showToastNotification } from '@utils';
+import { showToastNotification, sessionExpiredToast } from '@utils';
 import logo from '/img/logo.svg?url';
 
 export class Home extends HTMLElement {
   #state = {
-    isLoggedin: false,
     user: null,
   };
 
@@ -16,18 +15,19 @@ export class Home extends HTMLElement {
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    this.#state.isLoggedin = authStatus.success;
-    this.#state.user = auth.getStoredUser();
+    if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
+      router.redirect('/');
+      return;
+    }
+    this.#state.user = authStatus.response;
     this.render();
   }
 
   render() {
-    if (!this.#state.isLoggedin) {
-      router.redirect('/');
-      return;
-    }
     this.innerHTML = this.style() + this.template();
-
     const profileButton = this.querySelector('home-profile-button');
     profileButton.username = this.#state.user.username;
 

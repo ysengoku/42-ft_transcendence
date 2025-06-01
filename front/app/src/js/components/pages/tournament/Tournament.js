@@ -2,7 +2,7 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 
 export class Tournament extends HTMLElement {
@@ -11,7 +11,7 @@ export class Tournament extends HTMLElement {
     status: '', // Status for UI: pending, roundStart, bracketOngoing, waitingNextRound, roundFinished, finished
     tournamentId: '',
     tournament: null,
-    currentRoundNumber: 1,
+    currentRoundNumber: 0,
     currentRound: null,
     currentUserBracket: null,
     userDataInTournament: null,
@@ -33,7 +33,9 @@ export class Tournament extends HTMLElement {
     this.#state.tournamentId = param.id;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
-      showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
       router.redirect('/login');
       return;
     }
@@ -64,19 +66,8 @@ export class Tournament extends HTMLElement {
     // =========== For test ================================================
     this.#state.tournament = await mockTournamentDetail('mockidongoing');
     // =====================================================================
+    console.log('Tournament data fetched:', this.#state.tournament);
 
-    this.#state.currentRoundNumber = this.#state.tournament.rounds.length;
-    this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
-    this.#state.currentUserBracket = this.#state.currentRound.brackets.find((bracket) => {
-      return (bracket.participant1.profile.username.toLowerCase() === this.#state.user.username.toLowerCase() ||
-        bracket.participant2.profile.username.toLowerCase() === this.#state.user.username.toLowerCase());
-    });
-    this.setTournamentStatus[this.#state.tournament.status]();
-    if (this.#state.status === 'bracketOngoing') {
-      const gameId = this.#state.currentUserBracket.game_id;
-      router.redirect(`multiplayer-game/${gameId}`);
-      return;
-    }
     this.#state.userDataInTournament = this.#state.tournament.participants.find((participant) => {
       return participant.profile.username.toLowerCase() === this.#state.user.username.toLowerCase();
     });
@@ -86,28 +77,49 @@ export class Tournament extends HTMLElement {
       router.redirect('/tournament-menu');
       return;
     }
-    const isUserQualified = this.checkUserStatus();
-    if (!isUserQualified) {
-      return;
-    }
+    // TODO: handle status === 'canceled'
+    if (this.#state.tournament.status === 'pending') {
+      this.setTournamentStatus[this.#state.tournament.status]();
+    } else {
+      this.#state.currentRoundNumber = this.#state.tournament.rounds.length;
+      this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
+      this.#state.currentUserBracket = this.#state.currentRound.brackets.find((bracket) => {
+        return (
+          bracket.participant1.profile.username.toLowerCase() === this.#state.user.username.toLowerCase() ||
+          bracket.participant2.profile.username.toLowerCase() === this.#state.user.username.toLowerCase()
+        );
+      });
 
+      this.setTournamentStatus[this.#state.tournament.status]();
+      if (this.#state.status === 'bracketOngoing') {
+        const gameId = this.#state.currentUserBracket.game_id;
+        router.redirect(`multiplayer-game/${gameId}`);
+        return;
+      }
+      const isUserQualified = this.checkUserStatus();
+      if (!isUserQualified) {
+        return;
+      }
+    }
     this.render();
-    socketManager.openSocket('tournament', this.#state.tournamentId);
+    if (this.#state.status !== 'finished') {
+      socketManager.openSocket('tournament', this.#state.tournamentId);
+    }
   }
 
   checkUserStatus() {
     switch (this.#state.userDataInTournament.status) {
-    case 'playing':
-      const gameId = this.#state.currentUserBracket.game_id;
-      router.navigate(`multiplayer-game/${gameId}`);
-      return false;
-    case 'eliminated':
-      showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'You have been eliminated from the tournament.');
-      socketManager.closeSocket('tournament', this.#state.tournamentId);
-      router.navigate('/tournament-menu');
-      return false;
-    case 'qualified':
-      return true;
+      case 'playing':
+        const gameId = this.#state.currentUserBracket.game_id;
+        router.navigate(`multiplayer-game/${gameId}`);
+        return false;
+      case 'eliminated':
+        showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'You have been eliminated from the tournament.');
+        socketManager.closeSocket('tournament', this.#state.tournamentId);
+        router.navigate('/tournament-menu');
+        return false;
+      case 'qualified':
+        return true;
     }
   }
 
@@ -117,19 +129,19 @@ export class Tournament extends HTMLElement {
     },
     ongoing: () => {
       switch (this.#state.currentRound.status) {
-      case 'starting':
-        this.#state.status = 'roundStarting';
-        break;
-      case 'finished':
-        this.#state.status = 'roundFinished';
-        break;
-      case 'ongoing':
-        if (this.#state.currentUserBracket.status === 'finished') {
-          this.#state.status = 'waitingNextRound';
-        } else {
-          this.#state.status = 'bracketOngoing';
-        }
-        break;
+        case 'starting':
+          this.#state.status = 'roundStarting';
+          break;
+        case 'finished':
+          this.#state.status = 'roundFinished';
+          break;
+        case 'ongoing':
+          if (this.#state.currentUserBracket.status === 'finished') {
+            this.#state.status = 'waitingNextRound';
+          } else {
+            this.#state.status = 'bracketOngoing';
+          }
+          break;
       }
     },
     finished: () => {

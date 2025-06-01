@@ -4,7 +4,6 @@ export function sanitizeHtml(str) {
     ['<', '&lt;'],
     ['>', '&gt;'],
     ['"', '&quot;'],
-    /* eslint-disable-next-line */
     ["'", '&#39;'],
   ]);
 

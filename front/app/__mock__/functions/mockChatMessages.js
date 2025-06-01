@@ -31,11 +31,12 @@ export async function mockChatMessagesData(username) {
         },
         {
           sender: myUsername,
-          content: 'Just making sure. Last time you showed up empty-handed. ' +
-          'I don\'t want a repeat of that situation, ' +
-          'so I need to confirm everything is in order.' +
-          'You know how important this is, and I can\'t afford any mistakes.' +
-          'If anything is missing again, we\'ll have a serious problem. 👀',
+          content:
+            'Just making sure. Last time you showed up empty-handed. ' +
+            "I don't want a repeat of that situation, " +
+            'so I need to confirm everything is in order.' +
+            "You know how important this is, and I can't afford any mistakes." +
+            "If anything is missing again, we'll have a serious problem. 👀",
           date: '2025-02-02T12:07:00Z',
           is_liked: false,
           is_read: true,
@@ -51,7 +52,7 @@ export async function mockChatMessagesData(username) {
         },
         {
           sender: myUsername,
-          content: 'Later! Don\'t forget to bring snacks. 🤓',
+          content: "Later! Don't forget to bring snacks. 🤓",
           date: '2025-02-02T12:05:00Z',
           is_liked: true,
           is_read: true,
@@ -59,7 +60,7 @@ export async function mockChatMessagesData(username) {
         },
         {
           sender: 'alice123',
-          content: 'Haha, we\'ll see! Catch you later!',
+          content: "Haha, we'll see! Catch you later!",
           date: '2025-02-02T12:04:00Z',
           is_liked: false,
           is_read: true,
@@ -90,7 +91,7 @@ export async function mockChatMessagesData(username) {
           id: '2',
         },
         {
-          content: 'Yo! What\'s up?',
+          content: "Yo! What's up?",
           date: '2025-02-02T12:00:00Z',
           sender: 'alice123',
           is_read: true,

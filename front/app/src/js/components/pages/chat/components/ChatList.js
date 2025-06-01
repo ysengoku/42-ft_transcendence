@@ -102,8 +102,7 @@ export class ChatList extends HTMLElement {
     }
 
     // Load more items if needed to reach the minimum display count
-    while (this.#state.currentListItemCount < this.#state.totalItemCount &&
-      this.#state.displayedItemCount < 10) {
+    while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
     console.timeEnd('ChatList render');
@@ -176,8 +175,7 @@ export class ChatList extends HTMLElement {
     this.list.innerHTML = '';
     this.#state.totalItemCount = data.count;
     this.renderListItems();
-    while (this.#state.currentListItemCount < this.#state.totalItemCount &&
-      this.#state.displayedItemCount < 10) {
+    while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
   }
@@ -200,8 +198,10 @@ export class ChatList extends HTMLElement {
   async handleScrollEnd(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.currentListItemCount === this.#state.totalItemCount) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.currentListItemCount === this.#state.totalItemCount
+    ) {
       return;
     }
     await this.loadMoreItems();
@@ -296,8 +296,7 @@ export class ChatList extends HTMLElement {
       const unreadMessages = component.querySelector('.chat-list-item-unread-message');
 
       lastMessageTime.textContent = getRelativeTime(data.date);
-      let content =
-        data.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ? 'You: ' : '';
+      let content = data.sender.toLowerCase() === this.#state.loggedInUsername.toLowerCase() ? 'You: ' : '';
       content += data.content;
       lastMessageContent.textContent = content;
       if (this.#state.items[0].unread_messages_count === 0) {
@@ -305,7 +304,7 @@ export class ChatList extends HTMLElement {
       } else {
         unreadMessages.classList.remove('d-none');
         unreadMessages.textContent =
-        this.#state.items[0].unread_messages_count > 9 ? '9+' : this.#state.items[0].unread_messages_count;
+          this.#state.items[0].unread_messages_count > 9 ? '9+' : this.#state.items[0].unread_messages_count;
       }
     } else {
       const tmp = this.#state.items[index];
@@ -329,9 +328,7 @@ export class ChatList extends HTMLElement {
       this.#state.items[index].is_online = data.online;
       const component = document.getElementById(`chat-item-${this.#state.items[index].username}`);
       const onlineStatus = component.querySelector('.chat-list-status-indicator');
-      data.online ?
-        onlineStatus.classList.add('online') :
-        onlineStatus.classList.remove('online');
+      data.online ? onlineStatus.classList.add('online') : onlineStatus.classList.remove('online');
     }
   }
 

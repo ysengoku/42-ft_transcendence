@@ -1,5 +1,4 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class UserSearch extends HTMLElement {
   #state = {
@@ -49,15 +48,15 @@ export class UserSearch extends HTMLElement {
     this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
     this.dropdown?.addEventListener('scrollend', this.showMoreUsers);
 
-    this.form ? (
-      this.form.addEventListener('click', this.clearUserList),
-      this.form.addEventListener('submit', this.preventReloadBySubmit),
-      this.input = this.form.querySelector('input')
-    ) : (devErrorLog('User search form not found'));
-    this.input ? (
-      this.input.addEventListener('click', this.clearUserList),
-      this.input.addEventListener('input', this.handleInput)
-    ) : devErrorLog('User search input not found');
+    this.form
+      ? (this.form.addEventListener('click', this.clearUserList),
+        this.form.addEventListener('submit', this.preventReloadBySubmit),
+        (this.input = this.form.querySelector('input')))
+      : devErrorLog('User search form not found');
+    this.input
+      ? (this.input.addEventListener('click', this.clearUserList),
+        this.input.addEventListener('input', this.handleInput))
+      : devErrorLog('User search input not found');
 
     this.buttonMobile = document.getElementById('dropdown-item-user-search');
     this.dropdownMobile = document.getElementById('dropdown-user-search');
@@ -117,8 +116,7 @@ export class UserSearch extends HTMLElement {
       } else {
         this.#state.searchQuery = '';
       }
-    }
-    , 500);
+    }, 500);
   }
 
   handleDropdownHidden() {
@@ -132,8 +130,11 @@ export class UserSearch extends HTMLElement {
   async showMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-    this.#state.totalUsersCount === this.#state.currentListLength || this.#state.isLoading) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalUsersCount === this.#state.currentListLength ||
+      this.#state.isLoading
+    ) {
       return;
     }
     this.#state.isLoading = true;
@@ -158,10 +159,8 @@ export class UserSearch extends HTMLElement {
       this.renderUserList();
     } else {
       if (response.status === 401) {
-        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/login');
       } else {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR, 5000);
         router.navigate('/');
       }
     }

@@ -5,7 +5,6 @@ import pedro from '/3d_models/lilguy.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
 import { router } from '@router';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class MultiplayerGame extends HTMLElement {
   #navbarHeight = 64;
@@ -30,9 +29,8 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   async setParam(param) {
-    const authStatus = await auth.fetchAuthStatus();
-    if (!authStatus.success) {
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SESSION_EXPIRED);
+    const user = await auth.getUser();
+    if (!user) {
       router.navigate('/login');
       return;
     }
@@ -52,7 +50,6 @@ export class MultiplayerGame extends HTMLElement {
     document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
     document.removeEventListener('keydown', this.onDocumentKeyDown, true);
     document.removeEventListener('keyup', this.onDocumentKeyUp, true);
-    // window.removeEventListener('resize', this.windowResize);
   }
 
   onDocumentKeyDown(event) {
@@ -290,28 +287,28 @@ export class MultiplayerGame extends HTMLElement {
     pongSocket.addEventListener('message', (e) => {
       data = JSON.parse(e.data);
       switch (data.action) {
-      case 'state_updated':
-        updateState(data.state);
-        // if (data.state.someone_scored)
-        //     audio.cloneNode().play();
-        break;
-      case 'player_joined':
-        playerId = data.player_id;
-        break;
-      case 'game_paused':
-        devLog('Game paused');
-        this.showOverlay('pause', data.state);
-        break;
-      case 'game_unpaused':
-        devLog('Game unpaused');
-        this.hideOverlay();
-        break;
-      case 'game_cancelled':
-        devLog('Game cancelled');
-        this.showOverlay('cancel');
-        break;
-      default:
-        break;
+        case 'state_updated':
+          updateState(data.state);
+          // if (data.state.someone_scored)
+          //     audio.cloneNode().play();
+          break;
+        case 'player_joined':
+          playerId = data.player_id;
+          break;
+        case 'game_paused':
+          devLog('Game paused');
+          this.showOverlay('pause', data.state);
+          break;
+        case 'game_unpaused':
+          devLog('Game unpaused');
+          this.hideOverlay();
+          break;
+        case 'game_cancelled':
+          devLog('Game cancelled');
+          this.showOverlay('cancel');
+          break;
+        default:
+          break;
       }
     });
 
@@ -332,60 +329,9 @@ export class MultiplayerGame extends HTMLElement {
 
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
-    // function onDocumentKeyDown(event) {
-    //   if (event.defaultPrevented) {
-    //     return; // Do noplayerglb if the event was already processed
-    //   }
-    //   var keyCode = event.code;
-    //   if (keyCode == 'ArrowLeft') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'ArrowRight') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'KeyA') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'KeyD') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-    //   }
-    //   event.preventDefault();
-    // }
-    // function onDocumentKeyUp(event) {
-    //   if (event.defaultPrevented) {
-    //     return; // Do noplayerglb if the event was already processed
-    //   }
-    //   var keyCode = event.code;
-    //   if (keyCode == 'ArrowLeft') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-    //   }
-    //   if (keyCode == 'ArrowRight') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-    //   }k
-    //   if (keyCode == 'KeyA') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-    //   }
-    //   if (keyCode == 'KeyD') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-    //   }
-    //   event.preventDefault();
-    // }
 
     return [camera, renderer, animate];
   }
-
-  // windowResize() {
-  //   console.log(1);
-  //   const [camera, renderer, animate] = this.game();
-  //   console.log('Camera', camera);
-  //   renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
-  //   console.log(this.#navbarHeight);
-  //   const rendererWidth = renderer.domElement.offsetWidth;
-  //   const rendererHeight = renderer.domElement.offsetHeight;
-  //   console.log(rendererWidth, rendererHeight);
-  //   camera.aspect = rendererWidth / rendererHeight;
-  //   camera.updateProjectionMatrix();
-  // }
 
   render() {
     // this.innerHTML = ``;
@@ -398,14 +344,13 @@ export class MultiplayerGame extends HTMLElement {
 
     const navbarHeight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
       renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
       const rendererHeight = renderer.domElement.offsetHeight;
       camera.aspect = rendererWidth / rendererHeight;
       camera.updateProjectionMatrix();
     });
-    // window.addEventListener('resize', this.windowResize);
     animate();
 
     // ----- TEST ---------------
@@ -436,20 +381,28 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayMessageWrapper.classList.remove('d-none');
 
     switch (action) {
-    case 'pause':
-      let remainingTime = state.remaining_time;
-      this.overlayMessageContent = this.querySelector('#overlay-message-content');
-      this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
-      this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
-      this.overlayMessageTimer.textContent = remainingTime;
-      // TODO: Set timer
-      break;
-    case 'cancel':
-      this.overlayButton1 = this.querySelector('#overlay-button1');
-      this.overlayButton2 = this.querySelector('#overlay-button2');
-      this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
-      this.overlayButton2.addEventListener('click', this.navigateToHome);
-      break;
+      case 'pause':
+        let remainingTime = state.remaining_time;
+        this.overlayMessageContent = this.querySelector('#overlay-message-content');
+        this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
+        this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
+        this.overlayMessageTimer.textContent = remainingTime;
+        setInterval(() => {
+          remainingTime -= 1;
+          this.overlayMessageTimer.textContent = remainingTime;
+          if (remainingTime <= 0) {
+            clearInterval(this);
+            this.hideOverlay();
+            // TODO: Game over
+          }
+        }, 1000);
+        break;
+      case 'cancel':
+        this.overlayButton1 = this.querySelector('#overlay-button1');
+        this.overlayButton2 = this.querySelector('#overlay-button2');
+        this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
+        this.overlayButton2.addEventListener('click', this.navigateToHome);
+        break;
     }
   }
 

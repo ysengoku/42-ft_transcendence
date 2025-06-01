@@ -114,9 +114,9 @@ export class UserDuelHistory extends HTMLElement {
       duelResult.classList.add('duel-lost');
     }
     eloResult.textContent = item.elo_result;
-    const indicator = item.is_winner ?
-      '<i class="bi bi-arrow-up-right ps-1"></i>' :
-      '<i class="bi bi-arrow-down-right ps-1"></i>';
+    const indicator = item.is_winner
+      ? '<i class="bi bi-arrow-up-right ps-1"></i>'
+      : '<i class="bi bi-arrow-down-right ps-1"></i>';
     eloChangeIndicator.innerHTML = indicator;
 
     row.addEventListener('click', this.showDuelDetail);
@@ -139,7 +139,6 @@ export class UserDuelHistory extends HTMLElement {
 
   async loadMoreItems(event) {
     if (
-      !this.duelsTab.classList.contains('active') ||
       this.#state.isLoading ||
       (this.#state.totalMatches && this.#state.totalMatches <= this.#state.currentLastItemIndex + 1)
     ) {
@@ -156,7 +155,7 @@ export class UserDuelHistory extends HTMLElement {
 
   async sortItems(event) {
     event.preventDefault();
-    if (!this.duelsTab.classList.contains('active') || this.#state.items.length === 0 || this.#state.isLoading) {
+    if (this.#state.items.length === 0 || this.#state.isLoading) {
       return;
     }
     const target = event.target.closest('button');
@@ -188,7 +187,7 @@ export class UserDuelHistory extends HTMLElement {
 
   async filterItems(event) {
     event.preventDefault();
-    if (!this.duelsTab.classList.contains('active') || this.#state.items.length === 0 || this.#state.isLoading) {
+    if (this.#state.items.length === 0 || this.#state.isLoading) {
       return;
     }
     const target = event.target.closest('button');

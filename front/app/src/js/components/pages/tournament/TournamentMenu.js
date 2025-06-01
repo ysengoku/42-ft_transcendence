@@ -2,7 +2,7 @@ import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { formatDateMDY } from '@utils';
 import './components/index.js';
 
@@ -44,14 +44,11 @@ export class TournamentMenu extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
-        router.navigate('/login');
+        sessionExpiredToast();
       }
+      router.navigate('/login');
       return;
     }
-    // if (authStatus.response.tournament_id) {
-    //   this.redirectToActiveTournament(authStatus.response.tournament_id);
-    //   return;
-    // }
     this.#state.nickname = authStatus.response.nickname;
     this.render();
   }
@@ -61,8 +58,8 @@ export class TournamentMenu extends HTMLElement {
     this.list?.removeEventListener('register-tournament', this.showTournamentDetail);
     this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
     document.removeEventListener('hide-modal', this.hideModal);
-    this.modalComponent.removeEventListener('hide.bs.modal', this.handleCloseModal);
-    this.modalComponent.removeEventListener('hidden.bs.modal', this.handleCloseModal);
+    this.modalComponent?.removeEventListener('hide.bs.modal', this.handleCloseModal);
+    this.modalComponent?.removeEventListener('hidden.bs.modal', this.handleCloseModal);
     if (this.selectedTournament && this.selectedTournament.staus !== 'pending') {
       this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
@@ -215,9 +212,9 @@ export class TournamentMenu extends HTMLElement {
       } else {
         tournamentWinnerAvatar.classList.add('d-none');
       }
-      tournamentWinnerAlias.textContent = this.selectedTournament.winner ?
-        this.selectedTournament.winner.alias :
-        'Data not available';
+      tournamentWinnerAlias.textContent = this.selectedTournament.winner
+        ? this.selectedTournament.winner.alias
+        : 'Data not available';
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;

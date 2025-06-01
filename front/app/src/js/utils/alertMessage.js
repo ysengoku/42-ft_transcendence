@@ -1,9 +1,3 @@
-export const ERROR_MESSAGES = {
-  SERVER_ERROR: 'An unexpected error occurred. Please wait or try again later.',
-  UNKNOWN_ERROR: 'Something went wrong. Please try again later.',
-  SESSION_EXPIRED: 'Your session has expired. Please log in again.',
-};
-
 /**
  * Alert types based on Bootstrap alert classes.
  */
@@ -77,6 +71,11 @@ export function addDissmissAlertListener() {
   document.addEventListener('click', removeAlert);
   window.addEventListener('popstate', removeAlert);
   window.addEventListener('pushstate', removeAlert);
+}
+
+export function internalServerErrorAlert() {
+  const message = 'An unexpected error occurred. Please wait or try again later.';
+  showAlertMessageForDuration(ALERT_TYPE.ERROR, message, 5000);
 }
 
 function alertContentTemplate(type) {

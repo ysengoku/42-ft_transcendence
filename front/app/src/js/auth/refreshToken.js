@@ -1,6 +1,6 @@
 import { auth } from '@auth';
 import { API_ENDPOINTS } from '@api';
-import { showAlertMessage, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
+import { internalServerErrorAlert, unknowknErrorToast } from '@utils';
 
 /**
  * Refreshes the access token using the provided CSRF token.
@@ -35,7 +35,7 @@ export async function refreshAccessToken(csrfToken) {
         }
       }
       console.error('Refresh failed');
-      showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+      unknowknErrorToast();
       return { success: false, status: 500 };
     }, delay);
   }
@@ -56,7 +56,7 @@ export async function refreshAccessToken(csrfToken) {
         devLog('Refresh successful');
         return { success: true, status: 204 };
       } else if (refreshResponse.status === 500) {
-        showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
+        internalServerErrorAlert();
         devErrorLog('Server error, retrying refresh token request');
         return retryRefreshTokenRequest(request, 3000, 2);
       }
