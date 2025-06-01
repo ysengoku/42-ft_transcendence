@@ -15,6 +15,7 @@ from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
 
 from .models import Chat, ChatMessage, GameInvitation, Notification
+from .validator import Validator
 
 logger = logging.getLogger("server")
 
@@ -153,62 +154,6 @@ class UserEventsConsumer(WebsocketConsumer):
         except Chat.DoesNotExist:
             logger.debug("Acces denied to the chat %s for %s", chat_id, self.user.username)
 
-    def is_valid_uuid(self, val):
-        try:
-            UUID(str(val))
-            return True
-        except ValueError:
-            return False
-
-    def check_str_option(self, name, option, dict_options):
-        if option is not None:
-            if isinstance(option, str) and option == "any":
-                return True
-            if not isinstance(option, str) or option not in dict_options:
-                logger.warning("%s must be one of %s", name, dict_options)
-                return False
-        return True
-
-    def check_bool_option(self, name, option):
-        if option is not None:
-            if isinstance(option, str) and option == "any":
-                return True
-            if not isinstance(option, bool):
-                logger.warning("%s must be a boolean", name)
-                return False
-        return True
-
-    def check_int_option(self, name, option, val_min, val_max):
-        if option is not None:
-            if isinstance(option, str) and option == "any":
-                return True
-            if not isinstance(option, int) or not (val_min <= option <= val_max):
-                logger.warning("%s must be an int between %d and %d", name, val_min, val_max)
-                return False
-        return True
-
-    def validate_options(self, options):
-        schema = {"game_speed", "is_ranked", "score_to_win", "time_limit_minutes"}
-        for field in schema:
-            if field not in options:
-                logger.warning("Missing field [{%s}] for action game_invite", field)
-                return False
-            if options.get(field) is None:
-                logger.warning("Field [{%s}] if None for action game_invite", field)
-                return False
-
-        allowed_game_speeds = {"slow", "normal", "fast"}
-        min_score, max_score = 3, 20
-        min_time, max_time = 1, 5
-
-        if not self.check_str_option("game_speed", options.get("game_speed"), allowed_game_speeds):
-            return False
-        if not self.check_bool_option("is_ranked", options.get("is_ranked")):
-            return False
-        if not self.check_int_option("score_to_win", options.get("score_to_win"), min_score, max_score):
-            return False
-        return self.check_int_option("time_limit_minutes", options.get("time_limit_minutes"), min_time, max_time)
-
     def validate_action_data(self, action, data):
         expected_types = {
             "new_message": {"content": str, "chat_id": str},
@@ -252,7 +197,7 @@ class UserEventsConsumer(WebsocketConsumer):
         if action in uuid_fields:
             for field in uuid_fields[action]:
                 value = data.get(field)
-                if value and not self.is_valid_uuid(value):
+                if value and not Validator.is_valid_uuid(value):
                     logger.warning("Invalid UUID format for '%s', the value is %s", field, value)
                     return False
 
@@ -611,8 +556,6 @@ class UserEventsConsumer(WebsocketConsumer):
 
         if self.self_or_sender_already_in_game(sender, sender_name, client_id):
             return
-        # TODO: verify if user is in a game actually, if yes, no acceptations
-        # if self.user_profile.resolve_game_id() is not None:
         try:
             invitation = GameInvitation.objects.get(
                 sender=sender,
@@ -707,7 +650,7 @@ class UserEventsConsumer(WebsocketConsumer):
 
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
-        if not self.validate_options(options):
+        if not Validator.validate_options(options):
             return
         receiver_username = data["data"].get("username")
         if receiver_username == self.user.username:
