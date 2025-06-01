@@ -146,7 +146,6 @@ class GameServerConsumer(WebsocketConsumer):
         self.close(PongCloseCodes.CANCELLED)
 
     def player_joined(self, event: GameServerToClient.PlayerJoined):
-        print(event)
         player_id = event["player_id"]
         player_number = event["player_number"]
         self.send(
@@ -228,5 +227,4 @@ class GameServerConsumer(WebsocketConsumer):
         self.close(PongCloseCodes.NORMAL_CLOSURE)
 
     def movement_confirmed(self, event: GameServerToClient.InputConfirmed):
-        print(event)
         self.send(text_data=json.dumps(event))
