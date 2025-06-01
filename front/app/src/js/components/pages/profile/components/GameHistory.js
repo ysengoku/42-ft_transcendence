@@ -1,16 +1,12 @@
-import { mockFetchTournamentHistory } from '@mock/functions/mockFetchTournamentHistory.js';
-
 export class UserGameHistory extends HTMLElement {
   #state = {
     username: '',
-    selectedTab: 'duel',
     filter: 'all',
     sort: 'latest',
   };
 
   constructor() {
     super();
-    this.toggleTab = this.toggleTab.bind(this);
   }
 
   set data(value) {
@@ -21,61 +17,27 @@ export class UserGameHistory extends HTMLElement {
       username: this.#state.username,
       items: value.matches,
     };
-    // Test
-    this.userTournamentHistory.data = mockFetchTournamentHistory();
-    // this.userTournamentHistory.data = value.tournaments;
   }
 
   disconnectedCallback() {
-    this.duelsTab?.removeEventListener('click', this.toggleTab);
-    this.tournamentsTab?.removeEventListener('click', this.toggleTab);
   }
 
   render() {
     this.innerHTML = this.template() + this.style();
 
-    this.duelsTab = this.querySelector('#duels-tab');
-    this.tournamentsTab = this.querySelector('#tournaments-tab');
     this.cardBody = this.querySelector('#user-game-history-body');
     this.filterButton = this.querySelector('#game-history-filter');
     this.sortButton = this.querySelector('#game-history-sort');
-
-    this.duelsTab.addEventListener('click', this.toggleTab);
-    this.tournamentsTab.addEventListener('click', this.toggleTab);
-
     this.userDuelHistory = this.querySelector('user-duel-history');
-    this.userTournamentHistory = this.querySelector('user-tournament-history');
-  }
-
-  toggleTab(event) {
-    event.preventDefault();
-
-    const target = event.target.closest('a');
-    if (!target || target.classList.contains('active')) {
-      return;
-    }
-    this.#state.selectedTab = target.id === 'duels-tab' ? 'duel' : 'tournament';
-    this.duelsTab.classList.toggle('active');
-    this.tournamentsTab.classList.toggle('active');
-    this.cardBody.querySelector('.duel-history-wrapper').classList.toggle('d-none');
-    this.cardBody.querySelector('.tournament-history-wrapper').classList.toggle('d-none');
   }
 
   template() {
     return `
     <div class="game-history-card text-center px-2">
       <div class="card-header">
-        <p class="stat-label text-center pt-3">Game History</p>
+        <p class="stat-label text-center pt-3">Duel History</p>
 
         <div class="d-flex justify-content-between align-items-center px-3">
-          <ul class="nav nav-tabs card-header-tabs">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="true" id="duels-tab">Duels</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" id="tournaments-tab">Tournaments</a>
-            </li>
-          </ul>
           <div class="d-flex gap-4">
             <div class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="game-history-filter">
               All
@@ -97,12 +59,7 @@ export class UserGameHistory extends HTMLElement {
       </div>
 
       <div class="card-body px-2 pt-0 mt-2 table-container" id="user-game-history-body">
-        <div class="duel-history-wrapper">
-          <user-duel-history></user-duel-history>
-        </div>
-        <div class="tournament-history-wrapper d-none">
-          <user-tournament-history></user-tournament-history>
-        </div>
+        <user-duel-history></user-duel-history>
       </div>
     </div>
     `;

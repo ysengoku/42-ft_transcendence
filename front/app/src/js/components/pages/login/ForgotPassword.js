@@ -54,7 +54,8 @@ export class ForgotPassword extends HTMLElement {
       'POST',
       API_ENDPOINTS.FORGOT_PASSWORD,
       { email: this.#state.email },
-      false, false,
+      false,
+      false,
     );
     if (response.success) {
       this.renderEmailSentMessage();
@@ -82,7 +83,8 @@ export class ForgotPassword extends HTMLElement {
       'POST',
       API_ENDPOINTS.FORGOT_PASSWORD,
       { email: this.#state.email },
-      false, false,
+      false,
+      false,
     );
     if (response.success) {
       showAlertMessage(ALERT_TYPE.SUCCESS, 'Email resent successfully.');
