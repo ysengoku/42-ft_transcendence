@@ -61,7 +61,18 @@ class ClientToMatchmaking:
 
 
 class GameServerToClient:
-    class PlayerJoined(TypedDict):
+    class WorkerToClientOpen(TypedDict):
+        """Events sent from the worker to the client trough GameServer which don't close the connection."""
+
+        type: Literal["worker_to_client_open"]
+
+    class WorkerToClientClose(TypedDict):
+        """Events sent from the worker to the client trough GameServer which close the connection."""
+
+        type: Literal["worker_to_client_close"]
+        close_code: PongCloseCodes
+
+    class PlayerJoined(WorkerToClientOpen):
         """
         Player joined the game, and received number of their bumper as well as their unique id for the
         identification purposes.
@@ -71,41 +82,35 @@ class GameServerToClient:
         player_id: str
         player_number: Literal[1, 2]
 
-    class PlayerAssigned(TypedDict):
-        """Player joined the game, and received its unique id for the identification purposes."""
-
-        action: Literal["player_assigned"]
-        number: int
-
-    class GameCancelled(TypedDict):
+    class GameCancelled(WorkerToClientClose):
         """Both of the players failed to connect to the game, so it was cancelled."""
 
         action: Literal["game_cancelled"]
 
-    class GameStarted(TypedDict):
+    class GameStarted(WorkerToClientOpen):
         """Both of the players joined the game and it started."""
 
         action: Literal["game_started"]
 
-    class StateUpdated(TypedDict):
+    class StateUpdated(WorkerToClientOpen):
         """Game server calculated the game tick and sends the updated state."""
 
         action: Literal["state_updated"]
         state: SerializedGameState
 
-    class GamePaused(TypedDict):
+    class GamePaused(WorkerToClientOpen):
         """Game is paused due to one of the players disconnecting from the game."""
 
         action: Literal["game_paused"]
         remaining_time: int
         name: str
 
-    class GameUnpaused(TypedDict):
+    class GameUnpaused(WorkerToClientOpen):
         """Game is unpaused. One of the players managed to reconnect."""
 
         action: Literal["game_unpaused"]
 
-    class PlayerWon(TypedDict):
+    class PlayerWon(WorkerToClientClose):
         """One of the the player has won. Contains profile data of winner and loser, as well as the change in elo."""
 
         class _Player(TypedDict):
@@ -114,16 +119,19 @@ class GameServerToClient:
             elo: int
             player_number: Literal[1, 2]
 
+        type: Literal["player_won"]
         action: Literal["player_won"]
         winner: _Player
         loser: _Player
         elo_change: int
 
     class PlayerResigned(PlayerWon):
-        """When the player has resigned. Contains the same data as `PlayerWon`."""
+        """When the player has resigned. For example, by disconnect. Contains the same data as `PlayerWon`."""
 
-    class InputConfirmed(TypedDict):
-        """Confirmation of the input from the player."""
+        action: Literal["player_resigned"]
+
+    class InputConfirmed(WorkerToClientOpen):
+        """Server confirmation of the input from the player. Required for the client-side prediction."""
 
         action: Literal["move_left", "move_right"]
         content: int
@@ -154,6 +162,7 @@ class GameServerToGameWorker:
     class PlayerConnected(TypedDict):
         """Player is connected to websocket server, and it sends the player information to the worker."""
 
+        type: Literal["player_connected"]
         game_room_id: str
         player_id: str
         profile_id: str
@@ -164,6 +173,7 @@ class GameServerToGameWorker:
     class PlayerInputed(TypedDict):
         """Player has inputed the controls, websocket server sends it to the game worker."""
 
+        type: Literal["player_inputed"]
         action: Literal["move_left", "move_right"]
         game_room_id: str
         player_id: str
@@ -172,5 +182,6 @@ class GameServerToGameWorker:
     class PlayerDisconnected(TypedDict):
         """Player is disconnected from the websocket server, and it sends the relevant IDs to the worker."""
 
+        type: Literal["player_disconnected"]
         game_room_id: str
         player_id: str
