@@ -46,14 +46,21 @@ export class DuelPreview extends HTMLElement {
   }
 
   render() {
-    if (this.#state.status === 'canceled' || this.#state.status === 'declined') {
+    if (
+      this.#state.status === 'canceled' ||
+      this.#state.status === 'declined' ||
+      this.#state.status === 'matchmakingCanceled'
+    ) {
       this.innerHTML = this.canceledTemplate();
 
       const cancelMessage = this.querySelector('#cancel-message');
-      cancelMessage.textContent =
-        this.#state.status === 'canceled'
-          ? 'Your invitation has been canceled.'
-          : `${this.#state.user2.nickname} declined the duel.`;
+      if (this.#state.status === 'canceled') {
+        cancelMessage.textContent = 'Your invitation has been canceled.';
+      } else if (this.#state.status === 'declined') {
+        cancelMessage.textContent = `${this.#state.user2.nickname} declined the duel.`;
+      } else if (this.#state.status === 'matchmakingCanceled') {
+        cancelMessage.textContent = 'Your matchmaking request has been canceled.';
+      }
 
       this.goToHomeButton = this.querySelector('#btn-go-to-home');
       this.goToDuelMenuButton = this.querySelector('#btn-go-to-duelmenu');
@@ -83,7 +90,7 @@ export class DuelPreview extends HTMLElement {
   }
 
   navigateToDuelMenu() {
-    router.navigate('/duel');
+    router.navigate('/duel-menu');
   }
 
   template() {
