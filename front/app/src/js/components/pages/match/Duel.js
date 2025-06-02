@@ -6,7 +6,7 @@ import './components/index.js';
 export class Duel extends HTMLElement {
   #state = {
     clientId: '',
-    status: '', // inviting, matchmaking, starting, canceled, declied, finished?
+    status: '', // inviting, matchmaking, starting, canceled, declied, matchmakingCanceled
     gameId: '',
     loggedInUser: null,
     opponent: null,
@@ -125,14 +125,15 @@ export class Duel extends HTMLElement {
       router.removeBeforeunloadCallback();
       window.removeEventListener('beforeunload', this.confirmLeavePage);
     }
+
     if (this.#state.status === 'inviting') {
-      document.addEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
       this.cancelButton?.addEventListener('click', this.cancelInvitation);
     } else if (this.#state.status === 'matchmaking') {
       this.cancelButton?.addEventListener('click', this.cancelMatchmaking);
     } else {
       this.cancelButton?.classList.add('d-none');
     }
+    document.addEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -158,18 +159,18 @@ export class Duel extends HTMLElement {
   }
 
   cancelMatchmaking() {
-    devLog('Canceling matchmaking');
     const message = { action: 'cancel' };
     socketManager.sendMessage('matchmaking', message);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
-    router.navigate('/duel-menu');
     socketManager.closeSocket('matchmaking');
+    this.#state.status = 'matchmakingCanceled';
+    this.renderContent();
   }
 
   /**
    * Handles the event when a duel invitation is accepted.
-   * @param {Event|Object} input 
+   * @param {Event|Object} input
    * @return {void}
    */
   handleInvitationAccepted(input) {
@@ -179,13 +180,18 @@ export class Duel extends HTMLElement {
     } else {
       data = input;
     }
-    devLog('Invitation accepted:', data);
-    if (this.#state.status === 'inviting' && data.username !== this.#state.opponent.username) {
+    if (this.#state.status === 'matchmaking') {
+      this.cancelMatchmaking();
       return;
     }
-    // if (this.#state.status === 'inviting' && data.invitee.username !== this.#state.opponent.username) {
-    //   return;
-    // }
+    devLog('Invitation accepted:', data);
+    if (data.username !== this.#state.opponent.username) {
+      this.#state.opponent = {
+        username: data.username,
+        nickname: data.nickname,
+        avatar: data.avatar,
+      };
+    }
     this.#state.status = 'starting';
     this.#state.gameId = data.game_id;
     this.startDuel();
@@ -328,9 +334,7 @@ export class Duel extends HTMLElement {
         return 'Searching for your dream opponent...';
       case 'starting':
         return 'Both gunslingers are here. Time to duel!';
-      case 'canceled':
-        return 'This duel has been canceled.';
-      case 'declined':
+      default:
         return 'This duel has been canceled.';
     }
   }
