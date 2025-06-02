@@ -5,7 +5,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.db import transaction
 
-from pong.consumers.game_protocol import MatchmakingToClientEvents, PongCloseCodes
+from pong.consumers.game_protocol import MatchmakingToClient, PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
@@ -158,7 +158,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         self.game_room.save()
         self.send(
             text_data=json.dumps(
-                MatchmakingToClientEvents.GameFound(
+                MatchmakingToClient.GameFound(
                     {
                         "action": "game_found",
                         "game_room_id": str(self.game_room.id),
