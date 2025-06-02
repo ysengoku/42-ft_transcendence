@@ -4,13 +4,13 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-from pong.consumers.game_protocol import GameWSServerToClientEvents, GameWSServerToGameWorkerEvents, PongCloseCodes
+from pong.consumers.game_protocol import GameServerToClient, GameServerToGameWorker, PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
 
 
-class GameWSServerConsumer(WebsocketConsumer):
+class GameServerConsumer(WebsocketConsumer):
     """
     Interface between game worker, which runs an actual game, and the client.
     Sends to the worker events of player inputs and their connecction state for handling.
@@ -55,22 +55,16 @@ class GameWSServerConsumer(WebsocketConsumer):
             str(self.player.id),
         )
         self.accept()
-        async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
-        self.send(
-            text_data=json.dumps(
-                GameWSServerToClientEvents.PlayerJoined(
-                    action="player_joined",
-                    player_id=str(self.player.id),
-                ),
-            ),
-        )
         profile = self.user.profile
+        player_id = str(self.player.id)
+        async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_add)(f"player_{player_id}", self.channel_name)
         async_to_sync(self.channel_layer.send)(
             "game",
-            GameWSServerToGameWorkerEvents.PlayerConnected(
+            GameServerToGameWorker.PlayerConnected(
                 type="player_connected",
                 game_room_id=self.game_room_id,
-                player_id=str(self.player.id),
+                player_id=player_id,
                 profile_id=str(profile.id),
                 name=self.user.nickname if self.user.nickname else self.user.username,
                 avatar=profile.avatar,
@@ -79,6 +73,9 @@ class GameWSServerConsumer(WebsocketConsumer):
         )
 
     def disconnect(self, close_code):
+        if close_code != PongCloseCodes.ILLEGAL_CONNECTION:
+            async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
+            async_to_sync(self.channel_layer.group_discard)(f"player_{str(self.player.id)}", self.channel_name)
         # TODO: put close code to enum, make it prettier
         ok_close_code = 3000
         if close_code == ok_close_code:
@@ -87,7 +84,7 @@ class GameWSServerConsumer(WebsocketConsumer):
         if self.player:
             async_to_sync(self.channel_layer.send)(
                 "game",
-                GameWSServerToGameWorkerEvents.PlayerDisconnected(
+                GameServerToGameWorker.PlayerDisconnected(
                     type="player_disconnected",
                     game_room_id=self.game_room_id,
                     player_id=str(self.player.id),
@@ -98,7 +95,6 @@ class GameWSServerConsumer(WebsocketConsumer):
                 self.user.profile,
                 self.game_room_id,
             )
-            async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
 
     def receive(self, text_data):
         try:
@@ -120,7 +116,7 @@ class GameWSServerConsumer(WebsocketConsumer):
             }:
                 async_to_sync(self.channel_layer.send)(
                     "game",
-                    GameWSServerToGameWorkerEvents.PlayerInputed(
+                    GameServerToGameWorker.PlayerInputed(
                         type="player_inputed",
                         action=action,
                         game_room_id=self.game_room_id,
@@ -141,81 +137,14 @@ class GameWSServerConsumer(WebsocketConsumer):
     ##############################
     # GAME WORKER EVENT HANDLERS #
     ##############################
-    def game_cancelled(self, _: dict):
-        """
-        Event handler for `game_cancelled`.
-        `game_cancelled` is sent from the game worker to this consumer when players fail to connect to the game.
-        """
-        self.send(text_data=json.dumps({"action": "game_cancelled"}))
-        self.close(PongCloseCodes.CANCELLED)
+    # Simple handlers to propagate data from the game worker to the clients.
+    # The handlers filter out "type" key from the dicts to avoid leaking implementation details.
+    # DO NOT CALL THE `del` ON `type` KEY. This breaks Django Channels.
+    def worker_to_client_close(self, event: GameServerToClient.WorkerToClientClose):
+        """Send data to the client and close connection."""
+        self.send(text_data=json.dumps({k: v for k, v in event.items() if k != "type"}))
+        self.close(event["close_code"])
 
-    def game_started(self, _: dict):
-        """
-        Event handler for `game_started`.
-        `game_started` is sent from the game worker to this consumer when both players connected to the game.
-        """
-        self.send(text_data=json.dumps({"action": "game_started"}))
-
-    def state_updated(self, event: dict):
-        """
-        Event handler for `state_updated`.
-        `state_updated` is sent from the game worker to this consumer on each game tick.
-        """
-        self.send(text_data=json.dumps({"action": "state_updated", "state": event["state"]}))
-
-    def game_paused(self, event: dict):
-        """
-        Event handler for `game_paused`.
-        `game_paused` is sent from the game worker to this consumer when the game unters the paused state.
-        """
-        self.send(
-            text_data=json.dumps(
-                {"action": "game_paused", "remaining_time": event["remaining_time"], "name": event["name"]},
-            ),
-        )
-
-    def game_unpaused(self, _: dict):
-        """
-        Event handler for `game_unpaused`.
-        `game_unpaused` is sent from the game worker to this consumer when the game unters the paused state.
-        """
-        self.send(text_data=json.dumps({"action": "game_unpaused"}))
-
-    def player_won(self, event: dict):
-        """
-        Event handler for `player_won`.
-        `player_won` is sent from the game worker to this consumer when the game is ended and one of the players won
-        the game.
-        """
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "player_won",
-                    "winner": event["winner"],
-                    "loser": event["loser"],
-                    "elo_change": event["elo_change"],
-                },
-            ),
-        )
-        self.close(PongCloseCodes.NORMAL_CLOSURE)
-
-    def player_resigned(self, event: dict):
-        """
-        Event handler for `player_resigned`.
-        `player_resigned` is sent from the game worker to this consumer when one the players resigned,
-        by disconnect, for example.
-        """
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "player_won",
-                    "winner": event["winner"],
-                    "loser": event["loser"],
-                    "elo_change": event["elo_change"],
-                },
-            ),
-        )
-        self.close(PongCloseCodes.NORMAL_CLOSURE)
-
-    def player_moved(self, event: dict):
-        self.send(text_data=json.dumps(event))
+    def worker_to_client_open(self, event: GameServerToClient.WorkerToClientOpen):
+        """Send data to the client without closing connection."""
+        self.send(text_data=json.dumps({k: v for k, v in event.items() if k != "type"}))
