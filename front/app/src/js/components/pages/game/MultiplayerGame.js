@@ -127,8 +127,9 @@ export class MultiplayerGame extends HTMLElement {
     const scene = new THREE.Scene();
     const loader = new GLTFLoader();
 
-    const camera = new THREE.PerspectiveCamera(45, rendererWidth / rendererHeight, 0.1, 2000);
-    const orbit = new OrbitControls(camera, renderer.domElement);
+    
+    var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
+    // const orbit = new OrbitControls(camera, renderer.domElement);
 
     let mixer;
     var keyMap = [];
@@ -241,8 +242,8 @@ export class MultiplayerGame extends HTMLElement {
       });
     })(0, 1, 0);
 
-    camera.position.set(10, 15, -22);
-    orbit.update();
+    // camera.position.set(10, 15, -22);
+    // orbit.update();
 
     ligths[0].position.set(0, 10, 30);
     ligths[1].position.set(10, 0, 30);
@@ -441,6 +442,8 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'player_joined':
           playerIdContainer.playerId = data.player_id;
+          camera.position.set(0, 15, -20);
+          camera.lookAt(new THREE.Vector3(0,0,0));
           break;
         case 'game_paused':
           devLog('Game paused');
