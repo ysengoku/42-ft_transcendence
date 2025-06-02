@@ -1,6 +1,7 @@
 import { router } from '@router';
 import { socketManager } from '@socket';
 import { getRelativeTime } from '@utils';
+import { showToastNotification, TOAST_TYPES } from '@utils';
 
 export class NotificationsListItem extends HTMLElement {
   #state = {
@@ -119,44 +120,38 @@ export class NotificationsListItem extends HTMLElement {
       }
       const status = duelPage.status;
       switch (status) {
-        case 'inviting' :
+        case 'inviting':
           duelPage.cancelInvitation();
-          router.removeBeforeunloadCallback();
-          window.removeEventListener('beforeunload', this.confirmLeavePage);
           break;
-        
         case 'matchmaking':
           duelPage.cancelMatchmaking();
-          router.removeBeforeunloadCallback();
-          window.removeEventListener('beforeunload', this.confirmLeavePage);
           break;
-
         case 'starting':
-          // Show error (you are already in a duel)
+          showToastNotification('You are already in a duel. Cannot accept a new one.', TOAST_TYPES.ERROR);
           return;
       }
     }
-    this.replyGameInvite(true);
-    // wait for duelInvitationAccepted event
     const confirmationFromServer = new Promise((resolve) => {
-      document.addEventListener('duelInvitationAccepted', (event) => {
-        resolve(event.detail);
-      }, { once: true });
+      document.addEventListener(
+        'duelInvitationAccepted',
+        (event) => {
+          resolve(event.detail);
+        },
+        { once: true },
+      );
+      this.replyGameInvite(true);
     });
     const data = await confirmationFromServer;
-    console.log('Duel invitation accepted:', data);
-    duelPage ? (
-      duelPage.handleInvitationAccepted(data)
-    ) : (
-      router.navigate('/duel',
-        {
+    duelPage
+      ? duelPage.handleInvitationAccepted(data)
+      : (console.log('Navigating to duel page with data:', data),
+        router.navigate('/duel', {
           status: 'starting',
           gameId: data.game_id,
           username: data.username,
           nickname: data.nickname,
           avatar: data.avatar,
-        })
-    );
+        }));
   }
 
   handleDeclineDuel() {
