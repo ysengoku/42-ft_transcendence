@@ -13,7 +13,7 @@ export class AccountDeleted extends HTMLElement {
   connectedCallback() {
     const user = auth.getStoredUser();
     if (!user) {
-      router.navigate('/');
+      router.redirect('/');
       return;
     }
     this.#state.nickname = auth.getStoredUser().nickname;
