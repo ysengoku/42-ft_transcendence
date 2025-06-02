@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile
       target: ${NODE_ENV:-development} # Use the 'dev' stage by default, or 'build' in production
     volumes:
+      - front_dist_volume:/app/dist
       - ./front/app/src:/app/src
     ports:
       - "5173:5173"
@@ -107,8 +108,12 @@ services:
     container_name: nginx
     build:
       context: ./nginx
+      dockerfile: Dockerfile
+    args:
+        NODE_ENV: ${NODE_ENV} # Pass the NODE_ENV variable to the Nginx build context
     volumes:
       - ./front/app:/app/
+      - front_dist_volume:/app/dist:ro
       - media_volume:/app/media/ # Directory containing the application's media files
       - static_volume:/app/static/ # Directory containing the application's static files
       - db_volume:/var/lib/postgresql/data/ # Directory containing the database files
@@ -142,6 +147,9 @@ volumes:
 
   static_volume:
     name: static_volume
+
+  front_dist_volume:
+    name: front_dist_volume
 
   media_volume:
     name: media_volume
