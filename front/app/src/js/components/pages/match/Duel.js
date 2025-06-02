@@ -180,18 +180,16 @@ export class Duel extends HTMLElement {
     } else {
       data = input;
     }
+    devLog('Invitation accepted:', data);
     if (this.#state.status === 'matchmaking') {
       this.cancelMatchmaking();
       return;
     }
-    devLog('Invitation accepted:', data);
-    if (data.username !== this.#state.opponent.username) {
-      this.#state.opponent = {
-        username: data.username,
-        nickname: data.nickname,
-        avatar: data.avatar,
-      };
-    }
+    this.#state.opponent = {
+      username: data.username,
+      nickname: data.nickname,
+      avatar: data.avatar,
+    };
     this.#state.status = 'starting';
     this.#state.gameId = data.game_id;
     this.startDuel();
