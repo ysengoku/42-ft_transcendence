@@ -118,17 +118,9 @@ export class NotificationsListItem extends HTMLElement {
       if (!duelPage) {
         return;
       }
-      const status = duelPage.status;
-      switch (status) {
-        case 'inviting':
-          duelPage.cancelInvitation();
-          break;
-        case 'matchmaking':
-          duelPage.cancelMatchmaking();
-          break;
-        case 'starting':
-          showToastNotification('You are already in a duel. Cannot accept a new one.', TOAST_TYPES.ERROR);
-          return;
+      if (duelPage.status === 'starting') {
+        showToastNotification('You are already in a duel. Cannot accept a new one.', TOAST_TYPES.ERROR);
+        return;
       }
     }
     const confirmationFromServer = new Promise((resolve) => {

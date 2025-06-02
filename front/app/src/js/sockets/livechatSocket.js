@@ -85,7 +85,7 @@ socketManager.addSocket('livechat', {
       case false:
         message =
           data.username.toLowerCase() === user.username.toLowerCase()
-            ? 'Your invitation has been successfully canceled.'
+            ? 'Your invitation has been canceled.'
             : `${data.nickname} canceled the duel invitation.`;
     }
     if (message) {
