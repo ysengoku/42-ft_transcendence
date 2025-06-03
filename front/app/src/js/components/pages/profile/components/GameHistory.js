@@ -19,9 +19,6 @@ export class UserGameHistory extends HTMLElement {
     };
   }
 
-  disconnectedCallback() {
-  }
-
   render() {
     this.innerHTML = this.template() + this.style();
 
