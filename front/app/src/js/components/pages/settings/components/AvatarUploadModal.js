@@ -99,12 +99,16 @@ export class AvatarUploadModal extends HTMLElement {
         const blobUrl = URL.createObjectURL(file);
         this.currentBlobUrl = blobUrl;
         this.avatarPreview.src = blobUrl;
-        this.modalElement.addEventListener('hide.bs.modal', () => {
-          if (this.currentBlobUrl) {
-            URL.revokeObjectURL(this.currentBlobUrl);
-            this.currentBlobUrl = null;
-          }
-        }, { once: true });
+        this.modalElement.addEventListener(
+          'hide.bs.modal',
+          () => {
+            if (this.currentBlobUrl) {
+              URL.revokeObjectURL(this.currentBlobUrl);
+              this.currentBlobUrl = null;
+            }
+          },
+          { once: true },
+        );
       }
     }
   }
