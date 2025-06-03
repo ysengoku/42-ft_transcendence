@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime
-from typing import Literal, TypedDict
 
 from django.db import models
 from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
+from pong.consumers.game_protocol import GameRoomSettings
 from users.models.profile import Profile
 
 
@@ -200,21 +200,6 @@ class GameRoomQuerySet(models.QuerySet):
         return self.filter(Q(status=self.model.PENDING) | Q(status=self.model.ONGOING))
 
 
-class GameRoomSettings(TypedDict):
-    """
-    Options for the specific match of Pong.
-    `score_to_win` ranges from 3 to 20.
-    `time_limit`   ranges from 1 minute to 5 minutes.
-    `cool_mode`    activates the coin with different buffs/debuffs.
-    """
-
-    score_to_win: int
-    time_limit: int
-    cool_mode: bool
-    ranked: bool
-    game_speed: Literal["slow", "medium", "fast"]
-
-
 def get_default_game_room_settings() -> GameRoomSettings:
     return GameRoomSettings(
         score_to_win=5,
@@ -252,7 +237,7 @@ class GameRoom(models.Model):
         ordering = ["-date"]
 
     def __str__(self) -> str:
-        return f"{self.get_status_display()} match {str(self.id)}"
+        return f"{self.get_status_display()} match {str(self.id)}. Settings: {self.settings}"
 
     def close(self):
         self.status = GameRoom.CLOSED
