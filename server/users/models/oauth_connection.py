@@ -100,9 +100,10 @@ class OauthConnection(models.Model):
         self.user = user
         self.status = self.CONNECTED
 
-        self.avatar_url = self.get_avatar_url(user_info, self.connection_type)
-        if self.avatar_url:
-            self.save_avatar(self.avatar_url, self.user)
+        if not user.profile.profile_picture:
+            self.avatar_url = self.get_avatar_url(user_info, self.connection_type)
+            if self.avatar_url:
+                self.save_avatar(self.avatar_url, self.user)
 
         self.save()
 
