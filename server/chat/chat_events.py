@@ -87,8 +87,6 @@ class ChatEvent:
         message = message_data.get("content")
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
-        logger.info("DATA %s", data)
-        logger.info("MESSAGE_DATA %s", message_data)
         try:
             with transaction.atomic():
                 message = ChatMessage.objects.select_for_update().get(pk=message_id)
@@ -99,17 +97,18 @@ class ChatEvent:
                     message.refresh_from_db()
                     transaction.on_commit(
                         lambda: self.consumer.send_like_update(chat_id, message_id, True))
-                self.consumer.send(
-                    text_data=json.dumps(
-                        {
-                            "action": "like_message",
-                            "data": {
-                                "id": message_id,
-                                "chat_id": chat_id,
+                    self.consumer.send(
+                        text_data=json.dumps(
+                            {
+                                "action": "like_message",
+                                "data": {
+                                    "id": message_id,
+                                    "chat_id": chat_id,
+                                },
                             },
-                        },
-                    ),
-                )
+                        ),
+                    )
+
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist.", message_id)
 
