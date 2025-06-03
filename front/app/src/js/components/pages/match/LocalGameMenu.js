@@ -43,7 +43,9 @@ export class LocalGameMenu extends HTMLElement {
 
     const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
     anyOptions.forEach((item) => {
-      item.classList.add('d-none');
+      if (!item.classList.contains('optout-all')) {
+        item.classList.add('d-none');
+      }
     });
   }
 
@@ -67,6 +69,7 @@ export class LocalGameMenu extends HTMLElement {
         <div class="form-container col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 p-4">
           <div class="d-flex flex-column justify-content-center align-items-center w-100">
             <div class="w-75">
+              <h2 class="text-start m-0 mb-4 pt-2 w-75">Local Game</h2>
               <game-options></game-options>
               <button type="submit" id="local-game-classic" class="btn btn-wood btn-lg mt-5 w-100">Local player battle</button>
               <button type="submit" id="local-game-ai" class="btn btn-wood btn-lg mt-3 mb-5 w-100">AI Challenge</button>

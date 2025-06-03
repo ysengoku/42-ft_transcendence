@@ -43,7 +43,9 @@ export class InviteGameModal extends HTMLElement {
 
     const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
     anyOptions.forEach((item) => {
-      item.classList.add('d-none');
+      if (!item.classList.contains('optout-all')) {
+        item.classList.add('d-none');
+      }
     });
 
     if (this.#state.options) {
