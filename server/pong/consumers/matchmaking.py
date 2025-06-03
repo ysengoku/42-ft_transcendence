@@ -64,6 +64,7 @@ class MatchmakingConsumer(WebsocketConsumer):
             else:
                 game_room_player: GameRoomPlayer = GameRoomPlayer.objects.filter(
                     game_room=self.game_room,
+                    game_room__settings=self.game_room_settings,
                     profile=self.user.profile,
                 ).first()
                 game_room_player.inc_number_of_connections()
@@ -107,6 +108,7 @@ class MatchmakingConsumer(WebsocketConsumer):
             room_to_clean: GameRoom = GameRoom.objects.select_for_update().filter(id=self.game_room.id).first()
             disconnected_player: GameRoomPlayer = GameRoomPlayer.objects.filter(
                 game_room=self.game_room,
+                game_room__setings=self.game_room_settings,
                 profile=self.user.profile,
             ).first()
             disconnected_player.dec_number_of_connections()
@@ -188,14 +190,16 @@ class MatchmakingConsumer(WebsocketConsumer):
         """
         candidate_room = GameRoom.objects.for_valid_game_room(self.user.profile).first()
         if candidate_room:
-            locked_candidate_room = (
-                GameRoom.objects.select_for_update().filter(id=candidate_room.id, status=GameRoom.PENDING).first()
+            locked_candidate_room: GameRoom | None = (
+                GameRoom.objects.select_for_update()
+                .filter(id=candidate_room.id, status=GameRoom.PENDING, settings=self.game_room_settings)
+                .first()
             )
             if locked_candidate_room and locked_candidate_room.players.count() < PLAYERS_REQUIRED:
                 return locked_candidate_room
         return None
 
-    def _parse_game_room_settings(self, query_string) -> GameRoomSettings | None:
+    def _parse_game_room_settings(self, query_string) -> GameRoomSettings | None:  # noqa: PLR0911
         """
         Parses the query parameters for the MatchmakingConsumer, extracts their values, sets them to the correct type,
         and checks the correct ranges.
@@ -204,6 +208,9 @@ class MatchmakingConsumer(WebsocketConsumer):
         """
         try:
             game_room_settings = get_default_game_room_settings()
+            if not query_string:
+                return game_room_settings
+
             ### DECODING ###
             decoded_game_room_query_parameters: dict = {
                 k.decode(): v[0].decode()
