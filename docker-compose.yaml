@@ -109,7 +109,7 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-    args:
+      args:
         NODE_ENV: ${NODE_ENV} # Pass the NODE_ENV variable to the Nginx build context
     volumes:
       - ./front/app:/app/
