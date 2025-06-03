@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal, TypedDict
 
 from django.db import models
 from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
@@ -56,9 +57,7 @@ class MatchQuerySet(models.QuerySet):
         )
 
         loser: Profile = (
-            Profile.objects.get(id=loser_profile_or_id)
-            if isinstance(loser_profile_or_id, int)
-            else loser_profile_or_id
+            Profile.objects.get(id=loser_profile_or_id) if isinstance(loser_profile_or_id, int) else loser_profile_or_id
         )
 
         elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
@@ -134,9 +133,7 @@ class MatchQuerySet(models.QuerySet):
 
 
 class Match(models.Model):
-    """
-    Represents a finished match between two players.
-    """
+    """Represents a finished match between two players."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
@@ -203,6 +200,31 @@ class GameRoomQuerySet(models.QuerySet):
         return self.filter(Q(status=self.model.PENDING) | Q(status=self.model.ONGOING))
 
 
+class GameRoomSettings(TypedDict):
+    """
+    Options for the specific match of Pong.
+    `score_to_win` ranges from 3 to 20.
+    `time_limit`   ranges from 1 minute to 5 minutes.
+    `cool_mode`    activates the coin with different buffs/debuffs.
+    """
+
+    score_to_win: int
+    time_limit: int
+    cool_mode: bool
+    ranked: bool
+    game_speed: Literal["slow", "medium", "fast"]
+
+
+def get_default_game_room_settings() -> GameRoomSettings:
+    return GameRoomSettings(
+        score_to_win=5,
+        time_limit=3,
+        cool_mode=False,
+        ranked=False,
+        game_speed="medium",
+    )
+
+
 class GameRoom(models.Model):
     """
     Represents a game room where the players either look for an opponent or play a match.
@@ -222,6 +244,7 @@ class GameRoom(models.Model):
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
     players = models.ManyToManyField(Profile, related_name="game_rooms", through=GameRoomPlayer)
     date = models.DateTimeField(default=timezone.now)
+    settings = models.JSONField(verbose_name="Settings", default=get_default_game_room_settings)
 
     objects: GameRoomQuerySet = GameRoomQuerySet.as_manager()
 
