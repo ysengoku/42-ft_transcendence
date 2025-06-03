@@ -15,6 +15,7 @@ export class GameOptions extends HTMLElement {
 
     this.duelMenuComponent = null;
     this.closeButton = null;
+    this.optionWrapper = null;
     this.scoreToWinInput = null;
     this.gameSpeedInputs = null;
     this.isRankedInput = null;
@@ -29,13 +30,15 @@ export class GameOptions extends HTMLElement {
     const defaultOptionsFromEnv = import.meta.env.VITE_DEFAULT_GAME_OPTIONS;
     const defaultOptions = defaultOptionsFromEnv ? JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS) : {};
     this.#state.defaultOptionValue = {
-      scoreToWin: defaultOptions.scoreToWin || 15,
-      gameSpeed: defaultOptions.gameSpeed || 'normal',
-      isRanked: defaultOptions.isRanked || true,
-      timeLimitMinutes: defaultOptions.timeLimitMinutes || 3,
+      score_to_win: defaultOptions.scoreToWin || 5,
+      game_speed: defaultOptions.gameSpeed || 'medium',
+      ranked: defaultOptions.isRanked || false,
+      time_limit: defaultOptions.timeLimitMinutes || 3,
+      cool_mode: defaultOptions.coolMode || false,
     };
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
+    this.optoutAllOptions = this.optoutAllOptions.bind(this);
     this.toggleOptionOptout = this.toggleOptionOptout.bind(this);
   }
 
@@ -65,6 +68,7 @@ export class GameOptions extends HTMLElement {
     this.isRankedInput?.removeEventListener('change', this.updateOptions);
     this.timeLimitInput?.removeEventListener('input', this.updateOptions);
     this.timeLimitInput?.removeEventListener('input', this.updateSelectedValueOnRange);
+    this.allOptionsoptout?.removeEventListener('change', this.optoutAllOptions);
     this.scoreToWinOptout?.removeEventListener('change', this.toggleOptionOptout);
     this.gameSpeedOptout?.removeEventListener('change', this.toggleOptionOptout);
     this.isRankedOptout?.removeEventListener('change', this.toggleOptionOptout);
@@ -83,10 +87,12 @@ export class GameOptions extends HTMLElement {
 
     this.duelMenuComponent = document.querySelector('duel-menu');
     this.closeButton = this.querySelector('.btn-close');
+    this.optionWrapper = this.querySelector('.form-group');
     this.scoreToWinInput = this.querySelector('#score-to-win');
     this.gameSpeedInputs = this.querySelectorAll('input[name="speedOptions"]');
     this.isRankedInput = this.querySelector('#is-ranked');
     this.timeLimitInput = this.querySelector('#time-limit');
+    this.allOptionsoptout = this.querySelector('#optout-gameOptions');
     this.scoreToWinOptout = this.querySelector('#optout-scoreToWin');
     this.gameSpeedOptout = this.querySelector('#optout-gameSpeed');
     this.isRankedOptout = this.querySelector('#optout-isRanked');
@@ -102,6 +108,7 @@ export class GameOptions extends HTMLElement {
     this.isRankedInput.addEventListener('change', this.updateOptions);
     this.timeLimitInput.addEventListener('input', this.updateOptions);
     this.timeLimitInput.addEventListener('input', this.updateSelectedValueOnRange);
+    this.allOptionsoptout.addEventListener('change', this.optoutAllOptions);
     this.scoreToWinOptout.addEventListener('change', this.toggleOptionOptout);
     this.gameSpeedOptout.addEventListener('change', this.toggleOptionOptout);
     this.isRankedOptout.addEventListener('change', this.toggleOptionOptout);
@@ -193,6 +200,26 @@ export class GameOptions extends HTMLElement {
     this.#state.selectedOptions[id] = target.checked ? 'any' : this.#state.defaultOptionValue[id];
   }
 
+  optoutAllOptions(event) {
+    if (event.target.checked) {
+      this.optionWrapper.classList.add('d-none');
+      this.#state.selectedOptions = {
+        scoreToWin: 'any',
+        gameSpeed: 'any',
+        isRanked: 'any',
+        timeLimitMinutes: 'any',
+      };
+    } else {
+      this.optionWrapper.classList.remove('d-none');
+      this.#state.selectedOptions = {
+        scoreToWin: this.#state.defaultOptionValue.scoreToWin,
+        gameSpeed: this.#state.defaultOptionValue.gameSpeed,
+        isRanked: this.#state.defaultOptionValue.isRanked,
+        timeLimitMinutes: this.#state.defaultOptionValue.timeLimitMinutes,
+      };
+    }
+  }
+
   /* ------------------------------------------------------------------------ */
   /*      Template & style                                                    */
   /* ------------------------------------------------------------------------ */
@@ -200,6 +227,14 @@ export class GameOptions extends HTMLElement {
   template() {
     return `
     <h2 class="modal-title text-center pb-3">Game Options</h2>
+
+    <div class="opt-out-option form-check pt-1 mb-5 fs-5">
+      <input class="form-check-input" type="checkbox" id="optout-gameOptions">
+      <label class="form-check-label fw-bold" for="optout-optout-gameOptions">
+        Desactivate All Options
+      </label>
+    </div>
+
     <div class="form-group d-flex flex-column gap-4">
       <div class="option-input-wrapper pb-2">
         <div class="d-flex justify-content-between pb-1">
