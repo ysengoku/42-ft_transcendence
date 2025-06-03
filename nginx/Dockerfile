@@ -22,7 +22,6 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
       cp /etc/nginx/nginx.dev.conf  /etc/nginx/nginx.conf; \
     fi
 
-# Créer le répertoire pour les fichiers statiques
 RUN mkdir -p /app/dist
 
 EXPOSE 1026
