@@ -338,7 +338,10 @@ export class MultiplayerGame extends HTMLElement {
       if (!data) {
         return;
       }
+      let theirBumperPos = theirBumper == 0 ? data.bumper_1.x : data.bumper_2.x;
       data.last_bumper_collided == "_bumper_1" ? lastBumperCollided = 0 : lastBumperCollided = 1;
+      
+      
 
       Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
       Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
@@ -351,20 +354,8 @@ export class MultiplayerGame extends HTMLElement {
       Coin.cylinderUpdate.x = data.coin.x;
 
       Bumpers[0].score = data.bumper_1.score;
-      // console.log(data.player_id + " oui " + playerIdContainer.playerId)
-      // if (data.player_id != playerIdContainer.playerId)
-      //   Bumpers[0].cubeMesh.position.x = data.bumper_1.x;
-
       Bumpers[1].score = data.bumper_2.score;
-      // if ()
-      //   Bumpers[1].inputQueue.push(["move_left", 100]);
-      // if (data.bumper_2.x <= Bumpers[1].cubeMesh.position.x)
-      //   Bumpers[1].inputQueue.push(["move_right", 100]);
-        // 
-      // const {action, content} = data;
-
-      // 
-
+      Bumpers[theirBumper].cubeMesh.position.x = theirBumperPos;
 
       if (data.current_buff_or_debuff != 0) {
         switch (data.current_buff_or_debuff) {
@@ -403,11 +394,8 @@ export class MultiplayerGame extends HTMLElement {
             Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
             break;
         }
-      // Bumpers[1].score = data.bumper_2.score;
-      // Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
       }
     }
-    // console.log(Bumpers)
 
     pongSocket.addEventListener('open', function(_) {
       console.log('Success! :3 ');
@@ -440,19 +428,9 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'move_left':
         case 'move_right':
-          // console.log(data.player_id == playerIdContainer.playerId)
           
           if ((data.player_number == ourBumperIndexContainer.ourBumperIndex + 1) && !confirmInputs(data)) {
             Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x = data.position_x;
-          }
-          else if ((data.player_number != ourBumperIndexContainer.ourBumperIndex + 1)){
-            const {action, content} = data;
-
-            // if (data.action == "move_left")
-            //   Bumpers[1].cubeMesh.position.x -= Bumpers[1].speed;
-            // if (data.action == "move_right")
-            //   Bumpers[1].cubeMesh.position.x += Bumpers[1].speed;
-            Bumpers[theirBumper].inputQueue.push([action, content]);
           }
           break;
         case 'player_joined':
@@ -509,18 +487,18 @@ export class MultiplayerGame extends HTMLElement {
       // let i = 0;
       // console.log(Bumpers[1].inputQueue[Bumpers[1].inputQueue.length - 1] == undefined)
       // Bumpers[1].inputQueue.length
-      if (Bumpers[theirBumper].inputQueue.length != 0)
-      {
-        if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1])
-        {
-          if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][0] == "move_left" && !(Bumpers[theirBumper].cubeMesh.position.x > 10 - 0.5 - Bumpers[theirBumper].lenghtHalf))
-            if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][1] > 0)  
-              Bumpers[theirBumper].cubeMesh.position.x += Bumpers[theirBumper].speed;
-          if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][0] == "move_right" && !(Bumpers[theirBumper].cubeMesh.position.x < -10 + 0.5 + Bumpers[theirBumper].lenghtHalf))
-            if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][1] > 0)    
-              Bumpers[theirBumper].cubeMesh.position.x -= Bumpers[theirBumper].speed;
-        }
-      }
+      // if (Bumpers[theirBumper].inputQueue.length != 0)
+      // {
+      //   if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1])
+      //   {
+      //     if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][0] == "move_left" && !(Bumpers[theirBumper].cubeMesh.position.x > 10 - 0.5 - Bumpers[theirBumper].lenghtHalf))
+      //       if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][1] > 0)  
+      //         Bumpers[theirBumper].cubeMesh.position.x += Bumpers[theirBumper].speed;
+      //     if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][0] == "move_right" && !(Bumpers[theirBumper].cubeMesh.position.x < -10 + 0.5 + Bumpers[theirBumper].lenghtHalf))
+      //       if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][1] > 0)    
+      //         Bumpers[theirBumper].cubeMesh.position.x -= Bumpers[theirBumper].speed;
+      //   }
+      // }
         // i++;
       // }
 
