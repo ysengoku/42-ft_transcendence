@@ -15,6 +15,22 @@ class PongCloseCodes:
     ILLEGAL_CONNECTION = 3002
     BAD_DATA = 3100
 
+
+class GameRoomSettings(TypedDict):
+    """
+    Options for the specific match of Pong.
+    `score_to_win` ranges from 3 to 20.
+    `time_limit`   ranges from 1 minute to 5 minutes.
+    `cool_mode`    activates the coin with different buffs/debuffs.
+    """
+
+    score_to_win: int
+    time_limit: int
+    cool_mode: bool
+    ranked: bool
+    game_speed: Literal["slow", "medium", "fast"]
+
+
 class SerializedGameState(TypedDict):
     """State of the particular pong game represented in the JSON format."""
 
