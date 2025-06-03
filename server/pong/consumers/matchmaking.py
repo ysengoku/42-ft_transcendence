@@ -1,12 +1,13 @@
 import json
 import logging
+from urllib.parse import parse_qs
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.db import transaction
 
 from pong.consumers.game_protocol import MatchmakingToClientEvents, PongCloseCodes
-from pong.models import GameRoom, GameRoomPlayer
+from pong.models import GameRoom, GameRoomPlayer, GameRoomSettings, get_default_game_room_settings
 
 logger = logging.getLogger("server")
 
@@ -24,10 +25,16 @@ class MatchmakingConsumer(WebsocketConsumer):
         conforming room. The room is the re-fetched so to say, and revalidated.
         """
         self.user = self.scope.get("user")
-        self.game_room = None
+        self.game_room: GameRoom | None = None
         if not self.user:
-            logger.info("[Matchmaking.connect]: anonymous user tried to start matchmaking")
+            logger.warning("[Matchmaking.connect]: unauthorized user tried to start matchmaking")
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
+            return
+
+        self.game_room_settings = self._parse_game_room_settings(self.scope["query_string"])
+        if not self.game_room_settings:
+            logger.warning("[Matchmaking.connect]: invalid game room settings were given")
+            self.close(PongCloseCodes.BAD_DATA)
             return
 
         self.accept()
@@ -187,3 +194,48 @@ class MatchmakingConsumer(WebsocketConsumer):
             if locked_candidate_room and locked_candidate_room.players.count() < PLAYERS_REQUIRED:
                 return locked_candidate_room
         return None
+
+    def _parse_game_room_settings(self, query_string) -> GameRoomSettings | None:
+        """
+        Parses the query parameters for the MatchmakingConsumer, extracts their values, sets them to the correct type,
+        and checks the correct ranges.
+
+        If the game settings dict is valid, returns it. Otherwise, returns None.
+        """
+        try:
+            game_room_settings = get_default_game_room_settings()
+            ### DECODING ###
+            decoded_game_room_query_parameters: dict = {
+                k.decode(): v[0].decode()
+                for k, v in parse_qs(query_string, strict_parsing=True, max_num_fields=9, encoding="utf-8").items()
+            }
+
+            ### CHECKS FOR KEY NAMES AND VALUES TYPE CORRECTNESS ###
+            for setting_key, setting_value in decoded_game_room_query_parameters.items():
+                if setting_key not in game_room_settings:
+                    return None
+                setting_type = type(game_room_settings[setting_key])
+                if setting_type is bool:
+                    game_room_settings[setting_key] = setting_value and setting_value != "False"
+                else:
+                    game_room_settings[setting_key] = setting_type(setting_value)
+
+            ### CHECKS FOR VALUE RANGES CORRECTNESS ###
+            if game_room_settings["game_speed"] not in ["slow", "medium", "fast"]:
+                return None
+
+            provided_time_limit = game_room_settings["time_limit"]
+            min_time_limit = 1
+            max_time_limit = 5
+            if provided_time_limit < min_time_limit or provided_time_limit > max_time_limit:
+                return None
+
+            provided_score_to_win = game_room_settings["score_to_win"]
+            min_score_to_win = 3
+            max_score_to_win = 20
+            if provided_score_to_win < min_score_to_win or provided_score_to_win > max_score_to_win:
+                return None
+
+            return game_room_settings
+        except ValueError:
+            return None
