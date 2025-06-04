@@ -92,8 +92,6 @@ class Validator:
     @staticmethod
     def check_str_option(options, option, dict_options) -> bool:
         if option is not None:
-            if isinstance(option, str) and option == "any":
-                return True
             if not isinstance(option, str) or option not in dict_options:
                 logger.warning("%s must be one of %s", options, dict_options)
                 return False
@@ -102,8 +100,6 @@ class Validator:
     @staticmethod
     def check_bool_option(options, option) -> bool:
         if option is not None:
-            if isinstance(option, str) and option == "any":
-                return True
             if not isinstance(option, bool):
                 logger.warning("%s must be a boolean", options)
                 return False
@@ -112,8 +108,6 @@ class Validator:
     @staticmethod
     def check_int_option(options, option, val_min, val_max) -> bool:
         if option is not None:
-            if isinstance(option, str) and option == "any":
-                return True
             if not isinstance(option, int) or not (val_min <= option <= val_max):
                 logger.warning("%s must be an int between %d and %d", options, val_min, val_max)
                 return False
@@ -124,7 +118,7 @@ class Validator:
         if not isinstance(options, dict):
             logger.warning("Invalid type for 'options'")
             return False
-        RANKED = "is_ranked"
+        RANKED = "ranked"
         GAME_SPEED = "game_speed"
         SCORE_TO_WIN = "score_to_win"
         TIME_LIMIT = "time_limit"
@@ -134,7 +128,7 @@ class Validator:
             if field not in options:
                 continue
             if options.get(field) is None:
-                logger.warning("Field [{%s}] if None for action game_invite", field)
+                logger.warning("Field [{%s}] is None for action game_invite", field)
                 return False
 
         allowed_game_speeds = {"slow", "normal", "fast"}
@@ -145,8 +139,12 @@ class Validator:
             return False
         if not Validator.check_bool_option(RANKED, options.get(RANKED)):
             return False
+        if not Validator.check_bool_option(COOL_MODE, options.get(COOL_MODE)):
+            return False
         if not Validator.check_int_option(SCORE_TO_WIN, options.get(SCORE_TO_WIN), min_score, max_score):
             return False
-        return Validator.check_int_option(TIME_LIMIT, options.get(TIME_LIMIT), min_time, max_time)
+        if not Validator.check_int_option(TIME_LIMIT, options.get(TIME_LIMIT), min_time, max_time):
+            return False
+        return True
 
 
