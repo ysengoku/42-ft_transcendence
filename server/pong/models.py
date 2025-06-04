@@ -6,7 +6,7 @@ from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, 
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from pong.consumers.game_protocol import GameRoomSettings
+from pong.game_protocol import GameRoomSettings
 from users.models.profile import Profile
 
 
@@ -201,6 +201,7 @@ class GameRoomQuerySet(models.QuerySet):
 
 
 def get_default_game_room_settings() -> GameRoomSettings:
+    """Create the game settings for the default Pong experience."""
     return GameRoomSettings(
         score_to_win=5,
         time_limit=3,
@@ -213,7 +214,9 @@ def get_default_game_room_settings() -> GameRoomSettings:
 class GameRoom(models.Model):
     """
     Represents a game room where the players either look for an opponent or play a match.
-    Created after successeful matchmaking and used by the GameWSServerConsumer and GameWorkerConsumer.
+    Created after successeful matchmaking and used by the GameServerConsumer and GameWorkerConsumer.
+    Game settings are of the type GameRoomSettings. There are default settings, and the MatchmakingConsumer
+    will fill the fields that were not specified by the user with default values.
     """
 
     PENDING = "pending"
@@ -224,7 +227,6 @@ class GameRoom(models.Model):
         (ONGOING, "Ongoing"),
         (CLOSED, "Closed"),
     )
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
     players = models.ManyToManyField(Profile, related_name="game_rooms", through=GameRoomPlayer)

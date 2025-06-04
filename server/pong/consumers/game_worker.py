@@ -8,7 +8,7 @@ from enum import Enum, auto
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
-from pong.consumers.game_protocol import GameWSServerToGameWorkerEvents, SerializedGameState
+from pong.game_protocol import GameWSServerToGameWorkerEvents, SerializedGameState
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
