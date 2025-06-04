@@ -119,21 +119,22 @@ class Profile(models.Model):
         if not self.is_online:
             self.is_online = True
             self.save(update_fields=["is_online", "last_activity"])
-+           channel_layer = get_channel_layer()
-+           async_to_sync(channel_layer.group_send)(
-+               "online_users",
-+               {
-+                   "type": "user_status",
-+                   "action": "user_online",
-+                   "data": {
-+                       "username": self.user.username,
-+                       "nickname": getattr(self, "nickname", self.user.username),
-+                       "status": "online",
-+                       "date": timezone.now().isoformat(),
-+                   },
-+               },
-+           ) else:
-+            self.save(update_fields=["last_activity"])
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "online_users",
+                {
+                    "type": "user_status",
+                    "action": "user_online",
+                    "data": {
+                        "username": self.user.username,
+                        "nickname": getattr(self, "nickname", self.user.username),
+                        "status": "online",
+                        "date": timezone.now().isoformat(),
+                    },
+                },
+            )
+        else:
+            self.save(update_fields=["last_activity"])
 
     @property
     def is_really_online(self):
