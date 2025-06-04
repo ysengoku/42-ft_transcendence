@@ -12,7 +12,6 @@ export class GameOptions extends HTMLElement {
 
   constructor() {
     super();
-
     this.duelMenuComponent = null;
     this.optionWrapper = null;
     this.scoreToWinInput = null;
@@ -32,28 +31,19 @@ export class GameOptions extends HTMLElement {
     this.#state.defaultOptionValue = {
       score_to_win: defaultOptions.scoreToWin || 5,
       game_speed: defaultOptions.gameSpeed || 'medium',
-      time_limit: defaultOptions.timeLimitMinutes || 3,
+      time_limit: defaultOptions.timeLimit || 3,
       ranked: defaultOptions.isRanked || false,
       cool_mode: defaultOptions.coolMode || false,
     };
+
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
     this.toggleOptoutAllOptions = this.toggleOptoutAllOptions.bind(this);
     this.toggleOptionOptout = this.toggleOptionOptout.bind(this);
   }
 
-  set selectedOptions(options) {
-    this.#state.selectedOptions = options;
-    this.renderOptions();
-  }
-
-  get selectedOptions() {
-    console.log('GameOptions selectedOptions:', this.#state.selectedOptions);
-    return this.#state.selectedOptions;
-  }
-
   connectedCallback() {
-    if (!this.#state.selectedOptions) {
+    if (!this.#state.selectedOptions || Object.keys(this.#state.selectedOptions).length === 0) {
       this.#state.selectedOptions = {
         ...this.#state.defaultOptionValue,
       };
@@ -80,6 +70,16 @@ export class GameOptions extends HTMLElement {
 
     this.innerHTML = '';
     this.modal = null;
+  }
+
+  set selectedOptions(options) {
+    this.#state.selectedOptions = options;
+    this.renderOptions();
+  }
+
+  get selectedOptions() {
+    console.log('GameOptions selectedOptions:', this.#state.selectedOptions);
+    return this.#state.selectedOptions;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -124,11 +124,12 @@ export class GameOptions extends HTMLElement {
   }
 
   renderOptions() {
-    if (!this.#state.selectedOptions) {
+    if (!this.#state.selectedOptions  || Object.keys(this.#state.selectedOptions).length === 0) {
       this.#state.selectedOptions = {
         ...this.#state.defaultOptionValue,
       };
     }
+    console.log('Rendering GameOptions with selectedOptions:', this.#state.selectedOptions);
 
     if (this.#state.selectedOptions.score_to_win === 'any') {
       this.scoreToWinOptout.checked = true;
@@ -462,7 +463,7 @@ export class GameOptions extends HTMLElement {
       border: none;
     }
     .btn-outline-duel-speedOptions {
-      border: 1px solid var(--pm-gray-400);
+      border: 1px solid var(--pm-gray-500);
       background-color: var(--pm-gray-400);
       color: var(--pm-primary-100);
     }
