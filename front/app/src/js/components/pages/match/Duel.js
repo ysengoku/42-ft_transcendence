@@ -6,7 +6,7 @@ import './components/index.js';
 export class Duel extends HTMLElement {
   #state = {
     clientId: '',
-    status: '', // inviting, matchmaking, starting, canceled, declied, finished?
+    status: '', // inviting, matchmaking, starting, canceled, declied, matchmakingCanceled
     gameId: '',
     loggedInUser: null,
     opponent: null,
@@ -19,6 +19,7 @@ export class Duel extends HTMLElement {
     this.#state.clientId = socketManager.getClientInstanceId('livechat');
     this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
+    this.handleInvitationAccepted = this.handleInvitationAccepted.bind(this);
     this.cancelInvitation = this.cancelInvitation.bind(this);
     this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
@@ -80,6 +81,7 @@ export class Duel extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('gameFound', this.handleGameFound);
+    document.removeEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     if (this.#state.status === 'matchmaking') {
@@ -123,6 +125,7 @@ export class Duel extends HTMLElement {
       router.removeBeforeunloadCallback();
       window.removeEventListener('beforeunload', this.confirmLeavePage);
     }
+
     if (this.#state.status === 'inviting') {
       this.cancelButton?.addEventListener('click', this.cancelInvitation);
     } else if (this.#state.status === 'matchmaking') {
@@ -130,6 +133,7 @@ export class Duel extends HTMLElement {
     } else {
       this.cancelButton?.classList.add('d-none');
     }
+    document.addEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -155,17 +159,37 @@ export class Duel extends HTMLElement {
   }
 
   cancelMatchmaking() {
-    devLog('Canceling matchmaking');
     const message = { action: 'cancel' };
     socketManager.sendMessage('matchmaking', message);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
-    router.navigate('/duel-menu');
     socketManager.closeSocket('matchmaking');
+    this.#state.status = 'matchmakingCanceled';
+    this.renderContent();
   }
 
-  invitationAccepted(data) {
+  /**
+   * Handles the event when a duel invitation is accepted.
+   * @param {Event|Object} input
+   * @return {void}
+   */
+  handleInvitationAccepted(input) {
+    let data;
+    if (input instanceof CustomEvent) {
+      data = input.detail;
+    } else {
+      data = input;
+    }
     devLog('Invitation accepted:', data);
+    if (this.#state.status === 'matchmaking') {
+      this.cancelMatchmaking();
+      return;
+    }
+    this.#state.opponent = {
+      username: data.username,
+      nickname: data.nickname,
+      avatar: data.avatar,
+    };
     this.#state.status = 'starting';
     this.#state.gameId = data.game_id;
     this.startDuel();
@@ -308,9 +332,7 @@ export class Duel extends HTMLElement {
         return 'Searching for your dream opponent...';
       case 'starting':
         return 'Both gunslingers are here. Time to duel!';
-      case 'canceled':
-        return 'This duel has been canceled.';
-      case 'declined':
+      default:
         return 'This duel has been canceled.';
     }
   }

@@ -74,7 +74,6 @@ down:
 restart: down up
 
 # Logs for each service
-# Logs for each service
 logs:
 	@printf "${MAGENTA}--------------------${RESET}\n"
 	docker ps -a

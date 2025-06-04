@@ -6,6 +6,7 @@ from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, 
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
+from pong.game_protocol import GameRoomSettings
 from users.models.profile import Profile
 
 
@@ -56,9 +57,7 @@ class MatchQuerySet(models.QuerySet):
         )
 
         loser: Profile = (
-            Profile.objects.get(id=loser_profile_or_id)
-            if isinstance(loser_profile_or_id, int)
-            else loser_profile_or_id
+            Profile.objects.get(id=loser_profile_or_id) if isinstance(loser_profile_or_id, int) else loser_profile_or_id
         )
 
         elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
@@ -134,9 +133,7 @@ class MatchQuerySet(models.QuerySet):
 
 
 class Match(models.Model):
-    """
-    Represents a finished match between two players.
-    """
+    """Represents a finished match between two players."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
@@ -203,10 +200,23 @@ class GameRoomQuerySet(models.QuerySet):
         return self.filter(Q(status=self.model.PENDING) | Q(status=self.model.ONGOING))
 
 
+def get_default_game_room_settings() -> GameRoomSettings:
+    """Create the game settings for the default Pong experience."""
+    return GameRoomSettings(
+        score_to_win=5,
+        time_limit=3,
+        cool_mode=False,
+        ranked=False,
+        game_speed="medium",
+    )
+
+
 class GameRoom(models.Model):
     """
     Represents a game room where the players either look for an opponent or play a match.
-    Created after successeful matchmaking and used by the GameWSServerConsumer and GameWorkerConsumer.
+    Created after successeful matchmaking and used by the GameServerConsumer and GameWorkerConsumer.
+    Game settings are of the type GameRoomSettings. There are default settings, and the MatchmakingConsumer
+    will fill the fields that were not specified by the user with default values.
     """
 
     PENDING = "pending"
@@ -217,11 +227,11 @@ class GameRoom(models.Model):
         (ONGOING, "Ongoing"),
         (CLOSED, "Closed"),
     )
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
     players = models.ManyToManyField(Profile, related_name="game_rooms", through=GameRoomPlayer)
     date = models.DateTimeField(default=timezone.now)
+    settings = models.JSONField(verbose_name="Settings", default=get_default_game_room_settings)
 
     objects: GameRoomQuerySet = GameRoomQuerySet.as_manager()
 
@@ -229,7 +239,7 @@ class GameRoom(models.Model):
         ordering = ["-date"]
 
     def __str__(self) -> str:
-        return f"{self.get_status_display()} match {str(self.id)}"
+        return f"{self.get_status_display()} match {str(self.id)}. Settings: {self.settings}"
 
     def close(self):
         self.status = GameRoom.CLOSED

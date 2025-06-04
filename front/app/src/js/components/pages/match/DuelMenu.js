@@ -16,12 +16,7 @@ export class DuelMenu extends HTMLElement {
   #state = {
     user: null,
     opponentUsername: '',
-    options: {
-      scoreToWin: 15,
-      gameSpeed: 'normal',
-      isRanked: true,
-      timeLimitMinutes: 3,
-    },
+    options: {},
   };
 
   #usersearch = {
@@ -174,7 +169,7 @@ export class DuelMenu extends HTMLElement {
     document.body.appendChild(this.modalElement);
     this.gameOptionsModal = new Modal(this.modalElement);
     if (!this.gameOptionsModal) {
-      showToastNotification('Game options are momentarily unavailable', TOAST_TYPES.ERROR);
+      showToastNotification('Game options are momentarily unavailable.', TOAST_TYPES.ERROR);
       return;
     }
     this.modalBodyContent = document.querySelector('game-options');
@@ -194,6 +189,7 @@ export class DuelMenu extends HTMLElement {
   }
 
   saveSelectedOptions() {
+    this.#state.opritons = null;
     this.#state.options = this.modalBodyContent.selectedOptions;
     this.closeGameOptionsModal();
     devLog('Game options:', this.#state.options);
@@ -203,10 +199,10 @@ export class DuelMenu extends HTMLElement {
     if (!this.gameOptionsModal) {
       return;
     }
-    const options = this.modalBodyContent.selectedOptions;
-    if (options) {
-      this.#state.options = options;
-    }
+    // const options = this.modalBodyContent.selectedOptions;
+    // if (options) {
+    //   this.#state.options = options;
+    // }
     this.modalElement.addEventListener(
       'hidden.bs.modal',
       () => {
@@ -326,8 +322,8 @@ export class DuelMenu extends HTMLElement {
         options: {
           score_to_win: this.#state.options.scoreToWin,
           game_speed: this.#state.options.gameSpeed,
-          is_ranked: this.#state.options.isRanked,
-          time_limit_minutes: this.#state.options.timeLimitMinutes,
+          ranked: this.#state.options.isRanked,
+          time_limit: this.#state.options.timeLimitMinutes,
         },
         client_id: clientInstanceId,
       },
