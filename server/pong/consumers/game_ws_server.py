@@ -4,7 +4,7 @@ import logging
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-from pong.consumers.game_protocol import GameServerToClient, GameServerToGameWorker, PongCloseCodes
+from pong.game_protocol import GameServerToClient, GameServerToGameWorker, PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
