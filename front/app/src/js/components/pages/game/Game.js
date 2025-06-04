@@ -16,6 +16,9 @@ export class Game extends HTMLElement {
     this.render();
   }
 
+  // disconnectedCallback() {
+  // }
+
   game() {
     (() => {
       let oldPushState = history.pushState;
@@ -38,6 +41,8 @@ export class Game extends HTMLElement {
           window.dispatchEvent(new Event('locationchange'));
       });
     })();
+
+    const gameUrl = window.location.href;
     let gamePlaying = true;
     var keyMap = [];
     const WALL_WIDTH_HALF = 0.5;
@@ -47,8 +52,9 @@ export class Game extends HTMLElement {
     const BALL_DIAMETER = 1;
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
+    let   GAME_TIME = 60*10000000;
     let   BALL_INITIAL_VELOCITY = 0.25;
-    let   MAX_SCORE = 1;
+    let   MAX_SCORE = 10;
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
     const TEMPORAL_SPEED_DECAY = 0.005;
 
@@ -130,7 +136,7 @@ export class Game extends HTMLElement {
         cylinderUpdate,
         velocity,
     });
-    })(-9.25, 3, 0);
+    })(-9.25, 1, 0);
 
 	const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
@@ -460,7 +466,7 @@ export class Game extends HTMLElement {
       "else if (e.data[2] == \"create\"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == \"resume\" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}"]);
     var blobURL = window.URL.createObjectURL(blob);
 
-    Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
+    Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
     Workers[0].onmessage = function(e) {
       Bumpers[e.data[0]].cubeMesh.scale.x = 1;
       Bumpers[e.data[0]].lenghtHalf = 2.5;
@@ -488,6 +494,22 @@ export class Game extends HTMLElement {
     Workers[5].onmessage = function(e) {
       Coin.cylinderUpdate.set(-9.25, 3, 0);
     };
+    Workers[6].onmessage = function(e) {
+      if (Bumpers[0].score > Bumpers[1].score)
+      {
+        loadedFontP1.position.x = 9;
+        loadedFontP2.position.x = 100;
+      }
+      else if (Bumpers[1].score > Bumpers[0].score)
+      {
+        loadedFontP2.position.x = 9;
+        loadedFontP1.position.x = 100;
+      }
+      Bumpers[0].score = 0;
+      Bumpers[1].score = 0;
+      gamePlaying = false;
+    };
+    Workers[6].postMessage([GAME_TIME, -1, "create"]);
     start();
   }
 
@@ -628,14 +650,14 @@ export class Game extends HTMLElement {
         {
           stop();
           let i = 0;
-          while (i <= 5)
+          while (i <= 6)
             Workers[i++].postMessage([-1, -1, "pause"]);
           isPaused = true;
         }
         else
         {
           let i = 0;
-          while (i <= 5)
+          while (i <= 6)
             Workers[i++].postMessage([-1, -1, "resume"]);
           isPaused = false;
           start();
@@ -646,7 +668,7 @@ export class Game extends HTMLElement {
         stop();
         resetBall(1);
         let i = 0;
-        while (i <= 5)
+        while (i <= 6)
           Workers[i++].terminate();
         i = 0;
         Coin.cylinderUpdate.set(-9.25, 3, 0);
@@ -678,28 +700,25 @@ export class Game extends HTMLElement {
       if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
         return; // Do noplayerglb if the event was already processed
       }
-      // console.log("oui");
       var keyCode = event.code;
       keyMap[keyCode] = false;
       event.preventDefault();
     }
     function linkChange() {
-      stop();
-      gamePlaying = false;
-      canRestart = false;
-      let i = 0;
-      while (i <= 5)
-        Workers[i++].terminate();
       const currentUrl = window.location.href;
-      if (currentUrl == "https://localhost:1026/singleplayer-game/")
+      if (!(currentUrl == gameUrl))
       {
-        gamePlaying = true;
-        initGame();
+        gamePlaying = false;
+        canRestart = false;
+        let i = 0;
+        while (i <= 6)
+          Workers[i++].terminate();
+        stop(step);
       }
     };
     window.addEventListener('keydown', onDocumentKeyDown, true);
-    window.addEventListener('locationchange', linkChange);
     window.addEventListener('keyup', onDocumentKeyUp, true);
+    window.addEventListener('locationchange', linkChange);
 
     return [camera, renderer, initGame];
   }
