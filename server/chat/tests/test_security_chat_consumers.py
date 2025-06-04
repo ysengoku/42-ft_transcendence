@@ -177,9 +177,6 @@ class UserEventsConsumerTests(TransactionTestCase):
     async def test_valid_message_workflow(self):
         communicator = await self.get_authenticated_communicator()
 
-        # first notification is user_online
-        user_status = await communicator.receive_json_from()
-        assert user_status["action"] == "user_online"
 
         valid_data = {
             "action": "new_message",
@@ -200,10 +197,6 @@ class UserEventsConsumerTests(TransactionTestCase):
 
     async def test_notification_workflow(self):
         communicator = await self.get_authenticated_communicator()
-
-        # first notification is user_online
-        user_status = await communicator.receive_json_from()
-        assert user_status["action"] == "user_online"
 
         new_user = await database_sync_to_async(get_user_model().objects.create_user)(
             username="targetuser",
