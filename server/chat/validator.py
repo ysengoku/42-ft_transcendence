@@ -5,14 +5,14 @@ logger = logging.getLogger("server")
 
 
 class Validator:
-    def all_required_fields_are_present(self, data):
+    def all_required_fields_are_present(action, data) -> bool:
         required_fields = {
             "new_message": ["content", "chat_id"],
             "notification": ["message", "type"],
             "like_message": ["id", "chat_id"],
             "unlike_message": ["id", "chat_id"],
             "read_message": ["id"],
-            "game_invite": ["username"],
+            "game_invite": ["client_id", "username"],
             "reply_game_invite": ["username", "accept"],
             "game_accepted": ["username"],
             "game_declined": ["username"],
@@ -22,15 +22,15 @@ class Validator:
             "user_offline": ["username"],
         }
 
-        if self in required_fields:
-            for field in required_fields[self]:
+        if action in required_fields:
+            for field in required_fields[action]:
                 if field not in data:
-                    logger.warning("Missing field [{%s}] for action {%s}", field, self)
+                    logger.warning("Missing field [{%s}] for action {%s}", field, action)
                     return False
         return True
 
-    def validate_action_data(self, data):
-        if not Validator.all_required_fields_are_present(self, data):
+    def validate_action_data(action, data) -> bool:
+        if not Validator.all_required_fields_are_present(action, data):
             return False
 
         expected_types = {
@@ -40,7 +40,7 @@ class Validator:
             "read_message": {"id": str},
             "read_notification": {"id": str},
             "notification": {"message": str, "type": str},
-            "game_invite": {"client_id": str, "username": str, "options": dict},
+            "game_invite": {"client_id": str, "username": str},
             "reply_game_invite": {"accept": bool, "username": str},
             "game_accepted": {"accept": bool},
             "game_declined": {"accept": bool},
@@ -59,8 +59,8 @@ class Validator:
             "room_created": ["chat_id"],
         }
         # Types verification
-        if self in expected_types:
-            for field, expected_type in expected_types[self].items():
+        if action in expected_types:
+            for field, expected_type in expected_types[action].items():
                 value = data.get(field)
                 if not isinstance(value, expected_type):
                     logger.warning(
@@ -72,8 +72,8 @@ class Validator:
                     return False
 
         # UUID verification
-        if self in uuid_fields:
-            for field in uuid_fields[self]:
+        if action in uuid_fields:
+            for field in uuid_fields[action]:
                 value = data.get(field)
                 if value and not Validator.is_valid_uuid(value):
                     logger.warning("Invalid UUID format for '%s', the value is %s", field, value)
@@ -81,47 +81,59 @@ class Validator:
 
         return True
 
-    def is_valid_uuid(self):
+    @staticmethod
+    def is_valid_uuid(value) -> bool:
         try:
-            UUID(str(self))
+            UUID(str(value))
             return True
         except ValueError:
             return False
 
-    def check_str_option(self, option, dict_options):
+    @staticmethod
+    def check_str_option(options, option, dict_options) -> bool:
         if option is not None:
             if isinstance(option, str) and option == "any":
                 return True
             if not isinstance(option, str) or option not in dict_options:
-                logger.warning("%s must be one of %s", self, dict_options)
+                logger.warning("%s must be one of %s", options, dict_options)
                 return False
         return True
 
-    def check_bool_option(self, option):
+    @staticmethod
+    def check_bool_option(options, option) -> bool:
         if option is not None:
             if isinstance(option, str) and option == "any":
                 return True
             if not isinstance(option, bool):
-                logger.warning("%s must be a boolean", self)
+                logger.warning("%s must be a boolean", options)
                 return False
         return True
 
-    def check_int_option(self, option, val_min, val_max):
+    @staticmethod
+    def check_int_option(options, option, val_min, val_max) -> bool:
         if option is not None:
             if isinstance(option, str) and option == "any":
                 return True
             if not isinstance(option, int) or not (val_min <= option <= val_max):
-                logger.warning("%s must be an int between %d and %d", self, val_min, val_max)
+                logger.warning("%s must be an int between %d and %d", options, val_min, val_max)
                 return False
         return True
 
-    def validate_options(self):
-        schema = {"game_speed", "is_ranked", "score_to_win", "time_limit_minutes"}
+    @staticmethod
+    def validate_options(options) -> bool:
+        if not isinstance(options, dict):
+            logger.warning("Invalid type for 'options'")
+            return False
+        RANKED = "is_ranked"
+        GAME_SPEED = "game_speed"
+        SCORE_TO_WIN = "score_to_win"
+        TIME_LIMIT = "time_limit"
+        COOL_MODE = "cool_mode"
+        schema = {RANKED, GAME_SPEED, SCORE_TO_WIN, TIME_LIMIT, COOL_MODE}
         for field in schema:
-            if field not in self:
-                logger.warning("Missing field [{%s}] for action game_invite", field)
-                return False
-            if self.get(field) is None:
+            if field not in options:
+                continue
+            if options.get(field) is None:
                 logger.warning("Field [{%s}] if None for action game_invite", field)
                 return False
 
@@ -129,12 +141,12 @@ class Validator:
         min_score, max_score = 3, 20
         min_time, max_time = 1, 5
 
-        if not Validator.check_str_option("game_speed", self.get("game_speed"), allowed_game_speeds):
+        if not Validator.check_str_option(GAME_SPEED, options.get(GAME_SPEED), allowed_game_speeds):
             return False
-        if not Validator.check_bool_option("is_ranked", self.get("is_ranked")):
+        if not Validator.check_bool_option(RANKED, options.get(RANKED)):
             return False
-        if not Validator.check_int_option("score_to_win", self.get("score_to_win"), min_score, max_score):
+        if not Validator.check_int_option(SCORE_TO_WIN, options.get(SCORE_TO_WIN), min_score, max_score):
             return False
-        return Validator.check_int_option("time_limit_minutes", self.get("time_limit_minutes"), min_time, max_time)
+        return Validator.check_int_option(TIME_LIMIT, options.get(TIME_LIMIT), min_time, max_time)
 
 
