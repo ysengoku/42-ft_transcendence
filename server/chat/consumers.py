@@ -49,7 +49,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.user_profile.save(update_fields=["nb_active_connexions"])
 
                 self.user_profile.refresh_from_db()
-                self.user_profile.update_activity()
                 redis_status_manager.set_user_online(self.user.id)
                 logger.info("User %s connected, now has %i active connexions",
                     self.user.username, self.user_profile.nb_active_connexions,)

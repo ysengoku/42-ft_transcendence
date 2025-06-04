@@ -1,6 +1,7 @@
 from datetime import timedelta
 from pathlib import Path  # noqa: A005
-
+import logging
+from channels.layers import get_channel_layer
 import magic
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
@@ -10,8 +11,10 @@ from django.db.models.lookups import Exact
 from django.utils import timezone
 from ninja.files import UploadedFile
 
+from asgiref.sync import async_to_sync
 from users.utils import merge_err_dicts
 
+logger = logging.getLogger("server")
 
 def calculate_winrate(wins: int, loses: int) -> int | None:
     total = wins + loses
@@ -135,6 +138,7 @@ class Profile(models.Model):
             )
         else:
             self.save(update_fields=["last_activity"])
+        logger.warning("last activity === %s", self.last_activity)
 
     @property
     def is_really_online(self):
