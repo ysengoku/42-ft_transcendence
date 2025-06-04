@@ -36,6 +36,16 @@ class MatchQuerySet(models.QuerySet):
     DRAW = 0.5
     LOSS = 0
 
+    def calculate_elo_change_for_players(self, winner_elo: int, loser_elo: int) -> tuple[int, int, int]:
+        elo_change = _calculate_elo_change(winner_elo, loser_elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
+        if (loser_elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
+            elo_change = loser_elo.elo - MatchQuerySet.MINUMUM_ELO
+        elif (winner_elo + elo_change) > MatchQuerySet.MAXIMUM_ELO:
+            elo_change = MatchQuerySet.MAXIMUM_ELO - winner_elo
+        winner_elo += elo_change
+        loser_elo -= elo_change
+        return winner_elo, loser_elo, elo_change
+
     def resolve(
         self,
         winner_profile_or_id: Profile | int,
@@ -60,13 +70,9 @@ class MatchQuerySet(models.QuerySet):
             Profile.objects.get(id=loser_profile_or_id) if isinstance(loser_profile_or_id, int) else loser_profile_or_id
         )
 
-        elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
-        if (loser.elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
-            elo_change = loser.elo - MatchQuerySet.MINUMUM_ELO
-        elif (winner.elo + elo_change) > MatchQuerySet.MAXIMUM_ELO:
-            elo_change = MatchQuerySet.MAXIMUM_ELO - winner.elo
-        winner.elo += elo_change
-        loser.elo -= elo_change
+        winner_elo, loser_elo, elo_change = self.calculate_elo_change_for_players(winner.elo, loser.elo)
+        winner.elo = winner_elo
+        loser.elo = loser_elo
         resolved_match = Match(
             winner=winner,
             loser=loser,
