@@ -45,18 +45,14 @@ class UserEventsConsumer(WebsocketConsumer):
                     return
                 self.user_profile.nb_active_connexions = models.F(
                     "nb_active_connexions") + 1
-                self.user_profile.is_online = True
-                self.user_profile.last_activity = timezone.now()
-                self.user_profile.save(
-                    update_fields=["nb_active_connexions", "is_online", "last_activity"])
+                self.user_profile.update_activity()
+                self.user_profile.save(update_fields=["nb_active_connexions"])
+
                 self.user_profile.refresh_from_db()
                 self.user_profile.update_activity()
                 redis_status_manager.set_user_online(self.user.id)
-                logger.info(
-                    "User %s connected, now has %i active connexions",
-                    self.user.username,
-                    self.user_profile.nb_active_connexions,
-                )
+                logger.info("User %s connected, now has %i active connexions",
+                    self.user.username, self.user_profile.nb_active_connexions,)
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
             self.close()
@@ -78,8 +74,6 @@ class UserEventsConsumer(WebsocketConsumer):
             )
 
         self.accept()
-        self.user_profile.update_activity()
-        OnlineStatusConsumer.notify_online_status(self, "online")
 
     def disconnect(self, close_code):
         if not hasattr(self, "user_profile"):
@@ -101,7 +95,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.channel_name,
             )
         try:
-            # Décrémenter le compteur de connexions et récupérer la nouvelle valeur
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
                 self.user_profile.nb_active_connexions = models.F(
@@ -109,16 +102,14 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.user_profile.save(update_fields=["nb_active_connexions"])
                 self.user_profile.refresh_from_db()
 
-                # S'assurer que le compteur ne devient pas négatif
                 if self.user_profile.nb_active_connexions < 0:
                     self.user_profile.nb_active_connexions = 0
                     self.user_profile.save(
                         update_fields=["nb_active_connexions"])
 
-                logger.info(
-                    "User %s has %s active connexions", self.user.username, self.user_profile.nb_active_connexions,
-                )
-                # Marquer comme hors ligne uniquement si c'était la dernière connexion
+                logger.info("User %s has %s active connexions",
+                            self.user.username, self.user_profile.nb_active_connexions)
+                # Mark offline only if it was last disconnexion
                 if self.user_profile.nb_active_connexions == 0:
                     self.user_profile.is_online = False
                     self.user_profile.save(update_fields=["is_online"])
@@ -133,11 +124,8 @@ class UserEventsConsumer(WebsocketConsumer):
                         self.channel_name,
                     )
                 else:
-                    logger.info(
-                        "User %s still has %i active connexions",
-                        self.user.username,
-                        self.user_profile.nb_active_connexions,
-                    )
+                    logger.info("User %s still has %i active connexions",
+                        self.user.username, self.user_profile.nb_active_connexions)
 
         except DatabaseError as e:
             logger.error("Database error during disconnect: %s", e)
