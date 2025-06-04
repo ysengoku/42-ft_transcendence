@@ -3,13 +3,12 @@ import logging
 import math
 import random
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum, IntEnum, auto
 
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
-from pong.consumers.game_protocol import (
+from pong.game_protocol import (
     GameServerToClient,
     GameServerToGameWorker,
     PongCloseCodes,
