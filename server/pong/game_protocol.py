@@ -188,6 +188,7 @@ class GameServerToGameWorker:
         name: str
         avatar: str
         elo: int
+        settings: GameRoomSettings
 
     class PlayerInputed(TypedDict):
         """Player has inputed the controls, websocket server sends it to the game worker."""
