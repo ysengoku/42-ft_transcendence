@@ -389,8 +389,6 @@ class MultiplayerPongMatch(BasePong):
             player = self._player_2
         else:
             return None
-        # if bumper.control_reversed is True:
-        #     action = "move_left" if action == "move_right" else "move_right"
         bumper = player.bumper
 
         match action:
