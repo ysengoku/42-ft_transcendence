@@ -20,9 +20,8 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayMessageWrapper = null;
     this.overlayButton1 = null;
     this.overlayButton2 = null;
+    this.intervalGameId = null;
 
-    this.onDocumentKeyDown = this.onDocumentKeyDown.bind(this);
-    this.onDocumentKeyUp = this.onDocumentKeyUp.bind(this);
     // this.windowResize = this.windowResize.bind(this);
     this.requestNewMatchmaking = this.requestNewMatchmaking.bind(this);
     this.navigateToHome = this.navigateToHome.bind(this);
@@ -48,48 +47,71 @@ export class MultiplayerGame extends HTMLElement {
 
   disconnectedCallback() {
     document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
-    document.removeEventListener('keydown', this.onDocumentKeyDown, true);
-    document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+    if (this.onDocumentKeyDown)
+      document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+    if (this.onDocumentKeyUp)
+      document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+    // window.removeEventListener('resize', this.windowResize);
   }
 
-  onDocumentKeyDown(event) {
-    if (event.defaultPrevented) {
-      return; // Do noplayerglb if the event was already processed
+  createOnDocumentKeyDown(pongSocket, bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
+    return (e) => {
+      if (e.defaultPrevented) {
+        return; // Do noplayerglb if the event was already processed
+      }
+      var keyCode = e.code;
+      const now = Date.now();
+      // console.log(now);
+      if ((keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_left", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if ((keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if ((keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_left", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if ((keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+      }
+      keyMap[keyCode] = true;
+      e.preventDefault();
     }
-    var keyCode = event.code;
-    if (keyCode == 'ArrowLeft') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }));
-    }
-    if (keyCode == 'ArrowRight') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }));
-    }
-    if (keyCode == 'KeyA') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }));
-    }
-    if (keyCode == 'KeyD') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }));
-    }
-    event.preventDefault();
   }
 
-  onDocumentKeyUp(event) {
-    if (event.defaultPrevented) {
-      return; // Do noplayerglb if the event was already processed
+  createOnDocumentKeyUp(pongSocket, bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
+    return (e) => {
+      if (e.defaultPrevented) {
+        return; // Do noplayerglb if the event was already processed
+      }
+      // console.log(bumper)
+      // console.log(bumper.inputQueue)
+      var keyCode = e.code;
+      const now = -Date.now();
+      console.log(ourBumperIndexContainer.ourBumperIndex);
+      if ((keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_left", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if ((keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if ((keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+      }
+      if ((keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+      }
+      keyMap[keyCode] = false;
+      e.preventDefault();
     }
-    var keyCode = event.code;
-    if (keyCode == 'ArrowLeft') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }));
-    }
-    if (keyCode == 'ArrowRight') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }));
-    }
-    if (keyCode == 'KeyA') {
-      pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }));
-    }
-    if (keyCode == 'KeyD') {
-      pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }));
-    }
-    event.preventDefault();
   }
 
   game() {
@@ -105,10 +127,12 @@ export class MultiplayerGame extends HTMLElement {
     const scene = new THREE.Scene();
     const loader = new GLTFLoader();
 
-    const camera = new THREE.PerspectiveCamera(45, rendererWidth / rendererHeight, 0.1, 2000);
-    const orbit = new OrbitControls(camera, renderer.domElement);
+    
+    var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
+    // const orbit = new OrbitControls(camera, renderer.domElement);
 
     let mixer;
+    var keyMap = [];
     const normalMaterial = new THREE.MeshNormalMaterial();
 
     const ligths = [
@@ -119,7 +143,7 @@ export class MultiplayerGame extends HTMLElement {
     ];
 
     const playerglb = (() => {
-      const pedroModel = new THREE.Object3D();
+      const pedro_model = new THREE.Object3D();
       loader.load(
         pedro,
         function(gltf) {
@@ -138,17 +162,43 @@ export class MultiplayerGame extends HTMLElement {
             .play();
           idleAction.play();
           idleAction2.play();
-          pedroModel.add(gltf.scene);
+          pedro_model.add(gltf.scene);
         },
         undefined,
         function(error) {
           console.error(error);
         },
       );
-      pedroModel.scale.set(0.1, 0.1, 0.1);
-      scene.add(pedroModel);
-      return pedroModel;
+      pedro_model.scale.set(0.1, 0.1, 0.1);
+      scene.add(pedro_model);
+      return pedro_model;
     })();
+
+    const Coin = ((posX, posY, posZ) => {
+      const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
+      const cylinderMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
+
+      cylinderMesh.position.x = posX;
+      cylinderMesh.position.y = posY;
+      cylinderMesh.position.z = posZ;
+      cylinderMesh.rotation.z = -Math.PI / 2;
+      cylinderMesh.rotation.y = -Math.PI / 2;
+      cylinderMesh.castShadow = true;
+      scene.add(cylinderMesh);
+      const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
+      const velocity = new THREE.Vector3(0.01, 0, 0);
+      let lenghtHalf = 0.25;
+
+      return ({
+
+        get lenghtHalf() { return lenghtHalf; },
+        set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+        cylinderMesh,
+        cylinderUpdate,
+        velocity,
+      });
+    })(-9.25, 1, 0);
+
 
     const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
@@ -192,8 +242,8 @@ export class MultiplayerGame extends HTMLElement {
       });
     })(0, 1, 0);
 
-    camera.position.set(10, 15, -22);
-    orbit.update();
+    // camera.position.set(10, 15, -22);
+    // orbit.update();
 
     ligths[0].position.set(0, 10, 30);
     ligths[1].position.set(10, 0, 30);
@@ -206,27 +256,38 @@ export class MultiplayerGame extends HTMLElement {
     const BumperFactory = (posX, posY, posZ) => {
       const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
       const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
+
       cubeMesh.position.x = posX;
       cubeMesh.position.y = posY;
       cubeMesh.position.z = posZ;
       cubeMesh.castShadow = true;
       scene.add(cubeMesh);
 
+      const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
+      const dir_z = -Math.sign(posZ);
+      const inputQueue = [];
+      let controlReverse = false;
+      let   lenghtHalf = 2.5;
+      let speed = 0.25;
       let score = 0;
+
       return ({
         cubeMesh,
-        cubeGeometry,
+        cubeUpdate,
 
-        get score() {
-          return score;
-        },
-        set score(newScore) {
-          score = newScore;
-        },
+        get speed() { return speed; },
+        set speed(newSpeed) { speed = newSpeed; },
+        get score() { return score; },
+        set score(newScore) { score = newScore; },
+        get inputQueue() { return inputQueue; },
+        get lenghtHalf() { return lenghtHalf; },
+        set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+        get controlReverse() { return controlReverse; },
+        set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
+        get dir_z() { return dir_z; },
       });
-    };
+    }
 
-    /* eslint-disable-next-line new-cap */
     const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
     const WallFactory = (posX, posY, posZ) => {
@@ -256,13 +317,30 @@ export class MultiplayerGame extends HTMLElement {
     })();
 
     const clock = new THREE.Clock();
-
     const pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
+    let lastBumperCollided;
+
+    function confirmInputs(data) {
+      const {action, content} = data;
+      for (let [i, input] of Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.entries())
+      {
+        if (input[0] === action && input[1] <= content) {
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.splice(i, 1);
+          return true;
+        }
+      }
+      return false;
+    }
 
     function updateState(data) {
       if (!data) {
         return;
       }
+      let theirBumperPos = theirBumper == 0 ? data.bumper_1.x : data.bumper_2.x;
+      data.last_bumper_collided == "_bumper_1" ? lastBumperCollided = 0 : lastBumperCollided = 1;
+      
+      
+
       Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
       Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
       Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
@@ -270,12 +348,51 @@ export class MultiplayerGame extends HTMLElement {
       Ball.sphereUpdate.z = data.ball.z;
       Ball.sphereUpdate.x = data.ball.x;
 
-      Bumpers[0].score = data.bumper_1.score;
-      Bumpers[0].cubeMesh.position.x = data.bumper_1.x;
+      Coin.cylinderUpdate.z = data.coin.z;
+      Coin.cylinderUpdate.x = data.coin.x;
 
+      Bumpers[0].score = data.bumper_1.score;
       Bumpers[1].score = data.bumper_2.score;
-      Bumpers[1].cubeMesh.position.x = data.bumper_2.x;
-      // lastScore = data.last_score;
+      Bumpers[theirBumper].cubeMesh.position.x = theirBumperPos;
+
+      if (data.current_buff_or_debuff != 0) {
+        switch (data.current_buff_or_debuff) {
+          case 1:
+            Bumpers[lastBumperCollided].controlReverse = true;
+            break ;
+          case 2:
+            Bumpers[lastBumperCollided].speed = 0.1;
+            break;
+          case 3:
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
+            Bumpers[lastBumperCollided].lenghtHalf = 1.25;
+            break;
+          case 4:
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+            Bumpers[lastBumperCollided].lenghtHalf = 5;
+            break;
+          case 5:
+            Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+            break;
+          case -1:
+            Bumpers[lastBumperCollided].controlReverse = false;
+            break;
+          case -2:
+            Bumpers[lastBumperCollided].speed = 0.25;
+            break;
+          case -3:
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+            Bumpers[lastBumperCollided].lenghtHalf = 2.5;
+            break;
+          case -4:
+            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
+            Bumpers[lastBumperCollided].lenghtHalf = 2.5;
+            break;
+          case -5:
+            Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
+            break;
+        }
+      }
     }
 
     pongSocket.addEventListener('open', function(_) {
@@ -283,7 +400,22 @@ export class MultiplayerGame extends HTMLElement {
     });
 
     let data;
-    let playerId = '';
+    // let ;
+    let ourBumperIndexContainer = (() => {
+      let ourBumperIndex = 0;
+      return ({
+        get ourBumperIndex() { return ourBumperIndex },
+        set ourBumperIndex(newOurBumperIndex) { ourBumperIndex = newOurBumperIndex }
+      })
+    })();
+    let theirBumper = 0;
+    let playerIdContainer = (() => {
+      let actualPlayerId = '';
+      return ({
+        get playerId() { return actualPlayerId },
+        set playerId(newPlayerId) { actualPlayerId = newPlayerId }
+      })
+    })();
     pongSocket.addEventListener('message', (e) => {
       data = JSON.parse(e.data);
       switch (data.action) {
@@ -292,14 +424,28 @@ export class MultiplayerGame extends HTMLElement {
           // if (data.state.someone_scored)
           //     audio.cloneNode().play();
           break;
+        case 'move_left':
+        case 'move_right':
+          
+          if ((data.player_number == ourBumperIndexContainer.ourBumperIndex + 1) && !confirmInputs(data)) {
+            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x = data.position_x;
+          }
+          break;
         case 'player_joined':
-          playerId = data.player_id;
+          ourBumperIndexContainer.ourBumperIndex = data.player_number - 1;
+          theirBumper = Math.abs(ourBumperIndexContainer.ourBumperIndex - 1);
+          // console.log(data)
+          playerIdContainer.playerId = data.player_id;
+          camera.position.set(0, 15, -20);
+          camera.lookAt(new THREE.Vector3(0,0,0));
           break;
         case 'game_paused':
           devLog('Game paused');
-          this.showOverlay('pause', data.state);
+          console.log(data)
+          this.showOverlay('pause', data);
           break;
         case 'game_unpaused':
+          console.log(data)
           devLog('Game unpaused');
           this.hideOverlay();
           break;
@@ -307,6 +453,7 @@ export class MultiplayerGame extends HTMLElement {
           devLog('Game cancelled');
           this.showOverlay('cancel');
           break;
+
         default:
           break;
       }
@@ -321,14 +468,90 @@ export class MultiplayerGame extends HTMLElement {
       let delta = Math.min(clock.getDelta(), 0.1);
 
       Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+      Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+
+      console.log(ourBumperIndexContainer.ourBumperIndex + "   " + theirBumper);
+      if (((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) && !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x > 10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf))
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
+      if (((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) && !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x < -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf))
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
+
+      if (((keyMap['KeyD'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyMap['KeyA'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) && !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x > 10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf))
+        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
+      if (((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) && !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x < -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf))
+        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
+
+
+      // let i = 0;
+      // console.log(Bumpers[1].inputQueue[Bumpers[1].inputQueue.length - 1] == undefined)
+      // Bumpers[1].inputQueue.length
+      // if (Bumpers[theirBumper].inputQueue.length != 0)
+      // {
+      //   if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1])
+      //   {
+      //     if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][0] == "move_left" && !(Bumpers[theirBumper].cubeMesh.position.x > 10 - 0.5 - Bumpers[theirBumper].lenghtHalf))
+      //       if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][1] > 0)  
+      //         Bumpers[theirBumper].cubeMesh.position.x += Bumpers[theirBumper].speed;
+      //     if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][0] == "move_right" && !(Bumpers[theirBumper].cubeMesh.position.x < -10 + 0.5 + Bumpers[theirBumper].lenghtHalf))
+      //       if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][1] > 0)    
+      //         Bumpers[theirBumper].cubeMesh.position.x -= Bumpers[theirBumper].speed;
+      //   }
+      // }
+        // i++;
+      // }
+
+      // Bumpers[1].inputQueue.splice(0, 1);
+      // console.log(Bumpers[0].cubeMesh.position.x);
+
+      // console.log(Coin.cylinderMesh.position);
       if (mixer) {
         mixer.update(delta);
       }
       renderer.render(scene, camera);
     }
 
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(pongSocket, Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer).bind(this)
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(pongSocket, Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer).bind(this)
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
+    // function onDocumentKeyDown(event) {
+    //   if (event.defaultPrevented) {
+    //     return; // Do noplayerglb if the event was already processed
+    //   }
+    //   var keyCode = event.code;
+    //   if (keyCode == 'ArrowLeft') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+    //   }
+    //   if (keyCode == 'ArrowRight') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+    //   }
+    //   if (keyCode == 'KeyA') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
+    //   }
+    //   if (keyCode == 'KeyD') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
+    //   }
+    //   event.preventDefault();
+    // }
+    // function onDocumentKeyUp(event) {
+    //   if (event.defaultPrevented) {
+    //     return; // Do noplayerglb if the event was already processed
+    //   }
+    //   var keyCode = event.code;
+    //   if (keyCode == 'ArrowLeft') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+    //   }
+    //   if (keyCode == 'ArrowRight') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+    //   }k
+    //   if (keyCode == 'KeyA') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
+    //   }
+    //   if (keyCode == 'KeyD') {
+    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
+    //   }
+    //   event.preventDefault();
+    // }
 
     return [camera, renderer, animate];
   }
@@ -344,7 +567,7 @@ export class MultiplayerGame extends HTMLElement {
 
     const navbarHeight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
-    window.addEventListener('resize', function () {
+    window.addEventListener('resize', function() {
       renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
       const rendererHeight = renderer.domElement.offsetHeight;
@@ -373,21 +596,29 @@ export class MultiplayerGame extends HTMLElement {
     // --------------------------
   }
 
-  showOverlay(action, state = null) {
+  clearGameInterval() {
+    if (this.intervalGameId) {
+      clearInterval(this.intervalGameId)
+      this.intervalGameId = null;
+    }
+  }
+
+  showOverlay(action, data = null) {
     const element = document.createElement('div');
     element.innerHTML = this.overlayContentTemplate[action];
     this.overlayMessageWrapper.appendChild(element);
     this.overlay.classList.add('overlay-dark');
     this.overlayMessageWrapper.classList.remove('d-none');
+    this.clearGameInterval()
 
     switch (action) {
       case 'pause':
-        let remainingTime = state.remaining_time;
+        let remainingTime = data.remaining_time;
         this.overlayMessageContent = this.querySelector('#overlay-message-content');
         this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
-        this.overlayMessageContent.textContent = `Player ${state.name} disconnected.`;
+        this.overlayMessageContent.textContent = `Player ${data.name} disconnected.`;
         this.overlayMessageTimer.textContent = remainingTime;
-        setInterval(() => {
+        this.intervalGameId = setInterval(() => {
           remainingTime -= 1;
           this.overlayMessageTimer.textContent = remainingTime;
           if (remainingTime <= 0) {
@@ -407,6 +638,8 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   hideOverlay() {
+    if (this.intervalGameId)
+      clearInterval(this.intervalGameId)
     this.overlay.classList.remove('overlay-dark');
     this.overlayMessageWrapper.classList.add('d-none');
     this.overlayMessageWrapper.innerHTML = '';
