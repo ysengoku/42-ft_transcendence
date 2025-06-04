@@ -14,36 +14,41 @@ export class GameOptions extends HTMLElement {
     super();
 
     this.duelMenuComponent = null;
-    this.closeButton = null;
+    this.optionWrapper = null;
     this.scoreToWinInput = null;
     this.gameSpeedInputs = null;
-    this.isRankedInput = null;
     this.timeLimitInput = null;
+    this.isRankedInput = null;
+    this.coolModeInput = null;
+    this.allOptionsoptout = null;
     this.scoreToWinOptout = null;
     this.gameSpeedOptout = null;
-    this.isRankedOptout = null;
     this.timeLimitOptout = null;
-    this.confirmButton = null;
-    this.cancelButton = null;
+    this.isRankedOptout = null;
+    this.coolModeOptout = null;
 
     const defaultOptionsFromEnv = import.meta.env.VITE_DEFAULT_GAME_OPTIONS;
     const defaultOptions = defaultOptionsFromEnv ? JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS) : {};
     this.#state.defaultOptionValue = {
-      scoreToWin: defaultOptions.scoreToWin || 15,
-      gameSpeed: defaultOptions.gameSpeed || 'normal',
-      isRanked: defaultOptions.isRanked || true,
-      timeLimitMinutes: defaultOptions.timeLimitMinutes || 3,
+      score_to_win: defaultOptions.scoreToWin || 5,
+      game_speed: defaultOptions.gameSpeed || 'medium',
+      time_limit: defaultOptions.timeLimitMinutes || 3,
+      ranked: defaultOptions.isRanked || false,
+      cool_mode: defaultOptions.coolMode || false,
     };
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
+    this.toggleOptoutAllOptions = this.toggleOptoutAllOptions.bind(this);
     this.toggleOptionOptout = this.toggleOptionOptout.bind(this);
   }
 
   set selectedOptions(options) {
     this.#state.selectedOptions = options;
+    this.renderOptions();
   }
 
   get selectedOptions() {
+    console.log('GameOptions selectedOptions:', this.#state.selectedOptions);
     return this.#state.selectedOptions;
   }
 
@@ -62,13 +67,16 @@ export class GameOptions extends HTMLElement {
     this.gameSpeedInputs.forEach((input) => {
       input?.removeEventListener('change', this.updateOptions);
     });
-    this.isRankedInput?.removeEventListener('change', this.updateOptions);
     this.timeLimitInput?.removeEventListener('input', this.updateOptions);
     this.timeLimitInput?.removeEventListener('input', this.updateSelectedValueOnRange);
+    this.isRankedInput?.removeEventListener('change', this.updateOptions);
+    this.coolModeInput?.removeEventListener('change', this.updateOptions);
+    this.allOptionsoptout?.removeEventListener('change', this.toggleOptoutAllOptions);
     this.scoreToWinOptout?.removeEventListener('change', this.toggleOptionOptout);
     this.gameSpeedOptout?.removeEventListener('change', this.toggleOptionOptout);
-    this.isRankedOptout?.removeEventListener('change', this.toggleOptionOptout);
     this.timeLimitOptout?.removeEventListener('change', this.toggleOptionOptout);
+    this.isRankedOptout?.removeEventListener('change', this.toggleOptionOptout);
+    this.coolModeOptout?.removeEventListener('change', this.toggleOptionOptout);
 
     this.innerHTML = '';
     this.modal = null;
@@ -82,73 +90,123 @@ export class GameOptions extends HTMLElement {
     this.innerHTML = this.template() + this.style();
 
     this.duelMenuComponent = document.querySelector('duel-menu');
-    this.closeButton = this.querySelector('.btn-close');
+    this.optionWrapper = this.querySelector('.form-group');
     this.scoreToWinInput = this.querySelector('#score-to-win');
-    this.gameSpeedInputs = this.querySelectorAll('input[name="speedOptions"]');
-    this.isRankedInput = this.querySelector('#is-ranked');
+    this.gameSpeedInputs = this.querySelectorAll('input[name="speed-options"]');
     this.timeLimitInput = this.querySelector('#time-limit');
-    this.scoreToWinOptout = this.querySelector('#optout-scoreToWin');
-    this.gameSpeedOptout = this.querySelector('#optout-gameSpeed');
-    this.isRankedOptout = this.querySelector('#optout-isRanked');
-    this.timeLimitOptout = this.querySelector('#optout-timeLimitMinutes');
-    this.confirmButton = this.querySelector('.confirm-button');
-    this.cancelButton = this.querySelector('.cancel-button');
+    this.isRankedInput = this.querySelector('#is-ranked');
+    this.coolModeInput = this.querySelector('#cool-mode');
+    this.allOptionsoptout = this.querySelector('#optout-gameOptions');
+    this.scoreToWinOptout = this.querySelector('#optout-score_to_win');
+    this.gameSpeedOptout = this.querySelector('#optout-game_speed');
+    this.timeLimitOptout = this.querySelector('#optout-time_limit');
+    this.isRankedOptout = this.querySelector('#optout-ranked');
+    this.coolModeOptout = this.querySelector('#optout-cool_mode');
 
+    // Input event handlers
     this.scoreToWinInput.addEventListener('input', this.updateOptions);
     this.scoreToWinInput.addEventListener('input', this.updateSelectedValueOnRange);
     this.gameSpeedInputs.forEach((input) => {
       input.addEventListener('change', this.updateOptions);
     });
-    this.isRankedInput.addEventListener('change', this.updateOptions);
     this.timeLimitInput.addEventListener('input', this.updateOptions);
     this.timeLimitInput.addEventListener('input', this.updateSelectedValueOnRange);
+    this.isRankedInput.addEventListener('change', this.updateOptions);
+    this.coolModeInput.addEventListener('change', this.updateOptions);
+
+    // Optout event handlers
+    this.allOptionsoptout.addEventListener('change', this.toggleOptoutAllOptions);
     this.scoreToWinOptout.addEventListener('change', this.toggleOptionOptout);
     this.gameSpeedOptout.addEventListener('change', this.toggleOptionOptout);
-    this.isRankedOptout.addEventListener('change', this.toggleOptionOptout);
     this.timeLimitOptout.addEventListener('change', this.toggleOptionOptout);
+    this.isRankedOptout.addEventListener('change', this.toggleOptionOptout);
+    this.coolModeOptout.addEventListener('change', this.toggleOptionOptout);
+  }
 
-    const scoreToWinOutput = this.scoreToWinInput.nextElementSibling;
-    if (scoreToWinOutput) {
-      scoreToWinOutput.value = this.scoreToWinInput.value;
-      const pos =
-        ((this.scoreToWinInput.value - this.#state.range.minScoreToWin) * 100) /
-        (this.#state.range.maxScoreToWin - this.#state.range.minScoreToWin);
-      scoreToWinOutput.style.left = `calc(${pos}% + (${8 - pos * 0.15}px))`;
-    }
-    const selectedGameSpeed = this.#state.selectedOptions.gameSpeed;
-    const selectedGameSpeedInput = this.querySelector(`input[name="speedOptions"][value="${selectedGameSpeed}"]`);
-    if (selectedGameSpeedInput) {
-      selectedGameSpeedInput.checked = true;
-    }
-    this.#state.selectedOptions.isRanked ? (this.isRankedInput.checked = true) : (this.isRankedInput.checked = false);
-    const timeLimitOutput = this.timeLimitInput.nextElementSibling;
-    if (timeLimitOutput) {
-      timeLimitOutput.value = this.timeLimitInput.value;
-      const pos =
-        ((this.timeLimitInput.value - this.#state.range.minTimeLimit) * 100) /
-        (this.#state.range.maxTimeLimit - this.#state.range.minTimeLimit);
-      timeLimitOutput.style.left = `calc(${pos}% + (${8 - pos * 0.15}px))`;
+  renderOptions() {
+    if (!this.#state.selectedOptions) {
+      this.#state.selectedOptions = {
+        ...this.#state.defaultOptionValue,
+      };
     }
 
-    if (this.#state.selectedOptions.scoreToWin === 'any') {
+    if (this.#state.selectedOptions.score_to_win === 'any') {
       this.scoreToWinOptout.checked = true;
       const input = this.scoreToWinInput.closest('.option-input');
       input.classList.add('d-none');
+    } else {
+      this.renderOption('score_to_win');
     }
-    if (this.#state.selectedOptions.gameSpeed === 'any') {
+    if (this.#state.selectedOptions.game_speed === 'any') {
       this.gameSpeedOptout.checked = true;
       const input = this.gameSpeedInputs[0].closest('.option-input');
       input.classList.add('d-none');
+    } else {
+      this.renderOption('game_speed');
     }
-    if (this.#state.selectedOptions.isRanked === 'any') {
-      this.isRankedOptout.checked = true;
-      const input = this.isRankedInput.closest('.option-input');
-      input.classList.add('d-none');
-    }
-    if (this.#state.selectedOptions.timeLimitMinutes === 'any') {
+    if (this.#state.selectedOptions.time_limit === 'any') {
       this.timeLimitOptout.checked = true;
       const input = this.timeLimitInput.closest('.option-input');
       input.classList.add('d-none');
+    } else {
+      this.renderOption('time_limit');
+    }
+    if (this.#state.selectedOptions.ranked === 'any') {
+      this.isRankedOptout.checked = true;
+      const input = this.isRankedInput.closest('.option-input');
+      input.classList.add('d-none');
+    } else {
+      this.renderOption('ranked');
+    }
+    if (this.#state.selectedOptions.cool_mode === 'any') {
+      this.coolModeOptout.checked = true;
+      const input = this.coolModeInput.closest('.option-input');
+      input.classList.add('d-none');
+    } else {
+      this.renderOption('cool_mode');
+    }
+  }
+
+  renderOption(id) {
+    switch (id) {
+      case 'score_to_win':
+        this.scoreToWinInput.value =
+          this.#state.selectedOptions.score_to_win || this.#state.defaultOptionValue.score_to_win;
+        const scoreToWinOutput = this.scoreToWinInput.nextElementSibling;
+        if (scoreToWinOutput) {
+          scoreToWinOutput.value = this.scoreToWinInput.value;
+          const pos =
+            ((this.scoreToWinInput.value - this.#state.range.minScoreToWin) * 100) /
+            (this.#state.range.maxScoreToWin - this.#state.range.minScoreToWin);
+          scoreToWinOutput.style.left = `calc(${pos}% + (${8 - pos * 0.15}px))`;
+        }
+        break;
+      case 'game_speed':
+        const selectedGameSpeed = this.#state.selectedOptions.game_speed;
+        const selectedGameSpeedInput = this.querySelector(`input[name="speed-options"][value="${selectedGameSpeed}"]`);
+        if (selectedGameSpeedInput) {
+          selectedGameSpeedInput.checked = true;
+        }
+        break;
+      case 'time_limit':
+        this.timeLimitInput.value = this.#state.selectedOptions.time_limit || this.#state.defaultOptionValue.time_limit;
+        const timeLimitOutput = this.timeLimitInput.nextElementSibling;
+        if (timeLimitOutput) {
+          timeLimitOutput.value = this.timeLimitInput.value;
+          const pos =
+            ((this.timeLimitInput.value - this.#state.range.minTimeLimit) * 100) /
+            (this.#state.range.maxTimeLimit - this.#state.range.minTimeLimit);
+          timeLimitOutput.style.left = `calc(${pos}% + (${8 - pos * 0.15}px))`;
+        }
+        break;
+      case 'ranked':
+        this.#state.selectedOptions.ranked ? (this.isRankedInput.checked = false) : (this.isRankedInput.checked = true);
+        break;
+      case 'cool_mode':
+        this.#state.selectedOptions.cool_mode
+          ? (this.coolModeInput.checked = false)
+          : (this.coolModeInput.checked = true);
+        break;
     }
   }
 
@@ -160,14 +218,17 @@ export class GameOptions extends HTMLElement {
     event.preventDefault();
     const target = event.target;
     if (target.id === 'score-to-win') {
-      this.#state.selectedOptions.scoreToWin = parseInt(target.value);
-    } else if (target.name === 'speedOptions') {
-      this.#state.selectedOptions.gameSpeed = target.value;
-    } else if (target.id === 'is-ranked') {
-      this.#state.selectedOptions.isRanked = target.checked;
+      this.#state.selectedOptions.score_to_win = parseInt(target.value);
+    } else if (target.name === 'speed-options') {
+      this.#state.selectedOptions.game_speed = target.value;
     } else if (target.id === 'time-limit') {
-      this.#state.selectedOptions.timeLimitMinutes = parseInt(target.value);
+      this.#state.selectedOptions.time_limit = parseInt(target.value);
+    } else if (target.id === 'is-ranked') {
+      this.#state.selectedOptions.ranked = !target.checked;
+    } else if (target.id === 'cool-mode') {
+      this.#state.selectedOptions.cool_mode = !target.checked;
     }
+    console.log('GameOptions updated:', this.#state.selectedOptions);
   }
 
   updateSelectedValueOnRange(event) {
@@ -191,6 +252,27 @@ export class GameOptions extends HTMLElement {
 
     const id = target.id.replace('optout-', '');
     this.#state.selectedOptions[id] = target.checked ? 'any' : this.#state.defaultOptionValue[id];
+    console.log(`Option ${id} updated:`, this.#state.selectedOptions);
+
+    if (!target.checked) {
+      this.renderOption(id);
+    }
+  }
+
+  toggleOptoutAllOptions(event) {
+    if (event.target.checked) {
+      this.optionWrapper.classList.add('d-none');
+      this.#state.selectedOptions = null;
+    } else {
+      this.optionWrapper.classList.remove('d-none');
+      this.#state.selectedOptions = {
+        score_to_win: this.#state.defaultOptionValue.scoreToWin,
+        game_speed: this.#state.defaultOptionValue.gameSpeed,
+        time_limit: this.#state.defaultOptionValue.time_limit,
+        ranked: this.#state.defaultOptionValue.ranked,
+        cool_mode: this.#state.defaultOptionValue.coolMode,
+      };
+    }
   }
 
   /* ------------------------------------------------------------------------ */
@@ -200,13 +282,24 @@ export class GameOptions extends HTMLElement {
   template() {
     return `
     <h2 class="modal-title text-center pb-3">Game Options</h2>
+
+    <! -- Opt-out All Options -->
+    <div class="opt-out-option optout-all form-check pt-1 mb-5 fs-5">
+      <input class="form-check-input" type="checkbox" id="optout-gameOptions">
+      <label class="form-check-label fw-bold" for="optout-optout-gameOptions">
+        Desactivate All Options
+      </label>
+    </div>
+
     <div class="form-group d-flex flex-column gap-4">
+
+      <! -- Score to Win -->
       <div class="option-input-wrapper pb-2">
         <div class="d-flex justify-content-between pb-1">
           <label for="score-to-win" class="fs-5 fw-bold">Score to Win</label>
           <div class="opt-out-option form-check pt-1">
-            <input class="form-check-input" type="checkbox" id="optout-scoreToWin">
-            <label class="form-check-label" for="optout-scoreToWin">
+            <input class="form-check-input" type="checkbox" id="optout-score_to_win">
+            <label class="form-check-label" for="optout-score_to_win">
               I don't care
             </label>
           </div>
@@ -214,7 +307,7 @@ export class GameOptions extends HTMLElement {
         <div class="option-input d-flex align-items-start gap-2">
           <span class="pt-1">${this.#state.range.minScoreToWin}</span>
           <div class="range-wrapper flex-grow-1 pt-1">
-            <input type="range" class="form-range" id="score-to-win" value="${this.#state.selectedOptions.scoreToWin}"
+            <input type="range" class="form-range" id="score-to-win"
               min="${this.#state.range.minScoreToWin}" max="${this.#state.range.maxScoreToWin}" step="1">
             <output></output>
           </div>
@@ -222,53 +315,36 @@ export class GameOptions extends HTMLElement {
         </div>
       </div>
 
+      <! -- Game Speed -->
       <div class="option-input-wrapper d-flex flex-column pb-3 gap-2">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="game-speed" class="fs-5 fw-bold">Game Speed</label>
           <div class="opt-out-option form-check pt-1">
-            <input class="form-check-input" type="checkbox" id="optout-gameSpeed">
-            <label class="form-check-label" for="optout-GameSpeed">
+            <input class="form-check-input" type="checkbox" id="optout-game_speed">
+            <label class="form-check-label" for="optout-game_speed">
               I don't care
             </label>
           </div>
         </div>
         <div class="option-input btn-group" role="group" id="game-speed">
-          <input type="radio" class="btn-check" name="speedOptions" id="game-speed-slow" value="slow" autocomplete="off">
+          <input type="radio" class="btn-check" name="speed-options" id="game-speed-slow" value="slow" autocomplete="off">
           <label class="btn btn-outline-duel-speedOptions py-0" for="game-speed-slow">slow</label>
 
-          <input type="radio" class="btn-check" name="speedOptions" id="game-speed-medium" value="medium" autocomplete="off" checked>
+          <input type="radio" class="btn-check" name="speed-options" id="game-speed-medium" value="medium" autocomplete="off" checked>
           <label class="btn btn-outline-duel-speedOptions py-0" for="game-speed-medium">medium</label>
 
-          <input type="radio" class="btn-check" name="speedOptions" id="game-speed-fast" value="fast" autocomplete="off">
+          <input type="radio" class="btn-check" name="speed-options" id="game-speed-fast" value="fast" autocomplete="off">
 	      <label class="btn btn-outline-duel-speedOptions py-0" for="game-speed-fast">fast</label>
         </div>
       </div>
-              
-      <div class="option-input-wrapper pb-3" id="is-ranked-selector">
-        <div class="d-flex justify-content-between mt-2 pb-1">
-          <label for="is-ranked" class="fs-5 fw-bold">Ranked</label>
-          <div class="opt-out-option form-check pt-1">
-            <input class="form-check-input" type="checkbox" id="optout-isRanked">
-            <label class="form-check-label" for="optout-isRanked">
-              I don't care
-            </label>
-          </div>
-        </div>
-        <div class="option-input d-flex align-items-center gap-2">
-          <p class="pe-2 m-0 fs-6 fw-lighter">Casual</p>
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" id="is-ranked" checked>
-          </div>
-          <p class="ps-2 m-0 fs-6 fw-lighter">Ranked</p>
-        </div>
-      </div>
 
+      <! -- Time Limit -->
       <div class="option-input-wrapper">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="time-limit" class="fs-5 fw-bold">Time Limit</label>
           <div class="opt-out-option form-check pt-1">
-            <input class="form-check-input" type="checkbox" id="optout-timeLimitMinutes">
-            <label class="form-check-label" for="optout-timeLimitMinutes">
+            <input class="form-check-input" type="checkbox" id="optout-time_limit">
+            <label class="form-check-label" for="optout-time_limit">
               I don't care
             </label>
           </div>
@@ -276,11 +352,51 @@ export class GameOptions extends HTMLElement {
         <div class="option-input d-flex align-items-start gap-2">
           <span class="pt-1">${this.#state.range.minTimeLimit} min</span>
           <div class="range-wrapper flex-grow-1 pt-1">
-            <input type="range" class="form-range" id="time-limit" value="${this.#state.selectedOptions.timeLimitMinutes}"
+            <input type="range" class="form-range" id="time-limit"
               min="${this.#state.range.minTimeLimit}" max="${this.#state.range.maxTimeLimit}" step="1">
             <output></output>
           </div>
           <span class="pt-1">${this.#state.range.maxTimeLimit} min</span>
+        </div>
+      </div>
+
+      <! -- Ranked -->
+      <div class="option-input-wrapper pb-3" id="is-ranked-selector">
+        <div class="d-flex justify-content-between mt-2 pb-1">
+          <label for="is-ranked" class="fs-5 fw-bold">Ranked</label>
+          <div class="opt-out-option form-check pt-1">
+            <input class="form-check-input" type="checkbox" id="optout-ranked">
+            <label class="form-check-label" for="optout-ranked">
+              I don't care
+            </label>
+          </div>
+        </div>
+        <div class="option-input d-flex align-items-center gap-2">
+          <p class="pe-2 m-0 fs-6 fw-lighter">Enable</p>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="is-ranked">
+          </div>
+          <p class="ps-2 m-0 fs-6 fw-lighter">Disable</p>
+        </div>
+      </div>
+
+      <! -- Cool Mode -->
+      <div class="option-input-wrapper pb-3" id="cool-mode-selector">
+        <div class="d-flex justify-content-between mt-2 pb-1">
+          <label for="cool-mode" class="fs-5 fw-bold">Buffs</label>
+          <div class="opt-out-option form-check pt-1">
+            <input class="form-check-input" type="checkbox" id="optout-cool_mode">
+            <label class="form-check-label" for="optout-cool_mode">
+              I don't care
+            </label>
+          </div>
+        </div>
+        <div class="option-input d-flex align-items-center gap-2">
+          <p class="pe-2 m-0 fs-6 fw-lighter">Enable</p>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="cool-mode" checked>
+          </div>
+          <p class="ps-2 m-0 fs-6 fw-lighter">Disable</p>
         </div>
       </div>
     </div>
@@ -297,6 +413,10 @@ export class GameOptions extends HTMLElement {
 
     return `
     <style>
+    game-options {
+      display: block;
+      flex-shrink: 0;
+    }
     .modal-content {
       background-color: transparent;
       color: var(--pm-primary-100) !important;
@@ -371,6 +491,7 @@ export class GameOptions extends HTMLElement {
     .opt-out-option {
       .form-check-input {
         background-color: rgba(var(--pm-primary-100-rgb), 0.3);
+        border: 1px solid rgba(var(--pm-primary-100-rgb), 0.9);
       }
     }
     .form-switch .form-check-input {
