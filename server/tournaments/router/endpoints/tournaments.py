@@ -99,9 +99,6 @@ def get_all_tournaments(request, status: str = "all"):
     if status in [x[0] for x in Tournament.STATUS_CHOICES]:
         base_qs = base_qs.filter(status=status)
 
-    if not base_qs.exists():
-        return 204, None
-
     if status != Tournament.CANCELLED:
         base_qs = base_qs.exclude(status=Tournament.CANCELLED)
 

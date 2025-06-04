@@ -1,6 +1,5 @@
 import { socketManager } from './socket';
 import { auth } from '@auth';
-import { router } from '@router';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 
 // Socket registration for livechat module including Chat, Notifications, and Onlie status
@@ -37,32 +36,16 @@ socketManager.addSocket('livechat', {
     document.dispatchEvent(customEvent);
   },
   game_invite: (data) => {
+    showToastNotification(`${data.nickname} challenges you to a duel.`, TOAST_TYPES.INFO);
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-    showToastNotification(`${data.nickname} challenges you to a duel.`, TOAST_TYPES.INFO);
   },
   game_accepted: async (data) => {
-    if (window.location.pathname === '/duel') {
-      const duelPage = document.querySelector('duel-page');
-      if (duelPage?.status === 'inviting') {
-        duelPage?.invitationAccepted(data);
-      }
-      return;
-    }
-    const user = await auth.getUser();
-    if (!user || data.username === user.username) {
-      return;
-    }
-    showToastNotification('You have accepted the duel invitation.', TOAST_TYPES.SUCCESS);
-    const param = {
-      status: 'starting',
-      gameId: data.game_id,
-      username: data.username,
-      nickname: data.nickname,
-      avatar: data.avatar,
-    };
-    router.navigate('/duel', param);
-    return;
+    const customEvent = new CustomEvent('duelInvitationAccepted', {
+      detail: data,
+      bubbles: true,
+    });
+    document.dispatchEvent(customEvent);
   },
   game_declined: async (data) => {
     const user = await auth.getStoredUser();
@@ -82,7 +65,7 @@ socketManager.addSocket('livechat', {
   game_invite_canceled: async (data) => {
     const user = await auth.getStoredUser();
     const duelPageElement = document.querySelector('duel-page');
-    const clientId = duelPageElement?.clientId;
+    const clientId = socketManager.getClientInstanceId('livechat');
     if (!user || !clientId) {
       return;
     }
@@ -97,14 +80,13 @@ socketManager.addSocket('livechat', {
         if (!data.username) {
           data.message ? (message = data.message) : (message = 'Game invitation has been canceled.');
           type = TOAST_TYPES.ERROR;
-        } else if (data.username === user.username) {
-          message = 'Your duel invitation has successfully been canceled.';
         }
         break;
       case false:
-        if (data.username && data.username === user.username && data.nickname) {
-          message = `${data.nickname} canceled the duel invitation.`;
-        }
+        message =
+          data.username.toLowerCase() === user.username.toLowerCase()
+            ? 'Your invitation has been canceled.'
+            : `${data.nickname} canceled the duel invitation.`;
     }
     if (message) {
       showToastNotification(message, type);
