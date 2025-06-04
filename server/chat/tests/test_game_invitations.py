@@ -20,18 +20,17 @@ TIME_LIMIT = "time_limit"
 COOL_MODE = "cool_mode"
 
 def invite_player(player_name):
-    invite = {
+    return {
         "action": "game_invite",
         "data": {
             "username": player_name,
             "client_id": "client_id",
         },
     }
-    return invite
 
 
 def accept_invite(sender_name):
-    accept_invite = {
+    return {
         "action": "reply_game_invite",
         "data": {
             "accept": True,
@@ -39,7 +38,6 @@ def accept_invite(sender_name):
             "client_id": "client_id",
         },
     }
-    return accept_invite
 
 
 async def fill_log_invitations_info(invite_status, profile_player=None):
@@ -53,7 +51,7 @@ async def fill_log_invitations_info(invite_status, profile_player=None):
                     "status": inv.status,
                 }
                 for inv in GameInvitation.objects.filter(sender=profile_player, status=invite_status).select_related("sender__user", "recipient__user")
-            ]
+            ],
         )()
     else:
         infos = await database_sync_to_async(
@@ -65,7 +63,7 @@ async def fill_log_invitations_info(invite_status, profile_player=None):
                     "status": inv.status,
                 }
                 for inv in GameInvitation.objects.filter(status=invite_status).select_related("sender__user", "recipient__user")
-            ]
+            ],
         )()
     return infos
 
@@ -76,7 +74,7 @@ async def log_invitations(invite_status, profile_player=None):
     for info in infos:
         logger.critical(
             "INVITATION: id=%s sender=%s recipient=%s status=%s",
-            info["id"], info["sender"], info["recipient"], info["status"]
+            info["id"], info["sender"], info["recipient"], info["status"],
         )
 
 
@@ -249,7 +247,7 @@ class GameInvitationTests(UserEventsConsumerTests):
 
         await communicator.disconnect()
         await targetuser.disconnect()
-    
+
     async def test_game_invite_incomplete_dict(self):
         communicator = await self.get_authenticated_communicator()
         targetuser = await self.get_authenticated_communicator(
@@ -315,7 +313,6 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "target_user",
-                "client_id": "client_id",
                 "options": {
                     GAME_SPEED: "normal",
                     RANKED: True,
@@ -344,7 +341,6 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "target_user",
-                "client_id": "client_id",
                 "options": {
                     GAME_SPEED: "fast",
                     RANKED: True,
