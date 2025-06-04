@@ -6,8 +6,8 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.db import transaction
 
-from pong.consumers.game_protocol import MatchmakingToClientEvents, PongCloseCodes
-from pong.models import GameRoom, GameRoomPlayer, GameRoomSettings, get_default_game_room_settings
+from pong.game_protocol import GameRoomSettings, MatchmakingToClientEvents, PongCloseCodes
+from pong.models import GameRoom, GameRoomPlayer, get_default_game_room_settings
 
 logger = logging.getLogger("server")
 

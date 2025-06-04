@@ -1,3 +1,7 @@
+"""
+Contains typed definitions and enumerations required for the exchange of the data between the websocket server,
+the game server and the client for the game of pong.
+"""
 from typing import Literal, TypedDict
 
 
