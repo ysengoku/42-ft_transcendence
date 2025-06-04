@@ -39,7 +39,7 @@ class MatchQuerySet(models.QuerySet):
     def calculate_elo_change_for_players(self, winner_elo: int, loser_elo: int) -> tuple[int, int, int]:
         elo_change = _calculate_elo_change(winner_elo, loser_elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
         if (loser_elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
-            elo_change = loser_elo.elo - MatchQuerySet.MINUMUM_ELO
+            elo_change = loser_elo - MatchQuerySet.MINUMUM_ELO
         elif (winner_elo + elo_change) > MatchQuerySet.MAXIMUM_ELO:
             elo_change = MatchQuerySet.MAXIMUM_ELO - winner_elo
         winner_elo += elo_change
