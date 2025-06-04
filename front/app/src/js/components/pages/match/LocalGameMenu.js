@@ -36,7 +36,8 @@ export class LocalGameMenu extends HTMLElement {
     this.gameOptionsForm = this.querySelector('game-options');
     if (this.#state.options) {
       this.gameOptionsForm.selectedOptions = this.#state.options;
-      this.gameOptionsForm.render();
+    } else {
+      this.gameOptionsForm.renderOptions();
     }
     this.localPlayerButton.addEventListener('click', this.navigateToGame);
     this.aiPlayerButton.addEventListener('click', this.navigateToGame);
