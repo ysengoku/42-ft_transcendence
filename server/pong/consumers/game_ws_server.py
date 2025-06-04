@@ -69,6 +69,7 @@ class GameServerConsumer(WebsocketConsumer):
                 name=self.user.nickname if self.user.nickname else self.user.username,
                 avatar=profile.avatar,
                 elo=profile.elo,
+                settings=self.game_room.settings,
             ),
         )
 
