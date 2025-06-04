@@ -199,10 +199,6 @@ export class DuelMenu extends HTMLElement {
     if (!this.gameOptionsModal) {
       return;
     }
-    // const options = this.modalBodyContent.selectedOptions;
-    // if (options) {
-    //   this.#state.options = options;
-    // }
     this.modalElement.addEventListener(
       'hidden.bs.modal',
       () => {
@@ -222,6 +218,50 @@ export class DuelMenu extends HTMLElement {
     if (this.modalElement.contains(document.activeElement)) {
       document.activeElement.blur();
     }
+  }
+
+  optionsToObject() {
+    console.log('Converting options to object:', this.#state.options);
+    if (Object.keys(this.#state.options).length === 0) {
+      return null;
+    }
+    const optionsObj = {};
+    for (const [key, value] of Object.entries(this.#state.options)) {
+      if (value !== 'any') {
+        optionsObj[key] = value;
+      }
+    }
+    console.log('Converted options to object:', optionsObj);
+    return optionsObj;
+  }
+
+// /ws/matchmaking/?score_to_win=5
+  optionsToQueryParams() {
+    if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
+      return null;
+    }
+    let queryParams = '';
+    if (this.#state.options.score_to_win !== 'any') {
+      queryParams += `?score_to_win=${this.#state.options.score_to_win}`;
+    }
+    if (this.#state.options.game_speed !== 'any') {
+      queryParams.length > 1 ? queryParams += '&' : queryParams += '?';
+      queryParams += `game_speed=${this.#state.options.game_speed}`;
+    }
+    if (this.#state.options.time_limit !== 'any') {
+      queryParams.length > 1 ? queryParams += '&' : queryParams += '?';
+      queryParams += `time_limit=${this.#state.options.time_limit}`;
+    }
+    if (this.#state.options.ranked !== 'any') {
+      queryParams.length > 1 ? queryParams += '&' : queryParams += '?';
+      queryParams += `ranked=${this.#state.options.ranked}`;
+    }
+    if (this.#state.options.cool_mode !== 'any') {
+      queryParams.length > 1 ? queryParams += '&' : queryParams += '?';
+      queryParams += `cool_mode=${this.#state.options.cool_mode}`;
+    }
+    console.log('Converted options to query params:', queryParams);
+    return queryParams;
   }
 
   async handleSearchInput(event) {
@@ -319,29 +359,28 @@ export class DuelMenu extends HTMLElement {
       action: 'game_invite',
       data: {
         username: this.#state.opponentUsername,
-        options: {
-          score_to_win: this.#state.options.scoreToWin,
-          game_speed: this.#state.options.gameSpeed,
-          ranked: this.#state.options.isRanked,
-          time_limit: this.#state.options.timeLimitMinutes,
-        },
         client_id: clientInstanceId,
-      },
-    };
-    devLog('Sending duel invite:', message);
+      }
+    }
+    const options = this.optionsToObject();
+    if (options) {
+      message.data.options = options;
+    }
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
       username: this.#state.opponentUsername,
       nickname: this.opponentNickname.textContent,
       avatar: this.opponentAvatar.src,
-      // elo: this.opponentElo.textContent.substring(4),
     };
     router.navigate('/duel', queryParams);
   }
 
   requestMatchMaking(event) {
     event.preventDefault();
+    const queryParams = this.optionsToQueryParams();
+    socketManager.openSocket('matchmaking', queryParams);
+    devLog('Requesting matchmaking...');
     router.navigate('/duel', { status: 'matchmaking' });
   }
 
