@@ -169,7 +169,7 @@ export class DuelMenu extends HTMLElement {
     document.body.appendChild(this.modalElement);
     this.gameOptionsModal = new Modal(this.modalElement);
     if (!this.gameOptionsModal) {
-      showToastNotification('Game options are momentarily unavailable', TOAST_TYPES.ERROR);
+      showToastNotification('Game options are momentarily unavailable.', TOAST_TYPES.ERROR);
       return;
     }
     this.modalBodyContent = document.querySelector('game-options');
@@ -189,6 +189,7 @@ export class DuelMenu extends HTMLElement {
   }
 
   saveSelectedOptions() {
+    this.#state.opritons = null;
     this.#state.options = this.modalBodyContent.selectedOptions;
     this.closeGameOptionsModal();
     devLog('Game options:', this.#state.options);
