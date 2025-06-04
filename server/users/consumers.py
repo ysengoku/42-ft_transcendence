@@ -91,7 +91,7 @@ redis_status_manager = RedisUserStatusManager()
 
 def check_inactive_users():
     logger.info("Checking for inactive users")
-    threshold = timezone.now() - timedelta(minutes=5)
+    threshold = timezone.now() - timedelta(minutes=30)
 
     inactive_users = Profile.objects.filter(
         last_activity__lt=threshold,
@@ -101,7 +101,7 @@ def check_inactive_users():
     channel_layer = get_channel_layer()
 
     for user in inactive_users:
-        logger.info("User %s is inactive (no activity for 5 minutes and no active connections)",
+        logger.info("User %s is inactive (no activity for 30 minutes and no active connections)",
                     user.user.username)
 
         user.is_online = False
