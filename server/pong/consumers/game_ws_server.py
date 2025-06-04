@@ -23,7 +23,7 @@ class GameServerConsumer(WebsocketConsumer):
         self.game_room_id = self.scope["url_route"]["kwargs"]["game_room_id"]
         self.game_room_group_name = f"game_room_{self.game_room_id}"
         if not self.user:
-            logger.info("[GameRoom.connect]: anonymous user tried to join game room {%s}", self.game_room_id)
+            logger.info("[GameRoom.connect]: unauthorized user tried to join game room {%s}", self.game_room_id)
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
             return
 
@@ -74,12 +74,12 @@ class GameServerConsumer(WebsocketConsumer):
         )
 
     def disconnect(self, close_code):
-        if close_code != PongCloseCodes.ILLEGAL_CONNECTION:
-            async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
-            async_to_sync(self.channel_layer.group_discard)(f"player_{str(self.player.id)}", self.channel_name)
-        # TODO: put close code to enum, make it prettier
-        ok_close_code = 3000
-        if close_code == ok_close_code:
+        if close_code == PongCloseCodes.ILLEGAL_CONNECTION or not self.player:
+            return
+
+        async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(f"player_{str(self.player.id)}", self.channel_name)
+        if close_code == PongCloseCodes.NORMAL_CLOSURE:
             return
 
         if self.player:

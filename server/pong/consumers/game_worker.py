@@ -5,6 +5,7 @@ import random
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
@@ -14,6 +15,8 @@ from pong.game_protocol import (
     PongCloseCodes,
     SerializedGameState,
 )
+from pong.models import GameRoom, Match
+from users.models import Profile
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -44,7 +47,7 @@ TEMPORAL_SPEED_INCREASE = SUBTICK * 0
 TEMPORAL_SPEED_DECAY = 0.005
 GAME_TICK_INTERVAL = 1.0 / 120
 PLAYERS_REQUIRED = 2
-SCORE_TO_WIN = 1000
+SCORE_TO_WIN = 1
 DEFAULT_COIN_WAIT_TIME = 30
 ###################
 
@@ -97,7 +100,7 @@ class Player:
     # TODO: move time to constants
     reconnection_time: int = 10
     reconnection_timer: asyncio.Task | None = None
-    profile_id: str = ""
+    profile_id: int = -1
     name: str = ""
     avatar: str = ""
     elo: int = 0
@@ -418,7 +421,7 @@ class MultiplayerPongMatch(BasePong):
         player = available_player_slots.pop()
         player.id = player_id
         player.connection = PlayerConnectionState.CONNECTED
-        player.profile_id = player_connected_event["profile_id"]
+        player.profile_id = int(player_connected_event["profile_id"])
         player.name = player_connected_event["name"]
         player.avatar = player_connected_event["avatar"]
         player.elo = player_connected_event["elo"]
@@ -450,7 +453,7 @@ class MultiplayerPongMatch(BasePong):
             timer.cancel()
         self.waiting_for_players_timer = None
 
-    def get_result(self) -> tuple[Player] | None:
+    def get_result(self) -> tuple[Player, Player] | None:
         """Returns winner and loser or None, if the game is not decided yet."""
         if self._player_1.bumper.score >= SCORE_TO_WIN:
             return self._player_1, self._player_2
@@ -598,6 +601,7 @@ class GameWorkerConsumer(AsyncConsumer):
                     asyncio.create_task(self._wait_for_end_of_buff(match, None))
                 if result := match.get_result():
                     winner, loser = result
+                    elo_change = await self._write_result_to_db(winner, loser)
                     await self.channel_layer.group_send(
                         self._to_game_room_group_name(match),
                         GameServerToClient.PlayerWon(
@@ -605,10 +609,11 @@ class GameWorkerConsumer(AsyncConsumer):
                             action="player_won",
                             winner=winner.as_dict(),
                             loser=loser.as_dict(),
-                            elo_change=100,  # TODO: insert actual elo change number
+                            elo_change=elo_change,
                             close_code=PongCloseCodes.NORMAL_CLOSURE,
                         ),
                     )
+                    await self._do_after_match_cleanup(match, False)
                     logger.info("[GameWorker]: player {%s} has won the game {%s}", winner.id, match)
                     break
                 await self.channel_layer.group_send(
@@ -636,7 +641,6 @@ class GameWorkerConsumer(AsyncConsumer):
             logger.info("[GameWorker]: waiting for players to connect to the game {%s}", match)
             await asyncio.sleep(5)
             if len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) < PLAYERS_REQUIRED:
-                self._do_after_match_cleanup(match)
                 await self.channel_layer.group_send(
                     self._to_game_room_group_name(match),
                     GameServerToClient.GameCancelled(
@@ -645,6 +649,7 @@ class GameWorkerConsumer(AsyncConsumer):
                         close_code=PongCloseCodes.CANCELLED,
                     ),
                 )
+                await self._do_after_match_cleanup(match, True)
                 logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", match)
 
         except asyncio.CancelledError:
@@ -717,9 +722,9 @@ class GameWorkerConsumer(AsyncConsumer):
                 )
                 return None
 
-            self._do_after_match_cleanup(match)
             match.status = MultiplayerPongMatchStatus.ENDED
             winner = match.get_other_player(player.id)
+            elo_change = await self._write_result_to_db(winner, player)
             await self.channel_layer.group_send(
                 self._to_game_room_group_name(match),
                 GameServerToClient.PlayerResigned(
@@ -727,10 +732,11 @@ class GameWorkerConsumer(AsyncConsumer):
                     action="player_resigned",
                     winner=winner.as_dict(),
                     loser=player.as_dict(),
-                    elo_change=100,  # TODO: insert actual elo change number
+                    elo_change=elo_change,
                     close_code=PongCloseCodes.NORMAL_CLOSURE,
                 ),
             )
+            await self._do_after_match_cleanup(match, False)
             logger.info(
                 "[GameWorker]: player {%s} resigned by disconnecting in the game {%s}. Winner is {%s}",
                 player.id,
@@ -809,10 +815,18 @@ class GameWorkerConsumer(AsyncConsumer):
         )
 
     ##### MATCH MANAGEMENT METHODS #####
-    def _do_after_match_cleanup(self, match: MultiplayerPongMatch):
+    async def _do_after_match_cleanup(self, match: MultiplayerPongMatch, should_cancel: bool):
+        """
+        Cleans the match from the memory of the worker. Marks GameRoom in the database as closed.
+        `should_cancel` indicates if the match task should be cancelled. Should not be True when the match
+        can be allowed to end naturally, for example, if a player can win.
+        """
         self.matches.pop(str(match), None)
-        if match.game_loop_task and not match.game_loop_task.cancelled():
+        if match.game_loop_task and not match.game_loop_task.cancelled() and should_cancel:
             match.game_loop_task.cancel()
+        game_room_db: GameRoom = await database_sync_to_async(GameRoom.objects.get)(id=match.id)
+        game_room_db.status = GameRoom.CLOSED
+        await database_sync_to_async(game_room_db.save)()
 
     async def _pause(
         self,
@@ -841,6 +855,32 @@ class GameWorkerConsumer(AsyncConsumer):
         if not match.pause_event.is_set():
             match.pause_event.set()
         logger.info("[GameWorker]: game {%s} has been unpaused", match.id)
+
+    async def _write_result_to_db(self, winner: Player, loser: Player) -> int:
+        """
+        Records the results of the match into the database.
+        Unlike Match.objects.resolve(), this function works with Player classes and can be used in async context.
+        """
+        winners_elo, losers_elo, elo_change = Match.objects.calculate_elo_change_for_players(winner.elo, loser.elo)
+        winner.elo = winners_elo
+        loser.elo = losers_elo
+        winner_db: Profile = await database_sync_to_async(Profile.objects.get)(id=winner.profile_id)
+        loser_db: Profile = await database_sync_to_async(Profile.objects.get)(id=loser.profile_id)
+        resolved_match_db: Match = Match(
+            winner=winner_db,
+            loser=loser_db,
+            winners_score=winner.bumper.score,
+            losers_score=loser.bumper.score,
+            elo_change=elo_change,
+            winners_elo=winners_elo,
+            losers_elo=losers_elo,
+        )
+        winner_db.elo = winners_elo
+        loser_db.elo = losers_elo
+        await database_sync_to_async(resolved_match_db.save)()
+        await database_sync_to_async(winner_db.save)()
+        await database_sync_to_async(loser_db.save)()
+        return elo_change
 
     # To avoid typing errors.
     def _to_game_room_group_name(self, match: MultiplayerPongMatch):
