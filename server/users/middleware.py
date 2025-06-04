@@ -14,9 +14,11 @@ class JWTEndpointsAuthMiddleware(APIKeyCookie):
     param_name = "access_token"
 
     def authenticate(self, request, access_token: str):
-        payload = RefreshToken.objects.select_related("profile").verify_access_token(access_token)
- 
-        user = User.objects.for_id(payload["sub"]).first()
+        try:
+            payload = RefreshToken.objects.select_related("profile").verify_access_token(access_token)
+            user = User.objects.for_id(payload["sub"]).first()
+        except (AuthenticationError, User.DoesNotExist):
+            return None
         user.profile.update_activity()
         return user
 
