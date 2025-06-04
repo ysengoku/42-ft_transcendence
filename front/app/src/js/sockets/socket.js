@@ -7,7 +7,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
  */
 const WS_PATH = {
   livechat: '/ws/events/',
-  matchmaking: '/ws/matchmaking/',
+  matchmaking: (options) => options === null ? '/ws/matchmaking/' : `/ws/matchmaking/${options}`,
   tournament: (id) => `/ws/tournament/${id}`,
 };
 
@@ -140,8 +140,6 @@ const socketManager = (() => {
         return;
       }
       this.configs.set(name, { path, listeners });
-      // const ws = new WebSocketManager(name, path, listeners);
-      // this.sockets.set(name, ws);
     }
 
     /**

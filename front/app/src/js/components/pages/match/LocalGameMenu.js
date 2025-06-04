@@ -53,9 +53,6 @@ export class LocalGameMenu extends HTMLElement {
   navigateToGame(event) {
     event.preventDefault();
     this.#state.options = this.gameOptionsForm.selectedOptions;
-    if (this.#state.options) {
-      this.#state.options.isRanked = false;
-    }
     const gameType = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
     devLog('Game options:', this.#state.options, ' Game type: ', gameType);
     localStorage.setItem('gameOptions', JSON.stringify(this.#state.options));
