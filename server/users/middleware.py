@@ -15,9 +15,10 @@ class JWTEndpointsAuthMiddleware(APIKeyCookie):
 
     def authenticate(self, request, access_token: str):
         payload = RefreshToken.objects.select_related("profile").verify_access_token(access_token)
-
-        return User.objects.for_id(payload["sub"]).first()
-
+ 
+        user = User.objects.for_id(payload["sub"]).first()
+        user.profile.update_activity()
+        return user
 
 class JWTWebsocketAuthMiddleware:
     """
@@ -54,12 +55,3 @@ class JWTWebsocketAuthMiddleware:
         except (AuthenticationError, User.DoesNotExist):
             return None
 
-
-class ActivityMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        if request.user.is_authenticated:
-            request.user.profile.update_activity()
-        return self.get_response(request)
