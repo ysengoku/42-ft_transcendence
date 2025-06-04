@@ -121,9 +121,10 @@ class DuelEvent:
         game_room = self.create_game_room(sender, self.consumer.user.profile)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save()
+
         invitation.sync_notification_status()
-        # if any invitations were send by the user, they are cancelled because they are in a game now
         self.cancel_game_invite()
+        # if any invitations were send by the user, they are cancelled because they are in a game now
         sender_data = self.data_for_game_found(sender, game_room.id)
         receiver_data = self.data_for_game_found(self.consumer.user.profile, game_room.id)
         async_to_sync(self.consumer.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
@@ -188,7 +189,8 @@ class DuelEvent:
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         client_id = data["data"].get("client_id")
-        if not Validator.validate_options(options):
+        if options is not None and not Validator.validate_options(options):
+            self.consumer.close()
             return
         receiver_username = data["data"].get("username")
         if receiver_username == self.consumer.user.username:

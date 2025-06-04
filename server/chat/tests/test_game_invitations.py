@@ -13,18 +13,18 @@ logger = logging.getLogger("server")
 logging.getLogger("server").setLevel(logging.CRITICAL)
 
 
+RANKED = "ranked"
+GAME_SPEED = "game_speed"
+SCORE_TO_WIN = "score_to_win"
+TIME_LIMIT = "time_limit"
+COOL_MODE = "cool_mode"
+
 def invite_player(player_name):
     invite = {
         "action": "game_invite",
         "data": {
             "username": player_name,
             "client_id": "client_id",
-            "options": {
-                "game_speed": "any",
-                "is_ranked": "any",
-                "score_to_win": "any",
-                "time_limit_minutes": "any",
-            },
         },
     }
     return invite
@@ -82,6 +82,7 @@ async def log_invitations(invite_status, profile_player=None):
 
 class GameInvitationTests(UserEventsConsumerTests):
     async def test_game_invite_with_invalid_options(self):
+        logging.getLogger("server").setLevel(logging.WARNING)
         communicator = await self.get_authenticated_communicator()
 
         # Not a dict
@@ -90,13 +91,16 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "username": "targetuser",
                 "client_id": "client_id",
-                "options": "bullshit",
+                "options": "not a dict",
             },
         }
         with self.assertLogs("server", level="WARNING") as logs:
             await communicator.send_json_to(invalid_data_1)
             await communicator.receive_nothing(timeout=0.1)
             assert any("Invalid type for 'options'" in log for log in logs.output)
+
+    async def test_game_invite_with_invalid_speed(self):
+        communicator = await self.get_authenticated_communicator()
 
         # 2. Invalid game_speed
         invalid_data_2 = {
@@ -105,10 +109,10 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "ultrafast",
-                    "is_ranked": True,
-                    "score_to_win": 3,
-                    "time_limit_minutes": 3,
+                    GAME_SPEED: "ultrafast",
+                    RANKED: True,
+                    SCORE_TO_WIN: 3,
+                    TIME_LIMIT: 3,
                 },
             },
         }
@@ -124,10 +128,10 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": "true",
-                    "score_to_win": 3,
-                    "time_limit_minutes": 3,
+                    GAME_SPEED: "fast",
+                    RANKED: "true",
+                    SCORE_TO_WIN: 3,
+                    TIME_LIMIT: 3,
                 },
             },
         }
@@ -143,10 +147,10 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": True,
-                    "score_to_win": 2,
-                    "time_limit_minutes": 3,
+                    GAME_SPEED: "fast",
+                    RANKED: True,
+                    SCORE_TO_WIN: 2,
+                    TIME_LIMIT: 3,
                 },
             },
         }
@@ -162,10 +166,10 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": True,
-                    "score_to_win": 3,
-                    "time_limit_minutes": 6,
+                    GAME_SPEED: "fast",
+                    RANKED: True,
+                    SCORE_TO_WIN: 3,
+                    TIME_LIMIT: 6,
                 },
             },
         }
@@ -181,10 +185,10 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": True,
-                    "score_to_win": 3,
-                    "time_limit_minutes": None,
+                    GAME_SPEED: "fast",
+                    RANKED: True,
+                    SCORE_TO_WIN: 3,
+                    TIME_LIMIT: None,
                 },
             },
         }
@@ -200,7 +204,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "slow",
+                    GAME_SPEED: "slow",
                 },
             },
         }
@@ -224,10 +228,10 @@ class GameInvitationTests(UserEventsConsumerTests):
                 "username": "target_user",
                 "client_id": "client_id",
                 "options": {
-                    "game_speed": "slow",
-                    "is_ranked": False,
-                    "score_to_win": 3,
-                    "time_limit_minutes": 1,
+                    GAME_SPEED: "slow",
+                    RANKED: False,
+                    SCORE_TO_WIN: 3,
+                    TIME_LIMIT: 1,
                 },
             },
         }
@@ -252,10 +256,10 @@ class GameInvitationTests(UserEventsConsumerTests):
                 "username": "target_user",
                 "client_id": "client_id",
                 "options": {
-                    "game_speed": "normal",
-                    "is_ranked": True,
-                    "score_to_win": 10,
-                    "time_limit_minutes": 3,
+                    GAME_SPEED: "normal",
+                    RANKED: True,
+                    SCORE_TO_WIN: 10,
+                    TIME_LIMIT: 3,
                 },
             },
         }
@@ -280,11 +284,11 @@ class GameInvitationTests(UserEventsConsumerTests):
                 "username": "target_user",
                 "client_id": "client_id",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": True,
-                    "score_to_win": 20,
+                    GAME_SPEED: "fast",
+                    RANKED: True,
+                    SCORE_TO_WIN: 20,
                     "username": "target_user",
-                    "time_limit_minutes": 5,
+                    TIME_LIMIT: 5,
                 },
             },
         }
@@ -309,10 +313,10 @@ class GameInvitationTests(UserEventsConsumerTests):
                 "username": "target_user",
                 "client_id": "client_id",
                 "options": {
-                    "game_speed": "any",
-                    "is_ranked": "any",
-                    "score_to_win": "any",
-                    "time_limit_minutes": "any",
+                    GAME_SPEED: "any",
+                    RANKED: "any",
+                    SCORE_TO_WIN: "any",
+                    TIME_LIMIT: "any",
                 },
             },
         }
