@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta  # noqa: A005
 from pathlib import Path  # noqa: A005
 
 import magic
