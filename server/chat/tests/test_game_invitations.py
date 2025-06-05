@@ -13,25 +13,24 @@ logger = logging.getLogger("server")
 logging.getLogger("server").setLevel(logging.CRITICAL)
 
 
+RANKED = "ranked"
+GAME_SPEED = "game_speed"
+SCORE_TO_WIN = "score_to_win"
+TIME_LIMIT = "time_limit"
+COOL_MODE = "cool_mode"
+
 def invite_player(player_name):
-    invite = {
+    return {
         "action": "game_invite",
         "data": {
             "username": player_name,
             "client_id": "client_id",
-            "options": {
-                "game_speed": "any",
-                "is_ranked": "any",
-                "score_to_win": "any",
-                "time_limit_minutes": "any",
-            },
         },
     }
-    return invite
 
 
 def accept_invite(sender_name):
-    accept_invite = {
+    return {
         "action": "reply_game_invite",
         "data": {
             "accept": True,
@@ -39,7 +38,6 @@ def accept_invite(sender_name):
             "client_id": "client_id",
         },
     }
-    return accept_invite
 
 
 async def fill_log_invitations_info(invite_status, profile_player=None):
@@ -53,7 +51,7 @@ async def fill_log_invitations_info(invite_status, profile_player=None):
                     "status": inv.status,
                 }
                 for inv in GameInvitation.objects.filter(sender=profile_player, status=invite_status).select_related("sender__user", "recipient__user")
-            ]
+            ],
         )()
     else:
         infos = await database_sync_to_async(
@@ -65,7 +63,7 @@ async def fill_log_invitations_info(invite_status, profile_player=None):
                     "status": inv.status,
                 }
                 for inv in GameInvitation.objects.filter(status=invite_status).select_related("sender__user", "recipient__user")
-            ]
+            ],
         )()
     return infos
 
@@ -76,140 +74,204 @@ async def log_invitations(invite_status, profile_player=None):
     for info in infos:
         logger.critical(
             "INVITATION: id=%s sender=%s recipient=%s status=%s",
-            info["id"], info["sender"], info["recipient"], info["status"]
+            info["id"], info["sender"], info["recipient"], info["status"],
         )
 
 
 class GameInvitationTests(UserEventsConsumerTests):
-    async def test_game_invite_with_invalid_options(self):
+    async def test_not_a_dict(self):
         communicator = await self.get_authenticated_communicator()
+        targetuser = await self.get_authenticated_communicator(
+            username="targetuser", password="testpass",
+        )
 
-        # Not a dict
-        invalid_data_1 = {
+        invalid_data = {
             "action": "game_invite",
             "data": {
                 "username": "targetuser",
                 "client_id": "client_id",
-                "options": "bullshit",
+                "options": "not a dict",
             },
         }
-        with self.assertLogs("server", level="WARNING") as logs:
-            await communicator.send_json_to(invalid_data_1)
-            await communicator.receive_nothing(timeout=0.1)
-            assert any("Invalid type for 'options'" in log for log in logs.output)
+        await communicator.send_json_to(invalid_data)
+        await communicator.receive_nothing(timeout=0.1)
+        count = await database_sync_to_async(GameInvitation.objects.count)()
+        assert count == 0
+
+        await communicator.disconnect()
+        await targetuser.disconnect()
+
+    async def test_invalid_game_speed(self):
+        communicator = await self.get_authenticated_communicator()
+        targetuser = await self.get_authenticated_communicator(
+            username="targetuser", password="testpass",
+        )
 
         # 2. Invalid game_speed
-        invalid_data_2 = {
+        invalid_data = {
             "action": "game_invite",
-            "client_id": "client_id",
             "data": {
+                "client_id": "client_id",
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "ultrafast",
-                    "is_ranked": True,
-                    "score_to_win": 3,
-                    "time_limit_minutes": 3,
+                    GAME_SPEED: "ultrafast",
                 },
             },
         }
-        await communicator.send_json_to(invalid_data_2)
+        await communicator.send_json_to(invalid_data)
         await communicator.receive_nothing(timeout=0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
         assert count == 0
 
-        # 3. Invalid is_ranked
-        invalid_data_2 = {
+        await communicator.disconnect()
+        await targetuser.disconnect()
+
+    async def test_invalid_ranked(self):
+        communicator = await self.get_authenticated_communicator()
+        targetuser = await self.get_authenticated_communicator(
+            username="targetuser", password="testpass",
+        )
+
+        invalid_data = {
             "action": "game_invite",
-            "client_id": "client_id",
             "data": {
+                "client_id": "client_id",
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": "true",
-                    "score_to_win": 3,
-                    "time_limit_minutes": 3,
+                    RANKED: "true",
                 },
             },
         }
-        await communicator.send_json_to(invalid_data_2)
+        await communicator.send_json_to(invalid_data)
         await communicator.receive_nothing(timeout=0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
         assert count == 0
 
-        # 4. Invalid score_to_win
-        invalid_data_2 = {
+        await communicator.disconnect()
+        await targetuser.disconnect()
+
+    async def test_invalid_score_to_win(self):
+        communicator = await self.get_authenticated_communicator()
+        targetuser = await self.get_authenticated_communicator(
+            username="targetuser", password="testpass",
+        )
+
+        invalid_data = {
             "action": "game_invite",
-            "client_id": "client_id",
             "data": {
+                "client_id": "client_id",
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": True,
-                    "score_to_win": 2,
-                    "time_limit_minutes": 3,
+                    SCORE_TO_WIN: 2,
                 },
             },
         }
-        await communicator.send_json_to(invalid_data_2)
+        await communicator.send_json_to(invalid_data)
         await communicator.receive_nothing(timeout=0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
         assert count == 0
 
-        # 5. Invalid time_limit_minutes
-        invalid_data_2 = {
+        await communicator.disconnect()
+        await targetuser.disconnect()
+
+    async def test_invalid_time_limit(self):
+        communicator = await self.get_authenticated_communicator()
+        targetuser = await self.get_authenticated_communicator(
+            username="targetuser", password="testpass",
+        )
+
+        invalid_data = {
             "action": "game_invite",
-            "client_id": "client_id",
             "data": {
+                "client_id": "client_id",
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": True,
-                    "score_to_win": 3,
-                    "time_limit_minutes": 6,
+                    TIME_LIMIT: 6,
                 },
             },
         }
-        await communicator.send_json_to(invalid_data_2)
+        await communicator.send_json_to(invalid_data)
         await communicator.receive_nothing(timeout=0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
         assert count == 0
 
-        # 6. A value is None
-        invalid_data_2 = {
+        await communicator.disconnect()
+        await targetuser.disconnect()
+
+    async def test_invalid_None(self):
+        communicator = await self.get_authenticated_communicator()
+        targetuser = await self.get_authenticated_communicator(
+            username="targetuser", password="testpass",
+        )
+
+        # 2. Invalid game_speed
+        invalid_data = {
             "action": "game_invite",
-            "client_id": "client_id",
             "data": {
+                "client_id": "client_id",
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": True,
-                    "score_to_win": 3,
-                    "time_limit_minutes": None,
+                    TIME_LIMIT: None,
                 },
             },
         }
-        await communicator.send_json_to(invalid_data_2)
+        await communicator.send_json_to(invalid_data)
         await communicator.receive_nothing(timeout=0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
         assert count == 0
+
+        await communicator.disconnect()
+        await targetuser.disconnect()
+
+    async def test_invalid_None(self):
+        communicator = await self.get_authenticated_communicator()
+        targetuser = await self.get_authenticated_communicator(
+            username="targetuser", password="testpass",
+        )
+
+        # 2. Invalid game_speed
+        invalid_data = {
+            "action": "game_invite",
+            "data": {
+                "client_id": "client_id",
+                "username": "targetuser",
+                "options": {
+                    TIME_LIMIT: None,
+                },
+            },
+        }
+        await communicator.send_json_to(invalid_data)
+        await communicator.receive_nothing(timeout=0.1)
+        count = await database_sync_to_async(GameInvitation.objects.count)()
+        assert count == 0
+
+        await communicator.disconnect()
+        await targetuser.disconnect()
+
+    async def test_game_invite_incomplete_dict(self):
+        communicator = await self.get_authenticated_communicator()
+        targetuser = await self.get_authenticated_communicator(
+            username="targetuser", password="testpass",
+        )
 
         # 7. Incomplete dict
         invalid_data_3 = {
             "action": "game_invite",
-            "client_id": "client_id",
             "data": {
+                "client_id": "client_id",
                 "username": "targetuser",
                 "options": {
-                    "game_speed": "slow",
+                    GAME_SPEED: "slow",
                 },
             },
         }
         await communicator.send_json_to(invalid_data_3)
         await communicator.receive_nothing(timeout=0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
-        assert count == 0
+        assert count == 1
 
         await communicator.disconnect()
+        await targetuser.disconnect()
 
     async def test_game_invite_valid_creates_invitation_slow_min(self):
         target_user = await self.get_authenticated_communicator(
@@ -221,13 +283,13 @@ class GameInvitationTests(UserEventsConsumerTests):
         valid_data = {
             "action": "game_invite",
             "data": {
-                "username": "target_user",
                 "client_id": "client_id",
+                "username": "target_user",
                 "options": {
-                    "game_speed": "slow",
-                    "is_ranked": False,
-                    "score_to_win": 3,
-                    "time_limit_minutes": 1,
+                    GAME_SPEED: "slow",
+                    RANKED: False,
+                    SCORE_TO_WIN: 3,
+                    TIME_LIMIT: 1,
                 },
             },
         }
@@ -249,13 +311,13 @@ class GameInvitationTests(UserEventsConsumerTests):
         valid_data = {
             "action": "game_invite",
             "data": {
-                "username": "target_user",
                 "client_id": "client_id",
+                "username": "target_user",
                 "options": {
-                    "game_speed": "normal",
-                    "is_ranked": True,
-                    "score_to_win": 10,
-                    "time_limit_minutes": 3,
+                    GAME_SPEED: "normal",
+                    RANKED: True,
+                    SCORE_TO_WIN: 10,
+                    TIME_LIMIT: 3,
                 },
             },
         }
@@ -277,42 +339,14 @@ class GameInvitationTests(UserEventsConsumerTests):
         valid_data = {
             "action": "game_invite",
             "data": {
-                "username": "target_user",
                 "client_id": "client_id",
+                "username": "target_user",
                 "options": {
-                    "game_speed": "fast",
-                    "is_ranked": True,
-                    "score_to_win": 20,
+                    GAME_SPEED: "fast",
+                    RANKED: True,
+                    SCORE_TO_WIN: 20,
                     "username": "target_user",
-                    "time_limit_minutes": 5,
-                },
-            },
-        }
-        await communicator.send_json_to(valid_data)
-        await communicator.receive_nothing(timeout=0.1)
-        count = await database_sync_to_async(GameInvitation.objects.count)()
-        assert count == 1
-
-        await communicator.disconnect()
-        await target_user.disconnect()
-
-    async def test_game_invite_valid_creates_invitation_any(self):
-        target_user = await self.get_authenticated_communicator(
-            username="target_user", password="testpass",
-        )
-
-        communicator = await self.get_authenticated_communicator()
-
-        valid_data = {
-            "action": "game_invite",
-            "data": {
-                "username": "target_user",
-                "client_id": "client_id",
-                "options": {
-                    "game_speed": "any",
-                    "is_ranked": "any",
-                    "score_to_win": "any",
-                    "time_limit_minutes": "any",
+                    TIME_LIMIT: 5,
                 },
             },
         }
