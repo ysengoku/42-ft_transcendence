@@ -178,28 +178,28 @@ export class TournamentMenu extends HTMLElement {
       const tournamentOptionCoolMode = this.modalBody.querySelector('#tournament-option-cool-mode');
 
       // ===== For test ==================================
-      this.selectedTournament.options = {};
-      this.selectedTournament.options.score_to_win = 10;
-      this.selectedTournament.options.game_speed = 'fast';
-      this.selectedTournament.options.time_limit = 3;
-      this.selectedTournament.options.cool_mode = true;
+      this.selectedTournament.settings = {};
+      this.selectedTournament.settings.score_to_win = 10;
+      this.selectedTournament.settings.game_speed = 'fast';
+      this.selectedTournament.settings.time_limit = 3;
+      this.selectedTournament.settings.cool_mode = true;
       // =================================================
 
       modalTitle.textContent = this.selectedTournament.name;
       modatRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants}`;
 
-      if (this.selectedTournament.options.score_to_win) {
-        tournamentOptionScoreToWin.textContent = `Score to win: ${this.selectedTournament.options.score_to_win}`;
+      if (this.selectedTournament.settings.score_to_win) {
+        tournamentOptionScoreToWin.textContent = `Score to win: ${this.selectedTournament.settings.score_to_win}`;
       }
-      if (this.selectedTournament.options.game_speed) {
-        tournamentOptionGameSpeed.textContent = `Game speed: ${this.selectedTournament.options.game_speed}`;
+      if (this.selectedTournament.settings.game_speed) {
+        tournamentOptionGameSpeed.textContent = `Game speed: ${this.selectedTournament.settings.game_speed}`;
       }
-      if (this.selectedTournament.options.time_limit) {
-        tournamentOptionTimeLimit.textContent = `Time limit: ${this.selectedTournament.options.time_limit} min`;
+      if (this.selectedTournament.settings.time_limit) {
+        tournamentOptionTimeLimit.textContent = `Time limit: ${this.selectedTournament.settings.time_limit} min`;
       }
-      if (this.selectedTournament.options.cool_mode) {
+      if (this.selectedTournament.settings.cool_mode) {
         tournamentOptionCoolMode.textContent =
-          this.selectedTournament.options.cool_mode === true ? 'Buffs: enabled' : 'Buffs: disabled';
+          this.selectedTournament.settings.cool_mode === true ? 'Buffs: enabled' : 'Buffs: disabled';
       }
 
       this.aliasInput = this.modalBody.querySelector('#tournament-alias');

@@ -4,16 +4,40 @@ import audiourl from '/audio/score_sound.mp3?url';
 import pedro from '/3d_models/lilguy.glb?url';
 import fontWin from '/fonts/Texas_Tango_BOLD_PERSONAL_USE_Regular.json?url';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-import {TextGeometry} from 'three/addons/geometries/TextGeometry.js' 
-
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js'
+import { router } from '@router';
+import { auth } from '@auth';
+import { sessionExpiredToast } from '@utils';
 
 export class Game extends HTMLElement {
+  #state = {
+    gameOptions: null,
+    gameType: '', // 'classic' or 'ai'
+  }
+
   constructor() {
     super();
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    console.log('Auth status:', authStatus);
+    if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
+      router.redirect('/login');
+    }
+    this.setState();
     this.render();
+  }
+
+  setState() {
+    const options = localStorage.getItem('gameOptions');
+    const gameType = localStorage.getItem('gameType');
+    this.#state.gameOptions = options ? JSON.parse(options) : null;
+    this.#state.gameType = gameType ? gameType : 'classic';
+    devLog('Game options:', this.#state.gameOptions, 'Game type:', this.#state.gameType);
   }
 
   // disconnectedCallback() {
