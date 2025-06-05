@@ -7,6 +7,8 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 
+from channels.layers import get_channel_layer
+
 from pong.models import GameRoom, GameRoomPlayer
 from users.models import Profile
 
@@ -312,8 +314,7 @@ class DuelEvent:
         try:
             profile = Profile.objects.get(user__username=username)
         except Profile.DoesNotExist:
-            logger.warning("OH SHIT")
-        # profile = self.consumer.user.profile
+            logger.warning("Profile for user %s does not exists.", username)
         invitations = GameInvitation.objects.filter(
             Q(sender=profile) | Q(recipient=profile),
             status=GameInvitation.PENDING,
@@ -321,30 +322,62 @@ class DuelEvent:
         if not invitations.exists():
             logger.info("No pending invitations to cancel for user %s", username)
             return
+        channel_layer = get_channel_layer()
         with transaction.atomic():
             count = 0
             for invitation in invitations:
                 invitation.status = GameInvitation.CANCELLED
+                sender = invitation.sender
                 receiver = invitation.recipient
+                # client_id = invitation.client_id
                 invitation.save()
                 invitation.sync_notification_status()
                 count += 1
+                notif_data = {
+                    "type": "chat_message",
+                    "message": json.dumps(
+                        {
+                            "action": "game_invite_canceled",
+                            "data": {
+                                "message": "The user deleted their profile",
+                                "username": username,
+                            },
+                        },
+                    ),
+                },
+                target = receiver if sender == profile else sender
+                async_to_sync(channel_layer.group_send)(f"user_{target.user.id}", notif_data)
+            # async_to_sync(channel_layer.group_send)(f"user_{receiver.user.id}", notif_data)
+            # async_to_sync(channel_layer.group_send)(f"user_{sender.user.id}", notif_data)
+            #     {
+            #         "type": "chat_message",
+            #         "message": json.dumps(
+            #             {
+            #                 "action": "game_invite_canceled",
+            #                 "data": {
+            #                     "message": "The user deleted their profile",
+            #                     "username": username,
+            #                 },
+            #             },
+            #         ),
+            #     },
+            # )
+            # async_to_sync(channel_layer.group_send)(
+            #     f"user_{sender.user.id}",
+            #     {
+            #         "type": "chat_message",
+            #         "message": json.dumps(
+            #             {
+            #                 "action": "game_invite_canceled",
+            #                 "data": {
+            #                     "message": "The user deleted their profile",
+            #                     "username": username,
+            #                 },
+            #             },
+            #         ),
+            #     },
+            # )
             logger.info("Cancelled %d pending invitations for user %s", count, username)
-        # async_to_sync(self.consumer.channel_layer.group_send)(
-        #     f"user_{receiver.user.id}",
-        #     {
-        #         "type": "chat_message",
-        #         "message": json.dumps(
-        #             {
-        #                 "action": "game_invite_canceled",
-        #                 "data": {
-        #                     "username": username,
-        #                     "nickname": self.consumer.user.nickname,
-        #                 },
-        #             },
-        #         ),
-        #     },
-        # )
 
 
     def handle_new_tournament(self, data):
