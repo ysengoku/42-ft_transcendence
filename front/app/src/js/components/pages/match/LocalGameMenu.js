@@ -27,7 +27,6 @@ export class LocalGameMenu extends HTMLElement {
   render() {
     this.innerHTML = this.template();
 
-    this.querySelector('.modal-title')?.classList.add('d-none');
     this.querySelector('#is-ranked-selector')?.classList.add('d-none');
 
     this.localPlayerButton = this.querySelector('#local-game-classic');

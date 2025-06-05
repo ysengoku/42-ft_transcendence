@@ -78,7 +78,6 @@ export class GameOptions extends HTMLElement {
   }
 
   get selectedOptions() {
-    console.log('GameOptions selectedOptions:', this.#state.selectedOptions);
     return this.#state.selectedOptions;
   }
 
@@ -129,7 +128,6 @@ export class GameOptions extends HTMLElement {
         ...this.#state.defaultOptionValue,
       };
     }
-    console.log('Rendering GameOptions with selectedOptions:', this.#state.selectedOptions);
 
     if (this.#state.selectedOptions.score_to_win === 'any') {
       this.scoreToWinOptout.checked = true;
@@ -229,7 +227,6 @@ export class GameOptions extends HTMLElement {
     } else if (target.id === 'cool-mode') {
       this.#state.selectedOptions.cool_mode = !target.checked;
     }
-    console.log('GameOptions updated:', this.#state.selectedOptions);
   }
 
   updateSelectedValueOnRange(event) {
@@ -253,8 +250,6 @@ export class GameOptions extends HTMLElement {
 
     const id = target.id.replace('optout-', '');
     this.#state.selectedOptions[id] = target.checked ? 'any' : this.#state.defaultOptionValue[id];
-    console.log(`Option ${id} updated:`, this.#state.selectedOptions);
-
     if (!target.checked) {
       this.renderOption(id);
     }
