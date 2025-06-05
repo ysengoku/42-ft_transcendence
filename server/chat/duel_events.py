@@ -344,7 +344,7 @@ class DuelEvent:
                             "data": {
                                 "message": "The user deleted their profile",
                                 "username": username,
-                                "nickname": nickname,
+                                "nickname": receiver.user.nickname,
                             },
                         },
                     ),
