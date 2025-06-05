@@ -14,8 +14,10 @@ export class TournamentCreation extends HTMLElement {
     newTournament: {
       name: '',
       requiredParticipants: this.#defaultRequiredParticipants,
+      options: null,
     },
   };
+
   constructor() {
     super();
     this.tournamentMenu = document.querySelector('tournament-menu');
@@ -25,6 +27,7 @@ export class TournamentCreation extends HTMLElement {
     this.alert = null;
     this.tournamentNameInput = null;
     this.tournamentNameFeedback = null;
+    this.gameOptionsForm = null;
 
     const requiredParticipantsOptions = import.meta.env.VITE_REQUIRED_PARTICIPANTS_OPTIONS;
     if (requiredParticipantsOptions) {
@@ -35,8 +38,8 @@ export class TournamentCreation extends HTMLElement {
     }
     this.#defaultRequiredParticipants = this.#requiredParticipantsOptions[0];
 
-    this.handleTournamentInputName = this.handleTournamentInputName.bind(this);
-    this.handleAliasInput = this.handleAliasInput.bind(this);
+    this.validateTournamentNameInput = this.validateTournamentNameInput.bind(this);
+    this.validateAliasInput = this.validateAliasInput.bind(this);
     this.createTournament = this.createTournament.bind(this);
   }
 
@@ -51,8 +54,8 @@ export class TournamentCreation extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.tournamentNameInput?.removeEventListener('input', this.handleTournamentInputName);
-    this.tournamentAliasInput?.removeEventListener('input', this.handleAliasInput);
+    this.tournamentNameInput?.removeEventListener('input', this.validateTournamentNameInput);
+    this.tournamentAliasInput?.removeEventListener('input', this.validateAliasInput);
     this.confirmButton?.removeEventListener('click', this.createTournament);
   }
 
@@ -72,16 +75,27 @@ export class TournamentCreation extends HTMLElement {
 
     this.tournamentAliasInput.value = this.#state.nickname;
 
-    this.tournamentNameInput.addEventListener('input', this.handleTournamentInputName);
-    this.tournamentAliasInput.addEventListener('input', this.handleAliasInput);
+    this.tournamentNameInput.addEventListener('input', this.validateTournamentNameInput);
+    this.tournamentAliasInput.addEventListener('input', this.validateAliasInput);
     this.confirmButton.addEventListener('click', this.createTournament);
+
+    this.gameOptionsForm = this.querySelector('game-options');
+    this.gameOptionsForm.renderOptions();
+    const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
+    anyOptions.forEach((item) => {
+      if (!item.classList.contains('optout-all')) {
+        item.classList.add('d-none');
+      }
+    });
+    const isRankedSelector = this.gameOptionsForm.querySelector('#is-ranked-selector');
+    isRankedSelector?.classList.add('d-none');
   }
 
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
 
-  handleTournamentInputName(event) {
+  validateTournamentNameInput(event) {
     this.alert.classList.add('d-none');
     if (event.target.value.length < 1) {
       this.tournamentNameInput.classList.add('is-invalid');
@@ -98,7 +112,7 @@ export class TournamentCreation extends HTMLElement {
     }
   }
 
-  handleAliasInput(event) {
+  validateAliasInput(event) {
     this.alert.classList.add('d-none');
     if (event.target.value.length < 1) {
       this.tournamentAliasInput.classList.add('is-invalid');
@@ -122,11 +136,13 @@ export class TournamentCreation extends HTMLElement {
       'input[name="requiredParticipants"]:checked',
     ).value;
     this.#state.newTournament.alias = this.tournamentAliasInput.value;
+    this.#state.newTournament.options = this.gameOptionsForm.selectedOptions;
 
     const data = {
       name: this.#state.newTournament.name,
       required_participants: this.#state.newTournament.requiredParticipants,
       alias: this.#state.newTournament.alias,
+      options: this.#state.newTournament.options,
     };
     const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
     if (response.success) {
@@ -159,13 +175,13 @@ export class TournamentCreation extends HTMLElement {
 	    <div class="alert alert-danger d-none" role="alert""></div>
       <div id="create-tournament-form" class="d-flex flex-column w-100 gap-2">
         <div class="mb-4">
-          <label for="tournament-name" class="form-label">Tournament name</label>
+          <label for="tournament-name" class="form-label fs-5 fw-bold">Tournament name</label>
           <input type="text" class="form-control" id="tournament-name" placeholder="Tournament name" autocomplete="off" required>
           <div class="invalid-feedback" id="tournament-name-feedback"></div>
         </div>
     
         <div class="d-flex flex-column mb-4">
-          <label class="mb-2">Number of participants</label>
+          <label class="mb-2 fs-5 fw-bold">Number of participants</label>
           <div class="btn-group" role="group">
             <input type="radio" class="btn-check" name="requiredParticipants" id="${idForOption1}" value="${option1}" ${option1 === this.#defaultRequiredParticipants ? 'checked' : ''}>
             <label class="btn btn-outline-create-tournament py-0" for="${idForOption1}">${option1}</label>
@@ -174,11 +190,13 @@ export class TournamentCreation extends HTMLElement {
           </div>
         </div>
 
-        <div class="mb-3">
-          <label for="tournament-alias" class="form-label">Set your tournament alias</label>
+        <div class="mb-5 pb-3">
+          <label for="tournament-alias" class="form-label fs-5 fw-bold">Set your tournament alias</label>
           <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias" autocomplete="off" required>
           <div class="invalid-feedback" id="tournament-alias-feedback"></div>
         </div>
+
+        <game-options></game-options>
 
       </div>
     </div>
@@ -189,13 +207,14 @@ export class TournamentCreation extends HTMLElement {
     return `
     <style>
     .btn-outline-create-tournament {
-      border: 1px solid rgba(var(--bs-body-color-rgb), 0.4);
-      color: rgba(var(--bs-body-color-rgb), 0.6);
+      color: var(--pm-primary-100) !important;
+      border: 1px solid var(--pm-gray-500);
+      background-color: var(--pm-gray-400);
     }
     .btn-check:checked + .btn-outline-create-tournament,
     .btn-check:active + .btn-outline-create-tournament,
     .btn-outline-create-tournament.active {
-      color: var(--pm-primary-100);
+      color: var(--pm-primary-100) !important;
       font-weight: 600;
       background-color: var(--pm-primary-500);
       border-color: var(--pm-primary-500);

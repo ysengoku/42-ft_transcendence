@@ -33,7 +33,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       options.body = JSON.stringify(data);
     }
   }
-  devLog('Sending API request:', options);
+  devLog('Sending API request:', method, url, 'Request body: ', options.body);
 
   try {
     const response = await fetch(url, options);

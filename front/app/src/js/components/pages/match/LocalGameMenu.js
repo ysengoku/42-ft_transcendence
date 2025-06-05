@@ -12,7 +12,6 @@ export class LocalGameMenu extends HTMLElement {
 
   connectedCallback() {
     const storedOptions = localStorage.getItem('gameOptions');
-    console.log('Stored game options:', storedOptions);
     if (storedOptions) {
       this.#state.options = JSON.parse(storedOptions);
     }
@@ -27,7 +26,6 @@ export class LocalGameMenu extends HTMLElement {
   render() {
     this.innerHTML = this.template();
 
-    this.querySelector('.modal-title')?.classList.add('d-none');
     this.querySelector('#is-ranked-selector')?.classList.add('d-none');
 
     this.localPlayerButton = this.querySelector('#local-game-classic');
@@ -53,9 +51,6 @@ export class LocalGameMenu extends HTMLElement {
   navigateToGame(event) {
     event.preventDefault();
     this.#state.options = this.gameOptionsForm.selectedOptions;
-    if (this.#state.options) {
-      this.#state.options.isRanked = false;
-    }
     const gameType = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
     devLog('Game options:', this.#state.options, ' Game type: ', gameType);
     localStorage.setItem('gameOptions', JSON.stringify(this.#state.options));
