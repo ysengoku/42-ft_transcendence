@@ -1,7 +1,6 @@
 import json
 import logging
 from datetime import datetime
-
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.db import transaction
@@ -184,21 +183,6 @@ class DuelEvent:
             },
         )
 
-    def has_a_pending_invitation(self, sender_profile, sender_name, client_id) -> bool:
-        if GameInvitation.objects.filter(sender=sender_profile, status=GameInvitation.PENDING).exists():
-            logger.warning("Error : user %s has more than one pending invitation.", sender_name)
-            self.consumer.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "You have one invitation pending",
-                        "client_id": client_id,
-                    },
-                ),
-            )
-            return True
-        return False
-
     # TODO : security checks
 
     def send_game_invite(self, data):
@@ -221,6 +205,8 @@ class DuelEvent:
             )
             return
 
+        client_id = data["data"].get("client_id")
+
         try:
             receiver = Profile.objects.get(user__username=receiver_username)
         except Profile.DoesNotExist as e:
@@ -230,7 +216,40 @@ class DuelEvent:
 
         if self.self_or_target_already_in_game(receiver, receiver_username, client_id):
             return
-        if self.has_a_pending_invitation(self.consumer.user_profile, self.consumer.user.username, client_id):
+        # is_in_game: bool = (
+        #     GameRoom.objects.for_players(self.consumer.user_profile).for_pending_or_ongoing_status().exists()
+        # )
+        # if is_in_game:
+        #     logger.warning("Error : user %s is in a game : can't send invites.", self.consumer.user.username)
+        #     self.consumer.send(text_data=json.dumps({
+        #         "action": "game_invite_canceled",
+        #         "message": "You are in an ongoing game",
+        #         "client_id": client_id,
+        #     }))
+        #     return
+        # target_is_in_game: bool = (
+        #     GameRoom.objects.for_players(receiver).for_pending_or_ongoing_status().exists()
+        # )
+        # if target_is_in_game:
+        #     logger.warning("Error : user %s is in a game : can't receive invites.", receiver_username)
+        #     self.consumer.send(text_data=json.dumps({
+        #         "action": "game_invite_canceled",
+        #         "message": "Your target is in an ongoing game",
+        #         "client_id": client_id,
+        #     }))
+        #     return
+
+        if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
+            logger.warning("Error : user %s has more than one pending invitation.", self.consumer.user.username)
+            self.consumer.send(
+                text_data=json.dumps(
+                    {
+                        "action": "game_invite_canceled",
+                        "message": "You have one invitation pending",
+                        "client_id": client_id,
+                    },
+                ),
+            )
             return
         invitation = GameInvitation.objects.create(
             sender=self.consumer.user_profile,

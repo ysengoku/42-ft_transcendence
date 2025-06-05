@@ -15,9 +15,11 @@ class JWTEndpointsAuthMiddleware(APIKeyCookie):
 
     def authenticate(self, request, access_token: str):
         payload = RefreshToken.objects.select_related("profile").verify_access_token(access_token)
+
         user = User.objects.for_id(payload["sub"]).first()
         user.profile.update_activity()
         return user
+
 
 class JWTWebsocketAuthMiddleware:
     """
@@ -26,12 +28,11 @@ class JWTWebsocketAuthMiddleware:
     """
 
     def __init__(self, app):
-        self.app = app # ASGI app
+        self.app = app  # ASGI app
 
     async def __call__(self, scope, receive, send):
         headers = dict(scope["headers"])
-        cookies = headers.get(b"cookie", b"").decode(
-            "utf-8") if b"cookie" in headers else ""
+        cookies = headers.get(b"cookie", b"").decode("utf-8") if b"cookie" in headers else ""
         token = None
         scope["user"] = None
 
@@ -53,4 +54,3 @@ class JWTWebsocketAuthMiddleware:
             return User.objects.select_related("profile", "oauth_connection").filter(id=payload["sub"]).first()
         except (AuthenticationError, User.DoesNotExist):
             return None
-
