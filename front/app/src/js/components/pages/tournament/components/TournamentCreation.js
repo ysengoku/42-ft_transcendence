@@ -14,7 +14,6 @@ export class TournamentCreation extends HTMLElement {
     newTournament: {
       name: '',
       requiredParticipants: this.#defaultRequiredParticipants,
-      options: null,
     },
   };
 
@@ -62,7 +61,6 @@ export class TournamentCreation extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
-
   render() {
     this.innerHTML = this.template() + this.style();
 
@@ -80,7 +78,6 @@ export class TournamentCreation extends HTMLElement {
     this.confirmButton.addEventListener('click', this.createTournament);
 
     this.gameOptionsForm = this.querySelector('game-options');
-    this.gameOptionsForm.renderOptions();
     const anyOptions = this.gameOptionsForm.querySelectorAll('.opt-out-option');
     anyOptions.forEach((item) => {
       if (!item.classList.contains('optout-all')) {
@@ -94,7 +91,6 @@ export class TournamentCreation extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
-
   validateTournamentNameInput(event) {
     this.alert.classList.add('d-none');
     if (event.target.value.length < 1) {
@@ -136,13 +132,16 @@ export class TournamentCreation extends HTMLElement {
       'input[name="requiredParticipants"]:checked',
     ).value;
     this.#state.newTournament.alias = this.tournamentAliasInput.value;
-    this.#state.newTournament.options = this.gameOptionsForm.selectedOptions;
+    const options = this.gameOptionsForm.selectedOptions;
+    if (options && options.ranked) {
+      options.ranked = false;
+    }
 
     const data = {
       name: this.#state.newTournament.name,
       required_participants: this.#state.newTournament.requiredParticipants,
       alias: this.#state.newTournament.alias,
-      options: this.#state.newTournament.options,
+      options: options,
     };
     const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
     if (response.success) {
