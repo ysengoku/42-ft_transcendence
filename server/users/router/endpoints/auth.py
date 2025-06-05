@@ -24,6 +24,7 @@ from users.schemas import (
     SelfSchema,
     SignUpSchema,
 )
+from chat.duel_events import DuelEvent
 
 auth_router = Router()
 
@@ -152,6 +153,8 @@ def delete_account(request, username: str, response: HttpResponse):
 
     if user.username != username:
         raise HttpError(403, "You are not allowed to delete this account.")
+    # DELETE ALL INVITATION TO GAMES
+    DuelEvent.cancel_all_send_and_received_game_invites(username)
 
     old_refresh_token = request.COOKIES.get("refresh_token")
     if old_refresh_token:
