@@ -63,6 +63,7 @@ export class TournamentMenu extends HTMLElement {
     if (this.selectedTournament && this.selectedTournament.staus !== 'pending') {
       this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
+    this.modal.hide();
   }
 
   redirectToActiveTournament(id) {

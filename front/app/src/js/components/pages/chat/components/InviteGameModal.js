@@ -48,9 +48,7 @@ export class InviteGameModal extends HTMLElement {
       }
     });
 
-    if (this.#state.options) {
-      this.gameOptionsForm.selectedOptions = this.#state.options;
-    }
+    this.gameOptionsForm.selectedOptions = this.#state.options;
     this.modal = new Modal(this.querySelector('.modal'));
   }
 
@@ -68,13 +66,18 @@ export class InviteGameModal extends HTMLElement {
   }
 
   sendInvitation() {
+    const clientInstanceId = socketManager.getClientInstanceId('livechat');
     const message = {
       action: 'game_invite',
       data: {
         username: this.#state.opponent.username,
-        options: this.gameOptionsForm.selectedOptions,
+        client_id: clientInstanceId,
       },
     };
+    const options = this.optionsToObject(this.gameOptionsForm.selectedOptions);
+    if (options) {
+      message.data.options = options;
+    }
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
@@ -90,6 +93,21 @@ export class InviteGameModal extends HTMLElement {
       { once: true },
     );
     this.closeModal();
+  }
+
+  optionsToObject(data) {
+    console.log('Converting options to object:', this.#state.options);
+    if (!data || Object.keys(data).length === 0) {
+      return null;
+    }
+    const optionsObj = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== 'any') {
+        optionsObj[key] = value;
+      }
+    }
+    console.log('Converted options to object:', optionsObj);
+    return optionsObj;
   }
 
   template() {
