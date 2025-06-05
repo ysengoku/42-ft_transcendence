@@ -3,10 +3,7 @@ import logging
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, models, transaction
-from django.utils import timezone
 
 from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
@@ -14,7 +11,7 @@ from users.models import Profile
 from .chat_events import ChatEvent
 from .chat_utils import ChatUtils
 from .duel_events import DuelEvent
-from .models import Chat, ChatMessage, Notification
+from .models import Chat, Notification
 from .validator import Validator
 
 logger = logging.getLogger("server")
@@ -51,7 +48,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.user_profile.refresh_from_db()
                 redis_status_manager.set_user_online(self.user.id)
                 logger.info("User %s connected, now has %i active connexions",
-                    self.user.username, self.user_profile.nb_active_connexions,)
+                    self.user.username, self.user_profile.nb_active_connexions)
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
             self.close()
@@ -171,7 +168,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 case "add_new_friend":
                     self.add_new_friend(text_data_json)
                 case "join_chat":
-                    chat = ChatEvent(self)
+                    ChatEvent(self)
                     self.join_chat(text_data_json)
                 case _:
                     logger.warning("Unknown action : %s", action)
