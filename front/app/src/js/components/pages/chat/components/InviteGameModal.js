@@ -48,7 +48,6 @@ export class InviteGameModal extends HTMLElement {
       }
     });
 
-    this.gameOptionsForm.selectedOptions = this.#state.options;
     this.modal = new Modal(this.querySelector('.modal'));
   }
 
@@ -74,9 +73,12 @@ export class InviteGameModal extends HTMLElement {
         client_id: clientInstanceId,
       },
     };
-    const options = this.optionsToObject(this.gameOptionsForm.selectedOptions);
-    if (options) {
-      message.data.options = options;
+    const settings = this.optionsToObject(this.gameOptionsForm.selectedOptions);
+    if (settings) {
+      message.data.settings = settings;
+      if (settings.ranked) {
+        message.data.ranked = false;
+      }
     }
     socketManager.sendMessage('livechat', message);
     const queryParams = {
