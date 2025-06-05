@@ -102,7 +102,7 @@ Game options
 ```json
 {
   "score_to_win":	int,
-  "game_speed": string (),
+  "game_speed": string,
   "ranked": bool,
   "time_limit": int,
   "cool_mode": bool,
