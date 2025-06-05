@@ -333,7 +333,26 @@ class DuelEvent:
                 invitation.save()
                 invitation.sync_notification_status()
                 count += 1
-                notif_data = {
+                target = receiver if sender == profile else sender
+                # async_to_sync(channel_layer.group_send)(f"user_{target.user.id}", notif_data)
+                # async_to_sync(channel_layer.group_send)(f"user_{receiver.user.id}", notif_data)
+                # async_to_sync(channel_layer.group_send)(f"user_{sender.user.id}", notif_data)
+            #     {
+            #         "type": "chat_message",
+            #         "message": json.dumps(
+            #             {
+            #                 "action": "game_invite_canceled",
+            #                 "data": {
+            #                     "message": "The user deleted their profile",
+            #                     "username": username,
+            #                 },
+            #             },
+            #         ),
+            #     },
+            # )
+            async_to_sync(channel_layer.group_send)(
+                f"user_{target.user.id}",
+                {
                     "type": "chat_message",
                     "message": json.dumps(
                         {
@@ -345,38 +364,7 @@ class DuelEvent:
                         },
                     ),
                 },
-                target = receiver if sender == profile else sender
-                async_to_sync(channel_layer.group_send)(f"user_{target.user.id}", notif_data)
-            # async_to_sync(channel_layer.group_send)(f"user_{receiver.user.id}", notif_data)
-            # async_to_sync(channel_layer.group_send)(f"user_{sender.user.id}", notif_data)
-            #     {
-            #         "type": "chat_message",
-            #         "message": json.dumps(
-            #             {
-            #                 "action": "game_invite_canceled",
-            #                 "data": {
-            #                     "message": "The user deleted their profile",
-            #                     "username": username,
-            #                 },
-            #             },
-            #         ),
-            #     },
-            # )
-            # async_to_sync(channel_layer.group_send)(
-            #     f"user_{sender.user.id}",
-            #     {
-            #         "type": "chat_message",
-            #         "message": json.dumps(
-            #             {
-            #                 "action": "game_invite_canceled",
-            #                 "data": {
-            #                     "message": "The user deleted their profile",
-            #                     "username": username,
-            #                 },
-            #             },
-            #         ),
-            #     },
-            # )
+            )
             logger.info("Cancelled %d pending invitations for user %s", count, username)
 
 
