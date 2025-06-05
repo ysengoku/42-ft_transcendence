@@ -172,8 +172,35 @@ export class TournamentMenu extends HTMLElement {
       this.modalBody.innerHTML = this.registerTournamentTemplate();
       const modalTitle = this.modalBody.querySelector('.modal-title');
       const modatRequiredParticipants = this.modalBody.querySelector('#modal-required-participants');
+      const tournamentOptionScoreToWin = this.modalBody.querySelector('#tournament-option-score-to-win');
+      const tournamentOptionGameSpeed = this.modalBody.querySelector('#tournament-option-game-speed');
+      const tournamentOptionTimeLimit = this.modalBody.querySelector('#tournament-option-time-limit');
+      const tournamentOptionCoolMode = this.modalBody.querySelector('#tournament-option-cool-mode');
+
+      // ===== For test ==================================
+      this.selectedTournament.options = {};
+      this.selectedTournament.options.score_to_win = 10;
+      this.selectedTournament.options.game_speed = 'fast';
+      this.selectedTournament.options.time_limit = 3;
+      this.selectedTournament.options.cool_mode = true;
+      // =================================================
+
       modalTitle.textContent = this.selectedTournament.name;
       modatRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants}`;
+
+      if (this.selectedTournament.options.score_to_win) {
+        tournamentOptionScoreToWin.textContent = `Score to win: ${this.selectedTournament.options.score_to_win}`;
+      }
+      if (this.selectedTournament.options.game_speed) {
+        tournamentOptionGameSpeed.textContent = `Game speed: ${this.selectedTournament.options.game_speed}`;
+      }
+      if (this.selectedTournament.options.time_limit) {
+        tournamentOptionTimeLimit.textContent = `Time limit: ${this.selectedTournament.options.time_limit} min`;
+      }
+      if (this.selectedTournament.options.cool_mode) {
+        tournamentOptionCoolMode.textContent =
+          this.selectedTournament.options.cool_mode === true ? 'Buffs: enabled' : 'Buffs: disabled';
+      }
 
       this.aliasInput = this.modalBody.querySelector('#tournament-alias');
       this.aliasInputFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
@@ -357,6 +384,13 @@ export class TournamentMenu extends HTMLElement {
     .invalid-feedback {
       color: var(--pm-red-300) !important;
     }
+    .tournament-options-tag {
+      background-color: var(--pm-primary-500);
+      color: var(--pm-primary-100);
+      border-radius: 6px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.9rem;
+    }
     </style>
     `;
   }
@@ -372,7 +406,7 @@ export class TournamentMenu extends HTMLElement {
           <div class="modal-body"></div>
           <div class="modal-footer border-0 my-2 px-3">
             <button type="button" class="cancel-button btn me-3" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="confirm-button btn fw-bolder ms-2" disabled></button>
+            <button type="button" class="confirm-button btn fs-5 fw-bolder ms-2" disabled></button>
           </div>
         </div>
       </div>
@@ -385,9 +419,15 @@ export class TournamentMenu extends HTMLElement {
     <div class="d-flex flex-column align-items-center px-4 w-100">
       <h2 class="modal-title text-center"></h2>
       <p class="text-center fs-6 m-0" id="modal-tournament-status">Open for entries</p>
-      <div class="d-flex flex-row justify-content-center align-items-center mb-5 pb-2 gap-2">
+      <div class="d-flex flex-row justify-content-center align-items-center mb-3 gap-2">
         <p class="text-center fs-4 m-0" id="modal-required-participants"></p>
         <p class="text-center fs-6 m-0 pe-1">players</p>
+      </div>
+      <div class="d-flex flex-wrap justify-content-center mb-5 pb-2">
+        <div class="tournament-options-tag m-2" id="tournament-option-score-to-win"></div>
+        <div class="tournament-options-tag m-2" id="tournament-option-game-speed"></div>
+        <div class="tournament-options-tag m-2" id="tournament-option-time-limit"></div>
+        <div class="tournament-options-tag m-2" id="tournament-option-cool-mode"></div>
       </div>
       <div id="registration-fail-alert-wrapper"></div>
       <div id="tournament-register-form" class="d-flex flex-column w-100 mb-3">

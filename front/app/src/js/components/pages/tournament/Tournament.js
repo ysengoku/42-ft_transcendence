@@ -49,22 +49,22 @@ export class Tournament extends HTMLElement {
   }
 
   async fetchTournamentData() {
-    // const response = await apiRequest(
-    //   'GET',
-    //   /* eslint-disable-next-line new-cap */
-    //   API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
-    //   null,
-    //   false,
-    //   true,
-    // );
-    // if (!response.success) {
-    //   // TODO: handle error
-    //   return;
-    // }
-    // this.#state.tournament = response.data;
+    const response = await apiRequest(
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
+      null,
+      false,
+      true,
+    );
+    if (!response.success) {
+      // TODO: handle error
+      return;
+    }
+    this.#state.tournament = response.data;
 
     // =========== For test ================================================
-    this.#state.tournament = await mockTournamentDetail('mockidongoing');
+    // this.#state.tournament = await mockTournamentDetail('mockidongoing');
     // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
