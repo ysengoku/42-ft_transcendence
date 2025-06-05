@@ -96,7 +96,6 @@ export class InviteGameModal extends HTMLElement {
   }
 
   optionsToObject(data) {
-    console.log('Converting options to object:', this.#state.options);
     if (!data || Object.keys(data).length === 0) {
       return null;
     }
@@ -106,7 +105,6 @@ export class InviteGameModal extends HTMLElement {
         optionsObj[key] = value;
       }
     }
-    console.log('Converted options to object:', optionsObj);
     return optionsObj;
   }
 
