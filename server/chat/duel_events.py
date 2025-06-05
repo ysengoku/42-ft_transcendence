@@ -5,6 +5,7 @@ from datetime import datetime
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 
 from pong.models import GameRoom, GameRoomPlayer
 from users.models import Profile
@@ -133,7 +134,11 @@ class DuelEvent:
     # TODO : security checks
     def decline_game_invite(self, data):
         sender_name = data["data"].get("username")
-        sender = Profile.objects.get(user__username=sender_name)
+        try:
+            sender = Profile.objects.get(user__username=sender_name)
+        except Profile.DoesNotExist as e:
+            logger.warning("The invitation sender deleted their profile : %s", sender_name)
+            return
         invitations = GameInvitation.objects.filter(
             sender=sender,
             recipient=self.consumer.user.profile,
@@ -212,7 +217,6 @@ class DuelEvent:
             receiver = Profile.objects.get(user__username=receiver_username)
         except Profile.DoesNotExist as e:
             logger.error("Profile does not exist : %s", str(e))
-            self.consumer.close()
             return
 
         if self.self_or_target_already_in_game(receiver, receiver_username, client_id):
@@ -265,7 +269,7 @@ class DuelEvent:
             status=GameInvitation.PENDING,
         )
         if not invitations.exists():
-            logger.debug("No pending invitations to cancel for user %s", self.consumer.user.username)
+            logger.info("No pending invitations to cancel for user %s", self.consumer.user.username)
             return
         with transaction.atomic():
             count = 0
@@ -302,6 +306,46 @@ class DuelEvent:
                 ),
             },
         )
+
+    @staticmethod
+    def cancel_all_send_and_received_game_invites(username):
+        try:
+            profile = Profile.objects.get(user__username=username)
+        except Profile.DoesNotExist:
+            logger.warning("OH SHIT")
+        # profile = self.consumer.user.profile
+        invitations = GameInvitation.objects.filter(
+            Q(sender=profile) | Q(recipient=profile),
+            status=GameInvitation.PENDING,
+        )
+        if not invitations.exists():
+            logger.info("No pending invitations to cancel for user %s", username)
+            return
+        with transaction.atomic():
+            count = 0
+            for invitation in invitations:
+                invitation.status = GameInvitation.CANCELLED
+                receiver = invitation.recipient
+                invitation.save()
+                invitation.sync_notification_status()
+                count += 1
+            logger.info("Cancelled %d pending invitations for user %s", count, username)
+        # async_to_sync(self.consumer.channel_layer.group_send)(
+        #     f"user_{receiver.user.id}",
+        #     {
+        #         "type": "chat_message",
+        #         "message": json.dumps(
+        #             {
+        #                 "action": "game_invite_canceled",
+        #                 "data": {
+        #                     "username": username,
+        #                     "nickname": self.consumer.user.nickname,
+        #                 },
+        #             },
+        #         ),
+        #     },
+        # )
+
 
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]
