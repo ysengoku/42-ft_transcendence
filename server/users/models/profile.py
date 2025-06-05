@@ -283,7 +283,11 @@ class Profile(models.Model):
             "is_online": self.is_online,
         }
 
-    def can_be_invited(self):
+    def can_participate_in_game(self):
+        """
+        Checks if the user can be invited or can start games.
+        User should not participate in matchmaking, be a participant of a tournament or play pong match currently.
+        """
         active_statuses = ["pending", "ongoing"]
         # active non-tournament game
         has_active_game_room = self.game_rooms.filter(status__in=active_statuses, bracket__isnull=True).exists()
