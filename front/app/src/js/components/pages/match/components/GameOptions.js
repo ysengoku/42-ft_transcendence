@@ -124,7 +124,7 @@ export class GameOptions extends HTMLElement {
   }
 
   renderOptions() {
-    if (!this.#state.selectedOptions  || Object.keys(this.#state.selectedOptions).length === 0) {
+    if (!this.#state.selectedOptions || Object.keys(this.#state.selectedOptions).length === 0) {
       this.#state.selectedOptions = {
         ...this.#state.defaultOptionValue,
       };
@@ -282,8 +282,6 @@ export class GameOptions extends HTMLElement {
 
   template() {
     return `
-    <h2 class="modal-title text-center pb-3">Game Options</h2>
-
     <! -- Opt-out All Options -->
     <div class="opt-out-option optout-all form-check pt-1 mb-5 fs-5">
       <input class="form-check-input" type="checkbox" id="optout-gameOptions">

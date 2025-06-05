@@ -160,7 +160,7 @@ export class DuelMenu extends HTMLElement {
   }
 
   /* ------------------------------------------------------------------------ */
-  /*      Event handling                                                      */
+  /*      Event handling - Game options                                       */
   /* ------------------------------------------------------------------------ */
   openGameOptionsModal() {
     const template = document.createElement('template');
@@ -235,7 +235,6 @@ export class DuelMenu extends HTMLElement {
     return optionsObj;
   }
 
-// /ws/matchmaking/?score_to_win=5
   optionsToQueryParams() {
     if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
       return null;
@@ -245,25 +244,28 @@ export class DuelMenu extends HTMLElement {
       queryParams += `?score_to_win=${this.#state.options.score_to_win}`;
     }
     if (this.#state.options.game_speed !== 'any') {
-      queryParams.length > 1 ? queryParams += '&' : queryParams += '?';
+      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
       queryParams += `game_speed=${this.#state.options.game_speed}`;
     }
     if (this.#state.options.time_limit !== 'any') {
-      queryParams.length > 1 ? queryParams += '&' : queryParams += '?';
+      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
       queryParams += `time_limit=${this.#state.options.time_limit}`;
     }
     if (this.#state.options.ranked !== 'any') {
-      queryParams.length > 1 ? queryParams += '&' : queryParams += '?';
+      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
       queryParams += `ranked=${this.#state.options.ranked}`;
     }
     if (this.#state.options.cool_mode !== 'any') {
-      queryParams.length > 1 ? queryParams += '&' : queryParams += '?';
+      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
       queryParams += `cool_mode=${this.#state.options.cool_mode}`;
     }
     console.log('Converted options to query params:', queryParams);
     return queryParams;
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling - Game invitations                                   */
+  /* ------------------------------------------------------------------------ */
   async handleSearchInput(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -360,8 +362,8 @@ export class DuelMenu extends HTMLElement {
       data: {
         username: this.#state.opponentUsername,
         client_id: clientInstanceId,
-      }
-    }
+      },
+    };
     const options = this.optionsToObject();
     if (options) {
       message.data.options = options;
@@ -374,14 +376,6 @@ export class DuelMenu extends HTMLElement {
       avatar: this.opponentAvatar.src,
     };
     router.navigate('/duel', queryParams);
-  }
-
-  requestMatchMaking(event) {
-    event.preventDefault();
-    const queryParams = this.optionsToQueryParams();
-    socketManager.openSocket('matchmaking', queryParams);
-    devLog('Requesting matchmaking...');
-    router.navigate('/duel', { status: 'matchmaking' });
   }
 
   hideUserList(event) {
@@ -402,6 +396,17 @@ export class DuelMenu extends HTMLElement {
     if (event.key === 'Enter') {
       event.preventDefault();
     }
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling - Matchmaking                                        */
+  /* ------------------------------------------------------------------------ */
+  requestMatchMaking(event) {
+    event.preventDefault();
+    const queryParams = this.optionsToQueryParams();
+    socketManager.openSocket('matchmaking', queryParams);
+    devLog('Requesting matchmaking...');
+    router.navigate('/duel', { status: 'matchmaking' });
   }
 
   /* ------------------------------------------------------------------------ */
