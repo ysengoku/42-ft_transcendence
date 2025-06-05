@@ -94,7 +94,7 @@ OR to th inviter and invitee when the inviter has canceled his invitation.
 - `nickname`(string): nickname of the invitee
 - `avatar`(string): avatart url of the invitee
 
-`game_decliend`: Sent to the inviter when the invitee declined the invitation
+`game_declined`: Sent to the inviter when the invitee declined the invitation
 - `username`(string): username of the invitee 
 - `nickname`(string): nickname of the invitee
 
@@ -102,9 +102,10 @@ Game options
 ```json
 {
   "score_to_win":	int,
-  "game_speed": string (),
-  "is_ranked": bool,
-  "time_limit_minutes" int,
+  "game_speed": string,
+  "ranked": bool,
+  "time_limit": int,
+  "cool_mode": bool,
 }
 ```
 

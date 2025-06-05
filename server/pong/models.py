@@ -189,9 +189,11 @@ class GameRoomPlayer(models.Model):
 
 
 class GameRoomQuerySet(models.QuerySet):
-    def for_valid_game_room(self, profile: Profile):
+    def for_valid_game_room(self, profile: Profile, settings: GameRoomSettings):
         """Valid game room is a pending game room with less than 2 players."""
-        return self.annotate(players_count=Count("players")).filter(status=GameRoom.PENDING, players_count__lt=2)
+        return self.annotate(players_count=Count("players")).filter(
+            status=GameRoom.PENDING, players_count__lt=2, settings=settings,
+        )
 
     def for_id(self, game_room_id: str):
         return self.filter(id=game_room_id)
@@ -245,7 +247,7 @@ class GameRoom(models.Model):
         ordering = ["-date"]
 
     def __str__(self) -> str:
-        return f"{self.get_status_display()} match {str(self.id)}. Settings: {self.settings}"
+        return f"{self.get_status_display()} match {str(self.id)} with settings: {self.settings}"
 
     def close(self):
         self.status = GameRoom.CLOSED

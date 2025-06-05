@@ -136,14 +136,13 @@ export class NotificationsListItem extends HTMLElement {
     const data = await confirmationFromServer;
     duelPage
       ? duelPage.handleInvitationAccepted(data)
-      : (console.log('Navigating to duel page with data:', data),
-        router.navigate('/duel', {
+      : router.navigate('/duel', {
           status: 'starting',
           gameId: data.game_id,
           username: data.username,
           nickname: data.nickname,
           avatar: data.avatar,
-        }));
+        });
   }
 
   handleDeclineDuel() {
@@ -163,7 +162,6 @@ export class NotificationsListItem extends HTMLElement {
   }
 
   handleParticipateTournament() {
-    console.log('Participating in tournament');
     const dropdown = this.closest('.dropdown-menu');
     dropdown.classList.remove('show');
   }
