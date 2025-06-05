@@ -11,7 +11,6 @@ export class participantElement extends HTMLElement {
   set data(data) {
     this.#state.participantData = data.participant;
     this.#state.score = data.score.toString() || '';
-    console.log('Participant data set:', this.#state.participantData);
     this.render();
   }
 

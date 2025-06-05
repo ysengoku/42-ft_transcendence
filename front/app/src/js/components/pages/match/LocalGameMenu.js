@@ -12,7 +12,6 @@ export class LocalGameMenu extends HTMLElement {
 
   connectedCallback() {
     const storedOptions = localStorage.getItem('gameOptions');
-    console.log('Stored game options:', storedOptions);
     if (storedOptions) {
       this.#state.options = JSON.parse(storedOptions);
     }

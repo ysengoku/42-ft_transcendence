@@ -144,7 +144,6 @@ export class TournamentCreation extends HTMLElement {
       alias: this.#state.newTournament.alias,
       options: this.#state.newTournament.options,
     };
-    devLog('Creating tournament with data:', data);
     const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
     if (response.success) {
       document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true }));
