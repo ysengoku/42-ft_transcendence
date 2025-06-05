@@ -283,6 +283,22 @@ class Profile(models.Model):
             "is_online": self.is_online,
         }
 
+    def can_be_invited(self):
+        active_statuses = ["pending", "ongoing"]
+        # active non-tournament game
+        has_active_game_room = self.game_rooms.filter(status__in=active_statuses, bracket__isnull=True).exists()
+        if has_active_game_room:
+            return False
+
+        # active tournament presence
+        is_in_active_tournament = self.participant_set.filter(
+            tournament__status__in=active_statuses,
+        ).exists()
+        if is_in_active_tournament:  # noqa: SIM103
+            return False
+
+        return True
+
 
 class Friendship(models.Model):
     from_profile = models.ForeignKey(Profile, related_name="from_profile", on_delete=models.CASCADE)
