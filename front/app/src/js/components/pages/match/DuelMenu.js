@@ -361,9 +361,9 @@ export class DuelMenu extends HTMLElement {
         client_id: clientInstanceId,
       },
     };
-    const options = this.optionsToObject();
-    if (options) {
-      message.data.options = options;
+    const settings = this.optionsToObject();
+    if (settings) {
+      message.data.settings = settings;
     }
     socketManager.sendMessage('livechat', message);
     const queryParams = {
