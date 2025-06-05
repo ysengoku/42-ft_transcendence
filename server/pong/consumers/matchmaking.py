@@ -43,7 +43,7 @@ class MatchmakingConsumer(WebsocketConsumer):
             self.game_room: GameRoom = self._with_db_lock_find_valid_game_room()
 
             if not self.game_room:
-                self.game_room = GameRoom.objects.create()
+                self.game_room = GameRoom.objects.create(settings=self.game_room_settings)
                 game_room_player: GameRoomPlayer = GameRoomPlayer.objects.create(
                     game_room=self.game_room,
                     profile=self.user.profile,
@@ -64,7 +64,6 @@ class MatchmakingConsumer(WebsocketConsumer):
             else:
                 game_room_player: GameRoomPlayer = GameRoomPlayer.objects.filter(
                     game_room=self.game_room,
-                    game_room__settings=self.game_room_settings,
                     profile=self.user.profile,
                 ).first()
                 game_room_player.inc_number_of_connections()
@@ -108,7 +107,6 @@ class MatchmakingConsumer(WebsocketConsumer):
             room_to_clean: GameRoom = GameRoom.objects.select_for_update().filter(id=self.game_room.id).first()
             disconnected_player: GameRoomPlayer = GameRoomPlayer.objects.filter(
                 game_room=self.game_room,
-                game_room__setings=self.game_room_settings,
                 profile=self.user.profile,
             ).first()
             disconnected_player.dec_number_of_connections()
@@ -188,7 +186,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         If room was found, use it's id to get an actually locked room.
         Revalidate it.
         """
-        candidate_room = GameRoom.objects.for_valid_game_room(self.user.profile).first()
+        candidate_room = GameRoom.objects.for_valid_game_room(self.user.profile, self.game_room_settings).first()
         if candidate_room:
             locked_candidate_room: GameRoom | None = (
                 GameRoom.objects.select_for_update()
@@ -223,7 +221,7 @@ class MatchmakingConsumer(WebsocketConsumer):
                     return None
                 setting_type = type(game_room_settings[setting_key])
                 if setting_type is bool:
-                    game_room_settings[setting_key] = setting_value and setting_value != "False"
+                    game_room_settings[setting_key] = setting_value and setting_value.lower() != "false"
                 else:
                     game_room_settings[setting_key] = setting_type(setting_value)
 
