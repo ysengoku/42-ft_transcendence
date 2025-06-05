@@ -15,6 +15,9 @@ from tournaments.schemas import TournamentCreateSchema, TournamentSchema
 
 tournaments_router = Router()
 
+import logging
+
+logger = logging.getLogger("server")
 
 @tournaments_router.post(
     "",
