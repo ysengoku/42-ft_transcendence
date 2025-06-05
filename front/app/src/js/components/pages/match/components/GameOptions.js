@@ -43,6 +43,7 @@ export class GameOptions extends HTMLElement {
   }
 
   connectedCallback() {
+    this.#state.selectedOptions = this.getOptionsFromLocalStorage();
     if (!this.#state.selectedOptions || Object.keys(this.#state.selectedOptions).length === 0) {
       this.#state.selectedOptions = {
         ...this.#state.defaultOptionValue,
@@ -72,13 +73,48 @@ export class GameOptions extends HTMLElement {
     this.modal = null;
   }
 
-  set selectedOptions(options) {
-    this.#state.selectedOptions = options;
-    this.renderOptions();
+  get selectedOptions() {
+    this.storeOptionstoLocalStorage();
+    return this.#state.selectedOptions;
   }
 
-  get selectedOptions() {
-    return this.#state.selectedOptions;
+  getOptionsFromLocalStorage() {
+    const storedOptions = localStorage.getItem('gameOptions');
+    return storedOptions ? JSON.parse(storedOptions) : null;
+  }
+
+  storeOptionstoLocalStorage() {
+    if (!this.#state.selectedOptions) {
+      return;
+    }
+    const scoreToWin =
+      this.#state.selectedOptions.score_to_win === 'any'
+        ? this.#state.defaultOptionValue.score_to_win
+        : this.#state.selectedOptions.score_to_win || this.#state.defaultOptionValue.score_to_win;
+    const gameSpeed =
+      this.#state.selectedOptions.game_speed === 'any'
+        ? this.#state.defaultOptionValue.game_speed
+        : this.#state.selectedOptions.game_speed || this.#state.defaultOptionValue.game_speed;
+    const timeLimit =
+      this.#state.selectedOptions.time_limit === 'any'
+        ? this.#state.defaultOptionValue.time_limit
+        : this.#state.selectedOptions.time_limit || this.#state.defaultOptionValue.time_limit;
+    const ranked =
+      this.#state.selectedOptions.ranked === 'any'
+        ? this.#state.defaultOptionValue.ranked
+        : this.#state.selectedOptions.ranked || this.#state.defaultOptionValue.ranked;
+    const coolMode =
+      this.#state.selectedOptions.cool_mode === 'any'
+        ? this.#state.defaultOptionValue.cool_mode
+        : this.#state.selectedOptions.cool_mode || this.#state.defaultOptionValue.cool_mode;
+    const options = {
+      score_to_win: scoreToWin,
+      game_speed: gameSpeed,
+      time_limit: timeLimit,
+      ranked: ranked,
+      cool_mode: coolMode,
+    };
+    localStorage.setItem('gameOptions', JSON.stringify(options));
   }
 
   /* ------------------------------------------------------------------------ */
@@ -102,6 +138,8 @@ export class GameOptions extends HTMLElement {
     this.isRankedOptout = this.querySelector('#optout-ranked');
     this.coolModeOptout = this.querySelector('#optout-cool_mode');
 
+    this.renderOptions();
+
     // Input event handlers
     this.scoreToWinInput.addEventListener('input', this.updateOptions);
     this.scoreToWinInput.addEventListener('input', this.updateSelectedValueOnRange);
@@ -123,12 +161,6 @@ export class GameOptions extends HTMLElement {
   }
 
   renderOptions() {
-    if (!this.#state.selectedOptions || Object.keys(this.#state.selectedOptions).length === 0) {
-      this.#state.selectedOptions = {
-        ...this.#state.defaultOptionValue,
-      };
-    }
-
     if (this.#state.selectedOptions.score_to_win === 'any') {
       this.scoreToWinOptout.checked = true;
       const input = this.scoreToWinInput.closest('.option-input');
