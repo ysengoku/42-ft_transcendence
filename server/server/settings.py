@@ -141,9 +141,6 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # Profiling
     "silk",
-    # Testing frameworks
-    "rest_framework",
-    "rest_framework_simplejwt",
 ]
 
 MIDDLEWARE = [
