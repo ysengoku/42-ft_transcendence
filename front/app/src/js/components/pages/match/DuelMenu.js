@@ -221,7 +221,6 @@ export class DuelMenu extends HTMLElement {
   }
 
   optionsToObject() {
-    console.log('Converting options to object:', this.#state.options);
     if (Object.keys(this.#state.options).length === 0) {
       return null;
     }
@@ -231,7 +230,6 @@ export class DuelMenu extends HTMLElement {
         optionsObj[key] = value;
       }
     }
-    console.log('Converted options to object:', optionsObj);
     return optionsObj;
   }
 
@@ -259,7 +257,6 @@ export class DuelMenu extends HTMLElement {
       queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
       queryParams += `cool_mode=${this.#state.options.cool_mode}`;
     }
-    console.log('Converted options to query params:', queryParams);
     return queryParams;
   }
 
