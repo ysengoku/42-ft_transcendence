@@ -61,7 +61,6 @@ export class MultiplayerGame extends HTMLElement {
       }
       var keyCode = e.code;
       const now = Date.now();
-      // console.log(now);
       if ((keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_left", now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
@@ -88,11 +87,8 @@ export class MultiplayerGame extends HTMLElement {
       if (e.defaultPrevented) {
         return; // Do noplayerglb if the event was already processed
       }
-      // console.log(bumper)
-      // console.log(bumper.inputQueue)
       var keyCode = e.code;
       const now = -Date.now();
-      console.log(ourBumperIndexContainer.ourBumperIndex);
       if ((keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_left", now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
@@ -434,7 +430,7 @@ export class MultiplayerGame extends HTMLElement {
         case 'player_joined':
           ourBumperIndexContainer.ourBumperIndex = data.player_number - 1;
           theirBumper = Math.abs(ourBumperIndexContainer.ourBumperIndex - 1);
-          // console.log(data)
+          console.log(data)
           playerIdContainer.playerId = data.player_id;
           camera.position.set(0, 15, -20);
           camera.lookAt(new THREE.Vector3(0,0,0));
@@ -470,7 +466,6 @@ export class MultiplayerGame extends HTMLElement {
       Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
       Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
 
-      console.log(ourBumperIndexContainer.ourBumperIndex + "   " + theirBumper);
       if (((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) && !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x > 10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf))
           Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
       if (((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) && !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x < -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf))
@@ -481,29 +476,6 @@ export class MultiplayerGame extends HTMLElement {
       if (((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) && !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x < -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf))
         Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
 
-
-      // let i = 0;
-      // console.log(Bumpers[1].inputQueue[Bumpers[1].inputQueue.length - 1] == undefined)
-      // Bumpers[1].inputQueue.length
-      // if (Bumpers[theirBumper].inputQueue.length != 0)
-      // {
-      //   if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1])
-      //   {
-      //     if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][0] == "move_left" && !(Bumpers[theirBumper].cubeMesh.position.x > 10 - 0.5 - Bumpers[theirBumper].lenghtHalf))
-      //       if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][1] > 0)  
-      //         Bumpers[theirBumper].cubeMesh.position.x += Bumpers[theirBumper].speed;
-      //     if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][0] == "move_right" && !(Bumpers[theirBumper].cubeMesh.position.x < -10 + 0.5 + Bumpers[theirBumper].lenghtHalf))
-      //       if (Bumpers[theirBumper].inputQueue[Bumpers[theirBumper].inputQueue.length - 1][1] > 0)    
-      //         Bumpers[theirBumper].cubeMesh.position.x -= Bumpers[theirBumper].speed;
-      //   }
-      // }
-        // i++;
-      // }
-
-      // Bumpers[1].inputQueue.splice(0, 1);
-      // console.log(Bumpers[0].cubeMesh.position.x);
-
-      // console.log(Coin.cylinderMesh.position);
       if (mixer) {
         mixer.update(delta);
       }

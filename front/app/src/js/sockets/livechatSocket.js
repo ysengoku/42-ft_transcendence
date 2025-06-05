@@ -64,29 +64,31 @@ socketManager.addSocket('livechat', {
   },
   game_invite_canceled: async (data) => {
     const user = await auth.getStoredUser();
-    const duelPageElement = document.querySelector('duel-page');
+    const duelPageElement = window.location.pathname === '/duel' ? document.querySelector('duel-page') : null;
     const clientId = socketManager.getClientInstanceId('livechat');
     if (!user || !clientId) {
       return;
     }
     const isCurrentTab = data.client_id === clientId;
+    let opponent;
+    if (duelPageElement) {
+      opponent = duelPageElement.opponent;
+      if (isCurrentTab || data.username.toLowerCase() === opponent.username.toLowerCase()) {
+        duelPageElement.status = 'canceled';
+      }
+    }
     let message;
     let type = TOAST_TYPES.INFO;
-    switch (isCurrentTab) {
-      case true:
-        if (window.location.pathname === '/duel') {
-          duelPageElement.status = 'canceled';
-        }
-        if (!data.username) {
-          data.message ? (message = data.message) : (message = 'Game invitation has been canceled.');
-          type = TOAST_TYPES.ERROR;
-        }
-        break;
-      case false:
-        message =
-          data.username.toLowerCase() === user.username.toLowerCase()
-            ? 'Your invitation has been canceled.'
-            : `${data.nickname} canceled the duel invitation.`;
+    if (!data.username && isCurrentTab && duelPageElement) {
+      data.message ? (message = data.message) : (message = 'Game invitation has been canceled.');
+      type = TOAST_TYPES.ERROR;
+    } else {
+      message =
+        data.username.toLowerCase() === user.username.toLowerCase()
+          ? 'Your duel invitation has been canceled.'
+          : data.nickname
+            ? `${data.nickname} canceled the duel invitation.`
+            : 'Your rival canceled the duel invitation.';
     }
     if (message) {
       showToastNotification(message, type);

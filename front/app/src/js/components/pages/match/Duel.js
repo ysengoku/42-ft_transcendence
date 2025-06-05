@@ -59,6 +59,10 @@ export class Duel extends HTMLElement {
     return this.#state.clientId;
   }
 
+  get opponent() {
+    return this.#state.opponent;
+  }
+
   async connectedCallback() {
     this.#state.loggedInUser = await auth.getUser();
     if (!this.#state.loggedInUser) {
@@ -75,7 +79,7 @@ export class Duel extends HTMLElement {
 
     this.render();
     if (this.#state.status === 'matchmaking') {
-      this.requestMatchmaking();
+      document.addEventListener('gameFound', this.handleGameFound);
     }
   }
 
@@ -139,12 +143,6 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
-  requestMatchmaking() {
-    devLog('Requesting matchmaking...');
-    socketManager.openSocket('matchmaking');
-    document.addEventListener('gameFound', this.handleGameFound);
-  }
-
   handleGameFound(event) {
     devLog('Game found:', event.detail);
     this.#state.gameId = event.detail.game_room_id;
@@ -215,6 +213,9 @@ export class Duel extends HTMLElement {
   startDuel() {
     this.#state.status = 'starting';
     this.animation.classList.add('d-none');
+    this.cancelButton.classList.add('d-none');
+    this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
+    this.cancelButton?.removeEventListener('click', this.cancelInvitation);
 
     this.header.textContent = this.headerTemplate();
     this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
