@@ -47,12 +47,12 @@ class DuelEvent:
             },
         }
 
-    def self_or_sender_already_in_game(self, sender, sender_name, client_id):
+    def self_or_target_already_in_game(self, target, target_name, client_id):
         is_in_game: bool = (
             GameRoom.objects.for_players(self.consumer.user_profile).for_pending_or_ongoing_status().exists()
         )
         if is_in_game:
-            logger.warning("Error : user %s is in a game : can't accept invites.", self.consumer.user.username)
+            logger.warning("Error : user %s is in a game : can't join a game right now.", self.consumer.user.username)
             self.consumer.send(text_data=json.dumps({
                 "action": "game_invite_canceled",
                 "message": "You are in an ongoing game",
@@ -60,13 +60,13 @@ class DuelEvent:
             }))
             return True
         target_is_in_game: bool = (
-            GameRoom.objects.for_players(sender).for_pending_or_ongoing_status().exists()
+            GameRoom.objects.for_players(target).for_pending_or_ongoing_status().exists()
         )
         if target_is_in_game:
-            logger.warning("Error : user %s is in a game : can't join a game right now.", sender_name)
+            logger.warning("Error : user %s is in a game : can't join a game right now.", target_name)
             self.consumer.send(text_data=json.dumps({
                 "action": "game_invite_canceled",
-                "message": "Your target is in an ongoing game",
+                "message": "Your partner is in an ongoing game",
                 "client_id": client_id,
             }))
             return True
@@ -89,7 +89,7 @@ class DuelEvent:
             )
             return
 
-        if self.self_or_sender_already_in_game(sender, sender_name, client_id):
+        if self.self_or_target_already_in_game(sender, sender_name, client_id):
             return
         try:
             invitation = GameInvitation.objects.get(
@@ -121,9 +121,10 @@ class DuelEvent:
         game_room = self.create_game_room(sender, self.consumer.user.profile)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save()
+
         invitation.sync_notification_status()
-        # if any invitations were send by the user, they are cancelled because they are in a game now
         self.cancel_game_invite()
+        # if any invitations were send by the user, they are cancelled because they are in a game now
         sender_data = self.data_for_game_found(sender, game_room.id)
         receiver_data = self.data_for_game_found(self.consumer.user.profile, game_room.id)
         async_to_sync(self.consumer.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
@@ -188,7 +189,8 @@ class DuelEvent:
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         client_id = data["data"].get("client_id")
-        if not Validator.validate_options(options):
+        if options is not None and not Validator.validate_options(options):
+            self.consumer.close()
             return
         receiver_username = data["data"].get("username")
         if receiver_username == self.consumer.user.username:
@@ -213,27 +215,7 @@ class DuelEvent:
             self.consumer.close()
             return
 
-        is_in_game: bool = (
-            GameRoom.objects.for_players(self.consumer.user_profile).for_pending_or_ongoing_status().exists()
-        )
-        if is_in_game:
-            logger.warning("Error : user %s is in a game : can't send invites.", self.consumer.user.username)
-            self.consumer.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "You are in an ongoing game",
-                "client_id": client_id,
-            }))
-            return
-        target_is_in_game: bool = (
-            GameRoom.objects.for_players(receiver).for_pending_or_ongoing_status().exists()
-        )
-        if target_is_in_game:
-            logger.warning("Error : user %s is in a game : can't receive invites.", receiver_username)
-            self.consumer.send(text_data=json.dumps({
-                "action": "game_invite_canceled",
-                "message": "Your target is in an ongoing game",
-                "client_id": client_id,
-            }))
+        if self.self_or_target_already_in_game(receiver, receiver_username, client_id):
             return
 
         if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
