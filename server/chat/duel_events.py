@@ -328,28 +328,12 @@ class DuelEvent:
             for invitation in invitations:
                 invitation.status = GameInvitation.CANCELLED
                 sender = invitation.sender
+                nickname = invitation.sender.user.nickname
                 receiver = invitation.recipient
-                # client_id = invitation.client_id
                 invitation.save()
                 invitation.sync_notification_status()
                 count += 1
                 target = receiver if sender == profile else sender
-                # async_to_sync(channel_layer.group_send)(f"user_{target.user.id}", notif_data)
-                # async_to_sync(channel_layer.group_send)(f"user_{receiver.user.id}", notif_data)
-                # async_to_sync(channel_layer.group_send)(f"user_{sender.user.id}", notif_data)
-            #     {
-            #         "type": "chat_message",
-            #         "message": json.dumps(
-            #             {
-            #                 "action": "game_invite_canceled",
-            #                 "data": {
-            #                     "message": "The user deleted their profile",
-            #                     "username": username,
-            #                 },
-            #             },
-            #         ),
-            #     },
-            # )
             async_to_sync(channel_layer.group_send)(
                 f"user_{target.user.id}",
                 {
@@ -360,6 +344,7 @@ class DuelEvent:
                             "data": {
                                 "message": "The user deleted their profile",
                                 "username": username,
+                                "nickname": receiver.user.nickname,
                             },
                         },
                     ),
