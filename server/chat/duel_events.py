@@ -192,6 +192,16 @@ class DuelEvent:
         )
 
     # TODO : security checks
+    def self_send_game_invite_cancelled(self, message, client_id):
+        self.consumer.send(
+            text_data=json.dumps(
+                {
+                    "action": "game_invite_canceled",
+                    "message": message,
+                    "client_id": client_id,
+                },
+            ),
+        )
 
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
@@ -202,15 +212,7 @@ class DuelEvent:
         receiver_username = data["data"].get("username")
         if receiver_username == self.consumer.user.username:
             logger.warning("Error : user %s wanted to play with themself.", self.consumer.user.username)
-            self.consumer.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "You can't invite yourself to a game !",
-                        "client_id": client_id,
-                    },
-                ),
-            )
+            self.self_send_game_invite_cancelled("You can't invite yourself to a game !", client_id)
             return
 
         client_id = data["data"].get("client_id")
@@ -226,15 +228,7 @@ class DuelEvent:
 
         if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
             logger.warning("Error : user %s has more than one pending invitation.", self.consumer.user.username)
-            self.consumer.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "You have one invitation pending",
-                        "client_id": client_id,
-                    },
-                ),
-            )
+            self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
             return
         invitation = GameInvitation.objects.create(
             sender=self.consumer.user_profile,
