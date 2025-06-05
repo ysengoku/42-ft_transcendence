@@ -32,11 +32,6 @@ export class LocalGameMenu extends HTMLElement {
     this.aiPlayerButton = this.querySelector('#local-game-ai');
 
     this.gameOptionsForm = this.querySelector('game-options');
-    if (this.#state.options) {
-      this.gameOptionsForm.selectedOptions = this.#state.options;
-    } else {
-      this.gameOptionsForm.renderOptions();
-    }
     this.localPlayerButton.addEventListener('click', this.navigateToGame);
     this.aiPlayerButton.addEventListener('click', this.navigateToGame);
 
@@ -52,8 +47,6 @@ export class LocalGameMenu extends HTMLElement {
     event.preventDefault();
     this.#state.options = this.gameOptionsForm.selectedOptions;
     const gameType = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
-    devLog('Game options:', this.#state.options, ' Game type: ', gameType);
-    localStorage.setItem('gameOptions', JSON.stringify(this.#state.options));
     localStorage.setItem('gameType', gameType);
     router.navigate('/singleplayer-game');
   }

@@ -173,7 +173,7 @@ export class DuelMenu extends HTMLElement {
       return;
     }
     this.modalBodyContent = document.querySelector('game-options');
-    this.modalBodyContent.selectedOptions = this.#state.options;
+    // this.modalBodyContent.selectedOptions = this.#state.options;
     this.gameOptionsModal.show();
 
     this.modalSaveButton = this.modalElement.querySelector('.confirm-button');
