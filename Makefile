@@ -131,3 +131,6 @@ delete_games:
 
 clean-db:
 	docker exec server ./manage.py flush --no-input
+
+test-front:
+	docker exec $(FRONTEND_SERVICE) npm run test
