@@ -62,24 +62,24 @@ export class MultiplayerGame extends HTMLElement {
       var keyCode = e.code;
       const now = Date.now();
       if ((keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_left", now]);
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
       }
       if ((keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
         pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
       }
       if ((keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_left", now]);
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
       }
       if ((keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
         pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
       }
       keyMap[keyCode] = true;
       e.preventDefault();
-    }
+    };
   }
 
   createOnDocumentKeyUp(pongSocket, bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
@@ -90,19 +90,19 @@ export class MultiplayerGame extends HTMLElement {
       var keyCode = e.code;
       const now = -Date.now();
       if ((keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_left", now]);
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
       }
       if ((keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
         pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
       }
       if ((keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
         pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
       }
       if ((keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) || (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(["move_right", now]);
+        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
         pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
       }
       keyMap[keyCode] = false;
@@ -318,8 +318,7 @@ export class MultiplayerGame extends HTMLElement {
 
     function confirmInputs(data) {
       const {action, content} = data;
-      for (let [i, input] of Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.entries())
-      {
+      for (let [i, input] of Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.entries()) {
         if (input[0] === action && input[1] <= content) {
           Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.splice(i, 1);
           return true;
@@ -333,9 +332,7 @@ export class MultiplayerGame extends HTMLElement {
         return;
       }
       let theirBumperPos = theirBumper == 0 ? data.bumper_1.x : data.bumper_2.x;
-      data.last_bumper_collided == "_bumper_1" ? lastBumperCollided = 0 : lastBumperCollided = 1;
-      
-      
+      data.last_bumper_collided == '_bumper_1' ? lastBumperCollided = 0 : lastBumperCollided = 1;
 
       Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
       Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
@@ -355,7 +352,7 @@ export class MultiplayerGame extends HTMLElement {
         switch (data.current_buff_or_debuff) {
           case 1:
             Bumpers[lastBumperCollided].controlReverse = true;
-            break ;
+            break;
           case 2:
             Bumpers[lastBumperCollided].speed = 0.1;
             break;
@@ -391,7 +388,7 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
-    pongSocket.addEventListener('open', function(_) {
+    pongSocket.addEventListener('open', function (_) {
       console.log('Success! :3 ');
     });
 
@@ -539,7 +536,7 @@ export class MultiplayerGame extends HTMLElement {
 
     const navbarHeight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
       renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
       const rendererHeight = renderer.domElement.offsetHeight;
@@ -570,7 +567,7 @@ export class MultiplayerGame extends HTMLElement {
 
   clearGameInterval() {
     if (this.intervalGameId) {
-      clearInterval(this.intervalGameId)
+      clearInterval(this.intervalGameId);
       this.intervalGameId = null;
     }
   }
@@ -581,7 +578,7 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayMessageWrapper.appendChild(element);
     this.overlay.classList.add('overlay-dark');
     this.overlayMessageWrapper.classList.remove('d-none');
-    this.clearGameInterval()
+    this.clearGameInterval();
 
     switch (action) {
       case 'pause':
