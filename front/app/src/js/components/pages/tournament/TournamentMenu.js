@@ -4,7 +4,7 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { formatDateMDY } from '@utils';
-import { validateTournamentAlias} from './index';
+import { validateTournamentAlias } from './index';
 
 export class TournamentMenu extends HTMLElement {
   #state = {

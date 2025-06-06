@@ -29,7 +29,7 @@ export class TournamentCreation extends HTMLElement {
    * @property {number} #state.newTournament.requiredParticipants - Number of required participants for the tournament.
    * @property {boolean} #state.isTournamentNameValid - Validity state of the tournament name.
    * @property {boolean} #state.isAliasValid - Validity state of the tournament alias.
-   * 
+   *
    */
   #state = {
     nickname: '',
@@ -67,7 +67,7 @@ export class TournamentCreation extends HTMLElement {
     this.createTournament = this.createTournament.bind(this);
   }
 
-  /** 
+  /**
    * Initializes the required participants options from environment variables.
    * If the environment variable is not set or invalid, it uses default values.
    */
@@ -76,13 +76,15 @@ export class TournamentCreation extends HTMLElement {
     if (!rawData) {
       return;
     }
-    const parsedData = rawData.split(',').map(item => {
-      const n = Number(item);
-      if (Number.isInteger(n) && n > 0) {
-          return n;
-        }
-        return null;
-    }).filter(item => item !== null);
+    const parsedData = rawData
+      .split(',')
+      .map(item => {
+        const n = Number(item);
+        if (Number.isInteger(n) && n > 0) {
+            return n;
+          }
+          return null;
+      }).filter(item => item !== null);
     if (parsedData.length === 2) {
       this.#requiredParticipantsOptions = parsedData;
     } else {

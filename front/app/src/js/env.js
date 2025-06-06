@@ -2,7 +2,8 @@ export const MAX_CHAT_MESSAGE_LENGTH = Number(import.meta.env.VITE_MAX_MESSAGE_L
 
 export const DEFAULT_AVATAR = import.meta.env.VITE_DEFAULT_AVATAR || '/img/default_avatar.png';
 
-export const DEFAULT_GAME_OPTIONS = import.meta.env.VITE_DEFAULT_GAME_OPTIONS || {"scoreToWin":5,"gameSpeed":"medium","ranked":false,"timeLimit":3, "coolMode":false};
+export const DEFAULT_GAME_OPTIONS = import.meta.env.VITE_DEFAULT_GAME_OPTIONS || {
+	"scoreToWin":5, "gameSpeed":"medium", "ranked":false, "timeLimit":3, "coolMode":false };
 
 export const MAX_TOURNAMENT_NAME_LENGTH = Number(import.meta.env.VITE_MAX_TOURNAMENT_NAME_LENGTH) || 50;
 
