@@ -1,12 +1,11 @@
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { MAX_CHAT_MESSAGE_LENGTH } from '@env';
 
 export class ChatMessageInput extends HTMLElement {
   #charCounter = 0;
-  #maxChar = Number(import.meta.env.VITE_MAX_MESSAGE_LENGTH) || 255;
 
   constructor() {
     super();
-
     this.sendMessage = this.sendMessage.bind(this);
     this.countCharacters = this.countCharacters.bind(this);
   }
@@ -30,7 +29,7 @@ export class ChatMessageInput extends HTMLElement {
     this.messageInput = this.querySelector('#chat-message-input');
     this.charCounter = this.querySelector('.char-counter');
 
-    this.messageInput.setAttribute('maxlength', this.#maxChar);
+    this.messageInput.setAttribute('maxlength', MAX_CHAT_MESSAGE_LENGTH);
 
     this.sendMessageButton?.addEventListener('click', this.sendMessage);
     this.messageInput?.addEventListener('keypress', this.sendMessage);
@@ -42,10 +41,10 @@ export class ChatMessageInput extends HTMLElement {
   sendMessage(event) {
     if (event.key === 'Enter' || event.type === 'click') {
       const message = this.messageInput.value;
-      if (message.length > this.#maxChar) {
+      if (message.length > MAX_CHAT_MESSAGE_LENGTH) {
         showAlertMessageForDuration(
           ALERT_TYPE.ERROR,
-          `Cannot send the message. It exceeds maximum length of ${this > this.#maxChar} characters.`,
+          `Cannot send the message. It exceeds maximum length of ${this > MAX_CHAT_MESSAGE_LENGTH} characters.`,
         );
         this.messageInput.value = '';
         return;
@@ -66,11 +65,11 @@ export class ChatMessageInput extends HTMLElement {
       this.charCounter.classList.remove('text-danger');
       return;
     }
-    this.charCounter.textContent = `${this.#charCounter}/${this.#maxChar} characters`;
-    if (this.#charCounter === this.#maxChar) {
-      this.charCounter.textContent = `Maximum length of ${this.#maxChar} characters reached`;
+    this.charCounter.textContent = `${this.#charCounter}/${MAX_CHAT_MESSAGE_LENGTH} characters`;
+    if (this.#charCounter === MAX_CHAT_MESSAGE_LENGTH) {
+      this.charCounter.textContent = `Maximum length of ${MAX_CHAT_MESSAGE_LENGTH} characters reached`;
     }
-    if (this.#charCounter > this.#maxChar - 10) {
+    if (this.#charCounter > MAX_CHAT_MESSAGE_LENGTH - 10) {
       this.charCounter.classList.add('text-danger');
     } else {
       this.charCounter.classList.remove('text-danger');
@@ -82,7 +81,7 @@ export class ChatMessageInput extends HTMLElement {
     <div class="d-flex flex-column mx-4 my-3 gap-2">
       <small class="char-counter text-end me-1 w-100"></small>
       <div class="input-group">
-        <input type="text" id="chat-message-input" class="form-control" placeholder="Type a message..." autocomplete="off" maxlength="${this.#maxChar}" />
+        <input type="text" id="chat-message-input" class="form-control" placeholder="Type a message..." autocomplete="off" />
         <button class="btn btn-secondary" id="sendMessage">
           <i class="bi bi-send"></i>
         </button>
