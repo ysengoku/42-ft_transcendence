@@ -13,6 +13,35 @@ from .models import Bracket, Participant, Round, Tournament
 logger = logging.getLogger("server")
 
 
+def cancel_all_registrations_to_tournaments(username):
+    try:
+        profile = Profile.objects.select_related('user').get(user__username=username)
+    except Profile.DoesNotExist:
+        logger.warning("Profile for user %s does not exists.", username)
+    tournaments = Tournament.objects.filter(participants__profile=profile).prefetch_related('participants')
+    if not tournaments.exists():
+        logger.info("No tournaments to cancel for user %s", username)
+        return
+    with transaction.atomic():
+        count = 0
+        for tournament in tournaments:
+            try:
+                participant - tournament.participants.get(profile=profile)
+                if tournament.status == Tournament.PENDING:
+                    result = tournament.remove_participant(profile)
+                    if isinstance(result, str):
+                        logger.error("Failed to remove %s from tournament %s : %s", username, tournament.id, result)
+                    continue
+                else:
+                    # tournaments.participants__profile = NULL
+                    participant.status = Participant.UNREGISTERED
+                    participant.save()
+                count += 1
+            except Participant.DoesNotExist:
+                logger.warning("Participant %s not found in tournament %s", participant, tournament.id)
+                continue
+        logger.info("Successfully erased user %s fromd %s tournaments", username, count)
+
 class TournamentConsumer(WebsocketConsumer):
     tournaments = {}
 

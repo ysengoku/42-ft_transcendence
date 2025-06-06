@@ -9,7 +9,6 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
-
 from common.routers import allow_only_for_self
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from users.models import RefreshToken, User
@@ -153,7 +152,7 @@ def delete_account(request, username: str, response: HttpResponse):
 
     if user.username != username:
         raise HttpError(403, "You are not allowed to delete this account.")
-    # DELETE ALL INVITATION TO GAMES
+    # DELETE ALL INVITATIONS TO GAMES
     DuelEvent.cancel_all_send_and_received_game_invites(username)
 
     old_refresh_token = request.COOKIES.get("refresh_token")
