@@ -77,8 +77,7 @@ export class Tournament extends HTMLElement {
       router.redirect('/tournament-menu');
       return;
     }
-    // TODO: handle status === 'canceled'
-    if (this.#state.tournament.status === 'pending') {
+    if (this.#state.tournament.status === 'pending' || this.#state.tournament.status === 'canceled') {
       this.setTournamentStatus[this.#state.tournament.status]();
     } else {
       this.#state.currentRoundNumber = this.#state.tournament.rounds.length;
@@ -147,6 +146,9 @@ export class Tournament extends HTMLElement {
     finished: () => {
       this.#state.status = 'finished';
     },
+    canceled: () => {
+      this.#state.status = 'canceled';
+    },
   };
 
   /* ------------------------------------------------------------------------ */
@@ -172,6 +174,8 @@ export class Tournament extends HTMLElement {
         id: this.#state.tournamentId,
         required_participants: this.#state.tournament.required_participants,
         participants: this.#state.tournament.participants,
+        creatorUsername: this.#state.tournament.creator.username,
+        loggedInUsername: this.#state.user.username,
       };
       return tournamentWaiting;
     },
@@ -191,6 +195,14 @@ export class Tournament extends HTMLElement {
         status: this.#state.status,
       };
       return tournamentRoundOngoing;
+    },
+    canceled: () => {
+      const tournamentCanceled = document.createElement('tournament-canceled');
+      tournamentCanceled.data = {
+        tournamentId: this.#state.tournamentId,
+        creatorUsername: this.#state.tournament.creator.username,
+      };
+      return tournamentCanceled;
     },
   };
 
@@ -255,7 +267,29 @@ export class Tournament extends HTMLElement {
 
   handleTournamentFinished() {
     // Handle tournament_finished message via ws
-    // fetch tournament to get the tournament data
+    // Show a message
+    // Redirect to tournament overview page
+  }
+
+  async cancelTournament() {
+    if (this.#state.tournament.creator.username !== this.#state.user.username) {
+      return;
+    }
+    const response = await apiRequest(
+      'DELETE',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT(this.#state.tournamentId),
+      null,
+      false,
+      true,
+    );
+    if (!response.success) {
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament cancelled successfully.');
+    this.#state.status = 'canceled';
+    this.updateTournamentStatus();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -265,6 +299,7 @@ export class Tournament extends HTMLElement {
     return `
     <div class="container">
       <div class="row justify-content-center py-4">
+        <tournament-modal></tournament-modal>
         <div class="form-container col-12 col-xl-8 p-3">
           <div class="d-flex flex-column justify-content-center align-items-center w-100 px-4">
             <h2 class="text-center mt-1 mb-0 py-2 w-100" id="tournament-name"></h2>

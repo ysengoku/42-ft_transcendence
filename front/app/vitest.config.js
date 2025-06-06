@@ -18,15 +18,12 @@ export default defineConfig({
       '\\.css$': '<rootDir>/__mock__/styleMock.js',
       '\\.(svg)(\\?url)?$': '<rootDir>/__mock__/svgMock.js',
       '\\.(png|jpg|jpeg|gif|svg)(\\?.*)?$': '<rootDir>/__mock__/fileMock.js',
-    }
+    },
   },
   test: {
     environment: 'jsdom',
     include: ['**/__tests__/vitest/*.test.js'],
     exclude: ['node_modules', 'dist'],
     globals: true,
-    coverage: {
-      provider: 'istanbul'
-    }
   }
 });
