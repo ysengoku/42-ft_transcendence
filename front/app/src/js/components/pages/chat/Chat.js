@@ -71,7 +71,7 @@ export class Chat extends HTMLElement {
     this.chatList.setData(null, this.#state.loggedInUser.username, null);
     this.chatMessagesArea.setData(null, this.#state.loggedInUser.username);
 
-    // Fetch and set data for the chat list component
+    // Fetch data for the chat list component
     this.chatList.querySelector('.chat-loader')?.classList.remove('d-none');
     this.chatMessagesArea.querySelector('.chat-loader')?.classList.remove('d-none');
 
@@ -82,7 +82,6 @@ export class Chat extends HTMLElement {
     if (!chatListData) {
       return;
     }
-    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
 
     // Determine initial chat based on available data or query parameter
     if (chatListData.count > 0 && !this.#queryParam) {
@@ -95,7 +94,10 @@ export class Chat extends HTMLElement {
       }
     } else if (this.#queryParam) {
       this.#state.currentChatUsername = this.#queryParam;
-    } else if (chatListData.count === 0) {
+    }
+
+    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
+    if (chatListData.count === 0 || !this.#state.currentChatUsername) {
       this.chatMessagesArea.querySelector('.chat-loader')?.classList.add('d-none');
       this.chatMessagesArea.querySelector('.no-messages')?.classList.remove('d-none');
     }
@@ -141,7 +143,6 @@ export class Chat extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Rendering                                                           */
   /* ------------------------------------------------------------------------ */
-
   async render() {
     this.innerHTML = this.template() + this.style();
 

@@ -54,7 +54,6 @@ export class ChatList extends HTMLElement {
    * @param {Function} getCurrentChatUsername
    */
   setData(data, username, getCurrentChatUsername) {
-    console.time('ChatList setData');
     this.#state.loggedInUsername = username;
     if (data) {
       this.#state.items = data.items;
@@ -62,15 +61,7 @@ export class ChatList extends HTMLElement {
       this.#state.totalItemCount = data.count;
       this.#getCurrentChatUsername = getCurrentChatUsername;
     }
-    console.timeEnd('ChatList setData');
     this.render();
-    if (this.#state.totalItemCount === 0) {
-      const noChatsMessage = document.createElement('li');
-      noChatsMessage.classList.add('list-group-item', 'text-center', 'border-0', 'pt-5', 'pe-5', 'no-chats-message');
-      noChatsMessage.style.backgroundColor = 'transparent';
-      noChatsMessage.textContent = 'You have no conversations yet.';
-      this.list.appendChild(noChatsMessage);
-    }
   }
 
   disconnectedCallback() {
@@ -106,6 +97,10 @@ export class ChatList extends HTMLElement {
       await this.loadMoreItems();
     }
     console.timeEnd('ChatList render');
+
+    if (this.#state.totalItemCount === 0 || (this.#state.totalItemCount > 0 && this.#state.displayedItemCount === 0)) {
+      this.renderNoConversationsMessage();
+    }
   }
 
   /**
@@ -125,6 +120,7 @@ export class ChatList extends HTMLElement {
       }
       const listItem = document.createElement('chat-list-item-component');
       listItem.setData(this.#state.items[i], this.#state.loggedInUsername);
+      console.log('Current user: ', this.#getCurrentChatUsername());
       if (this.#state.items[i].username === this.#getCurrentChatUsername()) {
         listItem.querySelector('.chat-list-item').classList.add('active');
       }
@@ -178,6 +174,15 @@ export class ChatList extends HTMLElement {
     while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
+  }
+
+  renderNoConversationsMessage() {
+    this.loader.classList.add('d-none');
+    const noChatsMessage = document.createElement('li');
+    noChatsMessage.classList.add('list-group-item', 'text-center', 'border-0', 'pt-5', 'pe-5', 'no-chats-message');
+    noChatsMessage.style.backgroundColor = 'transparent';
+    noChatsMessage.textContent = 'You have no conversations yet.';
+    this.list.appendChild(noChatsMessage);
   }
 
   /* ------------------------------------------------------------------------ */
