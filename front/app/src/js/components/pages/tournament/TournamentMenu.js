@@ -4,11 +4,9 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { formatDateMDY } from '@utils';
-import './components/index.js';
+import { validateTournamentAlias} from './index';
 
 export class TournamentMenu extends HTMLElement {
-  #maxAliasLength = Number(import.meta.env.VITE_MAX_ALIAS_LENGTH) || 12;
-
   #state = {
     nickname: '',
   };
@@ -252,19 +250,29 @@ export class TournamentMenu extends HTMLElement {
   };
 
   handleAliasInput(event) {
-    if (event.target.value.length < 1) {
+    const validationError = validateTournamentAlias(event.target.value);
+    if (validationError) {
       this.aliasInput.classList.add('is-invalid');
-      this.aliasInputFeedback.textContent = 'Alias cannot be empty';
-      this.confirmButton.disabled = true;
-    } else if (event.target.value.length > this.#maxAliasLength) {
-      this.aliasInput.classList.add('is-invalid');
-      this.aliasInputFeedback.textContent = `Alias must be less than ${this.#maxAliasLength} characters.`;
+      this.aliasInputFeedback.textContent = validationError;
       this.confirmButton.disabled = true;
     } else {
       this.aliasInput.classList.remove('is-invalid');
       this.aliasInputFeedback.textContent = '';
       this.confirmButton.disabled = false;
     }
+    // if (event.target.value.length < 1) {
+    //   this.aliasInput.classList.add('is-invalid');
+    //   this.aliasInputFeedback.textContent = 'Alias cannot be empty';
+    //   this.confirmButton.disabled = true;
+    // } else if (event.target.value.length > this.#maxAliasLength) {
+    //   this.aliasInput.classList.add('is-invalid');
+    //   this.aliasInputFeedback.textContent = `Alias must be less than ${this.#maxAliasLength} characters.`;
+    //   this.confirmButton.disabled = true;
+    // } else {
+    //   this.aliasInput.classList.remove('is-invalid');
+    //   this.aliasInputFeedback.textContent = '';
+    //   this.confirmButton.disabled = false;
+    // }
   }
 
   async confirmRegister(event) {

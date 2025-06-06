@@ -1,3 +1,5 @@
+import { DEFAULT_AVATAR } from '@env';
+
 export class AvatarUpload extends HTMLElement {
   #state = {
     user: '',
@@ -38,7 +40,7 @@ export class AvatarUpload extends HTMLElement {
   }
 
   template() {
-    const defaultAvatar = import.meta.env.VITE_DEFAULT_AVATAR;
+    const defaultAvatar = DEFAULT_AVATAR;
     const avatarUploadMessage = this.#state.user.avatar === defaultAvatar ? 'Upload Avatar' : 'Change Avatar';
 
     return `
