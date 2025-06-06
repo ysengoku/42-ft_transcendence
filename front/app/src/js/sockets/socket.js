@@ -7,7 +7,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
  */
 const WS_PATH = {
   livechat: '/ws/events/',
-  matchmaking: (options) => options === null ? '/ws/matchmaking/' : `/ws/matchmaking/${options}`,
+  matchmaking: (options) => (options === null ? '/ws/matchmaking/' : `/ws/matchmaking/${options}`),
   tournament: (id) => `/ws/tournament/${id}`,
 };
 

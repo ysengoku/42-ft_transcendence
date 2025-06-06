@@ -73,7 +73,6 @@ export class ChatListItem extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Event handlers                                                       */
   /* ------------------------------------------------------------------------ */
-
   handleChatItemSelected() {
     this.listItem.classList.add('active');
     const unreadMessageCount = this.listItem.querySelector('.chat-list-item-unread-message');
