@@ -7,6 +7,8 @@ export class TournamentPending extends HTMLElement {
     id: '',
     requiredParticipants: 0,
     participants: [],
+    creatorUsername: '',
+    loggedInUsername: '',
   };
 
   constructor() {
@@ -15,20 +17,30 @@ export class TournamentPending extends HTMLElement {
     this.currentParticipantsCount = null;
     this.requiredParticipants = null;
     this.participantsWrapper = null;
+    this.cancelTournamentButton = null;
     this.unregisterButton = null;
+    this.modalElement = null;
 
-    this.unregisterTournament = this.unregisterTournament.bind(this);
+    this.handleUnregisterButtonClick = this.handleUnregisterButtonClick.bind(this);
+    this.handleCancelTournamentButtonClick = this.handleCancelTournamentButtonClick.bind(this);
+    this.handleConfirmationFromModal = this.handleConfirmationFromModal.bind(this);
   }
 
   set data(data) {
     this.#state.id = data.id;
     this.#state.requiredParticipants = data.required_participants;
     this.#state.participants = data.participants;
+    this.#state.creatorUsername = data.creatorUsername;
+    this.#state.loggedInUsername = data.loggedInUsername;
+  }
+
+  connectedCallback() {
     this.render();
   }
 
   disconnectedCallback() {
-    this.unregisterButton?.removeEventListener('click', this.unregisterTournament);
+    this.unregisterButton?.removeEventListener('click', this.handleUnregisterButtonClick);
+    this.cancelTournamentButton?.removeEventListener('click', this.handleCancelTournamentButtonClick);
     this.currentParticipantsCount = null;
   }
 
@@ -41,7 +53,9 @@ export class TournamentPending extends HTMLElement {
     this.currentParticipantsCount = this.querySelector('#current-participants-count');
     this.requiredParticipants = this.querySelector('#required-participants');
     this.participantsWrapper = this.querySelector('#participants-wrapper');
+    this.cancelTournamentButton = this.querySelector('#cancel-tournament-button');
     this.unregisterButton = this.querySelector('#cancel-registration-button');
+    this.modalElement = document.querySelector('tournament-modal');
 
     this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
     this.requiredParticipants.textContent = ` / ${this.#state.requiredParticipants}`;
@@ -50,11 +64,15 @@ export class TournamentPending extends HTMLElement {
       this.addParticipant(participant);
     });
 
-    this.unregisterButton.addEventListener('click', this.unregisterTournament);
+    if (this.#state.creatorUsername === this.#state.loggedInUsername) {
+      this.cancelTournamentButton.classList.remove('d-none');
+      this.cancelTournamentButton.addEventListener('click', this.handleCancelTournamentButtonClick);
+    }
+    this.unregisterButton.addEventListener('click', this.handleUnregisterButtonClick);
   }
 
   /* ------------------------------------------------------------------------ */
-  /*      Event handling                                                      */
+  /*      WebSocket Messages handling                                         */
   /* ------------------------------------------------------------------------ */
   // ws new_registration listener
   addParticipant(data) {
@@ -82,6 +100,15 @@ export class TournamentPending extends HTMLElement {
     }
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Events handling                                                     */
+  /* ------------------------------------------------------------------------ */
+  handleUnregisterButtonClick() {
+    this.modalElement.contentType = this.modalElement.CONTENT_TYPE.UNREGISTER_TOURNAMENT;
+    this.modalElement.showModal();
+    document.addEventListener('tournament-modal-confirm', this.handleConfirmationFromModal);
+  }
+
   async unregisterTournament() {
     const response = await apiRequest(
       'DELETE',
@@ -92,21 +119,53 @@ export class TournamentPending extends HTMLElement {
       true,
     );
     if (!response.success) {
-      if (response.status === 403) {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
-        return;
-      }
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
+      return;
     }
-    showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Unregistered from tournament successfully.');
-    setTimeout(() => {
-      router.navigate('/home');
-    }, 3000);
+    this.innerHTML = this.unresigteredTemplate();
+    const goToHomeButton = this.querySelector('#go-to-home-button');
+    const goToTournamentMenuButton = this.querySelector('#go-to-tournament-menu-button');
+    goToHomeButton.addEventListener(
+      'click',
+      () => {
+        router.redirect('/home');
+      },
+      { once: true },
+    );
+    goToTournamentMenuButton.addEventListener(
+      'click',
+      () => {
+        router.redirect('/tournament-menu');
+      },
+      { once: true },
+    );
+  }
+
+  handleCancelTournamentButtonClick() {
+    this.modalElement.contentType = this.modalElement.CONTENT_TYPE.CANCEL_TOURNAMENT;
+    this.modalElement.showModal();
+    document.addEventListener('tournament-modal-confirm', this.handleConfirmationFromModal);
+  }
+
+  handleConfirmationFromModal(event) {
+    const type = event.detail.contentType;
+    document.removeEventListener('tournament-modal-confirm', this.handleConfirmationFromModal);
+    if (type === this.modalElement.CONTENT_TYPE.CANCEL_TOURNAMENT) {
+      const tournamentPageElement = document.querySelector('tournament-room');
+      if (tournamentPageElement) {
+        tournamentPageElement.cancelTournament();
+      }
+      return;
+    }
+    if (type === this.modalElement.CONTENT_TYPE.UNREGISTER_TOURNAMENT) {
+      this.unregisterTournament();
+      return;
+    }
   }
 
   /* ------------------------------------------------------------------------ */
   /*      Template & style                                                    */
   /* ------------------------------------------------------------------------ */
-
   template() {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center mt-3">
@@ -117,7 +176,10 @@ export class TournamentPending extends HTMLElement {
       </div>
       <p class="text-center mt-4 mb-2 fs-5 fw-bold">Gunslingers in the Arena</p>
       <div class="d-flex flex-row flex-wrap justify-content-center w-75" id="participants-wrapper"></div>
-      <div class="btn mt-5" id="cancel-registration-button">Cancel registration</div>
+      <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">
+        <div class="btn d-none" id="cancel-tournament-button">Cancel tournament</div>
+        <div class="btn" id="cancel-registration-button">Cancel registration</div>
+      </div>
     </div>
     `;
   }
@@ -129,6 +191,7 @@ export class TournamentPending extends HTMLElement {
     #required-participants {
       font-family: 'van dyke', serif;
     }
+    #cancel-tournament-button,
     #cancel-registration-button {
 	    color: var(--pm-text-danger);
     }
@@ -141,6 +204,18 @@ export class TournamentPending extends HTMLElement {
     <div class="d-flex flex-row justify-content-center align-items-center mx-4 my-2 gap-2">
       <img class="participant-avatar avatar-xxs rounded-circle" src="/img/default_avatar.png" />
       <p class="participant-alias m-0 fs-5"></p>
+    </div>
+    `;
+  }
+
+  unresigteredTemplate() {
+    return `
+    <div class="d-flex flex-column justify-content-center align-items-center mt-3">
+	    <p class="fs-4">You’ve backed out of this tournament.</p>
+      <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">
+        <div class="btn" id="go-to-home-button">Back to Saloon</div>
+        <div class="btn" id="go-to-tournament-menu-button">Find another tournament</div>
+      </div>
     </div>
     `;
   }
