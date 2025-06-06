@@ -347,6 +347,7 @@ class DuelEvent:
             logger.info("Cancelled %d pending invitations for user %s", count, username)
 
 
+
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]
         tournament_name = data["data"].get["tournament_name"]
