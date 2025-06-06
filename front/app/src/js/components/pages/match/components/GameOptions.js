@@ -1,3 +1,5 @@
+import { DEFAULT_GAME_OPTIONS } from '@env';
+
 export class GameOptions extends HTMLElement {
   #state = {
     selectedOptions: null,
@@ -26,8 +28,7 @@ export class GameOptions extends HTMLElement {
     this.isRankedOptout = null;
     this.coolModeOptout = null;
 
-    const defaultOptionsFromEnv = import.meta.env.VITE_DEFAULT_GAME_OPTIONS;
-    const defaultOptions = defaultOptionsFromEnv ? JSON.parse(import.meta.env.VITE_DEFAULT_GAME_OPTIONS) : {};
+    const defaultOptions = DEFAULT_GAME_OPTIONS ? JSON.parse(DEFAULT_GAME_OPTIONS) : {};
     this.#state.defaultOptionValue = {
       score_to_win: defaultOptions.scoreToWin || 5,
       game_speed: defaultOptions.gameSpeed || 'medium',
@@ -322,7 +323,7 @@ export class GameOptions extends HTMLElement {
       <! -- Score to Win -->
       <div class="option-input-wrapper pb-2">
         <div class="d-flex justify-content-between pb-1">
-          <label for="score-to-win" class="fs-5 fw-bold">Score to Win</label>
+          <label for="score-to-win" class="fs-5">Score to Win</label>
           <div class="opt-out-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-score_to_win">
             <label class="form-check-label" for="optout-score_to_win">
@@ -344,7 +345,7 @@ export class GameOptions extends HTMLElement {
       <! -- Game Speed -->
       <div class="option-input-wrapper d-flex flex-column pb-3 gap-2">
         <div class="d-flex justify-content-between mt-2 pb-1">
-          <label for="game-speed" class="fs-5 fw-bold">Game Speed</label>
+          <label for="game-speed" class="fs-5">Game Speed</label>
           <div class="opt-out-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-game_speed">
             <label class="form-check-label" for="optout-game_speed">
@@ -367,7 +368,7 @@ export class GameOptions extends HTMLElement {
       <! -- Time Limit -->
       <div class="option-input-wrapper">
         <div class="d-flex justify-content-between mt-2 pb-1">
-          <label for="time-limit" class="fs-5 fw-bold">Time Limit</label>
+          <label for="time-limit" class="fs-5">Time Limit</label>
           <div class="opt-out-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-time_limit">
             <label class="form-check-label" for="optout-time_limit">
@@ -389,7 +390,7 @@ export class GameOptions extends HTMLElement {
       <! -- Ranked -->
       <div class="option-input-wrapper pb-3" id="is-ranked-selector">
         <div class="d-flex justify-content-between mt-2 pb-1">
-          <label for="is-ranked" class="fs-5 fw-bold">Ranked</label>
+          <label for="is-ranked" class="fs-5">Ranked</label>
           <div class="opt-out-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-ranked">
             <label class="form-check-label" for="optout-ranked">
@@ -409,7 +410,7 @@ export class GameOptions extends HTMLElement {
       <! -- Cool Mode -->
       <div class="option-input-wrapper pb-3" id="cool-mode-selector">
         <div class="d-flex justify-content-between mt-2 pb-1">
-          <label for="cool-mode" class="fs-5 fw-bold">Buffs</label>
+          <label for="cool-mode" class="fs-5">Buffs</label>
           <div class="opt-out-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-cool_mode">
             <label class="form-check-label" for="optout-cool_mode">
