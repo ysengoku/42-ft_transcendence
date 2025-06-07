@@ -260,19 +260,6 @@ export class TournamentMenu extends HTMLElement {
       this.aliasInputFeedback.textContent = '';
       this.confirmButton.disabled = false;
     }
-    // if (event.target.value.length < 1) {
-    //   this.aliasInput.classList.add('is-invalid');
-    //   this.aliasInputFeedback.textContent = 'Alias cannot be empty';
-    //   this.confirmButton.disabled = true;
-    // } else if (event.target.value.length > this.#maxAliasLength) {
-    //   this.aliasInput.classList.add('is-invalid');
-    //   this.aliasInputFeedback.textContent = `Alias must be less than ${this.#maxAliasLength} characters.`;
-    //   this.confirmButton.disabled = true;
-    // } else {
-    //   this.aliasInput.classList.remove('is-invalid');
-    //   this.aliasInputFeedback.textContent = '';
-    //   this.confirmButton.disabled = false;
-    // }
   }
 
   async confirmRegister(event) {
