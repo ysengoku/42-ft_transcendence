@@ -1,17 +1,47 @@
+/**
+ * @module Duel
+ * @description This module displays the duel status and handles the duel flow before the game starts.
+ */
+
 import { router } from '@router';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
+import { showToastNotification, TOAST_TYPES } from '@utils';
 import './components/index.js';
 
+/**
+ * @class Duel
+ * @extends {HTMLElement}
+ * @description Represents a duel page where users can the the status of pending or calceled duel.
+ */
 export class Duel extends HTMLElement {
+  /**
+   * @property {Object} #state - The internal state of the Duel component.
+   * @property {string} #state.clientId - The unique identifier for the client instance.
+   * @property {string} #state.status - The current status of the duel that indicates which content to render: inviting, matchmaking, starting, invitationCanceled, invitationDeclined, or matchmakingCanceled.
+   * @property {string} #state.gameId - The ID of the game room.
+   * @property {Object|null} #state.loggedInUser - The logged-in user information.
+   * @property {Object|null} #state.opponent - The opponent's information.
+   */
   #state = {
     clientId: '',
-    status: '', // inviting, matchmaking, starting, canceled, declied, matchmakingCanceled
+    status: '',
     gameId: '',
     loggedInUser: null,
     opponent: null,
   };
 
+  // Duel status constants
+  STATUS = {
+    INVITING: 'inviting',
+    MATCHMAKING: 'matchmaking',
+    STARTING: 'starting',
+    INVITATION_CANCELED: 'invitationCanceled',
+    INVITATION_DECLINED: 'declined',
+    MATCHMAKING_CANCELED: 'matchmakingCanceled',
+  }
+
+  // Countdown time in seconds before the duel starts
   #countdown = 3;
 
   constructor() {
@@ -19,33 +49,46 @@ export class Duel extends HTMLElement {
     this.#state.clientId = socketManager.getClientInstanceId('livechat');
     this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
+    this.handleMatchmakingCancellationByServer = this.handleMatchmakingCancellationByServer.bind(this);
     this.handleInvitationAccepted = this.handleInvitationAccepted.bind(this);
     this.cancelInvitation = this.cancelInvitation.bind(this);
     this.confirmLeavePage = this.confirmLeavePage.bind(this);
   }
 
+  /**
+   * Called from the router to set the query parameters for the duel.
+   * This method updates the internal state based on the provided URL parameters.
+   * @param {Object} param 
+   * @return {void}
+   */
   setQueryParam(param) {
     this.#state.status = param.get('status');
     if (
-      this.#state.status !== 'inviting' &&
-      this.#state.status !== 'matchmaking' &&
-      this.#state.status !== 'starting'
+      this.#state.status !== this.STATUS.INVITING &&
+      this.#state.status !== this.STATUS.MATCHMAKING &&
+      this.#state.status !== this.STATUS.STARTING
     ) {
       this.#state.status = '';
       return;
     }
-    if (this.#state.status === 'inviting' || this.#state.status === 'starting') {
+    if (this.#state.status === this.STATUS.INVITING || this.#state.status === this.STATUS.STARTING) {
       this.#state.opponent = {
         username: param.get('username'),
         nickname: param.get('nickname'),
         avatar: param.get('avatar'),
       };
     }
-    if (this.#state.status === 'starting') {
+    if (this.#state.status === this.STATUS.STARTING) {
       this.#state.gameId = param.get('gameId');
     }
   }
 
+  /**
+   * Called when the status of the duel changes.
+   * This method updates the internal state and re-renders the content.
+   * @param {string} status - The new status of the duel.
+   * @return {void}
+   */
   set status(status) {
     this.#state.status = status;
     this.renderContent();
@@ -78,20 +121,22 @@ export class Duel extends HTMLElement {
     window.addEventListener('beforeunload', this.confirmLeavePage);
 
     this.render();
-    if (this.#state.status === 'matchmaking') {
+    if (this.#state.status === this.STATUS.MATCHMAKING) {
       document.addEventListener('gameFound', this.handleGameFound);
+      document.addEventListener('websocket-close', this.handleMatchmakingCancellationByServer);
     }
   }
 
   disconnectedCallback() {
     document.removeEventListener('gameFound', this.handleGameFound);
+    document.removeEventListener('websocket-close', this.handleMatchmakingCancellationByServer);
     document.removeEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
-    if (this.#state.status === 'matchmaking') {
+    if (this.#state.status === this.STATUS.MATCHMAKING) {
       this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
-      socketManager.closeSocket('matchmaking');
-    } else if (this.#state.status === 'inviting') {
+      socketManager.closeSocket(this.STATUS.MATCHMAKING);
+    } else if (this.#state.status === this.STATUS.INVITING) {
       this.cancelButton?.removeEventListener('click', this.cancelInvitation);
     }
   }
@@ -101,6 +146,7 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template() + this.style();
+
     this.header = this.querySelector('#duel-header');
     this.content = this.querySelector('#duel-content');
     this.contentElement = document.createElement('duel-preview');
@@ -111,15 +157,21 @@ export class Duel extends HTMLElement {
     this.renderContent();
   }
 
+  /**
+   * Renders the content of the duel page based on the current state.
+   * It updates the header, content element, and handles the animation and timer display.
+   * It also sets up event listeners for canceling matchmaking or invitations.
+   * @return {void}
+   */
   renderContent() {
     this.content.innerHTML = '';
     this.header.textContent = this.headerTemplate();
     this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
     this.content.appendChild(this.contentElement);
 
-    if (this.#state.status === 'matchmaking' || this.#state.status === 'inviting') {
+    if (this.#state.status === this.STATUS.MATCHMAKING || this.#state.status === this.STATUS.INVITING) {
       this.animation.classList.remove('d-none');
-    } else if (this.#state.status === 'starting') {
+    } else if (this.#state.status === this.STATUS.STARTING) {
       this.animation.classList.add('d-none');
       this.timer.classList.remove('d-none');
       this.startDuel();
@@ -130,9 +182,9 @@ export class Duel extends HTMLElement {
       window.removeEventListener('beforeunload', this.confirmLeavePage);
     }
 
-    if (this.#state.status === 'inviting') {
+    if (this.#state.status === this.STATUS.INVITING) {
       this.cancelButton?.addEventListener('click', this.cancelInvitation);
-    } else if (this.#state.status === 'matchmaking') {
+    } else if (this.#state.status === this.STATUS.MATCHMAKING) {
       this.cancelButton?.addEventListener('click', this.cancelMatchmaking);
     } else {
       this.cancelButton?.classList.add('d-none');
@@ -141,8 +193,16 @@ export class Duel extends HTMLElement {
   }
 
   /* ------------------------------------------------------------------------ */
-  /*      Event handling                                                      */
+  /*      Event handling for matchmaking                                      */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * Handles the event when a game is found during matchmaking.
+   * It updates the internal state with the game ID and opponent's information,
+   * and starts the duel process.
+   * @param {CustomEvent} event - The event containing the game room details.
+   * @return {void}
+   */
   handleGameFound(event) {
     devLog('Game found:', event.detail);
     this.#state.gameId = event.detail.game_room_id;
@@ -156,15 +216,56 @@ export class Duel extends HTMLElement {
     this.startDuel();
   }
 
+  /**
+   * Called when the user clicks on cancel button during matchmaking.
+   */
   cancelMatchmaking() {
     const message = { action: 'cancel' };
     socketManager.sendMessage('matchmaking', message);
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     socketManager.closeSocket('matchmaking');
-    this.#state.status = 'matchmakingCanceled';
+    this.#state.status = this.STATUS.MATCHMAKING_CANCELED;
     this.renderContent();
   }
+
+  /**
+   * Handle the event when matchmaking is canceled by the server.
+   * @param {*} event 
+   * @returns 
+   * 
+   * Matchmaking ws close status codes:
+   * 3000: Game found
+   * 3001: Canceled by user
+   * 3002: Unauthorized
+   * 3100: Invalid request
+   */
+  handleMatchmakingCancellationByServer(event) {
+    if (
+      event.detail.name !== 'matchmaking'
+      || this.#state.status !== this.STATUS.MATCHMAKING
+      || !event.detail.code
+      || event.detail.code === 3000
+      || event.detail.code === 3001
+    ) {
+      return;
+    }
+    if (event.detail.code === 3002 || event.detail.code === 3100) {
+      router.removeBeforeunloadCallback();
+      window.removeEventListener('beforeunload', this.confirmLeavePage);
+      message = event.detail.code === 3002
+        ? 'You are not authorized to request matchmaking.'
+        : 'Matchmaking is momentarily unavailable.';
+      showToastNotification(TOAST_TYPES.ERROR, message);
+      this.#state.status = this.STATUS.MATCHMAKING_CANCELED;
+      this.renderContent();
+      devLog('Matchmaking canceled by server:', event.detail);
+    }
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling for game invitation                                  */
+  /* ------------------------------------------------------------------------ */
 
   /**
    * Handles the event when a duel invitation is accepted.
@@ -179,7 +280,7 @@ export class Duel extends HTMLElement {
       data = input;
     }
     devLog('Invitation accepted:', data);
-    if (this.#state.status === 'matchmaking') {
+    if (this.#state.status === this.STATUS.MATCHMAKING) {
       this.cancelMatchmaking();
       return;
     }
@@ -188,7 +289,7 @@ export class Duel extends HTMLElement {
       nickname: data.nickname,
       avatar: data.avatar,
     };
-    this.#state.status = 'starting';
+    this.#state.status = this.STATUS.STARTING;
     this.#state.gameId = data.game_id;
     this.startDuel();
   }
@@ -198,7 +299,7 @@ export class Duel extends HTMLElement {
     if (data.username !== this.#state.opponent.username) {
       return;
     }
-    this.#state.status = 'declined';
+    this.#state.status = this.STATUS.INVITATION_DECLINED;
     this.renderContent();
   }
 
@@ -206,12 +307,15 @@ export class Duel extends HTMLElement {
     devLog('Canceling game invitation');
     const message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
     socketManager.sendMessage('livechat', message);
-    this.#state.status = 'canceled';
+    this.#state.status = this.STATUS.INVITATION_CANCELED;
     this.renderContent();
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Starting game                                                       */
+  /* ------------------------------------------------------------------------ */
   startDuel() {
-    this.#state.status = 'starting';
+    this.#state.status = this.STATUS.STARTING;
     this.animation.classList.add('d-none');
     this.cancelButton.classList.add('d-none');
     this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
@@ -235,6 +339,9 @@ export class Duel extends HTMLElement {
     }, 1000);
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Prevent page changes and reload                                     */
+  /* ------------------------------------------------------------------------ */
   async confirmLeavePage(event) {
     const confirmationMessage = 'If you leave this page, the duel will be canceled.\nDo you want to continue?';
     if (event) {
@@ -256,11 +363,11 @@ export class Duel extends HTMLElement {
         devLog('User confirmed to leave the page');
         let message = '';
         let wsName = '';
-        if (this.#state.status === 'matchmaking') {
+        if (this.#state.status === this.STATUS.MATCHMAKING) {
           message = { action: 'cancel' };
           wsName = 'matchmaking';
           devLog('Canceling matchmaking', message);
-        } else if (this.#state.status === 'inviting') {
+        } else if (this.#state.status === this.STATUS.INVITING) {
           message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
           wsName = 'livechat';
           devLog('Canceling game invitation', message);
@@ -327,11 +434,11 @@ export class Duel extends HTMLElement {
 
   headerTemplate() {
     switch (this.#state.status) {
-      case 'inviting':
+      case 'this.STATUS.INVITING':
         return 'Waiting for your opponent to ride in...';
-      case 'matchmaking':
+      case this.STATUS.MATCHMAKING:
         return 'Searching for your dream opponent...';
-      case 'starting':
+      case this.STATUS.STARTING:
         return 'Both gunslingers are here. Time to duel!';
       default:
         return 'This duel has been canceled.';

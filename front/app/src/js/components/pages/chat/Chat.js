@@ -1,7 +1,6 @@
 /**
- * @file Chat Component
- * @description Provides a dynamic chat interface that integrates chat lists, messaging, and WebSocket communications.
  * @module Chat
+ * @description Provides a dynamic chat interface that integrates chat lists, messaging, and WebSocket communications.
  */
 
 import { router } from '@router';

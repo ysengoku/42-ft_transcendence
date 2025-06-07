@@ -1,3 +1,8 @@
+/**
+ * @module DuelMenu
+ * @description Component for the Duel Menu page, allowing users to invite others to a duel or request matchmaking.
+*/
+
 import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -13,12 +18,27 @@ import {
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
+  /**
+   * State of the DuelMenu component.
+   * @property {Object} user - The authenticated user.
+   * @property {string} opponentUsername - The username of the selected opponent.
+   * @property {Object} options - The game options selected by the user.
+   */
   #state = {
     user: null,
     opponentUsername: '',
     options: {},
   };
 
+  /**
+   * Object to manage user search functionality.
+   * @property {string} searchQuery - The current search query.
+   * @property {Array} list - The list of users matching the search query.
+   * @property {number} totalUsersCount - Total number of users matching the search query.
+   * @property {number} currentListLength - Current length of the user list.
+   * @property {number} searchTimeout - Timeout ID for the search input delay.
+   * @property {boolean} isLoading - Flag indicating if the user list is currently loading.
+   */
   #usersearch = {
     searchQuery: '',
     list: [],
@@ -31,6 +51,7 @@ export class DuelMenu extends HTMLElement {
   constructor() {
     super();
 
+    // Initialize references to DOM elements
     this.optionsButton = null;
     this.modalElement = null;
     this.gameOptionsModal = null;
@@ -46,6 +67,7 @@ export class DuelMenu extends HTMLElement {
     this.opponentAvatar = null;
     this.opponentOnlineStatus = null;
 
+    // Bind event handlers
     this.openGameOptionsModal = this.openGameOptionsModal.bind(this);
     this.closeGameOptionsModal = this.closeGameOptionsModal.bind(this);
     this.clearFocusInModal = this.clearFocusInModal.bind(this);
@@ -59,19 +81,24 @@ export class DuelMenu extends HTMLElement {
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
   }
 
+  /**
+   * Lifecycle method called when the component is connected to the DOM.
+   * It checks the authentication status of the user and redirects accordingly.
+   * If the user is authenticated and has an ongoing game, it redirects to the game page.
+   */
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
-      router.navigate('/login');
+      router.redirect('/login');
       return;
     }
     this.#state.user = authStatus.response;
     if (authStatus.response.game_id) {
       devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
-      router.navigate(`multiplayer-game/${authStatus.response.game_id}`);
+      router.redirect(`multiplayer-game/${authStatus.response.game_id}`);
       return;
     }
     this.render();
@@ -97,12 +124,12 @@ export class DuelMenu extends HTMLElement {
   render() {
     this.innerHTML = this.template() + this.style();
 
+    // Set references to DOM elements
     this.optionsButton = this.querySelector('#game-options-button');
     this.searchInput = this.querySelector('input');
     this.userList = this.querySelector('#duel-user-list');
     this.inviteButton = this.querySelector('#invite-button');
     this.requestMatchmakingButton = this.querySelector('#request-matchmaking-button');
-
     this.opponentNickname = this.querySelector('.opponent-nickname');
     this.opponentUsername = this.querySelector('.opponent-username');
     this.opponentElo = this.querySelector('.opponent-elo');
@@ -112,6 +139,7 @@ export class DuelMenu extends HTMLElement {
 
     this.opponentAvatar.src = anonymousAvatar;
 
+    // Add event listeners
     this.optionsButton.addEventListener('click', this.openGameOptionsModal);
     this.searchInput.addEventListener('input', this.handleSearchInput);
     this.searchInput.addEventListener('keydown', this.ignoreEnterKeyPress);
@@ -173,7 +201,6 @@ export class DuelMenu extends HTMLElement {
       return;
     }
     this.modalBodyContent = document.querySelector('game-options');
-    // this.modalBodyContent.selectedOptions = this.#state.options;
     this.gameOptionsModal.show();
 
     this.modalSaveButton = this.modalElement.querySelector('.confirm-button');
@@ -189,7 +216,7 @@ export class DuelMenu extends HTMLElement {
   }
 
   saveSelectedOptions() {
-    this.#state.opritons = null;
+    this.#state.options = null;
     this.#state.options = this.modalBodyContent.selectedOptions;
     this.closeGameOptionsModal();
     devLog('Game options:', this.#state.options);
@@ -220,6 +247,7 @@ export class DuelMenu extends HTMLElement {
     }
   }
 
+  // Convert game options to an object to include in the game invitation request.
   optionsToObject() {
     if (Object.keys(this.#state.options).length === 0) {
       return null;
@@ -233,6 +261,7 @@ export class DuelMenu extends HTMLElement {
     return optionsObj;
   }
 
+  // Convert game options to query parameters for matchmaking.
   optionsToQueryParams() {
     if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
       return null;
@@ -346,11 +375,15 @@ export class DuelMenu extends HTMLElement {
     this.inviteButton.classList.remove('disabled');
   }
 
-  inviteToDuel(event) {
+  async inviteToDuel(event) {
     event.preventDefault();
     if (!this.#state.opponentUsername) {
       const errorMessage = 'Opponent not selected';
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 5000);
+      return;
+    }
+    const canEngage = await auth.canEngageInGame();
+    if (!canEngage) {
       return;
     }
     const clientInstanceId = socketManager.getClientInstanceId('livechat');
@@ -398,8 +431,12 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling - Matchmaking                                        */
   /* ------------------------------------------------------------------------ */
-  requestMatchMaking(event) {
+  async requestMatchMaking(event) {
     event.preventDefault();
+    const canEngage = await auth.canEngageInGame();
+    if (!canEngage) {
+      return;
+    }
     const queryParams = this.optionsToQueryParams();
     socketManager.openSocket('matchmaking', queryParams);
     devLog('Requesting matchmaking...');

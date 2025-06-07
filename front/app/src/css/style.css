@@ -81,6 +81,13 @@
   --pm-red-300: #FF6A69;
   --pm-red-200: #FDC7C6;
   --pm-red-100: #FEEDED;
+  --pm-red-700-rgb: 77, 3, 2;
+  --pm-red-600-rgb: 135, 9, 7;
+  --pm-red-500-rgb: 198, 18, 16;
+  --pm-red-400-rgb: 251, 60, 59;
+  --pm-red-300-rgb: 255, 106, 105;
+  --pm-red-200-rgb: 253, 199, 198;
+  --pm-red-100-rgb: 254, 237, 237;
 
   --pm-green-700: #141400;
   --pm-green-600: #323301;
@@ -89,6 +96,13 @@
   --pm-green-300: #9D9E0A;
   --pm-green-200: #C4C610;
   --pm-green-100: #EDEF16;
+  --pm-green-700-rgb: 20, 20, 0;
+  --pm-green-600-rgb: 50, 51, 1;
+  --pm-green-500-rgb: 83, 84, 3;
+  --pm-green-400-rgb: 119, 120, 6;
+  --pm-green-300-rgb: 157, 158, 10;
+  --pm-green-200-rgb: 196, 198, 16;
+  --pm-green-100-rgb: 237, 239, 22;
 
   --bs-light: var(--pm-gray-100);
   --bs-light-rgb: var(--pm-gray-100-rgb);
@@ -96,7 +110,9 @@
   --bs-dark-rgb: var(--pm-gray-700-rgb);
 
   --pm-bg-success: var(--pm-green-400);
+  --pm-bg-success-rgb: var(--pm-green-400-rgb);
   --pm-bg-danger: var(--pm-red-400);
+  --pm-bg-danger-rgb: var(--pm-red-400-rgb);
 
   --pm-online: #228F0B;
   --pm-offline: var(--pm-gray-400);
@@ -188,12 +204,12 @@ h1, h2, h3, h4, h5, h6, legend {
   font-weight: bold;
 }
 .alert-success {
-  background-color: var(--pm-bg-success);
+  background-color: rgba(var(--pm-bg-success-rgb), 0.9);
   color: var(--pm-primary-100);
   border: none !important;
 }
 .alert-danger {
-  background-color: var(--pm-bg-danger);
+  background-color: rgba(var(--pm-bg-danger-rgb), 0.9);
   color: var(--pm-primary-100);
   border: none !important;
 }
