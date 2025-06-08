@@ -78,17 +78,20 @@ export class TournamentCreation extends HTMLElement {
     }
     const parsedData = rawData
       .split(',')
-      .map(item => {
+      .map((item) => {
         const n = Number(item);
         if (Number.isInteger(n) && n > 0) {
-            return n;
-          }
-          return null;
-      }).filter(item => item !== null);
+          return n;
+        }
+        return null;
+      })
+      .filter((item) => item !== null);
     if (parsedData.length === 2) {
       this.#requiredParticipantsOptions = parsedData;
     } else {
-      console.warn('Invalid required participants options in environment variable. Using default values of the component.');
+      console.warn(
+        'Invalid required participants options in environment variable. Using default values of the component.'
+      );
       this.#requiredParticipantsOptions = [4, 8];
     }
   }
@@ -125,7 +128,10 @@ export class TournamentCreation extends HTMLElement {
 
     // Initialize the preset input value for alias
     this.tournamentAliasInput.value = this.#state.nickname.substring(0, MAX_TOURNAMENT_ALIAS_LENGTH) || '';
-    if (this.tournamentAliasInput.value.length > 0 && this.tournamentAliasInput.value.length <= MAX_TOURNAMENT_ALIAS_LENGTH) {
+    if (
+      this.tournamentAliasInput.value.length > 0 &&
+      this.tournamentAliasInput.value.length <= MAX_TOURNAMENT_ALIAS_LENGTH
+    ) {
       this.#state.isAliasValid = true;
     }
     this.updateConfirmButtonState();
@@ -163,23 +169,6 @@ export class TournamentCreation extends HTMLElement {
       this.#state.isTournamentNameValid = true;
     }
     this.updateConfirmButtonState();
-
-    // if (event.target.value.length < 1) {
-    //   this.tournamentNameInput.classList.add('is-invalid');
-    //   this.tournamentNameFeedback.textContent = 'Tournament name must be at least 1 character.';
-    //   this.#state.isTournamentNameValid = false;
-    //   this.updateConfirmButtonState();
-    // } else if (event.target.value.length > MAX_TOURNAMENT_NAME_LENGTH) {
-    //   this.tournamentNameInput.classList.add('is-invalid');
-    //   this.tournamentNameFeedback.textContent = `Tournament name must be less than ${MAX_TOURNAMENT_NAME_LENGTH} characters.`;
-    //   this.#state.isTournamentNameValid = false;
-    //   this.updateConfirmButtonState();
-    // } else {
-    //   this.tournamentNameInput.classList.remove('is-invalid');
-    //   this.tournamentNameFeedback.textContent = '';
-    //   this.#state.isTournamentNameValid = true;
-    //   this.updateConfirmButtonState();
-    // }
   }
 
   validateAliasInput(event) {
@@ -195,23 +184,6 @@ export class TournamentCreation extends HTMLElement {
       this.#state.isAliasValid = true;
     }
     this.updateConfirmButtonState();
-
-    // if (event.target.value.length < 1) {
-    //   this.tournamentAliasInput.classList.add('is-invalid');
-    //   this.tournamentAliasFeedback.textContent = 'Alias must be at least 1 character.';
-    //   this.#state.isAliasValid = false;
-    //   this.updateConfirmButtonState();
-    // } else if (event.target.value.length > MAX_TOURNAMENT_ALIAS_LENGTH) {
-    //   this.tournamentAliasInput.classList.add('is-invalid');
-    //   this.tournamentAliasFeedback.textContent = `Alias must be less than ${MAX_TOURNAMENT_ALIAS_LENGTH} characters.`;
-    //   this.#state.isAliasValid = false;
-    //   this.updateConfirmButtonState();
-    // } else {
-    //   this.tournamentAliasInput.classList.remove('is-invalid');
-    //   this.tournamentAliasFeedback.textContent = '';
-    //   this.#state.isAliasValid = true;
-    //   this.updateConfirmButtonState();
-    // }
   }
 
   updateConfirmButtonState() {

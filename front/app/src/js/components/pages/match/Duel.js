@@ -39,7 +39,7 @@ export class Duel extends HTMLElement {
     INVITATION_CANCELED: 'invitationCanceled',
     INVITATION_DECLINED: 'declined',
     MATCHMAKING_CANCELED: 'matchmakingCanceled',
-  }
+  };
 
   // Countdown time in seconds before the duel starts
   #countdown = 3;
@@ -58,7 +58,7 @@ export class Duel extends HTMLElement {
   /**
    * Called from the router to set the query parameters for the duel.
    * This method updates the internal state based on the provided URL parameters.
-   * @param {Object} param 
+   * @param {Object} param
    * @return {void}
    */
   setQueryParam(param) {
@@ -231,9 +231,9 @@ export class Duel extends HTMLElement {
 
   /**
    * Handle the event when matchmaking is canceled by the server.
-   * @param {*} event 
-   * @returns 
-   * 
+   * @param {*} event
+   * @return {void}
+   *
    * Matchmaking ws close status codes:
    * 3000: Game found
    * 3001: Canceled by user
@@ -242,20 +242,21 @@ export class Duel extends HTMLElement {
    */
   handleMatchmakingCancellationByServer(event) {
     if (
-      event.detail.name !== 'matchmaking'
-      || this.#state.status !== this.STATUS.MATCHMAKING
-      || !event.detail.code
-      || event.detail.code === 3000
-      || event.detail.code === 3001
+      event.detail.name !== 'matchmaking' ||
+      this.#state.status !== this.STATUS.MATCHMAKING ||
+      !event.detail.code ||
+      event.detail.code === 3000 ||
+      event.detail.code === 3001
     ) {
       return;
     }
     if (event.detail.code === 3002 || event.detail.code === 3100) {
       router.removeBeforeunloadCallback();
       window.removeEventListener('beforeunload', this.confirmLeavePage);
-      message = event.detail.code === 3002
-        ? 'You are not authorized to request matchmaking.'
-        : 'Matchmaking is momentarily unavailable.';
+      message =
+        event.detail.code === 3002
+          ? 'You are not authorized to request matchmaking.'
+          : 'Matchmaking is momentarily unavailable.';
       showToastNotification(TOAST_TYPES.ERROR, message);
       this.#state.status = this.STATUS.MATCHMAKING_CANCELED;
       this.renderContent();
