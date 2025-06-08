@@ -76,8 +76,8 @@ export class TournamentModal extends HTMLElement {
   handleConfirmButtonClick() {
     const customEvent = new CustomEvent('tournament-modal-confirm', {
       detail: { contentType: this.#state.contentType },
-      bubbles: true, }
-	);
+      bubbles: true,
+    });
     this.modal.hide();
     this.dispatchEvent(customEvent);
   }
