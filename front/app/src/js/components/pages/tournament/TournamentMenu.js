@@ -1,3 +1,11 @@
+/**
+ * @module TournamentMenu
+ * @description
+ * TournamentMenu component, which displays tournaments list, filtered by ongoing or all tournaments.
+ * It allows users to create new tournaments, show preview of existing tournaments,
+ * and register for tournaments.
+ */
+
 import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -7,13 +15,21 @@ import { formatDateMDY } from '@utils';
 import { validateTournamentAlias } from './index';
 
 export class TournamentMenu extends HTMLElement {
+  /**
+   * Private state of the component.
+   * @property {Object} #state
+   * @property {string} #state.nickname - User's nickname.
+   * @property {boolean} #state.canEngage - Indicates if the user can engage in tournaments.
+   */
   #state = {
     nickname: '',
+    canEngage: false,
   };
 
   constructor() {
     super();
 
+    // Initialize references to DOM elements
     this.createTournamentButton = null;
     this.list = null;
     this.selectedTournament = null;
@@ -23,13 +39,14 @@ export class TournamentMenu extends HTMLElement {
     this.modal = null;
     this.modalBody = null;
     this.modalFooter = null;
-    this.calcelButton = null;
+    this.cancelButton = null;
     this.confirmButton = null;
     this.aliasInput = null;
     this.aliasInputFeedback = null;
     this.registrationFailFeedback = null;
 
-    this.showNewTournamentForm = this.showNewTournamentForm.bind(this);
+    // Bind event handlers
+    this.showTournamentCreationForm = this.showTournamentCreationForm.bind(this);
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
     this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
@@ -38,13 +55,22 @@ export class TournamentMenu extends HTMLElement {
     this.navigateToOverview = this.navigateToOverview.bind(this);
   }
 
+  /**
+   * Lifecycle method called when the component is connected to the DOM.
+   * It checks the authentication status and redirects the user accordingly.
+   * If the user is authenticated and has an active tournament session, it redirects to that tournament.
+   */
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
-      router.navigate('/login');
+      router.redirect('/login');
+      return;
+    }
+    if (authStatus.response.tournament_id) {
+      router.redirect(`/tournament/${authStatus.response.tournament_id}`);
       return;
     }
     this.#state.nickname = authStatus.response.nickname;
@@ -52,9 +78,9 @@ export class TournamentMenu extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.createTournamentButton?.removeEventListener('click', this.showNewTournamentForm);
+    this.createTournamentButton?.removeEventListener('click', this.showTournamentCreationForm);
     this.list?.removeEventListener('register-tournament', this.showTournamentDetail);
-    this.noOpenTournaments?.removeEventListener('click', this.showNewTournamentForm);
+    this.noOpenTournaments?.removeEventListener('click', this.showTournamentCreationForm);
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent?.removeEventListener('hide.bs.modal', this.handleCloseModal);
     this.modalComponent?.removeEventListener('hidden.bs.modal', this.handleCloseModal);
@@ -64,39 +90,32 @@ export class TournamentMenu extends HTMLElement {
     this.modal.hide();
   }
 
-  redirectToActiveTournament(id) {
-    devLog('Active tournament session found. Redirect to the tournament', id);
-    const modalTemplate = document.createElement('template');
-    modalTemplate.innerHTML = this.modalTemplate();
-    const modalHeader = modalTemplate.content.querySelector('.modal-header');
-    const modalBody = modalTemplate.content.querySelector('.modal-body');
-    modalBody.innerHTML = this.redirectToOngoingTournamentTemplate();
-    const modalFooter = modalTemplate.content.querySelector('.modal-footer');
-    modalHeader.classList.add('d-none');
-    modalFooter.classList.add('d-none');
-    this.modalComponent = modalTemplate.content.querySelector('.modal');
-    document.body.appendChild(this.modalComponent);
-    this.modal = new Modal(this.modalComponent);
-
-    this.modal.show();
-    setTimeout(() => {
-      this.modal.hide();
-      router.navigate(`/tournament/${id}`);
-    }, 3000);
-  }
-
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * Render tournament list (pending tournaments by default) and the create tournament button.
+   * It also sets up the modal for tournament creation and detail viewing.
+   * @returns {void}
+   */
   render() {
     this.innerHTML = this.template() + this.style();
 
     this.createTournamentButton = this.querySelector('#create-tournament-button');
     this.list = this.querySelector('tournament-list');
-
-    this.createTournamentButton.addEventListener('click', this.showNewTournamentForm);
+    this.createTournamentButton.addEventListener('click', this.showTournamentCreationForm);
     this.list.addEventListener('click', this.showTournamentDetail);
 
+    this.setUpModal();
+
+    window.requestAnimationFrame(() => {
+      this.noOpenTournaments = document.getElementById('no-open-tournaments');
+      this.noOpenTournaments?.addEventListener('click', this.showTournamentCreationForm);
+    });
+  }
+
+  setUpModal() {
     const modalTemplate = document.createElement('template');
     modalTemplate.innerHTML = this.modalTemplate();
     this.modalComponent = modalTemplate.content.querySelector('.modal');
@@ -104,16 +123,12 @@ export class TournamentMenu extends HTMLElement {
     this.modal = new Modal(this.modalComponent);
     this.modalBody = this.modalComponent.querySelector('.modal-body');
     this.modalFooter = this.modalComponent.querySelector('.modal-footer');
-    this.calcelButton = this.modalFooter.querySelector('.cancel-button');
+    this.cancelButton = this.modalFooter.querySelector('.cancel-button');
     this.confirmButton = this.modalFooter.querySelector('.confirm-button');
 
     document.addEventListener('hide-modal', this.hideModal);
     this.modalComponent.addEventListener('hide.bs.modal', this.handleCloseModal);
     this.modalComponent.addEventListener('hidden.bs.modal', this.handleCloseModal);
-    window.requestAnimationFrame(() => {
-      this.noOpenTournaments = document.getElementById('no-open-tournaments');
-      this.noOpenTournaments?.addEventListener('click', this.showNewTournamentForm);
-    });
   }
 
   /* ------------------------------------------------------------------------ */
@@ -130,7 +145,7 @@ export class TournamentMenu extends HTMLElement {
     this.modalBody.innerHTML = '';
     this.confirmButton.classList.remove('d-none');
     this.confirmButton.disabled = true;
-    this.calcelButton.textContent = 'Cancel';
+    this.cancelButton.textContent = 'Cancel';
 
     this.aliasInput?.removeEventListener('input', this.handleAliasInput);
     this.confirmButton.removeEventListener('click', this.confirmRegister);
@@ -140,16 +155,19 @@ export class TournamentMenu extends HTMLElement {
     this.aliasInputFeedback = null;
   }
 
-  showNewTournamentForm() {
+  async showTournamentCreationForm() {
+    const canEngage = await auth.canEngageInGame();
+    if (!canEngage) {
+      return;
+    }
     this.modalBody.innerHTML = '';
     const modalBodyContent = document.createElement('tournament-creation');
     this.modalBody.appendChild(modalBodyContent);
     this.confirmButton.textContent = 'Create';
-
     this.modal.show();
   }
 
-  showTournamentDetail(event) {
+  async showTournamentDetail(event) {
     const listItem = event.target.closest('li[tournament-id]');
     if (!listItem || !listItem.hasAttribute('tournament-id')) {
       return;
@@ -161,10 +179,15 @@ export class TournamentMenu extends HTMLElement {
       return;
     }
     this.modalBody.innerHTML = '';
+    this.#state.canEngage = await auth.canEngageInGame(false);
     this.tournamentDetail[tournamentStatus]();
     this.modal.show();
   }
 
+  /**
+   * Generate the tournament detail view based on the tournament status.
+   * It updates the modal body with the appropriate content and sets up event listeners.
+   */
   tournamentDetail = {
     pending: () => {
       this.modalBody.innerHTML = this.registerTournamentTemplate();
@@ -200,12 +223,19 @@ export class TournamentMenu extends HTMLElement {
           this.selectedTournament.settings.cool_mode === true ? 'Buffs: enabled' : 'Buffs: disabled';
       }
 
+      this.registerForm = this.modalBody.querySelector('#tournament-register-form');
       this.aliasInput = this.modalBody.querySelector('#tournament-alias');
       this.aliasInputFeedback = this.modalBody.querySelector('#tournament-alias-feedback');
-      this.registrationFailFeedback = this.modalBody.querySelector('#registration-fail-feedback');
-      this.registrationFailFeedbackMessage = this.modalBody.querySelector('#registration-fail-feedback-message');
-      this.aliasInput.addEventListener('input', this.handleAliasInput);
 
+      if (!this.#state.canEngage) {
+        this.registerForm.classList.add('d-none');
+        this.confirmButton.classList.add('d-none');
+        const alert = this.modalBody.querySelector('#cannot-engage-alert');
+        alert.classList.remove('d-none');
+        this.cancelButton.textContent = 'Close';
+        return;
+      }
+      this.aliasInput.addEventListener('input', this.handleAliasInput);
       this.aliasInput.value = this.#state.nickname;
       this.confirmButton.disabled = false;
       this.confirmButton.textContent = 'Register';
@@ -219,7 +249,7 @@ export class TournamentMenu extends HTMLElement {
       this.confirmButton.textContent = 'Check progress';
       this.confirmButton.disabled = false;
       this.confirmButton.addEventListener('click', this.navigateToOverview);
-      this.calcelButton.textContent = 'Close';
+      this.cancelButton.textContent = 'Close';
     },
     finished: () => {
       this.modalBody.innerHTML = this.finishedTournamentTemplate();
@@ -245,10 +275,16 @@ export class TournamentMenu extends HTMLElement {
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
       this.confirmButton.addEventListener('click', this.navigateToOverview);
-      this.calcelButton.textContent = 'Close';
+      this.cancelButton.textContent = 'Close';
     },
   };
 
+  /**
+   * Validate the tournament alias input.
+   * If the alias is invalid, it adds an error class to the input and displays an error message.
+   * If the alias is valid, it removes the error class and enables the confirm button.
+   * @param {*} event
+   */
   handleAliasInput(event) {
     const validationError = validateTournamentAlias(event.target.value);
     if (validationError) {
@@ -262,6 +298,14 @@ export class TournamentMenu extends HTMLElement {
     }
   }
 
+  /**
+   * Confirm the registration for the selected tournament.
+   * It sends a POST request to the API with the tournament ID and alias.
+   * If the registration is successful, it connects to the tournament room.
+   * If the registration fails, it displays an error message.
+   * @param {Event} event - The event triggered by the confirm button click.
+   * @returns {Promise<void>}
+   */
   async confirmRegister(event) {
     event.stopPropagation();
     devLog('Registering for tournament:', this.selectedTournament.id, this.aliasInput.value);
@@ -425,6 +469,9 @@ export class TournamentMenu extends HTMLElement {
         <div class="tournament-options-tag m-2" id="tournament-option-cool-mode"></div>
       </div>
       <div id="registration-fail-alert-wrapper"></div>
+      <p id="cannot-engage-alert" class="text-center d-none">
+        You have an ongoing game or tournament.</br>Cannot register.
+      </p>
       <div id="tournament-register-form" class="d-flex flex-column w-100 mb-3">
         <label for="tournament-alias" class="form-label">Set your tournament alias</label>
         <input type="text" class="form-control" id="tournament-alias" placeholder="Your alias for the tournament" autocomplete="off" required>
@@ -454,15 +501,6 @@ export class TournamentMenu extends HTMLElement {
         <img class="avatar-m rounded-circle" id="tournament-winner-avatar" alt="champion-avatar">
         <p class="fs-5" id="tournament-winner-alias"></p>
       </div>
-    </div>
-    `;
-  }
-
-  redirectToOngoingTournamentTemplate() {
-    return `
-    <div class="d-flex flex-column align-items-center px-4">
-      <p class="text-center m-0 mt-3">You have an active tournament session.</p>
-      <p class="text-center m-0 mb-3">Taking you there now!</p>
     </div>
     `;
   }
