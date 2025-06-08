@@ -22,6 +22,7 @@ export class TournamentRoundOngoing extends HTMLElement {
   }
 
   set data(data) {
+    console.log('TournamentRoundOngoing data:', data);
     this.#state.roundNumber = data.round_number;
     this.#state.round = data.round;
     this.#state.status = data.status;
@@ -52,9 +53,9 @@ export class TournamentRoundOngoing extends HTMLElement {
     }
 
     // For test
-    setTimeout(() => {
-      this.roundFinished();
-    }, 3000);
+    // setTimeout(() => {
+    //   this.roundFinished();
+    // }, 3000);
   }
 
   renderBracket(bracket) {
@@ -74,7 +75,7 @@ export class TournamentRoundOngoing extends HTMLElement {
       participant: bracket.participant2,
       score: scoreP2,
     };
-    if (bracket.winner.profile) {
+    if (bracket.winner && bracket.winner.profile) {
       bracket.winner.profile.username === bracket.participant1.profile.username
         ? (player1.classList.add('bracket-player-winner'), player2.classList.add('bracket-player-loser'))
         : (player1.classList.add('bracket-player-loser'), player2.classList.add('bracket-player-winner'));
