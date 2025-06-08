@@ -7,8 +7,8 @@ import {
   sessionExpiredToast,
   unknowknErrorToast,
   showAlertMessageForDuration,
-  ALERT_TYPE
- } from '@utils';
+  ALERT_TYPE,
+} from '@utils';
 
 /**
  * @module authManager
@@ -147,7 +147,7 @@ const auth = (() => {
      * If the user is not authenticated, redirects to the login page.
      * If the user has an ongoing game or tournament, shows an alert message and returns false.
      */
-    async canEngageInGame() {
+    async canEngageInGame(showAlert = true) {
       const authStatus = await this.fetchAuthStatus();
       if (!authStatus.success) {
         if (authStatus.status === 401) {
@@ -156,15 +156,19 @@ const auth = (() => {
         router.redirect('/login');
         return false;
       }
-      if (authStatus.response.game_id) {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, 'You have an ongoing game. Please finish it before   requesting matchmaking.');
-        return false;
+      if (!authStatus.response.game_id && !authStatus.response.tournament_id) {
+        return true;
       }
-      if (authStatus.response.tournament_id) {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, 'You are participating in a tournament. Cannot request   matchmaking');
-        return false;
+      if (showAlert) {
+        let type;
+        if (authStatus.response.game_id) {
+          type = 'game';
+        } else if (authStatus.response.tournament_id) {
+          type = 'tournament';
+        }
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, `You have an ongoing ${type}. Cannot start new activity`);
       }
-      return true;
+      return false;
     }
   }
   return new AuthManager();
