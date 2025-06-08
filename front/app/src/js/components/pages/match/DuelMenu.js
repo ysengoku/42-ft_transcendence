@@ -1,7 +1,7 @@
 /**
  * @module DuelMenu
  * @description Component for the Duel Menu page, allowing users to invite others to a duel or request matchmaking.
-*/
+ */
 
 import { Modal } from 'bootstrap';
 import { router } from '@router';
@@ -19,7 +19,7 @@ import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
   /**
-   * State of the DuelMenu component.
+   * Private state of the DuelMenu component.
    * @property {Object} user - The authenticated user.
    * @property {string} opponentUsername - The username of the selected opponent.
    * @property {Object} options - The game options selected by the user.
