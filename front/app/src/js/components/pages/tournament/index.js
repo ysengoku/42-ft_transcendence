@@ -6,6 +6,7 @@ import { TournamentRoundOngoing } from './components/TournamentRoundOngoing';
 import { TournamentCanceled } from './components/TournamentCanceled';
 import { TournamentOverviewTree } from './components/OverviewRoundsTree';
 import { TournamentOverviewTable } from './components/OverviewRoundsTable';
+import { BracketElement } from './components/BracketElement';
 import { participantElement } from './components/ParticipantElement';
 import { TournamentModal } from './components/TournamentModal';
 import { validateTournamentName, validateTournamentAlias } from './utils/validateInput';
@@ -19,6 +20,7 @@ export {
   TournamentCanceled,
   TournamentOverviewTree,
   TournamentOverviewTable,
+  BracketElement,
   participantElement,
   TournamentModal,
   validateTournamentName,
