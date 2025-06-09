@@ -1,10 +1,13 @@
 import { router } from '@router';
+import { flyAway } from '@utils';
 
 export class TournamentRoundStart extends HTMLElement {
   #state = {
-    roundNumber: 1,
-    round: null,
+    nextRoundNumber: 1,
+    nextRound: null,
+    currentRound: null,
     gameId: '',
+    isFirstRound: true,
   };
 
   #countdown = 3;
@@ -18,60 +21,87 @@ export class TournamentRoundStart extends HTMLElement {
   }
 
   set data(data) {
-    this.#state.roundNumber = data.round_number;
-    this.#state.round = data.round;
+    this.#state.nextRoundNumber = data.round_number;
+    this.#state.nextRound = data.round;
+    this.#state.currentRound = data.previous_round;
     this.#state.gameId = data.game_id;
-    this.isFirstRound = this.#state.roundNumber === 1;
+    this.#state.isFirstRound = this.#state.nextRoundNumber === 1;
     this.render();
   }
 
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
-  render() {
-    if (this.isFirstRound) {
+  async render() {
+    if (this.#state.isFirstRound) {
       this.innerHTML = `
       <div class="d-flex flex-column justify-content-center fs-5 my-5 py-5">
           All Gunslingers are now in the Arena. Tournament starts!
       </div>
       `;
-      this.isFirstRound = false;
-      setTimeout(() => this.render(), 2000);
+      setTimeout(() => this.renderNextRound(), 2000);
       return;
     }
     this.innerHTML = this.template() + this.style();
     this.roundNumberElement = this.querySelector('#round-number');
+    this.roundStatusMessage = this.querySelector('#round-status-message');
     this.timer = this.querySelector('#round-start-timer');
     this.bracketsWrapper = this.querySelector('#brackets-wrapper');
 
-    this.roundNumberElement.textContent = `Round ${this.#state.roundNumber}`;
-    this.renderBrackets();
-    this.countDownTimer();
+    await this.renderPreviousRoundResult();
+    await this.roundFinishedAnimation();
+    this.renderNextRound();
   }
 
-  renderBrackets() {
-    for (let i = 0; i < this.#state.round.brackets.length; i++) {
-      const bracket = document.createElement('div');
-      bracket.classList.add('d-flex', 'flex-column', 'mx-2', 'mb-3');
-
-      const player1 = document.createElement('div');
-      player1.innerHTML = this.participantTemplate();
-      const player1AvatarElement = player1.querySelector('img');
-      player1AvatarElement.src = this.#state.round.brackets[i].participant1.profile.avatar;
-      const player1AliasElement = player1.querySelector('.participant-alias');
-      player1AliasElement.textContent = this.#state.round.brackets[i].participant1.alias;
-
-      const player2 = document.createElement('div');
-      player2.innerHTML = this.participantTemplate();
-      const player2AvatarElement = player2.querySelector('img');
-      player2AvatarElement.src = this.#state.round.brackets[i].participant2.profile.avatar;
-      const player2AliasElement = player2.querySelector('.participant-alias');
-      player2AliasElement.textContent = this.#state.round.brackets[i].participant2.alias;
-
-      bracket.appendChild(player1);
-      bracket.appendChild(player2);
-      this.bracketsWrapper.appendChild(bracket);
+  renderPreviousRoundResult() {
+    if (this.#state.isFirstRound) {
+      return;
     }
+    this.roundNumberElement.textContent = `Round ${this.#state.nextRoundNumber - 1}`;
+    this.roundStatusMessage.textContent = 'All Gunslingers have completed their matches. Preparing the next round.';
+    return new Promise((resolve) => {
+      for (let i = 0; i < this.#state.currentRound.brackets.length; i++) {
+        const bracketElement = document.createElement('bracket-element');
+        bracketElement.data = this.#state.currentRound.brackets[i];
+        this.bracketsWrapper.appendChild(bracketElement);
+      }
+      setTimeout(() => {
+        resolve();
+      }, 3000);
+    });
+  }
+
+  roundFinishedAnimation() {
+    devLog(`Round ${this.#state.roundNumber - 1} finished`);
+    return new Promise((resolve) => {
+      const scoreElements = this.querySelectorAll('.player-score');
+      const loserElements = this.querySelectorAll('.bracket-player-loser');
+      scoreElements.forEach((score) => {
+        score.classList.add('d-none');
+      });
+      loserElements.forEach((loser) => {
+        flyAway(loser);
+      });
+      setTimeout(() => {
+        resolve();
+      }, 2000);
+    });
+  }
+
+  renderNextRound() {
+    this.bracketsWrapper.innerHTML = '';
+    this.roundStatusMessage.textContent = '';
+    this.roundNumberElement.classList.add('fade-in-animation');
+    this.roundNumberElement.textContent = `Round ${this.#state.nextRoundNumber}`;
+    this.timer.classList.add('fade-in-animation');
+    this.timer.textContent = 'Next round';
+    for (let i = 0; i < this.#state.nextRound.brackets.length; i++) {
+      const bracketElement = document.createElement('bracket-element');
+      bracketElement.classList.add('fade-in-animation');
+      bracketElement.data = this.#state.nextRound.brackets[i];
+      this.bracketsWrapper.appendChild(bracketElement);
+    }
+    this.countDownTimer();
   }
 
   countDownTimer() {
@@ -93,7 +123,8 @@ export class TournamentRoundStart extends HTMLElement {
   template() {
     return `
     <div class="d-flex flex-column justify-content-center mt-3">
-      <h3 class="text-center m-1" id="round-number">Round 1</h3>
+      <h3 class="text-center m-1" id="round-number"></h3>
+      <p class="text-center mb-4" id="round-status-message"></p>
       <div class="text-center fs-5 mb-4" id="round-start-timer"></div>
       <div class="d-flex flex-row flex-wrap justify-content-center mb-3 px-4 gap-4" id="brackets-wrapper"></div>
     </div>
@@ -107,7 +138,8 @@ export class TournamentRoundStart extends HTMLElement {
       background-color: rgba(var(--bs-body-bg-rgb), 0.6);
       border-radius: .4rem;
       margin-bottom: .2rem;
-    }      
+    }
+
     </style>
     `;
   }

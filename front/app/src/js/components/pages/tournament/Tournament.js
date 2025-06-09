@@ -100,8 +100,8 @@ export class Tournament extends HTMLElement {
     // this.#state.tournament = response.data;
 
     // =========== For test ================================================
-    // pending, tournamentStarting, waitingNextRound, roundStarting, roundEnd
-    this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
+    // pending, tournamentStarting, waitingNextRound, roundStarting
+    this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'roundStarting');
     // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
@@ -155,7 +155,10 @@ export class Tournament extends HTMLElement {
   }
 
   checkUserStatus() {
-    const userDataInBracket = this.#state.currentUserBracket.participant1.profile.username === this.#state.user.username ? this.#state.currentUserBracket.participant1 : this.#state.currentUserBracket.participant2;
+    const userDataInBracket =
+      this.#state.currentUserBracket.participant1.profile.username === this.#state.user.username
+        ? this.#state.currentUserBracket.participant1
+        : this.#state.currentUserBracket.participant2;
     switch (userDataInBracket.status) {
       case PARTICIPANT_STATUS.PLAYING:
         const gameId = this.#state.currentUserBracket.game_id;
@@ -231,9 +234,12 @@ export class Tournament extends HTMLElement {
     },
     roundStarting: () => {
       const tournamentRoundStart = document.createElement('tournament-round-start');
+      const previousRound =
+        this.#state.currentRoundNumber === 1 ? null : this.#state.tournament.rounds[this.#state.currentRoundNumber - 2];
       tournamentRoundStart.data = {
         round_number: this.#state.currentRoundNumber,
         round: this.#state.currentRound,
+        previous_round: previousRound,
         game_id: this.#state.currentUserBracket.game_id,
       };
       return tournamentRoundStart;
