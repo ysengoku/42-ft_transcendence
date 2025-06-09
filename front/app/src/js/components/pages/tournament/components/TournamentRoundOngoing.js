@@ -1,15 +1,8 @@
-import { flyAway } from '@utils';
-
 export class TournamentRoundOngoing extends HTMLElement {
   #state = {
     roundNumber: 1,
     round: null,
     status: '',
-  };
-
-  #messages = {
-    waitingNextRound: 'Waiting for all Gunslingers to complete their matches.',
-    roundFinished: 'All Gunslingers have completed their matches. Preparing the next round.',
   };
 
   constructor() {
@@ -40,49 +33,14 @@ export class TournamentRoundOngoing extends HTMLElement {
     this.bracketsWrapper = this.querySelector('#brackets-wrapper');
 
     this.roundNumberElement.textContent = `Round ${this.#state.roundNumber}`;
-    this.roundStatusMessage.textContent = this.#messages[this.#state.status];
+    this.roundStatusMessage.textContent = 'Waiting for all Gunslingers to complete their matches.';
     for (let i = 0; i < this.#state.round.brackets.length; i++) {
-      this.renderBracket(this.#state.round.brackets[i]);
+      const bracketElement = document.createElement('bracket-element');
+      console.log('Bracket element', bracketElement);
+      console.log('Bracket data', this.#state.round.brackets[i]);
+      bracketElement.data = this.#state.round.brackets[i];
+      this.bracketsWrapper.appendChild(bracketElement);
     }
-    if (this.#state.status === 'finished') {
-      setTimeout(() => {
-        this.roundFinished();
-      }, 3000);
-    } else {
-      // document.addEventListener('tournamentMatchFinished', this.updateBracket);
-    }
-
-    // For test
-    // setTimeout(() => {
-    //   this.roundFinished();
-    // }, 3000);
-  }
-
-  renderBracket(bracket) {
-    const bracketElement = document.createElement('div');
-    bracketElement.classList.add('d-flex', 'flex-column', 'align-items-start', 'mx-2', 'mb-3', 'gap-1');
-    bracketElement.id = `bracket-${bracket.game_id}`;
-
-    const player1 = document.createElement('participant-element');
-    const scoreP1 = bracket.status === 'finished' ? bracket.score_p1 : '';
-    player1.data = {
-      participant: bracket.participant1,
-      score: scoreP1,
-    };
-    const player2 = document.createElement('participant-element');
-    const scoreP2 = bracket.status === 'finished' ? bracket.score_p2 : '';
-    player2.data = {
-      participant: bracket.participant2,
-      score: scoreP2,
-    };
-    if (bracket.winner && bracket.winner.profile) {
-      bracket.winner.profile.username === bracket.participant1.profile.username
-        ? (player1.classList.add('bracket-player-winner'), player2.classList.add('bracket-player-loser'))
-        : (player1.classList.add('bracket-player-loser'), player2.classList.add('bracket-player-winner'));
-    }
-    bracketElement.appendChild(player1);
-    bracketElement.appendChild(player2);
-    this.bracketsWrapper.appendChild(bracketElement);
   }
 
   updateBracket(matchData) {
@@ -119,23 +77,10 @@ export class TournamentRoundOngoing extends HTMLElement {
     }
   }
 
-  roundFinished() {
-    devLog(`Round ${this.#state.roundNumber} finished`);
-    this.roundStatusMessage.textContent = this.#messages.roundFinished;
-    const scoreElements = this.querySelectorAll('.player-score');
-    const loserElements = this.querySelectorAll('.bracket-player-loser');
-    scoreElements.forEach((score) => {
-      score.classList.add('d-none');
-    });
-    loserElements.forEach((loser) => {
-      flyAway(loser);
-    });
-  }
-
   template() {
     return `
     <div class="d-flex flex-column justify-content-center mt-3">
-      <h3 class="text-center mb-3" id="round-number">Round 1</h3>
+      <h3 class="text-center mb-3" id="round-number"></h3>
       <p class="text-center mb-5" id="round-status-message"></p>
       <div class="d-flex flex-row flex-wrap justify-content-center my-3 px-4 gap-4" id="brackets-wrapper"></div>
     </div>

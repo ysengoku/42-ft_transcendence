@@ -1,12 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import {
-  validateTournamentName,
-  validateTournamentAlias,
-} from '@components/pages/tournament/utils/validateInput.js';
-import {
-  MAX_TOURNAMENT_NAME_LENGTH,
-  MAX_TOURNAMENT_ALIAS_LENGTH,
-} from '@env';
+import { validateTournamentName, validateTournamentAlias } from '@components/pages/tournament/utils/validateInput.js';
+import { MAX_TOURNAMENT_NAME_LENGTH, MAX_TOURNAMENT_ALIAS_LENGTH } from '@env';
 
 describe('Validate Tournament Input', () => {
   it('should return error if name is empty', () => {
