@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
+from chat.duel_events import DuelEvent
 from common.routers import allow_only_for_self
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from users.models import RefreshToken, User
@@ -24,7 +25,6 @@ from users.schemas import (
     SelfSchema,
     SignUpSchema,
 )
-from chat.duel_events import DuelEvent
 
 auth_router = Router()
 
@@ -42,7 +42,12 @@ def check_self(request: HttpRequest):
 
 @auth_router.post(
     "login",
-    response={200: ProfileMinimalSchema | LoginResponseSchema, 401: MessageSchema, 429: MessageSchema},
+    response={
+        200: ProfileMinimalSchema | LoginResponseSchema,
+        401: MessageSchema,
+        422: list[ValidationErrorMessageSchema],
+        429: MessageSchema,
+    },
     auth=None,
 )
 @ensure_csrf_cookie
