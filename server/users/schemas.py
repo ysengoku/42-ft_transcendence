@@ -47,6 +47,7 @@ class SelfSchema(ProfileMinimalSchema):
     unread_notifications_count: int
     game_id: str | None
     tournament_id: str | None
+    is_engaged_in_game: bool
 
     @staticmethod
     def resolve_unread_messages_count(obj: Profile):
@@ -69,6 +70,10 @@ class SelfSchema(ProfileMinimalSchema):
         if t:
             return str(t.id)
         return t
+
+    @staticmethod
+    def resolve_is_engaged_in_game(obj: Profile):
+        return not obj.can_participate_in_game()
 
 
 class UserSettingsSchema(Schema):
