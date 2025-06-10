@@ -50,7 +50,7 @@ export class TournamentMenu extends HTMLElement {
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
     this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
-    this.handleAliasInput = this.handleAliasInput.bind(this);
+    this.validateAliasInput = this.validateAliasInput.bind(this);
     this.confirmRegister = this.confirmRegister.bind(this);
     this.navigateToOverview = this.navigateToOverview.bind(this);
   }
@@ -84,10 +84,14 @@ export class TournamentMenu extends HTMLElement {
     document.removeEventListener('hide-modal', this.hideModal);
     this.modalComponent?.removeEventListener('hide.bs.modal', this.handleCloseModal);
     this.modalComponent?.removeEventListener('hidden.bs.modal', this.handleCloseModal);
-    if (this.selectedTournament && this.selectedTournament.staus !== 'pending') {
+    if (this.selectedTournament && this.selectedTournament.status !== 'pending') {
       this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
     this.modal.hide();
+    this.modal.dispose();
+    document.body.removeChild(this.modalComponent);
+    this.modalComponent = null;
+    this.modal = null;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -147,7 +151,7 @@ export class TournamentMenu extends HTMLElement {
     this.confirmButton.disabled = true;
     this.cancelButton.textContent = 'Cancel';
 
-    this.aliasInput?.removeEventListener('input', this.handleAliasInput);
+    this.aliasInput?.removeEventListener('input', this.validateAliasInput);
     this.confirmButton.removeEventListener('click', this.confirmRegister);
     this.confirmButton.removeEventListener('click', this.navigateToOverview);
 
@@ -164,6 +168,7 @@ export class TournamentMenu extends HTMLElement {
     const modalBodyContent = document.createElement('tournament-creation');
     this.modalBody.appendChild(modalBodyContent);
     this.confirmButton.textContent = 'Create';
+    this.confirmButton.disabled = false;
     this.modal.show();
   }
 
@@ -235,7 +240,7 @@ export class TournamentMenu extends HTMLElement {
         this.cancelButton.textContent = 'Close';
         return;
       }
-      this.aliasInput.addEventListener('input', this.handleAliasInput);
+      this.aliasInput.addEventListener('input', this.validateAliasInput);
       this.aliasInput.value = this.#state.nickname;
       this.confirmButton.disabled = false;
       this.confirmButton.textContent = 'Register';
@@ -270,7 +275,7 @@ export class TournamentMenu extends HTMLElement {
       }
       tournamentWinnerAlias.textContent = this.selectedTournament.winner
         ? this.selectedTournament.winner.alias
-        : 'Data not available';
+        : 'Data not available at the moment';
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
@@ -285,8 +290,9 @@ export class TournamentMenu extends HTMLElement {
    * If the alias is valid, it removes the error class and enables the confirm button.
    * @param {*} event
    */
-  handleAliasInput(event) {
-    const validationError = validateTournamentAlias(event.target.value);
+  validateAliasInput(event, value = null) {
+    const valueToValidate = event ? event.target.value : value;
+    const validationError = validateTournamentAlias(valueToValidate);
     if (validationError) {
       this.aliasInput.classList.add('is-invalid');
       this.aliasInputFeedback.textContent = validationError;
@@ -308,6 +314,10 @@ export class TournamentMenu extends HTMLElement {
    */
   async confirmRegister(event) {
     event.stopPropagation();
+    this.validateAliasInput(null, this.aliasInput.value);
+    if (!this.aliasInput.value || this.aliasInput.classList.contains('is-invalid')) {
+      return;
+    }
     devLog('Registering for tournament:', this.selectedTournament.id, this.aliasInput.value);
     const response = await apiRequest(
       'POST',
