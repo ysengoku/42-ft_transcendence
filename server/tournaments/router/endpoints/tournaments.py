@@ -1,4 +1,4 @@
-# server/tournaments/router/endpoints/tournaments.py
+import logging
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
@@ -15,9 +15,9 @@ from tournaments.schemas import TournamentCreateSchema, TournamentSchema
 
 tournaments_router = Router()
 
-import logging
 
 logger = logging.getLogger("server")
+
 
 @tournaments_router.post(
     "",
@@ -34,14 +34,14 @@ def create_tournament(request, data: TournamentCreateSchema):
     user = request.auth
 
     if Tournament.objects.get_active_tournament(user.profile):
-        raise HttpError(
-            403, "You can't be a participant in multiple active tournaments.")
+        raise HttpError(403, "You can't be a participant in multiple active tournaments.")
 
-    tournament = Tournament.objects.validate_and_create(
+    tournament: Tournament = Tournament.objects.validate_and_create(
         tournament_name=data.name,
         creator=user.profile,
         required_participants=data.required_participants,
         alias=data.alias,
+        settings=data.settings.dict(),
     )
 
     ws_data = {
@@ -58,8 +58,7 @@ def create_tournament(request, data: TournamentCreateSchema):
     minimum_num_participants = 4
     num_rounds = 2 if data.required_participants == minimum_num_participants else 3
     for round_num in range(1, num_rounds + 1):
-        Round.objects.create(tournament=tournament,
-                             number=round_num, status=Round.PENDING)
+        Round.objects.create(tournament=tournament, number=round_num, status=Round.PENDING)
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "tournament_global",
@@ -91,12 +90,10 @@ def get_tournament(request, tournament_id: UUID):
 @paginate
 def get_all_tournaments(request, status: str = "all"):
     base_qs = Tournament.objects.prefetch_related(
-        Prefetch("participants",
-                 queryset=Participant.objects.select_related("profile__user")),
+        Prefetch("participants", queryset=Participant.objects.select_related("profile__user")),
         Prefetch(
             "rounds__brackets",
-            queryset=Bracket.objects.select_related(
-                "participant1__profile__user", "participant2__profile__user"),
+            queryset=Bracket.objects.select_related("participant1__profile__user", "participant2__profile__user"),
         ),
     )
     if status in [x[0] for x in Tournament.STATUS_CHOICES]:
@@ -142,8 +139,7 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
             raise HttpError(404, "Tournament not found.") from e
 
         if Tournament.objects.get_active_tournament(user.profile):
-            raise HttpError(
-                403, "You can't be a participant in multiple active tournaments.")
+            raise HttpError(403, "You can't be a participant in multiple active tournaments.")
 
         if tournament.status != Tournament.PENDING:
             raise HttpError(403, "Tournament is not open.")
@@ -151,8 +147,7 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
         if tournament.participants.count() >= tournament.required_participants:
             raise HttpError(403, "Tournament is full.")
 
-        participant_or_error_str: Participant | str = tournament.add_participant(
-            user.profile, alias)
+        participant_or_error_str: Participant | str = tournament.add_participant(user.profile, alias)
         if type(participant_or_error_str) is str:
             raise HttpError(403, participant_or_error_str)
 
@@ -201,8 +196,7 @@ def unregister_for_tournament(request, tournament_id: UUID):
         if tournament.status != Tournament.PENDING:
             raise HttpError(403, "Cannot unregister from non-open tournament.")
 
-        participant_or_error_str: dict | str = tournament.remove_participant(
-            user.profile)
+        participant_or_error_str: dict | str = tournament.remove_participant(user.profile)
         if type(participant_or_error_str) is str:
             raise HttpError(403, participant_or_error_str)
 
@@ -210,10 +204,8 @@ def unregister_for_tournament(request, tournament_id: UUID):
         if tournament.participants.count() < 1:
             tournament.status = Tournament.CANCELLED
             tournament.save()
-            async_to_sync(channel_layer.group_send)(
-                f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
+            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
         else:
-            async_to_sync(channel_layer.group_send)(
-                f"tournament_{tournament_id}", {"type": "user_left"})
+            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "user_left"})
 
     return 204, None

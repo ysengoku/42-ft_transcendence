@@ -200,7 +200,6 @@ def generate_tournaments(users: dict[str, User]) -> None:
                 profile=p,
                 tournament=tournament,
                 alias=alias,
-                status="registered",
                 current_round=0,
             )
             participant_objs.append(part)
