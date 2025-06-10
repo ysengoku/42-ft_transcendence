@@ -156,17 +156,23 @@ const auth = (() => {
         router.redirect('/login');
         return false;
       }
-      if (!authStatus.response.game_id && !authStatus.response.tournament_id) {
+      if (
+        !authStatus.response.game_id &&
+        !authStatus.response.tournament_id &&
+        !authStatus.response.is_engaged_in_game
+      ) {
         return true;
       }
       if (showAlert) {
         let type;
         if (authStatus.response.game_id) {
-          type = 'game';
+          type = 'an ongoing game';
         } else if (authStatus.response.tournament_id) {
-          type = 'tournament';
+          type = 'an ongoing tournament';
+        } else {
+          type = 'a pending invitation or matchmaking';
         }
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, `You have an ongoing ${type}. Cannot start new activity`);
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, `You have ${type}. Cannot start new activity.`);
       }
       return false;
     }
