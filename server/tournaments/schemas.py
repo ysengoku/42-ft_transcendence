@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from django.conf import settings
@@ -6,7 +7,7 @@ from django.core.exceptions import ValidationError
 from ninja import Schema
 from pydantic import model_validator
 
-from common.schemas import ProfileMinimalSchema
+from common.schemas import GameSettingsSchema, ProfileMinimalSchema
 from tournaments.models import Tournament
 
 
@@ -39,6 +40,7 @@ class TournamentSchema(Schema):
     required_participants: int
     date: datetime
     participants_count: int | None
+    settings: GameSettingsSchema
 
     @staticmethod
     def resolve_participants_count(obj: Tournament):
@@ -49,8 +51,9 @@ class TournamentCreateSchema(Schema):
     """Schema that represents the necessary data to create a Tournament."""
 
     name: str
-    required_participants: int
+    required_participants: Literal[4, 8]
     alias: str
+    settings: GameSettingsSchema
 
     @model_validator(mode="after")
     def validate_tournament_schema(self):
