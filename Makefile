@@ -108,7 +108,7 @@ bash-backend:
 
 # Open a bash shell inside the frontend container
 bash-frontend:
-	docker compose exec -it $(FRONTEND_SERVICE) bash
+	docker compose exec -it $(FRONTEND_SERVICE) sh
 
 fclean:
 	docker compose down --volumes
@@ -134,3 +134,6 @@ clean-db:
 
 test-front:
 	docker exec $(FRONTEND_SERVICE) npm run test
+
+lint-front:
+	docker exec $(FRONTEND_SERVICE) npm run lint
