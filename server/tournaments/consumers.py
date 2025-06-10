@@ -29,22 +29,12 @@ class TournamentConsumer(WebsocketConsumer):
         try:
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
+            logger.warning("This tournamend id does not exist : %S", tournament_id)
             self.close()
         async_to_sync(self.channel_layer.group_add)(
             f"tournament_{self.tournament_id}", 
             self.channel_name
         )
-        # if self.tournament_id:
-        #     async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
-        # else:
-        #     self.tournament_id = str(uuid.uuid4())
-        #     self.tournaments[self.tournament_id] = {
-        #         "creator": self.user,
-        #         "participants": {},
-        #         "status": "start",
-        #         "rounds": [],
-        #     }
-        #
         self.accept()
 
     def disconnect(self, close_code):
@@ -54,6 +44,7 @@ class TournamentConsumer(WebsocketConsumer):
             f"tournament_{self.tournament_id}",
             {"type": "tournament.broadcast", "action": "user_left", "data": {"user": self.user.username}},
         )
+        self.close(close_code)
 
     def create_tournament(self, data):
         with transaction.atomic():
@@ -79,9 +70,8 @@ class TournamentConsumer(WebsocketConsumer):
                     {"action": "tournament_cancel_fail", "data": {"reason": "This tournament does not exist"}},
                 ),
             )
-            logger.warning(
-                "%s tried to cancel the tournament %s but it does not exist", self.user.username, tournament_id,
-            )
+            logger.warning("%s tried to cancel the tournament %s but it does not exist",
+                           self.user.username, tournament_id)
             return
             # if user_id != organizer_id:
             # self.send(text_data=json.dumps({
@@ -203,7 +193,7 @@ class TournamentConsumer(WebsocketConsumer):
 
     def cancel_participant(self, data):
         """
-        TODO code this properly
+        TODO: code this properly
         When the participant cancels their own participation
         """
 
@@ -300,9 +290,7 @@ class TournamentConsumer(WebsocketConsumer):
                 {
                     "action": "tournament_canceled",
                     "data": {
-                        "id": 12,
                     }
-                    # "data": event["data"]
                 }
             )
         )
@@ -314,9 +302,7 @@ class TournamentConsumer(WebsocketConsumer):
                 {
                     "action": "new_registration",
                     "data": {
-                        "id": 12,
                     }
-                    # "data": event["data"]
                 }
             )
         )
@@ -328,9 +314,7 @@ class TournamentConsumer(WebsocketConsumer):
                 {
                     "action": "last_registration",
                     "data": {
-                        "id": 12,
                     }
-                    # "data": event["data"]
                 }
             )
         )
