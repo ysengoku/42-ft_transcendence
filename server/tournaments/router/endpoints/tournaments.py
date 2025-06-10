@@ -41,7 +41,7 @@ def create_tournament(request, data: TournamentCreateSchema):
         creator=user.profile,
         required_participants=data.required_participants,
         alias=data.alias,
-        settings=data.settings.__dict__,
+        settings=data.settings.dict(),
     )
 
     ws_data = {
