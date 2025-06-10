@@ -10,7 +10,7 @@ describe('Validate Tournament Input', () => {
   it('should return error if name exceeds max length', () => {
     const longName = 'a'.repeat(MAX_TOURNAMENT_NAME_LENGTH + 1);
     expect(validateTournamentName(longName)).toBe(
-      `Tournament name cannot exceed ${MAX_TOURNAMENT_NAME_LENGTH} characters`
+      `Tournament name cannot exceed ${MAX_TOURNAMENT_NAME_LENGTH} characters`,
     );
   });
 
@@ -27,27 +27,16 @@ describe('validateTournamentAlias', () => {
 
   it('should return error if alias exceeds max length', () => {
     const longAlias = 'a'.repeat(MAX_TOURNAMENT_ALIAS_LENGTH + 1);
-    expect(validateTournamentAlias(longAlias)).toBe(
-      `Alias cannot exceed ${MAX_TOURNAMENT_ALIAS_LENGTH} characters`
-    );
+    expect(validateTournamentAlias(longAlias)).toBe(`Alias cannot exceed ${MAX_TOURNAMENT_ALIAS_LENGTH} characters`);
   });
 
   it('should return error if alias contains invalid characters', () => {
     const invalidAlias = 'bad*alias!';
-    expect(validateTournamentAlias(invalidAlias)).toBe(
-      'Alias can contain only letters, numbers and _ . @ + -'
-    );
+    expect(validateTournamentAlias(invalidAlias)).toBe('Alias can contain only letters, numbers and _ . @ + -');
   });
 
   it('should allow only letters, numbers, and _ . @ + -', () => {
-    const validAliases = [
-      'user_name',
-      'user.name',
-      'user@name',
-      'user+name',
-      'user-name',
-      'User123',
-    ];
+    const validAliases = ['user_name', 'user.name', 'user@name', 'user+name', 'user-name', 'User123'];
     for (const alias of validAliases) {
       expect(validateTournamentAlias(alias)).toBe('');
     }
