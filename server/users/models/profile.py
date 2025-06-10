@@ -283,7 +283,7 @@ class Profile(models.Model):
             "is_online": self.is_online,
         }
 
-    def can_participate_in_game(self):
+    def can_participate_in_game(self) -> bool:
         """
         Checks if the user can be invited or can start games.
         User should not participate in matchmaking, be a participant of a tournament, play pong match currently
