@@ -222,9 +222,9 @@ export class TournamentCreation extends HTMLElement {
     // Request to create a new tournament
     const data = {
       name: this.#state.newTournament.name,
-      required_participants: this.#state.newTournament.requiredParticipants,
+      required_participants: Number(this.#state.newTournament.requiredParticipants),
       alias: this.#state.newTournament.alias,
-      options: options,
+      settings: options,
     };
     const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
     if (response.success) {

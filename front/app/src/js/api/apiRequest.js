@@ -74,6 +74,7 @@ const handlers = {
     if (response.status !== 204) {
       responseData = await response.json();
     }
+    devLog('Response data:', responseData);
     return { success: true, status: response.status, data: responseData };
   },
 
