@@ -13,34 +13,6 @@ from .models import Bracket, Participant, Round, Tournament
 logger = logging.getLogger("server")
 
 
-def cancel_all_registrations_to_tournaments(username):
-    try:
-        profile = Profile.objects.select_related('user').get(user__username=username)
-    except Profile.DoesNotExist:
-        logger.warning("Profile for user %s does not exists.", username)
-    tournaments = Tournament.objects.filter(participants__profile=profile).prefetch_related('participants')
-    if not tournaments.exists():
-        logger.info("No tournaments to cancel for user %s", username)
-        return
-    with transaction.atomic():
-        count = 0
-        for tournament in tournaments:
-            try:
-                participant - tournament.participants.get(profile=profile)
-                if tournament.status == Tournament.PENDING:
-                    result = tournament.remove_participant(profile)
-                    if isinstance(result, str):
-                        logger.error("Failed to remove %s from tournament %s : %s", username, tournament.id, result)
-                    continue
-                else:
-                    # tournaments.participants__profile = NULL
-                    participant.status = Participant.UNREGISTERED
-                    participant.save()
-                count += 1
-            except Participant.DoesNotExist:
-                logger.warning("Participant %s not found in tournament %s", participant, tournament.id)
-                continue
-        logger.info("Successfully erased user %s fromd %s tournaments", username, count)
 
 class TournamentConsumer(WebsocketConsumer):
     tournaments = {}
@@ -52,18 +24,27 @@ class TournamentConsumer(WebsocketConsumer):
             self.close()
             return
         self.tournament_id = self.scope["url_route"]["kwargs"].get("tournament_id")
+        logger.info("TOURNAMENT ID : %s", self.tournament_id)
 
-        if self.tournament_id:
-            async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
-        else:
-            self.tournament_id = str(uuid.uuid4())
-            self.tournaments[self.tournament_id] = {
-                "creator": self.user,
-                "participants": {},
-                "status": "start",
-                "rounds": [],
-            }
-
+        try:
+            tournament = Tournament.objects.get(id=self.tournament_id)
+        except Tournament.DoesNotExist:
+            self.close()
+        async_to_sync(self.channel_layer.group_add)(
+            f"tournament_{self.tournament_id}", 
+            self.channel_name
+        )
+        # if self.tournament_id:
+        #     async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
+        # else:
+        #     self.tournament_id = str(uuid.uuid4())
+        #     self.tournaments[self.tournament_id] = {
+        #         "creator": self.user,
+        #         "participants": {},
+        #         "status": "start",
+        #         "rounds": [],
+        #     }
+        #
         self.accept()
 
     def disconnect(self, close_code):
@@ -143,19 +124,24 @@ class TournamentConsumer(WebsocketConsumer):
         if not self.validate_action_data(action, entire_data):
             return
 
-    match action:
-        case "create":
-            self.create_tournament(data)
-        case "cancel":
-            self.cancel_tournament(data)
-        case "register":
-            self.register_participant(data)
-        case "start_round":
-            self.start_round(data)
-        case "match_result":
-            self.handle_match_result(data)
-        case _:
-            logger.debug("Tournament unknown action : %s", action)
+        match action:
+            case "create":
+                self.create_tournament(data)
+            case "cancel":
+                self.cancel_tournament(data)
+            case "register":
+                self.register_participant(data)
+            # TODO: Fill the functions instead of the logger.info
+            case "new_registration":
+                logger.info("WOW ! A NEW REGISTRATION !!!")
+            case "user_left":
+                logger.info("OH NO, USER LEFT !")
+            case "start_round":
+                self.start_round(data)
+            case "match_result":
+                self.handle_match_result(data)
+            case _:
+                logger.debug("Tournament unknown action : %s", action)
 
     def validate_action_data(self, action, data):
         expected_types = {

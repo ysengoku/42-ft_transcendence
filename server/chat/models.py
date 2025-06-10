@@ -315,7 +315,7 @@ class GameInvitation(models.Model):
         max_length=11,
         blank=False,
         choices=INVITE_STATUS,
-        default="pending",
+        default=PENDING,
     )
     options = models.JSONField(null=True, blank=True)
 
@@ -330,3 +330,44 @@ class GameInvitation(models.Model):
         for notif in notifications:
             notif.data["status"] = self.status
             notif.save(update_fields=["data"])
+
+# class TournamentInvitation(models.Model):
+#     PENDING = "pending"
+#     ONGOING = "ongoing"
+#     FINISHED = "finished"
+#     CANCELLED = "cancelled"
+#     INVITE_STATUS = [
+#         (PENDING, "Pending"),
+#         (ONGOING, "Ongoing"),
+#         (FINISHED, "Finished"),
+#         (CANCELLED, "Cancelled"),
+#     ]
+#
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     tournament_id = models.UUIDField(primary_key=False, default=uuid.uuid4, editable=False)
+#     sender = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
+#     # recipient = models.ForeignKey(
+#     #     Profile,
+#     #     on_delete=models.CASCADE,
+#     #     related_name="received_invites",
+#     # )
+#     status = models.CharField(
+#         max_length=11,
+#         blank=False,
+#         choices=INVITE_STATUS,
+#         default=PENDING,
+#     )
+#     # options = models.JSONField(null=True, blank=True)
+#
+#     def __str__(self):
+#         return f"Game invitation :${self.id}"
+#
+#     def sync_notification_status(self):
+#         # TODO: SEE THIS LATER : HOW TO PUT THE NOTIFICATION TO ONGOING TO HIDE IT FROM NOTIFICATIONS
+#         notifications = Notification.objects.filter(
+#             # data__game_id=str(self.id),
+#             action=Notification.NEW_TOURNAMENT
+#         )
+#         for notif in notifications:
+#             notif.data["status"] = self.status
+#             notif.save(update_fields=["data"])
