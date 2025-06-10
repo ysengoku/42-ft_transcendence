@@ -130,4 +130,3 @@ export function flyAway(el, duration = 1000) {
     el.style.visibility = 'hidden';
   }, duration);
 }
-  
