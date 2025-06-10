@@ -293,6 +293,48 @@ class TournamentConsumer(WebsocketConsumer):
     def tournament_broadcast(self, event):
         self.send(text_data=json.dumps({"action": "new_tournament", "data": event["data"]}))
 
+    def tournament_cancelled(self, event):
+        logger.info(event)
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "tournament_canceled",
+                    "data": {
+                        "id": 12,
+                    }
+                    # "data": event["data"]
+                }
+            )
+        )
+
+    def new_registration(self, event):
+        logger.info(event)
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "new_registration",
+                    "data": {
+                        "id": 12,
+                    }
+                    # "data": event["data"]
+                }
+            )
+        )
+
+    def last_registration(self, event):
+        logger.info(event)
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "last_registration",
+                    "data": {
+                        "id": 12,
+                    }
+                    # "data": event["data"]
+                }
+            )
+        )
+
     def generate_brackets(self, participants):
         """
         Implémentation de la logique de génération des brackets

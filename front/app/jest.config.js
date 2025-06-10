@@ -1,6 +1,6 @@
 export default {
   testEnvironment: 'jsdom',
-  testMatch: ['**/__tests__/**/*.test.js'], // target test files
+  testMatch: ['**/__tests__/jest/*.test.js'], // target test files
   moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
     '^@main$': '<rootDir>/src/main.js',

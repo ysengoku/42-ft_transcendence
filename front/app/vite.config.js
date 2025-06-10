@@ -12,6 +12,7 @@ export default defineConfig({
     alias: {
       '@main': path.resolve(__dirname, 'src/main.js'),
       '@router': path.resolve(__dirname, 'src/js/router.js'),
+      '@env': path.resolve(__dirname, 'src/js/env.js'),
       '@socket': path.resolve(__dirname, 'src/js/sockets/index.js'),
       '@api': path.resolve(__dirname, 'src/js/api/index.js'),
       '@components': path.resolve(__dirname, 'src/js/components/'),

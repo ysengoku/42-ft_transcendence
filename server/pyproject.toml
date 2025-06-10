@@ -47,4 +47,5 @@ ignore = [
     "D203",     # One blank line required before class docstring (conflicts with D211)
     "PLR0913",  # Complains when it's too many arguments in a function
     "PLR0402",  # Disallows usage of aliases
+    "PT009",    # Using assert instead of assertEqual for testing
 ]
