@@ -347,6 +347,61 @@ class DuelEvent:
             logger.info("Cancelled %d pending invitations for user %s", count, username)
 
 
+    def send_tournament_notification(self, data):
+        # options = data["data"].get("options", {})
+        tournament_id = data["data"].get("tournament_id")
+        # if options is not None and not Validator.validate_options(options):
+        #     self.consumer.close()
+        #     return
+        # receiver_username = data["data"].get("username")
+        # if receiver_username == self.consumer.user.username:
+        #     logger.warning("Error : user %s wanted to play with themself.", self.consumer.user.username)
+        #     self.self_send_game_invite_cancelled("You can't invite yourself to a game !", client_id)
+        #     return
+        #
+        # client_id = data["data"].get("client_id")
+        #
+        # try:
+        #     receiver = Profile.objects.get(user__username=receiver_username)
+        # except Profile.DoesNotExist as e:
+        #     logger.error("Profile does not exist : %s", str(e))
+        #     return
+        #
+        # if self.self_or_target_already_in_game(receiver, receiver_username, client_id):
+        #     return
+        #
+        # if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
+        #     logger.warning("Error : user %s has more than one pending invitation.", self.consumer.user.username)
+        #     self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
+        #     return
+        # invitation = TournamentInvitation.objects.create(
+        #     sender=self.consumer.user_profile,
+        #     # recipient=receiver,
+        #     # options=options,
+        # )
+        # self.consumer.user_profile.refresh_from_db()
+        # notification = Notification.objects.action_send_game_invite(
+        #     receiver=receiver,
+        #     sender=self.consumer.user_profile,
+        #     notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
+        # )
+        # notification_data = notification.data.copy()
+        # notification_data["id"] = str(notification.id)
+        # # Convert date in good format
+        # if "date" in notification_data and isinstance(notification_data["date"], datetime):
+        #     notification_data["date"] = notification_data["date"].isoformat()
+        # async_to_sync(self.consumer.channel_layer.group_send)(
+        #     f"user_{receiver.user.id}",
+        #     {
+        #         "type": "chat_message",
+        #         "message": json.dumps(
+        #             {
+        #                 "action": "game_invite",
+        #                 "data": notification_data,
+        #             },
+        #         ),
+        #     },
+        # )
 
     def handle_new_tournament(self, data):
         tournament_id = data["data"].get["tournament_id"]
