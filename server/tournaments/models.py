@@ -178,11 +178,11 @@ class Round(models.Model):
 
 
 class Bracket(models.Model):
-    START = "start"
+    PENDING = "pending"
     ONGOING = "ongoing"
     FINISHED = "finished"
     STATUS_CHOICES = [
-        (START, "Start"),
+        (PENDING, "Pending"),
         (ONGOING, "Ongoing"),
         (FINISHED, "Finished"),
     ]
@@ -194,7 +194,7 @@ class Bracket(models.Model):
     score_p1 = models.PositiveIntegerField(default=0)
     score_p2 = models.PositiveIntegerField(default=0)
     winner = models.ForeignKey(Participant, on_delete=models.SET_NULL, null=True, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="start")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     score = models.CharField(max_length=7, blank=True)
     game_room = models.OneToOneField(GameRoom, on_delete=models.CASCADE, null=True, blank=True)
 

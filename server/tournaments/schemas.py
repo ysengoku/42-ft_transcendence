@@ -22,11 +22,15 @@ class BracketSchema(Schema):
     participant1: ParticipantSchema
     participant2: ParticipantSchema
     winner: ParticipantSchema | None = None
+    status: Literal["pending", "ongoing", "finished"]
+    score_p1: int
+    score_p2: int
 
 
 class RoundSchema(Schema):
     number: int
     brackets: list[BracketSchema]
+    status: Literal["pending", "ongoing", "finished"]
 
 
 class TournamentSchema(Schema):
