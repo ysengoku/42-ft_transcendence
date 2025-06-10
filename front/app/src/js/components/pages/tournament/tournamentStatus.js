@@ -3,15 +3,16 @@ export const UI_STATUS = {
   ROUND_STARTING: 'roundStarting',
   BRACKET_ONGOING: 'bracketOngoing',
   WAITING_NEXT_ROUND: 'waitingNextRound',
-  ROUND_FINISHED: 'roundFinished',
+  // ROUND_FINISHED: 'roundFinished',
   FINISHED: 'finished',
+  CANCELED: 'cancelled',
 };
 
 export const TOURNAMENT_STATUS = {
   PENDING: 'pending',
   ONGOING: 'ongoing',
   FINISHED: 'finished',
-  CANCELED: 'canceled',
+  CANCELED: 'cancelled',
 };
 
 export const ROUND_STATUS = {
@@ -28,6 +29,7 @@ export const BRACKET_STATUS = {
 
 export const PARTICIPANT_STATUS = {
   STARTING: 'starting',
+  PLAYING: 'playing',
   QUALIFIED: 'qualified',
   ELIMINATED: 'eliminated',
   WINNER: 'winner',
