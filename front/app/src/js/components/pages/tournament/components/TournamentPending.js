@@ -56,7 +56,7 @@ export class TournamentPending extends HTMLElement {
     this.cancelTournamentButton = this.querySelector('#cancel-tournament-button');
     this.unregisterButton = this.querySelector('#cancel-registration-button');
     // debugger;
-    this.modalElement = document.querySelector('tournament-modal');
+    // this.modalElement = document.querySelector('tournament-modal');
     // debugger;
 
     this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
@@ -110,6 +110,12 @@ export class TournamentPending extends HTMLElement {
   handleUnregisterButtonClick() {
     this.modalElement.contentType = this.modalElement.CONTENT_TYPE.UNREGISTER_TOURNAMENT;
     this.modalElement.showModal();
+    // const confirmationModal = document.createElement('tournament-modal');
+    // console.log('confirmationModal', confirmationModal);
+    // this.appendChild(confirmationModal);
+    // confirmationModal.render();
+    // confirmationModal.contentType = confirmationModal.CONTENT_TYPE.UNREGISTER_TOURNAMENT;
+    // confirmationModal.showModal();
     document.addEventListener('tournament-modal-confirm', this.handleConfirmationFromModal);
   }
 
