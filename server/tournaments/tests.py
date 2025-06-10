@@ -9,7 +9,7 @@ logger = logging.getLogger("server")
 logging.disable(logging.CRITICAL)
 
 
-class TestCreateTournamentEndpoint(TestCase):
+class TestTournamentEndpoints(TestCase):
     """
     Tests for the `POST /api/tournaments` endpoint.
     """
@@ -36,11 +36,11 @@ class TestCreateTournamentEndpoint(TestCase):
             },
         }
 
-    def test_tournament_works_with_bad_data(self):
+    def test_create_tournament_works_with_bad_data(self):
         response = self.client.post("/api/tournaments", content_type="application/json", data={"dummy": "dummy"})
         self.assertEqual(response.status_code, 422, "Response to bad data should be 422")
 
-    def test_tournament_is_not_created_with_bad_number_of_participants(self):
+    def test_create_tournament_is_not_created_with_bad_number_of_participants(self):
         data_with_wrong_number_of_participants = self._get_default_tournament_creation_data()
         data_with_wrong_number_of_participants["required_participants"] = 5
         response = self.client.post(
@@ -54,7 +54,7 @@ class TestCreateTournamentEndpoint(TestCase):
             "Response to bad data with number of participants other than 4 or 8 should be 422",
         )
 
-    def test_tournament_is_not_created_with_incorrect_game_speed(self):
+    def test_create_tournament_is_not_created_with_incorrect_game_speed(self):
         data_with_wrong_game_speed = self._get_default_tournament_creation_data()
         data_with_wrong_game_speed["settings"]["game_speed"] = "asd"
         response = self.client.post(
@@ -68,7 +68,7 @@ class TestCreateTournamentEndpoint(TestCase):
             "Response to bad data with wrong game speed should be 422",
         )
 
-    def test_tournament_is_not_created_with_correct_bounds_for_score_to_win(self):
+    def test_create_tournament_is_not_created_with_correct_bounds_for_score_to_win(self):
         data_with_wrong_game_speed = self._get_default_tournament_creation_data()
         data_with_wrong_game_speed["settings"]["score_to_win"] = 2
         response = self.client.post(
@@ -89,7 +89,7 @@ class TestCreateTournamentEndpoint(TestCase):
             "Response to bad data with score to win greater than 20 should be 422",
         )
 
-    def test_tournament_is_not_created_with_correct_bounds_for_time_limit(self):
+    def test_create_tournament_is_not_created_with_correct_bounds_for_time_limit(self):
         data_with_wrong_game_speed = self._get_default_tournament_creation_data()
         data_with_wrong_game_speed["settings"]["time_limit"] = 0
         response = self.client.post(
@@ -110,7 +110,7 @@ class TestCreateTournamentEndpoint(TestCase):
             "Response to bad data with time limit greater than 5 should be 422",
         )
 
-    def test_tournament_creates_with_valid_data(self):
+    def test_create_tournament_creates_with_valid_data(self):
         response = self.client.post(
             "/api/tournaments",
             content_type="application/json",
