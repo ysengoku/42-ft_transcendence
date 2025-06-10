@@ -1,7 +1,13 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import audiourl from '/audio/score_sound.mp3?url';
-import pedro from '/3d_models/lilguy.glb?url';
+import pedro from '/3d_models/pedro.glb?url';
+import bullet from '/3d_models/bullet.glb?url';
+import fence from '/3d_models/fence.glb?url';
+import chair from '/3d_models/chair.glb?url';
+import coin from '/3d_models/coin.glb?url';
+import carboard from '/3d_models/carboard.glb?url';
+import table from '/3d_models/table.glb?url';
 import fontWin from '/fonts/Texas_Tango_BOLD_PERSONAL_USE_Regular.json?url';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
@@ -65,7 +71,6 @@ export class Game extends HTMLElement {
         window.dispatchEvent(new Event('locationchange'));
       });
     })();
-
     const gameUrl = window.location.href;
     let gamePlaying = true;
     var keyMap = [];
@@ -83,9 +88,10 @@ export class Game extends HTMLElement {
     const TEMPORAL_SPEED_DECAY = 0.005;
 
     const audio = new Audio(audiourl);
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
+    renderer.setClearColor( 0x855988, 1);
     document.querySelector('#content').appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
@@ -96,88 +102,159 @@ export class Game extends HTMLElement {
     const loaderFonts = new FontLoader();
 
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
+    // let cameraX = 0;
+    // let cameraY = 30;
     camera.position.set(0, 15, -20);
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    // camera.position.set(0, 15, -20);
+    camera.lookAt(new THREE.Vector3(0,0,0));
 
     let mixer;
     const normalMaterial = new THREE.MeshNormalMaterial();
+    
+    const ligths = [new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff), new THREE.DirectionalLight(0xffffff)];
+      
 
-    const ligths = [
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-    ];
+      const carboardGlb = (() => {
+        const carboardModel = new THREE.Object3D();
+        loaderModel.load(
+            carboard,
+            function(gltf) {
+                const model = gltf.scene;
+                model.position.y = 0;
+                model.position.z = 0;
+                model.position.x = 0;
+                carboardModel.add(gltf.scene);
+            },
+            undefined,
+            function(error) {
+                console.error(error);
+            },
+        );
+        carboardModel.scale.set(1.2, 1.2, 1.2);
+        scene.add(carboardModel);
+        return carboardModel;
+      })();
 
-    const playerglb = (() => {
-      const pedro_model = new THREE.Object3D();
+      carboardGlb.rotation.y = Math.PI / 2;
+      carboardGlb.position.z = 15;
+
+    //   const playerGlb = (() => {
+    //     const pedro_model = new THREE.Object3D();
+    //     loaderModel.load(
+    //         pedro,
+    //         function(gltf) {
+    //             const model = gltf.scene;
+    //             model.position.y = 0;
+    //             model.position.z = -10;
+    //             model.position.x = 0;
+    //             model.rotation.y = 70;
+    //             mixer = new THREE.AnimationMixer(model);
+    //             pedro_model.add(gltf.scene);
+    //         },
+    //         undefined,
+    //         function(error) {
+    //             console.error(error);
+    //         },
+    //     );
+    //     pedro_model.scale.set(1, 1, 1);
+    //     scene.add(pedro_model);
+    //     return pedro_model;
+    // })();
+
+    const chairGlb = (() => {
+      const chairModel = new THREE.Object3D();
       loaderModel.load(
-        pedro,
-        function (gltf) {
-          const model = gltf.scene;
-          model.position.y = 7;
-          model.position.z = 0;
-          model.position.x = 0;
-          mixer = new THREE.AnimationMixer(model);
-          const idleAction = mixer
-            .clipAction(THREE.AnimationUtils.subclip(gltf.animations[0], 'idle', 0, 221))
-            .setDuration(6)
-            .play();
-          const idleAction2 = mixer
-            .clipAction(THREE.AnimationUtils.subclip(gltf.animations[1], 'idle', 0, 221))
-            .setDuration(6)
-            .play();
-          idleAction.play();
-          idleAction2.play();
-          pedro_model.add(gltf.scene);
-        },
-        undefined,
-        function (error) {
-          console.error(error);
-        },
+          chair,
+          function(gltf) {
+              const model = gltf.scene;
+              model.position.y = 2;
+              model.position.z = 0;
+              model.position.x = 0;
+              chairModel.add(gltf.scene);
+          },
+          undefined,
+          function(error) {
+              console.error(error);
+          },
       );
-      pedro_model.scale.set(0.1, 0.1, 0.1);
-      scene.add(pedro_model);
-      return pedro_model;
+      chairModel.scale.set(1, 1, 1);
+      scene.add(chairModel);
+      return chairModel;
     })();
+    chairGlb.rotation.y = Math.PI / 2;
 
     const Coin = ((posX, posY, posZ) => {
-      const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
-      const cylinderMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
+    const CoinGlb = (() => {
+      const CoinModel = new THREE.Object3D();
+      loaderModel.load(
+          coin,
+          function(gltf) {
+              const model = gltf.scene;
+              model.position.y = 0;
+              model.position.z = 0;
+              model.position.x = 0;
+              CoinModel.add(gltf.scene);
+          },
+          undefined,
+          function(error) {
+              console.error(error);
+          },
+      );
+      CoinModel.scale.set(0.45, 0.45, 0.45);
+      scene.add(CoinModel);
+      return CoinModel;
+    })();
+    
+    CoinGlb.position.x = posX;
+    CoinGlb.position.y = posY;
+    CoinGlb.position.z = posZ;
+    // CoinGlb.rotation.y = -Math.PI / 2;
+    const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
+    const velocity = new THREE.Vector3(0.01, 0, 0);
+    let lenghtHalf = 0.25;
 
-      cylinderMesh.position.x = posX;
-      cylinderMesh.position.y = posY;
-      cylinderMesh.position.z = posZ;
-      cylinderMesh.rotation.z = -Math.PI / 2;
-      cylinderMesh.rotation.y = -Math.PI / 2;
-      cylinderMesh.castShadow = true;
-      scene.add(cylinderMesh);
-      const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
-      const velocity = new THREE.Vector3(0.01, 0, 0);
-      let lenghtHalf = 0.25;
+    return ({
 
-      return {
-        get lenghtHalf() {
-          return lenghtHalf;
-        },
-        set lenghtHalf(newLenghtHalf) {
-          lenghtHalf = newLenghtHalf;
-        },
-        cylinderMesh,
+        get lenghtHalf() { return lenghtHalf; },
+        set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+        CoinGlb,
         cylinderUpdate,
         velocity,
       };
     })(-9.25, 1, 0);
 
-    const Ball = ((posX, posY, posZ) => {
-      const sphereGeometry = new THREE.SphereGeometry(0.5);
-      const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
+	const Ball = ((posX, posY, posZ) => {
 
-      sphereMesh.position.x = posX;
-      sphereMesh.position.y = posY;
-      sphereMesh.position.z = posZ;
-      sphereMesh.castShadow = true;
-      scene.add(sphereMesh);
+      const bulletGlb = (() => {
+          const bulletModel = new THREE.Object3D();
+          loaderModel.load(
+              bullet,
+              function(gltf) {
+                  const model = gltf.scene;
+                  model.position.y = 0;
+                  model.position.z = 0;
+                  model.position.x = 0;
+                  bulletModel.add(gltf.scene);
+              },
+              undefined,
+              function(error) {
+                  console.error(error);
+              },
+          );
+          bulletModel.scale.set(1, 1, 1);
+          scene.add(bulletModel);
+          return bulletModel;
+      })();
+
+      // const sphereGeometry = new THREE.SphereGeometry(0.5);
+      // const bulletGlb = new THREE.Mesh(sphereGeometry, normalMaterial);
+    
+      bulletGlb.position.x = posX;
+      bulletGlb.position.y = posY;
+      bulletGlb.position.z = posZ;
+      bulletGlb.castShadow = true;
+      bulletGlb.receiveShadow = true;
+      scene.add(bulletGlb);
 
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
@@ -209,12 +286,12 @@ export class Game extends HTMLElement {
           hasCollidedWithWall = newHasCollidedWithWall;
         },
 
-        sphereMesh,
-        sphereUpdate,
-        velocity,
-        temporalSpeed,
-      };
-    })(0, 1, 0);
+          bulletGlb,
+          sphereUpdate,
+          velocity,
+          temporalSpeed,
+      });
+  })(0, 1, 0);
 
     let loadedFontP2 = null;
     let loadedFontP1 = null;
@@ -261,95 +338,140 @@ export class Game extends HTMLElement {
       scene.add(loadedFontP1);
     });
 
-    ligths[0].position.set(0, 10, 30);
-    ligths[1].position.set(10, 0, 30);
-    ligths[2].position.set(0, 10, -30);
-    ligths[3].position.set(0, -10, 0);
-    for (let i = 0; i < 4; i++) scene.add(ligths[i]);
+  ligths[0].position.set(10, 10, 0);
+  ligths[0].castShadow = true;
+  ligths[0].shadow.mapSize.width = rendererWidth;
+  ligths[0].shadow.mapSize.height = rendererHeight;
+  ligths[0].shadow.camera.left = -10;
+  ligths[0].shadow.camera.right = 10;
+  ligths[0].shadow.camera.top = 10;
+  ligths[0].shadow.camera.bottom = -10;
+  ligths[0].shadow.camera.near = 0.1;
+  ligths[0].shadow.camera.far = 1000;
+  ligths[1].position.set(10, 0, 30);
+  ligths[2].position.set(0, 10, -30);
+  ligths[3].position.set(0, -10, 0);
+  ligths[4].position.set(0, 0, 0);
+  ligths[0].lookAt(0,0,0);
+  scene.add(ligths[0]);
+  for (let i = 0; i < 5; i++)
+  {
+    ligths[i].castShadow = true;
+    scene.add(ligths[i]);
+  }
+	
 
-    const BumperFactory = (posX, posY, posZ) => {
-      const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
-      const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
-
-      cubeMesh.position.x = posX;
-      cubeMesh.position.y = posY;
-      cubeMesh.position.z = posZ;
-      cubeMesh.castShadow = true;
-      scene.add(cubeMesh);
+  const BumperFactory = (posX, posY, posZ) => {
+      const tableGlb = (() => {
+        const tableModel = new THREE.Object3D();
+        loaderModel.load(
+            table,
+            function(gltf) {
+                const model = gltf.scene;
+                model.position.y = 0;
+                model.position.z = 0;
+                model.position.x = 0;
+                mixer = new THREE.AnimationMixer(model);
+                tableModel.add(gltf.scene);
+                gltf.scene.scale.set(0.5, 0.5, 0.5);
+            },
+            undefined,
+            function(error) {
+                console.error(error);
+            },
+        );
+        scene.add(tableModel);
+        return tableModel;
+      })();
+      tableGlb.castShadow = true;
+      tableGlb.receiveShadow = true;
+      // tableGlb.position.z = -9;
+      // tableGlb.scale.set(0.5, 0.5, 0.5);
+      tableGlb.position.x = posX;
+      tableGlb.position.y = posY;
+      tableGlb.position.z = posZ;
+      tableGlb.castShadow = true;
+      tableGlb.rotation.x = -Math.PI / 2;
+      tableGlb.position.z < 0 ? tableGlb.rotation.z = Math.PI : tableGlb.rotation.z = 0;
+      // scene.add(tableGlb);
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dir_z = -Math.sign(posZ);
-      let lenghtHalf = 2.5;
-      let widthHalf = 0.5;
-      let controlReverse = false;
-      let speed = 0.25;
-      let score = 0;
+      let   lenghtHalf = 2.5;
+      let   widthHalf = 0.5;
+      let   controlReverse = false;
+      let   speed = 0.25;
+      let   score = 0;
+    
+      return ({
+          tableGlb,
+          cubeUpdate,
 
-      return {
-        cubeMesh,
-        cubeUpdate,
+          get speed() { return speed; },
+          set speed(newSpeed) { speed = newSpeed; },
+          get score() { return score; },
+          set score(newScore) { score = newScore; },
+          get controlReverse() { return controlReverse; },
+          set controlReverse(newControlReverse) { controlReverse = newControlReverse; },
+          get lenghtHalf() { return lenghtHalf; },
+          set lenghtHalf(newLenghtHalf) { lenghtHalf = newLenghtHalf; },
+          get widthHalf() { return widthHalf; },
+          set widthHalf(newWidthHalf) { widthHalf = newWidthHalf; },
+          get dir_z() { return dir_z; },
+      });
+  }
+  
+  const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
-        get speed() {
-          return speed;
-        },
-        set speed(newSpeed) {
-          speed = newSpeed;
-        },
-        get score() {
-          return score;
-        },
-        set score(newScore) {
-          score = newScore;
-        },
-        get controlReverse() {
-          return controlReverse;
-        },
-        set controlReverse(newControlReverse) {
-          controlReverse = newControlReverse;
-        },
-        get lenghtHalf() {
-          return lenghtHalf;
-        },
-        set lenghtHalf(newLenghtHalf) {
-          lenghtHalf = newLenghtHalf;
-        },
-        get widthHalf() {
-          return widthHalf;
-        },
-        set widthHalf(newWidthHalf) {
-          widthHalf = newWidthHalf;
-        },
-        get dir_z() {
-          return dir_z;
-        },
-      };
-    };
 
-    const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
-    const WallFactory = (posX, posY, posZ) => {
-      const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
-      const wallMesh = new THREE.Mesh(wallGeometry, normalMaterial);
-      wallMesh.position.x = posX;
-      wallMesh.position.y = posY;
-      wallMesh.position.z = posZ;
-      wallMesh.rotation.y = -Math.PI / 2;
-      wallMesh.castShadow = true;
-      scene.add(wallMesh);
 
-      return {
-        wallMesh,
-      };
-    };
-    const Walls = [WallFactory(10, 2.5, 0), WallFactory(-10, 2.5, 0)];
+  const WallFactory = (posX, posY, posZ) => {
+    const fenceGlb = (() => {
+          const fenceModel = new THREE.Object3D();
+          loaderModel.load(
+              fence,
+              function(gltf) {
+                  const model = gltf.scene;
+                  model.position.y = 0;
+                  model.position.z = 0;
+                  model.position.x = 0;
+                  fenceModel.add(gltf.scene);
+              },
+              undefined,
+              function(error) {
+                  console.error(error);
+              },
+          );
+          fenceModel.scale.set(1, 0.5, 1);
+          scene.add(fenceModel);
+          return fenceModel;
+      })();
 
-    (() => {
-      const phongMaterial = new THREE.MeshPhongMaterial();
-      const planeGeometry = new THREE.PlaneGeometry(25, 25);
-      const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
-      planeMesh.rotateX(-Math.PI / 2);
-      planeMesh.receiveShadow = true;
-      scene.add(planeMesh);
+      fenceGlb.position.x = posX;
+      fenceGlb.position.y = posY;
+      fenceGlb.position.z = posZ;
+      fenceGlb.rotation.y = -Math.PI / 2;
+      fenceGlb.castShadow = true;
+      fenceGlb.receiveShadow = true;
+      scene.add(fenceGlb);
+
+      return ({
+          fenceGlb,
+      });
+  }
+  const Walls = [WallFactory(10, 2.5, 0), WallFactory(10, 2.5, 7.5), WallFactory(-10, 2.5, 7.5), WallFactory(10, 2.5, -7.5), WallFactory(-10, 2.5, -7.5), WallFactory(-10, 2.5, 0)];
+
+
+	 (() => {
+
+        const phongMaterial = new THREE.MeshBasicMaterial({color: 0xffcdac6d});
+        const planeGeometry = new THREE.PlaneGeometry(250, 250);
+        const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
+        planeMesh.rotateX(-Math.PI / 2);
+        planeMesh.receiveShadow = true;
+        planeMesh.castShadow = true;
+        scene.add(planeMesh);
     })();
 
     let delta;
@@ -438,8 +560,8 @@ export class Game extends HTMLElement {
     // -> calculate potential bounce on walls based on the pos and velocity
     // -> calculate best position to collide
     // -> move to the best position
-
-    let calculatedBumperPos = Bumpers[1].cubeMesh.position;
+  
+    let calculatedBumperPos = Bumpers[1].tableGlb.position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
     let i = 0;
@@ -531,70 +653,58 @@ export class Game extends HTMLElement {
       ]);
       var blobURL = window.URL.createObjectURL(blob);
 
-      Workers = [
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-      ];
-      Workers[0].onmessage = function (e) {
-        Bumpers[e.data[0]].cubeMesh.scale.x = 1;
-        Bumpers[e.data[0]].lenghtHalf = 2.5;
-      };
-      Workers[1].onmessage = function (e) {
-        Bumpers[Math.abs(e.data[0] - 1)].cubeMesh.scale.x = 1;
-        Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
-        if (
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x <
-          -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-        ) {
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
-        } else if (
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
-          10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-        ) {
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
-        }
-      };
-      Workers[2].onmessage = function (e) {
-        Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
-      };
-      Workers[3].onmessage = function (e) {
-        Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
-      };
-      Workers[4].onmessage = function (e) {
-        Bumpers[e.data[0]].cubeMesh.scale.z = 1;
-        Bumpers[e.data[0]].widthHalf = 0.5;
-      };
-      Workers[5].onmessage = function (e) {
-        Coin.cylinderUpdate.set(-9.25, 3, 0);
-      };
-      Workers[6].onmessage = function (e) {
-        if (Bumpers[0].score > Bumpers[1].score) {
-          loadedFontP1.position.x = 9;
-          loadedFontP2.position.x = 100;
-        } else if (Bumpers[1].score > Bumpers[0].score) {
-          loadedFontP2.position.x = 9;
-          loadedFontP1.position.x = 100;
-        }
-        Bumpers[0].score = 0;
-        Bumpers[1].score = 0;
-        gamePlaying = false;
-      };
-      Workers[6].postMessage([GAME_TIME, -1, 'create']);
-      start();
-    }
+    Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
+    Workers[0].onmessage = function(e) {
+      Bumpers[e.data[0]].tableGlb.scale.x = 1;
+      Bumpers[e.data[0]].lenghtHalf = 2.5;
+    };
+    Workers[1].onmessage = function(e) {
+      Bumpers[Math.abs(e.data[0] - 1)].tableGlb.scale.x = 1;
+      Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
+      if ((Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf)) {
+        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
+      }
+      else if (Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf){
+          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
+      }
+    };
+    Workers[2].onmessage = function(e) {
+      Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
+    };
+    Workers[3].onmessage = function(e) {
+      Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
+    };
+    Workers[4].onmessage = function(e) {
+      Bumpers[e.data[0]].tableGlb.scale.z = 1;
+      Bumpers[e.data[0]].widthHalf = 0.5;
+    };
+    Workers[5].onmessage = function(e) {
+      Coin.cylinderUpdate.set(-9.25, 3, 0);
+    };
+    Workers[6].onmessage = function(e) {
+      if (Bumpers[0].score > Bumpers[1].score)
+      {
+        loadedFontP1.position.x = 9;
+        loadedFontP2.position.x = 100;
+      }
+      else if (Bumpers[1].score > Bumpers[0].score)
+      {
+        loadedFontP2.position.x = 9;
+        loadedFontP1.position.x = 100;
+      }
+      Bumpers[0].score = 0;
+      Bumpers[1].score = 0;
+      gamePlaying = false;
+    };
+    Workers[6].postMessage([GAME_TIME, -1, "create"]);
+    start();
+  }
 
     function manageBuffAndDebuff() {
       let chooseBuff = Math.floor(Math.random() * 5);
       switch (chooseBuff) {
         case 1:
-          Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
+          Bumpers[lastBumperCollided].tableGlb.scale.x = 2;
           Bumpers[lastBumperCollided].lenghtHalf = 5;
           if (
             Bumpers[lastBumperCollided].cubeUpdate.x <
@@ -612,7 +722,7 @@ export class Game extends HTMLElement {
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           break;
         case 2:
-          Bumpers[Math.abs(lastBumperCollided - 1)].cubeMesh.scale.x = 0.5;
+          Bumpers[Math.abs(lastBumperCollided - 1)].tableGlb.scale.x = 0.5;
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
           break;
@@ -625,7 +735,7 @@ export class Game extends HTMLElement {
           Workers[3].postMessage([5000, lastBumperCollided, 'create']);
           break;
         default:
-          Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
+          Bumpers[lastBumperCollided].tableGlb.scale.z = 3;
           Bumpers[lastBumperCollided].widthHalf = 1.5;
           Workers[4].postMessage([10000, lastBumperCollided, 'create']);
           break;
@@ -707,23 +817,30 @@ export class Game extends HTMLElement {
         )
           Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
 
-        Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
-        if (
-          Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf ||
-          Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf
-        ) {
-          Coin.velocity.x *= -1;
-        }
-        Coin.cylinderUpdate.x += Coin.velocity.x;
-        Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
-        handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
-        current_subtick++;
+          Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
+          if ((Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf) || (Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf)) {
+            Coin.velocity.x *= -1
+          }
+          Coin.cylinderUpdate.x += Coin.velocity.x;
+          Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
+          handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
+          // if (cameraX >= -20) 
+          // {
+          //   if (cameraY >= 15)
+          //     camera.position.set(0, cameraY--, cameraX--);
+          //   else
+          //     camera.position.set(0, cameraY, cameraX--);
+          //   camera.lookAt(new THREE.Vector3(0,0,0));
+          // }
+          current_subtick++;
       }
-      Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-      Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
-      Bumpers[0].cubeMesh.position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
-      Bumpers[1].cubeMesh.position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
+      Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+      Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+      Coin.CoinGlb.rotation.set((-Math.PI / 2) + Math.PI / 10, Coin.cylinderUpdate.x, -Math.PI / 2);
+      Bumpers[0].tableGlb.position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
+      Bumpers[1].tableGlb.position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
 
+      
       if (mixer) {
         mixer.update(delta);
       }
@@ -761,9 +878,9 @@ export class Game extends HTMLElement {
         Coin.cylinderUpdate.set(-9.25, 3, 0);
         while (i < 2) {
           Bumpers[i].widthHalf = 0.5;
-          Bumpers[i].cubeMesh.scale.z = 1;
+          Bumpers[i].tableGlb.scale.z = 1;
           Bumpers[i].lenghtHalf = 2.5;
-          Bumpers[i].cubeMesh.scale.x = 1;
+          Bumpers[i].tableGlb.scale.x = 1;
           Bumpers[i].controlReverse = false;
           Bumpers[i].cubeUpdate.set(0, 1, i == 1 ? 9 : -9);
           Bumpers[i].speed = 0.25;
