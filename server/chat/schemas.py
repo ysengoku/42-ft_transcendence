@@ -101,6 +101,7 @@ class NewTournamentNotificationDataSchema(BaseNotificationDataSchema):
 
     tournament_id: str
     tournament_name: str
+    alias: str
 
 
 class NewFriendNotificationDataSchema(BaseNotificationDataSchema):
