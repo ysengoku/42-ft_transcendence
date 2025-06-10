@@ -324,7 +324,7 @@ class GameInvitation(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, null=True, blank=True)
+        Profile, on_delete=models.CASCADE, related_name="sent_invites", null=True, blank=True)
     recipient = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
