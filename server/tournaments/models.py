@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
 
+from pong.game_protocol import GameRoomSettings
 from pong.models import GameRoom, get_default_game_room_settings
 from users.models import Profile
 
@@ -38,12 +39,20 @@ class Participant(models.Model):
 
 
 class TournamentQuerySet(models.QuerySet):
-    def validate_and_create(self, creator: Profile, tournament_name: str, required_participants: int, alias: str):
+    def validate_and_create(
+        self,
+        creator: Profile,
+        tournament_name: str,
+        required_participants: int,
+        alias: str,
+        settings: GameRoomSettings,
+    ):
         tournament = self.model(
             name=tournament_name,
             creator=creator,
             required_participants=required_participants,
             status=self.model.PENDING,
+            settings=settings,
         )
         tournament.full_clean()
         tournament.save()
