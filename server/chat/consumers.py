@@ -11,6 +11,7 @@ from users.models import Profile
 from .chat_events import ChatEvent
 from .chat_utils import ChatUtils
 from .duel_events import DuelEvent
+from .tournament_events import TournamentEvent
 from .models import Chat, Notification
 from .validator import Validator
 
@@ -164,7 +165,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 case "cancel_game_invite":
                     DuelEvent(self).cancel_game_invite()
                 case "new_tournament":
-                    DuelEvent(self).handle_new_tournament(text_data_json)
+                    TournamentEvent(self).handle_new_tournament(text_data_json)
                 case "add_new_friend":
                     self.add_new_friend(text_data_json)
                 case "join_chat":

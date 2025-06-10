@@ -3,11 +3,10 @@ import logging
 from datetime import datetime
 
 from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
-
-from channels.layers import get_channel_layer
 
 from pong.models import GameRoom, GameRoomPlayer
 from users.models import Profile
@@ -138,7 +137,7 @@ class DuelEvent:
         sender_name = data["data"].get("username")
         try:
             sender = Profile.objects.get(user__username=sender_name)
-        except Profile.DoesNotExist as e:
+        except Profile.DoesNotExist:
             logger.warning("The invitation sender deleted their profile : %s", sender_name)
             return
         invitations = GameInvitation.objects.filter(
@@ -346,77 +345,3 @@ class DuelEvent:
             )
             logger.info("Cancelled %d pending invitations for user %s", count, username)
 
-
-    def send_tournament_notification(self, data):
-        # options = data["data"].get("options", {})
-        tournament_id = data["data"].get("tournament_id")
-        # TODO:Verify tournament_id (is it UUID)
-        if tournament_id is None:
-            logger.warning("Wrong tournament_id send by %s", self.consumer.user.username)
-            self.close()
-            return
-        # if receiver_username == self.consumer.user.username:
-        #     logger.warning("Error : user %s wanted to play with themself.", self.consumer.user.username)
-        #     self.self_send_game_invite_cancelled("You can't invite yourself to a game !", client_id)
-        #     return
-        #
-        # client_id = data["data"].get("client_id")
-        #
-        # if self.self_or_target_already_in_game(receiver, receiver_username, client_id):
-        #     return
-        #
-        if TournamentInvitation.objects.filter(sender=self.consumer.user_profile, status=TournamentInvitation.OPEN).exists():
-            logger.warning("Error : user %s has more than one open tournament invitation.", self.consumer.user.username)
-            self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
-            return
-        invitation = TournamentInvitation.objects.create(
-            sender=self.consumer.user_profile,
-            tournament_id = tournament_id,
-            # recipient=receiver,
-            # options=options,
-        )
-        self.consumer.user_profile.refresh_from_db()
-        notification = Notification.objects.action_send_tournament_invite(
-            receiver=receiver,
-            sender=self.consumer.user_profile,
-            notification_data={"client_id": str(client_id)},
-        )
-        notification_data = notification.data.copy()
-        notification_data["id"] = str(notification.id)
-        # Convert date in good format
-        if "date" in notification_data and isinstance(notification_data["date"], datetime):
-            notification_data["date"] = notification_data["date"].isoformat()
-        async_to_sync(self.consumer.channel_layer.group_send)(
-            f"user_{receiver.user.id}",
-            {
-                "type": "chat_message",
-                "message": json.dumps(
-                    {
-                        "action": "tournament_invite",
-                        "data": notification_data,
-                    },
-                ),
-            },
-        )
-
-    def handle_new_tournament(self, data):
-        tournament_id = data["data"].get["tournament_id"]
-        tournament_name = data["data"].get["tournament_name"]
-        organizer_id = data["data"].get["organizer_id"]
-
-        organizer = Profile.objects.get(id=organizer_id)
-
-        # send notification to concerned users
-        notification_data = ChatUtils.get_user_data(organizer)
-        notification_data.update(
-            {"id": tournament_id, "tournament_name": tournament_name},
-        )
-
-        self.consumer.send(
-            text_data=json.dumps(
-                {
-                    "action": "new_tournament",
-                    "data": notification_data,
-                },
-            ),
-        )

@@ -9,6 +9,7 @@ from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
 
+from chat.tournament_events import TournamentEvent
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from tournaments.models import Bracket, Participant, Round, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
@@ -36,7 +37,11 @@ def create_tournament(request, data: TournamentCreateSchema):
     if Tournament.objects.get_active_tournament(user.profile):
         raise HttpError(
             403, "You can't be a participant in multiple active tournaments.")
+    if user.profile.can_participate_in_game() == False:
+        raise HttpError(
+            403, "You can't be a participant if you are already in a game / looking for a game.")
 
+    alias = data.alias
     tournament = Tournament.objects.validate_and_create(
         tournament_name=data.name,
         creator=user.profile,
@@ -68,6 +73,7 @@ def create_tournament(request, data: TournamentCreateSchema):
             "data": ws_data,
         },
     )
+    TournamentEvent.send_tournament_notification(tournament.id, alias)
     return 201, tournament
 
 
@@ -170,6 +176,7 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
                     },
                 },
             )
+            Duel.close_tournament_invitations(tournament_id)
         else:
             async_to_sync(channel_layer.group_send)(
                 f"tournament_{tournament_id}",
