@@ -132,10 +132,14 @@ class TournamentConsumer(WebsocketConsumer):
             case "register":
                 self.register_participant(data)
             # TODO: Fill the functions instead of the logger.info
+            case "new_tournament":
+                logger.info("OMG A NEW TOURNAMENT")
             case "new_registration":
                 logger.info("WOW ! A NEW REGISTRATION !!!")
             case "user_left":
                 logger.info("OH NO, USER LEFT !")
+            case "tournament_cancelled":
+                logger.info("OH NO, TOURNAMENT GOT CANCELLED !")
             case "start_round":
                 self.start_round(data)
             case "match_result":

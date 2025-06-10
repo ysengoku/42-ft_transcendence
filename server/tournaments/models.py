@@ -98,8 +98,6 @@ class Tournament(models.Model):
         options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if num not in options:
             raise ValidationError({"required_participants": [f"Number of participants must be one of: {options}"]})
-        if Tournament.objects.filter(name__iexact=self.name).exclude(pk=self.pk).exists():
-            raise ValidationError({"name": ["A tournament with this name already exists."]})
 
     def get_rounds(self):
         return self.rounds.all().prefetch_related("brackets")
