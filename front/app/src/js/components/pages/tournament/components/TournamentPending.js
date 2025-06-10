@@ -55,20 +55,24 @@ export class TournamentPending extends HTMLElement {
     this.participantsWrapper = this.querySelector('#participants-wrapper');
     this.cancelTournamentButton = this.querySelector('#cancel-tournament-button');
     this.unregisterButton = this.querySelector('#cancel-registration-button');
+    // debugger;
     this.modalElement = document.querySelector('tournament-modal');
+    // debugger;
 
     this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
     this.requiredParticipants.textContent = ` / ${this.#state.requiredParticipants}`;
-
+    // debugger;
     this.#state.participants.forEach((participant) => {
       this.addParticipant(participant);
     });
-
+    // debugger;
     if (this.#state.creatorUsername === this.#state.loggedInUsername) {
       this.cancelTournamentButton.classList.remove('d-none');
       this.cancelTournamentButton.addEventListener('click', this.handleCancelTournamentButtonClick);
     }
+    // debugger;
     this.unregisterButton.addEventListener('click', this.handleUnregisterButtonClick);
+    // debugger;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -122,6 +126,9 @@ export class TournamentPending extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
       return;
     }
+    this.unregisterButton?.removeEventListener('click', this.handleUnregisterButtonClick);
+    this.cancelTournamentButton?.removeEventListener('click', this.handleCancelTournamentButtonClick);
+    this.innerHTML = '';
     this.innerHTML = this.unresigteredTemplate();
     const goToHomeButton = this.querySelector('#go-to-home-button');
     const goToTournamentMenuButton = this.querySelector('#go-to-tournament-menu-button');
@@ -177,8 +184,8 @@ export class TournamentPending extends HTMLElement {
       <p class="text-center mt-4 mb-2 fs-5 fw-bold">Gunslingers in the Arena</p>
       <div class="d-flex flex-row flex-wrap justify-content-center w-75" id="participants-wrapper"></div>
       <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">
-        <div class="btn d-none" id="cancel-tournament-button">Cancel tournament</div>
-        <div class="btn" id="cancel-registration-button">Cancel registration</div>
+        <div class="btn d-none" id="cancel-tournament-button">Call off the tournament</div>
+        <div class="btn" id="cancel-registration-button">Unregister from the tournament</div>
       </div>
     </div>
     `;
