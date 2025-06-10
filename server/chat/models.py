@@ -253,17 +253,17 @@ class NotificationQuerySet(models.QuerySet):
         self,
         receiver: Profile,
         sender: Profile,
-        notification_data={"game_id": str()},
+        notification_data={"invitation_id": str()},
         date: datetime = None,
     ):
         from chat.models import TournamentInvitation
-        invitation = TournamentInvitation.objects.get(id=notification_data["game_id"])
+        invitation = TournamentInvitation.objects.get(id=notification_data["invitation_id"])
         notification_data = notification_data.copy()
         notification_data["status"] = invitation.status
         return self._create(
             receiver=receiver,
             sender=sender,
-            notification_action=self.model.GAME_INVITE,
+            notification_action=self.model.NEW_TOURNAMENT,
             notification_data=notification_data,
             date=date,
         )
@@ -360,12 +360,14 @@ class TournamentInvitation(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tournament_id = models.UUIDField(primary_key=False, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True)
-    # recipient = models.ForeignKey(
-    #     Profile,
-    #     on_delete=models.CASCADE,
-    #     related_name="received_invites",
-    # )
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="sent_tournament_invites", null=True, blank=True)
+    recipient = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="received_tournament_invites",
+    )
+    tournament_name = models.CharField(max_length=50, null=False, blank=False, default="The no name tournament")
+    alias = models.CharField(max_length=30, null=False, blank=False, default="anonymous")
     status = models.CharField(
         max_length=11,
         blank=False,
@@ -375,10 +377,10 @@ class TournamentInvitation(models.Model):
     # options = models.JSONField(null=True, blank=True)
 
     def __str__(self):
-        return f"Game invitation :${self.id}"
+        return f"Tournament invitation :${self.id}"
 #
 #     def sync_notification_status(self):
-#         # TODO: SEE THIS LATER : HOW TO PUT THE NOTIFICATION TO ONGOING TO HIDE IT FROM NOTIFICATIONS
+#         # TODO: SEE THIS LATER : HOW TO PUT THE NOTIFICATION TO CLOSE TO HIDE IT FROM NOTIFICATIONS
 #         notifications = Notification.objects.filter(
 #             # data__game_id=str(self.id),
 #             action=Notification.NEW_TOURNAMENT
