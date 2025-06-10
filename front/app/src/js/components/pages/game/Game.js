@@ -53,22 +53,22 @@ export class Game extends HTMLElement {
     (() => {
       let oldPushState = history.pushState;
       history.pushState = function pushState() {
-        let ret = oldPushState.apply(this, arguments);
-        window.dispatchEvent(new Event('pushstate'));
-        window.dispatchEvent(new Event('locationchange'));
-        return ret;
+          let ret = oldPushState.apply(this, arguments);
+          window.dispatchEvent(new Event('pushstate'));
+          window.dispatchEvent(new Event('locationchange'));
+          return ret;
       };
-
+  
       let oldReplaceState = history.replaceState;
       history.replaceState = function replaceState() {
-        let ret = oldReplaceState.apply(this, arguments);
-        window.dispatchEvent(new Event('replacestate'));
-        window.dispatchEvent(new Event('locationchange'));
-        return ret;
+          let ret = oldReplaceState.apply(this, arguments);
+          window.dispatchEvent(new Event('replacestate'));
+          window.dispatchEvent(new Event('locationchange'));
+          return ret;
       };
-
+  
       window.addEventListener('popstate', () => {
-        window.dispatchEvent(new Event('locationchange'));
+          window.dispatchEvent(new Event('locationchange'));
       });
     })();
     const gameUrl = window.location.href;
@@ -81,11 +81,12 @@ export class Game extends HTMLElement {
     const BALL_DIAMETER = 1;
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
-    let GAME_TIME = 60 * 10000000;
-    let BALL_INITIAL_VELOCITY = 0.25;
-    let MAX_SCORE = 10;
+    let   GAME_TIME = 60*10000000;
+    let   BALL_INITIAL_VELOCITY = 0.25;
+    let   MAX_SCORE = 10;
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
     const TEMPORAL_SPEED_DECAY = 0.005;
+
 
     const audio = new Audio(audiourl);
     const renderer = new THREE.WebGLRenderer({ alpha: true });
@@ -220,7 +221,7 @@ export class Game extends HTMLElement {
         CoinGlb,
         cylinderUpdate,
         velocity,
-      };
+    });
     })(-9.25, 1, 0);
 
 	const Ball = ((posX, posY, posZ) => {
@@ -264,27 +265,16 @@ export class Game extends HTMLElement {
       let hasCollidedWithBumper2 = false;
       let hasCollidedWithWall = false;
 
-      return {
-        get hasCollidedWithBumper1() {
-          return hasCollidedWithBumper1;
-        },
-        set hasCollidedWithBumper1(newHasCollidedWithBumper1) {
-          hasCollidedWithBumper1 = newHasCollidedWithBumper1;
-        },
+      return ({
 
-        get hasCollidedWithBumper2() {
-          return hasCollidedWithBumper2;
-        },
-        set hasCollidedWithBumper2(newHasCollidedWithBumper2) {
-          hasCollidedWithBumper2 = newHasCollidedWithBumper2;
-        },
+          get hasCollidedWithBumper1() { return hasCollidedWithBumper1 },
+          set hasCollidedWithBumper1(newHasCollidedWithBumper1) { hasCollidedWithBumper1 = newHasCollidedWithBumper1 },
 
-        get hasCollidedWithWall() {
-          return hasCollidedWithWall;
-        },
-        set hasCollidedWithWall(newHasCollidedWithWall) {
-          hasCollidedWithWall = newHasCollidedWithWall;
-        },
+          get hasCollidedWithBumper2() { return hasCollidedWithBumper2 },
+          set hasCollidedWithBumper2(newHasCollidedWithBumper2) { hasCollidedWithBumper2 = newHasCollidedWithBumper2 },
+
+          get hasCollidedWithWall() { return hasCollidedWithWall },
+          set hasCollidedWithWall(newHasCollidedWithWall) { hasCollidedWithWall = newHasCollidedWithWall },
 
           bulletGlb,
           sphereUpdate,
@@ -293,50 +283,50 @@ export class Game extends HTMLElement {
       });
   })(0, 1, 0);
 
-    let loadedFontP2 = null;
-    let loadedFontP1 = null;
+  let loadedFontP2 = null;
+  let loadedFontP1 = null;
 
-    loaderFonts.load(fontWin, function (font) {
-      const geometry = new TextGeometry('P l a y e r   2   w i n', {
-        font: font,
-        size: 1,
-        depth: 0.5,
-        curveSegments: 12,
-      });
-
-      loadedFontP2 = new THREE.Mesh(geometry, [
-        new THREE.MeshPhongMaterial({ color: 0xad4000 }),
-        new THREE.MeshPhongMaterial({ color: 0x5c2301 }),
-      ]);
-      loadedFontP2.doubleSided = true;
-      loadedFontP2.position.x = 100;
-      loadedFontP2.position.y = 5;
-      loadedFontP2.position.z = 0;
-      loadedFontP2.scale.x = -1;
-
-      scene.add(loadedFontP2);
+  loaderFonts.load(fontWin, function (font) {
+    const geometry = new TextGeometry("P l a y e r   2   w i n", {
+      font: font,
+      size: 1,
+      depth: 0.5,
+      curveSegments: 12,
     });
+  
+    loadedFontP2 = new THREE.Mesh(geometry, [
+      new THREE.MeshPhongMaterial({ color: 0xad4000 }),
+      new THREE.MeshPhongMaterial({ color: 0x5c2301 })
+    ]);
+    loadedFontP2.doubleSided = true;
+    loadedFontP2.position.x = 100;
+    loadedFontP2.position.y = 5;
+    loadedFontP2.position.z = 0;
+    loadedFontP2.scale.x = -1;
+  
+    scene.add(loadedFontP2);
+  });
 
-    loaderFonts.load(fontWin, function (font) {
-      const geometry = new TextGeometry('P l a y e r   1   w i n', {
-        font: font,
-        size: 1,
-        depth: 0.5,
-        curveSegments: 12,
-      });
-
-      loadedFontP1 = new THREE.Mesh(geometry, [
-        new THREE.MeshPhongMaterial({ color: 0xad4000 }),
-        new THREE.MeshPhongMaterial({ color: 0x5c2301 }),
-      ]);
-      loadedFontP1.doubleSided = true;
-      loadedFontP1.position.x = 100;
-      loadedFontP1.position.y = 5;
-      loadedFontP1.position.z = 0;
-      loadedFontP1.scale.x = -1;
-
-      scene.add(loadedFontP1);
+  loaderFonts.load(fontWin, function (font) {
+    const geometry = new TextGeometry("P l a y e r   1   w i n", {
+      font: font,
+      size: 1,
+      depth: 0.5,
+      curveSegments: 12,
     });
+  
+    loadedFontP1 = new THREE.Mesh(geometry, [
+      new THREE.MeshPhongMaterial({ color: 0xad4000 }),
+      new THREE.MeshPhongMaterial({ color: 0x5c2301 })
+    ]);
+    loadedFontP1.doubleSided = true;
+    loadedFontP1.position.x = 100;
+    loadedFontP1.position.y = 5;
+    loadedFontP1.position.z = 0;
+    loadedFontP1.scale.x = -1;
+  
+    scene.add(loadedFontP1);
+  });
 
   ligths[0].position.set(10, 10, 0);
   ligths[0].castShadow = true;
@@ -479,42 +469,38 @@ export class Game extends HTMLElement {
     let ballSubtickX;
     let lastBumperCollided = 0;
 
-    function degreesToRadians(degrees) {
-      var pi = Math.PI;
-      return degrees * (pi / 180);
+    function degreesToRadians(degrees)
+    {
+        var pi = Math.PI;
+        return degrees * (pi/180);
     }
-
+    
     function isCoinCollidedWithBall(coin, ballSubtickZ, ballSubtickX) {
       return (
-        Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= coin.cylinderUpdate.x + 0.25 &&
-        Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= coin.cylinderUpdate.x - 0.25 &&
-        Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= coin.cylinderUpdate.z + 0.05 &&
-        Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= coin.cylinderUpdate.z - 0.05
-      );
-    }
+          (Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= coin.cylinderUpdate.x + 0.25)
+          && (Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= coin.cylinderUpdate.x - 0.25)
+          && (Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= coin.cylinderUpdate.z + 0.05)
+          && (Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= coin.cylinderUpdate.z - 0.05));
+  }
 
     function isCollidedWithBall(bumper, ballSubtickZ, ballSubtickX) {
-      return (
-        Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lenghtHalf &&
-        Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lenghtHalf &&
-        Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
-        Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
-      );
+        return (
+            (Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lenghtHalf)
+            && (Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lenghtHalf)
+            && (Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf)
+            && (Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf));
     }
 
     function calculateNewDir(bumper) {
-      let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
-      let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lenghtHalf);
-      let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
-      Ball.velocity.z = Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dir_z;
-      Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dir_z;
-      if (
-        Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
-        Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
-      )
-        Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
+        let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
+        let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lenghtHalf);
+        let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
+        Ball.velocity.z = (Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dir_z);
+        Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dir_z;
+        if ((Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf) && (Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf))
+            Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
     }
-
+      
     var step = null;
     let canRestart;
 
@@ -526,38 +512,41 @@ export class Game extends HTMLElement {
     }
     function stop() {
       if (step) {
-        cancelAnimationFrame(step);
-        step = null;
+         cancelAnimationFrame(step);
+         step = null;
       }
     }
     function resetBall(direction) {
-      if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE) {
-        if (Bumpers[0].score == MAX_SCORE) {
-          loadedFontP1.position.x = 9;
-          loadedFontP2.position.x = 100;
-          Bumpers[0].score = 0;
-          Bumpers[1].score = 0;
+        if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE)
+        {
+          if (Bumpers[0].score == MAX_SCORE)
+          {
+            loadedFontP1.position.x = 9;
+            loadedFontP2.position.x = 100;
+            Bumpers[0].score = 0;
+            Bumpers[1].score = 0;
+          }
+          if (Bumpers[1].score == MAX_SCORE)
+          {
+            loadedFontP2.position.x = 9;
+            loadedFontP1.position.x = 100;
+            Bumpers[0].score = 0;
+            Bumpers[1].score = 0;
+          }
+          gamePlaying = false;
         }
-        if (Bumpers[1].score == MAX_SCORE) {
-          loadedFontP2.position.x = 9;
-          loadedFontP1.position.x = 100;
-          Bumpers[0].score = 0;
-          Bumpers[1].score = 0;
-        }
-        gamePlaying = false;
-      }
-      Ball.temporalSpeed.x = 1;
-      Ball.temporalSpeed.z = 1;
-      Ball.sphereUpdate.x = 0;
-      Ball.sphereUpdate.z = 0;
-      Ball.velocity.x = 0;
-      Ball.velocity.z = BALL_INITIAL_VELOCITY;
-      Ball.velocity.z *= direction;
+        Ball.temporalSpeed.x = 1;
+        Ball.temporalSpeed.z = 1;
+        Ball.sphereUpdate.x = 0;
+        Ball.sphereUpdate.z = 0;
+        Ball.velocity.x = 0;
+        Ball.velocity.z = BALL_INITIAL_VELOCITY;
+        Ball.velocity.z *= direction;
     }
 
     // AI FUNC:
     // -> get sphere velocity and pos
-    // -> calculate potential bounce on walls based on the pos and velocity
+    // -> calculate potential bounce on walls based on the pos and velocity 
     // -> calculate best position to collide
     // -> move to the best position
   
@@ -567,91 +556,88 @@ export class Game extends HTMLElement {
     let i = 0;
 
     function moveAiBumper(calculatedPos) {
-      keyMap['KeyA'] = false;
-      keyMap['KeyD'] = false;
+      keyMap["KeyA"] = false;
+      keyMap["KeyD"] = false;
       i++;
-      if (
-        calculatedBumperPos.x < calculatedPos.x - 0.1 &&
-        calculatedBumperPos.x < calculatedPos.x - 0.2 &&
-        i % 2 == 0
-      ) {
-        keyMap['KeyA'] = true;
+      if (calculatedBumperPos.x < calculatedPos.x -0.1 && calculatedBumperPos.x < calculatedPos.x - 0.2 && i % 2 == 0)
+      {
+        keyMap["KeyA"] = true;
         calculatedBumperPos.x += bumperP2Subtick;
-      } else if (
-        calculatedBumperPos.x > calculatedPos.x + 0.1 &&
-        calculatedBumperPos.x > calculatedPos.x + 0.2 &&
-        i % 2 == 0
-      ) {
-        keyMap['KeyD'] = true;
+      }
+      else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2 && i % 2 == 0)
+      {
+        keyMap["KeyD"] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
-      } else {
-        keyMap['KeyA'] = false;
-        keyMap['KeyD'] = false;
+      }
+      else
+      {
+        keyMap["KeyA"] = false;
+        keyMap["KeyD"] = false;
       }
     }
-
+    
     let choosenDifficulty = 2;
 
     let isMovementDone = false;
     let ballPredictedPos;
     let isCalculationNeeded = true;
-    let difficultyLvl = [
-      [10, 750],
-      [8, 750],
-      [5, 500],
-      [3, 500],
-      [0, 500],
-    ];
+    let difficultyLvl = [[10, 750], [8, 750], [5, 500], [3, 500], [0, 500]];
     //1 && 500 / 5 && 500 / 8 && 750
 
-    function handleAiBehavior(BallPos, BallVelocity) {
-      if (isCalculationNeeded) {
-        let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
-        let error = difficultyLvl[choosenDifficulty][0] * closeness;
-        ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
-        let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);
-        let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z);
-        if (BallPredictedVelocity.z > 0) {
-          while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf) {
-            let totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x);
-            if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-              ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
-              BallPredictedVelocity.x *= -1;
-            }
-            if (ballPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-              ballPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
-              BallPredictedVelocity.x *= -1;
-            }
-            ballPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
-            ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
+    function handleAiBehavior (BallPos, BallVelocity){
+    if (isCalculationNeeded)
+    {
+      let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
+      let error = difficultyLvl[choosenDifficulty][0] * closeness;
+      ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
+      let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);;
+      let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
+      if (BallPredictedVelocity.z > 0)
+      {
+        while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf)
+        {
+          let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * BallPredictedVelocity.x);
+          if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
+            ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+            BallPredictedVelocity.x *= -1;
           }
+          if (ballPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
+            ballPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+            BallPredictedVelocity.x *= -1;
+          }
+          ballPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
+          ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
         }
-        isCalculationNeeded = false;
-        let timeooutId = setTimeout(() => {
-          if (BallVelocity.z > 0) {
-            isCalculationNeeded = true;
-            clearTimeout(timeooutId);
-          }
-        }, difficultyLvl[choosenDifficulty][1]);
+      }
+      isCalculationNeeded = false;
+      let timeooutId = setTimeout(() => {
+        if (BallVelocity.z > 0)
+        {
+          isCalculationNeeded = true;
+          clearTimeout(timeooutId);
+        }
+      }, difficultyLvl[choosenDifficulty][1]);
 
-        ballPredictedPos.x += -error + Math.round(Math.random()) * (error - -error);
-      }
-      if (!isMovementDone) moveAiBumper(ballPredictedPos);
-      else {
-        keyMap['KeyD'] = false;
-        keyMap['KeyA'] = false;
-      }
+      ballPredictedPos.x += (-error + (Math.round(Math.random()) * (error - (-error))));
     }
+    if (!isMovementDone)
+      moveAiBumper(ballPredictedPos);
+    else
+    {
+      keyMap["KeyD"] = false;
+      keyMap["KeyA"] = false;
+    }
+  }
 
-    var Workers = [];
-    function initGame() {
-      var blob = new Blob([
-        'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
-          'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
-          'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
-          'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
-      ]);
-      var blobURL = window.URL.createObjectURL(blob);
+  var Workers = [];
+  function initGame()
+  {
+    var blob = new Blob([
+      "let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;" + 
+      "remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};" +
+      "this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == \"pause\" && pauseTimer != null) {pauseTimer.pause();}" + 
+      "else if (e.data[2] == \"create\"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == \"resume\" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}"]);
+    var blobURL = window.URL.createObjectURL(blob);
 
     Workers = [new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL), new Worker(blobURL)];
     Workers[0].onmessage = function(e) {
@@ -700,54 +686,50 @@ export class Game extends HTMLElement {
     start();
   }
 
-    function manageBuffAndDebuff() {
+    function  manageBuffAndDebuff() {
       let chooseBuff = Math.floor(Math.random() * 5);
-      switch (chooseBuff) {
+      switch (chooseBuff)
+      {
         case 1:
           Bumpers[lastBumperCollided].tableGlb.scale.x = 2;
           Bumpers[lastBumperCollided].lenghtHalf = 5;
-          if (
-            Bumpers[lastBumperCollided].cubeUpdate.x <
-            -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
-          ) {
-            Bumpers[lastBumperCollided].cubeUpdate.x =
-              -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
-          } else if (
-            Bumpers[lastBumperCollided].cubeUpdate.x >
-            10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
-          ) {
-            Bumpers[lastBumperCollided].cubeUpdate.x =
-              10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+          if ((Bumpers[lastBumperCollided].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf)) {
+              Bumpers[lastBumperCollided].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
           }
-          Workers[0].postMessage([10000, lastBumperCollided, 'create']);
-          break;
+          else if (Bumpers[lastBumperCollided].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf){
+              Bumpers[lastBumperCollided].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+          }
+          Workers[0].postMessage([10000, lastBumperCollided, "create"]);
+          break ;
         case 2:
           Bumpers[Math.abs(lastBumperCollided - 1)].tableGlb.scale.x = 0.5;
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
-          Workers[1].postMessage([10000, lastBumperCollided, 'create']);
-          break;
+          Workers[1].postMessage([10000, lastBumperCollided, "create"]);
+          break ;
         case 3:
           Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
-          Workers[2].postMessage([2000, lastBumperCollided, 'create']);
-          break;
+          Workers[2].postMessage([2000, lastBumperCollided, "create"]);
+          break ;
         case 4:
           Bumpers[Math.abs(lastBumperCollided - 1)].speed = 0.1;
-          Workers[3].postMessage([5000, lastBumperCollided, 'create']);
-          break;
+          Workers[3].postMessage([5000, lastBumperCollided, "create"]);
+          break ;
         default:
           Bumpers[lastBumperCollided].tableGlb.scale.z = 3;
           Bumpers[lastBumperCollided].widthHalf = 1.5;
-          Workers[4].postMessage([10000, lastBumperCollided, 'create']);
-          break;
+          Workers[4].postMessage([10000, lastBumperCollided, "create"]);
+          break ;
       }
       Coin.cylinderUpdate.set(-100, 3, 0);
-      Workers[5].postMessage([30000, -1, 'create']);
+      Workers[5].postMessage([30000, -1, "create"]);
     }
+
+
 
     function animate() {
       step = null;
-      let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x);
-      let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z);
+      let totalDistanceX = Math.abs((Ball.temporalSpeed.x) * Ball.velocity.x);
+      let totalDistanceZ = Math.abs((Ball.temporalSpeed.z) * Ball.velocity.z);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
       let current_subtick = 0;
@@ -757,65 +739,53 @@ export class Game extends HTMLElement {
       bumperP1Subtick = Bumpers[0].speed / totalSubticks;
       bumperP2Subtick = Bumpers[1].speed / totalSubticks;
       while (current_subtick <= totalSubticks) {
-        if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-          Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
-          Ball.velocity.x *= -1;
-          if (lastBumperCollided == 0) isCalculationNeeded = true;
-        }
-        if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-          Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
-          Ball.velocity.x *= -1;
-          if (lastBumperCollided == 0) isCalculationNeeded = true;
-        }
-        if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
-          lastBumperCollided = 0;
-          isMovementDone = false;
-          isCalculationNeeded = true;
-          calculateNewDir(Bumpers[0]);
-        } else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
-          lastBumperCollided = 1;
-          isMovementDone = true;
-          calculateNewDir(Bumpers[1]);
-        }
-        if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
-          isMovementDone = true;
-          Bumpers[0].score++;
-          resetBall(-1);
-        } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
-          isMovementDone = false;
-          isCalculationNeeded = true;
-          Bumpers[1].score++;
-          resetBall(1);
-        }
-        if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
-          manageBuffAndDebuff();
-        }
+          if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
+              Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+              Ball.velocity.x *= -1;
+              if (lastBumperCollided == 0)
+                isCalculationNeeded = true;
+          }
+          if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
+              Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+              Ball.velocity.x *= -1;
+              if (lastBumperCollided == 0)
+                isCalculationNeeded = true;
+          }
+          if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
+            lastBumperCollided = 0;
+            isMovementDone = false;
+            isCalculationNeeded = true;
+            calculateNewDir(Bumpers[0]);
+          }
+          else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
+              lastBumperCollided = 1;
+              isMovementDone = true;
+              calculateNewDir(Bumpers[1]);
+          }
+          if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
+              isMovementDone = true;
+              Bumpers[0].score++;
+              resetBall(-1);
+          }
+          else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
+              isMovementDone = false;
+              isCalculationNeeded = true;
+              Bumpers[1].score++;
+              resetBall(1);
+          }
+          if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
+            manageBuffAndDebuff();
+          }
 
-        if (
-          ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
-            (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
-          !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
-        )
-          Bumpers[0].cubeUpdate.x += bumperP1Subtick;
-        if (
-          ((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) ||
-            (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) &&
-          !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
-        )
-          Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
+          if (((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf))
+              Bumpers[0].cubeUpdate.x += bumperP1Subtick;
+          if (((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) || (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) && !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf))
+              Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
 
-        if (
-          ((keyMap['KeyD'] == true && Bumpers[1].controlReverse) ||
-            (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) &&
-          !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
-        )
-          Bumpers[1].cubeUpdate.x += bumperP2Subtick;
-        if (
-          ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
-            (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
-          !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
-        )
-          Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
+          if (((keyMap['KeyD'] == true && Bumpers[1].controlReverse) || (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) && !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf))
+            Bumpers[1].cubeUpdate.x += bumperP2Subtick;
+          if (((keyMap['KeyA'] == true && Bumpers[1].controlReverse) || (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) && !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf))
+            Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
 
           Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
           if ((Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf) || (Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf)) {
@@ -847,7 +817,7 @@ export class Game extends HTMLElement {
       renderer.render(scene, camera);
       start();
     }
-
+    
     let isPaused = false;
 
     let onDocumentKeyDown = function (event) {
@@ -855,28 +825,38 @@ export class Game extends HTMLElement {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
-      if (keyCode != 'KeyA' && keyCode != 'KeyD') keyMap[keyCode] = true;
-      if (keyCode == 'Escape') {
-        if (isPaused == false) {
+      if (keyCode != 'KeyA' && keyCode != 'KeyD')
+        keyMap[keyCode] = true;
+      if (keyCode == "Escape")
+      {
+        if (isPaused == false)
+        {
           stop();
           let i = 0;
-          while (i <= 6) Workers[i++].postMessage([-1, -1, 'pause']);
+          while (i <= 6)
+            Workers[i++].postMessage([-1, -1, "pause"]);
           isPaused = true;
-        } else {
+        }
+        else
+        {
           let i = 0;
-          while (i <= 6) Workers[i++].postMessage([-1, -1, 'resume']);
+          while (i <= 6)
+            Workers[i++].postMessage([-1, -1, "resume"]);
           isPaused = false;
           start();
         }
       }
-      if (keyCode == 'KeyR') {
+      if (keyCode == "KeyR")
+      {
         stop();
         resetBall(1);
         let i = 0;
-        while (i <= 6) Workers[i++].terminate();
+        while (i <= 6)
+          Workers[i++].terminate();
         i = 0;
         Coin.cylinderUpdate.set(-9.25, 3, 0);
-        while (i < 2) {
+        while (i < 2)
+        {
           Bumpers[i].widthHalf = 0.5;
           Bumpers[i].tableGlb.scale.z = 1;
           Bumpers[i].lenghtHalf = 2.5;
@@ -889,16 +869,16 @@ export class Game extends HTMLElement {
         isPaused = false;
         loadedFontP1.position.x = 100;
         loadedFontP2.position.x = 100;
-        keyMap['KeyD'] = false;
-        keyMap['KeyA'] = false;
-        keyMap['ArrowRight'] = false;
-        keyMap['ArrowLeft'] = false;
+        keyMap["KeyD"] = false;
+        keyMap["KeyA"] = false;
+        keyMap["ArrowRight"] = false;
+        keyMap["ArrowLeft"] = false;
 
         gamePlaying = true;
         initGame();
       }
       event.preventDefault();
-    };
+    }
     let onDocumentKeyUp = function (event) {
       if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
         return; // Do noplayerglb if the event was already processed
@@ -906,17 +886,19 @@ export class Game extends HTMLElement {
       var keyCode = event.code;
       keyMap[keyCode] = false;
       event.preventDefault();
-    };
+    }
     function linkChange() {
       const currentUrl = window.location.href;
-      if (!(currentUrl == gameUrl)) {
+      if (!(currentUrl == gameUrl))
+      {
         gamePlaying = false;
         canRestart = false;
         let i = 0;
-        while (i <= 6) Workers[i++].terminate();
+        while (i <= 6)
+          Workers[i++].terminate();
         stop(step);
       }
-    }
+    };
     window.addEventListener('keydown', onDocumentKeyDown, true);
     window.addEventListener('keyup', onDocumentKeyUp, true);
     window.addEventListener('locationchange', linkChange);
@@ -928,14 +910,15 @@ export class Game extends HTMLElement {
     this.innerHTML = ``;
 
     const [camera, renderer, start] = this.game();
-    window.addEventListener('resize', function () {
+    window.addEventListener('resize', function() {
       renderer.setSize(window.innerWidth, window.innerHeight);
       let rendererWidth = renderer.domElement.offsetWidth;
       let rendererHeight = renderer.domElement.offsetHeight;
       camera.aspect = rendererWidth / rendererHeight;
       camera.updateProjectionMatrix();
-    });
-    start();
+  });
+  start();
+
   }
 }
 
