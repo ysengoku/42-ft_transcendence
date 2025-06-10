@@ -2,7 +2,6 @@ export class TournamentRoundOngoing extends HTMLElement {
   #state = {
     roundNumber: 1,
     round: null,
-    status: '',
   };
 
   constructor() {
@@ -18,7 +17,6 @@ export class TournamentRoundOngoing extends HTMLElement {
     console.log('TournamentRoundOngoing data:', data);
     this.#state.roundNumber = data.round_number;
     this.#state.round = data.round;
-    this.#state.status = data.status;
     this.render();
   }
 
