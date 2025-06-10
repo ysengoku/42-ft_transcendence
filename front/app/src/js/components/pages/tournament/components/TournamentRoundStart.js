@@ -33,20 +33,20 @@ export class TournamentRoundStart extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   async render() {
-    if (this.#state.isFirstRound) {
-      this.innerHTML = `
-      <div class="d-flex flex-column justify-content-center fs-5 my-5 py-5">
-          All Gunslingers are now in the Arena. Tournament starts!
-      </div>
-      `;
-      setTimeout(() => this.renderNextRound(), 2000);
-      return;
-    }
     this.innerHTML = this.template() + this.style();
     this.roundNumberElement = this.querySelector('#round-number');
     this.roundStatusMessage = this.querySelector('#round-status-message');
     this.timer = this.querySelector('#round-start-timer');
     this.bracketsWrapper = this.querySelector('#brackets-wrapper');
+    if (this.#state.isFirstRound) {
+      this.roundStatusMessage.innerHTML = `
+      <div class="d-flex flex-column justify-content-center fs-5 my-5 py-5">
+        All Gunslingers are now in the Arena.</br>Tournament starts!
+      </div>
+      `;
+      setTimeout(() => this.renderNextRound(), 2000);
+      return;
+    }
 
     await this.renderPreviousRoundResult();
     await this.roundFinishedAnimation();
