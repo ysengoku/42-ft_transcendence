@@ -14,6 +14,7 @@ from tournaments.models import Tournament
 class ParticipantSchema(Schema):
     profile: ProfileMinimalSchema
     alias: str
+    status: Literal["pending", "playing", "qualified", "eliminated", "winner"]
 
 
 class BracketSchema(Schema):
@@ -41,6 +42,7 @@ class TournamentSchema(Schema):
     date: datetime
     participants_count: int | None
     settings: GameSettingsSchema
+    winner: ParticipantSchema | None
 
     @staticmethod
     def resolve_participants_count(obj: Tournament):
