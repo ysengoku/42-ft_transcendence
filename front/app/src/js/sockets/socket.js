@@ -7,7 +7,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
  */
 const WS_PATH = {
   livechat: '/ws/events/',
-  matchmaking: (options) => options === null ? '/ws/matchmaking/' : `/ws/matchmaking/${options}`,
+  matchmaking: (options) => (options === null ? '/ws/matchmaking/' : `/ws/matchmaking/${options}`),
   tournament: (id) => `/ws/tournament/${id}`,
 };
 
@@ -42,6 +42,11 @@ class WebSocketManager {
     this.socket.onclose = (event) => {
       devLog('WebSocket closed: ', this.name, event);
       if (event.code >= 3000) {
+        const customEvent = new CustomEvent('websocket-close', {
+          detail: { name: this.name, code: event.code },
+          bubbles: true,
+        });
+        document.dispatchEvent(customEvent);
         devLog(`WebSocket (${this.name}) closed intentionally by server with code 3000.`);
         return;
       }

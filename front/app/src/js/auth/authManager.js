@@ -2,7 +2,13 @@ import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
 import { socketManager } from '@socket';
-import { internalServerErrorAlert, sessionExpiredToast, unknowknErrorToast } from '@utils';
+import {
+  internalServerErrorAlert,
+  sessionExpiredToast,
+  unknowknErrorToast,
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+} from '@utils';
 
 /**
  * @module authManager
@@ -133,6 +139,36 @@ const auth = (() => {
         return { success: false, status: response.status };
       }
       return { success: false, status: response.status };
+    }
+
+    /**
+     * Check if the user is authenticated and has no ongoing games or tournaments.
+     * @return { Promise<boolean> } Return true if the user is authenticated and have no ongoing games or tournaments.
+     * If the user is not authenticated, redirects to the login page.
+     * If the user has an ongoing game or tournament, shows an alert message and returns false.
+     */
+    async canEngageInGame(showAlert = true) {
+      const authStatus = await this.fetchAuthStatus();
+      if (!authStatus.success) {
+        if (authStatus.status === 401) {
+          sessionExpiredToast();
+        }
+        router.redirect('/login');
+        return false;
+      }
+      if (!authStatus.response.game_id && !authStatus.response.tournament_id) {
+        return true;
+      }
+      if (showAlert) {
+        let type;
+        if (authStatus.response.game_id) {
+          type = 'game';
+        } else if (authStatus.response.tournament_id) {
+          type = 'tournament';
+        }
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, `You have an ongoing ${type}. Cannot start new activity`);
+      }
+      return false;
     }
   }
   return new AuthManager();

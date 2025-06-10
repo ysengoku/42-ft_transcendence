@@ -1,5 +1,4 @@
 import { LoginForm } from '../../../app/src/js/components/pages/login/components/LoginForm.js';
-// import { isFieldFilled } from '../../../app/src/js/utils/inputFeedback.js';;
 
 describe('Login Form', () => {
   const generateForm = () => `
@@ -27,8 +26,6 @@ describe('Login Form', () => {
   test('should show error when username is empty', () => {
     const usernameField = document.getElementById('inputUsername');
     const passwordField = document.getElementById('inputPassword');
-    // const feedbackSelector = '#username-feedback';
-    // const errorMessage = 'Username or email is required';
 
     usernameField.value = '';
     passwordField.value = 'password';
@@ -36,15 +33,11 @@ describe('Login Form', () => {
     const result = login.checkInputs();
 
     expect(result).toBe(false);
-    // expect(usernameField.classList.contains('is-invalid')).toBe(true);
-    // expect(document.querySelector(feedbackSelector).textContent).toBe(errorMessage);
   });
 
   test('should show error when password is empty', () => {
     const usernameField = document.getElementById('inputUsername');
     const passwordField = document.getElementById('inputPassword');
-    // const feedbackSelector = '#loginpassword-feedback';
-    // const errorMessage = 'Password is required';
 
     usernameField.value = 'username';
     passwordField.value = '';
@@ -52,7 +45,5 @@ describe('Login Form', () => {
     const result = login.checkInputs();
 
     expect(result).toBe(false);
-    // expect(passwordField.classList.contains('is-invalid')).toBe(true);
-    // expect(document.querySelector(feedbackSelector).textContent).toBe(errorMessage);
   });
 });
