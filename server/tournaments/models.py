@@ -12,23 +12,23 @@ from users.models import Profile
 
 
 class Participant(models.Model):
-    REGISTERED = "registered"
+    PENDING = "pending"
     PLAYING = "playing"
+    QUALIFIED = "qualified"
     ELIMINATED = "eliminated"
     WINNER = "winner"
-    UNREGISTERED = "unregistered"
     STATUS_CHOICES = [
-        (REGISTERED, "Registered"),
+        (PENDING, "Pending"),
         (PLAYING, "Playing"),
+        (QUALIFIED, "Qualified"),
         (ELIMINATED, "Eliminated"),
         (WINNER, "Winner"),
-        (UNREGISTERED, "Unregistered"),
     ]
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     tournament = models.ForeignKey("Tournament", on_delete=models.CASCADE, related_name="participants")
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
-    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="registered")
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=PENDING)
     current_round = models.PositiveIntegerField(default=0)
 
     class Meta:
