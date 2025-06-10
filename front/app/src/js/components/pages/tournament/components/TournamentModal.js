@@ -21,23 +21,23 @@ export class TournamentModal extends HTMLElement {
     this.handleConfirmButtonClick = this.handleConfirmButtonClick.bind(this);
   }
 
-  connectedCallback() {
-    this.render();
-  }
+  // connectedCallback() {
+  //   this.render();
+  // }
 
   set contentType(contentType) {
     if (Object.values(this.CONTENT_TYPE).includes(contentType)) {
       this.#state.contentType = contentType;
       switch (this.#state.contentType) {
         case this.CONTENT_TYPE.CANCEL_TOURNAMENT:
-          this.modalBody.textContent = 'Are you sure you want to call off the tournament?';
-          this.confirmButton.textContent = 'Call off the tournament';
-          this.cancelButton.textContent = "I don't want to cancel";
+          this.modalBody.textContent = 'This will cancel the tournament permanently. Are you sure?';
+          this.confirmButton.textContent = 'Yes, cancel tournament';
+          this.cancelButton.textContent = 'No, keep tournament';
           break;
         case this.CONTENT_TYPE.UNREGISTER_TOURNAMENT:
-          this.modalBody.textContent = 'Are you sure you want to unregister from the tournament?';
-          this.confirmButton.textContent = 'Unregister';
-          this.cancelButton.textContent = "I don't unregister";
+          this.modalBody.textContent = 'You will be removed from this tournament. Continue?';
+          this.confirmButton.textContent = 'Yes, unregister me';
+          this.cancelButton.textContent = "No, stay registered";
           break;
       }
     }
@@ -50,31 +50,15 @@ export class TournamentModal extends HTMLElement {
 
   render() {
     this.innerHTML = this.template();
-    if (this.modal) {
-      this.modal.dispose();
-      this.modal = null;
-    }
-  }
-
-  render() {
-    this.innerHTML = this.template();
     this.modalElement = this.querySelector('.modal');
     this.modalBody = this.querySelector('.modal-body');
     this.confirmButton = this.querySelector('#tournament-modal-confirm');
     this.cancelButton = this.querySelector('#tournament-modal-cancel');
 
-    if (this.modalElement) {
-      setTimeout(() => {
-        if (this.modalElement && document.body.contains(this.modalElement)) {
-          this.modal = new Modal(this.modalElement);
-        } else {
-          console.error('Error: Modal element not found or detached by the time Bootstrap Modal was initialized.');
-        }
-      }, 0);
-    } else {
-      console.error('Error: .modal element not found during render. Cannot initialize Bootstrap Modal.');
+    if (!this.modalElement) {
       return;
     }
+    this.modal = new Modal(this.modalElement);
     this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
     this.confirmButton.addEventListener('click', this.handleConfirmButtonClick);
   }
@@ -102,7 +86,7 @@ export class TournamentModal extends HTMLElement {
 
   template() {
     return `
-    <div class="modal fade" tabindex="-1" aria-hidden="true" id="tournament-confirmation-modal">
+    <div class="modal fade" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-body py-4"></div>
