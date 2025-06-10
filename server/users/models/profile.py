@@ -283,25 +283,23 @@ class Profile(models.Model):
             "is_online": self.is_online,
         }
 
-    def can_participate_in_game(self):
+    def can_participate_in_game(self) -> bool:
         """
         Checks if the user can be invited or can start games.
-        User should not participate in matchmaking, be a participant of a tournament or play pong match currently.
+        User should not participate in matchmaking, be a participant of a tournament, play pong match currently
+        or have a game invitation for someone.
         """
         active_statuses = ["pending", "ongoing"]
         # active non-tournament game
         has_active_game_room = self.game_rooms.filter(status__in=active_statuses, bracket__isnull=True).exists()
-        if has_active_game_room:
-            return False
 
         # active tournament presence
-        is_in_active_tournament = self.participant_set.filter(
-            tournament__status__in=active_statuses,
-        ).exists()
-        if is_in_active_tournament:  # noqa: SIM103
-            return False
+        is_in_active_tournament = self.participant_set.filter(tournament__status__in=active_statuses).exists()
 
-        return True
+        # active invitation of someone (as inviter)
+        has_pending_invitation_as_inviter = self.sent_invites.filter(status="pending").exists()
+
+        return not (has_active_game_room or is_in_active_tournament or has_pending_invitation_as_inviter)
 
 
 class Friendship(models.Model):
