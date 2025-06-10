@@ -5,7 +5,7 @@ import path from 'path';
 export default defineConfig({
   resolve: {
     alias: {
-      'src': path.resolve(__dirname, 'src'),
+      src: path.resolve(__dirname, 'src'),
       '@main': path.resolve(__dirname, 'src/main.js'),
       '@router': path.resolve(__dirname, 'src/js/router.js'),
       '@env': path.resolve(__dirname, 'src/js/env.js'),
@@ -25,5 +25,5 @@ export default defineConfig({
     include: ['**/__tests__/vitest/*.test.js'],
     exclude: ['node_modules', 'dist'],
     globals: true,
-  }
+  },
 });
