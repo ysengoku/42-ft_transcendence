@@ -343,7 +343,7 @@ export class Tournament extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
       return;
     }
-    showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament cancelled successfully.');
+    showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament canceled successfully.');
     this.#state.uiStatus = UI_STATUS.CANCELED;
     this.updateContentOnStatusChange();
   }
