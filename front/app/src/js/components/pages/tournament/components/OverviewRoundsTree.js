@@ -118,9 +118,9 @@ export class TournamentOverviewTree extends HTMLElement {
     aliasElement.textContent = player.alias;
     if (bracketStatus === 'finished') {
       if (player.alias === winner.alias) {
-        element.classList.add('bracket-player-winner')
+        element.classList.add('bracket-player-winner');
       } else {
-        element.classList.add('bracket-player-loser')
+        element.classList.add('bracket-player-loser');
       }
       const scoreElement = element.querySelector('.player-score');
       scoreElement.textContent = score;
