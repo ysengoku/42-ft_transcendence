@@ -93,7 +93,7 @@ export class TournamentOverview extends HTMLElement {
     } else if (this.#state.tournament.status === 'finished') {
       this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`;
       if (this.#state.tournament.winner) {
-        this.tournamentWinnerAvatar.src = this.#state.tournament.winner.user.avatar;
+        this.tournamentWinnerAvatar.src = this.#state.tournament.winner.profile.avatar;
         this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias;
       }
     }

@@ -5,9 +5,7 @@
  */
 
 import { router } from '@router';
-import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import { REQUIRED_PARTICIPANTS_OPTIONS, MAX_TOURNAMENT_ALIAS_LENGTH } from '@env';
 import { validateTournamentName, validateTournamentAlias } from '../index';
 
@@ -36,6 +34,7 @@ export class TournamentCreation extends HTMLElement {
     newTournament: {
       name: '',
       requiredParticipants: this.#defaultRequiredParticipants,
+      settings: {},
     },
     isTournamentNameValid: true,
     isAliasValid: false,
@@ -214,30 +213,13 @@ export class TournamentCreation extends HTMLElement {
       return;
     }
 
-    const options = this.gameOptionsForm.selectedOptions;
-    if (options && options.ranked) {
-      options.ranked = false;
+    this.#state.newTournament.settings = this.gameOptionsForm.selectedOptions;
+    if (this.#state.newTournament.settings && this.#state.newTournament.settings.ranked) {
+      this.#state.newTournament.settings.ranked = false;
     }
-
-    // Request to create a new tournament
-    const data = {
-      name: this.#state.newTournament.name,
-      required_participants: Number(this.#state.newTournament.requiredParticipants),
-      alias: this.#state.newTournament.alias,
-      settings: options,
-    };
-    const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
-    if (response.success) {
-      document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true }));
-      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament created successfully!', 5000);
-      const tournamentId = response.data.id;
-      router.navigate(`/tournament/${tournamentId}`);
-    } else if (response.status === 422) {
-      this.alert.textContent = response.msg;
-      this.alert.classList.remove('d-none');
-      // this.confirmButton.disabled = true;
-    } else if (response.status !== 401 && response.status !== 500) {
-      // TODO: Handle other error messages
+    const tounamentMenu = document.querySelector('tournament-menu');
+    if (tounamentMenu) {
+      tounamentMenu.handleCreateTournament(this.#state.newTournament);
     }
   }
 
