@@ -55,24 +55,18 @@ export class TournamentPending extends HTMLElement {
     this.participantsWrapper = this.querySelector('#participants-wrapper');
     this.cancelTournamentButton = this.querySelector('#cancel-tournament-button');
     this.unregisterButton = this.querySelector('#cancel-registration-button');
-    // debugger;
-    // this.modalElement = document.querySelector('tournament-modal');
-    // debugger;
+    this.modalElement = document.querySelector('tournament-modal');
 
     this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
     this.requiredParticipants.textContent = ` / ${this.#state.requiredParticipants}`;
-    // debugger;
     this.#state.participants.forEach((participant) => {
       this.addParticipant(participant);
     });
-    // debugger;
     if (this.#state.creatorUsername === this.#state.loggedInUsername) {
       this.cancelTournamentButton.classList.remove('d-none');
       this.cancelTournamentButton.addEventListener('click', this.handleCancelTournamentButtonClick);
     }
-    // debugger;
     this.unregisterButton.addEventListener('click', this.handleUnregisterButtonClick);
-    // debugger;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -110,12 +104,6 @@ export class TournamentPending extends HTMLElement {
   handleUnregisterButtonClick() {
     this.modalElement.contentType = this.modalElement.CONTENT_TYPE.UNREGISTER_TOURNAMENT;
     this.modalElement.showModal();
-    // const confirmationModal = document.createElement('tournament-modal');
-    // console.log('confirmationModal', confirmationModal);
-    // this.appendChild(confirmationModal);
-    // confirmationModal.render();
-    // confirmationModal.contentType = confirmationModal.CONTENT_TYPE.UNREGISTER_TOURNAMENT;
-    // confirmationModal.showModal();
     document.addEventListener('tournament-modal-confirm', this.handleConfirmationFromModal);
   }
 
@@ -182,6 +170,7 @@ export class TournamentPending extends HTMLElement {
   template() {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center mt-3">
+      <tournament-modal></tournament-modal>
       <p class="text-center m-1">Gathering Gunslingers...</p>
       <div class="d-flex flex-row justify-content-center align-items-center mb-5">
         <p class="m-0 pe-1 fs-2" id="current-participants-count"></p>
@@ -224,7 +213,7 @@ export class TournamentPending extends HTMLElement {
   unresigteredTemplate() {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center mt-3">
-	    <p class="fs-4">You’ve backed out of this tournament.</p>
+	    <p class="fs-4">You've backed out of this tournament.</p>
       <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">
         <div class="btn" id="go-to-home-button">Back to Saloon</div>
         <div class="btn" id="go-to-tournament-menu-button">Find another tournament</div>
