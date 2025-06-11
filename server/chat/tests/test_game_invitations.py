@@ -314,7 +314,7 @@ class GameInvitationTests(UserEventsConsumerTests):
                 "client_id": "client_id",
                 "username": "target_user",
                 "options": {
-                    GAME_SPEED: "normal",
+                    GAME_SPEED: "medium",
                     RANKED: True,
                     SCORE_TO_WIN: 10,
                     TIME_LIMIT: 3,
