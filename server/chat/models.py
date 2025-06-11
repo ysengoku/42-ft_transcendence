@@ -233,7 +233,6 @@ class NotificationQuerySet(models.QuerySet):
         self,
         receiver: Profile,
         sender: Profile,
-        # notification_data = {"game_id": ""},
         notification_data = None,
         date: datetime = None,
     ):
