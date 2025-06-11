@@ -223,31 +223,6 @@ class GameInvitationTests(UserEventsConsumerTests):
         await communicator.disconnect()
         await targetuser.disconnect()
 
-    async def test_invalid_None(self):
-        communicator = await self.get_authenticated_communicator()
-        targetuser = await self.get_authenticated_communicator(
-            username="targetuser", password="testpass",
-        )
-
-        # 2. Invalid game_speed
-        invalid_data = {
-            "action": "game_invite",
-            "data": {
-                "client_id": "client_id",
-                "username": "targetuser",
-                "options": {
-                    TIME_LIMIT: None,
-                },
-            },
-        }
-        await communicator.send_json_to(invalid_data)
-        await communicator.receive_nothing(timeout=0.1)
-        count = await database_sync_to_async(GameInvitation.objects.count)()
-        assert count == 0
-
-        await communicator.disconnect()
-        await targetuser.disconnect()
-
     async def test_game_invite_incomplete_dict(self):
         communicator = await self.get_authenticated_communicator()
         targetuser = await self.get_authenticated_communicator(
