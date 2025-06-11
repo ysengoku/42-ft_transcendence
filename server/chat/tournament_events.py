@@ -57,7 +57,6 @@ class TournamentEvent:
                 },
             )
             notification_data = notification.data.copy()
-            logger.warning(notification_data)
             if "date" in notification_data and isinstance(notification_data["date"], datetime):
                 notification_data["date"] = notification_data["date"].isoformat()
             async_to_sync(channel_layer.group_send)(
