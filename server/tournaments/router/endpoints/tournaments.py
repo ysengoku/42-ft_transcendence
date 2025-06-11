@@ -176,7 +176,7 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
                     },
                 },
             )
-            Duel.close_tournament_invitations(tournament_id)
+            TournamentEvent.close_tournament_invitations(tournament_id)
         else:
             async_to_sync(channel_layer.group_send)(
                 f"tournament_{tournament_id}",

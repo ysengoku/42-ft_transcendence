@@ -68,7 +68,7 @@ class TournamentEvent:
                     "type": "chat_message",
                     "message": json.dumps(
                         {
-                            "action": "tournament_invite",
+                            "action": "new_tournament",
                             "data": notification_data,
                         },
                     ),
