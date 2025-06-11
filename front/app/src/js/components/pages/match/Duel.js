@@ -435,7 +435,7 @@ export class Duel extends HTMLElement {
 
   headerTemplate() {
     switch (this.#state.status) {
-      case 'this.STATUS.INVITING':
+      case this.STATUS.INVITING:
         return 'Waiting for your opponent to ride in...';
       case this.STATUS.MATCHMAKING:
         return 'Searching for your dream opponent...';
