@@ -21,9 +21,9 @@ export class TournamentModal extends HTMLElement {
     this.handleConfirmButtonClick = this.handleConfirmButtonClick.bind(this);
   }
 
-  // connectedCallback() {
-  //   this.render();
-  // }
+  connectedCallback() {
+    this.render();
+  }
 
   set contentType(contentType) {
     if (Object.values(this.CONTENT_TYPE).includes(contentType)) {
@@ -37,7 +37,7 @@ export class TournamentModal extends HTMLElement {
         case this.CONTENT_TYPE.UNREGISTER_TOURNAMENT:
           this.modalBody.textContent = 'You will be removed from this tournament. Continue?';
           this.confirmButton.textContent = 'Yes, unregister me';
-          this.cancelButton.textContent = "No, stay registered";
+          this.cancelButton.textContent = 'No, stay registered';
           break;
       }
     }
