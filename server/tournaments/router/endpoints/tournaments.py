@@ -131,6 +131,7 @@ def delete_tournament(request, tournament_id: UUID):
 
     tournament.status = Tournament.CANCELLED
     tournament.save()
+    TournamentEvent.close_tournament_invitations(tournament_id)
     return 204, None
 
 
@@ -143,7 +144,7 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
 
     with transaction.atomic():
         try:
-            tournament: Tournament = Tournament.objects.select_for_update().get(id=tournament_id)
+            tournament = Tournament.objects.select_for_update().get(id=tournament_id)
         except Tournament.DoesNotExist as e:
             raise HttpError(404, "Tournament not found.") from e
 
@@ -217,6 +218,7 @@ def unregister_for_tournament(request, tournament_id: UUID):
         if tournament.participants.count() < 1:
             tournament.status = Tournament.CANCELLED
             tournament.save()
+            TournamentEvent.close_tournament_invitations(tournament_id)
             async_to_sync(channel_layer.group_send)(
                 f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
         else:
