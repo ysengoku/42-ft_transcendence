@@ -119,7 +119,6 @@ class ChatQuerySet(models.QuerySet):
             Chat.objects.for_participants(profile)
             .with_and_order_by_last_message()
             .with_other_user_profile_info(profile)
-            # .annotate_real_online()
         )
 
 
@@ -234,9 +233,12 @@ class NotificationQuerySet(models.QuerySet):
         self,
         receiver: Profile,
         sender: Profile,
-        notification_data={"game_id": str()},
+        # notification_data = {"game_id": ""},
+        notification_data = None,
         date: datetime = None,
     ):
+        if notification_data is None:
+            notification_data = {"game_id": ""}
         from chat.models import GameInvitation
         invitation = GameInvitation.objects.get(id=notification_data["game_id"])
         notification_data = notification_data.copy()
@@ -253,9 +255,11 @@ class NotificationQuerySet(models.QuerySet):
         self,
         receiver: Profile,
         sender: Profile,
-        notification_data={"invitation_id": str()},
+        notification_data = None,
         date: datetime = None,
     ):
+        if notification_data is None:
+            notification_data = {"invitation_id": ""}
         from chat.models import TournamentInvitation
         invitation = TournamentInvitation.objects.get(id=notification_data["invitation_id"])
         notification_data = notification_data.copy()
@@ -344,7 +348,7 @@ class GameInvitation(models.Model):
     def sync_notification_status(self):
         notifications = Notification.objects.filter(
             data__game_id=str(self.id),
-            action=Notification.GAME_INVITE
+            action=Notification.GAME_INVITE,
         )
         for notif in notifications:
             notif.data["status"] = self.status
@@ -360,7 +364,10 @@ class TournamentInvitation(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tournament_id = models.UUIDField(primary_key=False, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="sent_tournament_invites", null=True, blank=True)
+    sender = models.ForeignKey(
+        Profile,
+        on_delete=models.CASCADE,
+        related_name="sent_tournament_invites", null=True, blank=True)
     recipient = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
@@ -374,17 +381,6 @@ class TournamentInvitation(models.Model):
         choices=INVITE_STATUS,
         default=OPEN,
     )
-    # options = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"Tournament invitation :${self.id}"
-#
-#     def sync_notification_status(self):
-#         # TODO: SEE THIS LATER : HOW TO PUT THE NOTIFICATION TO CLOSE TO HIDE IT FROM NOTIFICATIONS
-#         notifications = Notification.objects.filter(
-#             # data__game_id=str(self.id),
-#             action=Notification.NEW_TOURNAMENT
-#         )
-#         for notif in notifications:
-#             notif.data["status"] = self.status
-#             notif.save(update_fields=["data"])

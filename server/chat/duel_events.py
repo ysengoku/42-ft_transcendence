@@ -205,6 +205,8 @@ class DuelEvent:
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         client_id = data["data"].get("client_id")
+        if options is not None:
+            logger.debug(options)
         if options is not None and not Validator.validate_options(options):
             self.consumer.close()
             return
@@ -321,7 +323,6 @@ class DuelEvent:
             for invitation in invitations:
                 invitation.status = GameInvitation.CANCELLED
                 sender = invitation.sender
-                nickname = invitation.sender.user.nickname
                 receiver = invitation.recipient
                 invitation.save()
                 invitation.sync_notification_status()
