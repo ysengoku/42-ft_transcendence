@@ -78,8 +78,8 @@ export class TournamentMenu extends HTMLElement {
   }
 
   disconnectedCallback() {
-    document.body.removeChild(this.modalComponent);
     if (this.modal) {
+      document.body.removeChild(this.modalComponent);
       this.modal.dispose();
       this.modalComponent = null;
       this.modal = null;
@@ -148,14 +148,6 @@ export class TournamentMenu extends HTMLElement {
       const tournamentOptionTimeLimit = this.modalBody.querySelector('#tournament-option-time-limit');
       const tournamentOptionCoolMode = this.modalBody.querySelector('#tournament-option-cool-mode');
 
-      // ===== For test ==================================
-      this.selectedTournament.settings = {};
-      this.selectedTournament.settings.score_to_win = 10;
-      this.selectedTournament.settings.game_speed = 'fast';
-      this.selectedTournament.settings.time_limit = 3;
-      this.selectedTournament.settings.cool_mode = true;
-      // =================================================
-
       modalTitle.textContent = this.selectedTournament.name;
       modatRequiredParticipants.textContent = `${this.selectedTournament.participants_count} / ${this.selectedTournament.required_participants}`;
 
@@ -168,10 +160,8 @@ export class TournamentMenu extends HTMLElement {
       if (this.selectedTournament.settings.time_limit) {
         tournamentOptionTimeLimit.textContent = `Time limit: ${this.selectedTournament.settings.time_limit} min`;
       }
-      if (this.selectedTournament.settings.cool_mode) {
-        tournamentOptionCoolMode.textContent =
-          this.selectedTournament.settings.cool_mode === true ? 'Buffs: enabled' : 'Buffs: disabled';
-      }
+      tournamentOptionCoolMode.textContent =
+        this.selectedTournament.settings.cool_mode === true ? 'Buffs: enabled' : 'Buffs: disabled';
 
       this.registerForm = this.modalBody.querySelector('#tournament-register-form');
       this.aliasInput = this.modalBody.querySelector('#tournament-alias');
@@ -209,15 +199,7 @@ export class TournamentMenu extends HTMLElement {
       const tournamentWinnerAlias = this.modalBody.querySelector('#tournament-winner-alias');
       modalTitle.textContent = this.selectedTournament.name;
       modalTournamentStatus.textContent = `Finished on ${formatDateMDY(this.selectedTournament.date)}`;
-      if (
-        this.selectedTournament.winner &&
-        this.selectedTournament.winner.user &&
-        this.selectedTournament.winner.user.avatar
-      ) {
-        tournamentWinnerAvatar.src = this.selectedTournament.winner.user.avatar;
-      } else {
-        tournamentWinnerAvatar.classList.add('d-none');
-      }
+      tournamentWinnerAvatar.src = this.selectedTournament.winner.profile.avatar;
       tournamentWinnerAlias.textContent = this.selectedTournament.winner
         ? this.selectedTournament.winner.alias
         : 'Data not available at the moment';
