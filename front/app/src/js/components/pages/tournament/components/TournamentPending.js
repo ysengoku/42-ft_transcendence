@@ -59,11 +59,9 @@ export class TournamentPending extends HTMLElement {
 
     this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
     this.requiredParticipants.textContent = ` / ${this.#state.requiredParticipants}`;
-
     this.#state.participants.forEach((participant) => {
       this.addParticipant(participant);
     });
-
     if (this.#state.creatorUsername === this.#state.loggedInUsername) {
       this.cancelTournamentButton.classList.remove('d-none');
       this.cancelTournamentButton.addEventListener('click', this.handleCancelTournamentButtonClick);
@@ -122,6 +120,9 @@ export class TournamentPending extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
       return;
     }
+    this.unregisterButton?.removeEventListener('click', this.handleUnregisterButtonClick);
+    this.cancelTournamentButton?.removeEventListener('click', this.handleCancelTournamentButtonClick);
+    this.innerHTML = '';
     this.innerHTML = this.unresigteredTemplate();
     const goToHomeButton = this.querySelector('#go-to-home-button');
     const goToTournamentMenuButton = this.querySelector('#go-to-tournament-menu-button');
@@ -169,6 +170,7 @@ export class TournamentPending extends HTMLElement {
   template() {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center mt-3">
+      <tournament-modal></tournament-modal>
       <p class="text-center m-1">Gathering Gunslingers...</p>
       <div class="d-flex flex-row justify-content-center align-items-center mb-5">
         <p class="m-0 pe-1 fs-2" id="current-participants-count"></p>
@@ -177,8 +179,8 @@ export class TournamentPending extends HTMLElement {
       <p class="text-center mt-4 mb-2 fs-5 fw-bold">Gunslingers in the Arena</p>
       <div class="d-flex flex-row flex-wrap justify-content-center w-75" id="participants-wrapper"></div>
       <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">
-        <div class="btn d-none" id="cancel-tournament-button">Cancel tournament</div>
-        <div class="btn" id="cancel-registration-button">Cancel registration</div>
+        <div class="btn d-none" id="cancel-tournament-button">Call off the tournament</div>
+        <div class="btn" id="cancel-registration-button">Unregister from the tournament</div>
       </div>
     </div>
     `;
@@ -211,7 +213,7 @@ export class TournamentPending extends HTMLElement {
   unresigteredTemplate() {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center mt-3">
-	    <p class="fs-4">You’ve backed out of this tournament.</p>
+	    <p class="fs-4">You've backed out of this tournament.</p>
       <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">
         <div class="btn" id="go-to-home-button">Back to Saloon</div>
         <div class="btn" id="go-to-tournament-menu-button">Find another tournament</div>
