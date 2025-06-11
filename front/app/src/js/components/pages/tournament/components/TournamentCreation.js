@@ -25,6 +25,7 @@ export class TournamentCreation extends HTMLElement {
    * @property {Object} #state.newTournament - Details of the new tournament being created.
    * @property {string} #state.newTournament.name - Name of the tournament.
    * @property {number} #state.newTournament.requiredParticipants - Number of required participants for the tournament.
+   * @property {Object} #state.newTournament.settings - Game settings for the tournament.
    * @property {boolean} #state.isTournamentNameValid - Validity state of the tournament name.
    * @property {boolean} #state.isAliasValid - Validity state of the tournament alias.
    *
