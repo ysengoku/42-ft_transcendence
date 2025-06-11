@@ -89,6 +89,13 @@ class TestProfileModel(TestCase):
             creator=self.user.profile,
             required_participants=4,
             alias="barfoo",
+            settings = {
+                "score_to_win": 5,
+                "time_limit": 300,
+                "cool_mode": False,
+                "ranked": False,
+                "game_speed": "medium"
+            },
         )
         self.assertEqual(
             self.user.profile.can_participate_in_game(),
