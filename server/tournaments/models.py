@@ -6,28 +6,29 @@ from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
 
+from pong.game_protocol import GameRoomSettings
 from pong.models import GameRoom, get_default_game_room_settings
 from users.models import Profile
 
 
 class Participant(models.Model):
-    REGISTERED = "registered"
+    PENDING = "pending"
     PLAYING = "playing"
+    QUALIFIED = "qualified"
     ELIMINATED = "eliminated"
     WINNER = "winner"
-    UNREGISTERED = "unregistered"
     STATUS_CHOICES = [
-        (REGISTERED, "Registered"),
+        (PENDING, "Pending"),
         (PLAYING, "Playing"),
+        (QUALIFIED, "Qualified"),
         (ELIMINATED, "Eliminated"),
         (WINNER, "Winner"),
-        (UNREGISTERED, "Unregistered"),
     ]
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     tournament = models.ForeignKey("Tournament", on_delete=models.CASCADE, related_name="participants")
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
-    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="registered")
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=PENDING)
     current_round = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -38,12 +39,20 @@ class Participant(models.Model):
 
 
 class TournamentQuerySet(models.QuerySet):
-    def validate_and_create(self, creator: Profile, tournament_name: str, required_participants: int, alias: str):
+    def validate_and_create(
+        self,
+        creator: Profile,
+        tournament_name: str,
+        required_participants: int,
+        alias: str,
+        settings: GameRoomSettings,
+    ):
         tournament = self.model(
             name=tournament_name,
             creator=creator,
             required_participants=required_participants,
             status=self.model.PENDING,
+            settings=settings,
         )
         tournament.full_clean()
         tournament.save()
@@ -167,11 +176,11 @@ class Round(models.Model):
 
 
 class Bracket(models.Model):
-    START = "start"
+    PENDING = "pending"
     ONGOING = "ongoing"
     FINISHED = "finished"
     STATUS_CHOICES = [
-        (START, "Start"),
+        (PENDING, "Pending"),
         (ONGOING, "Ongoing"),
         (FINISHED, "Finished"),
     ]
@@ -183,7 +192,7 @@ class Bracket(models.Model):
     score_p1 = models.PositiveIntegerField(default=0)
     score_p2 = models.PositiveIntegerField(default=0)
     winner = models.ForeignKey(Participant, on_delete=models.SET_NULL, null=True, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="start")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     score = models.CharField(max_length=7, blank=True)
     game_room = models.OneToOneField(GameRoom, on_delete=models.CASCADE, null=True, blank=True)
 

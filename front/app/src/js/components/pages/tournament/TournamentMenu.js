@@ -50,7 +50,7 @@ export class TournamentMenu extends HTMLElement {
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
     this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
-    this.handleAliasInput = this.handleAliasInput.bind(this);
+    this.validateAliasInput = this.validateAliasInput.bind(this);
     this.confirmRegister = this.confirmRegister.bind(this);
     this.navigateToOverview = this.navigateToOverview.bind(this);
   }
@@ -78,16 +78,20 @@ export class TournamentMenu extends HTMLElement {
   }
 
   disconnectedCallback() {
+    document.body.removeChild(this.modalComponent);
+    if (this.modal) {
+      this.modal.dispose();
+      this.modalComponent = null;
+      this.modal = null;
+    }
     this.createTournamentButton?.removeEventListener('click', this.showTournamentCreationForm);
     this.list?.removeEventListener('register-tournament', this.showTournamentDetail);
     this.noOpenTournaments?.removeEventListener('click', this.showTournamentCreationForm);
     document.removeEventListener('hide-modal', this.hideModal);
-    this.modalComponent?.removeEventListener('hide.bs.modal', this.handleCloseModal);
     this.modalComponent?.removeEventListener('hidden.bs.modal', this.handleCloseModal);
-    if (this.selectedTournament && this.selectedTournament.staus !== 'pending') {
+    if (this.selectedTournament && this.selectedTournament.status !== 'pending') {
       this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
-    this.modal.hide();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -127,61 +131,7 @@ export class TournamentMenu extends HTMLElement {
     this.confirmButton = this.modalFooter.querySelector('.confirm-button');
 
     document.addEventListener('hide-modal', this.hideModal);
-    this.modalComponent.addEventListener('hide.bs.modal', this.handleCloseModal);
     this.modalComponent.addEventListener('hidden.bs.modal', this.handleCloseModal);
-  }
-
-  /* ------------------------------------------------------------------------ */
-  /*      Event handling                                                      */
-  /* ------------------------------------------------------------------------ */
-  hideModal() {
-    this.modal.hide();
-  }
-
-  handleCloseModal() {
-    if (this.modalComponent.contains(document.activeElement)) {
-      document.activeElement.blur();
-    }
-    this.modalBody.innerHTML = '';
-    this.confirmButton.classList.remove('d-none');
-    this.confirmButton.disabled = true;
-    this.cancelButton.textContent = 'Cancel';
-
-    this.aliasInput?.removeEventListener('input', this.handleAliasInput);
-    this.confirmButton.removeEventListener('click', this.confirmRegister);
-    this.confirmButton.removeEventListener('click', this.navigateToOverview);
-
-    this.aliasInput = null;
-    this.aliasInputFeedback = null;
-  }
-
-  async showTournamentCreationForm() {
-    const canEngage = await auth.canEngageInGame();
-    if (!canEngage) {
-      return;
-    }
-    this.modalBody.innerHTML = '';
-    const modalBodyContent = document.createElement('tournament-creation');
-    this.modalBody.appendChild(modalBodyContent);
-    this.confirmButton.textContent = 'Create';
-    this.modal.show();
-  }
-
-  async showTournamentDetail(event) {
-    const listItem = event.target.closest('li[tournament-id]');
-    if (!listItem || !listItem.hasAttribute('tournament-id')) {
-      return;
-    }
-    const tournamentId = listItem.getAttribute('tournament-id');
-    this.selectedTournament = this.list.getTournamentById(tournamentId);
-    const tournamentStatus = this.selectedTournament.status;
-    if (!tournamentId || !tournamentStatus) {
-      return;
-    }
-    this.modalBody.innerHTML = '';
-    this.#state.canEngage = await auth.canEngageInGame(false);
-    this.tournamentDetail[tournamentStatus]();
-    this.modal.show();
   }
 
   /**
@@ -235,7 +185,7 @@ export class TournamentMenu extends HTMLElement {
         this.cancelButton.textContent = 'Close';
         return;
       }
-      this.aliasInput.addEventListener('input', this.handleAliasInput);
+      this.aliasInput.addEventListener('input', this.validateAliasInput);
       this.aliasInput.value = this.#state.nickname;
       this.confirmButton.disabled = false;
       this.confirmButton.textContent = 'Register';
@@ -270,7 +220,7 @@ export class TournamentMenu extends HTMLElement {
       }
       tournamentWinnerAlias.textContent = this.selectedTournament.winner
         ? this.selectedTournament.winner.alias
-        : 'Data not available';
+        : 'Data not available at the moment';
 
       this.confirmButton.textContent = 'View Results';
       this.confirmButton.disabled = false;
@@ -279,14 +229,75 @@ export class TournamentMenu extends HTMLElement {
     },
   };
 
+  /* ------------------------------------------------------------------------ */
+  /*      Tournament creation                                                 */
+  /* ------------------------------------------------------------------------ */
+  async showTournamentCreationForm() {
+    const canEngage = await auth.canEngageInGame();
+    if (!canEngage) {
+      return;
+    }
+    this.modalBody.innerHTML = '';
+    const modalBodyContent = document.createElement('tournament-creation');
+    this.modalBody.appendChild(modalBodyContent);
+    this.confirmButton.textContent = 'Create';
+    this.confirmButton.disabled = false;
+    this.modal.show();
+  }
+
+  async showTournamentDetail(event) {
+    const listItem = event.target.closest('li[tournament-id]');
+    if (!listItem || !listItem.hasAttribute('tournament-id')) {
+      return;
+    }
+    const tournamentId = listItem.getAttribute('tournament-id');
+    this.selectedTournament = this.list.getTournamentById(tournamentId);
+    const tournamentStatus = this.selectedTournament.status;
+    if (!tournamentId || !tournamentStatus) {
+      return;
+    }
+    this.modalBody.innerHTML = '';
+    this.#state.canEngage = await auth.canEngageInGame(false);
+    this.tournamentDetail[tournamentStatus]();
+    this.modal.show();
+  }
+
+  async handleCreateTournament(newTournament) {
+    const data = {
+      name: newTournament.name,
+      required_participants: Number(newTournament.requiredParticipants),
+      alias: newTournament.alias,
+      settings: newTournament.settings,
+    };
+    console.log('Creating new tournament with data:', data);
+    const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
+    if (response.success) {
+      document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true }));
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament created successfully!', 5000);
+      const tournamentId = response.data.id;
+      this.connectToTournamentRoom(tournamentId);
+    } else if (response.status === 422) {
+      this.alert.textContent = response.msg;
+      this.alert.classList.remove('d-none');
+      // this.confirmButton.disabled = true;
+    } else if (response.status !== 401 && response.status !== 500) {
+      // TODO: Handle other error messages
+    }
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Tournament registration                                             */
+  /* ------------------------------------------------------------------------ */
+
   /**
    * Validate the tournament alias input.
    * If the alias is invalid, it adds an error class to the input and displays an error message.
    * If the alias is valid, it removes the error class and enables the confirm button.
    * @param {*} event
    */
-  handleAliasInput(event) {
-    const validationError = validateTournamentAlias(event.target.value);
+  validateAliasInput(event, value = null) {
+    const valueToValidate = event ? event.target.value : value;
+    const validationError = validateTournamentAlias(valueToValidate);
     if (validationError) {
       this.aliasInput.classList.add('is-invalid');
       this.aliasInputFeedback.textContent = validationError;
@@ -308,6 +319,10 @@ export class TournamentMenu extends HTMLElement {
    */
   async confirmRegister(event) {
     event.stopPropagation();
+    this.validateAliasInput(null, this.aliasInput.value);
+    if (!this.aliasInput.value || this.aliasInput.classList.contains('is-invalid')) {
+      return;
+    }
     devLog('Registering for tournament:', this.selectedTournament.id, this.aliasInput.value);
     const response = await apiRequest(
       'POST',
@@ -317,9 +332,10 @@ export class TournamentMenu extends HTMLElement {
       false,
       true,
     );
-
+    console.log('Registration successful 1:', this.selectedTournament.id);
     if (response.success) {
-      this.connectToTournamentRoom();
+      console.log('Registration successful 2:', this.selectedTournament.id);
+      this.connectToTournamentRoom(this.selectedTournament.id);
     } else {
       if (response.msg === 'Tournament is full.') {
         this.modal.hide();
@@ -348,11 +364,35 @@ export class TournamentMenu extends HTMLElement {
     }
   }
 
-  connectToTournamentRoom() {
+  /* ------------------------------------------------------------------------ */
+  /*      Other Even handlers                                                 */
+  /* ------------------------------------------------------------------------ */
+  hideModal() {
+    this.modal.hide();
+  }
+
+  handleCloseModal() {
+    if (this.modalComponent.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+    this.modalBody.innerHTML = '';
+    this.confirmButton.classList.remove('d-none');
+    this.confirmButton.disabled = true;
+    this.cancelButton.textContent = 'Cancel';
+
+    this.aliasInput?.removeEventListener('input', this.validateAliasInput);
+    this.confirmButton.removeEventListener('click', this.confirmRegister);
+    this.confirmButton.removeEventListener('click', this.navigateToOverview);
+
+    this.aliasInput = null;
+    this.aliasInputFeedback = null;
+  }
+
+  connectToTournamentRoom(id = this.selectedTournament.id) {
     this.modalComponent.addEventListener(
       'hidden.bs.modal',
       () => {
-        router.navigate(`/tournament/${this.selectedTournament.id}`);
+        router.navigate(`/tournament/${id}`);
       },
       { once: true },
     );

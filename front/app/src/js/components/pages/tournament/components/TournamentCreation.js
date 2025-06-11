@@ -5,9 +5,7 @@
  */
 
 import { router } from '@router';
-import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import { REQUIRED_PARTICIPANTS_OPTIONS, MAX_TOURNAMENT_ALIAS_LENGTH } from '@env';
 import { validateTournamentName, validateTournamentAlias } from '../index';
 
@@ -27,6 +25,7 @@ export class TournamentCreation extends HTMLElement {
    * @property {Object} #state.newTournament - Details of the new tournament being created.
    * @property {string} #state.newTournament.name - Name of the tournament.
    * @property {number} #state.newTournament.requiredParticipants - Number of required participants for the tournament.
+   * @property {Object} #state.newTournament.settings - Game settings for the tournament.
    * @property {boolean} #state.isTournamentNameValid - Validity state of the tournament name.
    * @property {boolean} #state.isAliasValid - Validity state of the tournament alias.
    *
@@ -36,6 +35,7 @@ export class TournamentCreation extends HTMLElement {
     newTournament: {
       name: '',
       requiredParticipants: this.#defaultRequiredParticipants,
+      settings: {},
     },
     isTournamentNameValid: true,
     isAliasValid: false,
@@ -134,7 +134,8 @@ export class TournamentCreation extends HTMLElement {
     ) {
       this.#state.isAliasValid = true;
     }
-    this.updateConfirmButtonState();
+    // this.updateConfirmButtonState();
+    this.confirmButton.disabled = false;
 
     // Initialize the game options form
     this.gameOptionsForm = this.querySelector('game-options');
@@ -169,7 +170,8 @@ export class TournamentCreation extends HTMLElement {
       this.tournamentNameFeedback.textContent = '';
       this.#state.isTournamentNameValid = true;
     }
-    this.updateConfirmButtonState();
+    // this.updateConfirmButtonState();
+    console.log('Tournament name validation:', this.#state.isTournamentNameValid);
   }
 
   validateAliasInput(event, value) {
@@ -185,21 +187,21 @@ export class TournamentCreation extends HTMLElement {
       this.tournamentAliasFeedback.textContent = '';
       this.#state.isAliasValid = true;
     }
-    this.updateConfirmButtonState();
+    // this.updateConfirmButtonState();
+    console.log('Alias validation:', this.#state.isAliasValid);
   }
 
-  updateConfirmButtonState() {
-    console.log('Updating confirm button state');
-    if (this.#state.isTournamentNameValid && this.#state.isAliasValid) {
-      this.confirmButton.disabled = false;
-    } else {
-      this.confirmButton.disabled = true;
-    }
-  }
+  // updateConfirmButtonState() {
+  //   console.log('Updating confirm button state');
+  //   if (this.#state.isTournamentNameValid && this.#state.isAliasValid) {
+  //     this.confirmButton.disabled = false;
+  //   } else {
+  //     this.confirmButton.disabled = true;
+  //   }
+  // }
 
   async createTournament(event) {
     event.stopPropagation();
-
     // Retrieve the input and selected game options
     this.#state.newTournament.name = this.tournamentNameInput.value;
     this.#state.newTournament.requiredParticipants = this.querySelector(
@@ -212,30 +214,13 @@ export class TournamentCreation extends HTMLElement {
       return;
     }
 
-    const options = this.gameOptionsForm.selectedOptions;
-    if (options && options.ranked) {
-      options.ranked = false;
+    this.#state.newTournament.settings = this.gameOptionsForm.selectedOptions;
+    if (this.#state.newTournament.settings && this.#state.newTournament.settings.ranked) {
+      this.#state.newTournament.settings.ranked = false;
     }
-
-    // Request to create a new tournament
-    const data = {
-      name: this.#state.newTournament.name,
-      required_participants: this.#state.newTournament.requiredParticipants,
-      alias: this.#state.newTournament.alias,
-      options: options,
-    };
-    const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
-    if (response.success) {
-      document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true }));
-      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament created successfully!', 5000);
-      const tournamentId = response.data.id;
-      router.navigate(`/tournament/${tournamentId}`);
-    } else if (response.status === 422) {
-      this.alert.textContent = response.msg;
-      this.alert.classList.remove('d-none');
-      this.confirmButton.disabled = true;
-    } else if (response.status !== 401 && response.status !== 500) {
-      // TODO: Handle other error messages
+    const tounamentMenu = document.querySelector('tournament-menu');
+    if (tounamentMenu) {
+      tounamentMenu.handleCreateTournament(this.#state.newTournament);
     }
   }
 
