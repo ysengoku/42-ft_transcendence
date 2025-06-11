@@ -127,6 +127,7 @@ class TournamentConsumer(WebsocketConsumer):
             case "new_registration":
                 logger.info("WOW ! A NEW REGISTRATION !!!")
             case "user_left":
+                self.user_left(data)
                 logger.info("OH NO, USER LEFT !")
             case "tournament_cancelled":
                 logger.info("OH NO, TOURNAMENT GOT CANCELLED !")
@@ -196,6 +197,13 @@ class TournamentConsumer(WebsocketConsumer):
         TODO: code this properly
         When the participant cancels their own participation
         """
+
+    def user_left(self, data):
+        """
+        TODO: code this properly
+        When the participant cancels their own participation
+        """
+        logger.debug("Bye everyone ! %s", data)
 
     def register_participant(self, data):
         register_data = data.get("data", {})
