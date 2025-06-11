@@ -330,6 +330,15 @@ h1, h2, h3, h4, h5, h6, legend {
   transform: rotate(32deg);
 }
 
+.bi-arrow-up-right {
+  color: var(--pm-bg-success);
+  -webkit-text-stroke: 1px;
+}
+.bi-arrow-down-right {
+  color: var(--pm-red-500);
+  -webkit-text-stroke: 1px;
+}
+
 /*--------------------------------------------------------------------------- */
 /*     Scroll bar                                                             */
 /*----------------------------------------------------------------------------*/
