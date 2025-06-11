@@ -481,6 +481,10 @@ export class MultiplayerGame extends HTMLElement {
           camera.position.set(0, 15, -20);
           camera.lookAt(new THREE.Vector3(0, 0, 0));
           break;
+        case 'game_started':
+          devLog('Game started', data);
+          this.hideOverlay();
+          break;
         case 'game_paused':
           devLog('Game paused');
           console.log(data);
@@ -495,7 +499,11 @@ export class MultiplayerGame extends HTMLElement {
           devLog('Game cancelled');
           this.showOverlay('cancel');
           break;
-
+        case 'player_won':
+        case 'player_resigned':
+          devLog('Game_over', data);
+          this.showOverlay('game_over', data);
+          break;
         default:
           break;
       }
@@ -639,6 +647,25 @@ export class MultiplayerGame extends HTMLElement {
     animate();
 
     // ----- TEST ---------------
+    const result = {
+      winner: {
+        name: 'Celiastral',
+        number: 1,
+        avatar: '/__mock__/img/sample-pic2.png',
+        elo: 1200,
+        number: 2,
+      },
+      loser: {
+        name: 'Pedro',
+        avatar: '/__mock__/img/sample-pic3.png',
+        elo: 1100,
+        number: 2,
+      },
+    };
+    this.showOverlay('game_over', result);
+
+    // this.showOverlay('pending');
+
     // mock data
     // const data = {
     //   state: {
@@ -696,6 +723,18 @@ export class MultiplayerGame extends HTMLElement {
         this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
         this.overlayButton2.addEventListener('click', this.navigateToHome);
         break;
+      case 'game_over':
+        let player1;
+        let player2;
+        data.winner.number === 1
+          ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.winner = false))
+          : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.winner = false));
+        const player1Element = this.createPlayerResultElement(player1);
+        const player2Element = this.createPlayerResultElement(player2);
+        const gameResultElement = this.querySelector('#overlay-game-result');
+        gameResultElement.appendChild(player1Element);
+        gameResultElement.appendChild(player2Element);
+        break;
     }
   }
 
@@ -709,6 +748,19 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayButton2?.removeEventListener('click', this.navigateToHome);
     this.overlayButton1 = null;
     this.overlayButton2 = null;
+  }
+
+  createPlayerResultElement(player) {
+    const element = document.createElement('div');
+    element.innerHTML = this.playerResultTemplate();
+    const avatar = element.querySelector('img');
+    avatar.src = player.avatar;
+    avatar.alt = player.name;
+    element.querySelector('.overlay-player-name').textContent = player.name;
+    const eloWrapper = element.querySelector('.overlay-player-elo');
+    eloWrapper.querySelector('p').textContent = player.elo;
+    eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
+    return element;
   }
 
   requestNewMatchmaking() {
@@ -754,6 +806,9 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   overlayContentTemplate = {
+    pending: `
+      <div id="overlay-message-title" class="fs-3 pb-3">Waiting for both players to join...</div>
+      `,
     pause: `
       <div id="overlay-message-title" class="fs-2">Game paused</div>
       <div id="overlay-message-content" class="mb-5"></div>
@@ -771,7 +826,28 @@ export class MultiplayerGame extends HTMLElement {
         <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
       </div>
     `,
+    game_over: `
+    <div id="overlay-message-title" class="fs-2 mb-3">Game fnished</div>
+    <div id="overlay-game-result" class="d-flex flex-row justify-content-center align-items-center gap-3"></div>
+    `,
   };
+
+  playerResultTemplate() {
+    return `
+    <div class="d-flex flex-column justify-content-center align-items-center mx-4 p-3">
+      <img class="avatar-l rounded-circle mb-2" />
+      <div class="overlay-player-name fs-4"></div>
+      <div class="overlay-player-elo" class="d-flex flex-row gap-2">
+        <p class="m-0 fw-bold"></p>
+        <i class="bi"></i>
+      </div>
+    </div>
+  `;
+  }
 }
 
 customElements.define('multiplayer-game', MultiplayerGame);
+
+// overlay also before the start of the game.
+// It should look the same as other ones, and be cleared after server sends `game_started` event.
+// It should be just an overlay which shows `Waiting for both players to connect...`.
