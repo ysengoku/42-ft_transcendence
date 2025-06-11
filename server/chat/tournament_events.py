@@ -83,7 +83,7 @@ class TournamentEvent:
         ).update(status=TournamentInvitation.CLOSED)
 
         notifications = Notification.objects.filter(
-            data__tournament_id=str(tournament.id),
+            data__tournament_id=str(tournament_id),
             action=Notification.NEW_TOURNAMENT,
         )
 
