@@ -5,6 +5,7 @@ logger = logging.getLogger("server")
 
 
 class Validator:
+    @staticmethod
     def all_required_fields_are_present(action, data) -> bool:
         required_fields = {
             "new_message": ["content", "chat_id"],
@@ -29,6 +30,7 @@ class Validator:
                     return False
         return True
 
+    @staticmethod
     def validate_action_data(action, data) -> bool:
         if not Validator.all_required_fields_are_present(action, data):
             return False
@@ -91,24 +93,25 @@ class Validator:
 
     @staticmethod
     def check_str_option(options, option, dict_options) -> bool:
-        if option is not None:
-            if not isinstance(option, str) or option not in dict_options:
-                logger.warning("%s must be one of %s", options, dict_options)
+        if option is None:
+            return True
+        if not isinstance(option, str) or option not in dict_options:
+                logger.warning("%s must be one of %s and currently is %s", options, dict_options, option)
                 return False
         return True
 
     @staticmethod
     def check_bool_option(options, option) -> bool:
-        if option is not None:
-            if not isinstance(option, bool):
+        if option is not None and not isinstance(option, bool):
                 logger.warning("%s must be a boolean", options)
                 return False
         return True
 
     @staticmethod
     def check_int_option(options, option, val_min, val_max) -> bool:
-        if option is not None:
-            if not isinstance(option, int) or not (val_min <= option <= val_max):
+        if option is None:
+            return True
+        if not isinstance(option, int) or not (val_min <= option <= val_max):
                 logger.warning("%s must be an int between %d and %d", options, val_min, val_max)
                 return False
         return True
@@ -118,12 +121,12 @@ class Validator:
         if not isinstance(options, dict):
             logger.warning("Invalid type for 'options'")
             return False
-        RANKED = "ranked"
-        GAME_SPEED = "game_speed"
-        SCORE_TO_WIN = "score_to_win"
-        TIME_LIMIT = "time_limit"
-        COOL_MODE = "cool_mode"
-        schema = {RANKED, GAME_SPEED, SCORE_TO_WIN, TIME_LIMIT, COOL_MODE}
+        ranked = "ranked"
+        game_speed = "game_speed"
+        score_to_win = "score_to_win"
+        time_limit = "time_limit"
+        cool_mode = "cool_mode"
+        schema = {ranked, game_speed, score_to_win, time_limit, cool_mode}
         for field in schema:
             if field not in options:
                 continue
@@ -131,20 +134,14 @@ class Validator:
                 logger.warning("Field [{%s}] is None for action game_invite", field)
                 return False
 
-        allowed_game_speeds = {"slow", "normal", "fast"}
+        allowed_game_speeds = {"slow", "medium", "fast"}
         min_score, max_score = 3, 20
         min_time, max_time = 1, 5
 
-        if not Validator.check_str_option(GAME_SPEED, options.get(GAME_SPEED), allowed_game_speeds):
-            return False
-        if not Validator.check_bool_option(RANKED, options.get(RANKED)):
-            return False
-        if not Validator.check_bool_option(COOL_MODE, options.get(COOL_MODE)):
-            return False
-        if not Validator.check_int_option(SCORE_TO_WIN, options.get(SCORE_TO_WIN), min_score, max_score):
-            return False
-        if not Validator.check_int_option(TIME_LIMIT, options.get(TIME_LIMIT), min_time, max_time):
-            return False
-        return True
-
-
+        return (
+            Validator.check_str_option(game_speed, options.get(game_speed), allowed_game_speeds)
+            and Validator.check_bool_option(ranked, options.get(ranked))
+            and Validator.check_bool_option(cool_mode, options.get(cool_mode))
+            and Validator.check_int_option(score_to_win, options.get(score_to_win), min_score, max_score)
+            and Validator.check_int_option(time_limit, options.get(time_limit), min_time, max_time)
+        )
