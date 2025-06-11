@@ -41,9 +41,8 @@ def create_tournament(request, data: TournamentCreateSchema):
         raise HttpError(
             403, "You can't be a participant if you are already in a game / looking for a game.")
 
-
     alias = data.alias
-    tournament = Tournament.objects.validate_and_create(
+    tournament : Tournament = Tournament.objects.validate_and_create(
         tournament_name=data.name,
         creator=user.profile,
         required_participants=data.required_participants,
