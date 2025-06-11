@@ -13,8 +13,8 @@ export class NotificationsListItem extends HTMLElement {
   message = {
     gameInvitation: (nickname) => `${nickname} challenges you to a duel.`,
     pendingGameInvitation: (nickname) => `You've challenged '${nickname} to a duel.`,
-    newTournament: (nickname, tournamentName) =>
-      `${nickname} is calling all gunslingers to a new tournament - ${tournamentName}!`,
+    newTournament: (alias, tournamentName) =>
+      `${alias} is calling all gunslingers to a new tournament - ${tournamentName}!`,
     newFriend: (nickname) => `${nickname} just roped you in as a friend.`,
   };
 
@@ -79,8 +79,8 @@ export class NotificationsListItem extends HTMLElement {
         break;
       case 'new_tournament':
         this.querySelector('.notification-content').textContent = this.message.newTournament(
-          this.#state.data.nickname,
-          this.#state.data.name,
+          this.#state.data.alias,
+          this.#state.data.tournament_name,
         );
         this.participateButton = document.createElement('button');
         this.participateButton.textContent = 'Participate';

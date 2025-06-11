@@ -21,10 +21,25 @@ export class TournamentModal extends HTMLElement {
     this.handleConfirmButtonClick = this.handleConfirmButtonClick.bind(this);
   }
 
+  connectedCallback() {
+    this.render();
+  }
+
   set contentType(contentType) {
     if (Object.values(this.CONTENT_TYPE).includes(contentType)) {
       this.#state.contentType = contentType;
-      this.render();
+      switch (this.#state.contentType) {
+        case this.CONTENT_TYPE.CANCEL_TOURNAMENT:
+          this.modalBody.textContent = 'This will cancel the tournament permanently. Are you sure?';
+          this.confirmButton.textContent = 'Yes, cancel tournament';
+          this.cancelButton.textContent = 'No, keep tournament';
+          break;
+        case this.CONTENT_TYPE.UNREGISTER_TOURNAMENT:
+          this.modalBody.textContent = 'You will be removed from this tournament. Continue?';
+          this.confirmButton.textContent = 'Yes, unregister me';
+          this.cancelButton.textContent = 'No, stay registered';
+          break;
+      }
     }
   }
 
@@ -35,28 +50,15 @@ export class TournamentModal extends HTMLElement {
 
   render() {
     this.innerHTML = this.template();
-    if (this.modal) {
-      this.modal.dispose();
-    }
-    this.modal = new Modal(this.querySelector('.modal'));
-
     this.modalElement = this.querySelector('.modal');
     this.modalBody = this.querySelector('.modal-body');
     this.confirmButton = this.querySelector('#tournament-modal-confirm');
+    this.cancelButton = this.querySelector('#tournament-modal-cancel');
 
-    switch (this.#state.contentType) {
-      case this.CONTENT_TYPE.CANCEL_TOURNAMENT:
-        this.modalBody.textContent = 'Are you sure you want to cancel the tournament?';
-        this.confirmButton.textContent = 'Cancel tournament';
-        this.confirmButton.classList.add('btn-danger');
-        break;
-      case this.CONTENT_TYPE.UNREGISTER_TOURNAMENT:
-        this.modalBody.textContent = 'Are you sure you want to unregister from the tournament?';
-        this.confirmButton.textContent = 'Unregister';
-        this.confirmButton.classList.add('btn-danger');
-        break;
+    if (!this.modalElement) {
+      return;
     }
-
+    this.modal = new Modal(this.modalElement);
     this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
     this.confirmButton.addEventListener('click', this.handleConfirmButtonClick);
   }
@@ -84,16 +86,16 @@ export class TournamentModal extends HTMLElement {
 
   template() {
     return `
-    <div class="modal fade" id="delete-account-confirm-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-body py-4"></div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn" data-bs-dismiss="modal" id="tournament-modal-cancel"></button>
             <button type="button" class="btn btn-danger" id="tournament-modal-confirm"></button>
           </div>
         </div>
-      <div>
+      </div>
     </div>
     `;
   }
