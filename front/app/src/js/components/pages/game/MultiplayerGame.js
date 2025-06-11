@@ -30,7 +30,7 @@ export class MultiplayerGame extends HTMLElement {
   async setParam(param) {
     const user = await auth.getUser();
     if (!user) {
-      router.navigate('/login');
+      router.redirect('/login');
       return;
     }
     if (!param.id) {
@@ -647,22 +647,22 @@ export class MultiplayerGame extends HTMLElement {
     animate();
 
     // ----- TEST ---------------
-    const result = {
-      winner: {
-        name: 'Celiastral',
-        number: 1,
-        avatar: '/__mock__/img/sample-pic2.png',
-        elo: 1200,
-        number: 2,
-      },
-      loser: {
-        name: 'Pedro',
-        avatar: '/__mock__/img/sample-pic3.png',
-        elo: 1100,
-        number: 2,
-      },
-    };
-    this.showOverlay('game_over', result);
+    // const result = {
+    //   winner: {
+    //     name: 'Celiastral',
+    //     number: 1,
+    //     avatar: '/__mock__/img/sample-pic2.png',
+    //     elo: 1200,
+    //     number: 2,
+    //   },
+    //   loser: {
+    //     name: 'Pedro',
+    //     avatar: '/__mock__/img/sample-pic3.png',
+    //     elo: 1100,
+    //     number: 2,
+    //   },
+    // };
+    // this.showOverlay('game_over', result);
 
     // this.showOverlay('pending');
 
@@ -807,7 +807,7 @@ export class MultiplayerGame extends HTMLElement {
 
   overlayContentTemplate = {
     pending: `
-      <div id="overlay-message-title" class="fs-3 pb-3">Waiting for both players to join...</div>
+      <div id="overlay-message-title" class="fs-3 px-4 pb-3">Waiting for both players to join...</div>
       `,
     pause: `
       <div id="overlay-message-title" class="fs-2">Game paused</div>
@@ -828,7 +828,7 @@ export class MultiplayerGame extends HTMLElement {
     `,
     game_over: `
     <div id="overlay-message-title" class="fs-2 mb-3">Game fnished</div>
-    <div id="overlay-game-result" class="d-flex flex-row justify-content-center align-items-center gap-3"></div>
+    <div id="overlay-game-result" class="d-flex flex-row justify-content-center align-items-center gap-3 pb-2"></div>
     `,
   };
 
@@ -837,8 +837,8 @@ export class MultiplayerGame extends HTMLElement {
     <div class="d-flex flex-column justify-content-center align-items-center mx-4 p-3">
       <img class="avatar-l rounded-circle mb-2" />
       <div class="overlay-player-name fs-4"></div>
-      <div class="overlay-player-elo" class="d-flex flex-row gap-2">
-        <p class="m-0 fw-bold"></p>
+      <div class="overlay-player-elo d-flex flex-row ps-2">
+        <p class="m-0 fw-bold pe-1"></p>
         <i class="bi"></i>
       </div>
     </div>
@@ -847,7 +847,3 @@ export class MultiplayerGame extends HTMLElement {
 }
 
 customElements.define('multiplayer-game', MultiplayerGame);
-
-// overlay also before the start of the game.
-// It should look the same as other ones, and be cleared after server sends `game_started` event.
-// It should be just an overlay which shows `Waiting for both players to connect...`.
