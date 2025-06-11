@@ -26,7 +26,7 @@ def get_notifications(request: HttpRequest, is_read: str = "all"):
     else:
         base_qs = Notification.objects.filter(receiver=profile_id, is_read=(is_read != "false"))
 
-    qs = base_qs.filter(
+    return base_qs.filter(
         (
             Q(action=Notification.GAME_INVITE, data__status=GameInvitation.PENDING)
             | ~Q(action=Notification.GAME_INVITE)
@@ -35,9 +35,8 @@ def get_notifications(request: HttpRequest, is_read: str = "all"):
         (
             Q(action=Notification.NEW_TOURNAMENT, data__status=TournamentInvitation.OPEN)
             | ~Q(action=Notification.NEW_TOURNAMENT)
-        )
+        ),
     )
-    return qs
 
 
 @notifications_router.post("/mark_all_as_read", response={200: MessageSchema})

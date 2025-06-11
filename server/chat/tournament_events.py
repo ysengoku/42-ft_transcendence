@@ -20,11 +20,9 @@ class TournamentEvent:
 
     @classmethod
     def send_tournament_notification(cls, tournament_id, alias):
-        tournament_id = tournament_id
-        # TODO:Verify tournament_id (is it UUID)
+        # TODO: Verify tournament_id (is it UUID)
         if tournament_id is None:
-            logger.warning("Wrong tournament_id send by %s", self.consumer.user.username)
-            self.close()
+            logger.warning("Wrong tournament_id send by the alias %s", alias)
             return
         try:
             tournament = Tournament.objects.get(id=tournament_id)
@@ -35,7 +33,7 @@ class TournamentEvent:
             return
 
         all_profiles = Profile.objects.exclude(pk=tournament_creator.pk)
- 
+
         channel_layer = get_channel_layer()
 
         for profile in all_profiles:
