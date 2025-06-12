@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentPath = window.location.pathname || '/';
   const queryParams = new URLSearchParams(window.location.search);
   router.navigate(currentPath, queryParams);
-  if (!currentPath.startsWith('/tournament') && authStatus.response.tournament_id) {
+  if (authStatus.response.tournament_id && !(currentPath.startsWith('/tournament') || currentPath.startsWith('/multiplayer-game')) ) {
     showTournamentAlert(authStatus.response.tournament_id);
   }
 });
