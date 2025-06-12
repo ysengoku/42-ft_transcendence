@@ -11,7 +11,7 @@ import { socketManager } from '@socket';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
-import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
+// import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
 
 export class Tournament extends HTMLElement {
   /**
@@ -116,7 +116,16 @@ export class Tournament extends HTMLElement {
       router.redirect('/tournament-menu');
       return;
     }
-
+    if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
+      showAlertMessageForDuration(
+        ALERT_TYPE.LIGHT,
+        'You have been eliminated from the tournament. Thanks for participating!',
+      );
+      setTimeout(() => {
+        router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
+      }, 2000);
+      return;
+    }
     if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
       socketManager.closeSocket('tournament', this.#state.tournamentId);
       router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
@@ -131,7 +140,11 @@ export class Tournament extends HTMLElement {
       this.#state.currentRoundNumber = this.#state.tournament.rounds.length;
       this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
       this.findAssignedBracketForUser();
-      console.log('Current user bracket:', this.#state.currentUserBracket);
+      if (!this.#state.currentUserBracket) {
+        devErrorLog('User is not assigned to any bracket in the current round');
+        router.redirect('/home');
+        return;
+      }
 
       this.resolveUIStatus[this.#state.tournament.status]();
       console.log('UI status set to:', this.#state.uiStatus);
@@ -172,8 +185,11 @@ export class Tournament extends HTMLElement {
         return false;
       case PARTICIPANT_STATUS.QUALIFIED:
         return true;
-      case PARTICIPANT_STATUS.STARTING:
+      case PARTICIPANT_STATUS.PENDING:
         return true;
+      default:
+        devErrorLog(`Unknown participant status: ${userDataInBracket.status}`);
+        return false;
     }
   }
 
@@ -183,7 +199,7 @@ export class Tournament extends HTMLElement {
     },
     [TOURNAMENT_STATUS.ONGOING]: () => {
       switch (this.#state.currentRound.status) {
-        case ROUND_STATUS.STARTING:
+        case ROUND_STATUS.PENDING:
           this.#state.uiStatus = UI_STATUS.ROUND_STARTING;
           break;
         // case ROUND_STATUS.FINISHED:
@@ -284,8 +300,7 @@ export class Tournament extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      WebSocket message handling                                          */
   /* ------------------------------------------------------------------------ */
-  handleTournamentStart(data) {
-  }
+  handleTournamentStart(data) {}
 
   handleRoundStart(data) {
     // Handle round_start message with [ROUND] data via ws
