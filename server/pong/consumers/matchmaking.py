@@ -32,7 +32,7 @@ class MatchmakingConsumer(WebsocketConsumer):
             return
 
         if not self.user.profile.can_participate_in_game():
-            logger.info("[Matchmaking.connect]: user {%s} is already involved in some game", self.user)
+            logger.info("[Matchmaking.connect]: user {%s} is already involved in some game", self.user.profile)
             self.close(PongCloseCodes.ALREADY_IN_GAME)
             return
 
