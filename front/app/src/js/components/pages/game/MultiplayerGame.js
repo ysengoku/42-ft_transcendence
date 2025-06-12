@@ -647,25 +647,25 @@ export class MultiplayerGame extends HTMLElement {
     });
     animate();
 
-    // this.showOverlay('pending');
+    this.showOverlay('pending');
 
     // ----- TEST ---------------
-    const result = {
-      winner: {
-        name: 'Celiastral',
-        number: 1,
-        avatar: '/__mock__/img/sample-pic1.jpg',
-        elo: 1200,
-        number: 2,
-      },
-      loser: {
-        name: 'Pedro',
-        avatar: '/__mock__/img/sample-pic2.png',
-        elo: 1100,
-        number: 2,
-      },
-    };
-    this.showOverlay('game_over', result);
+    // const result = {
+    //   winner: {
+    //     name: 'Celiastral',
+    //     number: 1,
+    //     avatar: '/__mock__/img/sample-pic1.jpg',
+    //     elo: 1200,
+    //     number: 2,
+    //   },
+    //   loser: {
+    //     name: 'Pedro',
+    //     avatar: '/__mock__/img/sample-pic2.png',
+    //     elo: 1100,
+    //     number: 2,
+    //   },
+    // };
+    // this.showOverlay('game_over', result);
 
     // mock data
     // const data = {
