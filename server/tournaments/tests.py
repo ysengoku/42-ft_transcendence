@@ -6,7 +6,7 @@ from tournaments.models import Tournament
 from users.models import User
 
 
-class TestTournamentEndpoints(TestCase):
+class TournamentEndpointsTests(TestCase):
     """
     Tests for the `POST /api/tournaments` endpoint.
     """
