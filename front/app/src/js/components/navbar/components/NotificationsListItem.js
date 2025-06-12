@@ -164,6 +164,15 @@ export class NotificationsListItem extends HTMLElement {
   handleParticipateTournament() {
     const dropdown = this.closest('.dropdown-menu');
     dropdown.classList.remove('show');
+    router.navigate('/tournament-menu');
+    requestAnimationFrame(() => {
+      const tournamentPage = document.querySelector('tournament-menu');
+      if (tournamentPage) {
+        tournamentPage.showTournamentDetail(null, this.#state.data.tournament_id);
+      } else {
+        console.error('Tournament page not found');
+      }
+    });
   }
 
   navigateToProfile() {
