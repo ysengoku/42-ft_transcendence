@@ -23,14 +23,14 @@ export class MultiplayerGame extends HTMLElement {
     this.intervalGameId = null;
 
     // this.windowResize = this.windowResize.bind(this);
-    this.requestNewMatchmaking = this.requestNewMatchmaking.bind(this);
+    this.navigateToDuelMenu = this.navigateToDuelMenu.bind(this);
     this.navigateToHome = this.navigateToHome.bind(this);
   }
 
   async setParam(param) {
     const user = await auth.getUser();
     if (!user) {
-      router.navigate('/login');
+      router.redirect('/login');
       return;
     }
     if (!param.id) {
@@ -326,6 +326,7 @@ export class MultiplayerGame extends HTMLElement {
       };
     };
 
+    /* eslint-disable-next-line new-cap */
     const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
     const WallFactory = (posX, posY, posZ) => {
@@ -481,6 +482,10 @@ export class MultiplayerGame extends HTMLElement {
           camera.position.set(0, 15, -20);
           camera.lookAt(new THREE.Vector3(0, 0, 0));
           break;
+        case 'game_started':
+          devLog('Game started', data);
+          this.hideOverlay();
+          break;
         case 'game_paused':
           devLog('Game paused');
           console.log(data);
@@ -495,7 +500,11 @@ export class MultiplayerGame extends HTMLElement {
           devLog('Game cancelled');
           this.showOverlay('cancel');
           break;
-
+        case 'player_won':
+        case 'player_resigned':
+          devLog('Game_over', data);
+          this.showOverlay('game_over', data);
+          break;
         default:
           break;
       }
@@ -638,7 +647,26 @@ export class MultiplayerGame extends HTMLElement {
     });
     animate();
 
+    this.showOverlay('pending');
+
     // ----- TEST ---------------
+    // const result = {
+    //   winner: {
+    //     name: 'Celiastral',
+    //     number: 1,
+    //     avatar: '/__mock__/img/sample-pic1.jpg',
+    //     elo: 1200,
+    //     number: 2,
+    //   },
+    //   loser: {
+    //     name: 'Pedro',
+    //     avatar: '/__mock__/img/sample-pic2.png',
+    //     elo: 1100,
+    //     number: 2,
+    //   },
+    // };
+    // this.showOverlay('game_over', result);
+
     // mock data
     // const data = {
     //   state: {
@@ -650,7 +678,7 @@ export class MultiplayerGame extends HTMLElement {
     // this.showOverlay('pause', data.state)
     // }, 2000);
     // setTimeout(() => {
-    //   this.hideOverlay()
+    //   this.hideOverlay();
     // }, 4000);
     // setTimeout(() => {
     // this.showOverlay('cancel');
@@ -690,11 +718,24 @@ export class MultiplayerGame extends HTMLElement {
           }
         }, 1000);
         break;
+      case 'game_over':
+        let player1;
+        let player2;
+        data.winner.number === 1
+          ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.winner = false))
+          : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.winner = false));
+        const player1Element = this.createPlayerResultElement(player1);
+        const player2Element = this.createPlayerResultElement(player2);
+        const gameResultElement = this.querySelector('#overlay-game-result');
+        gameResultElement.appendChild(player1Element);
+        gameResultElement.appendChild(player2Element);
       case 'cancel':
         this.overlayButton1 = this.querySelector('#overlay-button1');
         this.overlayButton2 = this.querySelector('#overlay-button2');
-        this.overlayButton1.addEventListener('click', this.requestNewMatchmaking);
+        this.overlayButton1.addEventListener('click', this.navigateToDuelMenu);
         this.overlayButton2.addEventListener('click', this.navigateToHome);
+        break;
+      default:
         break;
     }
   }
@@ -705,18 +746,31 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayMessageWrapper.classList.add('d-none');
     this.overlayMessageWrapper.innerHTML = '';
 
-    this.overlayButton1?.removeEventListener('click', this.requestNewMatchmaking);
+    this.overlayButton1?.removeEventListener('click', this.navigateToDuelMenu);
     this.overlayButton2?.removeEventListener('click', this.navigateToHome);
     this.overlayButton1 = null;
     this.overlayButton2 = null;
   }
 
-  requestNewMatchmaking() {
-    router.navigate('/duel', { status: 'matchmaking' });
+  createPlayerResultElement(player) {
+    const element = document.createElement('div');
+    element.innerHTML = this.playerResultTemplate();
+    const avatar = element.querySelector('img');
+    avatar.src = player.avatar;
+    avatar.alt = player.name;
+    element.querySelector('.overlay-player-name').textContent = player.name;
+    const eloWrapper = element.querySelector('.overlay-player-elo');
+    eloWrapper.querySelector('p').textContent = player.elo;
+    eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
+    return element;
+  }
+
+  navigateToDuelMenu() {
+    router.redirect('/duel-menu');
   }
 
   navigateToHome() {
-    router.navigate('/home');
+    router.redirect('/home');
   }
 
   overlayTemplate() {
@@ -754,6 +808,12 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   overlayContentTemplate = {
+    pending: `
+      <div class="d-flex flex-column align-items-center mb-3">
+        <div id="overlay-message-title" class="fs-3 px-4 pb-3">Waiting for both players to join...</div>
+        <div class="pongAnimation"></div>
+      </div>
+      `,
     pause: `
       <div id="overlay-message-title" class="fs-2">Game paused</div>
       <div id="overlay-message-content" class="mb-5"></div>
@@ -763,6 +823,14 @@ export class MultiplayerGame extends HTMLElement {
         <div>&nbspseconds</div>
       </div>
       `,
+    game_over: `
+      <div id="overlay-message-title" class="fs-2 mb-3">Game finished</div>
+      <div id="overlay-game-result" class="d-flex flex-row justify-content-center align-items-center gap-3 pb-2"></div>
+      <div class="d-flex flex-column mt-4">
+        <button id="overlay-button1" class="btn fw-bold">Find another duel</button>
+        <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
+      </div>
+    `,
     cancel: `
       <div id="overlay-message-title" class="fs-2">Game canceled</div>
       <div id="overlay-message-content" class="mb-3">Player failed to connect.</div>
@@ -772,6 +840,19 @@ export class MultiplayerGame extends HTMLElement {
       </div>
     `,
   };
+
+  playerResultTemplate() {
+    return `
+    <div class="d-flex flex-column justify-content-center align-items-center mx-4 p-3">
+      <img class="avatar-l rounded-circle mb-2" />
+      <div class="overlay-player-name fs-4"></div>
+      <div class="overlay-player-elo d-flex flex-row ps-2">
+        <p class="m-0 fw-bold pe-1"></p>
+        <i class="bi"></i>
+      </div>
+    </div>
+  `;
+  }
 }
 
 customElements.define('multiplayer-game', MultiplayerGame);

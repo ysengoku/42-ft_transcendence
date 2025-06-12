@@ -88,12 +88,6 @@ export class UserGameHistory extends HTMLElement {
         color: black;
         padding: 1rem 0 1rem 0.5rem;
       }
-      .bi-arrow-up-right {
-        color: var(--pm-green-400);
-      }
-      .bi-arrow-down-right {
-        color: var(--pm-red-500);
-      }
       .table-container {
         max-height: 640px;
         overflow-y: auto;
