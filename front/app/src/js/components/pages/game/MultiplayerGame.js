@@ -137,7 +137,8 @@ export class MultiplayerGame extends HTMLElement {
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
-    document.querySelector('#content').appendChild(renderer.domElement);
+    // document.querySelector('#content').appendChild(renderer.domElement);
+    this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
@@ -759,9 +760,11 @@ export class MultiplayerGame extends HTMLElement {
     avatar.src = player.avatar;
     avatar.alt = player.name;
     element.querySelector('.overlay-player-name').textContent = player.name;
-    const eloWrapper = element.querySelector('.overlay-player-elo');
-    eloWrapper.querySelector('p').textContent = player.elo;
-    eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
+    if (player.elo) {
+      const eloWrapper = element.querySelector('.overlay-player-elo');
+      eloWrapper.querySelector('p').textContent = player.elo;
+      eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
+    }
     return element;
   }
 

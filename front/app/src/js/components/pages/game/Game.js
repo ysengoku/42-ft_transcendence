@@ -92,7 +92,8 @@ export class Game extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.setClearColor(0x855988, 1);
-    document.querySelector('#content').appendChild(renderer.domElement);
+    // document.querySelector('#content').appendChild(renderer.domElement);
+    this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
