@@ -34,13 +34,8 @@ def create_tournament(request, data: TournamentCreateSchema):
     """
     user = request.auth
 
-    if Tournament.objects.get_active_tournament(user.profile):
-        raise HttpError(
-            403, "You can't be a participant in multiple active tournaments.")
-    if user.profile.can_participate_in_game() == False:
-        raise HttpError(
-            403, "You can't be a participant if you are already in a game / looking for a game.")
-
+    if not user.profile.can_participate_in_game():
+        raise HttpError(403, "You can't be a participant if you are already in a game / looking for a game.")
 
     alias = data.alias
     tournament = Tournament.objects.validate_and_create(
@@ -215,8 +210,7 @@ def unregister_for_tournament(request, tournament_id: UUID):
             tournament.status = Tournament.CANCELLED
             tournament.save()
             TournamentEvent.close_tournament_invitations(tournament_id)
-            async_to_sync(channel_layer.group_send)(
-                f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
+            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
         else:
             async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "user_left"})
 
