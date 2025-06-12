@@ -202,7 +202,6 @@ h1, h2, h3, h4, h5, h6, legend {
 #alert-message-container {
   z-index: 1050;
   font-weight: bold;
-  color: var(--pm-primary-100);
   border: none !important;
 }
 .alert-success {
@@ -222,7 +221,8 @@ h1, h2, h3, h4, h5, h6, legend {
 }
 
 .alert-tournament {
-  background-color: var(--pm-primary-400);
+  background-color: rgba(var(--pm-primary-400-rgb), 0.9);
+  color: var(--pm-primary-100);
 }
 
 #content {
