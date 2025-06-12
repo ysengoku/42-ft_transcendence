@@ -21,9 +21,6 @@ class TournamentEvent:
     @classmethod
     def send_tournament_notification(cls, tournament_id, alias):
         # TODO: Verify tournament_id (is it UUID)
-        # if tournament_id is not None and alias is not None:
-        #     logger.info("prout. aborting.")
-        #     return
         if tournament_id is None:
             logger.warning("Wrong tournament_id send by the alias %s", alias)
             return
