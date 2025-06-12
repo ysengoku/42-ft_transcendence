@@ -145,7 +145,7 @@ export class Duel extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.template();
 
     this.header = this.querySelector('#duel-header');
     this.content = this.querySelector('#duel-content');
@@ -405,31 +405,6 @@ export class Duel extends HTMLElement {
         <button class="btn my-2" id="cancel-duel-button">Cancel Duel</button>
       </div>
     </div>
-    `;
-  }
-
-  style() {
-    return `
-    <style>
-    .pongAnimation {
-      width: 64%;
-      height: 64px;
-      padding: 0 8px;
-      box-sizing: border-box;
-      background:
-      linear-gradient(var(--pm-primary-500) 0 0) 0    0/8px 20px,
-      linear-gradient(var(--pm-primary-500) 0 0) 100% 0/8px 20px,
-      radial-gradient(farthest-side,var(--pm-primary-400) 90%,#0000) 0 8px/12px 12px content-box,
-      transparent;
-      background-repeat: no-repeat; 
-      animation: pong 6s infinite linear;
-    }
-    @keyframes pong{
-      25% {background-position: 0 0,100% 100%,100% calc(100% - 4px)}
-      50% {background-position: 0 100%,100% 100%,0 calc(100% - 4px)}
-      75% {background-position: 0 100%,100% 0,100% 4px}
-    }
-    </style>
     `;
   }
 
