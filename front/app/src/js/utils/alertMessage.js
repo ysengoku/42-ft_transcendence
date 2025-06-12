@@ -10,7 +10,7 @@ export const ALERT_TYPE = {
 const HEADER = {
   'alert-success': 'Mighty fine!',
   'alert-danger': 'Oops!',
-  'alert-light': 'Careful!',
+  'alert-light': '',
 };
 
 const ICON = {

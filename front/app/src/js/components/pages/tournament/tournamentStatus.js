@@ -16,19 +16,19 @@ export const TOURNAMENT_STATUS = {
 };
 
 export const ROUND_STATUS = {
-  STARTING: 'starting',
+  PENDING: 'pending',
   ONGOING: 'ongoing',
   FINISHED: 'finished',
 };
 
 export const BRACKET_STATUS = {
-  STARTING: 'starting',
+  PENDING: 'pending',
   ONGOING: 'ongoing',
   FINISHED: 'finished',
 };
 
 export const PARTICIPANT_STATUS = {
-  STARTING: 'starting',
+  PENDING: 'pending',
   PLAYING: 'playing',
   QUALIFIED: 'qualified',
   ELIMINATED: 'eliminated',

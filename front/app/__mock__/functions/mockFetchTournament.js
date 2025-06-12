@@ -36,8 +36,8 @@ export function mockFetchTournament(username, status) {
       ],
       required_participants: 4,
     },
-    tournamentStarting: {
-      id: 'idroundStarting',
+    tournamentpending: {
+      id: 'idroundpending',
       name: 'Summer Championship',
       status: 'ongoing',
       creator: {
@@ -49,7 +49,7 @@ export function mockFetchTournament(username, status) {
       rounds: [
         {
           number: 1,
-          status: 'starting',
+          status: 'pending',
           brackets: [
             {
               game_id: 'game1',
@@ -59,7 +59,7 @@ export function mockFetchTournament(username, status) {
                   avatar: '/__mock__/img/sample-pic3.png',
                 },
                 alias: 'Nightmare',
-                status: 'starting',
+                status: 'pending',
               },
               participant2: {
                 profile: {
@@ -67,10 +67,10 @@ export function mockFetchTournament(username, status) {
                   avatar: '/__mock__/img/sample-pic2.png',
                 },
                 alias: 'Lone Cactus',
-                status: 'starting',
+                status: 'pending',
               },
               winner: null,
-              status: 'starting',
+              status: 'pending',
               score_p1: 0,
               score_p2: 0,
             },
@@ -82,7 +82,7 @@ export function mockFetchTournament(username, status) {
                   avatar: '/__mock__/img/sample-pic1.jpg',
                 },
                 alias: 'Midnight Rider',
-                status: 'starting',
+                status: 'pending',
               },
               participant2: {
                 profile: {
@@ -90,10 +90,10 @@ export function mockFetchTournament(username, status) {
                   avatar: '/img/fefault_avatar.png',
                 },
                 alias: 'DuskDevil',
-                status: 'starting',
+                status: 'pending',
               },
               winner: null,
-              status: 'starting',
+              status: 'pending',
               score_p1: 0,
               score_p2: 0,
             },
@@ -107,7 +107,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic3.png',
           },
           alias: 'Nightmare',
-          status: 'starting',
+          status: 'pending',
         },
         {
           profile: {
@@ -115,7 +115,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic2.png',
           },
           alias: 'Lone Cactus',
-          status: 'starting',
+          status: 'pending',
         },
         {
           profile: {
@@ -123,7 +123,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic1.jpg',
           },
           alias: 'Midnight Rider',
-          status: 'starting',
+          status: 'pending',
         },
         {
           profile: {
@@ -131,13 +131,13 @@ export function mockFetchTournament(username, status) {
             avatar: '/img/fefault_avatar.png',
           },
           alias: 'DuskDevil',
-          status: 'starting',
+          status: 'pending',
         },
       ],
       required_participants: 4,
     },
     waitingNextRound: {
-      id: 'idroundStarting',
+      id: 'idroundpending',
       name: 'Summer Championship',
       status: 'ongoing',
       creator: {
@@ -239,8 +239,8 @@ export function mockFetchTournament(username, status) {
       ],
       required_participants: 4,
     },
-    roundStarting: {
-      id: 'idroundStarting',
+    roundpending: {
+      id: 'idroundpending',
       name: 'Summer Championship',
       status: 'ongoing',
       creator: {
@@ -318,7 +318,7 @@ export function mockFetchTournament(username, status) {
         },
         {
           number: 2,
-          status: 'starting',
+          status: 'pending',
           brackets: [
             {
               game_id: 'game1',
@@ -339,7 +339,7 @@ export function mockFetchTournament(username, status) {
                 status: 'qualified',
               },
               winner: null,
-              status: 'starting',
+              status: 'pending',
               score_p1: 0,
               score_p2: 0,
             },
