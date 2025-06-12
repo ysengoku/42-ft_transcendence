@@ -9,7 +9,7 @@ from users.models import User
 
 
 # ruff: noqa: S106
-class TestLoginEndpoint(TestCase):
+class LoginEndpointTests(TestCase):
     def setUp(self):
         logging.disable(logging.CRITICAL)
         User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
@@ -53,7 +53,7 @@ class TestLoginEndpoint(TestCase):
         )
 
 
-class TestProfileModel(TestCase):
+class ProfileModelTests(TestCase):
     def setUp(self):
         self.user: User = User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
 
