@@ -199,9 +199,11 @@ h1, h2, h3, h4, h5, h6, legend {
   transform: scale(1.05);
 }
 
-#error-message-container {
+#alert-message-container {
   z-index: 1050;
   font-weight: bold;
+  color: var(--pm-primary-100);
+  border: none !important;
 }
 .alert-success {
   background-color: rgba(var(--pm-bg-success-rgb), 0.9);
@@ -217,6 +219,10 @@ h1, h2, h3, h4, h5, h6, legend {
   background-color: var(--pm-gray-500);
   color: var(--pm-primary-100);
   border: none !important;
+}
+
+.alert-tournament {
+  background-color: var(--pm-primary-400);
 }
 
 #content {

@@ -1,6 +1,5 @@
 import { auth } from '@auth';
-import { addDissmissAlertListener } from '@utils';
-import { createClouds, createStars } from '@utils';
+import { showTournamentAlert, addDissmissAlertListener, createClouds, createStars } from '@utils';
 
 /**
  * Router module for handling client-side navigation.
@@ -285,7 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         'linear-gradient(rgb(23, 18, 40) 0%, rgb(62, 52, 97) 16%, rgb(95, 83, 138) 40%, #6670A2 100%)'),
       createStars());
 
-  await auth.fetchAuthStatus();
+  const authStatus = await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');
   if (navbarContainer) {
     navbarContainer.innerHTML = '<navbar-component></navbar-component>';
@@ -297,6 +296,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentPath = window.location.pathname || '/';
   const queryParams = new URLSearchParams(window.location.search);
   router.navigate(currentPath, queryParams);
+  if (!currentPath.startsWith('/tournament') && authStatus.response.tournament_id) {
+    showTournamentAlert(authStatus.response.tournament_id);
+  }
 });
 
 export { router };
