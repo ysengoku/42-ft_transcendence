@@ -161,57 +161,6 @@ class TournamentConsumer(WebsocketConsumer):
 
     def tournament_broadcast(self, event):
         self.send(text_data=json.dumps({"action": "new_tournament", "data": event["data"]}))
-        logger.debug(event["data"])
-        # if tournament_id is None:
-        #     logger.warning("Wrong tournament_id send by the alias %s", alias)
-        #     return
-        # try:
-        #     tournament = Tournament.objects.get(id=tournament_id)
-        #     tournament_name = tournament.name
-        #     tournament_creator = tournament.creator
-        # except Tournament.DoesNotExist:
-        #     logger.warning("This tournament does not exist")
-        #     return
-        #
-        # all_profiles = Profile.objects.exclude(pk=tournament_creator.pk)
-        #
-        # channel_layer = get_channel_layer()
-        #
-        # for profile in all_profiles:
-        #     invitation = TournamentInvitation.objects.create(
-        #         sender=tournament_creator,
-        #         recipient=profile,
-        #         tournament_id = str(tournament_id),
-        #         tournament_name=tournament_name,
-        #         alias = alias,
-        #         status=TournamentInvitation.OPEN,
-        #     )
-        #     tournament_creator.refresh_from_db()
-        #     notification = Notification.objects.action_send_tournament_invite(
-        #         receiver=profile,
-        #         sender=tournament_creator,
-        #         notification_data={
-        #             "tournament_id": str(tournament_id),
-        #             "tournament_name": tournament_name,
-        #             "alias": alias,
-        #             "invitation_id": str(invitation.id),
-        #         },
-        #     )
-        #     notification_data = notification.data.copy()
-        #     if "date" in notification_data and isinstance(notification_data["date"], datetime):
-        #         notification_data["date"] = notification_data["date"].isoformat()
-        #     async_to_sync(channel_layer.group_send)(
-        #         f"user_{profile.user.id}",
-        #         {
-        #             "type": "chat_message",
-        #             "message": json.dumps(
-        #                 {
-        #                     "action": "new_tournament",
-        #                     "data": notification_data,
-        #                 },
-        #             ),
-        #         },
-        #     )
 
     def new_registration(self, event):
         logger.debug("function new_registration")
