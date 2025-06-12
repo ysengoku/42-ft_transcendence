@@ -1,5 +1,6 @@
 import { router } from '@router';
 import { auth } from '@auth';
+import { socketManager } from '@socket';
 import './components/index.js';
 import { showToastNotification, sessionExpiredToast } from '@utils';
 import logo from '/img/logo.svg?url';
@@ -35,6 +36,7 @@ export class Home extends HTMLElement {
       showToastNotification('You have an ongoing game. Please click on Duel button to continue.');
     } else if (this.#state.user.tournament_id) {
       showToastNotification('You are currently in a tournament. Click on Tournament button to continue.');
+      socketManager.openSocket('tournament', this.#state.user.tournament_id);
     }
   }
 
