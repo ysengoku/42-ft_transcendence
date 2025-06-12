@@ -529,6 +529,29 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   overflow: visible;
 }
 
+/*--------------------------------------------------------------------------- */
+/*    CSS Animations                                                          */
+/*----------------------------------------------------------------------------*/
+
+.pongAnimation {
+  width: 64%;
+  height: 64px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  background:
+  linear-gradient(var(--pm-primary-500) 0 0) 0    0/8px 20px,
+  linear-gradient(var(--pm-primary-500) 0 0) 100% 0/8px 20px,
+  radial-gradient(farthest-side,var(--pm-primary-400) 90%,#0000) 0 8px/12px 12px content-box,
+  transparent;
+  background-repeat: no-repeat; 
+  animation: pong 6s infinite linear;
+}
+@keyframes pong{
+  25% {background-position: 0 0,100% 100%,100% calc(100% - 4px)}
+  50% {background-position: 0 100%,100% 100%,0 calc(100% - 4px)}
+  75% {background-position: 0 100%,100% 0,100% 4px}
+}
+
 .fade-in-animation {
   animation: fade-in 2s;
   animation-fill-mode: forwards;
