@@ -17,6 +17,8 @@ const ICON = {
   'alert-success': 'bi-hand-thumbs-up',
   'alert-danger': 'bi-x-octagon',
   'alert-light': 'bi-exclamation-octagon',
+  // 'alert-tournament': 'bi-trophy',
+  'alert-tournament': 'bi-fire',
 };
 
 /**
@@ -25,7 +27,7 @@ const ICON = {
  * @param {string} message - The message to display in the alert.
  */
 export function showAlertMessage(type, message) {
-  const alertContainer = document.getElementById('error-message-container');
+  const alertContainer = document.getElementById('alert-message-container');
   if (alertContainer) {
     alertContainer.innerHTML = '';
     const alertMessage = document.createElement('div');
@@ -58,7 +60,7 @@ export function showAlertMessageForDuration(type, message, duration = 3000) {
  * Removes the alert message from the specified container.
  */
 export function removeAlert() {
-  const alertContainer = document.getElementById('error-message-container');
+  const alertContainer = document.getElementById('alert-message-container');
   if (alertContainer) {
     alertContainer.innerHTML = '';
   }
@@ -85,6 +87,55 @@ function alertContentTemplate(type) {
         <i id="alert-icon" class="class="bi mb-2" style="font-size: 3rem"></i>
         <div id="alert-header" class="fs-4 fw-bold mb-2"></div>
         <div id="alert-message" class="text-center"></div>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
+}
+
+export const TOURNAMENT_ALERT_TYPE = {
+  ONGOING_TOURNAMENT: 'ONGOING_TOURNAMENT',
+  TOURNAMENT_STARTS: 'TOURNAMENT_STARTS',
+  ROUND_END: 'ROUND_END',
+};
+
+const TOURNAMENT_ALERT_MESSAGE = {
+  ONGOING_TOURNAMENT: 'You are currently in a tournament.',
+  TOURNAMENT_STARTS: 'The tournament is starting soon.',
+  ROUND_END: 'The tournament round finished. The next round is starting soon.',
+};
+
+const TOURNAMENT_ALERT_CTA = {
+  ONGOING_TOURNAMENT: 'Go back to Tournament',
+  TOURNAMENT_STARTS: 'Join Tournament',
+  ROUND_END: 'Go back to Tournament',
+};
+
+export function showTournamentAlert(tournamentId, type = TOURNAMENT_ALERT_TYPE.ONGOING_TOURNAMENT) {
+  const alertContainer = document.getElementById('alert-message-container');
+  if (!alertContainer) {
+    return;
+  }
+  alertContainer.innerHTML = '';
+  const alertMessage = document.createElement('div');
+  alertMessage.innerHTML = tournamentAlertTemplate(tournamentId);
+
+  const messageElement = alertMessage.querySelector('#alert-message');
+  const alertCta = alertMessage.querySelector('a');
+  messageElement.textContent = TOURNAMENT_ALERT_MESSAGE[type];
+  alertCta.textContent = TOURNAMENT_ALERT_CTA[type];
+
+  alertContainer.appendChild(alertMessage);
+}
+
+function tournamentAlertTemplate(tournamentId) {
+  return `
+    <div class="alert alert-tournament alert-dismissible fade show" role="alert">
+      <div class="d-flex flex-column align-items-center ms-4 mt-4 p-3">
+        <div id="alert-message" class="fs-4 fw-bold mb-4 text-center"></div>
+        <div class="text-center">
+          <a href="/tournament/${tournamentId}" class="btn"></a>
+        </div>  
       </div>
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
