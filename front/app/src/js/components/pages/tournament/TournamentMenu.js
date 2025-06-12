@@ -119,6 +119,9 @@ export class TournamentMenu extends HTMLElement {
     });
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Modal set up and rendering                                          */
+  /* ------------------------------------------------------------------------ */
   setUpModal() {
     const modalTemplate = document.createElement('template');
     modalTemplate.innerHTML = this.modalTemplate();
@@ -211,9 +214,41 @@ export class TournamentMenu extends HTMLElement {
     },
   };
 
-  /* ------------------------------------------------------------------------ */
-  /*      Tournament creation                                                 */
-  /* ------------------------------------------------------------------------ */
+  async showTournamentDetail(event, tournamentId = null) {
+    if (event) {
+      const listItem = event.target.closest('li[tournament-id]');
+      if (!listItem || !listItem.hasAttribute('tournament-id')) {
+        return;
+      }
+      const id = listItem.getAttribute('tournament-id');
+      this.selectedTournament = this.list.getTournamentById(id);
+    } else {
+      if (!this.selectedTournament) {
+        /* eslint-disable-next-line */
+        const resonse = await apiRequest('GET', API_ENDPOINTS.TOURNAMENT(tournamentId), null, false, true);
+        if (!resonse.success) {
+          devErrorLog('Failed to fetch tournament details:', resonse);
+          return;
+        }
+        this.selectedTournament = resonse.data;
+      }
+    }
+    const tournamentStatus = this.selectedTournament.status;
+    if (!tournamentStatus) {
+      return;
+    }
+    this.modalBody.innerHTML = '';
+    this.#state.canEngage = await auth.canEngageInGame(false);
+    this.tournamentDetail[tournamentStatus]();
+    this.modal.show();
+  }
+
+  /**
+   * Show the tournament creation form from TournamentCreation in a modal.
+   * It checks if the user can engage in the game before displaying the form.
+   * If the user can engage, it sets up the modal body with the tournament creation component,
+   * enables the confirm button, and shows the modal.
+   * */
   async showTournamentCreationForm() {
     const canEngage = await auth.canEngageInGame();
     if (!canEngage) {
@@ -224,23 +259,6 @@ export class TournamentMenu extends HTMLElement {
     this.modalBody.appendChild(modalBodyContent);
     this.confirmButton.textContent = 'Create';
     this.confirmButton.disabled = false;
-    this.modal.show();
-  }
-
-  async showTournamentDetail(event) {
-    const listItem = event.target.closest('li[tournament-id]');
-    if (!listItem || !listItem.hasAttribute('tournament-id')) {
-      return;
-    }
-    const tournamentId = listItem.getAttribute('tournament-id');
-    this.selectedTournament = this.list.getTournamentById(tournamentId);
-    const tournamentStatus = this.selectedTournament.status;
-    if (!tournamentId || !tournamentStatus) {
-      return;
-    }
-    this.modalBody.innerHTML = '';
-    this.#state.canEngage = await auth.canEngageInGame(false);
-    this.tournamentDetail[tournamentStatus]();
     this.modal.show();
   }
 
@@ -267,37 +285,12 @@ export class TournamentMenu extends HTMLElement {
     }
   }
 
-  /* ------------------------------------------------------------------------ */
-  /*      Tournament registration                                             */
-  /* ------------------------------------------------------------------------ */
-
-  /**
-   * Validate the tournament alias input.
-   * If the alias is invalid, it adds an error class to the input and displays an error message.
-   * If the alias is valid, it removes the error class and enables the confirm button.
-   * @param {*} event
-   */
-  validateAliasInput(event, value = null) {
-    const valueToValidate = event ? event.target.value : value;
-    const validationError = validateTournamentAlias(valueToValidate);
-    if (validationError) {
-      this.aliasInput.classList.add('is-invalid');
-      this.aliasInputFeedback.textContent = validationError;
-      this.confirmButton.disabled = true;
-    } else {
-      this.aliasInput.classList.remove('is-invalid');
-      this.aliasInputFeedback.textContent = '';
-      this.confirmButton.disabled = false;
-    }
-  }
-
   /**
    * Confirm the registration for the selected tournament.
    * It sends a POST request to the API with the tournament ID and alias.
    * If the registration is successful, it connects to the tournament room.
    * If the registration fails, it displays an error message.
    * @param {Event} event - The event triggered by the confirm button click.
-   * @returns {Promise<void>}
    */
   async confirmRegister(event) {
     event.stopPropagation();
@@ -343,6 +336,26 @@ export class TournamentMenu extends HTMLElement {
       alert.appendChild(alertMessage);
       alert.appendChild(dismissButton);
       alertWrapper.appendChild(alert);
+    }
+  }
+
+  /**
+   * Validate the tournament alias input in tournament registration form.
+   * If the alias is invalid, it adds an error class to the input and displays an error message.
+   * If the alias is valid, it removes the error class and enables the confirm button.
+   * @param {*} event
+   */
+  validateAliasInput(event, value = null) {
+    const valueToValidate = event ? event.target.value : value;
+    const validationError = validateTournamentAlias(valueToValidate);
+    if (validationError) {
+      this.aliasInput.classList.add('is-invalid');
+      this.aliasInputFeedback.textContent = validationError;
+      this.confirmButton.disabled = true;
+    } else {
+      this.aliasInput.classList.remove('is-invalid');
+      this.aliasInputFeedback.textContent = '';
+      this.confirmButton.disabled = false;
     }
   }
 
