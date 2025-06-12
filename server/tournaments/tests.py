@@ -2,11 +2,8 @@ import logging
 
 from django.test import TestCase
 
+from tournaments.models import Tournament
 from users.models import User
-
-logger = logging.getLogger("server")
-
-logging.disable(logging.CRITICAL)
 
 
 class TestTournamentEndpoints(TestCase):
@@ -15,12 +12,16 @@ class TestTournamentEndpoints(TestCase):
     """
 
     def setUp(self):
-        User.objects.create_user("TestUser", email="user0@gmail.com", password="123")  # noqa: S106
+        self.user = User.objects.create_user("TestUser", email="user0@gmail.com", password="123")  # noqa: S106
         self.user_auth = self.client.post(
             "/api/login",
             content_type="application/json",
             data={"username": "TestUser", "password": "123"},
         )
+        logging.disable(logging.CRITICAL)
+
+    def tearDown(self):
+        logging.disable(logging.NOTSET)
 
     def _get_default_tournament_creation_data(self):
         return {
@@ -121,3 +122,5 @@ class TestTournamentEndpoints(TestCase):
             201,
             "Response to valid data should be 201",
         )
+        is_tournament_created = Tournament.objects.filter(creator=self.user.profile).exists()
+        self.assertEqual(is_tournament_created, True, "Tournament should be created after POST /api/tournaments")

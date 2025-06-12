@@ -7,15 +7,15 @@ from pong.models import GameRoom, GameRoomPlayer, get_default_game_room_settings
 from tournaments.models import Tournament
 from users.models import User
 
-logger = logging.getLogger("server")
-
-logging.disable(logging.CRITICAL)
-
 
 # ruff: noqa: S106
 class TestLoginEndpoint(TestCase):
     def setUp(self):
+        logging.disable(logging.CRITICAL)
         User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
+
+    def tearDown(self):
+        logging.disable(logging.NOTSET)
 
     def test_login_works_with_bad_data(self):
         response = self.client.post("/api/login", content_type="application/json", data={"dummy": "dummy"})
@@ -89,6 +89,7 @@ class TestProfileModel(TestCase):
             creator=self.user.profile,
             required_participants=4,
             alias="barfoo",
+            settings=get_default_game_room_settings(),
         )
         self.assertEqual(
             self.user.profile.can_participate_in_game(),
