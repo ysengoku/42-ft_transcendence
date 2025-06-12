@@ -31,6 +31,11 @@ class MatchmakingConsumer(WebsocketConsumer):
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
             return
 
+        if not self.user.profile.can_participate_in_game():
+            logger.info("[Matchmaking.connect]: user {%s} is already involved in some game", self.user)
+            self.close(PongCloseCodes.ALREADY_IN_GAME)
+            return
+
         self.game_room_settings = self._parse_game_room_settings(self.scope["query_string"])
         if not self.game_room_settings:
             logger.warning("[Matchmaking.connect]: invalid game room settings were given")
