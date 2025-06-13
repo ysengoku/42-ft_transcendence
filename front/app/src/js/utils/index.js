@@ -5,9 +5,20 @@ import { isMobile, BREAKPOINT } from './viewPort';
 import { getRelativeTime, getRelativeDateAndTime, formatDateMDY } from './dateFormat';
 import { isEqual } from './isEqual';
 
-import { INPUT_FEEDBACK, emailFeedback, passwordFeedback, isFieldFilled, removeInputFeedback } from './inputFeedback';
+import {
+  INPUT_FEEDBACK,
+  usernameFeedback,
+  nicknameFeedback,
+  emailFeedback,
+  passwordFeedback,
+  isFieldFilled,
+  removeInputFeedback,
+} from './inputFeedback';
+
 import { showFormErrorFeedback } from './formFeedback';
+
 import { showToastNotification, TOAST_TYPES, sessionExpiredToast, unknowknErrorToast } from './toastnotification';
+
 import {
   ALERT_TYPE,
   showAlertMessage,
@@ -34,6 +45,8 @@ export {
   formatDateMDY,
   isEqual,
   INPUT_FEEDBACK,
+  usernameFeedback,
+  nicknameFeedback,
   emailFeedback,
   passwordFeedback,
   isFieldFilled,
