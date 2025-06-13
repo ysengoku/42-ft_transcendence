@@ -1,4 +1,4 @@
-import { INPUT_FEEDBACK } from '@utils';
+import { usernameFeedback, nicknameFeedback } from '@utils';
 
 export class UserIdentityUpdate extends HTMLElement {
   #state = {
@@ -13,9 +13,9 @@ export class UserIdentityUpdate extends HTMLElement {
       nickname: '',
     };
     this.handleUsernameInput = this.handleUsernameInput.bind(this);
-    this.handleUsernameBlur = this.handleUsernameBlur.bind(this);
+    this.handleUsernameFocusout = this.handleUsernameFocusout.bind(this);
     this.handleNicknameInput = this.handleNicknameInput.bind(this);
-    this.handleNicknameBlur = this.handleNicknameBlur.bind(this);
+    this.handleNicknameFocusout = this.handleNicknameFocusout.bind(this);
   }
 
   setParams(user) {
@@ -26,9 +26,9 @@ export class UserIdentityUpdate extends HTMLElement {
 
   disconnectedCallback() {
     this.usernameInput.removeEventListener('input', this.handleUsernameInput);
-    this.usernameInput.removeEventListener('blur', this.handleUsernameBlur);
+    this.usernameInput.removeEventListener('focusout', this.handleUsernameFocusout);
     this.nicknameInput.removeEventListener('input', this.handleNicknameInput);
-    this.nicknameInput.removeEventListener('blur', this.handleNicknameBlur);
+    this.nicknameInput.removeEventListener('blur', this.handleNicknameFocusout);
   }
 
   render() {
@@ -43,25 +43,26 @@ export class UserIdentityUpdate extends HTMLElement {
     this.nicknameInput.value = this.#state.nickname;
 
     this.usernameInput.addEventListener('input', this.handleUsernameInput);
-    this.usernameInput.addEventListener('blur', this.handleUsernameBlur);
+    this.usernameInput.addEventListener('focusout', this.handleUsernameFocusout);
     this.nicknameInput.addEventListener('input', this.handleNicknameInput);
-    this.nicknameInput.addEventListener('blur', this.handleNicknameBlur);
+    this.nicknameInput.addEventListener('focusout', this.handleNicknameFocusout);
   }
 
   handleUsernameInput(event) {
-    if (event.target.value.length < 1) {
-      this.usernameFeedback.textContent = INPUT_FEEDBACK.CANNOT_DELETE_USERNAME;
-      this.usernameInput.classList.add('is-invalid');
-    } else {
-      this.usernameFeedback.textContent = '';
+    if (usernameFeedback(event.target, this.usernameFeedback)) {
       this.usernameInput.classList.remove('is-invalid');
+      this.usernameFeedback.textContent = '';
     }
     if (event.target.value !== this.#state.username) {
       this.newUserIdentity.username = event.target.value;
     }
   }
 
-  handleUsernameBlur(event) {
+  handleUsernameFocusout(event) {
+    const focusedElement = event.relatedTarget;
+    if (focusedElement && focusedElement.matches('button[type="submit"]')) {
+      return;
+    }
     if (event.target.value.length < 1) {
       event.target.value = this.#state.username;
       this.usernameInput.classList.remove('is-invalid');
@@ -70,19 +71,22 @@ export class UserIdentityUpdate extends HTMLElement {
   }
 
   handleNicknameInput(event) {
-    if (event.target.value.length < 1) {
-      this.nicknameFeedback.textContent = INPUT_FEEDBACK.CANNOT_DELETE_NICKNAME;
-      this.nicknameInput.classList.add('is-invalid');
+    if (!nicknameFeedback(event.target, this.nicknameFeedback)) {
+      return;
     } else {
-      this.nicknameFeedback.textContent = '';
       this.nicknameInput.classList.remove('is-invalid');
+      this.nicknameFeedback.textContent = '';
     }
     if (event.target.value !== this.#state.nickname) {
       this.newUserIdentity.nickname = event.target.value;
     }
   }
 
-  handleNicknameBlur(event) {
+  handleNicknameFocusout(event) {
+    const focusedElement = event.relatedTarget;
+    if (focusedElement && focusedElement.matches('button[type="submit"]')) {
+      return;
+    }
     if (event.target.value.length < 1) {
       event.target.value = this.#state.nickname;
       this.nicknameInput.classList.remove('is-invalid');
