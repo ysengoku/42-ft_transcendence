@@ -1,3 +1,10 @@
+/**
+ * @module Home
+ * @description This module defines the Home component for the application.
+ * It serves as the main landing page after user authentication,
+ * providing navigation options to various game modes, user's profile and settings.
+ */
+
 import { router } from '@router';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
@@ -14,6 +21,12 @@ export class Home extends HTMLElement {
     super();
   }
 
+  /**
+   * @description Lifecycle method called when the component is connected to the DOM.
+   * It checks if the user is authenticated by fetching the auth status.
+   * If the user is not authenticated, it redirects to the landing page.
+   * If authenticated, it retrieves the user data and renders the component.
+   */
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
@@ -27,6 +40,11 @@ export class Home extends HTMLElement {
     this.render();
   }
 
+  /**
+   * @description Renders the navigation menu for the user.
+   * It sets up the profile button with the user's username,
+   * if the user has an ongoing game or tournament, it shows a toast notification.
+   */
   render() {
     this.innerHTML = this.style() + this.template();
     const profileButton = this.querySelector('home-profile-button');

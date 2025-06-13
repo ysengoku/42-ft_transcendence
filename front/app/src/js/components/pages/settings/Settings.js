@@ -1,3 +1,10 @@
+/**
+ * @module Settings
+ * @description This module defines the Settings component for user settings management.
+ * Input fields for username, nickname, email, password, and MFA settings are managed in its child components.
+ * It handles current user data fetching, validation, and submission to the server.
+ */
+
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -13,6 +20,14 @@ import {
 import './components/index.js';
 
 export class Settings extends HTMLElement {
+  /**
+   * Private state of the component.
+   * @property {boolean} #state.isLoggedIn - Indicates if the user is logged in.
+   * @property {string} #state.username - The username of the logged-in user.
+   * @property {Object} #state.currentUserData - Contains the current user data fetched from the server.
+   * @property {Object} #state.newUserData - Holds the new user data to be submitted.
+   * @property {boolean} #state.changed - Indicates if there are changes to be submitted.
+   */
   #state = {
     isLoggedIn: false,
     username: '',
@@ -76,6 +91,10 @@ export class Settings extends HTMLElement {
     this.resetButton.addEventListener('click', this.handleResetClick);
   }
 
+  /**
+   * @description Sets the parameters for the child components based on the current user data,
+   * so that they can display the correct information.
+   */
   setParams() {
     this.avatarUploadField.setAvatar(this.#state.currentUserData);
     this.userIdentityField.setParams(this.#state.currentUserData);
@@ -90,12 +109,22 @@ export class Settings extends HTMLElement {
     this.handleSubmit();
   }
 
+  /**
+   *@description Handles the reset button click event.
+   * If the user confirms, it resets the form to the initial state by calling setParams.
+   */
   async handleResetClick() {
     if (confirm('Do you really want to discard the changes?')) {
       this.setParams();
     }
   }
 
+  /**
+   * @description Handles the form submission.
+   * Validates the input fields, constructs a FormData object with the new user data,
+   * checks if there are changes to be submitted,
+   * sends it to the server, and updates the state based on the response.
+   */
   async handleSubmit() {
     const userIdentity = this.userIdentityField.newUserIdentity;
     const newEmail = this.emailField.newEmail;
