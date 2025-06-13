@@ -237,6 +237,7 @@ export class Duel extends HTMLElement {
    * 3000: Game found
    * 3001: Canceled by user
    * 3002: Unauthorized
+   * 3003: Already engaged in another game activity
    * 3100: Invalid request
    */
   handleMatchmakingCancellationByServer(event) {
@@ -252,10 +253,17 @@ export class Duel extends HTMLElement {
     if (event.detail.code === 3002 || event.detail.code === 3100) {
       router.removeBeforeunloadCallback();
       window.removeEventListener('beforeunload', this.confirmLeavePage);
-      message =
-        event.detail.code === 3002
-          ? 'You are not authorized to request matchmaking.'
-          : 'Matchmaking is momentarily unavailable.';
+      let message = '';
+      switch (event.detail.code) {
+        case 3002:
+          message = 'You are not authorized to request matchmaking.';
+          break;
+        case 3003:
+          message = 'You are already engaged to another game activity. Cannot request a new matchmaking.';
+        case 3100:
+        default:
+          message = 'Matchmaking is momentarily unavailable.';
+      }
       showToastNotification(TOAST_TYPES.ERROR, message);
       this.#state.status = DUEL_STATUS.MATCHMAKING_CANCELED;
       this.renderContent();
