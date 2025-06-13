@@ -2,6 +2,7 @@
 Contains typed definitions and enumerations required for the exchange of the data between the websocket server,
 the game server and the client for the game of pong.
 """
+
 from typing import Literal, TypedDict
 
 
@@ -33,7 +34,6 @@ class GameRoomSettings(TypedDict):
     cool_mode: bool
     ranked: bool
     game_speed: Literal["slow", "medium", "fast"]
-
 
 
 class SerializedGameState(TypedDict):
@@ -189,6 +189,7 @@ class GameServerToGameWorker:
         avatar: str
         elo: int
         settings: GameRoomSettings
+        is_in_tournament: bool
 
     class PlayerInputed(TypedDict):
         """Player has inputed the controls, websocket server sends it to the game worker."""
