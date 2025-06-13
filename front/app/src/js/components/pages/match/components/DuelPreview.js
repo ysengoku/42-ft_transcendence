@@ -1,8 +1,19 @@
+/**
+ * @module DuelPreview
+ * @description Component to display a duel preview, showing the players involved and their statuses (inviting, matchmaking, canceled)
+ */
+
 import { router } from '@router';
 import { DUEL_STATUS } from '../Duel';
 import anonymousavatar from '/img/anonymous-avatar.png?url';
 
 export class DuelPreview extends HTMLElement {
+  /**
+   * @property {Object} #state - Internal state of the component
+   * @property {string} #state.status - Status of the duel (INVITING, MATCHMAKING, INVITATION_CANCELED, INVITATION_DECLINED, MATCHMAKING_CANCELED)
+   * @property {Object} #state.user1 - Data of the logged user in the duel
+   * @property {Object} #state.user2 - Data of the opponent user in the duel (if available)
+   */
   #state = {
     status: '',
     user1: null,
@@ -21,6 +32,9 @@ export class DuelPreview extends HTMLElement {
     this.navigateToDuelMenu = this.navigateToDuelMenu.bind(this);
   }
 
+  /**
+   * Called from the parent component (Duel) to set the duel data and render the content.
+   */
   setData(duelStatus, user1, user2) {
     if (!duelStatus || !user1) {
       const notFound = document.createElement('page-not-found');
@@ -46,6 +60,11 @@ export class DuelPreview extends HTMLElement {
     this.goToDuelMenuButton?.removeEventListener('click', this.navigateToDuelMenu);
   }
 
+  /**
+   * Renders the component based on the current state.
+   * If the duel status indicates a canceled invitation or matchmaking, it displays a cancellation message with buttons to navigate back to the home or duel menu.
+   * Otherwise, it displays the duel preview with player profiles and waiting animation.
+   */
   render() {
     if (
       this.#state.status === DUEL_STATUS.INVITATION_CANCELED ||
@@ -73,13 +92,15 @@ export class DuelPreview extends HTMLElement {
     this.player1 = this.querySelector('#duel-player1');
     this.player2 = this.querySelector('#duel-player2');
 
+    // Render logged in player profiles based on the duel status
     this.player1.innerHTML = this.userProfileTemplate();
     this.player1.querySelector('.player-avatar').src = this.#state.user1.avatar;
     this.player1.querySelector('.player-nickname').innerHTML = this.#state.user1.nickname;
     this.player1.querySelector('.player-username').innerHTML = `@${this.#state.user1.username}`;
 
+    // Render opponent player profiles if inviting, or anonymous avatar if matchmaking
     (this.player2.innerHTML = this.userProfileTemplate()),
-      this.#state.status === 'matchmaking'
+      this.#state.status === DUEL_STATUS.MATCHMAKING
         ? (this.player2.querySelector('.player-avatar').src = anonymousavatar)
         : ((this.player2.querySelector('.player-avatar').src = this.#state.user2.avatar),
           (this.player2.querySelector('.player-nickname').innerHTML = this.#state.user2.nickname),
