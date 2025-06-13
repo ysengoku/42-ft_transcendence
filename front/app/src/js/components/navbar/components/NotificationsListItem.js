@@ -155,7 +155,7 @@ export class NotificationsListItem extends HTMLElement {
     const message = {
       action: 'cancel_game_invite',
       data: {
-        username: this.#state.data.username,
+        username: this.#state.data.invitee.username,
       },
     };
     socketManager.sendMessage('livechat', message);
