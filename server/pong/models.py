@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import TruncDate
@@ -192,7 +193,9 @@ class GameRoomQuerySet(models.QuerySet):
     def for_valid_game_room(self, profile: Profile, settings: GameRoomSettings):
         """Valid game room is a pending game room with less than 2 players."""
         return self.annotate(players_count=Count("players")).filter(
-            status=GameRoom.PENDING, players_count__lt=2, settings=settings,
+            status=GameRoom.PENDING,
+            players_count__lt=2,
+            settings=settings,
         )
 
     def for_id(self, game_room_id: str):
@@ -255,3 +258,10 @@ class GameRoom(models.Model):
 
     def has_player(self, profile: Profile):
         return self.players.filter(id=profile.id).exists()
+
+    def is_in_tournament(self) -> bool:
+        """Checks if the game room is a part of some running tournament."""
+        try:
+            return self.bracket is not None
+        except ObjectDoesNotExist:
+            return False
