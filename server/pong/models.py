@@ -256,6 +256,9 @@ class GameRoom(models.Model):
         self.status = GameRoom.CLOSED
         self.save()
 
+    def add_player(self, profile: Profile):
+        return GameRoomPlayer.objects.create(game_room=self, profile=profile)
+
     def has_player(self, profile: Profile):
         return self.players.filter(id=profile.id).exists()
 

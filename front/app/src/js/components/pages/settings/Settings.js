@@ -1,7 +1,15 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { emailFeedback, showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
+import {
+  usernameFeedback,
+  nicknameFeedback,
+  emailFeedback,
+  showAlertMessage,
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+  sessionExpiredToast,
+} from '@utils';
 import './components/index.js';
 
 export class Settings extends HTMLElement {
@@ -59,7 +67,7 @@ export class Settings extends HTMLElement {
     this.emailField = this.querySelector('settings-email-update');
     this.passwordField = this.querySelector('settings-password-update');
     this.mfaEnable = this.querySelector('mfa-enable-update');
-    this.deleteAccountButton = this.querySelector('delete-account-button');
+    // this.deleteAccountButton = this.querySelector('delete-account-button');
     this.resetButton = this.querySelector('#settings-reset-button');
 
     this.setParams();
@@ -74,7 +82,7 @@ export class Settings extends HTMLElement {
     this.emailField.setParams(this.#state.currentUserData);
     this.passwordField.setParam(this.#state.currentUserData.connection_type);
     this.mfaEnable.setParams(this.#state.currentUserData);
-    this.deleteAccountButton.setUsername(this.#state.currentUserData.username);
+    // this.deleteAccountButton.setUsername(this.#state.currentUserData.username);
   }
 
   async handleSubmitClick(event) {
@@ -91,17 +99,20 @@ export class Settings extends HTMLElement {
   async handleSubmit() {
     const userIdentity = this.userIdentityField.newUserIdentity;
     const newEmail = this.emailField.newEmail;
-
-    if (
-      this.#state.currentUserData.connection_type === 'regular' &&
-      (!emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) ||
-        !this.passwordField.checkPasswordInput())
-    ) {
+    let isValid = true;
+    isValid =
+      usernameFeedback(this.userIdentityField.usernameInput, this.userIdentityField.usernameFeedback) && isValid;
+    isValid =
+      nicknameFeedback(this.userIdentityField.nicknameInput, this.userIdentityField.nicknameFeedback) && isValid;
+    if (this.#state.currentUserData.connection_type === 'regular') {
+      isValid = emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) && isValid;
+      isValid = this.passwordField.checkPasswordInput() && isValid;
+    }
+    if (!isValid) {
       return;
     }
 
     const avatarField = this.avatarUploadField.selectedFile;
-
     const formData = new FormData();
     if (userIdentity.username) {
       formData.append('username', userIdentity.username);
@@ -191,14 +202,14 @@ export class Settings extends HTMLElement {
               <mfa-enable-update></mfa-enable-update>
             </div>
             
-            <div class="mt-5 pb-5 border-bottom">
-              <button type="reset" class="btn mx-2" id="settings-reset-button">Reset</button>
+            <div class="d-flex flex-row justify-content-end mt-5 pb-3">
+              <button type="button" class="btn mx-2" id="settings-reset-button">Reset</button>
               <button type="submit" class="btn btn-wood mx-2">Save changes</button>
             </div>
 
-            <div class="mt-4 mb-3">
+            <!-- <div class="mt-4 mb-3">
               <delete-account-button></delete-account-button>
-            </div>
+            </div> -->
           </form>
   
           <avatar-upload-modal></avatar-upload-modal>
