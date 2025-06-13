@@ -50,10 +50,12 @@ class DuelEvent:
 
     def self_or_target_already_in_game(self, target, target_name, client_id):
         is_in_game: bool = (
-            GameRoom.objects.for_players(self.consumer.user_profile).for_pending_or_ongoing_status().exists()
+            GameRoom.objects.for_players(
+                self.consumer.user_profile).for_pending_or_ongoing_status().exists()
         )
         if is_in_game:
-            logger.warning("Error : user %s is in a game : can't join a game right now.", self.consumer.user.username)
+            logger.warning(
+                "Error : user %s is in a game : can't join a game right now.", self.consumer.user.username)
             self.consumer.send(
                 text_data=json.dumps(
                     {
@@ -64,9 +66,11 @@ class DuelEvent:
                 )
             )
             return True
-        target_is_in_game: bool = GameRoom.objects.for_players(target).for_pending_or_ongoing_status().exists()
+        target_is_in_game: bool = GameRoom.objects.for_players(
+            target).for_pending_or_ongoing_status().exists()
         if target_is_in_game:
-            logger.warning("Error : user %s is in a game : can't join a game right now.", target_name)
+            logger.warning(
+                "Error : user %s is in a game : can't join a game right now.", target_name)
             self.consumer.send(
                 text_data=json.dumps(
                     {
@@ -84,7 +88,8 @@ class DuelEvent:
         sender = Profile.objects.get(user__username=sender_name)
         client_id = data["data"].get("client_id")
         if sender == self.consumer.user.profile:
-            logger.warning("Error : user %s wanted to accept a game with themself.", self.consumer.user.username)
+            logger.warning(
+                "Error : user %s wanted to accept a game with themself.", self.consumer.user.username)
             self.consumer.send(
                 text_data=json.dumps(
                     {
@@ -134,9 +139,12 @@ class DuelEvent:
         self.cancel_game_invite()
         # if any invitations were send by the user, they are cancelled because they are in a game now
         sender_data = self.data_for_game_found(sender, game_room.id)
-        receiver_data = self.data_for_game_found(self.consumer.user.profile, game_room.id)
-        async_to_sync(self.consumer.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
-        async_to_sync(self.consumer.channel_layer.group_send)(f"user_{self.consumer.user.id}", sender_data)
+        receiver_data = self.data_for_game_found(
+            self.consumer.user.profile, game_room.id)
+        async_to_sync(self.consumer.channel_layer.group_send)(
+            f"user_{sender.user.id}", receiver_data)
+        async_to_sync(self.consumer.channel_layer.group_send)(
+            f"user_{self.consumer.user.id}", sender_data)
 
     # TODO : security checks
     def decline_game_invite(self, data):
@@ -144,7 +152,8 @@ class DuelEvent:
         try:
             sender = Profile.objects.get(user__username=sender_name)
         except Profile.DoesNotExist:
-            logger.warning("The invitation sender deleted their profile : %s", sender_name)
+            logger.warning(
+                "The invitation sender deleted their profile : %s", sender_name)
             return
         invitations = GameInvitation.objects.filter(
             sender=sender,
@@ -152,7 +161,8 @@ class DuelEvent:
             status=GameInvitation.PENDING,
         )
         if not invitations.exists():
-            logger.debug("No pending invitations sent by %s to cancel for user %s", sender, self.consumer.user.username)
+            logger.debug("No pending invitations sent by %s to cancel for user %s",
+                         sender, self.consumer.user.username)
             self.consumer.send(
                 text_data=json.dumps(
                     {
@@ -219,8 +229,10 @@ class DuelEvent:
             return
         receiver_username = data["data"].get("username")
         if receiver_username == self.consumer.user.username:
-            logger.warning("Error : user %s wanted to play with themself.", self.consumer.user.username)
-            self.self_send_game_invite_cancelled("You can't invite yourself to a game !", client_id)
+            logger.warning(
+                "Error : user %s wanted to play with themself.", self.consumer.user.username)
+            self.self_send_game_invite_cancelled(
+                "You can't invite yourself to a game !", client_id)
             return
 
         client_id = data["data"].get("client_id")
@@ -235,8 +247,10 @@ class DuelEvent:
             return
 
         if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
-            logger.warning("Error : user %s has more than one pending invitation.", self.consumer.user.username)
-            self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
+            logger.warning(
+                "Error : user %s has more than one pending invitation.", self.consumer.user.username)
+            self.self_send_game_invite_cancelled(
+                "You have one invitation pending.", client_id)
             return
         invitation = GameInvitation.objects.create(
             sender=self.consumer.user_profile,
@@ -247,15 +261,12 @@ class DuelEvent:
         notification = Notification.objects.action_send_game_invite(
             receiver=receiver,
             sender=self.consumer.user_profile,
-            notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
+            invitee=receiver,
+            notification_data={"game_id": str(
+                invitation.id), "client_id": str(client_id)},
         )
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
-        sender_notification = Notification.objects.action_send_game_invite(
-            receiver=self.consumer.user_profile,
-            sender=receiver,
-            notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
-        )
         # Convert date in good format
         if "date" in notification_data and isinstance(notification_data["date"], datetime):
             notification_data["date"] = notification_data["date"].isoformat()
@@ -271,6 +282,26 @@ class DuelEvent:
                 ),
             },
         )
+        sender_notification = Notification.objects.action_send_game_invite(
+            receiver=self.consumer.user_profile,
+            invitee=receiver,
+            sender=receiver,
+            notification_data={"game_id": str(
+                invitation.id), "client_id": str(client_id)},
+        )
+        notification_data = sender_notification.data.copy()
+        notification_data["id"] = str(sender_notification.id)
+        # Convert date in good format
+        if "date" in notification_data and isinstance(notification_data["date"], datetime):
+            notification_data["date"] = notification_data["date"].isoformat()
+        self.consumer.send(
+            text_data=json.dumps(
+                {
+                    "action": "game_invite",
+                    "data": notification_data,
+                }
+            )
+        )
 
     def cancel_game_invite(self):
         invitations = GameInvitation.objects.filter(
@@ -278,7 +309,8 @@ class DuelEvent:
             status=GameInvitation.PENDING,
         )
         if not invitations.exists():
-            logger.info("No pending invitations to cancel for user %s", self.consumer.user.username)
+            logger.info("No pending invitations to cancel for user %s",
+                        self.consumer.user.username)
             return
         with transaction.atomic():
             count = 0
@@ -288,7 +320,8 @@ class DuelEvent:
                 invitation.save()
                 invitation.sync_notification_status()
                 count += 1
-            logger.info("Cancelled %d pending invitations for user %s", count, self.consumer.user.username)
+            logger.info("Cancelled %d pending invitations for user %s",
+                        count, self.consumer.user.username)
         self.consumer.send(
             text_data=json.dumps(
                 {
@@ -327,7 +360,8 @@ class DuelEvent:
             status=GameInvitation.PENDING,
         )
         if not invitations.exists():
-            logger.info("No pending invitations to cancel for user %s", username)
+            logger.info(
+                "No pending invitations to cancel for user %s", username)
             return
         channel_layer = get_channel_layer()
         with transaction.atomic():
@@ -356,4 +390,5 @@ class DuelEvent:
                     ),
                 },
             )
-            logger.info("Cancelled %d pending invitations for user %s", count, username)
+            logger.info(
+                "Cancelled %d pending invitations for user %s", count, username)
