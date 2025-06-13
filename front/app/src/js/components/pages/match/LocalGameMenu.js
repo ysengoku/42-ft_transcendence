@@ -1,6 +1,16 @@
+/**
+ * @module LocalGameMenu
+ * @description This module defines the LocalGameMenu component for starting local games.
+ * It allows users to set game options and choose between a local player battle or an AI challenge,
+ * and navigates to the game page.
+ */
 import { router } from '@router';
 
 export class LocalGameMenu extends HTMLElement {
+  /**
+   * Private state of the component.
+   * @property {Object} #state.options - Contains the game options selected by the user.
+   */
   #state = {
     options: null,
   };
@@ -10,6 +20,10 @@ export class LocalGameMenu extends HTMLElement {
     this.navigateToGame = this.navigateToGame.bind(this);
   }
 
+  /**
+   * @description Lifecycle method called when the component is connected to the DOM.
+   * It retrieves stored game options from localStorage, if available, and renders the component.
+   */
   connectedCallback() {
     const storedOptions = localStorage.getItem('gameOptions');
     if (storedOptions) {
@@ -23,6 +37,10 @@ export class LocalGameMenu extends HTMLElement {
     this.aiPlayerButton?.removeEventListener('click', this.navigateToGame);
   }
 
+  /**
+   * @description Renders the component's HTML template and sets up event listeners.
+   * It initializes the local player and AI player buttons, and hides options that are not applicable.
+   */
   render() {
     this.innerHTML = this.template();
 
