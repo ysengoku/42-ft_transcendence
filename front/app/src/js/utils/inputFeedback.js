@@ -1,11 +1,16 @@
+import { MAX_NAME_LENGTH, MIN_PASSWORD_LENGTH } from '@env';
+
 export const INPUT_FEEDBACK = {
   EMPTY_USERNAME: 'Username is required',
+  EMPTY_NICKNAME: 'Nickname is required',
   EMPTY_EMAIL: 'Email is required',
   EMPTY_OLD_PASSWORD: 'Old password is required',
   EMPTY_PASSWORD: 'Password is required',
   EMPTY_PASSWORD_REPEAT: 'Please confirm your password',
+  USERNAME_TOO_LONG: `Username cannot be longer than ${MAX_NAME_LENGTH} characters`,
+  NICKNAME_TOO_LONG: `Nickname cannot be longer than ${MAX_NAME_LENGTH} characters`,
   INVALID_EMAIL: 'Invalid email address',
-  PASSWORD_TOO_SHORT: 'Password must be at least 8 characters',
+  PASSWORD_TOO_SHORT: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
   PASSWORDS_NOT_MATCH: 'Passwords do not match',
   CANNOT_DELETE_USERNAME: 'You cannot delete username.',
   CANNOT_DELETE_NICKNAME: 'You cannot delete nickname.',
@@ -20,6 +25,32 @@ export function isFieldFilled(field, feedbackFeeld, errorMessage) {
   } else {
     return true;
   }
+}
+
+export function usernameFeedback(usernameField, feedbackField) {
+  const username = usernameField.value;
+  if (!isFieldFilled(usernameField, feedbackField, INPUT_FEEDBACK.EMPTY_USERNAME, username) || username.length < 1) {
+    return false;
+  }
+  if (username.length > MAX_NAME_LENGTH) {
+    usernameField.classList.add('is-invalid');
+    feedbackField.textContent = INPUT_FEEDBACK.USERNAME_TOO_LONG;
+    return false;
+  }
+  return true;
+}
+
+export function nicknameFeedback(nicknameField, feedbackField) {
+  const nickname = nicknameField.value.trim();
+  if (!isFieldFilled(nicknameField, feedbackField, INPUT_FEEDBACK.EMPTY_NICKNAME) || nickname.length < 1) {
+    return false;
+  }
+  if (nickname.length > MAX_NAME_LENGTH) {
+    nicknameField.classList.add('is-invalid');
+    feedbackField.textContent = INPUT_FEEDBACK.NICKNAME_TOO_LONG;
+    return false;
+  }
+  return true;
 }
 
 export function emailFeedback(emailField, feedbackField) {
@@ -46,7 +77,7 @@ export function passwordFeedback(passwordField, passwordRepeatField, feedbackFie
 }
 
 function checkPasswordLength(passwordField, feedbackField) {
-  if (passwordField.value.length < 8) {
+  if (passwordField.value.length < MIN_PASSWORD_LENGTH) {
     passwordField.classList.add('is-invalid');
     feedbackField.textContent = INPUT_FEEDBACK.PASSWORD_TOO_SHORT;
     return false;
