@@ -1,4 +1,4 @@
-import { MAX_NAME_LENGTH } from '@env';
+import { MAX_NAME_LENGTH, MIN_PASSWORD_LENGTH } from '@env';
 
 export const INPUT_FEEDBACK = {
   EMPTY_USERNAME: 'Username is required',
@@ -10,7 +10,7 @@ export const INPUT_FEEDBACK = {
   USERNAME_TOO_LONG: `Username cannot be longer than ${MAX_NAME_LENGTH} characters`,
   NICKNAME_TOO_LONG: `Nickname cannot be longer than ${MAX_NAME_LENGTH} characters`,
   INVALID_EMAIL: 'Invalid email address',
-  PASSWORD_TOO_SHORT: 'Password must be at least 8 characters',
+  PASSWORD_TOO_SHORT: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
   PASSWORDS_NOT_MATCH: 'Passwords do not match',
   CANNOT_DELETE_USERNAME: 'You cannot delete username.',
   CANNOT_DELETE_NICKNAME: 'You cannot delete nickname.',
@@ -77,7 +77,7 @@ export function passwordFeedback(passwordField, passwordRepeatField, feedbackFie
 }
 
 function checkPasswordLength(passwordField, feedbackField) {
-  if (passwordField.value.length < 8) {
+  if (passwordField.value.length < MIN_PASSWORD_LENGTH) {
     passwordField.classList.add('is-invalid');
     feedbackField.textContent = INPUT_FEEDBACK.PASSWORD_TOO_SHORT;
     return false;
