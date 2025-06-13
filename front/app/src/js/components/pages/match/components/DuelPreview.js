@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { DUEL_STATUS } from '../Duel';
 import anonymousavatar from '/img/anonymous-avatar.png?url';
 
 export class DuelPreview extends HTMLElement {
@@ -47,18 +48,18 @@ export class DuelPreview extends HTMLElement {
 
   render() {
     if (
-      this.#state.status === 'canceled' ||
-      this.#state.status === 'declined' ||
-      this.#state.status === 'matchmakingCanceled'
+      this.#state.status === DUEL_STATUS.INVITATION_CANCELED ||
+      this.#state.status === DUEL_STATUS.INVITATION_DECLINED ||
+      this.#state.status === DUEL_STATUS.MATCHMAKING_CANCELED
     ) {
       this.innerHTML = this.canceledTemplate();
 
       const cancelMessage = this.querySelector('#cancel-message');
-      if (this.#state.status === 'canceled') {
+      if (this.#state.status === DUEL_STATUS.INVITATION_CANCELED) {
         cancelMessage.textContent = 'Your invitation has been canceled.';
-      } else if (this.#state.status === 'declined') {
+      } else if (this.#state.status === DUEL_STATUS.INVITATION_DECLINED) {
         cancelMessage.textContent = `${this.#state.user2.nickname} declined the duel.`;
-      } else if (this.#state.status === 'matchmakingCanceled') {
+      } else if (this.#state.status === DUEL_STATUS.MATCHMAKING_CANCELED) {
         cancelMessage.textContent = 'Your matchmaking request has been canceled.';
       }
 
