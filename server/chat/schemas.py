@@ -92,6 +92,7 @@ class GameInviteNotificationDataSchema(BaseNotificationDataSchema):
     """
 
     game_id: str
+    invitee: UsernameNicknameAvatarSchema
 
 
 class NewTournamentNotificationDataSchema(BaseNotificationDataSchema):

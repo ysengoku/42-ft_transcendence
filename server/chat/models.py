@@ -188,6 +188,7 @@ class NotificationQuerySet(models.QuerySet):
         notification_action: str,
         notification_data={},  # noqa: B006
         date: datetime = None,
+        invitee: Profile = None,
     ):
         """
         `notification_data` is a data specific to the notification of the `notification_action`.
@@ -235,6 +236,7 @@ class NotificationQuerySet(models.QuerySet):
         self,
         receiver: Profile,
         sender: Profile,
+        invitee: Profile,
         notification_data=None,
         date: datetime = None,
     ):
@@ -249,6 +251,7 @@ class NotificationQuerySet(models.QuerySet):
         return self._create(
             receiver=receiver,
             sender=sender,
+            invitee=invitee,
             notification_action=self.model.GAME_INVITE,
             notification_data=notification_data,
             date=date,
@@ -334,6 +337,8 @@ class GameInvitation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(Profile, on_delete=models.CASCADE,
                                related_name="sent_invites", null=True, blank=True)
+    invitee = models.ForeignKey(Profile, on_delete=models.CASCADE,
+                                related_name="invitee", null=True, blank=True)
     recipient = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
