@@ -68,11 +68,6 @@ export class Tournament extends HTMLElement {
       return;
     }
     this.#state.tournamentId = param.id;
-    // if (this.#state.user.tournament_id !== this.#state.tournamentId) {
-    //   devLog('User is not in this tournament');
-    //   router.redirect('/tournament-menu');
-    //   return;
-    // }
     await this.fetchTournamentData();
   }
 
@@ -94,7 +89,6 @@ export class Tournament extends HTMLElement {
       true,
     );
     if (!response.success) {
-      // TODO: handle error
       router.redirect('/home');
       return;
     }

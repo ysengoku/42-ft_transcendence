@@ -715,7 +715,6 @@ export class MultiplayerGame extends HTMLElement {
           if (remainingTime <= 0) {
             clearInterval(this);
             this.hideOverlay();
-            // TODO: Game over
           }
         }, 1000);
         break;
