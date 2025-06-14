@@ -62,8 +62,8 @@ class DuelEvent:
                         "action": "game_invite_canceled",
                         "message": "You are in an ongoing game",
                         "client_id": client_id,
-                    }
-                )
+                    },
+                ),
             )
             return True
         target_is_in_game: bool = GameRoom.objects.for_players(
@@ -77,8 +77,8 @@ class DuelEvent:
                         "action": "game_invite_canceled",
                         "message": "Your partner is in an ongoing game",
                         "client_id": client_id,
-                    }
-                )
+                    },
+                ),
             )
             return True
         return False
@@ -180,7 +180,7 @@ class DuelEvent:
                 invitation.sync_notification_status()
                 count += 1
             logger.info(
-                "Declined %d pending invitations from %s to %s", count, sender_name, self.consumer.user.username
+                "Declined %d pending invitations from %s to %s", count, sender_name, self.consumer.user.username,
             )
         self.consumer.send(
             text_data=json.dumps(
@@ -222,17 +222,13 @@ class DuelEvent:
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
         client_id = data["data"].get("client_id")
-        if options is not None:
-            logger.debug(options)
         if options is not None and not Validator.validate_options(options):
             self.consumer.close()
             return
         receiver_username = data["data"].get("username")
         if receiver_username == self.consumer.user.username:
-            logger.warning(
-                "Error : user %s wanted to play with themself.", self.consumer.user.username)
-            self.self_send_game_invite_cancelled(
-                "You can't invite yourself to a game !", client_id)
+            logger.warning("Error : user %s wanted to play with themself.", self.consumer.user.username)
+            self.self_send_game_invite_cancelled("You can't invite yourself to a game !", client_id)
             return
 
         client_id = data["data"].get("client_id")
@@ -247,23 +243,20 @@ class DuelEvent:
             return
 
         if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
-            logger.warning(
-                "Error : user %s has more than one pending invitation.", self.consumer.user.username)
-            self.self_send_game_invite_cancelled(
-                "You have one invitation pending.", client_id)
+            logger.warning("Error : user %s has more than one pending invitation.", self.consumer.user.username)
+            self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
             return
-        invitation = GameInvitation.objects.create(
-            sender=self.consumer.user_profile,
-            recipient=receiver,
-            invitee=receiver,
-            options=options,
-        )
+        invitation = GameInvitation.objects.create(sender=self.consumer.user_profile, recipient=receiver,
+                                                   invitee=receiver, options=options)
         self.consumer.user_profile.refresh_from_db()
+        self.create_and_send_game_notifications(self.consumer.user_profile, receiver, str(invitation.id), client_id)
+
+    def create_and_send_game_notifications(self, sender, receiver, invitation_id, client_id):
         notification = Notification.objects.action_send_game_invite(
             receiver=receiver,
-            sender=self.consumer.user_profile,
+            sender=sender,
             invitee=receiver,
-            notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
+            notification_data={"game_id": invitation_id, "client_id": str(client_id)},
         )
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
@@ -271,11 +264,12 @@ class DuelEvent:
         if "date" in notification_data and isinstance(notification_data["date"], datetime):
             notification_data["date"] = notification_data["date"].isoformat()
         self.send_ws_message_to_user(receiver, notification_data)
-        sender_notification = Notification.objects.action_send_game_invite(
-            receiver=self.consumer.user_profile,
+        # Notification for the sender,to find and cancel their invitation if the receiver never replies
+        Notification.objects.action_send_game_invite(
+            receiver=sender,
             invitee=receiver,
             sender=self.consumer.user_profile,
-            notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
+            notification_data={"game_id": invitation_id, "client_id": str(client_id)},
         )
 
     def send_ws_message_to_user(self, user, notification_data):
