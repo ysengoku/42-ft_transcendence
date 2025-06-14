@@ -75,6 +75,7 @@ export class TournamentMenu extends HTMLElement {
     }
     this.#state.nickname = authStatus.response.nickname;
     this.render();
+    this.setUpModal();
   }
 
   disconnectedCallback() {
@@ -111,8 +112,6 @@ export class TournamentMenu extends HTMLElement {
     this.createTournamentButton.addEventListener('click', this.showTournamentCreationForm);
     this.list.addEventListener('click', this.showTournamentDetail);
 
-    this.setUpModal();
-
     window.requestAnimationFrame(() => {
       this.noOpenTournaments = document.getElementById('no-open-tournaments');
       this.noOpenTournaments?.addEventListener('click', this.showTournamentCreationForm);
@@ -134,7 +133,7 @@ export class TournamentMenu extends HTMLElement {
     this.confirmButton = this.modalFooter.querySelector('.confirm-button');
 
     document.addEventListener('hide-modal', this.hideModal);
-    this.modalComponent.addEventListener('hidden.bs.modal', this.handleCloseModal);
+    this.modalComponent.addEventListener('hide.bs.modal', this.handleCloseModal);
   }
 
   /**
@@ -280,7 +279,7 @@ export class TournamentMenu extends HTMLElement {
     let message;
     switch (response.status) {
       case 401:
-        router.redirect('/login');
+        this.redirectToLoginPage();
         break;
       case 400:
         message = 'Invalid tournament data. Please check your input.';
@@ -323,36 +322,44 @@ export class TournamentMenu extends HTMLElement {
       false,
       true,
     );
-    console.log('Registration successful 1:', this.selectedTournament.id);
     if (response.success) {
-      console.log('Registration successful 2:', this.selectedTournament.id);
       this.connectToTournamentRoom(this.selectedTournament.id);
-    } else {
-      if (response.msg === 'Tournament is full.') {
-        this.modal.hide();
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
+      return;
+    }
+    let message;
+    switch (response.status) {
+      case 401:
+        this.redirectToLoginPage();
+        return;
+      case 403:
+        message = response.msg;
+        if (response.msg !== 'Tournament is full.' && response.msg !== 'Tournament is not open.') {
+          break;
+        }
+      case 404:
+        message = response.msg;
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, message);
+        this.hideModal();
         this.render();
         return;
-      }
-      const alertWrapper = this.modalBody.querySelector('#registration-fail-alert-wrapper');
-      alertWrapper.innerHTML = '';
-      const alert = document.createElement('div');
-      alert.className = 'alert alert-danger alert-dismissible show';
-
-      const alertMessage = document.createElement('p');
-      alertMessage.className = 'm-0';
-      alertMessage.textContent = response.msg;
-
-      const dismissButton = document.createElement('button');
-      dismissButton.type = 'button';
-      dismissButton.className = 'btn-close';
-      dismissButton.setAttribute('data-bs-dismiss', 'alert');
-      dismissButton.setAttribute('aria-label', 'Close');
-
-      alert.appendChild(alertMessage);
-      alert.appendChild(dismissButton);
-      alertWrapper.appendChild(alert);
+      default:
+        break;
     }
+    const alertWrapper = this.modalBody.querySelector('#registration-fail-alert-wrapper');
+    alertWrapper.innerHTML = '';
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger alert-dismissible show';
+    const alertMessage = document.createElement('p');
+    alertMessage.className = 'm-0';
+    alertMessage.textContent = message || 'Registration failed. Please try again later.';
+    const dismissButton = document.createElement('button');
+    dismissButton.type = 'button';
+    dismissButton.className = 'btn-close';
+    dismissButton.setAttribute('data-bs-dismiss', 'alert');
+    dismissButton.setAttribute('aria-label', 'Close');
+    alert.appendChild(alertMessage);
+    alert.appendChild(dismissButton);
+    alertWrapper.appendChild(alert);
   }
 
   /**
@@ -415,6 +422,17 @@ export class TournamentMenu extends HTMLElement {
       'hidden.bs.modal',
       () => {
         router.navigate(`/tournament-overview/${this.selectedTournament.id}`);
+      },
+      { once: true },
+    );
+    this.modal.hide();
+  }
+
+  redirectToLoginPage() {
+    this.modalComponent.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        router.redirect('/login');
       },
       { once: true },
     );

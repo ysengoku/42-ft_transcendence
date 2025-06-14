@@ -48,7 +48,7 @@ export class UserGameResultModal extends HTMLElement {
     this.modalElement = this.querySelector('.modal');
     this.gameResultContent = this.querySelector('#game-result-content');
     this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
-    this.renderDuelResult()
+    this.renderDuelResult();
     this.modal = new Modal(this.modalElement);
   }
 
@@ -180,9 +180,9 @@ export class UserGameResultModal extends HTMLElement {
       <div class="w-100 px-4" id="duel-loser"></div>
     </div>
     `;
-  };
+  }
 
-  userTemplate () {
+  userTemplate() {
     return `
       <div class="d-flex flex-row flex-wrap justify-content-start align-items-center gap-3">
         <div class="d-flex flex-row align-items-center me-3 gap-2">
@@ -197,7 +197,7 @@ export class UserGameResultModal extends HTMLElement {
         </div>
       </div>
       `;
-  };
+  }
 }
 
 customElements.define('game-result-modal', UserGameResultModal);
