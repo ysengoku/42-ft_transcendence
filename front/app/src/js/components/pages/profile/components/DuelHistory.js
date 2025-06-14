@@ -36,12 +36,7 @@ export class UserDuelHistory extends HTMLElement {
     this.filterButtonAll?.removeEventListener('click', this.filterItems);
     this.filterButtonWon?.removeEventListener('click', this.filterItems);
     this.filterButtonLost?.removeEventListener('click', this.filterItems);
-    if (this.#state.items.length === 0) {
-      return;
-    }
-    this.tableBody.querySelectorAll('tr').forEach((row) => {
-      row.removeEventListener('click', this.showDuelDetail);
-    });
+    this.tableBody?.removeEventListener('click', this.showDuelDetail);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -90,6 +85,7 @@ export class UserDuelHistory extends HTMLElement {
     this.filterButtonAll.addEventListener('click', this.filterItems);
     this.filterButtonWon.addEventListener('click', this.filterItems);
     this.filterButtonLost.addEventListener('click', this.filterItems);
+    this.tableBody.addEventListener('click', this.showDuelDetail);
   }
 
   createRow(item) {
@@ -118,8 +114,6 @@ export class UserDuelHistory extends HTMLElement {
       ? '<i class="bi bi-arrow-up-right ps-1"></i>'
       : '<i class="bi bi-arrow-down-right ps-1"></i>';
     eloChangeIndicator.innerHTML = indicator;
-
-    row.addEventListener('click', this.showDuelDetail);
     return row;
   }
 
@@ -128,13 +122,15 @@ export class UserDuelHistory extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   showDuelDetail(event) {
     event.preventDefault();
-    const target = event.target.closest('[match-id]');
+    const target = event.target.closest('tr[match-id]');
     const matchId = target?.getAttribute('match-id');
     if (!matchId) {
       return;
     }
     const modal = document.querySelector('game-result-modal');
-    modal.showModal('duel', matchId);
+    if (modal) {
+      modal.showModal(matchId);
+    }
   }
 
   async loadMoreItems(event) {
@@ -230,8 +226,6 @@ export class UserDuelHistory extends HTMLElement {
         this.tableBody.appendChild(row);
       }
       this.#state.currentLastItemIndex = this.#state.items.length - 1;
-    } else {
-      // TODO: handle error (if response.status !== 401/500)
     }
   }
 

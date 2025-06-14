@@ -189,7 +189,7 @@ export class Chat extends HTMLElement {
       devLog('Chat data response:', response);
       return { data: response.data, status: response.status };
     } else {
-      // TODO: Handle error
+      return null;
     }
   }
 
@@ -201,7 +201,9 @@ export class Chat extends HTMLElement {
     if (!event.detail.messages) {
       this.#state.currentChatUsername = event.detail;
       const chatData = await this.fetchChatData();
-      // TODO: Error handling
+      if (!chatData) {
+        return;
+      }
       this.#state.currentChat = chatData.data;
     } else {
       this.#state.currentChat = event.detail;

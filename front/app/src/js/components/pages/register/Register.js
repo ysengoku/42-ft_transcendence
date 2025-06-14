@@ -10,8 +10,7 @@ export class Register extends HTMLElement {
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    this.isLoggedin = authStatus.success;
-    if (this.isLoggedin) {
+    if (authStatus.success) {
       router.redirect('/home');
     }
     this.render();

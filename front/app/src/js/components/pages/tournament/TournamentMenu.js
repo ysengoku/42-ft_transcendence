@@ -269,19 +269,35 @@ export class TournamentMenu extends HTMLElement {
       alias: newTournament.alias,
       settings: newTournament.settings,
     };
-    console.log('Creating new tournament with data:', data);
     const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
     if (response.success) {
       document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true }));
-      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament created successfully!', 5000);
+      showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament created successfully!');
       const tournamentId = response.data.id;
       this.connectToTournamentRoom(tournamentId);
-    } else if (response.status === 422) {
-      this.alert.textContent = response.msg;
-      this.alert.classList.remove('d-none');
-      // this.confirmButton.disabled = true;
-    } else if (response.status !== 401 && response.status !== 500) {
-      // TODO: Handle other error messages
+      return;
+    }
+    let message;
+    switch (response.status) {
+      case 401:
+        router.redirect('/login');
+        break;
+      case 400:
+        message = 'Invalid tournament data. Please check your input.';
+      case 403:
+        if (!message) {
+          message = 'You have an ongoing game activity. Cannot create a new tournament.';
+        }
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, message);
+        this.hideModal();
+        break;
+      case 422:
+        this.alert.textContent = response.msg;
+        this.alert.classList.remove('d-none');
+        // this.confirmButton.disabled = true;
+        break;
+      default:
+        break;
     }
   }
 
