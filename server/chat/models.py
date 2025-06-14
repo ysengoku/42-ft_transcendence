@@ -244,10 +244,10 @@ class NotificationQuerySet(models.QuerySet):
             notification_data = {"game_id": ""}
         from chat.models import GameInvitation
 
-        invitation = GameInvitation.objects.get(
-            id=notification_data["game_id"])
+        invitation = GameInvitation.objects.get(id=notification_data["game_id"])
         notification_data = notification_data.copy()
         notification_data["status"] = invitation.status
+        notification_data["invitee"] = invitee.to_username_nickname_avatar_schema()
         return self._create(
             receiver=receiver,
             sender=sender,

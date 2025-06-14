@@ -255,6 +255,7 @@ class DuelEvent:
         invitation = GameInvitation.objects.create(
             sender=self.consumer.user_profile,
             recipient=receiver,
+            invitee=receiver,
             options=options,
         )
         self.consumer.user_profile.refresh_from_db()
@@ -285,22 +286,9 @@ class DuelEvent:
         sender_notification = Notification.objects.action_send_game_invite(
             receiver=self.consumer.user_profile,
             invitee=receiver,
-            sender=receiver,
+            sender=self.consumer.user_profile,
             notification_data={"game_id": str(
                 invitation.id), "client_id": str(client_id)},
-        )
-        notification_data = sender_notification.data.copy()
-        notification_data["id"] = str(sender_notification.id)
-        # Convert date in good format
-        if "date" in notification_data and isinstance(notification_data["date"], datetime):
-            notification_data["date"] = notification_data["date"].isoformat()
-        self.consumer.send(
-            text_data=json.dumps(
-                {
-                    "action": "game_invite",
-                    "data": notification_data,
-                }
-            )
         )
 
     def cancel_game_invite(self):
