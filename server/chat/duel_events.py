@@ -263,16 +263,24 @@ class DuelEvent:
             receiver=receiver,
             sender=self.consumer.user_profile,
             invitee=receiver,
-            notification_data={"game_id": str(
-                invitation.id), "client_id": str(client_id)},
+            notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
         )
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
         # Convert date in good format
         if "date" in notification_data and isinstance(notification_data["date"], datetime):
             notification_data["date"] = notification_data["date"].isoformat()
+        self.send_ws_message_to_user(receiver, notification_data)
+        sender_notification = Notification.objects.action_send_game_invite(
+            receiver=self.consumer.user_profile,
+            invitee=receiver,
+            sender=self.consumer.user_profile,
+            notification_data={"game_id": str(invitation.id), "client_id": str(client_id)},
+        )
+
+    def send_ws_message_to_user(self, user, notification_data):
         async_to_sync(self.consumer.channel_layer.group_send)(
-            f"user_{receiver.user.id}",
+            f"user_{user.user.id}",
             {
                 "type": "chat_message",
                 "message": json.dumps(
@@ -282,13 +290,6 @@ class DuelEvent:
                     },
                 ),
             },
-        )
-        sender_notification = Notification.objects.action_send_game_invite(
-            receiver=self.consumer.user_profile,
-            invitee=receiver,
-            sender=self.consumer.user_profile,
-            notification_data={"game_id": str(
-                invitation.id), "client_id": str(client_id)},
         )
 
     def cancel_game_invite(self):
