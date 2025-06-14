@@ -69,7 +69,10 @@ export class TournamentOverview extends HTMLElement {
     }
     this.#state.tournament = response.data;
 
-    if (!(this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING || this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED)) {
+    if (
+      this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING &&
+      this.#state.tournament.status !== TOURNAMENT_STATUS.FINISHED
+    ) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
       return;
