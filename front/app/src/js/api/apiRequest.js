@@ -62,7 +62,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
 const handlers = {
   /**
    * Handles successful API responses.
-   *
+
    * @async
    * @function
    * @param {Response} response - The response object from the fetch request.
