@@ -5,13 +5,11 @@ import './components/index.js';
 export class Login extends HTMLElement {
   constructor() {
     super();
-    this.isLoggedin = false;
   }
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    this.isLoggedin = authStatus.success;
-    if (this.isLoggedin) {
+    if (authStatus.success) {
       router.redirect('/home');
       return;
     }

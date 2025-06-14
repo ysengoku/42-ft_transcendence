@@ -238,7 +238,6 @@ export class ChatList extends HTMLElement {
       this.prependNewListItem(chatData);
     }
     this.hideUserSearchBar();
-    // TODO: Replace by setData to chatMessageArea
     const event = new CustomEvent('chatItemSelected', { detail: data.username, bubbles: true });
     this.dispatchEvent(event);
   }

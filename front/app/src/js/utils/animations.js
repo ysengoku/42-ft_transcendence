@@ -126,7 +126,6 @@ export function flyAway(el, duration = 1000) {
   el.classList.add('fly-away');
 
   setTimeout(() => {
-    // el.classList.remove('fly-away');
     el.style.visibility = 'hidden';
   }, duration);
 }

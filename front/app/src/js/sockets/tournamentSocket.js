@@ -23,7 +23,7 @@ socketManager.addSocket('tournament', {
   tournament_start: (data) => {
     if (window.location.pathname === '/tournament') {
       const tournamentPage = document.querySelector('tournament-room');
-      // If the current page is a tournament page, set it to tournamentStart
+      // TODO: set it to tournamentStart
     } else {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.TOURNAMENT_STARTS);
     }
