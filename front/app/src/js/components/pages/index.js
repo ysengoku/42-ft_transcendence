@@ -12,7 +12,6 @@ import { AccountDeleted } from './settings/AccountDeleted.js';
 import { Chat } from './chat/Chat.js';
 import { DuelMenu } from './match/DuelMenu.js';
 import { Duel } from './match/Duel.js';
-import { DuelResult } from './match/DuelResult.js';
 import { LocalGameMenu } from './match/LocalGameMenu.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
 import { Tournament } from './tournament/Tournament.js';
@@ -37,7 +36,6 @@ export {
   Chat,
   DuelMenu,
   Duel,
-  DuelResult,
   LocalGameMenu,
   TournamentMenu,
   Tournament,
