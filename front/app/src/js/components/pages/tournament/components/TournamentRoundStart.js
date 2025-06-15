@@ -1,11 +1,10 @@
 import { router } from '@router';
-import { flyAway } from '@utils';
 
 export class TournamentRoundStart extends HTMLElement {
   #state = {
     nextRoundNumber: 1,
     nextRound: null,
-    currentRound: null,
+    // currentRound: null,
     gameId: '',
     isFirstRound: true,
   };
@@ -23,9 +22,12 @@ export class TournamentRoundStart extends HTMLElement {
   set data(data) {
     this.#state.nextRoundNumber = data.round_number;
     this.#state.nextRound = data.round;
-    this.#state.currentRound = data.previous_round;
+    // this.#state.currentRound = data.previous_round;
     this.#state.gameId = data.game_id;
     this.#state.isFirstRound = this.#state.nextRoundNumber === 1;
+  }
+
+  connectedCallback() {
     this.render();
   }
 
@@ -68,23 +70,6 @@ export class TournamentRoundStart extends HTMLElement {
       setTimeout(() => {
         resolve();
       }, 3000);
-    });
-  }
-
-  roundFinishedAnimation() {
-    devLog(`Round ${this.#state.roundNumber - 1} finished`);
-    return new Promise((resolve) => {
-      const scoreElements = this.querySelectorAll('.player-score');
-      const loserElements = this.querySelectorAll('.bracket-player-loser');
-      scoreElements.forEach((score) => {
-        score.classList.add('d-none');
-      });
-      loserElements.forEach((loser) => {
-        flyAway(loser);
-      });
-      setTimeout(() => {
-        resolve();
-      }, 2000);
     });
   }
 

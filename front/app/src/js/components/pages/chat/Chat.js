@@ -238,8 +238,6 @@ export class Chat extends HTMLElement {
     };
     devLog('Sending new message to server. Data:', messageData);
     socketManager.sendMessage('livechat', messageData);
-    // TODO: Render temporary message (in gray) to chat message area?
-    // But how to match with the server response to remove it after ?
   }
 
   sendToggleLikeEvent(chatId, messageId, isLiked) {
