@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
@@ -87,6 +88,27 @@ class MatchQuerySet(models.QuerySet):
         resolved_match.save()
         winner.save()
         loser.save()
+        return resolved_match, winner, loser
+
+    async def async_resolve(self, winner_id: int, loser_id: int) -> tuple["Match", Profile, Profile]:
+        """Works like Match.objects.resolve(), but only with id's and in async context."""
+        winner: Profile = await database_sync_to_async(Profile.objects.get)(id=winner_id)
+        loser: Profile = await database_sync_to_async(Profile.objects.get)(id=loser_id)
+        winners_elo, losers_elo, elo_change = self.calculate_elo_change_for_players(winner.elo, loser.elo)
+        winner.elo = winners_elo
+        loser.elo = losers_elo
+        resolved_match: Match = Match(
+            winner=winner,
+            loser=loser,
+            winners_score=winner_id.bumper.score,
+            losers_score=loser_id.bumper.score,
+            elo_change=elo_change,
+            winners_elo=winners_elo,
+            losers_elo=losers_elo,
+        )
+        await database_sync_to_async(resolved_match.save)()
+        await database_sync_to_async(winner.save)()
+        await database_sync_to_async(loser.save)()
         return resolved_match, winner, loser
 
     def get_elo_points_by_day(self, profile: Profile):

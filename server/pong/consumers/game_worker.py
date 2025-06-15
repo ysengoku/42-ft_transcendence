@@ -18,7 +18,6 @@ from pong.game_protocol import (
     SerializedGameState,
 )
 from pong.models import GameRoom, Match
-from users.models import Profile
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -41,7 +40,7 @@ STARTING_BUMPER_2_POS = 0, 9
 STARTING_BALL_POS = 0, 0
 Z_VELOCITY = 0.25
 STARTING_BALL_VELOCITY = 0, Z_VELOCITY
-SUBTICK = 0.05
+SUBTICK = 0.025
 BOUNCING_ANGLE_DEGREES = 55
 BALL_VELOCITY_CAP = 1
 TEMPORAL_SPEED_DEFAULT = 1, 1
@@ -50,6 +49,7 @@ TEMPORAL_SPEED_DECAY = 0.005
 GAME_TICK_INTERVAL = 1.0 / 120
 PLAYERS_REQUIRED = 2
 DEFAULT_COIN_WAIT_TIME = 30
+BASE_BUMPPER_SPEED = 0.25
 ###################
 
 
@@ -80,6 +80,11 @@ class Vector2:
     x: float
     z: float
 
+    def mul(self, nbr: float):
+        self.x *= nbr
+        self.z *= nbr
+        return self
+
 
 @dataclass(slots=True)
 class Bumper(Vector2):
@@ -87,7 +92,7 @@ class Bumper(Vector2):
     width_half: int = 0.5
     lenght_half: int = 2.5
     score: int = 0
-    speed: int = 0.25
+    speed: int = BASE_BUMPPER_SPEED
     control_reversed: bool = False
     moves_left: bool = False
     moves_right: bool = False
@@ -112,7 +117,7 @@ class Player:
             task.cancel()
         self.reconnection_timer = None
 
-    def as_dict(self, anonymous: bool=False):
+    def as_dict(self, anonymous: bool = False):
         if anonymous:
             return {
                 "alias": self.name,
@@ -146,17 +151,17 @@ class BasePong:
     """
 
     coin: Coin | None
-    _game_speed: Literal[0.0125, 0.025, 0.05]
+    _game_speed: Literal[0.75, 1.0, 1.5]
     _is_someone_scored: bool
     _bumper_1: Bumper
     _bumper_2: Bumper
     _ball: Ball
 
-    def __init__(self, cool_mode: bool, game_speed: Literal[0.0125, 0.025, 0.05]):
+    def __init__(self, cool_mode: bool, game_speed: Literal[0.75, 1.0, 1.5]):
         if cool_mode:
             self.coin = Coin(
                 *STARTING_COIN_POS,
-                Vector2(*STARTING_COIN_VELOCITY),
+                Vector2(*STARTING_COIN_VELOCITY).mul(self._game_speed),
             )
         else:
             self.coin = None
@@ -164,15 +169,22 @@ class BasePong:
         self.last_bumper_collided: Bumper | None = None
         self.choose_buff = 0
         self.time_to_wait = 0
+        self._game_speed = game_speed
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
+            speed=BASE_BUMPPER_SPEED * self._game_speed,
         )
         self._bumper_2 = Bumper(
             *STARTING_BUMPER_2_POS,
             dir_z=-1,
+            speed=BASE_BUMPPER_SPEED * self._game_speed,
         )
-        self._ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
+        self._ball = Ball(
+            *STARTING_BALL_POS,
+            Vector2(*STARTING_BALL_VELOCITY).mul(self._game_speed),
+            Vector2(*TEMPORAL_SPEED_DEFAULT),
+        )
 
     def resolve_next_tick(self):
         """
@@ -181,12 +193,12 @@ class BasePong:
         This approach is called Conservative Advancement.
         """
         self._is_someone_scored = False
-        total_distance_x = abs((self._ball.temporal_speed.x) * self._ball.velocity.x)
-        total_distance_z = abs((self._ball.temporal_speed.z) * self._ball.velocity.z)
+        total_distance_x = abs((self._ball.temporal_speed.x) * self._ball.velocity.x * self._game_speed)
+        total_distance_z = abs((self._ball.temporal_speed.z) * self._ball.velocity.z * self._game_speed)
         self._ball.temporal_speed.x = max(TEMPORAL_SPEED_DEFAULT[0], self._ball.temporal_speed.x - TEMPORAL_SPEED_DECAY)
         self._ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self._ball.temporal_speed.z - TEMPORAL_SPEED_DECAY)
         current_subtick = 0
-        ball_subtick_z = self._game_speed
+        ball_subtick_z = SUBTICK
         total_subticks = total_distance_z / ball_subtick_z
         ball_subtick_x = total_distance_x / total_subticks
         bumper_1_subtick = self._bumper_1.speed / total_subticks
@@ -225,6 +237,7 @@ class BasePong:
         self._ball.temporal_speed.x, self._ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
         self._ball.x, self._ball.z = STARTING_BALL_POS
         self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCITY
+        self._ball.mul(self._game_speed)
         self._ball.velocity.z *= direction
 
     def _is_collided_with_ball(self, bumper, ball_subtick_z, ball_subtick_x):
@@ -388,7 +401,7 @@ class MultiplayerPongMatch(BasePong):
     _player_1: Player
     _player_2: Player
 
-    game_speed_dict = {"slow": 0.0125, "medium": 0.025, "fast": 0.05}
+    game_speed_dict = {"slow": 0.75, "medium": 1.0, "fast": 1.5}
 
     def __init__(self, game_id: str, settings: GameRoomSettings, is_in_tournament: bool):
         cool_mode, game_speed, time_limit, ranked, score_to_win = (
@@ -401,7 +414,7 @@ class MultiplayerPongMatch(BasePong):
         super().__init__(cool_mode, self.game_speed_dict[game_speed])
         self.id = game_id
         self.is_in_tournament = is_in_tournament
-        self.time_limit = time_limit             # TODO: use this
+        self.time_limit = time_limit  # TODO: use this
         self.ranked = ranked
         self.pause_event = asyncio.Event()
         self.game_loop_task = None
@@ -632,7 +645,7 @@ class GameWorkerConsumer(AsyncConsumer):
                     asyncio.create_task(self._wait_for_end_of_buff(match, None))
                 if result := match.get_result():
                     winner, loser = result
-                    elo_change = await self._write_result_to_db(winner, loser, match)
+                    match_db, _, _ = await self._write_result_to_db(winner, loser, match.is_in_tournament)
                     await self.channel_layer.group_send(
                         self._to_game_room_group_name(match),
                         GameServerToClient.PlayerWon(
@@ -640,7 +653,7 @@ class GameWorkerConsumer(AsyncConsumer):
                             action="player_won",
                             winner=winner.as_dict(),
                             loser=loser.as_dict(),
-                            elo_change=elo_change,
+                            elo_change=match_db.elo_change,
                             close_code=PongCloseCodes.NORMAL_CLOSURE,
                         ),
                     )
@@ -755,7 +768,7 @@ class GameWorkerConsumer(AsyncConsumer):
 
             match.status = MultiplayerPongMatchStatus.ENDED
             winner = match.get_other_player(player.id)
-            elo_change = await self._write_result_to_db(winner, player, match)
+            match_db, _, _ = await self._write_result_to_db(winner, player, match.is_in_tournament)
             await self.channel_layer.group_send(
                 self._to_game_room_group_name(match),
                 GameServerToClient.PlayerResigned(
@@ -763,7 +776,7 @@ class GameWorkerConsumer(AsyncConsumer):
                     action="player_resigned",
                     winner=winner.as_dict(),
                     loser=player.as_dict(),
-                    elo_change=elo_change,
+                    elo_change=match_db.elo_change,
                     close_code=PongCloseCodes.NORMAL_CLOSURE,
                 ),
             )
@@ -890,31 +903,14 @@ class GameWorkerConsumer(AsyncConsumer):
             match.pause_event.set()
         logger.info("[GameWorker]: game {%s} has been unpaused", match.id)
 
-    async def _write_result_to_db(self, winner: Player, loser: Player, match: MultiplayerPongMatch) -> int:
-        """
-        Records the results of the match into the database.
-        Unlike Match.objects.resolve(), this function works with Player classes and can be used in async context.
-        """
-        winner_db: Profile = await database_sync_to_async(Profile.objects.get)(id=winner.profile_id)
-        loser_db: Profile = await database_sync_to_async(Profile.objects.get)(id=loser.profile_id)
-        winners_elo, losers_elo, elo_change = Match.objects.calculate_elo_change_for_players(winner.elo, loser.elo)
-        winner.elo = winners_elo
-        loser.elo = losers_elo
-        resolved_match_db: Match = Match(
-            winner=winner_db,
-            loser=loser_db,
-            winners_score=winner.bumper.score,
-            losers_score=loser.bumper.score,
-            elo_change=elo_change,
-            winners_elo=winners_elo,
-            losers_elo=losers_elo,
-        )
-        winner_db.elo = winners_elo
-        loser_db.elo = losers_elo
-        await database_sync_to_async(resolved_match_db.save)()
-        await database_sync_to_async(winner_db.save)()
-        await database_sync_to_async(loser_db.save)()
-        return elo_change
+    async def _write_result_to_db(self, winner: Player, loser: Player, is_in_tournament: bool) -> int:
+        if not is_in_tournament:
+            match_db, winner_db, loser_db = await Match.objects.async_resolve(winner.profile_id, loser.profile_id)
+            winner.elo = winner_db.elo
+            loser.elo = loser_db.elo
+            return match_db, winner_db, loser_db
+
+        return None
 
     # To avoid typing errors.
     def _to_game_room_group_name(self, match: MultiplayerPongMatch):
