@@ -48,6 +48,7 @@ class WebSocketManager {
         });
         document.dispatchEvent(customEvent);
         devLog(`WebSocket (${this.name}) closed intentionally by server with code 3000.`);
+        this.socketOpen = false;
         return;
       }
       if (event.code === 1006 || event.code === 1011) {
@@ -158,7 +159,7 @@ const socketManager = (() => {
         devErrorLog('Socket not registered:', name);
         return;
       }
-      if (this.sockets.has(name)) {
+      if (this.sockets.has(name) && this.sockets.get(name).socketOpen) {
         devLog('Socket already open:', name);
         return;
       }
