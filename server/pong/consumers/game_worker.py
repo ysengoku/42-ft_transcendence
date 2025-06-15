@@ -151,13 +151,14 @@ class BasePong:
     """
 
     coin: Coin | None
-    _game_speed: Literal[0.75, 1.0, 1.5]
+    _game_speed: Literal[0.75, 1.0, 1.25]
     _is_someone_scored: bool
     _bumper_1: Bumper
     _bumper_2: Bumper
     _ball: Ball
 
-    def __init__(self, cool_mode: bool, game_speed: Literal[0.75, 1.0, 1.5]):
+    def __init__(self, cool_mode: bool, game_speed: Literal[0.75, 1.0, 1.25]):
+        self._game_speed = game_speed
         if cool_mode:
             self.coin = Coin(
                 *STARTING_COIN_POS,
@@ -169,7 +170,6 @@ class BasePong:
         self.last_bumper_collided: Bumper | None = None
         self.choose_buff = 0
         self.time_to_wait = 0
-        self._game_speed = game_speed
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
@@ -401,7 +401,7 @@ class MultiplayerPongMatch(BasePong):
     _player_1: Player
     _player_2: Player
 
-    game_speed_dict = {"slow": 0.75, "medium": 1.0, "fast": 1.5}
+    game_speed_dict = {"slow": 0.75, "medium": 1.0, "fast": 1.25}
 
     def __init__(self, game_id: str, settings: GameRoomSettings, is_in_tournament: bool):
         cool_mode, game_speed, time_limit, ranked, score_to_win = (
