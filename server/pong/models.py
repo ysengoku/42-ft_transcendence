@@ -91,7 +91,7 @@ class MatchQuerySet(models.QuerySet):
         return resolved_match, winner, loser
 
     async def async_resolve(
-        self, winner_id: int, loser_id: int, winners_score: int, losers_score: int, ranked: bool
+        self, winner_id: int, loser_id: int, winners_score: int, losers_score: int, ranked: bool,
     ) -> tuple["Match", Profile, Profile]:
         """Works like Match.objects.resolve(), but only with id's and in async context."""
         winner: Profile = await database_sync_to_async(Profile.objects.get)(id=winner_id)
