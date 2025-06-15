@@ -645,7 +645,7 @@ class GameWorkerConsumer(AsyncConsumer):
                     asyncio.create_task(self._wait_for_end_of_buff(match, None))
                 if result := match.get_result():
                     winner, loser = result
-                    match_db, _, _ = await self._write_result_to_db(winner, loser, match.is_in_tournament)
+                    match_db, _, _ = await self._write_result_to_db_and_send_result(winner, loser, match)
                     await self.channel_layer.group_send(
                         self._to_game_room_group_name(match),
                         GameServerToClient.PlayerWon(
@@ -653,7 +653,7 @@ class GameWorkerConsumer(AsyncConsumer):
                             action="player_won",
                             winner=winner.as_dict(),
                             loser=loser.as_dict(),
-                            elo_change=match_db.elo_change,
+                            elo_change=match_db.elo_change if match.ranked else 0,
                             close_code=PongCloseCodes.NORMAL_CLOSURE,
                         ),
                     )
@@ -768,7 +768,7 @@ class GameWorkerConsumer(AsyncConsumer):
 
             match.status = MultiplayerPongMatchStatus.ENDED
             winner = match.get_other_player(player.id)
-            match_db, _, _ = await self._write_result_to_db(winner, player, match.is_in_tournament)
+            match_db, _, _ = await self._write_result_to_db_and_send_result(winner, player, match)
             await self.channel_layer.group_send(
                 self._to_game_room_group_name(match),
                 GameServerToClient.PlayerResigned(
@@ -903,9 +903,16 @@ class GameWorkerConsumer(AsyncConsumer):
             match.pause_event.set()
         logger.info("[GameWorker]: game {%s} has been unpaused", match.id)
 
-    async def _write_result_to_db(self, winner: Player, loser: Player, is_in_tournament: bool) -> int:
-        if not is_in_tournament:
-            match_db, winner_db, loser_db = await Match.objects.async_resolve(winner.profile_id, loser.profile_id)
+    async def _write_result_to_db_and_send_result(
+        self,
+        winner: Player,
+        loser: Player,
+        match: MultiplayerPongMatch,
+    ) -> int:
+        if not match.is_in_tournament:
+            match_db, winner_db, loser_db = await Match.objects.async_resolve(
+                winner.profile_id, loser.profile_id, match.ranked,
+            )
             winner.elo = winner_db.elo
             loser.elo = loser_db.elo
             return match_db, winner_db, loser_db
