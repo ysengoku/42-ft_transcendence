@@ -488,8 +488,8 @@ class MultiplayerPongMatch(BasePong):
 
     def get_other_player(self, player_id: str) -> Player:
         if player_id == self._player_1.id:
-            return self._player_1
-        return self._player_2
+            return self._player_2
+        return self._player_1
 
     def stop_waiting_for_players_timer(self) -> None:
         timer = self.waiting_for_players_timer
@@ -911,7 +911,11 @@ class GameWorkerConsumer(AsyncConsumer):
     ) -> int:
         if not match.is_in_tournament:
             match_db, winner_db, loser_db = await Match.objects.async_resolve(
-                winner.profile_id, loser.profile_id, match.ranked,
+                winner.profile_id,
+                loser.profile_id,
+                winner.bumper.score,
+                loser.bumper.score,
+                match.ranked,
             )
             winner.elo = winner_db.elo
             loser.elo = loser_db.elo

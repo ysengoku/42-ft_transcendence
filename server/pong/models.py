@@ -90,7 +90,9 @@ class MatchQuerySet(models.QuerySet):
         loser.save()
         return resolved_match, winner, loser
 
-    async def async_resolve(self, winner_id: int, loser_id: int, ranked: bool) -> tuple["Match", Profile, Profile]:
+    async def async_resolve(
+        self, winner_id: int, loser_id: int, winners_score: int, losers_score: int, ranked: bool
+    ) -> tuple["Match", Profile, Profile]:
         """Works like Match.objects.resolve(), but only with id's and in async context."""
         winner: Profile = await database_sync_to_async(Profile.objects.get)(id=winner_id)
         loser: Profile = await database_sync_to_async(Profile.objects.get)(id=loser_id)
@@ -103,8 +105,8 @@ class MatchQuerySet(models.QuerySet):
         resolved_match: Match = Match(
             winner=winner,
             loser=loser,
-            winners_score=winner_id.bumper.score,
-            losers_score=loser_id.bumper.score,
+            winners_score=winners_score,
+            losers_score=losers_score,
             elo_change=elo_change,
             winners_elo=winners_elo,
             losers_elo=losers_elo,
