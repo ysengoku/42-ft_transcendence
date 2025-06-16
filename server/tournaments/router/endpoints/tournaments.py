@@ -142,8 +142,8 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
         except Tournament.DoesNotExist as e:
             raise HttpError(404, "Tournament not found.") from e
 
-        if Tournament.objects.get_active_tournament(user.profile):
-            raise HttpError(403, "You can't be a participant in multiple active tournaments.")
+        if not user.profile.can_participate_in_game():
+            raise HttpError(403, "You can't be a participant if you are already in a game / looking for a game.")
 
         if tournament.status != Tournament.PENDING:
             raise HttpError(403, "Tournament is not open.")
