@@ -62,7 +62,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
 const handlers = {
   /**
    * Handles successful API responses.
-   *
+
    * @async
    * @function
    * @param {Response} response - The response object from the fetch request.
@@ -152,7 +152,7 @@ const handlers = {
     } else if (typeof errorData === 'object' && errorData.msg) {
       errorMsg = errorData.msg;
     }
-    const excludedStatusCodes = [401, 403, 422, 429];
+    const excludedStatusCodes = [401, 403, 404, 422, 429];
     if (!excludedStatusCodes.includes(response.status)) {
       unknowknErrorToast();
     }

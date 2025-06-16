@@ -7,30 +7,44 @@ import { router } from '@router';
 import { showToastNotification, TOAST_TYPES, showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@utils';
 
 socketManager.addSocket('tournament', {
+  // TESTED
   new_registration: (data) => {
-    const customEvent = new CustomEvent('newTournamentRegistration', { detail: data, bubbles: true });
-    document.dispatchEvent(customEvent);
+    devLog('New tournament registration:', data);
+    if (window.location.pathname.startsWith('/tournament')) {
+      const tournamentPendingContentElement = document.querySelector('tournament-pending');
+      tournamentPendingContentElement?.addParticipant(data);
+    }
   },
-  registration_cancelled: (data) => {
-    const customEvent = new CustomEvent('tournamentRegistrationCancelled', { detail: data, bubbles: true });
-    document.dispatchEvent(customEvent);
+  // TESTED
+  registration_canceled: (data) => {
+    devLog('Tournament registration canceled:', data);
+    if (window.location.pathname.startsWith('/tournament')) {
+      const tournamentPendingContentElement = document.querySelector('tournament-pending');
+      tournamentPendingContentElement?.removeParticipant(data);
+    }
   },
+  // TESTED
   tournament_canceled: (data) => {
-    const customEvent = new CustomEvent('tournamentCanceled', { detail: data, bubbles: true });
-    document.dispatchEvent(customEvent);
-    showToastNotification(`Tournament -  ${data.tournament_name} has been canceled.`, TOAST_TYPES.ERROR);
+    devLog('Tournament canceled:', data);
+    if (window.location.pathname.startsWith('/tournament')) {
+      const tournamentPageElement = document.querySelector('tournament-room');
+      tournamentPageElement?.handleTournamentCanceled(data);
+    } else {
+      showToastNotification(`Tournament -  ${data.tournament_name} has been canceled.`, TOAST_TYPES.ERROR);
+    }
   },
   tournament_start: (data) => {
-    if (window.location.pathname === '/tournament') {
+    devLog('Tournament starts:', data);
+    if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPage = document.querySelector('tournament-room');
-      // If the current page is a tournament page, set it to tournamentStart
+      tournamentPage?.handleTournamentStart(data);
     } else {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.TOURNAMENT_STARTS);
     }
   },
   round_start: (data) => {
-    if (window.location.pathname === '/tournament') {
-      // set new round data in the tournament page buffer
+    if (window.location.pathname.startsWith('/tournament')) {
+      // TODO
     }
   },
   match_finished: (data) => {
@@ -38,17 +52,21 @@ socketManager.addSocket('tournament', {
       router.redirect(`tournament/${data.tournament_id}`);
     }
   },
-  match_result: (data) => {
-    if (window.location.pathname === '/tournament') {
+  match_result: async (data) => {
+    if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPage = document.querySelector('tournament-room');
-      tournamentPage?.updateBracket(data);
+      if (!tournamentPage) {
+        devErrorLog('Tournament page not found, cannot update bracket.');
+        return;
+      }
+      tournamentPage.updateBracket(data);
+      if (tournamentPage.ongoingBracketCount === 0) {
+        await tournamentPage.roundFinishedAnimation();
+      }
     }
   },
   round_end: (data) => {
-    if (window.location.pathname === '/tournament') {
-      const customEvent = new CustomEvent('tournamentRoundEnd', { detail: data, bubbles: true });
-      document.dispatchEvent(customEvent);
-    } else {
+    if (!window.location.pathname.startsWith('/tournament')) {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.ROUND_END);
     }
   },

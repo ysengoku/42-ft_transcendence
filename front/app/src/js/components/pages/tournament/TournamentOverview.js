@@ -1,12 +1,13 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { formatDateMDY } from '@utils';
 import { isMobile } from '@utils';
+import { TOURNAMENT_STATUS } from './tournamentStatus.js';
 // import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 
 export class TournamentOverview extends HTMLElement {
   #state = {
     tournament_id: '',
-    status: '', // ongoing, finished
+    status: '',
     tournament: null,
     isMobile: false,
   };
@@ -68,7 +69,10 @@ export class TournamentOverview extends HTMLElement {
     }
     this.#state.tournament = response.data;
 
-    if (!(this.#state.tournament.status === 'ongoing' || this.#state.tournament.status === 'finished')) {
+    if (
+      this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING &&
+      this.#state.tournament.status !== TOURNAMENT_STATUS.FINISHED
+    ) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
       return;
@@ -87,10 +91,10 @@ export class TournamentOverview extends HTMLElement {
     this.tournamentOverviewContent = this.querySelector('#tournament-overview-content');
 
     this.tournamentName.textContent = this.#state.tournament.name;
-    if (this.#state.tournament.status === 'ongoing') {
+    if (this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING) {
       this.tournamentStatus.textContent = 'Ongoing';
       this.tournamentWinnerWrapper.classList.add('d-none');
-    } else if (this.#state.tournament.status === 'finished') {
+    } else if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
       this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`;
       if (this.#state.tournament.winner) {
         this.tournamentWinnerAvatar.src = this.#state.tournament.winner.profile.avatar;
