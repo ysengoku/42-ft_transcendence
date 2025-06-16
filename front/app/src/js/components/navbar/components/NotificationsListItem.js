@@ -48,7 +48,8 @@ export class NotificationsListItem extends HTMLElement {
   render() {
     this.innerHTML = this.template();
 
-    this.querySelector('.notifications-list-avatar').src = this.#state.data.avatar;
+    const avatar = this.querySelector('.notifications-list-avatar');
+    avatar.src = this.#state.data.avatar;
     this.querySelector('.notification-time').textContent = getRelativeTime(this.#state.data.date);
 
     this.content = this.querySelector('.notification-content');
@@ -70,7 +71,8 @@ export class NotificationsListItem extends HTMLElement {
           this.buttonWrapper.appendChild(this.acceptButton);
           this.buttonWrapper.appendChild(this.declineButton);
         } else {
-          this.content.textContent = this.message.pendingGameInvitation(this.#state.data.nickname);
+          avatar.src = this.#state.data.invitee.avatar;
+          this.content.textContent = this.message.pendingGameInvitation(this.#state.data.invitee.nickname);
           this.cancelInviteButton = document.createElement('button');
           this.cancelInviteButton.textContent = 'Cancel';
           this.cancelInviteButton.addEventListener('click', this.cancelDuelInvitation);
@@ -153,7 +155,7 @@ export class NotificationsListItem extends HTMLElement {
     const message = {
       action: 'cancel_game_invite',
       data: {
-        username: this.#state.data.username,
+        username: this.#state.data.invitee.username,
       },
     };
     socketManager.sendMessage('livechat', message);

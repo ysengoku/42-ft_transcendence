@@ -1,7 +1,11 @@
+/**
+ * Socket registration for tournament with events handlers.
+ */
+
 import { socketManager } from '@socket';
 import { router } from '@router';
+import { showToastNotification, TOAST_TYPES, showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@utils';
 
-// Socket registration for tournament
 socketManager.addSocket('tournament', {
   new_registration: (data) => {
     const customEvent = new CustomEvent('newTournamentRegistration', { detail: data, bubbles: true });
@@ -14,15 +18,25 @@ socketManager.addSocket('tournament', {
   tournament_canceled: (data) => {
     const customEvent = new CustomEvent('tournamentCanceled', { detail: data, bubbles: true });
     document.dispatchEvent(customEvent);
-    // Show a toast notification
+    showToastNotification(`Tournament -  ${data.tournament_name} has been canceled.`, TOAST_TYPES.ERROR);
+  },
+  tournament_start: (data) => {
+    if (window.location.pathname === '/tournament') {
+      const tournamentPage = document.querySelector('tournament-room');
+      // If the current page is a tournament page, set it to tournamentStart
+    } else {
+      showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.TOURNAMENT_STARTS);
+    }
   },
   round_start: (data) => {
-    // If the current page is a tournament page, call roundStart method
-    // If not, redirect to the tournament page
+    if (window.location.pathname === '/tournament') {
+      // set new round data in the tournament page buffer
+    }
   },
   match_finished: (data) => {
-    // Show alert message for match finished?
-    router.redirect(`tournament/${data.tournament_id}`);
+    if (window.location.pathname === '/multiplayer-game') {
+      router.redirect(`tournament/${data.tournament_id}`);
+    }
   },
   match_result: (data) => {
     if (window.location.pathname === '/tournament') {
@@ -35,7 +49,7 @@ socketManager.addSocket('tournament', {
       const customEvent = new CustomEvent('tournamentRoundEnd', { detail: data, bubbles: true });
       document.dispatchEvent(customEvent);
     } else {
-      router.redirect(`tournament/${data.tournament_id}`);
+      showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.ROUND_END);
     }
   },
   tournament_end: (data) => {

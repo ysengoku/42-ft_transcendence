@@ -27,6 +27,11 @@ jobs:
         working-directory: ./front/app
         run: npm install
 
+      - name: Run unit tests
+        working-directory: ./front/app
+        run: npm test
+        # continue-on-error: true
+
       # - name: Format with Prettier
       #   working-directory: ./front/app
       #   run: npm run format
@@ -43,12 +48,6 @@ jobs:
       - name: Run linter
         working-directory: ./front/app
         run: npm run lint
-
-      - name: Run unit tests
-        working-directory: ./front/app
-        run: npm test
-        # continue-on-error: true
-
 
       - name: Build with Vite
         working-directory: ./front/app

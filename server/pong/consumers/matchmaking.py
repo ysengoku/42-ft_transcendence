@@ -31,6 +31,11 @@ class MatchmakingConsumer(WebsocketConsumer):
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
             return
 
+        if not self.user.profile.can_participate_in_game():
+            logger.info("[Matchmaking.connect]: user {%s} is already involved in some game", self.user.profile)
+            self.close(PongCloseCodes.ALREADY_IN_GAME)
+            return
+
         self.game_room_settings = self._parse_game_room_settings(self.scope["query_string"])
         if not self.game_room_settings:
             logger.warning("[Matchmaking.connect]: invalid game room settings were given")
@@ -43,18 +48,12 @@ class MatchmakingConsumer(WebsocketConsumer):
             self.game_room: GameRoom = self._with_db_lock_find_valid_game_room()
 
             if not self.game_room:
-                self.game_room = GameRoom.objects.create(settings=self.game_room_settings)
-                game_room_player: GameRoomPlayer = GameRoomPlayer.objects.create(
-                    game_room=self.game_room,
-                    profile=self.user.profile,
-                )
+                self.game_room: GameRoom = GameRoom.objects.create(settings=self.game_room_settings)
+                game_room_player: GameRoomPlayer = self.game_room.add_player(self.user.profile)
                 logger.info("[Matchmaking.connect]: game room {%s} was created", self.game_room)
 
             elif not self.game_room.has_player(self.user.profile):
-                game_room_player: GameRoomPlayer = GameRoomPlayer.objects.create(
-                    game_room=self.game_room,
-                    profile=self.user.profile,
-                )
+                game_room_player: GameRoomPlayer = self.game_room.add_player(self.user.profile)
                 logger.info(
                     "[Matchmaking.connect]: game room {%s} added profile {%s}",
                     self.game_room,
