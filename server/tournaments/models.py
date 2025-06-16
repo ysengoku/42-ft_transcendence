@@ -179,18 +179,21 @@ class Bracket(models.Model):
     PENDING = "pending"
     ONGOING = "ongoing"
     FINISHED = "finished"
+    CANCELLED = "cancelled"
     STATUS_CHOICES = [
         (PENDING, "Pending"),
         (ONGOING, "Ongoing"),
         (FINISHED, "Finished"),
+        (CANCELLED, "Cancelled"),
     ]
 
-    game = models.ForeignKey("pong.Match", on_delete=models.CASCADE, null=True)
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="brackets")
     participant1 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p1")
     participant2 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p2")
     score_p1 = models.PositiveIntegerField(default=0)
     score_p2 = models.PositiveIntegerField(default=0)
+    winners_score = models.PositiveIntegerField(default=0)
+    losers_score = models.PositiveIntegerField(default=0)
     winner = models.ForeignKey(Participant, on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     score = models.CharField(max_length=7, blank=True)

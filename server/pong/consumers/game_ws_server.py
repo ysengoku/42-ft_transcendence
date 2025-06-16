@@ -70,6 +70,7 @@ class GameServerConsumer(WebsocketConsumer):
                 avatar=profile.avatar,
                 elo=profile.elo,
                 settings=self.game_room.settings,
+                is_in_tournament=self.game_room.is_in_tournament(),
             ),
         )
 
