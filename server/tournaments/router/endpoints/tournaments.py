@@ -121,9 +121,9 @@ def delete_tournament(request, tournament_id: UUID):
         raise HttpError(404, "Tournament not found.") from e
 
     if tournament.creator != user.profile:
-        raise httperror(403, "you are not allowed to cancel this tournament.")
+        raise HttpError(403, "you are not allowed to cancel this tournament.")
     if tournament.status != Tournament.PENDING:
-        raise httperror(403, "You cannot cancel an ongoing tournament.")
+        raise HttpError(403, "You cannot cancel an ongoing tournament.")
 
     tournament.status = Tournament.CANCELLED
     tournament.save()
@@ -206,7 +206,7 @@ def unregister_for_tournament(request, tournament_id: UUID):
         try:
             alias = Participant.objects.get(profile=user.profile, tournament_id=tournament_id).alias
         except Participant.DoesNotExist as e:
-            raise HttpError(403, "Participant does not exists in this tournament.")
+            raise HttpError(403, "Participant does not exists in this tournament.") from e
 
         participant_or_error_str: dict | str = tournament.remove_participant(user.profile)
         if type(participant_or_error_str) is str:
@@ -220,7 +220,8 @@ def unregister_for_tournament(request, tournament_id: UUID):
             async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
         else:
             async_to_sync(channel_layer.group_send)(
-                f"tournament_{tournament_id}", {"type": "user_left", "alias": alias}
+                f"tournament_{tournament_id}",
+                {"type": "user_left", "alias": alias},
             )
 
     return 204, None
