@@ -174,6 +174,12 @@ export class ChatList extends HTMLElement {
     while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
+    const event = new CustomEvent('chatItemSelected', { detail: data.items[0].username, bubbles: true });
+    this.dispatchEvent(event);
+    const selectedItemElement = this.list.querySelector(`#chat-item-${data.items[0].username}`);
+    if (selectedItemElement) {
+      selectedItemElement.classList.add('active');
+    }
   }
 
   renderNoConversationsMessage() {
