@@ -19,12 +19,14 @@ export class BracketElement extends HTMLElement {
     this.bracketWrapper.id = `bracket-${this.#state.bracket.game_id}`;
 
     const player1 = document.createElement('participant-element');
+    player1.classList.add('bracket-player-1');
     const scoreP1 = this.#state.bracket.status === 'finished' ? this.#state.bracket.score_p1 : '';
     player1.data = {
       participant: this.#state.bracket.participant1,
       score: scoreP1,
     };
     const player2 = document.createElement('participant-element');
+    player2.classList.add('bracket-player-2');
     const scoreP2 = this.#state.bracket.status === 'finished' ? this.#state.bracket.score_p2 : '';
     player2.data = {
       participant: this.#state.bracket.participant2,

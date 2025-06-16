@@ -82,7 +82,7 @@ window.mockWS = {
             },
             participant2: {
               profile: {
-                username: this.username || 'Me',
+                username: this.username || 'unknown',
                 avatar: '/img/default_avatar.png',
               },
               alias: 'StormRider',
@@ -120,6 +120,155 @@ window.mockWS = {
       },
     };
     this.simulateAction('tournament', 'tournament_start', data);
+  },
+
+  similateMatchResult() {
+    const participant1 = {
+      profile: {
+        username: 'george',
+        avatar: '/__mock__/img/sample-pic1.jpg',
+      },
+      alias: 'Midnight Rider',
+      status: 'qualified',
+    };
+    const participant2 = {
+      profile: {
+        username: 'alice',
+        avatar: '/img/default_avatar.png',
+      },
+      alias: 'DuskDevil',
+      status: 'eliminated',
+    };
+    const data = {
+      tournament_id: this.tournamentId,
+      round_number: 1,
+      bracket: {
+        game_id: 'game2',
+        participant1: participant1,
+        participant2: participant2,
+        winner: participant1,
+        status: 'finished',
+        score_p1: 5,
+        score_p2: 4,
+        winners_score: 5,
+        losers_score: 4,
+      },
+    };
+    this.simulateAction('tournament', 'match_result', data);
+  },
+
+  simulateRoundEnd() {
+    const data = {
+      tournament_id: this.tournamentId,
+      tournament_name: 'Mock Tournament',
+      round: {
+        number: 1,
+        brackets: [
+          {
+            game_id: 1,
+            participant1: {
+              profile: {
+                username: 'TheBall',
+                avatar: '/img/default_avatar.png',
+              },
+              alias: 'SilverWolf',
+              status: 'qualified',
+            },
+            participant2: {
+              profile: {
+                username: this.username || 'unknown',
+                avatar: '/img/default_avatar.png',
+              },
+              alias: 'StormRider',
+              status: 'eliminated',
+            },
+            winner: {
+              profile: {
+                username: this.username || 'unknown',
+                avatar: '/img/default_avatar.png',
+              },
+              alias: 'StormRider',
+              status: 'qualified',
+            },
+            status: 'finished',
+            score_p1: 3,
+            score_p2: 5,
+            winners_score: 5,
+            losers_score: 3,
+          },
+          {
+            game_id: 2,
+            participant1: {
+              profile: {
+                username: 'warhawk',
+                avatar: '/img/default_avatar.png',
+              },
+              alias: 'ShadowFox',
+              status: 'qualified',
+            },
+            participant2: {
+              profile: {
+                username: 'faboussa',
+                avatar: '/img/default_avatar.png',
+              },
+              alias: 'GoldenEagle',
+              status: 'eliminated',
+            },
+            winner: {
+              profile: {
+                username: 'warhawk',
+                avatar: '/img/default_avatar.png',
+              },
+              alias: 'ShadowFox',
+              status: 'qualified',
+            },
+            status: 'finished',
+            score_p1: 5,
+            score_p2: 4,
+            winners_score: 5,
+            losers_score: 4,
+          }
+        ],
+        status: 'finished',
+      },
+    };
+    this.simulateAction('tournament', 'round_end', data);
+  },
+
+  simulateRoundStart() {
+    const data = {
+      tournament_id: this.tournamentId,
+      tournament_name: 'Mock Tournament',
+      round: {
+        number: 2,
+        brackets: [
+          {
+            game_id: 3,
+            participant1: {
+              profile: {
+                username: 'TheBall',
+                avatar: '/img/default_avatar.png',
+              },
+              alias: 'SilverWolf',
+              status: 'pending',
+            },
+            participant2: {
+              profile: {
+                username: this.username || 'unknown',
+                avatar: '/img/default_avatar.png',
+              },
+              alias: 'StormRider',
+              status: 'pending',
+            },
+            winner: null,
+            status: 'pending',
+            score_p1: 0,
+            score_p2: 0,
+          },
+        ],
+      },
+    };
+    this.simulateAction('tournament', 'round_start', data);
   },
 };
 
