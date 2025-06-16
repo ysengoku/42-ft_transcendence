@@ -255,7 +255,6 @@ class DuelEvent:
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
         # Convert date in good format
-        # | TypeError: DuelEvent.cancel_game_invite() missing 1 required positional argument: 'data'
         if "date" in notification_data and isinstance(notification_data["date"], datetime):
             notification_data["date"] = notification_data["date"].isoformat()
         self.send_ws_message_to_user(receiver, "game_invite", notification_data)
