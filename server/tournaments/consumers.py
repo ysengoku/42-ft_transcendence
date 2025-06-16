@@ -2,6 +2,7 @@
 import json
 import logging
 import uuid
+import random
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
@@ -50,62 +51,19 @@ class TournamentConsumer(WebsocketConsumer):
             logger.warning("Tournament: Message without action received")
             return
 
-        text_data_json.get("data", {})
         entire_data = text_data_json.get("data", {})
-        required_fields = {
-            "create": ["tournament_name", "required_participants", "alias"],
-            "start_round": ["id", "chat_id"],
-            "match_result": ["id", "chat_id"],
-        }
-
-        if action in required_fields:
-            for field in required_fields[action]:
-                if field not in entire_data:
-                    logger.warning("Missing field [{%s}] for action {%s}", field, action)
-                    return
-        if not self.validate_action_data(action, entire_data):
+        if not Validator.validate_action_data(action, entire_data):
             return
 
         match action:
+            case "last_registration":
+                self.start_round(data)
             case "start_round":
                 self.start_round(data)
             case "match_result":
                 self.handle_match_result(data)
             case _:
                 logger.debug("Tournament unknown action : %s", action)
-
-    def validate_action_data(self, action, data):
-        expected_types = {
-            "start_round": {"round_number": int},
-            "match_result": {"round_number": int, "result": int, "tournament_id": str},
-        }
-
-        uuid_fields = {
-            # "start_round": ["id"],
-            # "match_result": ["tournament_id"],
-        }
-        # Types verification
-        if action in expected_types:
-            for field, expected_type in expected_types[action].items():
-                value = data.get(field)
-                if not isinstance(value, expected_type):
-                    logger.warning(
-                        "Invalid type for '%s' (waited for %s, received %s)",
-                        field,
-                        expected_type.__name__,
-                        type(value).__name__,
-                    )
-                    return False
-
-        # UUID verification
-        if action in uuid_fields:
-            for field in uuid_fields[action]:
-                value = data.get(field)
-                if value and not self.is_valid_uuid(value):
-                    logger.warning("Invalid UUID format for '%s'", field)
-                    return False
-
-        return True
 
     def user_left(self, data):
         """
@@ -115,48 +73,45 @@ class TournamentConsumer(WebsocketConsumer):
         logger.debug("Bye everyone ! %s", data)
 
     def start_round(self, data):
-        tournament = Tournament.objects.get(id=self.tournament_id)
+        try:
+            tournament = Tournament.objects.get(id=self.tournament_id)
+        except Tournament.DoesNotExist:
+            logger.warning("This tournament doesn't exist.")
+            return
+        round_number = tournament.rounds.count() + 1
+        new_round = tournament.rounds.create(number=round_number)
+        if round_number == 1:
+            participants = list(tournament.participants.all())
+        else:
+            participants = self.take_winners_from(tournament.rounds.get(round_number - 1))
+        if participants is None:
+            logger.warning("It seems that the last tournament bracket was cancelled")
+            return
+        # else if participants == 1 === WINNER TOURNAMENT
+        brackets = self.generate_brackets(participants)
 
-        new_round = Round.objects.create(tournament=tournament)
-
-        brackets = self.generate_brackets(tournament.participants.all())
-
+        for p1, p2 in brackets:
+            Bracket.objects.create(round=new_round, participant1=p1, participant2=p2, status=Bracket.PENDING)
+        # Launch the game
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
             {
-                "type": "tournament.broadcast",
-                "action": "round_start",
-                "data": {"round_number": new_round.number, "brackets": brackets},
+                "type": "tournament_message",
+                "action": "start_game",
+                "data": {"round_number": round_number, "brackets": brackets},
             },
         )
 
-    # def start_round(self, data):
-    #     tournament = self.tournaments[self.tournament_id]
-    #     current_round = len(tournament['rounds']) + 1
-    #
-    #     brackets = self.generate_brackets(tournament['participants'])
-    #
-    #     tournament['rounds'].append({
-    #         'number': current_round,
-    #         'brackets': brackets,
-    #         'status': 'ongoing'
-    #     })
-    #
-    #     async_to_sync(self.channel_layer.group_send)(
-    #         f"tournament_{self.tournament_id}",
-    #         {
-    #             'type': 'tournament.broadcast',
-    #             'action': 'round_start',
-    #             'data': {
-    #                 'round_number': current_round,
-    #                 'brackets': brackets
-    #             }
-    #         }
-    #     )
+    def take_winners_from(self, previous_round):
+        winners = []
+        for bracket in previous_round.brackets.all():
+            if bracket.winner is not None:
+                winners.append(bracket.winner)
+        return winners
 
-    # def tournament_broadcast(self, event):
-    #     logger.debug("function tournament_broadcast")
-    #     self.send(text_data=json.dumps({"action": "new_tournament", "data": event["data"]}))
+    def tournament_broadcast(self, event):
+        logger.debug("function tournament_broadcast")
+        self.send(text_data=json.dumps({"action": "new_tournament", "data": event["data"]}))
 
     def tournament_message(self, event):
         logger.debug("function tournament_message")
@@ -175,7 +130,7 @@ class TournamentConsumer(WebsocketConsumer):
         alias = event["data"].get("alias")
         avatar = event["data"].get("avatar")
         # if Validator.validate_action_data("new_registration", event) is False:
-        #     self.close()
+        #     self.close() # Closes the tournament ???
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
             {
@@ -191,7 +146,7 @@ class TournamentConsumer(WebsocketConsumer):
         alias = event["data"].get("alias")
         avatar = event["data"].get("avatar")
         # if (Validator.validate_action_data("last_registration", event) == False):
-        #     self.close()
+        #     self.close() # Closes the tournament ???
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
             {
@@ -202,6 +157,12 @@ class TournamentConsumer(WebsocketConsumer):
         )
 
     def generate_brackets(self, participants):
-        """ """
         logger.debug("function generate_brackets")
-        pass
+        participants = list(participants)
+        random.shuffle(participants)
+        brackets = []
+        while len(participants) >= 2:
+            p1 = participants.pop()
+            p2 = participants.pop()
+            brackets.append((p1, p2))
+        return brackets
