@@ -1,50 +1,68 @@
 import { ThemeController } from './ThemeController';
+import { createClouds, createStars, loader, flyAway } from './animations';
 import { isMobile, BREAKPOINT } from './viewPort';
-import { sanitizeHtml } from './sanitizeHtml';
-import { showFormErrorFeedback } from './formFeedback';
-import { showToastNotification, TOAST_TYPES, sessionExpiredToast, unknowknErrorToast } from './toastnotification';
 
 import { getRelativeTime, getRelativeDateAndTime, formatDateMDY } from './dateFormat';
+import { isEqual } from './isEqual';
 
-import { createClouds, createStars, loader, flyAway } from './animations';
+import {
+  INPUT_FEEDBACK,
+  usernameFeedback,
+  nicknameFeedback,
+  emailFeedback,
+  passwordFeedback,
+  isFieldFilled,
+  removeInputFeedback,
+} from './inputFeedback';
 
-import { INPUT_FEEDBACK, emailFeedback, passwordFeedback, isFieldFilled, removeInputFeedback } from './inputFeedback';
+import { showFormErrorFeedback } from './formFeedback';
+
+import { showToastNotification, TOAST_TYPES, sessionExpiredToast, unknowknErrorToast } from './toastnotification';
 
 import {
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
+  showTournamentAlert,
+  TOURNAMENT_ALERT_TYPE,
   removeAlert,
   addDissmissAlertListener,
   internalServerErrorAlert,
 } from './alertMessage';
 
+import { sanitizeHtml } from './sanitizeHtml';
+
 export {
   ThemeController,
+  createClouds,
+  createStars,
+  loader,
+  flyAway,
   isMobile,
   BREAKPOINT,
   getRelativeTime,
   getRelativeDateAndTime,
   formatDateMDY,
-  sanitizeHtml,
+  isEqual,
+  INPUT_FEEDBACK,
+  usernameFeedback,
+  nicknameFeedback,
+  emailFeedback,
+  passwordFeedback,
+  isFieldFilled,
+  removeInputFeedback,
   showFormErrorFeedback,
   showToastNotification,
   TOAST_TYPES,
   sessionExpiredToast,
   unknowknErrorToast,
-  createClouds,
-  createStars,
-  loader,
-  flyAway,
-  INPUT_FEEDBACK,
-  emailFeedback,
-  passwordFeedback,
-  isFieldFilled,
-  removeInputFeedback,
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
+  showTournamentAlert,
+  TOURNAMENT_ALERT_TYPE,
   removeAlert,
   addDissmissAlertListener,
   internalServerErrorAlert,
+  sanitizeHtml,
 };

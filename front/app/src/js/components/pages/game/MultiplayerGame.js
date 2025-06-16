@@ -137,7 +137,8 @@ export class MultiplayerGame extends HTMLElement {
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
-    document.querySelector('#content').appendChild(renderer.domElement);
+    // document.querySelector('#content').appendChild(renderer.domElement);
+    this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
@@ -160,7 +161,7 @@ export class MultiplayerGame extends HTMLElement {
     ];
 
     const playerglb = (() => {
-      const pedro_model = new THREE.Object3D();
+      const pedroModel = new THREE.Object3D();
       loader.load(
         pedro,
         function (gltf) {
@@ -179,16 +180,16 @@ export class MultiplayerGame extends HTMLElement {
             .play();
           idleAction.play();
           idleAction2.play();
-          pedro_model.add(gltf.scene);
+          pedroModel.add(gltf.scene);
         },
         undefined,
         function (error) {
           console.error(error);
         },
       );
-      pedro_model.scale.set(0.1, 0.1, 0.1);
-      scene.add(pedro_model);
-      return pedro_model;
+      pedroModel.scale.set(0.1, 0.1, 0.1);
+      scene.add(pedroModel);
+      return pedroModel;
     })();
 
     const Coin = ((posX, posY, posZ) => {
@@ -282,7 +283,7 @@ export class MultiplayerGame extends HTMLElement {
       scene.add(cubeMesh);
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
-      const dir_z = -Math.sign(posZ);
+      const dirZ = -Math.sign(posZ);
       const inputQueue = [];
       let controlReverse = false;
       let lenghtHalf = 2.5;
@@ -320,8 +321,8 @@ export class MultiplayerGame extends HTMLElement {
         set controlReverse(newControlReverse) {
           controlReverse = newControlReverse;
         },
-        get dir_z() {
-          return dir_z;
+        get dirZ() {
+          return dirZ;
         },
       };
     };
@@ -759,9 +760,11 @@ export class MultiplayerGame extends HTMLElement {
     avatar.src = player.avatar;
     avatar.alt = player.name;
     element.querySelector('.overlay-player-name').textContent = player.name;
-    const eloWrapper = element.querySelector('.overlay-player-elo');
-    eloWrapper.querySelector('p').textContent = player.elo;
-    eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
+    if (player.elo) {
+      const eloWrapper = element.querySelector('.overlay-player-elo');
+      eloWrapper.querySelector('p').textContent = player.elo;
+      eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
+    }
     return element;
   }
 

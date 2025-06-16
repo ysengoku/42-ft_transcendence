@@ -92,7 +92,8 @@ export class Game extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.setClearColor(0x855988, 1);
-    document.querySelector('#content').appendChild(renderer.domElement);
+    // document.querySelector('#content').appendChild(renderer.domElement);
+    this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
@@ -401,7 +402,7 @@ export class Game extends HTMLElement {
       // scene.add(tableGlb);
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
-      const dir_z = -Math.sign(posZ);
+      const dirZ = -Math.sign(posZ);
       let lenghtHalf = 2.5;
       let widthHalf = 0.5;
       let controlReverse = false;
@@ -442,8 +443,8 @@ export class Game extends HTMLElement {
         set widthHalf(newWidthHalf) {
           widthHalf = newWidthHalf;
         },
-        get dir_z() {
-          return dir_z;
+        get dirZ() {
+          return dirZ;
         },
       };
     };
@@ -535,8 +536,8 @@ export class Game extends HTMLElement {
       let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
       let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lenghtHalf);
       let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
-      Ball.velocity.z = Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dir_z;
-      Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dir_z;
+      Ball.velocity.z = Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dirZ;
+      Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dirZ;
       if (
         Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
         Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
@@ -631,7 +632,7 @@ export class Game extends HTMLElement {
       [3, 500],
       [0, 500],
     ];
-    //1 && 500 / 5 && 500 / 8 && 750
+    // 1 && 500 / 5 && 500 / 8 && 750
 
     function handleAiBehavior(BallPos, BallVelocity) {
       if (isCalculationNeeded) {
@@ -791,13 +792,13 @@ export class Game extends HTMLElement {
       let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
-      let current_subtick = 0;
+      let currentSubtick = 0;
       ballSubtickZ = SUBTICK;
       let totalSubticks = totalDistanceZ / ballSubtickZ;
       ballSubtickX = totalDistanceX / totalSubticks;
       bumperP1Subtick = Bumpers[0].speed / totalSubticks;
       bumperP2Subtick = Bumpers[1].speed / totalSubticks;
-      while (current_subtick <= totalSubticks) {
+      while (currentSubtick <= totalSubticks) {
         if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
           Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
           Ball.velocity.x *= -1;
@@ -876,7 +877,7 @@ export class Game extends HTMLElement {
         //     camera.position.set(0, cameraY, cameraX--);
         //   camera.lookAt(new THREE.Vector3(0,0,0));
         // }
-        current_subtick++;
+        currentSubtick++;
       }
       Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
       Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);

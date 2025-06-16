@@ -1,3 +1,6 @@
+export const MAX_NAME_LENGTH = Number(import.meta.env.VITE_MAX_NAME_LENGTH) || 50;
+export const MIN_PASSWORD_LENGTH = Number(import.meta.env.VITE_MIN_PASSWORD_LENGTH) || 8;
+
 export const MAX_CHAT_MESSAGE_LENGTH = Number(import.meta.env.VITE_MAX_MESSAGE_LENGTH) || 255;
 
 export const DEFAULT_AVATAR = import.meta.env.VITE_DEFAULT_AVATAR || '/img/default_avatar.png';
