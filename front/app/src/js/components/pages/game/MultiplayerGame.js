@@ -696,6 +696,7 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   showOverlay(action, data = null) {
+    this.overlayMessageWrapper.innerHTML = '';
     const element = document.createElement('div');
     element.innerHTML = this.overlayContentTemplate[action];
     this.overlayMessageWrapper.appendChild(element);
@@ -743,7 +744,9 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   hideOverlay() {
-    if (this.intervalGameId) clearInterval(this.intervalGameId);
+    if (this.intervalGameId) {
+      clearInterval(this.intervalGameId);
+    }
     this.overlay.classList.remove('overlay-dark');
     this.overlayMessageWrapper.classList.add('d-none');
     this.overlayMessageWrapper.innerHTML = '';
