@@ -352,13 +352,14 @@ export class Duel extends HTMLElement {
   /*      Prevent page changes and reload                                     */
   /* ------------------------------------------------------------------------ */
   async confirmLeavePage(event) {
-    const confirmationMessage = 'If you leave this page, the duel will be canceled.\nDo you want to continue?';
     if (event) {
       event.preventDefault();
+      event.returnValue = '';
       router.removeBeforeunloadCallback();
       return;
     }
 
+    const confirmationMessage = 'If you leave this page, the duel will be canceled.\nDo you want to continue?';
     const confirmationModal = document.createElement('confirmation-modal');
     this.appendChild(confirmationModal);
     confirmationModal.render();
