@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from .models import Bracket, Participant, Round, Tournament
+from .tournament_validator import Validator
 
 logger = logging.getLogger("server")
 
@@ -29,10 +30,7 @@ class TournamentConsumer(WebsocketConsumer):
         except Tournament.DoesNotExist:
             logger.warning("This tournament id does not exist : %S", tournament_id)
             self.close()
-        async_to_sync(self.channel_layer.group_add)(
-            f"tournament_{self.tournament_id}", 
-            self.channel_name
-        )
+        async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
         self.accept()
 
     def disconnect(self, close_code):
@@ -43,7 +41,6 @@ class TournamentConsumer(WebsocketConsumer):
             {"type": "tournament.broadcast", "action": "user_left", "data": {"user": self.user.username}},
         )
         self.close(close_code)
-
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -57,7 +54,6 @@ class TournamentConsumer(WebsocketConsumer):
         entire_data = text_data_json.get("data", {})
         required_fields = {
             "create": ["tournament_name", "required_participants", "alias"],
-            "register": ["alias"],
             "start_round": ["id", "chat_id"],
             "match_result": ["id", "chat_id"],
         }
@@ -111,10 +107,9 @@ class TournamentConsumer(WebsocketConsumer):
 
         return True
 
-
     def user_left(self, data):
         """
-        TODO: code this properly
+        TODO: verify if this function really needs to exist
         When the participant cancels their own participation, it sends user_left
         """
         logger.debug("Bye everyone ! %s", data)
@@ -159,37 +154,54 @@ class TournamentConsumer(WebsocketConsumer):
     #         }
     #     )
 
-    def tournament_broadcast(self, event):
-        self.send(text_data=json.dumps({"action": "new_tournament", "data": event["data"]}))
+    # def tournament_broadcast(self, event):
+    #     logger.debug("function tournament_broadcast")
+    #     self.send(text_data=json.dumps({"action": "new_tournament", "data": event["data"]}))
+
+    def tournament_message(self, event):
+        logger.debug("function tournament_message")
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": event["action"],
+                    "data": event["data"],
+                }
+            )
+        )
 
     def new_registration(self, event):
         logger.debug("function new_registration")
         logger.info(event)
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "new_registration",
-                    "data": {
-                    }
-                }
-            )
+        alias = event["data"].get("alias")
+        avatar = event["data"].get("avatar")
+        # if Validator.validate_action_data("new_registration", event) is False:
+        #     self.close()
+        async_to_sync(self.channel_layer.group_send)(
+            f"tournament_{self.tournament_id}",
+            {
+                "type": "tournament_message",
+                "action": "new_registration",
+                "data": {"alias": alias, "avatar": avatar},
+            },
         )
 
     def last_registration(self, event):
         logger.debug("function last_registration")
         logger.info(event)
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": "last_registration",
-                    "data": {
-                    }
-                }
-            )
+        alias = event["data"].get("alias")
+        avatar = event["data"].get("avatar")
+        # if (Validator.validate_action_data("last_registration", event) == False):
+        #     self.close()
+        async_to_sync(self.channel_layer.group_send)(
+            f"tournament_{self.tournament_id}",
+            {
+                "type": "tournament_message",
+                "action": "last_registration",
+                "data": {"alias": alias, "avatar": avatar},
+            },
         )
 
     def generate_brackets(self, participants):
-        """
-        """
+        """ """
         logger.debug("function generate_brackets")
         pass
