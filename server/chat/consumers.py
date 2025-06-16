@@ -37,19 +37,20 @@ class UserEventsConsumer(WebsocketConsumer):
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
                 if self.user_profile.nb_active_connexions >= max_connexions:
-                    logger.warning(
-                        "Too many simultaneous connexions for user %s", self.user.username)
+                    logger.warning("Too many simultaneous connexions for user %s", self.user.username)
                     self.close()
                     return
-                self.user_profile.nb_active_connexions = models.F(
-                    "nb_active_connexions") + 1
+                self.user_profile.nb_active_connexions = models.F("nb_active_connexions") + 1
                 self.user_profile.update_activity()
                 self.user_profile.save(update_fields=["nb_active_connexions"])
 
                 self.user_profile.refresh_from_db()
                 redis_status_manager.set_user_online(self.user.id)
-                logger.info("User %s connected, now has %i active connexions",
-                    self.user.username, self.user_profile.nb_active_connexions)
+                logger.info(
+                    "User %s connected, now has %i active connexions",
+                    self.user.username,
+                    self.user_profile.nb_active_connexions,
+                )
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
             self.close()
@@ -75,8 +76,7 @@ class UserEventsConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         if not hasattr(self, "user_profile"):
             return
-        logger.info("User %s has %s active connexions",
-                    self.user.username, self.user_profile.nb_active_connexions)
+        logger.info("User %s has %s active connexions", self.user.username, self.user_profile.nb_active_connexions)
         if not Profile.objects.filter(pk=self.user_profile.pk).exists():
             logger.info("User profile does not exist. Possibly deleted.")
             return
@@ -94,26 +94,24 @@ class UserEventsConsumer(WebsocketConsumer):
         try:
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
-                self.user_profile.nb_active_connexions = models.F(
-                    "nb_active_connexions") - 1
+                self.user_profile.nb_active_connexions = models.F("nb_active_connexions") - 1
                 self.user_profile.save(update_fields=["nb_active_connexions"])
                 self.user_profile.refresh_from_db()
 
                 if self.user_profile.nb_active_connexions < 0:
                     self.user_profile.nb_active_connexions = 0
-                    self.user_profile.save(
-                        update_fields=["nb_active_connexions"])
+                    self.user_profile.save(update_fields=["nb_active_connexions"])
 
-                logger.info("User %s has %s active connexions",
-                            self.user.username, self.user_profile.nb_active_connexions)
+                logger.info(
+                    "User %s has %s active connexions", self.user.username, self.user_profile.nb_active_connexions
+                )
                 # Mark offline only if it was last disconnexion
                 if self.user_profile.nb_active_connexions == 0:
                     self.user_profile.is_online = False
                     self.user_profile.save(update_fields=["is_online"])
                     redis_status_manager.set_user_offline(self.user.id)
                     OnlineStatusConsumer.notify_online_status(self, "offline")
-                    logger.info(
-                        "User %s is now offline (no more active connexions)", self.user.username)
+                    logger.info("User %s is now offline (no more active connexions)", self.user.username)
 
                     # Remove user from the groups only when they have no more active connections
                     async_to_sync(self.channel_layer.group_discard)(
@@ -121,8 +119,11 @@ class UserEventsConsumer(WebsocketConsumer):
                         self.channel_name,
                     )
                 else:
-                    logger.info("User %s still has %i active connexions",
-                        self.user.username, self.user_profile.nb_active_connexions)
+                    logger.info(
+                        "User %s still has %i active connexions",
+                        self.user.username,
+                        self.user_profile.nb_active_connexions,
+                    )
 
         except DatabaseError as e:
             logger.error("Database error during disconnect: %s", e)
@@ -163,7 +164,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 case "game_declined":
                     DuelEvent(self).decline_game_invite(text_data_json)
                 case "cancel_game_invite":
-                    DuelEvent(self).cancel_game_invite()
+                    DuelEvent(self).cancel_game_invite(text_data_json)
                 case "new_tournament":
                     TournamentEvent(self).handle_new_tournament(text_data_json)
                 case "add_new_friend":
