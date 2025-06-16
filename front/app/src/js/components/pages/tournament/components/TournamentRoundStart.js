@@ -46,7 +46,7 @@ export class TournamentRoundStart extends HTMLElement {
         All Gunslingers are now in the Arena.</br>Tournament starts!
       </div>
       `;
-      setTimeout(() => this.renderNextRound(), 2000);
+      setTimeout(() => this.renderNextRound(), 700);
       return;
     }
 

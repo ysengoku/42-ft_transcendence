@@ -149,7 +149,7 @@ export class TournamentPending extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Events handling                                                     */
   /* ------------------------------------------------------------------------ */
-  
+
   /**
    * @description Handles the click event on the unregister button.
    * It shows a modal to confirm the unregistration from the tournament.

@@ -38,7 +38,7 @@ export class TournamentRoundOngoing extends HTMLElement {
   get onGoingBracketCount() {
     return this.#state.onGoingBracketCount;
   }
-    
+
   connectedCallback() {
     this.render();
   }
@@ -66,7 +66,7 @@ export class TournamentRoundOngoing extends HTMLElement {
 
   /**
    * @description Updates the bracket element with the match result.
-   * It is called when a match is finished and the result is received from the server. 
+   * It is called when a match is finished and the result is received from the server.
    */
   updateBracket(matchData) {
     const bracketElement = this.querySelector(`#bracket-${matchData.bracket.game_id}`);
@@ -102,7 +102,7 @@ export class TournamentRoundOngoing extends HTMLElement {
     }
     this.#state.onGoingBracketCount--;
   }
-  
+
   roundFinishedAnimation() {
     devLog(`Round ${this.#state.roundNumber} finished`);
     this.roundStatusMessage.textContent = 'All Gunslingers have completed their matches. Preparing the next round.';

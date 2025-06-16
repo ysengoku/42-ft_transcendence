@@ -131,7 +131,7 @@ export class Tournament extends HTMLElement {
     ) {
       this.resolveUIStatus[this.#state.tournament.status]();
     } else {
-      this.#state.currentRoundNumber = this.#state.tournament.rounds.length; // TODO: check round status instead of array length
+      this.findCurrentRound();
       this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
       this.findAssignedBracketForUser();
       if (!this.#state.currentUserBracket) {
@@ -149,9 +149,20 @@ export class Tournament extends HTMLElement {
     }
     this.render();
     if (this.#state.uiStatus !== UI_STATUS.CANCELED) {
-      // TODO: Reactivate this line when tournament socket is implemented
-      // socketManager.openSocket('tournament', this.#state.tournamentId);
+      socketManager.openSocket('tournament', this.#state.tournamentId);
     }
+  }
+
+  findCurrentRound() {
+    this.#state.currentRound = this.#state.tournament.rounds.find((round) => {
+      return round.status === ROUND_STATUS.ONGOING || round.status === ROUND_STATUS.PENDING;
+    });
+    if (!this.#state.currentRound) {
+      devErrorLog('No ongoing or pending round found in the tournament');
+      return;
+    }
+    this.#state.currentRoundNumber = this.#state.tournament.rounds.indexOf(this.#state.currentRound) + 1;
+    devLog('Current round found:', this.#state.currentRound);
   }
 
   findAssignedBracketForUser() {
@@ -164,11 +175,6 @@ export class Tournament extends HTMLElement {
   }
 
   checkUserStatus() {
-    // const userDataInBracket =
-    //   this.#state.currentUserBracket.participant1.profile.username === this.#state.user.username
-    //     ? this.#state.currentUserBracket.participant1
-    //     : this.#state.currentUserBracket.participant2;
-    // switch (userDataInBracket.status) {
     switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
         const gameId = this.#state.currentUserBracket.game_id;
@@ -297,12 +303,32 @@ export class Tournament extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      WebSocket message handling                                          */
   /* ------------------------------------------------------------------------ */
-  handleTournamentStart(data) {}
+  handleTournamentStart(data) {
+    if (data.tournament_id !== this.#state.tournamentId) {
+      return;
+    }
+    // Update #state
+    this.#state.currentRoundNumber = 1;
+    this.#state.currentRound = data.round;
+    this.#state.tournament.status = TOURNAMENT_STATUS.ONGOING;
+    this.#state.tournament.rounds[0] = this.#state.currentRound;
+    this.findAssignedBracketForUser();
+    if (!this.#state.currentUserBracket) {
+      devErrorLog('User is not assigned to any bracket in the current round');
+      router.redirect('/tournament-menu');
+      return;
+    }
+    this.#state.userDataInTournament.status = PARTICIPANT_STATUS.QUALIFIED;
+    this.#state.uiStatus = UI_STATUS.ROUND_STARTING;
+
+    // Update UI content
+    this.updateContentOnStatusChange();
+  }
 
   handleRoundStart(data) {
     // Handle round_start message with [ROUND] data via ws
 
-    // In scoketManager
+    // In socketManager
     // If the user is not on the tournament page, automatically navigate to the tournament page?
 
     this.#state.currentRoundNumber = data.round.number;
@@ -330,7 +356,10 @@ export class Tournament extends HTMLElement {
   }
 
   handleTournamentCanceled(data) {
-    if (data.tournament_id !== this.#state.tournamentId || this.#state.tournament.creator.username === this.#state.user.username) {
+    if (
+      data.tournament_id !== this.#state.tournamentId ||
+      this.#state.tournament.creator.username === this.#state.user.username
+    ) {
       return;
     }
     showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'This tournament has been canceled.');
@@ -419,29 +448,3 @@ export class Tournament extends HTMLElement {
 }
 
 customElements.define('tournament-room', Tournament);
-
-// Status: pending
-// - redirected from tournament menu --> [TournamentWaiting view]
-// - new_registration message via WebSocket
-
-// - tournament_canceled message via WebSocket
-
-// Status: ongoing (except during the match)
-// - round_start message via WebSocket --> [RoundStart view]
-// countdown, then redirected to the match page
-
-// - match_finished message via WebSocket
-// (receive on Game page when the user's own match is finished) --> [RoundWaiting view]
-// - match_result message via WebSocket --> Update [RoundWaiting view] adding new result
-// - round_end message via WebSocket --> Update [RoundWaiting view] with the result of the round
-
-// Repeat the process for the next round (round_start, match_finished, match_result, round_end)
-
-// Status: finished
-// - tournament_finished message via WebSocket --> [OverviewFinished view]?
-
-// Integrate Game component in this page
-// const game = document.createElement('multiplayer-game');
-// this.appendChild(game);
-// this.innerHTML = '';
-// game.setParam({ id: this.#state.tournamentId });
