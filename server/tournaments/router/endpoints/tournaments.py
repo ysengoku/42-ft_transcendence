@@ -203,6 +203,11 @@ def unregister_for_tournament(request, tournament_id: UUID):
         if tournament.status != Tournament.PENDING:
             raise HttpError(403, "Cannot unregister from non-open tournament.")
 
+        try:
+            alias = Participant.objects.get(profile=user.profile, tournament_id=tournament_id).alias
+        except Participant.DoesNotExist as e:
+            raise HttpError(403, "Participant does not exists in this tournament.")
+
         participant_or_error_str: dict | str = tournament.remove_participant(user.profile)
         if type(participant_or_error_str) is str:
             raise HttpError(403, participant_or_error_str)
@@ -214,6 +219,8 @@ def unregister_for_tournament(request, tournament_id: UUID):
             TournamentEvent.close_tournament_invitations(tournament_id)
             async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
         else:
-            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "user_left"})
+            async_to_sync(channel_layer.group_send)(
+                f"tournament_{tournament_id}", {"type": "user_left", "alias": alias}
+            )
 
     return 204, None
