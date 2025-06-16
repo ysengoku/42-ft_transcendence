@@ -11,7 +11,7 @@ import { socketManager } from '@socket';
 import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
-// import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
+import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
 
 export class Tournament extends HTMLElement {
   /**
@@ -96,7 +96,7 @@ export class Tournament extends HTMLElement {
 
     // =========== For test ================================================
     // pending, tournamentStarting, waitingNextRound, roundStarting
-    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'tournamentStarting');
+    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
     // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
@@ -175,6 +175,7 @@ export class Tournament extends HTMLElement {
   }
 
   checkUserStatus() {
+    console.log('Checking user status in tournament:', this.#state.userDataInTournament);
     switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
         const gameId = this.#state.currentUserBracket.game_id;
@@ -341,9 +342,9 @@ export class Tournament extends HTMLElement {
     this.updateContentOnStatusChange();
   }
 
-  updateMatchResult(data) {
-    // Handle match_result message with ROUND via ws
-  }
+  // updateMatchResult(data) {
+  //   // Handle match_result message with ROUND via ws
+  // }
 
   handleRoundEnd(data) {
     // Handle round_start message with [ROUND] data
