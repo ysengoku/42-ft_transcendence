@@ -79,6 +79,11 @@ export class DuelMenu extends HTMLElement {
     this.inviteToDuel = this.inviteToDuel.bind(this);
     this.requestMatchMaking = this.requestMatchMaking.bind(this);
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
+
+    const storedOptions = localStorage.getItem('gameOptions');
+    if (storedOptions) {
+      this.#state.options = JSON.parse(storedOptions);
+    }
   }
 
   /**
@@ -494,6 +499,8 @@ export class DuelMenu extends HTMLElement {
       return;
     }
     const queryParams = this.optionsToQueryParams();
+    console.log('Requesting matchmaking with options:', queryParams);
+    socketManager.closeSocket('matchmaking');
     socketManager.openSocket('matchmaking', queryParams);
     devLog('Requesting matchmaking...');
     router.navigate('/duel', { status: 'matchmaking' });
