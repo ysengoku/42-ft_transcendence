@@ -665,6 +665,7 @@ export class MultiplayerGame extends HTMLElement {
     //     elo: 1100,
     //     number: 2,
     //   },
+    //   elo_change: 16,
     // };
     // this.showOverlay('game_over', result);
 
@@ -719,13 +720,14 @@ export class MultiplayerGame extends HTMLElement {
         }, 1000);
         break;
       case 'game_over':
+        console.log('Game Over', data);
         let player1;
         let player2;
         data.winner.number === 1
           ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.winner = false))
           : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.winner = false));
-        const player1Element = this.createPlayerResultElement(player1);
-        const player2Element = this.createPlayerResultElement(player2);
+        const player1Element = this.createPlayerResultElement(player1, data.elo_change);
+        const player2Element = this.createPlayerResultElement(player2, data.elo_change);
         const gameResultElement = this.querySelector('#overlay-game-result');
         gameResultElement.appendChild(player1Element);
         gameResultElement.appendChild(player2Element);
@@ -752,7 +754,7 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayButton2 = null;
   }
 
-  createPlayerResultElement(player) {
+  createPlayerResultElement(player, eloChange) {
     const element = document.createElement('div');
     element.innerHTML = this.playerResultTemplate();
     const avatar = element.querySelector('img');
@@ -761,8 +763,9 @@ export class MultiplayerGame extends HTMLElement {
     element.querySelector('.overlay-player-name').textContent = player.name;
     if (player.elo) {
       const eloWrapper = element.querySelector('.overlay-player-elo');
-      eloWrapper.querySelector('p').textContent = player.elo;
+      eloWrapper.querySelector('.game-elo').textContent = player.elo;
       eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
+      eloWrapper.querySelector('.game-elo-change').textContent = player.winner ? `+${eloChange}` : `-${eloChange}`;
     }
     return element;
   }
@@ -849,8 +852,9 @@ export class MultiplayerGame extends HTMLElement {
       <img class="avatar-l rounded-circle mb-2" />
       <div class="overlay-player-name fs-4"></div>
       <div class="overlay-player-elo d-flex flex-row ps-2">
-        <p class="m-0 fw-bold pe-1"></p>
+        <p class="game-elo m-0 fw-bold pe-1"></p>
         <i class="bi"></i>
+        <p class="game-elo-change m-0 ps-2"></p>
       </div>
     </div>
   `;
