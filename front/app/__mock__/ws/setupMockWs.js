@@ -5,7 +5,7 @@
     const shim = document.createElement('script');
     shim.src = '/__mock__/ws/mockTournamentWs.js';
     shim.onload = () => {
-      console.log('✅ mockTournamentWs.js loaded');
+      console.log('🏓 mockTournamentWs.js loaded');
       resolve();
     };
     shim.onerror = reject;
@@ -30,7 +30,7 @@
   window.mockWS.setTournamentId(TOURNAMENT_ID);
   window.mockWS.setUsername(user?.username || 'Unknown');
 
-  console.log('🏓Mock WS ready for tournament', TOURNAMENT_ID, 'as', window.mockWS.username);
+  console.log('🏓 Mock WS ready for tournament', TOURNAMENT_ID, 'as', window.mockWS.username);
 })();
 
 // This script sets up a mock WebSocket connection for tournament-related events.

@@ -33,6 +33,7 @@ socketManager.addSocket('tournament', {
       showToastNotification(`Tournament -  ${data.tournament_name} has been canceled.`, TOAST_TYPES.ERROR);
     }
   },
+  // TESTED
   tournament_start: (data) => {
     devLog('Tournament starts:', data);
     if (window.location.pathname.startsWith('/tournament')) {
@@ -48,18 +49,20 @@ socketManager.addSocket('tournament', {
     }
   },
   match_finished: (data) => {
-    if (window.location.pathname === '/multiplayer-game') {
+    // TODO: Adjust depending which ws sends this message
+    if (window.location.pathname.startsWith('/multiplayer-game')) {
       router.redirect(`tournament/${data.tournament_id}`);
     }
   },
   match_result: async (data) => {
     if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPage = document.querySelector('tournament-room');
-      if (!tournamentPage) {
-        devErrorLog('Tournament page not found, cannot update bracket.');
+      const tournamentRoundOngoingElement = document.querySelector('tournament-round-ongoing');
+      if (!tournamentPage || !tournamentRoundOngoingElement) {
+        devErrorLog('Tournament RoundOngoing Element not found, cannot update bracket.');
         return;
       }
-      tournamentPage.updateBracket(data);
+      tournamentRoundOngoingElement.updateBracket(data);
       if (tournamentPage.ongoingBracketCount === 0) {
         await tournamentPage.roundFinishedAnimation();
       }
