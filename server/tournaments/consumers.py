@@ -70,7 +70,18 @@ class TournamentConsumer(WebsocketConsumer):
         TODO: verify if this function really needs to exist
         When the participant cancels their own participation, it sends user_left
         """
+
         logger.debug("Bye everyone ! %s", data)
+        logger.debug("Bye everyone ! %s", self)
+        # alias = data["data"].get("alias")
+        # async_to_sync(self.channel_layer.group_send)(
+        #     f"tournament_{self.tournament_id}",
+        #     {
+        #         "type": "tournament_message",
+        #         "action": "registration_canceled",
+        #         "data": {"alias": alias},
+        #     },
+        # )
 
     def start_round(self, data):
         try:
@@ -131,6 +142,17 @@ class TournamentConsumer(WebsocketConsumer):
         avatar = event["data"].get("avatar")
         # if Validator.validate_action_data("new_registration", event) is False:
         #     self.close() # Closes the tournament ???
+        self.send_new_registration_to_ws(alias, avatar)
+        # async_to_sync(self.channel_layer.group_send)(
+        #     f"tournament_{self.tournament_id}",
+        #     {
+        #         "type": "tournament_message",
+        #         "action": "new_registration",
+        #         "data": {"alias": alias, "avatar": avatar},
+        #     },
+        # )
+
+    def send_new_registration_to_ws(self, alias, avatar):
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
             {
@@ -147,11 +169,12 @@ class TournamentConsumer(WebsocketConsumer):
         avatar = event["data"].get("avatar")
         # if (Validator.validate_action_data("last_registration", event) == False):
         #     self.close() # Closes the tournament ???
+        self.send_new_registration_to_ws(alias, avatar)
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
             {
                 "type": "tournament_message",
-                "action": "last_registration",
+                "action": "tournament_start",
                 "data": {"alias": alias, "avatar": avatar},
             },
         )
