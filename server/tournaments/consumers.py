@@ -60,6 +60,8 @@ class TournamentConsumer(WebsocketConsumer):
                 self.start_round(data)
             case "start_round":
                 self.start_round(data)
+            case "start_game":
+                self.start_game(data)
             case "match_result":
                 self.handle_match_result(data)
             case _:
@@ -96,11 +98,15 @@ class TournamentConsumer(WebsocketConsumer):
         if participants is None:
             logger.warning("It seems that the last tournament bracket was cancelled")
             return
+        if participants.count() == 1:
+            tournament_winner = participants.get()
+            self.end_tournament_and_announce_winner(tournament_winner)
+            return
         # else if participants == 1 === WINNER TOURNAMENT
         brackets = self.generate_brackets(participants)
 
         for p1, p2 in brackets:
-            Bracket.objects.create(round=new_round, participant1=p1, participant2=p2, status=Bracket.PENDING)
+            new_round.brackets.create(participant1=p1, participant2=p2, status=Bracket.PENDING)
         # Launch the game
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
@@ -110,6 +116,18 @@ class TournamentConsumer(WebsocketConsumer):
                 "data": {"round_number": round_number, "brackets": brackets},
             },
         )
+
+    def create_tournament_game_room(self, p1, p2):
+        gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
+        GameRoomPlayer.objects.create(game_room=gameroom, profile=p1)
+        GameRoomPlayer.objects.create(game_room=gameroom, profile=p2)
+        return gameroom
+
+    def start_game(self, data):
+        pass
+
+    def end_tournament_and_announce_winner(self, winner):
+        pass
 
     def take_winners_from(self, previous_round):
         winners = []
