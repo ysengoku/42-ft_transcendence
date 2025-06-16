@@ -21,6 +21,8 @@ class BracketSchema(Schema):
     game_id: UUID | None = None
     participant1: ParticipantSchema
     participant2: ParticipantSchema
+    winners_score: int
+    losers_score: int
     winner: ParticipantSchema | None = None
     status: Literal["pending", "ongoing", "finished"]
     score_p1: int
