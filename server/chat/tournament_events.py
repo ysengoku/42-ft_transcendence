@@ -40,9 +40,9 @@ class TournamentEvent:
             invitation = TournamentInvitation.objects.create(
                 sender=tournament_creator,
                 recipient=profile,
-                tournament_id = str(tournament_id),
+                tournament_id=str(tournament_id),
                 tournament_name=tournament_name,
-                alias = alias,
+                alias=alias,
                 status=TournamentInvitation.OPEN,
             )
             tournament_creator.refresh_from_db()
@@ -93,14 +93,17 @@ class TournamentEvent:
                 f"user_{notif.receiver.user.id}",
                 {
                     "type": "chat_message",
-                    "message": json.dumps({
-                        "action": "tournament_invitation_closed",
-                        "data": notif.data | {"id": str(notif.id)},
-                    }),
+                    "message": json.dumps(
+                        {
+                            "action": "tournament_invitation_closed",
+                            "data": notif.data | {"id": str(notif.id)},
+                        }
+                    ),
                 },
             )
 
     def handle_new_tournament(self, data):
+        # TODO: Verify that this function is, indeed, useless and unused
         logger.info(data)
         logger.debug(data)
         logger.warning(data)
