@@ -1,5 +1,4 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-// import { mockTournamentList } from '@mock/functions/mockTournamentListData.js'; // For Test
 
 export class TournamentList extends HTMLElement {
   #state = {
@@ -66,7 +65,6 @@ export class TournamentList extends HTMLElement {
     }
     this.#state.isLoading = true;
     await this.fetchTournamentList();
-    // this.#state.tournaments = []; // TEST
     if (this.#state.tournaments.length === 0) {
       this.renderNoItem();
       this.#state.isLoading = false;
@@ -122,11 +120,6 @@ export class TournamentList extends HTMLElement {
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
   async fetchTournamentList() {
-    // // TEST
-    // const response = await mockTournamentList();
-    // this.#state.tournaments.push(...response.items);
-    // this.#state.totalTournaments = this.#state.tournaments.length;
-
     const response = await apiRequest(
       'GET',
       /* eslint-disable-next-line new-cap */

@@ -1,8 +1,23 @@
+/**
+ * @module TournamentPending
+ * @description Component for displaying the pending state of a tournament.
+ * It shows the current participants, allows the creator to cancel the tournament,
+ * and allows participants to unregister from the tournament.
+ */
+
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class TournamentPending extends HTMLElement {
+  /**
+   * Private state of the component.
+   * @property {string} id - The ID of the tournament.
+   * @property {number} requiredParticipants - The number of participants required for the tournament.
+   * @property {Array} participants - The list of participants currently registered for the tournament.
+   * @property {string} creatorUsername - The username of the tournament creator.
+   * @property {string} loggedInUsername - The username of the currently logged-in user.
+   */
   #state = {
     id: '',
     requiredParticipants: 0,
@@ -60,7 +75,7 @@ export class TournamentPending extends HTMLElement {
     this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
     this.requiredParticipants.textContent = ` / ${this.#state.requiredParticipants}`;
     this.#state.participants.forEach((participant) => {
-      this.addParticipant(participant);
+      this.renderParticipant(participant);
     });
     if (this.#state.creatorUsername === this.#state.loggedInUsername) {
       this.cancelTournamentButton.classList.remove('d-none');
@@ -69,26 +84,58 @@ export class TournamentPending extends HTMLElement {
     this.unregisterButton.addEventListener('click', this.handleUnregisterButtonClick);
   }
 
-  /* ------------------------------------------------------------------------ */
-  /*      WebSocket Messages handling                                         */
-  /* ------------------------------------------------------------------------ */
-  // ws new_registration listener
-  addParticipant(data) {
+  renderParticipant(data) {
+    if (this.participantsWrapper.querySelector(`#participant-${data.alias}`)) {
+      return;
+    }
+    // Create a new participant element and append it
+    if (!data.profile) {
+      data.profile = {};
+      data.profile.avatar = data.avatar;
+    }
     const participant = document.createElement('div');
     participant.innerHTML = this.participantTemplate();
-
     const avatarElement = participant.querySelector('.participant-avatar');
     const aliasElement = participant.querySelector('.participant-alias');
     avatarElement.src = data.profile.avatar;
     aliasElement.textContent = data.alias;
     participant.id = `participant-${data.alias}`;
-
     this.participantsWrapper.appendChild(participant);
   }
 
-  // ws registration_canceled listener
+  /**
+   * @param {Object} data - The participant data containing alias and profile information.
+   * @property {string} data.alias - The alias of the participant.
+   * @property {Object} data.profile - The profile information of the participant.
+   * @property {string} data.profile.avatar - The URL of the participant's avatar.
+   * @description If the participant already exists, it does nothing.
+   * It creates a new participant element, sets its avatar and alias, and appends it to the participants wrapper.
+   * It also updates the participants count and shows/hides buttons based on the number of participants.
+   */
+  addParticipant(data) {
+    this.renderParticipant(data);
+    this.#state.participants.push(data);
+
+    // Update the participants count
+    this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
+    if (this.#state.participants.length === this.#state.requiredParticipants) {
+      this.unregisterButton.classList.add('d-none');
+      this.cancelTournamentButton.classList.remove('d-none');
+    }
+  }
+
+  /**
+   * @param {Object} data - The participant data containing alias and profile information.
+   * @property {string} data.alias - The alias of the participant.
+   * @property {Object} data.profile - The profile information of the participant.
+   * @property {string} data.profile.avatar - The URL of the participant's avatar.
+   * @description Removes a participant from the tournament.
+   * It finds the participant element by its alias, removes it from the DOM,
+   * and updates the participants count.
+   */
   removeParticipant(data) {
-    const participant = this.participantsWrapper.querySelector(`#participant-${data.alias}`);
+    const escapedAlias = CSS.escape(data.alias);
+    const participant = this.participantsWrapper.querySelector(`#participant-${escapedAlias}`);
     if (participant) {
       this.participantsWrapper.removeChild(participant);
     }
@@ -96,17 +143,31 @@ export class TournamentPending extends HTMLElement {
     if (participantData) {
       this.#state.participants.splice(this.#state.participants.indexOf(participantData), 1);
     }
+    this.currentParticipantsCount.textContent = `${this.#state.participants.length}`;
   }
 
   /* ------------------------------------------------------------------------ */
   /*      Events handling                                                     */
   /* ------------------------------------------------------------------------ */
+  
+  /**
+   * @description Handles the click event on the unregister button.
+   * It shows a modal to confirm the unregistration from the tournament.
+   * It listens for 'tournament-modal-confirm' event from the modal to proceed with the unregistration.
+   */
   handleUnregisterButtonClick() {
     this.modalElement.contentType = this.modalElement.CONTENT_TYPE.UNREGISTER_TOURNAMENT;
     this.modalElement.showModal();
     document.addEventListener('tournament-modal-confirm', this.handleConfirmationFromModal);
   }
 
+  /**
+   * @description Unregisters the user from the tournament.
+   * It sends a DELETE request to the API endpoint to unregister the user.
+   * If the request is successful, it clears the inner HTML of the component,
+   * and displays a message indicating that the user has unregistered.
+   * If the request fails, it shows an error alert message.
+   */
   async unregisterTournament() {
     const response = await apiRequest(
       'DELETE',
@@ -142,12 +203,22 @@ export class TournamentPending extends HTMLElement {
     );
   }
 
+  /**
+   * @description Handles the click event on the cancel tournament button.
+   * It shows a modal to confirm the cancellation of the tournament.
+   * It listens for 'tournament-modal-confirm' event from the modal to proceed with the cancellation.
+   */
   handleCancelTournamentButtonClick() {
     this.modalElement.contentType = this.modalElement.CONTENT_TYPE.CANCEL_TOURNAMENT;
     this.modalElement.showModal();
     document.addEventListener('tournament-modal-confirm', this.handleConfirmationFromModal);
   }
 
+  /**
+   * @description Handles the confirmation event from the modal.
+   * It checks the content type of the modal (CANCEL_TOURNAMENT or UNREGISTER_TOURNAMENT),
+   * and performs the appropriate action.
+   */
   handleConfirmationFromModal(event) {
     const type = event.detail.contentType;
     document.removeEventListener('tournament-modal-confirm', this.handleConfirmationFromModal);

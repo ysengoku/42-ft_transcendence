@@ -36,11 +36,11 @@ export class UserProfile extends HTMLElement {
       }
     } else {
       if (response.status === 404) {
-        router.navigate('/user-not-found');
+        router.redirect('/user-not-found');
       } else if (response.status === 401) {
-        router.navigate('/login');
+        router.redirect('/login');
       } else {
-        router.navigate(`/error?code=${response.status}&error=${response.msg}`);
+        router.redirect(`/error?code=${response.status}&error=${response.msg}`);
         console.error('Error ', response.status, ': ', response.msg);
       }
     }
@@ -132,7 +132,6 @@ export class UserProfile extends HTMLElement {
       gameHistory.data = {
         username: this.user.username,
         matches: this.user.match_history,
-        // tournaments: this.user.tournament_history
       };
     }
   }

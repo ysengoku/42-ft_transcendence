@@ -68,11 +68,6 @@ export class Tournament extends HTMLElement {
       return;
     }
     this.#state.tournamentId = param.id;
-    // if (this.#state.user.tournament_id !== this.#state.tournamentId) {
-    //   devLog('User is not in this tournament');
-    //   router.redirect('/tournament-menu');
-    //   return;
-    // }
     await this.fetchTournamentData();
   }
 
@@ -94,7 +89,6 @@ export class Tournament extends HTMLElement {
       true,
     );
     if (!response.success) {
-      // TODO: handle error
       router.redirect('/home');
       return;
     }
@@ -137,7 +131,7 @@ export class Tournament extends HTMLElement {
     ) {
       this.resolveUIStatus[this.#state.tournament.status]();
     } else {
-      this.#state.currentRoundNumber = this.#state.tournament.rounds.length;
+      this.#state.currentRoundNumber = this.#state.tournament.rounds.length; // TODO: check round status instead of array length
       this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
       this.findAssignedBracketForUser();
       if (!this.#state.currentUserBracket) {
@@ -155,7 +149,8 @@ export class Tournament extends HTMLElement {
     }
     this.render();
     if (this.#state.uiStatus !== UI_STATUS.CANCELED) {
-      socketManager.openSocket('tournament', this.#state.tournamentId);
+      // TODO: Reactivate this line when tournament socket is implemented
+      // socketManager.openSocket('tournament', this.#state.tournamentId);
     }
   }
 
@@ -169,14 +164,16 @@ export class Tournament extends HTMLElement {
   }
 
   checkUserStatus() {
-    const userDataInBracket =
-      this.#state.currentUserBracket.participant1.profile.username === this.#state.user.username
-        ? this.#state.currentUserBracket.participant1
-        : this.#state.currentUserBracket.participant2;
-    switch (userDataInBracket.status) {
+    // const userDataInBracket =
+    //   this.#state.currentUserBracket.participant1.profile.username === this.#state.user.username
+    //     ? this.#state.currentUserBracket.participant1
+    //     : this.#state.currentUserBracket.participant2;
+    // switch (userDataInBracket.status) {
+    switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
         const gameId = this.#state.currentUserBracket.game_id;
-        // router.redirect(`multiplayer-game/${gameId}`);
+        // router.redirect(`multiplayer-game/${gameId}`); // TODO: activate this line
+        devLog('User is playing a match, redirecting to game page:', gameId);
         return false;
       case PARTICIPANT_STATUS.ELIMINATED:
         showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'You have been eliminated from the tournament.');
@@ -318,16 +315,6 @@ export class Tournament extends HTMLElement {
     this.updateContentOnStatusChange();
   }
 
-  handleMatchFinished() {
-    // User comes back from the match
-    // Receive match_finished message via ws with ROUND and user's own result
-    // ??? If we change the URL tournament - match
-    // In socketManager
-    // Navigate to this page (tournament/id)
-    // In this page
-    // fetch tournament to get the tournament data
-  }
-
   updateMatchResult(data) {
     // Handle match_result message with ROUND via ws
   }
@@ -340,6 +327,15 @@ export class Tournament extends HTMLElement {
     // Handle tournament_finished message via ws
     // Show a message
     // Redirect to tournament overview page
+  }
+
+  handleTournamentCanceled(data) {
+    if (data.tournament_id !== this.#state.tournamentId || this.#state.tournament.creator.username === this.#state.user.username) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'This tournament has been canceled.');
+    this.#state.uiStatus = UI_STATUS.CANCELED;
+    this.updateContentOnStatusChange();
   }
 
   async cancelTournament() {
