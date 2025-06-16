@@ -3,6 +3,7 @@ import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
 import { socketManager } from '@socket';
 import {
+  isEqual,
   internalServerErrorAlert,
   sessionExpiredToast,
   unknowknErrorToast,
@@ -27,17 +28,15 @@ const auth = (() => {
      */
     storeUser(user) {
       const currentUser = this.getStoredUser();
-      if (
-        !currentUser ||
-        currentUser.username !== user.username ||
-        currentUser.unread_messages_count !== user.unread_messages_count ||
-        currentUser.unread_notifications_count !== user.unread_notifications_count
-      ) {
+      if (!currentUser || !isEqual(currentUser, user)) {
         sessionStorage.setItem('user', JSON.stringify(user));
         const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
         document.dispatchEvent(event);
       }
       socketManager.openSocket('livechat');
+      if (user.tournament_id) {
+        socketManager.openSocket('tournament', user.tournament_id);
+      }
     }
 
     updateStoredUser(user) {

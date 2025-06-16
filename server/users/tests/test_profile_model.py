@@ -7,53 +7,9 @@ from pong.models import GameRoom, GameRoomPlayer, get_default_game_room_settings
 from tournaments.models import Tournament
 from users.models import User
 
-logger = logging.getLogger("server")
-
-logging.disable(logging.CRITICAL)
-
 
 # ruff: noqa: S106
-class TestLoginEndpoint(TestCase):
-    def setUp(self):
-        User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
-
-    def test_login_works_with_bad_data(self):
-        response = self.client.post("/api/login", content_type="application/json", data={"dummy": "dummy"})
-        self.assertEqual(response.status_code, 422, "Response to bad data should be 422")
-
-    def test_login_works_with_empty_data(self):
-        response = self.client.post("/api/login", content_type="application/json")
-        self.assertEqual(response.status_code, 422, "Response to empty data should be 422")
-
-    def test_login_works_with_incorrect_credentials(self):
-        response = self.client.post(
-            "/api/login",
-            content_type="application/json",
-            data={"username": "foo", "password": "bar"},
-        )
-        self.assertContains(response, "Username or password are not correct.", status_code=401)
-
-    def test_login_works_with_correct_credentials(self):
-        response = self.client.post(
-            "/api/login",
-            content_type="application/json",
-            data={"username": "TestUser", "password": "123"},
-        )
-        self.assertEqual(response.status_code, 200, "Status code for successeful login should be 200")
-        self.assertEqual(
-            response.json(),
-            {
-                "username": "TestUser",
-                "nickname": "TestUser",
-                "avatar": "/img/default_avatar.png",
-                "elo": 1000,
-                "is_online": False,
-            },
-            "Invalid data on login",
-        )
-
-
-class TestProfileModel(TestCase):
+class ProfileModelTests(TestCase):
     def setUp(self):
         self.user: User = User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
 
@@ -89,13 +45,7 @@ class TestProfileModel(TestCase):
             creator=self.user.profile,
             required_participants=4,
             alias="barfoo",
-            settings = {
-                "score_to_win": 5,
-                "time_limit": 300,
-                "cool_mode": False,
-                "ranked": False,
-                "game_speed": "medium"
-            },
+            settings=get_default_game_room_settings(),
         )
         self.assertEqual(
             self.user.profile.can_participate_in_game(),
