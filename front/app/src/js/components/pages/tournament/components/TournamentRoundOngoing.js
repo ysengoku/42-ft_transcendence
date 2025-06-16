@@ -1,7 +1,17 @@
+/**
+ * @module TournamentRoundOngoing
+ * @description Component to display the ongoing tournament round with brackets and match status.
+ * It is shown only to the users who are participating in the tournament and finished their matches of the current round.
+ * Each time a match is finished, the component updates the bracket and displays the result until the current round ends.
+ */
+
+import { flyAway } from '@utils';
+
 export class TournamentRoundOngoing extends HTMLElement {
   #state = {
     roundNumber: 1,
     round: null,
+    onGoingBracketCount: 0,
   };
 
   constructor() {
@@ -14,9 +24,22 @@ export class TournamentRoundOngoing extends HTMLElement {
   }
 
   set data(data) {
-    console.log('TournamentRoundOngoing data:', data);
+    // console.log('TournamentRoundOngoing data:', data);
     this.#state.roundNumber = data.round_number;
     this.#state.round = data.round;
+
+    for (let i = 0; i < this.#state.round.brackets.length; i++) {
+      if (this.#state.round.brackets[i].status === 'ongoing') {
+        this.#state.onGoingBracketCount++;
+      }
+    }
+  }
+
+  get onGoingBracketCount() {
+    return this.#state.onGoingBracketCount;
+  }
+    
+  connectedCallback() {
     this.render();
   }
 
@@ -34,13 +57,17 @@ export class TournamentRoundOngoing extends HTMLElement {
     this.roundStatusMessage.textContent = 'Waiting for all Gunslingers to complete their matches.';
     for (let i = 0; i < this.#state.round.brackets.length; i++) {
       const bracketElement = document.createElement('bracket-element');
-      console.log('Bracket element', bracketElement);
-      console.log('Bracket data', this.#state.round.brackets[i]);
+      // console.log('Bracket element', bracketElement);
+      // console.log('Bracket data', this.#state.round.brackets[i]);
       bracketElement.data = this.#state.round.brackets[i];
       this.bracketsWrapper.appendChild(bracketElement);
     }
   }
 
+  /**
+   * @description Updates the bracket element with the match result.
+   * It is called when a match is finished and the result is received from the server. 
+   */
   updateBracket(matchData) {
     const bracketElement = this.querySelector(`#bracket-${matchData.bracket.game_id}`);
     if (!bracketElement) {
@@ -73,6 +100,25 @@ export class TournamentRoundOngoing extends HTMLElement {
         break;
       }
     }
+    this.#state.onGoingBracketCount--;
+  }
+  
+  roundFinishedAnimation() {
+    devLog(`Round ${this.#state.roundNumber} finished`);
+    this.roundStatusMessage.textContent = 'All Gunslingers have completed their matches. Preparing the next round.';
+    return new Promise((resolve) => {
+      const scoreElements = this.querySelectorAll('.player-score');
+      const loserElements = this.querySelectorAll('.bracket-player-loser');
+      scoreElements.forEach((score) => {
+        score.classList.add('d-none');
+      });
+      loserElements.forEach((loser) => {
+        flyAway(loser);
+      });
+      setTimeout(() => {
+        resolve();
+      }, 2000);
+    });
   }
 
   template() {

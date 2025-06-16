@@ -79,10 +79,15 @@ export class DuelMenu extends HTMLElement {
     this.inviteToDuel = this.inviteToDuel.bind(this);
     this.requestMatchMaking = this.requestMatchMaking.bind(this);
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
+
+    const storedOptions = localStorage.getItem('gameOptions');
+    if (storedOptions) {
+      this.#state.options = JSON.parse(storedOptions);
+    }
   }
 
   /**
-   * Lifecycle method called when the component is connected to the DOM.
+   * @description Lifecycle method called when the component is connected to the DOM.
    * It checks the authentication status of the user and redirects accordingly.
    * If the user is authenticated and has an ongoing game, it redirects to the game page.
    */
@@ -149,6 +154,9 @@ export class DuelMenu extends HTMLElement {
     this.userList.addEventListener('scrollend', this.loadMoreUsers);
   }
 
+  /**
+   * @description Renders the user list based on the search results.
+   */
   renderUserList() {
     for (let i = this.#usersearch.currentListLength; i < this.#usersearch.list.length; i++) {
       if (this.#usersearch.list[i].username !== this.#state.user.username) {
@@ -159,6 +167,9 @@ export class DuelMenu extends HTMLElement {
     this.userList.classList.add('show');
   }
 
+  /**
+   * @description Renders a single user list item in the user search dropdown.
+   */
   renderUserListItem(user) {
     const item = document.createElement('div');
     item.innerHTML = this.userListItemTemplate();
@@ -180,6 +191,10 @@ export class DuelMenu extends HTMLElement {
     item.addEventListener('click', this.selectOpponent);
   }
 
+  /**
+   * @description Renders a message indicating that no user was found based on the search query.
+   * This is displayed when the search results are empty.
+   */
   renderNoUserFound() {
     const noUser = document.createElement('li');
     noUser.textContent = 'No user found';
@@ -190,6 +205,12 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling - Game options                                       */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description Opens the game options modal, allowing users to select game settings.
+   * It creates a modal element, appends it to the body, and initializes the Modal instance.
+   * It also sets up event listeners for saving and canceling the options.
+   */
   openGameOptionsModal() {
     const template = document.createElement('template');
     template.innerHTML = this.gameOptionsModalTemplate();
@@ -222,6 +243,11 @@ export class DuelMenu extends HTMLElement {
     devLog('Game options:', this.#state.options);
   }
 
+  /**
+   * @description Closes the game options modal and cleans up event listeners.
+   * It removes the modal from the DOM and resets the gameOptionsModal reference.
+   * It also ensures that the focus is cleared from any active element within the modal.
+   */
   closeGameOptionsModal() {
     if (!this.gameOptionsModal) {
       return;
@@ -241,13 +267,19 @@ export class DuelMenu extends HTMLElement {
     this.gameOptionsModal.hide();
   }
 
+  /**
+   * @description Clears the focus from any active element within the modal.
+   * This is useful to prevent focus issues when the modal is closed or when the user interacts with it.
+   */
   clearFocusInModal() {
     if (this.modalElement.contains(document.activeElement)) {
       document.activeElement.blur();
     }
   }
 
-  // Convert game options to an object to include in the game invitation request.
+  /**
+   * @description Convert game options to an object to include in the game invitation request.
+   */
   optionsToObject() {
     if (Object.keys(this.#state.options).length === 0) {
       return null;
@@ -261,7 +293,9 @@ export class DuelMenu extends HTMLElement {
     return optionsObj;
   }
 
-  // Convert game options to query parameters for matchmaking.
+  /**
+   * @description Convert game options to query parameters for matchmaking.
+   */
   optionsToQueryParams() {
     if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
       return null;
@@ -292,6 +326,10 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling - Game invitations                                   */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description Handles the search input for finding users to invite to a duel.
+   */
   async handleSearchInput(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -311,6 +349,9 @@ export class DuelMenu extends HTMLElement {
     }, 500);
   }
 
+  /**
+   * @description Sends a request to the API to search for users based on the current search query.
+   */
   async searchUser() {
     const response = await apiRequest(
       'GET',
@@ -331,6 +372,9 @@ export class DuelMenu extends HTMLElement {
     }
   }
 
+  /**
+   * @description Loads more users when the user scrolls to the bottom of the user list.
+   */
   async loadMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
@@ -346,6 +390,9 @@ export class DuelMenu extends HTMLElement {
     this.#usersearch.isLoading = false;
   }
 
+  /**
+   * @description On click on a user in the search results, this function selects the opponent.
+   */
   selectOpponent(event) {
     const selectedUser = event.currentTarget;
     const avatar = selectedUser.querySelector('.duel-usersearch-avatar').src;
@@ -375,6 +422,11 @@ export class DuelMenu extends HTMLElement {
     this.inviteButton.classList.remove('disabled');
   }
 
+  /**
+   * @description Invites the selected opponent to a duel.
+   * It checks if an opponent is selected, verifies if the user can engage in a game,
+   * and sends a game invitation message through the socket manager with the selected options.
+   */
   async inviteToDuel(event) {
     event.preventDefault();
     if (!this.#state.opponentUsername) {
@@ -408,6 +460,9 @@ export class DuelMenu extends HTMLElement {
     router.navigate('/duel', queryParams);
   }
 
+  /**
+   * @description Hides the user list dropdown when clicking outside of it or the search input.
+   */
   hideUserList(event) {
     event.stopPropagation();
     if (this.userList.contains(event.target) || this.searchInput.contains(event.target)) {
@@ -431,6 +486,12 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling - Matchmaking                                        */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description Requests matchmaking for a duel.
+   * It checks if the user can engage in a game, constructs query parameters from the selected options,
+   * opens a socket connection for matchmaking,
+   */
   async requestMatchMaking(event) {
     event.preventDefault();
     const canEngage = await auth.canEngageInGame();
@@ -438,6 +499,8 @@ export class DuelMenu extends HTMLElement {
       return;
     }
     const queryParams = this.optionsToQueryParams();
+    console.log('Requesting matchmaking with options:', queryParams);
+    socketManager.closeSocket('matchmaking');
     socketManager.openSocket('matchmaking', queryParams);
     devLog('Requesting matchmaking...');
     router.navigate('/duel', { status: 'matchmaking' });
