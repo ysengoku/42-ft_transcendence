@@ -102,7 +102,6 @@ class TournamentConsumer(WebsocketConsumer):
             tournament_winner = participants.get()
             self.end_tournament_and_announce_winner(tournament_winner)
             return
-        # else if participants == 1 === WINNER TOURNAMENT
         brackets = self.generate_brackets(participants)
 
         for p1, p2 in brackets:
@@ -119,15 +118,40 @@ class TournamentConsumer(WebsocketConsumer):
 
     def create_tournament_game_room(self, p1, p2):
         gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=p1)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=p2)
+        GameRoomPlayer.objects.create(game_room=gameroom, profile=p1.profile)
+        GameRoomPlayer.objects.create(game_room=gameroom, profile=p2.profile)
         return gameroom
 
+    def data_for_tournament_round(self, round_number):
+        action = "tournament_start" if round_number == 1 else "round_start"
+        return {
+            "type": "tournament_message",
+            "action": action,
+            "data": {
+                "tournament_id": self.tournament_id,
+                "tournament_name": self.tournament_name,
+                "round": round_number,
+            },
+        }
+
     def start_game(self, data):
-        pass
+        brackets = data["data"].get["brackets"]
+        round_number = data["data"].get["round_number"]
+        for bracket in brackets:
+            game_room = self.create_game_room(bracket.participant1, bracket.participant2)
+        notif_data = self.data_for_tournament_round(round_number)
+        async_to_sync(self.consumer.channel_layer.group_send)(f"tournament_{self.tournament_id}", notif_data)
 
     def end_tournament_and_announce_winner(self, winner):
-        pass
+        async_to_sync(self.consumer.channel_layer.group_send)(
+            f"tournament_{self.tournament_id}",
+            {
+                "type": "tournament_message",
+                "action": "tournament_end",
+                "alias": winner.alias,
+                "avatar": winner.avatar,
+            },
+        )
 
     def take_winners_from(self, previous_round):
         winners = []
