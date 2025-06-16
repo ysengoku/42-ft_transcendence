@@ -1,18 +1,19 @@
 import { router } from '@router';
+import { auth } from '@auth';
 import { socketManager } from '@socket';
 import { getRelativeTime } from '@utils';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 
 export class NotificationsListItem extends HTMLElement {
   #state = {
-    username: '',
+    // username: '',
     action: '',
     data: null,
   };
 
   message = {
     gameInvitation: (nickname) => `${nickname} challenges you to a duel.`,
-    pendingGameInvitation: (nickname) => `You've challenged '${nickname} to a duel.`,
+    pendingGameInvitation: (nickname) => `You've challenged ${nickname} to a duel.`,
     newTournament: (alias, tournamentName) =>
       `${alias} is calling all gunslingers to a new tournament - ${tournamentName}!`,
     newFriend: (nickname) => `${nickname} just roped you in as a friend.`,
@@ -33,6 +34,10 @@ export class NotificationsListItem extends HTMLElement {
     this.#state.data = data.data;
     this.render();
   }
+
+  // set username(username) {
+  //   this.#state.username = username;
+  // }
 
   disconnectedCallback() {
     this.acceptButton?.removeEventListener('click', this.handleAcceptDuel);
@@ -56,11 +61,17 @@ export class NotificationsListItem extends HTMLElement {
     this.buttonWrapper = this.querySelector('.call-to-action-groupe');
     switch (this.#state.action) {
       case 'game_invite':
+        const user = auth.getStoredUser();
+        const username = user ? user.username : '';
+        if (!username) {
+          this.content.textContent = 'This notification is momentarily unavailable.';
+          return;
+        }
         this.seeProfileButton = document.createElement('button');
         this.seeProfileButton.textContent = 'See profile';
         this.seeProfileButton.addEventListener('click', this.navigateToProfile);
         this.buttonWrapper.appendChild(this.seeProfileButton);
-        if (this.#state.data.username !== this.#state.username) {
+        if (this.#state.data.username !== username) {
           this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
           this.acceptButton = document.createElement('button');
           this.acceptButton.textContent = 'Accept';
@@ -152,6 +163,17 @@ export class NotificationsListItem extends HTMLElement {
   }
 
   cancelDuelInvitation() {
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
+    if (window.location.pathname === '/duel') {
+      const duelPage = document.querySelector('duel-page');
+      if (duelPage) {
+        duelPage.cancelInvitation();
+      } else {
+        devErrorLog('Duel page not found');
+      }
+      return;
+    }
     const message = {
       action: 'cancel_game_invite',
       data: {
@@ -159,8 +181,6 @@ export class NotificationsListItem extends HTMLElement {
       },
     };
     socketManager.sendMessage('livechat', message);
-    const dropdown = this.closest('.dropdown-menu');
-    dropdown.classList.remove('show');
   }
 
   handleParticipateTournament() {
