@@ -38,7 +38,7 @@ def create_tournament(request, data: TournamentCreateSchema):
         raise HttpError(403, "You can't be a participant if you are already in a game / looking for a game.")
 
     alias = data.alias
-    tournament : Tournament = Tournament.objects.validate_and_create(
+    tournament: Tournament = Tournament.objects.validate_and_create(
         tournament_name=data.name,
         creator=user.profile,
         required_participants=data.required_participants,
@@ -121,7 +121,9 @@ def delete_tournament(request, tournament_id: UUID):
         raise HttpError(404, "Tournament not found.") from e
 
     if tournament.creator != user.profile:
-        raise HttpError(403, "You are not allowed to cancel this tournament.")
+        raise httperror(403, "you are not allowed to cancel this tournament.")
+    if tournament.status != Tournament.PENDING:
+        raise httperror(403, "You cannot cancel an ongoing tournament.")
 
     tournament.status = Tournament.CANCELLED
     tournament.save()
