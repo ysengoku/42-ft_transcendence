@@ -194,7 +194,7 @@ export function mockFetchTournament(username, status) {
               participant2: {
                 profile: {
                   username: 'alice',
-                  avatar: '/img/fefault_avatar.png',
+                  avatar: '/img/default_avatar.png',
                 },
                 alias: 'DuskDevil',
                 status: 'playing',
@@ -214,6 +214,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic3.png',
           },
           alias: 'Nightmare',
+          status: 'eliminated',
         },
         {
           profile: {
@@ -221,6 +222,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic2.png',
           },
           alias: 'Lone Cactus',
+          status: 'qualified',
         },
         {
           profile: {
@@ -228,6 +230,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic1.jpg',
           },
           alias: 'Midnight Rider',
+          status: 'playing',
         },
         {
           profile: {
@@ -235,6 +238,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/img/fefault_avatar.png',
           },
           alias: 'DuskDevil',
+          status: 'playing',
         },
       ],
       required_participants: 4,
