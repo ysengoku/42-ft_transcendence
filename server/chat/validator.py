@@ -21,6 +21,7 @@ class Validator:
             "add_new_friend": ["sender_id", "receiver_id"],
             "user_online": ["username"],
             "user_offline": ["username"],
+            "cancel_game_invite": ["username"],
         }
 
         if action in required_fields:
@@ -46,6 +47,7 @@ class Validator:
             "reply_game_invite": {"accept": bool, "username": str},
             "game_accepted": {"accept": bool},
             "game_declined": {"accept": bool},
+            "cancel_game_invite": {"username": str},
         }
 
         uuid_fields = {
@@ -96,15 +98,15 @@ class Validator:
         if option is None:
             return True
         if not isinstance(option, str) or option not in dict_options:
-                logger.warning("%s must be one of %s and currently is %s", options, dict_options, option)
-                return False
+            logger.warning("%s must be one of %s and currently is %s", options, dict_options, option)
+            return False
         return True
 
     @staticmethod
     def check_bool_option(options, option) -> bool:
         if option is not None and not isinstance(option, bool):
-                logger.warning("%s must be a boolean", options)
-                return False
+            logger.warning("%s must be a boolean", options)
+            return False
         return True
 
     @staticmethod
@@ -112,8 +114,8 @@ class Validator:
         if option is None:
             return True
         if not isinstance(option, int) or not (val_min <= option <= val_max):
-                logger.warning("%s must be an int between %d and %d", options, val_min, val_max)
-                return False
+            logger.warning("%s must be an int between %d and %d", options, val_min, val_max)
+            return False
         return True
 
     @staticmethod
