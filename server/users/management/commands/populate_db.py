@@ -173,11 +173,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
         "PhantomCat",
     ]
     options = [int(x) for x in __import__("django.conf").conf.settings.REQUIRED_PARTICIPANTS_OPTIONS]
-    profiles = [
-        u.profile
-        for u in users.values()
-        if hasattr(u, "profile") and u.profile.user is not None and u.username not in ["emuminov", "celiastral"]
-    ]
+    profiles = [u.profile for u in users.values() if hasattr(u, "profile") and u.profile.user is not None]
 
     for i in range(15):
         name = f"Tournament {i + 1}"
