@@ -8,20 +8,9 @@ class Validator:
     @staticmethod
     def all_required_fields_are_present(action, data) -> bool:
         required_fields = {
-            "new_message": ["content", "chat_id"],
-            "notification": ["message", "type"],
-            "like_message": ["id", "chat_id"],
-            "unlike_message": ["id", "chat_id"],
-            "read_message": ["id"],
-            "game_invite": ["client_id", "username"],
-            "reply_game_invite": ["username", "accept"],
-            "game_accepted": ["username"],
-            "game_declined": ["username"],
-            "new_tournament": ["tournament_id", "tournament_name", "organizer_id"],
-            "add_new_friend": ["sender_id", "receiver_id"],
-            "user_online": ["username"],
-            "user_offline": ["username"],
-            "cancel_game_invite": ["username"],
+            "new_registration": ["alias", "avatar"],
+            "last_registration": ["alias", "avatar"],
+            "tournament_message": ["alias", "avatar"],
         }
 
         if action in required_fields:
@@ -37,30 +26,13 @@ class Validator:
             return False
 
         expected_types = {
-            "new_message": {"content": str, "chat_id": str},
-            "like_message": {"id": str, "chat_id": str},
-            "unlike_message": {"id": str, "chat_id": str},
-            "read_message": {"id": str},
-            "read_notification": {"id": str},
-            "notification": {"message": str, "type": str},
-            "game_invite": {"client_id": str, "username": str},
-            "reply_game_invite": {"accept": bool, "username": str},
-            "game_accepted": {"accept": bool},
-            "game_declined": {"accept": bool},
-            "cancel_game_invite": {"username": str},
+            "new_registration": {"alias": str, "avatar": str},
+            "last_registration": {"alias": str, "avatar": str},
+            "tournament_message": {"alias": str, "avatar": str},
         }
 
         uuid_fields = {
             "new_message": ["chat_id"],
-            "like_message": ["id", "chat_id"],
-            "unlike_message": ["id", "chat_id"],
-            "read_message": ["id"],
-            "read_notification": ["id"],
-            # TODO : check these ids
-            "new_tournament": ["id", "organizer_id"],
-            "add_new_friend": ["id"],
-            "join_chat": ["chat_id"],
-            "room_created": ["chat_id"],
         }
         # Types verification
         if action in expected_types:
