@@ -57,7 +57,6 @@ class TournamentEvent:
                 },
             )
             notification_data = notification.data.copy()
-            logger.warning(notification_data)
             if "date" in notification_data and isinstance(notification_data["date"], datetime):
                 notification_data["date"] = notification_data["date"].isoformat()
             async_to_sync(channel_layer.group_send)(
@@ -102,6 +101,11 @@ class TournamentEvent:
             )
 
     def handle_new_tournament(self, data):
+        logger.info(data)
+        logger.debug(data)
+        logger.warning(data)
+        logger.critical(data)
+        logger.warning("HOLY SHIT WILL YOU PLEASE PRINT THIS ?")
         tournament_id = data["data"].get["tournament_id"]
         tournament_name = data["data"].get["tournament_name"]
         organizer_id = data["data"].get["organizer_id"]

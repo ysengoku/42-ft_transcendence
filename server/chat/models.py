@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, ImageField, OuterRef, Q, Subquery, Value
+from django.db.models import (BooleanField, Count, Exists, ExpressionWrapper,
+                              ImageField, OuterRef, Q, Subquery, Value)
 from django.db.models.functions import Coalesce, Now, NullIf
 from django.utils import timezone
 
@@ -187,12 +188,14 @@ class NotificationQuerySet(models.QuerySet):
         notification_action: str,
         notification_data={},  # noqa: B006
         date: datetime = None,
+        invitee: Profile = None,
     ):
         """
         `notification_data` is a data specific to the notification of the `notification_action`.
 
         Notification.NEW_FRIEND:     no additional data required
         Notification.GAME_INVITE:    `game_id`
+        Notification.SENT_GAME_INVITE:    `game_id`
         Notification.NEW_TOURNAMENT: `tournament_id`, `tournament_name`
         """
         data = sender.to_username_nickname_avatar_schema() | notification_data
@@ -233,19 +236,22 @@ class NotificationQuerySet(models.QuerySet):
         self,
         receiver: Profile,
         sender: Profile,
-        # notification_data = {"game_id": ""},
-        notification_data = None,
+        invitee: Profile,
+        notification_data=None,
         date: datetime = None,
     ):
         if notification_data is None:
             notification_data = {"game_id": ""}
         from chat.models import GameInvitation
+
         invitation = GameInvitation.objects.get(id=notification_data["game_id"])
         notification_data = notification_data.copy()
         notification_data["status"] = invitation.status
+        notification_data["invitee"] = invitee.to_username_nickname_avatar_schema()
         return self._create(
             receiver=receiver,
             sender=sender,
+            invitee=invitee,
             notification_action=self.model.GAME_INVITE,
             notification_data=notification_data,
             date=date,
@@ -255,13 +261,15 @@ class NotificationQuerySet(models.QuerySet):
         self,
         receiver: Profile,
         sender: Profile,
-        notification_data = None,
+        notification_data=None,
         date: datetime = None,
     ):
         if notification_data is None:
             notification_data = {"invitation_id": ""}
         from chat.models import TournamentInvitation
-        invitation = TournamentInvitation.objects.get(id=notification_data["invitation_id"])
+
+        invitation = TournamentInvitation.objects.get(
+            id=notification_data["invitation_id"])
         notification_data = notification_data.copy()
         notification_data["status"] = invitation.status
         return self._create(
@@ -327,8 +335,10 @@ class GameInvitation(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name="sent_invites", null=True, blank=True)
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE,
+                               related_name="sent_invites", null=True, blank=True)
+    invitee = models.ForeignKey(Profile, on_delete=models.CASCADE,
+                                related_name="invitee", null=True, blank=True)
     recipient = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
@@ -354,6 +364,7 @@ class GameInvitation(models.Model):
             notif.data["status"] = self.status
             notif.save(update_fields=["data"])
 
+
 class TournamentInvitation(models.Model):
     OPEN = "open"
     CLOSED = "closed"
@@ -363,18 +374,20 @@ class TournamentInvitation(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    tournament_id = models.UUIDField(primary_key=False, default=uuid.uuid4, editable=False)
+    tournament_id = models.UUIDField(
+        primary_key=False, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(
-        Profile,
-        on_delete=models.CASCADE,
-        related_name="sent_tournament_invites", null=True, blank=True)
+        Profile, on_delete=models.CASCADE, related_name="sent_tournament_invites", null=True, blank=True
+    )
     recipient = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
         related_name="received_tournament_invites",
     )
-    tournament_name = models.CharField(max_length=50, null=False, blank=False, default="The no name tournament")
-    alias = models.CharField(max_length=30, null=False, blank=False, default="anonymous")
+    tournament_name = models.CharField(
+        max_length=50, null=False, blank=False, default="The no name tournament")
+    alias = models.CharField(max_length=30, null=False,
+                             blank=False, default="anonymous")
     status = models.CharField(
         max_length=11,
         blank=False,
