@@ -1,13 +1,15 @@
 # server/tournament/consumers.py
 import json
 import logging
-import uuid
 import random
+import uuid
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from django.core.exceptions import ValidationError
 from django.db import transaction
+
+from pong.models import GameRoom, GameRoomPlayer
 
 from .models import Bracket, Participant, Round, Tournament
 from .tournament_validator import Validator
@@ -18,6 +20,7 @@ logger = logging.getLogger("server")
 # TODO: Implement match_finished
 # TODO: Implement round_end
 # TODO: Verify connexion of both players before the match
+
 
 class TournamentConsumer(WebsocketConsumer):
     tournaments = {}
@@ -118,7 +121,9 @@ class TournamentConsumer(WebsocketConsumer):
         brackets = new_round.brackets.all()
         for bracket in brackets:
             game_room = self.create_tournament_game_room(bracket.participant1, bracket.participant2)
-            bracket.status=Bracket.ONGOING
+            bracket.status = Bracket.ONGOING
+            bracket.game_room = game_room
+            bracket.save()
 
     def send_start_round_message(self, round_number, new_round):
         action = "tournament_start" if round_number == 1 else "round_start"
@@ -154,7 +159,6 @@ class TournamentConsumer(WebsocketConsumer):
             },
         }
 
-
     def end_tournament_and_announce_winner(self, winner):
         async_to_sync(self.consumer.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
@@ -186,8 +190,8 @@ class TournamentConsumer(WebsocketConsumer):
                 {
                     "action": event["action"],
                     "data": event["data"],
-                }
-            )
+                },
+            ),
         )
 
     def new_registration(self, event):
@@ -218,6 +222,7 @@ class TournamentConsumer(WebsocketConsumer):
                 "data": {
                     "tournament_id": str(self.tournament_id),
                     "tournament_name": self.tournament_name,
+                },
             },
         )
 
@@ -263,15 +268,12 @@ class TournamentConsumer(WebsocketConsumer):
         # Goal : set the bracket as finished, then set the round as Finished
         winner = data["data"].get("winner")
         # If no winner, impossible to get the bracket and set it to CANCELLED here
-        bracket = self.tournament.bracket.get(winner=winner, round_number=round_number) #TODO: <-- delete this
+        bracket = self.tournament.bracket.get(winner=winner, round_number=round_number)  # TODO: <-- delete this
 
-        if winner is NONE:
-            bracket.status = Bracket.CANCELLED
-        else:
-            bracket.status = Bracket.FINISHED
-        if self.bracket.filter(status=Bracket.ONGOING) == 0
+        if self.bracket.filter(status=Bracket.ONGOING) == 0:
             self.tournament.round.get(number=round_number).status = round.FINISHED
             self.prepare_round()
+            self.tournament.round.save()
 
     def send_match_result(self, data):
         logger.debug("function send_match_result")
@@ -289,4 +291,3 @@ class TournamentConsumer(WebsocketConsumer):
                 },
             },
         )
-
