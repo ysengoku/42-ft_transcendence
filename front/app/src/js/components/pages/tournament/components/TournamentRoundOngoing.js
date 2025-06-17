@@ -43,10 +43,6 @@ export class TournamentRoundOngoing extends HTMLElement {
     this.render();
   }
 
-  disconnectedCallback() {
-    // document.removeEventListener('tournament-match-finished', this.updateBracket);
-  }
-
   render() {
     this.innerHTML = this.template();
     this.roundNumberElement = this.querySelector('#round-number');
@@ -83,7 +79,7 @@ export class TournamentRoundOngoing extends HTMLElement {
     scoreP2 = matchData.bracket.score_p2;
     // -----------------------------------------------------------
     if (matchData.bracket.winner && matchData.bracket.winner.profile) {
-      matchData.bracket.winner.profile.alias === matchData.bracket.participant1.alias
+      matchData.bracket.winner.alias === matchData.bracket.participant1.alias
         ? (player1Element.classList.add('bracket-player-winner'), player2Element.classList.add('bracket-player-loser'))
         : // TODO: Activate after the update on backend is ready
           // (scoreP1 = matchData.bracket.winners_score),

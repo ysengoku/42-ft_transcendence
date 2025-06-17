@@ -34,7 +34,6 @@ export class Tournament extends HTMLElement {
     currentRoundNumber: 0,
     currentRound: null,
     currentUserBracket: null,
-    // remainingBracketsInCurrentRound: 0,
     currentRoundFinished: false,
     nextRound: null,
   };
@@ -76,28 +75,6 @@ export class Tournament extends HTMLElement {
     await this.fetchTournamentData();
   }
 
-  /**
-   * Called onMessage round_start from tournament WS
-   * @description Sets the next round data in the state.
-   * If the previous round is set as finished, it triggers the start of the next round.
-   */
-  set nextRound(data) {
-    console.log('Setting next round:', data);
-    if (!data || data.tournament_id !== this.#state.tournamentId) {
-      return;
-    }
-    this.#state.nextRound = data.round;
-    if (this.#state.currentRoundFinished) {
-      this.#state.currentRound = this.#state.nextRound;
-      this.#state.currentRoundNumber++;
-      this.handleRoundStart();
-    }
-  }
-
-  get nextRound() {
-    return this.#state.nextRound;
-  }
-
   disconnectedCallback() {
     document.removeEventListener('tournament-round-finished-ui-ready', this.setCurrentRoundFinished);
   }
@@ -136,12 +113,21 @@ export class Tournament extends HTMLElement {
       return participant.profile.username.toLowerCase() === this.#state.user.username.toLowerCase();
     });
     devLog('User data in tournament:', this.#state.userDataInTournament);
+
     if (!this.#state.userDataInTournament) {
       devLog('User is not in this tournament');
       router.redirect('/tournament-menu');
       return;
     }
+    if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
+      socketManager.closeSocket('tournament', this.#state.tournamentId);
+      // TODO: Find the final round
+      // If user is one of 2 finalists, show a special message
+      router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
+      return;
+    }
     if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
+      socketManager.closeSocket('tournament', this.#state.tournamentId);
       showAlertMessageForDuration(
         ALERT_TYPE.LIGHT,
         'You have been eliminated from the tournament. Thanks for participating!',
@@ -149,11 +135,6 @@ export class Tournament extends HTMLElement {
       setTimeout(() => {
         router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
       }, 2000);
-      return;
-    }
-    if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
-      socketManager.closeSocket('tournament', this.#state.tournamentId);
-      router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
       return;
     }
     if (
@@ -377,6 +358,24 @@ export class Tournament extends HTMLElement {
   setCurrentRoundFinished() {
     this.#state.currentRoundFinished = true;
     if (this.#state.nextRound) {
+      this.#state.currentRound = this.#state.nextRound;
+      this.#state.currentRoundNumber++;
+      this.handleRoundStart();
+    }
+  }
+
+  /**
+   * Called onMessage round_start from tournament WS
+   * @description Sets the next round data in the state.
+   * If the previous round is set as finished, it triggers the start of the next round.
+   */
+  setNextRound(data) {
+    console.log('Setting next round:', data);
+    if (!data || data.tournament_id !== this.#state.tournamentId) {
+      return;
+    }
+    this.#state.nextRound = data.round;
+    if (this.#state.currentRoundFinished) {
       this.#state.currentRound = this.#state.nextRound;
       this.#state.currentRoundNumber++;
       this.handleRoundStart();
