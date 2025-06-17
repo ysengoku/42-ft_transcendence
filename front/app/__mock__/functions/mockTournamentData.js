@@ -1,10 +1,10 @@
 export async function mockTournamentData(status) {
   const data = {
-    lobby: {
+    pending: {
       id: 'kagerhnpewn16461gdsga',
       name: 'Peacemakers Cup',
       date: '2025-05-01T12:00:00Z',
-      status: 'lobby',
+      status: 'pending',
       required_participants: 8,
       creator: {
         username: 'Pedro',
@@ -16,34 +16,34 @@ export async function mockTournamentData(status) {
       participants: [
         {
           alias: 'WhiskeyDuke',
-          user: {
+          profile: {
             username: 'GeorgeLucas',
             nickname: 'The Legend',
             avatar: '/__mock__/img/sample-pic2.png',
             elo: 1500,
             is_online: true,
-          }
+          },
         },
         {
           alias: 'LoneStar',
-            user: {
-              username: 'Alex',
-              nickname: 'Jedi Master',
-              avatar: '/__mock__/img/sample-pic3.png',
-              elo: 1500,
-              is_online: false,
-            }
+          profile: {
+            username: 'Alex',
+            nickname: 'Jedi Master',
+            avatar: '/__mock__/img/sample-pic3.png',
+            elo: 1500,
+            is_online: false,
+          },
         },
         {
           alias: 'ShadowFang',
-          user: {
+          profile: {
             username: 'ShadowFang',
             nickname: 'The Phantom',
             avatar: '/__mock__/img/sample-pic1.jpg',
             elo: 1500,
             is_online: true,
-          }
-        }
+          },
+        },
       ],
       winner: null,
     },
@@ -63,83 +63,83 @@ export async function mockTournamentData(status) {
       participants: [
         {
           alias: 'WhiskeyDuke',
-          user: {
+          profile: {
             username: 'GeorgeLucas',
             nickname: 'The Legend',
             avatar: '/__mock__/img/sample-pic2.png',
             elo: 1500,
             is_online: true,
-          }
+          },
         },
         {
           alias: 'LoneStar',
-          user: {
+          profile: {
             username: 'Alex',
             nickname: 'Jedi Master',
             avatar: '/__mock__/img/sample-pic3.png',
             elo: 1500,
             is_online: false,
-          }
+          },
         },
         {
           alias: 'ShadowFang',
-          user: {
+          profile: {
             username: 'ShadowFang',
             nickname: 'The Phantom',
             avatar: '/__mock__/img/sample-pic1.jpg',
             elo: 1500,
             is_online: true,
-          }
+          },
         },
         {
           alias: 'SpeedFreak',
-          user: {
+          profile: {
             username: 'Tommy',
             nickname: 'Speedster',
             avatar: '/__mock__/img/sample-pic2.png',
             elo: 1550,
             is_online: false,
-          }
+          },
         },
         {
           alias: 'QuickSilver',
-          user: {
+          profile: {
             username: 'Sam',
             nickname: 'Blitz',
             avatar: '/__mock__/img/sample-pic2.png',
             elo: 1490,
             is_online: true,
-          }
+          },
         },
         {
           alias: 'SilentStorm',
-          user: {
+          profile: {
             username: 'Morgan',
             nickname: 'The Whisper',
             avatar: '/__mock__/img/sample-pic1.jpg',
             elo: 1450,
             is_online: false,
-          }
+          },
         },
         {
           alias: 'LoneStar',
-          user: {
+          profile: {
             username: 'Sammy',
             nickname: 'Blitz',
             avatar: '/__mock__/img/sample-pic2.png',
             elo: 1490,
             is_online: true,
-          }
+          },
         },
         {
           alias: 'StormBreaker',
-          user: {
+          profile: {
             username: 'Morganv',
             nickname: 'The Whisper',
             avatar: '/__mock__/img/sample-pic1.jpg',
             elo: 1450,
             is_online: false,
-          }
+          },
         },
       ],
       winner: null,
@@ -160,56 +160,56 @@ export async function mockTournamentData(status) {
       participants: [
         {
           alias: 'SpeedFreak',
-          user: {
+          profile: {
             username: 'Tommy',
             nickname: 'Speedster',
             avatar: '/__mock__/img/sample-pic2.png',
             elo: 1550,
             is_online: false,
-          }
+          },
         },
         {
           alias: 'QuickSilver',
-          user: {
+          profile: {
             username: 'Sam',
             nickname: 'Blitz',
             avatar: '/__mock__/img/sample-pic2.png',
             elo: 1490,
             is_online: true,
-          }
+          },
         },
         {
           alias: 'SilentStorm',
-          user: {
+          profile: {
             username: 'Morgan',
             nickname: 'The Whisper',
             avatar: '/__mock__/img/sample-pic1.jpg',
             elo: 1450,
             is_online: false,
-          }
+          },
         },
         {
           alias: 'ShadowFang',
-          user: {
+          profile: {
             username: 'ShadowFang',
             nickname: 'The Phantom',
             avatar: '/__mock__/img/sample-pic1.jpg',
             elo: 1500,
             is_online: true,
-          }
+          },
         },
-      ],  
+      ],
       winner: {
         alias: 'SpeedFreak',
-        user: {
-        username: 'Tommy',
-        nickname: 'Speedster',
-        avatar: '/__mock__/img/sample-pic2.png',
-        elo: 1550,
-        is_online: false,
-        }
+        profile: {
+          username: 'Tommy',
+          nickname: 'Speedster',
+          avatar: '/__mock__/img/sample-pic2.png',
+          elo: 1550,
+          is_online: false,
+        },
       },
     },
   };
   return data[status];
-};
+}

@@ -10,7 +10,7 @@ export class EmailUpdate extends HTMLElement {
     super();
     this.newEmail = '';
     this.isEmailFilled = this.isEmailFilled.bind(this);
-    this.removeFeedback = this.removeFeedback.bind(this);
+    this.handleFocusout = this.handleFocusout.bind(this);
   }
 
   setParams(user) {
@@ -21,8 +21,8 @@ export class EmailUpdate extends HTMLElement {
 
   disconnectedCallback() {
     if (this.#state.connectionType === 'regular') {
-      this.emailInput.removeEventListener('input', this.emailFeedback);
-      this.emailInput.removeEventListener('blur', this.removeFeedback);
+      this.emailInput?.removeEventListener('input', this.emailFeedback);
+      this.emailInput?.removeEventListener('focusout', this.handleFocusout);
     }
   }
 
@@ -40,7 +40,7 @@ export class EmailUpdate extends HTMLElement {
     this.emailFeedbackField = this.querySelector('#settings-email-feedback');
 
     this.emailInput.addEventListener('input', this.isEmailFilled);
-    this.emailInput.addEventListener('blur', this.removeFeedback);
+    this.emailInput.addEventListener('focusout', this.handleFocusout);
   }
 
   isEmailFilled(event) {
@@ -51,12 +51,16 @@ export class EmailUpdate extends HTMLElement {
       this.emailFeedbackField.textContent = '';
       this.emailInput.classList.remove('is-invalid');
     }
-    if (event.target.value !== this.#state.currentEmail) {
+    if (event.target.value.length > 0 && event.target.value !== this.#state.currentEmail) {
       this.newEmail = event.target.value;
     }
   }
 
-  removeFeedback(event) {
+  handleFocusout(event) {
+    const focusedElement = event.relatedTarget;
+    if (focusedElement && focusedElement.matches('button[type="submit"]')) {
+      return;
+    }
     if (event.target.value.length < 1) {
       event.target.value = this.#state.currentEmail;
       this.emailInput.classList.remove('is-invalid');

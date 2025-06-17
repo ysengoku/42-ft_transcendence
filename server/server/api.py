@@ -53,26 +53,13 @@ def handle_django_validation_error(request: HttpRequest, exc: ValidationError):
     if hasattr(exc, "message_dict"):
         for key in exc.message_dict:
             err_response.extend(
-                {
-                    "type": "validation_error",
-                    "loc": ["body", key],
-                    "msg": msg
-                }
-                for msg in exc.message_dict[key]
+                {"type": "validation_error", "loc": ["body", key], "msg": msg} for msg in exc.message_dict[key]
             )
     elif hasattr(exc, "messages"):
         for msg in exc.messages:
-            err_response.append({
-                "type": "validation_error",
-                "loc": ["body"],
-                "msg": msg
-            })
+            err_response.append({"type": "validation_error", "loc": ["body"], "msg": msg})  # noqa: PERF401
     else:
-        err_response.append({
-            "type": "validation_error",
-            "loc": ["body"],
-            "msg": str(exc)
-        })
+        err_response.append({"type": "validation_error", "loc": ["body"], "msg": str(exc)})
 
     return api.create_response(request, err_response, status=422)
 

@@ -1,4 +1,6 @@
 import { router } from '@router';
+import { auth } from '@auth';
+import { sessionExpiredToast } from '@utils';
 
 export class DuelButton extends HTMLElement {
   constructor() {
@@ -21,8 +23,21 @@ export class DuelButton extends HTMLElement {
     this.button.addEventListener('click', this.handleClick);
   }
 
-  handleClick(event) {
+  async handleClick(event) {
     event.preventDefault();
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
+      router.redirect('/login');
+      return;
+    }
+    if (authStatus.success && authStatus.response.game_id) {
+      devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
+      router.navigate(`multiplayer-game/${authStatus.response.game_id}`);
+      return;
+    }
     router.navigate('/duel-menu');
   }
 

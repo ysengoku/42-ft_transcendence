@@ -13,7 +13,7 @@ export class AccountDeleted extends HTMLElement {
   connectedCallback() {
     const user = auth.getStoredUser();
     if (!user) {
-      router.navigate('/');
+      router.redirect('/');
       return;
     }
     this.#state.nickname = auth.getStoredUser().nickname;
@@ -40,7 +40,7 @@ export class AccountDeleted extends HTMLElement {
 
   template() {
     return `
-    <div class="d-flex flex-column align-items-center justify-content-center my-5">
+    <div class="form-container d-flex flex-column align-items-center justify-content-center m-3 p-5">
       <h1></h1>
       <p class>Your journey ends here, but Peacemakers' town will always be here. Should you return, adventure awaits...</p>
       <button class="btn btn-wood mt-5" id="back-to-landingpage">Leave the town</button>
