@@ -30,10 +30,13 @@ export class Tournament extends HTMLElement {
     uiStatus: '',
     tournamentId: '',
     tournament: null,
+    userDataInTournament: null,
     currentRoundNumber: 0,
     currentRound: null,
     currentUserBracket: null,
-    userDataInTournament: null,
+    // remainingBracketsInCurrentRound: 0,
+    currentRoundFinished: false,
+    nextRound: null,
   };
 
   constructor() {
@@ -41,6 +44,8 @@ export class Tournament extends HTMLElement {
 
     this.tournamentName = null;
     this.tournamentContentWrapper = null;
+
+    this.setCurrentRoundFinished = this.setCurrentRoundFinished.bind(this);
   }
 
   /**
@@ -72,6 +77,32 @@ export class Tournament extends HTMLElement {
   }
 
   /**
+   * Called onMessage round_start from tournament WS
+   * @description Sets the next round data in the state.
+   * If the previous round is set as finished, it triggers the start of the next round.
+   */
+  set nextRound(data) {
+    console.log('Setting next round:', data);
+    if (!data || data.tournament_id !== this.#state.tournamentId) {
+      return;
+    }
+    this.#state.nextRound = data.round;
+    if (this.#state.currentRoundFinished) {
+      this.#state.currentRound = this.#state.nextRound;
+      this.#state.currentRoundNumber++;
+      this.handleRoundStart();
+    }
+  }
+
+  get nextRound() {
+    return this.#state.nextRound;
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener('tournament-round-finished-ui-ready', this.setCurrentRoundFinished);
+  }
+
+  /**
    * Fetches tournament data from the API using the tournament ID stored in the state.
    * If the fetch is successful, it updates the state with the tournament data and user data in the tournament.
    * If the tournament status is pending or canceled, it sets the UI status accordingly.
@@ -95,8 +126,8 @@ export class Tournament extends HTMLElement {
     this.#state.tournament = response.data;
 
     // =========== For test ================================================
-    // pending, tournamentStarting, waitingNextRound, roundStarting
-    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
+    // pending, tournamentstarting, waitingNextRound, roundpending
+    this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
     // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
@@ -192,11 +223,14 @@ export class Tournament extends HTMLElement {
       case PARTICIPANT_STATUS.PENDING:
         return true;
       default:
-        devErrorLog(`Unknown participant status: ${userDataInBracket.status}`);
+        devErrorLog('Unknown participant status');
         return false;
     }
   }
 
+  /* ------------------------------------------------------------------------ */
+  /*      Render                                                              */
+  /* ------------------------------------------------------------------------ */
   resolveUIStatus = {
     [TOURNAMENT_STATUS.PENDING]: () => {
       this.#state.uiStatus = UI_STATUS.PENDING;
@@ -206,9 +240,6 @@ export class Tournament extends HTMLElement {
         case ROUND_STATUS.PENDING:
           this.#state.uiStatus = UI_STATUS.ROUND_STARTING;
           break;
-        // case ROUND_STATUS.FINISHED:
-        //   this.#state.uiStatus = UI_STATUS.ROUND_FINISHED;
-        //   break;
         case ROUND_STATUS.ONGOING:
           if (this.#state.currentUserBracket.status === BRACKET_STATUS.ONGOING) {
             this.#state.uiStatus = UI_STATUS.BRACKET_ONGOING;
@@ -223,9 +254,6 @@ export class Tournament extends HTMLElement {
     },
   };
 
-  /* ------------------------------------------------------------------------ */
-  /*      Render                                                              */
-  /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = this.template() + this.style();
     this.tournamentName = this.querySelector('#tournament-name');
@@ -233,6 +261,7 @@ export class Tournament extends HTMLElement {
 
     this.tournamentName.textContent = this.#state.tournament.name;
     this.updateContentOnStatusChange();
+    document.addEventListener('round-finished-ui-ready', this.setCurrentRoundFinished);
   }
 
   /**
@@ -287,11 +316,6 @@ export class Tournament extends HTMLElement {
       this.tournamentContentWrapper.removeChild(this.tournamentContentWrapper.firstChild);
     }
     let content = null;
-    // if (this.#state.uiStatus === UI_STATUS.WAITING_NEXT_ROUND || this.#state.uiStatus === UI_STATUS.ROUND_FINISHED) {
-    //   content = this.tournamentContent.roundOngoing();
-    // } else {
-    //   content = this.tournamentContent[this.#state.uiStatus]();
-    // }
     content = this.tournamentContent[this.#state.uiStatus]();
 
     if (content) {
@@ -302,15 +326,20 @@ export class Tournament extends HTMLElement {
   }
 
   /* ------------------------------------------------------------------------ */
-  /*      WebSocket message handling                                          */
+  /*      WebSocket messages handling                                         */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * Called onMessage tournament_start from tournament WS
+   * @description Initializes the tournament state and updates the UI.
+   */
   handleTournamentStart(data) {
     if (data.tournament_id !== this.#state.tournamentId) {
       return;
     }
-    // Update #state
     this.#state.currentRoundNumber = 1;
     this.#state.currentRound = data.round;
+    this.#state.remainingBracketsInCurrentRound = data.round.brackets.length;
     this.#state.tournament.status = TOURNAMENT_STATUS.ONGOING;
     this.#state.tournament.rounds[0] = this.#state.currentRound;
     this.findAssignedBracketForUser();
@@ -321,41 +350,53 @@ export class Tournament extends HTMLElement {
     }
     this.#state.userDataInTournament.status = PARTICIPANT_STATUS.QUALIFIED;
     this.#state.uiStatus = UI_STATUS.ROUND_STARTING;
-
-    // Update UI content
     this.updateContentOnStatusChange();
   }
 
-  handleRoundStart(data) {
-    // Handle round_start message with [ROUND] data via ws
+  /**
+   * Called onMessage match_result from tournament WS
+   * @description Updates the match result in the tournament round ongoing view.
+   */
+  updateMatchResult(data) {
+    if (this.#state.uiStatus !== UI_STATUS.WAITING_NEXT_ROUND) {
+      return;
+    }
+    const tournamentRoundOngoingElement = this.querySelector('tournament-round-ongoing');
+    if (!tournamentRoundOngoingElement) {
+      devErrorLog('Tournament RoundOngoing Element not found, cannot update bracket.');
+      return;
+    }
+    tournamentRoundOngoingElement.updateBracket(data);
+  }
 
-    // In socketManager
-    // If the user is not on the tournament page, automatically navigate to the tournament page?
+  /**
+   * Called onEvent round-finished-ui-ready
+   * @description Sets the current round as finished
+   * If the next round data is already set, it triggers the start of the next round.
+   */
+  setCurrentRoundFinished() {
+    this.#state.currentRoundFinished = true;
+    if (this.#state.nextRound) {
+      this.#state.currentRound = this.#state.nextRound;
+      this.#state.currentRoundNumber++;
+      this.handleRoundStart();
+    }
+  }
 
-    this.#state.currentRoundNumber = data.round.number;
-    this.#state.currentRound = data.round;
-
-    // if (this.#state.currentRoundNumber === 1) {
-    //   this.#state.tournament.status = 'ongoing';
-    // }
+  /**
+   * @description Sets the UI status to WAITING_NEXT_ROUND and updates the content.
+   */
+  handleRoundStart() {
+    this.#state.currentRoundFinished = false;
+    this.#state.nextRound = null;
     this.#state.uiStatus = UI_STATUS.ROUND_STARTING;
     this.updateContentOnStatusChange();
   }
 
-  // updateMatchResult(data) {
-  //   // Handle match_result message with ROUND via ws
-  // }
-
-  handleRoundEnd(data) {
-    // Handle round_start message with [ROUND] data
-  }
-
-  handleTournamentFinished() {
-    // Handle tournament_finished message via ws
-    // Show a message
-    // Redirect to tournament overview page
-  }
-
+  /**
+   * Called onMessage tournament_canceled from tournament WS
+   * @description Sets the UI status to CANCELED and updates the content.
+   */
   handleTournamentCanceled(data) {
     if (
       data.tournament_id !== this.#state.tournamentId ||
@@ -368,6 +409,9 @@ export class Tournament extends HTMLElement {
     this.updateContentOnStatusChange();
   }
 
+  /**
+   * @description Cancels the tournament on cencel button click by the creator.
+   */
   async cancelTournament() {
     if (this.#state.tournament.creator.username !== this.#state.user.username) {
       return;

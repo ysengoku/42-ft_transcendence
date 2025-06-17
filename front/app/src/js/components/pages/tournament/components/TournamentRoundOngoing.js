@@ -72,31 +72,31 @@ export class TournamentRoundOngoing extends HTMLElement {
       devErrorLog('Bracket element not found for game_id:', matchData.bracket.game_id);
       return;
     }
-    const player1 = bracketElement.querySelector('.bracket-player-1');
-    const scoreP1 = player1.querySelector('.player-score');
-    const player2 = bracketElement.querySelector('.bracket-player-2');
-    const scoreP2 = player2.querySelector('.player-score');
+    const player1Element = bracketElement.querySelector('.bracket-player-1');
+    const scoreP1Element = player1Element.querySelector('.player-score');
+    const player2Element = bracketElement.querySelector('.bracket-player-2');
+    const scoreP2Element = player2Element.querySelector('.player-score');
+    let scoreP1 = 0;
+    let scoreP2 = 0;
+    // --- TODO: Remove after the update on backend is ready -----
+    scoreP1 = matchData.bracket.score_p1;
+    scoreP2 = matchData.bracket.score_p2;
+    // -----------------------------------------------------------
     if (matchData.bracket.winner && matchData.bracket.winner.profile) {
       matchData.bracket.winner.profile.alias === matchData.bracket.participant1.alias
-        ? (
-          player1.classList.add('bracket-player-winner'),
-          player2.classList.add('bracket-player-loser')
-          // TODO: Activate after the update on backend is ready
-          // scoreP1.textContent = matchData.bracket.winners_score,
-          // scoreP2.textContent = matchData.bracket.losers_score
-        ) : (
-          player1.classList.add('bracket-player-loser'),
-          player2.classList.add('bracket-player-winner')
-          // TODO: Activate after the update on backend is ready
-          // scoreP1.textContent = matchData.bracket.losers_score,
-          // scoreP2.textContent = matchData.bracket.winners_score
-        );
+        ? (player1Element.classList.add('bracket-player-winner'), player2Element.classList.add('bracket-player-loser'))
+        : // TODO: Activate after the update on backend is ready
+          // (scoreP1 = matchData.bracket.winners_score),
+          // (scoreP2 = matchData.bracket.losers_score))
+          (player1Element.classList.add('bracket-player-loser'), player2Element.classList.add('bracket-player-winner'));
+      // TODO: Activate after the update on backend is ready
+      // (scoreP1 = matchData.bracket.losers_score),
+      // (scoreP2 = matchData.bracket.winners_score));
     }
-    // TODO: Remove after the update on backend is ready
-    scoreP1.textContent = matchData.bracket.score_p1;
-    scoreP2.textContent = matchData.bracket.score_p2;
-    scoreP1.classList.remove('d-none');
-    scoreP2.classList.remove('d-none');
+    scoreP1Element.textContent = scoreP1;
+    scoreP2Element.textContent = scoreP2;
+    scoreP1Element.classList.remove('d-none');
+    scoreP2Element.classList.remove('d-none');
     for (let i = 0; i < this.#state.round.brackets.length; i++) {
       const bracket = this.#state.round.brackets[i];
       if (
@@ -111,6 +111,11 @@ export class TournamentRoundOngoing extends HTMLElement {
       }
     }
     this.#state.onGoingBracketCount--;
+    if (this.#state.onGoingBracketCount === 0) {
+      setTimeout(() => {
+        this.roundFinishedAnimation();
+      }, 500);
+    }
   }
 
   roundFinishedAnimation() {
@@ -127,7 +132,9 @@ export class TournamentRoundOngoing extends HTMLElement {
       });
       setTimeout(() => {
         resolve();
-      }, 2000);
+        const customEvent = new CustomEvent('round-finished-ui-ready', { bubbles: true });
+        document.dispatchEvent(customEvent);
+      }, 1500);
     });
   }
 

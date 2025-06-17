@@ -102,7 +102,7 @@ export const TOURNAMENT_ALERT_TYPE = {
 const TOURNAMENT_ALERT_MESSAGE = {
   ONGOING_TOURNAMENT: 'You are currently in a tournament.',
   TOURNAMENT_STARTS: 'The tournament is starting soon.',
-  ROUND_END: 'The current round of the tournament finished. The next round is starting soon.',
+  ROUND_END: 'The current round of the tournament finished.',
 };
 
 const TOURNAMENT_ALERT_CTA = {

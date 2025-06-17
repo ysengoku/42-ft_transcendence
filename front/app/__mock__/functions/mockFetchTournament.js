@@ -36,7 +36,7 @@ export function mockFetchTournament(username, status) {
       ],
       required_participants: 4,
     },
-    tournamentpending: {
+    tournamentstarting: {
       id: 'idroundpending',
       name: 'Summer Championship',
       status: 'ongoing',
@@ -87,7 +87,7 @@ export function mockFetchTournament(username, status) {
               participant2: {
                 profile: {
                   username: 'alice',
-                  avatar: '/img/fefault_avatar.png',
+                  avatar: '/img/default_avatar.png',
                 },
                 alias: 'DuskDevil',
                 status: 'pending',
@@ -332,7 +332,7 @@ export function mockFetchTournament(username, status) {
                   avatar: '/__mock__/img/sample-pic1.jpg',
                 },
                 alias: 'Midnight Rider',
-                status: 'qualified',
+                status: 'pending',
               },
               participant2: {
                 profile: {
@@ -357,6 +357,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic3.png',
           },
           alias: 'Nightmare',
+          status: 'eliminated',
         },
         {
           profile: {
@@ -364,6 +365,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic2.png',
           },
           alias: 'Lone Cactus',
+          status: 'qualified',
         },
         {
           profile: {
@@ -371,6 +373,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic1.jpg',
           },
           alias: 'Midnight Rider',
+          status: 'qualified',
         },
         {
           profile: {
@@ -378,6 +381,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/img/fefault_avatar.png',
           },
           alias: 'DuskDevil',
+          status: 'eliminated',
         },
       ],
       required_participants: 4,
