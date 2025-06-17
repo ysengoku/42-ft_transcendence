@@ -1,11 +1,19 @@
+/**
+ * @module Home
+ * @description This module defines the Home component for the application.
+ * It serves as the main landing page after user authentication,
+ * providing navigation options to various game modes, user's profile and settings.
+ */
+
 import { router } from '@router';
 import { auth } from '@auth';
+import { socketManager } from '@socket';
 import './components/index.js';
+import { showToastNotification, sessionExpiredToast } from '@utils';
 import logo from '/img/logo.svg?url';
 
 export class Home extends HTMLElement {
   #state = {
-    isLoggedin: false,
     user: null,
   };
 
@@ -13,22 +21,41 @@ export class Home extends HTMLElement {
     super();
   }
 
+  /**
+   * @description Lifecycle method called when the component is connected to the DOM.
+   * It checks if the user is authenticated by fetching the auth status.
+   * If the user is not authenticated, it redirects to the landing page.
+   * If authenticated, it retrieves the user data and renders the component.
+   */
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    this.#state.isLoggedin = authStatus.success;
-    this.#state.user = auth.getStoredUser();
+    if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
+      router.redirect('/');
+      return;
+    }
+    this.#state.user = authStatus.response;
     this.render();
   }
 
+  /**
+   * @description Renders the navigation menu for the user.
+   * It sets up the profile button with the user's username,
+   * if the user has an ongoing game or tournament, it shows a toast notification.
+   */
   render() {
-    if (!this.#state.isLoggedin) {
-      router.navigate('/');
-      return;
-    }
     this.innerHTML = this.style() + this.template();
-
     const profileButton = this.querySelector('home-profile-button');
     profileButton.username = this.#state.user.username;
+
+    if (this.#state.user.game_id) {
+      showToastNotification('You have an ongoing game. Please click on Duel button to continue.');
+    } else if (this.#state.user.tournament_id) {
+      showToastNotification('You are currently in a tournament. Click on Tournament button to continue.');
+      socketManager.openSocket('tournament', this.#state.user.tournament_id);
+    }
   }
 
   template() {

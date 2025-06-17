@@ -1,7 +1,6 @@
 /**
- * @file Chat Component
- * @description Provides a dynamic chat interface that integrates chat lists, messaging, and WebSocket communications.
  * @module Chat
+ * @description Provides a dynamic chat interface that integrates chat lists, messaging, and WebSocket communications.
  */
 
 import { router } from '@router';
@@ -71,7 +70,7 @@ export class Chat extends HTMLElement {
     this.chatList.setData(null, this.#state.loggedInUser.username, null);
     this.chatMessagesArea.setData(null, this.#state.loggedInUser.username);
 
-    // Fetch and set data for the chat list component
+    // Fetch data for the chat list component
     this.chatList.querySelector('.chat-loader')?.classList.remove('d-none');
     this.chatMessagesArea.querySelector('.chat-loader')?.classList.remove('d-none');
 
@@ -82,7 +81,6 @@ export class Chat extends HTMLElement {
     if (!chatListData) {
       return;
     }
-    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
 
     // Determine initial chat based on available data or query parameter
     if (chatListData.count > 0 && !this.#queryParam) {
@@ -95,7 +93,10 @@ export class Chat extends HTMLElement {
       }
     } else if (this.#queryParam) {
       this.#state.currentChatUsername = this.#queryParam;
-    } else if (chatListData.count === 0) {
+    }
+
+    this.chatList.setData(chatListData, this.#state.loggedInUser.username, this.getCurrentChatUsername.bind(this));
+    if (chatListData.count === 0 || !this.#state.currentChatUsername) {
       this.chatMessagesArea.querySelector('.chat-loader')?.classList.add('d-none');
       this.chatMessagesArea.querySelector('.no-messages')?.classList.remove('d-none');
     }
@@ -141,7 +142,6 @@ export class Chat extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Rendering                                                           */
   /* ------------------------------------------------------------------------ */
-
   async render() {
     this.innerHTML = this.template() + this.style();
 
@@ -163,12 +163,12 @@ export class Chat extends HTMLElement {
 
   async fetchChatList(offset = 0) {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT_LIST(10, offset),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.CHAT_LIST(10, offset),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       devLog('Chat list response:', response);
@@ -178,18 +178,18 @@ export class Chat extends HTMLElement {
 
   async fetchChatData() {
     const response = await apiRequest(
-        'PUT',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT(this.#state.currentChatUsername),
-        null,
-        false,
-        true,
+      'PUT',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.CHAT(this.#state.currentChatUsername),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       devLog('Chat data response:', response);
       return { data: response.data, status: response.status };
     } else {
-      // TODO: Handle error
+      return null;
     }
   }
 
@@ -201,7 +201,9 @@ export class Chat extends HTMLElement {
     if (!event.detail.messages) {
       this.#state.currentChatUsername = event.detail;
       const chatData = await this.fetchChatData();
-      // TODO: Error handling
+      if (!chatData) {
+        return;
+      }
       this.#state.currentChat = chatData.data;
     } else {
       this.#state.currentChat = event.detail;
@@ -236,8 +238,6 @@ export class Chat extends HTMLElement {
     };
     devLog('Sending new message to server. Data:', messageData);
     socketManager.sendMessage('livechat', messageData);
-    // TODO: Render temporary message (in gray) to chat message area?
-    // But how to match with the server response to remove it after ?
   }
 
   sendToggleLikeEvent(chatId, messageId, isLiked) {
@@ -298,6 +298,7 @@ export class Chat extends HTMLElement {
   template() {
     return `
     <div class="container-fluid d-flex flex-row flex-grow-1 p-0" id="chat-component-container">
+      <invite-game-modal></invite-game-modal>
       <div class="chat-list-wrapper col-12 col-md-4" id="chat-list-container">
           <chat-list-component></chat-list-component>
       </div>

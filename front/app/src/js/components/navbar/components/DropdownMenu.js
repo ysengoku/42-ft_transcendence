@@ -73,22 +73,30 @@ export class DropdownMenu extends HTMLElement {
       <img id="avatar-img" alt="user" class="d-inline-block align-top avatar-s rounded-circle">
     </div>
     <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="navbarDropdown">
-      ${ this.#state.isLoggedIn ? `
+      ${
+        this.#state.isLoggedIn
+          ? `
         <a href="/home" class="dropdown-item">Saloon</a>
         <a class="dropdown-item" id="dropdown-item-profile">My profile</a>
         <a href="/settings" class="dropdown-item">Settings</a>
-      ` : `
+      `
+          : `
         <a href="/login" class="dropdown-item">Login</a>
         <a href="/register" class="dropdown-item">Sign up</a>
-      ` }
+      `
+      }
       <div class="dropdown-divider"></div>
       <button class="dropdown-item" id="theme-toggle">
         <span id="theme-label">${isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
       </button>
-      ${ this.#state.isLoggedIn ? `
+      ${
+        this.#state.isLoggedIn
+          ? `
         <div class="dropdown-divider"></div>
         <div class="dropdown-item" id="dropdown-item-logout">Logout</div>
-      ` : `` }
+      `
+          : ''
+      }
     </div>
     `;
   }

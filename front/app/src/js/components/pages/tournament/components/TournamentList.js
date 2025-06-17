@@ -1,10 +1,9 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { mockTournamentList } from '@mock/functions/mockTournamentListData.js'; // For Test
 
 export class TournamentList extends HTMLElement {
   #state = {
     tournaments: [],
-    filter: 'lobby',
+    filter: 'pending',
     totalTournaments: 0,
     currentLastItemIndex: 0,
     isLoading: false,
@@ -37,21 +36,7 @@ export class TournamentList extends HTMLElement {
   }
 
   getTournamentById(id) {
-    return this.#state.tournaments.find(item => item.id === id);
-  }
-
-  setNewTournament(tournament) {
-    this.#state.tournaments.unshift(tournament);
-    console.log('New tournament added:', tournament);
-    this.#state.totalTournaments++;
-    const item = this.renderRow(tournament);
-    this.list.insertBefore(item, this.list.firstChild);
-    this.#state.currentLastItemIndex++;
-    this.filterButton.classList.remove('d-none');
-    const noItem = this.list.querySelector('#no-open-tournaments');
-    if (noItem) {
-      this.list.removeChild(noItem);
-    }
+    return this.#state.tournaments.find((item) => item.id === id);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -70,7 +55,7 @@ export class TournamentList extends HTMLElement {
     this.filterButton?.addEventListener('click', this.filterTournament);
     this.filterOpenButton?.addEventListener('click', this.filterTournament);
     this.filterAllButton?.addEventListener('click', this.filterTournament);
-  
+
     this.renderList();
   }
 
@@ -80,29 +65,26 @@ export class TournamentList extends HTMLElement {
     }
     this.#state.isLoading = true;
     await this.fetchTournamentList();
-    // this.#state.tournaments = []; // TEST
     if (this.#state.tournaments.length === 0) {
       this.renderNoItem();
       this.#state.isLoading = false;
       return;
     }
     for (let i = this.#state.currentLastItemIndex; i < this.#state.tournaments.length; i++) {
-      console.log('Render tournament:', this.#state.tournaments[i]);
-      if (this.#state.filter === 'lobby' && this.#state.tournaments[i].status !== this.#state.filter) {
+      if (this.#state.filter === 'pending' && this.#state.tournaments[i].status !== this.#state.filter) {
         continue;
       }
       const item = this.renderRow(this.#state.tournaments[i]);
       this.list.appendChild(item);
       ++this.#state.currentLastItemIndex;
     }
-    if (this.#state.filter === 'lobby' && this.#state.currentLastItemIndex === 0) {
+    if (this.#state.filter === 'pending' && this.#state.currentLastItemIndex === 0) {
       this.renderNoItem();
     }
     this.#state.isLoading = false;
   }
 
   renderRow(tournament) {
-    console.log('Render tournament:', tournament);
     const item = document.createElement('li');
     item.className = 'list-group-item d-flex flex-row justify-content-between mb-2 p-4';
     item.innerHTML = this.rowTemplate();
@@ -125,33 +107,32 @@ export class TournamentList extends HTMLElement {
   }
 
   renderNoItem() {
+    const message = 'No tournaments available at the moment. Create a new one to get started.';
     const item = document.createElement('li');
     item.className = 'list-group-item text-center border-0 bg-transparent py-3';
     item.id = 'no-open-tournaments';
-    item.textContent = 'No tournaments available at the moment. Create a new one to get started.';
+    item.textContent = message;
     this.list.appendChild(item);
     this.filterButton.classList.add('d-none');
   }
- 
+
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
   async fetchTournamentList() {
-    // TEST
-    const response = await mockTournamentList();
-    this.#state.tournaments.push(...response.items);
-    this.#state.totalTournaments = this.#state.tournaments.length;
-
-    // const response = await apiRequest(
-    //     'GET',
-    //     /* eslint-disable-next-line new-cap */
-    //     API_ENDPOINTS.TOURNAMENTS(this.#state.filter, 10, this.#state.currentLastItemIndex),
-    //     null, false, true);
-    // if (!response.success) {
-    //   return;
-    // }
-    // this.#state.tournaments.push(...response.data.items);
-    // this.#state.totalTournaments = response.data.count;
+    const response = await apiRequest(
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENTS(this.#state.filter, 10, this.#state.currentLastItemIndex),
+      null,
+      false,
+      true,
+    );
+    if (!response.success) {
+      return;
+    }
+    this.#state.tournaments.push(...response.data.items);
+    this.#state.totalTournaments = response.data.count;
   }
 
   filterTournament(event) {
@@ -176,8 +157,10 @@ export class TournamentList extends HTMLElement {
     }
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 10;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.totalTournaments <= this.#state.currentLastItemIndex) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalTournaments <= this.#state.currentLastItemIndex
+    ) {
       return;
     }
     this.#state.isLoading = true;
@@ -194,7 +177,7 @@ export class TournamentList extends HTMLElement {
       Open for entries
     </div>
     <div class="dropdown-menu dropdown-menu-end pt-2" aria-labelledby="tournament-list-filter">
-      <button class="dropdown-item text-center" id="tournament-filter-open" filter="lobby">Open for entries</button>
+      <button class="dropdown-item text-center" id="tournament-filter-open" filter="pending">Open for entries</button>
       <button class="dropdown-item text-center" id="tournament-filter-all" filter="all">All tournaments</button>
     </div>
 
@@ -248,7 +231,7 @@ export class TournamentList extends HTMLElement {
 
   tournamentStatus(status) {
     const message = {
-      lobby: 'Open for entries',
+      pending: 'Open for entries',
       ongoing: 'Ongoing',
       finished: 'Finished',
     };

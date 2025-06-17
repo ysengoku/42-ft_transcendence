@@ -43,11 +43,10 @@ export class DeleteAccountButton extends HTMLElement {
   }
 
   async handleDeleteAccount() {
-    console.log('Deleting account');
     /* eslint-disable-next-line new-cap */
     const response = await apiRequest('DELETE', API_ENDPOINTS.USER_DELETE(this.#state.username), null, false, true);
     if (response.success) {
-      router.navigate('/account-deleted');
+      router.redirect('/account-deleted');
     } else if (response.status !== 401) {
       console.error(response.msg);
       showAlertMessage(ALERT_TYPE.ERROR, response.msg);

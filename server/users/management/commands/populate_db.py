@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from chat.models import Chat, ChatMessage, Notification
-from pong.models import Match
+from pong.models import GameRoom, GameRoomPlayer, Match
 from tournaments.models import Bracket, Participant, Round, Tournament
 from users.models import OauthConnection, Profile, User
 
@@ -43,6 +43,8 @@ def clean_database():
     Chat.objects.all().delete()
     ChatMessage.objects.all().delete()
     Notification.objects.all().delete()
+    GameRoom.objects.all().delete()
+    GameRoomPlayer.objects.all().delete()
 
 
 def generate_users() -> tuple[list[User], User]:
@@ -199,7 +201,6 @@ def generate_tournaments(users: dict[str, User]) -> None:
                 profile=p,
                 tournament=tournament,
                 alias=alias,
-                status="registered",
                 current_round=0,
             )
             participant_objs.append(part)

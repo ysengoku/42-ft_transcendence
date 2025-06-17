@@ -3,7 +3,7 @@ import { BREAKPOINT } from '@utils';
 export class TournamentOverviewTree extends HTMLElement {
   #state = {
     rounds: null,
-  }
+  };
 
   constructor() {
     super();
@@ -29,21 +29,21 @@ export class TournamentOverviewTree extends HTMLElement {
           connector.classList.add('d-none');
         });
       }
-    };
+    }
   }
-  
+
   renderBrackets(round) {
     const roundElement = document.createElement('div');
-    roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');    
+    roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');
     const bracketPairsCount = Math.floor(round.brackets.length / 2);
     let bracketIndex = 0;
     if (bracketPairsCount !== 0) {
-      for(let i = 0; i < bracketPairsCount; i++) {
+      for (let i = 0; i < bracketPairsCount; i++) {
         const temp = document.createElement('div');
         temp.innerHTML = this.bracketsPairTemplate();
-        const bracketPairElement = temp.firstElementChild
+        const bracketPairElement = temp.firstElementChild;
         const bracketsWrapper = bracketPairElement.querySelector('.brackets-wrapper');
-  
+
         const bracket1 = round.brackets[bracketIndex];
         const bracket2 = round.brackets[bracketIndex + 1];
         bracketIndex += 2;
@@ -55,7 +55,7 @@ export class TournamentOverviewTree extends HTMLElement {
 
         requestAnimationFrame(() => {
           const incomingLines = bracketPairElement.querySelector('.brackets-connector-incoming');
-          const outboundLine   = bracketPairElement.querySelector('.brackets-connector-outbound');
+          const outboundLine = bracketPairElement.querySelector('.brackets-connector-outbound');
           const bracketWrapper1 = bracketsWrapper.children[0];
           const bracketWrapper2 = bracketsWrapper.children[1];
 
@@ -80,7 +80,7 @@ export class TournamentOverviewTree extends HTMLElement {
     this.tournamentOverviewContent.appendChild(roundElement);
     const roundElements = this.querySelectorAll('.round-wrapper');
     requestAnimationFrame(() => {
-    const roundElementHeight = roundElements[0].offsetHeight;
+      const roundElementHeight = roundElements[0].offsetHeight;
       for (let i = 1; i < roundElements.length; i++) {
         roundElements[i].style.height = `${roundElementHeight}px`;
       }
@@ -90,28 +90,41 @@ export class TournamentOverviewTree extends HTMLElement {
   createBracketElement(bracket) {
     const bracketElement = document.createElement('div');
     bracketElement.classList.add('d-flex', 'flex-column', 'align-items-center', 'w-100', 'my-2');
-    const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1);
-    const player2 = this.createPlayerElement(bracket.participant2, bracket.score_p2);
+    const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1, bracket.status, bracket.winner);
+    const player2 = this.createPlayerElement(bracket.participant2, bracket.score_p2, bracket.status, bracket.winner);
+
+    if (bracket.status === 'finished') {
+      const winnerAlias = bracket.winner.alias;
+      if (player1.alias === winnerAlias) {
+        player1.classList.add('bracket-player-winner');
+        player2.classList.add('bracket-player-loser');
+      } else if (player2.alias === winnerAlias) {
+        player1.classList.add('bracket-player-loser');
+        player2.classList.add('bracket-player-winner');
+      }
+    }
     bracketElement.appendChild(player1);
     bracketElement.appendChild(player2);
     return bracketElement;
   }
 
-  createPlayerElement(player, score) {
+  createPlayerElement(player, score, bracketStatus, winner = null) {
     const element = document.createElement('div');
     element.innerHTML = this.playerTemplate();
     element.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'w-100');
     const avatarElement = element.querySelector('img');
-    avatarElement.src = player.user.avatar;
+    avatarElement.src = player.profile.avatar;
     const aliasElement = element.querySelector('.player-alias');
     aliasElement.textContent = player.alias;
-    if (player.status === 'winner') {
-      element.classList.add('bracket-player-winner')
-    } else if (player.status === 'eliminated') {
-      element.classList.add('bracket-player-loser')
+    if (bracketStatus === 'finished') {
+      if (player.alias === winner.alias) {
+        element.classList.add('bracket-player-winner');
+      } else {
+        element.classList.add('bracket-player-loser');
+      }
+      const scoreElement = element.querySelector('.player-score');
+      scoreElement.textContent = score;
     }
-    const scoreElement = element.querySelector('.player-score');
-    scoreElement.textContent = score;
     return element;
   }
 

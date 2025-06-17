@@ -1,5 +1,6 @@
-
 FROM nginx:alpine
+
+ARG NODE_ENV
 
 # Install OpenSSL and generate certificates
 RUN apk add --no-cache openssl && \
@@ -11,9 +12,16 @@ RUN apk add --no-cache openssl && \
     && chmod 644 /etc/nginx/ssl/transcendance.crt \
     && chmod 644 /etc/nginx/ssl/transcendance.key
 
-COPY nginx.conf /etc/nginx/nginx.conf
+# COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.dev.conf /etc/nginx/nginx.dev.conf
+COPY nginx.prod.conf /etc/nginx/nginx.prod.conf
 
-# Créer le répertoire pour les fichiers statiques
+RUN if [ "$NODE_ENV" = "production" ]; then \
+      cp /etc/nginx/nginx.prod.conf /etc/nginx/nginx.conf; \
+    else \
+      cp /etc/nginx/nginx.dev.conf  /etc/nginx/nginx.conf; \
+    fi
+
 RUN mkdir -p /app/dist
 
 EXPOSE 1026

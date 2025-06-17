@@ -1,6 +1,6 @@
 import { router } from '@router';
 import { auth, getCSRFTokenfromCookies, refreshAccessToken } from '@auth';
-import { showAlertMessage, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
+import { sessionExpiredToast, internalServerErrorAlert, unknowknErrorToast } from '@utils';
 
 /**
  * Makes an API request with the specified method and endpoint.
@@ -33,7 +33,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       options.body = JSON.stringify(data);
     }
   }
-  devLog('Sending API request:', options);
+  devLog('Sending API request:', method, url, 'Request body: ', options.body);
 
   try {
     const response = await fetch(url, options);
@@ -62,7 +62,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
 const handlers = {
   /**
    * Handles successful API responses.
-   *
+
    * @async
    * @function
    * @param {Response} response - The response object from the fetch request.
@@ -74,6 +74,7 @@ const handlers = {
     if (response.status !== 204) {
       responseData = await response.json();
     }
+    devLog('Response data:', responseData);
     return { success: true, status: response.status, data: responseData };
   },
 
@@ -97,12 +98,12 @@ const handlers = {
     }
     if (refreshResponse.status === 401) {
       router.navigate('/login');
-      showAlertMessage(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+      sessionExpiredToast();
       return { success: false, status: 401, msg: 'Session expired' };
     }
     auth.clearStoredUser();
     router.navigate('/');
-    showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+    unknowknErrorToast();
     return { success: false, status: refreshResponse.status };
   },
 
@@ -116,7 +117,8 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and response message.
    */
   500: async (url, options) => {
-    showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
+    const message = 'Something went wrong. Please try again later.';
+    internalServerErrorAlert();
     // Retry request
     setTimeout(async () => {
       const retryResponse = await fetch(url, options);
@@ -130,7 +132,7 @@ const handlers = {
         return { success: true, status: response.status, data: responseData };
       }
     }, 3000);
-    return { success: false, status: 500, msg: ERROR_MESSAGES.UNKNOWN_ERROR };
+    return { success: false, status: 500, msg: message };
   },
 
   /**
@@ -143,12 +145,16 @@ const handlers = {
    */
   failure: async (response) => {
     const errorData = await response.json();
-    let errorMsg = ERROR_MESSAGES.UNKNOWN_ERROR;
+    let errorMsg = 'Something went wrong. Please try again later.';
     if (Array.isArray(errorData)) {
       const foundErrorMsg = errorData.find((item) => item.msg);
       errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;
     } else if (typeof errorData === 'object' && errorData.msg) {
       errorMsg = errorData.msg;
+    }
+    const excludedStatusCodes = [401, 403, 404, 422, 429];
+    if (!excludedStatusCodes.includes(response.status)) {
+      unknowknErrorToast();
     }
     return { success: false, status: response.status, msg: errorMsg };
   },
@@ -162,6 +168,7 @@ const handlers = {
    */
   exception: (error) => {
     console.error('API request failed:', error);
+    unknowknErrorToast();
     return { success: false, status: 0, msg: error };
   },
 };

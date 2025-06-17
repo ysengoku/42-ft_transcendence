@@ -6,27 +6,29 @@ from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
 
+from pong.game_protocol import GameRoomSettings
+from pong.models import GameRoom, get_default_game_room_settings
 from users.models import Profile
 
 
 class Participant(models.Model):
-    REGISTERED = "registered"
+    PENDING = "pending"
     PLAYING = "playing"
+    QUALIFIED = "qualified"
     ELIMINATED = "eliminated"
     WINNER = "winner"
-    UNREGISTERED = "unregistered"
     STATUS_CHOICES = [
-        (REGISTERED, "Registered"),
+        (PENDING, "Pending"),
         (PLAYING, "Playing"),
+        (QUALIFIED, "Qualified"),
         (ELIMINATED, "Eliminated"),
         (WINNER, "Winner"),
-        (UNREGISTERED, "Unregistered"),
     ]
 
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     tournament = models.ForeignKey("Tournament", on_delete=models.CASCADE, related_name="participants")
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
-    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="registered")
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=PENDING)
     current_round = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -37,12 +39,20 @@ class Participant(models.Model):
 
 
 class TournamentQuerySet(models.QuerySet):
-    def validate_and_create(self, creator: Profile, tournament_name: str, required_participants: int, alias: str):
+    def validate_and_create(
+        self,
+        creator: Profile,
+        tournament_name: str,
+        required_participants: int,
+        alias: str,
+        settings: GameRoomSettings,
+    ):
         tournament = self.model(
             name=tournament_name,
             creator=creator,
             required_participants=required_participants,
             status=self.model.PENDING,
+            settings=settings,
         )
         tournament.full_clean()
         tournament.save()
@@ -51,7 +61,8 @@ class TournamentQuerySet(models.QuerySet):
 
     def get_active_tournament(self, profile: Profile):
         return self.filter(
-            participants__profile=profile, status__in=[self.model.PENDING, self.model.ONGOING],
+            participants__profile=profile,
+            status__in=[self.model.PENDING, self.model.ONGOING],
         ).first()
 
 
@@ -81,6 +92,7 @@ class Tournament(models.Model):
         related_name="won_tournaments",
     )
     required_participants = models.PositiveIntegerField()
+    settings = models.JSONField(verbose_name="Settings", default=get_default_game_room_settings)
 
     objects: TournamentQuerySet = TournamentQuerySet.as_manager()
 
@@ -95,8 +107,6 @@ class Tournament(models.Model):
         options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if num not in options:
             raise ValidationError({"required_participants": [f"Number of participants must be one of: {options}"]})
-        if Tournament.objects.filter(name__iexact=self.name).exclude(pk=self.pk).exists():
-            raise ValidationError({"name": ["A tournament with this name already exists."]})
 
     def get_rounds(self):
         return self.rounds.all().prefetch_related("brackets")
@@ -166,24 +176,27 @@ class Round(models.Model):
 
 
 class Bracket(models.Model):
-    START = "start"
+    PENDING = "pending"
     ONGOING = "ongoing"
     FINISHED = "finished"
+    CANCELLED = "cancelled"
     STATUS_CHOICES = [
-        (START, "Start"),
+        (PENDING, "Pending"),
         (ONGOING, "Ongoing"),
         (FINISHED, "Finished"),
+        (CANCELLED, "Cancelled"),
     ]
 
-    game = models.ForeignKey("pong.Match", on_delete=models.SET_NULL, null=True)
+    game = models.ForeignKey("pong.Match", on_delete=models.CASCADE, null=True)
     round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="brackets")
     participant1 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p1")
     participant2 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p2")
     score_p1 = models.PositiveIntegerField(default=0)
     score_p2 = models.PositiveIntegerField(default=0)
     winner = models.ForeignKey(Participant, on_delete=models.SET_NULL, null=True, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="start")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     score = models.CharField(max_length=7, blank=True)
+    game_room = models.OneToOneField(GameRoom, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f"{self.participant1.alias} vs {self.participant2.alias} - Round {self.round.number}"
