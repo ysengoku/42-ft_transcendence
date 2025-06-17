@@ -4,12 +4,11 @@ export class TournamentRoundStart extends HTMLElement {
   #state = {
     nextRoundNumber: 1,
     nextRound: null,
-    // currentRound: null,
     gameId: '',
     isFirstRound: true,
   };
 
-  #countdown = 3;
+  #countdown = 2;
 
   constructor() {
     super();
@@ -22,7 +21,6 @@ export class TournamentRoundStart extends HTMLElement {
   set data(data) {
     this.#state.nextRoundNumber = data.round_number;
     this.#state.nextRound = data.round;
-    // this.#state.currentRound = data.previous_round;
     this.#state.gameId = data.game_id;
     this.#state.isFirstRound = this.#state.nextRoundNumber === 1;
   }
@@ -50,27 +48,7 @@ export class TournamentRoundStart extends HTMLElement {
       return;
     }
 
-    await this.renderPreviousRoundResult();
-    await this.roundFinishedAnimation();
     this.renderNextRound();
-  }
-
-  renderPreviousRoundResult() {
-    if (this.#state.isFirstRound) {
-      return;
-    }
-    this.roundNumberElement.textContent = `Round ${this.#state.nextRoundNumber - 1}`;
-    this.roundStatusMessage.textContent = 'All Gunslingers have completed their matches. Preparing the next round.';
-    return new Promise((resolve) => {
-      for (let i = 0; i < this.#state.currentRound.brackets.length; i++) {
-        const bracketElement = document.createElement('bracket-element');
-        bracketElement.data = this.#state.currentRound.brackets[i];
-        this.bracketsWrapper.appendChild(bracketElement);
-      }
-      setTimeout(() => {
-        resolve();
-      }, 3000);
-    });
   }
 
   renderNextRound() {

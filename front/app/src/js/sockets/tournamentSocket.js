@@ -43,38 +43,39 @@ socketManager.addSocket('tournament', {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.TOURNAMENT_STARTS);
     }
   },
+  // TESTED
   round_start: (data) => {
     if (window.location.pathname.startsWith('/tournament')) {
-      // TODO
+      const tournamentPage = document.querySelector('tournament-room');
+      if (!tournamentPage) {
+        devErrorLog('Tournament RoundStart Element not found, cannot update UI.');
+        return;
+      }
+      tournamentPage.nextRound = data;
     }
   },
   match_finished: (data) => {
-    // TODO: Adjust depending which ws sends this message
+    // TODO: Adjust depending which ws sends this message (tournament or pong)
     if (window.location.pathname.startsWith('/multiplayer-game')) {
       router.redirect(`tournament/${data.tournament_id}`);
     }
   },
+  // TESTED
   match_result: async (data) => {
-    if (window.location.pathname.startsWith('/tournament')) {
-      const tournamentPage = document.querySelector('tournament-room');
-      const tournamentRoundOngoingElement = document.querySelector('tournament-round-ongoing');
-      if (!tournamentPage || !tournamentRoundOngoingElement) {
-        devErrorLog('Tournament RoundOngoing Element not found, cannot update bracket.');
-        return;
-      }
-      tournamentRoundOngoingElement.updateBracket(data);
-      if (tournamentPage.ongoingBracketCount === 0) {
-        await tournamentPage.roundFinishedAnimation();
-      }
+    if (!window.location.pathname.startsWith('/tournament')) {
+      return;
     }
+    const tournamentPage = document.querySelector('tournament-room');
+    if (!tournamentPage) {
+      devErrorLog('Tournament RoundOngoing Element not found, cannot update bracket.');
+      return;
+    }
+    tournamentPage.updateMatchResult(data);
   },
+  // TESTED
   round_end: (data) => {
     if (!window.location.pathname.startsWith('/tournament')) {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.ROUND_END);
     }
-  },
-  tournament_end: (data) => {
-    // Show a toast notification
-    router.redirect(`tournament/${data.tournament_id}`);
   },
 });
