@@ -111,7 +111,7 @@ const TOURNAMENT_ALERT_CTA = {
   ONGOING_TOURNAMENT: 'Go back to Tournament room',
   TOURNAMENT_STARTS: 'Join Tournament',
   ROUND_END: 'Go back to Tournament',
-  CHAMPION: '',
+  CHAMPION: 'View the results',
 };
 
 export function showTournamentAlert(
@@ -133,8 +133,10 @@ export function showTournamentAlert(
     const headerElement = alertMessage.querySelector('#alert-header');
     headerElement.textContent = 'Congratulations!';
     messageElement.textContent = TOURNAMENT_ALERT_MESSAGE[type](tournamentName);
+    alertCta.href = `/tournament-overview/${tournamentId}`;
   } else {
     messageElement.textContent = TOURNAMENT_ALERT_MESSAGE[type];
+    alertCta.href = `/tournament/${tournamentId}`;
   }
   alertCta.textContent = TOURNAMENT_ALERT_CTA[type];
 
@@ -148,7 +150,7 @@ function tournamentAlertTemplate(tournamentId) {
         <h2 id="alert-header" class="mb-3"></h2>
         <div id="alert-message" class="fs-4 fw-bold mb-4 text-center"></div>
         <div class="text-center">
-          <a href="/tournament/${tournamentId}" class="btn"></a>
+          <a class="btn"></a>
         </div>  
       </div>
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
