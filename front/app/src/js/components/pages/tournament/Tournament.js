@@ -9,7 +9,13 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
+import {
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+  sessionExpiredToast,
+  showTournamentAlert,
+  TOURNAMENT_ALERT_TYPE,
+} from '@utils';
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
 import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
 
@@ -119,10 +125,15 @@ export class Tournament extends HTMLElement {
       router.redirect('/tournament-menu');
       return;
     }
-    if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
+    console.log('User data in tournament:', this.#state.userDataInTournament);
+    if (
+      this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED &&
+      this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER
+    ) {
+      devLog('Tournament finished and user is the winner');
       socketManager.closeSocket('tournament', this.#state.tournamentId);
-      // TODO: Find the final round
-      // If user is one of 2 finalists, show a special message
+      // TODO: Show a special winner message replacing the following alert message
+      showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
       router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
       return;
     }
@@ -397,10 +408,7 @@ export class Tournament extends HTMLElement {
    * @description Sets the UI status to CANCELED and updates the content.
    */
   handleTournamentCanceled(data) {
-    if (
-      data.tournament_id !== this.#state.tournamentId ||
-      this.#state.tournament.creator.username === this.#state.user.username
-    ) {
+    if (data.tournament_id !== this.#state.tournamentId) {
       return;
     }
     showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'This tournament has been canceled.');
