@@ -114,6 +114,9 @@ export class TournamentPending extends HTMLElement {
    */
   addParticipant(data) {
     this.renderParticipant(data);
+    if (this.#state.participants.find((participant) => participant.alias === data.alias)) {
+      return;
+    }
     this.#state.participants.push(data);
 
     // Update the participants count
