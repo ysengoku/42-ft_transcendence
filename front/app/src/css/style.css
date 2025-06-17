@@ -559,7 +559,7 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
 }
 
 .fade-in-animation {
-  animation: fade-in 2s;
+  animation: fade-in 1s;
   animation-fill-mode: forwards;
 }
 @keyframes fade-in {

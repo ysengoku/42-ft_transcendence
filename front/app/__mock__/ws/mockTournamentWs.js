@@ -42,7 +42,7 @@ window.mockWS = {
 
   simulateNewRegistration() {
     const data = {
-      alias: 'Mock Participant',
+      alias: 'SilverWolf',
       avatar: '__mock__/img/sample-pic2.png',
     };
     this.simulateAction('tournament', 'new_registration', data);
@@ -75,7 +75,7 @@ window.mockWS = {
             participant1: {
               profile: {
                 username: 'TheBall',
-                avatar: '/img/default_avatar.png',
+                avatar: '__mock__/img/sample-pic2.png',
               },
               alias: 'SilverWolf',
               status: 'pending',
@@ -83,7 +83,7 @@ window.mockWS = {
             participant2: {
               profile: {
                 username: this.username || 'unknown',
-                avatar: '/img/default_avatar.png',
+                avatar: '__mock__/img/sample-pic3.png',
               },
               alias: 'StormRider',
               status: 'pending',
@@ -97,18 +97,18 @@ window.mockWS = {
             game_id: 2,
             participant1: {
               profile: {
-                username: 'warhawk',
-                avatar: '/img/default_avatar.png',
+                username: 'george',
+                avatar: '/__mock__/img/sample-pic1.jpg',
               },
-              alias: 'ShadowFox',
+              alias: 'Midnight Rider',
               status: 'pending',
             },
             participant2: {
               profile: {
-                username: 'faboussa',
+                username: 'alice',
                 avatar: '/img/default_avatar.png',
               },
-              alias: 'GoldenEagle',
+              alias: 'DuskDevil',
               status: 'pending',
             },
             winner: null,
@@ -122,7 +122,7 @@ window.mockWS = {
     this.simulateAction('tournament', 'tournament_start', data);
   },
 
-  similateMatchResult() {
+  simulateMatchResult() {
     const participant1 = {
       profile: {
         username: 'george',
@@ -175,10 +175,10 @@ window.mockWS = {
             game_id: 3,
             participant1: {
               profile: {
-                username: 'TheBall',
-                avatar: '/img/default_avatar.png',
+                username: 'george',
+                avatar: '/__mock__/img/sample-pic1.jpg',
               },
-              alias: 'SilverWolf',
+              alias: 'Midnight Rider',
               status: 'pending',
             },
             participant2: {
