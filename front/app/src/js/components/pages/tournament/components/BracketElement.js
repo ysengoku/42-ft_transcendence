@@ -1,3 +1,5 @@
+import { BRACKET_STATUS } from '../tournamentStatus';
+
 export class BracketElement extends HTMLElement {
   #state = {
     bracket: null,
@@ -20,14 +22,14 @@ export class BracketElement extends HTMLElement {
 
     const player1 = document.createElement('participant-element');
     player1.classList.add('bracket-player-1');
-    const scoreP1 = this.#state.bracket.status === 'finished' ? this.#state.bracket.score_p1 : '';
+    const scoreP1 = this.#state.bracket.status === BRACKET_STATUS.FINISHED ? this.#state.bracket.score_p1 : '';
     player1.data = {
       participant: this.#state.bracket.participant1,
       score: scoreP1,
     };
     const player2 = document.createElement('participant-element');
     player2.classList.add('bracket-player-2');
-    const scoreP2 = this.#state.bracket.status === 'finished' ? this.#state.bracket.score_p2 : '';
+    const scoreP2 = this.#state.bracket.status === BRACKET_STATUS.FINISHED ? this.#state.bracket.score_p2 : '';
     player2.data = {
       participant: this.#state.bracket.participant2,
       score: scoreP2,
@@ -36,6 +38,10 @@ export class BracketElement extends HTMLElement {
       this.#state.bracket.winner.profile.username === this.#state.bracket.participant1.profile.username
         ? (player1.classList.add('bracket-player-winner'), player2.classList.add('bracket-player-loser'))
         : (player1.classList.add('bracket-player-loser'), player2.classList.add('bracket-player-winner'));
+    }
+    if (this.#state.bracket.status === BRACKET_STATUS.CANCELED) {
+      player1.classList.add('bracket-player-loser');
+      player2.classList.add('bracket-player-loser');
     }
     this.bracketWrapper.appendChild(player1);
     this.bracketWrapper.appendChild(player2);
