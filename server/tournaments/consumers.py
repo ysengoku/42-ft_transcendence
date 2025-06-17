@@ -42,10 +42,6 @@ class TournamentConsumer(WebsocketConsumer):
     def disconnect(self, close_code):
         if self.tournament_id:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_{self.tournament_id}", self.channel_name)
-        async_to_sync(self.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {"type": "tournament.broadcast", "action": "user_left", "data": {"user": self.user.username}},
-        )
         self.close(close_code)
 
     def receive(self, text_data):
