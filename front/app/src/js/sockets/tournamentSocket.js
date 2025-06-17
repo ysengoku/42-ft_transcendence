@@ -51,7 +51,7 @@ socketManager.addSocket('tournament', {
         devErrorLog('Tournament RoundStart Element not found, cannot update UI.');
         return;
       }
-      tournamentPage.nextRound = data;
+      tournamentPage.setNextRound(data);
     }
   },
   match_finished: (data) => {
