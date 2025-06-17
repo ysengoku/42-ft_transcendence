@@ -148,8 +148,13 @@ class TournamentConsumer(WebsocketConsumer):
             {
                 "type": "tournament_message",
                 "action": "tournament_end",
-                "alias": winner.alias,
-                "avatar": winner.avatar,
+                "data": {
+                    "tournament_id": self.tournament_id,
+                    "tournament_name": self.tournament_name,
+                    "round": round_number,
+                    "alias": winner.alias,
+                    "avatar": winner.avatar,
+                },
             },
         )
 

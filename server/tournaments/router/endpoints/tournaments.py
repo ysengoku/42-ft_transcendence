@@ -127,6 +127,18 @@ def delete_tournament(request, tournament_id: UUID):
 
     tournament.status = Tournament.CANCELLED
     tournament.save()
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"tournament_{tournament_id}",
+        {
+            "type": "tournament_message",
+            "action": "tournament_canceled",
+            "data": {
+                "tournament_id": str(tournament_id),
+                "tournament_name": tournament.name,
+            },
+        },
+    )
     TournamentEvent.close_tournament_invitations(tournament_id)
     return 204, None
 
