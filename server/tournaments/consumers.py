@@ -16,8 +16,6 @@ from .tournament_validator import Validator
 
 logger = logging.getLogger("server")
 
-# TODO: Replace match_result placeholders by real data
-# TODO: Implement match_finished
 # TODO: Implement round_end
 # TODO: Verify connexion of both players before the match
 
@@ -69,10 +67,8 @@ class TournamentConsumer(WebsocketConsumer):
                 self.prepare_round(data)
             case "round_end":
                 self.prepare_round(data)
-            case "match_finished":
+            case "tournament_game_finished":
                 self.handle_match_finished(data)
-            case "match_result":
-                self.send_match_result(data)
             case _:
                 logger.debug("Tournament unknown action : %s", action)
 
@@ -107,8 +103,7 @@ class TournamentConsumer(WebsocketConsumer):
             self.cancel_tournament()
             return
         if participants.count() == 1:
-            tournament_winner = participants.get()
-            self.end_tournament_and_announce_winner(tournament_winner)
+            self.end_tournament()
             return
         brackets = self.generate_brackets(participants)
 
@@ -124,6 +119,12 @@ class TournamentConsumer(WebsocketConsumer):
             bracket.status = Bracket.ONGOING
             bracket.game_room = game_room
             bracket.save()
+
+    def create_tournament_game_room(self, p1, p2):
+        gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
+        GameRoomPlayer.objects.create(game_room=gameroom, profile=p1.profile)
+        GameRoomPlayer.objects.create(game_room=gameroom, profile=p2.profile)
+        return gameroom
 
     def send_start_round_message(self, round_number, new_round):
         action = "tournament_start" if round_number == 1 else "round_start"
@@ -141,36 +142,9 @@ class TournamentConsumer(WebsocketConsumer):
             },
         )
 
-    def create_tournament_game_room(self, p1, p2):
-        gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=p1.profile)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=p2.profile)
-        return gameroom
-
-    def data_for_tournament_round(self, round_number):
-        action = "tournament_start" if round_number == 1 else "round_start"
-        return {
-            "type": "tournament_message",
-            "action": action,
-            "data": {
-                "tournament_id": self.tournament_id,
-                "tournament_name": self.tournament_name,
-                "round": round_number,
-            },
-        }
-
-    def end_tournament_and_announce_winner(self, winner):
-        async_to_sync(self.consumer.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {
-                "type": "tournament_message",
-                "action": "tournament_end",
-                "data": {
-                    "tournament_id": self.tournament_id,
-                    "alias": winner.alias,
-                },
-            },
-        )
+    def end_tournament(self):
+        self.tournament.status = Tournament.FINISHED
+        self.tournament.save()
 
     def take_winners_from(self, previous_round):
         winners = []
@@ -263,31 +237,58 @@ class TournamentConsumer(WebsocketConsumer):
     def handle_match_finished(self, data):
         logger.debug("function handle_match_finished")
         logger.debug("data for handle_match_finished : %s", data)
-        round_number = data["data"].get("round_number")
-        # A bracket ID would make this easier
-        # Goal : set the bracket as finished, then set the round as Finished
-        winner = data["data"].get("winner")
-        # If no winner, impossible to get the bracket and set it to CANCELLED here
-        bracket = self.tournament.bracket.get(winner=winner, round_number=round_number)  # TODO: <-- delete this
+        bracket_id = data["data"].get("id")
+        bracket = self.tournament.round.bracket(id=bracket_id)
+        round = bracket.round
 
+        self.send_match_result(bracket)
+        self.send_match_finished()
         if self.bracket.filter(status=Bracket.ONGOING) == 0:
-            self.tournament.round.get(number=round_number).status = round.FINISHED
+            round.status = round.FINISHED
+            round.save()
+            # self.tournament.round.get(number=round_number).status = round.FINISHED
+            # self.tournament.round.save()
+            self.send_round_end_to_ws()
             self.prepare_round()
-            self.tournament.round.save()
 
-    def send_match_result(self, data):
+    def send_round_end_to_ws(self):
+        async_to_sync(self.channel_layer.group_send)(
+            f"tournament_{self.tournament_id}",
+            {
+                "type": "tournament_message",
+                "action": "round_end",
+                "data": {
+                    "tournament_id": str(self.tournament_id),
+                },
+            },
+        )
+
+    def send_match_finished(self):
+        async_to_sync(self.channel_layer.group_send)(
+            f"tournament_{self.tournament_id}",
+            {
+                "type": "tournament_message",
+                "action": "match_finished",
+                "data": {
+                    "tournament_id": str(self.tournament_id),
+                },
+            },
+        )
+
+    def send_match_result(
+        self,
+    ):
         logger.debug("function send_match_result")
-        logger.debug("data for send_match_result : %s", data)
-        placeholder = "placeholder"
+        round_number = bracket.round.number
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
             {
                 "type": "tournament_message",
                 "action": "match_result",
                 "data": {
-                    "tournament_id": placeholder,
-                    "round_number": placeholder,
-                    "bracket": placeholder,
+                    "tournament_id": str(self.tournament_id),
+                    "round_number": round_number,
+                    "bracket": bracket,
                 },
             },
         )
