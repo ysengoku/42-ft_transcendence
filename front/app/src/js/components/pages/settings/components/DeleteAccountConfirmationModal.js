@@ -4,16 +4,25 @@ export class DeleteAccountConfirmationModal extends HTMLElement {
   constructor() {
     super();
     this.modal = null;
+    this.modalElement = null;
+
+    this.clearFocusInModal = this.clearFocusInModal.bind(this);
   }
 
   connectedCallback() {
     this.render();
   }
 
+  disconnectedCallback() {
+    this.deleteButton?.removeEventListener('click', this.handleDeleteAccount);
+    this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
+  }
+
   render() {
     this.innerHTML = this.template();
     this.modal = new Modal(this.querySelector('.modal'));
 
+    this.modalElement = this.querySelector('.modal');
     this.deleteButton = this.querySelector('#delete-account-confirm');
     const deleteAccountButton = document.querySelector('delete-account-button');
     this.handleDeleteAccount = () => {
@@ -21,10 +30,7 @@ export class DeleteAccountConfirmationModal extends HTMLElement {
       this.modal.hide();
     };
     this.deleteButton.addEventListener('click', this.handleDeleteAccount);
-  }
-
-  disconnectedCallback() {
-    this.deleteButton.removeEventListener('click', this.handleDeleteAccount);
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
   }
 
   showModal() {
@@ -33,10 +39,16 @@ export class DeleteAccountConfirmationModal extends HTMLElement {
     }
   }
 
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+  }
+
   template() {
     return `
     <div class="modal fade" id="delete-account-confirm-modal" tabindex="-1" aria-hidden="true">
-	    <div class="modal-dialog">
+	    <div class="modal-dialog modal-dialog-centered">
 	      <div class="modal-content">
 		      <div class="modal-body py-4">
 		        Are you sure you want to delete your account?

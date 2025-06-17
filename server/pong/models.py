@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
+from pong.game_protocol import GameRoomSettings
 from users.models.profile import Profile
 
 
@@ -35,25 +37,43 @@ class MatchQuerySet(models.QuerySet):
     DRAW = 0.5
     LOSS = 0
 
+    def calculate_elo_change_for_players(self, winner_elo: int, loser_elo: int) -> tuple[int, int, int]:
+        elo_change = _calculate_elo_change(winner_elo, loser_elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
+        if (loser_elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
+            elo_change = loser_elo - MatchQuerySet.MINUMUM_ELO
+        elif (winner_elo + elo_change) > MatchQuerySet.MAXIMUM_ELO:
+            elo_change = MatchQuerySet.MAXIMUM_ELO - winner_elo
+        winner_elo += elo_change
+        loser_elo -= elo_change
+        return winner_elo, loser_elo, elo_change
+
     def resolve(
         self,
-        winner: Profile,
-        loser: Profile,
+        winner_profile_or_id: Profile | int,
+        loser_profile_or_id: Profile | int,
         winners_score: int,
         losers_score: int,
         date: datetime = timezone.now(),
-    ):
+    ) -> tuple["Match", Profile, Profile]:
         """
         Resolves all elo calculations, updates profiles of players,
         creates a new match record and saves everything into the database.
+        Accepts either model instances directly or their ID's.
+        Returns resolved match, winner and loser model instances.
         """
-        elo_change = _calculate_elo_change(winner.elo, loser.elo, MatchQuerySet.WIN, MatchQuerySet.K_FACTOR)
-        if (loser.elo - elo_change) < MatchQuerySet.MINUMUM_ELO:
-            elo_change = loser.elo - MatchQuerySet.MINUMUM_ELO
-        elif (winner.elo + elo_change) > MatchQuerySet.MAXIMUM_ELO:
-            elo_change = MatchQuerySet.MAXIMUM_ELO - winner.elo
-        winner.elo += elo_change
-        loser.elo -= elo_change
+        winner: Profile = (
+            Profile.objects.get(id=winner_profile_or_id)
+            if isinstance(winner_profile_or_id, int)
+            else winner_profile_or_id
+        )
+
+        loser: Profile = (
+            Profile.objects.get(id=loser_profile_or_id) if isinstance(loser_profile_or_id, int) else loser_profile_or_id
+        )
+
+        winner_elo, loser_elo, elo_change = self.calculate_elo_change_for_players(winner.elo, loser.elo)
+        winner.elo = winner_elo
+        loser.elo = loser_elo
         resolved_match = Match(
             winner=winner,
             loser=loser,
@@ -67,7 +87,7 @@ class MatchQuerySet(models.QuerySet):
         resolved_match.save()
         winner.save()
         loser.save()
-        return resolved_match
+        return resolved_match, winner, loser
 
     def get_elo_points_by_day(self, profile: Profile):
         # annotate with day without time and elo change of the specific player
@@ -120,6 +140,8 @@ class MatchQuerySet(models.QuerySet):
 
 
 class Match(models.Model):
+    """Represents a finished match between two players."""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     winner = models.ForeignKey(Profile, related_name="won_matches", on_delete=models.SET_NULL, null=True, blank=True)
     loser = models.ForeignKey(Profile, related_name="lost_matches", on_delete=models.SET_NULL, null=True, blank=True)
@@ -130,7 +152,7 @@ class Match(models.Model):
     losers_elo = models.IntegerField()
     date = models.DateTimeField(default=timezone.now)
 
-    objects = MatchQuerySet.as_manager()
+    objects: MatchQuerySet = MatchQuerySet.as_manager()
 
     class Meta:
         verbose_name_plural = "matches"
@@ -142,22 +164,39 @@ class Match(models.Model):
         return f"{winner} - {loser}"
 
 
-# Define the intermediate model
 class GameRoomPlayer(models.Model):
     """Intermediate model for GameRoom and Profile, storing room-specific player data."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     game_room = models.ForeignKey("GameRoom", on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    number_of_connections = models.IntegerField(default=1)
 
     def __str__(self):
         return f"{self.profile.user.username} in Room {self.game_room.id}"
 
+    def inc_number_of_connections(self) -> int:
+        self.number_of_connections = F("number_of_connections") + 1
+        self.save()
+        self.refresh_from_db()
+        return self.number_of_connections
+
+    def dec_number_of_connections(self) -> int:
+        if self.number_of_connections > 0:
+            self.number_of_connections = F("number_of_connections") - 1
+            self.save()
+            self.refresh_from_db()
+        return self.number_of_connections
+
 
 class GameRoomQuerySet(models.QuerySet):
-    def for_valid_game_room(self, profile: Profile):
+    def for_valid_game_room(self, profile: Profile, settings: GameRoomSettings):
         """Valid game room is a pending game room with less than 2 players."""
-        return self.annotate(players_count=Count("players")).filter(status=GameRoom.PENDING, players_count__lt=2)
+        return self.annotate(players_count=Count("players")).filter(
+            status=GameRoom.PENDING,
+            players_count__lt=2,
+            settings=settings,
+        )
 
     def for_id(self, game_room_id: str):
         return self.filter(id=game_room_id)
@@ -168,10 +207,27 @@ class GameRoomQuerySet(models.QuerySet):
     def for_ongoing_status(self):
         return self.filter(status=self.model.ONGOING)
 
+    def for_pending_or_ongoing_status(self):
+        return self.filter(Q(status=self.model.PENDING) | Q(status=self.model.ONGOING))
+
+
+def get_default_game_room_settings() -> GameRoomSettings:
+    """Create the game settings for the default Pong experience."""
+    return GameRoomSettings(
+        score_to_win=5,
+        time_limit=3,
+        cool_mode=False,
+        ranked=False,
+        game_speed="medium",
+    )
+
 
 class GameRoom(models.Model):
     """
-    Gets created when user starts matchmaking search.
+    Represents a game room where the players either look for an opponent or play a match.
+    Created after successeful matchmaking and used by the GameServerConsumer and GameWorkerConsumer.
+    Game settings are of the type GameRoomSettings. There are default settings, and the MatchmakingConsumer
+    will fill the fields that were not specified by the user with default values.
     """
 
     PENDING = "pending"
@@ -182,11 +238,11 @@ class GameRoom(models.Model):
         (ONGOING, "Ongoing"),
         (CLOSED, "Closed"),
     )
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=7, choices=STATUS_CHOICES, default="pending")
     players = models.ManyToManyField(Profile, related_name="game_rooms", through=GameRoomPlayer)
     date = models.DateTimeField(default=timezone.now)
+    settings = models.JSONField(verbose_name="Settings", default=get_default_game_room_settings)
 
     objects: GameRoomQuerySet = GameRoomQuerySet.as_manager()
 
@@ -194,11 +250,21 @@ class GameRoom(models.Model):
         ordering = ["-date"]
 
     def __str__(self) -> str:
-        return f"{self.get_status_display()} match {str(self.id)}"
+        return f"{self.get_status_display()} match {str(self.id)} with settings: {self.settings}"
 
     def close(self):
         self.status = GameRoom.CLOSED
         self.save()
 
+    def add_player(self, profile: Profile):
+        return GameRoomPlayer.objects.create(game_room=self, profile=profile)
+
     def has_player(self, profile: Profile):
         return self.players.filter(id=profile.id).exists()
+
+    def is_in_tournament(self) -> bool:
+        """Checks if the game room is a part of some running tournament."""
+        try:
+            return self.bracket is not None
+        except ObjectDoesNotExist:
+            return False

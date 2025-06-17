@@ -74,7 +74,6 @@ down:
 restart: down up
 
 # Logs for each service
-# Logs for each service
 logs:
 	@printf "${MAGENTA}--------------------${RESET}\n"
 	docker ps -a
@@ -109,7 +108,7 @@ bash-backend:
 
 # Open a bash shell inside the frontend container
 bash-frontend:
-	docker compose exec -it $(FRONTEND_SERVICE) bash
+	docker compose exec -it $(FRONTEND_SERVICE) sh
 
 fclean:
 	docker compose down --volumes
@@ -124,5 +123,17 @@ update-nginx:
 populate-db:
 	docker exec server ./manage.py populate_db
 
+delete_invites:
+	docker exec server ./manage.py delete_pending_invitations
+
+delete_games:
+	docker exec server ./manage.py delete_games
+
 clean-db:
 	docker exec server ./manage.py flush --no-input
+
+test-front:
+	docker exec $(FRONTEND_SERVICE) npm run test
+
+lint-front:
+	docker exec $(FRONTEND_SERVICE) npm run lint

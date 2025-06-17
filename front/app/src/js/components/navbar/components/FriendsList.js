@@ -1,7 +1,6 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class FriendsList extends HTMLElement {
   #state = {
@@ -47,12 +46,12 @@ export class FriendsList extends HTMLElement {
     this.#state.username = auth.getStoredUser().username;
     this.#state.listLength = this.#state.friendsList.length;
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_FRIENDS_LIST(this.#state.username, 10, this.#state.listLength),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_FRIENDS_LIST(this.#state.username, 10, this.#state.listLength),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       if (response.data) {
@@ -62,10 +61,8 @@ export class FriendsList extends HTMLElement {
       this.renderFriendsList();
     } else {
       if (response.status === 401) {
-        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
         router.navigate('/login');
       } else {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR, 5000);
         router.navigate('/');
       }
     }
@@ -103,8 +100,10 @@ export class FriendsList extends HTMLElement {
   async showMoreFriends(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.totalFriendsCount === this.#state.listLength) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      this.#state.totalFriendsCount === this.#state.listLength
+    ) {
       return;
     }
     await this.fetchFriendsData();

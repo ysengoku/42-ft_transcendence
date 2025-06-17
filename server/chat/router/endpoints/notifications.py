@@ -1,8 +1,9 @@
+from django.db.models import Q
 from django.http import HttpRequest
 from ninja import Router
 from ninja.pagination import paginate
 
-from chat.models import Notification
+from chat.models import GameInvitation, Notification, TournamentInvitation
 from chat.schemas import NotificationSchema
 from common.schemas import MessageSchema
 
@@ -18,9 +19,24 @@ def get_notifications(request: HttpRequest, is_read: str = "all"):
     For example, `/notifications?&limit=10&offset=0` will get 10 notifications from the very first one.
     You can filter items by `is_read` parameter. False by default.
     """
+    profile_id = request.auth.profile.id
+
     if is_read == "all":
-        return Notification.objects.filter(receiver=request.auth.profile.id)
-    return Notification.objects.filter(receiver=request.auth.profile.id, is_read=(is_read != "false"))
+        base_qs = Notification.objects.filter(receiver=profile_id)
+    else:
+        base_qs = Notification.objects.filter(receiver=profile_id, is_read=(is_read != "false"))
+
+    return base_qs.filter(
+        (
+            Q(action=Notification.GAME_INVITE, data__status=GameInvitation.PENDING)
+            | ~Q(action=Notification.GAME_INVITE)
+        )
+        &
+        (
+            Q(action=Notification.NEW_TOURNAMENT, data__status=TournamentInvitation.OPEN)
+            | ~Q(action=Notification.NEW_TOURNAMENT)
+        ),
+    )
 
 
 @notifications_router.post("/mark_all_as_read", response={200: MessageSchema})

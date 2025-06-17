@@ -18,10 +18,11 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django_asgi_app = get_asgi_application()
 
 from chat.routing import websocket_urlpatterns as chat_websocket_urlpatterns  # noqa: E402
-from pong.consumers.game_worker import GameConsumer  # noqa: E402
+from pong.consumers.game_worker import GameWorkerConsumer  # noqa: E402
 from pong.routing import websocket_urlpatterns as pong_websocket_urlpatterns  # noqa: E402
+from tournaments.routing import websocket_urlpatterns as tournaments_websocket_urlpatterns  # noqa: E402
 
-combined_patterns = chat_websocket_urlpatterns + pong_websocket_urlpatterns
+combined_patterns = chat_websocket_urlpatterns + pong_websocket_urlpatterns + tournaments_websocket_urlpatterns
 
 application = ProtocolTypeRouter(
     {
@@ -33,7 +34,7 @@ application = ProtocolTypeRouter(
         ),
         "channel": ChannelNameRouter(
             {
-                "game": GameConsumer.as_asgi(),
+                "game": GameWorkerConsumer.as_asgi(),
             },
         ),
     },

@@ -1,16 +1,22 @@
 import { router } from '@router';
+import { auth } from '@auth';
+import { socketManager } from '@socket';
 import { getRelativeTime } from '@utils';
+import { showToastNotification, TOAST_TYPES } from '@utils';
 
 export class NotificationsListItem extends HTMLElement {
   #state = {
+    // username: '',
     action: '',
     data: null,
   };
 
   message = {
-    gameInvitation: (username) => `${username} challenges you to a duel.`,
-    newTournament: (username, tournamentName) => `${username} is calling all gunslingers to a new tournament - ${tournamentName}!`,
-    newFriend: (username) =>`${username} just roped you in as a friend.`,
+    gameInvitation: (nickname) => `${nickname} challenges you to a duel.`,
+    pendingGameInvitation: (nickname) => `You've challenged ${nickname} to a duel.`,
+    newTournament: (alias, tournamentName) =>
+      `${alias} is calling all gunslingers to a new tournament - ${tournamentName}!`,
+    newFriend: (nickname) => `${nickname} just roped you in as a friend.`,
   };
 
   constructor() {
@@ -18,6 +24,7 @@ export class NotificationsListItem extends HTMLElement {
 
     this.handleAcceptDuel = this.handleAcceptDuel.bind(this);
     this.handleDeclineDuel = this.handleDeclineDuel.bind(this);
+    this.cancelDuelInvitation = this.cancelDuelInvitation.bind(this);
     this.handleParticipateTournament = this.handleParticipateTournament.bind(this);
     this.navigateToProfile = this.navigateToProfile.bind(this);
   }
@@ -28,9 +35,15 @@ export class NotificationsListItem extends HTMLElement {
     this.render();
   }
 
+  // set username(username) {
+  //   this.#state.username = username;
+  // }
+
   disconnectedCallback() {
     this.acceptButton?.removeEventListener('click', this.handleAcceptDuel);
     this.declineButton?.removeEventListener('click', this.handleDeclineDuel);
+    this.cancelInviteButton?.removeEventListener('click', this.cancelDuelInvitation);
+    this.seeProfileButton?.removeEventListener('click', this.navigateToProfile);
     this.participateButton?.removeEventListener('click', this.handleParticipateTournament);
     if (this.#state.action === 'new_friend') {
       this.removeEventListener('click', this.navigateToProfile);
@@ -40,35 +53,53 @@ export class NotificationsListItem extends HTMLElement {
   render() {
     this.innerHTML = this.template();
 
-    this.querySelector('.notifications-list-avatar').src = this.#state.data.avatar;
+    const avatar = this.querySelector('.notifications-list-avatar');
+    avatar.src = this.#state.data.avatar;
     this.querySelector('.notification-time').textContent = getRelativeTime(this.#state.data.date);
 
     this.content = this.querySelector('.notification-content');
     this.buttonWrapper = this.querySelector('.call-to-action-groupe');
     switch (this.#state.action) {
       case 'game_invite':
-        this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
-
-        this.acceptButton = document.createElement('button');
-        this.acceptButton.textContent = 'Accept';
-        this.acceptButton.addEventListener('click', this.handleAcceptDuel);
-        this.declineButton = document.createElement('button');
-        this.declineButton.textContent = 'Decline';
-        this.declineButton.addEventListener('click', this.handleDeclineDuel);
-        this.buttonWrapper.appendChild(this.acceptButton);
-        this.buttonWrapper.appendChild(this.declineButton);
+        const user = auth.getStoredUser();
+        const username = user ? user.username : '';
+        if (!username) {
+          this.content.textContent = 'This notification is momentarily unavailable.';
+          return;
+        }
+        this.seeProfileButton = document.createElement('button');
+        this.seeProfileButton.textContent = 'See profile';
+        this.seeProfileButton.addEventListener('click', this.navigateToProfile);
+        this.buttonWrapper.appendChild(this.seeProfileButton);
+        if (this.#state.data.username !== username) {
+          this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
+          this.acceptButton = document.createElement('button');
+          this.acceptButton.textContent = 'Accept';
+          this.acceptButton.addEventListener('click', this.handleAcceptDuel);
+          this.declineButton = document.createElement('button');
+          this.declineButton.textContent = 'Decline';
+          this.declineButton.addEventListener('click', this.handleDeclineDuel);
+          this.buttonWrapper.appendChild(this.acceptButton);
+          this.buttonWrapper.appendChild(this.declineButton);
+        } else {
+          avatar.src = this.#state.data.invitee.avatar;
+          this.content.textContent = this.message.pendingGameInvitation(this.#state.data.invitee.nickname);
+          this.cancelInviteButton = document.createElement('button');
+          this.cancelInviteButton.textContent = 'Cancel';
+          this.cancelInviteButton.addEventListener('click', this.cancelDuelInvitation);
+          this.buttonWrapper.appendChild(this.cancelInviteButton);
+        }
         break;
-
       case 'new_tournament':
-        this.querySelector('.notification-content').textContent =
-          this.message.newTournament(this.#state.data.nickname, this.#state.data.tournament_name);
-
+        this.querySelector('.notification-content').textContent = this.message.newTournament(
+          this.#state.data.alias,
+          this.#state.data.tournament_name,
+        );
         this.participateButton = document.createElement('button');
         this.participateButton.textContent = 'Participate';
         this.participateButton.addEventListener('click', this.handleParticipateTournament);
         this.buttonWrapper.appendChild(this.participateButton);
         break;
-
       case 'new_friend':
         this.querySelector('.notification-content').textContent = this.message.newFriend(this.#state.data.nickname);
         this.seeProfileButton = document.createElement('button');
@@ -79,16 +110,91 @@ export class NotificationsListItem extends HTMLElement {
     }
   }
 
-  handleAcceptDuel() {
-    console.log('Duel accepted');
+  replyGameInvite(accept) {
+    const message = {
+      action: 'reply_game_invite',
+      data: {
+        username: this.#state.data.username,
+        accept: accept,
+      },
+    };
+    socketManager.sendMessage('livechat', message);
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
+  }
+
+  async handleAcceptDuel() {
+    const currentPath = window.location.pathname;
+    let duelPage;
+    if (currentPath === '/duel') {
+      duelPage = document.querySelector('duel-page');
+      if (!duelPage) {
+        return;
+      }
+      if (duelPage.status === 'starting') {
+        showToastNotification('You are already in a duel. Cannot accept a new one.', TOAST_TYPES.ERROR);
+        return;
+      }
+    }
+    const confirmationFromServer = new Promise((resolve) => {
+      document.addEventListener(
+        'duelInvitationAccepted',
+        (event) => {
+          resolve(event.detail);
+        },
+        { once: true },
+      );
+      this.replyGameInvite(true);
+    });
+    const data = await confirmationFromServer;
+    duelPage
+      ? duelPage.handleInvitationAccepted(data)
+      : router.navigate('/duel', {
+          status: 'starting',
+          gameId: data.game_id,
+          username: data.username,
+          nickname: data.nickname,
+          avatar: data.avatar,
+        });
   }
 
   handleDeclineDuel() {
-    console.log('Duel declined');
+    this.replyGameInvite(false);
+  }
+
+  cancelDuelInvitation() {
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
+    if (window.location.pathname === '/duel') {
+      const duelPage = document.querySelector('duel-page');
+      if (duelPage) {
+        duelPage.cancelInvitation();
+      } else {
+        devErrorLog('Duel page not found');
+      }
+      return;
+    }
+    const message = {
+      action: 'cancel_game_invite',
+      data: {
+        username: this.#state.data.invitee.username,
+      },
+    };
+    socketManager.sendMessage('livechat', message);
   }
 
   handleParticipateTournament() {
-    console.log('Participating in tournament');
+    const dropdown = this.closest('.dropdown-menu');
+    dropdown.classList.remove('show');
+    router.navigate('/tournament-menu');
+    requestAnimationFrame(() => {
+      const tournamentPage = document.querySelector('tournament-menu');
+      if (tournamentPage) {
+        tournamentPage.showTournamentDetail(null, this.#state.data.tournament_id);
+      } else {
+        console.error('Tournament page not found');
+      }
+    });
   }
 
   navigateToProfile() {

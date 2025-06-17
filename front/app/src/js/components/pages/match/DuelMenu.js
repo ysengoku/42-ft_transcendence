@@ -1,17 +1,44 @@
+/**
+ * @module DuelMenu
+ * @description Component for the Duel Menu page, allowing users to invite others to a duel or request matchmaking.
+ */
+
 import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { socketManager } from '@socket';
+import {
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+  showToastNotification,
+  TOAST_TYPES,
+  sessionExpiredToast,
+} from '@utils';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
+  /**
+   * Private state of the DuelMenu component.
+   * @property {Object} user - The authenticated user.
+   * @property {string} opponentUsername - The username of the selected opponent.
+   * @property {Object} options - The game options selected by the user.
+   */
   #state = {
     user: null,
     opponentUsername: '',
-    options: null,
+    options: {},
   };
 
+  /**
+   * Object to manage user search functionality.
+   * @property {string} searchQuery - The current search query.
+   * @property {Array} list - The list of users matching the search query.
+   * @property {number} totalUsersCount - Total number of users matching the search query.
+   * @property {number} currentListLength - Current length of the user list.
+   * @property {number} searchTimeout - Timeout ID for the search input delay.
+   * @property {boolean} isLoading - Flag indicating if the user list is currently loading.
+   */
   #usersearch = {
     searchQuery: '',
     list: [],
@@ -24,8 +51,11 @@ export class DuelMenu extends HTMLElement {
   constructor() {
     super();
 
+    // Initialize references to DOM elements
     this.optionsButton = null;
+    this.modalElement = null;
     this.gameOptionsModal = null;
+    this.gameOptionComponent = null;
     this.form = null;
     this.searchInput = null;
     this.userList = null;
@@ -37,8 +67,10 @@ export class DuelMenu extends HTMLElement {
     this.opponentAvatar = null;
     this.opponentOnlineStatus = null;
 
+    // Bind event handlers
     this.openGameOptionsModal = this.openGameOptionsModal.bind(this);
     this.closeGameOptionsModal = this.closeGameOptionsModal.bind(this);
+    this.clearFocusInModal = this.clearFocusInModal.bind(this);
     this.saveSelectedOptions = this.saveSelectedOptions.bind(this);
     this.handleSearchInput = this.handleSearchInput.bind(this);
     this.loadMoreUsers = this.loadMoreUsers.bind(this);
@@ -47,21 +79,33 @@ export class DuelMenu extends HTMLElement {
     this.inviteToDuel = this.inviteToDuel.bind(this);
     this.requestMatchMaking = this.requestMatchMaking.bind(this);
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
+
+    const storedOptions = localStorage.getItem('gameOptions');
+    if (storedOptions) {
+      this.#state.options = JSON.parse(storedOptions);
+    }
   }
 
+  /**
+   * @description Lifecycle method called when the component is connected to the DOM.
+   * It checks the authentication status of the user and redirects accordingly.
+   * If the user is authenticated and has an ongoing game, it redirects to the game page.
+   */
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
-        router.navigate('/login');
+        sessionExpiredToast();
       }
+      router.redirect('/login');
       return;
     }
-    // if (authStatus.response.game_id) {
-    //   // TODO: Redirect to multiplayer game page
-    //   return;
-    // }
-
+    this.#state.user = authStatus.response;
+    if (authStatus.response.game_id) {
+      devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
+      router.redirect(`multiplayer-game/${authStatus.response.game_id}`);
+      return;
+    }
     this.render();
   }
 
@@ -76,31 +120,31 @@ export class DuelMenu extends HTMLElement {
     this.userList?.querySelectorAll('li').forEach((item) => {
       item.removeEventListener('click', this.selectOpponent);
     });
+    this.closeGameOptionsModal();
   }
 
   /* ------------------------------------------------------------------------ */
   /*      Rendering                                                           */
   /* ------------------------------------------------------------------------ */
   render() {
-    console.log('Rendering DuelMenu');
     this.innerHTML = this.template() + this.style();
 
+    // Set references to DOM elements
     this.optionsButton = this.querySelector('#game-options-button');
-    this.gameOptionsModal = this.querySelector('game-options-modal');
-
     this.searchInput = this.querySelector('input');
     this.userList = this.querySelector('#duel-user-list');
     this.inviteButton = this.querySelector('#invite-button');
     this.requestMatchmakingButton = this.querySelector('#request-matchmaking-button');
-
     this.opponentNickname = this.querySelector('.opponent-nickname');
     this.opponentUsername = this.querySelector('.opponent-username');
     this.opponentElo = this.querySelector('.opponent-elo');
+    this.opponentAvatarWraper = this.querySelector('.opponent-avatar-wrapper');
     this.opponentAvatar = this.querySelector('.opponent-avatar');
     this.opponentOnlineStatus = this.querySelector('.opponent-status-indicator');
 
     this.opponentAvatar.src = anonymousAvatar;
 
+    // Add event listeners
     this.optionsButton.addEventListener('click', this.openGameOptionsModal);
     this.searchInput.addEventListener('input', this.handleSearchInput);
     this.searchInput.addEventListener('keydown', this.ignoreEnterKeyPress);
@@ -110,6 +154,9 @@ export class DuelMenu extends HTMLElement {
     this.userList.addEventListener('scrollend', this.loadMoreUsers);
   }
 
+  /**
+   * @description Renders the user list based on the search results.
+   */
   renderUserList() {
     for (let i = this.#usersearch.currentListLength; i < this.#usersearch.list.length; i++) {
       if (this.#usersearch.list[i].username !== this.#state.user.username) {
@@ -120,6 +167,9 @@ export class DuelMenu extends HTMLElement {
     this.userList.classList.add('show');
   }
 
+  /**
+   * @description Renders a single user list item in the user search dropdown.
+   */
   renderUserListItem(user) {
     const item = document.createElement('div');
     item.innerHTML = this.userListItemTemplate();
@@ -141,6 +191,10 @@ export class DuelMenu extends HTMLElement {
     item.addEventListener('click', this.selectOpponent);
   }
 
+  /**
+   * @description Renders a message indicating that no user was found based on the search query.
+   * This is displayed when the search results are empty.
+   */
   renderNoUserFound() {
     const noUser = document.createElement('li');
     noUser.textContent = 'No user found';
@@ -149,8 +203,14 @@ export class DuelMenu extends HTMLElement {
   }
 
   /* ------------------------------------------------------------------------ */
-  /*      Event handling                                                      */
+  /*      Event handling - Game options                                       */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description Opens the game options modal, allowing users to select game settings.
+   * It creates a modal element, appends it to the body, and initializes the Modal instance.
+   * It also sets up event listeners for saving and canceling the options.
+   */
   openGameOptionsModal() {
     const template = document.createElement('template');
     template.innerHTML = this.gameOptionsModalTemplate();
@@ -158,13 +218,10 @@ export class DuelMenu extends HTMLElement {
     document.body.appendChild(this.modalElement);
     this.gameOptionsModal = new Modal(this.modalElement);
     if (!this.gameOptionsModal) {
-      // TODO: handle error
+      showToastNotification('Game options are momentarily unavailable.', TOAST_TYPES.ERROR);
       return;
     }
-    const modalBody = this.modalElement.querySelector('.modal-body');
-    this.modalBodyContent = document.createElement('game-options');
-    this.modalBodyContent.selectedOptions = this.#state.options;
-    modalBody.appendChild(this.modalBodyContent);
+    this.modalBodyContent = document.querySelector('game-options');
     this.gameOptionsModal.show();
 
     this.modalSaveButton = this.modalElement.querySelector('.confirm-button');
@@ -174,30 +231,110 @@ export class DuelMenu extends HTMLElement {
     this.modalSaveButton.addEventListener('click', this.saveSelectedOptions);
     this.modalCancelButton.addEventListener('click', this.closeGameOptionsModal);
     this.modalCloseButton.addEventListener('click', this.closeGameOptionsModal);
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
+
+    this.gameOptionComponent = this.modalElement.querySelector('game-options');
   }
 
   saveSelectedOptions() {
+    this.#state.options = null;
     this.#state.options = this.modalBodyContent.selectedOptions;
     this.closeGameOptionsModal();
     devLog('Game options:', this.#state.options);
   }
 
+  /**
+   * @description Closes the game options modal and cleans up event listeners.
+   * It removes the modal from the DOM and resets the gameOptionsModal reference.
+   * It also ensures that the focus is cleared from any active element within the modal.
+   */
   closeGameOptionsModal() {
-    if (this.gameOptionsModal) {
-      this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
-      this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
-      this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
-      this.gameOptionsModal.hide();
-      document.body.removeChild(this.modalElement);
-      this.gameOptionsModal = null;
+    if (!this.gameOptionsModal) {
+      return;
+    }
+    this.modalElement.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
+        document.body.removeChild(this.modalElement);
+        this.gameOptionsModal = null;
+      },
+      { once: true },
+    );
+    this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
+    this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
+    this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
+    this.gameOptionsModal.hide();
+  }
+
+  /**
+   * @description Clears the focus from any active element within the modal.
+   * This is useful to prevent focus issues when the modal is closed or when the user interacts with it.
+   */
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
     }
   }
 
+  /**
+   * @description Convert game options to an object to include in the game invitation request.
+   */
+  optionsToObject() {
+    if (Object.keys(this.#state.options).length === 0) {
+      return null;
+    }
+    const optionsObj = {};
+    for (const [key, value] of Object.entries(this.#state.options)) {
+      if (value !== 'any') {
+        optionsObj[key] = value;
+      }
+    }
+    return optionsObj;
+  }
+
+  /**
+   * @description Convert game options to query parameters for matchmaking.
+   */
+  optionsToQueryParams() {
+    if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
+      return null;
+    }
+    let queryParams = '';
+    if (this.#state.options.score_to_win !== 'any') {
+      queryParams += `?score_to_win=${this.#state.options.score_to_win}`;
+    }
+    if (this.#state.options.game_speed !== 'any') {
+      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+      queryParams += `game_speed=${this.#state.options.game_speed}`;
+    }
+    if (this.#state.options.time_limit !== 'any') {
+      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+      queryParams += `time_limit=${this.#state.options.time_limit}`;
+    }
+    if (this.#state.options.ranked !== 'any') {
+      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+      queryParams += `ranked=${this.#state.options.ranked}`;
+    }
+    if (this.#state.options.cool_mode !== 'any') {
+      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+      queryParams += `cool_mode=${this.#state.options.cool_mode}`;
+    }
+    return queryParams;
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling - Game invitations                                   */
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description Handles the search input for finding users to invite to a duel.
+   */
   async handleSearchInput(event) {
     event.preventDefault();
     event.stopPropagation();
     clearTimeout(this.#usersearch.searchTimeout);
-    this.#usersearch.searchTimeout = setTimeout( async () => {
+    this.#usersearch.searchTimeout = setTimeout(async () => {
       this.#usersearch.list = [];
       this.#usersearch.totalUsersCount = 0;
       this.#usersearch.currentListLength = 0;
@@ -212,14 +349,17 @@ export class DuelMenu extends HTMLElement {
     }, 500);
   }
 
+  /**
+   * @description Sends a request to the API to search for users based on the current search query.
+   */
   async searchUser() {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_SEARCH(this.#usersearch.searchQuery, 10, this.#usersearch.currentListLength),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_SEARCH(this.#usersearch.searchQuery, 10, this.#usersearch.currentListLength),
+      null,
+      false,
+      true,
     );
     if (response.success && response.data) {
       if (response.data.count === 0) {
@@ -232,12 +372,17 @@ export class DuelMenu extends HTMLElement {
     }
   }
 
+  /**
+   * @description Loads more users when the user scrolls to the bottom of the user list.
+   */
   async loadMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
       this.#usersearch.totalUsersCount === this.#usersearch.currentListLength ||
-      this.#usersearch.isLoading) {
+      this.#usersearch.isLoading
+    ) {
       return;
     }
     this.#usersearch.isLoading = true;
@@ -245,6 +390,9 @@ export class DuelMenu extends HTMLElement {
     this.#usersearch.isLoading = false;
   }
 
+  /**
+   * @description On click on a user in the search results, this function selects the opponent.
+   */
   selectOpponent(event) {
     const selectedUser = event.currentTarget;
     const avatar = selectedUser.querySelector('.duel-usersearch-avatar').src;
@@ -256,12 +404,11 @@ export class DuelMenu extends HTMLElement {
     this.opponentNickname.textContent = nickname;
     this.opponentUsername.textContent = username;
     this.opponentElo.textContent = elo;
+    this.opponentAvatarWraper.classList.remove('d-none');
 
     const onlineStatusIndicator = selectedUser.querySelector('.duel-usersearch-status-indicator');
     const online = onlineStatusIndicator.classList.contains('online');
-    online ?
-      this.opponentOnlineStatus.classList.add('online') :
-      this.opponentOnlineStatus.classList.remove('online');
+    online ? this.opponentOnlineStatus.classList.add('online') : this.opponentOnlineStatus.classList.remove('online');
     this.opponentOnlineStatus.classList.remove('d-none');
 
     this.userList.innerHTML = '';
@@ -271,10 +418,15 @@ export class DuelMenu extends HTMLElement {
     this.#usersearch.searchQuery = '';
     this.searchInput.value = '';
 
-    this.#state.opponentUsername = username;
+    this.#state.opponentUsername = username.substring(1);
     this.inviteButton.classList.remove('disabled');
   }
 
+  /**
+   * @description Invites the selected opponent to a duel.
+   * It checks if an opponent is selected, verifies if the user can engage in a game,
+   * and sends a game invitation message through the socket manager with the selected options.
+   */
   async inviteToDuel(event) {
     event.preventDefault();
     if (!this.#state.opponentUsername) {
@@ -282,21 +434,35 @@ export class DuelMenu extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 5000);
       return;
     }
+    const canEngage = await auth.canEngageInGame();
+    if (!canEngage) {
+      return;
+    }
+    const clientInstanceId = socketManager.getClientInstanceId('livechat');
+    const message = {
+      action: 'game_invite',
+      data: {
+        username: this.#state.opponentUsername,
+        client_id: clientInstanceId,
+      },
+    };
+    const settings = this.optionsToObject();
+    if (settings) {
+      message.data.settings = settings;
+    }
+    socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
       username: this.#state.opponentUsername,
       nickname: this.opponentNickname.textContent,
       avatar: this.opponentAvatar.src,
-      elo: this.opponentElo.textContent,
     };
     router.navigate('/duel', queryParams);
   }
 
-  requestMatchMaking(event) {
-    event.preventDefault();
-    router.navigate('/duel', { status: 'matchmaking' });
-  }
-
+  /**
+   * @description Hides the user list dropdown when clicking outside of it or the search input.
+   */
   hideUserList(event) {
     event.stopPropagation();
     if (this.userList.contains(event.target) || this.searchInput.contains(event.target)) {
@@ -314,8 +480,30 @@ export class DuelMenu extends HTMLElement {
   ignoreEnterKeyPress(event) {
     if (event.key === 'Enter') {
       event.preventDefault();
-      // event.stopPropagation();
     }
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling - Matchmaking                                        */
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description Requests matchmaking for a duel.
+   * It checks if the user can engage in a game, constructs query parameters from the selected options,
+   * opens a socket connection for matchmaking,
+   */
+  async requestMatchMaking(event) {
+    event.preventDefault();
+    const canEngage = await auth.canEngageInGame();
+    if (!canEngage) {
+      return;
+    }
+    const queryParams = this.optionsToQueryParams();
+    console.log('Requesting matchmaking with options:', queryParams);
+    socketManager.closeSocket('matchmaking');
+    socketManager.openSocket('matchmaking', queryParams);
+    devLog('Requesting matchmaking...');
+    router.navigate('/duel', { status: 'matchmaking' });
   }
 
   /* ------------------------------------------------------------------------ */
@@ -346,7 +534,7 @@ export class DuelMenu extends HTMLElement {
                     <p class="opponent-username m-0 text-break"></p>
                   </div>
                   <span class="opponent-elo badge ms-2 my-1"></span>
-                  <div class="position-relative d-inline-block mt-2">
+                  <div class="opponent-avatar-wrapper position-relative d-inline-block mt-2 d-none">
                     <img class="opponent-avatar" />
                     <span class="online-status opponent-status-indicator position-absolute ms-3 d-none"></span>
                   </div>
@@ -361,7 +549,9 @@ export class DuelMenu extends HTMLElement {
                 </div>
 
                 <p class="fs-5 fw-bolder m-0 mb-3">Let fate decide opponent</p>
-                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg mb-1 w-100">Bring me my rival</button>
+                <button type="submit" id="request-matchmaking-button" class="btn btn-wood btn-lg mb-5 w-100">Bring me my rival</button>
+
+                <game-instruction></game-instruction>
 
                 <div class="d-flex flex-row justify-content-center mt-5">
                   <a href="/home" class="btn">
@@ -439,13 +629,15 @@ export class DuelMenu extends HTMLElement {
 
   gameOptionsModalTemplate() {
     return `
-    <div class="modal fade mt-5" tabindex="-1" aria-hidden="true">
+    <div class="modal fade mt-2" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog pt-4">
         <div class="modal-content wood-board">
           <div class="modal-header border-0">
             <button type="button" class="btn-close btn-close-white" aria-label="Close"></button>
           </div>
-          <div class="modal-body"></div>
+          <div class="modal-body">
+            <game-options></game-options>
+          </div>
           <div class="modal-footer border-0 mt-4">
             <button type="button" class="cancel-button btn" data-bs-dismiss="modal">Cancel</button>
             <button type="button" class="confirm-button btn fw-bolder fs-5" data-bs-dismiss="modal">Save choice</button>

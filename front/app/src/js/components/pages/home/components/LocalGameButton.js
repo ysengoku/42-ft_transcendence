@@ -23,7 +23,6 @@ export class LocalGameButton extends HTMLElement {
 
   navigateToMenu(event) {
     event.preventDefault();
-    // TODO: Update route
     router.navigate('/local-game-menu');
   }
 

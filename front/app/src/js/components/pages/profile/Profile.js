@@ -36,11 +36,11 @@ export class UserProfile extends HTMLElement {
       }
     } else {
       if (response.status === 404) {
-        router.navigate('/user-not-found');
+        router.redirect('/user-not-found');
       } else if (response.status === 401) {
-        router.navigate('/login');
+        router.redirect('/login');
       } else {
-        router.navigate(`/error?code=${response.status}&error=${response.msg}`);
+        router.redirect(`/error?code=${response.status}&error=${response.msg}`);
         console.error('Error ', response.status, ': ', response.msg);
       }
     }
@@ -132,7 +132,6 @@ export class UserProfile extends HTMLElement {
       gameHistory.data = {
         username: this.user.username,
         matches: this.user.match_history,
-        // tournaments: this.user.tournament_history
       };
     }
   }
@@ -141,7 +140,6 @@ export class UserProfile extends HTMLElement {
     if (event.detail.data.username.toLowerCase() !== this.user.username.toLowerCase()) {
       return;
     }
-    console.log('Update online status:', event.detail);
     this.user.is_online = event.detail.online;
     this.onlineStatusIndicator.setStatus(this.user.is_online);
   }
@@ -149,8 +147,8 @@ export class UserProfile extends HTMLElement {
   template() {
     return `
     <div class="container-fluid">
-      <game-result-modal></game-result-modal>
-      <div class="row">
+    <div class="row">
+    <game-result-modal></game-result-modal>
 
         <!-- Container Left -->
         <div class="d-flex col-12 col-lg-6 py-4">
