@@ -179,10 +179,12 @@ class Bracket(models.Model):
     PENDING = "pending"
     ONGOING = "ongoing"
     FINISHED = "finished"
+    CANCELLED = "cancelled"
     STATUS_CHOICES = [
         (PENDING, "Pending"),
         (ONGOING, "Ongoing"),
         (FINISHED, "Finished"),
+        (CANCELLED, "Cancelled"),
     ]
 
     game = models.ForeignKey("pong.Match", on_delete=models.CASCADE, null=True)
