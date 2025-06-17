@@ -127,7 +127,7 @@ export class Tournament extends HTMLElement {
 
     // =========== For test ================================================
     // pending, tournamentstarting, waitingNextRound, roundpending
-    this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
+    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
     // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
