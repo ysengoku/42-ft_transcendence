@@ -36,12 +36,14 @@ class TournamentConsumer(WebsocketConsumer):
         except Tournament.DoesNotExist:
             logger.warning("This tournament id does not exist : %S", tournament_id)
             self.close()
+        async_to_sync(self.channel_layer.group_add)(f"user_{self.user.id}", self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
         self.accept()
 
     def disconnect(self, close_code):
         if self.tournament_id:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_{self.tournament_id}", self.channel_name)
+        async_to_sync(self.channel_layer.group_discard)(f"user_{self.user.id}", self.channel_name)
         self.close(close_code)
 
     def receive(self, text_data):
@@ -173,6 +175,8 @@ class TournamentConsumer(WebsocketConsumer):
         #     self.close() # Closes the tournament ???
         self.send_new_registration_to_ws(alias, avatar)
 
+        # TODO: change this to a regular send to send to one person
+
     def send_new_registration_to_ws(self, alias, avatar):
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
@@ -237,8 +241,8 @@ class TournamentConsumer(WebsocketConsumer):
         bracket = self.tournament.round.bracket(id=bracket_id)
         round = bracket.round
 
+        self.send_match_finished(bracket)
         self.send_match_result(bracket)
-        self.send_match_finished()
         if self.bracket.filter(status=Bracket.ONGOING) == 0:
             round.status = round.FINISHED
             round.save()
@@ -260,16 +264,17 @@ class TournamentConsumer(WebsocketConsumer):
         )
 
     def send_match_finished(self):
-        async_to_sync(self.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {
-                "type": "tournament_message",
-                "action": "match_finished",
-                "data": {
-                    "tournament_id": str(self.tournament_id),
-                },
+        p1_id = bracket.participant1.profile.user.id
+        p2_id = bracket.participant2.profile.user.id
+        data = {
+            "type": "tournament_message",
+            "action": "match_finished",
+            "data": {
+                "tournament_id": str(self.tournament_id),
             },
-        )
+        }
+        for user_id in (p1_id, p2_id):
+            async_to_sync(self.channel_layer.group_send)(f"user_{user_id}", data)
 
     def send_match_result(
         self,
