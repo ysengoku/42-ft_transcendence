@@ -2,7 +2,7 @@ import pedro from '/img/pedro.png?url';
 
 export class Error extends HTMLElement {
   #state = {
-    message: '',
+    message: 'An error occurred',
     status: 0,
   };
 
@@ -11,15 +11,17 @@ export class Error extends HTMLElement {
   }
 
   connectedCallback() {
-    this.#state.status = '';
-    this.#state.message = 'An error occurred';
+    if (!this.#state.status) {
+      this.#state.status = '';
+    } else if (this.#state.status === '503') {
+      this.#state.message = 'Service Unavailable';
+    }
     this.render();
   }
 
   setQueryParam(param) {
     this.#state.message = param.get('error') || 'An error occurred';
     this.#state.status = param.get('code') || '';
-    this.render();
   }
 
   render() {
@@ -42,12 +44,12 @@ export class Error extends HTMLElement {
             </div>
           </div>
           <div class="image-container mt-5">
-            <img src="${pedro}" alt="404" class="img-fluid">
+            <img src="${pedro}" alt="pedro" class="img-fluid">
           </div>
         </div>
         <div class="d-flex flex-row justify-content-center align-items-center mt-2 mb-4">
           <i class="bi bi-arrow-left fw-bold"></i>
-          <a class="btn fw-bold" href="/home" role="button">Back to Saloon</a>
+          <a class="btn fw-bold" href="/home" role="button">Go Back</a>
         </div>
       </div>
 	  `;

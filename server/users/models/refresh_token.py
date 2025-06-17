@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import jwt
 from django.conf import settings
@@ -19,12 +19,14 @@ class RefreshTokenQuerySet(models.QuerySet):
     def set_revoked(self):
         return self.update(is_revoked=True)
 
-    def create(self, user, old_refresh_token_instance=None) -> tuple:
+    def create(self, user, old_refresh_token_instance: "RefreshToken" = None, now: datetime | None = None) -> tuple:
         """
         Creates a new refresh token.
         To avoid collisions, if old refresh token is identical to the new one, deletes the old refresh token.
         """
-        now = timezone.now()
+        if not now:
+            now = timezone.now()
+
         payload = {
             "sub": str(user.id),
             "iat": now,

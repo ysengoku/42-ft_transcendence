@@ -1,11 +1,12 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
+// import { auth } from '@auth';
 import { socketManager } from '@socket';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 
 export class NotificationsList extends HTMLElement {
   #state = {
     currentTab: 'all',
     isLoading: false,
+    // username: '',
   };
 
   #unread = {
@@ -35,6 +36,15 @@ export class NotificationsList extends HTMLElement {
   connectedCallback() {
     this.render();
   }
+
+  // async connectedCallback() {
+  //   const authStatus = await auth.fetchAuthStatus();
+  //   if (!authStatus.success) {
+  //     return;
+  //   }
+  //   this.#state.username = authStatus.data.username;
+  //   this.render();
+  // }
 
   disconnectedCallback() {
     this.button?.removeEventListener('shown.bs.dropdown', this.renderList);
@@ -86,6 +96,7 @@ export class NotificationsList extends HTMLElement {
     }
     for (let i = listData.listLength; i < listData.notifications.length; i++) {
       const item = document.createElement('notifications-list-item');
+      // item.username = this.#state.username;
       item.data = listData.notifications[i];
       if (i === 0) {
         item.querySelector('.dropdown-list-item').classList.add('border-top-0');
@@ -106,10 +117,13 @@ export class NotificationsList extends HTMLElement {
 
   async fetchNotifications(read, limit, offset) {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
-        null, false, true);
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
+      null,
+      false,
+      true,
+    );
     if (response.success) {
       return response.data;
     } else {
@@ -137,15 +151,18 @@ export class NotificationsList extends HTMLElement {
       await this.renderList();
       this.#state.isLoading = false;
     }
-  };
+  }
 
   async loadMoreNotifications(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
     const totalCount = this.#state.currentTab === 'unread' ? this.#unread.totalCount : this.#all.totalCount;
     const listLength = this.#state.currentTab === 'unread' ? this.#unread.listLength : this.#all.listLength;
-    if (Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold || totalCount <= listLength ||
-      this.#state.isLoading) {
+    if (
+      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
+      totalCount <= listLength ||
+      this.#state.isLoading
+    ) {
       return;
     }
     this.#state.isLoading = true;
@@ -163,7 +180,7 @@ export class NotificationsList extends HTMLElement {
         action: 'read_notification',
         data: {
           id: notificationId,
-        }
+        },
       };
       socketManager.sendMessage('livechat', message);
       element.removeEventListener('click', this.readNotification);
@@ -177,10 +194,7 @@ export class NotificationsList extends HTMLElement {
     event.preventDefault();
 
     const response = await apiRequest('POST', API_ENDPOINTS.NOTIDICATIONS_READ, null, false, true);
-    if (response.status === 401 || response.status === 500) {
-      return;
-    } else if (!response.success) {
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+    if (!response.success) {
       return;
     }
     this.#state.isLoading = true;

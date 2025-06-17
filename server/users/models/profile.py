@@ -1,7 +1,9 @@
-from datetime import timedelta
+from datetime import timedelta  # noqa: A005
 from pathlib import Path  # noqa: A005
 
 import magic
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
@@ -29,12 +31,9 @@ class ProfileQuerySet(models.QuerySet):
         Annotates friendship and block status regarding user <username>.
         """
         return self.annotate(
-            is_friend=Exists(curr_user.profile.friends.filter(
-                user__username=username)),
-            is_blocked_user=Exists(
-                curr_user.profile.blocked_users.filter(user__username=username)),
-            is_blocked_by_user=Exists(
-                curr_user.profile.blocked_users_of.filter(user__username=username)),
+            is_friend=Exists(curr_user.profile.friends.filter(user__username=username)),
+            is_blocked_user=Exists(curr_user.profile.blocked_users.filter(user__username=username)),
+            is_blocked_by_user=Exists(curr_user.profile.blocked_users_of.filter(user__username=username)),
             friends_count=Count("friends", distinct=True),
         )
 
@@ -49,8 +48,7 @@ class ProfileQuerySet(models.QuerySet):
 
         return (
             # count loses and wins as distinct for correct values
-            self.annotate(wins=Count("won_matches", distinct=True),
-                          loses=Count("lost_matches", distinct=True))
+            self.annotate(wins=Count("won_matches", distinct=True), loses=Count("lost_matches", distinct=True))
             # calculate total = wins + loses
             .annotate(total_matches=F("wins") + F("loses"))
             # calculate winrate
@@ -94,15 +92,11 @@ class Profile(models.Model):
     Contains user information to the application logic itself.
     """
 
-    user = models.OneToOneField(
-        "users.User", default=None, null=True, blank=True, on_delete=models.CASCADE)
-    profile_picture = models.ImageField(
-        upload_to="avatars/", null=True, blank=True)
+    user = models.OneToOneField("users.User", default=None, null=True, blank=True, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to="avatars/", null=True, blank=True)
     elo = models.IntegerField(default=1000)
-    friends = models.ManyToManyField(
-        "self", symmetrical=False, through="Friendship", related_name="friends_of")
-    blocked_users = models.ManyToManyField(
-        "self", symmetrical=False, related_name="blocked_users_of")
+    friends = models.ManyToManyField("self", symmetrical=False, through="Friendship", related_name="friends_of")
+    blocked_users = models.ManyToManyField("self", symmetrical=False, related_name="blocked_users_of")
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now_add=True)
     nb_active_connexions = models.IntegerField(default=0)
@@ -118,11 +112,27 @@ class Profile(models.Model):
         self.last_activity = timezone.now()
         if not self.is_online:
             self.is_online = True
-        self.save()
+            self.save(update_fields=["is_online", "last_activity"])
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "online_users",
+                {
+                    "type": "user_status",
+                    "action": "user_online",
+                    "data": {
+                        "username": self.user.username,
+                        "nickname": getattr(self, "nickname", self.user.username),
+                        "status": "online",
+                        "date": timezone.now().isoformat(),
+                    },
+                },
+            )
+        else:
+            self.save(update_fields=["last_activity"])
 
     @property
     def is_really_online(self):
-        return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=2)
+        return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=30)
 
     @property
     def avatar(self) -> str:
@@ -143,15 +153,15 @@ class Profile(models.Model):
         if self.elo > 2700:
             return "Wild West Legend", 1000000
         if self.elo > 2300:
-          return "Star Criminal", 500000
+            return "Star Criminal", 500000
         if self.elo > 2000:
-          return "Ace Outlaw", 100000
+            return "Ace Outlaw", 100000
         if self.elo > 1700:
-          return "Big Shot", 10000
+            return "Big Shot", 10000
         if self.elo > 1400:
-          return "El Bandito", 1000
+            return "El Bandito", 1000
         if self.elo > 1100:
-          return "Goon", 100
+            return "Goon", 100
         if self.elo > 800:
             return "Troublemaker", 50
         if self.elo > 500:
@@ -161,22 +171,19 @@ class Profile(models.Model):
     def get_scored_balls(self):
         return (
             self.matches.aggregate(
-                scored_balls=Sum(Case(When(loser=self, then="losers_score"), When(
-                    winner=self, then="winners_score"))),
+                scored_balls=Sum(Case(When(loser=self, then="losers_score"), When(winner=self, then="winners_score"))),
             )["scored_balls"]
             or 0
         )
 
     def get_best_enemy(self):
-        best_enemy = self.won_matches.values("loser").annotate(
-            wins=Count("loser")).order_by("-wins").first()
+        best_enemy = self.won_matches.values("loser").annotate(wins=Count("loser")).order_by("-wins").first()
         if not best_enemy or not best_enemy.get("loser", None):
             return None
         return Profile.objects.get(id=best_enemy["loser"])
 
     def get_worst_enemy(self):
-        worst_enemy = self.lost_matches.values("winner").annotate(
-            losses=Count("winner")).order_by("-losses").first()
+        worst_enemy = self.lost_matches.values("winner").annotate(losses=Count("winner")).order_by("-losses").first()
         if not worst_enemy or not worst_enemy.get("winner", None):
             return None
         return Profile.objects.get(id=worst_enemy["winner"])
@@ -218,8 +225,7 @@ class Profile(models.Model):
             raise RequestDataTooBig
 
         err_dict = {}
-        invalid_file_type_msg = {"avatar": [
-            "Invalid file type. Supported file types: .png, .jpg, .webp."]}
+        invalid_file_type_msg = {"avatar": ["Invalid file type. Supported file types: .png, .jpg, .webp."]}
         accepted_file_extensions = [".png", ".jpg", ".jpeg", ".webp"]
         accepted_mime_types = ["image/png", "image/jpeg", "image/webp"]
         file_mime_type = magic.from_buffer(file.read(1024), mime=True)
@@ -277,21 +283,35 @@ class Profile(models.Model):
             "is_online": self.is_online,
         }
 
+    def can_participate_in_game(self) -> bool:
+        """
+        Checks if the user can be invited or can start games.
+        User should not participate in matchmaking, be a participant of a tournament, play pong match currently
+        or have a game invitation for someone.
+        """
+        active_statuses = ["pending", "ongoing"]
+        # active non-tournament game
+        has_active_game_room = self.game_rooms.filter(status__in=active_statuses, bracket__isnull=True).exists()
+
+        # active tournament presence
+        is_in_active_tournament = self.participant_set.filter(tournament__status__in=active_statuses).exists()
+
+        # active invitation of someone (as inviter)
+        has_pending_invitation_as_inviter = self.sent_invites.filter(status="pending").exists()
+
+        return not (has_active_game_room or is_in_active_tournament or has_pending_invitation_as_inviter)
+
 
 class Friendship(models.Model):
-    from_profile = models.ForeignKey(
-        Profile, related_name="from_profile", on_delete=models.CASCADE)
-    to_profile = models.ForeignKey(
-        Profile, related_name="to_profile", on_delete=models.CASCADE)
+    from_profile = models.ForeignKey(Profile, related_name="from_profile", on_delete=models.CASCADE)
+    to_profile = models.ForeignKey(Profile, related_name="to_profile", on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
             # Block self-friendship
-            models.CheckConstraint(check=~models.Q(
-                from_profile=models.F("to_profile")), name="no_self_friendship"),
+            models.CheckConstraint(check=~models.Q(from_profile=models.F("to_profile")), name="no_self_friendship"),
             # Prevent duplicate entries (A->B can only exist once)
-            models.UniqueConstraint(
-                fields=["from_profile", "to_profile"], name="unique_friendship"),
+            models.UniqueConstraint(fields=["from_profile", "to_profile"], name="unique_friendship"),
         ]
 
     def __str__(self):

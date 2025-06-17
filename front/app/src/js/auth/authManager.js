@@ -1,8 +1,15 @@
 import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
-import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
 import { socketManager } from '@socket';
+import {
+  isEqual,
+  internalServerErrorAlert,
+  sessionExpiredToast,
+  unknowknErrorToast,
+  showAlertMessageForDuration,
+  ALERT_TYPE,
+} from '@utils';
 
 /**
  * @module authManager
@@ -21,14 +28,15 @@ const auth = (() => {
      */
     storeUser(user) {
       const currentUser = this.getStoredUser();
-      if (!currentUser || currentUser.username !== user.username ||
-        currentUser.unread_messages_count !== user.unread_messages_count ||
-        currentUser.unread_notifications_count !== user.unread_notifications_count) {
+      if (!currentUser || !isEqual(currentUser, user)) {
         sessionStorage.setItem('user', JSON.stringify(user));
         const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
         document.dispatchEvent(event);
       }
       socketManager.openSocket('livechat');
+      if (user.tournament_id) {
+        socketManager.openSocket('tournament', user.tournament_id);
+      }
     }
 
     updateStoredUser(user) {
@@ -51,6 +59,8 @@ const auth = (() => {
      */
     clearStoredUser() {
       sessionStorage.removeItem('user');
+      localStorage.removeItem('gameOptions');
+      localStorage.removeItem('gameType');
       const event = new CustomEvent('userStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
       socketManager.closeAllSockets();
@@ -70,7 +80,7 @@ const auth = (() => {
 
     /**
      * Get the user stored in session storage. If not found, fetch the user from the server
-     * and store it in session storage. If the user is not logged in, redirect to the login page.
+     * and store it in session storage. If the user is not logged in, return null.
      * @return { Promise<Object> } The user object
      * */
     async getUser() {
@@ -81,7 +91,8 @@ const auth = (() => {
           user = response.response;
           this.storeUser(user);
         } else if (response.status === 401) {
-          showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED);
+          sessionExpiredToast();
+          return null;
         }
       }
       return JSON.parse(user);
@@ -117,16 +128,52 @@ const auth = (() => {
             case 401:
               return { success: false, status: 401 };
             case 500:
-              showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.SERVER_ERROR);
+              internalServerErrorAlert();
               break;
             default:
-              showAlertMessage(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR);
+              unknowknErrorToast();
               return { success: false, status: refreshTokenResponse.status };
           }
         }
         return { success: false, status: response.status };
       }
       return { success: false, status: response.status };
+    }
+
+    /**
+     * Check if the user is authenticated and has no ongoing games or tournaments.
+     * @return { Promise<boolean> } Return true if the user is authenticated and have no ongoing games or tournaments.
+     * If the user is not authenticated, redirects to the login page.
+     * If the user has an ongoing game or tournament, shows an alert message and returns false.
+     */
+    async canEngageInGame(showAlert = true) {
+      const authStatus = await this.fetchAuthStatus();
+      if (!authStatus.success) {
+        if (authStatus.status === 401) {
+          sessionExpiredToast();
+        }
+        router.redirect('/login');
+        return false;
+      }
+      if (
+        !authStatus.response.game_id &&
+        !authStatus.response.tournament_id &&
+        !authStatus.response.is_engaged_in_game
+      ) {
+        return true;
+      }
+      if (showAlert) {
+        let type;
+        if (authStatus.response.game_id) {
+          type = 'an ongoing game';
+        } else if (authStatus.response.tournament_id) {
+          type = 'an ongoing tournament';
+        } else {
+          type = 'a pending invitation or matchmaking';
+        }
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, `You have ${type}. Cannot start new activity.`);
+      }
+      return false;
     }
   }
   return new AuthManager();

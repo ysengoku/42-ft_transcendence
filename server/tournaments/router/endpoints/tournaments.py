@@ -1,4 +1,4 @@
-# server/tournaments/router/endpoints/tournaments.py
+import logging
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
@@ -9,11 +9,15 @@ from ninja import Router
 from ninja.errors import HttpError
 from ninja.pagination import paginate
 
+from chat.tournament_events import TournamentEvent
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from tournaments.models import Bracket, Participant, Round, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
 
 tournaments_router = Router()
+
+
+logger = logging.getLogger("server")
 
 
 @tournaments_router.post(
@@ -30,15 +34,18 @@ def create_tournament(request, data: TournamentCreateSchema):
     """
     user = request.auth
 
-    if Tournament.objects.get_active_tournament(user.profile):
-        raise HttpError(403, "You can't be a participant in multiple active tournaments.")
+    if not user.profile.can_participate_in_game():
+        raise HttpError(403, "You can't be a participant if you are already in a game / looking for a game.")
 
-    tournament = Tournament.objects.validate_and_create(
+    alias = data.alias
+    tournament: Tournament = Tournament.objects.validate_and_create(
         tournament_name=data.name,
         creator=user.profile,
         required_participants=data.required_participants,
         alias=data.alias,
+        settings=data.settings.dict(),
     )
+
     ws_data = {
         "creator": {
             "alias": data.alias,
@@ -62,6 +69,7 @@ def create_tournament(request, data: TournamentCreateSchema):
             "data": ws_data,
         },
     )
+    TournamentEvent.send_tournament_notification(tournament.id, alias)
     return 201, tournament
 
 
@@ -113,10 +121,25 @@ def delete_tournament(request, tournament_id: UUID):
         raise HttpError(404, "Tournament not found.") from e
 
     if tournament.creator != user.profile:
-        raise HttpError(403, "You are not allowed to cancel this tournament.")
+        raise HttpError(403, "you are not allowed to cancel this tournament.")
+    if tournament.status != Tournament.PENDING:
+        raise HttpError(403, "You cannot cancel an ongoing tournament.")
 
     tournament.status = Tournament.CANCELLED
     tournament.save()
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"tournament_{tournament_id}",
+        {
+            "type": "tournament_message",
+            "action": "tournament_canceled",
+            "data": {
+                "tournament_id": str(tournament_id),
+                "tournament_name": tournament.name,
+            },
+        },
+    )
+    TournamentEvent.close_tournament_invitations(tournament_id)
     return 204, None
 
 
@@ -129,12 +152,12 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
 
     with transaction.atomic():
         try:
-            tournament: Tournament = Tournament.objects.select_for_update().get(id=tournament_id)
+            tournament = Tournament.objects.select_for_update().get(id=tournament_id)
         except Tournament.DoesNotExist as e:
             raise HttpError(404, "Tournament not found.") from e
 
-        if Tournament.objects.get_active_tournament(user.profile):
-            raise HttpError(403, "You can't be a participant in multiple active tournaments.")
+        if not user.profile.can_participate_in_game():
+            raise HttpError(403, "You can't be a participant if you are already in a game / looking for a game.")
 
         if tournament.status != Tournament.PENDING:
             raise HttpError(403, "Tournament is not open.")
@@ -160,6 +183,7 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
                     },
                 },
             )
+            TournamentEvent.close_tournament_invitations(tournament_id)
         else:
             async_to_sync(channel_layer.group_send)(
                 f"tournament_{tournament_id}",
@@ -191,6 +215,11 @@ def unregister_for_tournament(request, tournament_id: UUID):
         if tournament.status != Tournament.PENDING:
             raise HttpError(403, "Cannot unregister from non-open tournament.")
 
+        try:
+            alias = Participant.objects.get(profile=user.profile, tournament_id=tournament_id).alias
+        except Participant.DoesNotExist as e:
+            raise HttpError(403, "Participant does not exists in this tournament.") from e
+
         participant_or_error_str: dict | str = tournament.remove_participant(user.profile)
         if type(participant_or_error_str) is str:
             raise HttpError(403, participant_or_error_str)
@@ -199,8 +228,12 @@ def unregister_for_tournament(request, tournament_id: UUID):
         if tournament.participants.count() < 1:
             tournament.status = Tournament.CANCELLED
             tournament.save()
+            TournamentEvent.close_tournament_invitations(tournament_id)
             async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
         else:
-            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "user_left"})
+            async_to_sync(channel_layer.group_send)(
+                f"tournament_{tournament_id}",
+                {"type": "user_left", "alias": alias},
+            )
 
     return 204, None

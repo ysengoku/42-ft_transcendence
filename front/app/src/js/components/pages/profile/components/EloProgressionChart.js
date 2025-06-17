@@ -20,8 +20,7 @@ export class UserEloProgressionChart extends HTMLElement {
     min: 20,
     mid: 65,
   };
-  #scaleY =
-    (this.#yCoordinate.max - this.#yCoordinate.min) / (this.#valueRange.max - this.#valueRange.min);
+  #scaleY = (this.#yCoordinate.max - this.#yCoordinate.min) / (this.#valueRange.max - this.#valueRange.min);
 
   constructor() {
     super();
@@ -165,9 +164,7 @@ export class UserEloProgressionChart extends HTMLElement {
     });
   }
 
-  applyScale() {
-
-  }
+  applyScale() {}
 
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
@@ -210,12 +207,12 @@ export class UserEloProgressionChart extends HTMLElement {
 
   async fetchHistory() {
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line */
-        API_ENDPOINTS.DAILY_ELO(this.#state.username, 7, this.#state.currentItemCount),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line */
+      API_ENDPOINTS.DAILY_ELO(this.#state.username, 7, this.#state.currentItemCount),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.totalItemCount = response.data.count;
@@ -244,7 +241,6 @@ export class UserEloProgressionChart extends HTMLElement {
 
   lineChartTemplate() {
     const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
-    console.log('points', points);
     const yLabelPosition = {
       min: this.#yCoordinate.max,
       max: this.#yCoordinate.min + 2,

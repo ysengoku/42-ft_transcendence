@@ -1,29 +1,16 @@
 import { auth } from '@auth';
-import { addDissmissAlertListener } from '@utils';
-import { createClouds, createStars } from '@utils';
-// import { CubeTexture } from 'three/src/Three.Core.js';
+import { showTournamentAlert, addDissmissAlertListener, createClouds, createStars } from '@utils';
 
 /**
  * Router module for handling client-side navigation.
  * @module router
- * @requires module:landing-page
- * @requires module:login-page
- * @requires module:register-form
- * @requires module:user-home
- * @requires module:user-profile
- * @requires module:user-not-found
- * @requires module:user-settings
- * @requires module:duel-menu
- * @requires module:duel
- * @requires module:duel-result
- * @requires module:tournament-menu
- * @requires module:tournament
- * @requires module:chat-page
  */
 const router = (() => {
   class Router {
     constructor() {
       this.routes = new Map();
+      this.pathToReplace = new Set(['/reset-password', '/mfa-verification', '/user-not-found', '/error']);
+      this.isFristLoad = true;
       this.currentComponent = null;
       this.beforeunloadCallback = null;
     }
@@ -83,7 +70,7 @@ const router = (() => {
           this.renderStaticUrlComponent(componentTag, queryParams);
         }
       } else {
-        console.error(`Route not found for: ${path}`);
+        devErrorLog('Route not found:', path);
         this.renderStaticUrlComponent('page-not-found');
       }
     }
@@ -174,9 +161,10 @@ const router = (() => {
      * Navigates to the specified path.
      * @param {string} [path=window.location.pathname] - The path to navigate to.
      * @param {string} [queryParams=''] - The query parameters to include in the URL.
+     * @param {boolean} [redirect=false] - Whether to replace the current history entry or push a new one.
      * @return {void}
      */
-    async navigate(path = window.location.pathname, queryParams = '') {
+    async navigate(path = window.location.pathname, queryParams = '', redirect = false) {
       devLog('Navigating to:', path);
       if (this.beforeunloadCallback) {
         const response = await this.beforeunloadCallback();
@@ -195,12 +183,28 @@ const router = (() => {
         queryParamsObject = queryParams;
       }
 
-      if (path === '/user-not-found') {
-        window.history.replaceState({}, '', path);
-      } else {
-        window.history.pushState({}, '', path);
-      }
+      // let historyUpdateMethod = '';
+      // if (redirect || this.isFristLoad || path === '/user-not-found') {
+      //     historyUpdateMethod = 'replaceState';
+      // } else {
+      //   historyUpdateMethod = 'pushState';
+      // }
+      const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
+      const historyUpdateMethod = shouldReplace ? 'replaceState' : 'pushState';
+      window.history[historyUpdateMethod]({}, '', path);
+      this.isFristLoad = false;
       this.handleRoute(queryParamsObject);
+    }
+
+    /**
+     * Redirects to a new path. The old path is replaced by the redirection destination in the history stack.
+     * @param {string} [path=window.location.pathname] - The path to navigate to.
+     * @param {string} [queryParams=''] - The query parameters to include in the URL.
+     * @return {void}
+     */
+    async redirect(path = window.location.pathname, queryParams = '') {
+      devLog('Redirecting');
+      this.navigate(path, queryParams, true);
     }
 
     /**
@@ -270,15 +274,17 @@ router.addRoute('/error', 'error-page');
  */
 document.addEventListener('DOMContentLoaded', async () => {
   devLog('DOM loaded');
-  document.documentElement.getAttribute('data-bs-theme') === 'light' ? (
-    document.getElementById('stars') ? document.body.removeChild(stars) : null,
-    document.body.style.backgroundImage = `linear-gradient(rgba(170,79,236, 0.8) 0%, rgba(236,79,84, 0.8) 50%, rgba(236,79,84, 0.8) 100%)`,
-      createClouds()) : (
-    document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
-    document.body.style.backgroundImage = `linear-gradient(rgb(23, 18, 40) 0%, rgb(62, 52, 97) 16%, rgb(95, 83, 138) 40%, #6670A2 100%)`,
-    createStars());
+  document.documentElement.getAttribute('data-bs-theme') === 'light'
+    ? (document.getElementById('stars') ? document.body.removeChild(stars) : null,
+      (document.body.style.backgroundImage =
+        'linear-gradient(rgba(170,79,236, 0.8) 0%, rgba(236,79,84, 0.8) 50%, rgba(236,79,84, 0.8) 100%)'),
+      createClouds())
+    : (document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
+      (document.body.style.backgroundImage =
+        'linear-gradient(rgb(23, 18, 40) 0%, rgb(62, 52, 97) 16%, rgb(95, 83, 138) 40%, #6670A2 100%)'),
+      createStars());
 
-  await auth.fetchAuthStatus();
+  const authStatus = await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');
   if (navbarContainer) {
     navbarContainer.innerHTML = '<navbar-component></navbar-component>';
@@ -290,6 +296,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentPath = window.location.pathname || '/';
   const queryParams = new URLSearchParams(window.location.search);
   router.navigate(currentPath, queryParams);
+  if (
+    authStatus.response.tournament_id &&
+    !(currentPath.startsWith('/tournament') || currentPath.startsWith('/multiplayer-game'))
+  ) {
+    showTournamentAlert(authStatus.response.tournament_id);
+  }
 });
 
 export { router };

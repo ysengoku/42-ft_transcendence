@@ -1,19 +1,20 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { formatDateMDY } from '@utils';
 import { isMobile } from '@utils';
-import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
+import { TOURNAMENT_STATUS } from './tournamentStatus.js';
+// import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 
 export class TournamentOverview extends HTMLElement {
   #state = {
     tournament_id: '',
-    status: '', // ongoing, finished
+    status: '',
     tournament: null,
     isMobile: false,
-  }
+  };
 
   constructor() {
     super();
-  
+
     this.tournamentName = null;
     this.tournamentStatus = null;
     this.tournamentWinnerWrapper = null;
@@ -44,28 +45,34 @@ export class TournamentOverview extends HTMLElement {
     // For rendering test
     // this.#state.tournament = await mockTournamentDetail('mockidongoing');
     // this.#state.tournament = await mockTournamentDetail('mockidongoing2');
-    this.#state.tournament = await mockTournamentDetail('mockidfinished');
-  
+    // this.#state.tournament = await mockTournamentDetail('mockidfinished');
+
     // For error handling Test
     // this.#state.tournament_id = 'fb68695b-5645-4ad6-ac8a-8ee018475cae'
 
-    // Decomment after API is ready
-    // const response = await apiRequest(
-    //     'GET',
-    //     API_ENDPOINTS.TOURNAMENT(this.#state.tournament_id),
-    //     null, false, true);
-    // if (!response.success) {
-    //   if (response.status === 404) {
-    //     const notFound = document.createElement('page-not-found');
-    //     this.innerHTML = notFound.outerHTML;
-    //   } else {
-    //     console.error('Error fetching tournament data');
-    //   }
-    //   return;
-    // }
-    // this.#state.tournament = response.data;
+    const response = await apiRequest(
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.TOURNAMENT(this.#state.tournament_id),
+      null,
+      false,
+      true,
+    );
+    if (!response.success) {
+      if (response.status === 404) {
+        const notFound = document.createElement('page-not-found');
+        this.innerHTML = notFound.outerHTML;
+      } else {
+        console.error('Error fetching tournament data');
+      }
+      return;
+    }
+    this.#state.tournament = response.data;
 
-    if (!(this.#state.tournament.status === 'ongoing' || this.#state.tournament.status === 'finished')) {
+    if (
+      this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING &&
+      this.#state.tournament.status !== TOURNAMENT_STATUS.FINISHED
+    ) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
       return;
@@ -84,16 +91,20 @@ export class TournamentOverview extends HTMLElement {
     this.tournamentOverviewContent = this.querySelector('#tournament-overview-content');
 
     this.tournamentName.textContent = this.#state.tournament.name;
-    this.#state.tournament.status === 'ongoing' ? (
-      this.tournamentStatus.textContent = 'Ongoing',
-      this.tournamentWinnerWrapper.classList.add('d-none')
-    ) : (
-      this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`,
-      this.tournamentWinnerAvatar.src = this.#state.tournament.winner.user.avatar,
-      this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias
-    );
- 
-    const content = isMobile() ? document.createElement('tournament-overview-table') : document.createElement('tournament-overview-tree');
+    if (this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING) {
+      this.tournamentStatus.textContent = 'Ongoing';
+      this.tournamentWinnerWrapper.classList.add('d-none');
+    } else if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
+      this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`;
+      if (this.#state.tournament.winner) {
+        this.tournamentWinnerAvatar.src = this.#state.tournament.winner.profile.avatar;
+        this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias;
+      }
+    }
+
+    const content = isMobile()
+      ? document.createElement('tournament-overview-table')
+      : document.createElement('tournament-overview-tree');
     content.data = this.#state.tournament.rounds;
     this.tournamentOverviewContent.appendChild(content);
   }
