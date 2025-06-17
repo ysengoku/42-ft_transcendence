@@ -134,7 +134,6 @@ export class Tournament extends HTMLElement {
       socketManager.closeSocket('tournament', this.#state.tournamentId);
       // TODO: Show a special winner message replacing the following alert message
       showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
-      router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
       return;
     }
     if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
