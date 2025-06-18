@@ -7,7 +7,6 @@ import { router } from '@router';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
 
-
 socketManager.addSocket('tournament', {
   // TESTED
   new_registration: (data) => {
@@ -42,7 +41,7 @@ socketManager.addSocket('tournament', {
       const tournamentPage = document.querySelector('tournament-room');
       tournamentPage?.handleTournamentStart(data);
     } else {
-      showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.TOURNAMENT_STARTS);
+      showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.TOURNAMENT_STARTS, data.tournament_name);
     }
   },
   // TESTED

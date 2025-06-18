@@ -10,5 +10,5 @@ export async function handleLogout() {
     devErrorLog('A problem occurred while logging out:', response);
   }
   auth.clearStoredUser();
-  router.navigate('/');
+  router.redirect('/');
 }

@@ -53,19 +53,15 @@ export class FriendsList extends HTMLElement {
       false,
       true,
     );
-    if (response.success) {
-      if (response.data) {
-        this.#state.totalFriendsCount = response.data.count;
-        this.#state.friendsList.push(...response.data.items);
-      }
-      this.renderFriendsList();
-    } else {
-      if (response.status === 401) {
-        router.navigate('/login');
-      } else {
-        router.navigate('/');
-      }
+    if (!response.success) {
+      devLog('Failed to fetch friends list:', response);
+      return;
     }
+    if (response.data) {
+      this.#state.totalFriendsCount = response.data.count;
+      this.#state.friendsList.push(...response.data.items);
+    }
+    this.renderFriendsList();
   }
 
   renderFriendsList() {
