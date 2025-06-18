@@ -11,7 +11,9 @@ class Validator:
             "new_registration": ["alias", "avatar"],
             "last_registration": ["alias", "avatar"],
             "tournament_message": ["alias", "avatar"],
-            "start_round": ["id", "chat_id"], # chat_id ????
+            "start_round": ["id"],  #
+            "round_end": ["id"],  #
+            "tournament_game_finished": ["id"],  # the bracket id
             "match_result": ["id", "chat_id"],
         }
 
