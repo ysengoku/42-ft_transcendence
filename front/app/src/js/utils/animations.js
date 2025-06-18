@@ -111,25 +111,30 @@ export function loader() {
   `;
 }
 
-export function triggerRotateMoveShrink(el, duration = 1500) {
-  el.classList.add('rotateMoveShrink');
+export function triggerRotateMoveShrink(element, duration = 1500) {
+  element.classList.add('rotateMoveShrink');
 
   setTimeout(() => {
-    el.style.visibility = 'hidden';
+    element.style.visibility = 'hidden';
   }, duration);
 }
 
-export function flyAway(el, duration = 1000) {
-  if (getComputedStyle(el).position === 'static') {
-    el.style.position = 'relative';
+export function flyAway(element, duration = 1000) {
+  if (getComputedStyle(element).position === 'static') {
+    element.style.position = 'relative';
   }
-  el.classList.add('fly-away');
+  element.classList.add('fly-away');
 
   setTimeout(() => {
-    el.style.visibility = 'hidden';
+    element.style.visibility = 'hidden';
   }, duration);
 }
 
+/**
+ * Fire confetti animation from two launchers.
+ * Each launcher fires confetti particles in a spread pattern.
+ * @param {HTMLElement} parentElement 
+ */
 export function fireConfetti(parentElement = document.body) {
   const confetti = document.createElement('div');
   confetti.innerHTML = `
@@ -145,18 +150,23 @@ export function fireConfetti(parentElement = document.body) {
     .wrapper {
       position: absolute;
       bottom: 10%;
-      left: 10%;
+      left: 0;
+      width: 100%;
+      padding: 0 1rem;
       display: flex;
       flex-direction: row;
       align-items: center;
-      justify-content: center;
-      gap: 24rem;
+      justify-content: space-between;
     }
     .launcher {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+    .launcher img {
+      width: 1.6rem;
+      height: auto;
     }
     .launcher1 {
       transform: scaleX(-1) rotate(5deg);
@@ -166,13 +176,13 @@ export function fireConfetti(parentElement = document.body) {
     }
     .confetti {
       position: absolute;
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
       clip-path: polygon(50% 0%, 66% 25%, 95% 25%, 76.96% 50%, 95% 75%, 66% 75%, 50% 100%, 32% 75%, 5% 75%, 19.98% 50%, 5% 25%, 32% 25%);
       opacity: 0;
       transform: scale(0);
-      top: calc(50% - 3px);
-      left: calc(50% - 3px);
+      top: calc(50% - 16px);
+      left: calc(50% - 16px);
     }
     </style>
     `;
@@ -180,47 +190,99 @@ export function fireConfetti(parentElement = document.body) {
   parentElement.appendChild(confetti);
 
   const launchers = document.querySelectorAll('.launcher');
-  console.log('Launchers:', launchers);
+  
+  /**
+   * Defines the colors for the confetti particles.
+   */
   const COLORS = [
     getComputedStyle(document.documentElement).getPropertyValue('--pm-primary-500').trim(),
     getComputedStyle(document.documentElement).getPropertyValue('--pm-primary-400').trim(),
     getComputedStyle(document.documentElement).getPropertyValue('--pm-red-500').trim(),
   ];
 
+  /**
+   * Fires confetti particles from the specified launcher.
+   * Each particle is animated to move in a spread pattern.
+   * @param {HTMLElement} launcher - The launcher element from which to fire confetti.
+   */
   const fire = (launcher) => {
+    /**
+     * Base angle for confetti spread in radians.
+     * This angle is set to 220 degrees, which is approximately 40 degrees from the vertical axis.
+     * The angle is converted to radians for use in trigonometric functions.
+     * @type {number}
+     */
     const baseAngle = (220 * Math.PI) / 180;
+
+    /**
+     * Spread angle for confetti particles in radians.
+     * This defines how far the confetti will spread from the base angle.
+     * The spread is set to 30 degrees, which is approximately ±25 degrees from the base angle.
+     * @type {number}
+     */
     const spread = (30 * Math.PI) / 180; // ±25°
 
+    /**
+     * Number of confetti particles to fire from each launcher.
+     * This is set to 30 particles per launcher.
+     * @type {number}
+     */
     const count = 30;
+    /**
+     * Fires confetti particles from the specified launcher.
+     * Each particle is created, styled, and animated to move in a spread pattern.
+     * The particles are created in a loop, each with a unique color and animation.
+     * The animation includes a translation based on the angle and speed, and a fade-out effect
+     */
     for (let i = 0; i < count; i++) {
-      const dot = document.createElement('div');
-      dot.classList.add('confetti');
-      dot.style.background = COLORS[i % COLORS.length];
-      launcher.appendChild(dot);
+      const particle = document.createElement('div');
+      particle.classList.add('confetti');
+      particle.style.background = COLORS[i % COLORS.length];
+      launcher.appendChild(particle);
 
+      /**
+       * Compute the velocity vector and animate the particle along that vector while scaling,
+       * rotating, and fading it out. Finally, remove the particle from the DOM when the
+       * animation completes.
+       * @param {number} angle - Direction of motion in radians.
+       * @param {number} speed - Magnitude of motion in pixels per frame.
+       * @param {number} duration - Animation duration in milliseconds.
+       */
       const angle = baseAngle + (Math.random() - 0.5) * spread;
-      const speed = 280 + Math.random() * 150; // px/sec
-      const duration = 1500 + Math.random() * 600; // ms
+      const speed = 280 + Math.random() * 150;
+      const duration = 1500 + Math.random() * 800;
 
+      /**
+       * Calculate the movement vector components
+       */
       const dx = Math.cos(angle) * speed;
       const dy = Math.sin(angle) * speed;
 
-      dot.animate(
+      particle.animate(
         [
+          // start at original position, full size and fully opaque
           { transform: 'translate(0,0) scale(1)', opacity: 1 },
+          // move to (dx, dy), shrink to half size, rotate two full turns, and fade out
           { transform: `translate(${dx}px, ${dy}px) scale(0.5) rotate(720deg)`, opacity: 0 },
         ],
         {
           duration: duration,
-          easing: 'cubic-bezier(0.33,1,0.68,1)',
-          fill: 'forwards',
+          easing: 'cubic-bezier(0.33,1,0.68,1)', // smooth ease-out curve
+          fill: 'forwards', // retain end state after finishing
         },
-      ).onfinish = () => dot.remove();
+      ).onfinish = () => particle.remove();
     }
   };
 
+  /**
+   * Launches confetti from the two launchers in a specific pattern.
+   * The pattern is defined by an array where each element corresponds to a launcher.
+   * The launchers fire confetti in a sequence with a delay between each launch.
+   * The total delay is calculated based on the number of launches and the delay between them.
+   * @type {Array<number>}
+   */
   const launchPattern = [0, 1, 0, 1, 1, 0, 0, 1, 0, 1];
-  const delay = 250;
+  const delay = 200;
   let totalDelay = 0;
   for (let i = 0; i < launchPattern.length; i++) {
     const launcher = launchers[launchPattern[i]];

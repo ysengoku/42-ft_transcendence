@@ -5,6 +5,7 @@ import pedro from '/3d_models/lilguy.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
 import { router } from '@router';
 import { auth } from '@auth';
+import { showToastNotification, TOAST_TYPES } from '@utils';
 
 export class MultiplayerGame extends HTMLElement {
   #navbarHeight = 64;
@@ -511,9 +512,13 @@ export class MultiplayerGame extends HTMLElement {
       }
     });
 
-    pongSocket.addEventListener('close', function (_) {
+    pongSocket.addEventListener('close', function (event) {
       console.log('PONG socket was nice! :3');
-      // TODO: Add handler for ws closing in case user is not (or no more) in the game (code: 3002)
+      console.log('Closed by code ', event.code);
+      if (event.code === 3002) {
+        showToastNotification('This game does not exist or has ended.', TOAST_TYPES.ERROR);
+        router.redirect('/home');
+      }
     });
 
     function animate() {
