@@ -73,13 +73,13 @@ class TournamentConsumer(WebsocketConsumer):
     def user_left(self, data):
         logger.debug("Bye everyone ! %s", data)
         alias = data.get("alias")
-        async_to_sync(self.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {
-                "type": "tournament_message",
-                "action": "registration_canceled",
-                "data": {"alias": alias},
-            },
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "registration_canceled",
+                    "data": {"alias": alias},
+                },
+            ),
         )
 
     def prepare_round(self, data):
@@ -178,33 +178,31 @@ class TournamentConsumer(WebsocketConsumer):
         # TODO: change this to a regular send to send to one person
 
     def send_new_registration_to_ws(self, alias, avatar):
-        async_to_sync(self.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {
-                "type": "tournament_message",
-                "action": "new_registration",
-                "data": {"alias": alias, "avatar": avatar},
-            },
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": "new_registration",
+                    "data": {"alias": alias, "avatar": avatar},
+                },
+            ),
         )
 
-    def send_tournament_canceled_to_ws(self):
-        async_to_sync(self.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {
-                "type": "tournament_message",
-                "action": "tournament_canceled",
-                "data": {
-                    "tournament_id": str(self.tournament_id),
-                    "tournament_name": self.tournament_name,
+    def self_send_message_to_ws(self, action, data):
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": action,
+                    "data": data,
                 },
-            },
+            ),
         )
 
     def cancel_tournament(self):
         with transaction.atomic():
             self.tournament.status = Tournament.CANCELLED
             self.tournament.save()
-        self.send_tournament_canceled_to_ws()
+        data = {"tournament_id": str(self.tournament_id), "tournament_name": self.tournament_name}
+        self.self_send_message_to_ws("tournament_canceled", data)
 
     def last_registration(self, event):
         logger.debug("function last_registration")
@@ -213,15 +211,9 @@ class TournamentConsumer(WebsocketConsumer):
         avatar = event["data"].get("avatar")
         # if (Validator.validate_action_data("last_registration", event) == False):
         #     self.close() # Closes the tournament ???
+        data = {"alias": alias, "avatar": avatar}
         self.send_new_registration_to_ws(alias, avatar)
-        async_to_sync(self.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {
-                "type": "tournament_message",
-                "action": "tournament_start",
-                "data": {"alias": alias, "avatar": avatar},
-            },
-        )
+        self.self_send_message_to_ws("tournament_start", data)
 
     def generate_brackets(self, participants):
         logger.debug("function generate_brackets")
