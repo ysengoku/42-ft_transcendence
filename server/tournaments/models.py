@@ -201,6 +201,8 @@ class Bracket(models.Model):
     participant2 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p2")
     winners_score = models.PositiveIntegerField(default=0)
     losers_score = models.PositiveIntegerField(default=0)
+    score_p1 = models.PositiveIntegerField(default=0)
+    score_p2 = models.PositiveIntegerField(default=0)
     winner = models.ForeignKey(Participant, on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     score = models.CharField(max_length=7, blank=True)
