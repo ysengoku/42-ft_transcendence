@@ -74,17 +74,19 @@ class ProfileQuerySet(models.QuerySet):
             .with_wins_and_loses_and_total_matches()
         )
 
-    def with_search(self, search: str):
+    def with_search(self, search: str, curr_user):
         """
         Searches users based on the given context.
         """
+        search_qs = (
+            self.prefetch_related("user")
+            .all()
+            .order_by("-is_online", "user__nickname")
+            .exclude(blocked_users=curr_user.profile)
+        )
         if search:
-            return (
-                self.prefetch_related("user")
-                .filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
-                .order_by("-is_online", "user__nickname")
-            )
-        return Profile.objects.prefetch_related("user").all().order_by("-is_online", "user__nickname")
+            search_qs = search_qs.filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
+        return search_qs
 
 
 class Profile(models.Model):
