@@ -4,8 +4,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models import (BooleanField, Count, Exists, ExpressionWrapper,
-                              ImageField, OuterRef, Q, Subquery, Value)
+from django.db.models import BooleanField, Count, Exists, ExpressionWrapper, ImageField, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce, Now, NullIf
 from django.utils import timezone
 
@@ -58,10 +57,8 @@ class ChatQuerySet(models.QuerySet):
         ).order_by("-date")
 
         return self.annotate(
-            last_message=Subquery(
-                latest_message_subquery.values("content")[:1]),
-            last_message_date=Subquery(
-                latest_message_subquery.values("date")[:1]),
+            last_message=Subquery(latest_message_subquery.values("content")[:1]),
+            last_message_date=Subquery(latest_message_subquery.values("date")[:1]),
             last_message_id=Subquery(latest_message_subquery.values("pk")[:1]),
         ).order_by("-last_message_date")
 
@@ -72,33 +69,26 @@ class ChatQuerySet(models.QuerySet):
         blocked_through = Profile.blocked_users.through
 
         return self.annotate(
-            username=Subquery(
-                other_chat_participant_subquery.values("user__username")),
-            nickname=Subquery(
-                other_chat_participant_subquery.values("user__nickname")),
+            username=Subquery(other_chat_participant_subquery.values("user__username")),
+            nickname=Subquery(other_chat_participant_subquery.values("user__nickname")),
             avatar=Coalesce(
                 # sets field to null if the profile_picture is an empty string
                 NullIf(
-                    Subquery(other_chat_participant_subquery.values(
-                        "profile_picture")),
+                    Subquery(other_chat_participant_subquery.values("profile_picture")),
                     Value("", output_field=ImageField()),
                 ),
                 Value(settings.DEFAULT_USER_AVATAR, output_field=ImageField()),
             ),
-            last_activity=Subquery(
-                other_chat_participant_subquery.values("last_activity")),
-            is_online=Subquery(
-                other_chat_participant_subquery.values("is_online")),
+            last_activity=Subquery(other_chat_participant_subquery.values("last_activity")),
+            is_online=Subquery(other_chat_participant_subquery.values("is_online")),
             real_online=ExpressionWrapper(
                 Q(last_activity__gte=Now() - timedelta(minutes=5)),
                 output_field=BooleanField(),
             ),
-            other_profile_id=Subquery(
-                other_chat_participant_subquery.values("pk")),
+            other_profile_id=Subquery(other_chat_participant_subquery.values("pk")),
             unread_messages_count=Count(
                 "messages",
-                filter=~Q(messages__sender=profile) & Q(
-                    messages__is_read=False),
+                filter=~Q(messages__sender=profile) & Q(messages__is_read=False),
             ),
         ).annotate(
             is_blocked_user=Exists(
@@ -138,8 +128,7 @@ class Chat(models.Model):
             return "Empty chat"
 
         max_participants_to_display = 20
-        participants_list = [p.user.username for p in self.participants.all()[
-            :max_participants_to_display]]
+        participants_list = [p.user.username for p in self.participants.all()[:max_participants_to_display]]
         res = ", ".join(participants_list)
         if self.participants.count() > max_participants_to_display:
             res + " ..."
@@ -160,10 +149,8 @@ class ChatMessage(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content = models.TextField(max_length=256)
     date = models.DateTimeField(default=timezone.now)
-    sender = models.ForeignKey(
-        Profile, related_name="sent_messages", on_delete=models.CASCADE)
-    chat = models.ForeignKey(
-        Chat, related_name="messages", on_delete=models.CASCADE)
+    sender = models.ForeignKey(Profile, related_name="sent_messages", on_delete=models.CASCADE)
+    chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
     is_liked = models.BooleanField(default=False)
 
@@ -268,8 +255,7 @@ class NotificationQuerySet(models.QuerySet):
             notification_data = {"invitation_id": ""}
         from chat.models import TournamentInvitation
 
-        invitation = TournamentInvitation.objects.get(
-            id=notification_data["invitation_id"])
+        invitation = TournamentInvitation.objects.get(id=notification_data["invitation_id"])
         notification_data = notification_data.copy()
         notification_data["status"] = invitation.status
         return self._create(
@@ -335,10 +321,8 @@ class GameInvitation(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey(Profile, on_delete=models.CASCADE,
-                               related_name="sent_invites", null=True, blank=True)
-    invitee = models.ForeignKey(Profile, on_delete=models.CASCADE,
-                                related_name="invitee", null=True, blank=True)
+    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="sent_invites", null=True, blank=True)
+    invitee = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="invitee", null=True, blank=True)
     recipient = models.ForeignKey(
         Profile,
         on_delete=models.CASCADE,
@@ -362,7 +346,8 @@ class GameInvitation(models.Model):
         )
         for notif in notifications:
             notif.data["status"] = self.status
-            notif.save(update_fields=["data"])
+            notif.is_read = True
+            notif.save(update_fields=["data", "is_read"])
 
 
 class TournamentInvitation(models.Model):
@@ -374,8 +359,7 @@ class TournamentInvitation(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    tournament_id = models.UUIDField(
-        primary_key=False, default=uuid.uuid4, editable=False)
+    tournament_id = models.UUIDField(primary_key=False, default=uuid.uuid4, editable=False)
     sender = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="sent_tournament_invites", null=True, blank=True
     )
@@ -384,10 +368,8 @@ class TournamentInvitation(models.Model):
         on_delete=models.CASCADE,
         related_name="received_tournament_invites",
     )
-    tournament_name = models.CharField(
-        max_length=50, null=False, blank=False, default="The no name tournament")
-    alias = models.CharField(max_length=30, null=False,
-                             blank=False, default="anonymous")
+    tournament_name = models.CharField(max_length=50, null=False, blank=False, default="The no name tournament")
+    alias = models.CharField(max_length=30, null=False, blank=False, default="anonymous")
     status = models.CharField(
         max_length=11,
         blank=False,

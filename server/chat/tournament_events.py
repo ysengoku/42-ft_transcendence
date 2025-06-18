@@ -86,21 +86,11 @@ class TournamentEvent:
 
         channel_layer = get_channel_layer()
         for notif in notifications:
+            logger.debug(notif)
+            logger.debug(notif.is_read)
             notif.data["status"] = TournamentInvitation.CLOSED
-            notif.save(update_fields=["data"])
-
-            async_to_sync(channel_layer.group_send)(
-                f"user_{notif.receiver.user.id}",
-                {
-                    "type": "chat_message",
-                    "message": json.dumps(
-                        {
-                            "action": "tournament_invitation_closed",
-                            "data": notif.data | {"id": str(notif.id)},
-                        }
-                    ),
-                },
-            )
+            notif.is_read = True
+            notif.save(update_fields=["data", "is_read"])
 
     def handle_new_tournament(self, data):
         # TODO: Verify that this function is, indeed, useless and unused
