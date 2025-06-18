@@ -4,6 +4,7 @@ export const TOURNAMENT_ALERT_TYPE = {
   ONGOING_TOURNAMENT: 'ONGOING_TOURNAMENT',
   TOURNAMENT_STARTS: 'TOURNAMENT_STARTS',
   ROUND_END: 'ROUND_END',
+  ELIMINATED: 'ELIMINATED',
   CHAMPION: 'CHAMPION',
 };
 
@@ -11,6 +12,7 @@ const TOURNAMENT_ALERT_MESSAGE = {
   ONGOING_TOURNAMENT: 'You are currently in a tournament.',
   TOURNAMENT_STARTS: 'The tournament is starting soon.',
   ROUND_END: 'The current round of the tournament finished.',
+  ELIMINATED: 'You have been eliminated from the tournament.',
   CHAMPION: (name) => `You are the champion of ${name}.`,
 };
 
@@ -18,6 +20,7 @@ const TOURNAMENT_ALERT_CTA = {
   ONGOING_TOURNAMENT: 'Go back to Tournament room',
   TOURNAMENT_STARTS: 'Join Tournament',
   ROUND_END: 'Go back to Tournament',
+  ELIMINATED: 'Go back to Saloon',
   CHAMPION: 'View the results',
 };
 
@@ -36,21 +39,35 @@ export function showTournamentAlert(
 
   const messageElement = alertMessage.querySelector('#alert-message');
   const alertCta = alertMessage.querySelector('a');
-  if (type === TOURNAMENT_ALERT_TYPE.CHAMPION) {
-    const headerElement = alertMessage.querySelector('#alert-header');
-    headerElement.textContent = 'Congratulations!';
-    messageElement.textContent = TOURNAMENT_ALERT_MESSAGE[type](tournamentName);
-    // alertCta.href = `/tournament-overview/${tournamentId}`;
-  } else {
-    messageElement.textContent = TOURNAMENT_ALERT_MESSAGE[type];
-    alertCta.href = `/tournament/${tournamentId}`;
-    alertCta.textContent = TOURNAMENT_ALERT_CTA[type];
+  const headerElement = alertMessage.querySelector('#alert-header');
+
+  switch (type) {
+    case TOURNAMENT_ALERT_TYPE.CHAMPION:
+      headerElement.textContent = 'Congratulations!';
+      messageElement.textContent = TOURNAMENT_ALERT_MESSAGE[type](tournamentName);
+      alertContainer.appendChild(alertMessage);
+      fireConfetti(alertContainer);
+      return;
+    case TOURNAMENT_ALERT_TYPE.ELIMINATED:
+      // alertCta.href = '/home';
+      setTimeout(() => {
+        alertContainer.classList.add('fade-out-animation');
+        setTimeout(() => {
+          alertContainer.remove();
+        }, 1000);
+      }, 2000);
+      alertCta.classList.add('d-none');
+      break;
+    default:
+      alertCta.textContent = TOURNAMENT_ALERT_CTA[type];
+      alertCta.href = `/tournament/${tournamentId}`;
   }
 
-  alertContainer.appendChild(alertMessage);
-  if (type === TOURNAMENT_ALERT_TYPE.CHAMPION) {
-    fireConfetti(alertContainer);
+  if (tournamentName) {
+    headerElement.textContent = tournamentName;
   }
+  messageElement.textContent = TOURNAMENT_ALERT_MESSAGE[type];
+  alertContainer.appendChild(alertMessage);
 }
 
 function template() {
@@ -58,10 +75,10 @@ function template() {
     <div class="old-paper"></div>
     <div class="alert alert-tournament alert-dismissible fade show" role="alert">
       <div class="d-flex flex-column align-items-center ms-4 mt-4 p-4">
-        <h2 id="alert-header" class="mb-3"></h2>
-        <div id="alert-message" class="fs-4 fw-bold mb-4 text-center"></div>
+        <h2 id="alert-header" class="mb-4"></h2>
+        <div id="alert-message" class="fs-4 fw-bold text-center"></div>
         <div class="text-center">
-          <a class="btn" id="cta-link"></a>
+          <a class="btn mt-5" id="cta-link"></a>
         </div>  
       </div>
       <button type="button" class="btn-close mt-2 me-1" data-bs-dismiss="alert" aria-label="Close"></button>

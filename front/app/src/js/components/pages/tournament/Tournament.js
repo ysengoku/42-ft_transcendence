@@ -135,10 +135,7 @@ export class Tournament extends HTMLElement {
     }
     if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
       socketManager.closeSocket('tournament', this.#state.tournamentId);
-      showAlertMessageForDuration(
-        ALERT_TYPE.LIGHT,
-        'You have been eliminated from the tournament. Thanks for participating!',
-      );
+      showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.ELIMINATED, this.#state.tournament.name);
       setTimeout(() => {
         router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
       }, 2000);
