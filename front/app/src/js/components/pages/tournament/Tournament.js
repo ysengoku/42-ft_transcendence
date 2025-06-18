@@ -9,14 +9,9 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
 import { auth } from '@auth';
-import {
-  showAlertMessageForDuration,
-  ALERT_TYPE,
-  sessionExpiredToast,
-  showTournamentAlert,
-  TOURNAMENT_ALERT_TYPE,
-} from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
+import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
 import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
 
 export class Tournament extends HTMLElement {
@@ -132,8 +127,10 @@ export class Tournament extends HTMLElement {
     ) {
       devLog('Tournament finished and user is the winner');
       socketManager.closeSocket('tournament', this.#state.tournamentId);
-      // TODO: Show a special winner message replacing the following alert message
       showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
+      setTimeout(() => {
+        router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
+      }, 3000);
       return;
     }
     if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
