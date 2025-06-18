@@ -5,8 +5,7 @@ from uuid import UUID
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from ninja import Schema
-from pydantic import model_validator
-
+from pydantic import model_validator, ConfigDict
 from common.schemas import GameSettingsSchema, ProfileMinimalSchema
 from tournaments.models import Tournament
 
@@ -31,6 +30,7 @@ class RoundSchema(Schema):
     number: int
     brackets: list[BracketSchema]
     status: Literal["pending", "ongoing", "finished"]
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TournamentSchema(Schema):
