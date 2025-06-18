@@ -22,7 +22,7 @@ class BracketSchema(Schema):
     participant1: ParticipantSchema
     participant2: ParticipantSchema
     winner: ParticipantSchema | None = None
-    status: Literal["pending", "ongoing", "finished"]
+    status: Literal["pending", "ongoing", "finished", "cancelled"]
     score_p1: int
     score_p2: int
 

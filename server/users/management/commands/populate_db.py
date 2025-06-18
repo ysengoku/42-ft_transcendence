@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from random import choice, randint, randrange, sample
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -172,8 +173,8 @@ def generate_tournaments(users: dict[str, User]) -> None:
         "CosmicWhale",
         "PhantomCat",
     ]
-    options = [int(x) for x in __import__("django.conf").conf.settings.REQUIRED_PARTICIPANTS_OPTIONS]
-    profiles = [u.profile for u in users.values() if hasattr(u, "profile") and u.profile.user is not None]
+    options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
+    profiles = [u.profile for u in users.values()]
 
     for i in range(15):
         name = f"Tournament {i + 1}"

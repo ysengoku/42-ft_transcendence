@@ -11,6 +11,10 @@ class Validator:
             "new_registration": ["alias", "avatar"],
             "last_registration": ["alias", "avatar"],
             "tournament_message": ["alias", "avatar"],
+            "start_round": ["id"],  #
+            "round_end": ["id"],  #
+            "tournament_game_finished": ["id"],  # the bracket id
+            "match_result": ["id", "chat_id"],
         }
 
         if action in required_fields:
@@ -29,6 +33,8 @@ class Validator:
             "new_registration": {"alias": str, "avatar": str},
             "last_registration": {"alias": str, "avatar": str},
             "tournament_message": {"alias": str, "avatar": str},
+            "start_round": {"round_number": int},
+            "match_result": {"round_number": int, "result": int, "tournament_id": str},
         }
 
         uuid_fields = {
