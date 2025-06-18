@@ -96,9 +96,9 @@ export class TournamentList extends HTMLElement {
     const tournamentParticipants = item.querySelector('.tournament-participants');
     const currentParticipants = tournament.participants_count ? tournament.participants_count : 0;
     tournamentName.textContent = tournament.name;
-    tournamentOrganizer.textContent = 'by ' + tournament.creator.nickname;
+    tournamentOrganizer.textContent = 'by ' + tournament.creator.alias;
     tournamentOrganizerAvatar.src = tournament.creator.avatar;
-    tournamentOrganizerAvatar.alt = tournament.creator.nickname;
+    tournamentOrganizerAvatar.alt = tournament.creator.alias;
     tournamentStatus.textContent = this.tournamentStatus(tournament.status);
     tournamentParticipants.textContent = `${currentParticipants} / ${tournament.required_participants} players`;
 
