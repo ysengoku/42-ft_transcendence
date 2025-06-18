@@ -90,16 +90,15 @@ export class ChatUserSearch extends HTMLElement {
       false,
       true,
     );
-    if (response.success) {
-      if (response.data) {
-        this.#state.totalUserCount = response.data.count;
-        this.#state.userList.push(...response.data.items);
-      }
-      this.renderUserList();
-      this.listContainer.classList.add('show');
-    } else {
-      router.navigate('/login');
+    if (!response.success) {
+      return;
     }
+    if (response.data) {
+      this.#state.totalUserCount = response.data.count;
+      this.#state.userList.push(...response.data.items);
+    }
+    this.renderUserList();
+    this.listContainer.classList.add('show');
   }
 
   async handleInput(event) {

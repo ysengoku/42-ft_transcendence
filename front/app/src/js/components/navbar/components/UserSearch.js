@@ -151,19 +151,14 @@ export class UserSearch extends HTMLElement {
       false,
       true,
     );
-    if (response.success) {
-      if (response.data) {
-        this.#state.totalUsersCount = response.data.count;
-        this.#state.userList.push(...response.data.items);
-      }
-      this.renderUserList();
-    } else {
-      if (response.status === 401) {
-        router.navigate('/login');
-      } else {
-        router.navigate('/');
-      }
+    if (!response.success) {
+      return;
     }
+    if (response.data) {
+      this.#state.totalUsersCount = response.data.count;
+      this.#state.userList.push(...response.data.items);
+    }
+    this.renderUserList();
   }
 
   preventReloadBySubmit(event) {
