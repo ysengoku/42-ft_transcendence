@@ -241,10 +241,17 @@ class TournamentConsumer(WebsocketConsumer):
         self.self_send_message_to_ws("tournament_start", data)
 
     def handle_match_finished(self, data):
+        if data is None or "id" not in data or data.get("id") is None:
+            logger.warning("Error : no id given for the user gone")
+            return
         logger.debug("function handle_match_finished")
         logger.debug("data for handle_match_finished : %s", data)
         bracket_id = data["data"].get("id")
-        bracket = self.tournament.round.bracket(id=bracket_id)
+        try:
+            bracket = self.tournament.round.bracket(id=bracket_id)
+        except Bracket.DoesNotExist:
+            logger.warning("Error: No bracket with this id : %s", bracket_id)
+            return
         round = bracket.round
 
         self.send_match_finished(bracket)
@@ -270,9 +277,13 @@ class TournamentConsumer(WebsocketConsumer):
             },
         )
 
-    def send_match_finished(self):
-        p1_id = bracket.participant1.profile.user.id
-        p2_id = bracket.participant2.profile.user.id
+    def send_match_finished(self, bracket):
+        try:
+            p1_id = bracket.participant1.profile.user.id
+            p2_id = bracket.participant2.profile.user.id
+        except Bracket.DoesNotExist:
+            logger.warning("Error: No bracket with this id : %s", bracket_id)
+            return
         data = {
             "type": "tournament_message",
             "action": "match_finished",
@@ -283,11 +294,13 @@ class TournamentConsumer(WebsocketConsumer):
         for user_id in (p1_id, p2_id):
             async_to_sync(self.channel_layer.group_send)(f"user_{user_id}", data)
 
-    def send_match_result(
-        self,
-    ):
+    def send_match_result(self, bracket):
         logger.debug("function send_match_result")
-        round_number = bracket.round.number
+        try:
+            round_number = bracket.round.number
+        except Bracket.DoesNotExist:
+            logger.warning("Error: No bracket with this id : %s", bracket_id)
+            return
 
         p1_alias = bracket.participant1.alias
         if bracket.winner.alias == p1_alias:
