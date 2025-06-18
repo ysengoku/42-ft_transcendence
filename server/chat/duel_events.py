@@ -131,8 +131,13 @@ class DuelEvent:
         invitation.save()
 
         invitation.sync_notification_status()
-        self.cancel_game_invite()
-        # if any invitations were send by the user, they are cancelled because they are in a game now
+        """
+        About this function : self.cancel_game_invite()
+        if any invitations were send by the user, they are cancelled because they are in a game now
+        COMMENTED AND MIGHT DELETE THIS : I changed cancel_game_invite to work with a username. Either I implement
+        A new function, either I simply delete it since there is a security on acceptation, preventing a user from
+        accepting the invite from someone already in a game
+        """
         sender_data = self.data_for_game_found(sender, game_room.id)
         receiver_data = self.data_for_game_found(self.consumer.user.profile, game_room.id)
         async_to_sync(self.consumer.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)

@@ -38,7 +38,7 @@ def create_tournament(request, data: TournamentCreateSchema):
         raise HttpError(403, "You can't be a participant if you are already in a game / looking for a game.")
 
     alias = data.alias
-    tournament : Tournament = Tournament.objects.validate_and_create(
+    tournament: Tournament = Tournament.objects.validate_and_create(
         tournament_name=data.name,
         creator=user.profile,
         required_participants=data.required_participants,
@@ -121,10 +121,24 @@ def delete_tournament(request, tournament_id: UUID):
         raise HttpError(404, "Tournament not found.") from e
 
     if tournament.creator != user.profile:
-        raise HttpError(403, "You are not allowed to cancel this tournament.")
+        raise HttpError(403, "you are not allowed to cancel this tournament.")
+    if tournament.status != Tournament.PENDING:
+        raise HttpError(403, "You cannot cancel an ongoing tournament.")
 
     tournament.status = Tournament.CANCELLED
     tournament.save()
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"tournament_{tournament_id}",
+        {
+            "type": "tournament_message",
+            "action": "tournament_canceled",
+            "data": {
+                "tournament_id": str(tournament_id),
+                "tournament_name": tournament.name,
+            },
+        },
+    )
     TournamentEvent.close_tournament_invitations(tournament_id)
     return 204, None
 
@@ -201,6 +215,11 @@ def unregister_for_tournament(request, tournament_id: UUID):
         if tournament.status != Tournament.PENDING:
             raise HttpError(403, "Cannot unregister from non-open tournament.")
 
+        try:
+            alias = Participant.objects.get(profile=user.profile, tournament_id=tournament_id).alias
+        except Participant.DoesNotExist as e:
+            raise HttpError(403, "Participant does not exists in this tournament.") from e
+
         participant_or_error_str: dict | str = tournament.remove_participant(user.profile)
         if type(participant_or_error_str) is str:
             raise HttpError(403, participant_or_error_str)
@@ -212,6 +231,9 @@ def unregister_for_tournament(request, tournament_id: UUID):
             TournamentEvent.close_tournament_invitations(tournament_id)
             async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "tournament_cancelled"})
         else:
-            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "user_left"})
+            async_to_sync(channel_layer.group_send)(
+                f"tournament_{tournament_id}",
+                {"type": "user_left", "alias": alias},
+            )
 
     return 204, None
