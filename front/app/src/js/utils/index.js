@@ -1,5 +1,5 @@
 import { ThemeController } from './ThemeController';
-import { createClouds, createStars, loader, flyAway } from './animations';
+import { createClouds, createStars, loader, flyAway, fireConfetti } from './animations';
 import { isMobile, BREAKPOINT } from './viewPort';
 
 import { getRelativeTime, getRelativeDateAndTime, formatDateMDY } from './dateFormat';
@@ -23,8 +23,6 @@ import {
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
-  showTournamentAlert,
-  TOURNAMENT_ALERT_TYPE,
   removeAlert,
   addDissmissAlertListener,
   internalServerErrorAlert,
@@ -38,6 +36,7 @@ export {
   createStars,
   loader,
   flyAway,
+  fireConfetti,
   isMobile,
   BREAKPOINT,
   getRelativeTime,
@@ -59,8 +58,6 @@ export {
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
-  showTournamentAlert,
-  TOURNAMENT_ALERT_TYPE,
   removeAlert,
   addDissmissAlertListener,
   internalServerErrorAlert,
