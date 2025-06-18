@@ -34,7 +34,7 @@ class TournamentConsumer(WebsocketConsumer):
         try:
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
-            logger.warning("This tournament id does not exist : %S", tournament_id)
+            logger.warning("This tournament id does not exist : %s", self.tournament_id)
             self.close()
         async_to_sync(self.channel_layer.group_add)(f"user_{self.user.id}", self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
@@ -105,34 +105,38 @@ class TournamentConsumer(WebsocketConsumer):
         if self.participants_number_is_incorrect(participants):
             self.cancel_tournament()
             return
-        if participants.count() == 1:
+        if len(participants) == 1:
             self.end_tournament()
             return
         self.prepare_brackets(participants, round_number, new_round)
         self.send_start_round_message(round_number, new_round)
 
-    def participants_number_is_incorrect(participants) -> bool:
+    def participants_number_is_incorrect(self, participants) -> bool:
         if participants is None:
             logger.warning("Error: last bracket was cancelled or the final winner deleted their profile")
             return True
-        num = participants.count()
+        num = len(participants)
         if num != 1 and num % 2 != 0:
             logger.warning("Error: a participant deleted their account")
             return True
         return False
 
     def prepare_brackets(self, participants, round_number, new_round):
+        logger.debug("function prepare_brackets")
+        logger.debug(new_round)
         bracket_list = self.generate_brackets(participants)
-
         for p1, p2 in bracket_list:
             new_round.brackets.create(participant1=p1, participant2=p2, status=Bracket.PENDING)
-
         brackets = new_round.brackets.all()
+        logger.debug(brackets.count())
+        logger.debug(brackets)
         for bracket in brackets:
             game_room = self.create_tournament_game_room(bracket.participant1, bracket.participant2)
             bracket.status = Bracket.ONGOING
             bracket.game_room = game_room
             bracket.save()
+            logger.debug(bracket)
+        logger.debug(new_round)
 
     def create_tournament_game_room(self, p1, p2):
         gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
@@ -160,6 +164,14 @@ class TournamentConsumer(WebsocketConsumer):
 
     def send_start_round_message(self, round_number, new_round):
         action = "tournament_start" if round_number == 1 else "round_start"
+        try:
+            tournament = Tournament.objects.get(id=self.tournament_id)
+        except Tournament.DoesNotExist:
+            logger.warning("This tournament doesn't exist.")
+            return
+        tournament_name = tournament.name
+        logger.debug(new_round)
+        # TODO : Serialize new_round
         # Launch the game
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
@@ -168,7 +180,7 @@ class TournamentConsumer(WebsocketConsumer):
                 "action": action,
                 "data": {
                     "tournament_id": self.tournament_id,
-                    "tournament_name": self.tournament_name,
+                    "tournament_name": tournament_name,
                     "round": new_round,
                 },
             },
