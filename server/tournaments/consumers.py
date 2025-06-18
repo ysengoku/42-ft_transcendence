@@ -293,7 +293,7 @@ class TournamentConsumer(WebsocketConsumer):
         if bracket.winner.alias == p1_alias:
             bracket.score_p1 = bracket.winners_score
             bracket.score_p2 = bracket.losers_score
-        else
+        else:
             bracket.score_p1 = bracket.losers_score
             bracket.score_p2 = bracket.winners_score
         bracket.save(update_fields=["score_p1", "score_p2"])
