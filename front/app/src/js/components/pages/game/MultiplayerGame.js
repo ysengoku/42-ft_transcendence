@@ -513,6 +513,7 @@ export class MultiplayerGame extends HTMLElement {
 
     pongSocket.addEventListener('close', function (_) {
       console.log('PONG socket was nice! :3');
+      // TODO: Add handler for ws closing in case user is not (or no more) in the game (code: 3002)
     });
 
     function animate() {
