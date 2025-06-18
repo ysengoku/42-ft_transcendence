@@ -60,11 +60,11 @@ class TournamentConsumer(WebsocketConsumer):
 
         match action:
             case "last_registration":
-                self.prepare_round(data)
+                self.prepare_round()
             case "start_round":
-                self.prepare_round(data)
+                self.prepare_round()
             case "round_end":
-                self.prepare_round(data)
+                self.prepare_round()
             case "tournament_game_finished":
                 self.handle_match_finished(data)
             case _:
@@ -72,6 +72,9 @@ class TournamentConsumer(WebsocketConsumer):
 
     def user_left(self, data):
         logger.debug("Bye everyone ! %s", data)
+        if data is None or "alias" not in data or data.get("alias") is None:
+            logger.warning("Error : no alias given for the user gone")
+            return
         alias = data.get("alias")
         self.send(
             text_data=json.dumps(
@@ -82,35 +85,48 @@ class TournamentConsumer(WebsocketConsumer):
             ),
         )
 
-    def prepare_round(self, data):
+    def prepare_round(self):
         logger.debug("function prepare_round")
-        logger.debug("data for prepare_round : %s", data)
         try:
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
             logger.warning("This tournament doesn't exist.")
             return
         round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
-        new_round = tournament.rounds.get(number=round_number)
+        try:
+            new_round = tournament.rounds.get(number=round_number)
+        except Round.DoesNotExist:
+            logger.warning("This round does not exist, recreating it for the tournament to continue")
+            new_round = tournament.rounds.create(number=round_number)
         if round_number == 1:
             participants = list(tournament.participants.all())
         else:
             participants = self.take_winners_from(tournament.rounds.get(number=round_number - 1))
-        if participants is None:
-            logger.warning("It seems that the last tournament bracket was cancelled")
+        if self.participants_number_is_incorrect(participants):
             self.cancel_tournament()
             return
         if participants.count() == 1:
             self.end_tournament()
             return
-        brackets = self.generate_brackets(participants)
-
-        for p1, p2 in brackets:
-            new_round.brackets.create(participant1=p1, participant2=p2, status=Bracket.PENDING)
-        self.prepare_game_rooms_in_brackets(round_number, new_round)
+        self.prepare_brackets(participants, round_number, new_round)
         self.send_start_round_message(round_number, new_round)
 
-    def prepare_game_rooms_in_brackets(self, round_number, new_round):
+    def participants_number_is_incorrect(participants) -> bool:
+        if participants is None:
+            logger.warning("Error: last bracket was cancelled or the final winner deleted their profile")
+            return True
+        num = participants.count()
+        if num != 1 and num % 2 != 0:
+            logger.warning("Error: a participant deleted their account")
+            return True
+        return False
+
+    def prepare_brackets(self, participants, round_number, new_round):
+        bracket_list = self.generate_brackets(participants)
+
+        for p1, p2 in bracket_list:
+            new_round.brackets.create(participant1=p1, participant2=p2, status=Bracket.PENDING)
+
         brackets = new_round.brackets.all()
         for bracket in brackets:
             game_room = self.create_tournament_game_room(bracket.participant1, bracket.participant2)
@@ -123,6 +139,24 @@ class TournamentConsumer(WebsocketConsumer):
         GameRoomPlayer.objects.create(game_room=gameroom, profile=p1.profile)
         GameRoomPlayer.objects.create(game_room=gameroom, profile=p2.profile)
         return gameroom
+
+    def generate_brackets(self, participants):
+        logger.debug("function generate_brackets")
+        participants = list(participants)
+        random.shuffle(participants)
+        brackets = []
+        while len(participants) >= 2:
+            p1 = participants.pop()
+            p2 = participants.pop()
+            brackets.append((p1, p2))
+        return brackets
+
+    def take_winners_from(self, previous_round):
+        winners = []
+        for bracket in previous_round.brackets.all():
+            if bracket.winner is not None:
+                winners.append(bracket.winner)
+        return winners
 
     def send_start_round_message(self, round_number, new_round):
         action = "tournament_start" if round_number == 1 else "round_start"
@@ -143,13 +177,6 @@ class TournamentConsumer(WebsocketConsumer):
     def end_tournament(self):
         self.tournament.status = Tournament.FINISHED
         self.tournament.save()
-
-    def take_winners_from(self, previous_round):
-        winners = []
-        for bracket in previous_round.brackets.all():
-            if bracket.winner is not None:
-                winners.append(bracket.winner)
-        return winners
 
     def tournament_broadcast(self, event):
         logger.debug("function tournament_broadcast")
@@ -174,8 +201,6 @@ class TournamentConsumer(WebsocketConsumer):
         # if Validator.validate_action_data("new_registration", event) is False:
         #     self.close() # Closes the tournament ???
         self.send_new_registration_to_ws(alias, avatar)
-
-        # TODO: change this to a regular send to send to one person
 
     def send_new_registration_to_ws(self, alias, avatar):
         self.send(
@@ -215,17 +240,6 @@ class TournamentConsumer(WebsocketConsumer):
         self.send_new_registration_to_ws(alias, avatar)
         self.self_send_message_to_ws("tournament_start", data)
 
-    def generate_brackets(self, participants):
-        logger.debug("function generate_brackets")
-        participants = list(participants)
-        random.shuffle(participants)
-        brackets = []
-        while len(participants) >= 2:
-            p1 = participants.pop()
-            p2 = participants.pop()
-            brackets.append((p1, p2))
-        return brackets
-
     def handle_match_finished(self, data):
         logger.debug("function handle_match_finished")
         logger.debug("data for handle_match_finished : %s", data)
@@ -240,6 +254,7 @@ class TournamentConsumer(WebsocketConsumer):
             round.save()
             # self.tournament.round.get(number=round_number).status = round.FINISHED
             # self.tournament.round.save()
+            self.self_send_message_to_ws("round_end", data={"tournament_id": str(self.tournament_id)})
             self.send_round_end_to_ws()
             self.prepare_round()
 
