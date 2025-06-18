@@ -30,7 +30,7 @@ def get_users(request: HttpRequest, search: str | None = None):
     For example, `/users?search=pe&limit=10&offset=0` will get 10 friends from the very first one, whose
     `nickname` or `username` starts with `pe`.
     """
-    return Profile.objects.with_search(search)
+    return Profile.objects.with_search(search, request.auth)
 
 
 @users_router.get("{username}", response={200: ProfileFullSchema, frozenset({401, 404}): MessageSchema})
