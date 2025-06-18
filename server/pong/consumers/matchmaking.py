@@ -26,6 +26,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         """
         self.user = self.scope.get("user")
         self.game_room: GameRoom | None = None
+        self.accept()
         if not self.user:
             logger.warning("[Matchmaking.connect]: unauthorized user tried to start matchmaking")
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
@@ -41,8 +42,6 @@ class MatchmakingConsumer(WebsocketConsumer):
             logger.warning("[Matchmaking.connect]: invalid game room settings were given")
             self.close(PongCloseCodes.BAD_DATA)
             return
-
-        self.accept()
 
         with transaction.atomic():
             self.game_room: GameRoom = self._with_db_lock_find_valid_game_room()
