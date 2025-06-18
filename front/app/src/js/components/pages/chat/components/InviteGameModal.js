@@ -1,6 +1,7 @@
 import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { socketManager } from '@socket';
+import { auth } from '@auth';
 
 export class InviteGameModal extends HTMLElement {
   #state = {
@@ -51,7 +52,11 @@ export class InviteGameModal extends HTMLElement {
     this.modal = new Modal(this.querySelector('.modal'));
   }
 
-  showModal(opponent) {
+  async showModal(opponent) {
+    const canEngage = await auth.canEngageInGame();
+    if (!canEngage) {
+      return;
+    }
     this.#state.opponent = opponent;
     this.render();
     this.modal.show();
