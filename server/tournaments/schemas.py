@@ -24,6 +24,7 @@ class BracketSchema(Schema):
     status: Literal["pending", "ongoing", "finished", "cancelled"]
     score_p1: int
     score_p2: int
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RoundSchema(Schema):
