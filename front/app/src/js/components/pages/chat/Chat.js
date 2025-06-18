@@ -61,7 +61,7 @@ export class Chat extends HTMLElement {
     this.#state.loggedInUser = auth.getStoredUser();
     const isLoggedIn = this.#state.loggedInUser ? true : false;
     if (!isLoggedIn) {
-      router.navigate('/login');
+      router.redirect('/login');
       return;
     }
     // Remove the unread messages badge from the navbar

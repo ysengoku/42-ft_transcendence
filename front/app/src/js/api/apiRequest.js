@@ -97,12 +97,12 @@ const handlers = {
       return apiRequest(method, endpoint, data, isFileUpload, needToken);
     }
     if (refreshResponse.status === 401) {
-      router.navigate('/login');
+      router.redirect('/login');
       sessionExpiredToast();
       return { success: false, status: 401, msg: 'Session expired' };
     }
     auth.clearStoredUser();
-    router.navigate('/');
+    router.redirect('/');
     unknowknErrorToast();
     return { success: false, status: refreshResponse.status };
   },
