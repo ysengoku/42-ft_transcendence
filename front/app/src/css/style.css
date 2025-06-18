@@ -220,11 +220,6 @@ h1, h2, h3, h4, h5, h6, legend {
   border: none !important;
 }
 
-.alert-tournament {
-  background-color: rgba(var(--pm-primary-400-rgb), 0.9);
-  color: var(--pm-primary-100);
-}
-
 #content {
   max-width: 100%;
   padding: 64px 0 0 0;
@@ -568,5 +563,18 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   }
   to {
     opacity: 1;
+  }
+}
+
+.fade-out-animation {
+  animation: fade-out 1s;
+  animation-fill-mode: forwards;
+}
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
