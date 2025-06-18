@@ -11,6 +11,7 @@ from django.db import transaction
 
 from pong.models import GameRoom, GameRoomPlayer
 
+from .schemas import RoundSchema
 from .models import Bracket, Participant, Round, Tournament
 from .tournament_validator import Validator
 
@@ -92,6 +93,9 @@ class TournamentConsumer(WebsocketConsumer):
         except Tournament.DoesNotExist:
             logger.warning("This tournament doesn't exist.")
             return
+        if tournament.status is not tournament.ONGOING:
+            logger.warning("Error: the tournament is not ready yet, or already finished")
+            return
         round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
         try:
             new_round = tournament.rounds.get(number=round_number)
@@ -170,8 +174,7 @@ class TournamentConsumer(WebsocketConsumer):
             logger.warning("This tournament doesn't exist.")
             return
         tournament_name = tournament.name
-        logger.debug(new_round)
-        # TODO : Serialize new_round
+        round_data = RoundSchema.model_validate(new_round).model_dump()
         # Launch the game
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
@@ -181,7 +184,7 @@ class TournamentConsumer(WebsocketConsumer):
                 "data": {
                     "tournament_id": self.tournament_id,
                     "tournament_name": tournament_name,
-                    "round": new_round,
+                    "round": round_data,
                 },
             },
         )
