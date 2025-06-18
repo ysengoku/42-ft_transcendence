@@ -3,6 +3,7 @@ import json
 import logging
 import random
 import uuid
+from uuid import UUID
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
@@ -11,14 +12,15 @@ from django.db import transaction
 
 from pong.models import GameRoom, GameRoomPlayer
 
-from .schemas import RoundSchema
+# TODO: see if BracketSchema is really needed
+from .schemas import RoundSchema, BracketSchema
 from .models import Bracket, Participant, Round, Tournament
 from .tournament_validator import Validator
 
 logger = logging.getLogger("server")
 
-# TODO: Implement round_end
-# TODO: Verify connexion of both players before the match
+# TODO: Verify connexion of both players before the match ?
+# TODO: security checks : multiple crash when bad ws id sent by the console
 
 
 class TournamentConsumer(WebsocketConsumer):
@@ -89,10 +91,22 @@ class TournamentConsumer(WebsocketConsumer):
     def prepare_round(self):
         logger.debug("function prepare_round")
         try:
+            UUID(str(self.tournament_id))
+        except ValueError:
+            logger.warning("this tournament id is not a valid uuid.")
+            return
+        try:
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
             logger.warning("This tournament doesn't exist.")
             return
+        """
+        Commenting these 3 lines permits to test the tournament by sending last_registration
+        on the ws directly. The front and server don't act the same wether there are all the
+        participants or if I manually send, on the ws, the "last_registration"
+        """
+        # Commenting these 3 lines permits to test the tournament by sending last_registration
+        # on the
         if tournament.status is not tournament.ONGOING:
             logger.warning("Error: the tournament is not ready yet, or already finished")
             return
@@ -167,6 +181,7 @@ class TournamentConsumer(WebsocketConsumer):
         return winners
 
     def send_start_round_message(self, round_number, new_round):
+        logger.debug("function send_start_round_message")
         action = "tournament_start" if round_number == 1 else "round_start"
         try:
             tournament = Tournament.objects.get(id=self.tournament_id)
@@ -175,6 +190,7 @@ class TournamentConsumer(WebsocketConsumer):
             return
         tournament_name = tournament.name
         round_data = RoundSchema.model_validate(new_round).model_dump()
+        logger.debug(round_data)
         # Launch the game
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
@@ -214,7 +230,7 @@ class TournamentConsumer(WebsocketConsumer):
         alias = event["data"].get("alias")
         avatar = event["data"].get("avatar")
         # if Validator.validate_action_data("new_registration", event) is False:
-        #     self.close() # Closes the tournament ???
+        #     return
         self.send_new_registration_to_ws(alias, avatar)
 
     def send_new_registration_to_ws(self, alias, avatar):
@@ -250,12 +266,26 @@ class TournamentConsumer(WebsocketConsumer):
         alias = event["data"].get("alias")
         avatar = event["data"].get("avatar")
         # if (Validator.validate_action_data("last_registration", event) == False):
-        #     self.close() # Closes the tournament ???
+        #     return
         data = {"alias": alias, "avatar": avatar}
         self.send_new_registration_to_ws(alias, avatar)
         self.self_send_message_to_ws("tournament_start", data)
 
     def handle_match_finished(self, data):
+        try:
+            UUID(str(self.tournament_id))
+            logger.warning("this tournament id is not a valid uuid.")
+        except ValueError:
+            return
+        try:
+            tournament = Tournament.objects.get(id=self.tournament_id)
+        except Tournament.DoesNotExist:
+            logger.warning("This tournament doesn't exist.")
+            return
+        if tournament.status is not tournament.ONGOING:
+            logger.warning("Error: the tournament is not ongoing")
+            return
+        # TODO:Securise this more : what if a user in a middle of a game triggers this with the console ws ?
         if data is None or "id" not in data or data.get("id") is None:
             logger.warning("Error : no id given for the user gone")
             return
