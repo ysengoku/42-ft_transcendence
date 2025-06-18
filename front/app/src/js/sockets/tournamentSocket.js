@@ -33,6 +33,7 @@ socketManager.addSocket('tournament', {
       showToastNotification(`Tournament -  ${data.tournament_name} has been canceled.`, TOAST_TYPES.ERROR);
     }
   },
+  // TESTED
   tournament_start: (data) => {
     devLog('Tournament starts:', data);
     if (window.location.pathname.startsWith('/tournament')) {
@@ -42,36 +43,39 @@ socketManager.addSocket('tournament', {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.TOURNAMENT_STARTS);
     }
   },
+  // TESTED
   round_start: (data) => {
-    if (window.location.pathname.startsWith('/tournament')) {
-      // TODO
-    }
-  },
-  match_finished: (data) => {
-    if (window.location.pathname === '/multiplayer-game') {
-      router.redirect(`tournament/${data.tournament_id}`);
-    }
-  },
-  match_result: async (data) => {
     if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPage = document.querySelector('tournament-room');
       if (!tournamentPage) {
-        devErrorLog('Tournament page not found, cannot update bracket.');
+        devErrorLog('Tournament RoundStart Element not found, cannot update UI.');
         return;
       }
-      tournamentPage.updateBracket(data);
-      if (tournamentPage.ongoingBracketCount === 0) {
-        await tournamentPage.roundFinishedAnimation();
-      }
+      tournamentPage.setNextRound(data);
     }
   },
+  match_finished: (data) => {
+    // TODO: Adjust depending which ws sends this message (tournament or pong)
+    if (window.location.pathname.startsWith('/multiplayer-game')) {
+      router.redirect(`tournament/${data.tournament_id}`);
+    }
+  },
+  // TESTED
+  match_result: async (data) => {
+    if (!window.location.pathname.startsWith('/tournament')) {
+      return;
+    }
+    const tournamentPage = document.querySelector('tournament-room');
+    if (!tournamentPage) {
+      devErrorLog('Tournament RoundOngoing Element not found, cannot update bracket.');
+      return;
+    }
+    tournamentPage.updateMatchResult(data);
+  },
+  // TESTED
   round_end: (data) => {
     if (!window.location.pathname.startsWith('/tournament')) {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.ROUND_END);
     }
-  },
-  tournament_end: (data) => {
-    // Show a toast notification
-    router.redirect(`tournament/${data.tournament_id}`);
   },
 });
