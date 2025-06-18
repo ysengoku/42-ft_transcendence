@@ -25,6 +25,7 @@ export const BRACKET_STATUS = {
   PENDING: 'pending',
   ONGOING: 'ongoing',
   FINISHED: 'finished',
+  CANCELED: 'canceled',
 };
 
 export const PARTICIPANT_STATUS = {

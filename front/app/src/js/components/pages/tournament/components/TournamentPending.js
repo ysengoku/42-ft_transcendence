@@ -114,6 +114,9 @@ export class TournamentPending extends HTMLElement {
    */
   addParticipant(data) {
     this.renderParticipant(data);
+    if (this.#state.participants.find((participant) => participant.alias === data.alias)) {
+      return;
+    }
     this.#state.participants.push(data);
 
     // Update the participants count
@@ -149,7 +152,7 @@ export class TournamentPending extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Events handling                                                     */
   /* ------------------------------------------------------------------------ */
-  
+
   /**
    * @description Handles the click event on the unregister button.
    * It shows a modal to confirm the unregistration from the tournament.
