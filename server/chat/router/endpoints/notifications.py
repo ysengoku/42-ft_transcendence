@@ -27,12 +27,8 @@ def get_notifications(request: HttpRequest, is_read: str = "all"):
         base_qs = Notification.objects.filter(receiver=profile_id, is_read=(is_read != "false"))
 
     return base_qs.filter(
-        (
-            Q(action=Notification.GAME_INVITE, data__status=GameInvitation.PENDING)
-            | ~Q(action=Notification.GAME_INVITE)
-        )
-        &
-        (
+        (Q(action=Notification.GAME_INVITE, data__status=GameInvitation.PENDING) | ~Q(action=Notification.GAME_INVITE))
+        & (
             Q(action=Notification.NEW_TOURNAMENT, data__status=TournamentInvitation.OPEN)
             | ~Q(action=Notification.NEW_TOURNAMENT)
         ),
