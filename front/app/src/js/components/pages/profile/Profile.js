@@ -211,9 +211,9 @@ export class UserProfile extends HTMLElement {
 
         <!--
         <svg><defs><filter id="wave">
-						<feTurbulence baseFrequency="0.02" numOctaves="8" seed="1"></feTurbulence>
-				 	 	<feDisplacementMap in="SourceGraphic" scale="12" />
-				</filter></defs></svg>
+            <feTurbulence baseFrequency="0.02" numOctaves="8" seed="1"></feTurbulence>
+              <feDisplacementMap in="SourceGraphic" scale="12" />
+        </filter></defs></svg>
         -->
       </div>
     </div>`;

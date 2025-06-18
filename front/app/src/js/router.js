@@ -1,5 +1,6 @@
 import { auth } from '@auth';
-import { showTournamentAlert, addDissmissAlertListener, createClouds, createStars } from '@utils';
+import { addDissmissAlertListener, createClouds, createStars } from '@utils';
+import { showTournamentAlert } from '@components/pages/tournament/utils/tournamentAlert';
 
 /**
  * Router module for handling client-side navigation.
