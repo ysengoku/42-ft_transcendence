@@ -8,6 +8,7 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { socketManager } from '@socket';
 
 export class TournamentPending extends HTMLElement {
   /**
@@ -184,6 +185,7 @@ export class TournamentPending extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
       return;
     }
+    socketManager.closeSocket('tournament', this.#state.id);
     this.unregisterButton?.removeEventListener('click', this.handleUnregisterButtonClick);
     this.cancelTournamentButton?.removeEventListener('click', this.handleCancelTournamentButtonClick);
     this.innerHTML = '';
