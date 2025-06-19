@@ -133,7 +133,7 @@ export function flyAway(element, duration = 1000) {
 /**
  * Fire confetti animation from two launchers.
  * Each launcher fires confetti particles in a spread pattern.
- * @param {HTMLElement} parentElement 
+ * @param {HTMLElement} parentElement
  */
 export function fireConfetti(parentElement = document.body) {
   const confetti = document.createElement('div');
@@ -190,7 +190,7 @@ export function fireConfetti(parentElement = document.body) {
   parentElement.appendChild(confetti);
 
   const launchers = document.querySelectorAll('.launcher');
-  
+
   /**
    * Defines the colors for the confetti particles.
    */
