@@ -267,7 +267,7 @@ export class Duel extends HTMLElement {
         default:
           message = 'Matchmaking is momentarily unavailable.';
       }
-      showToastNotification(TOAST_TYPES.ERROR, message);
+      showToastNotification(message, TOAST_TYPES.ERROR);
       this.#state.status = DUEL_STATUS.MATCHMAKING_CANCELED;
       this.renderContent();
       devLog('Matchmaking canceled by server:', event.detail);
