@@ -65,6 +65,11 @@ class TournamentConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
         logger.debug("WILL BE ACCEPTED %s", self.user)
         self.accept()
+        if tournament.status == Tournament.ONGOING:
+            logger.debug("THIS TOURNAMENT IS UNGOINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
+            round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
+            new_round = tournament.rounds.get(number=round_number)
+            self.send_start_round_message(round_number, new_round)
 
     def disconnect(self, close_code):
         logger.debug("WILL BE DISCONNECTED")
@@ -145,6 +150,15 @@ class TournamentConsumer(WebsocketConsumer):
         except Round.DoesNotExist:
             logger.warning("This round does not exist, recreating it for the tournament to continue")
             new_round = tournament.rounds.create(number=round_number)
+        with transaction.atomic():
+            if new_round.status == Round.ONGOING:
+                logger.info("This round is already prepared with love <3")
+                # Un autre consumer a déjà préparé le round
+                self.send_start_round_message(round_number, new_round)
+                return
+            else:
+                new_round.status = Round.ONGOING
+                new_round.save(update_fields=["status"])
         if round_number == 1:
             participants = list(tournament.participants.all())
         else:
@@ -221,17 +235,17 @@ class TournamentConsumer(WebsocketConsumer):
         round_data = RoundSchema.model_validate(new_round).model_dump()
         logger.debug(round_data)
         # Launch the game
-        async_to_sync(self.channel_layer.group_send)(
-            f"tournament_{self.tournament_id}",
-            {
-                "type": "tournament_message",
-                "action": action,
-                "data": {
-                    "tournament_id": self.tournament_id,
-                    "tournament_name": tournament_name,
-                    "round": round_data,
-                },
-            },
+        self.send(
+            text_data=json.dumps(
+                {
+                    "action": action,
+                    "data": {
+                        "tournament_id": self.tournament_id,
+                        "tournament_name": tournament_name,
+                        "round": round_data,
+                    },
+                }
+            )
         )
 
     def end_tournament(self):
@@ -390,7 +404,7 @@ class TournamentConsumer(WebsocketConsumer):
             },
         }
         for user_id in (p1_id, p2_id):
-            async_to_sync(self.channel_layer.group_send)(f"user_{user_id}", data)
+            async_to_sync(self.channel_layer.group_send)(f"tournament_user_{user_id}", data)
 
     def send_match_result(self, bracket):
         logger.debug("function send_match_result")
