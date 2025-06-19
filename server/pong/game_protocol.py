@@ -4,6 +4,8 @@ the game server and the client for the game of pong.
 """
 from typing import Literal, TypedDict
 
+from typing_extensions import NotRequired
+
 
 class PongCloseCodes:
     """
@@ -29,11 +31,11 @@ class GameRoomSettings(TypedDict):
     `cool_mode`    activates the coin with different buffs/debuffs.
     """
 
-    score_to_win: int
-    time_limit: int
-    cool_mode: bool
-    ranked: bool
-    game_speed: Literal["slow", "medium", "fast"]
+    score_to_win: NotRequired[int]
+    time_limit: NotRequired[int]
+    cool_mode: NotRequired[bool]
+    ranked: NotRequired[bool]
+    game_speed: NotRequired[Literal["slow", "medium", "fast"]]
 
 
 
@@ -133,7 +135,11 @@ class GameServerToClient:
         action: Literal["game_unpaused"]
 
     class PlayerWon(WorkerToClientClose):
-        """One of the the player has won. Contains profile data of winner and loser, as well as the change in elo."""
+        """
+        One of the the player has won. Contains profile data of winner and loser, as well as the change in elo.
+        `player_won` means that one of the players won normally.
+        `player_resigned` means that one of the players won due to the other not managing to connect in time.
+        """
 
         class _Player(TypedDict):
             name: str
@@ -141,13 +147,10 @@ class GameServerToClient:
             elo: int
             player_number: Literal[1, 2]
 
-        action: Literal["player_won"]
+        action: Literal["player_won", "player_resigned"]
         winner: _Player
         loser: _Player
         elo_change: int
-
-    class PlayerResigned(PlayerWon):
-        """When the player has resigned. For example, by disconnect. Contains the same data as `PlayerWon`."""
 
         action: Literal["player_resigned"]
 
@@ -190,6 +193,9 @@ class GameServerToGameWorker:
         avatar: str
         elo: int
         settings: GameRoomSettings
+        is_in_tournament: bool
+        bracket_id: None | str
+        tournament_id: None | str
 
     class PlayerInputed(TypedDict):
         """Player has inputed the controls, websocket server sends it to the game worker."""
