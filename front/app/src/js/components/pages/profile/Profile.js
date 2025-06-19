@@ -57,8 +57,10 @@ export class UserProfile extends HTMLElement {
     this.innerHTML = this.style() + this.template();
 
     this.onlineStatusIndicator = this.querySelector('profile-online-status');
-    this.onlineStatusIndicator.setStatus(this.user.is_online);
-    document.addEventListener('onlineStatus', this.updateOnlineStatus);
+    if (this.onlineStatusIndicator) {
+      this.onlineStatusIndicator.setStatus(this.user.is_online);
+      document.addEventListener('onlineStatus', this.updateOnlineStatus);
+    }
 
     const profileAvatar = this.querySelector('profile-avatar');
     if (profileAvatar) {
@@ -137,7 +139,7 @@ export class UserProfile extends HTMLElement {
   }
 
   updateOnlineStatus(event) {
-    if (event.detail.data.username.toLowerCase() !== this.user.username.toLowerCase()) {
+    if (event.detail.data.username.toLowerCase() !== this.user.username.toLowerCase() || !this.onlineStatusIndicator) {
       return;
     }
     this.user.is_online = event.detail.online;
