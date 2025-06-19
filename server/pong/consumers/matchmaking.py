@@ -188,7 +188,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         if candidate_room:
             locked_candidate_room: GameRoom | None = (
                 GameRoom.objects.select_for_update()
-                .filter(id=candidate_room.id, status=GameRoom.PENDING, settings=self.game_room_settings)
+                .filter(id=candidate_room.id, status=GameRoom.PENDING, settings__contains=self.game_room_settings)
                 .first()
             )
             if locked_candidate_room and locked_candidate_room.players.count() < PLAYERS_REQUIRED:
@@ -217,6 +217,12 @@ class MatchmakingConsumer(WebsocketConsumer):
             for setting_key, setting_value in decoded_game_room_query_parameters.items():
                 if setting_key not in game_room_settings:
                     return None
+
+                # if the value is "any", it means that the user does not care and we delete the key altogether
+                if setting_value == "any":
+                    del game_room_settings[setting_key]
+                    continue
+
                 setting_type = type(game_room_settings[setting_key])
                 if setting_type is bool:
                     game_room_settings[setting_key] = setting_value and setting_value.lower() != "false"
