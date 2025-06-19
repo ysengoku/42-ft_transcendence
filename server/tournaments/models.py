@@ -1,8 +1,12 @@
-import uuid
+from __future__ import annotations
 
+import uuid
+from typing import Literal
+
+from channels.db import database_sync_to_async
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Prefetch
 from django.utils import timezone
 
@@ -176,12 +180,31 @@ class Round(models.Model):
 
 
 class BracketQuerySet(models.QuerySet):
-    async def async_update_finished_bracket(self, bracket_id: int):
+    async def async_update_finished_bracket(
+        self,
+        bracket_id: int,
+        winner_profile_id: int,
+        winners_score: int,
+        losers_score: int,
+        status: Literal["finished", "cancelled"],
+    ) -> None | Bracket:
         """
         Method for updated a Bracket with the data of a finished game.
         Meant to be used by the game server.
         """
-        # TODO: write a method
+        bracket: Bracket = database_sync_to_async(self.get)(id=bracket_id)
+        with transaction.atomic():
+            if status == "finished":
+                winner_participant: Participant = database_sync_to_async(self.get)(profile__id=winner_profile_id)
+                bracket.winners_score = winners_score
+                bracket.losers_score = losers_score
+                bracket.winner = winner_participant
+                bracket.status = status
+            elif status == "cancelled":
+                bracket.winner = None
+                bracket.status = status
+            database_sync_to_async(bracket.save)()
+            return bracket
 
 
 class Bracket(models.Model):
@@ -201,8 +224,6 @@ class Bracket(models.Model):
     participant2 = models.ForeignKey(Participant, on_delete=models.CASCADE, related_name="brackets_p2")
     winners_score = models.PositiveIntegerField(default=0)
     losers_score = models.PositiveIntegerField(default=0)
-    score_p1 = models.PositiveIntegerField(default=0)
-    score_p2 = models.PositiveIntegerField(default=0)
     winner = models.ForeignKey(Participant, on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     score = models.CharField(max_length=7, blank=True)
