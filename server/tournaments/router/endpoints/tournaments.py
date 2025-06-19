@@ -228,7 +228,16 @@ def unregister_for_tournament(request, tournament_id: UUID):
             tournament.status = Tournament.CANCELLED
             tournament.save()
             TournamentEvent.close_tournament_invitations(tournament_id)
-            async_to_sync(channel_layer.group_send)(f"tournament_{tournament_id}", {"type": "tournament_canceled"})
+            async_to_sync(channel_layer.group_send)(
+                f"tournament_{tournament_id}",
+                {
+                    "type": "tournament_canceled",
+                    "data": {
+                        "tournament_id": str(tournament_id),
+                        "tournament_name": tournament.name,
+                    },
+                },
+            )
         else:
             async_to_sync(channel_layer.group_send)(
                 f"tournament_{tournament_id}",
