@@ -314,7 +314,7 @@ export class GameOptions extends HTMLElement {
     <div class="opt-out-option optout-all form-check pt-1 mb-5 fs-5">
       <input class="form-check-input" type="checkbox" id="optout-gameOptions">
       <label class="form-check-label fw-bold" for="optout-optout-gameOptions">
-        Desactivate All Options
+        Deactivate All Options
       </label>
     </div>
 
