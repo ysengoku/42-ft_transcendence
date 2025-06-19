@@ -195,7 +195,7 @@ class GameRoomQuerySet(models.QuerySet):
         return self.annotate(players_count=Count("players")).filter(
             status=GameRoom.PENDING,
             players_count__lt=2,
-            settings=settings,
+            settings__contains=settings,
         )
 
     def for_id(self, game_room_id: str):
