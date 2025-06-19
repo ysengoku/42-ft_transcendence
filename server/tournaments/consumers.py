@@ -87,12 +87,12 @@ class TournamentConsumer(WebsocketConsumer):
             return
 
         match action:
-            case "last_registration":
-                self.prepare_round()
-            case "start_round":
-                self.prepare_round()
-            case "round_end":
-                self.prepare_round()
+            # case "last_registration":
+            #     self.prepare_round()
+            # case "start_round":
+            #     self.prepare_round()
+            # case "round_end":
+            #     self.prepare_round()
             case "tournament_game_finished":
                 self.handle_match_finished(data)
             case _:
@@ -118,7 +118,7 @@ class TournamentConsumer(WebsocketConsumer):
         logger.debug(self.user)
         # async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
 
-    def prepare_round(self):
+    def prepare_round(self, event):
         logger.debug("function prepare_round")
         try:
             UUID(str(self.tournament_id))
@@ -135,10 +135,9 @@ class TournamentConsumer(WebsocketConsumer):
         on the ws directly. The front and server don't act the same wether there are all the
         participants or if I manually send, on the ws, the "last_registration"
         """
-        # Commenting these 3 lines permits to test the tournament by sending last_registration
-        # on the
-        if tournament.status is not tournament.ONGOING:
+        if tournament.status != Tournament.ONGOING:
             logger.warning("Error: the tournament is not ready yet, or already finished")
+            logger.warning("Tournament status is : %s", tournament.status)
             return
         round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
         try:
@@ -323,7 +322,7 @@ class TournamentConsumer(WebsocketConsumer):
         #     return
         data = {"alias": alias, "avatar": avatar}
         self.send_new_registration_to_ws(alias, avatar)
-        self.self_send_message_to_ws("tournament_start", data)
+        # self.self_send_message_to_ws("tournament_start", data)
 
     def handle_match_finished(self, data):
         try:
