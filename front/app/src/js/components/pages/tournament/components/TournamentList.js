@@ -1,4 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
+import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class TournamentList extends HTMLElement {
   #state = {
@@ -94,11 +95,16 @@ export class TournamentList extends HTMLElement {
     const tournamentOrganizerAvatar = item.querySelector('.tournament-organizer-avatar');
     const tournamentStatus = item.querySelector('.tournament-status');
     const tournamentParticipants = item.querySelector('.tournament-participants');
+
     const currentParticipants = tournament.participants_count ? tournament.participants_count : 0;
+    const creatorAlias = tournament.tournament_creator ? tournament.tournament_creator.alias : 'Unknown gunslinger';
+    const creatorAvatar = tournament.tournament_creator
+      ? tournament.tournament_creator.profile.avatar
+      : anonymousAvatar;
     tournamentName.textContent = tournament.name;
-    tournamentOrganizer.textContent = 'by ' + tournament.creator.alias;
-    tournamentOrganizerAvatar.src = tournament.creator.avatar;
-    tournamentOrganizerAvatar.alt = tournament.creator.alias;
+    tournamentOrganizer.textContent = 'by ' + creatorAlias;
+    tournamentOrganizerAvatar.src = creatorAvatar;
+    tournamentOrganizerAvatar.alt = creatorAlias;
     tournamentStatus.textContent = this.tournamentStatus(tournament.status);
     tournamentParticipants.textContent = `${currentParticipants} / ${tournament.required_participants} players`;
 
