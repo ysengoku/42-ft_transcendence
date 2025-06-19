@@ -73,7 +73,7 @@ export class ChatList extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
   async render() {
-    console.time('ChatList render');
+    // console.time('ChatList render');
     this.innerHTML = this.template() + this.style();
     this.loader = this.querySelector('.chat-loader');
     this.loader.innerHTML = loader();
@@ -96,7 +96,7 @@ export class ChatList extends HTMLElement {
     while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
-    console.timeEnd('ChatList render');
+    // console.timeEnd('ChatList render');
 
     if (this.#state.totalItemCount === 0 || (this.#state.totalItemCount > 0 && this.#state.displayedItemCount === 0)) {
       this.renderNoConversationsMessage();
@@ -120,7 +120,6 @@ export class ChatList extends HTMLElement {
       }
       const listItem = document.createElement('chat-list-item-component');
       listItem.setData(this.#state.items[i], this.#state.loggedInUsername);
-      console.log('Current user: ', this.#getCurrentChatUsername());
       if (this.#state.items[i].username === this.#getCurrentChatUsername()) {
         listItem.querySelector('.chat-list-item').classList.add('active');
       }
@@ -337,6 +336,9 @@ export class ChatList extends HTMLElement {
     if (index !== -1) {
       this.#state.items[index].is_online = data.online;
       const component = document.getElementById(`chat-item-${this.#state.items[index].username}`);
+      if (!component) {
+        return;
+      }
       const onlineStatus = component.querySelector('.chat-list-status-indicator');
       data.online ? onlineStatus.classList.add('online') : onlineStatus.classList.remove('online');
     }
