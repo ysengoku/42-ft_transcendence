@@ -74,9 +74,9 @@ export class Chat extends HTMLElement {
     this.chatList.querySelector('.chat-loader')?.classList.remove('d-none');
     this.chatMessagesArea.querySelector('.chat-loader')?.classList.remove('d-none');
 
-    console.time('Fetching chat list data');
+    // console.time('Fetching chat list data');
     const chatListData = await this.fetchChatList();
-    console.timeEnd('Fetching chat list data');
+    // console.timeEnd('Fetching chat list data');
     this.chatList.querySelector('.chat-loader')?.classList.add('d-none');
     if (!chatListData) {
       return;
