@@ -6,7 +6,6 @@ import random
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Literal
-import traceback
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncConsumer
@@ -778,8 +777,6 @@ class GameWorkerConsumer(AsyncConsumer):
 
         except asyncio.CancelledError:
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
-        except Exception:
-            print(traceback.format_exc())
 
     ##### PLAYER MANAGEMENT METHODS #####
     async def _add_player_and_create_pending_match(self, event: GameServerToGameWorker.PlayerConnected):
