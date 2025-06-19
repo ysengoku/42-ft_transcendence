@@ -4,9 +4,12 @@ export function mockFetchTournament(username, status) {
       id: 'idpending',
       name: 'Summer Championship',
       status: 'pending',
-      creator: {
-        username: 'pedro',
-        avatar: '/__mock__/img/sample-pic2.png',
+      tournament_creator: {
+        profile: {
+          username: 'alex',
+          avatar: '/__mock__/img/sample-pic3.png',
+        },
+        alias: 'Nightmare',
       },
       winner: {},
       date: '',
@@ -18,6 +21,7 @@ export function mockFetchTournament(username, status) {
             avatar: '/__mock__/img/sample-pic3.png',
           },
           alias: 'Nightmare',
+          status: 'pending',
         },
         {
           profile: {
@@ -40,9 +44,13 @@ export function mockFetchTournament(username, status) {
       id: 'idroundpending',
       name: 'Summer Championship',
       status: 'ongoing',
-      creator: {
-        username: 'pedro',
-        avatar: '/__mock__/img/sample-pic2.png',
+      tournament_creator: {
+        profile: {
+          username: 'alex',
+          avatar: '/__mock__/img/sample-pic3.png',
+        },
+        alias: 'Nightmare',
+        status: 'pending',
       },
       winner: null,
       date: '',
@@ -140,9 +148,13 @@ export function mockFetchTournament(username, status) {
       id: 'idroundpending',
       name: 'Summer Championship',
       status: 'ongoing',
-      creator: {
-        username: 'pedro',
-        avatar: '/__mock__/img/sample-pic2.png',
+      tournament_creator: {
+        profile: {
+          username: 'alex',
+          avatar: '/__mock__/img/sample-pic3.png',
+        },
+        alias: 'Nightmare',
+        status: 'pending',
       },
       winner: null,
       date: '',
@@ -247,9 +259,13 @@ export function mockFetchTournament(username, status) {
       id: 'idroundpending',
       name: 'Summer Championship',
       status: 'ongoing',
-      creator: {
-        username: 'pedro',
-        avatar: '/__mock__/img/sample-pic2.png',
+      tournament_creator: {
+        profile: {
+          username: 'alex',
+          avatar: '/__mock__/img/sample-pic3.png',
+        },
+        alias: 'Nightmare',
+        status: 'pending',
       },
       winner: null,
       date: '',

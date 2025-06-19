@@ -5,12 +5,12 @@ export async function mockTournamentList() {
       name: 'Peacemakers Cup',
       date: null,
       status: 'lobby',
-      creator: {
-        username: 'Pedro',
-        nickname: 'Pedro',
-        avatar: '/__mock__/img/sample-pic2.png',
-        elo: 1500,
-        is_online: true,
+      tournament_creator: {
+        profile: {
+          username: 'pedro',
+          avatar: '/__mock__/img/sample-pic2.png',
+        },
+        alias: 'Lone Cactus',
       },
       required_participants: 8,
       participants_count: 3,
@@ -20,12 +20,12 @@ export async function mockTournamentList() {
       name: 'Valor Clash',
       date: '2025-05-10T15:00:00Z',
       status: 'ongoing',
-      creator: {
-        username: 'SarahConnor',
-        nickname: 'Time Traveler',
-        avatar: '/__mock__/img/sample-pic3.png',
-        elo: 1600,
-        is_online: true,
+      tournament_creator: {
+        profile: {
+          username: 'SarahConno',
+          avatar: '/__mock__/img/sample-pic3.png',
+        },
+        alias: 'Time Traveler',
       },
       required_participants: 8,
       participants_count: 8,
@@ -35,12 +35,12 @@ export async function mockTournamentList() {
       name: 'Ultimate Throwdown',
       date: '2025-04-20T18:00:00Z',
       status: 'finished',
-      creator: {
-        username: 'Morgan',
-        nickname: 'The Whisper',
-        avatar: '/__mock__/img/sample-pic1.jpg',
-        elo: 1450,
-        is_online: false,
+      tournament_creator: {
+        profile: {
+          username: 'Morgan',
+          avatar: '/__mock__/img/sample-pic1.jpg',
+        },
+        alias: 'Whisper',
       },
       required_participants: 4,
       participants_count: 4,
@@ -60,12 +60,12 @@ export async function mockTournamentList() {
       name: "Gladiator's Arena",
       date: null,
       status: 'lobby',
-      creator: {
-        username: 'Olivia',
-        nickname: 'The Hammer',
-        avatar: '/__mock__/img/sample-pic3.png',
-        elo: 1700,
-        is_online: true,
+      tournament_creator: {
+        profile: {
+          username: 'Olivia',
+          avatar: '/__mock__/img/sample-pic3.png',
+        },
+        alias: 'The Hammer',
       },
       required_participants: 4,
       participants_count: 0,
@@ -75,12 +75,12 @@ export async function mockTournamentList() {
       name: 'Sniper Showdown',
       date: null,
       status: 'lobby',
-      creator: {
-        username: 'Daniel',
-        nickname: 'Eagle Eye',
-        avatar: '/__mock__/img/sample-pic1.jpg',
-        elo: 1520,
-        is_online: false,
+      tournament_creator: {
+        profile: {
+          username: 'Daniel',
+          avatar: '/__mock__/img/sample-pic1.jpg',
+        },
+        alias: 'Eagle Eye',
       },
       required_participants: 8,
       participants_count: 2,
@@ -90,12 +90,12 @@ export async function mockTournamentList() {
       name: 'Nexus Battle',
       date: null,
       status: 'lobby',
-      creator: {
-        username: 'Bruce',
-        nickname: 'The Bat',
-        avatar: '/__mock__/img/sample-pic3.png',
-        elo: 1800,
-        is_online: true,
+      tournament_creator: {
+        profile: {
+          username: 'Bruce',
+          avatar: '/__mock__/img/sample-pic3.png',
+        },
+        alias: 'he Bat',
       },
       required_participants: 4,
       participants_count: 0,

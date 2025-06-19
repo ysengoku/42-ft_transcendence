@@ -4,12 +4,15 @@ export async function mockTournamentDetail(id) {
       id: 'mockidpending',
       name: 'Spring Championship',
       status: 'pending',
-      creator: {
-        username: 'pedro',
-        nickname: 'pedro',
-        avatar: '/__mock__/img/sample-pic2.png',
-        elo: 2000,
-        is_online: true,
+      tournament_creator: {
+        profile: {
+          username: 'pedro',
+          nickname: 'pedro',
+          avatar: '/__mock__/img/sample-pic2.png',
+          elo: 2000,
+          is_online: true,
+        },
+        alias: 'Lone Cactus',
       },
       winner: {},
       date: '',
@@ -72,12 +75,12 @@ export async function mockTournamentDetail(id) {
       id: 'mockidongoing',
       name: 'Spring Championship',
       status: 'ongoing',
-      creator: {
-        username: 'pedro',
-        nickname: 'Pedro',
-        avatar: '/__mock__/img/sample-pic3.png',
-        elo: 2000,
-        is_online: true,
+      tournament_creator: {
+        profile: {
+          username: 'pedro',
+          avatar: '/__mock__/img/sample-pic2.png',
+        },
+        alias: 'Lone Cactus',
       },
       winner: {},
       date: '2025-05-09T11:43:42.045Z',
@@ -339,12 +342,12 @@ export async function mockTournamentDetail(id) {
       id: 'mockidongoing2',
       name: 'Spring Championship',
       status: 'ongoing',
-      creator: {
-        username: 'pedro',
-        nickname: 'Pedro',
-        avatar: '/__mock__/img/sample-pic3.png',
-        elo: 2000,
-        is_online: true,
+      tournament_creator: {
+        profile: {
+          username: 'pedro',
+          avatar: '/__mock__/img/sample-pic2.png',
+        },
+        alias: 'Lone Cactus',
       },
       winner: {},
       date: '2025-05-09T11:43:42.045Z',
@@ -527,12 +530,12 @@ export async function mockTournamentDetail(id) {
       id: 'mockidfinished',
       name: 'Spring Championship',
       status: 'finished',
-      creator: {
-        username: 'pedro',
-        nickname: 'Pedro',
-        avatar: '/__mock__/img/sample-pic2.png',
-        elo: 2000,
-        is_online: true,
+      tournament_creator: {
+        profile: {
+          username: 'pedro',
+          avatar: '/__mock__/img/sample-pic2.png',
+        },
+        alias: 'Lone Cactus',
       },
       winner: {
         profile: {
