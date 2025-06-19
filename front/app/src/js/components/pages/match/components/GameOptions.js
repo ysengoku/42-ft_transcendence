@@ -85,37 +85,11 @@ export class GameOptions extends HTMLElement {
   }
 
   storeOptionstoLocalStorage() {
+    console.log('Storing game options to localStorage', this.#state.selectedOptions);
     if (!this.#state.selectedOptions) {
       return;
     }
-    const scoreToWin =
-      this.#state.selectedOptions.score_to_win === 'any'
-        ? this.#state.defaultOptionValue.score_to_win
-        : this.#state.selectedOptions.score_to_win || this.#state.defaultOptionValue.score_to_win;
-    const gameSpeed =
-      this.#state.selectedOptions.game_speed === 'any'
-        ? this.#state.defaultOptionValue.game_speed
-        : this.#state.selectedOptions.game_speed || this.#state.defaultOptionValue.game_speed;
-    const timeLimit =
-      this.#state.selectedOptions.time_limit === 'any'
-        ? this.#state.defaultOptionValue.time_limit
-        : this.#state.selectedOptions.time_limit || this.#state.defaultOptionValue.time_limit;
-    const ranked =
-      this.#state.selectedOptions.ranked === 'any'
-        ? this.#state.defaultOptionValue.ranked
-        : this.#state.selectedOptions.ranked || this.#state.defaultOptionValue.ranked;
-    const coolMode =
-      this.#state.selectedOptions.cool_mode === 'any'
-        ? this.#state.defaultOptionValue.cool_mode
-        : this.#state.selectedOptions.cool_mode || this.#state.defaultOptionValue.cool_mode;
-    const options = {
-      score_to_win: scoreToWin,
-      game_speed: gameSpeed,
-      time_limit: timeLimit,
-      ranked: ranked,
-      cool_mode: coolMode,
-    };
-    localStorage.setItem('gameOptions', JSON.stringify(options));
+    localStorage.setItem('gameOptions', JSON.stringify(this.#state.selectedOptions));
   }
 
   /* ------------------------------------------------------------------------ */
@@ -161,7 +135,22 @@ export class GameOptions extends HTMLElement {
     this.coolModeOptout.addEventListener('change', this.toggleOptionOptout);
   }
 
+  allOptionsOptout() {
+    return (
+      this.#state.selectedOptions.score_to_win === 'any' &&
+      this.#state.selectedOptions.game_speed === 'any' &&
+      this.#state.selectedOptions.time_limit === 'any' &&
+      this.#state.selectedOptions.ranked === 'any' &&
+      this.#state.selectedOptions.cool_mode === 'any'
+    );
+  }
+
   renderOptions() {
+    if (this.allOptionsOptout()) {
+      this.optionWrapper.classList.add('d-none');
+      this.allOptionsoptout.checked = true;
+      return;
+    }
     if (this.#state.selectedOptions.score_to_win === 'any') {
       this.scoreToWinOptout.checked = true;
       const input = this.scoreToWinInput.closest('.option-input');
@@ -291,16 +280,17 @@ export class GameOptions extends HTMLElement {
   toggleOptoutAllOptions(event) {
     if (event.target.checked) {
       this.optionWrapper.classList.add('d-none');
-      this.#state.selectedOptions = null;
+      this.#state.selectedOptions = {
+        score_to_win: 'any',
+        game_speed: 'any',
+        time_limit: 'any',
+        ranked: 'any',
+        cool_mode: 'any',
+      };
     } else {
       this.optionWrapper.classList.remove('d-none');
-      this.#state.selectedOptions = {
-        score_to_win: this.#state.defaultOptionValue.scoreToWin,
-        game_speed: this.#state.defaultOptionValue.gameSpeed,
-        time_limit: this.#state.defaultOptionValue.time_limit,
-        ranked: this.#state.defaultOptionValue.ranked,
-        cool_mode: this.#state.defaultOptionValue.coolMode,
-      };
+      this.#state.selectedOptions = this.#state.defaultOptionValue;
+      this.renderOptions();
     }
   }
 
@@ -314,7 +304,7 @@ export class GameOptions extends HTMLElement {
     <div class="opt-out-option optout-all form-check pt-1 mb-5 fs-5">
       <input class="form-check-input" type="checkbox" id="optout-gameOptions">
       <label class="form-check-label fw-bold" for="optout-optout-gameOptions">
-        Desactivate All Options
+        Deactivate All Options
       </label>
     </div>
 
