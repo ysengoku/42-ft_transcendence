@@ -12,6 +12,7 @@ import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
+import anonymousAvatar from '/img/anonymous-avatar.png?url';
 import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
 
 export class Tournament extends HTMLElement {
@@ -31,6 +32,11 @@ export class Tournament extends HTMLElement {
     uiStatus: '',
     tournamentId: '',
     tournament: null,
+    creator: {
+      username: '',
+      avatar: anonymousAvatar,
+      alias: 'anonymous gunslinger',
+    },
     userDataInTournament: null,
     currentRoundNumber: 0,
     currentRound: null,
@@ -98,10 +104,14 @@ export class Tournament extends HTMLElement {
       true,
     );
     if (!response.success) {
-      router.redirect('/home');
       return;
     }
     this.#state.tournament = response.data;
+    if (this.#state.tournament.tournament_creator) {
+      this.#state.creator.username = this.#state.tournament.tournament_creator.profile.username;
+      this.#state.creator.avatar = this.#state.tournament.tournament_creator.profile.avatar;
+      this.#state.creator.alias = this.#state.tournament.tournament_creator.alias;
+    }
 
     // =========== For test ================================================
     // pending, tournamentstarting, waitingNextRound, roundpending
@@ -261,7 +271,7 @@ export class Tournament extends HTMLElement {
         id: this.#state.tournamentId,
         required_participants: this.#state.tournament.required_participants,
         participants: this.#state.tournament.participants,
-        creatorUsername: this.#state.tournament.creator.username,
+        creatorUsername: this.#state.creator.username,
         loggedInUsername: this.#state.user.username,
       };
       return tournamentWaiting;
@@ -290,7 +300,7 @@ export class Tournament extends HTMLElement {
       const tournamentCanceled = document.createElement('tournament-canceled');
       tournamentCanceled.data = {
         tournamentId: this.#state.tournamentId,
-        creatorUsername: this.#state.tournament.creator.username,
+        creatorUsername: this.#state.creator.username,
       };
       return tournamentCanceled;
     },
@@ -413,7 +423,7 @@ export class Tournament extends HTMLElement {
    * @description Cancels the tournament on cencel button click by the creator.
    */
   async cancelTournament() {
-    if (this.#state.tournament.creator.username !== this.#state.user.username) {
+    if (!this.#state.creator.username || this.#state.creator.username !== this.#state.user.username) {
       return;
     }
     const response = await apiRequest(
