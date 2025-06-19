@@ -47,13 +47,13 @@ class WebSocketManager {
           bubbles: true,
         });
         document.dispatchEvent(customEvent);
-        devLog(`WebSocket (${this.name}) closed intentionally by server with code 3000.`);
+        devLog(`WebSocket (${this.name}) closed intentionally by server with code ${event.code}`);
         this.socketOpen = false;
         return;
       }
       if (event.code === 1006 || event.code === 1011) {
         showToastNotification('Connection to server lost.', TOAST_TYPES.ERROR);
-        console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
+        console.error(`WebSocket (${this.name}) closed. Server error.`);
         this.socketOpen = false;
         return;
       }
@@ -72,9 +72,19 @@ class WebSocketManager {
     this.socket.onerror = (event) => console.error('WebSocket error (', this.name, ') ', event);
     this.socket.onclose = (event) => {
       devLog('WebSocket closed (', this.name, ') ', event);
+      if (event.code >= 3000) {
+        const customEvent = new CustomEvent('websocket-close', {
+          detail: { name: this.name, code: event.code },
+          bubbles: true,
+        });
+        document.dispatchEvent(customEvent);
+        devLog(`WebSocket (${this.name}) closed intentionally by server with code ${event.code}`);
+        this.socketOpen = false;
+        return;
+      }
       if (event.code === 1006 || event.code === 1011) {
         showToastNotification('Connection to server lost.', TOAST_TYPES.ERROR);
-        console.error(`WebSocket (${this.name}) closed. Server did not respond.`);
+        console.error(`WebSocket (${this.name}) closed. Server error.`);
         this.socketOpen = false;
         return;
       }

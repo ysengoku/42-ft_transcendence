@@ -414,7 +414,10 @@ export class Tournament extends HTMLElement {
     if (data.tournament_id !== this.#state.tournamentId) {
       return;
     }
-    showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'This tournament has been canceled.');
+    socketManager.closeSocket('tournament', this.#state.tournamentId);
+    if (!this.#state.creator.username || this.#state.creator.username !== this.#state.user.username) {
+      showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED, this.#state.tournament.name);
+    }
     this.#state.uiStatus = UI_STATUS.CANCELED;
     this.updateContentOnStatusChange();
   }
