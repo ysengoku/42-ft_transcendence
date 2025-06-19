@@ -171,17 +171,33 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
         channel_layer = get_channel_layer()
         if tournament.participants.count() == tournament.required_participants:
             tournament.status = Tournament.ONGOING
-            tournament.save()
-            async_to_sync(channel_layer.group_send)(
-                f"tournament_{tournament_id}",
-                {
-                    "type": "last_registration",
-                    "data": {
-                        "avatar": user.profile.avatar,
-                        "alias": alias,
+            tournament.save(update_fields=["status"])
+            logger.warning("Tournament status is : %s", tournament.status)
+
+            def send_last_registration():
+                async_to_sync(channel_layer.group_send)(
+                    f"tournament_{tournament_id}",
+                    {
+                        "type": "last_registration",
+                        "data": {
+                            "avatar": user.profile.avatar,
+                            "alias": alias,
+                        },
                     },
-                },
-            )
+                )
+
+            transaction.on_commit(send_last_registration)
+
+            def start_tournament():
+                async_to_sync(channel_layer.group_send)(
+                    f"tournament_{tournament_id}",
+                    {
+                        "type": "prepare_round",
+                    },
+                )
+
+            transaction.on_commit(start_tournament)
+
             TournamentEvent.close_tournament_invitations(tournament_id)
         else:
             async_to_sync(channel_layer.group_send)(
