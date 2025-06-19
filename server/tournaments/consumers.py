@@ -263,9 +263,8 @@ class TournamentConsumer(WebsocketConsumer):
     def tournament_canceled(self, data=None):
         logger.debug("function tournament_canceled")
         if data is None:
-            tournament_id = data["data"].get("tournament_id")
-            tournament_name = data["data"].get("tournament_id")
-            tournament = Tournament.objects.get(id=tournament_id)
+            tournament_id = self.tournament_id
+            tournament_name = self.tournament.name
         else:
             tournament_id = data["data"].get("tournament_id")
             tournament_name = data["data"].get("tournament_id")
