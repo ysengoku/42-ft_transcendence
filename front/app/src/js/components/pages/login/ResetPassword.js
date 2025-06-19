@@ -73,7 +73,7 @@ export class ResetPassword extends HTMLElement {
     if (response.success) {
       const successMessage = 'Password reset successful. You can now login with your new password.';
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
-      router.navigate('/login');
+      router.redirect('/login');
     } else {
       const errorMessage = response.message || 'Password reset failed. Please try again.';
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);

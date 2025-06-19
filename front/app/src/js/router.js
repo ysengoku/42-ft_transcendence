@@ -184,12 +184,6 @@ const router = (() => {
         queryParamsObject = queryParams;
       }
 
-      // let historyUpdateMethod = '';
-      // if (redirect || this.isFristLoad || path === '/user-not-found') {
-      //     historyUpdateMethod = 'replaceState';
-      // } else {
-      //   historyUpdateMethod = 'pushState';
-      // }
       const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
       const historyUpdateMethod = shouldReplace ? 'replaceState' : 'pushState';
       window.history[historyUpdateMethod]({}, '', path);
