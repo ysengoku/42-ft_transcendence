@@ -118,7 +118,7 @@ export class MfaVerification extends HTMLElement {
         avatar: response.data.avatar,
       };
       auth.storeUser(userInformation);
-      router.navigate('/home', response.user);
+      router.redirect('/home', response.user);
       sessionStorage.removeItem('username');
     } else {
       this.feedbackField = this.querySelector('#mfa-failed-feedback');
