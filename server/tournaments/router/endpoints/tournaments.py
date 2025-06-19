@@ -172,7 +172,6 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
         if tournament.participants.count() == tournament.required_participants:
             tournament.status = Tournament.ONGOING
             tournament.save(update_fields=["status"])
-            logger.warning("Tournament status is : %s", tournament.status)
 
             def send_last_registration():
                 async_to_sync(channel_layer.group_send)(
