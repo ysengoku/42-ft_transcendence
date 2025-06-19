@@ -21,6 +21,12 @@ logger = logging.getLogger("server")
 
 # TODO: Verify connexion of both players before the match ?
 # TODO: security checks : multiple crash when bad ws id sent by the console
+# TODO: put all shared macros between files in the same file
+NORMAL_CLOSURE = 3000
+CANCELLED = 3001
+ILLEGAL_CONNECTION = 3002
+ALREADY_IN_GAME = 3003
+BAD_DATA = 3100
 
 
 class TournamentConsumer(WebsocketConsumer):
@@ -35,13 +41,27 @@ class TournamentConsumer(WebsocketConsumer):
             return
         logger.debug("STILL CONNECTED %s", self.user)
         self.tournament_id = self.scope["url_route"]["kwargs"].get("tournament_id")
+        try:
+            UUID(str(self.tournament_id))
+        except:
+            logger.warning("Wrong uuid : %s", self.tournament_id)
+            self.accept()
+            self.close(ILLEGAL_CONNECTION)
+            return
 
         try:
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
             logger.warning("This tournament id does not exist : %s", self.tournament_id)
             self.close()
-        # async_to_sync(self.channel_layer.group_add)(f"user_{self.user.id}", self.channel_name)
+            return
+        if not tournament.participants.filter(profile=self.user.profile).exists():
+            logger.warning("This user is not a participant: %s", self.user)
+            self.accept()
+            self.close(ILLEGAL_CONNECTION)
+            return
+
+        async_to_sync(self.channel_layer.group_add)(f"tournament_user_{self.user.id}", self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
         logger.debug("WILL BE ACCEPTED %s", self.user)
         self.accept()
@@ -50,7 +70,8 @@ class TournamentConsumer(WebsocketConsumer):
         logger.debug("WILL BE DISCONNECTED")
         if self.tournament_id:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_{self.tournament_id}", self.channel_name)
-        async_to_sync(self.channel_layer.group_discard)(f"user_{self.user.id}", self.channel_name)
+        # TODO: See how this line is useful
+        async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
         self.close(close_code)
 
     def receive(self, text_data):
@@ -91,6 +112,11 @@ class TournamentConsumer(WebsocketConsumer):
                 },
             ),
         )
+
+        # TODO: Find a way to disconnect the user only from the ws
+        logger.debug(self.user.username)
+        logger.debug(self.user)
+        # async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
 
     def prepare_round(self):
         logger.debug("function prepare_round")
