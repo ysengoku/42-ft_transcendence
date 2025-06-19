@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import TruncDate
@@ -199,7 +199,11 @@ class GameRoomQuerySet(models.QuerySet):
         )
 
     def for_id(self, game_room_id: str):
-        return self.filter(id=game_room_id)
+        try:
+            return self.filter(id=game_room_id)
+        # check if the game_room_id is valid UUID
+        except ValidationError:
+            return self.none()
 
     def for_players(self, *players: Profile):
         return self.filter(players__in=players)
