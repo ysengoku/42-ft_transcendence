@@ -53,6 +53,10 @@ export class MultiplayerGame extends HTMLElement {
 
   createOnDocumentKeyDown(pongSocket, bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
     return (e) => {
+      const tag = e.target.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') {
+        return; // Do not process key events on input or textarea elements
+      }
       if (e.defaultPrevented) {
         return; // Do noplayerglb if the event was already processed
       }
