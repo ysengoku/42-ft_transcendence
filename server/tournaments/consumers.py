@@ -28,10 +28,12 @@ class TournamentConsumer(WebsocketConsumer):
 
     def connect(self):
         self.user = self.scope.get("user")
+        logger.debug("CONNECTING %s", self.user)
         if not self.user or not self.user.is_authenticated:
             logger.warning("TournamentConsumer : Unauthentificated user trying to connect")
             self.close()
             return
+        logger.debug("STILL CONNECTED %s", self.user)
         self.tournament_id = self.scope["url_route"]["kwargs"].get("tournament_id")
 
         try:
@@ -39,11 +41,13 @@ class TournamentConsumer(WebsocketConsumer):
         except Tournament.DoesNotExist:
             logger.warning("This tournament id does not exist : %s", self.tournament_id)
             self.close()
-        async_to_sync(self.channel_layer.group_add)(f"user_{self.user.id}", self.channel_name)
+        # async_to_sync(self.channel_layer.group_add)(f"user_{self.user.id}", self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
+        logger.debug("WILL BE ACCEPTED %s", self.user)
         self.accept()
 
     def disconnect(self, close_code):
+        logger.debug("WILL BE DISCONNECTED")
         if self.tournament_id:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_{self.tournament_id}", self.channel_name)
         async_to_sync(self.channel_layer.group_discard)(f"user_{self.user.id}", self.channel_name)
@@ -121,7 +125,7 @@ class TournamentConsumer(WebsocketConsumer):
         else:
             participants = self.take_winners_from(tournament.rounds.get(number=round_number - 1))
         if self.participants_number_is_incorrect(participants):
-            self.cancel_tournament()
+            self.tournament_canceled()
             return
         if len(participants) == 1:
             self.end_tournament()
@@ -215,6 +219,9 @@ class TournamentConsumer(WebsocketConsumer):
 
     def tournament_message(self, event):
         logger.debug("function tournament_message")
+        logger.debug("action : %s", event["action"])
+        logger.debug("data : %s", event["data"])
+
         self.send(
             text_data=json.dumps(
                 {
@@ -253,12 +260,34 @@ class TournamentConsumer(WebsocketConsumer):
             ),
         )
 
-    def cancel_tournament(self):
+    def tournament_canceled(self, data=None):
+        logger.debug("function tournament_canceled")
+        if data is None:
+            tournament_id = data["data"].get("tournament_id")
+            tournament_name = data["data"].get("tournament_id")
+            tournament = Tournament.objects.get(id=tournament_id)
+        else:
+            tournament_id = data["data"].get("tournament_id")
+            tournament_name = data["data"].get("tournament_id")
+            if (
+                tournament_id is None
+                or tournament_name is None
+                or not isinstance(tournament_id, str)
+                or not isinstance(tournament_id, str)
+            ):
+                logger.warning("Invalid data for tournament_id or tournament_name")
+                return
+        try:
+            tournament = Tournament.objects.get(id=tournament_id)
+        except Tournament.DoesNotExist:
+            logger.warning("This tournament does not exist")
+            return
         with transaction.atomic():
-            self.tournament.status = Tournament.CANCELLED
-            self.tournament.save()
-        data = {"tournament_id": str(self.tournament_id), "tournament_name": self.tournament_name}
+            tournament.status = Tournament.CANCELLED
+            tournament.save()
+        data = {"tournament_id": tournament_id, "tournament_name": tournament_name}
         self.self_send_message_to_ws("tournament_canceled", data)
+        self.disconnect(3000)
 
     def last_registration(self, event):
         logger.debug("function last_registration")
@@ -344,7 +373,7 @@ class TournamentConsumer(WebsocketConsumer):
         try:
             round_number = bracket.round.number
         except Bracket.DoesNotExist:
-            logger.warning("Error: No bracket with this id : %s", bracket_id)
+            logger.warning("Error: No bracket found with this bracket : %s", bracket)
             return
 
         p1_alias = bracket.participant1.alias
