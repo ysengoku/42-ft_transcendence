@@ -410,6 +410,7 @@ export class Tournament extends HTMLElement {
     if (data.tournament_id !== this.#state.tournamentId) {
       return;
     }
+    socketManager.closeSocket('tournament', this.#state.tournamentId);
     showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'This tournament has been canceled.');
     this.#state.uiStatus = UI_STATUS.CANCELED;
     this.updateContentOnStatusChange();
