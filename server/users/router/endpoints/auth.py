@@ -15,7 +15,7 @@ from common.routers import allow_only_for_self
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from users.models import RefreshToken, User
 from users.router.endpoints.mfa import handle_mfa_code
-from users.router.utils import _create_json_response_with_tokens
+from users.router.utils import create_json_response_with_tokens
 from users.schemas import (
     ForgotPasswordSchema,
     LoginResponseSchema,
@@ -75,7 +75,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if is_mfa_enabled:
         raise HttpError(503, "Failed to send MFA code")
     response_data = user.profile.to_profile_minimal_schema()
-    return _create_json_response_with_tokens(user, response_data)
+    return create_json_response_with_tokens(user, response_data)
 
 
 @auth_router.post(
@@ -96,7 +96,7 @@ def signup(request: HttpRequest, data: SignUpSchema):
     )
     user.save()
 
-    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+    return create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
 
 
 @auth_router.post(

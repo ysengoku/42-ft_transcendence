@@ -12,7 +12,7 @@ from ninja.errors import HttpError
 
 from common.schemas import MessageSchema
 from users.models import User
-from users.router.utils import _create_json_response_with_tokens
+from users.router.utils import create_json_response_with_tokens
 from users.schemas import SendMfaCode
 
 mfa_router = Router()
@@ -90,4 +90,4 @@ def verify_mfa_code(request, username: str, data: SendMfaCode) -> dict[str, any]
         raise HttpError(401, "Invalid verification code")
 
     response_data = user.profile.to_profile_minimal_schema()
-    return _create_json_response_with_tokens(user, response_data)
+    return create_json_response_with_tokens(user, response_data)
