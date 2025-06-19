@@ -23,7 +23,6 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayButton2 = null;
     this.intervalGameId = null;
 
-    // this.windowResize = this.windowResize.bind(this);
     this.navigateToDuelMenu = this.navigateToDuelMenu.bind(this);
     this.navigateToHome = this.navigateToHome.bind(this);
   }
@@ -50,7 +49,6 @@ export class MultiplayerGame extends HTMLElement {
     document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
     if (this.onDocumentKeyDown) document.removeEventListener('keydown', this.onDocumentKeyDown, true);
     if (this.onDocumentKeyUp) document.removeEventListener('keyup', this.onDocumentKeyUp, true);
-    // window.removeEventListener('resize', this.windowResize);
   }
 
   createOnDocumentKeyDown(pongSocket, bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
@@ -514,7 +512,6 @@ export class MultiplayerGame extends HTMLElement {
 
     pongSocket.addEventListener('close', function (event) {
       console.log('PONG socket was nice! :3');
-      console.log('Closed by code ', event.code);
       if (event.code === 3002) {
         showToastNotification('This game does not exist or has ended.', TOAST_TYPES.ERROR);
         router.redirect('/home');
@@ -727,7 +724,6 @@ export class MultiplayerGame extends HTMLElement {
         }, 1000);
         break;
       case 'game_over':
-        console.log('Game Over', data);
         let player1;
         let player2;
         data.winner.number === 1
