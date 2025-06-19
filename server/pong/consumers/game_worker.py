@@ -42,7 +42,7 @@ STARTING_BUMPER_2_POS = 0, 9
 STARTING_BALL_POS = 0, 0
 Z_VELOCITY = 0.25
 STARTING_BALL_VELOCITY = 0, Z_VELOCITY
-SUBTICK = 0.05
+SUBTICK = 0.025
 BOUNCING_ANGLE_DEGREES = 55
 BALL_VELOCITY_CAP = 1
 TEMPORAL_SPEED_DEFAULT = 1, 1
@@ -50,7 +50,6 @@ TEMPORAL_SPEED_INCREASE = SUBTICK * 0
 TEMPORAL_SPEED_DECAY = 0.005
 GAME_TICK_INTERVAL = 1.0 / 120
 PLAYERS_REQUIRED = 2
-SCORE_TO_WIN = 1
 DEFAULT_COIN_WAIT_TIME = 30
 BASE_BUMPER_SPEED = 0.25
 ###################
@@ -83,6 +82,11 @@ class Vector2:
     x: float
     z: float
 
+    def mul(self, nbr: float):
+        self.x *= nbr
+        self.z *= nbr
+        return self
+
 
 @dataclass(slots=True)
 class Bumper(Vector2):
@@ -90,7 +94,7 @@ class Bumper(Vector2):
     width_half: int = 0.5
     lenght_half: int = 2.5
     score: int = 0
-    speed: int = 0.25
+    speed: int = BASE_BUMPER_SPEED
     control_reversed: bool = False
     moves_left: bool = False
     moves_right: bool = False
@@ -115,7 +119,13 @@ class Player:
             task.cancel()
         self.reconnection_timer = None
 
-    def as_dict(self):
+    def as_dict(self, anonymous: bool = False):
+        if anonymous:
+            return {
+                "alias": self.name,
+                "avatar": self.avatar,
+                "player_number": 1 if self.bumper.z == 1 else 2,
+            }
         return {
             "name": self.name,
             "avatar": self.avatar,
@@ -425,6 +435,7 @@ class MultiplayerPongMatch(BasePong):
         self._score_to_win = score_to_win
         self._player_1 = Player(self._bumper_1)
         self._player_2 = Player(self._bumper_2)
+
     def __str__(self):
         return self.id
 
@@ -490,8 +501,8 @@ class MultiplayerPongMatch(BasePong):
 
     def get_other_player(self, player_id: str) -> Player:
         if player_id == self._player_1.id:
-            return self._player_1
-        return self._player_2
+            return self._player_2
+        return self._player_1
 
     def stop_waiting_for_players_timer(self) -> None:
         timer = self.waiting_for_players_timer
@@ -501,9 +512,9 @@ class MultiplayerPongMatch(BasePong):
 
     def get_result(self) -> tuple[Player, Player] | None:
         """Returns winner and loser or None, if the game is not decided yet."""
-        if self._player_1.bumper.score >= SCORE_TO_WIN:
+        if self._player_1.bumper.score >= self._score_to_win:
             return self._player_1, self._player_2
-        if self._player_2.bumper.score >= SCORE_TO_WIN:
+        if self._player_2.bumper.score >= self._score_to_win:
             return self._player_2, self._player_1
         return None
 
@@ -624,7 +635,7 @@ class GameWorkerConsumer(AsyncConsumer):
                     await match.pause_event.wait()
                 tick_start_time = asyncio.get_event_loop().time()
                 match.resolve_next_tick()
-                if match.choose_buff != 0:
+                if match.coin and match.choose_buff != 0:
                     asyncio.create_task(
                         self._wait_for_end_of_buff(match, match.last_bumper_collided),
                     )
