@@ -22,6 +22,7 @@ class GameServerConsumer(WebsocketConsumer):
         self.user = self.scope.get("user")
         self.game_room_id = self.scope["url_route"]["kwargs"]["game_room_id"]
         self.game_room_group_name = f"game_room_{self.game_room_id}"
+        self.accept()
         if not self.user:
             logger.info("[GameRoom.connect]: unauthorized user tried to join game room {%s}", self.game_room_id)
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
@@ -35,7 +36,6 @@ class GameServerConsumer(WebsocketConsumer):
                 self.game_room_id,
             )
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
-            return
 
         self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).for_ongoing_status().first()
         if not self.game_room:
@@ -54,7 +54,6 @@ class GameServerConsumer(WebsocketConsumer):
             self.game_room_id,
             str(self.player.id),
         )
-        self.accept()
         profile = self.user.profile
         player_id = str(self.player.id)
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)

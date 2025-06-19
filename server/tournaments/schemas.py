@@ -8,7 +8,7 @@ from ninja import Schema
 from pydantic import model_validator
 
 from common.schemas import GameSettingsSchema, ProfileMinimalSchema
-from tournaments.models import Tournament
+from tournaments.models import Participant, Tournament
 
 
 class ParticipantSchema(Schema):
@@ -36,7 +36,7 @@ class RoundSchema(Schema):
 class TournamentSchema(Schema):
     """Schema that represents a singular Tournament."""
 
-    creator: ProfileMinimalSchema
+    tournament_creator: ParticipantSchema | None
     id: UUID
     name: str
     rounds: list[RoundSchema]
@@ -51,6 +51,10 @@ class TournamentSchema(Schema):
     @staticmethod
     def resolve_participants_count(obj: Tournament):
         return Tournament.objects.get(id=obj.id).participants.count() or None
+
+    @staticmethod
+    def resolve_tournament_creator(obj: Tournament):
+        return Participant.objects.filter(profile=obj.creator, tournament=obj).first()
 
 
 class TournamentCreateSchema(Schema):
