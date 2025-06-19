@@ -74,7 +74,7 @@ export class Register extends HTMLElement {
           avatar: response.data.avatar,
         };
         auth.storeUser(userInformation);
-        router.navigate('/home', response.user);
+        router.redirect('/home', response.user);
       }
     } else {
       console.error('Registration failed:', response.msg);
