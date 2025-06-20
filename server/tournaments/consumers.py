@@ -103,7 +103,7 @@ class TournamentConsumer(WebsocketConsumer):
             # case "round_end":
             #     self.prepare_round()
             case "tournament_game_finished":
-                self.handle_match_finished(data)
+                self.tournament_game_finished(data)
             case _:
                 logger.debug("Tournament unknown action : %s", action)
 
@@ -342,7 +342,7 @@ class TournamentConsumer(WebsocketConsumer):
         self.send_new_registration_to_ws(alias, avatar)
         # self.self_send_message_to_ws("tournament_start", data)
 
-    def handle_match_finished(self, data):
+    def tournament_game_finished(self, data):
         try:
             UUID(str(self.tournament_id))
             logger.warning("this tournament id is not a valid uuid.")
