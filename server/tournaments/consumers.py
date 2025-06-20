@@ -194,6 +194,7 @@ class TournamentConsumer(WebsocketConsumer):
         for bracket in brackets:
             game_room = self.create_tournament_game_room(bracket.participant1, bracket.participant2)
             bracket.game_room = game_room
+            bracket.game_id = game_room.id
             bracket.save()
             logger.debug(bracket)
         logger.debug(new_round)
