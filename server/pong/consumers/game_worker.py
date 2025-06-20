@@ -1,22 +1,25 @@
 import asyncio
+import contextlib
 import logging
 import math
 import random
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
+from typing import Literal
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
 from pong.game_protocol import (
+    GameRoomSettings,
     GameServerToClient,
     GameServerToGameWorker,
     PongCloseCodes,
     SerializedGameState,
 )
 from pong.models import GameRoom, Match
-from users.models import Profile
+from tournaments.models import Bracket
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -39,7 +42,7 @@ STARTING_BUMPER_2_POS = 0, 9
 STARTING_BALL_POS = 0, 0
 Z_VELOCITY = 0.25
 STARTING_BALL_VELOCITY = 0, Z_VELOCITY
-SUBTICK = 0.05
+SUBTICK = 0.025
 BOUNCING_ANGLE_DEGREES = 55
 BALL_VELOCITY_CAP = 1
 TEMPORAL_SPEED_DEFAULT = 1, 1
@@ -47,8 +50,8 @@ TEMPORAL_SPEED_INCREASE = SUBTICK * 0
 TEMPORAL_SPEED_DECAY = 0.005
 GAME_TICK_INTERVAL = 1.0 / 120
 PLAYERS_REQUIRED = 2
-SCORE_TO_WIN = 1
 DEFAULT_COIN_WAIT_TIME = 30
+BASE_BUMPER_SPEED = 0.25
 ###################
 
 
@@ -56,7 +59,7 @@ class MultiplayerPongMatchStatus(Enum):
     PENDING = auto()
     ONGOING = auto()
     PAUSED = auto()
-    ENDED = auto()
+    FINISHED = auto()
 
 
 class Buffs(IntEnum):
@@ -79,6 +82,11 @@ class Vector2:
     x: float
     z: float
 
+    def mul(self, nbr: float):
+        self.x *= nbr
+        self.z *= nbr
+        return self
+
 
 @dataclass(slots=True)
 class Bumper(Vector2):
@@ -86,7 +94,7 @@ class Bumper(Vector2):
     width_half: int = 0.5
     lenght_half: int = 2.5
     score: int = 0
-    speed: int = 0.25
+    speed: int = BASE_BUMPER_SPEED
     control_reversed: bool = False
     moves_left: bool = False
     moves_right: bool = False
@@ -98,7 +106,7 @@ class Player:
     id: str = ""
     connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
     # TODO: move time to constants
-    reconnection_time: int = 10
+    reconnection_time: int = 1
     reconnection_timer: asyncio.Task | None = None
     profile_id: int = -1
     name: str = ""
@@ -111,7 +119,13 @@ class Player:
             task.cancel()
         self.reconnection_timer = None
 
-    def as_dict(self):
+    def as_dict(self, anonymous: bool = False):
+        if anonymous:
+            return {
+                "alias": self.name,
+                "avatar": self.avatar,
+                "player_number": 1 if self.bumper.z == 1 else 2,
+            }
         return {
             "name": self.name,
             "avatar": self.avatar,
@@ -138,16 +152,22 @@ class BasePong:
     Can be plugged into any engine like PyGame.
     """
 
+    coin: Coin | None
+    _game_speed: Literal[0.75, 1.0, 1.25]
     _is_someone_scored: bool
     _bumper_1: Bumper
     _bumper_2: Bumper
     _ball: Ball
 
-    def __init__(self):
-        self.coin = Coin(
-            *STARTING_COIN_POS,
-            Vector2(*STARTING_COIN_VELOCITY),
-        )
+    def __init__(self, cool_mode: bool, game_speed: Literal[0.75, 1.0, 1.25]):
+        self._game_speed = game_speed
+        if cool_mode:
+            self.coin = Coin(
+                *STARTING_COIN_POS,
+                Vector2(*STARTING_COIN_VELOCITY).mul(self._game_speed),
+            )
+        else:
+            self.coin = None
         self._is_someone_scored = False
         self.last_bumper_collided: Bumper | None = None
         self.choose_buff = 0
@@ -155,12 +175,18 @@ class BasePong:
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
+            speed=BASE_BUMPER_SPEED * self._game_speed,
         )
         self._bumper_2 = Bumper(
             *STARTING_BUMPER_2_POS,
             dir_z=-1,
+            speed=BASE_BUMPER_SPEED * self._game_speed,
         )
-        self._ball = Ball(*STARTING_BALL_POS, Vector2(*STARTING_BALL_VELOCITY), Vector2(*TEMPORAL_SPEED_DEFAULT))
+        self._ball = Ball(
+            *STARTING_BALL_POS,
+            Vector2(*STARTING_BALL_VELOCITY).mul(self._game_speed),
+            Vector2(*TEMPORAL_SPEED_DEFAULT),
+        )
 
     def resolve_next_tick(self):
         """
@@ -169,8 +195,8 @@ class BasePong:
         This approach is called Conservative Advancement.
         """
         self._is_someone_scored = False
-        total_distance_x = abs((self._ball.temporal_speed.x) * self._ball.velocity.x)
-        total_distance_z = abs((self._ball.temporal_speed.z) * self._ball.velocity.z)
+        total_distance_x = abs((self._ball.temporal_speed.x) * self._ball.velocity.x * self._game_speed)
+        total_distance_z = abs((self._ball.temporal_speed.z) * self._ball.velocity.z * self._game_speed)
         self._ball.temporal_speed.x = max(TEMPORAL_SPEED_DEFAULT[0], self._ball.temporal_speed.x - TEMPORAL_SPEED_DECAY)
         self._ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self._ball.temporal_speed.z - TEMPORAL_SPEED_DECAY)
         current_subtick = 0
@@ -183,11 +209,13 @@ class BasePong:
         while current_subtick <= total_subticks:
             self._check_ball_wall_collision()
             self._check_ball_bumper_collision(ball_subtick_z, ball_subtick_x)
-            self._check_ball_coin_collision(ball_subtick_z, ball_subtick_x)
+            if self.coin:
+                self._check_ball_coin_collision(ball_subtick_z, ball_subtick_x)
             self._check_ball_scored()
             self._move_bumpers(bumper_1_subtick, bumper_2_subtick)
             self._move_ball(ball_subtick_z, ball_subtick_x)
-            self._move_coin()
+            if self.coin:
+                self._move_coin()
 
             current_subtick += 1
 
@@ -200,7 +228,7 @@ class BasePong:
             "bumper_1": {"x": self._bumper_1.x, "z": self._bumper_1.z, "score": self._bumper_1.score},
             "bumper_2": {"x": self._bumper_2.x, "z": self._bumper_2.z, "score": self._bumper_2.score},
             "ball": {"x": self._ball.x, "z": self._ball.z},
-            "coin": {"x": self.coin.x, "z": self.coin.z},
+            "coin": {"x": self.coin.x, "z": self.coin.z} if self.coin else None,
             "is_someone_scored": self._is_someone_scored,
             "last_bumper_collided": "_bumper_1" if self.last_bumper_collided == self._bumper_1 else "_bumper_2",
             "current_buff_or_debuff": self.choose_buff,
@@ -211,6 +239,7 @@ class BasePong:
         self._ball.temporal_speed.x, self._ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
         self._ball.x, self._ball.z = STARTING_BALL_POS
         self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCITY
+        self._ball.mul(self._game_speed)
         self._ball.velocity.z *= direction
 
     def _is_collided_with_ball(self, bumper, ball_subtick_z, ball_subtick_x):
@@ -363,19 +392,47 @@ class MultiplayerPongMatch(BasePong):
     """
 
     id: str
+    tournament_id: None | str
+    bracket_id: None | str
+    is_in_tournament: bool
     game_loop_task: asyncio.Task | None
     waiting_for_players_timer: asyncio.Task | None
     status: MultiplayerPongMatchStatus = MultiplayerPongMatchStatus.PENDING
     pause_event: asyncio.Event
+    time_limit: int
+    ranked: bool
+    _score_to_win: int
     _player_1: Player
     _player_2: Player
 
-    def __init__(self, game_id: str):
-        super().__init__()
+    game_speed_dict = {"slow": 0.75, "medium": 1.0, "fast": 1.25}
+
+    def __init__(
+        self,
+        game_id: str,
+        settings: GameRoomSettings,
+        is_in_tournament: bool,
+        bracket_id: None | str,
+        tournament_id: None | str,
+    ):
+        cool_mode, game_speed, time_limit, ranked, score_to_win = (
+            settings["cool_mode"],
+            settings["game_speed"],
+            settings["time_limit"],
+            settings["ranked"],
+            settings["score_to_win"],
+        )
+        super().__init__(cool_mode, self.game_speed_dict[game_speed])
         self.id = game_id
+        self.is_in_tournament = is_in_tournament
+        self.bracket_id = bracket_id
+        self.tournament_id = tournament_id
+        self.time_limit = time_limit  # TODO: use this
+        self.ranked = ranked
         self.pause_event = asyncio.Event()
-        self.game_loop_task = None
+        self.game_loop_task: asyncio.Task | None = None
         self.waiting_for_players_timer = None
+        self._score_to_win = score_to_win
         self._player_1 = Player(self._bumper_1)
         self._player_2 = Player(self._bumper_2)
 
@@ -444,8 +501,8 @@ class MultiplayerPongMatch(BasePong):
 
     def get_other_player(self, player_id: str) -> Player:
         if player_id == self._player_1.id:
-            return self._player_1
-        return self._player_2
+            return self._player_2
+        return self._player_1
 
     def stop_waiting_for_players_timer(self) -> None:
         timer = self.waiting_for_players_timer
@@ -455,27 +512,11 @@ class MultiplayerPongMatch(BasePong):
 
     def get_result(self) -> tuple[Player, Player] | None:
         """Returns winner and loser or None, if the game is not decided yet."""
-        if self._player_1.bumper.score >= SCORE_TO_WIN:
+        if self._player_1.bumper.score >= self._score_to_win:
             return self._player_1, self._player_2
-        if self._player_2.bumper.score >= SCORE_TO_WIN:
+        if self._player_2.bumper.score >= self._score_to_win:
             return self._player_2, self._player_1
         return None
-
-
-# Logic for client side prediction :
-# - do inputs
-# - send timestamp + control
-# - get input and timestamp and put it inside an array on the server
-# - do the actions with the timestamp, while sending the movement to only the right user. and confirmation of movement
-# for the other one
-
-
-# Logic for client side prediction :
-# - do inputs
-# - send timestamp + control
-# - get input and timestamp and put it inside an array on the server
-# - do the actions with the timestamp, while sending the movement to only the right user. and confirmation of movement
-# for the other one
 
 
 class GameWorkerConsumer(AsyncConsumer):
@@ -517,9 +558,9 @@ class GameWorkerConsumer(AsyncConsumer):
         player_id = event["player_id"]
 
         match = self.matches.get(game_room_id)
-        if match is None or match.status == MultiplayerPongMatchStatus.ENDED:
-            logger.warning(
-                "[GameWorker]: player {%s} disconnected from the non-existent or ended game {%s}",
+        if match is None or match.status == MultiplayerPongMatchStatus.FINISHED:
+            logger.info(
+                "[GameWorker]: player {%s} disconnected from a finished game {%s}",
                 player_id,
                 game_room_id,
             )
@@ -589,30 +630,20 @@ class GameWorkerConsumer(AsyncConsumer):
         """Asynchrounous loop that runs one specific match."""
         logger.info("[GameWorker]: match {%s} has been started", match)
         try:
-            while match.status != MultiplayerPongMatchStatus.ENDED:
+            while match.status != MultiplayerPongMatchStatus.FINISHED:
                 if match.status == MultiplayerPongMatchStatus.PAUSED:
                     await match.pause_event.wait()
                 tick_start_time = asyncio.get_event_loop().time()
                 match.resolve_next_tick()
-                if match.choose_buff != 0:
+                if match.coin and match.choose_buff != 0:
                     asyncio.create_task(
                         self._wait_for_end_of_buff(match, match.last_bumper_collided),
                     )
                     asyncio.create_task(self._wait_for_end_of_buff(match, None))
                 if result := match.get_result():
                     winner, loser = result
-                    elo_change = await self._write_result_to_db(winner, loser)
-                    await self.channel_layer.group_send(
-                        self._to_game_room_group_name(match),
-                        GameServerToClient.PlayerWon(
-                            type="worker_to_client_close",
-                            action="player_won",
-                            winner=winner.as_dict(),
-                            loser=loser.as_dict(),
-                            elo_change=elo_change,
-                            close_code=PongCloseCodes.NORMAL_CLOSURE,
-                        ),
-                    )
+                    match_db, _, _ = await self._write_result_to_db(winner, loser, match, Bracket.FINISHED)
+                    await self._send_player_won_event(match, "player_won", winner, loser, match_db.elo_change)
                     await self._do_after_match_cleanup(match, False)
                     logger.info("[GameWorker]: player {%s} has won the game {%s}", winner.id, match)
                     break
@@ -649,6 +680,16 @@ class GameWorkerConsumer(AsyncConsumer):
                         close_code=PongCloseCodes.CANCELLED,
                     ),
                 )
+                # Special case: notification for the tournament consumer.
+                if match.is_in_tournament:
+                    await Bracket.objects.async_update_finished_bracket(match.bracket_id, 0, 0, 0, Bracket.CANCELLED)
+                    await self.channel_layer.group_send(
+                        f"tournament_{match.tournament_id}",
+                        {
+                            "type": "tournament_game_finished",
+                            "bracket_id": match.bracket_id,
+                        },
+                    )
                 await self._do_after_match_cleanup(match, True)
                 logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", match)
 
@@ -715,28 +756,18 @@ class GameWorkerConsumer(AsyncConsumer):
                 player.reconnection_time -= 0.2
                 logger.info("[GameWorker]: {%.1f} seconds left for player {%s}", player.reconnection_time, player.id)
 
-            if match.status == MultiplayerPongMatchStatus.ENDED:
-                return logger.warning(
-                    "[GameWorker]: players didn't reconnect to non-existent or ended game {%s}. Closing",
+            if match.status == MultiplayerPongMatchStatus.FINISHED:
+                return logger.info(
+                    "[GameWorker]: players didn't reconnect to a finished game {%s}. Closing",
                     match,
                 )
                 return None
 
-            match.status = MultiplayerPongMatchStatus.ENDED
+            match.status = MultiplayerPongMatchStatus.FINISHED
             winner = match.get_other_player(player.id)
-            elo_change = await self._write_result_to_db(winner, player)
-            await self.channel_layer.group_send(
-                self._to_game_room_group_name(match),
-                GameServerToClient.PlayerResigned(
-                    type="worker_to_client_close",
-                    action="player_resigned",
-                    winner=winner.as_dict(),
-                    loser=player.as_dict(),
-                    elo_change=elo_change,
-                    close_code=PongCloseCodes.NORMAL_CLOSURE,
-                ),
-            )
-            await self._do_after_match_cleanup(match, False)
+            match_db, _, _ = await self._write_result_to_db(winner, player, match, "finished")
+            await self._send_player_won_event(match, "player_resigned", winner, player, match_db.elo_change)
+            await self._do_after_match_cleanup(match, True)
             logger.info(
                 "[GameWorker]: player {%s} resigned by disconnecting in the game {%s}. Winner is {%s}",
                 player.id,
@@ -751,7 +782,18 @@ class GameWorkerConsumer(AsyncConsumer):
     async def _add_player_and_create_pending_match(self, event: GameServerToGameWorker.PlayerConnected):
         player_id = event["player_id"]
         game_room_id = event["game_room_id"]
-        match = self.matches[game_room_id] = MultiplayerPongMatch(game_room_id)
+        settings = event["settings"]
+        is_in_tournament = event["is_in_tournament"]
+        bracket_id = event["bracket_id"]
+        tournament_id = event["tournament_id"]
+
+        match = self.matches[game_room_id] = MultiplayerPongMatch(
+            game_room_id,
+            settings,
+            is_in_tournament,
+            bracket_id,
+            tournament_id,
+        )
         match.waiting_for_players_timer = asyncio.create_task(self._wait_for_both_player_task(match))
         player = match.add_player(event)
         await self._send_player_id_and_number_to_player(player, match)
@@ -824,6 +866,8 @@ class GameWorkerConsumer(AsyncConsumer):
         self.matches.pop(str(match), None)
         if match.game_loop_task and not match.game_loop_task.cancelled() and should_cancel:
             match.game_loop_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await match.game_loop_task
         game_room_db: GameRoom = await database_sync_to_async(GameRoom.objects.get)(id=match.id)
         game_room_db.status = GameRoom.CLOSED
         await database_sync_to_async(game_room_db.save)()
@@ -856,31 +900,62 @@ class GameWorkerConsumer(AsyncConsumer):
             match.pause_event.set()
         logger.info("[GameWorker]: game {%s} has been unpaused", match.id)
 
-    async def _write_result_to_db(self, winner: Player, loser: Player) -> int:
-        """
-        Records the results of the match into the database.
-        Unlike Match.objects.resolve(), this function works with Player classes and can be used in async context.
-        """
-        winners_elo, losers_elo, elo_change = Match.objects.calculate_elo_change_for_players(winner.elo, loser.elo)
-        winner.elo = winners_elo
-        loser.elo = losers_elo
-        winner_db: Profile = await database_sync_to_async(Profile.objects.get)(id=winner.profile_id)
-        loser_db: Profile = await database_sync_to_async(Profile.objects.get)(id=loser.profile_id)
-        resolved_match_db: Match = Match(
-            winner=winner_db,
-            loser=loser_db,
-            winners_score=winner.bumper.score,
-            losers_score=loser.bumper.score,
-            elo_change=elo_change,
-            winners_elo=winners_elo,
-            losers_elo=losers_elo,
+    async def _write_result_to_db(
+        self,
+        winner: Player,
+        loser: Player,
+        match: MultiplayerPongMatch,
+        status: Literal["finished", "cancelled"],
+    ) -> int:
+        if not match.is_in_tournament:
+            match_db, winner_db, loser_db = await Match.objects.async_resolve(
+                winner.profile_id,
+                loser.profile_id,
+                winner.bumper.score,
+                loser.bumper.score,
+                match.ranked,
+            )
+            winner.elo = winner_db.elo
+            loser.elo = loser_db.elo
+            return match_db, winner_db, loser_db
+
+        return await Bracket.objects.async_update_finished_bracket(
+            match.bracket_id,
+            winner.profile_id,
+            winner.bumper.score,
+            loser.bumper.score,
+            status,
         )
-        winner_db.elo = winners_elo
-        loser_db.elo = losers_elo
-        await database_sync_to_async(resolved_match_db.save)()
-        await database_sync_to_async(winner_db.save)()
-        await database_sync_to_async(loser_db.save)()
-        return elo_change
+
+    async def _send_player_won_event(
+        self,
+        match: MultiplayerPongMatch,
+        action: Literal["player_won", "player_resigned"],
+        winner: Player,
+        loser: Player,
+        elo_change: int,
+    ):
+        await self.channel_layer.group_send(
+            self._to_game_room_group_name(match),
+            GameServerToClient.PlayerWon(
+                type="worker_to_client_close",
+                action=action,
+                winner=winner.as_dict(),
+                loser=loser.as_dict(),
+                elo_change=elo_change if match.ranked else 0,
+                close_code=PongCloseCodes.NORMAL_CLOSURE,
+            ),
+        )
+
+        # Special case: notification for the tournament consumer.
+        if match.is_in_tournament:
+            await self.channel_layer.group_send(
+                f"tournament_{match.tournament_id}",
+                {
+                    "type": "tournament_game_finished",
+                    "bracket_id": match.bracket_id,
+                },
+            )
 
     # To avoid typing errors.
     def _to_game_room_group_name(self, match: MultiplayerPongMatch):
