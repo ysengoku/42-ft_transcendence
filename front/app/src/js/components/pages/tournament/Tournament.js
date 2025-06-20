@@ -115,7 +115,7 @@ export class Tournament extends HTMLElement {
 
     // =========== For test ================================================
     // pending, tournamentstarting, waitingNextRound, roundpending
-    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
+    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'tournamentstarting');
     // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
@@ -124,13 +124,11 @@ export class Tournament extends HTMLElement {
       return participant.profile.username.toLowerCase() === this.#state.user.username.toLowerCase();
     });
     devLog('User data in tournament:', this.#state.userDataInTournament);
-
     if (!this.#state.userDataInTournament) {
       devLog('User is not in this tournament');
       router.redirect('/tournament-menu');
       return;
     }
-    console.log('User data in tournament:', this.#state.userDataInTournament);
     if (
       this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED &&
       this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER
@@ -159,7 +157,9 @@ export class Tournament extends HTMLElement {
     } else {
       this.findCurrentRound();
       this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
+
       this.findAssignedBracketForUser();
+      devLog("Current user's bracket", this.#state.currentUserBracket);
       if (!this.#state.currentUserBracket) {
         devErrorLog('User is not assigned to any bracket in the current round');
         router.redirect('/home');
@@ -167,12 +167,13 @@ export class Tournament extends HTMLElement {
       }
 
       this.resolveUIStatus[this.#state.tournament.status]();
-      console.log('UI status set to:', this.#state.uiStatus);
       const isUserQualified = this.checkUserStatus();
       if (!isUserQualified) {
         return;
       }
     }
+    devLog('UI status set to:', this.#state.uiStatus);
+
     this.render();
     if (this.#state.uiStatus !== UI_STATUS.CANCELED) {
       socketManager.openSocket('tournament', this.#state.tournamentId);
@@ -204,9 +205,9 @@ export class Tournament extends HTMLElement {
     console.log('Checking user status in tournament:', this.#state.userDataInTournament);
     switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
-        const gameId = this.#state.currentUserBracket.game_id;
-        // router.redirect(`multiplayer-game/${gameId}`); // TODO: activate this line
         devLog('User is playing a match, redirecting to game page:', gameId);
+        const gameId = this.#state.currentUserBracket.game_id;
+        router.redirect(`multiplayer-game/${gameId}`);
         return false;
       case PARTICIPANT_STATUS.ELIMINATED:
         showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'You have been eliminated from the tournament.');
@@ -236,12 +237,26 @@ export class Tournament extends HTMLElement {
           this.#state.uiStatus = UI_STATUS.ROUND_STARTING;
           break;
         case ROUND_STATUS.ONGOING:
-          if (this.#state.currentUserBracket.status === BRACKET_STATUS.ONGOING) {
-            this.#state.uiStatus = UI_STATUS.BRACKET_ONGOING;
-          } else {
-            this.#state.uiStatus = UI_STATUS.WAITING_NEXT_ROUND;
+          switch (this.#state.currentUserBracket.status) {
+            case BRACKET_STATUS.PENDING:
+              this.#state.uiStatus = UI_STATUS.ROUND_STARTING;
+              break;
+            case BRACKET_STATUS.ONGOING:
+              this.#state.uiStatus = UI_STATUS.BRACKET_ONGOING;
+              break;
+            case BRACKET_STATUS.FINISHED:
+              this.#state.uiStatus = UI_STATUS.WAITING_NEXT_ROUND;
+              break;
+            default:
+              devErrorLog('Unknown bracket status:', this.#state.currentUserBracket.status);
           }
-          break;
+        default:
+          devErrorLog(
+            'Cannot resolve UI status. Round status:',
+            this.#state.currentRound.status,
+            'Current bracket status:',
+            this.#state.currentUserBracket.status,
+          );
       }
     },
     [TOURNAMENT_STATUS.CANCELED]: () => {
@@ -286,6 +301,7 @@ export class Tournament extends HTMLElement {
         previous_round: previousRound,
         game_id: this.#state.currentUserBracket.game_id,
       };
+      devLog("User's Game id for the starting round:", this.#state.currentUserBracket.game_id);
       return tournamentRoundStart;
     },
     [UI_STATUS.WAITING_NEXT_ROUND]: () => {
@@ -311,6 +327,7 @@ export class Tournament extends HTMLElement {
       this.tournamentContentWrapper.removeChild(this.tournamentContentWrapper.firstChild);
     }
     let content = null;
+    devLog('Updating content for UI status:', this.#state.uiStatus);
     content = this.tournamentContent[this.#state.uiStatus]();
 
     if (content) {
@@ -329,7 +346,7 @@ export class Tournament extends HTMLElement {
    * @description Initializes the tournament state and updates the UI.
    */
   handleTournamentStart(data) {
-    if (data.tournament_id !== this.#state.tournamentId) {
+    if (data.tournament_id !== this.#state.tournamentId || !this.#state.tournament) {
       return;
     }
     this.#state.currentRoundNumber = 1;
@@ -423,7 +440,7 @@ export class Tournament extends HTMLElement {
   }
 
   /**
-   * @description Cancels the tournament on cencel button click by the creator.
+   * @description Cancels the tournament on cancel button click by the creator.
    */
   async cancelTournament() {
     if (!this.#state.creator.username || this.#state.creator.username !== this.#state.user.username) {
