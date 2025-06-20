@@ -15,6 +15,7 @@ import { router } from '@router';
 import { auth } from '@auth';
 import { sessionExpiredToast } from '@utils';
 
+/* eslint no-var: "off" */
 export class Game extends HTMLElement {
   #state = {
     gameOptions: null,
@@ -451,6 +452,7 @@ export class Game extends HTMLElement {
       };
     };
 
+    /* eslint-disable new-cap */
     const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
     const WallFactory = (posX, posY, posZ) => {
@@ -487,6 +489,7 @@ export class Game extends HTMLElement {
         fenceGlb,
       };
     };
+    /* eslint-disable new-cap */
     const Walls = [
       WallFactory(10, 2.5, 0),
       WallFactory(10, 2.5, 7.5),

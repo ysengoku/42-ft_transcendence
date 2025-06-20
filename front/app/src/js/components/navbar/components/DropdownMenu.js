@@ -94,9 +94,12 @@ export class DropdownMenu extends HTMLElement {
           ? `
         <div class="dropdown-divider"></div>
         <div class="dropdown-item" id="dropdown-item-logout">Logout</div>
-      `
+        `
           : ''
       }
+
+      <div class="dropdown-divider"></div>
+      <credits-accordion></credits-accordion>
     </div>
     `;
   }
