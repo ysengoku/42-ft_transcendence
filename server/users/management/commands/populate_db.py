@@ -214,7 +214,6 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
     options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
     profiles = [u.profile for u in users.values()]
     # list_users = list(users.values())
-
     for i in range(2):
         name = f"Tournament {i + 1}"
         date = generate_random_date()
