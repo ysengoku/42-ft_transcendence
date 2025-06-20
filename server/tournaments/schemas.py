@@ -5,9 +5,10 @@ from uuid import UUID
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from ninja import Schema
-from pydantic import model_validator, ConfigDict
+from pydantic import ConfigDict, model_validator
+
 from common.schemas import GameSettingsSchema, ProfileMinimalSchema
-from tournaments.models import Participant, Tournament
+from tournaments.models import Bracket, Participant, Tournament
 
 
 class ParticipantSchema(Schema):
@@ -25,6 +26,22 @@ class BracketSchema(Schema):
     score_p1: int
     score_p2: int
     model_config = ConfigDict(from_attributes=True)
+
+    @staticmethod
+    def resolve_score_p1(obj: Bracket):
+        if not obj.winner:
+            return 0
+        if obj.winner.alias == obj.participant1.alias:
+            return obj.winners_score
+        return obj.losers_score
+
+    @staticmethod
+    def resolve_score_p2(obj: Bracket):
+        if not obj.winner:
+            return 0
+        if obj.winner.alias == obj.participant2.alias:
+            return obj.winners_score
+        return obj.losers_score
 
 
 class RoundSchema(Schema):
