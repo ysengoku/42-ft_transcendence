@@ -7,6 +7,7 @@ import { router } from '@router';
 import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 
+/* eslint no-var: "off" */
 export class MultiplayerGame extends HTMLElement {
   #navbarHeight = 64;
 
