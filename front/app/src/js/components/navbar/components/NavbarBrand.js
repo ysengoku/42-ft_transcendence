@@ -13,7 +13,7 @@ export class NavbarBrand extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.img?.removeEventListener('click', this.handleClick);
+    this.removeEventListener('click', this.handleClick);
   }
 
   setLoginStatus(value) {
@@ -33,8 +33,9 @@ export class NavbarBrand extends HTMLElement {
     this.img.height = 20;
     this.img.alt = 'Peacemakers';
     this.img.classList.add('d-inline-block', 'align-center');
+    this.img.style.verticalAlign = 'middle';
 
-    this.img.addEventListener('click', this.handleClick);
+    this.addEventListener('click', this.handleClick);
     this.link.appendChild(this.img);
     this.innerHTML = '';
     this.appendChild(this.link);
