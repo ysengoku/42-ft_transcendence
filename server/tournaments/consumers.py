@@ -68,7 +68,11 @@ class TournamentConsumer(WebsocketConsumer):
         if tournament.status == Tournament.ONGOING:
             logger.debug("THIS TOURNAMENT IS UNGOINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
             round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
-            new_round = tournament.rounds.get(number=round_number)
+            try:
+                new_round = tournament.rounds.get(number=round_number)
+            except Round.DoesNotExist:
+                logger.warning("This round should exist")
+                return
             self.send_start_round_message(round_number, new_round)
 
     def disconnect(self, close_code):
