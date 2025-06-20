@@ -34,4 +34,3 @@ app created:
 ```
 https://myaccount.google.com/apppasswords?
 ```
-![alt text](image.png)
