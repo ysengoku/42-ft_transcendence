@@ -3,6 +3,7 @@ import contextlib
 import logging
 import math
 import random
+import traceback
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Literal
@@ -20,6 +21,7 @@ from pong.game_protocol import (
 )
 from pong.models import GameRoom, Match
 from tournaments.models import Bracket
+from users.models import Profile
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -642,8 +644,14 @@ class GameWorkerConsumer(AsyncConsumer):
                     asyncio.create_task(self._wait_for_end_of_buff(match, None))
                 if result := match.get_result():
                     winner, loser = result
-                    match_db, _, _ = await self._write_result_to_db(winner, loser, match, Bracket.FINISHED)
-                    await self._send_player_won_event(match, "player_won", winner, loser, match_db.elo_change)
+                    match_db = await self._write_result_to_db(winner, loser, match, Bracket.FINISHED)
+                    await self._send_player_won_event(
+                        match,
+                        "player_won",
+                        winner,
+                        loser,
+                        match_db.elo_change if not match.is_in_tournament else 0,
+                    )
                     await self._do_after_match_cleanup(match, False)
                     logger.info("[GameWorker]: player {%s} has won the game {%s}", winner.id, match)
                     break
@@ -687,6 +695,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 # Special case: notification for the tournament consumer.
                 if match.is_in_tournament:
                     await Bracket.objects.async_update_finished_bracket(match.bracket_id, 0, 0, 0, Bracket.CANCELLED)
+                    print(f"tournament_{match.tournament_id}")
                     await self.channel_layer.group_send(
                         f"tournament_{match.tournament_id}",
                         {
@@ -769,8 +778,10 @@ class GameWorkerConsumer(AsyncConsumer):
 
             match.status = MultiplayerPongMatchStatus.FINISHED
             winner = match.get_other_player(player.id)
-            match_db, _, _ = await self._write_result_to_db(winner, player, match, "finished")
-            await self._send_player_won_event(match, "player_resigned", winner, player, match_db.elo_change)
+            match_db = await self._write_result_to_db(winner, player, match, "finished")
+            await self._send_player_won_event(
+                match, "player_resigned", winner, player, match_db.elo_change if not match.is_in_tournament else 0,
+            )
             await self._do_after_match_cleanup(match, True)
             logger.info(
                 "[GameWorker]: player {%s} resigned by disconnecting in the game {%s}. Winner is {%s}",
@@ -910,7 +921,7 @@ class GameWorkerConsumer(AsyncConsumer):
         loser: Player,
         match: MultiplayerPongMatch,
         status: Literal["finished", "cancelled"],
-    ) -> int:
+    ) -> Match | Bracket:
         if not match.is_in_tournament:
             match_db, winner_db, loser_db = await Match.objects.async_resolve(
                 winner.profile_id,
@@ -921,7 +932,7 @@ class GameWorkerConsumer(AsyncConsumer):
             )
             winner.elo = winner_db.elo
             loser.elo = loser_db.elo
-            return match_db, winner_db, loser_db
+            return match_db
 
         return await Bracket.objects.async_update_finished_bracket(
             match.bracket_id,
