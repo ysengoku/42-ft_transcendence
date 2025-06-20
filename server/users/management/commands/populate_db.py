@@ -213,27 +213,38 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
     ]
     options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
     profiles = [u.profile for u in users.values()]
+    # list_users = list(users.values())
 
-    for i in range(3):
+    for i in range(2):
         name = f"Tournament {i + 1}"
         date = generate_random_date()
-        status = choice([Tournament.PENDING, Tournament.ONGOING, Tournament.FINISHED])
+        option_for_status = [Tournament.ONGOING, Tournament.FINISHED]
+        status = option_for_status[i]
         user = choice(list(users.values()))
+        # user = choice(list_users)
+        # list_users.remove(user)
+
         required = choice(options)
 
-        tournament = Tournament.objects.create(
-            name=name,
-            date=date,
-            status=status,
+        print(name, " : creator : ", user.username, " requires ", required, " participants")
+        tournament = Tournament.objects.validate_and_create(
             creator=user.profile,
+            tournament_name=name,
             required_participants=required,
+            alias="The creator",
+            # date=date,
+            # status=status,
         )
+        tournament.status = status
+        tournament.save(update_fields=["status"])
 
         available_aliases = dummy_aliases.copy()
 
         participants = sample(profiles, k=required)
         participant_objs = []
+        i = 0
         for p in participants:
+            i += 1
             alias = available_aliases.pop(randint(0, len(available_aliases) - 1))
             part = Participant.objects.create(
                 profile=p,
@@ -242,6 +253,7 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
                 current_round=0,
             )
             participant_objs.append(part)
+            print("Participant ", p.user.username, " : ", i, " on ", required)
 
         # ongoing/finished の場合はラウンド生成・状態更新
         if status in (Tournament.ONGOING, Tournament.FINISHED):
@@ -478,6 +490,7 @@ class Command(BaseCommand):
 
         generate_matches(users, life_enjoyer)
         # generate_tournaments(users)
+        modified_generate_tournaments(users)
         put_avatars()
 
         # MFA users
