@@ -49,8 +49,11 @@ class TournamentQuerySet(models.QuerySet):
         tournament_name: str,
         required_participants: int,
         alias: str,
-        settings: GameRoomSettings,
+        settings: GameRoomSettings | None = None,
     ):
+        if not settings:
+            settings = get_default_game_room_settings()
+
         tournament = self.model(
             name=tournament_name,
             creator=creator,
