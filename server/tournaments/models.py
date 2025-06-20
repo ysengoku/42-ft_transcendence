@@ -192,19 +192,20 @@ class BracketQuerySet(models.QuerySet):
         Method for updated a Bracket with the data of a finished game.
         Meant to be used by the game server.
         """
-        bracket: Bracket = database_sync_to_async(self.get)(id=bracket_id)
-        with transaction.atomic():
-            if status == "finished":
-                winner_participant: Participant = database_sync_to_async(self.get)(profile__id=winner_profile_id)
-                bracket.winners_score = winners_score
-                bracket.losers_score = losers_score
-                bracket.winner = winner_participant
-                bracket.status = status
-            elif status == "cancelled":
-                bracket.winner = None
-                bracket.status = status
-            database_sync_to_async(bracket.save)()
-            return bracket
+        bracket: Bracket = await database_sync_to_async(self.get)(id=bracket_id)
+        if status == "finished":
+            winner_participant: Participant = await database_sync_to_async(Participant.objects.get)(
+                profile__id=winner_profile_id,
+            )
+            bracket.winners_score = winners_score
+            bracket.losers_score = losers_score
+            bracket.winner = winner_participant
+            bracket.status = status
+        elif status == "cancelled":
+            bracket.winner = None
+            bracket.status = status
+        await database_sync_to_async(bracket.save)()
+        return bracket
 
 
 class Bracket(models.Model):
