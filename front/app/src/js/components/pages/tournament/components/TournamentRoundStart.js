@@ -72,7 +72,7 @@ export class TournamentRoundStart extends HTMLElement {
     const countdown = setInterval(() => {
       this.timer.textContent = `Starting in ${timeLeft} seconds...`;
       timeLeft -= 1;
-      if (timeLeft <= 0) {
+      if (timeLeft < 0) {
         clearInterval(countdown);
         router.redirect(`multiplayer-game/${this.#state.gameId}`);
       }
