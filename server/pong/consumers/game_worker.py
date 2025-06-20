@@ -106,7 +106,7 @@ class Player:
     id: str = ""
     connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
     # TODO: move time to constants
-    reconnection_time: int = 1
+    reconnection_time: int = 3
     reconnection_timer: asyncio.Task | None = None
     profile_id: int = -1
     name: str = ""
@@ -670,7 +670,11 @@ class GameWorkerConsumer(AsyncConsumer):
         """
         try:
             logger.info("[GameWorker]: waiting for players to connect to the game {%s}", match)
-            await asyncio.sleep(5)
+            # TODO: remove this later
+            if match.is_in_tournament:
+                await asyncio.sleep(15)
+            else:
+                await asyncio.sleep(5)
             if len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) < PLAYERS_REQUIRED:
                 await self.channel_layer.group_send(
                     self._to_game_room_group_name(match),
