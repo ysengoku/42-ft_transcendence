@@ -67,7 +67,7 @@ class TournamentQuerySet(models.QuerySet):
         """Gets the active tournament where user is still a playing participant."""
         participant: Participant = Participant.objects.filter(
             ~Q(status__in=[Participant.PENDING, Participant.PLAYING]),
-            tournament__status__in=[self.model.ELIMINATED, self.model.WINNER],
+            tournament__status__in=[self.model.PENDING, self.model.ONGOING],
             profile=profile,
         ).first()
         if participant:
