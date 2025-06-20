@@ -38,11 +38,13 @@ export class Game extends HTMLElement {
     this.render();
   }
 
+  setQueryParam(param) {
+    this.#state.gameType = param.get('type') || 'classic';
+  }
+
   setState() {
     const options = localStorage.getItem('gameOptions');
-    const gameType = localStorage.getItem('gameType');
     this.#state.gameOptions = options ? JSON.parse(options) : null;
-    this.#state.gameType = gameType ? gameType : 'classic';
     devLog('Game options:', this.#state.gameOptions, 'Game type:', this.#state.gameType);
   }
 
