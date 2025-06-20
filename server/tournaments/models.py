@@ -6,8 +6,8 @@ from typing import Literal
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
-from django.db.models import Prefetch
+from django.db import models
+from django.db.models import Prefetch, Q
 from django.utils import timezone
 
 from pong.game_protocol import GameRoomSettings
@@ -63,11 +63,16 @@ class TournamentQuerySet(models.QuerySet):
         tournament.add_participant(creator, alias)
         return tournament
 
-    def get_active_tournament(self, profile: Profile):
-        return self.filter(
-            participants__profile=profile,
-            status__in=[self.model.PENDING, self.model.ONGOING],
+    def get_active_tournament(self, profile: Profile) -> None | Tournament:
+        """Gets the active tournament where user is still a playing participant."""
+        participant: Participant = Participant.objects.filter(
+            ~Q(status__in=[Participant.PENDING, Participant.PLAYING]),
+            tournament__status__in=[self.model.ELIMINATED, self.model.WINNER],
+            profile=profile,
         ).first()
+        if participant:
+            return participant.tournament
+        return None
 
 
 class Tournament(models.Model):
