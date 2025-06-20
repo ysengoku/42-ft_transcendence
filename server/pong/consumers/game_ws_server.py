@@ -58,6 +58,7 @@ class GameServerConsumer(WebsocketConsumer):
         player_id = str(self.player.id)
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"player_{player_id}", self.channel_name)
+        is_in_tournament = self.game_room.is_in_tournament()
         async_to_sync(self.channel_layer.send)(
             "game",
             GameServerToGameWorker.PlayerConnected(
@@ -69,6 +70,9 @@ class GameServerConsumer(WebsocketConsumer):
                 avatar=profile.avatar,
                 elo=profile.elo,
                 settings=self.game_room.settings,
+                is_in_tournament=is_in_tournament,
+                bracket_id=str(self.game_room.bracket.id) if is_in_tournament else None,
+                tournament_id=str(self.game_room.bracket.round.tournament.id) if is_in_tournament else None,
             ),
         )
 
