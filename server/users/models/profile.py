@@ -211,6 +211,7 @@ class Profile(models.Model):
             Path.unlink(self.profile_picture.path)
 
     def update_avatar(self, new_avatar) -> None:
+        """Validates an avatar, and if its valid, deletes an old avatar and sets a new one. Does not saves the model."""
         self.validate_avatar(new_avatar)
         self.delete_avatar()
         self.profile_picture = new_avatar
