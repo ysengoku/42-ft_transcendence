@@ -135,13 +135,29 @@ def put_avatars():
     darksmelo = Profile.objects.get(user__username="Darksmelo")
     rick = Profile.objects.get(user__username="Rick")
 
+    def get_content_type(filename):
+        ext = Path(filename).suffix.lower()
+        if ext == ".jpg" or ext == ".jpeg":
+            return "image/jpeg"
+        if ext == ".png":
+            return "image/png"
+        if ext == ".webp":
+            return "image/webp"
+        return "application/octet-stream"
+
     def put_one_avatar(file, profile):
         file_path = "/app/media/avatars/" + file
         with Path(file_path).open("rb") as f:
-            uploaded = SimpleUploadedFile(name=file, content=f.read(), content_type="image/jpeg")
+            content_type = get_content_type(file_path)
+            uploaded = SimpleUploadedFile(name=file, content=f.read(), content_type=content_type)
+            f.seek(0)
             profile.update_avatar(uploaded)
             profile.save()
+        av = profile.avatar
+        print("I putted avatar for ", profile.user.username, " and it is ", av, " :D")
+        print("The profile.profile_picture is ", profile.profile_picture, " :D")
 
+    put_one_avatar("rick_roll.webp", rick)
     put_one_avatar("taki.jpg", taki)
     put_one_avatar("felix.jpg", felix)
     put_one_avatar("grandma.jpg", grandma)
@@ -151,7 +167,6 @@ def put_avatars():
     put_one_avatar("pedro2.jpg", pedro2)
     put_one_avatar("alice.jpg", alice)
     put_one_avatar("darksmelo.png", darksmelo)
-    put_one_avatar("rick_roll.webp", rick)
 
 
 def generate_matches(users: dict[str, User], life_enjoyer: User):
@@ -478,8 +493,8 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
-        generate_tournaments(users)
-        modified_generate_tournaments(users)
+        # generate_tournaments(users)
+        # modified_generate_tournaments(users)
         put_avatars()
 
         # MFA users
