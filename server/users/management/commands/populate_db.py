@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 from random import choice, randint, randrange, sample
 
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -122,36 +124,34 @@ def generate_users() -> tuple[list[User], User]:
 
 
 def put_avatars():
-    from django.core.files.uploadedfile import SimpleUploadedFile
-
-    Taki = Profile.objects.get(user__username="Taki")
-    Felix = Profile.objects.get(user__username="Felix")
-    Grandma = Profile.objects.get(user__username="Grandma")
-    Grandpa = Profile.objects.get(user__username="Grandpa")
-    Pedro = Profile.objects.get(user__username="Pedro")
-    Pedro1 = Profile.objects.get(user__username="Pedro1")
-    Pedro2 = Profile.objects.get(user__username="Pedro2")
-    Alice = Profile.objects.get(user__username="alice")
-    Darksmelo = Profile.objects.get(user__username="Darksmelo")
-    Rick = Profile.objects.get(user__username="Rick")
+    taki = Profile.objects.get(user__username="Taki")
+    felix = Profile.objects.get(user__username="Felix")
+    grandma = Profile.objects.get(user__username="Grandma")
+    grandpa = Profile.objects.get(user__username="Grandpa")
+    pedro = Profile.objects.get(user__username="Pedro")
+    pedro1 = Profile.objects.get(user__username="Pedro1")
+    pedro2 = Profile.objects.get(user__username="Pedro2")
+    alice = Profile.objects.get(user__username="alice")
+    darksmelo = Profile.objects.get(user__username="Darksmelo")
+    rick = Profile.objects.get(user__username="Rick")
 
     def put_one_avatar(file, profile):
         file_path = "/app/media/avatars/" + file
-        with open(file_path, "rb") as f:
+        with Path(file_path).open("rb") as f:
             uploaded = SimpleUploadedFile(name=file, content=f.read(), content_type="image/jpeg")
             profile.update_avatar(uploaded)
             profile.save()
 
-    put_one_avatar("taki.jpg", Taki)
-    put_one_avatar("felix.jpg", Felix)
-    put_one_avatar("grandma.jpg", Grandma)
-    put_one_avatar("grandpa.jpg", Grandpa)
-    put_one_avatar("pedro.jpg", Pedro)
-    put_one_avatar("pedro1.jpg", Pedro1)
-    put_one_avatar("pedro2.jpg", Pedro2)
-    put_one_avatar("alice.jpg", Alice)
-    put_one_avatar("darksmelo.png", Darksmelo)
-    put_one_avatar("rick_roll.webp", Rick)
+    put_one_avatar("taki.jpg", taki)
+    put_one_avatar("felix.jpg", felix)
+    put_one_avatar("grandma.jpg", grandma)
+    put_one_avatar("grandpa.jpg", grandpa)
+    put_one_avatar("pedro.jpg", pedro)
+    put_one_avatar("pedro1.jpg", pedro1)
+    put_one_avatar("pedro2.jpg", pedro2)
+    put_one_avatar("alice.jpg", alice)
+    put_one_avatar("darksmelo.png", darksmelo)
+    put_one_avatar("rick_roll.webp", rick)
 
 
 def generate_matches(users: dict[str, User], life_enjoyer: User):
@@ -470,16 +470,6 @@ def generate_tournaments(users: dict[str, User]) -> None:
                 tournament.save()
 
 
-def generate_empty_tournament(user: User) -> Tournament:
-    return Tournament.objects.create(
-        name="Empty Tournament",
-        date=generate_random_date(),
-        status=Tournament.PENDING,
-        creator=user.profile,
-        required_participants=0,
-    )
-
-
 class Command(BaseCommand):
     help = "Populates db with a dummy data"
 
@@ -489,7 +479,7 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
-        # generate_tournaments(users)
+        generate_tournaments(users)
         modified_generate_tournaments(users)
         put_avatars()
 
