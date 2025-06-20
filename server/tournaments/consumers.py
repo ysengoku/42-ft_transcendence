@@ -193,7 +193,6 @@ class TournamentConsumer(WebsocketConsumer):
         logger.debug(brackets)
         for bracket in brackets:
             game_room = self.create_tournament_game_room(bracket.participant1, bracket.participant2)
-            bracket.status = Bracket.ONGOING
             bracket.game_room = game_room
             bracket.save()
             logger.debug(bracket)
