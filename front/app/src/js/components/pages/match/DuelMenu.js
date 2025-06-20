@@ -301,25 +301,15 @@ export class DuelMenu extends HTMLElement {
       return null;
     }
     let queryParams = '';
-    if (this.#state.options.score_to_win !== 'any') {
-      queryParams += `?score_to_win=${this.#state.options.score_to_win}`;
-    }
-    if (this.#state.options.game_speed !== 'any') {
-      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-      queryParams += `game_speed=${this.#state.options.game_speed}`;
-    }
-    if (this.#state.options.time_limit !== 'any') {
-      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-      queryParams += `time_limit=${this.#state.options.time_limit}`;
-    }
-    if (this.#state.options.ranked !== 'any') {
-      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-      queryParams += `ranked=${this.#state.options.ranked}`;
-    }
-    if (this.#state.options.cool_mode !== 'any') {
-      queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-      queryParams += `cool_mode=${this.#state.options.cool_mode}`;
-    }
+    queryParams += `?score_to_win=${this.#state.options.score_to_win}`;
+    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+    queryParams += `game_speed=${this.#state.options.game_speed}`;
+    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+    queryParams += `time_limit=${this.#state.options.time_limit}`;
+    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+    queryParams += `ranked=${this.#state.options.ranked}`;
+    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+    queryParams += `cool_mode=${this.#state.options.cool_mode}`;
     return queryParams;
   }
 

@@ -240,12 +240,12 @@ def generate_tournaments(users: dict[str, User]) -> None:
                     )
 
                     if bracket_status == Tournament.FINISHED:
-                        s1, s2 = randint(0, 3), randint(0, 3)
+                        s1, s2 = randint(0, 4), randint(0, 4)
                         if s1 == s2:
                             s1 += 1
-                        bracket.score_p1, bracket.score_p2 = s1, s2
                         winner = p1 if s1 > s2 else p2
                         loser = p2 if s1 > s2 else p1
+                        bracket.winners_score, bracket.losers_score = max(s1, s2), min(s1, s2)
                         bracket.winner = winner
                         bracket.score = f"{s1}-{s2}"
                         bracket.save()
@@ -260,12 +260,12 @@ def generate_tournaments(users: dict[str, User]) -> None:
                         next_round.append(winner)
                     elif status == Tournament.ONGOING:
                         if randint(0, 1):
-                            s1, s2 = randint(0, 3), randint(0, 3)
+                            s1, s2 = randint(0, 4), randint(0, 4)
                             if s1 == s2:
                                 s2 += 1
-                            bracket.score_p1, bracket.score_p2 = s1, s2
                             winner = p1 if s1 > s2 else p2
                             loser = p2 if s1 > s2 else p1
+                            bracket.winners_score, bracket.losers_score = max(s1, s2), min(s1, s2)
                             bracket.winner = winner
                             bracket.score = f"{s1}-{s2}"
                             bracket.status = Bracket.FINISHED

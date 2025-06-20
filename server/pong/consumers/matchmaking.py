@@ -38,7 +38,7 @@ class MatchmakingConsumer(WebsocketConsumer):
             return
 
         self.game_room_settings = self._parse_game_room_settings(self.scope["query_string"])
-        if not self.game_room_settings:
+        if self.game_room_settings is None:
             logger.warning("[Matchmaking.connect]: invalid game room settings were given")
             self.close(PongCloseCodes.BAD_DATA)
             return
@@ -188,7 +188,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         if candidate_room:
             locked_candidate_room: GameRoom | None = (
                 GameRoom.objects.select_for_update()
-                .filter(id=candidate_room.id, status=GameRoom.PENDING, settings=self.game_room_settings)
+                .filter(id=candidate_room.id, status=GameRoom.PENDING, settings__contains=self.game_room_settings)
                 .first()
             )
             if locked_candidate_room and locked_candidate_room.players.count() < PLAYERS_REQUIRED:
@@ -217,6 +217,12 @@ class MatchmakingConsumer(WebsocketConsumer):
             for setting_key, setting_value in decoded_game_room_query_parameters.items():
                 if setting_key not in game_room_settings:
                     return None
+
+                # if the value is "any", it means that the user does not care and we delete the key altogether
+                if setting_value == "any":
+                    del game_room_settings[setting_key]
+                    continue
+
                 setting_type = type(game_room_settings[setting_key])
                 if setting_type is bool:
                     game_room_settings[setting_key] = setting_value and setting_value.lower() != "false"
@@ -224,19 +230,27 @@ class MatchmakingConsumer(WebsocketConsumer):
                     game_room_settings[setting_key] = setting_type(setting_value)
 
             ### CHECKS FOR VALUE RANGES CORRECTNESS ###
-            if game_room_settings["game_speed"] not in ["slow", "medium", "fast"]:
+            if "game_speed" in game_room_settings and game_room_settings["game_speed"] not in [
+                "slow",
+                "medium",
+                "fast",
+            ]:
                 return None
 
-            provided_time_limit = game_room_settings["time_limit"]
+            provided_time_limit = game_room_settings.get("time_limit")
             min_time_limit = 1
             max_time_limit = 5
-            if provided_time_limit < min_time_limit or provided_time_limit > max_time_limit:
+            if provided_time_limit and (
+                provided_time_limit < min_time_limit or provided_time_limit > max_time_limit
+            ):
                 return None
 
-            provided_score_to_win = game_room_settings["score_to_win"]
+            provided_score_to_win = game_room_settings.get("score_to_win")
             min_score_to_win = 3
             max_score_to_win = 20
-            if provided_score_to_win < min_score_to_win or provided_score_to_win > max_score_to_win:
+            if provided_score_to_win and (
+                provided_score_to_win < min_score_to_win or provided_score_to_win > max_score_to_win
+            ):
                 return None
 
             return game_room_settings
