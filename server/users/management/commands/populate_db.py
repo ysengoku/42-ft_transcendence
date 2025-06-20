@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 from random import choice, randint, randrange, sample
 
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -55,6 +57,7 @@ def generate_users() -> tuple[list[User], User]:
 
     # special user who has no data on itself
     User.objects.create_user("User0", email="user0@gmail.com", password="123")
+    User.objects.create_user("Rick", email="rick@roll.com", password="123")
 
     users = {}
     names_and_elo = [
@@ -79,6 +82,10 @@ def generate_users() -> tuple[list[User], User]:
         ("emuminov", 2500),
         ("Darksmelo", 2500),
         ("faboussa", 2500),
+        ("Taki", 1500),
+        ("Felix", 2000),
+        ("Grandma", 5000),
+        ("Grandpa", 4200),
     ]
 
     for name, elo in names_and_elo:
@@ -114,6 +121,37 @@ def generate_users() -> tuple[list[User], User]:
             life_enjoyer.profile.add_friend(user.profile)
     life_enjoyer.profile.save()
     return users, life_enjoyer
+
+
+def put_avatars():
+    taki = Profile.objects.get(user__username="Taki")
+    felix = Profile.objects.get(user__username="Felix")
+    grandma = Profile.objects.get(user__username="Grandma")
+    grandpa = Profile.objects.get(user__username="Grandpa")
+    pedro = Profile.objects.get(user__username="Pedro")
+    pedro1 = Profile.objects.get(user__username="Pedro1")
+    pedro2 = Profile.objects.get(user__username="Pedro2")
+    alice = Profile.objects.get(user__username="alice")
+    darksmelo = Profile.objects.get(user__username="Darksmelo")
+    rick = Profile.objects.get(user__username="Rick")
+
+    def put_one_avatar(file, profile):
+        file_path = "/app/media/avatars/" + file
+        with Path(file_path).open("rb") as f:
+            uploaded = SimpleUploadedFile(name=file, content=f.read(), content_type="image/jpeg")
+            profile.update_avatar(uploaded)
+            profile.save()
+
+    put_one_avatar("taki.jpg", taki)
+    put_one_avatar("felix.jpg", felix)
+    put_one_avatar("grandma.jpg", grandma)
+    put_one_avatar("grandpa.jpg", grandpa)
+    put_one_avatar("pedro.jpg", pedro)
+    put_one_avatar("pedro1.jpg", pedro1)
+    put_one_avatar("pedro2.jpg", pedro2)
+    put_one_avatar("alice.jpg", alice)
+    put_one_avatar("darksmelo.png", darksmelo)
+    put_one_avatar("rick_roll.webp", rick)
 
 
 def generate_matches(users: dict[str, User], life_enjoyer: User):
@@ -158,6 +196,148 @@ def generate_matches(users: dict[str, User], life_enjoyer: User):
                 )
 
 
+def modified_generate_tournaments(users: dict[str, User]) -> None:
+    dummy_aliases = [
+        "RedFalcon",
+        "BlueTiger",
+        "SilverWolf",
+        "GoldenEagle",
+        "ShadowFox",
+        "RedDragon",
+        "EmeraldLion",
+        "NightHawk",
+        "MysticBear",
+        "StormRider",
+        "CosmicWhale",
+        "PhantomCat",
+    ]
+    options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
+    profiles = [u.profile for u in users.values()]
+    # list_users = list(users.values())
+    for i in range(2):
+        name = f"Tournament {i + 1}"
+        date = generate_random_date()
+        option_for_status = [Tournament.ONGOING, Tournament.FINISHED]
+        status = option_for_status[i]
+        user = choice(list(users.values()))
+        # user = choice(list_users)
+        # list_users.remove(user)
+
+        required = choice(options)
+
+        print(name, " : creator : ", user.username, " requires ", required, " participants")
+        tournament = Tournament.objects.validate_and_create(
+            creator=user.profile,
+            tournament_name=name,
+            required_participants=required,
+            alias="The creator",
+            # date=date,
+            # status=status,
+        )
+        tournament.status = status
+        tournament.save(update_fields=["status"])
+
+        available_aliases = dummy_aliases.copy()
+
+        participants = sample(profiles, k=required)
+        participant_objs = []
+        i = 0
+        for p in participants:
+            i += 1
+            alias = available_aliases.pop(randint(0, len(available_aliases) - 1))
+            part = Participant.objects.create(
+                profile=p,
+                tournament=tournament,
+                alias=alias,
+                current_round=0,
+            )
+            participant_objs.append(part)
+            print("Participant ", p.user.username, " : ", i, " on ", required)
+
+        # ongoing/finished の場合はラウンド生成・状態更新
+        if status in (Tournament.ONGOING, Tournament.FINISHED):
+            total_rounds = 2 if required == 4 else 3
+            current = participant_objs.copy()
+
+            for rnd in range(1, total_rounds + 1):
+                for part in current:
+                    part.status = "playing"
+                    part.current_round = rnd
+                    part.save()
+
+                rnd_status = (
+                    Tournament.FINISHED
+                    if status == Tournament.FINISHED or (status == Tournament.ONGOING and rnd < total_rounds)
+                    else Tournament.PENDING
+                )
+                rnd_obj = Round.objects.create(
+                    tournament=tournament,
+                    number=rnd,
+                    status=rnd_status,
+                )
+
+                next_round = []
+                for j in range(0, len(current), 2):
+                    p1 = current[j]
+                    p2 = current[j + 1]
+                    bracket_status = Tournament.FINISHED if rnd_status == Tournament.FINISHED else Tournament.ONGOING
+                    bracket = Bracket.objects.create(
+                        round=rnd_obj,
+                        participant1=p1,
+                        participant2=p2,
+                        status=bracket_status,
+                    )
+
+                    if bracket_status == Tournament.FINISHED:
+                        s1, s2 = randint(0, 3), randint(0, 3)
+                        if s1 == s2:
+                            s1 += 1
+                        bracket.score_p1, bracket.score_p2 = s1, s2
+                        winner = p1 if s1 > s2 else p2
+                        loser = p2 if s1 > s2 else p1
+                        bracket.winner = winner
+                        bracket.score = f"{s1}-{s2}"
+                        bracket.save()
+
+                        winner.status = "playing" if rnd < total_rounds else "winner"
+                        loser.status = "eliminated"
+                        loser.current_round = rnd
+                        winner.current_round = rnd + (0 if rnd < total_rounds else rnd)
+                        winner.save()
+                        loser.save()
+
+                        next_round.append(winner)
+                    elif status == Tournament.ONGOING:
+                        if randint(0, 1):
+                            s1, s2 = randint(0, 3), randint(0, 3)
+                            if s1 == s2:
+                                s2 += 1
+                            bracket.score_p1, bracket.score_p2 = s1, s2
+                            winner = p1 if s1 > s2 else p2
+                            loser = p2 if s1 > s2 else p1
+                            bracket.winner = winner
+                            bracket.score = f"{s1}-{s2}"
+                            bracket.status = Bracket.FINISHED
+                            bracket.save()
+
+                            winner.status = Participant.PLAYING
+                            loser.status = Participant.ELIMINATED
+                            winner.current_round = rnd
+                            loser.current_round = rnd
+                            winner.save()
+                            loser.save()
+
+                            next_round.append(winner)
+                current = next_round
+
+            final = Round.objects.get(tournament=tournament, number=total_rounds)
+            finished_brackets = final.brackets.filter(status=Tournament.FINISHED)
+            if finished_brackets.exists():
+                champ = finished_brackets.order_by("?").first().winner
+                tournament.winner = champ
+                tournament.save()
+
+
 def generate_tournaments(users: dict[str, User]) -> None:
     dummy_aliases = [
         "RedFalcon",
@@ -176,7 +356,7 @@ def generate_tournaments(users: dict[str, User]) -> None:
     options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
     profiles = [u.profile for u in users.values()]
 
-    for i in range(15):
+    for i in range(3):
         name = f"Tournament {i + 1}"
         date = generate_random_date()
         status = choice([Tournament.PENDING, Tournament.ONGOING, Tournament.FINISHED])
@@ -289,16 +469,6 @@ def generate_tournaments(users: dict[str, User]) -> None:
                 tournament.save()
 
 
-def generate_empty_tournament(user: User) -> Tournament:
-    return Tournament.objects.create(
-        name="Empty Tournament",
-        date=generate_random_date(),
-        status=Tournament.PENDING,
-        creator=user.profile,
-        required_participants=0,
-    )
-
-
 class Command(BaseCommand):
     help = "Populates db with a dummy data"
 
@@ -309,6 +479,8 @@ class Command(BaseCommand):
 
         generate_matches(users, life_enjoyer)
         generate_tournaments(users)
+        modified_generate_tournaments(users)
+        put_avatars()
 
         # MFA users
         mfa_users = [
@@ -476,4 +648,4 @@ Keep soaring high, superstar!""",
                         notification.is_read = True
                         notification.save()
 
-        print("\033[92mDB was successefully populated!\033[0m")  # noqa: T201
+        print("\033[92mDB was successfully populated!\033[0m")  # noqa: T201
