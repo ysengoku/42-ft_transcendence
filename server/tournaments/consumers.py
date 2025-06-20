@@ -425,7 +425,6 @@ class TournamentConsumer(WebsocketConsumer):
         else:
             bracket.score_p1 = bracket.losers_score
             bracket.score_p2 = bracket.winners_score
-        bracket.save(update_fields=["score_p1", "score_p2"])
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
             {
