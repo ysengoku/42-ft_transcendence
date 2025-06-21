@@ -32,7 +32,7 @@
 #### **5. Back-End Framework** - ✅ **IMPLEMENTED**
 - [x] **Requirement**: Use a framework to build the back end
 - [x] **Implementation**: Django 5.1.4 with Django Ninja for API
-- [x] **Bonus!**: A django nina admin page allows to test the API endpoints
+- [x] **Bonus!**: Auto-generated Swagger API documentation (/api/docs) for testing and debugging endpoints
 - [x] **Evidence**: `/server/`, Django apps structure
 - [x] **Stack**: Django Ninja
 
@@ -207,20 +207,32 @@
 
 ## 🏆 **BONUS FEATURES & ORGANIZATION**
 
+### **👥 Team Organization & Roles**
+- [x] **Eldar**: Lead Developer and DevOps
+- [x] **Celia**: Game Developer
+- [x] **Fanny**: DevOps & Backend Developer
+- [x] **Mélodie**: Backend Developer
+- [x] **Yuko**: Frontend Lead Developer & UI/UX Designer, Project Manager
+
 ### **🌍 International Team Management**
 - [x] **Full English Communication**: All discussions (oral and written) conducted in English
 - [x] **English Documentation**: Website, documentation, code comments, commits, issues, PRs, code reviews
 - [x] **International Collaboration**: Multi-cultural team experience
 
-### **📋 Project Organization**
-- [x] **Discord Channel**: Team central communication with different channels
+### **📋 Project Organization & Tools**
+- [x] **Google Sheets**: Progress tracking, meeting preparation, and database management
+- [x] **Discord Channels**: Dedicated channels for each module
 - [x] **Weekly Meetings**: Sprint planning and regular follow-up
+- [x] **Git Workflow**: One development branch, one main branch, and feature branches
+- [x] **Atomic Commits**: Respecting naming convention (feat, add, enhanced, refactor...)
 - [x] **GitHub Project Management**: 
   - [x] Roadmap and iterations (sprint planning)
   - [x] Backlog management
-  - [x] Bug reporting with forms
-  - [x] Code review via pull requests with forms
-  - [x] Code quality (linters, formatters, CI/CD (GitHub workflows), tests)
+  - [x] Bug reporting with GitHub templates
+  - [x] Code review via pull requests with GitHub templates
+  - [x] GitHub Workflows for push and PR
+  - [x] Code quality (linters, formatters, CI/CD, tests)
+- [x] **Well-structured Directory Setup**: Efficient and organized project structure
 
 ### **📸 Project Management Screenshots**
 - **Roadmap & Sprint Planning**: 
@@ -234,19 +246,87 @@
   ![alt text](code_review.png)
 - **Discord Communication**:
   ![alt text](discord_communication.png)
+- **UI / Design**:
+  ![alt text](design_wireframe.png)
+  ![Light Mode Design](light_mode.png)
+  ![Dark Mode Design](dark_mode.png)
+  ![Moodboard](moodboard.png)
+  ![Concept Style Board](concept_style_board.png)
+
+### **🛠️ Our Stack and Tools**
+
+#### **Backend Stack**
+- [x] **Django Ninja**: Schema, Models, and Endpoints
+- [x] **Auto-generated API Documentation**: `/api/docs` for testing and debugging
+- [x] **Query Optimization**: Controlled and optimized with Silk
+- [x] **Database Configuration**: Carefully structured tables for consistency
+
+#### **Frontend Stack**
+- [x] **Vanilla JavaScript & Bootstrap**: Strictly adhering to project requirements
+- [x] **Web Components**: Dynamically rendered (mimicking React)
+- [x] **Router**: Navigate to different pages
+- [x] **Pure Vanilla WebSockets**: No external libraries
+- [x] **Vite**: Improved development experience and build efficiency
+
+#### **Game Development**
+- [x] **Three.js**: 3D graphics and rendering
+- [x] **Cannon-es**: Physics engine
+- [x] **Blender**: 3D modeling
+
+#### **Design & Prototyping**
+- [x] **Figma**: UI/UX design and wireframing
+- [x] **FigJam**: Team collaboration
+- [x] **Custom Illustrations**: All drawings created by our team
+
+#### **Infrastructure**
+- [x] **Docker**: Containerization
+- [x] **Nginx**: Optimized performance and security
+- [x] **Redis**: WebSocket efficiency improvement
 
 ### **📚 Documentation Quality**
 - [x] **Comprehensive README**: Project description, setup, usage
 - [x] **Module Documentation**: OAuth2, Chat Component, etc.
 - [x] **Developer Guidelines**: Code standards and best practices
 
-### **🎨 Additional Bonus Features**
-- [x] **Dark/Light Mode**: Dark and light theme with persistence
+### **🎨 Extra Options Added on Modules**
+
+#### **Game Design**
+- [x] **Coherent Creative Concept**: 3D Cowboy Bug Universe theme
+- [x] **Blender 3D Modeling**: Custom 3D models and assets
+- [x] **Visual Identity**: Based on our unique concept
+
+#### **Front-End & UI Design**
+- [x] **Big Focus on UI Design**: Professional user interface
+- [x] **Visual Identity**: Based on our creative concept
+- [x] **UI/UX Best Practices**: Following industry standards
+- [x] **Day/Night Mode**: Distinct color palettes and illustrations
+- [x] **Pure Vanilla Implementation**: WebSockets and CSS, no external libraries
+- [x] **Web Components**: Dynamically rendered (mimicking React)
+- [x] **Custom Router**: Navigate to different pages
 - [x] **Responsive Design**: Bootstrap adaptive interface
-- [x] **3D Cowboy Bug Universe**: Unique and immersive graphic theme
+
+#### **Back-End**
+- [x] **Django Ninja API**: Structured and consistent API design
+- [x] **Well-defined Schema Classes**: Uniform endpoint design
+
+#### **User Management**
+- [x] **JWT with Refresh Token**: Advanced authentication
+- [x] **Database Token Storage**: JWT, MFA, forgot password tokens (no default Django sessions)
+- [x] **Forgot Password**: Resend options with personalized themed emails
+
+#### **Live Chat**
+- [x] **Custom Protocol Implementation**: Tailored for our needs
+
+#### **OAuth**
+- [x] **Integrated 42 API and GitHub**: GitHub was bonus (not required by subject)
+- [x] **Server-side Data Exchange**: No frontend exposure for security
+
+#### **Tournament**
+- [x] **Advanced Matchmaking**: With user notifications
+
+#### **Additional Bonus Features**
 - [x] **Advanced Security**: 2FA, multiple OAuth providers
 - [x] **Professional CI/CD**: Automated testing and code quality
-- [x] **Forgot Password**: Password recovery system, sender email address is personalized with photo to stay in theme
 
 ---
 
