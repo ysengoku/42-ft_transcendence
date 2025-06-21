@@ -234,9 +234,9 @@
   - [x] Qualité du code (linters, formatters, CI/CD, tests)
 - [x] **Structure de Répertoire**: Configuration efficace et organisée
 
-### **📸 Captures d'Écran de Gestion de Projet**
+### **📸 Documentation Visuelle & Gestion de Projet**
 - **Feuille de Route et Planification de Sprint**: 
-  ![alt text](roaadmap.png)
+  ![alt text](roadmap.png)
 - **Gestion du Backlog**: 
   ![alt text](backlog.png)
 - **Système de Rapport d'Issues**:
@@ -244,14 +244,16 @@
   ![alt text](issue_report2.png)
 - **Processus de Revue de Code**:
   ![alt text](code_review.png)
+- **Documentation API Django Ninja**:
+  ![alt text](ninja_docs.png)
 - **Communication Discord**:
   ![alt text](discord_communication.png)
-- **UI / Design**:
-  ![alt text](design_wireframe.png)
+- **UI / Design - Boards Figma**:
+  ![Wireframes & Structure](design_wireframe.png)
   ![Mode Clair Design](light_mode.png)
   ![Mode Sombre Design](dark_mode.png)
-  ![Moodboard](moodboard.png)
-  ![Planche de Style Concept](concept_style_board.png)
+  ![Moodboard - Inspiration Visuelle](moodboard.png)
+  ![Planche de Style Concept - Système de Design](concept_style_board.png)
 
 ### **🛠️ Notre Stack et Outils**
 
@@ -312,7 +314,6 @@
 #### **Gestion d'Utilisateurs**
 - [x] **JWT avec Refresh Token**: Authentification avancée
 - [x] **Stockage de Tokens en Base**: Tokens JWT, MFA, mot de passe oublié (pas de sessions Django par défaut)
-- [x] **Mot de Passe Oublié**: Options de renvoi avec emails thématisés personnalisés
 
 #### **Chat en Direct**
 - [x] **Implémentation de Protocole Personnalisé**: Adapté à nos besoins
@@ -326,6 +327,7 @@
 
 #### **Fonctionnalités Bonus Supplémentaires**
 - [x] **Sécurité Avancée**: 2FA, multiples fournisseurs OAuth
+- [x] **Mot de Passe Oublié**: Options de renvoi avec emails thématisés personnalisés
 - [x] **CI/CD Professionnel**: Tests automatisés et qualité du code
 
 ---
