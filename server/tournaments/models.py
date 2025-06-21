@@ -29,7 +29,7 @@ class Participant(models.Model):
         (WINNER, "Winner"),
     ]
 
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey("users.Profile", on_delete=models.CASCADE)
     tournament = models.ForeignKey("Tournament", on_delete=models.CASCADE, related_name="participants")
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=PENDING)
@@ -94,7 +94,7 @@ class Tournament(models.Model):
     name = models.CharField(max_length=100)
     date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
-    creator = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    creator = models.ForeignKey("users.Profile", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     winner = models.ForeignKey(
         Participant,
