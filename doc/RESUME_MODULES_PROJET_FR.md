@@ -32,6 +32,7 @@
 #### **5. Framework Back-End** - ✅ **IMPLÉMENTÉ**
 - [x] **Exigence**: Utiliser un framework pour construire le back end
 - [x] **Implémentation**: Django 5.1.4 avec Django Ninja pour l'API
+- [x] **Bonus !**: Documentation API Swagger auto-générée (/api/docs) pour tester et déboguer les endpoints
 - [x] **Preuve**: `/server/`, structure des apps Django
 - [x] **Stack**: Django Ninja
 
@@ -177,7 +178,7 @@
 - [x] **Configuration 2FA conviviale**: Processus de configuration 2FA intuitif
 - [x] **2FA multi-méthodes**: Options SMS, apps d'authentification, email
 - [x] **Validation JWT sécurisée**: Émission et validation sécurisées des tokens JWT
-- [x] **Bonus !**: Fonctionnalité de mot de passe oublié
+- [x] **Bonus !**: Documentation API Swagger auto-générée (/api/docs) pour tester et déboguer les endpoints
 - [x] **Preuve**: `/server/users/`, implémentation MFA et JWT
 - [x] **Stack**: JWT + MFA
 
@@ -206,20 +207,32 @@
 
 ## 🏆 **FONCTIONNALITÉS BONUS ET ORGANISATION**
 
+### **👥 Organisation & Rôles de l'Équipe**
+- [x] **Eldar**: Lead Developer and DevOps
+- [x] **Celia**: Développeuse Jeu
+- [x] **Fanny**: DevOps & Développeuse Backend
+- [x] **Melodie**: Développeuse Backend
+- [x] **Yuko**: Développeuse Frontend Principale & Designer UI/UX, Chef de Projet
+
 ### **🌍 Gestion d'Équipe Internationale**
 - [x] **Communication Entièrement en Anglais**: Toutes les discussions (orales et écrites) menées en anglais
 - [x] **Documentation en Anglais**: Site web, documentation, commentaires de code, commits, issues, PRs, revues de code
 - [x] **Collaboration Internationale**: Expérience d'équipe multiculturelle
 
-### **📋 Organisation du Projet**
-- [x] **Canal Discord**: Communication centrale de l'équipe avec différents canaux
+### **📋 Organisation du Projet & Outils**
+- [x] **Google Sheets**: Suivi des progrès, préparation des réunions, gestion de base de données
+- [x] **Canaux Discord**: Canaux dédiés pour chaque module
 - [x] **Réunions Hebdomadaires**: Planification de sprint et suivi régulier
+- [x] **Workflow Git**: Une branche de développement, une branche principale, et branches de fonctionnalités
+- [x] **Commits Atomiques**: Respect des conventions de nommage (feat, add, enhanced, refactor...)
 - [x] **Gestion de Projet GitHub**: 
   - [x] Feuille de route et itérations (planification de sprint)
   - [x] Gestion du backlog
-  - [x] Rapport de bugs avec formulaires
-  - [x] Revue de code via pull requests avec formulaires
-  - [x] Qualité du code (linters, formatters, CI/CD (workflows GitHub), tests)
+  - [x] Rapport de bugs avec templates GitHub
+  - [x] Revue de code via pull requests avec templates GitHub
+  - [x] Workflows GitHub pour push et PR
+  - [x] Qualité du code (linters, formatters, CI/CD, tests)
+- [x] **Structure de Répertoire**: Configuration efficace et organisée
 
 ### **📸 Captures d'Écran de Gestion de Projet**
 - **Feuille de Route et Planification de Sprint**: 
@@ -233,19 +246,87 @@
   ![alt text](code_review.png)
 - **Communication Discord**:
   ![alt text](discord_communication.png)
+- **UI / Design**:
+  ![alt text](design_wireframe.png)
+  ![Mode Clair Design](light_mode.png)
+  ![Mode Sombre Design](dark_mode.png)
+  ![Moodboard](moodboard.png)
+  ![Planche de Style Concept](concept_style_board.png)
+
+### **🛠️ Notre Stack et Outils**
+
+#### **Stack Backend**
+- [x] **Django Ninja**: Schémas, Modèles, et Endpoints
+- [x] **Documentation API Auto-générée**: `/api/docs` pour tester et déboguer
+- [x] **Optimisation des Requêtes**: Contrôlées et optimisées avec Silk
+- [x] **Configuration Base de Données**: Tables soigneusement structurées pour la cohérence
+
+#### **Stack Frontend**
+- [x] **Vanilla JavaScript & Bootstrap**: Respect strict des exigences du projet
+- [x] **Composants Web**: Rendus dynamiquement (imitant React)
+- [x] **Routeur**: Navigation vers différentes pages
+- [x] **WebSockets Vanilla Purs**: Aucune bibliothèque externe
+- [x] **Vite**: Amélioration de l'expérience de développement et efficacité de build
+
+#### **Développement Jeu**
+- [x] **Three.js**: Graphiques et rendu 3D
+- [x] **Cannon-es**: Moteur physique
+- [x] **Blender**: Modélisation 3D
+
+#### **Design & Prototypage**
+- [x] **Figma**: Design UI/UX et wireframing
+- [x] **FigJam**: Collaboration d'équipe
+- [x] **Illustrations Personnalisées**: Tous les dessins créés par notre équipe
+
+#### **Infrastructure**
+- [x] **Docker**: Containerisation
+- [x] **Nginx**: Performance et sécurité optimisées
+- [x] **Redis**: Amélioration de l'efficacité WebSocket
 
 ### **📚 Qualité de la Documentation**
 - [x] **README Complet**: Description du projet, configuration, utilisation
 - [x] **Documentation des Modules**: OAuth2, Composant Chat, etc.
 - [x] **Directives pour Développeurs**: Standards de code et meilleures pratiques
 
-### **🎨 Fonctionnalités Bonus Supplémentaires**
-- [x] **Mode Sombre/Clair**: Thème sombre et clair avec persistance
+### **🎨 Options Supplémentaires Ajoutées aux Modules**
+
+#### **Design de Jeu**
+- [x] **Concept Créatif Cohérent**: Thème Univers 3D Cowboy Bug
+- [x] **Modélisation 3D Blender**: Modèles 3D et assets personnalisés
+- [x] **Identité Visuelle**: Basée sur notre concept unique
+
+#### **Front-End & Design UI**
+- [x] **Focus Important sur le Design UI**: Interface utilisateur professionnelle
+- [x] **Identité Visuelle**: Basée sur notre concept créatif
+- [x] **Meilleures Pratiques UI/UX**: Suivant les standards de l'industrie
+- [x] **Mode Jour/Nuit**: Palettes de couleurs et illustrations distinctes
+- [x] **Implémentation Vanilla Pure**: WebSockets et CSS, aucune bibliothèque externe
+- [x] **Composants Web**: Rendus dynamiquement (imitant React)
+- [x] **Routeur Personnalisé**: Navigation vers différentes pages
 - [x] **Design Responsive**: Interface adaptative Bootstrap
-- [x] **Univers 3D Cowboy Bug**: Thème graphique unique et immersif
+
+#### **Back-End**
+- [x] **API Django Ninja**: Design d'API structuré et cohérent
+- [x] **Classes de Schéma Bien Définies**: Design d'endpoint uniforme
+
+#### **Gestion d'Utilisateurs**
+- [x] **JWT avec Refresh Token**: Authentification avancée
+- [x] **Stockage de Tokens en Base**: Tokens JWT, MFA, mot de passe oublié (pas de sessions Django par défaut)
+- [x] **Mot de Passe Oublié**: Options de renvoi avec emails thématisés personnalisés
+
+#### **Chat en Direct**
+- [x] **Implémentation de Protocole Personnalisé**: Adapté à nos besoins
+
+#### **OAuth**
+- [x] **API 42 et GitHub Intégrés**: GitHub était bonus (non requis par le sujet)
+- [x] **Échange de Données Côté Serveur**: Aucune exposition frontend pour la sécurité
+
+#### **Tournoi**
+- [x] **Matchmaking Avancé**: Avec notifications utilisateur
+
+#### **Fonctionnalités Bonus Supplémentaires**
 - [x] **Sécurité Avancée**: 2FA, multiples fournisseurs OAuth
 - [x] **CI/CD Professionnel**: Tests automatisés et qualité du code
-- [x] **Mot de Passe Oublié**: Système de récupération de mot de passe, l'adresse email expéditrice est personnalisée avec photo pour rester dans le thème
 
 ---
 
