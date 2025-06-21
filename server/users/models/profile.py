@@ -1,5 +1,8 @@
+from __future__ import annotations  # noqa: A005
+
 from datetime import timedelta  # noqa: A005
 from pathlib import Path  # noqa: A005
+from typing import TYPE_CHECKING
 
 import magic
 from asgiref.sync import async_to_sync
@@ -10,9 +13,15 @@ from django.db import models
 from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
 from django.db.models.lookups import Exact
 from django.utils import timezone
-from ninja.files import UploadedFile
 
 from users.utils import merge_err_dicts
+
+if TYPE_CHECKING:
+    from ninja.files import UploadedFile
+
+    from chat.models import GameInvitation
+    from pong.models import GameRoom
+    from tournaments.models import Participant, Tournament
 
 
 def calculate_winrate(wins: int, loses: int) -> int | None:
@@ -286,23 +295,37 @@ class Profile(models.Model):
             "is_online": self.is_online,
         }
 
-    def can_participate_in_game(self) -> bool:
+    def get_active_tournament(self) -> None | Tournament:
+        """Gets the active tournament where user is still a playing participant."""
+        participant: Participant = self.participant_set.filter(
+            ~Q(status__in=["eliminated", "winner"]),
+            tournament__status__in=["pending", "ongoing"],
+            profile=self,
+        ).first()
+        if participant:
+            return participant.tournament
+        return None
+
+    def get_active_game_participation(self) -> tuple[GameRoom | None, Tournament | None, GameInvitation | None]:
         """
-        Checks if the user can be invited or can start games.
+        Gets active game pariticipation.
         User should not participate in matchmaking, be a participant of a tournament, play pong match currently
         or have a game invitation for someone.
         """
         active_statuses = ["pending", "ongoing"]
         # active non-tournament game
-        has_active_game_room = self.game_rooms.filter(status__in=active_statuses, bracket__isnull=True).exists()
+        active_game_room: GameRoom | None = self.game_rooms.filter(
+            status__in=active_statuses,
+            bracket__isnull=True,
+        ).first()
 
         # active tournament presence
-        is_in_active_tournament = self.participant_set.filter(tournament__status__in=active_statuses).exists()
+        active_tournament: Tournament | None = self.get_active_tournament()
 
         # active invitation of someone (as inviter)
-        has_pending_invitation_as_inviter = self.sent_invites.filter(status="pending").exists()
+        pending_invitation_as_inviter: GameInvitation | None = self.sent_invites.filter(status="pending").first()
 
-        return not (has_active_game_room or is_in_active_tournament or has_pending_invitation_as_inviter)
+        return active_game_room, active_tournament, pending_invitation_as_inviter
 
 
 class Friendship(models.Model):
