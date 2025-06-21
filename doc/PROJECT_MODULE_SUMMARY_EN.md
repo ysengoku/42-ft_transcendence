@@ -32,6 +32,7 @@
 #### **5. Back-End Framework** - ✅ **IMPLEMENTED**
 - [x] **Requirement**: Use a framework to build the back end
 - [x] **Implementation**: Django 5.1.4 with Django Ninja for API
+- [x] **Bonus!**: A django nina admin page allows to test the API endpoints
 - [x] **Evidence**: `/server/`, Django apps structure
 - [x] **Stack**: Django Ninja
 
