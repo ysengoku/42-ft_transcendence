@@ -1,6 +1,6 @@
 # 42-ft_transcendence
 
-![alt text](image.png)
+![alt text](PeaceMakers_cover.png)
 
 Start the project in dev mode:
 
