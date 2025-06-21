@@ -234,9 +234,9 @@
   - [x] Code quality (linters, formatters, CI/CD, tests)
 - [x] **Well-structured Directory Setup**: Efficient and organized project structure
 
-### **📸 Project Management Screenshots**
+### **📸 Visual Documentation & Project Management**
 - **Roadmap & Sprint Planning**: 
-  ![alt text](roaadmap.png)
+  ![alt text](roadmap.png)
 - **Backlog Management**: 
   ![alt text](backlog.png)
 - **Issue Reporting System**:
@@ -244,14 +244,16 @@
   ![alt text](issue_report2.png)
 - **Code Review Process**:
   ![alt text](code_review.png)
+- **Django Ninja API Documentation**:
+  ![alt text](ninja_docs.png)
 - **Discord Communication**:
   ![alt text](discord_communication.png)
-- **UI / Design**:
-  ![alt text](design_wireframe.png)
+- **UI / Design - Figma Boards**:
+  ![Wireframes & Structure](design_wireframe.png)
   ![Light Mode Design](light_mode.png)
   ![Dark Mode Design](dark_mode.png)
-  ![Moodboard](moodboard.png)
-  ![Concept Style Board](concept_style_board.png)
+  ![Moodboard - Visual Inspiration](moodboard.png)
+  ![Concept Style Board - Design System](concept_style_board.png)
 
 ### **🛠️ Our Stack and Tools**
 
@@ -312,7 +314,6 @@
 #### **User Management**
 - [x] **JWT with Refresh Token**: Advanced authentication
 - [x] **Database Token Storage**: JWT, MFA, forgot password tokens (no default Django sessions)
-- [x] **Forgot Password**: Resend options with personalized themed emails
 
 #### **Live Chat**
 - [x] **Custom Protocol Implementation**: Tailored for our needs
@@ -326,6 +327,7 @@
 
 #### **Additional Bonus Features**
 - [x] **Advanced Security**: 2FA, multiple OAuth providers
+- [x] **Forgot Password**: Resend options with personalized themed emails
 - [x] **Professional CI/CD**: Automated testing and code quality
 
 ---
