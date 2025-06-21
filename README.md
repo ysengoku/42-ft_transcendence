@@ -1,5 +1,7 @@
 # 42-ft_transcendence
 
+![alt text](image.png)
+
 Start the project in dev mode:
 
 ```bash
