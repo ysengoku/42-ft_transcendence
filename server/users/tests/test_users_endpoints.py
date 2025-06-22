@@ -73,9 +73,28 @@ class AuthEndpointsTests(TestCase):
             content_type="application/json",
             data=self._get_default_tournament_creation_data(),
         )
-        tournament_id = str(Tournament.objects.get(creator=self.user.profile).id)
+        tournament = Tournament.objects.get(creator=self.user.profile)
         response = self.client.get("/api/self", content_type="application/json")
-        self.assertEqual(tournament_id, response.json()["tournament_id"], "asd")
+        self.assertEqual(str(tournament.id), response.json()["tournament_id"], "self should give valid tournament_id")
+
+        tournament.status = Tournament.FINISHED
+        tournament.save()
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertIsNone(response.json()["tournament_id"], "self should not give tournament_id when the tournament is finished")
+
+        game_room: GameRoom = GameRoom.objects.create()
+        game_room.add_player(self.user.profile)
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertIsNone(response.json()["game_id"], "self should not give game_id when the game didn't start yet")
+
+        game_room.status = GameRoom.ONGOING
+        game_room.save()
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertEqual(str(game_room.id), response.json()["game_id"], "self should give valid game_id after the game have started")
+
+        game_room.close()
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertIsNone(response.json()["game_id"], "self should not give game_id when the game is finished")
 
 
 class UsersEndpointsTests(TestCase):
