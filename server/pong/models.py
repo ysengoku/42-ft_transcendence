@@ -222,13 +222,23 @@ class GameRoomPlayer(models.Model):
 
 
 class GameRoomQuerySet(models.QuerySet):
+    def for_settings(self, settings: GameRoomSettings) -> models.QuerySet:
+        """
+        Returns a query based on the GameRoomSettings. Excludes all the game rooms with conflicting settings.
+        """
+        settings_conflict_query = Q()
+        for key, value in settings.items():
+            settings_conflict_query |= (Q(settings__has_key=key) & ~Q(settings__contains={key: value}))
+
+        return self.exclude(settings_conflict_query)
+
     def for_valid_game_room(self, profile: Profile, settings: GameRoomSettings):
         """Valid game room is a pending game room with less than 2 players."""
         return self.annotate(players_count=Count("players")).filter(
             status=GameRoom.PENDING,
             players_count__lt=2,
             settings__contains=settings,
-        )
+        ).for_settings(settings)
 
     def for_id(self, game_room_id: str):
         try:
