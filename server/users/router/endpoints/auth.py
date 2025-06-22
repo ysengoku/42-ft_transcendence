@@ -13,7 +13,8 @@ from ninja.errors import AuthenticationError, HttpError
 from chat.duel_events import DuelEvent
 from common.routers import allow_only_for_self
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
-from users.models import RefreshToken, User
+from pong.models import GameRoom
+from users.models import Profile, RefreshToken, User
 from users.router.endpoints.mfa import handle_mfa_code
 from users.router.utils import create_json_response_with_tokens
 from users.schemas import (
@@ -37,6 +38,12 @@ def check_self(request: HttpRequest):
     Checks authentication status of the user.
     If the user has valid access token, returns minimal information of user's profile.
     """
+    profile: Profile = request.auth.profile
+    active_games = profile.get_active_game_participation()
+    game_room, tournament, game_invitation = active_games
+    profile.game_id = str(game_room.id) if game_room and game_room.status == GameRoom.ONGOING else None
+    profile.tournament_id = str(tournament.id) if tournament else None
+    profile.is_engaged_in_game = any(x for x in active_games if x is not None)
     return request.auth.profile
 
 
