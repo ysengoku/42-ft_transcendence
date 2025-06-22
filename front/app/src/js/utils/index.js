@@ -1,5 +1,5 @@
 import { ThemeController } from './ThemeController';
-import { createClouds, createStars, loader, flyAway, fireConfetti } from './animations';
+import { createClouds, createStars, loader, flyAway, fireConfetti, particleBurst } from './animations';
 import { isMobile, BREAKPOINT } from './viewPort';
 
 import { getRelativeTime, getRelativeDateAndTime, formatDateMDY } from './dateFormat';
@@ -37,6 +37,7 @@ export {
   loader,
   flyAway,
   fireConfetti,
+  particleBurst,
   isMobile,
   BREAKPOINT,
   getRelativeTime,

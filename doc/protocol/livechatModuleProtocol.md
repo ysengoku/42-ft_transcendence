@@ -42,10 +42,7 @@
 `like_message`: Sent when the receiver liked a message
 - `chat_id`(string): id of the chat room
 - `id`(string): id of the liked message
-
-`unlike_message`:Sent when the receiver unliked a message
-- `chat_id`(string): id of the chat room
-- `id`(string): id of the unliked message
+- `is_liked`(bool): if the message is liked or un-liked
 
 ## Notification
 

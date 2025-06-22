@@ -389,7 +389,7 @@ export class ChatList extends HTMLElement {
         min-width: 0;
       }
       .chat-list-item-unread-message {
-        background-color: var(--pm-red-500);
+        background-color: var(--pm-red-400);
         color: var(--pm-gray-100);
         border-radius: 50%;
         width: 24px;
