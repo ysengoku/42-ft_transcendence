@@ -695,7 +695,6 @@ class GameWorkerConsumer(AsyncConsumer):
                 # Special case: notification for the tournament consumer.
                 if match.is_in_tournament:
                     await Bracket.objects.async_update_finished_bracket(match.bracket_id, 0, 0, 0, Bracket.CANCELLED)
-                    print(f"tournament_{match.tournament_id}")
                     await self.channel_layer.group_send(
                         f"tournament_{match.tournament_id}",
                         {
