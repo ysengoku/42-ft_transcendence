@@ -40,7 +40,7 @@ class WebSocketManager {
     this.socket.onmessage = (event) => this.handleAction(event);
     this.socket.onerror = (event) => console.error('WebSocket error: ', this.name, event);
     this.socket.onclose = (event) => {
-      devLog('WebSocket closed: ', this.name, event);
+      devLog('WebSocket closed: ', this.name, event, event.code);
       if (event.code >= 3000) {
         const customEvent = new CustomEvent('websocket-close', {
           detail: { name: this.name, code: event.code },
