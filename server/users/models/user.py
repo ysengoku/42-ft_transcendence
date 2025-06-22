@@ -9,7 +9,7 @@ from django.db import models
 from django.db.models import Q
 from ninja.files import UploadedFile
 
-from users.models import OauthConnection, Profile
+from users.models import OauthConnection
 from users.utils import merge_err_dicts
 
 """
