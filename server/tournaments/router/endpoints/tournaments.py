@@ -34,7 +34,7 @@ def create_tournament(request, data: TournamentCreateSchema):
     """
     user = request.auth
 
-    if not user.profile.can_participate_in_game():
+    if any(user.profile.get_active_game_participation()):
         raise HttpError(403, "You can't be a participant if you are already in a game / looking for a game.")
 
     alias = data.alias
@@ -155,7 +155,7 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
         except Tournament.DoesNotExist as e:
             raise HttpError(404, "Tournament not found.") from e
 
-        if not user.profile.can_participate_in_game():
+        if any(user.profile.get_active_game_participation()):
             raise HttpError(403, "You can't be a participant if you are already in a game / looking for a game.")
 
         if tournament.status != Tournament.PENDING:
