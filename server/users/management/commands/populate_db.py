@@ -225,7 +225,6 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
 
         required = choice(options)
 
-        print(name, " : creator : ", user.username, " requires ", required, " participants")
         tournament = Tournament.objects.validate_and_create(
             creator=user.profile,
             tournament_name=name,
@@ -252,7 +251,6 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
                 current_round=0,
             )
             participant_objs.append(part)
-            print("Participant ", p.user.username, " : ", i, " on ", required)
 
         # ongoing/finished の場合はラウンド生成・状態更新
         if status in (Tournament.ONGOING, Tournament.FINISHED):
@@ -480,7 +478,6 @@ class Command(BaseCommand):
         generate_matches(users, life_enjoyer)
         generate_tournaments(users)
         modified_generate_tournaments(users)
-        put_avatars()
 
         # MFA users
         mfa_users = [
