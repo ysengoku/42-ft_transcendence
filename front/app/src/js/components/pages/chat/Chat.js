@@ -7,7 +7,7 @@ import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { isMobile } from '@utils';
+import { isMobile, particleBurst } from '@utils';
 import './components/index.js';
 
 /**
@@ -268,19 +268,25 @@ export class Chat extends HTMLElement {
   }
 
   handleToggleLikeMessage(event) {
-    const data = event.detail.data;
+    const data = event.detail;
     if (data.chat_id !== this.#state.currentChat.chat_id) {
       return;
     }
     const component = document.getElementById(data.id);
-    if (component) {
-      if (data.is_liked) {
-        devLog('Message is liked:', component);
-        component.classList.add('liked');
-      } else {
-        devLog('Message is unliked:', component);
-        component.classList.remove('liked');
-      }
+    if (!component) {
+      return;
+    }
+    const heart = component.querySelector('.message-liked');
+    if (data.is_liked) {
+      devLog('Message is liked:', component);
+      component.classList.remove('unliked');
+      component.classList.add('liked');
+      particleBurst(component, heart);
+    } else {
+      devLog('Message is unliked:', component);
+      particleBurst(component, heart, 'var(--pm-gray-500)');
+      component.classList.remove('liked');
+      component.classList.add('unliked');
     }
   }
 

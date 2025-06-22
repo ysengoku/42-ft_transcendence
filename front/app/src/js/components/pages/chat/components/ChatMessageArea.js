@@ -262,7 +262,6 @@ export class ChatMessageArea extends HTMLElement {
             id: message.id,
           },
         };
-        devLog('Sending read_message to server:', readMessage);
         socketManager.sendMessage('livechat', readMessage);
       }
     } else {
@@ -424,7 +423,7 @@ export class ChatMessageArea extends HTMLElement {
       <div class="chat-loader d-flex text-center justify-content-center align-items-center ms-4 mt-5 d-none"></div>
       <div class="no-messages d-flex flex-column justify-content-center align-items-center mt-5 d-none">
         <p class="m-0">Every great partnership starts with a howdy.</p>
-        <p class="m-0">Don\'t be shy now — send your first message.</p>
+        <p class="m-0">Don't be shy now — send your first message.</p>
       </div>
       <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages" lang="en"></div>
 
@@ -473,23 +472,54 @@ export class ChatMessageArea extends HTMLElement {
         border-radius: 16px;
         background-color: var(--pm-gray-100);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        color: black;
-      }
+        color: var(--pm-gray-700);
+      }  
       .bubble i {
-        display: none;
-      }
-      .bubble.liked i {
         display: block;
-      }
+      } 
       .right-align-message .bubble {
         background-color: var(--pm-primary-600);
-        color: white;
+        color: var(--pm-gray-100);
+        i {
+          color: var(--pm-gray-400);
+          opacity: 0;
+        }
       }
       .bi-heart-fill {
         position: absolute;
         bottom: -20px;
-        right: 4px;
-        color: red;
+        right: 6px;
+        color: var(--pm-gray-400);
+        opacity: 0.4;
+      }
+      .bubble.liked .message-liked {
+        visibility: visible;
+        opacity: 1;
+        color: var(--pm-red-400);
+        transition-delay: 0s;
+        transform: scale(1);
+        animation: pop 0.6s ease;
+      }
+      @keyframes pop {
+        0%   { transform: scale(1); }
+        30%  { transform: scale(1.3); }
+        50%  { transform: scale(1); }
+        70%  { transform: scale(1.4); }
+        100% { transform: scale(1); }
+      }
+      .bubble.unliked .message-liked {
+        color: var(--pm-gray-400);
+        animation: disappear 0.6s ease forwards;
+      }
+      @keyframes disappear {
+        0% { 
+          transform: scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0.4;
+        }
       }
       .message-time {
         font-size: 12px;
