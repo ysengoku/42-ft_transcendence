@@ -27,7 +27,6 @@ class ProfileModelTests(TestCase):
             game_room=game_room,
             profile=self.user.profile,
         )
-        print(next((x for x in self.user.profile.get_active_game_participation() if isinstance(x, GameRoom)), None))
         self.assertIsNotNone(
             next((x for x in self.user.profile.get_active_game_participation() if isinstance(x, GameRoom)), None),
             "User should not be able to participate in games when they are already active in matchmaking",
