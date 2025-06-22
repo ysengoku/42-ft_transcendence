@@ -12,10 +12,24 @@ from users.models import User
 class AuthEndpointsTests(TestCase):
     def setUp(self):
         logging.disable(logging.CRITICAL)
-        User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
+        self.user = User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
 
     def tearDown(self):
         logging.disable(logging.NOTSET)
+
+    def _get_default_tournament_creation_data(self):
+        return {
+            "name": "Foo",
+            "required_participants": 4,
+            "alias": "Bar",
+            "settings": {
+                "game_speed": "medium",
+                "score_to_win": 5,
+                "time_limit": 3,
+                "ranked": False,
+                "cool_mode": False,
+            },
+        }
 
     def test_login_works_with_bad_data(self):
         response = self.client.post("/api/login", content_type="application/json", data={"dummy": "dummy"})
@@ -51,6 +65,17 @@ class AuthEndpointsTests(TestCase):
             },
             "Invalid data on login",
         )
+
+    def test_self_gives_correct_tournament_id_on_tournament_creation(self):
+        self.client.post("/api/login", content_type="application/json", data={"username": "TestUser", "password": "123"})
+        self.client.post(
+            "/api/tournaments",
+            content_type="application/json",
+            data=self._get_default_tournament_creation_data(),
+        )
+        tournament_id = str(Tournament.objects.get(creator=self.user.profile).id)
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertEqual(tournament_id, response.json()["tournament_id"], "asd")
 
 
 class UsersEndpointsTests(TestCase):
