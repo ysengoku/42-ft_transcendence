@@ -3,7 +3,6 @@ import contextlib
 import logging
 import math
 import random
-import traceback
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Literal
@@ -21,7 +20,6 @@ from pong.game_protocol import (
 )
 from pong.models import GameRoom, Match
 from tournaments.models import Bracket
-from users.models import Profile
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -779,7 +777,11 @@ class GameWorkerConsumer(AsyncConsumer):
             winner = match.get_other_player(player.id)
             match_db = await self._write_result_to_db(winner, player, match, "finished")
             await self._send_player_won_event(
-                match, "player_resigned", winner, player, match_db.elo_change if not match.is_in_tournament else 0,
+                match,
+                "player_resigned",
+                winner,
+                player,
+                match_db.elo_change if not match.is_in_tournament else 0,
             )
             await self._do_after_match_cleanup(match, True)
             logger.info(
