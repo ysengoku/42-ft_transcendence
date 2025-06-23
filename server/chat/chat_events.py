@@ -115,7 +115,6 @@ class ChatEvent:
                     message.refresh_from_db()
                     transaction.on_commit(lambda: self.consumer.send_like_update(chat_id, message_id, False))
 
-                    message.refresh_from_db()
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist", message_id)
 
