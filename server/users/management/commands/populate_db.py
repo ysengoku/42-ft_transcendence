@@ -123,7 +123,18 @@ def generate_users() -> tuple[list[User], User]:
     return users, life_enjoyer
 
 
+def erase_old_avatars():
+    avatars_folder = "/app/media/avatars"
+    avatars_path = Path(avatars_folder)
+    for file in avatars_path.iterdir():
+        file_path = avatars_path / file
+        if Path.is_file(file_path):
+            Path.unlink(file_path)
+            print(file, "is removed")
+
+
 def put_avatars():
+    erase_old_avatars()
     taki = Profile.objects.get(user__username="Taki")
     felix = Profile.objects.get(user__username="Felix")
     grandma = Profile.objects.get(user__username="Grandma")
@@ -137,7 +148,7 @@ def put_avatars():
 
     def get_content_type(filename):
         ext = Path(filename).suffix.lower()
-        if ext == ".jpg" or ext == ".jpeg":
+        if ext in {".jpg", ".jpeg"}:
             return "image/jpeg"
         if ext == ".png":
             return "image/png"
@@ -146,7 +157,7 @@ def put_avatars():
         return "application/octet-stream"
 
     def put_one_avatar(file, profile):
-        file_path = "/app/media/avatars/" + file
+        file_path = "/app/test_assets/" + file
         with Path(file_path).open("rb") as f:
             content_type = get_content_type(file_path)
             uploaded = SimpleUploadedFile(name=file, content=f.read(), content_type=content_type)
@@ -154,8 +165,7 @@ def put_avatars():
             profile.update_avatar(uploaded)
             profile.save()
         av = profile.avatar
-        print("I putted avatar for ", profile.user.username, " and it is ", av, " :D")
-        print("The profile.profile_picture is ", profile.profile_picture, " :D")
+        print("I putted avatar for", profile.user.username, "and it is", av, ":D")
 
     put_one_avatar("rick_roll.webp", rick)
     put_one_avatar("taki.jpg", taki)
@@ -256,9 +266,7 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
 
         participants = sample(profiles, k=required)
         participant_objs = []
-        i = 0
         for p in participants:
-            i += 1
             alias = available_aliases.pop(randint(0, len(available_aliases) - 1))
             part = Participant.objects.create(
                 profile=p,
@@ -267,7 +275,7 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
                 current_round=0,
             )
             participant_objs.append(part)
-            print("Participant ", p.user.username, " : ", i, " on ", required)
+            print("Participant :", p.user.username)
 
         # ongoing/finished の場合はラウンド生成・状態更新
         if status in (Tournament.ONGOING, Tournament.FINISHED):
