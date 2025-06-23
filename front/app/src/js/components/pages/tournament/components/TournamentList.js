@@ -69,7 +69,6 @@ export class TournamentList extends HTMLElement {
     if (this.#state.tournaments.length === 0) {
       this.renderNoItem();
       this.#state.isLoading = false;
-      this.filterButton.classList.add('d-none');
       return;
     }
     for (let i = this.#state.currentLastItemIndex; i < this.#state.tournaments.length; i++) {
