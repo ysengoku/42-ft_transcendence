@@ -25,12 +25,7 @@ class ChatEvent:
         except Chat.DoesNotExist:
             logger.debug("Acces denied to the chat %s for %s", chat_id, self.consumer.user.username)
 
-    def handle_message(self, data):
-        message_data = data.get("data", {})
-        message = message_data.get("content")
-        chat_id = message_data.get("chat_id")
-
-        # security check: chat should exist
+    def check_if_chat_exists_and_is_in_chat(self, chat_id) -> Chat | bool:
         chat = (
             Chat.objects.for_participants(self.consumer.user_profile)
             .with_other_user_profile_info(self.consumer.user_profile)
@@ -38,16 +33,25 @@ class ChatEvent:
             .first()
         )
         if not chat:
-            return
+            return False
 
         # security check: user should be in the chat
         is_in_chat = chat.participants.filter(id=self.consumer.user_profile.id).exists()
         if not is_in_chat:
-            return
+            return False
         is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
         if is_blocked:
+            return False
+        return chat
+
+    def handle_message(self, data):
+        message_data = data.get("data", {})
+        message = message_data.get("content")
+        chat_id = message_data.get("chat_id")
+
+        chat = self.check_if_chat_exists_and_is_in_chat(chat_id)
+        if not isinstance(chat, Chat):
             return
-        # security check: message should not be longueur than 255
         if message is not None and len(message) > settings.MAX_MESSAGE_LENGTH:
             logger.warning(
                 "Message too long (%d caracteres) from user %s in chat %s",
@@ -84,6 +88,9 @@ class ChatEvent:
         message = message_data.get("content")
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
+        chat = self.check_if_chat_exists_and_is_in_chat(chat_id)
+        if not isinstance(chat, Chat):
+            return
         try:
             with transaction.atomic():
                 message = ChatMessage.objects.select_for_update().get(pk=message_id)
@@ -103,6 +110,9 @@ class ChatEvent:
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
         sender = message_data.get("sender")
+        chat = self.check_if_chat_exists_and_is_in_chat(chat_id)
+        if not isinstance(chat, Chat):
+            return
         try:
             with transaction.atomic():
                 message = ChatMessage.objects.select_for_update().get(pk=message_id)

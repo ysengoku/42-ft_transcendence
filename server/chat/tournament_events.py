@@ -84,7 +84,6 @@ class TournamentEvent:
             action=Notification.NEW_TOURNAMENT,
         )
 
-        channel_layer = get_channel_layer()
         for notif in notifications:
             notif.data["status"] = TournamentInvitation.CLOSED
             notif.is_read = True
