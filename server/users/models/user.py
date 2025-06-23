@@ -9,7 +9,7 @@ from django.db import models
 from django.db.models import Q
 from ninja.files import UploadedFile
 
-from users.models import OauthConnection, Profile
+from users.models import OauthConnection
 from users.utils import merge_err_dicts
 
 """
@@ -107,16 +107,6 @@ class User(AbstractUser):
     mfa_token_date = models.DateTimeField(blank=True, null=True)
 
     objects = UserManager()
-
-    @property
-    def profile(self):
-        """
-        Retourne le profil associé à cet utilisateur.
-        Si aucun profil n'existe, il en crée un automatiquement.
-        """
-        if not hasattr(self, "_profile"):
-            self._profile, _ = Profile.objects.get_or_create(user=self)
-        return self._profile
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
         """

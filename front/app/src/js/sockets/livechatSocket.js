@@ -15,22 +15,12 @@ socketManager.addSocket('livechat', {
     }
     return;
   },
-  like_message: (data) => {
-    if (window.location.pathname !== '/chat') {
+  like_message: (data) => { 
+    if (window.location.pathname !== '/chat' || !data || !('is_liked' in data)) {
       return;
     }
     const customEvent = new CustomEvent('toggleLikeChatMessage', {
-      detail: { data, is_liked: true },
-      bubbles: true,
-    });
-    document.dispatchEvent(customEvent);
-  },
-  unlike_message: (data) => {
-    if (window.location.pathname !== '/chat') {
-      return;
-    }
-    const customEvent = new CustomEvent('toggleLikeChatMessage', {
-      detail: { data, is_liked: false },
+      detail: data,
       bubbles: true,
     });
     document.dispatchEvent(customEvent);
