@@ -3,7 +3,6 @@ import contextlib
 import logging
 import math
 import random
-import traceback
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Literal
@@ -21,7 +20,6 @@ from pong.game_protocol import (
 )
 from pong.models import GameRoom, Match
 from tournaments.models import Bracket
-from users.models import Profile
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -695,7 +693,6 @@ class GameWorkerConsumer(AsyncConsumer):
                 # Special case: notification for the tournament consumer.
                 if match.is_in_tournament:
                     await Bracket.objects.async_update_finished_bracket(match.bracket_id, 0, 0, 0, Bracket.CANCELLED)
-                    print(f"tournament_{match.tournament_id}")
                     await self.channel_layer.group_send(
                         f"tournament_{match.tournament_id}",
                         {
@@ -780,7 +777,11 @@ class GameWorkerConsumer(AsyncConsumer):
             winner = match.get_other_player(player.id)
             match_db = await self._write_result_to_db(winner, player, match, "finished")
             await self._send_player_won_event(
-                match, "player_resigned", winner, player, match_db.elo_change if not match.is_in_tournament else 0,
+                match,
+                "player_resigned",
+                winner,
+                player,
+                match_db.elo_change if not match.is_in_tournament else 0,
             )
             await self._do_after_match_cleanup(match, True)
             logger.info(
