@@ -245,7 +245,10 @@ class DuelEvent:
             self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
             return
         invitation = GameInvitation.objects.create(
-            sender=self.consumer.user_profile, recipient=receiver, invitee=receiver, options=options
+            sender=self.consumer.user_profile,
+            recipient=receiver,
+            invitee=receiver,
+            options=options,
         )
         self.consumer.user_profile.refresh_from_db()
         self.create_and_send_game_notifications(self.consumer.user_profile, receiver, str(invitation.id), client_id)
@@ -299,7 +302,12 @@ class DuelEvent:
                 status=GameInvitation.PENDING,
             )
         except GameInvitation.DoesNotExist as e:
-            logger.error("No pending invitations to cancel from %s to %s", self.consumer.user.username, target_username)
+            logger.error(
+                "No pending invitations to cancel from %s to %s : %s",
+                self.consumer.user.username,
+                target_username,
+                e,
+            )
             return
         with transaction.atomic():
             invitation.status = GameInvitation.CANCELLED
