@@ -143,6 +143,11 @@ def put_avatars():
     erase_old_avatars()
     taki = Profile.objects.get(user__username="Taki")
     felix = Profile.objects.get(user__username="Felix")
+    rex = Profile.objects.get(user__username="Rex")
+    sad_hampter = Profile.objects.get(user__username="sad_hampter")
+    tama = Profile.objects.get(user__username="Tama")
+    martine = Profile.objects.get(user__username="Martine")
+    marie = Profile.objects.get(user__username="Marie")
     grandma = Profile.objects.get(user__username="Grandma")
     grandpa = Profile.objects.get(user__username="Grandpa")
     pedro = Profile.objects.get(user__username="Pedro")
@@ -150,6 +155,7 @@ def put_avatars():
     pedro2 = Profile.objects.get(user__username="Pedro2")
     alice = Profile.objects.get(user__username="alice")
     darksmelo = Profile.objects.get(user__username="Darksmelo")
+    menaco = Profile.objects.get(user__username="menaco")
     rick = Profile.objects.get(user__username="Rick")
 
     def get_content_type(filename):
@@ -175,6 +181,9 @@ def put_avatars():
 
     put_one_avatar("rick_roll.webp", rick)
     put_one_avatar("taki.jpg", taki)
+    put_one_avatar("rex.jpg", rex)
+    put_one_avatar("sad_hampter.jpg", sad_hampter)
+    put_one_avatar("tama.jpg", tama)
     put_one_avatar("felix.jpg", felix)
     put_one_avatar("grandma.jpg", grandma)
     put_one_avatar("grandpa.jpg", grandpa)
@@ -182,6 +191,9 @@ def put_avatars():
     put_one_avatar("pedro1.jpg", pedro1)
     put_one_avatar("pedro2.jpg", pedro2)
     put_one_avatar("alice.jpg", alice)
+    put_one_avatar("martine.jpg", martine)
+    put_one_avatar("marie.jpg", marie)
+    put_one_avatar("menaco.jpg", menaco)
     put_one_avatar("darksmelo.png", darksmelo)
 
 
@@ -253,7 +265,6 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
         status = option_for_status[i]
         user = choice(list(users.values()))
         user = choice(list_users)
-        # if status in (Tournament.ONGOING, Tournament.PENDING):
         list_users.remove(user)
 
         required = choice(options)
@@ -268,6 +279,10 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
         )
         tournament.status = status
         tournament.save(update_fields=["status"])
+        if status is Tournament.PENDING:
+            num_rounds = 2 if required == 4 else 3
+            for round_num in range(1, num_rounds + 1):
+                Round.objects.create(tournament=tournament, number=round_num, status=Round.PENDING)
 
         available_aliases = dummy_aliases.copy()
 
@@ -289,7 +304,6 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
             profiles.remove(p)
             participant_objs.append(part)
         print("There are", len(participant_objs), "participants in this tournament (len(participant_objs))")
-
         # ongoing/finished の場合はラウンド生成・状態更新
         if status in (Tournament.ONGOING, Tournament.FINISHED):
             total_rounds = 2 if required == 3 else 3
@@ -352,137 +366,6 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
                             bracket.score_p1, bracket.score_p2 = s1, s2
                             winner = p1 if s1 > s2 else p2
                             loser = p2 if s1 > s2 else p1
-                            bracket.winner = winner
-                            bracket.score = f"{s1}-{s2}"
-                            bracket.status = Bracket.FINISHED
-                            bracket.save()
-
-                            winner.status = Participant.PLAYING
-                            loser.status = Participant.ELIMINATED
-                            winner.current_round = rnd
-                            loser.current_round = rnd
-                            winner.save()
-                            loser.save()
-
-                            next_round.append(winner)
-                current = next_round
-
-            final = Round.objects.get(tournament=tournament, number=total_rounds)
-            finished_brackets = final.brackets.filter(status=Tournament.FINISHED)
-            if finished_brackets.exists():
-                champ = finished_brackets.order_by("?").first().winner
-                tournament.winner = champ
-                tournament.save()
-
-
-def generate_tournaments(users: dict[str, User]) -> None:
-    dummy_aliases = [
-        "RedFalcon",
-        "BlueTiger",
-        "SilverWolf",
-        "GoldenEagle",
-        "ShadowFox",
-        "RedDragon",
-        "EmeraldLion",
-        "NightHawk",
-        "MysticBear",
-        "StormRider",
-        "CosmicWhale",
-        "PhantomCat",
-    ]
-    options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
-    profiles = [u.profile for u in users.values()]
-
-    for i in range(3):
-        name = f"Tournament {i + 1}"
-        date = generate_random_date()
-        status = choice([Tournament.PENDING, Tournament.ONGOING, Tournament.FINISHED])
-        user = choice(list(users.values()))
-        required = choice(options)
-
-        tournament = Tournament.objects.create(
-            name=name,
-            date=date,
-            status=status,
-            creator=user.profile,
-            required_participants=required,
-        )
-
-        available_aliases = dummy_aliases.copy()
-
-        participants = sample(profiles, k=required)
-        participant_objs = []
-        for p in participants:
-            alias = available_aliases.pop(randint(0, len(available_aliases) - 1))
-            part = Participant.objects.create(
-                profile=p,
-                tournament=tournament,
-                alias=alias,
-                current_round=0,
-            )
-            participant_objs.append(part)
-
-        # ongoing/finished の場合はラウンド生成・状態更新
-        if status in (Tournament.ONGOING, Tournament.FINISHED):
-            total_rounds = 2 if required == 4 else 3
-            current = participant_objs.copy()
-
-            for rnd in range(1, total_rounds + 1):
-                for part in current:
-                    part.status = "playing"
-                    part.current_round = rnd
-                    part.save()
-
-                rnd_status = (
-                    Tournament.FINISHED
-                    if status == Tournament.FINISHED or (status == Tournament.ONGOING and rnd < total_rounds)
-                    else Tournament.PENDING
-                )
-                rnd_obj = Round.objects.create(
-                    tournament=tournament,
-                    number=rnd,
-                    status=rnd_status,
-                )
-
-                next_round = []
-                for j in range(0, len(current), 2):
-                    p1 = current[j]
-                    p2 = current[j + 1]
-                    bracket_status = Tournament.FINISHED if rnd_status == Tournament.FINISHED else Tournament.ONGOING
-                    bracket = Bracket.objects.create(
-                        round=rnd_obj,
-                        participant1=p1,
-                        participant2=p2,
-                        status=bracket_status,
-                    )
-
-                    if bracket_status == Tournament.FINISHED:
-                        s1, s2 = randint(0, 4), randint(0, 4)
-                        if s1 == s2:
-                            s1 += 1
-                        winner = p1 if s1 > s2 else p2
-                        loser = p2 if s1 > s2 else p1
-                        bracket.winners_score, bracket.losers_score = max(s1, s2), min(s1, s2)
-                        bracket.winner = winner
-                        bracket.score = f"{s1}-{s2}"
-                        bracket.save()
-
-                        winner.status = "playing" if rnd < total_rounds else "winner"
-                        loser.status = "eliminated"
-                        loser.current_round = rnd
-                        winner.current_round = rnd + (0 if rnd < total_rounds else rnd)
-                        winner.save()
-                        loser.save()
-
-                        next_round.append(winner)
-                    elif status == Tournament.ONGOING:
-                        if randint(0, 1):
-                            s1, s2 = randint(0, 4), randint(0, 4)
-                            if s1 == s2:
-                                s2 += 1
-                            winner = p1 if s1 > s2 else p2
-                            loser = p2 if s1 > s2 else p1
-                            bracket.winners_score, bracket.losers_score = max(s1, s2), min(s1, s2)
                             bracket.winner = winner
                             bracket.score = f"{s1}-{s2}"
                             bracket.status = Bracket.FINISHED
