@@ -227,6 +227,7 @@ export class ChatMessageArea extends HTMLElement {
     };
     this.#state.data.messages.unshift(message);
     const messageElement = this.messageItem(message);
+    messageElement.classList.add('animateIn');
     this.chatMessages.appendChild(messageElement);
     this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
   }
@@ -448,6 +449,19 @@ export class ChatMessageArea extends HTMLElement {
       .message {
         overflow-wrap: anywhere;
         hyphens: auto;
+      }
+      .animateIn {
+        animation: animateIn 0.4s ease forwards;
+      }
+      @keyframes animateIn {
+        0% {
+          opacity: 0;
+          transform: scale(0) translateY(24px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
       }
       .left-align-message {
         padding-right: 32px;
