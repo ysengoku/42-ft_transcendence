@@ -1,15 +1,27 @@
-## Credits for pictures used in the media/avatars
+## Credits for pictures used in the assets_tests 
 
 darksmelo.png : original picture done by mbernard
 taki.jpg : original picture of mbernard's dog, Taki
 
 felix.jpg : Image by <a href="https://pixabay.com/users/sayaphotos-479227/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=468814">Sayaka Photos</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=468814">Pixabay</a>
 
+tomo.jpg : Image by <a href="https://pixabay.com/fr/users/christels-3741991/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=2969932">Christel SAGNIEZ</a> from <a href="https://pixabay.com/fr//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=2969932">Pixabay</a>
+
+rex.jpg : no author, link : https://pixabay.com/fr/photos/malinois-chien-de-berger-belge-672686/
+
+menaco.jpg : Image by <a href="https://pixabay.com/fr/users/nickype-10327513/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=5428516">Nicky ❤️🌿🐞🌿❤️</a> from <a href="https://pixabay.com/fr//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=5428516">Pixabay</a>
+
 grandma.jpg : Image by <a href="https://unsplash.com/fr/@alexharvey?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">RepentAnd SeekChristJesus</a> from <a href="https://unsplash.com/fr/photos/femme-en-haut-blanc-portant-des-lunettes-y0I85D5QKvs?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
 
 grandpa.jpb : Image by <a href="https://pixabay.com/users/pexels-2286921/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=1835599">Pexels</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=1835599">Pixabay</a>
 
 alice.jpg : Image by <a href="https://pixabay.com/users/mamizaza-3710005/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=6199537">Mami Miyashima</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=6199537">Pixabay</a>
+
+martine.jpg : Image by <a href="https://pixabay.com/fr/users/adinavoicu-485024/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=767010">Adina Voicu</a> by <a href="https://pixabay.com/fr//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=767010">Pixabay</a>
+
+marie.jpg : Image by <a href="https://pixabay.com/fr/users/adinavoicu-485024/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=1200278">Adina Voicu</a> by <a href="https://pixabay.com/fr//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=1200278">Pixabay</a>
+
+sad_hampter.jpg : Image by <a href="https://pixabay.com/fr/users/marina_kratko-23099684/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=6777533">Marina Kratko</a> from <a href="https://pixabay.com/fr//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=6777533">Pixabay</a>
 
 rick_roll.webp : converted in webp, original gif : https://upload.wikimedia.org/wikipedia/commons/0/02/One_Million_Checkboxes_-_Rickroll.gif , from the author eieio of the original blog post : https://eieio.games/essays/the-secret-in-one-million-checkboxes/
 
