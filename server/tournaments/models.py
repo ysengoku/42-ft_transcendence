@@ -226,6 +226,7 @@ class Bracket(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     score = models.CharField(max_length=7, blank=True)
     game_room = models.OneToOneField(GameRoom, on_delete=models.CASCADE, null=True, blank=True)
+    game_id = models.UUIDField(null=True, blank=True, editable=True)
 
     objects: BracketQuerySet = BracketQuerySet.as_manager()
 
