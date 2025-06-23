@@ -1,0 +1,20 @@
+## Credits for pictures used in the media/avatars
+
+darksmelo.png : original picture done by mbernard
+taki.jpg : original picture of mbernard's dog, Taki
+
+felix.jpg : Image by <a href="https://pixabay.com/users/sayaphotos-479227/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=468814">Sayaka Photos</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=468814">Pixabay</a>
+
+grandma.jpg : Image by <a href="https://unsplash.com/fr/@alexharvey?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">RepentAnd SeekChristJesus</a> from <a href="https://unsplash.com/fr/photos/femme-en-haut-blanc-portant-des-lunettes-y0I85D5QKvs?utm_content=creditCopyText&utm_medium=referral&utm_source=unsplash">Unsplash</a>
+
+grandpa.jpb : Image by <a href="https://pixabay.com/users/pexels-2286921/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=1835599">Pexels</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=1835599">Pixabay</a>
+
+alice.jpg : Image by <a href="https://pixabay.com/users/mamizaza-3710005/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=6199537">Mami Miyashima</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=6199537">Pixabay</a>
+
+rick_roll.webp : converted in webp, original gif : https://upload.wikimedia.org/wikipedia/commons/0/02/One_Million_Checkboxes_-_Rickroll.gif , from the author eieio of the original blog post : https://eieio.games/essays/the-secret-in-one-million-checkboxes/
+
+pedro.jpg : Image by <a href="https://pixabay.com/users/leroy_skalstad-1202818/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=875597">Leroy Skalstad</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=875597">Pixabay</a>
+
+pedro1.jpg : Image by <a href="https://pixabay.com/users/danny_hawkwood-2557192/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=4930885">Danny_Hawkwood</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=4930885">Pixabay</a>
+
+pedro2.jpg : Image by <a href="https://pixabay.com/users/leroy_skalstad-1202818/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=6780464">Leroy Skalstad</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=6780464">Pixabay</a>
