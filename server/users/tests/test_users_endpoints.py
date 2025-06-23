@@ -12,10 +12,24 @@ from users.models import User
 class AuthEndpointsTests(TestCase):
     def setUp(self):
         logging.disable(logging.CRITICAL)
-        User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
+        self.user = User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
 
     def tearDown(self):
         logging.disable(logging.NOTSET)
+
+    def _get_default_tournament_creation_data(self):
+        return {
+            "name": "Foo",
+            "required_participants": 4,
+            "alias": "Bar",
+            "settings": {
+                "game_speed": "medium",
+                "score_to_win": 5,
+                "time_limit": 3,
+                "ranked": False,
+                "cool_mode": False,
+            },
+        }
 
     def test_login_works_with_bad_data(self):
         response = self.client.post("/api/login", content_type="application/json", data={"dummy": "dummy"})
@@ -51,6 +65,36 @@ class AuthEndpointsTests(TestCase):
             },
             "Invalid data on login",
         )
+
+    def test_self_gives_correct_tournament_id_on_tournament_creation(self):
+        self.client.post("/api/login", content_type="application/json", data={"username": "TestUser", "password": "123"})
+        self.client.post(
+            "/api/tournaments",
+            content_type="application/json",
+            data=self._get_default_tournament_creation_data(),
+        )
+        tournament = Tournament.objects.get(creator=self.user.profile)
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertEqual(str(tournament.id), response.json()["tournament_id"], "self should give valid tournament_id")
+
+        tournament.status = Tournament.FINISHED
+        tournament.save()
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertIsNone(response.json()["tournament_id"], "self should not give tournament_id when the tournament is finished")
+
+        game_room: GameRoom = GameRoom.objects.create()
+        game_room.add_player(self.user.profile)
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertIsNone(response.json()["game_id"], "self should not give game_id when the game didn't start yet")
+
+        game_room.status = GameRoom.ONGOING
+        game_room.save()
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertEqual(str(game_room.id), response.json()["game_id"], "self should give valid game_id after the game have started")
+
+        game_room.close()
+        response = self.client.get("/api/self", content_type="application/json")
+        self.assertIsNone(response.json()["game_id"], "self should not give game_id when the game is finished")
 
 
 class UsersEndpointsTests(TestCase):
