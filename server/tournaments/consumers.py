@@ -199,8 +199,8 @@ class TournamentConsumer(WebsocketConsumer):
             game_room = self.create_tournament_game_room(bracket.participant1, bracket.participant2)
             bracket.game_room = game_room
             bracket.game_id = game_room.id
-            bracket.save()
-            logger.debug(bracket)
+            bracket.save(update_fields=["game_room", "game_id"])
+            logger.debug("PLEASE PLEASE PLEASE %s", bracket.game_id)
         logger.debug(new_round)
 
     def create_tournament_game_room(self, p1, p2):
@@ -236,7 +236,7 @@ class TournamentConsumer(WebsocketConsumer):
             logger.warning("This tournament doesn't exist.")
             return
         tournament_name = tournament.name
-        round_data = RoundSchema.model_validate(new_round).model_dump()
+        round_data = RoundSchema.model_validate(new_round)
         logger.debug(round_data)
         # Launch the game
         self.send(
@@ -246,9 +246,9 @@ class TournamentConsumer(WebsocketConsumer):
                     "data": {
                         "tournament_id": self.tournament_id,
                         "tournament_name": tournament_name,
-                        "round": round_data,
+                        "round": json.loads(round_data.json()),
                     },
-                }
+                },
             )
         )
 
