@@ -84,8 +84,14 @@ def generate_users() -> tuple[list[User], User]:
         ("faboussa", 2500),
         ("Taki", 1500),
         ("Felix", 2000),
-        ("Grandma", 5000),
-        ("Grandpa", 4200),
+        ("Grandma", 3000),
+        ("Grandpa", 2200),
+        ("Tama", 2800),
+        ("Rex", 2200),
+        ("Martine", 200),
+        ("Josiane", 800),
+        ("Marie", 2700),
+        ("Lily", 2200),
     ]
 
     for name, elo in names_and_elo:
@@ -238,35 +244,41 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
     ]
     options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
     profiles = [u.profile for u in users.values()]
-    # list_users = list(users.values())
-    for i in range(2):
+    print("Number of profiles :", len(profiles))
+    list_users = list(users.values())
+    for i in range(4):
         name = f"Tournament {i + 1}"
         date = generate_random_date()
-        option_for_status = [Tournament.ONGOING, Tournament.FINISHED]
+        option_for_status = [Tournament.FINISHED, Tournament.CANCELLED, Tournament.ONGOING, Tournament.PENDING]
         status = option_for_status[i]
         user = choice(list(users.values()))
-        # user = choice(list_users)
-        # list_users.remove(user)
+        user = choice(list_users)
+        # if status in (Tournament.ONGOING, Tournament.PENDING):
+        list_users.remove(user)
 
         required = choice(options)
 
-        print(name, " : creator : ", user.username, " requires ", required, " participants")
+        print(name, ", creator :", user.username, ", requires", required, "participants,", "status :", status)
         tournament = Tournament.objects.validate_and_create(
             creator=user.profile,
             tournament_name=name,
             required_participants=required,
             alias="The creator",
-            # date=date,
-            # status=status,
+            settings={"game_speed": "medium", "score_to_win": 3, "time_limit": 1, "ranked": False, "cool_mode": True},
         )
         tournament.status = status
         tournament.save(update_fields=["status"])
 
         available_aliases = dummy_aliases.copy()
 
+        required -= 2 if status in {Tournament.PENDING, Tournament.CANCELLED} else 1
+        if user.profile in profiles:
+            profiles.remove(user.profile)
         participants = sample(profiles, k=required)
         participant_objs = []
+        participant_objs.append(tournament.participants.get(profile=user.profile))
         for p in participants:
+            print("Participant :", p.user.username)
             alias = available_aliases.pop(randint(0, len(available_aliases) - 1))
             part = Participant.objects.create(
                 profile=p,
@@ -274,12 +286,14 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
                 alias=alias,
                 current_round=0,
             )
+            profiles.remove(p)
             participant_objs.append(part)
-            print("Participant :", p.user.username)
+        print("There are", len(participant_objs), "participants in this tournament (len(participant_objs))")
 
         # ongoing/finished の場合はラウンド生成・状態更新
         if status in (Tournament.ONGOING, Tournament.FINISHED):
-            total_rounds = 2 if required == 4 else 3
+            total_rounds = 2 if required == 3 else 3
+            # required has been lowed to avoir adding a participant since the creator is added at the beginning
             current = participant_objs.copy()
 
             for rnd in range(1, total_rounds + 1):
@@ -303,7 +317,7 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
                 for j in range(0, len(current), 2):
                     p1 = current[j]
                     p2 = current[j + 1]
-                    bracket_status = Tournament.FINISHED if rnd_status == Tournament.FINISHED else Tournament.ONGOING
+                    bracket_status = Bracket.FINISHED if rnd_status == Round.FINISHED else Bracket.ONGOING
                     bracket = Bracket.objects.create(
                         round=rnd_obj,
                         participant1=p1,
@@ -502,7 +516,7 @@ class Command(BaseCommand):
 
         generate_matches(users, life_enjoyer)
         # generate_tournaments(users)
-        # modified_generate_tournaments(users)
+        modified_generate_tournaments(users)
         put_avatars()
 
         # MFA users
