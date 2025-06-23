@@ -132,7 +132,7 @@ def generate_users() -> tuple[list[User], User]:
 def erase_old_avatars():
     avatars_folder = "/app/media/avatars"
     avatars_path = Path(avatars_folder)
-    if avatars_path.isdir() == False
+    if avatars_path.isdir() == False:
         return
     for file in avatars_path.iterdir():
         file_path = avatars_path / file
