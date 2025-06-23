@@ -6,7 +6,7 @@ from typing import Literal
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
 
@@ -29,7 +29,7 @@ class Participant(models.Model):
         (WINNER, "Winner"),
     ]
 
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    profile = models.ForeignKey("users.Profile", on_delete=models.CASCADE)
     tournament = models.ForeignKey("Tournament", on_delete=models.CASCADE, related_name="participants")
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=PENDING)
@@ -49,8 +49,11 @@ class TournamentQuerySet(models.QuerySet):
         tournament_name: str,
         required_participants: int,
         alias: str,
-        settings: GameRoomSettings,
+        settings: GameRoomSettings | None = None,
     ):
+        if not settings:
+            settings = get_default_game_room_settings()
+
         tournament = self.model(
             name=tournament_name,
             creator=creator,
@@ -62,12 +65,6 @@ class TournamentQuerySet(models.QuerySet):
         tournament.save()
         tournament.add_participant(creator, alias)
         return tournament
-
-    def get_active_tournament(self, profile: Profile):
-        return self.filter(
-            participants__profile=profile,
-            status__in=[self.model.PENDING, self.model.ONGOING],
-        ).first()
 
 
 class Tournament(models.Model):
@@ -86,7 +83,7 @@ class Tournament(models.Model):
     name = models.CharField(max_length=100)
     date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
-    creator = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    creator = models.ForeignKey("users.Profile", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     winner = models.ForeignKey(
         Participant,

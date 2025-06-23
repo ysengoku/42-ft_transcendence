@@ -187,6 +187,10 @@ body {
   z-index: 3;
 }
 
+.navbar-brand {
+  line-height: 64px;
+}
+
 .navbar-brand:hover {
   transform: scale(1.05);
 }
@@ -451,10 +455,6 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   }
 }
 
-.fly-away {
-  animation: flyAway 1.0s ease-out forwards;
-}
-
 /*--------------------------------------------------------------------------- */
 /*    Wood grain                                                              */
 /*----------------------------------------------------------------------------*/
@@ -575,6 +575,27 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
     opacity: 1;
   }
   to {
+    opacity: 0;
+  }
+}
+
+.fly-away {
+  animation: flyAway 1.0s ease-out forwards;
+}
+
+/* For particleBurst effect */
+.particle {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.9;
+  animation: fly 0.8s forwards ease-out;
+}
+@keyframes fly {
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(0.5);
     opacity: 0;
   }
 }

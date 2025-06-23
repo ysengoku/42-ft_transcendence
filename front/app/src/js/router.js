@@ -292,6 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const queryParams = new URLSearchParams(window.location.search);
   router.navigate(currentPath, queryParams);
   if (
+    authStatus.success &&
     authStatus.response.tournament_id &&
     !(currentPath.startsWith('/tournament') || currentPath.startsWith('/multiplayer-game'))
   ) {

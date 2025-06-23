@@ -69,6 +69,7 @@ export class TournamentList extends HTMLElement {
     if (this.#state.tournaments.length === 0) {
       this.renderNoItem();
       this.#state.isLoading = false;
+      this.filterButton.classList.add('d-none');
       return;
     }
     for (let i = this.#state.currentLastItemIndex; i < this.#state.tournaments.length; i++) {
@@ -113,13 +114,12 @@ export class TournamentList extends HTMLElement {
   }
 
   renderNoItem() {
-    const message = 'No tournaments available at the moment. Create a new one to get started.';
+    const message = 'No tournaments available at the moment.';
     const item = document.createElement('li');
     item.className = 'list-group-item text-center border-0 bg-transparent py-3';
     item.id = 'no-open-tournaments';
     item.textContent = message;
     this.list.appendChild(item);
-    this.filterButton.classList.add('d-none');
   }
 
   /* ------------------------------------------------------------------------ */
