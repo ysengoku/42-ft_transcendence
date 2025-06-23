@@ -103,7 +103,9 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.user_profile.save(update_fields=["nb_active_connexions"])
 
                 logger.info(
-                    "User %s has %s active connexions", self.user.username, self.user_profile.nb_active_connexions
+                    "User %s has %s active connexions",
+                    self.user.username,
+                    self.user_profile.nb_active_connexions,
                 )
                 # Mark offline only if it was last disconnexion
                 if self.user_profile.nb_active_connexions == 0:
