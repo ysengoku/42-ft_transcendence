@@ -132,6 +132,8 @@ def generate_users() -> tuple[list[User], User]:
 def erase_old_avatars():
     avatars_folder = "/app/media/avatars"
     avatars_path = Path(avatars_folder)
+    if avatars_path.isdir() == False
+        return
     for file in avatars_path.iterdir():
         file_path = avatars_path / file
         if Path.is_file(file_path):
@@ -398,7 +400,6 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
-        # generate_tournaments(users)
         modified_generate_tournaments(users)
 
         # MFA users
