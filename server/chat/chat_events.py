@@ -23,8 +23,7 @@ class ChatEvent:
                 self.consumer.channel_name,
             )
         except Chat.DoesNotExist:
-            logger.debug("Acces denied to the chat %s for %s",
-                         chat_id, self.consumer.user.username)
+            logger.debug("Acces denied to the chat %s for %s", chat_id, self.consumer.user.username)
 
     def handle_message(self, data):
         message_data = data.get("data", {})
@@ -42,8 +41,7 @@ class ChatEvent:
             return
 
         # security check: user should be in the chat
-        is_in_chat = chat.participants.filter(
-            id=self.consumer.user_profile.id).exists()
+        is_in_chat = chat.participants.filter(id=self.consumer.user_profile.id).exists()
         if not is_in_chat:
             return
         is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
@@ -58,8 +56,7 @@ class ChatEvent:
                 chat_id,
             )
             return
-        new_message = ChatMessage.objects.create(
-            sender=self.consumer.user_profile, content=message, chat=chat)
+        new_message = ChatMessage.objects.create(sender=self.consumer.user_profile, content=message, chat=chat)
 
         async_to_sync(self.consumer.channel_layer.group_send)(
             f"chat_{chat_id}",
@@ -95,19 +92,7 @@ class ChatEvent:
                     message.is_liked = True
                     message.save(update_fields=["is_liked"])
                     message.refresh_from_db()
-                    transaction.on_commit(
-                        lambda: self.consumer.send_like_update(chat_id, message_id, True))
-                    self.consumer.send(
-                        text_data=json.dumps(
-                            {
-                                "action": "like_message",
-                                "data": {
-                                    "id": message_id,
-                                    "chat_id": chat_id,
-                                },
-                            },
-                        ),
-                    )
+                    transaction.on_commit(lambda: self.consumer.send_like_update(chat_id, message_id, True))
 
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist.", message_id)
@@ -128,21 +113,9 @@ class ChatEvent:
                     message.save(update_fields=["is_liked"])
 
                     message.refresh_from_db()
-                    transaction.on_commit(
-                        lambda: self.consumer.send_like_update(chat_id, message_id, False))
+                    transaction.on_commit(lambda: self.consumer.send_like_update(chat_id, message_id, False))
 
                     message.refresh_from_db()
-                    self.consumer.send(
-                        text_data=json.dumps(
-                            {
-                                "action": "unlike_message",
-                                "data": {
-                                    "id": message_id,
-                                    "chat_id": chat_id,
-                                },
-                            },
-                        ),
-                    )
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist", message_id)
 
