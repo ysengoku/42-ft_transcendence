@@ -252,9 +252,7 @@ export function fireConfetti(parentElement = document.body) {
       const speed = 280 + Math.random() * 150;
       const duration = 1500 + Math.random() * 800;
 
-      /**
-       * Calculate the movement vector components
-       */
+      // Calculate the movement vector components
       const dx = Math.cos(angle) * speed;
       const dy = Math.sin(angle) * speed;
 
@@ -296,3 +294,29 @@ export function fireConfetti(parentElement = document.body) {
     parentElement.classList.add('fade-out-animation');
   }, totalDelay);
 }
+
+/**
+ * Creates a burst of particles around a target element.
+ * Each particle moves in a random direction and fades out.
+ * @param {HTMLElement} wrapper - The container for the particles.
+ * @param {HTMLElement} target - The target element around which particles will burst.
+ * @param {string} color - The color of the particles, defaults to 'var(--pm-red-500)'.
+ */
+export function   particleBurst(wrapper, target, color = 'var(--pm-red-500)') {
+    for (let i = 0; i < 20; i++) {
+      const particle = document.createElement('div');
+      particle.classList.add('particle');
+      const angle = Math.random() * 2 * Math.PI;
+      const distance = Math.random() * 20 + 20;
+      particle.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+      particle.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+      particle.style.background = color;
+      const rect = target.getBoundingClientRect();
+      particle.style.left = `${rect.left + rect.width / 2 - 4}px`;
+      particle.style.top = `${rect.top + rect.height / 2 - 6}px`;
+      wrapper.appendChild(particle);
+      particle.addEventListener('animationend', () => {
+        particle.remove();
+      }, { once: true });
+    }
+  }

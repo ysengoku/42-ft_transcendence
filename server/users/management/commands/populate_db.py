@@ -400,7 +400,6 @@ class Command(BaseCommand):
         generate_matches(users, life_enjoyer)
         # generate_tournaments(users)
         modified_generate_tournaments(users)
-        put_avatars()
 
         # MFA users
         mfa_users = [
