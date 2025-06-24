@@ -1,5 +1,7 @@
+import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { sessionExpiredToast } from '@utils';
 
 export class FriendsList extends HTMLElement {
   #state = {
@@ -42,7 +44,12 @@ export class FriendsList extends HTMLElement {
   }
 
   async fetchFriendsData() {
-    this.#state.username = auth.getStoredUser().username;
+    const userData = await auth.getUser();
+    if (!userData) {
+      sessionExpiredToast();
+      router.redirect('/login');
+    }
+    this.#state.username = userData.username;
     this.#state.listLength = this.#state.friendsList.length;
     const response = await apiRequest(
       'GET',
@@ -53,7 +60,7 @@ export class FriendsList extends HTMLElement {
       true,
     );
     if (!response.success) {
-      devLog('Failed to fetch friends list:', response);
+      devErrorLog('Failed to fetch friends list:', response);
       return;
     }
     if (response.data) {

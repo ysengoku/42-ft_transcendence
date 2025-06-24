@@ -38,7 +38,7 @@ socketManager.addSocket('livechat', {
     document.dispatchEvent(customEvent);
   },
   game_declined: async (data) => {
-    const user = await auth.getStoredUser(); // TODO: use getUser?
+    const user = await auth.getUser();
     if (!user) {
       return;
     }
@@ -58,7 +58,7 @@ socketManager.addSocket('livechat', {
       bubbles: true,
     });
     document.dispatchEvent(customEvent);
-    const user = await auth.getStoredUser(); // TODO: use getUser?
+    const user = await auth.getUser();
     if (!user) {
       return;
     }
