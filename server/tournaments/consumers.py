@@ -299,7 +299,7 @@ class TournamentConsumer(WebsocketConsumer):
         )
 
     def tournament_canceled(self, data=None):
-        logger.debug("function tournament_canceled"["data"])
+        logger.debug("function tournament_canceled")
         if data is None:
             tournament_id = self.tournament_id
             tournament_name = self.tournament.name
@@ -331,8 +331,6 @@ class TournamentConsumer(WebsocketConsumer):
         logger.info(event)
         if Validator.validate_action_data("last_registration", event["data"]) is False:
             return
-        # if event is None or "data" not in event or data.get("alias") is None or data.get("avatar") is None:
-        #     logger.warning("last_registration : no alias or avatar in data")
         alias = event["data"].get("alias")
         avatar = event["data"].get("avatar")
         data = {"alias": alias, "avatar": avatar}
@@ -403,8 +401,20 @@ class TournamentConsumer(WebsocketConsumer):
                 "tournament_id": str(self.tournament_id),
             },
         }
+        logger.info("The winner : %s", bracket.winner.profile)
+        logger.info("The user : %s", self.user.profile)
+        if bracket.winner is None or bracket.winner.profile != self.user.profile:
+            loser = self.user.profile
+        else:
+            loser = None
         for user_id in (p1_id, p2_id):
             async_to_sync(self.channel_layer.group_send)(f"tournament_user_{user_id}", data)
+        # This does not self.close the ws for this user
+        # TODO: fix this : closing eliminated connexions
+        # if loser == self.user.profile:
+        #     logger.critical("CLOSING THE CONNECTION FOR THIS LOSER : %s", loser)
+        #     self.tournament_id = None
+        #     self.close(NORMAL_CLOSURE)
 
     def send_match_result(self, bracket):
         logger.debug("function send_match_result")
@@ -413,7 +423,6 @@ class TournamentConsumer(WebsocketConsumer):
         except Bracket.DoesNotExist:
             logger.warning("Error: No bracket found with this bracket : %s", bracket)
             return
-
         bracket_data = BracketSchema.model_validate(bracket)
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
@@ -427,3 +436,7 @@ class TournamentConsumer(WebsocketConsumer):
                 },
             },
         )
+
+    def log_self(self):
+        for key, value in self.__dict__.items():
+            logger.info("%s: %s", key, value)
