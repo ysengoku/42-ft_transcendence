@@ -130,6 +130,7 @@ class TournamentConsumer(WebsocketConsumer):
     def prepare_round(self, event):
         logger.debug("function prepare_round")
         try:
+            logger.debug(self.tournament_id)
             UUID(str(self.tournament_id))
         except ValueError:
             logger.warning("this tournament id is not a valid uuid.")
@@ -345,26 +346,29 @@ class TournamentConsumer(WebsocketConsumer):
     def tournament_game_finished(self, data):
         try:
             UUID(str(self.tournament_id))
-            logger.warning("this tournament id is not a valid uuid.")
         except ValueError:
+            logger.warning("this tournament id is not a valid uuid.")
             return
         try:
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
             logger.warning("This tournament doesn't exist.")
             return
-        if tournament.status is not tournament.ONGOING:
+        if tournament.status != tournament.ONGOING:
             logger.warning("Error: the tournament is not ongoing")
+            logger.warning("The tournament is %s", tournament.status)
             return
         # TODO:Securise this more : what if a user in a middle of a game triggers this with the console ws ?
-        if data is None or "id" not in data or data.get("id") is None:
+        if data is None or "bracket_id" not in data or data.get("bracket_id") is None:
             logger.warning("Error : no id given for the user gone")
+            logger.warning(data)
             return
         logger.debug("function handle_match_finished")
         logger.debug("data for handle_match_finished : %s", data)
-        bracket_id = data["data"].get("id")
+        bracket_id = data.get("bracket_id")
         try:
-            bracket = self.tournament.round.bracket(id=bracket_id)
+            bracket = Bracket.objects.get(id=bracket_id, round__tournament=tournament)
+            # tournament.rounds.bracket(id=bracket_id)
         except Bracket.DoesNotExist:
             logger.warning("Error: No bracket with this id : %s", bracket_id)
             return
@@ -374,9 +378,7 @@ class TournamentConsumer(WebsocketConsumer):
         self.send_match_result(bracket)
         if self.bracket.filter(status=Bracket.ONGOING) == 0:
             round.status = round.FINISHED
-            round.save()
-            # self.tournament.round.get(number=round_number).status = round.FINISHED
-            # self.tournament.round.save()
+            round.save(update_fields=["status"])
             self.self_send_message_to_ws("round_end", data={"tournament_id": str(self.tournament_id)})
             self.send_round_end_to_ws()
             self.prepare_round()
@@ -418,13 +420,7 @@ class TournamentConsumer(WebsocketConsumer):
             logger.warning("Error: No bracket found with this bracket : %s", bracket)
             return
 
-        p1_alias = bracket.participant1.alias
-        if bracket.winner.alias == p1_alias:
-            bracket.score_p1 = bracket.winners_score
-            bracket.score_p2 = bracket.losers_score
-        else:
-            bracket.score_p1 = bracket.losers_score
-            bracket.score_p2 = bracket.winners_score
+        bracket_data = BracketSchema.model_validate(bracket).model_dump()
         async_to_sync(self.channel_layer.group_send)(
             f"tournament_{self.tournament_id}",
             {
@@ -433,7 +429,9 @@ class TournamentConsumer(WebsocketConsumer):
                 "data": {
                     "tournament_id": str(self.tournament_id),
                     "round_number": round_number,
-                    "bracket": bracket,
+                    "bracket": json.loads(bracket_data.json()),
+                    # ERROR HERE !
+                    # TODO: DON'T FORGET TO RUN THE GAME WORKER :D
                 },
             },
         )
