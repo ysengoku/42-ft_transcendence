@@ -26,9 +26,17 @@ const auth = (() => {
      * @param {Object} user - The user object to store in session storage
      * @return {void}
      */
-    storeUser(user) {
+    storeUser(data) {
+      const user = {
+        username: data.username,
+        nickname: data.nickname,
+        avatar: data.avatar,
+        unread_messages_count: data.unread_messages_count,
+        unread_notifications_count: data.unread_notifications_count,
+      };
       const currentUser = this.getStoredUser();
       if (!currentUser || !isEqual(currentUser, user)) {
+        sessionStorage.removeItem('user');
         sessionStorage.setItem('user', JSON.stringify(user));
         const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
         document.dispatchEvent(event);
@@ -41,6 +49,7 @@ const auth = (() => {
 
     updateStoredUser(user) {
       const currentUser = this.getStoredUser();
+      sessionStorage.removeItem('user');
       const updatedUser = {
         username: user.username,
         nickname: user.nickname,
@@ -71,11 +80,28 @@ const auth = (() => {
      * @return { Object | null } The user object from session storage or null
      */
     getStoredUser() {
-      const user = sessionStorage.getItem('user');
-      if (!user) {
+      const rawData = sessionStorage.getItem('user');
+      if (!rawData) {
         return null;
       }
-      return JSON.parse(user);
+      let user;
+      try {
+        user = JSON.parse(rawData);
+      } catch {
+        console.error('invalid json');
+        return null;
+      }
+      if (
+        !user.username ||
+        !user.nickname ||
+        !user.avatar ||
+        typeof user.username !== 'string' ||
+        typeof user.nickname !== 'string' ||
+        typeof user.avatar !== 'string'
+      ) {
+        return null;
+      }
+      return user;
     }
 
     /**
@@ -84,18 +110,15 @@ const auth = (() => {
      * @return { Promise<Object> } The user object
      * */
     async getUser() {
-      let user = sessionStorage.getItem('user');
-      if (!user) {
-        const response = await this.fetchAuthStatus();
-        if (response.success) {
-          user = response.response;
-          this.storeUser(user);
-        } else if (response.status === 401) {
-          sessionExpiredToast();
-          return null;
-        }
+      const { success, response, status } = await this.fetchAuthStatus();
+      if (success) {
+        this.storeUser(response);
+        return response;
       }
-      return JSON.parse(user);
+      if (status === 401) {
+        sessionExpiredToast();
+      }
+      return null;
     }
 
     /**
