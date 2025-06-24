@@ -236,7 +236,6 @@ export class Chat extends HTMLElement {
         content: event.detail,
       },
     };
-    devLog('Sending new message to server. Data:', messageData);
     socketManager.sendMessage('livechat', messageData);
   }
 
@@ -252,7 +251,6 @@ export class Chat extends HTMLElement {
   }
 
   async receiveMessage(event) {
-    devLog('New message received:', event.detail);
     if (this.#state.currentChat && event.detail.chat_id === this.#state.currentChat.chat_id) {
       this.chatMessagesArea.renderNewMessage(event.detail);
     } else if (!this.#state.currentChat && event.detail.sender !== this.#state.loggedInUser.username) {
@@ -278,15 +276,21 @@ export class Chat extends HTMLElement {
     }
     const heart = component.querySelector('.message-liked');
     if (data.is_liked) {
-      devLog('Message is liked:', component);
       component.classList.remove('unliked');
       component.classList.add('liked');
       particleBurst(component, heart);
     } else {
-      devLog('Message is unliked:', component);
       particleBurst(component, heart, 'var(--pm-gray-500)');
       component.classList.remove('liked');
       component.classList.add('unliked');
+      const heartIcon = component.querySelector('i');
+      heartIcon?.addEventListener(
+        'animationend',
+        () => {
+          component.classList.remove('unliked');
+        },
+        { once: true },
+      );
     }
   }
 
