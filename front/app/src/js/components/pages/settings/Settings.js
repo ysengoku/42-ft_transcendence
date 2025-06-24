@@ -43,11 +43,14 @@ export class Settings extends HTMLElement {
   }
 
   async connectedCallback() {
-    const user = auth.getStoredUser();
+    let user = auth.getStoredUser();
+    if (!user) {
+      user = await auth.getUser();
+    }
     this.#state.isLoggedIn = user ? true : false;
     if (!this.#state.isLoggedIn) {
       sessionExpiredToast();
-      router.navigate('/');
+      router.navigate('/login');
       return;
     }
     this.#state.username = user.username;
@@ -62,15 +65,26 @@ export class Settings extends HTMLElement {
 
   async fetchUserData() {
     /* eslint-disable-next-line new-cap */
-    const response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.#state.username));
-    if (response.success) {
-      if (response.status === 200) {
-        this.#state.currentUserData = response.data;
-        this.render();
-      }
-    } else {
-      router.navigate('/login');
+    let response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.#state.username));
+    if (response.status === 200) {
+      this.#state.currentUserData = response.data;
+      this.render();
+      return;
     }
+    if (response.status === 403) {
+      const userData = await auth.getUser();
+      if (userData) {
+        this.#state.username = userData.username;
+        /* eslint-disable-next-line new-cap */
+        response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.#state.username));
+        if (response.status === 200) {
+          this.#state.currentUserData = response.data;
+          this.render();
+          return;
+        }
+      }
+    }
+    router.navigate('/login');
   }
 
   render() {
