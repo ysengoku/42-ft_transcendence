@@ -58,12 +58,14 @@ export class Chat extends HTMLElement {
    * @return {Promise<void>}
    */
   async connectedCallback() {
-    this.#state.loggedInUser = auth.getStoredUser();
-    const isLoggedIn = this.#state.loggedInUser ? true : false;
-    if (!isLoggedIn) {
+    const userData = await auth.getUser();
+    if (userData) {
+      this.#state.loggedInUser = userData;
+    } else {
       router.redirect('/login');
       return;
     }
+
     // Remove the unread messages badge from the navbar
     document.getElementById('navbar-chat-badge')?.classList.add('d-none');
     this.render();
