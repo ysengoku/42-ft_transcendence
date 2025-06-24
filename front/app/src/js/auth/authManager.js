@@ -26,7 +26,7 @@ const auth = (() => {
      * @param {Object} user - The user object to store in session storage
      * @return {void}
      */
-    storeUser(data) {
+    storeUser(data, fireEvent) {
       const user = {
         username: data.username,
         nickname: data.nickname,
@@ -38,8 +38,10 @@ const auth = (() => {
       if (!currentUser || !isEqual(currentUser, user)) {
         sessionStorage.removeItem('user');
         sessionStorage.setItem('user', JSON.stringify(user));
-        const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
-        document.dispatchEvent(event);
+        if (fireEvent) {
+          const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
+          document.dispatchEvent(event);
+        }
       }
       socketManager.openSocket('livechat');
       if (user.tournament_id) {
@@ -110,7 +112,7 @@ const auth = (() => {
      * @return { Promise<Object> } The user object
      * */
     async getUser() {
-      const { success, response, status } = await this.fetchAuthStatus();
+      const { success, response, status } = await this.fetchAuthStatus(false);
       if (success) {
         this.storeUser(response);
         return response;
@@ -125,7 +127,7 @@ const auth = (() => {
      * Fetch the user authentication status from the server
      * @return { Promise<Object> } Object including success: bool & user data on success or status code on failure
      */
-    async fetchAuthStatus() {
+    async fetchAuthStatus(fireEvent = true) {
       devLog('Fetching user login status...');
       const CSRFToken = getCSRFTokenfromCookies();
       const request = {
@@ -140,14 +142,14 @@ const auth = (() => {
       if (response.ok) {
         const data = await response.json();
         devLog('User is logged in: ', data);
-        this.storeUser(data);
+        this.storeUser(data, fireEvent);
         return { success: true, response: data };
       } else if (response.status === 401) {
         const refreshTokenResponse = await refreshAccessToken(CSRFToken);
         if (refreshTokenResponse.status) {
           switch (refreshTokenResponse.status) {
             case 204:
-              return this.fetchAuthStatus();
+              return this.fetchAuthStatus(fireEvent);
             case 401:
               return { success: false, status: 401 };
             case 500:
