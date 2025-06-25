@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -224,21 +225,24 @@ class GameRoomPlayer(models.Model):
 class GameRoomQuerySet(models.QuerySet):
     def for_settings(self, settings: GameRoomSettings) -> models.QuerySet:
         """
-        Returns a query based on the GameRoomSettings. Excludes all the game rooms with conflicting settings.
+        Returns a QuerySet based on the GameRoomSettings. Excludes all the game rooms with conflicting settings.
         """
-        settings_conflict_query = Q()
+        compatible_settings_query = Q()
         for key, value in settings.items():
-            settings_conflict_query |= (Q(settings__has_key=key) & ~Q(settings__contains={key: value}))
+            compatible_settings_query &= ~Q(settings__has_key=key) | Q(settings__contains={key: value})
 
-        return self.exclude(settings_conflict_query)
+        return self.filter(compatible_settings_query)
 
     def for_valid_game_room(self, profile: Profile, settings: GameRoomSettings):
         """Valid game room is a pending game room with less than 2 players."""
-        return self.annotate(players_count=Count("players")).filter(
-            status=GameRoom.PENDING,
-            players_count__lt=2,
-            settings__contains=settings,
-        ).for_settings(settings)
+        return (
+            self.annotate(players_count=Count("players"))
+            .filter(
+                status=GameRoom.PENDING,
+                players_count__lt=2,
+            )
+            .for_settings(settings)
+        )
 
     def for_id(self, game_room_id: str):
         try:
@@ -314,3 +318,72 @@ class GameRoom(models.Model):
             return self.bracket is not None
         except ObjectDoesNotExist:
             return False
+
+    @staticmethod
+    def decode_game_room_settings_uri_query(
+        query_string: str, default_game_room_settings: None | GameRoomSettings = None,
+    ) -> GameRoomSettings:
+        """
+        Decodes the game room settings from the query string, converts the data to the correct type.
+        """
+        if not default_game_room_settings:
+            default_game_room_settings = get_default_game_room_settings()
+        if not query_string:
+            return default_game_room_settings
+
+        ### DECODING ###
+        decoded_game_room_query_parameters: dict = {
+            k.decode(): v[0].decode()
+            for k, v in parse_qs(query_string, strict_parsing=True, max_num_fields=9, encoding="utf-8").items()
+        }
+
+        return decoded_game_room_query_parameters
+
+    @staticmethod
+    def handle_game_room_settings_types(
+        game_room_settings: dict[str, str], default_game_room_settings: None | GameRoomSettings = None,
+    ) -> None | GameRoomSettings:
+        ### CHECKS FOR KEY NAMES AND VALUES TYPE CORRECTNESS ###
+        try:
+            if not default_game_room_settings:
+                default_game_room_settings = get_default_game_room_settings()
+            result = dict(default_game_room_settings)
+            for setting_key, setting_value in game_room_settings.items():
+                if setting_key not in default_game_room_settings:
+                    return None
+
+                # if the value is "any", it means that the user does not care and we delete the key altogether
+                if setting_value == "any":
+                    del result[setting_key]
+                    continue
+
+                setting_type = type(default_game_room_settings[setting_key])
+                if setting_type is bool:
+                    result[setting_key] = setting_value and setting_value.lower() != "false"
+                else:
+                    result[setting_key] = setting_type(setting_value)
+
+            if "game_speed" in result and result["game_speed"] not in [
+                "slow",
+                "medium",
+                "fast",
+            ]:
+                return None
+
+            provided_time_limit = result.get("time_limit", 0)
+            min_time_limit = 1
+            max_time_limit = 5
+            if provided_time_limit < min_time_limit or provided_time_limit > max_time_limit:
+                return None
+
+            provided_score_to_win = result.get("score_to_win")
+            min_score_to_win = 3
+            max_score_to_win = 20
+            if provided_score_to_win and (
+                provided_score_to_win < min_score_to_win or provided_score_to_win > max_score_to_win
+            ):
+                return None
+
+            return result
+        except ValueError:
+            return None
