@@ -307,10 +307,16 @@ class GameRoom(models.Model):
         Resolves settings of this game room player set by the creator with the non conflicting game room settings
         of the other player in the game room.
         """
-        new_settings = dict(self.settings)
-        for key, value in other_settings.items():
-            if key not in new_settings:
-                new_settings[key] = value
+        default_game_room_settings = get_default_game_room_settings()
+        initial_settings = dict(self.settings)
+        new_settings = {}
+        for key in default_game_room_settings:
+            if key in initial_settings:
+                new_settings[key] = initial_settings[key]
+            elif key in other_settings:
+                new_settings[key] = other_settings[key]
+            else:
+                new_settings[key] = default_game_room_settings[key]
         self.settings = new_settings
         self.save()
         return self
