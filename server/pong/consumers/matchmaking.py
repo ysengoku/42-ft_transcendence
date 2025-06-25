@@ -77,6 +77,7 @@ class MatchmakingConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_add)(self.matchmaking_group_name, self.channel_name)
 
             if self.game_room.players.count() == PLAYERS_REQUIRED:
+                self.game_room.set_ongoing()
                 logger.info("[Matchmaking.connect]: game room {%s} both players were found")
                 async_to_sync(self.channel_layer.group_send)(
                     self.matchmaking_group_name,
@@ -159,7 +160,6 @@ class MatchmakingConsumer(WebsocketConsumer):
         game room.
         """
         opponent: GameRoomPlayer = self.game_room.players.exclude(user=self.user).first()
-        self.game_room.set_ongoing()
         self.send(
             text_data=json.dumps(
                 MatchmakingToClient.GameFound(
