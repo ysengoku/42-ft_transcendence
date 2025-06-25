@@ -55,9 +55,10 @@ class MatchmakingConsumer(WebsocketConsumer):
             elif not self.game_room.has_player(self.user.profile):
                 game_room_player: GameRoomPlayer = self.game_room.add_player(self.user.profile)
                 logger.info(
-                    "[Matchmaking.connect]: game room {%s} added profile {%s}",
+                    "[Matchmaking.connect]: game room {%s} added profile {%s}. Desired settings of the player: {%s}",
                     self.game_room,
                     self.user.profile,
+                    self.game_room_settings,
                 )
 
             else:
@@ -78,7 +79,9 @@ class MatchmakingConsumer(WebsocketConsumer):
 
             if self.game_room.players.count() == PLAYERS_REQUIRED:
                 self.game_room.set_ongoing()
-                logger.info("[Matchmaking.connect]: game room {%s} both players were found")
+                self.game_room.resolve_settings(self.game_room_settings)
+                logger.info("[Matchmaking.connect]: both players were found. Settings were resolved for the game room "
+                            "{%s} ", self.game_room)
                 async_to_sync(self.channel_layer.group_send)(
                     self.matchmaking_group_name,
                     {"type": "game_found"},
@@ -97,8 +100,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(self.matchmaking_group_name, self.channel_name)
         if code == PongCloseCodes.NORMAL_CLOSURE:
             logger.info(
-                "[Matchmaking.disconnect]: players were found for game room {%s}, connection is closed normally",
-                self.game_room,
+                "[Matchmaking.disconnect]: connection is closed normally",
             )
             return
 
