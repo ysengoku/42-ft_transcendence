@@ -7,7 +7,7 @@ from channels.db import database_sync_to_async
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.utils import timezone
 
 from pong.game_protocol import GameRoomSettings
