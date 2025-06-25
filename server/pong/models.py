@@ -310,8 +310,8 @@ class GameRoom(models.Model):
         return GameRoomPlayer.objects.create(game_room=self, profile=profile)
 
     def set_ongoing(self):
-        self.game_room.status = GameRoom.ONGOING
-        self.game_room.save()
+        self.status = self.ONGOING
+        self.save()
         return self
 
     def has_player(self, profile: Profile):
@@ -326,7 +326,8 @@ class GameRoom(models.Model):
 
     @staticmethod
     def decode_game_room_settings_uri_query(
-        query_string: str, default_game_room_settings: None | GameRoomSettings = None,
+        query_string: str,
+        default_game_room_settings: None | GameRoomSettings = None,
     ) -> GameRoomSettings:
         """
         Decodes the game room settings from the query string, converts the data to the correct type.
@@ -346,7 +347,8 @@ class GameRoom(models.Model):
 
     @staticmethod
     def handle_game_room_settings_types(
-        game_room_settings: dict[str, str], default_game_room_settings: None | GameRoomSettings = None,
+        game_room_settings: dict[str, str],
+        default_game_room_settings: None | GameRoomSettings = None,
     ) -> None | GameRoomSettings:
         ### CHECKS FOR KEY NAMES AND VALUES TYPE CORRECTNESS ###
         try:
@@ -375,10 +377,12 @@ class GameRoom(models.Model):
             ]:
                 return None
 
-            provided_time_limit = result.get("time_limit", 0)
+            provided_time_limit = result.get("time_limit")
             min_time_limit = 1
             max_time_limit = 5
-            if provided_time_limit < min_time_limit or provided_time_limit > max_time_limit:
+            if provided_time_limit is not None and (
+                provided_time_limit < min_time_limit or provided_time_limit > max_time_limit
+            ):
                 return None
 
             provided_score_to_win = result.get("score_to_win")
