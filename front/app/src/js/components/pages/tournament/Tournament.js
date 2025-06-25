@@ -347,7 +347,11 @@ export class Tournament extends HTMLElement {
    * @description Initializes the tournament state and updates the UI.
    */
   handleTournamentStart(data) {
-    if (data.tournament_id !== this.#state.tournamentId || !this.#state.tournament) {
+    if (
+      data.tournament_id !== this.#state.tournamentId ||
+      !this.#state.tournament ||
+      this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING
+    ) {
       return;
     }
     this.#state.currentRoundNumber = 1;
