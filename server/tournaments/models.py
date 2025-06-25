@@ -192,6 +192,7 @@ class BracketQuerySet(models.QuerySet):
         bracket: Bracket = await database_sync_to_async(self.get)(id=bracket_id)
         if status == "finished":
             winner_participant: Participant = await database_sync_to_async(Participant.objects.get)(
+                Q(brackets_p1__id=bracket_id) | Q(brackets_p2__id=bracket_id),
                 profile__id=winner_profile_id,
             )
             bracket.winners_score = winners_score
