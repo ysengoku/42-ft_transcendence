@@ -247,8 +247,11 @@ class TournamentConsumer(WebsocketConsumer):
         logger.debug("function end_tournament")
         if winner is not None:
             tournament.winner = winner[0]
+            winner[0].status = Participant.WINNER
+            winner[0].save(update_fields=["status"])
         tournament.status = Tournament.FINISHED
         tournament.save()
+        self.close(NORMAL_CLOSURE)
 
     def tournament_broadcast(self, event):
         logger.debug("function tournament_broadcast")
@@ -415,13 +418,17 @@ class TournamentConsumer(WebsocketConsumer):
             logger.critical("CLOSING THE CONNECTION FOR THIS LOSER : %s", loser)
             if bracket.participant1.profile == loser:
                 p_loser = bracket.participant1
+                p_winner = bracket.participant2
             elif bracket.participant2.profile == loser:
                 p_loser = bracket.participant2
+                p_winner = bracket.participant1
             else:
                 logger.warning("The loser profile is none of the 2 participants")
                 return
             p_loser.status = Participant.ELIMINATED
+            p_winner.status = Participant.QUALIFIED
             p_loser.save(update_fields=["status"])
+            p_winner.save(update_fields=["status"])
             self.tournament_id = None
             self.close(NORMAL_CLOSURE)
 
