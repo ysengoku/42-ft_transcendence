@@ -250,6 +250,7 @@ export class Tournament extends HTMLElement {
             default:
               devErrorLog('Unknown bracket status:', this.#state.currentUserBracket.status);
           }
+          break;
         default:
           devErrorLog(
             'Cannot resolve UI status. Round status:',

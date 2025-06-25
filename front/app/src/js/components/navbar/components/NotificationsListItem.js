@@ -1,12 +1,11 @@
 import { router } from '@router';
-import { auth } from '@auth';
 import { socketManager } from '@socket';
 import { getRelativeTime } from '@utils';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 
 export class NotificationsListItem extends HTMLElement {
   #state = {
-    // username: '',
+    username: '',
     action: '',
     data: null,
   };
@@ -29,15 +28,12 @@ export class NotificationsListItem extends HTMLElement {
     this.navigateToProfile = this.navigateToProfile.bind(this);
   }
 
-  set data(data) {
+  set state(data) {
     this.#state.action = data.action;
     this.#state.data = data.data;
+    this.#state.username = data.username;
     this.render();
   }
-
-  // set username(username) {
-  //   this.#state.username = username;
-  // }
 
   disconnectedCallback() {
     this.acceptButton?.removeEventListener('click', this.handleAcceptDuel);
@@ -61,9 +57,7 @@ export class NotificationsListItem extends HTMLElement {
     this.buttonWrapper = this.querySelector('.call-to-action-groupe');
     switch (this.#state.action) {
       case 'game_invite':
-        const user = auth.getStoredUser();
-        const username = user ? user.username : '';
-        if (!username) {
+        if (!this.#state.username) {
           this.content.textContent = 'This notification is momentarily unavailable.';
           return;
         }
@@ -71,7 +65,7 @@ export class NotificationsListItem extends HTMLElement {
         this.seeProfileButton.textContent = 'See profile';
         this.seeProfileButton.addEventListener('click', this.navigateToProfile);
         this.buttonWrapper.appendChild(this.seeProfileButton);
-        if (this.#state.data.username !== username) {
+        if (this.#state.data.username !== this.#state.username) {
           this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
           this.acceptButton = document.createElement('button');
           this.acceptButton.textContent = 'Accept';
