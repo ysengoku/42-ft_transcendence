@@ -302,6 +302,19 @@ class GameRoom(models.Model):
     def __str__(self) -> str:
         return f"{self.get_status_display()} match {str(self.id)} with settings: {self.settings}"
 
+    def resolve_settings(self, other_settings: GameRoomSettings):
+        """
+        Resolves settings of this game room player set by the creator with the non conflicting game room settings
+        of the other player in the game room.
+        """
+        new_settings = dict(self.settings)
+        for key, value in other_settings.items():
+            if key not in new_settings:
+                new_settings[key] = value
+        self.settings = new_settings
+        self.save()
+        return self
+
     def set_closed(self):
         self.status = GameRoom.CLOSED
         self.save()
