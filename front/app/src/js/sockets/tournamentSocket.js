@@ -8,7 +8,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
 
 socketManager.addSocket('tournament', {
-  // TESTED
   new_registration: (data) => {
     devLog('New tournament registration:', data);
     if (window.location.pathname.startsWith('/tournament')) {
@@ -16,7 +15,6 @@ socketManager.addSocket('tournament', {
       tournamentPendingContentElement?.addParticipant(data);
     }
   },
-  // TESTED
   registration_canceled: (data) => {
     devLog('Tournament registration canceled:', data);
     if (window.location.pathname.startsWith('/tournament')) {
@@ -24,7 +22,6 @@ socketManager.addSocket('tournament', {
       tournamentPendingContentElement?.removeParticipant(data);
     }
   },
-  // TESTED
   tournament_canceled: (data) => {
     devLog('Tournament canceled:', data);
     if (window.location.pathname.startsWith('/tournament')) {
@@ -34,7 +31,6 @@ socketManager.addSocket('tournament', {
       showToastNotification(`Tournament -  ${data.tournament_name} has been canceled.`, TOAST_TYPES.ERROR);
     }
   },
-  // TESTED
   tournament_start: (data) => {
     devLog('Tournament starts:', data);
     if (window.location.pathname.startsWith('/tournament')) {
@@ -44,7 +40,6 @@ socketManager.addSocket('tournament', {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.TOURNAMENT_STARTS, data.tournament_name);
     }
   },
-  // TESTED
   round_start: (data) => {
     if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPage = document.querySelector('tournament-room');
@@ -56,12 +51,10 @@ socketManager.addSocket('tournament', {
     }
   },
   match_finished: (data) => {
-    // TODO: Adjust depending which ws sends this message (tournament or pong)
-    if (window.location.pathname.startsWith('/multiplayer-game')) {
-      router.redirect(`tournament/${data.tournament_id}`);
-    }
+    // if (window.location.pathname.startsWith('/multiplayer-game')) {
+    //   router.redirect(`tournament/${data.tournament_id}`);
+    // }
   },
-  // TESTED
   match_result: async (data) => {
     if (!window.location.pathname.startsWith('/tournament')) {
       return;
@@ -75,7 +68,10 @@ socketManager.addSocket('tournament', {
   },
   // TESTED
   round_end: (data) => {
-    if (!window.location.pathname.startsWith('/tournament')) {
+    if (
+      !window.location.pathname.startsWith('/tournament') &&
+      !window.location.pathname.startsWith('/multiplayer-game')
+    ) {
       showTournamentAlert(data.tournament_id, TOURNAMENT_ALERT_TYPE.ROUND_END);
     }
   },
