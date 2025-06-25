@@ -302,9 +302,10 @@ class GameRoom(models.Model):
     def __str__(self) -> str:
         return f"{self.get_status_display()} match {str(self.id)} with settings: {self.settings}"
 
-    def close(self):
+    def set_closed(self):
         self.status = GameRoom.CLOSED
         self.save()
+        return self
 
     def add_player(self, profile: Profile):
         return GameRoomPlayer.objects.create(game_room=self, profile=profile)
