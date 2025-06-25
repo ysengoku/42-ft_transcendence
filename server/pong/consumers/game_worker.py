@@ -3,6 +3,7 @@ import contextlib
 import logging
 import math
 import random
+import traceback
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from typing import Literal
@@ -548,7 +549,6 @@ class GameWorkerConsumer(AsyncConsumer):
             and len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) == PLAYERS_REQUIRED - 1
         ):
             await self._add_player_and_start_match(match, event)
-
         ### RECONNECTION OF ONE OF THE PLAYERS TO THE MATCH ###
         elif match.status in {MultiplayerPongMatchStatus.PENDING, MultiplayerPongMatchStatus.PAUSED}:
             await self._reconnect_player(player_id, match)
@@ -668,6 +668,8 @@ class GameWorkerConsumer(AsyncConsumer):
             logger.info("[GameWorker]: task for game {%s} has been done", match)
         except asyncio.CancelledError:
             logger.info("[GameWorker]: task for game {%s} has been cancelled", match)
+        except Exception:  # noqa: BLE001
+            logger.critical(traceback.format_exc())
 
     async def _wait_for_both_player_task(self, match: MultiplayerPongMatch):
         """
@@ -705,6 +707,8 @@ class GameWorkerConsumer(AsyncConsumer):
 
         except asyncio.CancelledError:
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
+        except Exception:  # noqa: BLE001
+            logger.critical(traceback.format_exc())
 
     async def _wait_for_end_of_buff(self, match: MultiplayerPongMatch, last_bumper_collided: str):
         time_to_wait = match.time_to_wait if last_bumper_collided is not None else DEFAULT_COIN_WAIT_TIME
@@ -793,6 +797,8 @@ class GameWorkerConsumer(AsyncConsumer):
 
         except asyncio.CancelledError:
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
+        except Exception:  # noqa: BLE001
+            logger.critical(traceback.format_exc())
 
     ##### PLAYER MANAGEMENT METHODS #####
     async def _add_player_and_create_pending_match(self, event: GameServerToGameWorker.PlayerConnected):

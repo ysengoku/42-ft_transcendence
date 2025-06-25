@@ -309,6 +309,11 @@ class GameRoom(models.Model):
     def add_player(self, profile: Profile):
         return GameRoomPlayer.objects.create(game_room=self, profile=profile)
 
+    def set_ongoing(self):
+        self.game_room.status = GameRoom.ONGOING
+        self.game_room.save()
+        return self
+
     def has_player(self, profile: Profile):
         return self.players.filter(id=profile.id).exists()
 

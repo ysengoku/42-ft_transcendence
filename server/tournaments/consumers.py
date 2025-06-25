@@ -12,9 +12,10 @@ from django.db import transaction
 
 from pong.models import GameRoom, GameRoomPlayer
 
-# TODO: see if BracketSchema is really needed
-from .schemas import RoundSchema, BracketSchema
 from .models import Bracket, Participant, Round, Tournament
+
+# TODO: see if BracketSchema is really needed
+from .schemas import BracketSchema, RoundSchema
 from .tournament_validator import Validator
 
 logger = logging.getLogger("server")
@@ -192,9 +193,9 @@ class TournamentConsumer(WebsocketConsumer):
         logger.debug(new_round)
 
     def create_tournament_game_room(self, p1, p2):
-        gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=p1.profile)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=p2.profile)
+        gameroom: GameRoom = GameRoom.objects.create(status=GameRoom.ONGOING)
+        gameroom.add_player(p1.profile)
+        gameroom.add_player(p2.profile)
         return gameroom
 
     def generate_brackets(self, participants):
@@ -240,7 +241,7 @@ class TournamentConsumer(WebsocketConsumer):
                         "round": json.loads(round_data.json()),
                     },
                 },
-            )
+            ),
         )
 
     def end_tournament(self, tournament, winner):

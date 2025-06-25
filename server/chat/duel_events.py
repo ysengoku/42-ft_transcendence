@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 
-from pong.models import GameRoom, GameRoomPlayer
+from pong.models import GameRoom
 from users.models import Profile
 
 from .chat_utils import ChatUtils
@@ -30,9 +30,9 @@ class DuelEvent:
             DuelEvent.decline_game_invite(self, data)
 
     def create_game_room(self, profile1, profile2):
-        gameroom = GameRoom.objects.create(status=GameRoom.ONGOING)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=profile1)
-        GameRoomPlayer.objects.create(game_room=gameroom, profile=profile2)
+        gameroom: GameRoom = GameRoom.objects.create(status=GameRoom.ONGOING)
+        gameroom.add_player(profile1)
+        gameroom.add_player(profile2)
         return gameroom
 
     def data_for_game_found(self, player, game_id):
