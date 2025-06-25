@@ -401,8 +401,8 @@ class TournamentConsumer(WebsocketConsumer):
                 "tournament_id": str(self.tournament_id),
             },
         }
-        logger.info("The winner : %s", bracket.winner.profile)
-        logger.info("The user : %s", self.user.profile)
+        # logger.info("The winner : %s", bracket.winner.profile)
+        # logger.info("The user : %s", self.user.profile)
         if bracket.winner is None or bracket.winner.profile != self.user.profile:
             loser = self.user.profile
         else:
@@ -411,10 +411,19 @@ class TournamentConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_send)(f"tournament_user_{user_id}", data)
         # This does not self.close the ws for this user
         # TODO: fix this : closing eliminated connexions
-        # if loser == self.user.profile:
-        #     logger.critical("CLOSING THE CONNECTION FOR THIS LOSER : %s", loser)
-        #     self.tournament_id = None
-        #     self.close(NORMAL_CLOSURE)
+        if loser == self.user.profile:
+            logger.critical("CLOSING THE CONNECTION FOR THIS LOSER : %s", loser)
+            if bracket.participant1.profile == loser:
+                p_loser = bracket.participant1
+            elif bracket.participant2.profile == loser:
+                p_loser = bracket.participant2
+            else:
+                logger.warning("The loser profile is none of the 2 participants")
+                return
+            p_loser.status = Participant.ELIMINATED
+            p_loser.save(update_fields=["status"])
+            self.tournament_id = None
+            self.close(NORMAL_CLOSURE)
 
     def send_match_result(self, bracket):
         logger.debug("function send_match_result")
