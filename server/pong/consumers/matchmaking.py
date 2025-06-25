@@ -36,7 +36,7 @@ class MatchmakingConsumer(WebsocketConsumer):
             self.close(PongCloseCodes.ALREADY_IN_GAME)
             return
 
-        self.game_room_settings = GameRoom.validate_game_room_settings_ranges(
+        self.game_room_settings = GameRoom.handle_game_room_settings_types(
             GameRoom.decode_game_room_settings_uri_query(self.scope["query_string"]),
         )
         if self.game_room_settings is None:
@@ -160,8 +160,7 @@ class MatchmakingConsumer(WebsocketConsumer):
         game room.
         """
         opponent: GameRoomPlayer = self.game_room.players.exclude(user=self.user).first()
-        self.game_room.status = GameRoom.ONGOING
-        self.game_room.save()
+        self.game_room.set_ongoing()
         self.send(
             text_data=json.dumps(
                 MatchmakingToClient.GameFound(
