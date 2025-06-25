@@ -227,8 +227,16 @@ export class ChatMessageArea extends HTMLElement {
     };
     this.#state.data.messages.unshift(message);
     const messageElement = this.messageItem(message);
+    messageElement.classList.add('animateIn');
     this.chatMessages.appendChild(messageElement);
     this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    messageElement.addEventListener(
+      'animationend',
+      () => {
+        messageElement.classList.remove('animateIn');
+      },
+      { once: true },
+    );
   }
 
   /**
@@ -449,12 +457,30 @@ export class ChatMessageArea extends HTMLElement {
         overflow-wrap: anywhere;
         hyphens: auto;
       }
+      .animateIn {
+        animation: animateIn 0.4s ease forwards;
+      }
+      @keyframes animateIn {
+        0% {
+          opacity: 0;
+          transform: scale(0) translateY(24px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
       .left-align-message {
         padding-right: 32px;
         margin-bottom: 24px;
         .message-time {
           margin-left: 8px;
           margin-bottom: 4px;
+        }
+        .bubble:hover {
+          .bi-heart-fill {
+            opacity: 0.5;
+          }
         }
       }
       .right-align-message {
@@ -473,7 +499,7 @@ export class ChatMessageArea extends HTMLElement {
         background-color: var(--pm-gray-100);
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         color: var(--pm-gray-700);
-      }  
+      }
       .bubble i {
         display: block;
       } 
@@ -490,7 +516,7 @@ export class ChatMessageArea extends HTMLElement {
         bottom: -20px;
         right: 6px;
         color: var(--pm-gray-400);
-        opacity: 0.4;
+        opacity: 0;
       }
       .bubble.liked .message-liked {
         visibility: visible;
@@ -518,7 +544,7 @@ export class ChatMessageArea extends HTMLElement {
         }
         100% {
           transform: scale(1);
-          opacity: 0.4;
+          opacity: 0;
         }
       }
       .message-time {
@@ -542,3 +568,27 @@ export class ChatMessageArea extends HTMLElement {
 }
 
 customElements.define('chat-message-area', ChatMessageArea);
+
+/*
+
+<div class="right-align-message d-flex flex-row justify-content-end align-items-center animateIn">
+    
+    <div class="message" data-bs-toggle="tooltip" data-bs-original-title="today, 09:01">
+      <div class="bubble ms-5" id="a9b9abc4-5289-49c3-a368-924bbebb537b">
+        <div class="message-content">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</div>
+        <i class="message-liked bi bi-heart-fill h5"></i>
+      </div>
+    </div>
+    </div>
+
+
+<div class="right-align-message d-flex flex-row justify-content-end align-items-center">
+    
+    <div class="message" data-bs-toggle="tooltip" data-bs-original-title="today, 09:01">
+      <div class="bubble ms-5" id="a9b9abc4-5289-49c3-a368-924bbebb537b">
+        <div class="message-content">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</div>
+        <i class="message-liked bi bi-heart-fill h5"></i>
+      </div>
+    </div>
+    </div>
+*/

@@ -68,12 +68,6 @@ export class Register extends HTMLElement {
 
     if (response.success) {
       if (response.status === 200) {
-        const userInformation = {
-          username: response.data.username,
-          nickname: response.data.nickname,
-          avatar: response.data.avatar,
-        };
-        auth.storeUser(userInformation);
         router.redirect('/home', response.user);
       }
     } else {
