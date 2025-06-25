@@ -110,6 +110,7 @@ class GameServerToClient:
         """Both of the players failed to connect to the game, so it was cancelled."""
 
         action: Literal["game_cancelled"]
+        tournament_id: str | None
 
     class GameStarted(WorkerToClientOpen):
         """Both of the players joined the game and it started."""
