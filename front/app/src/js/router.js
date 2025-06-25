@@ -282,7 +282,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authStatus = await auth.fetchAuthStatus();
   const navbarContainer = document.getElementById('navbar-container');
   if (navbarContainer) {
-    navbarContainer.innerHTML = '<navbar-component></navbar-component>';
+    const navbarElement = document.createElement('navbar-component');
+    navbarElement.state = authStatus.success ? authStatus.response : null;
+    navbarContainer.appendChild(navbarElement);
   } else {
     console.error('Error rendering navbar');
   }
