@@ -9,21 +9,24 @@ export class Navbar extends HTMLElement {
 
   constructor() {
     super();
+    this.render = this.render.bind(this);
     this.updateNavbar = this.updateNavbar.bind(this);
+  }
+
+  set state(data) {
+    this.#state.user = data;
+    this.#state.isLoggedin = this.#state.user ? true : false;
   }
 
   connectedCallback() {
     document.addEventListener('userStatusChange', this.updateNavbar);
-    this.#state.user = auth.getStoredUser();
-    this.#state.isLoggedin = this.#state.user ? true : false;
+    window.addEventListener('resize', this.render);
     this.render();
-    window.addEventListener('resize', () => {
-      this.render();
-    });
   }
 
   disconnectedCallback() {
     document.removeEventListener('userStatusChange', this.updateNavbar);
+    window.removeEventListener('resize', this.render);
   }
 
   render() {
@@ -65,7 +68,7 @@ export class Navbar extends HTMLElement {
   updateNavbar(event) {
     this.#state.isLoggedin = event.detail.user !== null;
     if (this.#state.isLoggedin) {
-      this.#state.user = auth.getStoredUser();
+      this.#state.user = auth.getStoredUser(); // TODO: Use event.detail.user?
     }
     this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
