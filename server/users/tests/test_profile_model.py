@@ -31,7 +31,7 @@ class ProfileModelTests(TestCase):
             next((x for x in self.user.profile.get_active_game_participation() if isinstance(x, GameRoom)), None),
             "User should not be able to participate in games when they are already active in matchmaking",
         )
-        game_room.close()
+        game_room.set_closed()
         self.assertIsNone(
             next((x for x in self.user.profile.get_active_game_participation() if isinstance(x, GameRoom)), None),
             "User should be able to participate in games after they finished the game",
