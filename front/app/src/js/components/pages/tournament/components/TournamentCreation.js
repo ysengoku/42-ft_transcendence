@@ -213,8 +213,7 @@ export class TournamentCreation extends HTMLElement {
     if (!this.#state.isAliasValid || !this.#state.isTournamentNameValid) {
       return;
     }
-
-    this.#state.newTournament.settings = this.gameOptionsForm.selectedOptions;
+    this.#state.newTournament.settings = this.gameOptionsForm.selectedOptionsObject;
     if (this.#state.newTournament.settings && this.#state.newTournament.settings.ranked) {
       this.#state.newTournament.settings.ranked = false;
     }

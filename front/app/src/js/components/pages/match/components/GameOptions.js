@@ -79,13 +79,26 @@ export class GameOptions extends HTMLElement {
     return this.#state.selectedOptions;
   }
 
+  get selectedOptionsObject() {
+    this.storeOptionstoLocalStorage();
+    if (Object.keys(this.#state.selectedOptions).length === 0) {
+      return null;
+    }
+    const optionsObj = {};
+    for (const [key, value] of Object.entries(this.#state.selectedOptions)) {
+      if (value !== 'any') {
+        optionsObj[key] = value;
+      }
+    }
+    return optionsObj;
+  }
+
   getOptionsFromLocalStorage() {
     const storedOptions = localStorage.getItem('gameOptions');
     return storedOptions ? JSON.parse(storedOptions) : null;
   }
 
   storeOptionstoLocalStorage() {
-    console.log('Storing game options to localStorage', this.#state.selectedOptions);
     if (!this.#state.selectedOptions) {
       return;
     }
@@ -300,10 +313,10 @@ export class GameOptions extends HTMLElement {
 
   template() {
     return `
-    <! -- Opt-out All Options -->
-    <div class="opt-out-option optout-all form-check pt-1 mb-5 fs-5">
+    <! -- Optout All Options -->
+    <div class="optout-option optout-all form-check pt-1 mb-5 fs-5">
       <input class="form-check-input" type="checkbox" id="optout-gameOptions">
-      <label class="form-check-label fw-bold" for="optout-optout-gameOptions">
+      <label class="form-check-label fw-bold" for="optout-gameOptions">
         Deactivate All Options
       </label>
     </div>
@@ -314,7 +327,7 @@ export class GameOptions extends HTMLElement {
       <div class="option-input-wrapper pb-2">
         <div class="d-flex justify-content-between pb-1">
           <label for="score-to-win" class="fs-5">Score to Win</label>
-          <div class="opt-out-option form-check pt-1">
+          <div class="optout-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-score_to_win">
             <label class="form-check-label" for="optout-score_to_win">
               I don't care
@@ -336,7 +349,7 @@ export class GameOptions extends HTMLElement {
       <div class="option-input-wrapper d-flex flex-column pb-3 gap-2">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="game-speed" class="fs-5">Game Speed</label>
-          <div class="opt-out-option form-check pt-1">
+          <div class="optout-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-game_speed">
             <label class="form-check-label" for="optout-game_speed">
               I don't care
@@ -359,7 +372,7 @@ export class GameOptions extends HTMLElement {
       <div class="option-input-wrapper">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="time-limit" class="fs-5">Time Limit</label>
-          <div class="opt-out-option form-check pt-1">
+          <div class="optout-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-time_limit">
             <label class="form-check-label" for="optout-time_limit">
               I don't care
@@ -381,7 +394,7 @@ export class GameOptions extends HTMLElement {
       <div class="option-input-wrapper pb-3" id="is-ranked-selector">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="is-ranked" class="fs-5">Ranked</label>
-          <div class="opt-out-option form-check pt-1">
+          <div class="optout-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-ranked">
             <label class="form-check-label" for="optout-ranked">
               I don't care
@@ -401,7 +414,7 @@ export class GameOptions extends HTMLElement {
       <div class="option-input-wrapper pb-3" id="cool-mode-selector">
         <div class="d-flex justify-content-between mt-2 pb-1">
           <label for="cool-mode" class="fs-5">Buffs</label>
-          <div class="opt-out-option form-check pt-1">
+          <div class="optout-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-cool_mode">
             <label class="form-check-label" for="optout-cool_mode">
               I don't care
@@ -505,7 +518,7 @@ export class GameOptions extends HTMLElement {
       border: none;
       box-shadow: none;
     }
-    .opt-out-option {
+    .optout-option {
       .form-check-input {
         background-color: rgba(var(--pm-primary-100-rgb), 0.3);
         border: 1px solid rgba(var(--pm-primary-100-rgb), 0.9);
