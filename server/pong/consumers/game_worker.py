@@ -966,6 +966,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 loser=loser.as_dict(),
                 elo_change=elo_change if match.ranked else 0,
                 close_code=PongCloseCodes.NORMAL_CLOSURE,
+                tournament_id=match.tournament_id,
             ),
         )
 
