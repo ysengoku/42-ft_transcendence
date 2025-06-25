@@ -151,8 +151,7 @@ class GameServerToClient:
         winner: _Player
         loser: _Player
         elo_change: int
-
-        action: Literal["player_resigned"]
+        tournament_id: str | None
 
     class InputConfirmed(WorkerToClientOpen):
         """Server confirmation of the input from the player. Required for the client-side prediction."""
