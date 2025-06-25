@@ -210,10 +210,16 @@ class BracketQuerySet(models.QuerySet):
                 Q(brackets_p1__id=bracket_id) | Q(brackets_p2__id=bracket_id),
                 profile__id=winner_profile_id,
             )
-            if bracket.participant1 == winner_participant:
-                await bracket.participant2.async_set_eliminated()
+            participant1: Participant = await database_sync_to_async(Participant.objects.get)(
+                brackets_p1__id=bracket_id,
+            )
+            participant2: Participant = await database_sync_to_async(Participant.objects.get)(
+                brackets_p2__id=bracket_id,
+            )
+            if participant1 == winner_participant:
+                await participant2.async_set_eliminated()
             else:
-                await bracket.participant1.async_set_eliminated()
+                await participant1.async_set_eliminated()
             await winner_participant.async_set_qualified()
             bracket.winners_score = winners_score
             bracket.losers_score = losers_score
