@@ -7,7 +7,7 @@ from channels.db import database_sync_to_async
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.utils import timezone
 
 from pong.game_protocol import GameRoomSettings
@@ -18,14 +18,14 @@ from users.models import Profile
 class Participant(models.Model):
     PENDING = "pending"
     PLAYING = "playing"
-    QUALIFIED = "qualified"
     ELIMINATED = "eliminated"
+    QUALIFIED = "qualified"
     WINNER = "winner"
     STATUS_CHOICES = [
         (PENDING, "Pending"),
         (PLAYING, "Playing"),
-        (QUALIFIED, "Qualified"),
         (ELIMINATED, "Eliminated"),
+        (QUALIFIED, "Qualified"),
         (WINNER, "Winner"),
     ]
 
@@ -40,6 +40,21 @@ class Participant(models.Model):
 
     def __str__(self):
         return f"{self.alias} ({self.tournament.name})"
+
+    async def async_set_eliminated(self):
+        self.status = self.ELIMINATED
+        await database_sync_to_async(self.save)()
+        return self
+
+    async def async_set_qualified(self):
+        self.status = self.QUALIFIED
+        await database_sync_to_async(self.save)()
+        return self
+
+    def set_eliminated(self):
+        self.status = self.ELIMINATED
+        self.save()
+        return self
 
 
 class TournamentQuerySet(models.QuerySet):
@@ -195,6 +210,11 @@ class BracketQuerySet(models.QuerySet):
                 Q(brackets_p1__id=bracket_id) | Q(brackets_p2__id=bracket_id),
                 profile__id=winner_profile_id,
             )
+            if bracket.participant1 == winner_participant:
+                await bracket.participant2.async_set_eliminated()
+            else:
+                await bracket.participant1.async_set_eliminated()
+            await winner_participant.async_set_qualified()
             bracket.winners_score = winners_score
             bracket.losers_score = losers_score
             bracket.winner = winner_participant
@@ -233,3 +253,8 @@ class Bracket(models.Model):
 
     def __str__(self):
         return f"{self.participant1.alias} vs {self.participant2.alias} - Round {self.round.number}"
+
+    def set_ongoing(self):
+        self.status = self.ONGOING
+        self.save()
+        return self
