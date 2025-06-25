@@ -348,7 +348,7 @@ export class GameOptions extends HTMLElement {
       <! -- Game Speed -->
       <div class="option-input-wrapper d-flex flex-column pb-3 gap-2">
         <div class="d-flex justify-content-between mt-2 pb-1">
-          <label for="game-speed" class="fs-5">Game Speed</label>
+          <p class="fs-5 m-0">Game Speed</p>
           <div class="optout-option form-check pt-1">
             <input class="form-check-input" type="checkbox" id="optout-game_speed">
             <label class="form-check-label" for="optout-game_speed">
