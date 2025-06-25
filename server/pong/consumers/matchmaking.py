@@ -78,7 +78,6 @@ class MatchmakingConsumer(WebsocketConsumer):
 
             if self.game_room.players.count() == PLAYERS_REQUIRED:
                 logger.info("[Matchmaking.connect]: game room {%s} both players were found")
-                self.game_room.close()
                 async_to_sync(self.channel_layer.group_send)(
                     self.matchmaking_group_name,
                     {"type": "game_found"},
@@ -123,7 +122,7 @@ class MatchmakingConsumer(WebsocketConsumer):
                     self.user.profile,
                 )
             if self.game_room.players.count() < 1:
-                room_to_clean.close()
+                room_to_clean.set_closed()
                 logger.info("[Matchmaking.disconnect]: game room {%s} closed", room_to_clean)
 
     def receive(self, text_data):
