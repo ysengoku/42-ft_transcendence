@@ -1,5 +1,10 @@
+/**
+ * @module UserActionsMenu
+ * @description Dropdown menu for user actions on media screens narrower than the MD breakpoint.
+ * Includes user search and friend list
+ */
+
 import { router } from '@router';
-import { auth } from '@auth';
 import { isMobile } from '@utils';
 
 export class UserActionsMenu extends HTMLElement {
@@ -9,19 +14,20 @@ export class UserActionsMenu extends HTMLElement {
 
   constructor() {
     super();
+
+    this.dropdownUserActions = null;
+    this.dropdownUserSearch = null;
+    this.dropdownFriendsList = null;
+    this.dropdownusersearchList = null;
+    this.userActionsButton = null;
+    this.userSearchButton = null;
+    this.friendsListButton = null;
+
     this.showUserActionsDropdown = this.showUserActionsDropdown.bind(this);
     this.hideUserActionsDropdown = this.hideUserActionsDropdown.bind(this);
     this.handleClickUserSearch = this.handleClickUserSearch.bind(this);
     this.handleClickFriendsList = this.handleClickFriendsList.bind(this);
     this.handleClickChat = this.handleClickChat.bind(this);
-  }
-
-  connectedCallback() {
-    this.#state.isLoggedin = auth.getStoredUser() ? true : false;
-    if (!isMobile() || !this.#state.isLoggedin) {
-      return;
-    }
-    this.render();
   }
 
   disconnectedCallback() {
@@ -37,7 +43,7 @@ export class UserActionsMenu extends HTMLElement {
   }
 
   render() {
-    if (!this.#state.isLoggedin) {
+    if (!this.#state.isLoggedin || !isMobile()) {
       this.innerHTML = '';
       return;
     }

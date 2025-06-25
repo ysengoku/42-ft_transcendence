@@ -15,7 +15,7 @@ socketManager.addSocket('livechat', {
     }
     return;
   },
-  like_message: (data) => { 
+  like_message: (data) => {
     if (window.location.pathname !== '/chat' || !data || !('is_liked' in data)) {
       return;
     }
@@ -38,7 +38,7 @@ socketManager.addSocket('livechat', {
     document.dispatchEvent(customEvent);
   },
   game_declined: async (data) => {
-    const user = await auth.getStoredUser();
+    const user = await auth.getUser();
     if (!user) {
       return;
     }
@@ -53,12 +53,12 @@ socketManager.addSocket('livechat', {
     showToastNotification(`${nickname} have declined the duel invitation.`, TOAST_TYPES.INFO);
   },
   game_invite_canceled: async (data) => {
-    const cystomEvent = new CustomEvent('duelInvitationCanceled', {
+    const customEvent = new CustomEvent('duelInvitationCanceled', {
       detail: data,
       bubbles: true,
     });
-    document.dispatchEvent(cystomEvent);
-    const user = await auth.getStoredUser();
+    document.dispatchEvent(customEvent);
+    const user = await auth.getUser();
     if (!user) {
       return;
     }

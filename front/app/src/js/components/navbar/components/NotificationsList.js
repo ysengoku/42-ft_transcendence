@@ -1,12 +1,12 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-// import { auth } from '@auth';
+import { auth } from '@auth';
 import { socketManager } from '@socket';
 
 export class NotificationsList extends HTMLElement {
   #state = {
     currentTab: 'all',
     isLoading: false,
-    // username: '',
+    username: '',
   };
 
   #unread = {
@@ -33,18 +33,14 @@ export class NotificationsList extends HTMLElement {
     this.resetList = this.resetList.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const userData = await auth.getUser();
+    if (!userData) {
+      return;
+    }
+    this.#state.username = userData.username;
     this.render();
   }
-
-  // async connectedCallback() {
-  //   const authStatus = await auth.fetchAuthStatus();
-  //   if (!authStatus.success) {
-  //     return;
-  //   }
-  //   this.#state.username = authStatus.data.username;
-  //   this.render();
-  // }
 
   disconnectedCallback() {
     this.button?.removeEventListener('shown.bs.dropdown', this.renderList);
@@ -96,8 +92,13 @@ export class NotificationsList extends HTMLElement {
     }
     for (let i = listData.listLength; i < listData.notifications.length; i++) {
       const item = document.createElement('notifications-list-item');
-      // item.username = this.#state.username;
-      item.data = listData.notifications[i];
+      const data = {
+        action: listData.notifications[i].action,
+        data: listData.notifications[i].data,
+        username: this.#state.username,
+      };
+      item.state = data;
+      // item.data = listData.notifications[i];
       if (i === 0) {
         item.querySelector('.dropdown-list-item').classList.add('border-top-0');
       }
