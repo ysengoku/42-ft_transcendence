@@ -6,6 +6,7 @@ from channels.generic.websocket import WebsocketConsumer
 
 from pong.game_protocol import GameServerToClient, GameServerToGameWorker, PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
+from tournaments.models import Bracket
 
 logger = logging.getLogger("server")
 
@@ -59,6 +60,11 @@ class GameServerConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(self.game_room_group_name, self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"player_{player_id}", self.channel_name)
         is_in_tournament = self.game_room.is_in_tournament()
+        if is_in_tournament:
+            bracket: Bracket = self.game_room.bracket
+            bracket.set_ongoing()
+            bracket_id = str(bracket.id) if is_in_tournament else None
+            tournament_id = (str(self.game_room.bracket.round.tournament.id) if is_in_tournament else None,)
         async_to_sync(self.channel_layer.send)(
             "game",
             GameServerToGameWorker.PlayerConnected(
@@ -71,8 +77,8 @@ class GameServerConsumer(WebsocketConsumer):
                 elo=profile.elo,
                 settings=self.game_room.settings,
                 is_in_tournament=is_in_tournament,
-                bracket_id=str(self.game_room.bracket.id) if is_in_tournament else None,
-                tournament_id=str(self.game_room.bracket.round.tournament.id) if is_in_tournament else None,
+                bracket_id=bracket_id,
+                tournament_id=tournament_id,
             ),
         )
 
