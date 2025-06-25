@@ -212,12 +212,8 @@ SOCIALACCOUNT_PROVIDERS = {
 REDIS_HOST = env("REDIS_HOST")
 REDIS_PORT = env("REDIS_PORT")
 # For the tests
-if 'test' in sys.argv:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer"
-        }
-    }
+if "test" in sys.argv:
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 else:
     CHANNEL_LAYERS = {
         "default": {
@@ -238,6 +234,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://localhost:1026",
     "http://localhost:5173",
     "https://nginx:1026",
+    # TODO: add the ip of the machine
 ]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False

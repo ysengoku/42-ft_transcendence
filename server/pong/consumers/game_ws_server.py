@@ -63,8 +63,13 @@ class GameServerConsumer(WebsocketConsumer):
         if is_in_tournament:
             bracket: Bracket = self.game_room.bracket
             bracket.set_ongoing()
-            bracket_id = str(bracket.id) if is_in_tournament else None
-            tournament_id = (str(self.game_room.bracket.round.tournament.id) if is_in_tournament else None,)
+            bracket_id = str(bracket.id)
+            tournament_id = str(bracket.round.tournament.id)
+            name = bracket.participant1.alias if bracket.participant1.profile == profile else bracket.participant2.alias
+        else:
+            name = self.user.nickname if self.user.nickname else self.user.username
+            bracket_id = None
+            tournament_id =  None
         async_to_sync(self.channel_layer.send)(
             "game",
             GameServerToGameWorker.PlayerConnected(
@@ -72,7 +77,7 @@ class GameServerConsumer(WebsocketConsumer):
                 game_room_id=self.game_room_id,
                 player_id=player_id,
                 profile_id=str(profile.id),
-                name=self.user.nickname if self.user.nickname else self.user.username,
+                name=name,
                 avatar=profile.avatar,
                 elo=profile.elo,
                 settings=self.game_room.settings,
