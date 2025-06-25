@@ -388,7 +388,7 @@ class GameRoom(models.Model):
             provided_score_to_win = result.get("score_to_win")
             min_score_to_win = 3
             max_score_to_win = 20
-            if provided_score_to_win and (
+            if provided_score_to_win is not None and (
                 provided_score_to_win < min_score_to_win or provided_score_to_win > max_score_to_win
             ):
                 return None
