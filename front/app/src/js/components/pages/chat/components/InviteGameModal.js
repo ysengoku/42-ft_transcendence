@@ -78,12 +78,9 @@ export class InviteGameModal extends HTMLElement {
         client_id: clientInstanceId,
       },
     };
-    const settings = this.optionsToObject(this.gameOptionsForm.selectedOptions);
+    const settings = this.gameOptionsForm.selectedOptionsObject;
     if (settings) {
       message.data.settings = settings;
-      if (settings.ranked) {
-        message.data.ranked = false;
-      }
     }
     socketManager.sendMessage('livechat', message);
     const queryParams = {
@@ -100,19 +97,6 @@ export class InviteGameModal extends HTMLElement {
       { once: true },
     );
     this.closeModal();
-  }
-
-  optionsToObject(data) {
-    if (!data || Object.keys(data).length === 0) {
-      return null;
-    }
-    const optionsObj = {};
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== 'any') {
-        optionsObj[key] = value;
-      }
-    }
-    return optionsObj;
   }
 
   template() {
