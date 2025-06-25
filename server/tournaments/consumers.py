@@ -221,6 +221,8 @@ class TournamentConsumer(WebsocketConsumer):
 
     def send_start_round_message(self, round_number, new_round):
         logger.debug("function send_start_round_message")
+        # TODO: Externalize this (and all things in fact) externaly, so functions are not
+        # called only if the person responsible for it is qualified
         action = "tournament_start" if round_number == 1 else "round_start"
         try:
             tournament = Tournament.objects.get(id=self.tournament_id)
@@ -370,10 +372,13 @@ class TournamentConsumer(WebsocketConsumer):
         self.send_match_finished(bracket)
         self.send_match_result(bracket)
         # TODO: Change this to status=Bracket.ONGOING when the game worker will change the Bracket status
-        if not Bracket.objects.filter(status=Bracket.PENDING, round__tournament=tournament).exists():
-            # only for the sake of testing : The worker should put all brackets to ongoing at the game starting
+        # if not Bracket.objects.filter(status=Bracket.PENDING, round__tournament=tournament).exists():
+
+        if not Bracket.objects.filter(
+            status__in=[Bracket.ONGOING, Bracket.PENDING], round__tournament=tournament
+        ).exists():
             # if not Bracket.objects.filter(status=Bracket.ONGOING, round__tournament=tournament).exists():
-            round.status = round.FINISHED
+            round.status = Round.FINISHED
             round.save(update_fields=["status"])
             self.self_send_message_to_ws("round_end", data={"tournament_id": str(self.tournament_id)})
             self.send_round_end_to_ws()
@@ -405,7 +410,7 @@ class TournamentConsumer(WebsocketConsumer):
                 "tournament_id": str(self.tournament_id),
             },
         }
-        # logger.info("The winner : %s", bracket.winner.profile)
+        logger.info("The winner from this bracket : %s", bracket.winner)
         # logger.info("The user : %s", self.user.profile)
         if bracket.winner is None or bracket.winner.profile != self.user.profile:
             loser = self.user.profile
@@ -416,20 +421,20 @@ class TournamentConsumer(WebsocketConsumer):
         # This does not self.close the ws for this user
         # TODO: fix this : closing eliminated connexions
         if loser == self.user.profile:
-            logger.critical("CLOSING THE CONNECTION FOR THIS LOSER : %s", loser)
-            if bracket.participant1.profile == loser:
-                p_loser = bracket.participant1
-                p_winner = bracket.participant2
-            elif bracket.participant2.profile == loser:
-                p_loser = bracket.participant2
-                p_winner = bracket.participant1
-            else:
-                logger.warning("The loser profile is none of the 2 participants")
-                return
-            p_loser.status = Participant.ELIMINATED
-            p_winner.status = Participant.QUALIFIED
-            p_loser.save(update_fields=["status"])
-            p_winner.save(update_fields=["status"])
+            # logger.critical("CLOSING THE CONNECTION FOR THIS LOSER : %s", loser)
+            # if bracket.participant1.profile == loser:
+            #     p_loser = bracket.participant1
+            #     p_winner = bracket.participant2
+            # elif bracket.participant2.profile == loser:
+            #     p_loser = bracket.participant2
+            #     p_winner = bracket.participant1
+            # else:
+            #     logger.warning("The loser profile is none of the 2 participants")
+            #     return
+            # p_loser.status = Participant.ELIMINATED
+            # p_winner.status = Participant.QUALIFIED
+            # p_loser.save(update_fields=["status"])
+            # p_winner.save(update_fields=["status"])
             self.tournament_id = None
             self.close(NORMAL_CLOSURE)
 
