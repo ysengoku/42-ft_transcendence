@@ -517,9 +517,17 @@ export class MultiplayerGame extends HTMLElement {
 
     pongSocket.addEventListener('close', function (event) {
       console.log('PONG socket was nice! :3');
-      if (event.code === 3002) {
-        showToastNotification('This game does not exist or has ended.', TOAST_TYPES.ERROR);
-        router.redirect('/home');
+      switch (event.code) {
+        case 3100:
+        case 3002:
+          showToastNotification('This game does not exist or has ended.', TOAST_TYPES.ERROR);
+        case 3003:
+          showToastNotification('Your are already in a game.', TOAST_TYPES.ERROR);
+          setTimeout(() => {
+            router.redirect('/home');
+          }, 1500);
+          break;
+        default:
       }
     });
 
@@ -594,44 +602,6 @@ export class MultiplayerGame extends HTMLElement {
     ).bind(this);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
-    // function onDocumentKeyDown(event) {
-    //   if (event.defaultPrevented) {
-    //     return; // Do noplayerglb if the event was already processed
-    //   }
-    //   var keyCode = event.code;
-    //   if (keyCode == 'ArrowLeft') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'ArrowRight') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'KeyA') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'KeyD') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-    //   }
-    //   event.preventDefault();
-    // }
-    // function onDocumentKeyUp(event) {
-    //   if (event.defaultPrevented) {
-    //     return; // Do noplayerglb if the event was already processed
-    //   }
-    //   var keyCode = event.code;
-    //   if (keyCode == 'ArrowLeft') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-    //   }
-    //   if (keyCode == 'ArrowRight') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-    //   }k
-    //   if (keyCode == 'KeyA') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-    //   }
-    //   if (keyCode == 'KeyD') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-    //   }
-    //   event.preventDefault();
-    // }
 
     return [camera, renderer, animate];
   }
