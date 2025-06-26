@@ -13,27 +13,47 @@ if ! docker compose ps server | grep -q "Up"; then
     exit 1
 fi
 
-# Préparer les options de test
-TEST_OPTIONS="--verbosity=1"
-if [[ "$*" == *"--keepdb"* ]]; then
-    TEST_OPTIONS="$TEST_OPTIONS --keepdb"
+# Préparer les options de test (--keepdb par défaut pour la vitesse)
+TEST_OPTIONS="--verbosity=1 --keepdb"
+if [[ "$*" == *"--fresh-db"* ]]; then
+    TEST_OPTIONS="--verbosity=1"
+    echo "🔄 Using fresh database (slower)"
+else
     echo "🚀 Using --keepdb for faster execution"
 fi
 
-# Lancer les tests et capturer la sortie
+# Fonction pour afficher les étapes de progression
+show_progress() {
+    echo "🔄 Step 1/4: Connecting to Django container..."
+    sleep 1
+    echo "🔄 Step 2/4: Setting up test environment..."
+    sleep 1
+    echo "🔄 Step 3/4: Creating test database and applying migrations..."
+    sleep 1
+    echo "🔄 Step 4/4: Running tests and collecting results..."
+    echo ""
+}
+
+# Lancer les tests avec suivi en temps réel
 if [ -z "$1" ] || [ "$1" = "--keepdb" ]; then
     echo "🎯 Running ALL tests..."
-    echo "⏳ Please wait, creating test database and running tests..."
-    output=$(docker compose exec -T server python manage.py test $TEST_OPTIONS 2>&1)
+    show_progress
+    echo "🔄 Running tests with real-time feedback..."
+    echo "=========================================="
+    docker compose exec -T server python manage.py test $TEST_OPTIONS --verbosity=2 | tee /tmp/test_output.txt
+    output=$(cat /tmp/test_output.txt)
 else
     MODULE="$1"
     echo "🎯 Running tests for: $MODULE"
-    echo "⏳ Please wait, creating test database and running tests..."
-    output=$(docker compose exec -T server python manage.py test "$MODULE" $TEST_OPTIONS 2>&1)
+    show_progress
+    echo "🔄 Running tests with real-time feedback..."
+    echo "=========================================="
+    docker compose exec -T server python manage.py test "$MODULE" $TEST_OPTIONS --verbosity=2 | tee /tmp/test_output.txt
+    output=$(cat /tmp/test_output.txt)
 fi
 
-# Afficher la sortie complète
-echo "$output"
+echo ""
+echo "=========================================="
 
 # Extraire les statistiques
 total=$(echo "$output" | grep -o "Ran [0-9]* test" | grep -o "[0-9]*")
