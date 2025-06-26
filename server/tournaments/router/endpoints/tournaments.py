@@ -13,6 +13,7 @@ from chat.tournament_events import TournamentEvent
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from tournaments.models import Bracket, Participant, Round, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
+from tournaments.tournament_manager import TournamentManager
 
 tournaments_router = Router()
 
@@ -127,17 +128,18 @@ def delete_tournament(request, tournament_id: UUID):
 
     tournament.status = Tournament.CANCELLED
     tournament.save()
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        f"tournament_{tournament_id}",
-        {
-            "type": "tournament_canceled",
-            "data": {
-                "tournament_id": str(tournament_id),
-                "tournament_name": tournament.name,
-            },
-        },
-    )
+    TournamentManager.tournament_canceled(tournament_id)
+    # channel_layer = get_channel_layer()
+    # async_to_sync(channel_layer.group_send)(
+    #     f"tournament_{tournament_id}",
+    #     {
+    #         "type": "tournament_canceled",
+    #         "data": {
+    #             "tournament_id": str(tournament_id),
+    #             "tournament_name": tournament.name,
+    #         },
+    #     },
+    # )
     TournamentEvent.close_tournament_invitations(tournament_id)
     return 204, None
 
@@ -168,47 +170,52 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
         if type(participant_or_error_str) is str:
             raise HttpError(403, participant_or_error_str)
 
-        channel_layer = get_channel_layer()
+        # channel_layer = get_channel_layer()
+        avatar = user.profile.avatar
         if tournament.participants.count() == tournament.required_participants:
             tournament.status = Tournament.ONGOING
             tournament.save(update_fields=["status"])
 
-            def send_last_registration():
-                async_to_sync(channel_layer.group_send)(
-                    f"tournament_{tournament_id}",
-                    {
-                        "type": "last_registration",
-                        "data": {
-                            "avatar": user.profile.avatar,
-                            "alias": alias,
-                        },
-                    },
-                )
+            # def send_last_registration():
+            #     async_to_sync(channel_layer.group_send)(
+            #         f"tournament_{tournament_id}",
+            #         {
+            #             "type": "last_registration",
+            #             "data": {
+            #                 "avatar": user.profile.avatar,
+            #                 "alias": alias,
+            #             },
+            #         },
+            #     )
+            #
+            # transaction.on_commit(send_last_registration)
+            # transaction.on_commit(TournamentManager.send_last_registration(tournament_id, alias, avatar))
+            transaction.on_commit(lambda: TournamentManager.new_registration(tournament_id, alias, avatar, True))
 
-            transaction.on_commit(send_last_registration)
-
-            def start_tournament():
-                async_to_sync(channel_layer.group_send)(
-                    f"tournament_{tournament_id}",
-                    {
-                        "type": "prepare_round",
-                    },
-                )
-
-            transaction.on_commit(start_tournament)
+            # def start_tournament():
+            #     async_to_sync(channel_layer.group_send)(
+            #         f"tournament_{tournament_id}",
+            #         {
+            #             "type": "prepare_round",
+            #         },
+            #     )
+            #
+            # transaction.on_commit(start_tournament)
+            transaction.on_commit(lambda: TournamentManager.prepare_round(tournament_id))
 
             TournamentEvent.close_tournament_invitations(tournament_id)
         else:
-            async_to_sync(channel_layer.group_send)(
-                f"tournament_{tournament_id}",
-                {
-                    "type": "new_registration",
-                    "data": {
-                        "avatar": user.profile.avatar,
-                        "alias": alias,
-                    },
-                },
-            )
+            TournamentManager.new_registration(tournament_id, alias, avatar, False)
+            # async_to_sync(channel_layer.group_send)(
+            #     f"tournament_{tournament_id}",
+            #     {
+            #         "type": "new_registration",
+            #         "data": {
+            #             "avatar": user.profile.avatar,
+            #             "alias": alias,
+            #         },
+            #     },
+            # )
 
     return 204, None
 
@@ -238,25 +245,28 @@ def unregister_for_tournament(request, tournament_id: UUID):
         if type(participant_or_error_str) is str:
             raise HttpError(403, participant_or_error_str)
 
-        channel_layer = get_channel_layer()
+        # channel_layer = get_channel_layer()
         if tournament.participants.count() < 1:
             tournament.status = Tournament.CANCELLED
             tournament.save()
             TournamentEvent.close_tournament_invitations(tournament_id)
-            async_to_sync(channel_layer.group_send)(
-                f"tournament_{tournament_id}",
-                {
-                    "type": "tournament_canceled",
-                    "data": {
-                        "tournament_id": str(tournament_id),
-                        "tournament_name": tournament.name,
-                    },
-                },
-            )
+            data = {"tournament_id": str(tournament_id), "tournament_name": tournament.name}
+            TournamentManager.send_group_message(tournament_id, "tournament_canceled", data)
+            # async_to_sync(channel_layer.group_send)(
+            #     f"tournament_{tournament_id}",
+            #     {
+            #         "type": "tournament_canceled",
+            #         "data": {
+            #             "tournament_id": str(tournament_id),
+            #             "tournament_name": tournament.name,
+            #         },
+            #     },
+            # )
         else:
-            async_to_sync(channel_layer.group_send)(
-                f"tournament_{tournament_id}",
-                {"type": "user_left", "alias": alias},
-            )
+            TournamentManager.user_left(tournament_id, alias, user.id)
+            # async_to_sync(channel_layer.group_send)(
+            #     f"tournament_{tournament_id}",
+            #     {"type": "user_left", "alias": alias},
+            # )
 
     return 204, None
