@@ -205,29 +205,25 @@ class BracketQuerySet(models.QuerySet):
         Meant to be used by the game server.
         """
         bracket: Bracket = await database_sync_to_async(self.get)(id=bracket_id)
-        if status == "finished":
-            winner_participant: Participant = await database_sync_to_async(Participant.objects.get)(
-                Q(brackets_p1__id=bracket_id) | Q(brackets_p2__id=bracket_id),
-                profile__id=winner_profile_id,
-            )
-            participant1: Participant = await database_sync_to_async(Participant.objects.get)(
-                brackets_p1__id=bracket_id,
-            )
-            participant2: Participant = await database_sync_to_async(Participant.objects.get)(
-                brackets_p2__id=bracket_id,
-            )
-            if participant1 == winner_participant:
-                await participant2.async_set_eliminated()
-            else:
-                await participant1.async_set_eliminated()
-            await winner_participant.async_set_qualified()
-            bracket.winners_score = winners_score
-            bracket.losers_score = losers_score
-            bracket.winner = winner_participant
-            bracket.status = status
-        elif status == "cancelled":
-            bracket.winner = None
-            bracket.status = status
+        winner_participant: Participant = await database_sync_to_async(Participant.objects.get)(
+            Q(brackets_p1__id=bracket_id) | Q(brackets_p2__id=bracket_id),
+            profile__id=winner_profile_id,
+        )
+        participant1: Participant = await database_sync_to_async(Participant.objects.get)(
+            brackets_p1__id=bracket_id,
+        )
+        participant2: Participant = await database_sync_to_async(Participant.objects.get)(
+            brackets_p2__id=bracket_id,
+        )
+        if participant1 == winner_participant:
+            await participant2.async_set_eliminated()
+        else:
+            await participant1.async_set_eliminated()
+        await winner_participant.async_set_qualified()
+        bracket.winners_score = winners_score
+        bracket.losers_score = losers_score
+        bracket.winner = winner_participant
+        bracket.status = status
         await database_sync_to_async(bracket.save)()
         return bracket
 
