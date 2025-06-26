@@ -61,7 +61,14 @@ export class DropdownMenu extends HTMLElement {
     const newTheme = ThemeController.toggleTheme();
     const themeLabel = document.getElementById('theme-label');
     if (themeLabel) {
-      themeLabel.textContent = newTheme === 'dark' ? 'Light Mode' : 'Dark Mode';
+      const icon = themeLabel.querySelector('i');
+      if (icon) {
+        icon.className = newTheme === 'dark' ? 'bi bi-sun mt-1' : 'bi bi-moon-stars mt-1';
+      }
+      const themeText = themeLabel.querySelector('span');
+      if (themeText) {
+        themeText.textContent = newTheme === 'dark' ? 'Day Mode' : 'Night Mode';
+      }
     }
   }
 
@@ -87,7 +94,10 @@ export class DropdownMenu extends HTMLElement {
       }
       <div class="dropdown-divider"></div>
       <button class="dropdown-item" id="theme-toggle">
-        <span id="theme-label">${isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+        <div id="theme-label" class="d-flex align-items-center gap-2">
+          <span class="m-0">${isDarkMode ? 'Day Mode' : 'Night Mode'}</span>
+          <i class="mt-1 bi ${isDarkMode ? 'bi-sun' : 'bi-moon-stars'}"></i>
+        </div>
       </button>
       ${
         this.#state.isLoggedIn
