@@ -3,7 +3,6 @@
  */
 
 import { socketManager } from '@socket';
-import { router } from '@router';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
 
