@@ -20,15 +20,7 @@ export class LocalGameMenu extends HTMLElement {
     this.navigateToGame = this.navigateToGame.bind(this);
   }
 
-  /**
-   * @description Lifecycle method called when the component is connected to the DOM.
-   * It retrieves stored game options from localStorage, if available, and renders the component.
-   */
   connectedCallback() {
-    const storedOptions = localStorage.getItem('gameOptions');
-    if (storedOptions) {
-      this.#state.options = JSON.parse(storedOptions);
-    }
     this.render();
   }
 
@@ -64,9 +56,9 @@ export class LocalGameMenu extends HTMLElement {
   navigateToGame(event) {
     event.preventDefault();
     this.#state.options = this.gameOptionsForm.selectedOptions;
-    const gameType = event.target.id === 'local-game-classic' ? { type: 'classic' } : { type: 'ai' };
-    // localStorage.setItem('gameType', gameType);
-    router.navigate('/singleplayer-game', gameType);
+    const queryParam = this.#state.options;
+    queryParam.type = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
+    router.navigate('/singleplayer-game', queryParam);
   }
 
   template() {
