@@ -85,15 +85,68 @@ The application uses multiple WebSocket connections for real-time features:
 
 ## Testing
 
+### Backend Testing Commands
+- `make tests` - Run all Django tests with statistics
+- `make tests-users` - Run user module tests only
+- `make tests-chat` - Run chat module tests only  
+- `make tests-pong` - Run game module tests only
+- `make tests-tournaments` - Run tournament module tests only
+- Add `-fresh` suffix (e.g., `make tests-chat-fresh`) to use fresh database (slower but clean)
+
 ### Frontend Testing
 - Run `make test-front` from project root or `npm run test` inside frontend container
+- `npm run test:jest` - Jest unit tests only
+- `npm run test:vitest` - Vitest integration tests only
 - Jest for unit tests (`front/app/__tests__/jest/`)
 - Vitest for integration tests (`front/app/__tests__/vitest/`)
 
-### Backend Testing
-- Run `python manage.py test` inside backend container
-- Tests located in `tests/` directories within each Django app
-- Uses Django's built-in testing framework
+### Frontend Test Structure
+**Unit Tests (Jest):**
+- `isEqualFunction.test.js` - Tests deep equality utility function (18 test cases)
+- `registerInputValidation.test.js` - Registration form validation tests
+
+**Integration Tests (Vitest):**  
+- `inputFeedback.test.js` - Comprehensive input validation testing
+- `loginInputValidation.test.js` - Login form validation testing
+- `tournamentInputValidation.test.js` - Tournament form validation testing
+
+**Mock System (`front/app/__mock__/`):**
+- Comprehensive API mocking (`mockLogin.js`, `mockRegister.js`, etc.)
+- WebSocket mocking (`ws/mockTournamentWs.js`, `ws/setupMockWs.js`)
+- Data mocking (chat, tournaments, users, notifications)
+- Test assets (sample images for testing)
+
+### Backend Test Structure
+**Chat Module Tests (60 tests):**
+- `test_chat.py` - Core chat functionality
+- `test_chat_endpoints.py` - Chat API endpoints
+- `test_events_consumers.py` - WebSocket event consumers
+- `test_game_invitations.py` - Game invitation system
+- `test_notifications_endpoints.py` - Notification API
+- `test_security_chat_consumers.py` - Security tests for chat consumers
+
+**Users Module Tests:**
+- `test_auth_endpoints.py` - Authentication (login/logout/MFA/password reset)
+- `test_mfa_endpoints.py` - Multi-factor authentication
+- `test_oauth2_endpoints.py` - OAuth2 integration (GitHub, 42 School)
+- `test_profile_model.py` - User profile models and game participation
+- `test_users_endpoints.py` - User management APIs
+
+**Pong Module Tests:**
+- `test_game_room_model.py` - Game room management and player connections
+- `test_game_stats_endpoints.py` - Game statistics, ELO ratings, match history
+
+**Tournament Module Tests:**
+- `test_tournament_endpoints.py` - Tournament API endpoints
+- `test_tournaments_endpoints.py` - Tournament management, brackets, participants
+
+### Test Statistics Script
+The project includes `test_with_stats.sh` which provides detailed test statistics:
+- Total tests run
+- Pass/fail/error counts and percentages  
+- Success rate calculation
+- Status indicators (EXCELLENT/GOOD/NEEDS WORK)
+- Supports both individual modules and full test suite
 
 ## Environment Setup
 
