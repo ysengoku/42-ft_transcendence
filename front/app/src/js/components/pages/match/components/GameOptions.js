@@ -1,4 +1,5 @@
 import { DEFAULT_GAME_OPTIONS } from '@env';
+import { getOptionsFromLocalStorage } from '../utils/gameOptions.js';
 
 export class GameOptions extends HTMLElement {
   #state = {
@@ -28,13 +29,12 @@ export class GameOptions extends HTMLElement {
     this.isRankedOptout = null;
     this.coolModeOptout = null;
 
-    const defaultOptions = DEFAULT_GAME_OPTIONS ? JSON.parse(DEFAULT_GAME_OPTIONS) : {};
     this.#state.defaultOptionValue = {
-      score_to_win: defaultOptions.scoreToWin || 5,
-      game_speed: defaultOptions.gameSpeed || 'medium',
-      time_limit: defaultOptions.timeLimit || 3,
-      ranked: defaultOptions.isRanked || false,
-      cool_mode: defaultOptions.coolMode || false,
+      score_to_win: DEFAULT_GAME_OPTIONS.score_to_win || 5,
+      game_speed: DEFAULT_GAME_OPTIONS.game_speed || 'medium',
+      time_limit: DEFAULT_GAME_OPTIONS.time_limit || 3,
+      ranked: DEFAULT_GAME_OPTIONS.ranked || false,
+      cool_mode: DEFAULT_GAME_OPTIONS.cool_mode || false,
     };
 
     this.updateOptions = this.updateOptions.bind(this);
@@ -44,7 +44,7 @@ export class GameOptions extends HTMLElement {
   }
 
   connectedCallback() {
-    this.#state.selectedOptions = this.getOptionsFromLocalStorage();
+    this.#state.selectedOptions = getOptionsFromLocalStorage();
     if (!this.#state.selectedOptions || Object.keys(this.#state.selectedOptions).length === 0) {
       this.#state.selectedOptions = {
         ...this.#state.defaultOptionValue,
@@ -75,12 +75,12 @@ export class GameOptions extends HTMLElement {
   }
 
   get selectedOptions() {
-    this.storeOptionstoLocalStorage();
+    this.storeOptionsToLocalStorage();
     return this.#state.selectedOptions;
   }
 
   get selectedOptionsObject() {
-    this.storeOptionstoLocalStorage();
+    this.storeOptionsToLocalStorage();
     if (Object.keys(this.#state.selectedOptions).length === 0) {
       return null;
     }
@@ -93,12 +93,7 @@ export class GameOptions extends HTMLElement {
     return optionsObj;
   }
 
-  getOptionsFromLocalStorage() {
-    const storedOptions = localStorage.getItem('gameOptions');
-    return storedOptions ? JSON.parse(storedOptions) : null;
-  }
-
-  storeOptionstoLocalStorage() {
+  storeOptionsToLocalStorage() {
     if (!this.#state.selectedOptions) {
       return;
     }
