@@ -142,7 +142,7 @@ lint-front:
 tests:
 	./test_with_stats.sh
 
-# Run tests by module
+# Run tests by module (fast with --keepdb)
 tests-users:
 	./test_with_stats.sh users
 
@@ -154,3 +154,19 @@ tests-pong:
 
 tests-tournaments:
 	./test_with_stats.sh tournaments
+
+# Run tests with fresh database (slower but clean)
+tests-fresh:
+	./test_with_stats.sh --fresh-db
+
+tests-users-fresh:
+	./test_with_stats.sh users --fresh-db
+
+tests-chat-fresh:
+	./test_with_stats.sh chat --fresh-db
+
+tests-pong-fresh:
+	./test_with_stats.sh pong --fresh-db
+
+tests-tournaments-fresh:
+	./test_with_stats.sh tournaments --fresh-db
