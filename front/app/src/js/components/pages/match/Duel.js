@@ -67,7 +67,7 @@ export class Duel extends HTMLElement {
       case DUEL_STATUS.MATCHMAKING:
         document.addEventListener('gameFound', this.handleGameFound);
         document.addEventListener('websocket-close', this.handleMatchmakingCancellationByServer);
-        const queryParams = param.get('params');
+        const queryParams = param.get('params') || null;
         socketManager.closeSocket('matchmaking');
         socketManager.openSocket('matchmaking', queryParams);
         devLog('Requesting matchmaking...');
