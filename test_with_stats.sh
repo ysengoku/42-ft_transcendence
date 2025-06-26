@@ -34,22 +34,22 @@ show_progress() {
     echo ""
 }
 
-# Lancer les tests avec suivi en temps réel
+# Lancer les tests avec capture de sortie complète
 if [ -z "$1" ] || [ "$1" = "--keepdb" ]; then
     echo "🎯 Running ALL tests..."
     show_progress
     echo "🔄 Running tests with real-time feedback..."
     echo "=========================================="
-    docker compose exec -T server python manage.py test $TEST_OPTIONS --verbosity=2 | tee /tmp/test_output.txt
-    output=$(cat /tmp/test_output.txt)
+    output=$(docker compose exec -T server python manage.py test $TEST_OPTIONS --verbosity=2 2>&1)
+    echo "$output"
 else
     MODULE="$1"
     echo "🎯 Running tests for: $MODULE"
     show_progress
     echo "🔄 Running tests with real-time feedback..."
     echo "=========================================="
-    docker compose exec -T server python manage.py test "$MODULE" $TEST_OPTIONS --verbosity=2 | tee /tmp/test_output.txt
-    output=$(cat /tmp/test_output.txt)
+    output=$(docker compose exec -T server python manage.py test "$MODULE" $TEST_OPTIONS --verbosity=2 2>&1)
+    echo "$output"
 fi
 
 echo ""
@@ -57,8 +57,31 @@ echo "=========================================="
 
 # Extraire les statistiques
 total=$(echo "$output" | grep -o "Ran [0-9]* test" | grep -o "[0-9]*")
-failures=$(echo "$output" | grep -o "failures=[0-9]*" | grep -o "[0-9]*")
-errors=$(echo "$output" | grep -o "errors=[0-9]*" | grep -o "[0-9]*")
+if [ -z "$total" ]; then
+    total=$(echo "$output" | grep -o "Ran [0-9]* tests" | grep -o "[0-9]*")
+fi
+
+# Extraire les échecs et erreurs depuis la ligne de résumé
+failures=0
+errors=0
+
+# Vérifier si il y a des échecs (FAILED)
+if echo "$output" | grep -q "FAILED"; then
+    failures=$(echo "$output" | grep -o "failures=[0-9]*" | grep -o "[0-9]*")
+    if [ -z "$failures" ]; then
+        # Compter les lignes avec FAIL
+        failures=$(echo "$output" | grep -c " ... FAIL")
+    fi
+fi
+
+# Vérifier si il y a des erreurs (ERROR)
+if echo "$output" | grep -q "ERROR"; then
+    errors=$(echo "$output" | grep -o "errors=[0-9]*" | grep -o "[0-9]*")
+    if [ -z "$errors" ]; then
+        # Compter les lignes avec ERROR
+        errors=$(echo "$output" | grep -c " ... ERROR")
+    fi
+fi
 
 # Valeurs par défaut si vides
 total=${total:-0}
