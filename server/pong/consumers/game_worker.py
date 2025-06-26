@@ -5,12 +5,14 @@ import math
 import random
 import traceback
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum, IntEnum, auto
 from typing import Literal
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
+from django.utils import timezone
 
 from pong.game_protocol import (
     GameRoomSettings,
@@ -106,6 +108,7 @@ class Player:
     bumper: Bumper
     id: str = ""
     connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
+    connection_stamp: datetime | Literal[0] = 0
     # TODO: move time to constants
     reconnection_time: int = 3
     reconnection_timer: asyncio.Task | None = None
@@ -133,6 +136,11 @@ class Player:
             "elo": self.elo,
             "player_number": 1 if self.bumper.z == 1 else 2,
         }
+
+    def set_as_connected(self):
+        self.connection = PlayerConnectionState.CONNECTED
+        self.connection_stamp = timezone.now()
+        return self
 
 
 @dataclass(slots=True)
@@ -478,7 +486,7 @@ class MultiplayerPongMatch(BasePong):
         random.shuffle(available_player_slots)
         player = available_player_slots.pop()
         player.id = player_id
-        player.connection = PlayerConnectionState.CONNECTED
+        player.set_as_connected()
         player.profile_id = int(player_connected_event["profile_id"])
         player.name = player_connected_event["name"]
         player.avatar = player_connected_event["avatar"]
@@ -492,6 +500,17 @@ class MultiplayerPongMatch(BasePong):
     def get_players_based_on_connection(self, connection: PlayerConnectionState) -> list[Player, Player]:
         """Returns a list of players based on their connection state."""
         return [p for p in [self._player_1, self._player_2] if p.connection == connection]
+
+    def get_player_who_connected_earliest(self) -> Player:
+        """Returns the player who connected to the game first."""
+        if self._player_1.connection_stamp == 0:
+            return self._player_2
+        if self._player_2.connection_stamp == 0:
+            return self._player_1
+
+        if self._player_1.connection_stamp > self._player_2.connection_stamp:
+            return self._player_2
+        return self._player_1
 
     def get_player(self, player_id: str) -> Player | None:
         if self._player_1.id == player_id:
@@ -689,12 +708,18 @@ class GameWorkerConsumer(AsyncConsumer):
                     GameServerToClient.GameCancelled(
                         type="worker_to_client_close",
                         action="game_cancelled",
+                        tournament_id=match.tournament_id,
                         close_code=PongCloseCodes.CANCELLED,
                     ),
                 )
-                # Special case: notification for the tournament consumer.
                 if match.is_in_tournament:
-                    await Bracket.objects.async_update_finished_bracket(match.bracket_id, 0, 0, 0, Bracket.CANCELLED)
+                    # If the tournament game is cancelled, there is a winner: player who connected first
+                    winner = match.get_player_who_connected_earliest()
+                    await Bracket.objects.async_update_finished_bracket(
+                        match.bracket_id, winner.profile_id, 0, 0, Bracket.CANCELLED,
+                    )
+
+                    # also send notification to the consumer
                     await self.channel_layer.group_send(
                         f"tournament_{match.tournament_id}",
                         {
@@ -857,7 +882,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 match,
             )
             return
-        player.connection = PlayerConnectionState.CONNECTED
+        player.set_as_connected()
         player.stop_waiting_for_reconnection_timer()
         # TODO: do better reconnection logic
         await self._send_player_id_and_number_to_player(player, match)
