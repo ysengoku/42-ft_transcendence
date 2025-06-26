@@ -65,7 +65,20 @@ docker ps
 # You should see 5 running containers
 ```
 
-### 3. Enter the backend container
+### 3. Run tests with statistics (Recommended)
+
+```bash
+# Script with detailed statistics (new!)
+./test_with_stats.sh
+
+# For specific module
+./test_with_stats.sh users
+./test_with_stats.sh chat
+./test_with_stats.sh pong
+./test_with_stats.sh tournaments
+```
+
+### 4. Alternative method: Enter container
 
 ```bash
 # Method 1: With Make (recommended)
@@ -142,7 +155,48 @@ class AuthEndpointsTests(TestCase):  # Test class
 
 ## 🚀 Running tests
 
-### Basic commands
+### 🎯 Recommended method: With statistics
+
+```bash
+# From the project root (simpler and with stats!)
+# IMPORTANT: Docker must be started with 'make up' first
+
+# 1. Run ALL tests with statistics
+make tests
+# or
+./test_with_stats.sh
+
+# 2. Run tests by module with statistics  
+make tests-users      # User & authentication tests
+make tests-chat       # Chat & notifications tests
+make tests-pong       # Game & statistics tests
+make tests-tournaments # Tournament tests
+
+# Or directly with the script:
+./test_with_stats.sh users
+./test_with_stats.sh chat
+./test_with_stats.sh pong
+./test_with_stats.sh tournaments
+```
+
+**Example output:**
+```
+🧪 Running Django Tests with Statistics
+========================================
+🎯 Running tests for: users
+[normal test output...]
+
+📊 SUMMARY
+==========
+Total tests: 70
+✅ Passed: 49 (70%)
+❌ Failed: 14 (20%) 
+💥 Errors: 7 (10%)
+🎯 Success rate: 70%
+🟡 Status: GOOD
+```
+
+### 🔧 Alternative method: Manual commands
 
 ```bash
 # IMPORTANT: You must be inside the backend container

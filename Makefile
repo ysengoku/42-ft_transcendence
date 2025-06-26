@@ -137,3 +137,20 @@ test-front:
 
 lint-front:
 	docker exec $(FRONTEND_SERVICE) npm run lint
+
+# Run Django tests with statistics
+tests:
+	./test_with_stats.sh
+
+# Run tests by module
+tests-users:
+	./test_with_stats.sh users
+
+tests-chat:
+	./test_with_stats.sh chat
+
+tests-pong:
+	./test_with_stats.sh pong
+
+tests-tournaments:
+	./test_with_stats.sh tournaments
