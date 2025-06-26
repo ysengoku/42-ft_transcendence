@@ -77,7 +77,7 @@ export class DuelMenu extends HTMLElement {
     this.hideUserList = this.hideUserList.bind(this);
     this.selectOpponent = this.selectOpponent.bind(this);
     this.inviteToDuel = this.inviteToDuel.bind(this);
-    this.requestMatchMaking = this.requestMatchMaking.bind(this);
+    this.handleMatchmakingRequest = this.handleMatchmakingRequest.bind(this);
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
 
     const storedOptions = localStorage.getItem('gameOptions');
@@ -116,7 +116,7 @@ export class DuelMenu extends HTMLElement {
     this.userList?.removeEventListener('scrollend', this.loadMoreUsers);
     document.removeEventListener('click', this.hideUserList);
     this.inviteButton?.removeEventListener('click', this.inviteToDuel);
-    this.requestMatchmakingButton?.removeEventListener('click', this.requestMatchMaking);
+    this.requestMatchmakingButton?.removeEventListener('click', this.handleMatchmakingRequest);
     this.userList?.querySelectorAll('li').forEach((item) => {
       item.removeEventListener('click', this.selectOpponent);
     });
@@ -150,7 +150,7 @@ export class DuelMenu extends HTMLElement {
     this.searchInput.addEventListener('keydown', this.ignoreEnterKeyPress);
     document.addEventListener('click', this.hideUserList);
     this.inviteButton.addEventListener('click', this.inviteToDuel);
-    this.requestMatchmakingButton.addEventListener('click', this.requestMatchMaking);
+    this.requestMatchmakingButton.addEventListener('click', this.handleMatchmakingRequest);
     this.userList.addEventListener('scrollend', this.loadMoreUsers);
   }
 
@@ -478,22 +478,18 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   /**
-   * @description Requests matchmaking for a duel.
-   * It checks if the user can engage in a game, constructs query parameters from the selected options,
-   * opens a socket connection for matchmaking,
+   * @description Navigates to the Duel page to initiate matchmaking.
+   * Verifies if the user is eligible to join a game, builds query parameters from the selected options,
+   * and navigates to the Duel page with matchmaking status and user-selected game options.
    */
-  async requestMatchMaking(event) {
+  async handleMatchmakingRequest(event) {
     event.preventDefault();
     const canEngage = await auth.canEngageInGame();
     if (!canEngage) {
       return;
     }
     const queryParams = this.optionsToQueryParams();
-    console.log('Requesting matchmaking with options:', queryParams);
-    socketManager.closeSocket('matchmaking');
-    socketManager.openSocket('matchmaking', queryParams);
-    devLog('Requesting matchmaking...');
-    router.navigate('/duel', { status: 'matchmaking' });
+    router.navigate('/duel', { status: 'matchmaking', params: queryParams });
   }
 
   /* ------------------------------------------------------------------------ */
