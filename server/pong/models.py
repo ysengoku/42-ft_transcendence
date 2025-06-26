@@ -203,7 +203,7 @@ class GameRoomPlayer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     game_room = models.ForeignKey("GameRoom", on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    number_of_connections = models.IntegerField(default=1)
+    number_of_connections = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.profile.user.username} in Room {self.game_room.id}"
