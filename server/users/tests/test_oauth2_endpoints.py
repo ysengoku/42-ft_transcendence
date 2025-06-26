@@ -2,6 +2,7 @@ import logging
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
 
+import requests
 from django.test import TestCase
 
 from users.models import OauthConnection, User
@@ -59,7 +60,7 @@ class OAuth2EndpointsTests(TestCase):
 
     @patch("users.router.endpoints.oauth2.requests.get")
     def test_oauth_authorize_42_connection_error(self, mock_get):
-        mock_get.side_effect = Exception("Connection error")
+        mock_get.side_effect = requests.RequestException("Connection error")
         response = self.client.get("/api/oauth/authorize/42")
         self.assertEqual(response.status_code, 422)
         response_data = response.json()
@@ -68,8 +69,10 @@ class OAuth2EndpointsTests(TestCase):
 
     def test_oauth_callback_unsupported_platform(self):
         response = self.client.get("/api/oauth/callback/unsupported?code=test&state=test")
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("error=Unsupported%20platform", response.url)
+        # Platform validation happens first, returning 422 before redirect logic
+        self.assertEqual(response.status_code, 422)
+        response_data = response.json()
+        self.assertIn("Unsupported platform", response_data["detail"])
 
     def test_oauth_callback_with_oauth_error(self):
         response = self.client.get("/api/oauth/callback/github?error=access_denied&error_description=User%20denied%20access")

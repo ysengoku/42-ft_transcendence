@@ -53,7 +53,7 @@ class ChatEndpointsTests(TestCase):
         self.assertEqual(len(response_data["items"]), 1)
         
         chat_preview = response_data["items"][0]
-        self.assertEqual(chat_preview["other_user"]["username"], "User2")
+        self.assertEqual(chat_preview["username"], "User2")
         self.assertEqual(chat_preview["last_message"]["content"], "Hello User1!")
 
     def test_get_chats_pagination(self):
@@ -103,8 +103,8 @@ class ChatEndpointsTests(TestCase):
         self.assertEqual(response.status_code, 201)
         
         response_data = response.json()
-        self.assertEqual(response_data["other_user"]["username"], "User2")
-        self.assertEqual(response_data["other_user"]["nickname"], "User2")
+        self.assertEqual(response_data["username"], "User2")
+        self.assertEqual(response_data["nickname"], "User2")
         self.assertEqual(len(response_data["messages"]), 0)
         
         # Verify chat was created in database
@@ -132,7 +132,7 @@ class ChatEndpointsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         
         response_data = response.json()
-        self.assertEqual(response_data["other_user"]["username"], "User2")
+        self.assertEqual(response_data["username"], "User2")
         self.assertEqual(len(response_data["messages"]), 2)
         
         # Verify channel layer send was not called for existing chat
@@ -184,14 +184,14 @@ class ChatEndpointsTests(TestCase):
         self.assertEqual(response_data["count"], 3)
         self.assertEqual(len(response_data["items"]), 3)
         
-        # Check message content and senders
+        # Check message content and senders (messages are returned in reverse chronological order)
         messages = response_data["items"]
-        self.assertEqual(messages[0]["content"], "Hello User2!")
-        self.assertEqual(messages[0]["sender"]["username"], "User1")
+        self.assertEqual(messages[0]["content"], "How are you?")
+        self.assertEqual(messages[0]["sender"], "User1")
         self.assertEqual(messages[1]["content"], "Hello User1!")
-        self.assertEqual(messages[1]["sender"]["username"], "User2")
-        self.assertEqual(messages[2]["content"], "How are you?")
-        self.assertEqual(messages[2]["sender"]["username"], "User1")
+        self.assertEqual(messages[1]["sender"], "User2")
+        self.assertEqual(messages[2]["content"], "Hello User2!")
+        self.assertEqual(messages[2]["sender"], "User1")
 
     def test_get_messages_pagination(self):
         # Create chat with many messages

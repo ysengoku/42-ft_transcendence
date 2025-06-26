@@ -35,17 +35,27 @@ class NotificationsEndpointsTests(TestCase):
         self.assertEqual(len(response_data["items"]), 0)
 
     def test_get_notifications_with_general_notifications(self):
-        # Create various notifications
+        # Create various notifications with proper data structures
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.NEW_FRIEND,
-            data={"username": "User2"},
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=False
         )
         Notification.objects.create(
             receiver=self.user1.profile,
-            action=Notification.NEW_MESSAGE,
-            data={"from": "User2", "content": "Hello!"},
+            action=Notification.MESSAGE,
+            data={
+                "username": "User2",
+                "nickname": "User2", 
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=True
         )
         
@@ -60,13 +70,27 @@ class NotificationsEndpointsTests(TestCase):
         game_invitation = GameInvitation.objects.create(
             sender=self.user2.profile,
             invitee=self.user1.profile,
+            recipient=self.user1.profile,
             status=GameInvitation.PENDING
         )
         
+        # Create notification with proper data structure matching schemas
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.GAME_INVITE,
-            data={"status": GameInvitation.PENDING, "invitation_id": game_invitation.id},
+            data={
+                "username": "User2",
+                "nickname": "User2", 
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z",
+                "game_id": str(game_invitation.id),
+                "status": GameInvitation.PENDING,
+                "invitee": {
+                    "username": "User1",
+                    "nickname": "User1",
+                    "avatar": "/static/images/default_avatar.png"
+                }
+            },
             is_read=False
         )
         
@@ -74,13 +98,26 @@ class NotificationsEndpointsTests(TestCase):
         game_invitation_accepted = GameInvitation.objects.create(
             sender=self.user2.profile,
             invitee=self.user1.profile,
+            recipient=self.user1.profile,
             status=GameInvitation.ACCEPTED
         )
         
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.GAME_INVITE,
-            data={"status": GameInvitation.ACCEPTED, "invitation_id": game_invitation_accepted.id},
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png", 
+                "date": "2024-01-01T12:00:00Z",
+                "game_id": str(game_invitation_accepted.id),
+                "status": GameInvitation.ACCEPTED,
+                "invitee": {
+                    "username": "User1",
+                    "nickname": "User1", 
+                    "avatar": "/static/images/default_avatar.png"
+                }
+            },
             is_read=False
         )
         
@@ -93,29 +130,49 @@ class NotificationsEndpointsTests(TestCase):
     def test_get_notifications_with_tournament_invitations(self):
         # Create tournament invitation notification with open status
         tournament_invitation = TournamentInvitation.objects.create(
-            name="Test Tournament",
-            alias="TestAlias",
+            tournament_name="Test Tournament",
+            alias="TestAlias",  
+            recipient=self.user1.profile,
             status=TournamentInvitation.OPEN
         )
         
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.NEW_TOURNAMENT,
-            data={"status": TournamentInvitation.OPEN, "tournament_id": tournament_invitation.id},
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z",
+                "tournament_id": str(tournament_invitation.id),
+                "tournament_name": "Test Tournament",
+                "alias": "TestAlias",
+                "status": TournamentInvitation.OPEN
+            },
             is_read=False
         )
         
         # Create tournament invitation notification with closed status (should be filtered out)
         tournament_invitation_closed = TournamentInvitation.objects.create(
-            name="Closed Tournament",
+            tournament_name="Closed Tournament",
             alias="ClosedAlias",
+            recipient=self.user1.profile,
             status=TournamentInvitation.CLOSED
         )
         
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.NEW_TOURNAMENT,
-            data={"status": TournamentInvitation.CLOSED, "tournament_id": tournament_invitation_closed.id},
+            data={
+                "username": "User2",
+                "nickname": "User2", 
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z",
+                "tournament_id": str(tournament_invitation_closed.id),
+                "tournament_name": "Closed Tournament",
+                "alias": "ClosedAlias",
+                "status": TournamentInvitation.CLOSED
+            },
             is_read=False
         )
         
@@ -130,19 +187,34 @@ class NotificationsEndpointsTests(TestCase):
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.NEW_FRIEND,
-            data={"username": "User2"},
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=False
         )
         Notification.objects.create(
             receiver=self.user1.profile,
-            action=Notification.NEW_MESSAGE,
-            data={"from": "User2", "content": "Hello!"},
+            action=Notification.MESSAGE,
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=True
         )
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.NEW_FRIEND,
-            data={"username": "User3"},
+            data={
+                "username": "User3",
+                "nickname": "User3",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=False
         )
         
@@ -160,19 +232,34 @@ class NotificationsEndpointsTests(TestCase):
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.NEW_FRIEND,
-            data={"username": "User2"},
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=False
         )
         Notification.objects.create(
             receiver=self.user1.profile,
-            action=Notification.NEW_MESSAGE,
-            data={"from": "User2", "content": "Hello!"},
+            action=Notification.MESSAGE,
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=True
         )
         Notification.objects.create(
             receiver=self.user1.profile,
-            action=Notification.NEW_MESSAGE,
-            data={"from": "User3", "content": "Hi!"},
+            action=Notification.MESSAGE,
+            data={
+                "username": "User3",
+                "nickname": "User3",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=True
         )
         
@@ -190,13 +277,23 @@ class NotificationsEndpointsTests(TestCase):
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.NEW_FRIEND,
-            data={"username": "User2"},
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=False
         )
         Notification.objects.create(
             receiver=self.user1.profile,
-            action=Notification.NEW_MESSAGE,
-            data={"from": "User2", "content": "Hello!"},
+            action=Notification.MESSAGE,
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=True
         )
         
@@ -211,8 +308,13 @@ class NotificationsEndpointsTests(TestCase):
         for i in range(25):
             Notification.objects.create(
                 receiver=self.user1.profile,
-                action=Notification.NEW_MESSAGE,
-                data={"from": "User2", "content": f"Message {i}"},
+                action=Notification.MESSAGE,
+                data={
+                    "username": "User2",
+                    "nickname": "User2",
+                    "avatar": "/static/images/default_avatar.png",
+                    "date": "2024-01-01T12:00:00Z"
+                },
                 is_read=i % 2 == 0
             )
         
@@ -244,8 +346,13 @@ class NotificationsEndpointsTests(TestCase):
         for i in range(5):
             Notification.objects.create(
                 receiver=self.user1.profile,
-                action=Notification.NEW_MESSAGE,
-                data={"from": "User2", "content": f"Message {i}"},
+                action=Notification.MESSAGE,
+                data={
+                    "username": "User2",
+                    "nickname": "User2",
+                    "avatar": "/static/images/default_avatar.png",
+                    "date": "2024-01-01T12:00:00Z"
+                },
                 is_read=False
             )
         
@@ -278,8 +385,13 @@ class NotificationsEndpointsTests(TestCase):
         for i in range(3):
             notification = Notification.objects.create(
                 receiver=self.user1.profile,
-                action=Notification.NEW_MESSAGE,
-                data={"from": "User2", "content": f"Message {i}"},
+                action=Notification.MESSAGE,
+                data={
+                    "username": "User2",
+                    "nickname": "User2",
+                    "avatar": "/static/images/default_avatar.png",
+                    "date": "2024-01-01T12:00:00Z"
+                },
                 is_read=False
             )
             notifications.append(notification)
@@ -298,7 +410,12 @@ class NotificationsEndpointsTests(TestCase):
         Notification.objects.create(
             receiver=self.user1.profile,
             action=Notification.NEW_FRIEND,
-            data={"username": "User2"},
+            data={
+                "username": "User2",
+                "nickname": "User2",
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=False
         )
         
@@ -306,7 +423,12 @@ class NotificationsEndpointsTests(TestCase):
         Notification.objects.create(
             receiver=self.user2.profile,
             action=Notification.NEW_FRIEND,
-            data={"username": "User1"},
+            data={
+                "username": "User1",
+                "nickname": "User1", 
+                "avatar": "/static/images/default_avatar.png",
+                "date": "2024-01-01T12:00:00Z"
+            },
             is_read=False
         )
         
