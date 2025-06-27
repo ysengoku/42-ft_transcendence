@@ -1,9 +1,9 @@
 # Peacemakers Ponggers Edition - ft_transcendence
-[Still on working]   
+🛠️👷🏻‍♂️ On working   
 Real-time multiplayer PONG Game built as a Single Page Application, developed by five students during 42 school curriculum.
 This project combines authentication, live gameplay, chat, and 3D rendering using modern web technologies.
 
-![Peace](./assets/PeaceMakers_cover.png)
+![Peacemakers](./assets/PeaceMakers_cover.png)
 
 ## Usage
 🛠️👷🏻‍♂️
@@ -86,12 +86,42 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 - [Live chat modules (Chat, notifications, Game invitation)](/doc/protocol/livechatModuleProtocol.md)
 
 
-## Contributors
-[emuminov](https://github.com/emuminov)   
-[melobern](https://github.com/melobern)   
-[Fanny_BOUSSARD](https://github.com/faboussard)   
-[Celiastral](https://github.com/Celiastral)   
-[Yuko SENGOKU](https://github.com/ysengoku)  
+## 👥 Contributors
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/emuminov">
+        <img src="https://avatars.githubusercontent.com/emuminov" width="80px;" alt="emuminov"/><br />
+        <sub><b>emuminov</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/melobern">
+        <img src="https://avatars.githubusercontent.com/melobern" width="80px;" alt="melobern"/><br />
+        <sub><b>melobern</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/faboussard">
+        <img src="https://avatars.githubusercontent.com/faboussard" width="80px;" alt="Fanny_BOUSSARD"/><br />
+        <sub><b>faboussard</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/Celiastral">
+        <img src="https://avatars.githubusercontent.com/Celiastral" width="80px;" alt="Celiastral"/><br />
+        <sub><b>Celiastral</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/ysengoku">
+        <img src="https://avatars.githubusercontent.com/ysengoku" width="80px;" alt="Yuko SENGOKU"/><br />
+        <sub><b>ysengoku</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
 ## License
 This project is for educational purposes only — not licensed for commercial use.
