@@ -7,9 +7,6 @@ export class CreditsAccordion extends HTMLElement {
     this.render();
   }
 
-  // disconnectedCallback() {
-  // }
-
   render() {
     this.innerHTML = this.template() + this.style();
   }

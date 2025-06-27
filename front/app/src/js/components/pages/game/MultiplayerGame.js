@@ -607,7 +607,6 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   render() {
-    // this.innerHTML = ``;
     document.querySelector('#content').classList.add('position-relative');
     this.innerHTML = this.overlayTemplate();
     this.overlay = this.querySelector('#overlay');
