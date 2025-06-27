@@ -1,8 +1,17 @@
+/**
+ * @module AvatarUpload
+ * @description Component for displaying and initiating avatar upload.
+ * Renders a user avatar with an upload/change button. Opens AvatarUploadModal when clicked.
+ * @security
+ * - Uses `URL.createObjectURL` for temporary preview without injecting HTML.
+ * - Relies on AvatarUploadModal for file validation before setting `src`.
+ */
+
 import { DEFAULT_AVATAR } from '@env';
 
 export class AvatarUpload extends HTMLElement {
   #state = {
-    user: '',
+    user: {},
   };
 
   constructor() {
@@ -11,6 +20,10 @@ export class AvatarUpload extends HTMLElement {
     this.handleClick = this.handleClick.bind(this);
   }
 
+  /**
+   * Updates component state with user data and renders.
+   * @param {Object} user - User object containing `avatar` URL.
+   */
   setAvatar(user) {
     this.#state.user = user;
     this.render();
@@ -30,6 +43,10 @@ export class AvatarUpload extends HTMLElement {
     this.avatarImage.src = this.#state.user.avatar;
   }
 
+  /**
+   * Open the upload modal and set preview to selected file.
+   * @param {Event} event - Click event on upload button.
+   */
   handleClick(event) {
     event.preventDefault();
     const modal = document.querySelector('avatar-upload-modal');
