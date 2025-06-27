@@ -75,7 +75,10 @@ class TournamentConsumer(WebsocketConsumer):
             except Round.DoesNotExist:
                 logger.warning("This round should exist")
                 return
-            TournamentManager.receive_start_round_message(tournament.id, self.user.id, round_number, new_round)
+            if round_number == 1: # and no brackets has began
+                TournamentManager.send_start_round_message(tournament.id, self.user.id, round_number, new_round)
+            else:
+                TournamentManager.receive_start_round_message(tournament.id, self.user.id, round_number, new_round)
 
     def disconnect(self, close_code):
         logger.debug("WILL BE DISCONNECTED")
@@ -84,6 +87,16 @@ class TournamentConsumer(WebsocketConsumer):
         # TODO: See how this line is useful
         async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
         self.close(close_code)
+        if tournament.status == Tournament.ONGOING: 
+            logger.debug("THIS TOURNAMENT IS UNGOINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
+            round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
+            try:
+                new_round = tournament.rounds.get(number=round_number)
+            except Round.DoesNotExist:
+                logger.warning("This round should exist")
+                return
+            if round_number == 1: # and no brackets has began
+                TournamentManager.send_start_round_message(tournament.id, self.user.id, round_number, new_round)
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
