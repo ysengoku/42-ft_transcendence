@@ -51,7 +51,7 @@ export function getOptionsFromLocalStorage() {
   return validateStoredOptions(options);
 }
 
-function validateStoredOptions(options = {}) {
+export function validateStoredOptions(options = {}) {
   const validatedOtions = {};
   for (const [key, rule] of Object.entries(gameOptionsSchema)) {
     if (options[key] === undefined || options[key] === null) {
@@ -65,7 +65,7 @@ function validateStoredOptions(options = {}) {
   return validatedOtions;
 }
 
-function validateOption(raw, rule) {
+export function validateOption(raw, rule) {
   switch (rule.type) {
     case 'boolean':
       return typeof raw === 'boolean' || raw === 'any';
