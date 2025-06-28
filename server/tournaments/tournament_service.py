@@ -108,7 +108,7 @@ class TournamentService:
         with transaction.atomic():
             if new_round.status == Round.ONGOING:
                 logger.info("This round is already prepared with love <3")
-                TournamentService.send_start_round_message(round_number, new_round)
+                TournamentService.send_start_round_message(tournament_id, round_number, new_round)
                 return
             else:
                 new_round.status = Round.ONGOING
