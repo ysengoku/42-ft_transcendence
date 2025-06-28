@@ -33,7 +33,7 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 
-class TournamentManager:
+class TournamentService:
     @staticmethod
     def send_group_message(tournament_id, action, data=None):
         channel_layer = get_channel_layer()
@@ -92,13 +92,13 @@ class TournamentManager:
         if round_number == 1:
             participants = list(tournament.participants.all())
         else:
-            participants = TournamentManager.take_winners_from(tournament.rounds.get(number=round_number - 1))
-        if TournamentManager.participants_number_is_incorrect(participants):
-            TournamentManager.tournament_canceled(tournament_id)
+            participants = TournamentService.take_winners_from(tournament.rounds.get(number=round_number - 1))
+        if TournamentService.participants_number_is_incorrect(participants):
+            TournamentService.tournament_canceled(tournament_id)
             return
         if len(participants) == 1:
             logger.debug("Only one participant left")
-            TournamentManager.end_tournament(tournament, participants)
+            TournamentService.end_tournament(tournament, participants)
             return
         try:
             new_round = tournament.rounds.get(number=round_number)
@@ -108,14 +108,14 @@ class TournamentManager:
         with transaction.atomic():
             if new_round.status == Round.ONGOING:
                 logger.info("This round is already prepared with love <3")
-                TournamentManager.send_start_round_message(round_number, new_round)
+                TournamentService.send_start_round_message(round_number, new_round)
                 return
             else:
                 new_round.status = Round.ONGOING
                 new_round.save(update_fields=["status"])
-        TournamentManager.prepare_brackets(participants, round_number, new_round)
+        TournamentService.prepare_brackets(participants, round_number, new_round)
         if round_number != 1:
-            TournamentManager.send_start_round_message(tournament_id, round_number, new_round)
+            TournamentService.send_start_round_message(tournament_id, round_number, new_round)
 
     @staticmethod
     def participants_number_is_incorrect(participants) -> bool:
@@ -132,14 +132,14 @@ class TournamentManager:
     def prepare_brackets(participants, round_number, new_round):
         logger.debug("function prepare_brackets")
         logger.debug(new_round)
-        bracket_list = TournamentManager.generate_brackets(participants)
+        bracket_list = TournamentService.generate_brackets(participants)
         for p1, p2 in bracket_list:
             new_round.brackets.create(participant1=p1, participant2=p2, status=Bracket.PENDING)
         brackets = new_round.brackets.all()
         logger.debug(brackets.count())
         logger.debug(brackets)
         for bracket in brackets:
-            game_room = TournamentManager.create_tournament_game_room(bracket.participant1, bracket.participant2)
+            game_room = TournamentService.create_tournament_game_room(bracket.participant1, bracket.participant2)
             bracket.game_room = game_room
             bracket.game_id = game_room.id
             bracket.save(update_fields=["game_room", "game_id"])
@@ -188,7 +188,7 @@ class TournamentManager:
         round_data = RoundSchema.model_validate(new_round)
         logger.debug(round_data)
         # Launch the game
-        TournamentManager.send_group_message(
+        TournamentService.send_group_message(
             tournament_id,
             action,
             data={
@@ -211,7 +211,7 @@ class TournamentManager:
         round_data = RoundSchema.model_validate(new_round)
         logger.debug(round_data)
         # Launch the game
-        TournamentManager.send_personal_message(
+        TournamentService.send_personal_message(
             user_id,
             action,
             data={
@@ -232,15 +232,15 @@ class TournamentManager:
         else:
             tournament.status = Tournament.CANCELLED
         tournament.save()
-        TournamentManager.trigger_action(tournament.id, "close_self_ws")
+        TournamentService.trigger_action(tournament.id, "close_self_ws")
 
     @staticmethod
     def new_registration(tournament_id, alias, avatar, is_last):
         logger.debug("function new_registration")
         data = {"alias": alias, "avatar": avatar}
-        TournamentManager.send_group_message(tournament_id, "new_registration", data)
+        TournamentService.send_group_message(tournament_id, "new_registration", data)
         if is_last:
-            TournamentManager.send_group_message(tournament_id, "tournament_start", data)
+            TournamentService.send_group_message(tournament_id, "tournament_start", data)
 
     @staticmethod
     def tournament_canceled(tournament_id, data=None):
@@ -255,8 +255,8 @@ class TournamentManager:
             tournament.status = Tournament.CANCELLED
             tournament.save()
         data = {"tournament_id": str(tournament_id), "tournament_name": tournament_name}
-        TournamentManager.send_group_message(tournament_id, "tournament_canceled", data)
-        TournamentManager.trigger_action(tournament_id, "close_self_ws")
+        TournamentService.send_group_message(tournament_id, "tournament_canceled", data)
+        TournamentService.trigger_action(tournament_id, "close_self_ws")
 
     @staticmethod
     def tournament_game_finished(tournament_id, data):
@@ -282,8 +282,8 @@ class TournamentManager:
             logger.warning("Error: No bracket with this id : %s", bracket_id)
             return
 
-        TournamentManager.send_match_finished(tournament_id, bracket)
-        TournamentManager.send_match_result(tournament_id, bracket)
+        TournamentService.send_match_finished(tournament_id, bracket)
+        TournamentService.send_match_result(tournament_id, bracket)
 
         round = bracket.round
         if not Bracket.objects.filter(
@@ -292,8 +292,8 @@ class TournamentManager:
             round.status = Round.FINISHED
             round.save(update_fields=["status"])
             data = {"tournament_id": str(tournament_id)}
-            TournamentManager.send_group_message(tournament_id, "round_end", data)
-            TournamentManager.prepare_round(tournament_id)
+            TournamentService.send_group_message(tournament_id, "round_end", data)
+            TournamentService.prepare_round(tournament_id)
 
     @staticmethod
     # TODO: See how to handle this self
@@ -306,15 +306,15 @@ class TournamentManager:
             return
         logger.info("The winner from this bracket : %s", bracket.winner)
         data = {"tournament_id": str(tournament_id)}
-        TournamentManager.send_personal_message(p1_id, "match_finished", data)
-        TournamentManager.send_personal_message(p2_id, "match_finished", data)
+        TournamentService.send_personal_message(p1_id, "match_finished", data)
+        TournamentService.send_personal_message(p2_id, "match_finished", data)
         if bracket.winner is None:
-            TournamentManager.disconnect_user(p1_id)
-            TournamentManager.disconnect_user(p2_id)
+            TournamentService.disconnect_user(p1_id)
+            TournamentService.disconnect_user(p2_id)
         elif bracket.winner == bracket.participant1.profile:
-            TournamentManager.disconnect_user(p2_id)
+            TournamentService.disconnect_user(p2_id)
         else:
-            TournamentManager.disconnect_user(p2_id)
+            TournamentService.disconnect_user(p2_id)
 
     @staticmethod
     def send_match_result(tournament_id, bracket):
@@ -330,7 +330,7 @@ class TournamentManager:
             "round_number": round_number,
             "bracket": json.loads(bracket_data.json()),
         }
-        TournamentManager.send_group_message(tournament_id, "match_result", data)
+        TournamentService.send_group_message(tournament_id, "match_result", data)
 
     @staticmethod
     def disconnect_user(user_id):
@@ -345,5 +345,5 @@ class TournamentManager:
     @staticmethod
     def user_left(tournament_id, alias, user_id):
         data = {"alias": alias}
-        TournamentManager.disconnect_user(user_id)
-        TournamentManager.send_group_message(tournament_id, "registration_canceled", data)
+        TournamentService.disconnect_user(user_id)
+        TournamentService.send_group_message(tournament_id, "registration_canceled", data)
