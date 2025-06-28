@@ -1,8 +1,17 @@
+/**
+ * @module AvatarUpload
+ * @description Component for displaying and initiating avatar upload.
+ * Renders a user avatar with an upload/change button. Opens AvatarUploadModal when clicked.
+ * @security
+ * - Uses `URL.createObjectURL` for temporary preview without injecting HTML.
+ * - Relies on AvatarUploadModal for file validation before setting `src`.
+ */
+
 import { DEFAULT_AVATAR } from '@env';
 
 export class AvatarUpload extends HTMLElement {
   #state = {
-    user: '',
+    user: {},
   };
 
   constructor() {
@@ -11,6 +20,10 @@ export class AvatarUpload extends HTMLElement {
     this.handleClick = this.handleClick.bind(this);
   }
 
+  /**
+   * Updates component state with user data and renders.
+   * @param {Object} user - User object containing `avatar` URL.
+   */
   setAvatar(user) {
     this.#state.user = user;
     this.render();
@@ -26,8 +39,14 @@ export class AvatarUpload extends HTMLElement {
     this.avatarUploadButton = this.querySelector('#avatar-upload-button');
     this.avatarImage = this.querySelector('#user-avatar-image');
     this.avatarUploadButton.addEventListener('click', this.handleClick);
+
+    this.avatarImage.src = this.#state.user.avatar;
   }
 
+  /**
+   * Open the upload modal and set preview to selected file.
+   * @param {Event} event - Click event on upload button.
+   */
   handleClick(event) {
     event.preventDefault();
     const modal = document.querySelector('avatar-upload-modal');
@@ -45,7 +64,7 @@ export class AvatarUpload extends HTMLElement {
 
     return `
 		  <div class="d-flex align-items-start pb-4 border-bottom">
-				  <img src="${this.#state.user.avatar}" alt="User Avatar" class="avatar-xl rounded-circle me-3" id="user-avatar-image">
+				  <img alt="User Avatar" class="avatar-xl rounded-circle me-3" id="user-avatar-image">
 			  <div class="col-5 d-flex flex-column align-items-start mx-3 my-auto py-3">
 				  <b>Avatar</b>
 				  <button class="btn btn-wood my-3" id="avatar-upload-button">${avatarUploadMessage}</button>
