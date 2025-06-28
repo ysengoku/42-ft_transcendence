@@ -17,7 +17,7 @@ from .models import Bracket, Participant, Round, Tournament
 # TODO: see if BracketSchema is really needed
 from .schemas import BracketSchema, RoundSchema
 from .tournament_validator import Validator
-from .tournament_manager import TournamentManager
+from .tournament_service import TournamentService
 
 logger = logging.getLogger("server")
 
@@ -76,9 +76,9 @@ class TournamentConsumer(WebsocketConsumer):
                 logger.warning("This round should exist")
                 return
             if round_number == 1: # and no brackets has began
-                TournamentManager.send_start_round_message(tournament.id, self.user.id, round_number, new_round)
+                TournamentService.send_start_round_message(tournament.id, self.user.id, round_number, new_round)
             else:
-                TournamentManager.receive_start_round_message(tournament.id, self.user.id, round_number, new_round)
+                TournamentService.receive_start_round_message(tournament.id, self.user.id, round_number, new_round)
 
     def disconnect(self, close_code):
         logger.debug("WILL BE DISCONNECTED")
@@ -96,7 +96,7 @@ class TournamentConsumer(WebsocketConsumer):
                 logger.warning("This round should exist")
                 return
             if round_number == 1: # and no brackets has began
-                TournamentManager.send_start_round_message(tournament.id, self.user.id, round_number, new_round)
+                TournamentService.send_start_round_message(tournament.id, self.user.id, round_number, new_round)
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -140,5 +140,5 @@ class TournamentConsumer(WebsocketConsumer):
     def tournament_game_finished(self, data):
         if Validator.validate_action_data("tournament_game_finished", data) is False:
             return
-        TournamentManager.tournament_game_finished(self.tournament_id, data)
+        TournamentService.tournament_game_finished(self.tournament_id, data)
         return
