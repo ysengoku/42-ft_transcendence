@@ -132,14 +132,18 @@ class TournamentConsumer(WebsocketConsumer):
         logger.debug("function tournament_message")
         logger.debug("action : %s", event["action"])
         logger.debug("data : %s", event["data"])
-        self.send(
-            text_data=json.dumps(
-                {
-                    "action": event["action"],
-                    "data": event["data"],
-                },
-            ),
-        )
+        try:
+            self.send(
+                text_data=json.dumps(
+                    {
+                        "action": event["action"],
+                        "data": event["data"],
+                    },
+                ),
+            )
+        except Disconnected as e:
+            logger.warning("Failed to send message : %s", e)
+
 
     def tournament_game_finished(self, data):
         if Validator.validate_action_data("tournament_game_finished", data) is False:
