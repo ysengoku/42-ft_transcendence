@@ -76,7 +76,7 @@ class TournamentConsumer(WebsocketConsumer):
                 logger.warning("This round should exist")
                 return
             if round_number == 1: # and no brackets has began
-                TournamentService.send_start_round_message(tournament.id, self.user.id, round_number, new_round)
+                TournamentService.send_start_round_message(tournament.id, round_number, new_round)
             else:
                 TournamentService.receive_start_round_message(tournament.id, self.user.id, round_number, new_round)
 
@@ -87,6 +87,11 @@ class TournamentConsumer(WebsocketConsumer):
         # TODO: See how this line is useful
         async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
         self.close(close_code)
+        try:
+            tournament = Tournament.objects.get(id=self.tournament_id)
+        except Tournament.DoesNotExist:
+            logger.warning("This tournament id does not exist : %s", self.tournament_id)
+            return
         if tournament.status == Tournament.ONGOING: 
             logger.debug("THIS TOURNAMENT IS UNGOINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
             round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
@@ -96,7 +101,7 @@ class TournamentConsumer(WebsocketConsumer):
                 logger.warning("This round should exist")
                 return
             if round_number == 1: # and no brackets has began
-                TournamentService.send_start_round_message(tournament.id, self.user.id, round_number, new_round)
+                TournamentService.send_start_round_message(tournament.id, round_number, new_round)
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -127,7 +132,6 @@ class TournamentConsumer(WebsocketConsumer):
         logger.debug("function tournament_message")
         logger.debug("action : %s", event["action"])
         logger.debug("data : %s", event["data"])
-
         self.send(
             text_data=json.dumps(
                 {
