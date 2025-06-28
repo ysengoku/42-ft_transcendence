@@ -55,7 +55,7 @@ export class Settings extends HTMLElement {
     }
     this.#state.username = user.username;
     await this.fetchUserData();
-    this.#state.newUserData = this.#state.currentUserData;
+    this.#state.newUserData = { ...this.#state.currentUserData };
   }
 
   disconnecteCallback() {
@@ -194,7 +194,7 @@ export class Settings extends HTMLElement {
     }
 
     if (!this.#state.changed) {
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, 'No changes to save', 2000);
+      showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'No changes to save', 2000);
       return;
     }
     const response = await apiRequest(

@@ -487,7 +487,9 @@ export class DuelMenu extends HTMLElement {
       return;
     }
     const queryParams = this.optionsToQueryParams();
-    router.navigate('/duel', { status: 'matchmaking', params: queryParams });
+    queryParams
+      ? router.navigate('/duel', { status: 'matchmaking', params: queryParams })
+      : router.navigate('/duel', { status: 'matchmaking' });
   }
 
   /* ------------------------------------------------------------------------ */
