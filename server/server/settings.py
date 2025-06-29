@@ -70,6 +70,7 @@ env = environ.Env(
     # TODO: for the docker to work without having the real value
     # TODO: of SECRET_KEY yet                                  <--
     SECRET_KEY=(str, "default"),
+    HOST_IP=(str, ""),
 )
 
 env.read_env(env_file=str(BASE_DIR / ".env"))
@@ -87,7 +88,9 @@ REQUIRED_PARTICIPANTS_OPTIONS = env.list(
     "REQUIRED_PARTICIPANTS_OPTIONS",
     default=["4", "8"],
 )
-ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
+
+HOST_IP = env("HOST_IP")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=f"localhost,127.0.0.1,{HOST_IP}").split(",")
 
 IN_CONTAINER = env("IN_CONTAINER")
 
@@ -123,14 +126,16 @@ else:
 
 
 INSTALLED_APPS = [
-    # ASGI server for working with websockets
+    # ASGI server for working with websockets and Django channels
     "daphne",
     "channels",
+
     # Our apps
     "users",
     "chat",
     "pong",
     "tournaments",
+
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -139,8 +144,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    # Profiling
-    "silk",
 ]
 
 MIDDLEWARE = [
@@ -153,7 +156,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "silk.middleware.SilkyMiddleware",
 ]
-
 
 ROOT_URLCONF = "server.urls"
 
@@ -190,12 +192,9 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-# ################# #
-# project additions #
-# ################# #
-# CUSTOM USER MODEL
-
+# Custom user model
 AUTH_USER_MODEL = "users.User"
+
 DEFAULT_USER_AVATAR = "/img/default_avatar.png"
 
 # Configuration OAuth 42
@@ -209,12 +208,12 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-REDIS_HOST = env("REDIS_HOST")
-REDIS_PORT = env("REDIS_PORT")
 # For the tests
 if "test" in sys.argv:
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 else:
+    REDIS_HOST = env("REDIS_HOST")
+    REDIS_PORT = env("REDIS_PORT")
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -229,13 +228,13 @@ else:
     }
 
 
-# Configuration for proxy
 CSRF_TRUSTED_ORIGINS = [
     "https://localhost:1026",
     "http://localhost:5173",
     "https://nginx:1026",
-    # TODO: add the ip of the machine
+    f"https://{HOST_IP}:1026",
 ]
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
 
@@ -345,8 +344,8 @@ LOGGING = {
     "loggers": {
         "server": {
             "handlers": ["console"],
-            "level": "DEBUG",  # Niveau du logger
-            "propagate": False,  # Empêche la propagation vers le root logger
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
     "root": {
