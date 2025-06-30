@@ -2,11 +2,9 @@
 import json
 import logging
 import random
-import uuid
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
-from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from pong.models import GameRoom
@@ -15,7 +13,6 @@ from .models import Bracket, Participant, Round, Tournament
 
 # TODO: see if BracketSchema is really needed
 from .schemas import BracketSchema, RoundSchema
-from .tournament_validator import Validator
 
 logger = logging.getLogger("server")
 
@@ -30,7 +27,6 @@ BAD_DATA = 3100
 
 
 from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 
 
 class TournamentService:
@@ -110,9 +106,8 @@ class TournamentService:
                 logger.info("This round is already prepared with love <3")
                 TournamentService.send_start_round_message(tournament_id, round_number, new_round)
                 return
-            else:
-                new_round.status = Round.ONGOING
-                new_round.save(update_fields=["status"])
+            new_round.status = Round.ONGOING
+            new_round.save(update_fields=["status"])
         TournamentService.prepare_brackets(participants, round_number, new_round)
         TournamentService.send_start_round_message(tournament_id, round_number, new_round)
 
@@ -286,7 +281,7 @@ class TournamentService:
 
         round = bracket.round
         if not Bracket.objects.filter(
-            status__in=[Bracket.ONGOING, Bracket.PENDING], round__tournament=tournament
+            status__in=[Bracket.ONGOING, Bracket.PENDING], round__tournament=tournament,
         ).exists():
             round.status = Round.FINISHED
             round.save(update_fields=["status"])
