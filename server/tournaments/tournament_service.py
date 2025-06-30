@@ -114,8 +114,7 @@ class TournamentService:
                 new_round.status = Round.ONGOING
                 new_round.save(update_fields=["status"])
         TournamentService.prepare_brackets(participants, round_number, new_round)
-        if round_number != 1:
-            TournamentService.send_start_round_message(tournament_id, round_number, new_round)
+        TournamentService.send_start_round_message(tournament_id, round_number, new_round)
 
     @staticmethod
     def participants_number_is_incorrect(participants) -> bool:
@@ -177,7 +176,7 @@ class TournamentService:
 
     @staticmethod
     def send_start_round_message(tournament_id, round_number, new_round):
-        logger.debug("function send_start_round_message")
+        logger.debug("function send_start_round_message, round : %s", round_number)
         action = "tournament_start" if round_number == 1 else "round_start"
         try:
             tournament = Tournament.objects.get(id=tournament_id)
@@ -200,7 +199,7 @@ class TournamentService:
 
     @staticmethod
     def receive_start_round_message(tournament_id, user_id, round_number, new_round):
-        logger.debug("function send_start_round_message")
+        logger.debug("function send_start_round_message, round number : %s", round_number)
         action = "tournament_start" if round_number == 1 else "round_start"
         try:
             tournament = Tournament.objects.get(id=tournament_id)
