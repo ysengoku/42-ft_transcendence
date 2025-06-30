@@ -89,7 +89,7 @@ export class Tournament extends HTMLElement {
   /**
    * Fetches tournament data from the API using the tournament ID stored in the state.
    * If the fetch is successful, it updates the state with the tournament data and user data in the tournament.
-   * If the tournament status is pending or canceled, it sets the UI status accordingly.
+   * If the tournament status is pending, it sets the UI status accordingly.
    * If the tournament is ongoing, it sets the current round and user bracket data.
    * If the user is qualified, it updates the UI status and renders the tournament view.
    * @returns {Promise<void>} - A promise that resolves when the tournament data is fetched and the UI is updated.
@@ -129,18 +129,6 @@ export class Tournament extends HTMLElement {
       router.redirect('/tournament-menu');
       return;
     }
-    if (
-      this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED &&
-      this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER
-    ) {
-      devLog('Tournament finished and user is the winner');
-      socketManager.closeSocket('tournament', this.#state.tournamentId);
-      showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
-      setTimeout(() => {
-        router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
-      }, 3000);
-      return;
-    }
     if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
       socketManager.closeSocket('tournament', this.#state.tournamentId);
       showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.ELIMINATED, this.#state.tournament.name);
@@ -149,35 +137,105 @@ export class Tournament extends HTMLElement {
       }, 2000);
       return;
     }
-    if (
-      this.#state.tournament.status === TOURNAMENT_STATUS.PENDING ||
-      this.#state.tournament.status === TOURNAMENT_STATUS.CANCELED
-    ) {
-      this.resolveUIStatus[this.#state.tournament.status]();
-    } else {
-      this.findCurrentRound();
-      this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
 
-      this.findAssignedBracketForUser();
-      devLog("Current user's bracket", this.#state.currentUserBracket);
-      if (!this.#state.currentUserBracket) {
-        devErrorLog('User is not assigned to any bracket in the current round');
-        router.redirect('/home');
+    console.log('Tournament status', this.#state.tournament.status);
+    switch (this.#state.tournament.status) {
+      case TOURNAMENT_STATUS.FINISHED:
+        if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER) {
+          devLog('Tournament finished and the user is the champion');
+          socketManager.closeSocket('tournament', this.#state.tournamentId);
+          showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
+          setTimeout(() => {
+            router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
+          }, 3000);
+        } else {
+          showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED);
+          setTimeout(() => {
+            router.redirect('/home');
+          }, 3000);
+        }
         return;
-      }
-
-      this.resolveUIStatus[this.#state.tournament.status]();
-      const isUserQualified = this.checkUserStatus();
-      if (!isUserQualified) {
+      case TOURNAMENT_STATUS.CANCELED:
+        socketManager.closeSocket('tournament', this.#state.tournamentId);
+        showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED);
+        setTimeout(() => {
+          router.redirect(`/tournament-menu`);
+        }, 2000);
         return;
-      }
+      case TOURNAMENT_STATUS.PENDING:
+        this.resolveUIStatus[this.#state.tournament.status]();
+        break;
+      default:
+        this.findCurrentRound();
+        this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
+        this.findAssignedBracketForUser();
+        devLog("Current user's bracket", this.#state.currentUserBracket);
+        if (!this.#state.currentUserBracket) {
+          devErrorLog('User is not assigned to any bracket in the current round');
+          router.redirect('/home');
+          return;
+        }
+        this.resolveUIStatus[this.#state.tournament.status]();
+        const isUserQualified = this.checkUserStatus();
+        if (!isUserQualified) {
+          return;
+        }
     }
+    // if (
+    //   this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED &&
+    //   this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER
+    // ) {
+    //   devLog('Tournament finished and user is the winner');
+    //   socketManager.closeSocket('tournament', this.#state.tournamentId);
+    //   showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
+    //   setTimeout(() => {
+    //     router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
+    //   }, 3000);
+    //   return;
+    // }
+    // if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
+    //   socketManager.closeSocket('tournament', this.#state.tournamentId);
+    //   showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.ELIMINATED, this.#state.tournament.name);
+    //   setTimeout(() => {
+    //     router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
+    //   }, 2000);
+    //   return;
+    // }
+    // if (this.#state.tournament.status === TOURNAMENT_STATUS.CANCELED) {
+    //   socketManager.closeSocket('tournament', this.#state.tournamentId);
+    //   showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED, this.#state.tournament.name);
+    //   setTimeout(() => {
+    //     router.redirect(`/tournament-menu`);
+    //   }, 2000);
+    //   return;
+    // }
+    // if (this.#state.tournament.status === TOURNAMENT_STATUS.PENDING) {
+    //   this.resolveUIStatus[this.#state.tournament.status]();
+    // } else {
+    //   this.findCurrentRound();
+    //   this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
+
+    //   this.findAssignedBracketForUser();
+    //   devLog("Current user's bracket", this.#state.currentUserBracket);
+    //   if (!this.#state.currentUserBracket) {
+    //     devErrorLog('User is not assigned to any bracket in the current round');
+    //     router.redirect('/home');
+    //     return;
+    //   }
+
+    //   this.resolveUIStatus[this.#state.tournament.status]();
+    //   const isUserQualified = this.checkUserStatus();
+    //   if (!isUserQualified) {
+    //     return;
+    //   }
+    // }
+
     devLog('UI status set to:', this.#state.uiStatus);
-
     this.render();
-    if (this.#state.uiStatus !== UI_STATUS.CANCELED) {
-      socketManager.openSocket('tournament', this.#state.tournamentId);
-    }
+    socketManager.openSocket('tournament', this.#state.tournamentId);
+    // if (this.#state.uiStatus !== UI_STATUS.CANCELED) {
+    //   socketManager.openSocket('tournament', this.#state.tournamentId);
+    // }
   }
 
   findCurrentRound() {
