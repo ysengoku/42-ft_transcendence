@@ -131,6 +131,8 @@ export class Tournament extends HTMLElement {
     }
     if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
       socketManager.closeSocket('tournament', this.#state.tournamentId);
+      this.#state.uiStatus = UI_STATUS.ELIMINATED;
+      this.render();
       showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.ELIMINATED, this.#state.tournament.name);
       setTimeout(() => {
         router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
@@ -138,17 +140,19 @@ export class Tournament extends HTMLElement {
       return;
     }
 
-    console.log('Tournament status', this.#state.tournament.status);
     switch (this.#state.tournament.status) {
       case TOURNAMENT_STATUS.FINISHED:
         if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER) {
           devLog('Tournament finished and the user is the champion');
           socketManager.closeSocket('tournament', this.#state.tournamentId);
-          showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
+          requestAnimationFrame(() => {
+            showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
+          });
           setTimeout(() => {
             router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
           }, 3000);
         } else {
+          // TODO: Check this
           showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED);
           setTimeout(() => {
             router.redirect('/home');
@@ -181,61 +185,10 @@ export class Tournament extends HTMLElement {
           return;
         }
     }
-    // if (
-    //   this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED &&
-    //   this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER
-    // ) {
-    //   devLog('Tournament finished and user is the winner');
-    //   socketManager.closeSocket('tournament', this.#state.tournamentId);
-    //   showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
-    //   setTimeout(() => {
-    //     router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
-    //   }, 3000);
-    //   return;
-    // }
-    // if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.ELIMINATED) {
-    //   socketManager.closeSocket('tournament', this.#state.tournamentId);
-    //   showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.ELIMINATED, this.#state.tournament.name);
-    //   setTimeout(() => {
-    //     router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
-    //   }, 2000);
-    //   return;
-    // }
-    // if (this.#state.tournament.status === TOURNAMENT_STATUS.CANCELED) {
-    //   socketManager.closeSocket('tournament', this.#state.tournamentId);
-    //   showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED, this.#state.tournament.name);
-    //   setTimeout(() => {
-    //     router.redirect(`/tournament-menu`);
-    //   }, 2000);
-    //   return;
-    // }
-    // if (this.#state.tournament.status === TOURNAMENT_STATUS.PENDING) {
-    //   this.resolveUIStatus[this.#state.tournament.status]();
-    // } else {
-    //   this.findCurrentRound();
-    //   this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
-
-    //   this.findAssignedBracketForUser();
-    //   devLog("Current user's bracket", this.#state.currentUserBracket);
-    //   if (!this.#state.currentUserBracket) {
-    //     devErrorLog('User is not assigned to any bracket in the current round');
-    //     router.redirect('/home');
-    //     return;
-    //   }
-
-    //   this.resolveUIStatus[this.#state.tournament.status]();
-    //   const isUserQualified = this.checkUserStatus();
-    //   if (!isUserQualified) {
-    //     return;
-    //   }
-    // }
 
     devLog('UI status set to:', this.#state.uiStatus);
     this.render();
     socketManager.openSocket('tournament', this.#state.tournamentId);
-    // if (this.#state.uiStatus !== UI_STATUS.CANCELED) {
-    //   socketManager.openSocket('tournament', this.#state.tournamentId);
-    // }
   }
 
   findCurrentRound() {
@@ -372,12 +325,20 @@ export class Tournament extends HTMLElement {
       return tournamentRoundOngoing;
     },
     [UI_STATUS.CANCELED]: () => {
-      const tournamentCanceled = document.createElement('tournament-canceled');
-      tournamentCanceled.data = {
-        tournamentId: this.#state.tournamentId,
-        creatorUsername: this.#state.creator.username,
+      const tournamentExit = document.createElement('tournament-exit');
+      tournamentExit.data = {
+        status: UI_STATUS.CANCELED,
+        creatorAlias: this.#state.creator.alias,
       };
-      return tournamentCanceled;
+      return tournamentExit;
+    },
+    [UI_STATUS.ELIMINATED]: () => {
+      const tournamentExit = document.createElement('tournament-exit');
+      tournamentExit.data = {
+        status: UI_STATUS.ELIMINATED,
+        tournamentId: this.#state.tournamentId,
+      };
+      return tournamentExit;
     },
   };
 

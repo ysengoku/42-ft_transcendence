@@ -3,7 +3,7 @@ export const UI_STATUS = {
   ROUND_STARTING: 'roundStarting',
   BRACKET_ONGOING: 'bracketOngoing',
   WAITING_NEXT_ROUND: 'waitingNextRound',
-  // ROUND_FINISHED: 'roundFinished',
+  ELIMINATED: 'eliminated',
   FINISHED: 'finished',
   CANCELED: 'cancelled',
 };
@@ -25,7 +25,7 @@ export const BRACKET_STATUS = {
   PENDING: 'pending',
   ONGOING: 'ongoing',
   FINISHED: 'finished',
-  CANCELED: 'canceled',
+  CANCELED: 'cancelled',
 };
 
 export const PARTICIPANT_STATUS = {
