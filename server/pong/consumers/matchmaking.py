@@ -66,7 +66,6 @@ class MatchmakingConsumer(WebsocketConsumer):
                     game_room=self.game_room,
                     profile=self.user.profile,
                 ).first()
-                game_room_player.inc_number_of_connections()
 
             logger.info(
                 "[Matchmaking.connect]: player {%s} connected to the game room {%s} {%s} times",
@@ -106,24 +105,17 @@ class MatchmakingConsumer(WebsocketConsumer):
 
         with transaction.atomic():
             room_to_clean: GameRoom = GameRoom.objects.select_for_update().filter(id=self.game_room.id).first()
-            disconnected_player: GameRoomPlayer = GameRoomPlayer.objects.filter(
-                game_room=self.game_room,
-                profile=self.user.profile,
-            ).first()
-            disconnected_player.dec_number_of_connections()
             logger.info(
-                "[Matchmaking.connect]: player {%s} connected to the game room {%s} {%s} times",
+                "[Matchmaking.connect]: player {%s} connected to the game room {%s}",
                 self.user.profile,
                 self.game_room,
-                disconnected_player.number_of_connections,
             )
-            if disconnected_player.number_of_connections == 0:
-                room_to_clean.players.remove(self.user.profile)
-                logger.info(
-                    "[Matchmaking.disconnect]: game room {%s} removed player {%s}",
-                    room_to_clean,
-                    self.user.profile,
-                )
+            room_to_clean.players.remove(self.user.profile)
+            logger.info(
+                "[Matchmaking.disconnect]: game room {%s} removed player {%s}",
+                room_to_clean,
+                self.user.profile,
+            )
             if self.game_room.players.count() < 1:
                 room_to_clean.set_closed()
                 logger.info("[Matchmaking.disconnect]: game room {%s} closed", room_to_clean)

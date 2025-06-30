@@ -21,7 +21,8 @@ export class TournamentOverviewTree extends HTMLElement {
 
     for (let i = 0; i < this.#state.rounds.length; i++) {
       const round = this.#state.rounds[i];
-      this.renderBrackets(round);
+      const renderConnector = this.#state.rounds[i + 1] && this.#state.rounds[i + 1].brackets.length > 0 ? true : false;
+      this.renderBrackets(round, renderConnector);
       if (i === this.#state.rounds.length - 1) {
         const lastRoundElement = this.querySelector('.round-wrapper:last-child');
         const connectors = lastRoundElement.querySelectorAll('.brackets-connector');
@@ -32,7 +33,7 @@ export class TournamentOverviewTree extends HTMLElement {
     }
   }
 
-  renderBrackets(round) {
+  renderBrackets(round, renderConnector = true) {
     const roundElement = document.createElement('div');
     roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');
     const bracketPairsCount = Math.floor(round.brackets.length / 2);
@@ -53,6 +54,10 @@ export class TournamentOverviewTree extends HTMLElement {
         bracketsWrapper.appendChild(bracket2Element);
         roundElement.appendChild(bracketPairElement);
 
+        if (!renderConnector) {
+          bracketPairElement.querySelector('.brackets-connector')?.classList.add('d-none');
+          continue;
+        }
         requestAnimationFrame(() => {
           const incomingLines = bracketPairElement.querySelector('.brackets-connector-incoming');
           const outboundLine = bracketPairElement.querySelector('.brackets-connector-outbound');
@@ -90,25 +95,16 @@ export class TournamentOverviewTree extends HTMLElement {
   createBracketElement(bracket) {
     const bracketElement = document.createElement('div');
     bracketElement.classList.add('d-flex', 'flex-column', 'align-items-center', 'w-100', 'my-2');
-    const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1, bracket.status, bracket.winner);
-    const player2 = this.createPlayerElement(bracket.participant2, bracket.score_p2, bracket.status, bracket.winner);
-
-    if (bracket.status === 'finished') {
-      const winnerAlias = bracket.winner.alias;
-      if (player1.alias === winnerAlias) {
-        player1.classList.add('bracket-player-winner');
-        player2.classList.add('bracket-player-loser');
-      } else if (player2.alias === winnerAlias) {
-        player1.classList.add('bracket-player-loser');
-        player2.classList.add('bracket-player-winner');
-      }
+    if (bracket) {
+      const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1, bracket.winner);
+      const player2 = this.createPlayerElement(bracket.participant2, bracket.score_p2, bracket.winner);
+      bracketElement.appendChild(player1);
+      bracketElement.appendChild(player2);
     }
-    bracketElement.appendChild(player1);
-    bracketElement.appendChild(player2);
     return bracketElement;
   }
 
-  createPlayerElement(player, score, bracketStatus, winner = null) {
+  createPlayerElement(player, score, winner = null) {
     const element = document.createElement('div');
     element.innerHTML = this.playerTemplate();
     element.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'w-100');
@@ -116,7 +112,7 @@ export class TournamentOverviewTree extends HTMLElement {
     avatarElement.src = player.profile.avatar;
     const aliasElement = element.querySelector('.player-alias');
     aliasElement.textContent = player.alias;
-    if (bracketStatus === 'finished') {
+    if (winner) {
       if (player.alias === winner.alias) {
         element.classList.add('bracket-player-winner');
       } else {
