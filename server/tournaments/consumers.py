@@ -1,23 +1,16 @@
 # server/tournament/consumers.py
 import json
 import logging
-import random
-import uuid
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from django.core.exceptions import ValidationError
-from django.db import transaction
 
-from pong.models import GameRoom, GameRoomPlayer
-
-from .models import Bracket, Participant, Round, Tournament
+from .models import Tournament
 
 # TODO: see if BracketSchema is really needed
-from .schemas import BracketSchema, RoundSchema
-from .tournament_validator import Validator
 from .tournament_service import TournamentService
+from .tournament_validator import Validator
 
 logger = logging.getLogger("server")
 

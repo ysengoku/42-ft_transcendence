@@ -132,7 +132,7 @@ def generate_users() -> tuple[list[User], User]:
 def erase_old_avatars():
     avatars_folder = "/app/media/avatars"
     avatars_path = Path(avatars_folder)
-    if avatars_path.is_dir() == False:
+    if avatars_path.is_dir() is False:
         return
     for file in avatars_path.iterdir():
         file_path = avatars_path / file
@@ -262,7 +262,7 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
     list_users = list(users.values())
     for i in range(4):
         name = f"Tournament {i + 1}"
-        date = generate_random_date()
+        generate_random_date()
         option_for_status = [Tournament.FINISHED, Tournament.CANCELLED, Tournament.ONGOING, Tournament.PENDING]
         status = option_for_status[i]
         user = choice(list(users.values()))
