@@ -59,7 +59,6 @@ def oauth_authorize(request: HttpRequest, platform: str):
     if not is_available:
         return JsonResponse({"error": error_msg}, status=422)
 
-
     state = hashlib.sha256(os.urandom(32)).hexdigest()
 
     OauthConnection.objects.create_pending_connection(state, platform)
@@ -73,12 +72,6 @@ def oauth_authorize(request: HttpRequest, platform: str):
     }
     return JsonResponse({"auth_url": f"{config['auth_uri']}?{urlencode(params)}"})
 
-
-def to_home_redirect_url(host: str):
-    return f"https://{host}:1026/home"
-
-def to_error_redirect_url(host: str):
-    return f"https://{host}:1026/error"
 
 @oauth2_router.get(
     "/callback/{platform}",
