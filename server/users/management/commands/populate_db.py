@@ -198,6 +198,27 @@ def put_avatars():
     put_one_avatar("menaco.jpg", menaco)
     put_one_avatar("darksmelo.png", darksmelo)
 
+    def set_alias(profile, alias):
+        profile.user.nickname = alias
+        profile.user.save(update_fields=["nickname"])
+
+    set_alias(taki, "lovely_dog")
+    set_alias(felix, "Deadly_Kitty")
+    set_alias(rex, "Good_boy")
+    set_alias(sad_hampter, "little_rat")
+    set_alias(tama, "flower_girl")
+    set_alias(martine, "The_Queen")
+    set_alias(marie, "Good_boy")
+    set_alias(grandma, "Old_hag")
+    set_alias(grandpa, "Old_grumpy")
+    set_alias(pedro, "The_original")
+    set_alias(pedro1, "The_copy")
+    set_alias(pedro2, "Copy_Two")
+    set_alias(alice, "aLIcE")
+    set_alias(darksmelo, "Hey_yeH")
+    set_alias(menaco, "PrettyFrog")
+    set_alias(rick, "Roll")
+
 
 def generate_matches(users: dict[str, User], life_enjoyer: User):
     # generate random sorted dates in advance to preserve the sequentiality of the played matches
