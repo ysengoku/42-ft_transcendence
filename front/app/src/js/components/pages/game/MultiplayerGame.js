@@ -502,8 +502,11 @@ export class MultiplayerGame extends HTMLElement {
           this.hideOverlay();
           break;
         case 'game_cancelled':
-          devLog('Game cancelled');
-          this.showOverlay('cancel');
+          devLog('Game cancelled', data);
+          this.showOverlay('cancel', data);
+          if (data.tournament_id) {
+            router.redirect(`tournament/${data.tournament_id}`);
+          }
           break;
         case 'player_won':
         case 'player_resigned':
@@ -722,8 +725,13 @@ export class MultiplayerGame extends HTMLElement {
       case 'cancel':
         this.overlayButton1 = this.querySelector('#overlay-button1');
         this.overlayButton2 = this.querySelector('#overlay-button2');
-        this.overlayButton1.addEventListener('click', this.navigateToDuelMenu);
-        this.overlayButton2.addEventListener('click', this.navigateToHome);
+        if (data.tournament_id) {
+          this.overlayButton1.classList.add('d-none');
+          this.overlayButton2.classList.add('d-none');
+        } else {
+          this.overlayButton1.addEventListener('click', this.navigateToDuelMenu);
+          this.overlayButton2.addEventListener('click', this.navigateToHome);
+        }
         break;
       default:
         break;
