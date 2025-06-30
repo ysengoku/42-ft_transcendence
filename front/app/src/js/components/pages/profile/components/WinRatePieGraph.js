@@ -17,8 +17,17 @@ export class UserWinRatePieGraph extends HTMLElement {
   }
 
   render() {
-    this.#state.rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
+    // this.#state.rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     this.innerHTML = this.template() + this.style();
+
+    const wins = this.querySelector('#wins');
+    const losses = this.querySelector('#losses');
+    if (wins) {
+      wins.textContent = `Wins ${this.#state.wins}`;
+    }
+    if (losses) {
+      losses.textContent = `Losses ${this.#state.losses}`;
+    }
 
     if (this.#state.wins === 0 && this.#state.losses === 0) {
       const pieGraphWrapper = this.querySelector('.pie-graph-wrapper');
@@ -30,6 +39,7 @@ export class UserWinRatePieGraph extends HTMLElement {
   }
 
   template() {
+    const rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     const r = 100 / (2 * Math.PI); // radius
     return `
     <div class="pie-graph-wrapper d-flex flex-column justify-content-center align-items-center">
@@ -51,16 +61,16 @@ export class UserWinRatePieGraph extends HTMLElement {
             fill="none"
             stroke="var(--pm-primary-600)"
             stroke-width="6"
-            stroke-dasharray="${this.#state.rate} 100"
+            stroke-dasharray="${rate} 100"
           />
           <text x="52%" y="40%" text-anchor="middle" dy="7" font-size="0.5rem">
-            ${this.#state.rate}%
+            ${rate}%
           </text>
         </svg>
         <div class="d-flex flex-row justify-content-center">
-          <p class="m-0 text-center">Wins ${this.#state.wins}</p>
+          <p class="m-0 text-center" id="wins"></p>
           <p>&nbsp;-&nbsp;</p>
-          <p class="m-0 text-center">Losses ${this.#state.losses}</p>
+          <p class="m-0 text-center" id="losses"></p>
         </div>
       </div>
     </div>

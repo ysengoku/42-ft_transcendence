@@ -92,7 +92,7 @@ class AuthEndpointsTests(TestCase):
         response = self.client.get("/api/self", content_type="application/json")
         self.assertEqual(str(game_room.id), response.json()["game_id"], "self should give valid game_id after the game have started")
 
-        game_room.close()
+        game_room.set_closed()
         response = self.client.get("/api/self", content_type="application/json")
         self.assertIsNone(response.json()["game_id"], "self should not give game_id when the game is finished")
 
