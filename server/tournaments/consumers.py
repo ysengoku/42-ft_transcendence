@@ -67,18 +67,6 @@ class TournamentConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
         logger.debug("WILL BE ACCEPTED %s", self.user)
         self.accept()
-        if tournament.status == Tournament.ONGOING:
-            logger.debug("THIS TOURNAMENT IS UNGOINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
-            round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
-            try:
-                new_round = tournament.rounds.get(number=round_number)
-            except Round.DoesNotExist:
-                logger.warning("This round should exist")
-                return
-            if round_number == 1: # and no brackets has began
-                TournamentService.send_start_round_message(tournament.id, round_number, new_round)
-            else:
-                TournamentService.receive_start_round_message(tournament.id, self.user.id, round_number, new_round)
 
     def disconnect(self, close_code):
         logger.debug("WILL BE DISCONNECTED")
@@ -87,21 +75,6 @@ class TournamentConsumer(WebsocketConsumer):
         # TODO: See how this line is useful
         async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
         self.close(close_code)
-        try:
-            tournament = Tournament.objects.get(id=self.tournament_id)
-        except Tournament.DoesNotExist:
-            logger.warning("This tournament id does not exist : %s", self.tournament_id)
-            return
-        if tournament.status == Tournament.ONGOING: 
-            logger.debug("THIS TOURNAMENT IS UNGOINGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
-            round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
-            try:
-                new_round = tournament.rounds.get(number=round_number)
-            except Round.DoesNotExist:
-                logger.warning("This round should exist")
-                return
-            if round_number == 1: # and no brackets has began
-                TournamentService.send_start_round_message(tournament.id, round_number, new_round)
 
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
@@ -143,7 +116,6 @@ class TournamentConsumer(WebsocketConsumer):
             )
         except Disconnected as e:
             logger.warning("Failed to send message : %s", e)
-
 
     def tournament_game_finished(self, data):
         if Validator.validate_action_data("tournament_game_finished", data) is False:
