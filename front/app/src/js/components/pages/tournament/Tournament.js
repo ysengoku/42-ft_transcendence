@@ -464,7 +464,6 @@ export class Tournament extends HTMLElement {
    * If the previous round is set as finished, it triggers the start of the next round.
    */
   setNextRound(data) {
-    console.log('Setting next round:', data);
     if (!data || data.tournament_id !== this.#state.tournamentId) {
       return;
     }
@@ -480,6 +479,7 @@ export class Tournament extends HTMLElement {
    * @description Sets the UI status to WAITING_NEXT_ROUND and updates the content.
    */
   handleRoundStart() {
+    this.findAssignedBracketForUser();
     this.#state.currentRoundFinished = false;
     this.#state.nextRound = null;
     this.#state.uiStatus = UI_STATUS.ROUND_STARTING;
