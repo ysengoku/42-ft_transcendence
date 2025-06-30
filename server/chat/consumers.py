@@ -31,15 +31,9 @@ class UserEventsConsumer(WebsocketConsumer):
             self.close()
             return
 
-        # Increment the number of active connexions and get the new value
-        max_connexions = 10
         try:
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
-                if self.user_profile.nb_active_connexions >= max_connexions:
-                    logger.warning("Too many simultaneous connexions for user %s", self.user.username)
-                    self.close()
-                    return
                 self.user_profile.nb_active_connexions = models.F("nb_active_connexions") + 1
                 self.user_profile.update_activity()
                 self.user_profile.save(update_fields=["nb_active_connexions"])
