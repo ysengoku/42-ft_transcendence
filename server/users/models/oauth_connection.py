@@ -120,7 +120,7 @@ class OauthConnection(models.Model):
                     "client_id": config["client_id"],
                     "client_secret": config["client_secret"],
                     "code": code,
-                    "redirect_uri": config["redirect_uris"][0],
+                    "redirect_uri": config["redirect_uris"],
                     "grant_type": "authorization_code",
                 },
                 headers={"Accept": "application/json"},
