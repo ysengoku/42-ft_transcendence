@@ -40,7 +40,9 @@ export class NotificationsListItem extends HTMLElement {
     this.declineButton?.removeEventListener('click', this.handleDeclineDuel);
     this.cancelInviteButton?.removeEventListener('click', this.cancelDuelInvitation);
     this.seeProfileButton?.removeEventListener('click', this.navigateToProfile);
-    this.participateButton?.removeEventListener('click', this.handleParticipateTournament);
+    if (this.#state.action === 'new_tournament') {
+      this.removeEventListener('click', this.handleParticipateTournament);
+    }
     if (this.#state.action === 'new_friend') {
       this.removeEventListener('click', this.navigateToProfile);
     }
@@ -91,7 +93,7 @@ export class NotificationsListItem extends HTMLElement {
         );
         this.participateButton = document.createElement('button');
         this.participateButton.textContent = 'Participate';
-        this.participateButton.addEventListener('click', this.handleParticipateTournament);
+        this.addEventListener('click', this.handleParticipateTournament);
         this.buttonWrapper.appendChild(this.participateButton);
         break;
       case 'new_friend':
