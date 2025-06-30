@@ -1,7 +1,8 @@
 #!/bin/bash
 
 if [ ! -f .env ]; then
-    echo 'Creating env...'
+    echo "No .env detected!"
+    exit 1
 fi
 HOST_IP=$(ip route get 8.8.8.8 | awk '{print $7; exit}');
 if ! grep -qE "^HOST_IP=" .env; then
