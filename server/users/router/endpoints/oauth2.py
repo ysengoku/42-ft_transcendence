@@ -4,7 +4,7 @@ from urllib.parse import quote, urlencode
 
 import requests
 from django.conf import settings
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Query, Router
 from ninja.errors import HttpError
@@ -47,7 +47,7 @@ def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
     auth=None,
     response={200: MessageSchema, frozenset({404, 422}): MessageSchema},
 )
-def oauth_authorize(request, platform: str):
+def oauth_authorize(request: HttpRequest, platform: str):
     """
     Starts the OAuth2 authorization process.
     Returns the authorization URL.
@@ -81,7 +81,7 @@ def oauth_authorize(request, platform: str):
 )
 @ensure_csrf_cookie
 def oauth_callback(  # noqa: PLR0911
-    request,
+    request: HttpRequest,
     platform: str,
     params: OAuthCallbackParams = Query(...),
 ):
@@ -109,7 +109,8 @@ def oauth_callback(  # noqa: PLR0911
 
     oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
     if not oauth_connection:
-        raise HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error=Invalid state&code=422")
+        error_message = quote("Invalid state.")
+        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
 
     state_error = oauth_connection.check_state_and_validity(platform, state)
     if state_error:
