@@ -21,7 +21,8 @@ export class TournamentOverviewTree extends HTMLElement {
 
     for (let i = 0; i < this.#state.rounds.length; i++) {
       const round = this.#state.rounds[i];
-      this.renderBrackets(round);
+      const renderConnector = this.#state.rounds[i + 1] && this.#state.rounds[i + 1].brackets.length > 0 ? true : false;
+      this.renderBrackets(round, renderConnector);
       if (i === this.#state.rounds.length - 1) {
         const lastRoundElement = this.querySelector('.round-wrapper:last-child');
         const connectors = lastRoundElement.querySelectorAll('.brackets-connector');
@@ -32,7 +33,7 @@ export class TournamentOverviewTree extends HTMLElement {
     }
   }
 
-  renderBrackets(round) {
+  renderBrackets(round, renderConnector = true) {
     const roundElement = document.createElement('div');
     roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');
     const bracketPairsCount = Math.floor(round.brackets.length / 2);
@@ -53,6 +54,10 @@ export class TournamentOverviewTree extends HTMLElement {
         bracketsWrapper.appendChild(bracket2Element);
         roundElement.appendChild(bracketPairElement);
 
+        if (!renderConnector) {
+          bracketPairElement.querySelector('.brackets-connector')?.classList.add('d-none');
+          continue;
+        }
         requestAnimationFrame(() => {
           const incomingLines = bracketPairElement.querySelector('.brackets-connector-incoming');
           const outboundLine = bracketPairElement.querySelector('.brackets-connector-outbound');
