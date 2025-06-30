@@ -15,6 +15,7 @@ const TOURNAMENT_ALERT_MESSAGE = {
   ROUND_END: 'The current round of the tournament finished.',
   ELIMINATED: 'You have been eliminated from the tournament.',
   CHAMPION: (name) => `You are the champion of ${name}.`,
+  FINISHED: 'The tournament is finished',
   CANCELED: 'The tournament has been canceled.',
 };
 
@@ -24,6 +25,7 @@ const TOURNAMENT_ALERT_CTA = {
   ROUND_END: 'Go back to Tournament',
   ELIMINATED: 'Go back to Saloon',
   CHAMPION: 'View the results',
+  FINISHED: 'Go back to Saloon',
   CANCELED: 'Go back to Saloon',
 };
 

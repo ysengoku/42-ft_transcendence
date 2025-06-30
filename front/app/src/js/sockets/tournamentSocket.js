@@ -3,7 +3,6 @@
  */
 
 import { socketManager } from '@socket';
-import { router } from '@router';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
 
@@ -33,7 +32,10 @@ socketManager.addSocket('tournament', {
   },
   tournament_start: (data) => {
     devLog('Tournament starts:', data);
-    if (window.location.pathname.startsWith('/tournament')) {
+    if (
+      window.location.pathname.startsWith('/tournament') ||
+      window.location.pathname.startsWith('/multiplayer-game')
+    ) {
       const tournamentPage = document.querySelector('tournament-room');
       tournamentPage?.handleTournamentStart(data);
     } else {
@@ -41,7 +43,10 @@ socketManager.addSocket('tournament', {
     }
   },
   round_start: (data) => {
-    if (window.location.pathname.startsWith('/tournament')) {
+    if (
+      window.location.pathname.startsWith('/tournament') ||
+      window.location.pathname.startsWith('/multiplayer-game')
+    ) {
       const tournamentPage = document.querySelector('tournament-room');
       if (!tournamentPage) {
         devErrorLog('Tournament RoundStart Element not found, cannot update UI.');
@@ -66,7 +71,6 @@ socketManager.addSocket('tournament', {
     }
     tournamentPage.updateMatchResult(data);
   },
-  // TESTED
   round_end: (data) => {
     if (
       !window.location.pathname.startsWith('/tournament') &&
