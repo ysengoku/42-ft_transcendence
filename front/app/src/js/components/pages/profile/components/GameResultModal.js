@@ -71,20 +71,20 @@ export class UserGameResultModal extends HTMLElement {
 
     this.duelWinner.innerHTML = this.userTemplate();
     this.duelWinner.setAttribute('username', this.#state.gameData.winner.username);
-    this.duelWinner.querySelector('.duel-user-score').innerHTML = this.#state.gameData.winners_score;
+    this.duelWinner.querySelector('.duel-user-score').textContent = this.#state.gameData.winners_score;
     this.duelWinner.querySelector('.duel-user-avatar').src = this.#state.gameData.winner.avatar;
-    this.duelWinner.querySelector('.duel-user-nickname').innerHTML = this.#state.gameData.winner.nickname;
-    this.duelWinner.querySelector('.duel-user-username').innerHTML = `@${this.#state.gameData.winner.username}`;
-    this.duelWinner.querySelector('.duel-user-elo').innerHTML = `Elo: ${this.#state.gameData.winner.elo}`;
+    this.duelWinner.querySelector('.duel-user-nickname').textContent = this.#state.gameData.winner.nickname;
+    this.duelWinner.querySelector('.duel-user-username').textContent = `@${this.#state.gameData.winner.username}`;
+    this.duelWinner.querySelector('.duel-user-elo').textContent = `Elo: ${this.#state.gameData.winner.elo}`;
     this.duelWinner.addEventListener('click', this.navigateToProfile);
 
     this.duelLoser.innerHTML = this.userTemplate();
     this.duelLoser.setAttribute('username', this.#state.gameData.loser.username);
-    this.duelLoser.querySelector('.duel-user-score').innerHTML = this.#state.gameData.losers_score;
+    this.duelLoser.querySelector('.duel-user-score').textContent = this.#state.gameData.losers_score;
     this.duelLoser.querySelector('.duel-user-avatar').src = this.#state.gameData.loser.avatar;
-    this.duelLoser.querySelector('.duel-user-nickname').innerHTML = this.#state.gameData.loser.nickname;
-    this.duelLoser.querySelector('.duel-user-username').innerHTML = `@${this.#state.gameData.loser.username}`;
-    this.duelLoser.querySelector('.duel-user-elo').innerHTML = `Elo: ${this.#state.gameData.loser.elo}`;
+    this.duelLoser.querySelector('.duel-user-nickname').textContent = this.#state.gameData.loser.nickname;
+    this.duelLoser.querySelector('.duel-user-username').textContent = `@${this.#state.gameData.loser.username}`;
+    this.duelLoser.querySelector('.duel-user-elo').textContent = `Elo: ${this.#state.gameData.loser.elo}`;
     this.duelLoser.addEventListener('click', this.navigateToProfile);
   }
 

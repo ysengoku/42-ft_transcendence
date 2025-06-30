@@ -63,23 +63,27 @@ export class Duel extends HTMLElement {
    */
   setQueryParam(param) {
     this.#state.status = param.get('status');
-    if (
-      this.#state.status !== DUEL_STATUS.INVITING &&
-      this.#state.status !== DUEL_STATUS.MATCHMAKING &&
-      this.#state.status !== DUEL_STATUS.STARTING
-    ) {
-      this.#state.status = '';
-      return;
-    }
-    if (this.#state.status === DUEL_STATUS.INVITING || this.#state.status === DUEL_STATUS.STARTING) {
-      this.#state.opponent = {
-        username: param.get('username'),
-        nickname: param.get('nickname'),
-        avatar: param.get('avatar'),
-      };
-    }
-    if (this.#state.status === DUEL_STATUS.STARTING) {
-      this.#state.gameId = param.get('gameId');
+    switch (this.#state.status) {
+      case DUEL_STATUS.MATCHMAKING:
+        document.addEventListener('gameFound', this.handleGameFound);
+        document.addEventListener('websocket-close', this.handleMatchmakingCancellationByServer);
+        const queryParams = param.get('params') || null;
+        socketManager.closeSocket('matchmaking');
+        socketManager.openSocket('matchmaking', queryParams);
+        devLog('Requesting matchmaking...');
+        break;
+      case DUEL_STATUS.STARTING:
+        this.#state.gameId = param.get('gameId');
+      case DUEL_STATUS.INVITING:
+        this.#state.opponent = {
+          username: param.get('username'),
+          nickname: param.get('nickname'),
+          avatar: param.get('avatar'),
+        };
+        break;
+      default:
+        this.#state.status = '';
+        return;
     }
   }
 
@@ -121,10 +125,6 @@ export class Duel extends HTMLElement {
     window.addEventListener('beforeunload', this.confirmLeavePage);
 
     this.render();
-    if (this.#state.status === DUEL_STATUS.MATCHMAKING) {
-      document.addEventListener('gameFound', this.handleGameFound);
-      document.addEventListener('websocket-close', this.handleMatchmakingCancellationByServer);
-    }
   }
 
   disconnectedCallback() {

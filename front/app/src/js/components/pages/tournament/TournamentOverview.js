@@ -2,7 +2,6 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 import { formatDateMDY } from '@utils';
 import { isMobile } from '@utils';
 import { TOURNAMENT_STATUS } from './tournamentStatus.js';
-// import { mockTournamentDetail } from '@mock/functions/mockTournamentDetail';
 
 export class TournamentOverview extends HTMLElement {
   #state = {
@@ -42,14 +41,6 @@ export class TournamentOverview extends HTMLElement {
   }
 
   async fetchTournamentrData() {
-    // For rendering test
-    // this.#state.tournament = await mockTournamentDetail('mockidongoing');
-    // this.#state.tournament = await mockTournamentDetail('mockidongoing2');
-    // this.#state.tournament = await mockTournamentDetail('mockidfinished');
-
-    // For error handling Test
-    // this.#state.tournament_id = 'fb68695b-5645-4ad6-ac8a-8ee018475cae'
-
     const response = await apiRequest(
       'GET',
       /* eslint-disable-next-line new-cap */

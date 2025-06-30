@@ -203,7 +203,7 @@ class GameRoomPlayer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     game_room = models.ForeignKey("GameRoom", on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
-    number_of_connections = models.IntegerField(default=1)
+    number_of_connections = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.profile.user.username} in Room {self.game_room.id}"
@@ -302,16 +302,36 @@ class GameRoom(models.Model):
     def __str__(self) -> str:
         return f"{self.get_status_display()} match {str(self.id)} with settings: {self.settings}"
 
-    def close(self):
+    def resolve_settings(self, other_settings: GameRoomSettings):
+        """
+        Resolves settings of this game room player set by the creator with the non conflicting game room settings
+        of the other player in the game room.
+        """
+        default_game_room_settings = get_default_game_room_settings()
+        initial_settings = dict(self.settings)
+        new_settings = {}
+        for key in default_game_room_settings:
+            if key in initial_settings:
+                new_settings[key] = initial_settings[key]
+            elif key in other_settings:
+                new_settings[key] = other_settings[key]
+            else:
+                new_settings[key] = default_game_room_settings[key]
+        self.settings = new_settings
+        self.save()
+        return self
+
+    def set_closed(self):
         self.status = GameRoom.CLOSED
         self.save()
+        return self
 
     def add_player(self, profile: Profile):
         return GameRoomPlayer.objects.create(game_room=self, profile=profile)
 
     def set_ongoing(self):
-        self.game_room.status = GameRoom.ONGOING
-        self.game_room.save()
+        self.status = self.ONGOING
+        self.save()
         return self
 
     def has_player(self, profile: Profile):
@@ -326,7 +346,8 @@ class GameRoom(models.Model):
 
     @staticmethod
     def decode_game_room_settings_uri_query(
-        query_string: str, default_game_room_settings: None | GameRoomSettings = None,
+        query_string: str,
+        default_game_room_settings: None | GameRoomSettings = None,
     ) -> GameRoomSettings:
         """
         Decodes the game room settings from the query string, converts the data to the correct type.
@@ -346,7 +367,8 @@ class GameRoom(models.Model):
 
     @staticmethod
     def handle_game_room_settings_types(
-        game_room_settings: dict[str, str], default_game_room_settings: None | GameRoomSettings = None,
+        game_room_settings: dict[str, str],
+        default_game_room_settings: None | GameRoomSettings = None,
     ) -> None | GameRoomSettings:
         ### CHECKS FOR KEY NAMES AND VALUES TYPE CORRECTNESS ###
         try:
@@ -375,16 +397,18 @@ class GameRoom(models.Model):
             ]:
                 return None
 
-            provided_time_limit = result.get("time_limit", 0)
+            provided_time_limit = result.get("time_limit")
             min_time_limit = 1
             max_time_limit = 5
-            if provided_time_limit < min_time_limit or provided_time_limit > max_time_limit:
+            if provided_time_limit is not None and (
+                provided_time_limit < min_time_limit or provided_time_limit > max_time_limit
+            ):
                 return None
 
             provided_score_to_win = result.get("score_to_win")
             min_score_to_win = 3
             max_score_to_win = 20
-            if provided_score_to_win and (
+            if provided_score_to_win is not None and (
                 provided_score_to_win < min_score_to_win or provided_score_to_win > max_score_to_win
             ):
                 return None

@@ -302,21 +302,25 @@ export function fireConfetti(parentElement = document.body) {
  * @param {HTMLElement} target - The target element around which particles will burst.
  * @param {string} color - The color of the particles, defaults to 'var(--pm-red-500)'.
  */
-export function   particleBurst(wrapper, target, color = 'var(--pm-red-500)') {
-    for (let i = 0; i < 20; i++) {
-      const particle = document.createElement('div');
-      particle.classList.add('particle');
-      const angle = Math.random() * 2 * Math.PI;
-      const distance = Math.random() * 20 + 20;
-      particle.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
-      particle.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
-      particle.style.background = color;
-      const rect = target.getBoundingClientRect();
-      particle.style.left = `${rect.left + rect.width / 2 - 4}px`;
-      particle.style.top = `${rect.top + rect.height / 2 - 6}px`;
-      wrapper.appendChild(particle);
-      particle.addEventListener('animationend', () => {
+export function particleBurst(wrapper, target, color = 'var(--pm-red-500)') {
+  for (let i = 0; i < 20; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    const angle = Math.random() * 2 * Math.PI;
+    const distance = Math.random() * 20 + 20;
+    particle.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+    particle.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+    particle.style.background = color;
+    const rect = target.getBoundingClientRect();
+    particle.style.left = `${rect.left + rect.width / 2 - 4}px`;
+    particle.style.top = `${rect.top + rect.height / 2 - 6}px`;
+    wrapper.appendChild(particle);
+    particle.addEventListener(
+      'animationend',
+      () => {
         particle.remove();
-      }, { once: true });
-    }
+      },
+      { once: true },
+    );
   }
+}
