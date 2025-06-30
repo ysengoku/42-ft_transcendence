@@ -1,17 +1,31 @@
+/**
+ * @module AvatarUploadModal
+ * @description　Provides file selection, client-side validation (MIME type and size),
+ * and safe preview via Blob URLs.
+ */
 import { Modal } from 'bootstrap';
 import avatarPlaceholder from '/img/avatar-placeholder.svg?url';
 
 export class AvatarUploadModal extends HTMLElement {
-  #MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  /**
+   * Maximum allowed avatar file size in bytes (5 MB).
+   * @private
+   * @constant {number}
+   */
+  #MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   constructor() {
     super();
+
+    // Initialize elements
     this.modal = null;
     this.modalElement = null;
-    this.selectedFile = null;
-    this.onConfirm = null;
-    this.currentBlobUrl = null;
 
+    this.selectedFile = null;
+    this.currentBlobUrl = null;
+    this.onConfirm = null;
+
+    // Bind handlers
     this.readURL = this.readURL.bind(this);
     this.handleConfirm = this.handleConfirm.bind(this);
     this.removeFeedback = this.removeFeedback.bind(this);
@@ -35,6 +49,9 @@ export class AvatarUploadModal extends HTMLElement {
     this.modalElement.removeEventListener('hide.bs.modal', this.clearFocusInModal);
   }
 
+  /**
+   * Reder the modal content, initialize bootstrap modal and add listeners
+   */
   render() {
     this.innerHTML = this.style() + this.template();
     this.modal = new Modal(this.querySelector('#avatar-upload-modal'));
@@ -45,8 +62,9 @@ export class AvatarUploadModal extends HTMLElement {
     this.confirmButton = this.querySelector('#confirm-avatar-button');
     this.cancelButton = this.querySelector('#cancel-avatar-upload');
 
-    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
     this.avatarPreview.src = avatarPlaceholder;
+
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
     this.avatarUploadField.addEventListener('input', this.removeFeedback);
     this.cancelButton.addEventListener('click', this.handleCancel);
     this.avatarUploadField.addEventListener('change', this.readURL);
@@ -72,6 +90,18 @@ export class AvatarUploadModal extends HTMLElement {
     this.avatarPreview.src = avatarPlaceholder;
   }
 
+  /**
+   * Handle file input change and update avatar preview safely.
+   * Validates that the selected file is an image (MIME type check) and
+   * that its size does not exceed the defined limit. On success,
+   * generates a Blob URL for preview and sets it on the image element.
+   * Ensures previously created Blob URLs are revoked to free memory.
+   * @param {Event} event - Input change event
+   * @security
+   * - Prevents non-image files via MIME type enforcement.
+   * - Mitigates resource abuse by enforcing defined limit.
+   * - Uses safe Blob URLs for preview, avoiding direct HTML injection.
+   */
   readURL(event) {
     const input = event.target;
 
@@ -92,6 +122,12 @@ export class AvatarUploadModal extends HTMLElement {
           this.selectedFile = null;
           return;
         }
+
+        /**
+         * Generate and assign Blob(Binary Large Objects) URL for preview
+         * Blob URL is a temporary reference that points to in-memory file data, created via `URL.createObjectURL`. 
+         * It allows safe preview of local files without embedding raw binary or HTML.
+         */
         this.selectedFile = file;
         if (this.currentBlobUrl) {
           URL.revokeObjectURL(this.currentBlobUrl);
@@ -99,6 +135,7 @@ export class AvatarUploadModal extends HTMLElement {
         const blobUrl = URL.createObjectURL(file);
         this.currentBlobUrl = blobUrl;
         this.avatarPreview.src = blobUrl;
+        // Revoke Blob URL on modal hide to free memory
         this.modalElement.addEventListener(
           'hide.bs.modal',
           () => {
@@ -113,6 +150,9 @@ export class AvatarUploadModal extends HTMLElement {
     }
   }
 
+  /**
+   * Handles avatar confirmation, invoking callback methode with selected File.
+   */
   handleConfirm() {
     if (!this.selectedFile) {
       this.avatarUploadField.classList.add('is-invalid');

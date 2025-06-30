@@ -568,27 +568,3 @@ export class ChatMessageArea extends HTMLElement {
 }
 
 customElements.define('chat-message-area', ChatMessageArea);
-
-/*
-
-<div class="right-align-message d-flex flex-row justify-content-end align-items-center animateIn">
-    
-    <div class="message" data-bs-toggle="tooltip" data-bs-original-title="today, 09:01">
-      <div class="bubble ms-5" id="a9b9abc4-5289-49c3-a368-924bbebb537b">
-        <div class="message-content">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</div>
-        <i class="message-liked bi bi-heart-fill h5"></i>
-      </div>
-    </div>
-    </div>
-
-
-<div class="right-align-message d-flex flex-row justify-content-end align-items-center">
-    
-    <div class="message" data-bs-toggle="tooltip" data-bs-original-title="today, 09:01">
-      <div class="bubble ms-5" id="a9b9abc4-5289-49c3-a368-924bbebb537b">
-        <div class="message-content">aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</div>
-        <i class="message-liked bi bi-heart-fill h5"></i>
-      </div>
-    </div>
-    </div>
-*/

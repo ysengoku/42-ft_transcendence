@@ -55,9 +55,10 @@ class MatchmakingConsumer(WebsocketConsumer):
             elif not self.game_room.has_player(self.user.profile):
                 game_room_player: GameRoomPlayer = self.game_room.add_player(self.user.profile)
                 logger.info(
-                    "[Matchmaking.connect]: game room {%s} added profile {%s}",
+                    "[Matchmaking.connect]: game room {%s} added profile {%s}. Desired settings of the player: {%s}",
                     self.game_room,
                     self.user.profile,
+                    self.game_room_settings,
                 )
 
             else:
@@ -65,7 +66,6 @@ class MatchmakingConsumer(WebsocketConsumer):
                     game_room=self.game_room,
                     profile=self.user.profile,
                 ).first()
-                game_room_player.inc_number_of_connections()
 
             logger.info(
                 "[Matchmaking.connect]: player {%s} connected to the game room {%s} {%s} times",
@@ -77,8 +77,10 @@ class MatchmakingConsumer(WebsocketConsumer):
             async_to_sync(self.channel_layer.group_add)(self.matchmaking_group_name, self.channel_name)
 
             if self.game_room.players.count() == PLAYERS_REQUIRED:
-                logger.info("[Matchmaking.connect]: game room {%s} both players were found")
-                self.game_room.close()
+                self.game_room.set_ongoing()
+                self.game_room.resolve_settings(self.game_room_settings)
+                logger.info("[Matchmaking.connect]: both players were found. Settings were resolved for the game room "
+                            "{%s} ", self.game_room)
                 async_to_sync(self.channel_layer.group_send)(
                     self.matchmaking_group_name,
                     {"type": "game_found"},
@@ -97,33 +99,25 @@ class MatchmakingConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(self.matchmaking_group_name, self.channel_name)
         if code == PongCloseCodes.NORMAL_CLOSURE:
             logger.info(
-                "[Matchmaking.disconnect]: players were found for game room {%s}, connection is closed normally",
-                self.game_room,
+                "[Matchmaking.disconnect]: connection is closed normally",
             )
             return
 
         with transaction.atomic():
             room_to_clean: GameRoom = GameRoom.objects.select_for_update().filter(id=self.game_room.id).first()
-            disconnected_player: GameRoomPlayer = GameRoomPlayer.objects.filter(
-                game_room=self.game_room,
-                profile=self.user.profile,
-            ).first()
-            disconnected_player.dec_number_of_connections()
             logger.info(
-                "[Matchmaking.connect]: player {%s} connected to the game room {%s} {%s} times",
+                "[Matchmaking.connect]: player {%s} connected to the game room {%s}",
                 self.user.profile,
                 self.game_room,
-                disconnected_player.number_of_connections,
             )
-            if disconnected_player.number_of_connections == 0:
-                room_to_clean.players.remove(self.user.profile)
-                logger.info(
-                    "[Matchmaking.disconnect]: game room {%s} removed player {%s}",
-                    room_to_clean,
-                    self.user.profile,
-                )
+            room_to_clean.players.remove(self.user.profile)
+            logger.info(
+                "[Matchmaking.disconnect]: game room {%s} removed player {%s}",
+                room_to_clean,
+                self.user.profile,
+            )
             if self.game_room.players.count() < 1:
-                room_to_clean.close()
+                room_to_clean.set_closed()
                 logger.info("[Matchmaking.disconnect]: game room {%s} closed", room_to_clean)
 
     def receive(self, text_data):
@@ -160,7 +154,6 @@ class MatchmakingConsumer(WebsocketConsumer):
         game room.
         """
         opponent: GameRoomPlayer = self.game_room.players.exclude(user=self.user).first()
-        self.game_room.set_ongoing()
         self.send(
             text_data=json.dumps(
                 MatchmakingToClient.GameFound(
