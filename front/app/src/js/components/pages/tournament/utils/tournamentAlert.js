@@ -34,7 +34,6 @@ export function showTournamentAlert(
   type = TOURNAMENT_ALERT_TYPE.ONGOING_TOURNAMENT,
   tournamentName = '',
 ) {
-  console.trace('showTournamentAlert called');
   const alertContainer = document.getElementById('alert-message-container');
   if (!alertContainer) {
     return;
