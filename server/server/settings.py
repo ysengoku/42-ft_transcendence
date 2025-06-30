@@ -29,7 +29,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Init django-environ
 env = environ.Env(
     DEBUG=(bool, False),
-    IN_CONTAINER=(bool, False),
     CRON_SECRET=(str, ""),
     REDIS_HOST=(str, "redis"),
     REDIS_PORT=(int, 6379),
@@ -48,18 +47,9 @@ env = environ.Env(
     DEFAULT_FROM_EMAIL=(str, ""),
     GITHUB_CLIENT_ID=(str, ""),
     GITHUB_CLIENT_SECRET=(str, ""),
-    GITHUB_REDIRECT_URI=(str, ""),
-    GITHUB_ACCESS_TOKEN_URL=(str, ""),
-    GITHUB_AUTHORIZE_URL=(str, ""),
-    GITHUB_USER_PROFILE_URL=(str, ""),
-    GITHUB_FT_API_URL=(str, ""),
     API42_CLIENT_ID=(str, ""),
     API42_CLIENT_SECRET=(str, ""),
-    FT_API_REDIRECT_URI=(str, ""),
-    FT_API_ACCESS_TOKEN_URL=(str, ""),
-    FT_API_AUTHORIZE_URL=(str, ""),
-    FT_API_USER_PROFILE_URL=(str, ""),
-    FT_API_OAUTH_URL=(str, ""),
+    NGINX_PORT=(str, ""),
     ACCESS_TOKEN_SECRET_KEY=(str, ""),
     REFRESH_TOKEN_SECRET_KEY=(str, ""),
     # value by default is set to 255, but env value overwrites it if present
@@ -70,9 +60,12 @@ env = environ.Env(
     # TODO: for the docker to work without having the real value
     # TODO: of SECRET_KEY yet                                  <--
     SECRET_KEY=(str, "default"),
+    HOST_IP=(str, ""),
 )
 
 env.read_env(env_file=str(BASE_DIR / ".env"))
+
+SERVER_PORT = env("NGINX_PORT")
 
 # TODO: Change the secret key in production
 SECRET_KEY = env("SECRET_KEY")
@@ -87,18 +80,12 @@ REQUIRED_PARTICIPANTS_OPTIONS = env.list(
     "REQUIRED_PARTICIPANTS_OPTIONS",
     default=["4", "8"],
 )
-ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
-IN_CONTAINER = env("IN_CONTAINER")
+HOST_IP = env("HOST_IP")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=f"localhost,127.0.0.1,{HOST_IP}").split(",")
 
-if not IN_CONTAINER:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        },
-    }
-elif "GITHUB_ACTIONS" in os.environ:
+
+if "GITHUB_ACTIONS" in os.environ:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -123,14 +110,16 @@ else:
 
 
 INSTALLED_APPS = [
-    # ASGI server for working with websockets
+    # ASGI server for working with websockets and Django channels
     "daphne",
     "channels",
+
     # Our apps
     "users",
     "chat",
     "pong",
     "tournaments",
+
     # Default Django applications
     "django.contrib.admin",
     "django.contrib.auth",
@@ -139,8 +128,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    # Profiling
-    "silk",
 ]
 
 MIDDLEWARE = [
@@ -151,9 +138,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "silk.middleware.SilkyMiddleware",
 ]
-
 
 ROOT_URLCONF = "server.urls"
 
@@ -190,12 +175,9 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-# ################# #
-# project additions #
-# ################# #
-# CUSTOM USER MODEL
-
+# Custom user model
 AUTH_USER_MODEL = "users.User"
+
 DEFAULT_USER_AVATAR = "/img/default_avatar.png"
 
 # Configuration OAuth 42
@@ -209,12 +191,12 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-REDIS_HOST = env("REDIS_HOST")
-REDIS_PORT = env("REDIS_PORT")
 # For the tests
 if "test" in sys.argv:
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 else:
+    REDIS_HOST = env("REDIS_HOST")
+    REDIS_PORT = env("REDIS_PORT")
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -229,13 +211,13 @@ else:
     }
 
 
-# Configuration for proxy
 CSRF_TRUSTED_ORIGINS = [
-    "https://localhost:1026",
+    f"https://localhost:{SERVER_PORT}",
     "http://localhost:5173",
-    "https://nginx:1026",
-    # TODO: add the ip of the machine
+    f"https://nginx:{SERVER_PORT}",
+    f"https://{HOST_IP}:{SERVER_PORT}",
 ]
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
 
@@ -266,24 +248,26 @@ APPEND_SLASH = False
 # OAuth
 GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET")
-GITHUB_AUTHORIZE_URL = env("GITHUB_AUTHORIZE_URL")
-GITHUB_ACCESS_TOKEN_URL = env("GITHUB_ACCESS_TOKEN_URL")
-GITHUB_REDIRECT_URI = env("GITHUB_REDIRECT_URI")
-GITHUB_USER_PROFILE_URL = env("GITHUB_USER_PROFILE_URL")
-GITHUB_FT_API_URL = env("GITHUB_FT_API_URL")
 
 # OAuth 42
 API42_CLIENT_ID = env("API42_CLIENT_ID")
 API42_CLIENT_SECRET = env("API42_CLIENT_SECRET")
-FT_API_AUTHORIZE_URL = env("FT_API_AUTHORIZE_URL")
-FT_API_ACCESS_TOKEN_URL = env("FT_API_ACCESS_TOKEN_URL")
-FT_API_REDIRECT_URI = env("FT_API_REDIRECT_URI")
-FT_API_USER_PROFILE_URL = env("FT_API_USER_PROFILE_URL")
-FT_API_OAUTH_URL = env("FT_API_OAUTH_URL")
 
-HOME_REDIRECT_URL = "https://localhost:1026/home"
-FRONTEND_URL = "https://localhost:1026"
-ERROR_REDIRECT_URL = "https://localhost:1026/error"
+HOME_REDIRECT_URL = f"https://localhost:{SERVER_PORT}/home"
+FRONTEND_URL = f"https://localhost:{SERVER_PORT}"
+ERROR_REDIRECT_URL = f"https://localhost:{SERVER_PORT}/error"
+
+GITHUB_REDIRECT_URI = f"https://localhost:{SERVER_PORT}/api/oauth/callback/github"
+GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"  # noqa: S105
+GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
+GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
+GITHUB_FT_API_URL = "https://api.github.com"
+
+FT_API_REDIRECT_URI = f"https://localhost:{SERVER_PORT}/api/oauth/callback/42"
+FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"  # noqa: S105
+FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
+FT_API_OAUTH_URL = "https://api.intra.42.fr"
+FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
@@ -292,7 +276,7 @@ OAUTH_CONFIG = {
         "client_secret": GITHUB_CLIENT_SECRET,
         "auth_uri": GITHUB_AUTHORIZE_URL,
         "token_uri": GITHUB_ACCESS_TOKEN_URL,
-        "redirect_uris": [GITHUB_REDIRECT_URI],
+        "redirect_uris": GITHUB_REDIRECT_URI,
         "scopes": ["user"],
         "user_info_uri": GITHUB_USER_PROFILE_URL,
         "oauth_uri": GITHUB_FT_API_URL,
@@ -302,7 +286,7 @@ OAUTH_CONFIG = {
         "client_secret": API42_CLIENT_SECRET,
         "auth_uri": FT_API_AUTHORIZE_URL,
         "token_uri": FT_API_ACCESS_TOKEN_URL,
-        "redirect_uris": [FT_API_REDIRECT_URI],
+        "redirect_uris": FT_API_REDIRECT_URI,
         "scopes": ["public", "profile"],
         "user_info_uri": FT_API_USER_PROFILE_URL,
         "oauth_uri": FT_API_OAUTH_URL,
@@ -345,8 +329,8 @@ LOGGING = {
     "loggers": {
         "server": {
             "handlers": ["console"],
-            "level": "DEBUG",  # Niveau du logger
-            "propagate": False,  # Empêche la propagation vers le root logger
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
     "root": {
