@@ -1,8 +1,7 @@
-# Define the paths for volumes and backups
 VOLUME_PATH := ./volumes
-DATABASE_VOLUME_PATH := ./volumes/database
-MEDIA_VOLUME_PATH := ./volumes/media
-STATIC_VOLUME_PATH := ./volumes/static
+DATABASE_VOLUME_PATH := $(VOLUME_PATH)/database
+MEDIA_VOLUME_PATH := $(VOLUME_PATH)/media
+STATIC_VOLUME_PATH := $(VOLUME_PATH)/static
 
 # Couleurs
 GREEN=\033[0;32m
@@ -12,68 +11,43 @@ MAGENTA=\033[0;35m
 BLUE=\033[0;34m
 RESET=\033[0m
 
-# Define backup directories for each volume type
-# BACKUP_DIR := ./backups
-# DB_BACKUP_DIR := $(BACKUP_DIR)/database
-# MEDIA_BACKUP_DIR := $(BACKUP_DIR)/media
-# STATIC_BACKUP_DIR := $(BACKUP_DIR)/static
-
-# Define the Docker Compose files for development and production
 DOCKER_COMPOSE = docker-compose.yaml
 
-# Define the name of the services
 FRONTEND_SERVICE = front
 BACKEND_SERVICE = server
 DATABASE_SERVICE = database
 NGINX_SERVICE = nginx
 
-# Default to production mode
 NODE_ENV ?= development
 
-# Create all necessary backup directories
-# create-backup-dirs:
-# 	mkdir -p $(DB_BACKUP_DIR)
-# 	mkdir -p $(MEDIA_BACKUP_DIR)
-# 	mkdir -p $(STATIC_BACKUP_DIR)
-
-# Ensure that the .env file exists
-check-env:
+ensure-env:
 	@if [ ! -f .env ]; then \
 		echo ".env file not found, copying from .env.example"; \
 		cp .env.example .env; \
 	fi
 
+update-ip:
+	./update_ip.sh
 
-# Build Docker images
-build: check-env
+build: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) build
 
-# Start containers with backup option
-up: check-env #  ensure-volumes
-#	$(MAKE) backup-volumes
+up: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up -d --build
 
-# Development mode
 dev: export NODE_ENV=development
-dev: check-env # ensure-volumes
-#	$(MAKE) backup-volumes
+dev: ensure-env update-ip
 	NODE_ENV=development docker compose -f $(DOCKER_COMPOSE) up --build
 
-# Production mode
 prod: export NODE_ENV=production
-prod: check-env # ensure-volumes
-#	$(MAKE) backup-volumes
+prod: ensure-env update-ip
 	$(MAKE) up
 
-# Stop containers with backup
 down:
-#	$(MAKE) backup-volumes
 	docker compose -f $(DOCKER_COMPOSE) down
 
-# Restart containers
 restart: down up
 
-# Logs for each service
 logs:
 	@printf "${MAGENTA}--------------------${RESET}\n"
 	docker ps -a
@@ -93,20 +67,12 @@ logs:
 	@docker logs $(NGINX_SERVICE)
 	@printf "${BLUE}--------------------${RESET}\n"
 
-
-# Rebuild containers
-rebuild: check-env
-	docker compose -f $(DOCKER_COMPOSE) up --build -d
-
-# Run Django migrations
 migrate:
 	docker exec $(BACKEND_SERVICE) python ./manage.py makemigrations && docker exec $(BACKEND_SERVICE) python ./manage.py migrate
 
-# Open a bash shell inside the backend container
 bash-backend:
 	docker compose exec -it $(BACKEND_SERVICE) bash
 
-# Open a bash shell inside the frontend container
 bash-frontend:
 	docker compose exec -it $(FRONTEND_SERVICE) sh
 
@@ -123,10 +89,10 @@ update-nginx:
 populate-db:
 	docker exec server ./manage.py populate_db
 
-delete_invites:
+delete-invites:
 	docker exec server ./manage.py delete_pending_invitations
 
-delete_games:
+delete-games:
 	docker exec server ./manage.py delete_games
 
 clean-db:

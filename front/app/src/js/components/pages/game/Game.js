@@ -13,12 +13,13 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { router } from '@router';
 import { auth } from '@auth';
+import { DEFAULT_GAME_OPTIONS } from '@env';
 import { sessionExpiredToast } from '@utils';
 
 /* eslint no-var: "off" */
 export class Game extends HTMLElement {
   #state = {
-    gameOptions: null,
+    gameOptions: {},
     gameType: '', // 'classic' or 'ai'
   };
 
@@ -28,25 +29,29 @@ export class Game extends HTMLElement {
 
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
-    console.log('Auth status:', authStatus);
     if (!authStatus.success) {
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
       router.redirect('/login');
     }
-    this.setState();
     this.render();
   }
 
   setQueryParam(param) {
     this.#state.gameType = param.get('type') || 'classic';
-  }
 
-  setState() {
-    const options = localStorage.getItem('gameOptions');
-    this.#state.gameOptions = options ? JSON.parse(options) : null;
-    devLog('Game options:', this.#state.gameOptions, 'Game type:', this.#state.gameType);
+    const storedCoolMode = param.get('cool_mode');
+    this.#state.gameOptions.cool_mode = storedCoolMode === 'any' ? DEFAULT_GAME_OPTIONS.cool_mode : storedCoolMode;
+    const gameSpeed = param.get('game_speed');
+    this.#state.gameOptions.game_speed = gameSpeed === 'any' ? DEFAULT_GAME_OPTIONS.game_speed : gameSpeed;
+    const scoreToWin = param.get('score_to_win');
+    this.#state.gameOptions.score_to_win = scoreToWin === 'any' ? DEFAULT_GAME_OPTIONS.score_to_win : scoreToWin;
+    const timeLimit = param.get('time_limit');
+    this.#state.gameOptions.time_limit = timeLimit === 'any' ? DEFAULT_GAME_OPTIONS.time_limit : timeLimit;
+    this.#state.gameOptions.ranked = false;
+
+    console.log('Game options:', this.#state.gameOptions);
   }
 
   // disconnectedCallback() {

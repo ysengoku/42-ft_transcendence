@@ -15,6 +15,7 @@ import {
   TOAST_TYPES,
   sessionExpiredToast,
 } from '@utils';
+import { getOptionsFromLocalStorage } from './utils/gameOptions.js';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
@@ -80,10 +81,7 @@ export class DuelMenu extends HTMLElement {
     this.handleMatchmakingRequest = this.handleMatchmakingRequest.bind(this);
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
 
-    const storedOptions = localStorage.getItem('gameOptions');
-    if (storedOptions) {
-      this.#state.options = JSON.parse(storedOptions);
-    }
+    this.#state.options = getOptionsFromLocalStorage();
   }
 
   /**
@@ -489,7 +487,9 @@ export class DuelMenu extends HTMLElement {
       return;
     }
     const queryParams = this.optionsToQueryParams();
-    router.navigate('/duel', { status: 'matchmaking', params: queryParams });
+    queryParams
+      ? router.navigate('/duel', { status: 'matchmaking', params: queryParams })
+      : router.navigate('/duel', { status: 'matchmaking' });
   }
 
   /* ------------------------------------------------------------------------ */
