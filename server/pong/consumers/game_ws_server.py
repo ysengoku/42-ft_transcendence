@@ -1,12 +1,16 @@
 import json
 import logging
+from typing import TYPE_CHECKING
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
 from pong.game_protocol import GameServerToClient, GameServerToGameWorker, PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
-from tournaments.models import Bracket
+
+if TYPE_CHECKING:
+    from tournaments.models import Bracket
+    from users.models import User
 
 logger = logging.getLogger("server")
 
@@ -19,19 +23,19 @@ class GameServerConsumer(WebsocketConsumer):
     """
 
     def connect(self):
-        self.player = None
-        self.user = self.scope.get("user")
-        self.game_room_id = self.scope["url_route"]["kwargs"]["game_room_id"]
+        self.player: None | GameRoomPlayer = None
+        self.user: None | User = self.scope.get("user")
+        self.game_room_id: str = self.scope["url_route"]["kwargs"]["game_room_id"]
         self.game_room_group_name = f"game_room_{self.game_room_id}"
         self.accept()
         if not self.user:
-            logger.info("[GameRoom.connect]: unauthorized user tried to join game room {%s}", self.game_room_id)
+            logger.warning("[GameRoom.connect]: unauthorized user tried to join game room {%s}", self.game_room_id)
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
             return
 
         game_room_qs: GameRoom = GameRoom.objects.for_id(self.game_room_id)
         if not game_room_qs.exists():
-            logger.info(
+            logger.warning(
                 "[GameRoom.connect]: user {%s} tried to join non-existant game room {%s}",
                 self.user.profile,
                 self.game_room_id,
@@ -40,7 +44,7 @@ class GameServerConsumer(WebsocketConsumer):
 
         self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).for_ongoing_status().first()
         if not self.game_room:
-            logger.info(
+            logger.warning(
                 "[GameRoom.connect]: illegal user {%s} tried to join game room {%s}",
                 self.user.profile,
                 self.game_room_id,
@@ -49,6 +53,16 @@ class GameServerConsumer(WebsocketConsumer):
             return
 
         self.player = GameRoomPlayer.objects.filter(profile=self.user.profile, game_room=self.game_room).first()
+        self.player.inc_number_of_connections()
+        if self.player.number_of_connections > 1:
+            logger.warning(
+                "[GameRoom.connect]: user {%s} is already connected to the game room {%s}",
+                self.user.profile,
+                self.game_room_id,
+            )
+            self.close(PongCloseCodes.ALREADY_IN_GAME)
+            return
+
         logger.info(
             "[GameRoom.connect]: user {%s} successefully joined game room {%s}. Player id of the user is {%s}",
             self.user.profile,
@@ -69,7 +83,7 @@ class GameServerConsumer(WebsocketConsumer):
         else:
             name = self.user.nickname if self.user.nickname else self.user.username
             bracket_id = None
-            tournament_id =  None
+            tournament_id = None
         async_to_sync(self.channel_layer.send)(
             "game",
             GameServerToGameWorker.PlayerConnected(
@@ -94,9 +108,16 @@ class GameServerConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
         async_to_sync(self.channel_layer.group_discard)(f"player_{str(self.player.id)}", self.channel_name)
         if close_code == PongCloseCodes.NORMAL_CLOSURE:
+            logger.info(
+                "[GameRoom.disconnect]: player {%s} has been disconnected from the game room {%s} normally",
+                self.user.profile,
+                self.game_room_id,
+            )
+            self.player.dec_number_of_connections()
             return
 
         if self.player:
+            self.player.dec_number_of_connections()
             async_to_sync(self.channel_layer.send)(
                 "game",
                 GameServerToGameWorker.PlayerDisconnected(
@@ -105,6 +126,13 @@ class GameServerConsumer(WebsocketConsumer):
                     player_id=str(self.player.id),
                 ),
             )
+            if close_code == PongCloseCodes.ALREADY_IN_GAME:
+                logger.warning(
+                    "[GameRoom.disconnect]: player {%s} has been disconnected from the game room {%s} abnormally",
+                    self.user.profile,
+                    self.game_room_id,
+                )
+                return
             logger.info(
                 "[GameRoom.disconnect]: player {%s} has left game room {%s}",
                 self.user.profile,

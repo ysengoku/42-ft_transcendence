@@ -517,9 +517,17 @@ export class MultiplayerGame extends HTMLElement {
 
     pongSocket.addEventListener('close', function (event) {
       console.log('PONG socket was nice! :3');
-      if (event.code === 3002) {
-        showToastNotification('This game does not exist or has ended.', TOAST_TYPES.ERROR);
-        router.redirect('/home');
+      switch (event.code) {
+        case 3100:
+        case 3002:
+          showToastNotification('This game does not exist or has ended.', TOAST_TYPES.ERROR);
+        case 3003:
+          showToastNotification('Your are already in a game.', TOAST_TYPES.ERROR);
+          setTimeout(() => {
+            router.redirect('/home');
+          }, 1500);
+          break;
+        default:
       }
     });
 
@@ -594,50 +602,11 @@ export class MultiplayerGame extends HTMLElement {
     ).bind(this);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
-    // function onDocumentKeyDown(event) {
-    //   if (event.defaultPrevented) {
-    //     return; // Do noplayerglb if the event was already processed
-    //   }
-    //   var keyCode = event.code;
-    //   if (keyCode == 'ArrowLeft') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'ArrowRight') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'KeyA') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: true, playerId }))
-    //   }
-    //   if (keyCode == 'KeyD') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: true, playerId }))
-    //   }
-    //   event.preventDefault();
-    // }
-    // function onDocumentKeyUp(event) {
-    //   if (event.defaultPrevented) {
-    //     return; // Do noplayerglb if the event was already processed
-    //   }
-    //   var keyCode = event.code;
-    //   if (keyCode == 'ArrowLeft') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-    //   }
-    //   if (keyCode == 'ArrowRight') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-    //   }k
-    //   if (keyCode == 'KeyA') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_left', content: false, playerId }))
-    //   }
-    //   if (keyCode == 'KeyD') {
-    //     pongSocket.send(JSON.stringify({ action: 'move_right', content: false, playerId }))
-    //   }
-    //   event.preventDefault();
-    // }
 
     return [camera, renderer, animate];
   }
 
   render() {
-    // this.innerHTML = ``;
     document.querySelector('#content').classList.add('position-relative');
     this.innerHTML = this.overlayTemplate();
     this.overlay = this.querySelector('#overlay');
@@ -674,6 +643,7 @@ export class MultiplayerGame extends HTMLElement {
     //     number: 2,
     //   },
     //   elo_change: 16,
+    //   tournament_id: null,
     // };
     // this.showOverlay('game_over', result);
 
@@ -731,14 +701,24 @@ export class MultiplayerGame extends HTMLElement {
       case 'game_over':
         let player1;
         let player2;
+        const isTournament = data.tournament_id !== null;
         data.winner.number === 1
           ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.winner = false))
           : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.winner = false));
-        const player1Element = this.createPlayerResultElement(player1, data.elo_change);
-        const player2Element = this.createPlayerResultElement(player2, data.elo_change);
+        const player1Element = this.createPlayerResultElement(player1, data.elo_change, isTournament);
+        const player2Element = this.createPlayerResultElement(player2, data.elo_change, isTournament);
+        if (isTournament) {
+          this.querySelector('#overlay-button1')?.classList.add('d-none');
+          this.querySelector('#overlay-button2')?.classList.add('d-none');
+        }
         const gameResultElement = this.querySelector('#overlay-game-result');
         gameResultElement.appendChild(player1Element);
         gameResultElement.appendChild(player2Element);
+        if (isTournament) {
+          setTimeout(() => {
+            router.redirect(`tournament/${data.tournament_id}`);
+          }, 1000);
+        }
       case 'cancel':
         this.overlayButton1 = this.querySelector('#overlay-button1');
         this.overlayButton2 = this.querySelector('#overlay-button2');
@@ -764,14 +744,18 @@ export class MultiplayerGame extends HTMLElement {
     this.overlayButton2 = null;
   }
 
-  createPlayerResultElement(player, eloChange) {
+  createPlayerResultElement(player, eloChange, isTournament) {
     const element = document.createElement('div');
     element.innerHTML = this.playerResultTemplate();
+    const result = element.querySelector('.match-result');
+    player.winner
+      ? ((result.textContent = 'Winner'), result.classList.add('match-result-winner'))
+      : ((result.textContent = 'Loser'), result.classList.add('match-result-loser'));
     const avatar = element.querySelector('img');
     avatar.src = player.avatar;
     avatar.alt = player.name;
     element.querySelector('.overlay-player-name').textContent = player.name;
-    if (player.elo) {
+    if (player.elo && !isTournament) {
       const eloWrapper = element.querySelector('.overlay-player-elo');
       eloWrapper.querySelector('.game-elo').textContent = player.elo;
       eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
@@ -814,6 +798,12 @@ export class MultiplayerGame extends HTMLElement {
     #overlay-button1,
     #overlay-button2 {
       color: rgba(var(--pm-gray-100-rgb), 0.9) !important;
+    }
+    .match-result-winner {
+      color: var(--pm-green-300);
+    }
+    .match-result-loser {
+      color: var(--pm-red-400);
     }
     </style>
     <div id="overlay" class="position-absolute w-100 h-100">
@@ -859,6 +849,7 @@ export class MultiplayerGame extends HTMLElement {
   playerResultTemplate() {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center mx-4 p-3">
+      <div class="match-result fs-5 fw-bold pb-2"></div>
       <img class="avatar-l rounded-circle mb-2" />
       <div class="overlay-player-name fs-4"></div>
       <div class="overlay-player-elo d-flex flex-row ps-2">
