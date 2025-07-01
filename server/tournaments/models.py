@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Literal
 
@@ -13,6 +14,8 @@ from django.utils import timezone
 from pong.game_protocol import GameRoomSettings
 from pong.models import GameRoom, get_default_game_room_settings
 from users.models import Profile
+
+logger = logging.getLogger("server")
 
 
 class Participant(models.Model):
@@ -128,8 +131,7 @@ class Tournament(models.Model):
         return self.rounds.all().prefetch_related("brackets")
 
     def get_current_round_number(self):
-        round_number = self.rounds.filter(status=Round.FINISHED).count() + 1
-        return round_number
+        return self.rounds.filter(status=Round.FINISHED).count() + 1
 
     def get_current_round(self, round_number=None):
         if round_number is None:
@@ -149,7 +151,7 @@ class Tournament(models.Model):
             return None
 
         bracket = current_round.brackets.filter(
-            models.Q(participant1=participant) | models.Q(participant2=participant)
+            models.Q(participant1=participant) | models.Q(participant2=participant),
         ).first()
         if not bracket:
             logger.warning("This user is not in any brackets of the current round")
