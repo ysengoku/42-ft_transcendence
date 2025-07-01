@@ -9,8 +9,9 @@ export class TournamentOverview extends HTMLElement {
     tournament_id: '',
     status: '',
     tournament: null,
-    isMobile: false,
     username: '',
+    isMobile: false,
+    updating: false,
   };
 
   constructor() {
@@ -24,6 +25,7 @@ export class TournamentOverview extends HTMLElement {
     this.tournamentOverviewContent = null;
 
     this.#state.isMobile = isMobile();
+    this.fetchTournamentrData = this.fetchTournamentrData.bind(this);
     this.handleResize = this.handleResize.bind(this);
   }
 
@@ -45,9 +47,14 @@ export class TournamentOverview extends HTMLElement {
 
   disconnectedCallback() {
     window.removeEventListener('resize', this.handleResize);
+    this.updateButton?.removeEventListener('click', this.fetchTournamentrData);
   }
 
   async fetchTournamentrData() {
+    if (this.updating) {
+      return;
+    }
+    this.#state.updating = true;
     const response = await apiRequest(
       'GET',
       /* eslint-disable-next-line new-cap */
@@ -76,6 +83,7 @@ export class TournamentOverview extends HTMLElement {
       return;
     }
     this.render();
+    this.#state.updating = false;
   }
 
   render() {
@@ -83,6 +91,7 @@ export class TournamentOverview extends HTMLElement {
 
     this.tournamentName = this.querySelector('#tournament-name');
     this.tournamentStatus = this.querySelector('#tournament-status');
+    this.updateButton = this.querySelector('.update-tournament-status-button');
     this.tournamentWinnerWrapper = this.querySelector('#tournament-winner-wrapper');
     this.tournamentWinnerAvatar = this.querySelector('#tournament-winner-avatar');
     this.tournamentWinnerAlias = this.querySelector('#tournament-winner-alias');
@@ -92,8 +101,10 @@ export class TournamentOverview extends HTMLElement {
     if (this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING) {
       this.tournamentStatus.textContent = 'Ongoing';
       this.tournamentWinnerWrapper.classList.add('d-none');
+      this.updateButton.addEventListener('click', this.fetchTournamentrData);
     } else if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
       this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`;
+      this.updateButton.classList.add('d-none');
       if (this.#state.tournament.winner) {
         this.tournamentWinnerAvatar.src = this.#state.tournament.winner.profile.avatar;
         this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias;
@@ -124,6 +135,10 @@ export class TournamentOverview extends HTMLElement {
           <div class="d-flex flex-column justify-content-center align-items-center w-100 px-4 my-3">
             <h2 class="text-center m-0 pt-2 w-100" id="tournament-name"></h2>
             <p class="text-center m-0 mb-3 w-100" id="tournament-status"></p>
+            <div class="update-tournament-status-button d-flex justify-content-center fw-bold mb-3">
+              <i class="bi bi-arrow-clockwise"></i>
+              &nbsp;Update the status
+            </div>
 
             <div class="d-flex flex-column justify-content-start align-items-center" id="tournament-winner-wrapper">
               <p class="m-0 py-2 w-100" style="font-family: 'van dyke'">Champion</p>
@@ -155,6 +170,13 @@ export class TournamentOverview extends HTMLElement {
   style() {
     return `
     <style>
+    .update-tournament-status-button {
+      color: var(--pm-text-green);
+      font-size: 0.8rem;
+    }
+    .update-tournament-status-button:hover {
+      color: var(--pm-green-400);
+    }
     .bracket-player {
       background-color: rgba(var(--bs-body-bg-rgb), 0.6);
       border-radius: .4rem;
