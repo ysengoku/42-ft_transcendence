@@ -127,6 +127,20 @@ class Tournament(models.Model):
     def get_rounds(self):
         return self.rounds.all().prefetch_related("brackets")
 
+    def get_current_round_number(self):
+        round_number = self.rounds.filter(status=Round.FINISHED).count() + 1
+        return round_number
+
+    def get_current_round(self, round_number=None):
+        if round_number is None:
+            round_number = self.get_current_round_number()
+        try:
+            current_round = self.rounds.get(number=round_number)
+        except Round.DoesNotExist:
+            logger.warning("This round does not exist, recreating it for the tournament to continue")
+            current_round = self.rounds.create(number=round_number)
+        return current_round
+
     def get_prefetched(self):
         return Tournament.objects.prefetch_related(
             Prefetch("tournament_participants", queryset=Participant.objects.select_related("profile__user")),

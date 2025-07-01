@@ -83,7 +83,7 @@ class TournamentService:
             logger.warning("Error: the tournament is not ready yet, or already finished")
             logger.warning("Tournament status is : %s", tournament.status)
             return
-        round_number = tournament.rounds.filter(status=Round.FINISHED).count() + 1
+        round_number = tournament.get_current_round_number()
         logger.debug("round_number is %s", round_number)
         if round_number == 1:
             participants = list(tournament.participants.all())
@@ -96,11 +96,7 @@ class TournamentService:
             logger.debug("Only one participant left")
             TournamentService.end_tournament(tournament, participants)
             return
-        try:
-            new_round = tournament.rounds.get(number=round_number)
-        except Round.DoesNotExist:
-            logger.warning("This round does not exist, recreating it for the tournament to continue")
-            new_round = tournament.rounds.create(number=round_number)
+        new_round = tournament.get_current_round(round_number)
         with transaction.atomic():
             if new_round.status == Round.ONGOING:
                 logger.info("This round is already prepared with love <3")
@@ -285,7 +281,6 @@ class TournamentService:
             return
         logger.debug("function handle_match_finished")
         logger.debug("data for handle_match_finished : %s", bracket_id)
-        # bracket_id = data.get("bracket_id")
         try:
             bracket = Bracket.objects.get(id=bracket_id, round__tournament=tournament)
         except Bracket.DoesNotExist:
