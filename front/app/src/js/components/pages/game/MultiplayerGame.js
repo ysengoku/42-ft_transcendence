@@ -519,7 +519,7 @@ export class MultiplayerGame extends HTMLElement {
     });
 
     pongSocket.addEventListener('close', function (event) {
-      console.log('PONG socket was nice! :3');
+      console.log('PONG socket was nice! :3', event.code);
       switch (event.code) {
         case 3100:
         case 3002:

@@ -3,6 +3,7 @@ import { TournamentCreation } from './components/TournamentCreation';
 import { TournamentPending } from './components/TournamentPending';
 import { TournamentRoundStart } from './components/TournamentRoundStart';
 import { TournamentRoundOngoing } from './components/TournamentRoundOngoing';
+import { TournamentBracketOngoing } from './components/TournamentBracketOngoing';
 import { TournamentExit } from './components/TournamentExit';
 import { TournamentOverviewTree } from './components/OverviewRoundsTree';
 import { TournamentOverviewTable } from './components/OverviewRoundsTable';
@@ -17,6 +18,7 @@ export {
   TournamentPending,
   TournamentRoundStart,
   TournamentRoundOngoing,
+  TournamentBracketOngoing,
   TournamentExit,
   TournamentOverviewTree,
   TournamentOverviewTable,

@@ -37,7 +37,6 @@ export class TournamentExit extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
-    console.log(this.#state);
     this.innerHTML = this.template();
 
     this.message = this.querySelector('#tournament-exit-message');
@@ -46,15 +45,23 @@ export class TournamentExit extends HTMLElement {
     this.goToTournamentMenuButton = this.querySelector('#go-to-tournament-menu-button');
     this.goToTournamentOverviewButton = this.querySelector('#go-to-tournament-overview-button');
 
-    this.#state.status === UI_STATUS.CANCELED
-      ? ((this.message.textContent = `${this.#state.creatorAlias} called off this tournament.`),
-        this.goToHomeButton.addEventListener('click', this.redirectToHome),
-        this.goToTournamentMenuButton.addEventListener('click', this.redirectToTournamentMenu),
-        this.goToTournamentOverviewButton.classList.add('d-none'))
-      : ((this.message.textContent = "You've been eliminated."),
-        this.goToTournamentOverviewButton.addEventListener('click', this.redirectToTournamentOverview),
-        this.goToHomeButton.classList.add('d-none'),
-        this.goToTournamentMenuButton.classList.add('d-none'));
+    switch (this.#state.status) {
+      case UI_STATUS.ELIMINATED:
+        this.message.textContent = "You've been eliminated.";
+        this.goToTournamentOverviewButton.addEventListener('click', this.redirectToTournamentOverview);
+        this.goToHomeButton.classList.add('d-none');
+        this.goToTournamentMenuButton.classList.add('d-none');
+        return;
+      case UI_STATUS.CANCELED:
+        this.message.textContent = `${this.#state.creatorAlias} called off this tournament.`;
+        break;
+      case UI_STATUS.ERROR:
+        this.message.textContent = 'Oops! Something went wrong.';
+        break;
+    }
+    this.goToHomeButton.addEventListener('click', this.redirectToHome);
+    this.goToTournamentMenuButton.addEventListener('click', this.redirectToTournamentMenu);
+    this.goToTournamentOverviewButton.classList.add('d-none');
   }
 
   /* ------------------------------------------------------------------------ */
