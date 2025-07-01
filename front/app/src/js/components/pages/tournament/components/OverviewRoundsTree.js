@@ -1,4 +1,11 @@
+/**
+ * @module TournamentOverviewTree
+ * @description Renders tournament tree with current status for ongoing or finished tournament
+ * for thw window size larger than Breakpoint MD.
+ */
+
 import { BREAKPOINT } from '@utils';
+import { mockTournamentResult } from '@mock/functions/mockTournamentResult';
 
 export class TournamentOverviewTree extends HTMLElement {
   #state = {
@@ -12,6 +19,10 @@ export class TournamentOverviewTree extends HTMLElement {
 
   set data(data) {
     this.#state.rounds = data;
+
+    // ----- For test -----------
+    this.#state.rounds = mockTournamentResult().rounds;
+    console.log('Rounds data', this.#state.rounds);
     this.render();
   }
 
@@ -21,6 +32,7 @@ export class TournamentOverviewTree extends HTMLElement {
 
     for (let i = 0; i < this.#state.rounds.length; i++) {
       const round = this.#state.rounds[i];
+      // If the next round exists and has assigned brackets, render the connector
       const renderConnector = this.#state.rounds[i + 1] && this.#state.rounds[i + 1].brackets.length > 0 ? true : false;
       this.renderBrackets(round, renderConnector);
       if (i === this.#state.rounds.length - 1) {
@@ -33,6 +45,11 @@ export class TournamentOverviewTree extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * @param {Object} round
+   * @param {boolean} renderConnector - Indicate if the connector should be rendered
+   */
   renderBrackets(round, renderConnector = true) {
     const roundElement = document.createElement('div');
     roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');
