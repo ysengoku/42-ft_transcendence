@@ -110,6 +110,13 @@ class TournamentService:
             new_round.save(update_fields=["status"])
         TournamentService.prepare_brackets(participants, round_number, new_round)
         TournamentService.send_start_round_message(tournament_id, round_number, new_round)
+        # import time
+
+        # time.sleep(5)
+        # if new_round.brackets.first().status == Bracket.PENDING:
+        #     TournamentService.tournament_canceled(tournament)
+        # else:
+        #     logger.debug("new_round is %s", new_round.brackets.first(status))
 
     @staticmethod
     def participants_number_is_incorrect(participants) -> bool:
@@ -223,9 +230,15 @@ class TournamentService:
             winner[0].status = Participant.WINNER
             winner[0].save(update_fields=["status"])
             tournament.status = Tournament.FINISHED
+            logger.debug("Tournament should be set to FINISHED with a winner")
         else:
             tournament.status = Tournament.CANCELLED
+            logger.debug("Tournament should be cancelled")
         tournament.save()
+        logger.debug("Tournament status : %s", tournament.status)
+        participants = tournament.participants.all()
+        for p in participants:
+            p.profile.user.tournament_id = None
         TournamentService.trigger_action(tournament.id, "close_self_ws")
 
     @staticmethod
@@ -247,13 +260,16 @@ class TournamentService:
             return
         with transaction.atomic():
             tournament.status = Tournament.CANCELLED
-            tournament.save()
+            tournament.save(update_fields=["status"])
         data = {"tournament_id": str(tournament_id), "tournament_name": tournament_name}
         TournamentService.send_group_message(tournament_id, "tournament_canceled", data)
+        participants = tournament.participants.all()
+        for p in participants:
+            p.profile.user.tournament_id = None
         TournamentService.trigger_action(tournament_id, "close_self_ws")
 
     @staticmethod
-    def tournament_game_finished(tournament_id, data):
+    def tournament_game_finished(tournament_id, bracket_id):
         try:
             UUID(str(tournament_id))
         except ValueError:
@@ -268,8 +284,8 @@ class TournamentService:
             logger.info("The tournament is not ongoing : it is %s", tournament.status)
             return
         logger.debug("function handle_match_finished")
-        logger.debug("data for handle_match_finished : %s", data)
-        bracket_id = data.get("bracket_id")
+        logger.debug("data for handle_match_finished : %s", bracket_id)
+        # bracket_id = data.get("bracket_id")
         try:
             bracket = Bracket.objects.get(id=bracket_id, round__tournament=tournament)
         except Bracket.DoesNotExist:
@@ -281,13 +297,21 @@ class TournamentService:
 
         round = bracket.round
         if not Bracket.objects.filter(
-            status__in=[Bracket.ONGOING, Bracket.PENDING], round__tournament=tournament,
+            status__in=[Bracket.ONGOING, Bracket.PENDING],
+            round__tournament=tournament,
         ).exists():
             round.status = Round.FINISHED
             round.save(update_fields=["status"])
             data = {"tournament_id": str(tournament_id)}
             TournamentService.send_group_message(tournament_id, "round_end", data)
             TournamentService.prepare_round(tournament_id)
+        else:
+            brackets_left = Bracket.objects.filter(
+                status__in=[Bracket.ONGOING, Bracket.PENDING],
+                round__tournament=tournament,
+            )
+            for b in brackets_left:
+                logger.debug("Left brackets : %s", b)
 
     @staticmethod
     # TODO: See how to handle this self
