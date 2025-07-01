@@ -1,6 +1,6 @@
 /**
  * @module AvatarUploadModal
- * @description　Provides file selection, client-side validation (MIME type and size),
+ * @description Provides file selection, client-side validation (MIME type and size),
  * and safe preview via Blob URLs.
  */
 import { Modal } from 'bootstrap';
@@ -125,7 +125,7 @@ export class AvatarUploadModal extends HTMLElement {
 
         /**
          * Generate and assign Blob(Binary Large Objects) URL for preview
-         * Blob URL is a temporary reference that points to in-memory file data, created via `URL.createObjectURL`. 
+         * Blob URL is a temporary reference that points to in-memory file data, created via `URL.createObjectURL`.
          * It allows safe preview of local files without embedding raw binary or HTML.
          */
         this.selectedFile = file;
