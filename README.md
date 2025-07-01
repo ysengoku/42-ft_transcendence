@@ -1,4 +1,4 @@
-![Peacemakers](./assets/peacemakers_cover.png)
+![Peacemakers](./assets/peacemakers-cover.jpg)
 
 <div align="center">
   <img src="https://img.shields.io/github/commit-activity/t/ysengoku/42-ft_transcendence?style=flat-square&color=9D9E0A" />
