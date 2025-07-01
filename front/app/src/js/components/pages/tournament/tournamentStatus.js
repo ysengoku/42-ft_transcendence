@@ -6,6 +6,7 @@ export const UI_STATUS = {
   ELIMINATED: 'eliminated',
   FINISHED: 'finished',
   CANCELED: 'cancelled',
+  ERROR: 'error',
 };
 
 export const TOURNAMENT_STATUS = {
