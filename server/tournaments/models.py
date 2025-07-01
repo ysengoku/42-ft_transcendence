@@ -141,6 +141,21 @@ class Tournament(models.Model):
             current_round = self.rounds.create(number=round_number)
         return current_round
 
+    def get_user_current_bracket(self, profile: Profile, round_number):
+        current_round = self.get_current_round(round_number)
+        participant = current_round.tournament.participants.filter(profile=profile).first()
+        if not participant:
+            logger.warning("Profile is not a participant in this tournament")
+            return None
+
+        bracket = current_round.brackets.filter(
+            models.Q(participant1=participant) | models.Q(participant2=participant)
+        ).first()
+        if not bracket:
+            logger.warning("This user is not in any brackets of the current round")
+            return None
+        return bracket
+
     def get_prefetched(self):
         return Tournament.objects.prefetch_related(
             Prefetch("tournament_participants", queryset=Participant.objects.select_related("profile__user")),

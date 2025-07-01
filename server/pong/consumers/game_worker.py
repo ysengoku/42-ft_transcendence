@@ -726,7 +726,8 @@ class GameWorkerConsumer(AsyncConsumer):
                     )
 
                     await sync_to_async(TournamentService.tournament_game_finished)(
-                        match.tournament_id, match.bracket_id,
+                        match.tournament_id,
+                        match.bracket_id,
                     )
                 await self._do_after_match_cleanup(match, True)
                 logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", match)

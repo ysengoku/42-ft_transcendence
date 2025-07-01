@@ -3,8 +3,8 @@ import json
 import logging
 import random
 from uuid import UUID
-
 from asgiref.sync import async_to_sync
+from channels.db import database_sync_to_async
 from django.db import transaction
 
 from pong.models import GameRoom
@@ -106,13 +106,26 @@ class TournamentService:
             new_round.save(update_fields=["status"])
         TournamentService.prepare_brackets(participants, round_number, new_round)
         TournamentService.send_start_round_message(tournament_id, round_number, new_round)
-        # import time
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.send)(
+            "tournament_worker",
+            {
+                "type": "check_brackets_later",
+                "tournament_id": str(tournament_id),
+            },
+        )
 
-        # time.sleep(5)
-        # if new_round.brackets.first().status == Bracket.PENDING:
-        #     TournamentService.tournament_canceled(tournament)
-        # else:
-        #     logger.debug("new_round is %s", new_round.brackets.first(status))
+    @staticmethod
+    @database_sync_to_async
+    def async_check_brackets_status(tournament_id):
+        try:
+            tournament = Tournament.objects.get(id=tournament_id)
+        except Tournament.DoesNotExist:
+            logger.warning("This tournament doesn't exist.")
+            return
+        current_round = tournament.get_current_round()
+        if tournament.status != tournament.FINISHED and current_round.brackets.filter(status=Bracket.PENDING).exists():
+            TournamentService.tournament_canceled(tournament)
 
     @staticmethod
     def participants_number_is_incorrect(participants) -> bool:
@@ -197,7 +210,7 @@ class TournamentService:
 
     @staticmethod
     def receive_start_round_message(tournament_id, user_id, round_number, new_round):
-        logger.debug("function send_start_round_message, round number : %s", round_number)
+        logger.debug("function receive_start_round_message, round number : %s", round_number)
         action = "tournament_start" if round_number == 1 else "round_start"
         try:
             tournament = Tournament.objects.get(id=tournament_id)
