@@ -1,3 +1,4 @@
+import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { formatDateMDY } from '@utils';
 import { isMobile } from '@utils';
@@ -9,6 +10,7 @@ export class TournamentOverview extends HTMLElement {
     status: '',
     tournament: null,
     isMobile: false,
+    username: '',
   };
 
   constructor() {
@@ -25,8 +27,13 @@ export class TournamentOverview extends HTMLElement {
     this.handleResize = this.handleResize.bind(this);
   }
 
-  setParam(param) {
+  async setParam(param) {
     this.#state.tournament_id = param.id;
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      router.redirect('/login');
+    }
+    this.#state.username = authStatus.response.username;
     if (this.#state.tournament_id === '') {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
@@ -137,7 +144,7 @@ export class TournamentOverview extends HTMLElement {
           </div>
           <div class="btn-container d-flex flex-row justify-content-center align-items-center mt-3 mb-4 gap-2">
             <a class="btn btn-wood" href="/home" role="button">Go to Saloon</a>
-            <a class="btn btn-wood" role="button">See my Profile</a>
+            <a class="btn btn-wood" href="profile/${this.#state.username}" role="button">See my Profile</a>
           </div>
         </div>
       </div>  
