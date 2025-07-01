@@ -104,6 +104,10 @@ export class Tournament extends HTMLElement {
       true,
     );
     if (!response.success) {
+      if (response.status === 404 || response.status === 422) {
+        const notFound = document.createElement('page-not-found');
+        this.innerHTML = notFound.outerHTML;
+      }
       return;
     }
     this.#state.tournament = response.data;
@@ -115,7 +119,7 @@ export class Tournament extends HTMLElement {
 
     // =========== For test ================================================
     // pending, tournamentstarting, waitingNextRound, roundpending
-    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'tournamentstarting');
+    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
     // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
@@ -182,6 +186,8 @@ export class Tournament extends HTMLElement {
         this.resolveUIStatus[this.#state.tournament.status]();
         const isUserQualified = this.checkUserStatus();
         if (!isUserQualified) {
+          // showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.ELIMINATED, this.#state.tournament.name);
+          // router.redirect('/home');
           return;
         }
     }
@@ -258,6 +264,9 @@ export class Tournament extends HTMLElement {
             case BRACKET_STATUS.FINISHED:
               this.#state.uiStatus = UI_STATUS.WAITING_NEXT_ROUND;
               break;
+            case BRACKET_STATUS.CANCELED:
+              this.#state.uiStatus = UI_STATUS.ERROR; // TODO: Consider error handling
+              break;
             default:
               devErrorLog('Unknown bracket status:', this.#state.currentUserBracket.status);
           }
@@ -282,6 +291,7 @@ export class Tournament extends HTMLElement {
     this.tournamentContentWrapper = this.querySelector('#tournament-content');
 
     this.tournamentName.textContent = this.#state.tournament.name;
+    this.#state.uiStatus = UI_STATUS.BRACKET_ONGOING;
     this.updateContentOnStatusChange();
     document.addEventListener('round-finished-ui-ready', this.setCurrentRoundFinished);
   }
@@ -324,6 +334,15 @@ export class Tournament extends HTMLElement {
       };
       return tournamentRoundOngoing;
     },
+    [UI_STATUS.BRACKET_ONGOING]: () => {
+      const tournamentBracketOngoing = document.createElement('tournament-bracket-ongoing');
+      tournamentBracketOngoing.data = {
+        round_number: this.#state.currentRoundNumber,
+        round: this.#state.currentRound,
+        game_id: this.#state.currentUserBracket.game_id,
+      };
+      return tournamentBracketOngoing;
+    },
     [UI_STATUS.CANCELED]: () => {
       const tournamentExit = document.createElement('tournament-exit');
       tournamentExit.data = {
@@ -337,6 +356,13 @@ export class Tournament extends HTMLElement {
       tournamentExit.data = {
         status: UI_STATUS.ELIMINATED,
         tournamentId: this.#state.tournamentId,
+      };
+      return tournamentExit;
+    },
+    [UI_STATUS.ERROR]: () => {
+      const tournamentExit = document.createElement('tournament-exit');
+      tournamentExit.data = {
+        status: UI_STATUS.ERROR,
       };
       return tournamentExit;
     },

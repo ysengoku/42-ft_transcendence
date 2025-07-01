@@ -198,7 +198,7 @@ const router = (() => {
      * @return {void}
      */
     async redirect(path = window.location.pathname, queryParams = '') {
-      devLog('Redirecting');
+      console.trace('Redirecting');
       this.navigate(path, queryParams, true);
     }
 
