@@ -291,7 +291,6 @@ export class Tournament extends HTMLElement {
     this.tournamentContentWrapper = this.querySelector('#tournament-content');
 
     this.tournamentName.textContent = this.#state.tournament.name;
-    this.#state.uiStatus = UI_STATUS.BRACKET_ONGOING;
     this.updateContentOnStatusChange();
     document.addEventListener('round-finished-ui-ready', this.setCurrentRoundFinished);
   }
