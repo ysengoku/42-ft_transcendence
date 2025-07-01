@@ -6,7 +6,7 @@ from uuid import UUID
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-from .models import Tournament, Bracket
+from .models import Bracket, Tournament
 
 # TODO: see if BracketSchema is really needed
 from .tournament_service import TournamentService
@@ -37,7 +37,7 @@ class TournamentConsumer(WebsocketConsumer):
         self.tournament_id = self.scope["url_route"]["kwargs"].get("tournament_id")
         try:
             UUID(str(self.tournament_id))
-        except:
+        except ValueError:
             logger.warning("Wrong uuid : %s", self.tournament_id)
             self.accept()
             self.close(ILLEGAL_CONNECTION)
@@ -114,5 +114,5 @@ class TournamentConsumer(WebsocketConsumer):
                     },
                 ),
             )
-        except Disconnected as e:
-            logger.warning("Failed to send message : %s", e)
+        except RuntimeError as e:
+            logger.warning("Failed to send message: %s", e)
