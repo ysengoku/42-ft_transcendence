@@ -258,6 +258,7 @@ class TournamentService:
             logger.debug("Tournament should be cancelled")
         tournament.save()
         logger.debug("Tournament status : %s", tournament.status)
+        logger.warning("CLOSING CAUSE END TOURNAMENT")
         TournamentService.trigger_action(tournament.id, "close_self_ws")
 
     @staticmethod
@@ -282,14 +283,15 @@ class TournamentService:
             tournament.save(update_fields=["status"])
         data = {"tournament_id": str(tournament_id), "tournament_name": tournament_name}
         TournamentService.send_group_message(tournament_id, "tournament_canceled", data)
-        TournamentService.trigger_action(tournament_id, "close_self_ws")
+        # TournamentService.trigger_action(tournament_id, "close_self_ws")
 
     @staticmethod
     def cancel_bracket(bracket, tournament_id):
         logger.debug("function cancel_bracket")
         with transaction.atomic():
+            bracket.winner = bracket.participant1
             bracket.status = Bracket.CANCELLED
-            bracket.save(update_fields=["status"])
+            bracket.save(update_fields=["status", "winner"])
         p1_id = bracket.participant1.profile.user.id
         p2_id = bracket.participant2.profile.user.id
         TournamentService.disconnect_user(p1_id)
@@ -326,6 +328,7 @@ class TournamentService:
             status__in=[Bracket.ONGOING, Bracket.PENDING],
             round__tournament=tournament,
         ).exists():
+            logger.info("Round finished for tournament : %s", tournament.name)
             last_round.status = Round.FINISHED
             last_round.save(update_fields=["status"])
             data = {"tournament_id": str(tournament_id)}
