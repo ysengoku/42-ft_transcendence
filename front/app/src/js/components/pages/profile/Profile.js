@@ -22,6 +22,8 @@ export class UserProfile extends HTMLElement {
       this.innerHTML = notFound.outerHTML;
       return;
     }
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     this.fetchUserData(username);
   }
 
@@ -54,6 +56,7 @@ export class UserProfile extends HTMLElement {
     const storedUser = sessionStorage.getItem('user');
     this.#state.loggedInUsername = JSON.parse(storedUser).username;
 
+    this.innerHTML = '';
     this.innerHTML = this.style() + this.template();
 
     this.onlineStatusIndicator = this.querySelector('profile-online-status');
