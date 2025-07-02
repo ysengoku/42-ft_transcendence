@@ -1,4 +1,11 @@
+/**
+ * @module TournamentOverviewTree
+ * @description Renders tournament tree with current status for ongoing or finished tournament
+ * for thw window size larger than Breakpoint MD.
+ */
+
 import { BREAKPOINT } from '@utils';
+import { mockTournamentResult } from '@mock/functions/mockTournamentResult';
 
 export class TournamentOverviewTree extends HTMLElement {
   #state = {
@@ -12,6 +19,10 @@ export class TournamentOverviewTree extends HTMLElement {
 
   set data(data) {
     this.#state.rounds = data;
+
+    // ----- For test -----------
+    this.#state.rounds = mockTournamentResult().rounds;
+    console.log('Rounds data', this.#state.rounds);
     this.render();
   }
 
@@ -21,7 +32,9 @@ export class TournamentOverviewTree extends HTMLElement {
 
     for (let i = 0; i < this.#state.rounds.length; i++) {
       const round = this.#state.rounds[i];
-      this.renderBrackets(round);
+      // If the next round exists and has assigned brackets, render the connector
+      const renderConnector = this.#state.rounds[i + 1] && this.#state.rounds[i + 1].brackets.length > 0 ? true : false;
+      this.renderBrackets(round, renderConnector);
       if (i === this.#state.rounds.length - 1) {
         const lastRoundElement = this.querySelector('.round-wrapper:last-child');
         const connectors = lastRoundElement.querySelectorAll('.brackets-connector');
@@ -32,7 +45,12 @@ export class TournamentOverviewTree extends HTMLElement {
     }
   }
 
-  renderBrackets(round) {
+  /**
+   * @description
+   * @param {Object} round
+   * @param {boolean} renderConnector - Indicate if the connector should be rendered
+   */
+  renderBrackets(round, renderConnector = true) {
     const roundElement = document.createElement('div');
     roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');
     const bracketPairsCount = Math.floor(round.brackets.length / 2);
@@ -53,6 +71,10 @@ export class TournamentOverviewTree extends HTMLElement {
         bracketsWrapper.appendChild(bracket2Element);
         roundElement.appendChild(bracketPairElement);
 
+        if (!renderConnector) {
+          bracketPairElement.querySelector('.brackets-connector')?.classList.add('d-none');
+          continue;
+        }
         requestAnimationFrame(() => {
           const incomingLines = bracketPairElement.querySelector('.brackets-connector-incoming');
           const outboundLine = bracketPairElement.querySelector('.brackets-connector-outbound');
