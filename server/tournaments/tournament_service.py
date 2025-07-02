@@ -180,7 +180,6 @@ class TournamentService:
         participants = list(participants)
         random.shuffle(participants)
         brackets = []
-        # while len(participants) >= 2:
         while participants:
             p1 = participants.pop()
             p2 = participants.pop()
@@ -289,6 +288,7 @@ class TournamentService:
     def cancel_bracket(bracket, tournament_id):
         logger.debug("function cancel_bracket")
         with transaction.atomic():
+            # TODO: see if setting the bracket to a winner is really fair (if the user reconnects, they could continue the tournament without having to play) 
             bracket.winner = bracket.participant1
             bracket.status = Bracket.CANCELLED
             bracket.save(update_fields=["status", "winner"])
