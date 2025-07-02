@@ -9,7 +9,6 @@ from datetime import datetime
 from enum import Enum, IntEnum, auto
 from typing import Literal
 
-from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
@@ -24,7 +23,6 @@ from pong.game_protocol import (
 )
 from pong.models import GameRoom, Match
 from tournaments.models import Bracket
-from tournaments.tournament_service import TournamentService
 
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
@@ -724,10 +722,13 @@ class GameWorkerConsumer(AsyncConsumer):
                         0,
                         Bracket.CANCELLED,
                     )
-
-                    await sync_to_async(TournamentService.tournament_game_finished)(
-                        match.tournament_id,
-                        match.bracket_id,
+                    await self.channel_layer.send(
+                        "tournament",
+                        {
+                            "type": "tournament_game_finished",
+                            "tournament_id": str(match.tournament_id),
+                            "bracket_id": match.bracket_id,
+                        },
                     )
                 await self._do_after_match_cleanup(match, True)
                 logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", match)
@@ -999,7 +1000,14 @@ class GameWorkerConsumer(AsyncConsumer):
 
         # Special case: notification for the tournament consumer.
         if match.is_in_tournament:
-            await sync_to_async(TournamentService.tournament_game_finished)(match.tournament_id, match.bracket_id)
+            await self.channel_layer.send(
+                "tournament",
+                {
+                    "type": "tournament_game_finished",
+                    "tournament_id": str(match.tournament_id),
+                    "bracket_id": match.bracket_id,
+                },
+            )
 
     # To avoid typing errors.
     def _to_game_room_group_name(self, match: MultiplayerPongMatch):
