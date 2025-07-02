@@ -18,6 +18,7 @@ import { Tournament } from './tournament/Tournament.js';
 import { TournamentOverview } from './tournament/TournamentOverview.js';
 import { Game } from './game/Game.js';
 import { MultiplayerGame } from './game/MultiplayerGame.js';
+import { Loading } from './Loading.js';
 import { Error } from './Error.js';
 import { NotFoundPage } from './NotFound.js';
 
@@ -42,6 +43,7 @@ export {
   TournamentOverview,
   Game,
   MultiplayerGame,
+  Loading,
   Error,
   NotFoundPage,
 };
