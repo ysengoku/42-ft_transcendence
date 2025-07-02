@@ -15,7 +15,7 @@ export function mockTournamentResult() {
     profile: {
       username: 'Pedro0',
       nickname: 'Pedro0',
-      avatar: '/img/default_avatar.png',
+      avatar: '/img/pedro.png',
       elo: 1000,
       is_online: false,
     },
@@ -27,7 +27,7 @@ export function mockTournamentResult() {
     profile: {
       username: 'Pedro1',
       nickname: 'Pedro1',
-      avatar: '/media/avatars/pedro1.jpg',
+      avatar: '/img/default_avatar.png',
       elo: 1000,
       is_online: false,
     },
@@ -39,7 +39,7 @@ export function mockTournamentResult() {
     profile: {
       username: 'Pedro2',
       nickname: 'Pedro2',
-      avatar: '/media/avatars/pedro2.jpg',
+      avatar: 'https://picsum.photos/200/300',
       elo: 1000,
       is_online: false,
     },
@@ -51,7 +51,7 @@ export function mockTournamentResult() {
     profile: {
       username: 'Pedro4',
       nickname: 'Pedro4',
-      avatar: '/img/default_avatar.png',
+      avatar: 'https://picsum.photos/400/300',
       elo: 1000,
       is_online: false,
     },
