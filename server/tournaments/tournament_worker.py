@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 
@@ -20,6 +21,17 @@ class TournamentWorkerConsumer(AsyncConsumer):
         logger.info("The time to wait is actually set to %s", time_to_wait)
         await asyncio.sleep(time_to_wait)
         await TournamentService.async_check_brackets_status(tournament_id, round_number)
+
+    async def tournament_game_finished(self, event):
+        logger.debug("function tournament_game_finished from tournament worker")
+        if event is None or "tournament_id" not in event or "bracket_id" not in event:
+            return
+        tournament_id = event["tournament_id"]
+        bracket_id = event["bracket_id"]
+        await sync_to_async(TournamentService.tournament_game_finished)(
+            tournament_id,
+            bracket_id,
+        )
 
 
 async def main():
