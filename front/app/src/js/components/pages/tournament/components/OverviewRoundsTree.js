@@ -1,7 +1,7 @@
 /**
  * @module TournamentOverviewTree
  * @description Renders tournament tree with current status for ongoing or finished tournament
- * for thw window size larger than Breakpoint MD.
+ * for the window size larger than Breakpoint MD.
  */
 
 import { BREAKPOINT } from '@utils';

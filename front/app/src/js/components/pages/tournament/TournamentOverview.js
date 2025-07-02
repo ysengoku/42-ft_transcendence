@@ -1,3 +1,9 @@
+/**
+ * @module TournamentOverview
+ * @description Displays the tournament result if it's finished and the current status if ongoing.
+ * For the window size larger than Breakpoint MD, it displays tournament tree, otherwise brackets table.
+ */
+
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
@@ -14,6 +20,8 @@ export class TournamentOverview extends HTMLElement {
     isMobile: false,
     updating: false,
   };
+
+  #pollingInterval = null;
 
   constructor() {
     super();
@@ -42,13 +50,17 @@ export class TournamentOverview extends HTMLElement {
       this.innerHTML = notFound.outerHTML;
       return;
     }
-    this.fetchTournamentrData();
+    await this.fetchTournamentrData();
     window.addEventListener('resize', this.handleResize);
+    this.startPolling();
   }
 
   disconnectedCallback() {
     window.removeEventListener('resize', this.handleResize);
     this.updateButton?.removeEventListener('click', this.fetchTournamentrData);
+    if (this.#pollingInterval) {
+      clearInterval(this.#pollingInterval);
+    }
   }
 
   async fetchTournamentrData() {
@@ -84,6 +96,9 @@ export class TournamentOverview extends HTMLElement {
       return;
     }
     this.render();
+    if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
+      clearInterval(this.#pollingInterval);
+    }
     this.#state.updating = false;
   }
 
@@ -126,6 +141,16 @@ export class TournamentOverview extends HTMLElement {
     }
     this.#state.isMobile = isMobileSize;
     this.render();
+  }
+
+  startPolling() {
+    if (this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING) {
+      return;
+    }
+    this.#pollingInterval = setInterval(() => {
+      this.fetchTournamentrData();
+    }, 30000);
+    devLog('Tournament status polling started');
   }
 
   template() {
