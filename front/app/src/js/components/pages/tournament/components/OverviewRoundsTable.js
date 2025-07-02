@@ -47,14 +47,14 @@ export class TournamentOverviewTable extends HTMLElement {
   createBracketElement(bracket) {
     const bracketElement = document.createElement('div');
     bracketElement.classList.add('d-flex', 'flex-column', 'align-items-center', 'mx-3', 'my-2');
-    const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1);
-    const player2 = this.createPlayerElement(bracket.participant2, bracket.score_p2);
+    const player1 = this.createPlayerElement(bracket.participant1, bracket.score_p1, bracket.winner.alias);
+    const player2 = this.createPlayerElement(bracket.participant2, bracket.score_p2, bracket.winner.alias);
     bracketElement.appendChild(player1);
     bracketElement.appendChild(player2);
     return bracketElement;
   }
 
-  createPlayerElement(player, score) {
+  createPlayerElement(player, score, winnerAlias) {
     const element = document.createElement('div');
     element.innerHTML = this.playerTemplate();
     element.classList.add('d-flex', 'justify-content-center', 'align-items-center');
@@ -62,7 +62,7 @@ export class TournamentOverviewTable extends HTMLElement {
     avatarElement.src = player.profile.avatar;
     const aliasElement = element.querySelector('.player-alias');
     aliasElement.textContent = player.alias;
-    if (player.status === 'winner') {
+    if (player.alias === winnerAlias) {
       element.classList.add('bracket-player-winner');
     } else if (player.status === 'eliminated') {
       element.classList.add('bracket-player-loser');
