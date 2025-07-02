@@ -53,6 +53,7 @@ class TournamentConsumer(WebsocketConsumer):
         if not tournament.has_participant(self.user.profile):
             logger.warning("This user is not a participant: %s", self.user)
             self.accept()
+            logger.warning("CLOSING BECAUSE NOT A PARTICIPANT")
             self.close(ILLEGAL_CONNECTION)
             return
 
@@ -74,6 +75,8 @@ class TournamentConsumer(WebsocketConsumer):
         # TODO: See how the line about the tournament user is useful
         if hasattr(self, "user") and self.user:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
+        logger.warning("CLOSING FROM DISCONNECT")
+        # self.close(close_code)
         self.close(close_code)
 
     def receive(self, text_data):
@@ -95,6 +98,7 @@ class TournamentConsumer(WebsocketConsumer):
 
     def close_self_ws(self, event):
         self.tournament_id = None
+        logger.warning("CLOSING WITH CLOSE SELF WS")
         self.close(NORMAL_CLOSURE)
 
     def tournament_broadcast(self, event):
