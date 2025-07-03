@@ -40,6 +40,8 @@ export class TournamentOverview extends HTMLElement {
 
   async setParam(param) {
     this.#state.tournament_id = param.id;
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       router.redirect('/login');
@@ -103,6 +105,7 @@ export class TournamentOverview extends HTMLElement {
   }
 
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template() + this.style();
 
     this.tournamentName = this.querySelector('#tournament-name');

@@ -43,6 +43,8 @@ export class Settings extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     let user = auth.getStoredUser();
     if (!user) {
       user = await auth.getUser();
@@ -88,6 +90,7 @@ export class Settings extends HTMLElement {
   }
 
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template();
 
     this.form = this.querySelector('form');

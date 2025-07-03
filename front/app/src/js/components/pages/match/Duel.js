@@ -111,6 +111,8 @@ export class Duel extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     this.#state.loggedInUser = await auth.getUser();
     if (!this.#state.loggedInUser) {
       router.navigate('/login');
@@ -146,6 +148,7 @@ export class Duel extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template();
 
     this.header = this.querySelector('#duel-header');

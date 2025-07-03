@@ -64,6 +64,8 @@ export class Tournament extends HTMLElement {
    * @returns {Promise<void>} - A promise that resolves when the tournament data is fetched and the UI is updated.
    */
   async setParam(param) {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
@@ -286,6 +288,7 @@ export class Tournament extends HTMLElement {
   };
 
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template() + this.style();
     this.tournamentName = this.querySelector('#tournament-name');
     this.tournamentContentWrapper = this.querySelector('#tournament-content');

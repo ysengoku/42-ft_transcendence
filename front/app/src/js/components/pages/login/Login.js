@@ -8,6 +8,8 @@ export class Login extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
       router.redirect('/home');

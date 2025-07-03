@@ -255,7 +255,6 @@ router.addRoute('/account-deleted', 'account-deleted');
 router.addRoute('/chat', 'chat-page');
 router.addRoute('/duel-menu', 'duel-menu');
 router.addRoute('/duel', 'duel-page');
-router.addRoute('/duel-result/:id', 'duel-result', true);
 router.addRoute('/local-game-menu', 'local-game-menu');
 router.addRoute('/tournament-menu', 'tournament-menu');
 router.addRoute('/tournament/:id', 'tournament-room', true);
