@@ -599,3 +599,15 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
     opacity: 0;
   }
 }
+
+.rotating {
+  animation: rotating 1s linear infinite;
+}
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
