@@ -34,7 +34,7 @@ export class TournamentOverview extends HTMLElement {
     this.tournamentOverviewContent = null;
 
     this.#state.isMobile = isMobile();
-    this.fetchTournamentrData = this.fetchTournamentrData.bind(this);
+    this.updateStatus = this.updateStatus.bind(this);
     this.handleResize = this.handleResize.bind(this);
   }
 
@@ -53,6 +53,9 @@ export class TournamentOverview extends HTMLElement {
       return;
     }
     await this.fetchTournamentrData();
+    if (this.#state.tournament) {
+      this.render();
+    }
     window.addEventListener('resize', this.handleResize);
     this.startPolling();
   }
@@ -70,6 +73,11 @@ export class TournamentOverview extends HTMLElement {
       return;
     }
     this.#state.updating = true;
+    this.updateIcon?.classList.add('rotating');
+    if (this.updateButtonText) {
+      this.updateButtonText.textContent = ' Updating';
+    }
+
     const response = await apiRequest(
       'GET',
       /* eslint-disable-next-line new-cap */
@@ -97,10 +105,13 @@ export class TournamentOverview extends HTMLElement {
       this.innerHTML = notFound.outerHTML;
       return;
     }
-    this.render();
     if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
       clearInterval(this.#pollingInterval);
     }
+    setTimeout(() => {
+      this.updateIcon.classList.remove('rotating');
+      this.updateButtonText.textContent = ' Update the status';
+    }, 800);
     this.#state.updating = false;
   }
 
@@ -111,6 +122,8 @@ export class TournamentOverview extends HTMLElement {
     this.tournamentName = this.querySelector('#tournament-name');
     this.tournamentStatus = this.querySelector('#tournament-status');
     this.updateButton = this.querySelector('.update-tournament-status-button');
+    this.updateIcon = this.querySelector('.bi-arrow-clockwise');
+    this.updateButtonText = this.querySelector('.update-button-text');
     this.tournamentWinnerWrapper = this.querySelector('#tournament-winner-wrapper');
     this.tournamentWinnerAvatar = this.querySelector('#tournament-winner-avatar');
     this.tournamentWinnerAlias = this.querySelector('#tournament-winner-alias');
@@ -118,12 +131,20 @@ export class TournamentOverview extends HTMLElement {
 
     this.tournamentName.textContent = this.#state.tournament.name;
     if (this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING) {
+      this.updateButton.addEventListener('click', this.updateStatus);
+      this.updateButtonText.textContent = ' Update the status';
+    }
+    this.renderBracketUpdates();
+  }
+
+  renderBracketUpdates() {
+    if (this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING) {
       this.tournamentStatus.textContent = 'Ongoing';
       this.tournamentWinnerWrapper.classList.add('d-none');
-      this.updateButton.addEventListener('click', this.fetchTournamentrData);
     } else if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
       this.tournamentStatus.textContent = 'Finished on ' + `${formatDateMDY(this.#state.tournament.date)}`;
       this.updateButton.classList.add('d-none');
+      this.updateButton?.removeEventListener('click', this.updateStatus);
       if (this.#state.tournament.winner) {
         this.tournamentWinnerAvatar.src = this.#state.tournament.winner.profile.avatar;
         this.tournamentWinnerAlias.textContent = this.#state.tournament.winner.alias;
@@ -134,16 +155,8 @@ export class TournamentOverview extends HTMLElement {
       ? document.createElement('tournament-overview-table')
       : document.createElement('tournament-overview-tree');
     content.data = this.#state.tournament.rounds;
+    this.tournamentOverviewContent.innerHTML = '';
     this.tournamentOverviewContent.appendChild(content);
-  }
-
-  handleResize() {
-    const isMobileSize = isMobile();
-    if (isMobileSize === this.#state.isMobile) {
-      return;
-    }
-    this.#state.isMobile = isMobileSize;
-    this.render();
   }
 
   startPolling() {
@@ -156,6 +169,22 @@ export class TournamentOverview extends HTMLElement {
     devLog('Tournament status polling started');
   }
 
+  async updateStatus() {
+    await this.fetchTournamentrData();
+    if (this.#state.tournament) {
+      this.renderBracketUpdates();
+    }
+  }
+
+  handleResize() {
+    const isMobileSize = isMobile();
+    if (isMobileSize === this.#state.isMobile) {
+      return;
+    }
+    this.#state.isMobile = isMobileSize;
+    this.renderBracketUpdates();
+  }
+
   template() {
     return `
     <div class="container">
@@ -165,8 +194,8 @@ export class TournamentOverview extends HTMLElement {
             <h2 class="text-center m-0 pt-2 w-100" id="tournament-name"></h2>
             <p class="text-center m-0 mb-3 w-100" id="tournament-status"></p>
             <div class="update-tournament-status-button d-flex justify-content-center fw-bold mb-3">
-              <i class="bi bi-arrow-clockwise"></i>
-              &nbsp;Update the status
+              <i class="bi bi-arrow-clockwise fs-5 me-1"></i>
+              <p class="update-button-text m-0 pt-1"></p>
             </div>
 
             <div class="d-flex flex-column justify-content-start align-items-center" id="tournament-winner-wrapper">
@@ -201,7 +230,6 @@ export class TournamentOverview extends HTMLElement {
     <style>
     .update-tournament-status-button {
       color: var(--pm-text-green);
-      font-size: 0.8rem;
     }
     .update-tournament-status-button:hover {
       color: var(--pm-green-400);
