@@ -28,6 +28,8 @@ export class Home extends HTMLElement {
    * If authenticated, it retrieves the user data and renders the component.
    */
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
@@ -46,6 +48,7 @@ export class Home extends HTMLElement {
    * if the user has an ongoing game or tournament, it shows a toast notification.
    */
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.style() + this.template();
     const profileButton = this.querySelector('home-profile-button');
     profileButton.username = this.#state.user.username;

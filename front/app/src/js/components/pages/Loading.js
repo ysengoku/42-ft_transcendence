@@ -1,81 +1,141 @@
-export class Loading extends HTMLElement {
-  #state = {
-    ballSpeedX: 4,
-    ballSpeedY: 3,
-    ballRadius: 12,
-    animationFrameId: null,
-  };
+/**
+ * @module Loading
+ * @description Displays a loading animation
+ */
 
+export class Loading extends HTMLElement {
   constructor() {
     super();
-    this.ballColor = getComputedStyle(document.documentElement).getPropertyValue('--pm-primary-400');
   }
 
   connectedCallback() {
     this.render();
   }
 
-  disconnectedCallback() {
-    cancelAnimationFrame(this.#state.animationFrameId);
-  }
-
   render() {
     this.innerHTML = this.template() + this.style();
-    this.canvas = document.getElementById('loading-animation-canvas');
-    this.ctx = this.canvas.getContext('2d');
-    this.resizeCanvas();
-    this.drawFrame();
-  }
-
-  drawBall() {
-    this.ctx.beginPath();
-    this.ctx.arc(this.ballX, this.ballY, this.#state.ballRadius, 0, Math.PI * 2);
-    this.ctx.fillStyle = this.ballColor;
-    this.ctx.fill();
-    this.ctx.closePath();
-  }
-
-  updateBallPosition() {
-    this.ballX += this.#state.ballSpeedX;
-    this.ballY += this.#state.ballSpeedY;
-
-    if (this.ballX + this.#state.ballRadius > this.canvas.width || this.ballX - this.#state.ballRadius < 0) {
-      this.#state.ballSpeedX = -this.#state.ballSpeedX;
-    }
-    if (this.ballY + this.#state.ballRadius > this.canvas.height || this.ballY - this.#state.ballRadius < 0) {
-      this.#state.ballSpeedY = -this.#state.ballSpeedY;
-    }
-  }
-
-  drawFrame() {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.drawBall();
-    // this.drawMessage();
-    this.updateBallPosition();
-    this.#state.animationFrameId = requestAnimationFrame(() => this.drawFrame());
-  }
-
-  resizeCanvas() {
-    this.canvas.width = Math.floor(window.innerWidth) * 0.4;
-    this.canvas.height = Math.floor(window.innerHeight) * 0.2;
-    this.ballX = this.canvas.width / 2;
-    this.ballY = this.canvas.height / 2;
   }
 
   template() {
     return `
     <div class="container d-flex flex-column justify-content-center align-items-center text-center">
-      <canvas id="loading-animation-canvas"></canvas>
-      <div id="loading-message" class="fs-4 fw-bold">Loading</div>
+      <div id="loading-text-container">
+        <p class="loading-text">
+          <span class="letter">L</span>
+          <span class="letter">o</span>
+          <span class="letter">a</span>
+          <span class="letter">d</span>
+          <span class="letter">i</span>
+          <span class="letter">n</span>
+          <span class="letter">g</span>
+        </p>
+      </div>
     </div>
     `;
   }
 
+  /**
+   * Returns CSS styles
+   * - Bouncing ball animation: simulates a ball that travels above the letters in sync with their stretching.
+   * - Letter L & I stretch animations: create dynamic scaling effects on specific letters.
+   */
   style() {
     return `
     <style>
-      #loading-message {
+      #loading-text-container {
         position: absolute;
+        top: 55vh;
+        span {
+          font-family: 'kleader';
+          font-size: 24px;
+          font-weight: bold;
+          color: rgba(var(--pm-gray-100-rgb), 0.6);
+        }
+      }
+      .loading-text {
+        position: relative;
+        margin: 0;
+        white-space: nowrap;
+      }
+      .loading-text .letter {
+        display: inline-block;
+        position: relative;
+        letter-spacing: 2px;
+      }
+
+      /**
+       * Bouncing ball keyframes:
+       * - At 0% and 100%: the ball is above the letter "i", rotated so its trajectory aligns.
+       * - At 50%: the ball moves and drops between letters, simulating a bounce.
+       */
+      .loading-text::before {
+        position: absolute;
+        content: '';
+        z-index: 1;
+        left: 28px; /* Initial x-offset */
+        top: 0px; /* Initial y-offset */
+        width: 12px;
+        height: 12px;
+        background: var(--pm-green-300);
+        border-radius: 50%;
+        animation: bouncingBall 1800ms cubic-bezier(0.25,0.25,0.73,0.73) infinite;
+      }
+      @keyframes bouncingBall {
+        0%, 100% {
+          transform: rotate(180deg) translate(-52px, -4px) rotate(-180deg);
+        }
+        50% {
+          transform: rotate(0deg) translate(-28px, 6px) rotate(0deg);
+        }
+      }
+
+      /**
+       * Letter L stretching keyframes:
+       * - Creates an elastic stretch and squash effect on the first letter (L).
+       */
+      .loading-text .letter:nth-child(1) {
+        transform-origin: 100% 70%;
+        transform: scale(1, 1.6);
+        animation: letterLStretch 1800ms cubic-bezier(0.25,0.25,0.75,0.75) infinite;
+      }
+      @keyframes letterLStretch {
+        0%, 45%, 70%, 100% { transform: scaleY(1.6); }
+        49% { transform: scaleY(0.2); }
+        50% { transform: scaleY(0.3); }
+        53% { transform: scaleY(0.5); }
+        60% { transform: scaleY(1); }
+        68% { transform: scaleY(1.4); }
+      }
+
+      /**
+       * Letter I stretching keyframes:
+       * - Pulses the 5th letter (i) to add rhythm in sync with the bouncing ball.
+       */
+      .loading-text .letter:nth-child(5) {
+        transform-origin: 100% 70%;
+        animation: letterIStretch 1800ms cubic-bezier(0.25,0.23,0.73,0.75) infinite;
+      }
+      @keyframes letterIStretch {
+        0%, 100% {
+          transform: scale(1, 0.35);
+          transform-origin: 100% 75%;
+        }
+        8%, 28% {
+          transform: scale(1, 2.125);
+          transform-origin: 100% 67%;
+        }
+        37% {
+          transform: scale(1, 0.875);
+          transform-origin: 100% 75%;
+        }
+        46% {
+          transform: scale(1, 1.03);
+          transform-origin: 100% 75%;
+        }
+        50%, 97% {
+          transform: scale(1);
+          transform-origin: 100% 75%;
+        }
       }
     </style>
     `;
