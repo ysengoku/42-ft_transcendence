@@ -68,7 +68,7 @@ export class Navbar extends HTMLElement {
   updateNavbar(event) {
     this.#state.isLoggedin = event.detail.user !== null;
     if (this.#state.isLoggedin) {
-      this.#state.user = auth.getStoredUser(); // TODO: Use event.detail.user?
+      this.#state.user = event.detail.user;
     }
     this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
