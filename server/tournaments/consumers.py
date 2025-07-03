@@ -21,6 +21,7 @@ NORMAL_CLOSURE = 3000
 CANCELLED = 3001
 ILLEGAL_CONNECTION = 3002
 ALREADY_IN_GAME = 3003
+EXCLUDED = 3004
 BAD_DATA = 3100
 
 
@@ -50,11 +51,17 @@ class TournamentConsumer(WebsocketConsumer):
             self.accept()  # TODO: test this
             self.close(BAD_DATA)
             return
-        if not tournament.has_participant(self.user.profile):
-            logger.warning("This user is not a participant: %s", self.user)
+        try:
+            participant = tournament.participants.get(profile=self.user.profile)
+        except Participant.DoesNotExist:
             self.accept()
-            logger.warning("CLOSING BECAUSE NOT A PARTICIPANT")
             self.close(ILLEGAL_CONNECTION)
+            logger.warning("CLOSING because this user is not a participant : %s", self.user)
+            return
+        if participant.excluded:
+            self.accept()
+            self.close(EXCLUDED)
+            logger.warning("CLOSING because this participant was excluded : %s", self.user)
             return
 
         async_to_sync(self.channel_layer.group_add)(f"tournament_user_{self.user.id}", self.channel_name)
@@ -63,7 +70,12 @@ class TournamentConsumer(WebsocketConsumer):
         self.accept()
         if tournament.status == tournament.ONGOING:
             round_number = tournament.get_current_round_number()
-            bracket_status = tournament.get_user_current_bracket(self.user.profile, round_number).status
+            try:
+                bracket_status = tournament.get_user_current_bracket(self.user.profile, round_number).status
+            except Bracket.DoesNotExist:
+                logger.warning("This bracket does not exist")
+                self.close(BAD_DATA)
+                return
             if bracket_status in [Bracket.PENDING, Bracket.ONGOING]:
                 current_round = tournament.get_current_round(round_number)
                 TournamentService.receive_start_round_message(tournament.id, self.user.id, round_number, current_round)
@@ -76,7 +88,6 @@ class TournamentConsumer(WebsocketConsumer):
         if hasattr(self, "user") and self.user:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
         logger.warning("CLOSING FROM DISCONNECT")
-        # self.close(close_code)
         self.close(close_code)
 
     def receive(self, text_data):
