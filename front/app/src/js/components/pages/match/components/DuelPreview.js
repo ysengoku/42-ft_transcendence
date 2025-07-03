@@ -43,7 +43,7 @@ export class DuelPreview extends HTMLElement {
         duelPage.innerHTML = '';
         duelPage.appendChild(notFound);
       } else {
-        router.navigate('error');
+        router.redirect('error');
       }
       return;
     }
@@ -108,11 +108,11 @@ export class DuelPreview extends HTMLElement {
   }
 
   navigateToHome() {
-    router.navigate('/home');
+    router.redirect('/home');
   }
 
   navigateToDuelMenu() {
-    router.navigate('/duel-menu');
+    router.redirect('/duel-menu');
   }
 
   template() {
