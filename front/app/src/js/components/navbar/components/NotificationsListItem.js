@@ -145,7 +145,7 @@ export class NotificationsListItem extends HTMLElement {
     const data = await confirmationFromServer;
     duelPage
       ? duelPage.handleInvitationAccepted(data)
-      : router.navigate('/duel', {
+      : router.redirect('/duel', {
           status: 'starting',
           gameId: data.game_id,
           username: data.username,
