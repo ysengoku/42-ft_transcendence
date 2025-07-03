@@ -62,7 +62,6 @@ export function loader() {
     aspect-ratio: 1;
     border-radius: 50%;
     background: var(--pm-primary-500);
-    /* background: radial-gradient(circle at 16% 16%, var(--pm-primary-300) 20%, var(--pm-primary-500) 48%, var(--pm-primary-700) 100%); */
     animation: 
       loader-0 .5s cubic-bezier(0,900,1,900) infinite,
       loader-1  2s linear infinite alternate;
@@ -78,7 +77,9 @@ export function loader() {
   .chat-loader span {
     display: inline-block;
     animation: bounce 3s infinite ease-in-out;
-    font-size: 20px;
+    font-size: 16px;
+    font-family: 'kleader';
+    color: rgba(var(--pm-gray-100-rgb), 0.6);
   }
   .chat-loader span:nth-child(1) { animation-delay: 0s; }
   .chat-loader span:nth-child(2) { animation-delay: 0.2s; }
@@ -104,9 +105,6 @@ export function loader() {
     <span>i</span>
     <span>n</span>
     <span>g</span>
-    <span>.</span>
-    <span>.</span>
-    <span>.</span>
   </div>
   `;
 }

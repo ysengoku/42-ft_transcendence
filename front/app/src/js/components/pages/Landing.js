@@ -11,12 +11,15 @@ export class Landing extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     this.#state.isLoggedIn = authStatus.success ? true : false;
     this.render();
   }
 
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template() + this.style();
   }
 

@@ -61,6 +61,8 @@ export class TournamentMenu extends HTMLElement {
    * If the user is authenticated and has an active tournament session, it redirects to that tournament.
    */
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
@@ -105,6 +107,7 @@ export class TournamentMenu extends HTMLElement {
    * @returns {void}
    */
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template() + this.style();
 
     this.createTournamentButton = this.querySelector('#create-tournament-button');

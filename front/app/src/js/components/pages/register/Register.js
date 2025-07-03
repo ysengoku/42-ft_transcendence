@@ -9,6 +9,8 @@ export class Register extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
       router.redirect('/home');
@@ -25,6 +27,7 @@ export class Register extends HTMLElement {
   }
 
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template();
 
     this.form = this.querySelector('form');
