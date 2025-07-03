@@ -15,21 +15,18 @@ import {
   showAlertMessage,
   showAlertMessageForDuration,
   ALERT_TYPE,
-  sessionExpiredToast,
 } from '@utils';
 import './components/index.js';
 
 export class Settings extends HTMLElement {
   /**
    * Private state of the component.
-   * @property {boolean} #state.isLoggedIn - Indicates if the user is logged in.
    * @property {string} #state.username - The username of the logged-in user.
    * @property {Object} #state.currentUserData - Contains the current user data fetched from the server.
    * @property {Object} #state.newUserData - Holds the new user data to be submitted.
    * @property {boolean} #state.changed - Indicates if there are changes to be submitted.
    */
   #state = {
-    isLoggedIn: false,
     username: '',
     currentUserData: null,
     newUserData: null,
@@ -49,10 +46,8 @@ export class Settings extends HTMLElement {
     if (!user) {
       user = await auth.getUser();
     }
-    this.#state.isLoggedIn = user ? true : false;
-    if (!this.#state.isLoggedIn) {
-      sessionExpiredToast();
-      router.navigate('/login');
+    if (!user) {
+      router.redirect('/login');
       return;
     }
     this.#state.username = user.username;
