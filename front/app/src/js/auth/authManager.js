@@ -39,7 +39,7 @@ const auth = (() => {
         sessionStorage.removeItem('user');
         sessionStorage.setItem('user', JSON.stringify(user));
         if (fireEvent) {
-          const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
+          const event = new CustomEvent('userStatusChange', { detail: { user: user }, bubbles: true });
           document.dispatchEvent(event);
         }
       }
@@ -60,7 +60,7 @@ const auth = (() => {
         unread_notifications_count: currentUser.unread_notifications_count,
       };
       sessionStorage.setItem('user', JSON.stringify(updatedUser));
-      const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
+      const event = new CustomEvent('userStatusChange', { detail: { user: user }, bubbles: true });
       document.dispatchEvent(event);
     }
 

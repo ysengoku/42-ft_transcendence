@@ -5,7 +5,6 @@
  */
 
 import { BREAKPOINT } from '@utils';
-import { mockTournamentResult } from '@mock/functions/mockTournamentResult';
 
 export class TournamentOverviewTree extends HTMLElement {
   #state = {
@@ -19,9 +18,6 @@ export class TournamentOverviewTree extends HTMLElement {
 
   set data(data) {
     this.#state.rounds = data;
-    // ----- For test ---------------------------------------
-    // this.#state.rounds = mockTournamentResult().rounds;
-    // ------------------------------------------------------
     this.reorderBracketsForTree();
     this.render();
   }
