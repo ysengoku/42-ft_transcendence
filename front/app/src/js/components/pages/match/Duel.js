@@ -115,7 +115,7 @@ export class Duel extends HTMLElement {
     this.innerHTML = loading.outerHTML;
     this.#state.loggedInUser = await auth.getUser();
     if (!this.#state.loggedInUser) {
-      router.navigate('/login');
+      router.redirect('/login');
       return;
     }
     if (!this.#state.status) {
@@ -363,7 +363,7 @@ export class Duel extends HTMLElement {
         router.removeBeforeunloadCallback();
         window.removeEventListener('beforeunload', this.confirmLeavePage);
         socketManager.closeSocket('matchmaking');
-        router.navigate(`/multiplayer-game/${this.#state.gameId}`);
+        router.redirect(`/multiplayer-game/${this.#state.gameId}`);
       }
     }, 1000);
   }
