@@ -90,6 +90,8 @@ export class DuelMenu extends HTMLElement {
    * If the user is authenticated and has an ongoing game, it redirects to the game page.
    */
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
       if (authStatus.status === 401) {
@@ -125,6 +127,7 @@ export class DuelMenu extends HTMLElement {
   /*      Rendering                                                           */
   /* ------------------------------------------------------------------------ */
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template() + this.style();
 
     // Set references to DOM elements
