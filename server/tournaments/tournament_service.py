@@ -281,13 +281,11 @@ class TournamentService:
             tournament.save(update_fields=["status"])
         data = {"tournament_id": str(tournament_id), "tournament_name": tournament_name}
         TournamentService.send_group_message(tournament_id, "tournament_canceled", data)
-        # TournamentService.trigger_action(tournament_id, "close_self_ws")
 
     @staticmethod
     def cancel_bracket(bracket, tournament_id):
         logger.debug("function cancel_bracket")
         with transaction.atomic():
-            # TODO: see if setting the bracket to a winner is really fair (if the user reconnects, they could continue the tournament without having to play)
             bracket.winner = bracket.participant1
             bracket.status = Bracket.CANCELLED
             bracket.participant1.status = Participant.QUALIFIED

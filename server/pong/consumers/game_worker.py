@@ -714,15 +714,8 @@ class GameWorkerConsumer(AsyncConsumer):
                         ),
                     )
                 elif match.is_in_tournament:
-                    # await self._send_player_won_event(
-                    #     match,
-                    #     "player_resigned",
-                    #     winner,
-                    #     player,
-                    #     0,
-                    # )
                     winner = match.get_player_who_connected_earliest()
-                    loser = match._player_2 if winner == match._player_1 else match._player_1
+                    loser = match.get_other_player(winner.id)
                     await self.channel_layer.group_send(
                         self._to_game_room_group_name(match),
                         GameServerToClient.PlayerWon(
@@ -736,13 +729,11 @@ class GameWorkerConsumer(AsyncConsumer):
                         ),
                     )
                     # If the tournament game is cancelled, there is a winner: player who connected first
-                    # winner = match.get_player_who_connected_earliest()
                     await Bracket.objects.async_update_finished_bracket(
                         match.bracket_id,
                         winner.profile_id,
                         0,
                         0,
-                        # Bracket.CANCELLED,
                         Bracket.FINISHED,
                     )
                     await self.channel_layer.send(
