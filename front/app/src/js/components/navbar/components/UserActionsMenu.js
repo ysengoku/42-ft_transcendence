@@ -38,6 +38,9 @@ export class UserActionsMenu extends HTMLElement {
   }
 
   updateLoginStatus(isLoggedin) {
+    if (this.#state.isLoggedin === isLoggedin) {
+      return;
+    }
     this.#state.isLoggedin = isLoggedin;
     this.render();
   }
