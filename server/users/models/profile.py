@@ -302,7 +302,7 @@ class Profile(models.Model):
             tournament__status__in=["pending", "ongoing"],
             profile=self,
         ).first()
-        if participant:
+        if participant and not participant.excluded:
             return participant.tournament
         return None
 
