@@ -28,6 +28,7 @@ export class Chat extends HTMLElement {
     loggedInUser: null,
     currentChatUsername: '',
     currentChat: null,
+    // pendingMessages: new Map(),
   };
 
   /**
@@ -232,16 +233,19 @@ export class Chat extends HTMLElement {
 
   sendMessage(event) {
     const timestamp = Date.now();
-    console.log(timestamp);
     const messageData = {
       action: 'new_message',
       data: {
         chat_id: this.#state.currentChat.chat_id,
         content: event.detail,
-        timestamp: timestamp,
+        // timestamp: timestamp,
+        timestamp: '12345', // For test
       },
     };
-    socketManager.sendMessage('livechat', messageData);
+    this.chatMessagesArea.renderPendingMessage(messageData.data);
+    requestAnimationFrame(() => {
+      socketManager.sendMessage('livechat', messageData);
+    });
   }
 
   sendToggleLikeEvent(chatId, messageId, isLiked) {
@@ -256,18 +260,21 @@ export class Chat extends HTMLElement {
   }
 
   async receiveMessage(event) {
-    if (this.#state.currentChat && event.detail.chat_id === this.#state.currentChat.chat_id) {
-      this.chatMessagesArea.renderNewMessage(event.detail);
-    } else if (!this.#state.currentChat && event.detail.sender !== this.#state.loggedInUser.username) {
-      this.#state.currentChatUsername = event.detail.sender;
-      const chatData = await this.fetchChatData();
-      if (!chatData) {
-        return;
+    setTimeout(async () => { // For test
+      if (this.#state.currentChat && event.detail.chat_id === this.#state.currentChat.chat_id) {
+        event.detail.timestamp = '12345'; // For test
+        this.chatMessagesArea.renderNewMessage(event.detail);
+      } else if (!this.#state.currentChat && event.detail.sender !== this.#state.loggedInUser.username) {
+        this.#state.currentChatUsername = event.detail.sender;
+        const chatData = await this.fetchChatData();
+        if (!chatData) {
+          return;
+        }
+        this.#state.currentChat = chatData.data;
+        this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
       }
-      this.#state.currentChat = chatData.data;
-      this.chatMessagesArea.setData(this.#state.currentChat, this.#state.loggedInUser.username);
-    }
-    await this.chatList.updateListWithIncomingMessage(event.detail);
+      await this.chatList.updateListWithIncomingMessage(event.detail);
+    }, 1000); // For test
   }
 
   handleToggleLikeMessage(event) {
