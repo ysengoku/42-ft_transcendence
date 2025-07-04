@@ -6,7 +6,7 @@ from uuid import UUID
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-from .models import Bracket, Tournament
+from .models import Bracket, Participant, Tournament
 
 # TODO: see if BracketSchema is really needed
 from .tournament_service import TournamentService
