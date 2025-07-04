@@ -17,7 +17,6 @@ from .schemas import BracketSchema, RoundSchema
 
 logger = logging.getLogger("server")
 
-# TODO: Verify connexion of both players before the match ?
 # TODO: security checks : multiple crash when bad ws id sent by the console
 # TODO: put all shared macros between files in the same file
 NORMAL_CLOSURE = 3000
@@ -180,7 +179,6 @@ class TournamentService:
         participants = list(participants)
         random.shuffle(participants)
         brackets = []
-        # while len(participants) >= 2:
         while participants:
             p1 = participants.pop()
             p2 = participants.pop()
@@ -258,6 +256,7 @@ class TournamentService:
             logger.debug("Tournament should be cancelled")
         tournament.save()
         logger.debug("Tournament status : %s", tournament.status)
+        logger.warning("CLOSING CAUSE END TOURNAMENT")
         TournamentService.trigger_action(tournament.id, "close_self_ws")
 
     @staticmethod
@@ -282,14 +281,22 @@ class TournamentService:
             tournament.save(update_fields=["status"])
         data = {"tournament_id": str(tournament_id), "tournament_name": tournament_name}
         TournamentService.send_group_message(tournament_id, "tournament_canceled", data)
-        TournamentService.trigger_action(tournament_id, "close_self_ws")
+        # TournamentService.trigger_action(tournament_id, "close_self_ws")
 
     @staticmethod
     def cancel_bracket(bracket, tournament_id):
         logger.debug("function cancel_bracket")
         with transaction.atomic():
+            # TODO: see if setting the bracket to a winner is really fair (if the user reconnects, they could continue the tournament without having to play)
+            bracket.winner = bracket.participant1
             bracket.status = Bracket.CANCELLED
-            bracket.save(update_fields=["status"])
+            bracket.participant1.status = Participant.QUALIFIED
+            bracket.participant2.status = Participant.ELIMINATED
+            bracket.participant1.excluded = True
+            bracket.participant2.excluded = True
+            bracket.participant1.save(update_fields=["excluded", "status"])
+            bracket.participant2.save(update_fields=["excluded", "status"])
+            bracket.save(update_fields=["status", "winner"])
         p1_id = bracket.participant1.profile.user.id
         p2_id = bracket.participant2.profile.user.id
         TournamentService.disconnect_user(p1_id)
@@ -326,6 +333,7 @@ class TournamentService:
             status__in=[Bracket.ONGOING, Bracket.PENDING],
             round__tournament=tournament,
         ).exists():
+            logger.info("Round finished for tournament : %s", tournament.name)
             last_round.status = Round.FINISHED
             last_round.save(update_fields=["status"])
             data = {"tournament_id": str(tournament_id)}

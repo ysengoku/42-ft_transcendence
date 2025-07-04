@@ -37,6 +37,7 @@ class Participant(models.Model):
     alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=PENDING)
     current_round = models.PositiveIntegerField(default=0)
+    excluded = models.BooleanField(default=False)
 
     class Meta:
         unique_together = (("profile", "tournament"), ("tournament", "alias"))
