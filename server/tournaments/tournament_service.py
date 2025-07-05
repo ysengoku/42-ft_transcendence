@@ -106,6 +106,10 @@ class TournamentService:
             new_round.save(update_fields=["status"])
         TournamentService.prepare_brackets(participants, round_number, new_round)
         TournamentService.send_start_round_message(tournament_id, round_number, new_round)
+        if new_round.brackets.filter(status=Bracket.FINISHED):
+            finished_brackets = new_round.brackets.filter(status=Bracket.FINISHED)
+            for b in finished_brackets:
+                TournamentService.tournament_game_finished(tournament_id, b.id)
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.send)(
             "tournament",
@@ -164,6 +168,10 @@ class TournamentService:
             bracket.game_room = game_room
             bracket.game_id = game_room.id
             bracket.save(update_fields=["game_room", "game_id"])
+            if game_room.status == GameRoom.CLOSED:
+                bracket.status = Bracket.FINISHED
+                bracket.winner = bracket.participant1 if bracket.participant2.excluded else bracket.participant2
+                bracket.save(update_fields=["status", "winner"])
         logger.debug(new_round)
 
     @staticmethod
@@ -171,6 +179,9 @@ class TournamentService:
         gameroom: GameRoom = GameRoom.objects.create(status=GameRoom.ONGOING)
         gameroom.add_player(p1.profile)
         gameroom.add_player(p2.profile)
+        if p1.excluded or p2.excluded:
+            gameroom.status=GameRoom.CLOSED
+            gameroom.save(update_fields=["status"])
         return gameroom
 
     @staticmethod
