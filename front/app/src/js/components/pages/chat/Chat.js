@@ -231,11 +231,14 @@ export class Chat extends HTMLElement {
   }
 
   sendMessage(event) {
+    const timestamp = Date.now();
+    console.log(timestamp);
     const messageData = {
       action: 'new_message',
       data: {
         chat_id: this.#state.currentChat.chat_id,
         content: event.detail,
+        timestamp: timestamp,
       },
     };
     socketManager.sendMessage('livechat', messageData);
