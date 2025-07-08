@@ -21,10 +21,10 @@ config:
   theme: redux
 ---
 flowchart TD
-    A(["User navigates or clicks link"]) ---> B("**navigate()** / **redirect()** / **handleLinkClick()**")
+    A(["User navigates or clicks link"]) --> B("**navigate()** / **redirect()** / **handleLinkClick()**")
     B --> C("**handleRoute()**")
     C -- No matched route found --> D(["Render 'page-not-found' component"])
-    C -- Route found --> E["Is route dynamic?"]
+    C -- Route found ---> E["Is route dynamic?"]
     E -- Yes --> F("**extractParam()**")
     F --> G("**renderDynamicUrlComponent()**")
     G --- H("Call **setParam()**")
