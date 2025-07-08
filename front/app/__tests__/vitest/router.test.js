@@ -194,4 +194,99 @@ describe('navigate', () => {
     expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/test');
     expect(pushStateSpy).not.toHaveBeenCalled();
   })
+
+  it('should convert object queryParams to URLSearchParams', async() => {
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    await navigate('/test', { status: '123' });
+
+    const arg = handleRouteSpy.mock.calls[0][0];
+    expect(arg instanceof URLSearchParams).toBe(true);
+    expect(arg.get('status')).toBe('123');
+  });
+
+  it('should convert queryParams in string to URLSearchParams', async() => {
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    await navigate('/test', 'status=123&message=test');
+
+    const arg = handleRouteSpy.mock.calls[0][0];
+    expect(arg instanceof URLSearchParams).toBe(true);
+    expect(arg.get('status')).toBe('123');
+    expect(arg.get('message')).toBe('test');
+  });
+
+  it('should pass queryParams in URLSearchParams', async() => {
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const query = new URLSearchParams({ status: '123' });
+    await navigate('/test', query);
+
+    const arg = handleRouteSpy.mock.calls[0][0];
+    expect(arg.get('status')).toBe('123');    
+  });
+
+  it('should not proceed if beforeunloadCallback returns false', async() => {
+    router.beforeunloadCallback = vi.fn().mockResolvedValue(false);
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+
+    await router.navigate('/test');
+    expect(router.beforeunloadCallback).toHaveBeenCalled();
+    expect(handleRouteSpy).not.toHaveBeenCalled();
+    expect(pushStateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should proceed if beforeunloadCallback returns true', async() => {
+    const beforeUnloadSpy = vi.fn().mockResolvedValue(true);
+    router.beforeunloadCallback = beforeUnloadSpy;
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+
+    await router.navigate('/test');
+    expect(beforeUnloadSpy).toHaveBeenCalled();
+    expect(handleRouteSpy).toHaveBeenCalled();
+    expect(pushStateSpy).toHaveBeenCalled();
+  });
+});
+
+describe('handleLinkClick', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('should call navigate when clicking on internal link', () => {
+    const mockClickEvent = {
+      target: document.createElement('a'),
+      preventDefault: vi.fn(),
+    };
+    mockClickEvent.target.setAttribute('href', '/test');
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    router.handleLinkClick(mockClickEvent);
+
+    expect(mockClickEvent.preventDefault).toHaveBeenCalled();
+    expect(navigateSpy).toHaveBeenCalledWith('/test');
+  });
+
+  it('should not call navigate when clicking non-anchor elements', () => {
+    const mockClickEvent = {
+      target: document.createElement('div'),
+      preventDefault: vi.fn(),
+    };
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    router.handleLinkClick(mockClickEvent);
+
+    expect(mockClickEvent.preventDefault).not.toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not call navigate when clicking on external link', () => {
+    const mockClickEvent = {
+      target: document.createElement('a'),
+      preventDefault: vi.fn(),
+    };
+    mockClickEvent.target.setAttribute('href', 'https://externaklink.com');
+    const navigateSpy = vi.spyOn(router, 'navigate');
+    router.handleLinkClick(mockClickEvent);
+
+    expect(mockClickEvent.preventDefault).not.toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
 });
