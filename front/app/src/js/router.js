@@ -129,9 +129,9 @@ const router = (() => {
       const component = document.createElement(componentTag);
 
       if (queryParams.size > 0) {
-        for (const [key, value] of queryParams.entries()) {
-          devLog(`${key}: ${value}`);
-        }
+        // for (const [key, value] of queryParams.entries()) {
+        //   devLog(`${key}: ${value}`);
+        // }
         component.setQueryParam(queryParams);
       }
       const contentElement = document.getElementById('content');
@@ -302,3 +302,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 export { router };
+
+export const __test__ = {
+  extractParam: router.extractParam.bind(router),
+  matchDynamicRoute: router.matchDynamicRoute.bind(router),
+  navigate: router.navigate.bind(router),
+  router,
+};

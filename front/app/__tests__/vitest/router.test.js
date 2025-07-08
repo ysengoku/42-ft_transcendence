@@ -1,0 +1,197 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+vi.mock('@socket', () => ({
+  socketManager: {
+    addSocket: vi.fn(),
+    openSocket: vi.fn(),
+    closeSocket: vi.fn(),
+  }
+}));
+
+globalThis.devLog = vi.fn();
+globalThis.devErrorLog = vi.fn();
+
+import { __test__ } from '@router';
+const { extractParam, matchDynamicRoute, navigate, router } = __test__;
+
+describe('extractParam', () => {
+  it('should extract username', () => {
+    expect(extractParam('/profile/:username', '/profile/alice')).toStrictEqual({ username: 'alice' });
+  });
+
+  it('should extract id', () => {
+    expect(extractParam('/multiplayer-game/:id', '/multiplayer-game/12345')).toStrictEqual({ id: '12345' });
+  });
+
+	it('should return null if static parts do not match', () => {
+    expect(extractParam('/profile/:username', '/user/alice')).toBeNull();
+  });
+
+	it('should return null if segments count mismatch', () => {
+    expect(extractParam('/profile/:username', '/profile/alice/user')).toBeNull();
+  });
+
+  it('should return null if dynamic segment missing', () => {
+    expect(extractParam('/profile/:id', '/profile')).toBeNull();
+  });
+});
+
+describe('matchDynamicRoute', () => {
+  beforeEach(() => {
+    router.routes.clear();
+    router.addRoute('/test/:id', 'test-page', true);
+    router.addRoute('/test-profile/:username', 'test-profile-page', true);
+    router.addRoute('/static-test', 'static-test-page', false);
+  });
+
+  it('should match a dynamic route and return component and param', () => {
+    expect(matchDynamicRoute('/test/12345')).toStrictEqual({
+      componentTag: 'test-page',
+      isDynamic: true,
+      param: { id: '12345' }
+    });
+    expect(matchDynamicRoute('/test-profile/alice')).toStrictEqual({
+      componentTag: 'test-profile-page',
+      isDynamic: true,
+      param: { username: 'alice' },
+    });
+  });
+
+  it('should return null if no dynamic route matches', () => {
+    expect(matchDynamicRoute('/tests/12345')).toBeNull();
+    expect(matchDynamicRoute('/test/12345/abc')).toBeNull();
+  });
+
+  it('should ignore static routes', () => {
+    expect(matchDynamicRoute('/static-test')).toBeNull();
+  });
+});
+
+describe('renderStaticUrlComponent', () => {
+  let container;
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'content';
+    document.body.innerHTML = '';
+    document.body.appendChild(container);
+  });
+
+  it('should append component to container', () => {
+    router.renderStaticUrlComponent('test-component');
+    const appendedElement = container.querySelector('test-component');
+
+    expect(appendedElement).not.toBeNull();
+    expect(router.currentComponent).toBe(appendedElement);
+  });
+
+  it('should remove current component if it exists', () => {
+    const current = document.createElement('current');
+    current.remove = vi.fn();
+    router.currentComponent = current;
+    container.appendChild(current);
+
+    router.renderStaticUrlComponent('new');
+    expect(current.remove).toHaveBeenCalled();
+  });
+
+  it('should call setQueryParam if queryParams is provided', () => {
+    const testComponentTag = 'test-component';
+    customElements.define(testComponentTag, class extends HTMLElement {
+      setQueryParam(q) {
+        this._param = q;
+      }
+    });
+
+    const queryParam = new URLSearchParams({ status: '12345' });
+    router.renderStaticUrlComponent(testComponentTag, queryParam);
+
+    const element = container.querySelector(testComponentTag);
+    expect(element._param).toEqual(queryParam); 
+  });
+});
+
+describe('renderDynamicUrlComponent', () => {
+  let container;
+  beforeEach(() => {
+    container = document.createElement('div');
+    container.id = 'content';
+    document.body.innerHTML = '';
+    document.body.appendChild(container);
+  });
+
+  it('should append component to container', () => {
+    router.renderDynamicUrlComponent('test-component');
+    const appendedElement = container.querySelector('test-component');
+
+    expect(appendedElement).not.toBeNull();
+    expect(router.currentComponent).toBe(appendedElement);
+  });
+
+  it('should remove current component if it exists', () => {
+    const current = document.createElement('current');
+    current.remove = vi.fn();
+    router.currentComponent = current;
+    container.appendChild(current);
+
+    router.renderDynamicUrlComponent('new');
+    expect(current.remove).toHaveBeenCalled();
+  });
+
+  it('should call setParam', () => {
+    const testComponentTag = 'dynamic-url-test-component';
+    customElements.define(testComponentTag, class extends HTMLElement {
+      setParam(p) {
+        this._param = p;
+      }
+    });
+
+    const param = { id: '12345' };
+    router.renderDynamicUrlComponent(testComponentTag, param);
+
+    const element = container.querySelector(testComponentTag);
+    expect(element._param).toEqual(param); 
+  });
+});
+
+describe('navigate', () => {
+  beforeEach(() => {
+    router.routes.clear();
+    router.isFristLoad = false;
+    router.beforeunloadCallback = null;
+    vi.restoreAllMocks();
+  });
+
+  it('should use pushState if redirect and first load are false', async () => {
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+    await navigate('/test', '', false);
+
+    expect(handleRouteSpy).toHaveBeenCalledWith('');
+    expect(pushStateSpy).toHaveBeenCalledWith({}, '', '/test');
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should use replaceState if redirect is true', async () => {
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    await navigate('/test', '', true);
+
+    expect(handleRouteSpy).toHaveBeenCalledWith('');
+    expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/test');
+    expect(pushStateSpy).not.toHaveBeenCalled();
+  })
+
+  it('should use replaceState if first load is true', async () => {
+    router.isFristLoad = true;
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    await navigate('/test', '', false);
+
+    expect(handleRouteSpy).toHaveBeenCalledWith('');
+    expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/test');
+    expect(pushStateSpy).not.toHaveBeenCalled();
+  })
+});
