@@ -128,7 +128,7 @@ flowchart TD
     I --> N(["Return<br/>- success: false<br/>- response status<br/>- error message"])
 
     E -- Exception thrown --> J("handlers.exception")
-    J --> O(["Return<br/>- success: false<br/>- response status<br/>- error message"])
+    J --> O(["Return<br/>- success: false<br/>- status: 0<br/>- error message"])
 
     D@{ shape: text }
     E@{ shape: text }
