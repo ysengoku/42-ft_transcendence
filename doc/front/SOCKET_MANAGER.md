@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `socketManager` is a singleton WebSocket manager that that can handle multiple named WebSocket connections.
+The `socketManager` is a singleton WebSocket manager that can handle multiple named WebSocket connections.
 Each named socket is an instance of `WebSocketManager` which wraps a single `WebSocket`, handles automatic reconnects, parses incoming messages, and dispatches them to registered listeners.
 
 ## `WS_PATH` Enum
@@ -12,7 +12,8 @@ Defines the URL path for each feature’s WebSocket endpoint.
 ```js
 const WS_PATH = {
   livechat: '/ws/events/',
-  matchmaking: '/ws/matchmaking/',
+  matchmaking: (options) => (options === null ? '/ws/matchmaking/' : `/ws/matchmaking/${options}`),
+  tournament: (id) => `/ws/tournament/${id}`,
 };
 ```
 
@@ -70,13 +71,28 @@ const socketManager = (() => {
 - `closeAllSockets()`: Closes every registered socket.
 - `sendMessage(name, message)`: Serializes message to JSON and sends it via the named socket.
 
+### Reconnection Logic
+Automatic reconnection is built-in for resilience against unintentional disconnections:
+
+- The `onclose` handler triggers `reconnect()` when:
+  - the socket was not closed intentionally;
+  - the close code is not ≥ 3000 (which usually means server-initiated shutdown);
+  - the close code is not 1006 or 1011, which indicate more serious connection or server errors. In those cases, a user-facing toast notification is shown.
+
+- Retry behavior:
+  - Reconnect attempts are delayed by 1 second using setTimeout().
+  - Reconnection uses the same path and listeners, reinitializing the socket.
+
+- Stop conditions:
+  - If the server repeatedly closes the connection with code ≥ 3000, the socket is assumed to be intentionally closed and no further reconnect attempts are made.
+  - If the user has manually called close(), no reconnection is attempted.
+
 ## Built‐in Socket Registrations
 
 We can register as many sockets as we need.
 Here is how to do it for the built-in modules:
 
 ```js
-// Livechat: chat messages, notifications, online presence
 socketManager.addSocket('livechat', {
   new_message: (data) => { /* dispatch newChatMessage, toast, badge */ },
   like_message:  (data) => { /* dispatch toggleLikeChatMessage */ },
@@ -86,14 +102,6 @@ socketManager.addSocket('livechat', {
   new_friend:    (data) => { /* badge + toast “X is now your friend” */ },
   user_online:   (data) => { /* dispatch onlineStatus(online=true) */ },
   user_offline:  (data) => { /* dispatch onlineStatus(online=false)*/ },
-});
-
-// Matchmaking: game‐found events
-socketManager.addSocket('matchmaking', {
-  game_found: (data) => {
-    const evt = new CustomEvent('gameFound', { detail: data, bubbles: true });
-    document.dispatchEvent(evt);
-  }
 });
 ```
 
@@ -113,114 +121,39 @@ All messages follow this format:
 }
 ```
 
-### Live Chat module Protocol
+### 👉 `livechat`
 
-Live Chat module handles:
-- Chat between 2 users
-- Notifications for new friend, invitation to a match and new tournament creation
-- Realtime users' online status update on UI
+The `livechat` WebSocket is used to receive and send real-time updates related to chat activity and global events. This socket is persistent and remains open while the user is authenticated and active in the application.
 
-#### Chat
+It includes:
+- Sending and receiving chat messages;
+- Handling like/dislike actions on chat messages;
+- Receiving notifications when other users come online or go offline;
+- Receiving game invitations from other users and replying to them;
+- Receiving notifications when other users add the user to their friend list.
 
-##### action: `new_message`
+The communication protocol is explained here: [LiveChat Module WebSocket actions Protocol](./protocol/LIVECHAT_MODULE_WS_PROTOCOL.md)
 
-From Server to Client
+### 👉 `matchmaking`
 
-| Field             | Type     |
-|:------------------|:---------|
-| chat_id           | string   |
-| id (message id)   | string   |
-| content           | string   |
-| date              | datetime |
-| sender (username) | string   |
-| is_read           | bool     |
-| is_liked          | bool     |
+The `matchmaking` WebSocket manages real-time interactions during the matchmaking process.
+- If `options` is null, the connection is established at /ws/matchmaking/. Game options will be set to default value by the server.
+- If `options` is provided, it connects to /ws/matchmaking/<options>, where <options> represents the game options selected by the user.
+The socket is opened when the user enters matchmaking and closed once the match is found.
 
-From Client to Server
+This WebSocket handles:
+- Searching for or waiting for a match based on selected game options;
+- Receiving a notifications when a match is found;
+- Sending a cancel action when the user cancels matchmaking.
 
-| Field    | Type   |
-|:---------|:-------|
-| chat_id  | string |
-| content  | string |
+### 👉 `tournament`
 
+The `tournament` socket is opened when a user subscribes to a tournament and remains active to provide live synchronization of tournament-related data. It is closed when the user is eliminated, or when the tournament ends or is canceled.
 
-##### action: `like_message` & action: `unlike_message`
+This WebSocket handles:
+- Receiving new registrations and cancellations, and updating the lobby UI;
+- Managing tournament lifecycle events (start, cancel, round start/end);
+- Updating match results in the bracket for users who have completed their matches and are waiting for the next round;
+- Notifying users through UI updates or alerts, depending on context.
 
-From Server to Client & From Client to Server
-
-| Field             | Type     |
-|:------------------|:---------|
-| chat_id           | string   |
-| id (message id)   | string   |
-
-
-##### action: `read_message`
-
-From Client to Server
-
-| Field             | Type     |
-|:------------------|:---------|
-| chat_id           | string   |
-| id (message id)   | string   |
-
-#### Notifications
-
-##### action: `new_friend`
-
-From Server to Client
-
-| Field                | Type   |
-|:---------------------|:-------|
-| id (notification id) | string |
-| username             | string |
-| nickname             | string |
-
-##### action: `game_invite`
-
-From Server to Client
-
-| Field                  | Type   |
-|:-----------------------|:-------|
-| id (notification id)   | string |
-| game_id                | string |
-| username               | string |
-| nickname               | string |
-
-##### action: `reply_game_invite`
-
-From Client to Server
-
-| Field  | Type |
-|:-------|:-----|
-| id     | string |
-| accept | bool   |
-
-##### action: `new_tounament`
-
-From Server to Client
-
-| Field                  | Type   |
-|:-----------------------|:-------|
-| id (notification id)   | string |
-| tounament_id           | string |
-| tournament_name        | string |
-| nickname (organizer)   | string |
-
-##### action: `read_notification`
-
-From Client to Server
-
-| Field                  | Type   |
-|:-----------------------|:-------|
-| id (notification id)   | string |
-
-
-#### Online status
-
-##### action: `user_online` & action: `user_offline`
-
-From Server to Client
-
-| Field    | Type   |
-|:---------|:-------|
-| username | string |
+The communication protocol is explained here: [Tournament WebSocket actions Protocol](./protocol/TOURNAMENT_WS_PROTOCOL.md)
