@@ -111,7 +111,6 @@ class Profile(models.Model):
     is_online = models.BooleanField(default=False)
     last_activity = models.DateTimeField(auto_now_add=True)
     nb_active_connexions = models.IntegerField(default=0)
-    active_channels = models.JSONField(default=list, blank=True)
 
     objects = ProfileQuerySet.as_manager()
 
