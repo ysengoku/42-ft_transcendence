@@ -17,7 +17,7 @@ export class UserStatCard extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     const title = this.querySelector('#stat-card-title');
     const value = this.querySelector('#stat-card-value');

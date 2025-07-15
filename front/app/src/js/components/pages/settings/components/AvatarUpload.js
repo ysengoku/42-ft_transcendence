@@ -34,7 +34,7 @@ export class AvatarUpload extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.avatarUploadButton = this.querySelector('#avatar-upload-button');
     this.avatarImage = this.querySelector('#user-avatar-image');

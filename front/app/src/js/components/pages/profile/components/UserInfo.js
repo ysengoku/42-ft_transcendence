@@ -19,7 +19,7 @@ export class ProfileUserInfo extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.querySelector('#profile-nickname').textContent = this.#state.nickname;
     this.querySelector('#profile-username').textContent = `@${this.#state.username}`;
