@@ -64,7 +64,7 @@ export class TournamentPending extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.currentParticipantsCount = this.querySelector('#current-participants-count');
     this.requiredParticipants = this.querySelector('#required-participants');

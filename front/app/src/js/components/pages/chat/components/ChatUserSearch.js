@@ -39,7 +39,7 @@ export class ChatUserSearch extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.listContainer = this.querySelector('#chat-user-list');
     this.form = this.querySelector('#chat-user-search-form');

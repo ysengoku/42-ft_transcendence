@@ -143,7 +143,7 @@ export class Chat extends HTMLElement {
   /*      Rendering                                                           */
   /* ------------------------------------------------------------------------ */
   async render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.chatList = this.querySelector('chat-list-component');
     this.chatMessagesArea = document.querySelector('chat-message-area');

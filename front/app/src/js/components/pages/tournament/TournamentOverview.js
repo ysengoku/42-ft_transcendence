@@ -117,7 +117,7 @@ export class TournamentOverview extends HTMLElement {
 
   render() {
     this.innerHTML = '';
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.tournamentName = this.querySelector('#tournament-name');
     this.tournamentStatus = this.querySelector('#tournament-status');

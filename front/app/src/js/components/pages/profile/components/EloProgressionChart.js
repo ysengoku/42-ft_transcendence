@@ -49,7 +49,7 @@ export class UserEloProgressionChart extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.chart = this.querySelector('.line-chart-wrapper');
     this.previousButton = this.querySelector('#btn-elo-history-prev');

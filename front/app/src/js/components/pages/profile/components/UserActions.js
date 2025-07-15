@@ -55,7 +55,7 @@ export class ProfileUserActions extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     if (this.#state.isMyProfile) {
       this.editProfileButton = this.querySelector('#edit-profile-button');
