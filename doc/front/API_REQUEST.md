@@ -14,8 +14,8 @@ apiRequest(method, endpoint, data = null, isFileUpload = false, needToken = true
 
 | Parameter      | Type               | Default | Description                                   |
 | -------------- | ------------------ | ------- | --------------------------------------------- |
-| `method`       | `string`           | –       | HTTP method to be used (e.g., `GET`, `POST`, `PUT`, `DELETE`).                                     |
-| `endpoint`     | `string`           | –       | API endpoint to which the request is sent.                                                  |
+| `method`       | `string`           | –       | HTTP method to be used (e.g., `GET`, `POST`, `PUT`, `DELETE`). |
+| `endpoint`     | `string`           | –       | API endpoint to which the request is sent. |
 | `data`         | `object` \| `null` | `null`  | The payload sent with the request. For `POST` or `PUT`, this is stringified unless it's a file. |
 | `isFileUpload` | `boolean`          | `false` | Whether the request uploads a file. If `true`, `Content-Type` header is omitted. |
 | `needToken`    | `boolean`          | `true`  | Whether an access token is needed. Affects how `401` errors are handled. |
