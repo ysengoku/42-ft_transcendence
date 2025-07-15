@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 from datetime import timedelta
 
@@ -32,7 +33,6 @@ auth_router = Router()
 
 TOKEN_EXPIRY = 10
 
-import logging
 
 logger = logging.getLogger("server")
 
