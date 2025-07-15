@@ -114,7 +114,7 @@ export class ChatMessageArea extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.messageInput = this.querySelector('#chat-message-input-wrapper');
     this.loader = this.querySelector('.chat-loader');
     this.loader.innerHTML = loader();
