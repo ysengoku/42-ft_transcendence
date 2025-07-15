@@ -32,7 +32,7 @@ export class Navbar extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.navbarBrand = this.querySelector('navbar-brand-component');
     this.mobileUserActionsMenu = this.querySelector('user-actions-menu');

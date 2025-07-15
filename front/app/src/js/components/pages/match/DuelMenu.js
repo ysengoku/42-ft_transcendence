@@ -128,7 +128,7 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = '';
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     // Set references to DOM elements
     this.optionsButton = this.querySelector('#game-options-button');

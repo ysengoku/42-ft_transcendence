@@ -15,7 +15,7 @@ export class ProfileAvatar extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     const image = this.querySelector('img');
     if (image) {

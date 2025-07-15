@@ -26,7 +26,7 @@ export class ChatUserSearchItem extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     const avatar = this.#state.user.avatar ? this.#state.user.avatar : defaltAvatar;
     this.querySelector('.chat-user-search-avatar').src = avatar;

@@ -88,7 +88,7 @@ export class DuelPreview extends HTMLElement {
       this.goToDuelMenuButton.addEventListener('click', this.navigateToDuelMenu);
       return;
     }
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.player1 = this.querySelector('#duel-player1');
     this.player2 = this.querySelector('#duel-player2');
 

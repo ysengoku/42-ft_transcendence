@@ -43,7 +43,7 @@ export class UserGameResultModal extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.modalElement = this.querySelector('.modal');
     this.gameResultContent = this.querySelector('#game-result-content');

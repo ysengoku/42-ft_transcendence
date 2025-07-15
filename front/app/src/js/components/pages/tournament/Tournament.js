@@ -289,7 +289,7 @@ export class Tournament extends HTMLElement {
 
   render() {
     this.innerHTML = '';
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.tournamentName = this.querySelector('#tournament-name');
     this.tournamentContentWrapper = this.querySelector('#tournament-content');
 

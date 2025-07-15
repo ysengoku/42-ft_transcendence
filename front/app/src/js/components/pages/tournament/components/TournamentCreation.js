@@ -116,7 +116,7 @@ export class TournamentCreation extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     // Set up references to the elements used in this component
     this.confirmButton = this.modalComponent.querySelector('.confirm-button');
