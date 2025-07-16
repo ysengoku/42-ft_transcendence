@@ -1,9 +1,3 @@
-VOLUME_PATH := ./volumes
-DATABASE_VOLUME_PATH := $(VOLUME_PATH)/database
-MEDIA_VOLUME_PATH := $(VOLUME_PATH)/media
-STATIC_VOLUME_PATH := $(VOLUME_PATH)/static
-
-# Couleurs
 GREEN=\033[0;32m
 YELLOW=\033[0;33m
 RED=\033[0;31m
@@ -33,14 +27,14 @@ build: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) build
 
 up: ensure-env update-ip
-	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up -d --build
+	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up --build
 
 dev: export NODE_ENV=development
-dev: ensure-env update-ip
-	NODE_ENV=development docker compose -f $(DOCKER_COMPOSE) up --build
+dev:
+	$(MAKE) up
 
 prod: export NODE_ENV=production
-prod: ensure-env update-ip
+prod:
 	$(MAKE) up
 
 down:
@@ -80,11 +74,6 @@ fclean:
 	docker compose down --volumes
 	docker system prune -a
 	docker volume prune -a
-
-# RUN WITH MAKE -i
-update-nginx:
-	docker cp ./nginx/nginx.conf nginx:/etc/nginx/
-	docker exec nginx nginx -s reload
 
 populate-db:
 	docker exec server ./manage.py populate_db
