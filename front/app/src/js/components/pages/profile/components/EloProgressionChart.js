@@ -2,6 +2,7 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 
 export class UserEloProgressionChart extends HTMLElement {
   #state = {
+    loggedInUsername: '',
     username: '',
     history: [],
     totalItemCount: 0,
@@ -29,7 +30,8 @@ export class UserEloProgressionChart extends HTMLElement {
     this.renderNext = this.renderNext.bind(this);
   }
 
-  setData(username, data) {
+  setData(loggedInUsername, username, data) {
+    this.#state.loggedInUsername = loggedInUsername;
     this.#state.username = username;
     this.#state.history = data;
     this.#state.currentItemCount = this.#state.history.length;
@@ -52,6 +54,7 @@ export class UserEloProgressionChart extends HTMLElement {
     this.innerHTML = this.style() + this.template();
 
     this.chart = this.querySelector('.line-chart-wrapper');
+    this.compareButton = this.querySelector('#btn-elo-history-compare');
     this.previousButton = this.querySelector('#btn-elo-history-prev');
     this.nextButton = this.querySelector('#btn-elo-history-next');
     this.previousButton.addEventListener('click', this.renderPrevious);
@@ -62,6 +65,9 @@ export class UserEloProgressionChart extends HTMLElement {
       this.chart.classList.add('d-flex', 'justify-content-center', 'align-items-center');
       this.previousButton.classList.add('invisible');
       return;
+    }
+    if (this.#state.loggedInUsername === this.#state.username) {
+      this.compareButton.classList.add('invisible');
     }
     this.renderChart();
   }
@@ -105,18 +111,24 @@ export class UserEloProgressionChart extends HTMLElement {
       tooltipBg.setAttribute('fill', 'rgba(var(--bs-body-color-rgb), 0.5');
       tooltipBg.setAttribute('visibility', 'hidden');
 
-      if (index === 0) {
-        tooltip.setAttribute('text-anchor', 'start');
-        tooltip.setAttribute('x', item.x + 6);
-        tooltipBg.setAttribute('x', item.x);
-      } else if (index === 6) {
-        tooltip.setAttribute('text-anchor', 'end');
-        tooltip.setAttribute('x', item.x - 6);
-        tooltipBg.setAttribute('x', item.x - 44);
-      } else {
-        tooltip.setAttribute('text-anchor', 'middle');
-        tooltip.setAttribute('x', item.x);
-        tooltipBg.setAttribute('x', item.x - 24);
+      switch (index) {
+        case 0:
+          if (this.parsedData.length === 7) {
+            tooltip.setAttribute('text-anchor', 'start');
+            tooltip.setAttribute('x', item.x + 6);
+            tooltipBg.setAttribute('x', item.x - 2);
+            break;
+          }
+        case 6:
+          tooltip.setAttribute('text-anchor', 'end');
+          tooltip.setAttribute('x', item.x - 6);
+          tooltipBg.setAttribute('x', item.x - 44);
+          break;
+        default:
+          tooltip.setAttribute('text-anchor', 'middle');
+          tooltip.setAttribute('x', item.x);
+          tooltipBg.setAttribute('x', item.x - 24);
+          break;
       }
 
       marker.addEventListener('mouseenter', () => {
@@ -169,8 +181,12 @@ export class UserEloProgressionChart extends HTMLElement {
   adjustYAxis(data) {
     this.#valueRange.min = Math.min(...data.map((item) => item.elo_result));
     this.#valueRange.min = Math.floor(this.#valueRange.min / 10) * 10 - 10;
+    this.#valueRange.min = Math.max(this.#valueRange.min, 100);
+
     this.#valueRange.max = Math.max(...data.map((item) => item.elo_result));
     this.#valueRange.max = Math.floor(this.#valueRange.max / 10) * 10 + 10;
+    this.#valueRange.max = Math.min(this.#valueRange.max, 3000);
+
     this.#eloMidrange = Math.round((this.#valueRange.min + this.#valueRange.max) / 2);
     this.#scaleY = (this.#yCoordinate.max - this.#yCoordinate.min) / (this.#valueRange.max - this.#valueRange.min);
   }
@@ -240,6 +256,7 @@ export class UserEloProgressionChart extends HTMLElement {
     <div class="d-flex flex-row justify-content-around align-items-start">
       <p class="stat-label m-0 mx-4">Elo progression</p>
       <div class="d-flex flex-row gap-2">
+      <button class="btn-elo-history"id="btn-elo-history-compare" type="button">Compare</button>
       <button class="btn-elo-history" id="btn-elo-history-prev" type="button">< prev</button>
       <button class="btn-elo-history invisible" id="btn-elo-history-next" type="button" disabled>next ></button>
       </div>
