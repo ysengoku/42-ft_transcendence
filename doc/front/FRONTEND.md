@@ -116,8 +116,9 @@ Vite handles both the development server and the production build process, minim
 
 ## Detailed documentations
 
+- [API Request](./API_REQUEST.md)
+- [Auth manager](./AUTH_MANAGER.md)
+- [Component](./COMPONENT.md)
 - [Router](./ROUTER.md)
 - [Socket Manager](./SOCKET_MANAGER.md)
-- [API Request](./API_REQUEST.md)
-- [component](./COMPONENT.md)
-- [Auth manager](./AUTH_MANAGER.md)
+- [Tournament UI](./TOURNAMENT_UI.md)
