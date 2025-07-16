@@ -5,6 +5,7 @@ Contains the default exception handlers for some of the possible errors.
 
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from ninja import NinjaAPI
@@ -17,7 +18,12 @@ from tournaments.router import tournaments_app_router
 from users.middleware import JWTEndpointsAuthMiddleware
 from users.router import users_app_router
 
-api = NinjaAPI(auth=JWTEndpointsAuthMiddleware(), csrf=True)
+# conditionally hide the docs in production build
+if settings.DEBUG:
+    api = NinjaAPI(auth=JWTEndpointsAuthMiddleware(), csrf=True)
+else:
+    api = NinjaAPI(auth=JWTEndpointsAuthMiddleware(), csrf=True, docs_url=None)
+
 api.add_router("", router=users_app_router)
 api.add_router("", router=chat_app_router)
 api.add_router("", router=pong_app_router)
