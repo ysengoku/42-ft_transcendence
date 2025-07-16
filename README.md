@@ -39,6 +39,7 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 - Game worker
 - 3D graphics and rendering
 
+
 ### Chat and WebSocket communication
 
 - Direct messages one on one
@@ -52,6 +53,7 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 - Responsive design
 - Two color themes: Light and Dark
 - Google Chrome Compatibility
+- Hand-made 3D models, animation and art!
 
 ## Technologies 🛠️👷🏻‍♂️
 
