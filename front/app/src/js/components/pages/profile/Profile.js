@@ -129,7 +129,7 @@ export class UserProfile extends HTMLElement {
 
     const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
     if (userEloProgressionChart) {
-      userEloProgressionChart.setData(this.user.username, this.user.elo_history);
+      userEloProgressionChart.setData(this.#state.loggedInUsername, this.user.username, this.user.elo_history);
     }
 
     const gameHistory = this.querySelector('user-game-history');
@@ -278,9 +278,11 @@ export class UserProfile extends HTMLElement {
     }
     .btn-elo-history {
       color: var(--pm-primary-700);
+      font-size: 0.9rem;
       font-weight: bold;
       background: none;
       border: none;
+      padding: 1px 4px;
     }
     .row.no-gutters > [class*='col-'] {
       padding-right: 0;
