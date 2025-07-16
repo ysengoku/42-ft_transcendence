@@ -129,7 +129,7 @@ export class UserProfile extends HTMLElement {
 
     const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
     if (userEloProgressionChart) {
-      userEloProgressionChart.setData(this.user.username, this.user.elo_history);
+      userEloProgressionChart.setData(this.#state.loggedInUsername, this.user.username, this.user.elo_history);
     }
 
     const gameHistory = this.querySelector('user-game-history');
