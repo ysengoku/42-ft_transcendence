@@ -56,7 +56,6 @@ export class UserEloProgressionChart extends HTMLElement {
     this.innerHTML = this.style() + this.template();
 
     this.chart = this.querySelector('.line-chart-wrapper');
-    this.compareButton = this.querySelector('#btn-elo-history-compare');
     this.previousButton = this.querySelector('#btn-elo-history-prev');
     this.nextButton = this.querySelector('#btn-elo-history-next');
     this.previousButton.addEventListener('click', this.renderPrevious);
@@ -68,15 +67,11 @@ export class UserEloProgressionChart extends HTMLElement {
       this.previousButton.classList.add('invisible');
       return;
     }
-    if (this.#state.loggedInUsername === this.#state.username) {
-      this.compareButton.classList.add('invisible');
-    }
     this.renderChart();
   }
 
-  renderChart(compare = false) {
-    // compare = true; // For test
-    this.parseData(compare);
+  renderChart() {
+    this.parseData();
     this.chart.innerHTML = '';
 
     const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
@@ -86,16 +81,6 @@ export class UserEloProgressionChart extends HTMLElement {
     markers.classList.add('line-chart-marker');
     svg.appendChild(polyline);
     svg.appendChild(markers);
-
-    // if (compare) {
-    //   const pointsCompare = this.parsedData.map((item) => `${item.x},${item.y + 10}`).join(' '); // For rendering test
-    //   const polyline2 = this.generateLineGraph(pointsCompare, true);
-    //   svg.appendChild(polyline2);
-
-    //   const markersCompare = document.createElementNS(this.SVGNS, 'g');
-    //   markersCompare.classList.add('line-chart-marker-compare');
-    //   svg.appendChild(markersCompare);
-    // }
 
     const labels = svg.querySelector('.linechart-labels');
     this.parsedData.forEach((item, index) => {
@@ -236,20 +221,16 @@ export class UserEloProgressionChart extends HTMLElement {
     return svg;
   }
 
-  generateLineGraph(points, compare = false) {
+  generateLineGraph(points) {
     const polyline = document.createElementNS(this.SVGNS, 'polyline');
     polyline.setAttribute('points', points);
     polyline.setAttribute('fill', 'none');
-    polyline.setAttribute('stroke', compare ? 'var(--pm-green-400)' : 'var(--pm-primary-600)');
+    polyline.setAttribute('stroke', 'var(--pm-primary-600)');
     polyline.setAttribute('stroke-width', '1');
-
-    const markers = document.createElementNS(this.SVGNS, 'g');
-    markers.classList.add(compare ? 'line-chart-marker-compare' : 'line-chart-marker');
-
     return polyline;
   }
 
-  parseData(compare) {
+  parseData() {
     const cunkedData = this.chunkArray(this.#state.history);
     const dataToDisplay = cunkedData[this.#state.currentWeekIndex];
     dataToDisplay.reverse();
@@ -257,7 +238,7 @@ export class UserEloProgressionChart extends HTMLElement {
     const count = dataToDisplay.length;
     const startX = 20 + (7 - count) * 40;
 
-    this.adjustYAxis(dataToDisplay, compare);
+    this.adjustYAxis(dataToDisplay);
 
     this.parsedData = [];
     dataToDisplay.forEach((item, index) => {
@@ -281,19 +262,15 @@ export class UserEloProgressionChart extends HTMLElement {
     return result;
   }
 
-  adjustYAxis(data, compare) {
-    if (!compare) {
-      this.#valueRange.min = Math.min(...data.map((item) => item.elo_result));
-      this.#valueRange.min = Math.floor(this.#valueRange.min / 10) * 10 - 10;
-      this.#valueRange.min = Math.max(this.#valueRange.min, 100);
+  adjustYAxis(data) {
+    this.#valueRange.min = Math.min(...data.map((item) => item.elo_result));
+    this.#valueRange.min = Math.floor(this.#valueRange.min / 10) * 10 - 10;
+    this.#valueRange.min = Math.max(this.#valueRange.min, 100);
 
-      this.#valueRange.max = Math.max(...data.map((item) => item.elo_result));
-      this.#valueRange.max = Math.floor(this.#valueRange.max / 10) * 10 + 10;
-      this.#valueRange.max = Math.min(this.#valueRange.max, 3000);
-    } else {
-      this.#valueRange.min = 100;
-      this.#valueRange.max = 3000;
-    }
+    this.#valueRange.max = Math.max(...data.map((item) => item.elo_result));
+    this.#valueRange.max = Math.floor(this.#valueRange.max / 10) * 10 + 10;
+    this.#valueRange.max = Math.min(this.#valueRange.max, 3000);
+
     this.#eloMidrange = Math.round((this.#valueRange.min + this.#valueRange.max) / 2);
     this.#scaleY = (this.#yCoordinate.max - this.#yCoordinate.min) / (this.#valueRange.max - this.#valueRange.min);
   }
@@ -363,7 +340,6 @@ export class UserEloProgressionChart extends HTMLElement {
     <div class="d-flex flex-row justify-content-between align-items-start">
       <p class="stat-label m-0 ms-3 pe-1">Elo progression</p>
       <div class="d-flex flex-row">
-        <button class="btn-elo-history"id="btn-elo-history-compare" type="button">Show my Elo</button>
         <button class="btn-elo-history pb-1" id="btn-elo-history-prev" type="button">< prev</button>
         <button class="btn-elo-history pb-1 invisible" id="btn-elo-history-next" type="button" disabled>next ></button>
       </div>
@@ -372,41 +348,9 @@ export class UserEloProgressionChart extends HTMLElement {
     `;
   }
 
-  // lineChartTemplate() {
-  //   const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
-  //   const yLabelPosition = {
-  //     min: this.#yCoordinate.max,
-  //     max: this.#yCoordinate.min + 2,
-  //     mid: this.#yCoordinate.mid,
-  //   };
-  //   return `
-  //   <div class="line-chart">
-  //     <svg width="100%" height="232" viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-  //       <g class="linechart-grid y-linechart-grid">
-  //         <line x1="20" x2="20" y1="10" y2="110"></line>
-  //       </g>
-  //       <g class="linechart-labels">
-  //         <text x="18" y="${yLabelPosition.min}" text-anchor="end">${this.#valueRange.min}</text>
-  //         <text x="18" y="${yLabelPosition.mid}" text-anchor="end">${this.#eloMidrange}</text>
-  //         <text x="18" y="${yLabelPosition.max}" text-anchor="end">${this.#valueRange.max}</text>
-  //       </g>
-  //       <g class="linechart-grid x-linechart-grid">
-  //         <line x1="20" x2="270" y1="110" y2="110"></line>
-  //       </g>
-  //       <g class="linechart-labels"></g>
-  //       <polyline points="${points}" fill="none" stroke-width="1" />
-  //       <g class="line-chart-marker"></g>
-  //     </svg>
-  //   </div>
-  //   `;
-  // }
-
   style() {
     return `
     <style>
-    #btn-elo-history-compare {
-      color: var(--pm-green-500);
-    }
     .line-chart-wrapper {
       width: 100%;
       height: 240px;
@@ -422,9 +366,6 @@ export class UserEloProgressionChart extends HTMLElement {
     }
     .line-chart-marker circle {
       fill: var(--pm-primary-600);
-    }
-    .line-chart-marker-compare circle {
-      fill: var(--pm-green-400);
     }
     </style>
     `;
