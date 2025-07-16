@@ -179,7 +179,7 @@ def put_avatars():
             profile.update_avatar(uploaded)
             profile.save()
         av = profile.avatar
-        print("I putted avatar for", profile.user.username, "and it is", av, ":D")
+        # print("I putted avatar for", profile.user.username, "and it is", av, ":D")
 
     put_one_avatar("rick_roll.webp", rick)
     put_one_avatar("taki.jpg", taki)
@@ -421,7 +421,7 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
-        # modified_generate_tournaments(users)
+        modified_generate_tournaments(users)
         put_avatars()
 
         # MFA users
