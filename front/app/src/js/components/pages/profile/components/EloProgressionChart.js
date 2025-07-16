@@ -134,14 +134,6 @@ export class UserEloProgressionChart extends HTMLElement {
     });
   }
 
-  chunkArray(array) {
-    const result = [];
-    for (let i = 0; i < array.length; i += 7) {
-      result.push(array.slice(i, i + 7));
-    }
-    return result;
-  }
-
   parseData() {
     const cunkedData = this.chunkArray(this.#state.history);
     const dataToDisplay = cunkedData[this.#state.currentWeekIndex];
@@ -149,6 +141,8 @@ export class UserEloProgressionChart extends HTMLElement {
 
     const count = dataToDisplay.length;
     const startX = 20 + (7 - count) * 40;
+
+    this.adjustYAxis(dataToDisplay);
 
     this.parsedData = [];
     dataToDisplay.forEach((item, index) => {
@@ -164,7 +158,22 @@ export class UserEloProgressionChart extends HTMLElement {
     });
   }
 
-  applyScale() {}
+  chunkArray(array) {
+    const result = [];
+    for (let i = 0; i < array.length; i += 7) {
+      result.push(array.slice(i, i + 7));
+    }
+    return result;
+  }
+
+  adjustYAxis(data) {
+    this.#valueRange.min = Math.min(...data.map((item) => item.elo_result));
+    this.#valueRange.min = Math.floor(this.#valueRange.min / 10) * 10 - 10;
+    this.#valueRange.max = Math.max(...data.map((item) => item.elo_result));
+    this.#valueRange.max = Math.floor(this.#valueRange.max / 10) * 10 + 10;
+    this.#eloMidrange = Math.round((this.#valueRange.min + this.#valueRange.max) / 2);
+    this.#scaleY = (this.#yCoordinate.max - this.#yCoordinate.min) / (this.#valueRange.max - this.#valueRange.min);
+  }
 
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
@@ -253,7 +262,7 @@ export class UserEloProgressionChart extends HTMLElement {
           <line x1="20" x2="20" y1="10" y2="110"></line> 
         </g>
         <g class="linechart-labels">
-          <text x="18" y="${yLabelPosition.min}" text-anchor="end">${this.#valueRange.min + 100}</text>
+          <text x="18" y="${yLabelPosition.min}" text-anchor="end">${this.#valueRange.min}</text>
           <text x="18" y="${yLabelPosition.mid}" text-anchor="end">${this.#eloMidrange}</text>
           <text x="18" y="${yLabelPosition.max}" text-anchor="end">${this.#valueRange.max}</text>
         </g>
