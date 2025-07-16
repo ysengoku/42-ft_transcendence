@@ -121,7 +121,6 @@ INSTALLED_APPS = [
     "tournaments",
 
     # Default Django applications
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
