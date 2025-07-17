@@ -112,10 +112,6 @@ class TournamentConsumer(WebsocketConsumer):
         logger.warning("CLOSING WITH CLOSE SELF WS")
         self.close(NORMAL_CLOSURE)
 
-    def tournament_broadcast(self, event):
-        logger.debug("function tournament_broadcast")
-        self.send(text_data=json.dumps({"action": "new_tournament", "data": event["data"]}))
-
     def tournament_message(self, event):
         logger.debug("function tournament_message")
         logger.debug("action : %s", event["action"])

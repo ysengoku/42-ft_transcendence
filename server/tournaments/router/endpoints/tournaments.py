@@ -66,7 +66,8 @@ def create_tournament(request, data: TournamentCreateSchema):
     async_to_sync(channel_layer.group_send)(
         "tournament_global",
         {
-            "type": "tournament_broadcast",
+            "type": "tournament_message",
+            "action": "new_tournament",
             "data": ws_data,
         },
     )
