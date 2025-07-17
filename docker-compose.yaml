@@ -1,3 +1,7 @@
+# Environmental variables, shared by multiple containers
+x-front-server-common-variables: &front-server-common-variables
+  NODE_ENV: ${NODE_ENV:-development}  # defines whether the images run in production or developement mode
+
 services:
   front:
     container_name: front
@@ -19,7 +23,7 @@ services:
     networks:
       - transcendance_network
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
+       <<: *front-server-common-variables
 
   server:
     container_name: server
@@ -38,6 +42,7 @@ services:
     env_file:
       - .env
     environment:
+      <<: *front-server-common-variables
       DJANGO_SETTINGS_MODULE: server.settings
       DATABASE_URL: ${DATABASE_URL}
       REDIS_HOST: redis
@@ -50,7 +55,6 @@ services:
       - redis
     volumes:
       - ./server:/app
-      - static_volume:/app/static
       - media_volume:/app/media
     networks:
       - transcendance_network
@@ -107,12 +111,11 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
       args:
-        NODE_ENV: ${NODE_ENV} # Pass the NODE_ENV variable to the Nginx build context
+        NODE_ENV: ${NODE_ENV} # Pass the NODE_ENV variable to the Nginx build context to determine which config to use
     volumes:
       - ./front/app:/app/
       - front_dist_volume:/app/dist:ro
-      - media_volume:/app/media/ # Directory containing the application's media files
-      - static_volume:/app/static/ # Directory containing the application's static files
+      - media_volume:/app/media/            # Directory containing the application's media files
       - db_volume:/var/lib/postgresql/data/ # Directory containing the database files
     ports:
       - "1026:1026"
@@ -141,9 +144,6 @@ volumes:
     
   db_volume:
     name: db_volume
-
-  static_volume:
-    name: static_volume
 
   front_dist_volume:
     name: front_dist_volume
