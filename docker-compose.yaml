@@ -1,4 +1,3 @@
-# Environmental variables, shared by multiple containers
 x-front-server-common-variables: &front-server-common-variables
   NODE_ENV: ${NODE_ENV:-development}  # defines whether the images run in production or developement mode
 
@@ -87,8 +86,8 @@ services:
   database:
     container_name: database
     build:
-      context: ./database # Build context (directory containing the Dockerfile for the database)
-      dockerfile: Dockerfile # Dockerfile for this service
+      context: ./database
+      dockerfile: Dockerfile
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -115,8 +114,8 @@ services:
     volumes:
       - ./front/app:/app/
       - front_dist_volume:/app/dist:ro
-      - media_volume:/app/media/            # Directory containing the application's media files
-      - db_volume:/var/lib/postgresql/data/ # Directory containing the database files
+      - media_volume:/app/media/
+      - db_volume:/var/lib/postgresql/data/
     ports:
       - "1026:1026"
     expose:
@@ -137,7 +136,6 @@ services:
     networks:
       - transcendance_network
 
-# shared volumes for all services, and between host and containers. better to mount volumes without bind: docker managed the persistence
 volumes:
   redis_data:
     name: redis_data
@@ -154,21 +152,3 @@ volumes:
 networks:
   transcendance_network:
     driver: bridge
-
-# For static_volume:
-# Django collects its static files into this volume using collectstatic
-# These files are dynamically generated from various Django apps
-# Nginx needs to access these files to serve them
-# The shared volume allows both Django and Nginx to access the same files
-
-# For media_volume:
-# Media files are uploaded by users
-# Django stores these files in this volume
-# Nginx must be able to serve them
-# The volume is shared because it changes dynamically (new uploads, deletions, etc.)
-
-# In contrast, for front-end files:
-# They are static (predefined)
-# They do not change dynamically
-# They can be mounted directly from the filesystem
-# That’s why direct mount is sufficient for the front-end, but shared volumes are needed for the server and media.
