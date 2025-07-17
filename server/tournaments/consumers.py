@@ -14,7 +14,6 @@ from .tournament_validator import Validator
 
 logger = logging.getLogger("server")
 
-# TODO: Verify connexion of both players before the match ?
 # TODO: security checks : multiple crash when bad ws id sent by the console
 # TODO: put all shared macros between files in the same file
 NORMAL_CLOSURE = 3000
@@ -48,7 +47,7 @@ class TournamentConsumer(WebsocketConsumer):
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
             logger.warning("This tournament id does not exist : %s", self.tournament_id)
-            self.accept()  # TODO: test this
+            self.accept()
             self.close(BAD_DATA)
             return
         try:
