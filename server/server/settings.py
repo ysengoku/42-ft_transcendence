@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Environment variables
 # Init django-environ
 env = environ.Env(
-    NODE_ENV=(str, "developement"),
+    NODE_ENV=(str, "development"),
     CRON_SECRET=(str, ""),
     REDIS_HOST=(str, "redis"),
     REDIS_PORT=(int, 6379),
