@@ -87,15 +87,6 @@ def login(request: HttpRequest, credentials: LoginSchema):
     if is_mfa_enabled:
         raise HttpError(503, "Failed to send MFA code")
 
-    max_connexions = 1
-    try:
-        with transaction.atomic():
-            user.profile.refresh_from_db()
-            if user.profile.nb_active_connexions >= max_connexions:
-                logger.warning("User %s tried to connect from 2 differents browsers", user.username)
-                raise HttpError(403, "You are already logged somewhere else : only 1 browser authorized")
-    except DatabaseError as e:
-        logger.error("Database error during connect: %s", e)
     response_data = user.profile.to_profile_minimal_schema()
     return create_json_response_with_tokens(user, response_data)
 
