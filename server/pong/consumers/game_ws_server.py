@@ -41,6 +41,7 @@ class GameServerConsumer(WebsocketConsumer):
                 self.game_room_id,
             )
             self.close(PongCloseCodes.ILLEGAL_CONNECTION)
+            return
 
         self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).for_ongoing_status().first()
         if not self.game_room:
@@ -118,6 +119,9 @@ class GameServerConsumer(WebsocketConsumer):
 
         if self.player:
             self.player.dec_number_of_connections()
+            if close_code == PongCloseCodes.ALREADY_IN_GAME:
+                return
+
             async_to_sync(self.channel_layer.send)(
                 "game",
                 GameServerToGameWorker.PlayerDisconnected(
@@ -126,13 +130,6 @@ class GameServerConsumer(WebsocketConsumer):
                     player_id=str(self.player.id),
                 ),
             )
-            if close_code == PongCloseCodes.ALREADY_IN_GAME:
-                logger.warning(
-                    "[GameRoom.disconnect]: player {%s} has been disconnected from the game room {%s} abnormally",
-                    self.user.profile,
-                    self.game_room_id,
-                )
-                return
             logger.info(
                 "[GameRoom.disconnect]: player {%s} has left game room {%s}",
                 self.user.profile,
