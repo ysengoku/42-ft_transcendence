@@ -50,8 +50,10 @@ services:
       CRON_SECRET: ${CRON_SECRET}
       CRON_ENDPOINT: ${CRON_ENDPOINT}
     depends_on:
-      - database
-      - redis
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./server:/app
       - media_volume:/app/media
@@ -103,6 +105,12 @@ services:
       - "5432"
     networks:
       - transcendance_network
+    healthcheck:
+      # pg_isready is a utility for checking the status of the postgres connection
+      test: ["CMD-SHELL", "pg_isready -p ${DATABASE_PORT} -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
 
   nginx:
     container_name: nginx
@@ -135,6 +143,12 @@ services:
     - redis_data:/data
     networks:
       - transcendance_network
+    healthcheck:
+      # redis-cli ping returns exit status of 0 even when it fails, so grep to find the actual PONG response is necessary
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
 
 volumes:
   redis_data:
