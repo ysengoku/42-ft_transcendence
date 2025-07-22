@@ -6,6 +6,7 @@
  */
 import { router } from '@router';
 import { auth } from '@auth';
+import { sessionExpiredToast } from '@utils';
 
 export class LocalGameMenu extends HTMLElement {
   /**
@@ -24,8 +25,11 @@ export class LocalGameMenu extends HTMLElement {
   async connectedCallback() {
     const loading = document.createElement('loading-animation');
     this.innerHTML = loading.outerHTML;
-    const authStatus = auth.fetchAuthStatus();
+    const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
       router.redirect('/login');
     }
     this.render();
