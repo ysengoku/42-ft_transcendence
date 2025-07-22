@@ -5,7 +5,7 @@ vi.mock('@socket', () => ({
     addSocket: vi.fn(),
     openSocket: vi.fn(),
     closeSocket: vi.fn(),
-  }
+  },
 }));
 
 globalThis.devLog = vi.fn();
@@ -23,11 +23,11 @@ describe('extractParam', () => {
     expect(extractParam('/multiplayer-game/:id', '/multiplayer-game/12345')).toStrictEqual({ id: '12345' });
   });
 
-	it('should return null if static parts do not match', () => {
+  it('should return null if static parts do not match', () => {
     expect(extractParam('/profile/:username', '/user/alice')).toBeNull();
   });
 
-	it('should return null if segments count mismatch', () => {
+  it('should return null if segments count mismatch', () => {
     expect(extractParam('/profile/:username', '/profile/alice/user')).toBeNull();
   });
 
@@ -48,7 +48,7 @@ describe('matchDynamicRoute', () => {
     expect(matchDynamicRoute('/test/12345')).toStrictEqual({
       componentTag: 'test-page',
       isDynamic: true,
-      param: { id: '12345' }
+      param: { id: '12345' },
     });
     expect(matchDynamicRoute('/test-profile/alice')).toStrictEqual({
       componentTag: 'test-profile-page',
@@ -96,17 +96,20 @@ describe('renderStaticUrlComponent', () => {
 
   it('should call setQueryParam if queryParams is provided', () => {
     const testComponentTag = 'test-component';
-    customElements.define(testComponentTag, class extends HTMLElement {
-      setQueryParam(q) {
-        this._param = q;
-      }
-    });
+    customElements.define(
+      testComponentTag,
+      class extends HTMLElement {
+        setQueryParam(q) {
+          this._param = q;
+        }
+      },
+    );
 
     const queryParam = new URLSearchParams({ status: '12345' });
     router.renderStaticUrlComponent(testComponentTag, queryParam);
 
     const element = container.querySelector(testComponentTag);
-    expect(element._param).toEqual(queryParam); 
+    expect(element._param).toEqual(queryParam);
   });
 });
 
@@ -139,17 +142,20 @@ describe('renderDynamicUrlComponent', () => {
 
   it('should call setParam', () => {
     const testComponentTag = 'dynamic-url-test-component';
-    customElements.define(testComponentTag, class extends HTMLElement {
-      setParam(p) {
-        this._param = p;
-      }
-    });
+    customElements.define(
+      testComponentTag,
+      class extends HTMLElement {
+        setParam(p) {
+          this._param = p;
+        }
+      },
+    );
 
     const param = { id: '12345' };
     router.renderDynamicUrlComponent(testComponentTag, param);
 
     const element = container.querySelector(testComponentTag);
-    expect(element._param).toEqual(param); 
+    expect(element._param).toEqual(param);
   });
 });
 
@@ -181,7 +187,7 @@ describe('navigate', () => {
     expect(handleRouteSpy).toHaveBeenCalledWith('');
     expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/test');
     expect(pushStateSpy).not.toHaveBeenCalled();
-  })
+  });
 
   it('should use replaceState if first load is true', async () => {
     router.isFristLoad = true;
@@ -193,9 +199,9 @@ describe('navigate', () => {
     expect(handleRouteSpy).toHaveBeenCalledWith('');
     expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/test');
     expect(pushStateSpy).not.toHaveBeenCalled();
-  })
+  });
 
-  it('should convert object queryParams to URLSearchParams', async() => {
+  it('should convert object queryParams to URLSearchParams', async () => {
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     await navigate('/test', { status: '123' });
 
@@ -204,7 +210,7 @@ describe('navigate', () => {
     expect(arg.get('status')).toBe('123');
   });
 
-  it('should convert queryParams in string to URLSearchParams', async() => {
+  it('should convert queryParams in string to URLSearchParams', async () => {
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     await navigate('/test', 'status=123&message=test');
 
@@ -214,16 +220,16 @@ describe('navigate', () => {
     expect(arg.get('message')).toBe('test');
   });
 
-  it('should pass queryParams in URLSearchParams', async() => {
+  it('should pass queryParams in URLSearchParams', async () => {
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     const query = new URLSearchParams({ status: '123' });
     await navigate('/test', query);
 
     const arg = handleRouteSpy.mock.calls[0][0];
-    expect(arg.get('status')).toBe('123');    
+    expect(arg.get('status')).toBe('123');
   });
 
-  it('should not proceed if beforeunloadCallback returns false', async() => {
+  it('should not proceed if beforeunloadCallback returns false', async () => {
     router.beforeunloadCallback = vi.fn().mockResolvedValue(false);
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     const pushStateSpy = vi.spyOn(window.history, 'pushState');
@@ -234,7 +240,7 @@ describe('navigate', () => {
     expect(pushStateSpy).not.toHaveBeenCalled();
   });
 
-  it('should proceed if beforeunloadCallback returns true', async() => {
+  it('should proceed if beforeunloadCallback returns true', async () => {
     const beforeUnloadSpy = vi.fn().mockResolvedValue(true);
     router.beforeunloadCallback = beforeUnloadSpy;
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');

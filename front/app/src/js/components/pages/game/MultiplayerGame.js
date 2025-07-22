@@ -55,7 +55,7 @@ export class MultiplayerGame extends HTMLElement {
       document.removeEventListener('keyup', this.onDocumentKeyUp, true);
     }
     if (this.#pongSocket) {
-      devLog('Closing pongSocket')
+      devLog('Closing pongSocket');
       this.#pongSocket.close();
       this.#pongSocket = null;
     }
@@ -77,28 +77,36 @@ export class MultiplayerGame extends HTMLElement {
         (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+        this.#pongSocket.send(
+          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
+        );
       }
       if (
         (keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+        this.#pongSocket.send(
+          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
+        );
       }
       if (
         (keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+        this.#pongSocket.send(
+          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
+        );
       }
       if (
         (keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+        this.#pongSocket.send(
+          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
+        );
       }
       keyMap[keyCode] = true;
       e.preventDefault();
@@ -117,28 +125,36 @@ export class MultiplayerGame extends HTMLElement {
         (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+        this.#pongSocket.send(
+          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
+        );
       }
       if (
         (keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+        this.#pongSocket.send(
+          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
+        );
       }
       if (
         (keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }));
+        this.#pongSocket.send(
+          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
+        );
       }
       if (
         (keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
         bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }));
+        this.#pongSocket.send(
+          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
+        );
       }
       keyMap[keyCode] = false;
       e.preventDefault();
@@ -532,14 +548,16 @@ export class MultiplayerGame extends HTMLElement {
         case 3100:
         case 3002:
           showToastNotification('This game does not exist or has ended.', TOAST_TYPES.ERROR);
+          break;
         case 3003:
           showToastNotification('Your are already in a game.', TOAST_TYPES.ERROR);
-          setTimeout(() => {
-            router.redirect('/home');
-          }, 1500);
           break;
         default:
+          return;
       }
+      setTimeout(() => {
+        router.redirect('/home');
+      }, 1500);
     });
 
     function animate() {
@@ -597,18 +615,8 @@ export class MultiplayerGame extends HTMLElement {
       renderer.render(scene, camera);
     }
 
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(
-      Bumpers,
-      playerIdContainer,
-      keyMap,
-      ourBumperIndexContainer,
-    )
-    this.onDocumentKeyUp = this.createOnDocumentKeyUp(
-      Bumpers,
-      playerIdContainer,
-      keyMap,
-      ourBumperIndexContainer,
-    )
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
