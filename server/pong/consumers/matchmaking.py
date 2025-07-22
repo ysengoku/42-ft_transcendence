@@ -2,9 +2,9 @@ import json
 import logging
 
 from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
 from django.db import transaction
 
+from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from pong.game_protocol import MatchmakingToClient, PongCloseCodes
 from pong.models import GameRoom, GameRoomPlayer
 
@@ -14,7 +14,7 @@ logger = logging.getLogger("server")
 PLAYERS_REQUIRED = 2
 
 
-class MatchmakingConsumer(WebsocketConsumer):
+class MatchmakingConsumer(GuardedWebsocketConsumer):
     def connect(self):
         """
         On connection, join existing pending game room with less than two players, or create a new one.
@@ -79,8 +79,10 @@ class MatchmakingConsumer(WebsocketConsumer):
             if self.game_room.players.count() == PLAYERS_REQUIRED:
                 self.game_room.set_ongoing()
                 self.game_room.resolve_settings(self.game_room_settings)
-                logger.info("[Matchmaking.connect]: both players were found. Settings were resolved for the game room "
-                            "{%s} ", self.game_room)
+                logger.info(
+                    "[Matchmaking.connect]: both players were found. Settings were resolved for the game room {%s} ",
+                    self.game_room,
+                )
                 async_to_sync(self.channel_layer.group_send)(
                     self.matchmaking_group_name,
                     {"type": "game_found"},
