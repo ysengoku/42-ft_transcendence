@@ -43,7 +43,7 @@ export class DuelPreview extends HTMLElement {
         duelPage.innerHTML = '';
         duelPage.appendChild(notFound);
       } else {
-        router.redirect('error');
+        router.redirect('/error');
       }
       return;
     }
