@@ -55,7 +55,11 @@ export async function refreshAccessToken(csrfToken) {
       if (refreshResponse.ok) {
         devLog('Refresh successful');
         return { success: true, status: 204 };
-      } else if (refreshResponse.status === 500) {
+      }
+      // if (refreshResponse.status === 429) {
+      // TODO
+      // }
+      if (refreshResponse.status === 500) {
         internalServerErrorAlert();
         devErrorLog('Server error, retrying refresh token request');
         return retryRefreshTokenRequest(request, 3000, 2);
