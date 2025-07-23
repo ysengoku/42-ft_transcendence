@@ -83,7 +83,7 @@ export class UserSearch extends HTMLElement {
 
   renderNoUserFound() {
     const noUser = document.createElement('li');
-    noUser.innerHTML = this.noUserFoundTemplate();
+    noUser.innerHTML = this.noUserTemplate();
     this.listContainer.appendChild(noUser);
   }
 
@@ -152,6 +152,13 @@ export class UserSearch extends HTMLElement {
       true,
     );
     if (!response.success) {
+      const noUser = document.createElement('li');
+      noUser.innerHTML = this.noUserTemplate();
+      const message = noUser.querySelector('p');
+      if (message) {
+        message.textContent = 'Tempoeary unavailable';
+      }
+      this.listContainer.appendChild(noUser);
       return;
     }
     if (response.data) {
@@ -182,7 +189,7 @@ export class UserSearch extends HTMLElement {
     `;
   }
 
-  noUserFoundTemplate() {
+  noUserTemplate() {
     return `
     <style>
       .list-group-item {

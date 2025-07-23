@@ -47,6 +47,9 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     if (needToken && response.status === 401) {
       return handlers[401](method, endpoint, data, isFileUpload, needToken, csrfToken);
     }
+    if (response.status === 429) {
+      return handlers[429](response);
+    }
     if (response.status === 500) {
       return handlers[500](url, options);
     }
@@ -55,6 +58,12 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
     return handlers.exception(error);
   }
 }
+
+const errorMessage = {
+  default: 'Something went wrong. Please try again later.',
+  401: 'Session expired',
+  429: 'Unable to process your request right now. Please try again later',
+};
 
 /**
  * Handlers for different API response statuses and exceptions.
@@ -93,18 +102,51 @@ const handlers = {
    */
   401: async (method, endpoint, data, isFileUpload, needToken, csrfToken) => {
     const refreshResponse = await refreshAccessToken(csrfToken);
-    if (refreshResponse.success) {
-      return apiRequest(method, endpoint, data, isFileUpload, needToken);
+    let message = '';
+    switch (refreshResponse.status) {
+      case 204:
+        return apiRequest(method, endpoint, data, isFileUpload, needToken);
+      case 401:
+        router.redirect('/login');
+        sessionExpiredToast();
+        message = errorMessage[401];
+        break;
+      case 429:
+        message = errorMessage[429];
+        router.redirect(`/error?error=${message}`);
+        return { success: false, status: 429, message };
+      default:
+        router.redirect('/');
+        unknowknErrorToast();
+        break;
     }
-    if (refreshResponse.status === 401) {
-      router.redirect('/login');
-      sessionExpiredToast();
-      return { success: false, status: 401, msg: 'Session expired' };
-    }
+    // if (refreshResponse.success) {
+    //   return apiRequest(method, endpoint, data, isFileUpload, needToken);
+    // }
+    // if (refreshResponse.status === 401) {
+    //   router.redirect('/login');
+    //   sessionExpiredToast();
+    //   return { success: false, status: 401, msg: errorMessage[401] };
+    // }
     auth.clearStoredUser();
-    router.redirect('/');
-    unknowknErrorToast();
-    return { success: false, status: refreshResponse.status };
+    return { success: false, status: refreshResponse.status, msg: message };
+    // router.redirect('/');
+    // unknowknErrorToast();
+    // return { success: false, status: refreshResponse.status };
+  },
+
+  /**
+   * Handles 429 Too many request.
+   *
+   * @async
+   * @function
+   * @param {Response} response - The response object from the fetch request.
+   * @return {Promise<Object>} An object containing the success status, response status, and error message.
+   */
+  429: async () => {
+    const message = errorMessage[429];
+    router.redirect(`/error?error=${message}`);
+    return { success: false, status: 429, message };
   },
 
   /**
@@ -117,7 +159,7 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and response message.
    */
   500: async (url, options) => {
-    const message = 'Something went wrong. Please try again later.';
+    const message = errorMessage.default;
     internalServerErrorAlert();
     // Retry request
     setTimeout(async () => {
@@ -145,7 +187,7 @@ const handlers = {
    */
   failure: async (response) => {
     const errorData = await response.json();
-    let errorMsg = 'Something went wrong. Please try again later.';
+    let errorMsg = errorMessage.default;
     if (Array.isArray(errorData)) {
       const foundErrorMsg = errorData.find((item) => item.msg);
       errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;

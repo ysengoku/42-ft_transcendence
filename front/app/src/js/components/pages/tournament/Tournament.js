@@ -502,6 +502,9 @@ export class Tournament extends HTMLElement {
       true,
     );
     if (!response.success) {
+      if (response.status === 429) {
+        return;
+      }
       showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
       return;
     }
