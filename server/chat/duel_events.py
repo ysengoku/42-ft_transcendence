@@ -126,6 +126,10 @@ class DuelEvent:
                 self.consumer.user.username,
             )
             return
+        DuelEvent.cancel_all_send_and_received_game_invites(self.consumer.user.username, True)
+        logger.warning(
+            "%s : %s", self.consumer.user.username, self.consumer.user.profile.get_active_game_participation()
+        )
         game_room = self.create_game_room(sender, self.consumer.user.profile)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save()
@@ -142,7 +146,6 @@ class DuelEvent:
         receiver_data = self.data_for_game_found(self.consumer.user.profile, game_room.id)
         async_to_sync(self.consumer.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
         async_to_sync(self.consumer.channel_layer.group_send)(f"user_{self.consumer.user.id}", sender_data)
-        DuelEvent.cancel_all_send_game_invites(self.consumer.user.username)
 
     # TODO : security checks
     def decline_game_invite(self, data):
@@ -323,26 +326,7 @@ class DuelEvent:
         self.send_ws_message_to_user(receiver, "game_invite_canceled", notification_data)
 
     @staticmethod
-    def cancel_all_send_game_invites(username):
-        try:
-            profile = Profile.objects.get(user__username=username)
-        except Profile.DoesNotExist:
-            logger.warning("Profile for user %s does not exists.", username)
-        invitations = GameInvitation.objects.filter(sender=profile, status=GameInvitation.PENDING)
-        if not invitations.exists():
-            logger.info("No pending invitations to cancel for user %s", username)
-            return
-        with transaction.atomic():
-            count = 0
-            for invitation in invitations:
-                invitation.status = GameInvitation.CANCELLED
-                invitation.save()
-                invitation.sync_notification_status()
-                count += 1
-            logger.info("Cancelled %d pending invitations for user %s", count, username)
-
-    @staticmethod
-    def cancel_all_send_and_received_game_invites(username):
+    def cancel_all_send_and_received_game_invites(username, still_exists=False):
         try:
             profile = Profile.objects.get(user__username=username)
         except Profile.DoesNotExist:
@@ -365,20 +349,21 @@ class DuelEvent:
                 invitation.sync_notification_status()
                 count += 1
                 target = receiver if sender == profile else sender
-            async_to_sync(channel_layer.group_send)(
-                f"user_{target.user.id}",
-                {
-                    "type": "chat_message",
-                    "message": json.dumps(
-                        {
-                            "action": "game_invite_canceled",
-                            "data": {
-                                "message": "The user deleted their profile",
-                                "username": username,
-                                "nickname": receiver.user.nickname,
+                message = "The user deleted their profile" if still_exists == False else "Invitation cancelled"
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{target.user.id}",
+                    {
+                        "type": "chat_message",
+                        "message": json.dumps(
+                            {
+                                "action": "game_invite_canceled",
+                                "data": {
+                                    "message": message,
+                                    "username": username,
+                                    "nickname": receiver.user.nickname,
+                                },
                             },
-                        },
-                    ),
-                },
-            )
+                        ),
+                    },
+                )
             logger.info("Cancelled %d pending invitations for user %s", count, username)
