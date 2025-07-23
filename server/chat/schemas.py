@@ -5,6 +5,7 @@ from ninja import Schema
 
 from chat.models import Chat, ChatMessage, Notification
 from users.schemas import UsernameNicknameAvatarSchema
+from common.schemas import GameSettingsSchema
 
 
 class ChatMessageSchema(Schema):
@@ -92,6 +93,7 @@ class GameInviteNotificationDataSchema(BaseNotificationDataSchema):
     """
 
     game_id: str
+    settings: GameSettingsSchema
     invitee: UsernameNicknameAvatarSchema
 
 
