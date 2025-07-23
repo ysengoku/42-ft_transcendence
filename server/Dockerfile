@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.10-slim AS base
 
 # libpq-dev and gcc are required for the communication between Python and PostgreSQL (psycopg2 package)
 # libmagic1 is required for the image manipulation and validation withing django server
@@ -26,4 +26,9 @@ EXPOSE 8000
 
 # entrypoint script runs the workers and does cleanups after database shutdowns
 ENTRYPOINT ["./django_init.sh"]
+
+FROM base AS development
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+FROM base AS production
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "server.asgi:application"]
