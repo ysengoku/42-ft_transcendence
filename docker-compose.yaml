@@ -117,8 +117,9 @@ services:
     build:
       context: ./nginx
       dockerfile: Dockerfile
-      args:
-        NODE_ENV: ${NODE_ENV} # Pass the NODE_ENV variable to the Nginx build context to determine which config to use
+      target: ${NODE_ENV:-development} # Use the 'dev' stage by default, or 'build' in production
+      # args:
+      #   NODE_ENV: ${NODE_ENV} # Pass the NODE_ENV variable to the Nginx build context to determine which config to use
     volumes:
       - ./front/app:/app/
       - front_dist_volume:/app/dist:ro
