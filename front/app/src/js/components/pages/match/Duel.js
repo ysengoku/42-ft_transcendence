@@ -82,7 +82,11 @@ export class Duel extends HTMLElement {
           avatar: param.get('avatar'),
         };
         this.#state.settings = {
-          
+          score_to_win: param.get('score_to_win'),
+          game_speed: param.get('game_speed'),
+          ranked: param.get('ranked'),
+          time_limit: param.get('time_limit'),
+          cool_mode: param.get('cool_mode'),
         }
         break;
       default:
