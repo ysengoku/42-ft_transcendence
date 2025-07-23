@@ -50,7 +50,7 @@ export class UserActionsMenu extends HTMLElement {
       this.innerHTML = '';
       return;
     }
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.dropdownUserActions = document.getElementById('dropdown-user-actions');
     this.dropdownUserSearch = document.getElementById('dropdown-user-search');

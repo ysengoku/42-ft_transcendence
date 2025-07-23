@@ -13,7 +13,6 @@ import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@u
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
-import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
 
 export class Tournament extends HTMLElement {
   /**
@@ -119,10 +118,6 @@ export class Tournament extends HTMLElement {
       this.#state.creator.alias = this.#state.tournament.tournament_creator.alias;
     }
 
-    // =========== For test ================================================
-    // pending, tournamentstarting, waitingNextRound, roundpending
-    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'waitingNextRound');
-    // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
     // Find user data in the tournament participants
@@ -289,7 +284,7 @@ export class Tournament extends HTMLElement {
 
   render() {
     this.innerHTML = '';
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.tournamentName = this.querySelector('#tournament-name');
     this.tournamentContentWrapper = this.querySelector('#tournament-content');
 

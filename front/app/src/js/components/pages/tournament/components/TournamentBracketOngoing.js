@@ -34,7 +34,7 @@ export class TournamentBracketOngoing extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   async render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.roundNumberElement = this.querySelector('#round-number');
     this.message = this.querySelector('#redirecting-message');
     this.bracketsWrapper = this.querySelector('#brackets-wrapper');
