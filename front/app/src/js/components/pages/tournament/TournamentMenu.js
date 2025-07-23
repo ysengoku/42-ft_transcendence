@@ -108,7 +108,7 @@ export class TournamentMenu extends HTMLElement {
    */
   render() {
     this.innerHTML = '';
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.createTournamentButton = this.querySelector('#create-tournament-button');
     this.list = this.querySelector('tournament-list');

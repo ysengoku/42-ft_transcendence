@@ -1,7 +1,9 @@
-# Utiliser l'image de base Python
 FROM python:3.10-slim
 
-# Installer les dépendances système
+# libpq-dev and gcc are required for the communication between Python and PostgreSQL (psycopg2 package)
+# libmagic1 is required for the image manipulation and validation withing django server
+# procps for monitoring processes within the docker container
+# && rm -rf /var/lib/apt/lists/* for the best practice of keeping the Docker image lean
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     procps \
@@ -9,26 +11,19 @@ RUN apt-get update && apt-get install -y \
     libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Définir le répertoire de travail
 WORKDIR /app
 
-# Copier les fichiers requirements et installer les dépendances
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier tout le projet
 COPY . .
 
 # It's important to chmox the script
 ENV chmox="chmod +x"
 RUN $chmox ./django_init.sh
 
-# Collecter les fichiers statiques
-RUN python manage.py collectstatic --noinput
-
-# Exposer le port
 EXPOSE 8000
 
-# Utiliser Daphne pour ASGI (support WebSocket)
+# entrypoint script runs the workers and does cleanups after database shutdowns
 ENTRYPOINT ["./django_init.sh"]
 CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "server.asgi:application"]

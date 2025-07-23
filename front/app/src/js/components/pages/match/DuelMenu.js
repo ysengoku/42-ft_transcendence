@@ -128,7 +128,7 @@ export class DuelMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   render() {
     this.innerHTML = '';
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     // Set references to DOM elements
     this.optionsButton = this.querySelector('#game-options-button');
@@ -282,7 +282,7 @@ export class DuelMenu extends HTMLElement {
    * @description Convert game options to an object to include in the game invitation request.
    */
   optionsToObject() {
-    if (Object.keys(this.#state.options).length === 0) {
+    if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
       return null;
     }
     const optionsObj = {};

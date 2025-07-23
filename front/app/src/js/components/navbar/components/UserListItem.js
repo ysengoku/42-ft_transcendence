@@ -26,7 +26,7 @@ export class UserListItem extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     const avatar = this.querySelector('.dropdown-list-avatar');
     avatar.src = this.#state.avatar;

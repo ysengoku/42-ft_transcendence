@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Environment variables
 # Init django-environ
 env = environ.Env(
-    DEBUG=(bool, False),
+    NODE_ENV=(str, "development"),
     CRON_SECRET=(str, ""),
     REDIS_HOST=(str, "redis"),
     REDIS_PORT=(int, 6379),
@@ -70,7 +70,7 @@ SERVER_PORT = env("NGINX_PORT")
 # TODO: Change the secret key in production
 SECRET_KEY = env("SECRET_KEY")
 
-DEBUG = env("DEBUG")
+DEBUG = env("NODE_ENV") != "production"
 CRON_SECRET = env("CRON_SECRET")
 
 MAX_ALIAS_LENGTH = env("MAX_ALIAS_LENGTH")
@@ -121,7 +121,6 @@ INSTALLED_APPS = [
     "tournaments",
 
     # Default Django applications
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",

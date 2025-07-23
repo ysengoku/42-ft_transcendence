@@ -48,7 +48,7 @@ export class TournamentOverviewTree extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.tournamentOverviewContent = this.querySelector('#tournament-overview-content-wrapper');
 
     for (let i = 0; i < this.#state.rounds.length; i++) {

@@ -23,7 +23,7 @@ def get_daily_elo_change(request: HttpRequest, username: str):
     For example, `/{username}/daily-elo?limit=7&offset=0` will get 7 elo points.
     """
     user_profile = get_profile_queryset_by_username_or_404(username).first()
-    return Match.objects.get_elo_points_by_day(user_profile)
+    return Match.objects.get_elo_points_by_day(user_profile).values("day", "daily_elo_change", "elo_result")
 
 
 @game_stats_router.get(
