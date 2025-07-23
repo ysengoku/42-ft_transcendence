@@ -2,9 +2,9 @@ import json
 import logging
 
 from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
 from django.db import DatabaseError, models, transaction
 
+from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
 
@@ -18,7 +18,7 @@ from .validator import Validator
 logger = logging.getLogger("server")
 
 
-class UserEventsConsumer(WebsocketConsumer):
+class UserEventsConsumer(GuardedWebsocketConsumer):
     def connect(self):
         self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
