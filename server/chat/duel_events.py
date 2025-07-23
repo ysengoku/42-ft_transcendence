@@ -126,14 +126,14 @@ class DuelEvent:
                 self.consumer.user.username,
             )
             return
+        logger.warning(
+            "%s : %s", self.consumer.user.username, self.consumer.user.profile.get_active_game_participation()
+        )
         game_room = self.create_game_room(sender, self.consumer.user.profile)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save()
         invitation.sync_notification_status()
-        DuelEvent.cancel_all_send_and_received_game_invites(self.consumer.user.username, True)
-        logger.warning(
-            "%s : %s", self.consumer.user.username, self.consumer.user.profile.get_active_game_participation()
-        )
+        DuelEvent.cancel_all_send_game_invites(self.consumer.user.username)
         """
         About this function : self.cancel_game_invite()
         if any invitations were send by the user, they are cancelled because they are in a game now
@@ -259,9 +259,11 @@ class DuelEvent:
             options=options,
         )
         self.consumer.user_profile.refresh_from_db()
-        self.create_and_send_game_notifications(self.consumer.user_profile, receiver, str(invitation.id), client_id)
+        self.create_and_send_game_notifications(
+            self.consumer.user_profile, receiver, str(invitation.id), client_id, options
+        )
 
-    def create_and_send_game_notifications(self, sender, receiver, invitation_id, client_id):
+    def create_and_send_game_notifications(self, sender, receiver, invitation_id, client_id, options):
         notification = Notification.objects.action_send_game_invite(
             receiver=receiver,
             sender=sender,
@@ -275,6 +277,7 @@ class DuelEvent:
             notification_data["date"] = notification_data["date"].isoformat()
         self.send_ws_message_to_user(receiver, "game_invite", notification_data)
         # Notification for the sender,to find and cancel their invitation if the receiver never replies
+        # TODO: put options (settings) in notification
         Notification.objects.action_send_game_invite(
             receiver=sender,
             invitee=receiver,
@@ -330,7 +333,26 @@ class DuelEvent:
         self.send_ws_message_to_user(receiver, "game_invite_canceled", notification_data)
 
     @staticmethod
-    def cancel_all_send_and_received_game_invites(username, still_exists=False):
+    def cancel_all_send_game_invites(username):
+        try:
+            profile = Profile.objects.get(user__username=username)
+        except Profile.DoesNotExist:
+            logger.warning("Profile for user %s does not exists.", username)
+        invitations = GameInvitation.objects.filter(sender=profile, status=GameInvitation.PENDING)
+        if not invitations.exists():
+            logger.info("No pending invitations to cancel for user %s", username)
+            return
+        with transaction.atomic():
+            count = 0
+            for invitation in invitations:
+                invitation.status = GameInvitation.CANCELLED
+                invitation.save()
+                invitation.sync_notification_status()
+                count += 1
+            logger.info("Cancelled %d pending invitations for user %s", count, username)
+
+    @staticmethod
+    def cancel_all_send_and_received_game_invites(username):
         try:
             profile = Profile.objects.get(user__username=username)
         except Profile.DoesNotExist:
@@ -353,7 +375,6 @@ class DuelEvent:
                 invitation.sync_notification_status()
                 count += 1
                 target = receiver if sender == profile else sender
-                message = "The user deleted their profile" if still_exists == False else "Invitation cancelled"
                 async_to_sync(channel_layer.group_send)(
                     f"user_{target.user.id}",
                     {
@@ -362,7 +383,7 @@ class DuelEvent:
                             {
                                 "action": "game_invite_canceled",
                                 "data": {
-                                    "message": message,
+                                    "message": "The user deleted their profile",
                                     "username": username,
                                     "nickname": receiver.user.nickname,
                                 },
