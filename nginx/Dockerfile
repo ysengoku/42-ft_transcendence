@@ -12,7 +12,7 @@ RUN mkdir -p /app/dist
 
 EXPOSE 1026
 
-FROM base AS developement
+FROM base AS development
 COPY nginx.dev.conf /etc/nginx/nginx.conf
 CMD ["nginx", "-g" ,"daemon off;"]
 
