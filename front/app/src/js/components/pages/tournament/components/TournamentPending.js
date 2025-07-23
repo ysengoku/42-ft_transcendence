@@ -182,7 +182,9 @@ export class TournamentPending extends HTMLElement {
       true,
     );
     if (!response.success) {
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
+      if (response.status !== 401 && response.status !== 429) {
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
+      }
       return;
     }
     socketManager.closeSocket('tournament', this.#state.id);

@@ -52,7 +52,7 @@ export class TournamentOverview extends HTMLElement {
       this.innerHTML = notFound.outerHTML;
       return;
     }
-    await this.fetchTournamentrData();
+    await this.fetchTournamentData();
     if (this.#state.tournament) {
       this.render();
     }
@@ -62,13 +62,13 @@ export class TournamentOverview extends HTMLElement {
 
   disconnectedCallback() {
     window.removeEventListener('resize', this.handleResize);
-    this.updateButton?.removeEventListener('click', this.fetchTournamentrData);
+    this.updateButton?.removeEventListener('click', this.fetchTournamentData);
     if (this.#pollingInterval) {
       clearInterval(this.#pollingInterval);
     }
   }
 
-  async fetchTournamentrData() {
+  async fetchTournamentData() {
     if (this.updating) {
       return;
     }
@@ -90,8 +90,6 @@ export class TournamentOverview extends HTMLElement {
       if (response.status === 404) {
         const notFound = document.createElement('page-not-found');
         this.innerHTML = notFound.outerHTML;
-      } else {
-        console.error('Error fetching tournament data');
       }
       return;
     }
@@ -163,16 +161,27 @@ export class TournamentOverview extends HTMLElement {
     if (this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING) {
       return;
     }
-    this.#pollingInterval = setInterval(() => {
-      this.fetchTournamentrData();
+    this.#pollingInterval = setInterval(async () => {
+      await this.fetchTournamentData();
+      if (this.#state.tournament) {
+        if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
+          this.render();
+        } else {
+          this.renderBracketUpdates();
+        }
+      }
     }, 30000);
     devLog('Tournament status polling started');
   }
 
   async updateStatus() {
-    await this.fetchTournamentrData();
+    await this.fetchTournamentData();
     if (this.#state.tournament) {
-      this.renderBracketUpdates();
+      if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
+        this.render();
+      } else {
+        this.renderBracketUpdates();
+      }
     }
   }
 

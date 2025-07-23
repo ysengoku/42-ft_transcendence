@@ -36,15 +36,18 @@ export class UserProfile extends HTMLElement {
         devLog('User data:', this.user);
         this.render();
       }
-    } else {
-      if (response.status === 404) {
+      return;
+    }
+    switch (response.status) {
+      case 401:
+        return;
+      case 404:
         router.redirect('/user-not-found');
-      } else if (response.status === 401) {
-        router.redirect('/login');
-      } else {
+        break;
+      case 429:
+        return;
+      default:
         router.redirect(`/error?code=${response.status}&error=${response.msg}`);
-        console.error('Error ', response.status, ': ', response.msg);
-      }
     }
   }
 
