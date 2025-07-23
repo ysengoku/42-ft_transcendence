@@ -286,7 +286,7 @@ export class DuelMenu extends HTMLElement {
     if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
       return null;
     }
-    const optionsObj = {};
+    const optionsObj = DEFAULT_GAME_OPTIONS;
     for (const [key, value] of Object.entries(this.#state.options)) {
       if (value !== 'any') {
         optionsObj[key] = value;
@@ -440,19 +440,13 @@ export class DuelMenu extends HTMLElement {
     };
     const settings = this.optionsToObject();
     message.data.settings = settings ? settings : DEFAULT_GAME_OPTIONS;
-    // if (settings) {
-    //   message.data.settings = settings;
-    // }
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
       username: this.#state.opponentUsername,
       nickname: this.opponentNickname.textContent,
       avatar: this.opponentAvatar.src,
-      // score_to_win: settings.score_to_win | 5,
-      // game_speed: settings.game_speed | 'medium',
-
-// "score_to_win":5,"game_speed":"medium","ranked":false,"time_limit":3, "cool_mode":false      
+      ...message.data.settings,
     };
     router.navigate('/duel', queryParams);
   }
