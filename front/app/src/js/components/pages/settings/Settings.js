@@ -81,7 +81,10 @@ export class Settings extends HTMLElement {
         }
       }
     }
-    router.navigate('/login');
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    router.redirect('/login');
   }
 
   render() {
@@ -209,7 +212,7 @@ export class Settings extends HTMLElement {
       auth.updateStoredUser(this.#state.currentUserData);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 2000);
     } else {
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 429) {
         return;
       }
       let errorMsg = 'An unexpected error occurred. Please try again later.';

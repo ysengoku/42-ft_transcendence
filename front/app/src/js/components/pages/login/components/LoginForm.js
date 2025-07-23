@@ -58,9 +58,12 @@ export class LoginForm extends HTMLElement {
           router.redirect('/home', response.user);
         }
       }
-    } else {
-      showFormErrorFeedback(document.querySelector('#login-failed-feedback'), response.msg);
+      return;
     }
+    if (response.status === 429) {
+      return;
+    }
+    showFormErrorFeedback(document.querySelector('#login-failed-feedback'), response.msg);
   }
 
   checkInputs() {
