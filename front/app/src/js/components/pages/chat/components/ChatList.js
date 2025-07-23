@@ -74,7 +74,7 @@ export class ChatList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   async render() {
     // console.time('ChatList render');
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.loader = this.querySelector('.chat-loader');
     this.loader.innerHTML = loader();
 

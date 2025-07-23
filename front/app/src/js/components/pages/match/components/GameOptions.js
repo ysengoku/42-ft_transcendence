@@ -105,7 +105,7 @@ export class GameOptions extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.duelMenuComponent = document.querySelector('duel-menu');
     this.optionWrapper = this.querySelector('.form-group');

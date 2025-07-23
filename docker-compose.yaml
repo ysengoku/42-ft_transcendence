@@ -1,3 +1,6 @@
+x-front-server-common-variables: &front-server-common-variables
+  NODE_ENV: ${NODE_ENV:-development}  # defines whether the images run in production or developement mode
+
 services:
   front:
     container_name: front
@@ -19,7 +22,7 @@ services:
     networks:
       - transcendance_network
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
+       <<: *front-server-common-variables
 
   server:
     container_name: server
@@ -38,6 +41,7 @@ services:
     env_file:
       - .env
     environment:
+      <<: *front-server-common-variables
       DJANGO_SETTINGS_MODULE: server.settings
       DATABASE_URL: ${DATABASE_URL}
       REDIS_HOST: redis
@@ -46,11 +50,12 @@ services:
       CRON_SECRET: ${CRON_SECRET}
       CRON_ENDPOINT: ${CRON_ENDPOINT}
     depends_on:
-      - database
-      - redis
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./server:/app
-      - static_volume:/app/static
       - media_volume:/app/media
     networks:
       - transcendance_network
@@ -83,8 +88,8 @@ services:
   database:
     container_name: database
     build:
-      context: ./database # Build context (directory containing the Dockerfile for the database)
-      dockerfile: Dockerfile # Dockerfile for this service
+      context: ./database
+      dockerfile: Dockerfile
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -100,6 +105,12 @@ services:
       - "5432"
     networks:
       - transcendance_network
+    healthcheck:
+      # pg_isready is a utility for checking the status of the postgres connection
+      test: ["CMD-SHELL", "pg_isready -p ${DATABASE_PORT} -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
 
   nginx:
     container_name: nginx
@@ -107,13 +118,12 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
       args:
-        NODE_ENV: ${NODE_ENV} # Pass the NODE_ENV variable to the Nginx build context
+        NODE_ENV: ${NODE_ENV} # Pass the NODE_ENV variable to the Nginx build context to determine which config to use
     volumes:
       - ./front/app:/app/
       - front_dist_volume:/app/dist:ro
-      - media_volume:/app/media/ # Directory containing the application's media files
-      - static_volume:/app/static/ # Directory containing the application's static files
-      - db_volume:/var/lib/postgresql/data/ # Directory containing the database files
+      - media_volume:/app/media/
+      - db_volume:/var/lib/postgresql/data/
     ports:
       - "1026:1026"
     expose:
@@ -133,17 +143,19 @@ services:
     - redis_data:/data
     networks:
       - transcendance_network
+    healthcheck:
+      # redis-cli ping returns exit status of 0 even when it fails, so grep to find the actual PONG response is necessary
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
 
-# shared volumes for all services, and between host and containers. better to mount volumes without bind: docker managed the persistence
 volumes:
   redis_data:
     name: redis_data
     
   db_volume:
     name: db_volume
-
-  static_volume:
-    name: static_volume
 
   front_dist_volume:
     name: front_dist_volume
@@ -154,21 +166,3 @@ volumes:
 networks:
   transcendance_network:
     driver: bridge
-
-# For static_volume:
-# Django collects its static files into this volume using collectstatic
-# These files are dynamically generated from various Django apps
-# Nginx needs to access these files to serve them
-# The shared volume allows both Django and Nginx to access the same files
-
-# For media_volume:
-# Media files are uploaded by users
-# Django stores these files in this volume
-# Nginx must be able to serve them
-# The volume is shared because it changes dynamically (new uploads, deletions, etc.)
-
-# In contrast, for front-end files:
-# They are static (predefined)
-# They do not change dynamically
-# They can be mounted directly from the filesystem
-# That’s why direct mount is sufficient for the front-end, but shared volumes are needed for the server and media.

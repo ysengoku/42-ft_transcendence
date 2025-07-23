@@ -8,7 +8,7 @@ export class CreditsAccordion extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
   }
 
   template() {
