@@ -4,8 +4,8 @@ from django.conf import settings
 from ninja import Schema
 
 from chat.models import Chat, ChatMessage, Notification
-from users.schemas import UsernameNicknameAvatarSchema
 from common.schemas import GameSettingsSchema
+from users.schemas import UsernameNicknameAvatarSchema
 
 
 class ChatMessageSchema(Schema):
