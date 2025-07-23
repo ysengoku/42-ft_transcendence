@@ -127,7 +127,7 @@ class DuelEvent:
             )
             return
         logger.warning(
-            "%s : %s", self.consumer.user.username, self.consumer.user.profile.get_active_game_participation()
+            "%s : %s", self.consumer.user.username, self.consumer.user.profile.get_active_game_participation(),
         )
         game_room = self.create_game_room(sender, self.consumer.user.profile)
         invitation.status = GameInvitation.ACCEPTED
@@ -244,13 +244,17 @@ class DuelEvent:
             return
 
         if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
-            logger.warning("Error : user %s has more than one pending invitation.", self.consumer.user.username)
+            logger.warning("user %s has more than one pending invitation.", self.consumer.user.username)
             self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
             return
         if GameInvitation.objects.filter(
-            sender=receiver, recipient=self.consumer.user_profile, status=GameInvitation.PENDING
+            sender=receiver, recipient=self.consumer.user_profile, status=GameInvitation.PENDING,
         ).exists():
-            logger.warning("Error : user %s is already invited by %s.", receiver_username, self.consumer.user.username)
+            logger.warning(
+                "user %s is already invited by %s, deleting the invite...",
+                receiver_username,
+                self.consumer.user.username,
+            )
             DuelEvent.decline_game_invite(self, data)
         invitation = GameInvitation.objects.create(
             sender=self.consumer.user_profile,
@@ -260,7 +264,7 @@ class DuelEvent:
         )
         self.consumer.user_profile.refresh_from_db()
         self.create_and_send_game_notifications(
-            self.consumer.user_profile, receiver, str(invitation.id), client_id, options
+            self.consumer.user_profile, receiver, str(invitation.id), client_id, options,
         )
 
     def create_and_send_game_notifications(self, sender, receiver, invitation_id, client_id, options):
@@ -268,7 +272,7 @@ class DuelEvent:
             receiver=receiver,
             sender=sender,
             invitee=receiver,
-            notification_data={"game_id": invitation_id, "client_id": str(client_id)},
+            notification_data={"game_id": invitation_id, "client_id": str(client_id), "settings": options},
         )
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
@@ -282,7 +286,7 @@ class DuelEvent:
             receiver=sender,
             invitee=receiver,
             sender=self.consumer.user_profile,
-            notification_data={"game_id": invitation_id, "client_id": str(client_id)},
+            notification_data={"game_id": invitation_id, "client_id": str(client_id), "settings": options},
         )
 
     def send_ws_message_to_user(self, user, action, notification_data):
