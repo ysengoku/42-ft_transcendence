@@ -90,8 +90,6 @@ export class TournamentOverview extends HTMLElement {
       if (response.status === 404) {
         const notFound = document.createElement('page-not-found');
         this.innerHTML = notFound.outerHTML;
-      } else {
-        console.error('Error fetching tournament data');
       }
       return;
     }
