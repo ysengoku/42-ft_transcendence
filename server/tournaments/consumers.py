@@ -4,7 +4,8 @@ import logging
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
+
+from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 
 from .models import Bracket, Participant, Tournament
 
@@ -24,7 +25,7 @@ EXCLUDED = 3004
 BAD_DATA = 3100
 
 
-class TournamentConsumer(WebsocketConsumer):
+class TournamentConsumer(GuardedWebsocketConsumer):
     tournaments = {}
 
     def connect(self):
