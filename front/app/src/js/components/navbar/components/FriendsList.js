@@ -61,7 +61,13 @@ export class FriendsList extends HTMLElement {
     );
     if (!response.success) {
       devErrorLog('Failed to fetch friends list:', response);
-      return;
+      const unavailable = document.createElement('li');
+      unavailable.innerHTML = this.unavailableTemplate();
+      const message = unavailable.querySelector('p');
+      if (message) {
+        message.innerText = 'Temporary unavailable';
+      }
+      this.listContainer.appendChild(unavailable);
     }
     if (response.data) {
       this.#state.totalFriendsCount = response.data.count;
@@ -89,7 +95,7 @@ export class FriendsList extends HTMLElement {
 
   renderNoFriendsFound() {
     const noFriends = document.createElement('li');
-    noFriends.innerHTML = this.noFriendTemplate();
+    noFriends.innerHTML = this.unavailableTemplate();
     this.listContainer.appendChild(noFriends);
   }
 
@@ -120,7 +126,7 @@ export class FriendsList extends HTMLElement {
     `;
   }
 
-  noFriendTemplate() {
+  unavailableTemplate() {
     return `
     <style>
     .list-group-item {
