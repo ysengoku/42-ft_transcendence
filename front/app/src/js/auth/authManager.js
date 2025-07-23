@@ -151,6 +151,9 @@ const auth = (() => {
               return this.fetchAuthStatus(fireEvent);
             case 401:
               return { success: false, status: 401 };
+            case 429:
+              // TODO
+              break;
             case 500:
               internalServerErrorAlert();
               break;

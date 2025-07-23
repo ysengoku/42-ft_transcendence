@@ -294,7 +294,6 @@ export class TournamentMenu extends HTMLElement {
         this.hideModal();
         break;
       case 422:
-        console.log(response.msg);
         this.alert.textContent = response.msg;
         this.alert.classList.remove('d-none');
         // this.confirmButton.disabled = true;
@@ -345,6 +344,9 @@ export class TournamentMenu extends HTMLElement {
         showAlertMessageForDuration(ALERT_TYPE.ERROR, message);
         this.hideModal();
         this.render();
+        return;
+      case 429:
+        this.hideModal();
         return;
       default:
         break;

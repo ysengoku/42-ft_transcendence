@@ -73,12 +73,14 @@ export class Register extends HTMLElement {
       if (response.status === 200) {
         router.redirect('/home', response.user);
       }
-    } else {
-      console.error('Registration failed:', response.msg);
-      this.feedbackField = this.querySelector('#signup-failed-feedback');
-      this.feedbackField.innerHTML = '';
-      showFormErrorFeedback(this.feedbackField, response.msg);
+      return;
     }
+    if (response.status === 429) {
+      return;
+    }
+    this.feedbackField = this.querySelector('#signup-failed-feedback');
+    this.feedbackField.innerHTML = '';
+    showFormErrorFeedback(this.feedbackField, response.msg);
   }
 
   checkInputFields() {
