@@ -126,15 +126,14 @@ class DuelEvent:
                 self.consumer.user.username,
             )
             return
+        game_room = self.create_game_room(sender, self.consumer.user.profile)
+        invitation.status = GameInvitation.ACCEPTED
+        invitation.save()
+        invitation.sync_notification_status()
         DuelEvent.cancel_all_send_and_received_game_invites(self.consumer.user.username, True)
         logger.warning(
             "%s : %s", self.consumer.user.username, self.consumer.user.profile.get_active_game_participation()
         )
-        game_room = self.create_game_room(sender, self.consumer.user.profile)
-        invitation.status = GameInvitation.ACCEPTED
-        invitation.save()
-
-        invitation.sync_notification_status()
         """
         About this function : self.cancel_game_invite()
         if any invitations were send by the user, they are cancelled because they are in a game now
