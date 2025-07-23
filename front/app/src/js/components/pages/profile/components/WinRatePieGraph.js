@@ -18,7 +18,7 @@ export class UserWinRatePieGraph extends HTMLElement {
 
   render() {
     // this.#state.rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     const wins = this.querySelector('#wins');
     const losses = this.querySelector('#losses');

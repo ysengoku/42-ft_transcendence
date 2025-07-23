@@ -20,7 +20,7 @@ export class UserGameHistory extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.cardBody = this.querySelector('#user-game-history-body');
     this.filterButton = this.querySelector('#game-history-filter');

@@ -5,11 +5,13 @@ Contains the default exception handlers for some of the possible errors.
 
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from ninja import NinjaAPI
 from ninja.errors import AuthenticationError, HttpError
 from ninja.errors import ValidationError as NinjaValidationError
+from ninja.throttling import AnonRateThrottle, AuthRateThrottle
 
 from chat.router import chat_app_router
 from pong.router import pong_app_router
@@ -17,7 +19,20 @@ from tournaments.router import tournaments_app_router
 from users.middleware import JWTEndpointsAuthMiddleware
 from users.router import users_app_router
 
-api = NinjaAPI(auth=JWTEndpointsAuthMiddleware(), csrf=True)
+# conditionally hide the docs and set throttling protection in production build
+if settings.DEBUG:
+    api = NinjaAPI(
+        auth=JWTEndpointsAuthMiddleware(),
+        csrf=True,
+    )
+else:
+    api = NinjaAPI(
+        auth=JWTEndpointsAuthMiddleware(),
+        csrf=True,
+        docs_url=None,
+        throttle=[AnonRateThrottle("5/s"), AuthRateThrottle("50/s")],
+    )
+
 api.add_router("", router=users_app_router)
 api.add_router("", router=chat_app_router)
 api.add_router("", router=pong_app_router)

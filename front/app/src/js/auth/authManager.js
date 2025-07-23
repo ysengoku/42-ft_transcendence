@@ -71,7 +71,6 @@ const auth = (() => {
     clearStoredUser() {
       sessionStorage.removeItem('user');
       localStorage.removeItem('gameOptions');
-      localStorage.removeItem('gameType');
       const event = new CustomEvent('userStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
       socketManager.closeAllSockets();
