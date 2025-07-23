@@ -38,6 +38,7 @@ export class Duel extends HTMLElement {
     gameId: '',
     loggedInUser: null,
     opponent: null,
+    settings: {},
   };
 
   // Countdown time in seconds before the duel starts
@@ -80,6 +81,9 @@ export class Duel extends HTMLElement {
           nickname: param.get('nickname'),
           avatar: param.get('avatar'),
         };
+        this.#state.settings = {
+          
+        }
         break;
       default:
         this.#state.status = '';

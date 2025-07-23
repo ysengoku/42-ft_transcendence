@@ -16,6 +16,7 @@ import {
   sessionExpiredToast,
 } from '@utils';
 import { getOptionsFromLocalStorage } from './utils/gameOptions.js';
+import { DEFAULT_GAME_OPTIONS } from '@env';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
@@ -438,15 +439,20 @@ export class DuelMenu extends HTMLElement {
       },
     };
     const settings = this.optionsToObject();
-    if (settings) {
-      message.data.settings = settings;
-    }
+    message.data.settings = settings ? settings : DEFAULT_GAME_OPTIONS;
+    // if (settings) {
+    //   message.data.settings = settings;
+    // }
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
       username: this.#state.opponentUsername,
       nickname: this.opponentNickname.textContent,
       avatar: this.opponentAvatar.src,
+      // score_to_win: settings.score_to_win | 5,
+      // game_speed: settings.game_speed | 'medium',
+
+// "score_to_win":5,"game_speed":"medium","ranked":false,"time_limit":3, "cool_mode":false      
     };
     router.navigate('/duel', queryParams);
   }
