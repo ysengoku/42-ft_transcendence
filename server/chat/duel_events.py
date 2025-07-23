@@ -247,6 +247,11 @@ class DuelEvent:
             logger.warning("Error : user %s has more than one pending invitation.", self.consumer.user.username)
             self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
             return
+        if GameInvitation.objects.filter(
+            sender=receiver, recipient=self.consumer.user_profile, status=GameInvitation.PENDING
+        ).exists():
+            logger.warning("Error : user %s is already invited by %s.", receiver_username, self.consumer.user.username)
+            DuelEvent.decline_game_invite(self, data)
         invitation = GameInvitation.objects.create(
             sender=self.consumer.user_profile,
             recipient=receiver,
