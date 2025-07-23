@@ -112,10 +112,12 @@ export class ProfileUserActions extends HTMLElement {
     if (response.success) {
       this.#state.data.isFriend = true;
       this.render();
-    } else {
-      console.error('Error adding friend:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.addFriend, 3000);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
   }
 
   async removeFriend() {
@@ -130,10 +132,12 @@ export class ProfileUserActions extends HTMLElement {
     if (response.success) {
       this.#state.data.isFriend = false;
       this.render();
-    } else {
-      console.error('Error removing friend:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.removeFriend, 3000);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
   }
 
   async blockUser() {
@@ -150,10 +154,12 @@ export class ProfileUserActions extends HTMLElement {
       this.#state.data.isBlocked = true;
       this.#state.data.isFriend = false;
       this.render();
-    } else {
-      console.error('Error blocking user:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.blockUser, 3000);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
   }
 
   async unblockUser() {
@@ -168,10 +174,12 @@ export class ProfileUserActions extends HTMLElement {
     if (response.success) {
       this.#state.data.isBlocked = false;
       this.render();
-    } else {
-      console.error('Error unblocking:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.unblockUser, 3000);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
   }
 
   template() {
