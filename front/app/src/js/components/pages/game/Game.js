@@ -30,10 +30,14 @@ export class Game extends HTMLElement {
   async connectedCallback() {
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
       router.redirect('/login');
+      return;
     }
     this.render();
   }
