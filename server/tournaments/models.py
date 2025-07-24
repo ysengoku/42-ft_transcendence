@@ -292,3 +292,6 @@ class Bracket(models.Model):
         self.status = self.ONGOING
         self.save()
         return self
+
+    def get_winner(self):
+        return self.winner
