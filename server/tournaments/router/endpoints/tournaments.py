@@ -13,7 +13,7 @@ from chat.tournament_events import TournamentEvent
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from tournaments.models import Bracket, Participant, Round, Tournament
 from tournaments.schemas import TournamentCreateSchema, TournamentSchema
-from tournaments.tournament_service import TournamentService
+from tournaments.tournament_worker import TournamentWorkerConsumer
 
 tournaments_router = Router()
 
@@ -129,7 +129,7 @@ def delete_tournament(request, tournament_id: UUID):
 
     tournament.status = Tournament.CANCELLED
     tournament.save()
-    TournamentService.tournament_canceled(tournament_id)
+    async_to_sync(TournamentWorkerConsumer.tournament_canceled)(tournament_id)
     TournamentEvent.close_tournament_invitations(tournament_id)
     return 204, None
 
@@ -165,11 +165,13 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
             tournament.status = Tournament.ONGOING
             tournament.save(update_fields=["status"])
 
-            transaction.on_commit(lambda: TournamentService.new_registration(tournament_id, alias, avatar, True))
-            transaction.on_commit(lambda: TournamentService.prepare_round(tournament_id))
+            transaction.on_commit(
+                lambda: async_to_sync(TournamentWorkerConsumer.new_registration)(tournament_id, alias, avatar, True),
+            )
+            transaction.on_commit(lambda: async_to_sync(TournamentWorkerConsumer.prepare_round)(tournament_id))
             TournamentEvent.close_tournament_invitations(tournament_id)
         else:
-            TournamentService.new_registration(tournament_id, alias, avatar, False)
+            async_to_sync(TournamentWorkerConsumer.new_registration)(tournament_id, alias, avatar, False)
 
     return 204, None
 
@@ -204,8 +206,8 @@ def unregister_for_tournament(request, tournament_id: UUID):
             tournament.save()
             TournamentEvent.close_tournament_invitations(tournament_id)
             data = {"tournament_id": str(tournament_id), "tournament_name": tournament.name}
-            TournamentService.send_group_message(tournament_id, "tournament_canceled", data)
+            async_to_sync(TournamentWorkerConsumer.send_group_message)(tournament_id, "tournament_canceled", data)
         else:
-            TournamentService.user_left(tournament_id, alias, user.id)
+            async_to_sync(TournamentWorkerConsumer.user_left)(tournament_id, alias, user.id)
 
     return 204, None
