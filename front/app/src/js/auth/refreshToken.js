@@ -52,21 +52,34 @@ export async function refreshAccessToken(csrfToken) {
         credentials: 'include',
       };
       const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, request);
-      if (refreshResponse.ok) {
-        devLog('Refresh successful');
-        return { success: true, status: 204 };
+      switch (refreshResponse.status) {
+        case 204:
+          devLog('Refresh successful');
+          return { success: true, status: 204 };
+        case 500:
+          internalServerErrorAlert();
+          devErrorLog('Server error, retrying refresh token request');
+          return retryRefreshTokenRequest(request, 3000, 2);
+        default:
+          devLog('Refresh failed');
+          auth.clearStoredUser();
+          return { success: false, status: refreshResponse.status };
       }
+      // if (refreshResponse.ok) {
+      //   devLog('Refresh successful');
+      //   return { success: true, status: 204 };
+      // }
       // if (refreshResponse.status === 429) {
       // TODO
       // }
-      if (refreshResponse.status === 500) {
-        internalServerErrorAlert();
-        devErrorLog('Server error, retrying refresh token request');
-        return retryRefreshTokenRequest(request, 3000, 2);
-      }
-      devLog('Refresh failed');
-      auth.clearStoredUser();
-      return { success: false, status: refreshResponse.status };
+      // if (refreshResponse.status === 500) {
+      //   internalServerErrorAlert();
+      //   devErrorLog('Server error, retrying refresh token request');
+      //   return retryRefreshTokenRequest(request, 3000, 2);
+      // }
+      // devLog('Refresh failed');
+      // auth.clearStoredUser();
+      // return { success: false, status: refreshResponse.status };
     } catch (error) {
       devErrorLog(error);
       auth.clearStoredUser();

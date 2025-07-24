@@ -130,7 +130,6 @@ export class Duel extends HTMLElement {
     this.innerHTML = loading.outerHTML;
     this.#state.loggedInUser = await auth.getUser();
     if (!this.#state.loggedInUser) {
-      router.redirect('/login');
       return;
     }
     if (!this.#state.status) {
