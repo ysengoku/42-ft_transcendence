@@ -23,6 +23,9 @@ export class MfaVerification extends HTMLElement {
       router.redirect('/home');
       return;
     }
+    if (authStatus.status === 429) {
+      return;
+    }
     if (this.#state.username === '') {
       router.redirect('/login');
       return;

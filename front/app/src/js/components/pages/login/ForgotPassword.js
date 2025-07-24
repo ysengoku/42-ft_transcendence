@@ -22,6 +22,9 @@ export class ForgotPassword extends HTMLElement {
       router.redirect('/home');
       return;
     }
+    if (authStatus.status === 429) {
+      return;
+    }
     this.render();
   }
 

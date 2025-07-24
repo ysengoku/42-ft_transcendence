@@ -17,7 +17,6 @@ const ICON = {
   'alert-success': 'bi-hand-thumbs-up',
   'alert-danger': 'bi-x-octagon',
   'alert-light': 'bi-exclamation-octagon',
-  // 'alert-tournament': 'bi-trophy',
   'alert-tournament': 'bi-fire',
 };
 
