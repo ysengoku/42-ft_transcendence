@@ -10,8 +10,7 @@ from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from .models import Bracket, Participant, Tournament
 
 # TODO: see if BracketSchema is really needed
-from .tournament_service import TournamentService
-from .tournament_validator import Validator
+from .tournament_worker import TournamentWorkerConsumer
 
 logger = logging.getLogger("server")
 
@@ -70,15 +69,17 @@ class TournamentConsumer(GuardedWebsocketConsumer):
         self.accept()
         if tournament.status == tournament.ONGOING:
             round_number = tournament.get_current_round_number()
-            try:
-                bracket_status = tournament.get_user_current_bracket(self.user.profile, round_number).status
-            except Bracket.DoesNotExist:
+            bracket = tournament.get_user_current_bracket(self.user.profile, round_number)
+            if bracket is None:
                 logger.warning("This bracket does not exist")
                 self.close(BAD_DATA)
                 return
+            bracket_status = bracket.status
             if bracket_status in [Bracket.PENDING, Bracket.ONGOING]:
                 current_round = tournament.get_current_round(round_number)
-                TournamentService.receive_start_round_message(tournament.id, self.user.id, round_number, current_round)
+                async_to_sync(TournamentWorkerConsumer.receive_start_round_message)(
+                    tournament.id, self.user.id, round_number, current_round,
+                )
 
     def disconnect(self, close_code):
         logger.debug("WILL BE DISCONNECTED : %s", self.user)
@@ -98,9 +99,7 @@ class TournamentConsumer(GuardedWebsocketConsumer):
             logger.warning("Tournament: Message without action received")
             return
 
-        entire_data = text_data_json.get("data", {})
-        if not Validator.validate_action_data(action, entire_data):
-            return
+        text_data_json.get("data", {})
 
         match action:
             case _:
