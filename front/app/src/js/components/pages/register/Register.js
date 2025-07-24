@@ -14,6 +14,10 @@ export class Register extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
       router.redirect('/home');
+      return;
+    }
+    if (authStatus.status === 429) {
+      return;
     }
     this.render();
   }

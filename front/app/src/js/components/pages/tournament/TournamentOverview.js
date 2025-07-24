@@ -7,8 +7,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { formatDateMDY } from '@utils';
-import { isMobile } from '@utils';
+import { formatDateMDY, sessionExpiredToast, isMobile } from '@utils';
 import { TOURNAMENT_STATUS } from './tournamentStatus.js';
 
 export class TournamentOverview extends HTMLElement {
@@ -44,7 +43,14 @@ export class TournamentOverview extends HTMLElement {
     this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
       router.redirect('/login');
+      return;
     }
     this.#state.username = authStatus.response.username;
     if (this.#state.tournament_id === '') {

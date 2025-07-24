@@ -1,7 +1,5 @@
-import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { sessionExpiredToast } from '@utils';
 
 export class FriendsList extends HTMLElement {
   #state = {
@@ -46,8 +44,7 @@ export class FriendsList extends HTMLElement {
   async fetchFriendsData() {
     const userData = await auth.getUser();
     if (!userData) {
-      sessionExpiredToast();
-      router.redirect('/login');
+      return;
     }
     this.#state.username = userData.username;
     this.#state.listLength = this.#state.friendsList.length;
