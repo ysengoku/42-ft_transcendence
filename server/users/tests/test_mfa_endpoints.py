@@ -30,19 +30,19 @@ class MfaEndpointsTests(TestCase):
         response = self.client.post(
             "/api/mfa/resend-code",
             content_type="application/json",
-            data="TestUser",
+            data={"username": "TestUser"},
         )
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+        # API returns 200 for successful code sending
+        self.assertEqual(response.status_code, 200)
 
     def test_resend_code_with_invalid_user(self):
         response = self.client.post(
             "/api/mfa/resend-code",
             content_type="application/json",
-            data="NonExistentUser",
+            data={"username": "NonExistentUser"},
         )
-        # API returns 422 for validation errors (invalid username format)
-        self.assertEqual(response.status_code, 422)
+        # API returns 404 for user not found
+        self.assertEqual(response.status_code, 404)
 
     @patch("users.router.endpoints.mfa.send_mail")
     def test_resend_code_with_mail_failure(self, mock_send_mail):
@@ -50,10 +50,10 @@ class MfaEndpointsTests(TestCase):
         response = self.client.post(
             "/api/mfa/resend-code",
             content_type="application/json",
-            data="TestUser",
+            data={"username": "TestUser"},
         )
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+        # API returns 500 for server error when mail fails
+        self.assertEqual(response.status_code, 500)
 
     def test_verify_mfa_with_invalid_user(self):
         response = self.client.post(
@@ -61,8 +61,8 @@ class MfaEndpointsTests(TestCase):
             content_type="application/json",
             data={"username": "NonExistentUser", "token": "123456"},
         )
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+        # API returns 404 for user not found
+        self.assertEqual(response.status_code, 404)
 
     def test_verify_mfa_token_format_validation(self):
         # Group all token format validation tests
@@ -84,7 +84,7 @@ class MfaEndpointsTests(TestCase):
                     content_type="application/json",
                     data={"username": "TestUser", "token": token},
                 )
-                self.assertEqual(response.status_code, 422)
+                self.assertEqual(response.status_code, 400)
 
     def test_verify_mfa_with_expired_token(self):
         self.user.mfa_token = "123456"
@@ -96,8 +96,8 @@ class MfaEndpointsTests(TestCase):
             content_type="application/json",
             data={"username": "TestUser", "token": "123456"},
         )
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+        # API returns 408 for expired token
+        self.assertEqual(response.status_code, 408)
 
     def test_verify_mfa_with_incorrect_token(self):
         self.user.mfa_token = "123456"
@@ -109,8 +109,8 @@ class MfaEndpointsTests(TestCase):
             content_type="application/json",
             data={"username": "TestUser", "token": "654321"},
         )
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+        # API returns 401 for incorrect token
+        self.assertEqual(response.status_code, 401)
 
     def test_verify_mfa_with_correct_token(self):
         self.user.mfa_token = "123456"
@@ -122,8 +122,8 @@ class MfaEndpointsTests(TestCase):
             content_type="application/json",
             data={"username": "TestUser", "token": "123456"},
         )
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+        # API returns 200 for successful verification
+        self.assertEqual(response.status_code, 200)
 
     def test_verify_mfa_without_mfa_token_set(self):
         response = self.client.post(
@@ -131,5 +131,5 @@ class MfaEndpointsTests(TestCase):
             content_type="application/json",
             data={"username": "TestUser", "token": "123456"},
         )
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+        # API returns 400 for no verification code sent
+        self.assertEqual(response.status_code, 400)
