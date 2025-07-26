@@ -20,7 +20,10 @@ from users.middleware import JWTEndpointsAuthMiddleware
 from users.router import users_app_router
 
 # conditionally hide the docs and set throttling protection in production build
-if settings.DEBUG:
+# Disable throttling during tests to avoid 429 errors
+import sys
+is_testing = 'test' in sys.argv
+if settings.DEBUG or is_testing:
     api = NinjaAPI(
         auth=JWTEndpointsAuthMiddleware(),
         csrf=True,
