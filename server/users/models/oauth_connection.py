@@ -196,6 +196,9 @@ class OauthConnection(models.Model):
         """
         from users.models.user import User
 
+        if not user_info or not isinstance(user_info, dict) or "id" not in user_info:
+            return None, ("Invalid user information", 400)
+
         user = User.objects.for_oauth_id(user_info["id"]).first()
         if not user:
             user = User.objects.validate_and_create_user(
