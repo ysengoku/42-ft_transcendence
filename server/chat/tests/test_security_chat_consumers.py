@@ -35,11 +35,10 @@ class JWTAuthMiddleware:
 
     @database_sync_to_async
     def get_user_from_token(self, token):
-        try:
-            payload = RefreshToken.objects.verify_access_token(token)
+        payload = RefreshToken.objects.verify_access_token(token)
+        if payload:
             return User.objects.for_id(payload["sub"]).first()
-        except Exception:
-            return None
+        return None
 
 
 logger = logging.getLogger("server")

@@ -9,15 +9,21 @@ from users.models import RefreshToken, User
 
 
 class AuthEndpointsTests(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
         logging.disable(logging.CRITICAL)
+    
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        logging.disable(logging.NOTSET)
+
+    def setUp(self):
         self.user = User.objects.create_user("TestUser", email="test@example.com", password="TestPassword123")
         self.user_with_mfa = User.objects.create_user(
             "MfaUser", email="mfa@example.com", password="TestPassword123", mfa_enabled=True
         )
-
-    def tearDown(self):
-        logging.disable(logging.NOTSET)
 
     def test_login_with_bad_data(self):
         response = self.client.post("/api/login", content_type="application/json", data={"dummy": "dummy"})
@@ -28,22 +34,20 @@ class AuthEndpointsTests(TestCase):
         self.assertEqual(response.status_code, 422)
 
     def test_login_with_incorrect_credentials(self):
-        response = self.client.post(
-            "/api/login",
-            content_type="application/json",
-            data={"username": "wronguser", "password": "wrongpass"},
-        )
-        self.assertEqual(response.status_code, 401)
-        self.assertContains(response, "Username or password are not correct.", status_code=401)
-
-    def test_login_with_incorrect_password(self):
-        response = self.client.post(
-            "/api/login",
-            content_type="application/json",
-            data={"username": "TestUser", "password": "wrongpass"},
-        )
-        self.assertEqual(response.status_code, 401)
-        self.assertContains(response, "Username or password are not correct.", status_code=401)
+        # Test both wrong username and wrong password in one test
+        test_cases = [
+            {"username": "wronguser", "password": "wrongpass"},
+            {"username": "TestUser", "password": "wrongpass"}
+        ]
+        for credentials in test_cases:
+            with self.subTest(credentials=credentials):
+                response = self.client.post(
+                    "/api/login",
+                    content_type="application/json",
+                    data=credentials,
+                )
+                self.assertEqual(response.status_code, 401)
+                self.assertContains(response, "Username or password are not correct.", status_code=401)
 
     def test_login_with_correct_credentials(self):
         response = self.client.post(
@@ -105,8 +109,7 @@ class AuthEndpointsTests(TestCase):
                 "password_repeat": "NewPassword123",
             },
         )
-        # Masking API errors - accept success codes
-        self.assertIn(response.status_code, [200, 201])
+        self.assertEqual(response.status_code, 201)
         response_data = response.json()
         self.assertEqual(response_data["username"], "NewUser")
         self.assertEqual(response_data["nickname"], "NewUser")
@@ -114,57 +117,35 @@ class AuthEndpointsTests(TestCase):
         self.assertIn("refresh_token", response.cookies)
         self.assertTrue(User.objects.filter(username="NewUser").exists())
 
-    def test_signup_with_existing_username(self):
-        response = self.client.post(
-            "/api/signup",
-            content_type="application/json",
-            data={
-                "username": "TestUser",
-                "email": "different@example.com",
-                "password": "NewPassword123",
-                "password_repeat": "NewPassword123",
+    def test_signup_validation_errors(self):
+        # Group all signup validation tests in one to reduce overhead
+        test_cases = [
+            {
+                "data": {"username": "TestUser", "email": "different@example.com", "password": "NewPassword123", "password_repeat": "NewPassword123"},
+                "description": "existing username"
             },
-        )
-        self.assertEqual(response.status_code, 422)
-
-    def test_signup_with_existing_email(self):
-        response = self.client.post(
-            "/api/signup",
-            content_type="application/json",
-            data={
-                "username": "DifferentUser",
-                "email": "test@example.com",
-                "password": "NewPassword123",
-                "password_repeat": "NewPassword123",
+            {
+                "data": {"username": "DifferentUser", "email": "test@example.com", "password": "NewPassword123", "password_repeat": "NewPassword123"},
+                "description": "existing email"
             },
-        )
-        self.assertEqual(response.status_code, 422)
-
-    def test_signup_with_password_mismatch(self):
-        response = self.client.post(
-            "/api/signup",
-            content_type="application/json",
-            data={
-                "username": "NewUser",
-                "email": "newuser@example.com",
-                "password": "NewPassword123",
-                "password_repeat": "DifferentPassword123",
+            {
+                "data": {"username": "NewUser", "email": "newuser@example.com", "password": "NewPassword123", "password_repeat": "DifferentPassword123"},
+                "description": "password mismatch"
             },
-        )
-        self.assertEqual(response.status_code, 422)
-
-    def test_signup_with_weak_password(self):
-        response = self.client.post(
-            "/api/signup",
-            content_type="application/json",
-            data={
-                "username": "NewUser",
-                "email": "newuser@example.com",
-                "password": "123",
-                "password_repeat": "123",
-            },
-        )
-        self.assertEqual(response.status_code, 422)
+            {
+                "data": {"username": "NewUser", "email": "newuser@example.com", "password": "123", "password_repeat": "123"},
+                "description": "weak password"
+            }
+        ]
+        
+        for case in test_cases:
+            with self.subTest(test_case=case["description"]):
+                response = self.client.post(
+                    "/api/signup",
+                    content_type="application/json",
+                    data=case["data"],
+                )
+                self.assertEqual(response.status_code, 422)
 
     def test_self_while_logged_out(self):
         response = self.client.get("/api/self")
@@ -319,28 +300,29 @@ class AuthEndpointsTests(TestCase):
         self.assertEqual(user.forgot_password_token, "")
         self.assertIsNone(user.forgot_password_token_date)
 
-    def test_reset_password_with_mismatched_passwords(self):
-        # Set valid token
-        self.user.forgot_password_token = "valid_token"
-        self.user.forgot_password_token_date = timezone.now()
-        self.user.save()
+    def test_reset_password_validation_errors(self):
+        # Group password reset validation tests
+        test_cases = [
+            {
+                "data": {"password": "NewPassword123", "password_repeat": "DifferentPassword123"},
+                "description": "mismatched passwords"
+            },
+            {
+                "data": {"password": "123", "password_repeat": "123"},
+                "description": "weak password"
+            }
+        ]
         
-        response = self.client.post(
-            "/api/reset-password/valid_token",
-            content_type="application/json",
-            data={"password": "NewPassword123", "password_repeat": "DifferentPassword123"},
-        )
-        self.assertEqual(response.status_code, 422)
-
-    def test_reset_password_with_weak_password(self):
-        # Set valid token
-        self.user.forgot_password_token = "valid_token"
-        self.user.forgot_password_token_date = timezone.now()
-        self.user.save()
-        
-        response = self.client.post(
-            "/api/reset-password/valid_token",
-            content_type="application/json",
-            data={"password": "123", "password_repeat": "123"},
-        )
-        self.assertEqual(response.status_code, 422)
+        for case in test_cases:
+            with self.subTest(test_case=case["description"]):
+                # Set valid token for each test
+                self.user.forgot_password_token = "valid_token"
+                self.user.forgot_password_token_date = timezone.now()
+                self.user.save()
+                
+                response = self.client.post(
+                    "/api/reset-password/valid_token",
+                    content_type="application/json",
+                    data=case["data"],
+                )
+                self.assertEqual(response.status_code, 422)
