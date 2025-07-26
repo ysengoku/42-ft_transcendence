@@ -22,8 +22,8 @@ export const API_ENDPOINTS = {
   /** POST: Login to the user account */
   LOGIN: `${API_BASE_URL}login`,
   OAUTH_AUTHORIZE: (platform) => `${API_BASE_URL}oauth/authorize/${platform}`,
-  MFA_VERIFICATION: (username) => `${API_BASE_URL}mfa/verify-mfa?username=${username}`,
-  MFA_RESEND_CODE: (username) => `${API_BASE_URL}mfa/resend-code?username=${username}`,
+  MFA_VERIFICATION: `${API_BASE_URL}mfa/verify-mfa`,
+  MFA_RESEND_CODE: `${API_BASE_URL}mfa/resend-code`,
 
   /** POST: Rotate the refresh token. Issues a new refresh token and a new access token. */
   REFRESH: `${API_BASE_URL}refresh`,
