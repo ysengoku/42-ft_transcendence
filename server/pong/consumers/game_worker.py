@@ -703,27 +703,44 @@ class GameWorkerConsumer(AsyncConsumer):
             else:
                 await asyncio.sleep(5)
             if len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) < PLAYERS_REQUIRED:
-                await self.channel_layer.group_send(
-                    self._to_game_room_group_name(match),
-                    GameServerToClient.GameCancelled(
-                        type="worker_to_client_close",
-                        action="game_cancelled",
-                        tournament_id=match.tournament_id,
-                        close_code=PongCloseCodes.CANCELLED,
-                    ),
-                )
-                if match.is_in_tournament:
-                    # If the tournament game is cancelled, there is a winner: player who connected first
-                    winner = match.get_player_who_connected_earliest()
-                    await Bracket.objects.async_update_finished_bracket(
-                        match.bracket_id, winner.profile_id, 0, 0, Bracket.CANCELLED,
-                    )
-
-                    # also send notification to the consumer
+                if not match.is_in_tournament:
                     await self.channel_layer.group_send(
-                        f"tournament_{match.tournament_id}",
+                        self._to_game_room_group_name(match),
+                        GameServerToClient.GameCancelled(
+                            type="worker_to_client_close",
+                            action="game_cancelled",
+                            tournament_id=match.tournament_id,
+                            close_code=PongCloseCodes.CANCELLED,
+                        ),
+                    )
+                elif match.is_in_tournament:
+                    winner = match.get_player_who_connected_earliest()
+                    loser = match.get_other_player(winner.id)
+                    await self.channel_layer.group_send(
+                        self._to_game_room_group_name(match),
+                        GameServerToClient.PlayerWon(
+                            type="worker_to_client_close",
+                            action="player_resigned",
+                            winner=winner.as_dict(),
+                            loser=loser.as_dict(),
+                            elo_change=0,
+                            tournament_id=match.tournament_id,
+                            close_code=PongCloseCodes.CANCELLED,
+                        ),
+                    )
+                    # If the tournament game is cancelled, there is a winner: player who connected first
+                    await Bracket.objects.async_update_finished_bracket(
+                        match.bracket_id,
+                        winner.profile_id,
+                        0,
+                        0,
+                        Bracket.FINISHED,
+                    )
+                    await self.channel_layer.send(
+                        "tournament",
                         {
                             "type": "tournament_game_finished",
+                            "tournament_id": str(match.tournament_id),
                             "bracket_id": match.bracket_id,
                         },
                     )
@@ -997,10 +1014,11 @@ class GameWorkerConsumer(AsyncConsumer):
 
         # Special case: notification for the tournament consumer.
         if match.is_in_tournament:
-            await self.channel_layer.group_send(
-                f"tournament_{match.tournament_id}",
+            await self.channel_layer.send(
+                "tournament",
                 {
                     "type": "tournament_game_finished",
+                    "tournament_id": str(match.tournament_id),
                     "bracket_id": match.bracket_id,
                 },
             )

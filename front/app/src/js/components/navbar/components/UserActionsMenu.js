@@ -38,6 +38,9 @@ export class UserActionsMenu extends HTMLElement {
   }
 
   updateLoginStatus(isLoggedin) {
+    if (this.#state.isLoggedin === isLoggedin) {
+      return;
+    }
     this.#state.isLoggedin = isLoggedin;
     this.render();
   }
@@ -47,7 +50,7 @@ export class UserActionsMenu extends HTMLElement {
       this.innerHTML = '';
       return;
     }
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.dropdownUserActions = document.getElementById('dropdown-user-actions');
     this.dropdownUserSearch = document.getElementById('dropdown-user-search');

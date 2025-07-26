@@ -57,7 +57,7 @@ export class NotificationsList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.button = document.getElementById('navbar-notifications-button');
     this.dropdown = document.getElementById('notifications-dropdown');
@@ -75,20 +75,29 @@ export class NotificationsList extends HTMLElement {
     this.markAllAsReadButton?.addEventListener('click', this.markAllAsRead);
   }
 
-  async renderList() {
-    this.clearList();
+  async renderList(clearList = true) {
+    if (clearList) {
+      this.clearList();
+    }
     this.button?.querySelector('.notification-badge')?.classList.add('d-none');
 
     const read = this.#state.currentTab === 'unread' ? 'false' : 'all';
     const listData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
     const data = await this.fetchNotifications(read, 10, listData.listLength);
     if (!data) {
+      this.list.innerHTML = this.noNotificationTemplate();
+      const messageElement = this.querySelector('#unavailable-message');
+      if (messageElement) {
+        messageElement.innerText = 'Temporary unavailable';
+      }
+      this.markAllAsReadButton?.classList.add('d-none');
       return;
     }
     listData.totalCount = data.count;
     listData.notifications.push(...data.items);
     if (listData.notifications.length === 0) {
       this.list.innerHTML = this.noNotificationTemplate();
+      this.markAllAsReadButton?.classList.add('d-none');
     }
     for (let i = listData.listLength; i < listData.notifications.length; i++) {
       const item = document.createElement('notifications-list-item');
@@ -98,7 +107,6 @@ export class NotificationsList extends HTMLElement {
         username: this.#state.username,
       };
       item.state = data;
-      // item.data = listData.notifications[i];
       if (i === 0) {
         item.querySelector('.dropdown-list-item').classList.add('border-top-0');
       }
@@ -167,7 +175,7 @@ export class NotificationsList extends HTMLElement {
       return;
     }
     this.#state.isLoading = true;
-    await this.renderList();
+    await this.renderList(false);
     this.#state.isLoading = false;
   }
 
@@ -305,7 +313,7 @@ export class NotificationsList extends HTMLElement {
     }
     </style>
     <div class="list-group-item p-3">
-      <p class="text-center m-0">No notification</p>
+      <p class="text-center m-0" id="unavailable-message">No notification</p>
     </div>
     `;
   }

@@ -1,7 +1,10 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 
 export class UserEloProgressionChart extends HTMLElement {
+  SVGNS = 'http://www.w3.org/2000/svg';
+
   #state = {
+    loggedInUsername: '',
     username: '',
     history: [],
     totalItemCount: 0,
@@ -29,7 +32,8 @@ export class UserEloProgressionChart extends HTMLElement {
     this.renderNext = this.renderNext.bind(this);
   }
 
-  setData(username, data) {
+  setData(loggedInUsername, username, data) {
+    this.#state.loggedInUsername = loggedInUsername;
     this.#state.username = username;
     this.#state.history = data;
     this.#state.currentItemCount = this.#state.history.length;
@@ -49,7 +53,7 @@ export class UserEloProgressionChart extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.chart = this.querySelector('.line-chart-wrapper');
     this.previousButton = this.querySelector('#btn-elo-history-prev');
@@ -68,55 +72,65 @@ export class UserEloProgressionChart extends HTMLElement {
 
   renderChart() {
     this.parseData();
-
     this.chart.innerHTML = '';
-    this.chart.innerHTML = this.lineChartTemplate();
 
-    const markers = this.querySelector('.line-chart-marker');
-    const labels = this.querySelector('.linechart-labels');
-    const namespaceUrl = 'http://www.w3.org/2000/svg';
+    const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
+    const svg = this.linechartSVG();
+    const polyline = this.generateLineGraph(points);
+    const markers = document.createElementNS(this.SVGNS, 'g');
+    markers.classList.add('line-chart-marker');
+    svg.appendChild(polyline);
+    svg.appendChild(markers);
+
+    const labels = svg.querySelector('.linechart-labels');
     this.parsedData.forEach((item, index) => {
-      const label = document.createElementNS(namespaceUrl, 'text');
+      const label = document.createElementNS(this.SVGNS, 'text');
       index === 0 ? label.setAttribute('x', item.x - 3) : label.setAttribute('x', item.x - 6);
       label.setAttribute('y', 118);
       label.setAttribute('text-anchor', 'center');
       label.textContent = `${item.date.getMonth() + 1}/${item.date.getDate()}`;
       labels.appendChild(label);
 
-      const marker = document.createElementNS(namespaceUrl, 'circle');
+      const marker = document.createElementNS(this.SVGNS, 'circle');
       marker.setAttribute('cx', item.x);
       marker.setAttribute('cy', item.y);
       marker.setAttribute('r', '2');
       marker.setAttribute('data-value', item.elo);
 
-      const tooltip = document.createElementNS(namespaceUrl, 'text');
+      const tooltip = document.createElementNS(this.SVGNS, 'text');
       tooltip.setAttribute('y', item.y - 8);
       tooltip.setAttribute('font-size', '0.5rem');
       tooltip.setAttribute('fill', 'var(--pm-primary-700)');
       tooltip.setAttribute('visibility', 'hidden');
       tooltip.textContent = item.elo + ' (' + item.elo_change + ')';
 
-      const tooltipBg = document.createElementNS(namespaceUrl, 'rect');
+      const tooltipBg = document.createElementNS(this.SVGNS, 'rect');
       tooltipBg.setAttribute('y', item.y - 18);
       tooltipBg.setAttribute('rx', '4');
       tooltipBg.setAttribute('ry', '4');
       tooltipBg.setAttribute('width', '48');
       tooltipBg.setAttribute('height', '16');
-      tooltipBg.setAttribute('fill', 'rgba(var(--bs-body-color-rgb), 0.5');
+      tooltipBg.setAttribute('fill', 'rgba(var(--pm-primary-100-rgb), 0.5');
       tooltipBg.setAttribute('visibility', 'hidden');
 
-      if (index === 0) {
-        tooltip.setAttribute('text-anchor', 'start');
-        tooltip.setAttribute('x', item.x + 6);
-        tooltipBg.setAttribute('x', item.x);
-      } else if (index === 6) {
-        tooltip.setAttribute('text-anchor', 'end');
-        tooltip.setAttribute('x', item.x - 6);
-        tooltipBg.setAttribute('x', item.x - 44);
-      } else {
-        tooltip.setAttribute('text-anchor', 'middle');
-        tooltip.setAttribute('x', item.x);
-        tooltipBg.setAttribute('x', item.x - 24);
+      switch (index) {
+        case 0:
+          if (this.parsedData.length === 7) {
+            tooltip.setAttribute('text-anchor', 'start');
+            tooltip.setAttribute('x', item.x + 6);
+            tooltipBg.setAttribute('x', item.x - 2);
+            break;
+          }
+        case 6:
+          tooltip.setAttribute('text-anchor', 'end');
+          tooltip.setAttribute('x', item.x - 6);
+          tooltipBg.setAttribute('x', item.x - 44);
+          break;
+        default:
+          tooltip.setAttribute('text-anchor', 'middle');
+          tooltip.setAttribute('x', item.x);
+          tooltipBg.setAttribute('x', item.x - 24);
+          break;
       }
 
       marker.addEventListener('mouseenter', () => {
@@ -132,14 +146,88 @@ export class UserEloProgressionChart extends HTMLElement {
       markers.insertBefore(tooltipBg, marker);
       markers.insertBefore(tooltip, marker);
     });
+
+    this.chart.appendChild(svg);
   }
 
-  chunkArray(array) {
-    const result = [];
-    for (let i = 0; i < array.length; i += 7) {
-      result.push(array.slice(i, i + 7));
-    }
-    return result;
+  linechartSVG() {
+    const yLabelPosition = {
+      min: this.#yCoordinate.max,
+      max: this.#yCoordinate.min + 2,
+      mid: this.#yCoordinate.mid,
+    };
+
+    // Create the main svg
+    const svg = document.createElementNS(this.SVGNS, 'svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '232');
+    svg.setAttribute('viewBox', '0 0 280 120');
+    svg.setAttribute('preserveAspectRatio', 'none');
+
+    // Create Y-axis grid
+    const yGrid = document.createElementNS(this.SVGNS, 'g');
+    yGrid.classList.add('linechart-grid', 'y-linechart-grid');
+    const yLine = document.createElementNS(this.SVGNS, 'line');
+    yLine.setAttribute('x1', '20');
+    yLine.setAttribute('x2', '20');
+    yLine.setAttribute('y1', '10');
+    yLine.setAttribute('y2', '110');
+    yGrid.appendChild(yLine);
+    svg.appendChild(yGrid);
+
+    // Create Y-axis labels
+    const yLabels = document.createElementNS(this.SVGNS, 'g');
+    yLabels.classList.add('linechart-labels');
+
+    const yLabelMin = document.createElementNS(this.SVGNS, 'text');
+    yLabelMin.setAttribute('x', '18');
+    yLabelMin.setAttribute('y', yLabelPosition.min);
+    yLabelMin.setAttribute('text-anchor', 'end');
+    yLabelMin.textContent = this.#valueRange.min;
+
+    const yLabelMid = document.createElementNS(this.SVGNS, 'text');
+    yLabelMid.setAttribute('x', '18');
+    yLabelMid.setAttribute('y', yLabelPosition.mid);
+    yLabelMid.setAttribute('text-anchor', 'end');
+    yLabelMid.textContent = this.#eloMidrange;
+
+    const yLabelMax = document.createElementNS(this.SVGNS, 'text');
+    yLabelMax.setAttribute('x', '18');
+    yLabelMax.setAttribute('y', yLabelPosition.max);
+    yLabelMax.setAttribute('text-anchor', 'end');
+    yLabelMax.textContent = this.#valueRange.max;
+
+    yLabels.appendChild(yLabelMin);
+    yLabels.appendChild(yLabelMid);
+    yLabels.appendChild(yLabelMax);
+    svg.appendChild(yLabels);
+
+    // Create X-axis grid
+    const xGrid = document.createElementNS(this.SVGNS, 'g');
+    xGrid.classList.add('linechart-grid', 'x-linechart-grid');
+    const xLine = document.createElementNS(this.SVGNS, 'line');
+    xLine.setAttribute('x1', '20');
+    xLine.setAttribute('x2', '270');
+    xLine.setAttribute('y1', '110');
+    xLine.setAttribute('y2', '110');
+    xGrid.appendChild(xLine);
+    svg.appendChild(xGrid);
+
+    // Create X-axis labels
+    const xLabels = document.createElementNS(this.SVGNS, 'g');
+    xLabels.classList.add('linechart-labels');
+    svg.appendChild(xLabels);
+
+    return svg;
+  }
+
+  generateLineGraph(points) {
+    const polyline = document.createElementNS(this.SVGNS, 'polyline');
+    polyline.setAttribute('points', points);
+    polyline.setAttribute('fill', 'none');
+    polyline.setAttribute('stroke', 'var(--pm-primary-600)');
+    polyline.setAttribute('stroke-width', '1');
+    return polyline;
   }
 
   parseData() {
@@ -149,6 +237,8 @@ export class UserEloProgressionChart extends HTMLElement {
 
     const count = dataToDisplay.length;
     const startX = 20 + (7 - count) * 40;
+
+    this.adjustYAxis(dataToDisplay);
 
     this.parsedData = [];
     dataToDisplay.forEach((item, index) => {
@@ -164,7 +254,26 @@ export class UserEloProgressionChart extends HTMLElement {
     });
   }
 
-  applyScale() {}
+  chunkArray(array) {
+    const result = [];
+    for (let i = 0; i < array.length; i += 7) {
+      result.push(array.slice(i, i + 7));
+    }
+    return result;
+  }
+
+  adjustYAxis(data) {
+    this.#valueRange.min = Math.min(...data.map((item) => item.elo_result));
+    this.#valueRange.min = Math.floor(this.#valueRange.min / 10) * 10 - 10;
+    this.#valueRange.min = Math.max(this.#valueRange.min, 100);
+
+    this.#valueRange.max = Math.max(...data.map((item) => item.elo_result));
+    this.#valueRange.max = Math.floor(this.#valueRange.max / 10) * 10 + 10;
+    this.#valueRange.max = Math.min(this.#valueRange.max, 3000);
+
+    this.#eloMidrange = Math.round((this.#valueRange.min + this.#valueRange.max) / 2);
+    this.#scaleY = (this.#yCoordinate.max - this.#yCoordinate.min) / (this.#valueRange.max - this.#valueRange.min);
+  }
 
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
@@ -228,43 +337,14 @@ export class UserEloProgressionChart extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   template() {
     return `
-    <div class="d-flex flex-row justify-content-around align-items-start">
-      <p class="stat-label m-0 mx-4">Elo progression</p>
-      <div class="d-flex flex-row gap-2">
-      <button class="btn-elo-history" id="btn-elo-history-prev" type="button">< prev</button>
-      <button class="btn-elo-history invisible" id="btn-elo-history-next" type="button" disabled>next ></button>
+    <div class="d-flex flex-row justify-content-between align-items-start">
+      <p class="stat-label m-0 ms-3 pe-1">Elo progression</p>
+      <div class="d-flex flex-row">
+        <button class="btn-elo-history pb-1" id="btn-elo-history-prev" type="button">< prev</button>
+        <button class="btn-elo-history pb-1 invisible" id="btn-elo-history-next" type="button" disabled>next ></button>
       </div>
     </div>
     <div class="line-chart-wrapper"></div>
-    `;
-  }
-
-  lineChartTemplate() {
-    const points = this.parsedData.map((item) => `${item.x},${item.y}`).join(' ');
-    const yLabelPosition = {
-      min: this.#yCoordinate.max,
-      max: this.#yCoordinate.min + 2,
-      mid: this.#yCoordinate.mid,
-    };
-    return `
-    <div class="line-chart">
-      <svg width="100%" height="232" viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-        <g class="linechart-grid y-linechart-grid">
-          <line x1="20" x2="20" y1="10" y2="110"></line> 
-        </g>
-        <g class="linechart-labels">
-          <text x="18" y="${yLabelPosition.min}" text-anchor="end">${this.#valueRange.min + 100}</text>
-          <text x="18" y="${yLabelPosition.mid}" text-anchor="end">${this.#eloMidrange}</text>
-          <text x="18" y="${yLabelPosition.max}" text-anchor="end">${this.#valueRange.max}</text>
-        </g>
-        <g class="linechart-grid x-linechart-grid">
-          <line x1="20" x2="270" y1="110" y2="110"></line> 
-        </g>
-        <g class="linechart-labels"></g>
-        <polyline points="${points}" fill="none" stroke="var(--pm-primary-600)" stroke-width="1" />
-        <g class="line-chart-marker"></g>
-      </svg>
-    </div>
     `;
   }
 
@@ -285,8 +365,8 @@ export class UserEloProgressionChart extends HTMLElement {
       text-align: center;
     }
     .line-chart-marker circle {
-	    fill: var(--pm-primary-600);
-	  }
+      fill: var(--pm-primary-600);
+    }
     </style>
     `;
   }

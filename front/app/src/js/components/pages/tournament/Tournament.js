@@ -13,7 +13,6 @@ import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@u
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
-import { mockFetchTournament } from '@mock/functions/mockFetchTournament';
 
 export class Tournament extends HTMLElement {
   /**
@@ -64,8 +63,13 @@ export class Tournament extends HTMLElement {
    * @returns {Promise<void>} - A promise that resolves when the tournament data is fetched and the UI is updated.
    */
   async setParam(param) {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
@@ -104,6 +108,10 @@ export class Tournament extends HTMLElement {
       true,
     );
     if (!response.success) {
+      if (response.status === 404 || response.status === 422) {
+        const notFound = document.createElement('page-not-found');
+        this.innerHTML = notFound.outerHTML;
+      }
       return;
     }
     this.#state.tournament = response.data;
@@ -113,10 +121,6 @@ export class Tournament extends HTMLElement {
       this.#state.creator.alias = this.#state.tournament.tournament_creator.alias;
     }
 
-    // =========== For test ================================================
-    // pending, tournamentstarting, waitingNextRound, roundpending
-    // this.#state.tournament = await mockFetchTournament(this.#state.user.username, 'tournamentstarting');
-    // =====================================================================
     console.log('Tournament data fetched:', this.#state.tournament);
 
     // Find user data in the tournament participants
@@ -182,6 +186,8 @@ export class Tournament extends HTMLElement {
         this.resolveUIStatus[this.#state.tournament.status]();
         const isUserQualified = this.checkUserStatus();
         if (!isUserQualified) {
+          // showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.ELIMINATED, this.#state.tournament.name);
+          // router.redirect('/home');
           return;
         }
     }
@@ -258,6 +264,9 @@ export class Tournament extends HTMLElement {
             case BRACKET_STATUS.FINISHED:
               this.#state.uiStatus = UI_STATUS.WAITING_NEXT_ROUND;
               break;
+            case BRACKET_STATUS.CANCELED:
+              this.#state.uiStatus = UI_STATUS.ERROR; // TODO: Consider error handling
+              break;
             default:
               devErrorLog('Unknown bracket status:', this.#state.currentUserBracket.status);
           }
@@ -277,7 +286,8 @@ export class Tournament extends HTMLElement {
   };
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = '';
+    this.innerHTML = this.style() + this.template();
     this.tournamentName = this.querySelector('#tournament-name');
     this.tournamentContentWrapper = this.querySelector('#tournament-content');
 
@@ -324,6 +334,15 @@ export class Tournament extends HTMLElement {
       };
       return tournamentRoundOngoing;
     },
+    [UI_STATUS.BRACKET_ONGOING]: () => {
+      const tournamentBracketOngoing = document.createElement('tournament-bracket-ongoing');
+      tournamentBracketOngoing.data = {
+        round_number: this.#state.currentRoundNumber,
+        round: this.#state.currentRound,
+        game_id: this.#state.currentUserBracket.game_id,
+      };
+      return tournamentBracketOngoing;
+    },
     [UI_STATUS.CANCELED]: () => {
       const tournamentExit = document.createElement('tournament-exit');
       tournamentExit.data = {
@@ -337,6 +356,13 @@ export class Tournament extends HTMLElement {
       tournamentExit.data = {
         status: UI_STATUS.ELIMINATED,
         tournamentId: this.#state.tournamentId,
+      };
+      return tournamentExit;
+    },
+    [UI_STATUS.ERROR]: () => {
+      const tournamentExit = document.createElement('tournament-exit');
+      tournamentExit.data = {
+        status: UI_STATUS.ERROR,
       };
       return tournamentExit;
     },
@@ -479,6 +505,9 @@ export class Tournament extends HTMLElement {
       true,
     );
     if (!response.success) {
+      if (response.status === 429) {
+        return;
+      }
       showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
       return;
     }

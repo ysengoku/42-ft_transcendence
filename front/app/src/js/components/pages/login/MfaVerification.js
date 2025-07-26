@@ -23,6 +23,9 @@ export class MfaVerification extends HTMLElement {
       router.redirect('/home');
       return;
     }
+    if (authStatus.status === 429) {
+      return;
+    }
     if (this.#state.username === '') {
       router.redirect('/login');
       return;
@@ -119,11 +122,14 @@ export class MfaVerification extends HTMLElement {
       auth.storeUser(userInformation);
       router.redirect('/home', response.user);
       sessionStorage.removeItem('username');
-    } else {
-      this.feedbackField = this.querySelector('#mfa-failed-feedback');
-      this.feedbackField.innerHTML = '';
-      showFormErrorFeedback(this.feedbackField, response.msg);
+      return;
     }
+    if (response.status === 429) {
+      return;
+    }
+    this.feedbackField = this.querySelector('#mfa-failed-feedback');
+    this.feedbackField.innerHTML = '';
+    showFormErrorFeedback(this.feedbackField, response.msg);
   }
 
   async resendMfaCode() {
@@ -137,7 +143,9 @@ export class MfaVerification extends HTMLElement {
     );
     if (response.success) {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Email resent successfully', 3000);
-    } else {
+      return;
+    }
+    if (response.status !== 429) {
       showFormErrorFeedback(this.feedbackField, response.msg);
     }
   }

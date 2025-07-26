@@ -1,23 +1,16 @@
 # server/tournament/consumers.py
 import json
 import logging
-import random
-import uuid
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from django.core.exceptions import ValidationError
-from django.db import transaction
 
-from pong.models import GameRoom, GameRoomPlayer
-
-from .models import Bracket, Participant, Round, Tournament
+from .models import Bracket, Participant, Tournament
 
 # TODO: see if BracketSchema is really needed
-from .schemas import BracketSchema, RoundSchema
-from .tournament_validator import Validator
 from .tournament_service import TournamentService
+from .tournament_validator import Validator
 
 logger = logging.getLogger("server")
 
@@ -28,6 +21,7 @@ NORMAL_CLOSURE = 3000
 CANCELLED = 3001
 ILLEGAL_CONNECTION = 3002
 ALREADY_IN_GAME = 3003
+EXCLUDED = 3004
 BAD_DATA = 3100
 
 
@@ -36,16 +30,15 @@ class TournamentConsumer(WebsocketConsumer):
 
     def connect(self):
         self.user = self.scope.get("user")
-        logger.debug("CONNECTING %s", self.user)
+        logger.debug("CONNECTING %s TO TOURNAMENT SOCKET", self.user)
         if not self.user or not self.user.is_authenticated:
             logger.warning("TournamentConsumer : Unauthentificated user trying to connect")
             self.close()
             return
-        logger.debug("STILL CONNECTED %s", self.user)
         self.tournament_id = self.scope["url_route"]["kwargs"].get("tournament_id")
         try:
             UUID(str(self.tournament_id))
-        except:
+        except ValueError:
             logger.warning("Wrong uuid : %s", self.tournament_id)
             self.accept()
             self.close(ILLEGAL_CONNECTION)
@@ -55,25 +48,46 @@ class TournamentConsumer(WebsocketConsumer):
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
             logger.warning("This tournament id does not exist : %s", self.tournament_id)
-            self.close()
+            self.accept()  # TODO: test this
+            self.close(BAD_DATA)
             return
-        if not tournament.participants.filter(profile=self.user.profile).exists():
-            logger.warning("This user is not a participant: %s", self.user)
+        try:
+            participant = tournament.participants.get(profile=self.user.profile)
+        except Participant.DoesNotExist:
             self.accept()
             self.close(ILLEGAL_CONNECTION)
+            logger.warning("CLOSING because this user is not a participant : %s", self.user)
+            return
+        if participant.excluded:
+            self.accept()
+            self.close(EXCLUDED)
+            logger.warning("CLOSING because this participant was excluded : %s", self.user)
             return
 
         async_to_sync(self.channel_layer.group_add)(f"tournament_user_{self.user.id}", self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
-        logger.debug("WILL BE ACCEPTED %s", self.user)
+        logger.debug("WILL BE ACCEPTED : %s", self.user)
         self.accept()
+        if tournament.status == tournament.ONGOING:
+            round_number = tournament.get_current_round_number()
+            try:
+                bracket_status = tournament.get_user_current_bracket(self.user.profile, round_number).status
+            except Bracket.DoesNotExist:
+                logger.warning("This bracket does not exist")
+                self.close(BAD_DATA)
+                return
+            if bracket_status in [Bracket.PENDING, Bracket.ONGOING]:
+                current_round = tournament.get_current_round(round_number)
+                TournamentService.receive_start_round_message(tournament.id, self.user.id, round_number, current_round)
 
     def disconnect(self, close_code):
-        logger.debug("WILL BE DISCONNECTED")
-        if self.tournament_id:
+        logger.debug("WILL BE DISCONNECTED : %s", self.user)
+        if hasattr(self, "tournament_id") and self.tournament_id:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_{self.tournament_id}", self.channel_name)
-        # TODO: See how this line is useful
-        async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
+        # TODO: See how the line about the tournament user is useful
+        if hasattr(self, "user") and self.user:
+            async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
+        logger.warning("CLOSING FROM DISCONNECT")
         self.close(close_code)
 
     def receive(self, text_data):
@@ -95,6 +109,7 @@ class TournamentConsumer(WebsocketConsumer):
 
     def close_self_ws(self, event):
         self.tournament_id = None
+        logger.warning("CLOSING WITH CLOSE SELF WS")
         self.close(NORMAL_CLOSURE)
 
     def tournament_broadcast(self, event):
@@ -114,11 +129,5 @@ class TournamentConsumer(WebsocketConsumer):
                     },
                 ),
             )
-        except Disconnected as e:
-            logger.warning("Failed to send message : %s", e)
-
-    def tournament_game_finished(self, data):
-        if Validator.validate_action_data("tournament_game_finished", data) is False:
-            return
-        TournamentService.tournament_game_finished(self.tournament_id, data)
-        return
+        except RuntimeError as e:
+            logger.warning("Failed to send message: %s", e)

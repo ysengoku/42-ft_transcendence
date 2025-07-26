@@ -132,7 +132,7 @@ def generate_users() -> tuple[list[User], User]:
 def erase_old_avatars():
     avatars_folder = "/app/media/avatars"
     avatars_path = Path(avatars_folder)
-    if avatars_path.is_dir() == False:
+    if avatars_path.is_dir() is False:
         return
     for file in avatars_path.iterdir():
         file_path = avatars_path / file
@@ -179,7 +179,7 @@ def put_avatars():
             profile.update_avatar(uploaded)
             profile.save()
         av = profile.avatar
-        print("I putted avatar for", profile.user.username, "and it is", av, ":D")
+        # print("I putted avatar for", profile.user.username, "and it is", av, ":D")
 
     put_one_avatar("rick_roll.webp", rick)
     put_one_avatar("taki.jpg", taki)
@@ -197,6 +197,27 @@ def put_avatars():
     put_one_avatar("marie.jpg", marie)
     put_one_avatar("menaco.jpg", menaco)
     put_one_avatar("darksmelo.png", darksmelo)
+
+    def set_alias(profile, alias):
+        profile.user.nickname = alias
+        profile.user.save(update_fields=["nickname"])
+
+    set_alias(taki, "lovely_dog")
+    set_alias(felix, "Deadly_Kitty")
+    set_alias(rex, "Good_boy")
+    set_alias(sad_hampter, "little_rat")
+    set_alias(tama, "flower_girl")
+    set_alias(martine, "The_Queen")
+    set_alias(marie, "Good_boy")
+    set_alias(grandma, "Old_hag")
+    set_alias(grandpa, "Old_grumpy")
+    set_alias(pedro, "The_original")
+    set_alias(pedro1, "The_copy")
+    set_alias(pedro2, "Copy_Two")
+    set_alias(alice, "aLIcE")
+    set_alias(darksmelo, "Hey_yeH")
+    set_alias(menaco, "PrettyFrog")
+    set_alias(rick, "Roll")
 
 
 def generate_matches(users: dict[str, User], life_enjoyer: User):
@@ -262,7 +283,7 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
     list_users = list(users.values())
     for i in range(4):
         name = f"Tournament {i + 1}"
-        date = generate_random_date()
+        generate_random_date()
         option_for_status = [Tournament.FINISHED, Tournament.CANCELLED, Tournament.ONGOING, Tournament.PENDING]
         status = option_for_status[i]
         user = choice(list(users.values()))
@@ -400,7 +421,7 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
-        # modified_generate_tournaments(users)
+        modified_generate_tournaments(users)
         put_avatars()
 
         # MFA users

@@ -33,7 +33,7 @@ export class TournamentRoundStart extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   async render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.roundNumberElement = this.querySelector('#round-number');
     this.roundStatusMessage = this.querySelector('#round-status-message');
     this.timer = this.querySelector('#round-start-timer');

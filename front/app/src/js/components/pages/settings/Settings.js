@@ -15,21 +15,18 @@ import {
   showAlertMessage,
   showAlertMessageForDuration,
   ALERT_TYPE,
-  sessionExpiredToast,
 } from '@utils';
 import './components/index.js';
 
 export class Settings extends HTMLElement {
   /**
    * Private state of the component.
-   * @property {boolean} #state.isLoggedIn - Indicates if the user is logged in.
    * @property {string} #state.username - The username of the logged-in user.
    * @property {Object} #state.currentUserData - Contains the current user data fetched from the server.
    * @property {Object} #state.newUserData - Holds the new user data to be submitted.
    * @property {boolean} #state.changed - Indicates if there are changes to be submitted.
    */
   #state = {
-    isLoggedIn: false,
     username: '',
     currentUserData: null,
     newUserData: null,
@@ -43,14 +40,13 @@ export class Settings extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     let user = auth.getStoredUser();
     if (!user) {
       user = await auth.getUser();
     }
-    this.#state.isLoggedIn = user ? true : false;
-    if (!this.#state.isLoggedIn) {
-      sessionExpiredToast();
-      router.navigate('/login');
+    if (!user) {
       return;
     }
     this.#state.username = user.username;
@@ -66,14 +62,17 @@ export class Settings extends HTMLElement {
   async fetchUserData() {
     /* eslint-disable-next-line new-cap */
     let response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.#state.username));
-    if (response.status === 200) {
-      this.#state.currentUserData = response.data;
-      this.render();
-      return;
-    }
-    if (response.status === 403) {
-      const userData = await auth.getUser();
-      if (userData) {
+
+    switch (response.status) {
+      case 200:
+        this.#state.currentUserData = response.data;
+        this.render();
+        return;
+      case 403:
+        const userData = await auth.getUser();
+        if (!userData) {
+          return;
+        }
         this.#state.username = userData.username;
         /* eslint-disable-next-line new-cap */
         response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.#state.username));
@@ -82,12 +81,16 @@ export class Settings extends HTMLElement {
           this.render();
           return;
         }
-      }
+      case 401:
+      case 429:
+        return;
+      default:
+        router.redirect('/login');
     }
-    router.navigate('/login');
   }
 
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template();
 
     this.form = this.querySelector('form');
@@ -211,7 +214,7 @@ export class Settings extends HTMLElement {
       auth.updateStoredUser(this.#state.currentUserData);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 2000);
     } else {
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 429) {
         return;
       }
       let errorMsg = 'An unexpected error occurred. Please try again later.';
