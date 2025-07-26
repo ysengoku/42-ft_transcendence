@@ -137,6 +137,9 @@ def oauth_callback(  # noqa: PLR0911
         error_message, status_code = user_creation_error
         return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
+    # Mark OAuth connection as consumed by deleting it
+    oauth_connection.delete()
+
     # when everything is correct, assign JWT
     access_token, refresh_token_instance = RefreshToken.objects.create(user)
 
