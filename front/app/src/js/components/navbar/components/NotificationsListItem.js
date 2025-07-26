@@ -49,7 +49,7 @@ export class NotificationsListItem extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template();
+    this.innerHTML = this.style() + this.template();
 
     const avatar = this.querySelector('.notifications-list-avatar');
     avatar.src = this.#state.data.avatar;
@@ -69,6 +69,7 @@ export class NotificationsListItem extends HTMLElement {
         this.buttonWrapper.appendChild(this.seeProfileButton);
         if (this.#state.data.username !== this.#state.username) {
           this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
+          this.renderGameOptionTags();
           this.acceptButton = document.createElement('button');
           this.acceptButton.textContent = 'Accept';
           this.acceptButton.addEventListener('click', this.handleAcceptDuel);
@@ -104,6 +105,33 @@ export class NotificationsListItem extends HTMLElement {
         this.addEventListener('click', this.navigateToProfile);
         break;
     }
+  }
+
+  renderGameOptionTags() {
+    const optionsWrapper = this.querySelector('.notification-game-options');
+    if (!optionsWrapper) {
+      return;
+    }
+    const scoreToWin = document.createElement('div');
+    scoreToWin.classList.add('game-options-tag', 'tag-notification');
+    scoreToWin.textContent = `Score to win: ${this.#state.data.settings.score_to_win}`;
+    optionsWrapper.appendChild(scoreToWin);
+    const gameSpeed = document.createElement('div');
+    gameSpeed.classList.add('game-options-tag', 'tag-notification');
+    gameSpeed.textContent = `Game speed: ${this.#state.data.settings.game_speed}`;
+    optionsWrapper.appendChild(gameSpeed);
+    const timeLimit = document.createElement('div');
+    timeLimit.classList.add('game-options-tag', 'tag-notification');
+    timeLimit.textContent = `Time limit: ${this.#state.data.settings.time_limit}`;
+    optionsWrapper.appendChild(timeLimit);
+    const ranked = document.createElement('div');
+    ranked.classList.add('game-options-tag', 'tag-notification');
+    ranked.textContent = `${this.#state.data.settings.ranked ? 'Ranked' : 'Not ranked'}`;
+    optionsWrapper.appendChild(ranked);
+    const coolMode = document.createElement('div');
+    coolMode.classList.add('game-options-tag', 'tag-notification');
+    coolMode.textContent = `Buffs ${this.#state.data.settings.cool_mode ? 'enabled' : 'disabled'}`;
+    optionsWrapper.appendChild(coolMode);
   }
 
   replyGameInvite(accept) {
@@ -210,6 +238,7 @@ export class NotificationsListItem extends HTMLElement {
             <img class="notifications-list-avatar avatar-m rounded-circle" alt="Avatar"">
             <div class="d-flex flex-column justify-content-center">
               <p class="notification-content m-0 mb-1"></p>
+              <div class="notification-game-options d-flex flex-row flex-wrap mb-1 gap-1"></div>
               <p class="notification-time m-0"></P>
             </div>
             <i class="unread-badge bi bi-record-fill ms-auto"></i>
@@ -218,6 +247,21 @@ export class NotificationsListItem extends HTMLElement {
 	    </div>
 	  </li>
     `;
+  }
+
+  style() {
+    return `
+    <style>
+      .notification-content {
+        white-space: pre-wrap;
+      }
+      .tag-notification {
+        background-color: rgba(var(--bs-body-color-rgb), 0.1) !important;
+        color: var(--bs-body-color) !important;
+        font-size: 0.8rem;
+      }
+    </style>
+    `
   }
 }
 
