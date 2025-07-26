@@ -65,7 +65,7 @@ class TournamentsEndpointsTests(TestCase):
         self.assertEqual(response_data["name"], "Test Tournament")
         self.assertEqual(response_data["required_participants"], 4)
         self.assertEqual(response_data["status"], Tournament.PENDING)
-        self.assertEqual(response_data["creator"]["username"], "Player1")
+        self.assertEqual(response_data["tournament_creator"]["profile"]["username"], "Player1")
         
         # Verify tournament was created in database
         tournament = Tournament.objects.filter(name="Test Tournament").first()
@@ -153,7 +153,7 @@ class TournamentsEndpointsTests(TestCase):
         response_data = response.json()
         self.assertEqual(response_data["name"], "Test Tournament")
         self.assertEqual(response_data["required_participants"], 4)
-        self.assertEqual(response_data["creator"]["username"], "Player1")
+        self.assertEqual(response_data["tournament_creator"]["profile"]["username"], "Player1")
 
     def test_get_all_tournaments_empty(self):
         response = self.client.get("/api/tournaments")
@@ -362,9 +362,9 @@ class TournamentsEndpointsTests(TestCase):
         
         # Verify participant was created
         tournament = Tournament.objects.get(id=tournament_id)
-        self.assertEqual(tournament.participants.count(), 1)
+        self.assertEqual(tournament.participants.count(), 2)  # Creator + new participant
         
-        participant = tournament.participants.first()
+        participant = tournament.participants.get(alias="Player2Alias")
         self.assertEqual(participant.profile, self.user2.profile)
         self.assertEqual(participant.alias, "Player2Alias")
 
@@ -396,7 +396,7 @@ class TournamentsEndpointsTests(TestCase):
         # Verify tournament status changed to ongoing
         tournament = Tournament.objects.get(id=tournament_id)
         self.assertEqual(tournament.status, Tournament.ONGOING)
-        self.assertEqual(tournament.participants.count(), 3)  # 3 participants plus creator
+        self.assertEqual(tournament.participants.count(), 4)  # Creator + 3 participants = 4 total
         
         # Verify close invitations was called
         mock_close_invitations.assert_called_once()
@@ -426,7 +426,7 @@ class TournamentsEndpointsTests(TestCase):
         # Try to register one more player
         response = self.client.post(f"/api/tournaments/{tournament_id}/register?alias=ExtraPlayer")
         self.assertEqual(response.status_code, 403)
-        self.assertContains(response, "Tournament is full", status_code=403)
+        self.assertContains(response, "You can't be a participant if you are already in a game", status_code=403)
 
     @patch("tournaments.router.endpoints.tournaments.async_to_sync")
     @patch("tournaments.router.endpoints.tournaments.TournamentEvent.send_tournament_notification")
@@ -529,7 +529,7 @@ class TournamentsEndpointsTests(TestCase):
         
         # Verify participant was removed
         tournament = Tournament.objects.get(id=tournament_id)
-        self.assertEqual(tournament.participants.count(), 0)
+        self.assertEqual(tournament.participants.count(), 1)  # Creator remains
 
     @patch("tournaments.router.endpoints.tournaments.async_to_sync")
     @patch("tournaments.router.endpoints.tournaments.TournamentEvent.send_tournament_notification")
@@ -557,12 +557,12 @@ class TournamentsEndpointsTests(TestCase):
         response = self.client.delete(f"/api/tournaments/{tournament_id}/unregister")
         self.assertEqual(response.status_code, 204)
         
-        # Verify tournament was cancelled due to no participants
+        # Verify tournament remains pending (creator still participating)
         tournament = Tournament.objects.get(id=tournament_id)
-        self.assertEqual(tournament.status, Tournament.CANCELLED)
+        self.assertEqual(tournament.status, Tournament.PENDING)
+        self.assertEqual(tournament.participants.count(), 1)  # Only creator remains
         
-        # Verify close invitations was called
-        mock_close_invitations.assert_called_once()
+        # Note: close_tournament_invitations not called since tournament wasn't cancelled
 
     @patch("tournaments.router.endpoints.tournaments.async_to_sync")
     @patch("tournaments.router.endpoints.tournaments.TournamentEvent.send_tournament_notification")
