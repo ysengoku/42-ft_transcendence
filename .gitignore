@@ -134,6 +134,7 @@ env.bak/
 venv.bak/
 .secrets
 secrets.json
+cookies.txt
 
 # Spyder project settings
 .spyderproject

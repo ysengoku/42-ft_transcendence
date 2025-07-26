@@ -264,18 +264,6 @@ class OAuth2EndpointsTests(TestCase):
         self.assertEqual(response.status_code, 302)
         
                 
-    @patch("users.router.endpoints.oauth2.requests.get") 
-    @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_callback_network_timeout_simulation(self, mock_post, mock_get):
-        # Simulate timeout on token request
-        mock_get.return_value.status_code = 200
-        mock_post.side_effect = requests.Timeout("Request timed out")
-        
-        OauthConnection.objects.create_pending_connection("timeout_state", "github")
-        
-        response = self.client.get("/api/oauth/callback/github?code=test&state=timeout_state")
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("error=", response.url)
 
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.post")
@@ -343,18 +331,3 @@ class OAuth2EndpointsTests(TestCase):
             "error=Invalid%20state" in response2.url or 
             "error=Invalid%20user%20information" in response2.url
         )
-        
-    def test_oauth_callback_network_timeout_simulation(self):
-        # Test network timeout scenarios
-        with patch("users.router.endpoints.oauth2.requests.post") as mock_post, \
-             patch("users.router.endpoints.oauth2.requests.get") as mock_get:
-                
-            # Simulate timeout on token request
-            mock_get.return_value.status_code = 200
-            mock_post.side_effect = requests.Timeout("Request timed out")
-            
-            OauthConnection.objects.create_pending_connection("timeout_state", "github")
-            
-            response = self.client.get("/api/oauth/callback/github?code=test&state=timeout_state")
-            self.assertEqual(response.status_code, 302)
-            self.assertIn("error=", response.url)

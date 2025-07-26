@@ -82,7 +82,7 @@ def verify_mfa_code(request, data: VerifyMfaCode) -> dict[str, any]:
     if not data.token or len(data.token) != TOKEN_LENGTH or not data.token.isdigit():
         raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
 
-    if not user.mfa_token:
+    if not user.mfa_token or not user.mfa_token_date:
         raise HttpError(400, "No verification code has been sent")
 
     now = timezone.now()
