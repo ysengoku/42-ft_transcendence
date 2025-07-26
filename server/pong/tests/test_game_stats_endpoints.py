@@ -314,8 +314,7 @@ class GameStatsEndpointsTests(TestCase):
 
     def test_get_match_invalid_uuid(self):
         response = self.client.get("/api/game-stats/matches/invalid-uuid")
-        # Should return 422 or 400 for invalid UUID format
-        self.assertIn(response.status_code, [400, 422])
+        self.assertEqual(response.status_code, 422)
 
     def test_get_match_success(self):
         # Create a match
