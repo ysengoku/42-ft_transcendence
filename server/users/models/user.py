@@ -9,7 +9,7 @@ from django.db import models
 from django.db.models import Q
 from ninja.files import UploadedFile
 
-# from users.models import OauthConnection  # Moved to local import to avoid circular dependency
+from users.models import OauthConnection
 from users.utils import merge_err_dicts
 
 """
@@ -46,7 +46,7 @@ class UserManager(BaseUserManager):
     def for_mfa_token(self, token: str):
         return self.filter(mfa_token=token)
 
-    def fill_user_data(self, username: str, oauth_connection: "OauthConnection" = None, **extra_fields):
+    def fill_user_data(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         username = AbstractUser.normalize_username(username)
         if oauth_connection:
             username = self._generate_unique_username(username)
@@ -59,13 +59,13 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("nickname", username)
         return self.model(username=username, oauth_connection=oauth_connection, **extra_fields)
 
-    def create_user(self, username: str, oauth_connection: "OauthConnection" = None, **extra_fields):
+    def create_user(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         extra_fields["is_superuser"] = False
         user = self.fill_user_data(username, oauth_connection, **extra_fields)
         user.save()
         return user
 
-    def validate_and_create_user(self, username: str, oauth_connection: "OauthConnection" = None, **extra_fields):
+    def validate_and_create_user(self, username: str, oauth_connection: OauthConnection = None, **extra_fields):
         extra_fields["is_superuser"] = False
         user = self.fill_user_data(username, oauth_connection, **extra_fields)
         user.full_clean()
