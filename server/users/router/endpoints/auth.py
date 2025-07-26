@@ -107,11 +107,8 @@ def signup(request: HttpRequest, data: SignUpSchema):
         email=data.email,
         password=data.password,
     )
-    user.save()
 
-    response = create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
-    response.status_code = 201
-    return response
+    return create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
 
 
 @auth_router.post(
