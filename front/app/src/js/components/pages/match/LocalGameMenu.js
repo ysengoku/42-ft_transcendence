@@ -5,6 +5,8 @@
  * and navigates to the game page.
  */
 import { router } from '@router';
+import { auth } from '@auth';
+import { sessionExpiredToast } from '@utils';
 
 export class LocalGameMenu extends HTMLElement {
   /**
@@ -20,7 +22,19 @@ export class LocalGameMenu extends HTMLElement {
     this.navigateToGame = this.navigateToGame.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
+    const authStatus = await auth.fetchAuthStatus();
+    if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
+      if (authStatus.status === 401) {
+        sessionExpiredToast();
+      }
+      router.redirect('/login');
+    }
     this.render();
   }
 
@@ -34,6 +48,7 @@ export class LocalGameMenu extends HTMLElement {
    * It initializes the local player and AI player buttons, and hides options that are not applicable.
    */
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template();
 
     this.querySelector('#is-ranked-selector')?.classList.add('d-none');

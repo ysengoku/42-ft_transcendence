@@ -114,7 +114,7 @@ export class ChatMessageArea extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.messageInput = this.querySelector('#chat-message-input-wrapper');
     this.loader = this.querySelector('.chat-loader');
     this.loader.innerHTML = loader();
@@ -216,6 +216,54 @@ export class ChatMessageArea extends HTMLElement {
     }
   }
 
+  renderPendingMessage(data) {
+    console.log('Pending message', data);
+    const messageElement = document.createElement('div');
+    messageElement.innerHTML = this.pendingMessageTemplate();
+    messageElement.classList.add(
+      'right-align-message',
+      'd-flex',
+      'flex-row',
+      'justify-content-end',
+      'align-items-center',
+    );
+    const messageContent = messageElement.querySelector('.bubble');
+    messageContent.id = data.timestamp;
+    messageContent.querySelector('.message-content').textContent = data.content;
+    messageElement.classList.add('animateIn');
+    this.chatMessages.appendChild(messageElement);
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    messageElement.addEventListener(
+      'animationend',
+      () => {
+        messageElement.classList.remove('animateIn');
+      },
+      { once: true },
+    );
+  }
+
+  updateMessageStatus(data) {
+    const messageContent = document.getElementById(data.timestamp);
+    if (!messageContent) {
+      return false;
+    }
+    const message = messageContent.querySelector('.message-content');
+    if (!message || message.textContent !== data.content) {
+      return false;
+    }
+    messageContent.id = data.id;
+    messageContent.classList.add('fade-in-animation-half');
+    messageContent.addEventListener(
+      'animationend',
+      () => {
+        messageContent.classList.remove('fade-in-animation-half');
+        messageContent.classList.remove('pending-message');
+      },
+      { once: true },
+    );
+    return true;
+  }
+
   renderNewMessage(data) {
     const message = {
       content: data.content,
@@ -226,6 +274,9 @@ export class ChatMessageArea extends HTMLElement {
       id: data.id,
     };
     this.#state.data.messages.unshift(message);
+    if (data.sender === this.#state.loggedInUsername && this.updateMessageStatus(data)) {
+      return;
+    }
     const messageElement = this.messageItem(message);
     messageElement.classList.add('animateIn');
     this.chatMessages.appendChild(messageElement);
@@ -550,6 +601,13 @@ export class ChatMessageArea extends HTMLElement {
       .message-time {
         font-size: 12px;
       }
+      .pending-message {
+        opacity: 0.4
+        /*
+        color: rgba(var(--pm-gray-100-rgb), 0.6) !important;
+        background-color: rgba(var(--pm-primary-600-rgb), 0.4) !important;
+        */
+      }
 	  </style>
     `;
   }
@@ -564,6 +622,17 @@ export class ChatMessageArea extends HTMLElement {
       </div>
     </div>
     `;
+  }
+
+  pendingMessageTemplate() {
+    return `
+    <div class="message" data-bs-toggle="tooltip">
+      <div class="pending-message bubble ms-5">
+        <div class="message-content"></div>
+        <i class="message-liked bi bi-heart-fill h5"></i>
+      </div>
+    </div>
+  `;
   }
 }
 

@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 describe('AvatarUploadModal component', () => {
-    it('should render modal structure on connectedCallback', () => {
+  it('should render modal structure on connectedCallback', () => {
     const modal = new AvatarUploadModal();
     document.body.appendChild(modal);
     modal.connectedCallback();

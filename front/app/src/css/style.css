@@ -344,6 +344,14 @@ h1, h2, h3, h4, h5, h6, legend {
   -webkit-text-stroke: 1px;
 }
 
+.game-options-tag {
+  background-color: var(--pm-primary-500);
+  color: var(--pm-primary-100);
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.9rem;
+}
+
 /*--------------------------------------------------------------------------- */
 /*     Scroll bar                                                             */
 /*----------------------------------------------------------------------------*/
@@ -566,6 +574,19 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   }
 }
 
+.fade-in-animation-half {
+  animation: fade-in-half 0.5s;
+  animation-fill-mode: forwards;
+}
+@keyframes fade-in-half {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .fade-out-animation {
   animation: fade-out 1s;
   animation-fill-mode: forwards;
@@ -597,5 +618,17 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   to {
     transform: translate(var(--dx), var(--dy)) scale(0.5);
     opacity: 0;
+  }
+}
+
+.rotating {
+  animation: rotating 1s linear infinite;
+}
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }

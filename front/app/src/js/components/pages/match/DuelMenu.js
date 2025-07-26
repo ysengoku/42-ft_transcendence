@@ -16,6 +16,7 @@ import {
   sessionExpiredToast,
 } from '@utils';
 import { getOptionsFromLocalStorage } from './utils/gameOptions.js';
+import { DEFAULT_GAME_OPTIONS } from '@env';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
@@ -90,8 +91,13 @@ export class DuelMenu extends HTMLElement {
    * If the user is authenticated and has an ongoing game, it redirects to the game page.
    */
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
@@ -125,7 +131,8 @@ export class DuelMenu extends HTMLElement {
   /*      Rendering                                                           */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = '';
+    this.innerHTML = this.style() + this.template();
 
     // Set references to DOM elements
     this.optionsButton = this.querySelector('#game-options-button');
@@ -279,10 +286,10 @@ export class DuelMenu extends HTMLElement {
    * @description Convert game options to an object to include in the game invitation request.
    */
   optionsToObject() {
-    if (Object.keys(this.#state.options).length === 0) {
+    if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
       return null;
     }
-    const optionsObj = {};
+    const optionsObj = DEFAULT_GAME_OPTIONS;
     for (const [key, value] of Object.entries(this.#state.options)) {
       if (value !== 'any') {
         optionsObj[key] = value;
@@ -435,15 +442,14 @@ export class DuelMenu extends HTMLElement {
       },
     };
     const settings = this.optionsToObject();
-    if (settings) {
-      message.data.settings = settings;
-    }
+    message.data.settings = settings ? settings : DEFAULT_GAME_OPTIONS;
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
       username: this.#state.opponentUsername,
       nickname: this.opponentNickname.textContent,
       avatar: this.opponentAvatar.src,
+      ...message.data.settings,
     };
     router.navigate('/duel', queryParams);
   }

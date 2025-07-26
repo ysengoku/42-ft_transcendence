@@ -43,7 +43,7 @@ export class DuelPreview extends HTMLElement {
         duelPage.innerHTML = '';
         duelPage.appendChild(notFound);
       } else {
-        router.navigate('error');
+        router.redirect('/error');
       }
       return;
     }
@@ -88,7 +88,7 @@ export class DuelPreview extends HTMLElement {
       this.goToDuelMenuButton.addEventListener('click', this.navigateToDuelMenu);
       return;
     }
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.player1 = this.querySelector('#duel-player1');
     this.player2 = this.querySelector('#duel-player2');
 
@@ -108,11 +108,11 @@ export class DuelPreview extends HTMLElement {
   }
 
   navigateToHome() {
-    router.navigate('/home');
+    router.redirect('/home');
   }
 
   navigateToDuelMenu() {
-    router.navigate('/duel-menu');
+    router.redirect('/duel-menu');
   }
 
   template() {

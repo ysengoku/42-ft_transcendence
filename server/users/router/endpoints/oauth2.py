@@ -19,7 +19,7 @@ oauth2_router = Router()
 def get_oauth_config(platform: str) -> dict:
     """
     Retrieves OAuth configuration for the platform.
-    Raises 422 if the platform is unsupported.
+    Raises 404 if the platform is unsupported.
     """
     if platform not in settings.OAUTH_CONFIG:
         raise HttpError(404, f"Unsupported platform: {platform}")

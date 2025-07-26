@@ -9,9 +9,15 @@ export class Register extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
       router.redirect('/home');
+      return;
+    }
+    if (authStatus.status === 429) {
+      return;
     }
     this.render();
   }
@@ -25,6 +31,7 @@ export class Register extends HTMLElement {
   }
 
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template();
 
     this.form = this.querySelector('form');
@@ -70,12 +77,14 @@ export class Register extends HTMLElement {
       if (response.status === 200) {
         router.redirect('/home', response.user);
       }
-    } else {
-      console.error('Registration failed:', response.msg);
-      this.feedbackField = this.querySelector('#signup-failed-feedback');
-      this.feedbackField.innerHTML = '';
-      showFormErrorFeedback(this.feedbackField, response.msg);
+      return;
     }
+    if (response.status === 429) {
+      return;
+    }
+    this.feedbackField = this.querySelector('#signup-failed-feedback');
+    this.feedbackField.innerHTML = '';
+    showFormErrorFeedback(this.feedbackField, response.msg);
   }
 
   checkInputFields() {

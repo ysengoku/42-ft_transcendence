@@ -1,11 +1,9 @@
 import logging
 
 from django.core.management.base import BaseCommand
-
-from chat.models import GameInvitation
-
 from django.db import transaction
 
+from chat.models import GameInvitation
 
 logger = logging.getLogger("server")
 
@@ -15,7 +13,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         invitations = GameInvitation.objects.filter(
-            status=GameInvitation.PENDING
+            status=GameInvitation.PENDING,
         )
         if not invitations.exists():
             logger.info("No pending invitations in the database.")

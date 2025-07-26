@@ -52,6 +52,10 @@ class RefreshTokenQuerySet(models.QuerySet):
         return access_token, refresh_token_instance
 
     def rotate(self, refresh_token_raw: str) -> tuple:
+        """
+        Revokes the old refresh tokens and creates a new one for the user.
+        Used in the /refresh endpoint.
+        """
         refresh_token_instance = self.select_related("user").filter(token=refresh_token_raw).first()
         if not refresh_token_instance:
             raise AuthenticationError

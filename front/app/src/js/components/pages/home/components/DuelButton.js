@@ -27,13 +27,16 @@ export class DuelButton extends HTMLElement {
     event.preventDefault();
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
       router.redirect('/login');
       return;
     }
-    if (authStatus.success && authStatus.response.game_id) {
+    if (authStatus.response.game_id) {
       devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
       router.navigate(`multiplayer-game/${authStatus.response.game_id}`);
       return;

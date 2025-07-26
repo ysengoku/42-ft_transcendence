@@ -15,7 +15,7 @@ export class participantElement extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     const avatarElement = this.querySelector('.player-avatar');
     const aliasElement = this.querySelector('.player-alias');
     const scoreElement = this.querySelector('.player-score');
