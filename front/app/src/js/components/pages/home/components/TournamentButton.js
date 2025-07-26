@@ -29,6 +29,9 @@ export class TournamentButton extends HTMLElement {
     event.preventDefault();
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }

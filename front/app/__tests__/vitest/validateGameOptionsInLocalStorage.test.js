@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-	getOptionsFromLocalStorage,
-	validateStoredOptions,
-	validateOption
-} from '@components/pages/match/utils/gameOptions.js'
+  getOptionsFromLocalStorage,
+  validateStoredOptions,
+  validateOption,
+} from '@components/pages/match/utils/gameOptions.js';
 import { DEFAULT_GAME_OPTIONS } from '@env';
 
 describe('validateStoredOptions', () => {
@@ -78,7 +78,7 @@ describe('validateOption', () => {
     const rule = { type: 'enum', values: ['slow', 'medium', 'fast', 'any'] };
     expect(validateOption('medium', rule)).toBe(true);
     expect(validateOption('ultra', rule)).toBe(false);
-		expect(validateOption('any', rule)).toBe(true);
+    expect(validateOption('any', rule)).toBe(true);
   });
 
   it('validates number with range', () => {

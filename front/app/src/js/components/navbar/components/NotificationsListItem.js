@@ -1,7 +1,7 @@
 import { router } from '@router';
 import { socketManager } from '@socket';
-import { getRelativeTime } from '@utils';
-import { showToastNotification, TOAST_TYPES } from '@utils';
+import { getRelativeTime, showToastNotification, TOAST_TYPES } from '@utils';
+import { DUEL_STATUS } from '@components/pages/match/Duel';
 
 export class NotificationsListItem extends HTMLElement {
   #state = {
@@ -127,9 +127,12 @@ export class NotificationsListItem extends HTMLElement {
       if (!duelPage) {
         return;
       }
-      if (duelPage.status === 'starting') {
+      if (duelPage.status === DUEL_STATUS.STARTING) {
         showToastNotification('You are already in a duel. Cannot accept a new one.', TOAST_TYPES.ERROR);
         return;
+      }
+      if (duelPage.status === DUEL_STATUS.INVITING) {
+        duelPage.cancelInvitation();
       }
     }
     const confirmationFromServer = new Promise((resolve) => {
@@ -143,15 +146,15 @@ export class NotificationsListItem extends HTMLElement {
       this.replyGameInvite(true);
     });
     const data = await confirmationFromServer;
-    duelPage
-      ? duelPage.handleInvitationAccepted(data)
-      : router.navigate('/duel', {
-          status: 'starting',
-          gameId: data.game_id,
-          username: data.username,
-          nickname: data.nickname,
-          avatar: data.avatar,
-        });
+    if (!duelPage) {
+      router.redirect('/duel', {
+        status: DUEL_STATUS.STARTING,
+        gameId: data.game_id,
+        username: data.username,
+        nickname: data.nickname,
+        avatar: data.avatar,
+      });
+    }
   }
 
   handleDeclineDuel() {

@@ -26,7 +26,7 @@ export class ChatUserSearchItem extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     const avatar = this.#state.user.avatar ? this.#state.user.avatar : defaltAvatar;
     this.querySelector('.chat-user-search-avatar').src = avatar;
@@ -72,10 +72,10 @@ export class ChatUserSearchItem extends HTMLElement {
         this.chatList.addNewChat(response.data);
       }
     } else {
-      if (response.status !== 401 && response.status !== 500) {
-        console.error(response.msg);
-        showAlertMessage(ALERT_TYPE.ERROR, response.msg);
+      if (response.status === 401 || response.status === 429 || response.status === 500) {
+        return;
       }
+      showAlertMessage(ALERT_TYPE.ERROR, response.msg);
     }
   }
 

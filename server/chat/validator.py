@@ -8,7 +8,7 @@ class Validator:
     @staticmethod
     def all_required_fields_are_present(action, data) -> bool:
         required_fields = {
-            "new_message": ["content", "chat_id"],
+            "new_message": ["content", "chat_id", "timestamp"],
             "notification": ["message", "type"],
             "like_message": ["id", "chat_id"],
             "unlike_message": ["id", "chat_id"],
@@ -37,7 +37,7 @@ class Validator:
             return False
 
         expected_types = {
-            "new_message": {"content": str, "chat_id": str},
+            "new_message": {"content": str, "chat_id": str, "timestamp": str},
             "like_message": {"id": str, "chat_id": str},
             "unlike_message": {"id": str, "chat_id": str},
             "read_message": {"id": str},

@@ -61,8 +61,13 @@ export class TournamentMenu extends HTMLElement {
    * If the user is authenticated and has an active tournament session, it redirects to that tournament.
    */
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
@@ -105,7 +110,8 @@ export class TournamentMenu extends HTMLElement {
    * @returns {void}
    */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = '';
+    this.innerHTML = this.style() + this.template();
 
     this.createTournamentButton = this.querySelector('#create-tournament-button');
     this.list = this.querySelector('tournament-list');
@@ -291,7 +297,6 @@ export class TournamentMenu extends HTMLElement {
         this.hideModal();
         break;
       case 422:
-        console.log(response.msg);
         this.alert.textContent = response.msg;
         this.alert.classList.remove('d-none');
         // this.confirmButton.disabled = true;
@@ -342,6 +347,9 @@ export class TournamentMenu extends HTMLElement {
         showAlertMessageForDuration(ALERT_TYPE.ERROR, message);
         this.hideModal();
         this.render();
+        return;
+      case 429:
+        this.hideModal();
         return;
       default:
         break;
@@ -533,10 +541,10 @@ export class TournamentMenu extends HTMLElement {
         <p class="text-center fs-6 m-0 pe-1">players</p>
       </div>
       <div class="d-flex flex-wrap justify-content-center mb-5 pb-2">
-        <div class="tournament-options-tag m-2" id="tournament-option-score-to-win"></div>
-        <div class="tournament-options-tag m-2" id="tournament-option-game-speed"></div>
-        <div class="tournament-options-tag m-2" id="tournament-option-time-limit"></div>
-        <div class="tournament-options-tag m-2" id="tournament-option-cool-mode"></div>
+        <div class="game-options-tag m-2" id="tournament-option-score-to-win"></div>
+        <div class="game-options-tag m-2" id="tournament-option-game-speed"></div>
+        <div class="game-options-tag m-2" id="tournament-option-time-limit"></div>
+        <div class="game-options-tag m-2" id="tournament-option-cool-mode"></div>
       </div>
       <div id="registration-fail-alert-wrapper"></div>
       <p id="cannot-engage-alert" class="text-center d-none">

@@ -44,7 +44,7 @@ export class TournamentList extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.listWrapper = this.querySelector('#tournament-list-wrapper');
     this.list = this.querySelector('#tournament-list');
