@@ -22,6 +22,8 @@ export class UserProfile extends HTMLElement {
       this.innerHTML = notFound.outerHTML;
       return;
     }
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     this.fetchUserData(username);
   }
 
@@ -34,15 +36,18 @@ export class UserProfile extends HTMLElement {
         devLog('User data:', this.user);
         this.render();
       }
-    } else {
-      if (response.status === 404) {
+      return;
+    }
+    switch (response.status) {
+      case 401:
+        return;
+      case 404:
         router.redirect('/user-not-found');
-      } else if (response.status === 401) {
-        router.redirect('/login');
-      } else {
+        break;
+      case 429:
+        return;
+      default:
         router.redirect(`/error?code=${response.status}&error=${response.msg}`);
-        console.error('Error ', response.status, ': ', response.msg);
-      }
     }
   }
 
@@ -54,6 +59,7 @@ export class UserProfile extends HTMLElement {
     const storedUser = sessionStorage.getItem('user');
     this.#state.loggedInUsername = JSON.parse(storedUser).username;
 
+    this.innerHTML = '';
     this.innerHTML = this.style() + this.template();
 
     this.onlineStatusIndicator = this.querySelector('profile-online-status');
@@ -126,7 +132,7 @@ export class UserProfile extends HTMLElement {
 
     const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
     if (userEloProgressionChart) {
-      userEloProgressionChart.setData(this.user.username, this.user.elo_history);
+      userEloProgressionChart.setData(this.#state.loggedInUsername, this.user.username, this.user.elo_history);
     }
 
     const gameHistory = this.querySelector('user-game-history');
@@ -275,9 +281,11 @@ export class UserProfile extends HTMLElement {
     }
     .btn-elo-history {
       color: var(--pm-primary-700);
+      font-size: 0.9rem;
       font-weight: bold;
       background: none;
       border: none;
+      padding: 1px 4px;
     }
     .row.no-gutters > [class*='col-'] {
       padding-right: 0;

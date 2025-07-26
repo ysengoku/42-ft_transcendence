@@ -1,6 +1,7 @@
 import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 
 export class UserGameResultModal extends HTMLElement {
   #state = {
@@ -23,7 +24,10 @@ export class UserGameResultModal extends HTMLElement {
     let response = null;
     /* eslint-disable-next-line new-cap */
     response = await apiRequest('GET', API_ENDPOINTS.MATCH_RESULT(this.#state.id), null, false, true);
-    if (!response) {
+    if (!response.success) {
+      if (response.status === 404) {
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
+      }
       return;
     }
     this.#state.gameData = response.data;
@@ -43,7 +47,7 @@ export class UserGameResultModal extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.modalElement = this.querySelector('.modal');
     this.gameResultContent = this.querySelector('#game-result-content');

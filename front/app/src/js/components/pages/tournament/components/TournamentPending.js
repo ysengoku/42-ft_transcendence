@@ -64,7 +64,7 @@ export class TournamentPending extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.currentParticipantsCount = this.querySelector('#current-participants-count');
     this.requiredParticipants = this.querySelector('#required-participants');
@@ -182,7 +182,9 @@ export class TournamentPending extends HTMLElement {
       true,
     );
     if (!response.success) {
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
+      if (response.status !== 401 && response.status !== 429) {
+        showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg);
+      }
       return;
     }
     socketManager.closeSocket('tournament', this.#state.id);
@@ -248,10 +250,11 @@ export class TournamentPending extends HTMLElement {
     <div class="d-flex flex-column justify-content-center align-items-center mt-3">
       <tournament-modal></tournament-modal>
       <p class="text-center m-1">Gathering Gunslingers...</p>
-      <div class="d-flex flex-row justify-content-center align-items-center mb-5">
+      <div class="d-flex flex-row justify-content-center align-items-center mb-3">
         <p class="m-0 pe-1 fs-2" id="current-participants-count"></p>
         <p class="m-0 fs-4" id="required-participants"></p>
       </div>
+      <div class="pongAnimation"></div>
       <p class="text-center mt-4 mb-2 fs-5 fw-bold">Gunslingers in the Arena</p>
       <div class="d-flex flex-row flex-wrap justify-content-center w-75" id="participants-wrapper"></div>
       <div class="d-flex flex-row justify-content-center align-items-center mt-5 mb-2 gap-3">

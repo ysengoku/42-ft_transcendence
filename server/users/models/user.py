@@ -18,6 +18,10 @@ Models related to authentication and authorization.
 
 
 class UserManager(BaseUserManager):
+    """
+    Custom manager for the `User` model.
+    """
+
     def for_id(self, user_id: str):
         return self.filter(id=user_id)
 
@@ -86,6 +90,8 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     """
+    Custom `User` model. Reuses some functionality of default `User` model, but is not related to the built-in
+    authentication mechanism of Django. Instead, it is indeded for use for custom JWT-based authenticaiton system.
     Contains information that is related to authentication and authorization of one single user.
     """
 
@@ -110,7 +116,7 @@ class User(AbstractUser):
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
         """
-        Called during full_clean().
+        Called during `.full_clean()`.
         Additional logic for validation of unique fields.
         **kwargs have a default parameter exclude, which excludes certain fields from being validated.
         """

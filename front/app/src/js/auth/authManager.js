@@ -1,3 +1,4 @@
+import { router } from '@router';
 import { API_ENDPOINTS } from '@api';
 import { getCSRFTokenfromCookies } from './csrfToken';
 import { refreshAccessToken } from './refreshToken';
@@ -39,7 +40,7 @@ const auth = (() => {
         sessionStorage.removeItem('user');
         sessionStorage.setItem('user', JSON.stringify(user));
         if (fireEvent) {
-          const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
+          const event = new CustomEvent('userStatusChange', { detail: { user: user }, bubbles: true });
           document.dispatchEvent(event);
         }
       }
@@ -60,7 +61,7 @@ const auth = (() => {
         unread_notifications_count: currentUser.unread_notifications_count,
       };
       sessionStorage.setItem('user', JSON.stringify(updatedUser));
-      const event = new CustomEvent('userStatusChange', { detail: user, bubbles: true });
+      const event = new CustomEvent('userStatusChange', { detail: { user: user }, bubbles: true });
       document.dispatchEvent(event);
     }
 
@@ -71,7 +72,6 @@ const auth = (() => {
     clearStoredUser() {
       sessionStorage.removeItem('user');
       localStorage.removeItem('gameOptions');
-      localStorage.removeItem('gameType');
       const event = new CustomEvent('userStatusChange', { detail: { user: null }, bubbles: true });
       document.dispatchEvent(event);
       socketManager.closeAllSockets();
@@ -119,6 +119,9 @@ const auth = (() => {
       }
       if (status === 401) {
         sessionExpiredToast();
+        if (window.location.pathname !== '/login') {
+          router.redirect('/login');
+        }
       }
       return null;
     }
@@ -139,30 +142,38 @@ const auth = (() => {
         credentials: 'include',
       };
       const response = await fetch(API_ENDPOINTS.SELF, request);
-      if (response.ok) {
-        const data = await response.json();
-        devLog('User is logged in: ', data);
-        this.storeUser(data, fireEvent);
-        return { success: true, response: data };
-      } else if (response.status === 401) {
-        const refreshTokenResponse = await refreshAccessToken(CSRFToken);
-        if (refreshTokenResponse.status) {
-          switch (refreshTokenResponse.status) {
-            case 204:
-              return this.fetchAuthStatus(fireEvent);
-            case 401:
-              return { success: false, status: 401 };
-            case 500:
-              internalServerErrorAlert();
-              break;
-            default:
-              unknowknErrorToast();
-              return { success: false, status: refreshTokenResponse.status };
+      switch (response.status) {
+        case 200:
+          const data = await response.json();
+          devLog('User is logged in: ', data);
+          this.storeUser(data, fireEvent);
+          return { success: true, response: data };
+        case 401:
+          const refreshTokenResponse = await refreshAccessToken(CSRFToken);
+          if (refreshTokenResponse.status) {
+            switch (refreshTokenResponse.status) {
+              case 204:
+                return this.fetchAuthStatus(fireEvent);
+              case 401:
+                return { success: false, status: 401 };
+              case 429:
+                router.redirect('/error?code=429');
+                return { success: false, status: 429 };
+              case 500:
+                internalServerErrorAlert();
+                break;
+              default:
+                unknowknErrorToast();
+                return { success: false, status: refreshTokenResponse.status };
+            }
           }
-        }
-        return { success: false, status: response.status };
+          return { success: false, status: response.status };
+        case 429:
+          router.redirect('/error?code=429');
+          return { success: false, status: 429 };
+        default:
+          return { success: false, status: response.status };
       }
-      return { success: false, status: response.status };
     }
 
     /**

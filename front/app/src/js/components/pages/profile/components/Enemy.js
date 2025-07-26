@@ -23,7 +23,7 @@ export class UserEnemy extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     if (!this.#state.data) {
       return;

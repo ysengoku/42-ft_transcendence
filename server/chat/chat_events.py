@@ -48,6 +48,7 @@ class ChatEvent:
         message_data = data.get("data", {})
         message = message_data.get("content")
         chat_id = message_data.get("chat_id")
+        timestamp = message_data.get("timestamp")
 
         chat = self.check_if_chat_exists_and_is_in_chat(chat_id)
         if not isinstance(chat, Chat):
@@ -77,6 +78,7 @@ class ChatEvent:
                             "sender": self.consumer.user_profile.user.username,
                             "is_read": False,
                             "is_liked": False,
+                            "timestamp": timestamp,
                         },
                     },
                 ),

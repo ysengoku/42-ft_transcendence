@@ -1,8 +1,14 @@
+/**
+ * @module TournamentOverviewTree
+ * @description Renders tournament tree with current status for ongoing or finished tournament
+ * for the window size larger than Breakpoint MD.
+ */
+
 import { BREAKPOINT } from '@utils';
 
 export class TournamentOverviewTree extends HTMLElement {
   #state = {
-    rounds: null,
+    rounds: [],
   };
 
   constructor() {
@@ -12,17 +18,42 @@ export class TournamentOverviewTree extends HTMLElement {
 
   set data(data) {
     this.#state.rounds = data;
+    this.reorderBracketsForTree();
     this.render();
   }
 
+  reorderBracketsForTree() {
+    for (let i = this.#state.rounds.length - 1; i >= 0; i--) {
+      if (this.#state.rounds[i].brackets.length === 0) {
+        this.#state.rounds.pop(this.#state.rounds[i]);
+        continue;
+      }
+      if (i === this.#state.rounds.length - 1) {
+        continue;
+      }
+      const reordered = [];
+      const players = [];
+      for (let j = 0; j < this.#state.rounds[i + 1].brackets.length; j++) {
+        players.push(this.#state.rounds[i + 1].brackets[j].participant1.alias);
+        players.push(this.#state.rounds[i + 1].brackets[j].participant2.alias);
+      }
+      for (let k = 0; k < players.length; k++) {
+        const bracketOfPlayer = this.#state.rounds[i].brackets.find((bracket) => {
+          return bracket.participant1.alias === players[k] || bracket.participant2.alias === players[k];
+        });
+        reordered.push(bracketOfPlayer);
+      }
+      this.#state.rounds[i].brackets = reordered;
+    }
+  }
+
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
     this.tournamentOverviewContent = this.querySelector('#tournament-overview-content-wrapper');
 
     for (let i = 0; i < this.#state.rounds.length; i++) {
       const round = this.#state.rounds[i];
-      const renderConnector = this.#state.rounds[i + 1] && this.#state.rounds[i + 1].brackets.length > 0 ? true : false;
-      this.renderBrackets(round, renderConnector);
+      this.renderBrackets(round);
       if (i === this.#state.rounds.length - 1) {
         const lastRoundElement = this.querySelector('.round-wrapper:last-child');
         const connectors = lastRoundElement.querySelectorAll('.brackets-connector');
@@ -33,7 +64,11 @@ export class TournamentOverviewTree extends HTMLElement {
     }
   }
 
-  renderBrackets(round, renderConnector = true) {
+  /**
+   * @description
+   * @param {Object} round
+   */
+  renderBrackets(round) {
     const roundElement = document.createElement('div');
     roundElement.classList.add('round-wrapper', 'd-flex', 'flex-column', 'justify-content-around');
     const bracketPairsCount = Math.floor(round.brackets.length / 2);
@@ -54,28 +89,8 @@ export class TournamentOverviewTree extends HTMLElement {
         bracketsWrapper.appendChild(bracket2Element);
         roundElement.appendChild(bracketPairElement);
 
-        if (!renderConnector) {
-          bracketPairElement.querySelector('.brackets-connector')?.classList.add('d-none');
-          continue;
-        }
         requestAnimationFrame(() => {
-          const incomingLines = bracketPairElement.querySelector('.brackets-connector-incoming');
-          const outboundLine = bracketPairElement.querySelector('.brackets-connector-outbound');
-          const bracketWrapper1 = bracketsWrapper.children[0];
-          const bracketWrapper2 = bracketsWrapper.children[1];
-
-          if (this.baseTop === 0) {
-            this.baseTop = bracketPairElement.getBoundingClientRect().top;
-          }
-          const pairTop = i === 0 ? this.baseTop : bracketPairElement.getBoundingClientRect().top;
-          const offset = (bracketPairElement.getBoundingClientRect().top - pairTop) / 2;
-
-          const y1 = bracketWrapper1.getBoundingClientRect().top + bracketWrapper1.offsetHeight / 2 - pairTop - offset;
-          const y2 = bracketWrapper2.getBoundingClientRect().top + bracketWrapper2.offsetHeight / 2 - pairTop + offset;
-          incomingLines.style.setProperty('--y1', `${y1}px`);
-          incomingLines.style.setProperty('--y2', `${y2}px`);
-          const mid = (y1 + y2) / 2;
-          outboundLine.style.top = `${mid}px`;
+          this.setupConnectorPosition(bracketsWrapper, bracketPairElement, i);
         });
       }
     } else {
@@ -122,6 +137,26 @@ export class TournamentOverviewTree extends HTMLElement {
       scoreElement.textContent = score;
     }
     return element;
+  }
+
+  setupConnectorPosition(bracketsWrapper, bracketPairElement, index) {
+    const incomingLines = bracketPairElement.querySelector('.brackets-connector-incoming');
+    const outboundLine = bracketPairElement.querySelector('.brackets-connector-outbound');
+    const bracketWrapper1 = bracketsWrapper.children[0];
+    const bracketWrapper2 = bracketsWrapper.children[1];
+
+    if (this.baseTop === 0) {
+      this.baseTop = bracketPairElement.getBoundingClientRect().top;
+    }
+    const pairTop = index === 0 ? this.baseTop : bracketPairElement.getBoundingClientRect().top;
+    const offset = (bracketPairElement.getBoundingClientRect().top - pairTop) / 2;
+
+    const y1 = bracketWrapper1.getBoundingClientRect().top + bracketWrapper1.offsetHeight / 2 - pairTop - offset;
+    const y2 = bracketWrapper2.getBoundingClientRect().top + bracketWrapper2.offsetHeight / 2 - pairTop + offset;
+    incomingLines.style.setProperty('--y1', `${y1}px`);
+    incomingLines.style.setProperty('--y2', `${y2}px`);
+    const mid = (y1 + y2) / 2;
+    outboundLine.style.top = `${mid}px`;
   }
 
   template() {

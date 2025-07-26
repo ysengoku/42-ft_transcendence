@@ -1,9 +1,11 @@
 import hashlib
+import logging
 import os
 from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import DatabaseError, transaction
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -30,6 +32,9 @@ from users.schemas import (
 auth_router = Router()
 
 TOKEN_EXPIRY = 10
+
+
+logger = logging.getLogger("server")
 
 
 @auth_router.get("self", response={200: SelfSchema, 401: MessageSchema})
@@ -81,6 +86,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
         )
     if is_mfa_enabled:
         raise HttpError(503, "Failed to send MFA code")
+
     response_data = user.profile.to_profile_minimal_schema()
     return create_json_response_with_tokens(user, response_data)
 
@@ -147,7 +153,15 @@ def logout(request: HttpRequest, response: HttpResponse):
         allow_only_for_self(request, refresh_token_instance.user.username)
 
     refresh_token_qs.set_revoked()
-
+    user = refresh_token_instance.user
+    try:
+        with transaction.atomic():
+            user.profile.refresh_from_db()
+            user.profile.nb_active_connexions = 0
+            user.profile.save(update_fields=["nb_active_connexions"])
+            user.profile.refresh_from_db()
+    except DatabaseError as e:
+        logger.error("Database error during disconnect: %s", e)
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return 204, None

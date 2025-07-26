@@ -6,6 +6,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
+import { DEFAULT_GAME_OPTIONS } from '@env';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import './components/index.js';
 
@@ -38,6 +39,7 @@ export class Duel extends HTMLElement {
     gameId: '',
     loggedInUser: null,
     opponent: null,
+    settings: {},
   };
 
   // Countdown time in seconds before the duel starts
@@ -68,6 +70,12 @@ export class Duel extends HTMLElement {
         document.addEventListener('gameFound', this.handleGameFound);
         document.addEventListener('websocket-close', this.handleMatchmakingCancellationByServer);
         const queryParams = param.get('params') || null;
+        if (queryParams) {
+          const searchParams = new URLSearchParams(queryParams.substring(1));
+          this.#state.settings = Object.fromEntries(searchParams.entries());
+        } else {
+          this.#state.settings = DEFAULT_GAME_OPTIONS;
+        }
         socketManager.closeSocket('matchmaking');
         socketManager.openSocket('matchmaking', queryParams);
         devLog('Requesting matchmaking...');
@@ -79,6 +87,13 @@ export class Duel extends HTMLElement {
           username: param.get('username'),
           nickname: param.get('nickname'),
           avatar: param.get('avatar'),
+        };
+        this.#state.settings = {
+          score_to_win: param.get('score_to_win'),
+          game_speed: param.get('game_speed'),
+          ranked: param.get('ranked'),
+          time_limit: param.get('time_limit'),
+          cool_mode: param.get('cool_mode'),
         };
         break;
       default:
@@ -111,9 +126,10 @@ export class Duel extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     this.#state.loggedInUser = await auth.getUser();
     if (!this.#state.loggedInUser) {
-      router.navigate('/login');
       return;
     }
     if (!this.#state.status) {
@@ -146,6 +162,7 @@ export class Duel extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template();
 
     this.header = this.querySelector('#duel-header');
@@ -154,6 +171,7 @@ export class Duel extends HTMLElement {
     this.cancelButton = this.querySelector('#cancel-duel-button');
     this.animation = this.querySelector('.pongAnimation');
     this.timer = this.querySelector('#timer');
+    this.optionTagsWrapper = this.querySelector('#options-tag-wrapper');
 
     this.renderContent();
   }
@@ -171,25 +189,57 @@ export class Duel extends HTMLElement {
     this.content.appendChild(this.contentElement);
 
     if (this.#state.status === DUEL_STATUS.MATCHMAKING || this.#state.status === DUEL_STATUS.INVITING) {
-      this.animation.classList.remove('d-none');
-    } else if (this.#state.status === DUEL_STATUS.STARTING) {
-      this.animation.classList.add('d-none');
-      this.timer.classList.remove('d-none');
-      this.startDuel();
-    } else {
-      this.animation.classList.add('d-none');
-      this.timer.classList.add('d-none');
-      router.removeBeforeunloadCallback();
-      window.removeEventListener('beforeunload', this.confirmLeavePage);
+      this.optionTagsWrapper.innerHTML = this.gameOptionTagsTemplate();
+      const optionScoreToWin = this.querySelector('#duel-option-score-to-win');
+      const optionGameSpeed = this.querySelector('#duel-option-game-speed');
+      const optionTimeLimit = this.querySelector('#duel-option-time-limit');
+      const optionRanked = this.querySelector('#duel-option-ranked');
+      const optionCoolMode = this.querySelector('#duel-option-cool-mode');
+      console.log(this.#state.settings);
+      this.#state.settings.score_to_win === 'any'
+        ? optionScoreToWin.classList.add('d-none')
+        : (optionScoreToWin.textContent = `Score to win: ${this.#state.settings.score_to_win}`);
+      this.#state.settings.game_speed === 'any'
+        ? optionGameSpeed.classList.add('d-none')
+        : (optionGameSpeed.textContent = `Game speed: ${this.#state.settings.game_speed}`);
+      this.#state.settings.time_limit === 'any'
+        ? optionTimeLimit.classList.add('d-none')
+        : (optionTimeLimit.textContent = `Time limit: ${this.#state.settings.time_limit} min`);
+      this.#state.settings.ranked === 'true'
+        ? (optionRanked.textContent = 'Ranked')
+        : optionRanked.classList.add('d-none');
+      this.#state.settings.cool_mode === 'any'
+        ? optionCoolMode.classList.add('d-none')
+        : (optionCoolMode.textContent =
+            this.#state.settings.cool_mode === 'true' ? 'Buffs: enabled' : 'Buffs: disabled');
     }
 
-    if (this.#state.status === DUEL_STATUS.INVITING) {
-      this.cancelButton?.addEventListener('click', this.cancelInvitation);
-    } else if (this.#state.status === DUEL_STATUS.MATCHMAKING) {
-      this.cancelButton?.addEventListener('click', this.cancelMatchmaking);
-    } else {
-      this.cancelButton?.classList.add('d-none');
+    switch (this.#state.status) {
+      case DUEL_STATUS.MATCHMAKING:
+        this.animation.classList.remove('d-none');
+        this.cancelButton?.addEventListener('click', this.cancelMatchmaking);
+        break;
+      case DUEL_STATUS.INVITING:
+        this.animation.classList.remove('d-none');
+        this.cancelButton?.addEventListener('click', this.cancelInvitation);
+        break;
+      case DUEL_STATUS.STARTING:
+        this.animation.classList.add('d-none');
+        this.optionTagsWrapper.classList.add('d-none');
+        this.timer.classList.remove('d-none');
+        this.cancelButton?.classList.add('d-none');
+        this.startDuel();
+        break;
+      default:
+        this.animation.classList.add('d-none');
+        this.optionTagsWrapper.classList.add('d-none');
+        this.timer.classList.add('d-none');
+        this.cancelButton?.classList.add('d-none');
+        router.removeBeforeunloadCallback();
+        window.removeEventListener('beforeunload', this.confirmLeavePage);
+        break;
     }
+
     document.addEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
     document.addEventListener('duelInvitationCanceled', this.invitationCanceled);
   }
@@ -360,7 +410,7 @@ export class Duel extends HTMLElement {
         router.removeBeforeunloadCallback();
         window.removeEventListener('beforeunload', this.confirmLeavePage);
         socketManager.closeSocket('matchmaking');
-        router.navigate(`/multiplayer-game/${this.#state.gameId}`);
+        router.redirect(`/multiplayer-game/${this.#state.gameId}`);
       }
     }, 1000);
   }
@@ -428,6 +478,7 @@ export class Duel extends HTMLElement {
         <div class="pongAnimation d-none"></div>
         <div class="" id="timer"></div>
         <div id="duel-content"></div>
+        <div class="d-flex flex-wrap justify-content-center m-3" id="options-tag-wrapper"></div>
         <button class="btn my-2" id="cancel-duel-button">Cancel Duel</button>
       </div>
     </div>
@@ -445,6 +496,16 @@ export class Duel extends HTMLElement {
       default:
         return 'This duel has been canceled.';
     }
+  }
+
+  gameOptionTagsTemplate() {
+    return `
+    <div class="game-options-tag m-2" id="duel-option-score-to-win"></div>
+    <div class="game-options-tag m-2" id="duel-option-game-speed"></div>
+    <div class="game-options-tag m-2" id="duel-option-time-limit"></div>
+    <div class="game-options-tag m-2" id="duel-option-ranked"></div>
+    <div class="game-options-tag m-2" id="duel-option-cool-mode"></div>
+    `;
   }
 }
 

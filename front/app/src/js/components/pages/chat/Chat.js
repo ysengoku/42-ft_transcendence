@@ -3,7 +3,6 @@
  * @description Provides a dynamic chat interface that integrates chat lists, messaging, and WebSocket communications.
  */
 
-import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
@@ -62,7 +61,6 @@ export class Chat extends HTMLElement {
     if (userData) {
       this.#state.loggedInUser = userData;
     } else {
-      router.redirect('/login');
       return;
     }
 
@@ -76,9 +74,7 @@ export class Chat extends HTMLElement {
     this.chatList.querySelector('.chat-loader')?.classList.remove('d-none');
     this.chatMessagesArea.querySelector('.chat-loader')?.classList.remove('d-none');
 
-    // console.time('Fetching chat list data');
     const chatListData = await this.fetchChatList();
-    // console.timeEnd('Fetching chat list data');
     this.chatList.querySelector('.chat-loader')?.classList.add('d-none');
     if (!chatListData) {
       return;
@@ -145,7 +141,7 @@ export class Chat extends HTMLElement {
   /*      Rendering                                                           */
   /* ------------------------------------------------------------------------ */
   async render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.chatList = this.querySelector('chat-list-component');
     this.chatMessagesArea = document.querySelector('chat-message-area');
@@ -231,14 +227,19 @@ export class Chat extends HTMLElement {
   }
 
   sendMessage(event) {
+    const timestamp = Date.now().toString();
     const messageData = {
       action: 'new_message',
       data: {
         chat_id: this.#state.currentChat.chat_id,
         content: event.detail,
+        timestamp: timestamp,
       },
     };
-    socketManager.sendMessage('livechat', messageData);
+    this.chatMessagesArea.renderPendingMessage(messageData.data);
+    requestAnimationFrame(() => {
+      socketManager.sendMessage('livechat', messageData);
+    });
   }
 
   sendToggleLikeEvent(chatId, messageId, isLiked) {

@@ -1,5 +1,4 @@
 import logging
-from uuid import UUID
 
 logger = logging.getLogger("server")
 
@@ -35,9 +34,6 @@ class Validator:
             "tournament_game_finished": {"bracket_id": str},
         }
 
-        uuid_fields = {
-            "new_message": ["chat_id"],
-        }
         # Types verification
         if action in expected_types:
             for field, expected_type in expected_types[action].items():

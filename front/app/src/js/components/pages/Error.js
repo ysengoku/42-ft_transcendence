@@ -1,8 +1,9 @@
+import { API_ERROR_MESSAGE } from '@api';
 import pedro from '/img/pedro.png?url';
 
 export class Error extends HTMLElement {
   #state = {
-    message: 'An error occurred',
+    message: '',
     status: 0,
   };
 
@@ -11,17 +12,26 @@ export class Error extends HTMLElement {
   }
 
   connectedCallback() {
-    if (!this.#state.status) {
-      this.#state.status = '';
-    } else if (this.#state.status === '503') {
-      this.#state.message = 'Service Unavailable';
+    switch (this.#state.status) {
+      case '429':
+        this.#state.status = '';
+        this.#state.message = API_ERROR_MESSAGE[429];
+        break;
+      case '503':
+        this.#state.message = 'Service Unavailable';
+        break;
+      default:
+        this.#state.status = '';
+        this.#state.message = 'An error occurred';
+        break;
     }
     this.render();
   }
 
   setQueryParam(param) {
-    this.#state.message = param.get('error') || 'An error occurred';
+    this.#state.message = param.get('error');
     this.#state.status = param.get('code') || '';
+    console.log(this.#state);
   }
 
   render() {
@@ -49,7 +59,7 @@ export class Error extends HTMLElement {
         </div>
         <div class="d-flex flex-row justify-content-center align-items-center mt-2 mb-4">
           <i class="bi bi-arrow-left fw-bold"></i>
-          <a class="btn fw-bold" href="/home" role="button">Go Back</a>
+          <a class="btn" href="/home" role="button">Go Back</a>
         </div>
       </div>
 	  `;

@@ -1,16 +1,17 @@
-import { auth } from '@auth';
 import { isMobile } from '@utils';
 
 export class Navbar extends HTMLElement {
   #state = {
     user: '',
     isLoggedin: false,
+    isMobile: false,
   };
 
   constructor() {
     super();
     this.render = this.render.bind(this);
     this.updateNavbar = this.updateNavbar.bind(this);
+    this.handleResize = this.handleResize.bind(this);
   }
 
   set state(data) {
@@ -19,18 +20,19 @@ export class Navbar extends HTMLElement {
   }
 
   connectedCallback() {
+    this.#state.isMobile = isMobile();
     document.addEventListener('userStatusChange', this.updateNavbar);
-    window.addEventListener('resize', this.render);
+    window.addEventListener('resize', this.handleResize);
     this.render();
   }
 
   disconnectedCallback() {
     document.removeEventListener('userStatusChange', this.updateNavbar);
-    window.removeEventListener('resize', this.render);
+    window.removeEventListener('resize', this.handleResize);
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.navbarBrand = this.querySelector('navbar-brand-component');
     this.mobileUserActionsMenu = this.querySelector('user-actions-menu');
@@ -43,11 +45,13 @@ export class Navbar extends HTMLElement {
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
     if (this.#state.isLoggedin) {
-      if (!isMobile()) {
+      if (!this.#state.isMobile) {
         const searchUserButtotn = document.createElement('user-search-button');
         const friendsButton = document.createElement('friends-button');
         navbarActions.appendChild(searchUserButtotn);
         navbarActions.appendChild(friendsButton);
+      } else {
+        this.mobileUserActionsMenu.updateLoginStatus(this.#state.isLoggedin);
       }
       const chatButton = document.createElement('chat-button');
       const notificationsButton = document.createElement('notifications-button');
@@ -68,12 +72,26 @@ export class Navbar extends HTMLElement {
   updateNavbar(event) {
     this.#state.isLoggedin = event.detail.user !== null;
     if (this.#state.isLoggedin) {
-      this.#state.user = auth.getStoredUser(); // TODO: Use event.detail.user?
+      this.#state.user = event.detail.user;
     }
     this.navbarBrand.setLoginStatus(this.#state.isLoggedin);
     this.renderNavbarActions();
     if (isMobile()) {
       this.mobileUserActionsMenu.updateLoginStatus(this.#state.isLoggedin);
+    }
+  }
+
+  handleResize() {
+    const mediaSizeChanged = this.#state.isMobile !== isMobile();
+    if (!this.#state.isLoggedin || !mediaSizeChanged) {
+      return;
+    }
+    this.#state.isMobile = !this.#state.isMobile;
+    if (this.#state.isMobile) {
+      this.mobileUserActionsMenu.classList.remove('d-none');
+      this.mobileUserActionsMenu.updateLoginStatus(this.#state.isLoggedin);
+    } else {
+      this.mobileUserActionsMenu.classList.add('d-none');
     }
   }
 

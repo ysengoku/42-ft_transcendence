@@ -4,7 +4,6 @@
  * @module TournamentCreation
  */
 
-import { router } from '@router';
 import { auth } from '@auth';
 import { REQUIRED_PARTICIPANTS_OPTIONS, MAX_TOURNAMENT_ALIAS_LENGTH } from '@env';
 import { validateTournamentName, validateTournamentAlias } from '../index';
@@ -99,7 +98,6 @@ export class TournamentCreation extends HTMLElement {
   async connectedCallback() {
     const user = await auth.getUser();
     if (!user) {
-      router.navigate('/login');
       return;
     }
     this.#state.nickname = user.nickname;
@@ -116,7 +114,7 @@ export class TournamentCreation extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     // Set up references to the elements used in this component
     this.confirmButton = this.modalComponent.querySelector('.confirm-button');

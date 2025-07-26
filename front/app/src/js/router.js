@@ -1,6 +1,4 @@
-import { auth } from '@auth';
-import { addDissmissAlertListener, createClouds, createStars } from '@utils';
-import { showTournamentAlert } from '@components/pages/tournament/utils/tournamentAlert';
+import { addDissmissAlertListener } from '@utils';
 
 /**
  * Router module for handling client-side navigation.
@@ -129,9 +127,6 @@ const router = (() => {
       const component = document.createElement(componentTag);
 
       if (queryParams.size > 0) {
-        for (const [key, value] of queryParams.entries()) {
-          devLog(`${key}: ${value}`);
-        }
         component.setQueryParam(queryParams);
       }
       const contentElement = document.getElementById('content');
@@ -167,6 +162,11 @@ const router = (() => {
      */
     async navigate(path = window.location.pathname, queryParams = '', redirect = false) {
       devLog('Navigating to:', path);
+      const splitPath = path.split('?');
+      if (splitPath[1]) {
+        path = splitPath[0];
+        queryParams = splitPath[1];
+      }
       if (this.beforeunloadCallback) {
         const response = await this.beforeunloadCallback();
         if (!response) {
@@ -176,12 +176,18 @@ const router = (() => {
       this.beforeunloadCallback = null;
 
       let queryParamsObject = new URLSearchParams();
-      if (queryParams && typeof queryParams === 'object') {
-        queryParamsObject = new URLSearchParams(queryParams);
-      } else if (typeof queryParams === 'string' && queryParams.length > 0) {
-        queryParamsObject = new URLSearchParams(queryParams);
-      } else {
-        queryParamsObject = queryParams;
+      if (queryParams) {
+        switch (typeof queryParams) {
+          case 'string':
+            if (queryParams.length <= 0) {
+              break;
+            }
+          case 'object':
+            queryParamsObject = new URLSearchParams(queryParams);
+            break;
+          default:
+            queryParamsObject = queryParams;
+        }
       }
 
       const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
@@ -198,7 +204,7 @@ const router = (() => {
      * @return {void}
      */
     async redirect(path = window.location.pathname, queryParams = '') {
-      devLog('Redirecting');
+      console.trace('Redirecting');
       this.navigate(path, queryParams, true);
     }
 
@@ -255,7 +261,6 @@ router.addRoute('/account-deleted', 'account-deleted');
 router.addRoute('/chat', 'chat-page');
 router.addRoute('/duel-menu', 'duel-menu');
 router.addRoute('/duel', 'duel-page');
-router.addRoute('/duel-result/:id', 'duel-result', true);
 router.addRoute('/local-game-menu', 'local-game-menu');
 router.addRoute('/tournament-menu', 'tournament-menu');
 router.addRoute('/tournament/:id', 'tournament-room', true);
@@ -268,38 +273,18 @@ router.addRoute('/error', 'error-page');
  * Initialize the router on the initial HTML document load
  */
 document.addEventListener('DOMContentLoaded', async () => {
-  devLog('DOM loaded');
-  document.documentElement.getAttribute('data-bs-theme') === 'light'
-    ? (document.getElementById('stars') ? document.body.removeChild(stars) : null,
-      (document.body.style.backgroundImage =
-        'linear-gradient(rgba(170,79,236, 0.8) 0%, rgba(236,79,84, 0.8) 50%, rgba(236,79,84, 0.8) 100%)'),
-      createClouds())
-    : (document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
-      (document.body.style.backgroundImage =
-        'linear-gradient(rgb(23, 18, 40) 0%, rgb(62, 52, 97) 16%, rgb(95, 83, 138) 40%, #6670A2 100%)'),
-      createStars());
-
-  const authStatus = await auth.fetchAuthStatus();
-  const navbarContainer = document.getElementById('navbar-container');
-  if (navbarContainer) {
-    const navbarElement = document.createElement('navbar-component');
-    navbarElement.state = authStatus.success ? authStatus.response : null;
-    navbarContainer.appendChild(navbarElement);
-  } else {
-    console.error('Error rendering navbar');
-  }
   router.init();
   addDissmissAlertListener();
   const currentPath = window.location.pathname || '/';
   const queryParams = new URLSearchParams(window.location.search);
   router.navigate(currentPath, queryParams);
-  if (
-    authStatus.success &&
-    authStatus.response.tournament_id &&
-    !(currentPath.startsWith('/tournament') || currentPath.startsWith('/multiplayer-game'))
-  ) {
-    showTournamentAlert(authStatus.response.tournament_id);
-  }
 });
 
 export { router };
+
+export const __test__ = {
+  extractParam: router.extractParam.bind(router),
+  matchDynamicRoute: router.matchDynamicRoute.bind(router),
+  navigate: router.navigate.bind(router),
+  router,
+};

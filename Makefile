@@ -1,9 +1,3 @@
-VOLUME_PATH := ./volumes
-DATABASE_VOLUME_PATH := $(VOLUME_PATH)/database
-MEDIA_VOLUME_PATH := $(VOLUME_PATH)/media
-STATIC_VOLUME_PATH := $(VOLUME_PATH)/static
-
-# Couleurs
 GREEN=\033[0;32m
 YELLOW=\033[0;33m
 RED=\033[0;31m
@@ -18,7 +12,8 @@ BACKEND_SERVICE = server
 DATABASE_SERVICE = database
 NGINX_SERVICE = nginx
 
-NODE_ENV ?= development
+# NODE_ENV is used to determine if the overall build is dev or prod (for the server and nginx containers too)
+NODE_ENV = development
 
 ensure-env:
 	@if [ ! -f .env ]; then \
@@ -33,15 +28,13 @@ build: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) build
 
 up: ensure-env update-ip
-	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up -d --build
+	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up --build
 
-dev: export NODE_ENV=development
-dev: ensure-env update-ip
-	NODE_ENV=development docker compose -f $(DOCKER_COMPOSE) up --build
+dev: NODE_ENV=development
+dev: up
 
-prod: export NODE_ENV=production
-prod: ensure-env update-ip
-	$(MAKE) up
+prod: NODE_ENV=production
+prod: up
 
 down:
 	docker compose -f $(DOCKER_COMPOSE) down
@@ -80,11 +73,6 @@ fclean:
 	docker compose down --volumes
 	docker system prune -a
 	docker volume prune -a
-
-# RUN WITH MAKE -i
-update-nginx:
-	docker cp ./nginx/nginx.conf nginx:/etc/nginx/
-	docker exec nginx nginx -s reload
 
 populate-db:
 	docker exec server ./manage.py populate_db
@@ -136,3 +124,4 @@ tests-pong-fresh:
 
 tests-tournaments-fresh:
 	./test_with_stats.sh tournaments --fresh-db
+.PHONY: bash-backend bash-frontend build clean-db delete-games delete-invites dev down ensure-env fclean lint-front logs migrate populate-db prod restart test-front up update-ip
