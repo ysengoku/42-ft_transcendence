@@ -1,19 +1,21 @@
-# 🧪 Complete Testing Guide - Transcendence Project
+# 🧪 Complete Testing Guide - Transcendence Project (EN)
 
 This guide explains how to use and understand unit tests in the Transcendence project, from A to Z, even if you've never done testing before.
 
 ## 📚 Table of Contents
 
 1. [What are unit tests?](#what-are-unit-tests-)
-2. [Starting the environment](#starting-the-environment)
-3. [Test structure](#test-structure)
-4. [Running tests](#running-tests)
-5. [Understanding options](#understanding-options)
-6. [Understanding assertions](#understanding-assertions)
-7. [Test lifecycle](#test-lifecycle)
-8. [Interpreting results](#interpreting-results)
-9. [Debugging tests](#debugging-tests)
-10. [Best practices](#best-practices)
+2. [Test results](#test-results)
+3. [Mocking and simulations](#mocking-and-simulations)
+4. [Starting the environment](#starting-the-environment)
+5. [Test structure](#test-structure)
+6. [Running tests](#running-tests)
+7. [Understanding options](#understanding-options)
+8. [Understanding assertions](#understanding-assertions)
+9. [Test lifecycle](#test-lifecycle)
+10. [Interpreting results](#interpreting-results)
+11. [Debugging tests](#debugging-tests)
+12. [Best practices](#best-practices)
 
 ---
 
@@ -32,6 +34,71 @@ In our Transcendence project, we test **API endpoints** (the URLs that the front
 - Handle errors properly
 - Respect permissions
 - Work in all scenarios
+
+---
+
+## 📊 Test results
+
+### ✅ **Success/Passed**
+Test executes completely and all assertions succeed.
+
+### ❌ **Failure/Failed** 
+Test executes but an assertion fails (expected value ≠ received value).
+
+### 💥 **Error**
+Test cannot execute due to an exception (bug in code or test).
+
+---
+
+## 🎭 Mocking and simulations
+
+### **@patch**
+Replaces a real function with a fake object during the test.
+
+```python
+@patch("requests.get")
+def test_api_call(self, mock_get):
+    mock_get.return_value.status_code = 200
+    # Now requests.get returns our fake object
+```
+
+### **MagicMock**
+Fake object that simulates any function or class.
+
+```python
+mock_user = MagicMock()
+mock_user.id = 12345
+mock_user.save.return_value = None
+```
+
+### **return_value vs side_effect**
+
+**return_value**: Same result every call
+```python
+mock_api.return_value = {"status": "ok"}  # Always same response
+```
+
+**side_effect**: Different results or exceptions
+```python
+mock_api.side_effect = [response1, response2, Exception("error")]
+# First call → response1, second → response2, third → exception
+```
+
+### **Complete OAuth example**
+```python
+@patch("users.models.oauth_connection.requests.get")  # Avatar
+@patch("users.router.endpoints.oauth2.requests.get")  # User info  
+@patch("users.router.endpoints.oauth2.requests.post") # Token
+def test_oauth(self, mock_post, mock_get, mock_avatar):
+    # Setup mocks
+    mock_post.return_value.json.return_value = {"access_token": "abc"}
+    mock_get.return_value.json.return_value = {"id": 123, "login": "user"}
+    mock_avatar.return_value.content = b"avatar_data"
+    
+    # Test
+    response = self.client.get("/oauth/callback?code=test&state=state")
+    self.assertEqual(response.status_code, 302)
+```
 
 ---
 

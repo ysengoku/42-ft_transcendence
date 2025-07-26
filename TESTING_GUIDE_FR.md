@@ -1,19 +1,21 @@
-# 🧪 Guide Complet des Tests - Projet Transcendence
+# 🧪 Guide Complet des Tests - Projet Transcendence (FR)
 
 Ce guide explique comment utiliser et comprendre les tests unitaires dans le projet Transcendence, de A à Z, même si vous n'avez jamais fait de tests auparavant.
 
 ## 📚 Table des matières
 
 1. [Qu'est-ce que les tests unitaires ?](#quest-ce-que-les-tests-unitaires-)
-2. [Démarrage de l'environnement](#démarrage-de-lenvironnement)
-3. [Structure des tests](#structure-des-tests)
-4. [Lancer les tests](#lancer-les-tests)
-5. [Comprendre les options](#comprendre-les-options)
-6. [Comprendre les assertions](#comprendre-les-assertions)
-7. [Cycle de vie d'un test](#cycle-de-vie-dun-test)
-8. [Interpréter les résultats](#interpréter-les-résultats)
-9. [Déboguer les tests](#déboguer-les-tests)
-10. [Bonnes pratiques](#bonnes-pratiques)
+2. [Résultats de tests](#résultats-de-tests)
+3. [Mocking et simulations](#mocking-et-simulations)
+4. [Démarrage de l'environnement](#démarrage-de-lenvironnement)
+5. [Structure des tests](#structure-des-tests)
+6. [Lancer les tests](#lancer-les-tests)
+7. [Comprendre les options](#comprendre-les-options)
+8. [Comprendre les assertions](#comprendre-les-assertions)
+9. [Cycle de vie d'un test](#cycle-de-vie-dun-test)
+10. [Interpréter les résultats](#interpréter-les-résultats)
+11. [Déboguer les tests](#déboguer-les-tests)
+12. [Bonnes pratiques](#bonnes-pratiques)
 
 ---
 
@@ -32,6 +34,71 @@ Dans notre projet Transcendence, nous testons les **endpoints API** (les URLs qu
 - Gèrent correctement les erreurs
 - Respectent les permissions
 - Fonctionnent dans tous les scénarios
+
+---
+
+## 📊 Résultats de tests
+
+### ✅ **Success/Passed**
+Test s'exécute complètement et toutes les assertions réussissent.
+
+### ❌ **Failure/Failed** 
+Test s'exécute mais une assertion échoue (valeur attendue ≠ valeur reçue).
+
+### 💥 **Error**
+Test ne peut pas s'exécuter à cause d'une exception (bug dans le code ou le test).
+
+---
+
+## 🎭 Mocking et simulations
+
+### **@patch**
+Remplace une fonction réelle par un faux objet pendant le test.
+
+```python
+@patch("requests.get")
+def test_api_call(self, mock_get):
+    mock_get.return_value.status_code = 200
+    # Maintenant requests.get retourne notre faux objet
+```
+
+### **MagicMock**
+Objet faux qui simule n'importe quelle fonction ou classe.
+
+```python
+mock_user = MagicMock()
+mock_user.id = 12345
+mock_user.save.return_value = None
+```
+
+### **return_value vs side_effect**
+
+**return_value** : Même résultat à chaque appel
+```python
+mock_api.return_value = {"status": "ok"}  # Toujours la même réponse
+```
+
+**side_effect** : Résultats différents ou exceptions
+```python
+mock_api.side_effect = [response1, response2, Exception("erreur")]
+# Premier appel → response1, deuxième → response2, troisième → exception
+```
+
+### **Exemple OAuth complet**
+```python
+@patch("users.models.oauth_connection.requests.get")  # Avatar
+@patch("users.router.endpoints.oauth2.requests.get")  # User info  
+@patch("users.router.endpoints.oauth2.requests.post") # Token
+def test_oauth(self, mock_post, mock_get, mock_avatar):
+    # Setup mocks
+    mock_post.return_value.json.return_value = {"access_token": "abc"}
+    mock_get.return_value.json.return_value = {"id": 123, "login": "user"}
+    mock_avatar.return_value.content = b"avatar_data"
+    
+    # Test
+    response = self.client.get("/oauth/callback?code=test&state=state")
+    self.assertEqual(response.status_code, 302)
+```
 
 ---
 
