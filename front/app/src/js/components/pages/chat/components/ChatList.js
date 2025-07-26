@@ -33,6 +33,7 @@ export class ChatList extends HTMLElement {
     displayedItemCount: 0,
     totalItemCount: -1,
     items: [],
+    isLoading: false,
   };
 
   #getCurrentChatUsername = null;
@@ -130,6 +131,10 @@ export class ChatList extends HTMLElement {
   }
 
   async loadMoreItems() {
+    if (this.#state.isLoading) {
+      return;
+    }
+    this.#state.isLoading = true;
     const data = await this.chatComponent.fetchChatList(this.#state.fetchedItemCount);
     if (!data) {
       return;
@@ -137,6 +142,7 @@ export class ChatList extends HTMLElement {
     this.#state.items = [...this.#state.items, ...data.items];
     this.#state.fetchedItemCount += data.items.length;
     this.renderListItems(this.#state.currentListItemCount);
+    this.#state.isLoading = false;
   }
 
   prependNewListItem(newItemData) {
@@ -158,6 +164,7 @@ export class ChatList extends HTMLElement {
   }
 
   async refreshList() {
+    this.#state.isLoading = true;
     const data = await this.chatComponent.fetchChatList();
     if (!data) {
       return;
@@ -170,6 +177,7 @@ export class ChatList extends HTMLElement {
     this.list.innerHTML = '';
     this.#state.totalItemCount = data.count;
     this.renderListItems();
+    this.#state.isLoading = false;
     while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
@@ -204,7 +212,6 @@ export class ChatList extends HTMLElement {
     userSearch?.classList.add('d-none');
   }
 
-  // TODO: Avoid multiple calls before the previous one is completed
   async handleScrollEnd(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
