@@ -13,7 +13,7 @@ from ninja.errors import HttpError
 from common.schemas import MessageSchema
 from users.models import User
 from users.router.utils import create_json_response_with_tokens
-from users.schemas import SendMfaCode
+from users.schemas import SendMfaCode, ResendMfaCode, VerifyMfaCode
 
 mfa_router = Router()
 
@@ -31,10 +31,10 @@ def get_cache_key(username: str) -> str:
     return f"mfa_email_code_{username}"
 
 
-@mfa_router.post("/resend-code", auth=None, response={200: MessageSchema, 404: MessageSchema})
+@mfa_router.post("/resend-code", auth=None, response={200: MessageSchema, 404: MessageSchema, 500: MessageSchema})
 @ensure_csrf_cookie
-def resend_verification_code(request, username: str) -> dict[str, any]:
-    user = User.objects.filter(username=username).first()
+def resend_verification_code(request, data: ResendMfaCode) -> dict[str, any]:
+    user = User.objects.filter(username=data.username).first()
     if not user:
         raise HttpError(404, "User with that email not found")
 
@@ -44,7 +44,7 @@ def resend_verification_code(request, username: str) -> dict[str, any]:
                 "msg": "Verification code sent to user email",
             },
         )
-    return None
+    raise HttpError(500, "Failed to send verification code")
 
 
 def handle_mfa_code(user):
@@ -70,17 +70,20 @@ def handle_mfa_code(user):
 @mfa_router.post(
     "/verify-mfa",
     auth=None,
-    response={200: MessageSchema, 404: MessageSchema, 408: MessageSchema, 401: MessageSchema},
+    response={200: MessageSchema, 404: MessageSchema, 408: MessageSchema, 401: MessageSchema, 400: MessageSchema},
 )
 @ensure_csrf_cookie
-def verify_mfa_code(request, username: str, data: SendMfaCode) -> dict[str, any]:
+def verify_mfa_code(request, data: VerifyMfaCode) -> dict[str, any]:
     """Verify verification code received by email during login"""
-    user = User.objects.filter(username=username).first()
+    user = User.objects.filter(username=data.username).first()
     if not user:
         raise HttpError(404, "User not found")
 
     if not data.token or len(data.token) != TOKEN_LENGTH or not data.token.isdigit():
         raise HttpError(400, "Invalid code format. Please enter a 6-digit code.")
+
+    if not user.mfa_token:
+        raise HttpError(400, "No verification code has been sent")
 
     now = timezone.now()
     if user.mfa_token_date + timedelta(minutes=TOKEN_EXPIRY) < now:

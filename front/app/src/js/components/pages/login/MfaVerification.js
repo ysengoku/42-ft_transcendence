@@ -105,9 +105,8 @@ export class MfaVerification extends HTMLElement {
     const otpInput = this.#state.otp;
     const response = await apiRequest(
       'POST',
-      /* eslint-disable-next-line new-cap */
-      API_ENDPOINTS.MFA_VERIFICATION(this.#state.username),
-      { token: otpInput },
+      API_ENDPOINTS.MFA_VERIFICATION,
+      { username: this.#state.username, token: otpInput },
       false,
       false,
     );
@@ -131,9 +130,8 @@ export class MfaVerification extends HTMLElement {
     this.#state.username = sessionStorage.getItem('username');
     const response = await apiRequest(
       'POST',
-      /* eslint-disable-next-line new-cap */
-      API_ENDPOINTS.MFA_RESEND_CODE(this.#state.username),
-      null,
+      API_ENDPOINTS.MFA_RESEND_CODE,
+      { username: this.#state.username },
       false,
       true,
     );
