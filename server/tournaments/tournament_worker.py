@@ -121,7 +121,6 @@ class TournamentWorkerConsumer(AsyncConsumer):
             logger.warning("Error: the tournament is not in a playing state. Status is : %s", tournament.status)
             return
         round_number = await database_sync_to_async(lambda: tournament.get_current_round_number())()
-        logger.debug("round_number is %s", round_number)
         if round_number == 1:
             participants = await database_sync_to_async(lambda: list(tournament.participants.all()))()
         else:
@@ -198,7 +197,6 @@ class TournamentWorkerConsumer(AsyncConsumer):
     def take_winners_from(self, previous_round):
         winners = []
         for bracket in previous_round.brackets.all():
-            logger.debug(bracket)
             bracket_winner = bracket.get_winner()
             if bracket_winner is not None:
                 winners.append(bracket_winner)
@@ -245,7 +243,6 @@ class TournamentWorkerConsumer(AsyncConsumer):
             return
         tournament_name = tournament.name
         round_data = await TournamentWorkerConsumer.serialize_round_for_schema(new_round)
-        logger.debug(round_data)
         # Launch the game
         await TournamentWorkerConsumer.send_personal_message(
             user_id,
@@ -267,7 +264,6 @@ class TournamentWorkerConsumer(AsyncConsumer):
         else:
             tournament.status = Tournament.CANCELLED
         tournament.save()
-        logger.debug("Tournament status : %s", tournament.status)
 
     @staticmethod
     async def end_tournament(tournament, winner):
