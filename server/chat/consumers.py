@@ -9,7 +9,6 @@ from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
 
 from .chat_events import ChatEvent
-from .chat_utils import ChatUtils
 from .duel_events import DuelEvent
 from .models import Chat, Notification
 from .tournament_events import TournamentEvent
@@ -146,9 +145,9 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                 case ("user_offline", "user_online"):
                     self.handle_online_status(text_data_json)
                 case "like_message":
-                    ChatEvent(self).handle_like_message(text_data_json)
+                    ChatEvent(self).handle_toggle_like_message(text_data_json, True)
                 case "unlike_message":
-                    ChatEvent(self).handle_unlike_message(text_data_json)
+                    ChatEvent(self).handle_toggle_like_message(text_data_json, False)
                 case "read_message":
                     ChatEvent(self).handle_read_message(text_data_json)
                 case "game_invite":
@@ -225,7 +224,7 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
         # Create notification
         notification = Notification.objects.action_new_friend(receiver, sender)
 
-        notification_data = ChatUtils.get_user_data(sender)
+        notification_data = sender.get_user_data_with_date()
         # Add id to the notification data
         notification_data["id"] = str(notification.id)
 
