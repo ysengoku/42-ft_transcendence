@@ -165,9 +165,6 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                     TournamentEvent(self).handle_new_tournament(text_data_json)
                 case "add_new_friend":
                     self.add_new_friend(text_data_json)
-                case "join_chat":
-                    ChatEvent(self)
-                    self.join_chat(text_data_json)
                 case _:
                     logger.warning("Unknown action : %s", action)
                     self.close()
