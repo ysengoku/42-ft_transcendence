@@ -85,15 +85,7 @@ class DuelEvent:
         client_id = data["data"].get("client_id")
         if sender == self.consumer.user.profile:
             logger.warning("Error : user %s wanted to accept a game with themself.", self.consumer.user.username)
-            self.consumer.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "You can't accept invitations from yourself to a game !",
-                        "client_id": client_id,
-                    },
-                ),
-            )
+            self.self_send_game_invite_cancelled("You can't accept invitations from yourself to a game !", client_id)
             return
 
         if self.self_or_target_already_in_game(sender, sender_name, client_id):
@@ -110,14 +102,7 @@ class DuelEvent:
                 sender.user.username,
                 self.consumer.user.username,
             )
-            self.consumer.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "Invitation not found.",
-                    },
-                ),
-            )
+            self.self_send_game_invite_cancelled("Invitation not found.", client_id)
             return
         except GameInvitation.MultipleObjectsReturned:
             logger.warning(
@@ -126,21 +111,11 @@ class DuelEvent:
                 self.consumer.user.username,
             )
             return
-        logger.warning(
-            "%s : %s", self.consumer.user.username, self.consumer.user.profile.get_active_game_participation(),
-        )
         game_room = self.create_game_room(sender, self.consumer.user.profile)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save()
         invitation.sync_notification_status()
         DuelEvent.cancel_all_send_game_invites(self.consumer.user.username)
-        """
-        About this function : self.cancel_game_invite()
-        if any invitations were send by the user, they are cancelled because they are in a game now
-        COMMENTED AND MIGHT DELETE THIS : I changed cancel_game_invite to work with a username. Either I implement
-        A new function, either I simply delete it since there is a security on acceptation, preventing a user from
-        accepting the invite from someone already in a game
-        """
         sender_data = self.data_for_game_found(sender, game_room.id)
         receiver_data = self.data_for_game_found(self.consumer.user.profile, game_room.id)
         async_to_sync(self.consumer.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
@@ -183,42 +158,44 @@ class DuelEvent:
                 sender_name,
                 self.consumer.user.username,
             )
-        self.consumer.send(
-            text_data=json.dumps(
-                {
-                    "action": "game_declined",
-                    "data": {
-                        "username": self.consumer.user.username,
-                        "nickname": self.consumer.user.nickname,
-                    },
-                },
-            ),
-        )
+        self.self_send_game_declined(self.consumer.user.username, self.consumer.user.nickname)
         notification_data = ChatUtils.get_user_data(self.consumer.user_profile)
         notification_data.update({"status": "declined"})
+        self.group_send_game_declined(invitation, self.consumer.user.username, self.consumer.user.nickname)
+
+    def group_send_game_declined(self, invitation, username, nickname):
         async_to_sync(self.consumer.channel_layer.group_send)(
             f"user_{invitation.sender.user.id}",
             {
                 "type": "user_status",
                 "action": "game_declined",
                 "data": {
-                    "username": self.consumer.user.username,
-                    "nickname": self.consumer.user.nickname,
+                    "username": username,
+                    "nickname": nickname,
                 },
             },
         )
 
-    # TODO : security checks
-    def self_send_game_invite_cancelled(self, message, client_id):
-        self.consumer.send(
-            text_data=json.dumps(
-                {
-                    "action": "game_invite_canceled",
-                    "message": message,
-                    "client_id": client_id,
-                },
-            ),
-        )
+    def self_send_game_declined(self, username, nickname, client_id=None):
+        data = {
+            "action": "game_declined",
+            "data": {
+                "username": username,
+                "nickname": nickname,
+            },
+        }
+        if client_id != None:
+            data["client_id"] = client_id
+        self.consumer.send(text_data=json.dumps(data))
+
+    def self_send_game_invite_cancelled(self, message, client_id=None):
+        data = {
+            "action": "game_invite_canceled",
+            "message": message,
+        }
+        if client_id != None:
+            data["client_id"] = client_id
+        self.consumer.send(text_data=json.dumps(data))
 
     def send_game_invite(self, data):
         options = data["data"].get("options", {})
@@ -248,7 +225,9 @@ class DuelEvent:
             self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
             return
         if GameInvitation.objects.filter(
-            sender=receiver, recipient=self.consumer.user_profile, status=GameInvitation.PENDING,
+            sender=receiver,
+            recipient=self.consumer.user_profile,
+            status=GameInvitation.PENDING,
         ).exists():
             logger.warning(
                 "user %s is already invited by %s, deleting the invite...",
@@ -264,7 +243,11 @@ class DuelEvent:
         )
         self.consumer.user_profile.refresh_from_db()
         self.create_and_send_game_notifications(
-            self.consumer.user_profile, receiver, str(invitation.id), client_id, options,
+            self.consumer.user_profile,
+            receiver,
+            str(invitation.id),
+            client_id,
+            options,
         )
 
     def create_and_send_game_notifications(self, sender, receiver, invitation_id, client_id, options):
