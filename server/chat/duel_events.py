@@ -11,7 +11,6 @@ from django.db.models import Q
 from pong.models import GameRoom
 from users.models import Profile
 
-from .chat_utils import ChatUtils
 from .models import GameInvitation, Notification
 from .validator import Validator
 
@@ -159,7 +158,7 @@ class DuelEvent:
                 self.consumer.user.username,
             )
         self.self_send_game_declined(self.consumer.user.username, self.consumer.user.nickname)
-        notification_data = ChatUtils.get_user_data(self.consumer.user_profile)
+        notification_data = self.consumer.user_profile.get_user_data_with_date()
         notification_data.update({"status": "declined"})
         self.group_send_game_declined(invitation, self.consumer.user.username, self.consumer.user.nickname)
 

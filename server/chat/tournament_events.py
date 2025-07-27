@@ -8,7 +8,6 @@ from channels.layers import get_channel_layer
 from tournaments.models import Tournament
 from users.models import Profile
 
-from .chat_utils import ChatUtils
 from .models import Notification, TournamentInvitation
 
 logger = logging.getLogger("server")
@@ -103,7 +102,7 @@ class TournamentEvent:
         organizer = Profile.objects.get(id=organizer_id)
 
         # send notification to concerned users
-        notification_data = ChatUtils.get_user_data(organizer)
+        notification_data = organizer.get_user_data_with_date()
         notification_data.update(
             {"id": tournament_id, "tournament_name": tournament_name},
         )
