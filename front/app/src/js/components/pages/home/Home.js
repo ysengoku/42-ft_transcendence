@@ -32,10 +32,13 @@ export class Home extends HTMLElement {
     this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
-      router.redirect('/');
+      router.redirect('/login');
       return;
     }
     this.#state.user = authStatus.response;

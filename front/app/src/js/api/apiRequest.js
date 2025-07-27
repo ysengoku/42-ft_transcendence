@@ -59,7 +59,7 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
   }
 }
 
-const errorMessage = {
+export const API_ERROR_MESSAGE = {
   default: 'Something went wrong. Please try again later.',
   401: 'Session expired',
   429: 'Unable to process your request right now. Please try again later',
@@ -109,10 +109,10 @@ const handlers = {
       case 401:
         router.redirect('/login');
         sessionExpiredToast();
-        message = errorMessage[401];
+        message = API_ERROR_MESSAGE[401];
         break;
       case 429:
-        message = errorMessage[429];
+        message = API_ERROR_MESSAGE[429];
         router.redirect(`/error?error=${message}`);
         return { success: false, status: 429, message };
       default:
@@ -126,7 +126,7 @@ const handlers = {
     // if (refreshResponse.status === 401) {
     //   router.redirect('/login');
     //   sessionExpiredToast();
-    //   return { success: false, status: 401, msg: errorMessage[401] };
+    //   return { success: false, status: 401, msg: API_ERROR_MESSAGE[401] };
     // }
     auth.clearStoredUser();
     return { success: false, status: refreshResponse.status, msg: message };
@@ -144,7 +144,7 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and error message.
    */
   429: async () => {
-    const message = errorMessage[429];
+    const message = API_ERROR_MESSAGE[429];
     router.redirect(`/error?error=${message}`);
     return { success: false, status: 429, message };
   },
@@ -159,7 +159,7 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and response message.
    */
   500: async (url, options) => {
-    const message = errorMessage.default;
+    const message = API_ERROR_MESSAGE.default;
     internalServerErrorAlert();
     // Retry request
     setTimeout(async () => {
@@ -187,7 +187,7 @@ const handlers = {
    */
   failure: async (response) => {
     const errorData = await response.json();
-    let errorMsg = errorMessage.default;
+    let errorMsg = API_ERROR_MESSAGE.default;
     if (Array.isArray(errorData)) {
       const foundErrorMsg = errorData.find((item) => item.msg);
       errorMsg = foundErrorMsg ? foundErrorMsg.msg : errorMsg;

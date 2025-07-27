@@ -65,6 +65,9 @@ export class TournamentMenu extends HTMLElement {
     this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
     if (!authStatus.success) {
+      if (authStatus.status === 429) {
+        return;
+      }
       if (authStatus.status === 401) {
         sessionExpiredToast();
       }
@@ -538,10 +541,10 @@ export class TournamentMenu extends HTMLElement {
         <p class="text-center fs-6 m-0 pe-1">players</p>
       </div>
       <div class="d-flex flex-wrap justify-content-center mb-5 pb-2">
-        <div class="tournament-options-tag m-2" id="tournament-option-score-to-win"></div>
-        <div class="tournament-options-tag m-2" id="tournament-option-game-speed"></div>
-        <div class="tournament-options-tag m-2" id="tournament-option-time-limit"></div>
-        <div class="tournament-options-tag m-2" id="tournament-option-cool-mode"></div>
+        <div class="game-options-tag m-2" id="tournament-option-score-to-win"></div>
+        <div class="game-options-tag m-2" id="tournament-option-game-speed"></div>
+        <div class="game-options-tag m-2" id="tournament-option-time-limit"></div>
+        <div class="game-options-tag m-2" id="tournament-option-cool-mode"></div>
       </div>
       <div id="registration-fail-alert-wrapper"></div>
       <p id="cannot-engage-alert" class="text-center d-none">

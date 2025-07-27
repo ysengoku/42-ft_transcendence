@@ -54,6 +54,8 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 - Two color themes: Light and Dark
 - Google Chrome Compatibility
 - Hand-made 3D models, animation and art!
+- Forgotten password reset functionality
+- Workflows and templated for issue/task creation
 
 ## Technologies 🛠️👷🏻‍♂️
 
@@ -111,8 +113,102 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 
 ## Documentation 🛠️👷🏻‍♂️
 
-- Architecture
-  
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Browser"
+        UI[Frontend SPA<br/>Vanilla JS + Bootstrap]
+        WS_CLIENT[WebSocket Client]
+        GAME_ENGINE[3D Game Engine<br/>Three.js]
+    end
+
+    subgraph "Load Balancer"
+        NGINX[Nginx<br/>Reverse Proxy<br/>Static Files]
+    end
+
+    subgraph "Application Server"
+        DJANGO[Django Application<br/>Django Ninja API]
+        WS_SERVER[WebSocket Server<br/>Django Channels]
+        CRON[Crontab<br/>Background Tasks]
+    end
+
+    subgraph "Data Layer"
+        POSTGRES[PostgreSQL<br/>Primary Database]
+        REDIS[Redis<br/>WebSocket Sessions<br/>Pubsub]
+    end
+
+    subgraph "External Services"
+        GITHUB[GitHub OAuth]
+        FORTYTWO[42 School OAuth]
+        GMAIL[Gmail SMTP<br/>MFA Emails]
+    end
+
+    %% Client connections
+    UI --> NGINX
+    WS_CLIENT -.->|WebSocket| NGINX
+    GAME_ENGINE --> UI
+
+    %% Load balancer routing
+    NGINX --> DJANGO
+    NGINX -.->|WebSocket Upgrade| WS_SERVER
+
+    %% Application layer
+    DJANGO --> POSTGRES
+    DJANGO --> REDIS
+    WS_SERVER --> REDIS
+    CRON --> POSTGRES
+
+    %% External integrations
+    DJANGO --> GITHUB
+    DJANGO --> FORTYTWO
+    DJANGO --> GMAIL
+
+    %% Styling
+    classDef frontend fill:#e1f5fe
+    classDef backend fill:#f3e5f5
+    classDef database fill:#e8f5e8
+    classDef external fill:#fff3e0
+    classDef logs fill:#fce4ec
+
+    class UI,WS_CLIENT,GAME_ENGINE frontend
+    class NGINX,DJANGO,WS_SERVER,CRON backend
+    class POSTGRES,REDIS database
+    class GITHUB,FORTYTWO,GMAIL external
+```
+
+### Component Responsibilities
+
+#### Frontend Layer
+- **SPA (Single Page Application)**: Vanilla JavaScript with component-based architecture
+- **WebSocket Client**: Real-time communication for chat, notifications, and game state
+- **3D Game Engine**: Three.js for rendering
+
+#### Infrastructure Layer
+- **Nginx**: Load balancing, static file serving, WebSocket proxy
+- **Docker**: Containerized architecture
+
+#### Application Layer
+- **Django API**: RESTful API with Django Ninja, JWT authentication
+- **WebSocket Server**: Django Channels for real-time features
+- **Background Tasks**: Crontab for scheduled operations
+
+#### Data Layer
+- **PostgreSQL**: Primary database for user data, game records, chat history
+- **Redis**: WebSocket session management, pub/sub messaging
+
+#### External Integrations
+- **OAuth Providers**: GitHub and 42 School for third-party authentication
+- **Email Service**: Gmail SMTP for MFA verification codes
+
+### Key Features
+- **Real-time Multiplayer**: WebSocket-based game synchronization
+- **Multi-factor Authentication**: Email-based verification system
+- **OAuth 2.0 Integration**: Third-party authentication support
+- **3D Gaming**: Hardware-accelerated 3D graphics with Three.js
+- **Tournament System**: Bracket-based competitive play
+- **Live Chat**: Real-time messaging with notifications
+
 ### Front-end
 
 - [Web component](/doc/front/Component.md)
@@ -123,8 +219,8 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 
 ### Server
 
-- [Multi-factor authentication](/doc/server/DOC_mfa.md)
-- [Remote Authentication (OAuth 2.0)](/doc/server/DOC_oauth2.md)
+- [Multi-factor authentication](/doc/server/MFA.md)
+- [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
 
 ### Database
 

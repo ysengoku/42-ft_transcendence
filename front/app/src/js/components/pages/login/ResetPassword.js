@@ -19,9 +19,12 @@ export class ResetPassword extends HTMLElement {
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
       router.redirect('/home');
-    } else {
-      this.render();
+      return;
     }
+    if (authStatus.status === 429) {
+      return;
+    }
+    this.render();
   }
 
   render() {
