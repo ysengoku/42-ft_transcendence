@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 from asgiref.sync import async_to_sync
 
 from common.guarded_websocket_consumer import GuardedWebsocketConsumer
-from pong.game_protocol import GameServerToClient, GameServerToGameWorker, PongCloseCodes
+from common.close_codes import CloseCodes
+from pong.game_protocol import GameServerToClient, GameServerToGameWorker
 from pong.models import GameRoom, GameRoomPlayer
 
 if TYPE_CHECKING:
@@ -30,7 +31,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
         self.accept()
         if not self.user:
             logger.warning("[GameRoom.connect]: unauthorized user tried to join game room {%s}", self.game_room_id)
-            self.close(PongCloseCodes.ILLEGAL_CONNECTION)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
         game_room_qs: GameRoom = GameRoom.objects.for_id(self.game_room_id)
@@ -40,7 +41,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
                 self.user.profile,
                 self.game_room_id,
             )
-            self.close(PongCloseCodes.ILLEGAL_CONNECTION)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
         self.game_room: GameRoom = game_room_qs.for_players(self.user.profile).for_ongoing_status().first()
@@ -50,7 +51,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
                 self.user.profile,
                 self.game_room_id,
             )
-            self.close(PongCloseCodes.ILLEGAL_CONNECTION)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
         self.player = GameRoomPlayer.objects.filter(profile=self.user.profile, game_room=self.game_room).first()
@@ -61,7 +62,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
                 self.user.profile,
                 self.game_room_id,
             )
-            self.close(PongCloseCodes.ALREADY_IN_GAME)
+            self.close(CloseCodes.ALREADY_IN_GAME)
             return
 
         logger.info(
@@ -103,13 +104,13 @@ class GameServerConsumer(GuardedWebsocketConsumer):
         )
 
     def disconnect(self, close_code):
-        if close_code == PongCloseCodes.ILLEGAL_CONNECTION or not self.player:
+        if close_code == CloseCodes.ILLEGAL_CONNECTION or not self.player:
             return
 
         async_to_sync(self.channel_layer.group_discard)(self.game_room_group_name, self.channel_name)
         async_to_sync(self.channel_layer.group_discard)(f"player_{str(self.player.id)}", self.channel_name)
         self.player.dec_number_of_connections()
-        if close_code == PongCloseCodes.NORMAL_CLOSURE:
+        if close_code == CloseCodes.NORMAL_CLOSURE:
             logger.info(
                 "[GameRoom.disconnect]: player {%s} has been disconnected from the game room {%s} normally",
                 self.user.profile,
@@ -119,7 +120,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
 
         # the player has a valid connection, so we return here without notify the worker of disconnect, so we don't
         # ruin the other valid connection
-        if close_code == PongCloseCodes.ALREADY_IN_GAME:
+        if close_code == CloseCodes.ALREADY_IN_GAME:
             return
 
         async_to_sync(self.channel_layer.send)(
@@ -140,7 +141,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
         except json.JSONDecodeError:
-            self.close(PongCloseCodes.BAD_DATA)
+            self.close(CloseCodes.BAD_DATA)
             logger.warning(
                 "[GameRoom.receive]: user {%s} sent invalid json to the game room {%s}",
                 self.user.profile,
@@ -166,7 +167,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
                 )
 
             case unknown:
-                self.close(PongCloseCodes.BAD_DATA)
+                self.close(CloseCodes.BAD_DATA)
                 logger.warning(
                     "[GameRoom.receive]: user {%s} sent an invalid action {%s} to the game room {%s}",
                     self.user.profile,
