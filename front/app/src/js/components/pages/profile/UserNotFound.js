@@ -1,4 +1,3 @@
-import { router } from '@router';
 import { auth } from '@auth';
 import pedro from '/img/pedro.png?url';
 
@@ -10,7 +9,6 @@ export class UserNotFound extends HTMLElement {
   async connectedCallback() {
     const user = await auth.getUser();
     if (!user) {
-      router.redirect('/login');
       return;
     }
     this.render();

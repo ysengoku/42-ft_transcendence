@@ -31,7 +31,6 @@ export class MultiplayerGame extends HTMLElement {
   async setParam(param) {
     const user = await auth.getUser();
     if (!user) {
-      router.redirect('/login');
       return;
     }
     if (!param.id) {
@@ -166,7 +165,6 @@ export class MultiplayerGame extends HTMLElement {
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
-    // document.querySelector('#content').appendChild(renderer.domElement);
     this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
