@@ -48,7 +48,7 @@ def get_or_create_chat(request, username: str):
             async_to_sync(channel_layer.group_send)(
                 f"user_{user_profile.user.id}",
                 {
-                    "type": "join.chat",
+                    "type": "join_chat",
                     "data": {"chat_id": str(chat.id)},
                 },
             )

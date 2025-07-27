@@ -307,6 +307,11 @@ class Profile(models.Model):
             "is_online": self.is_online,
         }
 
+    def get_user_data_with_date(self):
+        return self.to_username_nickname_avatar_schema() | {
+            "date": timezone.now().isoformat(),
+        }
+
     def get_active_tournament(self) -> None | Tournament:
         """Gets the active tournament where user is still a playing participant."""
         participant: Participant = self.participant_set.filter(
@@ -338,6 +343,7 @@ class Profile(models.Model):
         pending_invitation_as_inviter: GameInvitation | None = self.sent_invites.filter(status="pending").first()
 
         return active_game_room, active_tournament, pending_invitation_as_inviter
+
 
 
 class Friendship(models.Model):
