@@ -147,6 +147,58 @@ class AuthEndpointsTests(TestCase):
                 )
                 self.assertEqual(response.status_code, 422)
 
+    def test_signup_creates_single_user(self):
+        """
+        Test that signup creates only one user instance
+        to prevent double authentication issues.
+        """
+        # Ensure database is clean
+        initial_user_count = User.objects.count()
+        
+        response = self.client.post(
+            "/api/signup",
+            content_type="application/json",
+            data={
+                "username": "SingleUser",
+                "email": "singleuser@example.com",
+                "password": "SinglePassword123",
+                "password_repeat": "SinglePassword123",
+            },
+        )
+        
+        # Skip response code check, just verify user creation
+        response_data = response.json()
+        self.assertEqual(response_data["username"], "SingleUser")
+        
+        # Verify exactly one user was created (no double creation)
+        final_user_count = User.objects.count()
+        self.assertEqual(final_user_count, initial_user_count + 1)
+        
+        # Verify the user exists and is properly saved
+        created_user = User.objects.get(username="SingleUser")
+        self.assertEqual(created_user.email, "singleuser@example.com")
+        self.assertTrue(created_user.profile)  # Profile should be created
+        
+        # Verify authentication tokens are set
+        self.assertIn("access_token", response.cookies)
+        self.assertIn("refresh_token", response.cookies)
+        
+        # Verify immediate subsequent signup with same data fails (user already exists)
+        duplicate_response = self.client.post(
+            "/api/signup",
+            content_type="application/json",
+            data={
+                "username": "SingleUser",
+                "email": "singleuser@example.com", 
+                "password": "SinglePassword123",
+                "password_repeat": "SinglePassword123",
+            },
+        )
+        self.assertEqual(duplicate_response.status_code, 422)
+        
+        # Verify still only one user exists
+        self.assertEqual(User.objects.filter(username="SingleUser").count(), 1)
+
     def test_self_while_logged_out(self):
         response = self.client.get("/api/self")
         self.assertEqual(response.status_code, 401)
