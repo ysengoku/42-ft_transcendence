@@ -36,7 +36,7 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 - AI opponent
 - Remote players
 - Game customization
-- Game worker
+- Game worker: Background processing of game logic
 - 3D graphics and rendering
 
 
@@ -57,61 +57,46 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 - Forgotten password reset functionality
 - Workflows and templated for issue/task creation
 
-## Technologies 🛠️👷🏻‍♂️
-
+## Technologies
 
 ### Front-end
 
 [![JavaScript](https://img.shields.io/badge/-Javascript-F7DF1E.svg?logo=javascript&style=for-the-badge&logoColor=000)](#)
 [![Bootstrap](https://img.shields.io/badge/-Bootstrap-563D7C.svg?logo=bootstrap&style=for-the-badge&logoColor=fff)](#)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&style=for-the-badge&logoColor=fff)](#)
-- Vanilla JavaScript
-- Bootstrap
-- WebSocket
-- Vite
 
 ### Game
 
 [![Three.js](https://img.shields.io/badge/Three.js-000?logo=threedotjs&style=for-the-badge&logoColor=fff)](#)
-[![Blender](https://img.shields.io/badge/Blender-%23F5792A.svg?logo=blender&style=for-the-badge&logoColor=fff)](#)
-- Three.js
-- Blender (3D modeling)
+[![Blender](https://img.shields.io/badge/Blender-E87D0D.svg?logo=blender&style=for-the-badge&logoColor=fff)](#)
+
+### UI design
+
+[![Figma](https://img.shields.io/badge/-Figma-F24E1E.svg?logo=figma&style=for-the-badge&logoColor=fff)](#)
 
 ### Back-end
 
-[![Django](https://img.shields.io/badge/-Django-092E20.svg?logo=django&style=for-the-badge&logoColor=fff)](#)
-[![Redis](https://img.shields.io/badge/-Redis-D82C20.svg?logo=redis&style=for-the-badge&logoColor=fff)](#)
-- Django
-- Django Ninja for API
-- Django Channel, WebSocket
-- Redis
-- Crontab
+[![Django](https://img.shields.io/badge/Django-092E20?logo=django&style=for-the-badge&logoColor=fff)](#)
+[![Django Ninja](https://img.shields.io/badge/DJANGO_Ninja-ff1709?style=for-the-badge&color=326342)](#)
+[![Django Channels](https://img.shields.io/badge/DJANGO_Channels-ff1709?style=for-the-badge&color=326342)](#)
+[![Cron](https://img.shields.io/badge/Cron_Job-4A4A4A?style=for-the-badge&logo=linux&logoColor=fff)](#)
 
 ### Data base
 
 [![PostgreSQL](https://img.shields.io/badge/-Postgres-%23316192.svg?logo=postgresql&style=for-the-badge&logoColor=fff)](#)
-- PostgreSQL
+[![Redis](https://img.shields.io/badge/-Redis-D82C20.svg?logo=redis&style=for-the-badge&logoColor=fff)](#)
 
 ### DevOps & CI/CD
 
 [![Docker](https://img.shields.io/badge/-Docker-1488C6.svg?logo=docker&style=for-the-badge&logoColor=fff)](#)
 [![Nginx](https://img.shields.io/badge/-Nginx-269539.svg?logo=nginx&style=for-the-badge&logoColor=fff)](#)
 [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?logo=github-actions&style=for-the-badge&logoColor=fff)](#)
-- Docker
-- Nginx
 
 ### Testing
 
-- Jest
-- Vitest
-- pytest
-
-### UI design
-
-[![Figma](https://img.shields.io/badge/-Figma-F24E1E.svg?logo=figma&style=for-the-badge&logoColor=fff)](#)
-- Figma
-
-## Documentation 🛠️👷🏻‍♂️
+[![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&style=for-the-badge&logoColor=fff)](#)
+[![Jest](https://img.shields.io/badge/Jest-C21325?logo=jest&style=for-the-badge&logoColor=fff)](#)
+[![Django Test Framework](https://img.shields.io/badge/Django%20Tests-092E20?logo=django&style=for-the-badge&logoColor=fff)](#)
 
 ## Architecture
 
@@ -180,34 +165,42 @@ graph TB
 ### Component Responsibilities
 
 #### Frontend Layer
+
 - **SPA (Single Page Application)**: Vanilla JavaScript with component-based architecture
 - **WebSocket Client**: Real-time communication for chat, notifications, and game state
 - **3D Game Engine**: Three.js for rendering
 
 #### Infrastructure Layer
+
 - **Nginx**: Load balancing, static file serving, WebSocket proxy
 - **Docker**: Containerized architecture
 
 #### Application Layer
+
 - **Django API**: RESTful API with Django Ninja, JWT authentication
 - **WebSocket Server**: Django Channels for real-time features
 - **Background Tasks**: Crontab for scheduled operations
 
 #### Data Layer
+
 - **PostgreSQL**: Primary database for user data, game records, chat history
 - **Redis**: WebSocket session management, pub/sub messaging
 
 #### External Integrations
+
 - **OAuth Providers**: GitHub and 42 School for third-party authentication
 - **Email Service**: Gmail SMTP for MFA verification codes
 
 ### Key Features
+
 - **Real-time Multiplayer**: WebSocket-based game synchronization
 - **Multi-factor Authentication**: Email-based verification system
 - **OAuth 2.0 Integration**: Third-party authentication support
 - **3D Gaming**: Hardware-accelerated 3D graphics with Three.js
 - **Tournament System**: Bracket-based competitive play
 - **Live Chat**: Real-time messaging with notifications
+
+## Documentation 🛠️👷🏻‍♂️
 
 ### Front-end
 
@@ -226,7 +219,8 @@ graph TB
 
 ### Protocol
 
-- [Live chat modules (Chat, notifications, Game invitation)](/doc/protocol/livechatModuleProtocol.md)
+- [Live chat modules (Chat, notifications, Game invitation)](/doc/protocol/LIVECHAT_MODULE_WS_PROTOCOL.md)
+- [Tournament state](/doc/protocol/TOURNAMENT_WS_PROTOCOL.md)
 
 ### UI design
 
