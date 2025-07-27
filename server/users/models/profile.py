@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
 
 def calculate_winrate(wins: int, loses: int) -> int | None:
+    """Returns `None` if the user didn't play any games yet, a valid winrate otherwise."""
     total = wins + loses
     if total == 0:
         return None
@@ -52,6 +53,8 @@ class ProfileQuerySet(models.QuerySet):
         """
 
         class Round(Func):
+            """Custom SQL function for calculating the winrate."""
+
             function = "ROUND"
             template = "%(function)s(%(expressions)s, 0)"
 
@@ -86,6 +89,7 @@ class ProfileQuerySet(models.QuerySet):
     def with_search(self, search: str, curr_user):
         """
         Searches users based on the given context.
+        The context is their username or nickhame.
         """
         search_qs = (
             self.prefetch_related("user")
@@ -100,7 +104,9 @@ class ProfileQuerySet(models.QuerySet):
 
 class Profile(models.Model):
     """
-    Contains user information to the application logic itself.
+    The most important model of the application.
+    Contains user specific information related to the application logic itself.
+    Relates to a lot of models, including models from other apps.
     """
 
     user = models.OneToOneField("users.User", default=None, null=True, blank=True, on_delete=models.CASCADE)
@@ -145,6 +151,7 @@ class Profile(models.Model):
 
     @property
     def avatar(self) -> str:
+        """Returns either profile picture of the user, or the default avatar, if the user didn't provide one."""
         if self.profile_picture:
             return self.profile_picture.url
         return settings.DEFAULT_USER_AVATAR
@@ -186,18 +193,24 @@ class Profile(models.Model):
         )
 
     def get_best_enemy(self):
+        """Best enemy is the user against which the user won the most."""
         best_enemy = self.won_matches.values("loser").annotate(wins=Count("loser")).order_by("-wins").first()
         if not best_enemy or not best_enemy.get("loser", None):
             return None
         return Profile.objects.get(id=best_enemy["loser"])
 
     def get_worst_enemy(self):
+        """Worst enemy is the user against which the user lost the most."""
         worst_enemy = self.lost_matches.values("winner").annotate(losses=Count("winner")).order_by("-losses").first()
         if not worst_enemy or not worst_enemy.get("winner", None):
             return None
         return Profile.objects.get(id=worst_enemy["winner"])
 
     def get_stats_against_player(self, profile):
+        """
+        Gets play statistics of the given user.
+        Wins, loses, elo and winrate are retrieved.
+        """
         res = self.matches.aggregate(
             wins=Count("pk", filter=Q(winner=self) & Q(loser=profile)),
             loses=Count("pk", filter=Q(winner=profile) & Q(loser=self)),
@@ -213,6 +226,7 @@ class Profile(models.Model):
         }
 
     def delete_avatar(self) -> None:
+        """Deletes avatar from both the database, as well as an actual picture from the media volume."""
         self.profile_picture.delete()
         if self.profile_picture and Path.is_file(self.profile_picture.path):
             Path.unlink(self.profile_picture.path)
@@ -249,7 +263,7 @@ class Profile(models.Model):
         if err_dict:
             raise ValidationError(err_dict)
 
-    def add_friend(self, new_friend):
+    def add_friend(self, new_friend) -> None | str:
         if new_friend == self:
             return "Can't add yourself to the friendlist."
         if self.friends.filter(pk=new_friend.pk).exists():
@@ -259,13 +273,13 @@ class Profile(models.Model):
         self.friends.add(new_friend)
         return None
 
-    def remove_friend(self, removed_friend):
+    def remove_friend(self, removed_friend) -> None | str:
         if not self.friends.filter(pk=removed_friend.pk).exists():
             return f"User {removed_friend.user.username} is not in the friendlist."
         self.friends.remove(removed_friend)
         return None
 
-    def block_user(self, user_to_block):
+    def block_user(self, user_to_block) -> None | str:
         if user_to_block == self:
             return "Can't block self."
         if self.blocked_users.filter(pk=user_to_block.pk).exists():
@@ -274,7 +288,7 @@ class Profile(models.Model):
         self.remove_friend(user_to_block)
         return None
 
-    def unblock_user(self, blocked_user_to_remove):
+    def unblock_user(self, blocked_user_to_remove) -> None | str:
         if not self.blocked_users.filter(pk=blocked_user_to_remove.pk).exists():
             return f"User {blocked_user_to_remove.user.username} is not in your blocklist."
         self.blocked_users.remove(blocked_user_to_remove)
