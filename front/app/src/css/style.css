@@ -344,6 +344,14 @@ h1, h2, h3, h4, h5, h6, legend {
   -webkit-text-stroke: 1px;
 }
 
+.game-options-tag {
+  background-color: var(--pm-primary-500);
+  color: var(--pm-primary-100);
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.9rem;
+}
+
 /*--------------------------------------------------------------------------- */
 /*     Scroll bar                                                             */
 /*----------------------------------------------------------------------------*/

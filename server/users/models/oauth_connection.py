@@ -24,6 +24,11 @@ class OauthConnectionManager(models.Manager):
 
 
 class OauthConnection(models.Model):
+    """
+    Represents OAuth connection state of a specific user.
+    Stores all of the data required to connect user using OAuth: type of the platform, id, status and state.
+    """
+
     FT = "42"
     GITHUB = "github"
     REGULAR = "regular"
@@ -65,6 +70,7 @@ class OauthConnection(models.Model):
     def get_avatar_url(user_info: dict, connection_type: str) -> str:
         """
         Retrieves the avatar URL based on the connection type (GITHUB or FT).
+        Stores the avatar of the user that they have on either Github or 42 account.
         """
         if connection_type == OauthConnection.GITHUB:
             return user_info.get("avatar_url")

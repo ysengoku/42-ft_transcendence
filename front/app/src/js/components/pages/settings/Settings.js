@@ -47,7 +47,6 @@ export class Settings extends HTMLElement {
       user = await auth.getUser();
     }
     if (!user) {
-      router.redirect('/login');
       return;
     }
     this.#state.username = user.username;
@@ -63,14 +62,17 @@ export class Settings extends HTMLElement {
   async fetchUserData() {
     /* eslint-disable-next-line new-cap */
     let response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.#state.username));
-    if (response.status === 200) {
-      this.#state.currentUserData = response.data;
-      this.render();
-      return;
-    }
-    if (response.status === 403) {
-      const userData = await auth.getUser();
-      if (userData) {
+
+    switch (response.status) {
+      case 200:
+        this.#state.currentUserData = response.data;
+        this.render();
+        return;
+      case 403:
+        const userData = await auth.getUser();
+        if (!userData) {
+          return;
+        }
         this.#state.username = userData.username;
         /* eslint-disable-next-line new-cap */
         response = await apiRequest('GET', API_ENDPOINTS.USER_SETTINGS(this.#state.username));
@@ -79,12 +81,12 @@ export class Settings extends HTMLElement {
           this.render();
           return;
         }
-      }
+      case 401:
+      case 429:
+        return;
+      default:
+        router.redirect('/login');
     }
-    if (response.status === 401 || response.status === 429) {
-      return;
-    }
-    router.redirect('/login');
   }
 
   render() {
