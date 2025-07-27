@@ -120,7 +120,7 @@ graph TB
     subgraph "Client Browser"
         UI[Frontend SPA<br/>Vanilla JS + Bootstrap]
         WS_CLIENT[WebSocket Client]
-        GAME_ENGINE[3D Game Engine<br/>Three.js + Cannon.js]
+        GAME_ENGINE[3D Game Engine<br/>Three.js]
     end
 
     subgraph "Load Balancer"
@@ -135,19 +135,13 @@ graph TB
 
     subgraph "Data Layer"
         POSTGRES[PostgreSQL<br/>Primary Database]
-        REDIS[Redis<br/>WebSocket Sessions<br/>Cache]
+        REDIS[Redis<br/>WebSocket Sessions<br/>Pubsub]
     end
 
     subgraph "External Services"
         GITHUB[GitHub OAuth]
         FORTYTWO[42 School OAuth]
         GMAIL[Gmail SMTP<br/>MFA Emails]
-    end
-
-    subgraph "Log Management (ELK Stack)"
-        ELASTICSEARCH[Elasticsearch<br/>Log Storage]
-        LOGSTASH[Logstash<br/>Log Processing]
-        KIBANA[Kibana<br/>Log Visualization]
     end
 
     %% Client connections
@@ -170,12 +164,6 @@ graph TB
     DJANGO --> FORTYTWO
     DJANGO --> GMAIL
 
-    %% Logging flow
-    DJANGO -.-> LOGSTASH
-    NGINX -.-> LOGSTASH
-    LOGSTASH --> ELASTICSEARCH
-    KIBANA --> ELASTICSEARCH
-
     %% Styling
     classDef frontend fill:#e1f5fe
     classDef backend fill:#f3e5f5
@@ -187,7 +175,6 @@ graph TB
     class NGINX,DJANGO,WS_SERVER,CRON backend
     class POSTGRES,REDIS database
     class GITHUB,FORTYTWO,GMAIL external
-    class ELASTICSEARCH,LOGSTASH,KIBANA logs
 ```
 
 ### Component Responsibilities
@@ -195,11 +182,11 @@ graph TB
 #### Frontend Layer
 - **SPA (Single Page Application)**: Vanilla JavaScript with component-based architecture
 - **WebSocket Client**: Real-time communication for chat, notifications, and game state
-- **3D Game Engine**: Three.js for rendering, Cannon.js for physics simulation
+- **3D Game Engine**: Three.js for rendering
 
 #### Infrastructure Layer
 - **Nginx**: Load balancing, static file serving, WebSocket proxy
-- **Docker**: Containerized microservices architecture
+- **Docker**: Containerized architecture
 
 #### Application Layer
 - **Django API**: RESTful API with Django Ninja, JWT authentication
@@ -208,14 +195,11 @@ graph TB
 
 #### Data Layer
 - **PostgreSQL**: Primary database for user data, game records, chat history
-- **Redis**: WebSocket session management, caching, pub/sub messaging
+- **Redis**: WebSocket session management, pub/sub messaging
 
 #### External Integrations
 - **OAuth Providers**: GitHub and 42 School for third-party authentication
 - **Email Service**: Gmail SMTP for MFA verification codes
-
-#### Observability
-- **ELK Stack**: Centralized logging with Elasticsearch, Logstash, and Kibana
 
 ### Key Features
 - **Real-time Multiplayer**: WebSocket-based game synchronization
@@ -225,8 +209,6 @@ graph TB
 - **Tournament System**: Bracket-based competitive play
 - **Live Chat**: Real-time messaging with notifications
 
-- Architecture
-  
 ### Front-end
 
 - [Web component](/doc/front/Component.md)
