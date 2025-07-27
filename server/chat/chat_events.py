@@ -16,6 +16,7 @@ class ChatEvent:
         self.consumer = consumer
 
     def join_chat(self, event):
+        """When the user joins the new chat."""
         chat_id = event["data"]["chat_id"]
         try:
             async_to_sync(self.consumer.channel_layer.group_add)(
@@ -25,7 +26,7 @@ class ChatEvent:
         except Chat.DoesNotExist:
             logger.debug("Acces denied to the chat %s for %s", chat_id, self.consumer.user.username)
 
-    def check_if_chat_exists_and_is_in_chat(self, chat_id) -> Chat | bool:
+    def check_if_chat_exists_and_is_in_chat(self, chat_id) -> Chat | None:
         chat = (
             Chat.objects.for_participants(self.consumer.user_profile)
             .with_other_user_profile_info(self.consumer.user_profile)
@@ -33,20 +34,20 @@ class ChatEvent:
             .first()
         )
         if not chat:
-            return False
+            return None
 
         # security check: user should be in the chat
         is_in_chat = chat.participants.filter(id=self.consumer.user_profile.id).exists()
         if not is_in_chat:
-            return False
+            return None
         is_blocked = chat.is_blocked_user or chat.is_blocked_by_user
         if is_blocked:
-            return False
+            return None
         return chat
 
     def handle_message(self, data):
         message_data = data.get("data", {})
-        message = message_data.get("content")
+        message = message_data.get("content", "")
         chat_id = message_data.get("chat_id")
         timestamp = message_data.get("timestamp")
 
@@ -85,9 +86,9 @@ class ChatEvent:
             },
         )
 
-    def handle_like_message(self, data):
+    def handle_toggle_like_message(self, data, is_liked: bool):
         message_data = data.get("data", {})
-        message = message_data.get("content")
+        message = message_data.get("content", "")
         message_id = message_data.get("id")
         chat_id = message_data.get("chat_id")
         chat = self.check_if_chat_exists_and_is_in_chat(chat_id)
@@ -98,39 +99,16 @@ class ChatEvent:
                 message = ChatMessage.objects.select_for_update().get(pk=message_id)
                 sender = message.sender.user.username
                 if sender != self.consumer.user.username:  # prevent from liking own message
-                    message.is_liked = True
+                    message.is_liked = is_liked
                     message.save(update_fields=["is_liked"])
                     message.refresh_from_db()
-                    transaction.on_commit(lambda: self.consumer.send_like_update(chat_id, message_id, True))
+                    transaction.on_commit(lambda: self.consumer.send_like_update(chat_id, message_id, is_liked))
 
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist.", message_id)
 
-    def handle_unlike_message(self, data):
-        message_data = data.get("data", {})
-        message = message_data.get("content")
-        message_id = message_data.get("id")
-        chat_id = message_data.get("chat_id")
-        sender = message_data.get("sender")
-        chat = self.check_if_chat_exists_and_is_in_chat(chat_id)
-        if not isinstance(chat, Chat):
-            return
-        try:
-            with transaction.atomic():
-                message = ChatMessage.objects.select_for_update().get(pk=message_id)
-                sender = message.sender.user.username
-                if sender != self.consumer.user.username:  # prevent from unliking own message
-                    message = ChatMessage.objects.select_for_update().get(pk=message_id)
-                    message.is_liked = False
-                    message.save(update_fields=["is_liked"])
-
-                    message.refresh_from_db()
-                    transaction.on_commit(lambda: self.consumer.send_like_update(chat_id, message_id, False))
-
-        except ObjectDoesNotExist:
-            logger.debug("Message %s does not exist", message_id)
-
     def send_like_update(self, chat_id, message_id, is_liked):
+        """Notifies users of a liked message."""
         async_to_sync(self.consumer.channel_layer.group_send)(
             f"chat_{chat_id}",
             {
@@ -158,10 +136,9 @@ class ChatEvent:
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist", message_id)
 
-    # Receive message from room group
     def chat_message(self, event):
+        """Sends any message to the client throught the `EventConsumer`."""
         message = event["message"]
-        # Send message to WebSocket
         try:
             json.loads(message)
             self.consumer.send(text_data=message)
