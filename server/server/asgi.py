@@ -12,10 +12,10 @@ from channels.routing import ChannelNameRouter, ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 
-from users.middleware import JWTWebsocketAuthMiddleware
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
 django_asgi_app = get_asgi_application()
+
+from users.middleware import JWTWebsocketAuthMiddleware  # noqa: I001,E402
 
 from chat.routing import websocket_urlpatterns as chat_websocket_urlpatterns  # noqa: E402
 from pong.consumers.game_worker import GameWorkerConsumer  # noqa: E402

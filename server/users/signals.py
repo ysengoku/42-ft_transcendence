@@ -8,11 +8,13 @@ from .models import Profile, User
 
 @receiver(post_save, sender=User)
 def create_profile(sender, instance: User, created: bool, **kwargs) -> None:
+    """Ensures that whenever `User` is created, `Profile` gets created too."""
     if created:
         Profile.objects.create(user=instance)
 
 
 @receiver(pre_delete, sender=User)
 def delete_avatar(sender, instance: User, **kwargs) -> None:
+    """Ensures that on `User` deletion their profile picture gets deleted too."""
     with suppress(Profile.DoesNotExist):
         instance.profile.delete_avatar()
