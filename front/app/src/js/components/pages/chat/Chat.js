@@ -3,7 +3,6 @@
  * @description Provides a dynamic chat interface that integrates chat lists, messaging, and WebSocket communications.
  */
 
-import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
@@ -62,7 +61,6 @@ export class Chat extends HTMLElement {
     if (userData) {
       this.#state.loggedInUser = userData;
     } else {
-      router.redirect('/login');
       return;
     }
 
