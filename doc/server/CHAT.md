@@ -1,43 +1,157 @@
-# CHAT
+# CHAT.md
 
-`Chat` module handles every message the user can get, as an event manager.
-Its websockets connects at the connection.
+The `Chat` module manages :
 
-## Overview
+- messaging
+- notifications
+- game invitations
+- real-time presence within the application, primarily via WebSockets.
+  This documentation covers the system architecture, flows, REST and WebSocket APIs, validation, security, and concrete usage examples.
 
-The consumer is EventConsumer, it receives public announcements and private messages.
-It handles notifications, chat message, like/unlike actions.
+## 1. Architecture \& Data Flow
 
-## `EventConsumer`
+- **WebSockets**: Chat relies on Django Channels.
+  Each user establishes a WebSocket connection (one per browser tab), enabling:
+  - Joining groups: `user_{id}`, `chat_{uuid}`, `online_users`
+  - Receiving real-time messages, likes, notifications, game/tournament invites.
+- **Channel Groups**:
+  - `user_{id}`: private actions (notifications, friend events)
+  - `chat_{uuid}`: group chat messages for all members
+  - `online_users`: presence broadcasts
 
-### Functionality
+> **Typical Flow**
+>
+> - Client opens WS → Auth via JWT → Joins groups → Exchanges protocol events
+> - Backend validates each message, broadcasts to proper groups
 
-#### Receives every websocket message
+## 2. UI / API Use Cases
 
-- First validate data with the Validator.
-- Then decides to accept or refuse the user. Use standard close codes.
-- Prepare peoples' chats and adds them in.
-- Message received trigger differents actions.
+**Core User Journey:**
 
-#### Adds user to channels
+- Open chat tab → WebSocket connects, joins groups.
+- Send message → WS (`new_message`) → All chat users receive event.
+- Like/unlike → WS action (`like_message` / `unlike_message`)
+- Mark as read → WS (`read_message`)
+- Real-time notifications via WS (friends, tournaments, game invites...)
 
-User is added to :
+**Sample WebSocket JSON Payload:**
 
-- group chats
-- online users
-- their own personal channel for direct messages
+```json
+{
+  "action": "new_message",
+  "data": {
+    "content": "Hello!",
+    "chat_id": "5eafd8eb-5be1-4671-9ff8-ba8fbb798af7",
+    "timestamp": "2025-07-28T09:00:00Z"
+  }
+}
+```
 
-#### Data Handling
+## 3. REST Endpoints
 
-Data is verified by the Validator, which return a boolean.
-If True, the consumer lets the user in.
-If False, the user gets disconnected from the websocket with the close code "BAD_DATA".
-If the websocket receives an unknown action, it closes the connection with this code.
+| Endpoint                          | Method | Description                                     | Params            | Returns (Code)             |
+| :-------------------------------- | :----- | :---------------------------------------------- | :---------------- | :------------------------- |
+| `/chats/`                         | GET    | Paginated list of user's chats                  | `limit`, `offset` | 200 `[ChatPreviewSchema]`  |
+| `/chats/{username}`               | PUT    | Open or create a chat, returns last 30 messages | -                 | 200/201 `ChatSchema`       |
+| `/chats/{username}/messages`      | GET    | Retrieve chat messages (paginated)              | `limit`, `offset` | 200 `[ChatMessageSchema]`  |
+| `/notifications/`                 | GET    | Paginated notification list                     | `limit`, `offset` | 200 `[NotificationSchema]` |
+| `/notifications/mark_all_as_read` | POST   | Mark all notifications as read                  | -                 | 200                        |
 
-#### Online status
+## 4. WebSocket Protocol: Supported Actions
 
-Every time the user opens a tab/browser, a new websocket connection opens.
-To show the user offline when they log out, a user counter is used.
-It increments and decrements on opening/closing tabs/browser.
-If users are inactive for more than 30 minutes, the crontab disconnects them.
-It also set their connection count to 0.
+| Action              | Required `data` fields                             | Backend Response                | Description       |
+| :------------------ | :------------------------------------------------- | :------------------------------ | :---------------- |
+| `new_message`       | `content`, `chat_id`, `timestamp`                  | `new_message` (to all)          | Send chat message |
+| `like_message`      | `id`, `chat_id`                                    | `chat_like_update`              | Like message      |
+| `unlike_message`    | `id`, `chat_id`                                    | `chat_like_update`              | Unlike message    |
+| `read_message`      | `id`                                               | (possible notification)         | Mark message read |
+| `game_invite`       | `username`, `client_id`, `options`                 | `game_invite` or error          | Pong invite       |
+| `reply_game_invite` | `username`, `accept`                               | `game_accepted`/`game_declined` | Reply to invite   |
+| `add_new_friend`    | `sender_id`, `receiver_id`                         | `new_friend`                    | Add friend        |
+| `new_tournament`    | `tournament_id`, `tournament_name`, `organizer_id` | `new_tournament`                | Tournament invite |
+| Others              | (see `validator.py` for schema)                    |                                 |                   |
+
+_Field requirements and types are enforced by strict validation (see section 5)._
+
+## 5. Validation \& Security
+
+- **Strict schema validation** for all incoming WebSocket data (fields, types, valid UUIDs).
+  → Invalid data immediately triggers WebSocket closure with `BAD_DATA`.
+  → Reasons for rejection: missing fields, wrong types, invalid UUID, unknown action.
+- **Business logic constraints:**
+  - Cannot self-invite/self-chat or like own messages.
+  - No multiple invites for users already engaged in a game.
+- **Backend protections:**
+  - JWT auth is mandatory.
+  - Resource access checked at every API/WS action.
+
+## 6. Presence System (Online/Offline)
+
+- **Multiple connection handling:**
+  - `nb_active_connexions` tracked on profile and incremented or decremented at connect/disconnect.
+  - When `nb_active_connexions == 0`, user is considered offline (both DB and Redis).
+  - Presence state is broadcast in real-time (`online_users` group).
+- **Inactivity detection:**
+  - Cronjob every 30min: any user with no activity is forced offline, connection counter reset.
+  - Each meaningful API/WS request refreshes user `last_activity`.
+
+## 7. Notifications / Integrations
+
+- **Notification types:**
+  - `game_invite`: Pong game invitation
+  - `new_tournament`: Tournament invitation
+  - `new_friend`: Friend added
+- **Delivery:**
+  - Real-time push via WebSocket (`user_{id}` group)
+  - REST API for notification history and marking as read
+
+## 8. Data Schemas
+
+- **Main models:** `Chat`, `ChatMessage`, `Notification` (defined in `chat/schemas.py`)
+- **ChatMessageSchema** example:
+
+```json
+{
+  "id": "a13c68f0-9358-49b7-8fe0-ac288a793e6c",
+  "content": "Hi there!",
+  "date": "2025-07-28T09:13:00Z",
+  "sender": "user42",
+  "is_read": false,
+  "is_liked": false
+}
+```
+
+- **NotificationSchema** fields:
+  - `id`, `action`, `data` (typed per notification kind), `is_read`
+
+## 9. Unit \& WebSocket Testing
+
+- **Security tests:** malformed messages, unauthorized attempts, invalid UUIDs, attempts to self-like, etc.
+- **Workflow tests:** chat/message creation, invitation/decline, notification creation, `is_read` update.
+
+## 10. Usage \& Sequence Examples
+
+**Opening a chat:**
+
+1. Frontend calls `PUT /chats/{username}` (open or create chat)
+2. WS auto-connects, gets `join.chat` event
+3. UI updates chat list
+
+**Receiving a real-time message:**
+
+- User sends `new_message` WS event → all connected clients receive `new_message` object.
+
+**Sequence (text version):**
+
+1. User A sends message via front (WS: `new_message`)
+2. Backend validates, creates message resource
+3. Backend broadcasts event to all chat members
+
+## Key Points to Maintain
+
+- **Global architecture** (schema + WS groups)
+- **Explicit tables of REST endpoints and WS actions/protocols**
+- **Validation \& security rules clarified, strict schema on all events**
+- **Presence and notification system, multi-tab logic**
+- **Usage examples, real timeline sequences**
+- **Reference to unit/WebSocket tests for Q/A coverage**
