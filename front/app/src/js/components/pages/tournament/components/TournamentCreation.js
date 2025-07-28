@@ -168,8 +168,6 @@ export class TournamentCreation extends HTMLElement {
       this.tournamentNameFeedback.textContent = '';
       this.#state.isTournamentNameValid = true;
     }
-    // this.updateConfirmButtonState();
-    console.log('Tournament name validation:', this.#state.isTournamentNameValid);
   }
 
   validateAliasInput(event, value) {
@@ -185,18 +183,7 @@ export class TournamentCreation extends HTMLElement {
       this.tournamentAliasFeedback.textContent = '';
       this.#state.isAliasValid = true;
     }
-    // this.updateConfirmButtonState();
-    console.log('Alias validation:', this.#state.isAliasValid);
   }
-
-  // updateConfirmButtonState() {
-  //   console.log('Updating confirm button state');
-  //   if (this.#state.isTournamentNameValid && this.#state.isAliasValid) {
-  //     this.confirmButton.disabled = false;
-  //   } else {
-  //     this.confirmButton.disabled = true;
-  //   }
-  // }
 
   async createTournament(event) {
     event.stopPropagation();
