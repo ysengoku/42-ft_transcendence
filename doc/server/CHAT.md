@@ -169,7 +169,13 @@ The `Chat` module manages :
 config:
   layout: dagre
   look: classic
-  theme: redux
+  theme: neutral
+  themeVariables:
+    lineColor: '#544'
+    textColor: '#191919'
+    fontSize: 15px
+    nodeTextColor: '#000'
+    edgeLabelBackground: '#fff'
 ---
 flowchart TD
   %% Clients
@@ -222,9 +228,9 @@ flowchart TD
   B -- "(periodic/offline detection)" --> D
   D -- "User set offline, nb_active_connexions=0" --> H
   H -- "'user_offline' broadcast" --> A
-
   %% Styling
   style CLIENT fill:#f9f,stroke:#333,stroke-width:2px
   style BACKEND fill:#ccf,stroke:#333,stroke-width:2px
   style GROUPS fill:#efe,stroke:#333,stroke-width:1px
+
 ```
