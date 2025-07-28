@@ -73,6 +73,8 @@ class TournamentQuerySet(models.QuerySet):
         if not settings:
             settings = get_default_game_room_settings()
 
+        if settings["ranked"] == True:
+            settings["ranked"] = False
         tournament = self.model(
             name=tournament_name,
             creator=creator,
