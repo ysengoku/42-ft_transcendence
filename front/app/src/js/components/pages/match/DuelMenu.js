@@ -293,6 +293,8 @@ export class DuelMenu extends HTMLElement {
     for (const [key, value] of Object.entries(this.#state.options)) {
       if (value !== 'any') {
         optionsObj[key] = value;
+      } else {
+        optionsObj[key] = DEFAULT_GAME_OPTIONS[key];
       }
     }
     return optionsObj;
