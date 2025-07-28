@@ -4,6 +4,7 @@ import autobahn
 from channels.generic.websocket import WebsocketConsumer
 
 from common.close_codes import CloseCodes
+
 logger = logging.getLogger("server")
 
 
