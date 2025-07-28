@@ -164,6 +164,54 @@ The `Chat` module manages :
 2. Backend validates, creates message resource
 3. Backend broadcasts event to all chat members
 
+```mermaid
+---
+config:
+  layout: dagre
+  look: classic
+  theme: redux
+---
+flowchart TD
+    A(["apiRequest() called"]) --> B("**Options Setup**<br/>*- HTTP method<br/>- CSRF token header<br/>- Content-Type header<br/>- includes credentials*")
+    B --> C("**Data Handling**<br/>*- file uploads or stringified as JSON*")
+    C --> D["Execute Request"]
+    D --> E["Response"]
+
+    E -- 2xx Success --> F("handlers.success")
+    F --> M([Return<br/>- success: true<br/>- response status<br/>- data])
+
+    E -- "401 Unauthorized (needToken=true)" --> G("handlers\[401\]<br/>Reflesh token request")
+    G -->|refresh succeeded| R["Execute Request"]
+    R --> S(["Return<br/>- success: true/false<br/>- response status<br/>- data/error"])
+    G -->|refresh failed| K(["Return<br/>- success: false<br/>- response status"])
+		K --> P["Redirect to Login"]
+
+    E -- 500 Internal Server Error --> H("handlers\[500\]<br/>Retry after delay")
+    H -- retry success --> U(["Return<br/>- success: true<br/>- response status<br/>- data"])
+    H -- retry failed --> L(["Return<br/>- success: false<br/>- response status<br/>- error message"])
+    L --> Q["Redirect to Home"]
+
+
+    E -->|"Other Error"| I("handlers.failure")
+    I --> N(["Return<br/>- success: false<br/>- response status<br/>- error message"])
+
+    E -- Exception thrown --> J("handlers.exception")
+    J --> O(["Return<br/>- success: false<br/>- status: 0<br/>- error message"])
+
+    D@{ shape: text }
+    E@{ shape: text }
+		P@{ shape: text }
+		Q@{ shape: text }
+    R@{ shape: text }
+    B:::Ash
+    C:::Ash
+    F:::Ash
+		G:::Ash
+		H:::Ash
+		I:::Ash
+    J:::Ash
+    classDef Ash stroke-width:1px, stroke-dasharray:none, stroke:#999999, fill:#EEEEEE, color:#000000
+```
 
 ```mermaid
 flowchart TD
