@@ -169,7 +169,13 @@ The `Chat` module manages :
 config:
   layout: dagre
   look: classic
-  theme: redux
+  theme: neutral
+  themeVariables:
+    lineColor: '#444'
+    textColor: '#191919'
+    fontSize: 15px
+    nodeTextColor: '#000'
+    edgeLabelBackground: '#fff'
 ---
 flowchart TD
   %% Clients
