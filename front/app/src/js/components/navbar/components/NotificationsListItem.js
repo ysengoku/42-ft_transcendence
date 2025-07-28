@@ -221,7 +221,7 @@ export class NotificationsListItem extends HTMLElement {
       if (tournamentPage) {
         tournamentPage.showTournamentDetail(null, this.#state.data.tournament_id);
       } else {
-        console.error('Tournament page not found');
+        devErrorLog('Tournament page not found');
       }
     });
   }
