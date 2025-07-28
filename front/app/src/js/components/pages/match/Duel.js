@@ -195,7 +195,6 @@ export class Duel extends HTMLElement {
       const optionTimeLimit = this.querySelector('#duel-option-time-limit');
       const optionRanked = this.querySelector('#duel-option-ranked');
       const optionCoolMode = this.querySelector('#duel-option-cool-mode');
-      console.log(this.#state.settings);
       this.#state.settings.score_to_win === 'any'
         ? optionScoreToWin.classList.add('d-none')
         : (optionScoreToWin.textContent = `Score to win: ${this.#state.settings.score_to_win}`);
