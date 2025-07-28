@@ -113,7 +113,7 @@ class DuelEvent:
             return
         game_room = self.create_game_room(sender, self.consumer.user.profile)
         invitation.status = GameInvitation.ACCEPTED
-        invitation.save()
+        invitation.save(update_fields=["status"])
         invitation.sync_notification_status()
         DuelEvent.cancel_all_send_game_invites(self.consumer.user.username)
         sender_data = self.data_for_game_found(sender, game_room.id)
@@ -149,7 +149,7 @@ class DuelEvent:
             count = 0
             for invitation in invitations:
                 invitation.status = GameInvitation.DECLINED
-                invitation.save()
+                invitation.save(update_fields=["status"])
                 invitation.sync_notification_status()
                 count += 1
             logger.info(
@@ -309,7 +309,7 @@ class DuelEvent:
             return
         with transaction.atomic():
             invitation.status = GameInvitation.CANCELLED
-            invitation.save()
+            invitation.save(update_fields=["status"])
             invitation.sync_notification_status()
         logger.info("Cancelled pending invitations from user %s to %s", self.consumer.user.username, target_username)
         notification_data = {
@@ -333,7 +333,7 @@ class DuelEvent:
             count = 0
             for invitation in invitations:
                 invitation.status = GameInvitation.CANCELLED
-                invitation.save()
+                invitation.save(update_fields=["status"])
                 invitation.sync_notification_status()
                 count += 1
             logger.info("Cancelled %d pending invitations for user %s", count, username)
@@ -358,7 +358,7 @@ class DuelEvent:
                 invitation.status = GameInvitation.CANCELLED
                 sender = invitation.sender
                 receiver = invitation.recipient
-                invitation.save()
+                invitation.save(update_fields=["status"])
                 invitation.sync_notification_status()
                 count += 1
                 target = receiver if sender == profile else sender
