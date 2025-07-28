@@ -69,7 +69,9 @@ export class NotificationsListItem extends HTMLElement {
         this.buttonWrapper.appendChild(this.seeProfileButton);
         if (this.#state.data.username !== this.#state.username) {
           this.content.textContent = this.message.gameInvitation(this.#state.data.nickname);
-          this.renderGameOptionTags();
+          if (this.#state.data.settings) {
+            this.renderGameOptionTags();
+          }
           this.acceptButton = document.createElement('button');
           this.acceptButton.textContent = 'Accept';
           this.acceptButton.addEventListener('click', this.handleAcceptDuel);
