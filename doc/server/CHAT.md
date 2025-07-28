@@ -171,7 +171,7 @@ config:
   look: classic
   theme: neutral
   themeVariables:
-    lineColor: '#444'
+    lineColor: '#544'
     textColor: '#191919'
     fontSize: 15px
     nodeTextColor: '#000'
