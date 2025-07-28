@@ -172,52 +172,58 @@ config:
   theme: redux
 ---
 flowchart TD
-subgraph CLIENT
-A[User Front-End (Browser Tab)]
-end
-subgraph BACKEND
-B[EventConsumer (WebSocket)]
-C[Validator.py (Validation)]
-D[Chat models, Notification, etc.]
-E[Django Channels Groups]
-end
-subgraph GROUPS
-F["user_{id}"]
-G["chat_{uuid}"]
-H["online_users"]
-end
+  %% Clients
+  subgraph CLIENT
+    A[User Front-End (Browser Tab)]
+  end
 
-    %% WebSocket handshake
-    A -- Open WebSocket (with JWT) --> B
+  %% Backend components
+  subgraph BACKEND
+    B[EventConsumer (WebSocket)]
+    C[Validator.py (Validation)]
+    D[Chat models, Notification, etc.]
+    E[Django Channels Groups]
+  end
 
-    %% Join groups after validation
-    B -- Authenticate + Validate --> C
-    C -- Accepts User --> E
-    E -- Add to "user_{id}" --> F
-    E -- Add to "online_users" --> H
-    E -- Add to each "chat_{uuid}" (for user's active chats) --> G
+  %% WebSocket groups
+  subgraph GROUPS
+    F["user_{id}"]
+    G["chat_{uuid}"]
+    H["online_users"]
+  end
 
-    %% Real-time message flow
-    A -- WS action: new_message / like_message / etc. --> B
-    B -- Validate action & data --> C
-    C -- Valid? --> D
-    D -- DB update (ex: create message) --> D
-    D -- Broadcast to group --> E
+  %% WebSocket handshake
+  A -- "Open WebSocket (with JWT)" --> B
 
-    %% Group broadcasts back to clients
-    F -- push notification/new_friend/etc. --> A
-    G -- push chat event/new_message/etc. --> A
-    H -- push online/offline status --> A
+  %% Join groups after validation
+  B -- "Authenticate + Validate" --> C
+  C -- "Accepts User" --> E
+  E -- "Add to user_{id}" --> F
+  E -- "Add to online_users" --> H
+  E -- "Add to each chat_{uuid}" --> G
 
-    %% Error/Validation fails
-    C -- Invalid, close with BAD_DATA --> A
+  %% Real-time message flow
+  A -- "WS action: new_message / like_message / etc." --> B
+  B -- "Validate action & data" --> C
+  C -- "Valid?" --> D
+  D -- "DB update (create message etc)" --> D
+  D -- "Broadcast to group" --> E
 
-    %% Crontab/Inactive disconnect
-    B -- (periodic/offline detection) --> D
-    D -- User set offline, nb_active_connexions=0 --> H
-    H -- "user_offline" broadcast --> A
+  %% Group broadcasts back to clients
+  F -- "push notification/new_friend/etc." --> A
+  G -- "push chat event/new_message/etc." --> A
+  H -- "push online/offline status" --> A
 
-    style CLIENT fill:#f9f,stroke:#333,stroke-width:2px
-    style BACKEND fill:#ccf,stroke:#333,stroke-width:2px
-    style GROUPS fill:#efe,stroke:#333,stroke-width:1px
+  %% Error/Validation fails
+  C -- "Invalid, close with BAD_DATA" --> A
+
+  %% Crontab/Inactive disconnect
+  B -- "(periodic/offline detection)" --> D
+  D -- "User set offline, nb_active_connexions=0" --> H
+  H -- "\"user_offline\" broadcast" --> A
+
+  %% Styling
+  style CLIENT fill:#f9f,stroke:#333,stroke-width:2px
+  style BACKEND fill:#ccf,stroke:#333,stroke-width:2px
+  style GROUPS fill:#efe,stroke:#333,stroke-width:1px
 ```
