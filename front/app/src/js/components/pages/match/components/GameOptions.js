@@ -86,9 +86,7 @@ export class GameOptions extends HTMLElement {
     }
     const optionsObj = {};
     for (const [key, value] of Object.entries(this.#state.selectedOptions)) {
-      if (value !== 'any') {
-        optionsObj[key] = value;
-      }
+      optionsObj[key] = value !== 'any' ? value : DEFAULT_GAME_OPTIONS[key];
     }
     return optionsObj;
   }
