@@ -166,21 +166,17 @@ The `Chat` module manages :
 
 ```mermaid
 ---
-config:
-  layout: dagre
-  look: classic
-  theme: redux
----
 flowchart TD
   %% Clients
   subgraph CLIENT
-    A[User Front-End (Browser Tab)]
+  A[User Front-End Browser Tab]
   end
+
 
   %% Backend components
   subgraph BACKEND
-    B[EventConsumer (WebSocket)]
-    C[Validator.py (Validation)]
+    B[EventConsumer WebSocket]
+    C[Validator.py Validation]
     D[Chat models, Notification, etc.]
     E[Django Channels Groups]
   end
@@ -220,7 +216,7 @@ flowchart TD
   %% Crontab/Inactive disconnect
   B -- "(periodic/offline detection)" --> D
   D -- "User set offline, nb_active_connexions=0" --> H
-  H -- "\"user_offline\" broadcast" --> A
+  H -- "user_offline broadcast" --> A
 
   %% Styling
   style CLIENT fill:#f9f,stroke:#333,stroke-width:2px
