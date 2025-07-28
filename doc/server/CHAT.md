@@ -57,21 +57,38 @@ The `Chat` module manages :
 | `/notifications/`                 | GET    | Paginated notification list                     | `limit`, `offset` | 200 `[NotificationSchema]` |
 | `/notifications/mark_all_as_read` | POST   | Mark all notifications as read                  | -                 | 200                        |
 
-## 4. WebSocket Protocol: Supported Actions
+## 4. WebSocket Protocol: Exhaustive Supported Actions
 
-| Action              | Required `data` fields                             | Backend Response                | Description       |
-| :------------------ | :------------------------------------------------- | :------------------------------ | :---------------- |
-| `new_message`       | `content`, `chat_id`, `timestamp`                  | `new_message` (to all)          | Send chat message |
-| `like_message`      | `id`, `chat_id`                                    | `chat_like_update`              | Like message      |
-| `unlike_message`    | `id`, `chat_id`                                    | `chat_like_update`              | Unlike message    |
-| `read_message`      | `id`                                               | (possible notification)         | Mark message read |
-| `game_invite`       | `username`, `client_id`, `options`                 | `game_invite` or error          | Pong invite       |
-| `reply_game_invite` | `username`, `accept`                               | `game_accepted`/`game_declined` | Reply to invite   |
-| `add_new_friend`    | `sender_id`, `receiver_id`                         | `new_friend`                    | Add friend        |
-| `new_tournament`    | `tournament_id`, `tournament_name`, `organizer_id` | `new_tournament`                | Tournament invite |
-| Others              | (see `validator.py` for schema)                    |                                 |                   |
+| Action               | Required `data` fields                               | Backend Response                                         | Description                           |
+| :------------------- | :--------------------------------------------------- | :------------------------------------------------------- | :------------------------------------ |
+| `new_message`        | `content`, `chat_id`, `timestamp`                    | `new_message` (to all)                                   | Send chat message                     |
+| `like_message`       | `id`, `chat_id`                                      | `chat_like_update`                                       | Like message                          |
+| `unlike_message`     | `id`, `chat_id`                                      | `chat_like_update`                                       | Unlike message                        |
+| `read_message`       | `id`                                                 | (possible notification)                                  | Mark message read                     |
+| `game_invite`        | `username`, `client_id`, `options` (dict, see below) | `game_invite`, `game_invite_canceled` or error           | Pong invite                           |
+| `reply_game_invite`  | `username`, `accept`                                 | `game_accepted`, `game_declined`, `game_invite_canceled` | Reply (accept/decline) to Pong invite |
+| `game_accepted`      | `username`                                           | `game_found`                                             | Pong invite accepted                  |
+| `game_declined`      | `username`                                           | `game_declined`                                          | Pong invite declined                  |
+| `add_new_friend`     | `sender_id`, `receiver_id`                           | `new_friend`                                             | Add friend                            |
+| `new_tournament`     | `tournament_id`, `tournament_name`, `organizer_id`   | `new_tournament`                                         | Tournament invite                     |
+| `read_notification`  | `id`                                                 | n/a                                                      | Mark notification as read             |
+| `notification`       | `message`, `type`                                    | `notification`                                           | Generic notification                  |
+| `user_online`        | `username`                                           | `user_online`                                            | Notify that user is online            |
+| `user_offline`       | `username`                                           | `user_offline`                                           | Notify that user is offline           |
+| `cancel_game_invite` | `username`                                           | `game_invite_canceled`                                   | Cancel sent Pong invite               |
+| `join_chat`          | `chat_id`                                            | `join_chat`                                              | Explicitly join chat (WS group)       |
+| `room_created`       | `chat_id`                                            | `room_created`                                           | Notify that a room was created        |
 
-_Field requirements and types are enforced by strict validation (see section 5)._
+**Special note for `game_invite` `options` field:**
+
+- `options` is a dictionary and may include:
+  - `game_speed` (`"slow"`, `"medium"`, `"fast"`)
+  - `ranked` (bool)
+  - `cool_mode` (bool)
+  - `score_to_win` (int, 3-20)
+  - `time_limit` (int, 1-5)
+
+> All fields are strictly validated for type and contents. Most responses have events pushed to the relevant WebSocket group or user; errors or protocol issues trigger a WS close with appropriate code.
 
 ## 5. Validation \& Security
 
