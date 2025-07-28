@@ -12,7 +12,6 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
-from chat.duel_events import DuelEvent
 from common.routers import allow_only_for_self
 from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from pong.models import GameRoom
