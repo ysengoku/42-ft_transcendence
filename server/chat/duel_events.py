@@ -3,10 +3,8 @@ import logging
 from datetime import datetime
 
 from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
 
 from common.close_codes import CloseCodes
 from pong.models import GameRoom
@@ -30,10 +28,14 @@ class DuelEvent:
         elif response is False:
             DuelEvent.decline_game_invite(self, data)
 
-    def create_game_room(self, profile1, profile2):
+    def create_game_room(self, profile1, profile2, settings):
+        logger.debug(settings)
         gameroom: GameRoom = GameRoom.objects.create(status=GameRoom.ONGOING)
         gameroom.add_player(profile1)
         gameroom.add_player(profile2)
+        gameroom.settings = settings
+        gameroom.save(update_fields=["settings"])
+        logger.debug(gameroom.settings)
         return gameroom
 
     def data_for_game_found(self, player, game_id):
@@ -112,7 +114,7 @@ class DuelEvent:
                 self.consumer.user.username,
             )
             return
-        game_room = self.create_game_room(sender, self.consumer.user.profile)
+        game_room = self.create_game_room(sender, self.consumer.user.profile, invitation.options)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save(update_fields=["status"])
         invitation.sync_notification_status()
@@ -199,7 +201,7 @@ class DuelEvent:
         self.consumer.send(text_data=json.dumps(data))
 
     def send_game_invite(self, data):
-        options = data["data"].get("options", {})
+        options = data["data"].get("settings", {})
         client_id = data["data"].get("client_id")
         if options is not None and not Validator.validate_options(options):
             self.consumer.close(CloseCodes.BAD_DATA)
