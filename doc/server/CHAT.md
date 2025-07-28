@@ -164,13 +164,8 @@ The `Chat` module manages :
 2. Backend validates, creates message resource
 3. Backend broadcasts event to all chat members
 
+
 ```mermaid
----
-config:
-  layout: dagre
-  look: classic
-  theme: redux
----
 flowchart TD
   %% Clients
   subgraph CLIENT
