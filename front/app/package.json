@@ -26,8 +26,8 @@
     "jest-environment-jsdom": "29.7.0",
     "jsdom": "^24.0.0",
     "prettier": "3.4.2",
-    "vite": "6.0.5",
-    "vitest": "^1.6.1"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "bootstrap": "^5.3.3",
