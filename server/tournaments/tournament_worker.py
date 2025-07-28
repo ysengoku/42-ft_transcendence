@@ -8,21 +8,11 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 from django.db import transaction
-
 from pong.models import GameRoom
-
 from .models import Bracket, Participant, Round, Tournament
 from .schemas import BracketSchema, RoundSchema
 
 logger = logging.getLogger("server")
-
-# TODO: security checks : multiple crash when bad ws id sent by the console
-# TODO: put all shared macros between files in the same file
-NORMAL_CLOSURE = 3000
-CANCELLED = 3001
-ILLEGAL_CONNECTION = 3002
-ALREADY_IN_GAME = 3003
-BAD_DATA = 3100
 
 
 class TournamentWorkerConsumer(AsyncConsumer):
