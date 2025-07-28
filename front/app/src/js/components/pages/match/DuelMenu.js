@@ -582,7 +582,7 @@ export class DuelMenu extends HTMLElement {
       min-width: 0;
     }
     .badge {
-      background-color: var(--pm-primary-500);
+      background-color: var(--pm-primary-600);
     }
     .opponent-avatar {
       width: 120px;
