@@ -228,6 +228,8 @@ flowchart TD
   B -- "(periodic/offline detection)" --> D
   D -- "User set offline, nb_active_connexions=0" --> H
   H -- "'user_offline' broadcast" --> A
+  %% Styling
 
+  style GROUPS fill:#efe,stroke:#333,stroke-width:1px
 
 ```
