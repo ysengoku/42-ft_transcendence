@@ -164,11 +164,60 @@ The `Chat` module manages :
 2. Backend validates, creates message resource
 3. Backend broadcasts event to all chat members
 
-## Key Points to Maintain
+```mermaid
+---
+config:
+  layout: dagre
+  look: classic
+  theme: redux
+---
+flowchart TD
+subgraph CLIENT
+A[User Front-End (Browser Tab)]
+end
+subgraph BACKEND
+B[EventConsumer (WebSocket)]
+C[Validator.py (Validation)]
+D[Chat models, Notification, etc.]
+E[Django Channels Groups]
+end
+subgraph GROUPS
+F["user_{id}"]
+G["chat_{uuid}"]
+H["online_users"]
+end
 
-- **Global architecture** (schema + WS groups)
-- **Explicit tables of REST endpoints and WS actions/protocols**
-- **Validation \& security rules clarified, strict schema on all events**
-- **Presence and notification system, multi-tab logic**
-- **Usage examples, real timeline sequences**
-- **Reference to unit/WebSocket tests for Q/A coverage**
+    %% WebSocket handshake
+    A -- Open WebSocket (with JWT) --> B
+
+    %% Join groups after validation
+    B -- Authenticate + Validate --> C
+    C -- Accepts User --> E
+    E -- Add to "user_{id}" --> F
+    E -- Add to "online_users" --> H
+    E -- Add to each "chat_{uuid}" (for user's active chats) --> G
+
+    %% Real-time message flow
+    A -- WS action: new_message / like_message / etc. --> B
+    B -- Validate action & data --> C
+    C -- Valid? --> D
+    D -- DB update (ex: create message) --> D
+    D -- Broadcast to group --> E
+
+    %% Group broadcasts back to clients
+    F -- push notification/new_friend/etc. --> A
+    G -- push chat event/new_message/etc. --> A
+    H -- push online/offline status --> A
+
+    %% Error/Validation fails
+    C -- Invalid, close with BAD_DATA --> A
+
+    %% Crontab/Inactive disconnect
+    B -- (periodic/offline detection) --> D
+    D -- User set offline, nb_active_connexions=0 --> H
+    H -- "user_offline" broadcast --> A
+
+    style CLIENT fill:#f9f,stroke:#333,stroke-width:2px
+    style BACKEND fill:#ccf,stroke:#333,stroke-width:2px
+    style GROUPS fill:#efe,stroke:#333,stroke-width:1px
+```
