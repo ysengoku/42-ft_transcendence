@@ -129,7 +129,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
         if round_already_prepared:
             await TournamentWorkerConsumer.send_start_round_message(tournament_id, round_number, new_round)
             return
-        await TournamentWorkerConsumer.prepare_brackets(participants, round_number, new_round)
+        await TournamentWorkerConsumer.prepare_brackets(participants, round_number, new_round, tournament.settings)
         await TournamentWorkerConsumer.send_start_round_message(tournament_id, round_number, new_round)
         finished_brackets = await database_sync_to_async(
             lambda: list(new_round.brackets.filter(status=Bracket.FINISHED)),
@@ -150,13 +150,15 @@ class TournamentWorkerConsumer(AsyncConsumer):
         return False
 
     @database_sync_to_async
-    def prepare_brackets(self, participants, round_number, new_round):
+    def prepare_brackets(self, participants, round_number, new_round, settings):
         bracket_list = TournamentWorkerConsumer.generate_brackets(participants)
         for p1, p2 in bracket_list:
             new_round.brackets.create(participant1=p1, participant2=p2, status=Bracket.PENDING)
         brackets = new_round.brackets.all()
         for bracket in brackets:
-            game_room = TournamentWorkerConsumer.create_tournament_game_room(bracket.participant1, bracket.participant2)
+            game_room = TournamentWorkerConsumer.create_tournament_game_room(
+                bracket.participant1, bracket.participant2, settings,
+            )
             bracket.game_room = game_room
             bracket.game_id = game_room.id
             bracket.save(update_fields=["game_room", "game_id"])
@@ -165,10 +167,12 @@ class TournamentWorkerConsumer(AsyncConsumer):
                 bracket.winner = bracket.participant1 if bracket.participant2.excluded else bracket.participant2
                 bracket.save(update_fields=["status", "winner"])
 
-    def create_tournament_game_room(self, p2):
+    def create_tournament_game_room(self, p2, settings):
         gameroom: GameRoom = GameRoom.objects.create(status=GameRoom.ONGOING)
         gameroom.add_player(self.profile)
         gameroom.add_player(p2.profile)
+        gameroom.settings = settings
+        gameroom.save(update_fields=["settings"])
         if self.excluded or p2.excluded:
             gameroom.status = GameRoom.CLOSED
             gameroom.save(update_fields=["status"])
