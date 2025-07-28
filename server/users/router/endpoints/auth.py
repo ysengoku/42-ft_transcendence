@@ -165,36 +165,6 @@ def logout(request: HttpRequest, response: HttpResponse):
     return 204, None
 
 
-@auth_router.delete(
-    "/users/{username}/delete",
-    response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema},
-)
-def delete_account(request, username: str, response: HttpResponse):
-    """
-    Delete definitely the user account and the associated profile, including friends relations and avatar.
-    """
-    user = request.auth
-    if not user:
-        return None
-
-    if user.username != username:
-        raise HttpError(403, "You are not allowed to delete this account.")
-    # DELETE ALL INVITATIONS TO GAMES
-    DuelEvent.cancel_all_send_and_received_game_invites(username)
-
-    old_refresh_token = request.COOKIES.get("refresh_token")
-    if old_refresh_token:
-        refresh_token_qs = RefreshToken.objects.for_token(old_refresh_token)
-        refresh_token_qs.set_revoked()
-
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
-
-    user.delete()
-
-    return {"msg": "Account successfully deleted."}
-
-
 @auth_router.post("/forgot-password", response={200: MessageSchema}, auth=None)
 @csrf_exempt
 def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any]:
