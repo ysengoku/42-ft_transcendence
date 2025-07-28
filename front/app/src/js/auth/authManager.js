@@ -90,7 +90,7 @@ const auth = (() => {
       try {
         user = JSON.parse(rawData);
       } catch {
-        console.error('invalid json');
+        devErrorLog('invalid json');
         return null;
       }
       if (
