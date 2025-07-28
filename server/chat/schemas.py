@@ -4,6 +4,7 @@ from django.conf import settings
 from ninja import Schema
 
 from chat.models import Chat, ChatMessage, Notification
+from common.schemas import GameSettingsSchema
 from users.schemas import UsernameNicknameAvatarSchema
 
 
@@ -92,6 +93,7 @@ class GameInviteNotificationDataSchema(BaseNotificationDataSchema):
     """
 
     game_id: str
+    settings: GameSettingsSchema
     invitee: UsernameNicknameAvatarSchema
 
 
