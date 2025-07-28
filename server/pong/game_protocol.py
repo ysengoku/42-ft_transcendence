@@ -4,8 +4,9 @@ the game server and the client for the game of pong.
 """
 from typing import Literal, TypedDict
 
-from common.close_codes import CloseCodes
 from typing_extensions import NotRequired
+
+from common.close_codes import CloseCodes
 
 
 class GameRoomSettings(TypedDict):

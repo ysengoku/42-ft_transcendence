@@ -14,13 +14,13 @@ from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 from django.utils import timezone
 
+from common.close_codes import CloseCodes
 from pong.game_protocol import (
     GameRoomSettings,
     GameServerToClient,
     GameServerToGameWorker,
     SerializedGameState,
 )
-from common.close_codes import CloseCodes
 from pong.models import GameRoom, Match
 from tournaments.models import Bracket
 
