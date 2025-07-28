@@ -263,7 +263,7 @@ export class NotificationsListItem extends HTMLElement {
         font-size: 0.8rem;
       }
     </style>
-    `
+    `;
   }
 }
 
