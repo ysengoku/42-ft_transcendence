@@ -150,11 +150,11 @@ graph TB
     DJANGO --> GMAIL
 
     %% Styling
-    classDef frontend fill:#e1f5fe
-    classDef backend fill:#f3e5f5
-    classDef database fill:#e8f5e8
-    classDef external fill:#fff3e0
-    classDef logs fill:#fce4ec
+    classDef frontend fill:#e1f5fe,color:#01579b
+    classDef backend fill:#f3e5f5,color:#4a148c
+    classDef database fill:#e8f5e9,color:#1b5e20
+    classDef logs fill:#fce4ec,color:#880e4f
+    classDef external fill:#fff3e0,color:#e65100
 
     class UI,WS_CLIENT,GAME_ENGINE frontend
     class NGINX,DJANGO,WS_SERVER,CRON backend
