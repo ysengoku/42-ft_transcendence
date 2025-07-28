@@ -8,6 +8,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 
+from common.close_codes import CloseCodes
 from pong.models import GameRoom
 from users.models import Profile
 
@@ -201,11 +202,11 @@ class DuelEvent:
         options = data["data"].get("options", {})
         client_id = data["data"].get("client_id")
         if options is not None and not Validator.validate_options(options):
-            self.consumer.close()
+            self.consumer.close(CloseCodes.BAD_DATA)
             return
         receiver_username = data["data"].get("username")
         if receiver_username == self.consumer.user.username:
-            logger.warning("Error : user %s wanted to play with themself.", self.consumer.user.username)
+            logger.warning("User %s wanted to play with themself.", self.consumer.user.username)
             self.self_send_game_invite_cancelled("You can't invite yourself to a game !", client_id)
             return
 
@@ -264,7 +265,6 @@ class DuelEvent:
             notification_data["date"] = notification_data["date"].isoformat()
         self.send_ws_message_to_user(receiver, "game_invite", notification_data)
         # Notification for the sender,to find and cancel their invitation if the receiver never replies
-        # TODO: put options (settings) in notification
         Notification.objects.action_send_game_invite(
             receiver=sender,
             invitee=receiver,
