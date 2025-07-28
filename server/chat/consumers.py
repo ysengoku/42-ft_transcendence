@@ -5,7 +5,7 @@ from asgiref.sync import async_to_sync
 from django.db import DatabaseError, models, transaction
 
 from common.guarded_websocket_consumer import GuardedWebsocketConsumer
-from common.close_code import CloseCodes
+from common.close_codes import CloseCodes
 from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
 
