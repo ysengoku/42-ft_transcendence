@@ -5,10 +5,10 @@ from uuid import UUID
 
 from asgiref.sync import async_to_sync
 
-from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from common.close_codes import CloseCodes
-from .models import Bracket, Participant, Tournament
+from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 
+from .models import Bracket, Participant, Tournament
 from .tournament_worker import TournamentWorkerConsumer
 
 logger = logging.getLogger("server")
