@@ -57,21 +57,21 @@ The `Chat` module manages :
 | `/notifications/`                 | GET    | Paginated notification list                     | `limit`, `offset` | 200 `[NotificationSchema]` |
 | `/notifications/mark_all_as_read` | POST   | Mark all notifications as read                  | -                 | 200                        |
 
-## 4. WebSocket Protocol: Exhaustive Supported Actions
+## 4. WebSocket Protocol: Supported Actions
 
 | Action               | Required `data` fields                               | Backend Response                                         | Description                           |
 | :------------------- | :--------------------------------------------------- | :------------------------------------------------------- | :------------------------------------ |
 | `new_message`        | `content`, `chat_id`, `timestamp`                    | `new_message` (to all)                                   | Send chat message                     |
 | `like_message`       | `id`, `chat_id`                                      | `chat_like_update`                                       | Like message                          |
 | `unlike_message`     | `id`, `chat_id`                                      | `chat_like_update`                                       | Unlike message                        |
-| `read_message`       | `id`                                                 | (possible notification)                                  | Mark message read                     |
+| `read_message`       | `id`                                                 | None                                                     | Mark message read                     |
 | `game_invite`        | `username`, `client_id`, `options` (dict, see below) | `game_invite`, `game_invite_canceled` or error           | Pong invite                           |
 | `reply_game_invite`  | `username`, `accept`                                 | `game_accepted`, `game_declined`, `game_invite_canceled` | Reply (accept/decline) to Pong invite |
 | `game_accepted`      | `username`                                           | `game_found`                                             | Pong invite accepted                  |
 | `game_declined`      | `username`                                           | `game_declined`                                          | Pong invite declined                  |
 | `add_new_friend`     | `sender_id`, `receiver_id`                           | `new_friend`                                             | Add friend                            |
 | `new_tournament`     | `tournament_id`, `tournament_name`, `organizer_id`   | `new_tournament`                                         | Tournament invite                     |
-| `read_notification`  | `id`                                                 | n/a                                                      | Mark notification as read             |
+| `read_notification`  | `id`                                                 | None                                                     | Mark notification as read             |
 | `notification`       | `message`, `type`                                    | `notification`                                           | Generic notification                  |
 | `user_online`        | `username`                                           | `user_online`                                            | Notify that user is online            |
 | `user_offline`       | `username`                                           | `user_offline`                                           | Notify that user is offline           |
