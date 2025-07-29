@@ -171,8 +171,7 @@ export class Navbar extends HTMLElement {
     <nav class="navbar navbar-expand fixed-top px-3">
       <user-actions-menu></user-actions-menu>
       <navbar-brand-component></navbar-brand-component>
-      <div class="ms-auto d-flex align-items-center" id="navbar-actions-content">
-      </div>
+      <div class="ms-auto d-flex align-items-center" id="navbar-actions-content"></div>
     </nav>
     `;
   }
