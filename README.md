@@ -95,7 +95,6 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 ### Testing
 
 [![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&style=for-the-badge&logoColor=fff)](#)
-[![Jest](https://img.shields.io/badge/Jest-C21325?logo=jest&style=for-the-badge&logoColor=fff)](#)
 [![Django Test Framework](https://img.shields.io/badge/Django%20Tests-092E20?logo=django&style=for-the-badge&logoColor=fff)](#)
 
 ## Architecture
