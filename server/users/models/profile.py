@@ -164,6 +164,10 @@ class Profile(models.Model):
     def dialogues(self):
         return self.dialogues_as_user1 | self.dialogues_as_user2
 
+    @classmethod
+    def get_db_table(cls):
+        return cls._meta.db_table
+
     def get_title_and_price(self):  # noqa: PLR0911
         # ruff: noqa: PLR2004
         if self.elo > 2700:
