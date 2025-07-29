@@ -186,7 +186,7 @@ class DuelEvent:
                 "nickname": nickname,
             },
         }
-        if client_id != None:
+        if client_id is not None:
             data["client_id"] = client_id
         self.consumer.send(text_data=json.dumps(data))
 
@@ -195,7 +195,7 @@ class DuelEvent:
             "action": "game_invite_canceled",
             "message": message,
         }
-        if client_id != None:
+        if client_id is not None:
             data["client_id"] = client_id
         self.consumer.send(text_data=json.dumps(data))
 

@@ -6,8 +6,8 @@ from django.db import DatabaseError, models, transaction
 
 from common.close_codes import CloseCodes
 from common.guarded_websocket_consumer import GuardedWebsocketConsumer
-from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
+from users.service import OnlineStatusService
 
 from .chat_events import ChatEvent
 from .duel_events import DuelEvent
@@ -39,7 +39,6 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                 self.user_profile.save(update_fields=["nb_active_connexions"])
 
                 self.user_profile.refresh_from_db()
-                redis_status_manager.set_user_online(self.user.id)
                 logger.info(
                     "User %s connected, now has %i active connexions",
                     self.user.username,
@@ -101,15 +100,12 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                     self.user.username,
                     self.user_profile.nb_active_connexions,
                 )
-                # Mark offline only if it was last disconnexion
                 if self.user_profile.nb_active_connexions == 0:
                     self.user_profile.is_online = False
                     self.user_profile.save(update_fields=["is_online"])
-                    redis_status_manager.set_user_offline(self.user.id)
-                    OnlineStatusConsumer.notify_online_status(self, "offline")
+                    OnlineStatusService.notify_online_status(self, "offline")
                     logger.info("User %s is now offline (no more active connexions)", self.user.username)
 
-                    # Remove user from the groups only when they have no more active connections
                     async_to_sync(self.channel_layer.group_discard)(
                         "online_users",
                         self.channel_name,
@@ -222,11 +218,9 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
         # Verify if not already friend
         if not sender.friends.filter(id=receiver.id).exists():
             sender.friends.add(receiver)
-        # Create notification
         notification = Notification.objects.action_new_friend(receiver, sender)
 
         notification_data = sender.get_user_data_with_date()
-        # Add id to the notification data
         notification_data["id"] = str(notification.id)
 
         self.send(
