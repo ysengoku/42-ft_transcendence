@@ -3,7 +3,7 @@ from django.shortcuts import render
 
 from common.schemas import MessageSchema
 from server.api import api
-from users.consumers import check_inactive_users
+from users.service import check_inactive_users
 
 from .models import Chat, Notification
 
@@ -36,6 +36,6 @@ def get_chats(request: HttpRequest):
 
 def check_inactive_users_view(request):
     if request.method == "POST":
-        check_inactive_users()  # Exécutez la logique pour vérifier les utilisateurs inactifs
+        check_inactive_users()
         return JsonResponse({"status": "success", "message": "Inactive users checked."})
     return JsonResponse({"status": "error", "message": "Invalid request method."}, status=400)
