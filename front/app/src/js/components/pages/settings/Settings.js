@@ -117,7 +117,6 @@ export class Settings extends HTMLElement {
     this.emailField.setParams(this.#state.currentUserData);
     this.passwordField.setParam(this.#state.currentUserData.connection_type);
     this.mfaEnable.setParams(this.#state.currentUserData);
-    // this.deleteAccountButton.setUsername(this.#state.currentUserData.username);
   }
 
   async handleSubmitClick(event) {
