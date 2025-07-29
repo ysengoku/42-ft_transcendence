@@ -135,3 +135,63 @@ _Status values_: `pending`, `ongoing`, `finished`, `cancelled` (for Tournament/B
   }
 }
 ```
+
+```mermaid
+---
+config:
+  layout: dagre
+  look: classic
+  theme: base
+  themeVariables:
+    lineColor: '#f7230c'
+    textColor: '#191919'
+    fontSize: 25px
+    nodeTextColor: '#000'
+    edgeLabelBackground: '#fff'
+---
+flowchart TD
+  %% Tournament Backend Worker internals
+  subgraph TOURNAMENT_WORKER
+    TW_PENDING["Wait for enough participants"]
+    TW_START["Start Tournament"]
+    TW_CANCEL_TOURNAMENT["cancel tournament"]
+    TW_CANCEL_BRACKETS["cancel bracket"]
+    TW_TAKE_WINNERS["Take winners from previous round / all participants"]
+    TW_PREP_ROUND["prepare round"]
+    TW_PREP_BRACKETS["prepare brackets"]
+    TW_GAME_ROOMS["create GameRooms for all brackets"]
+    TW_MONITOR["monitor bracket status / timeouts"]
+    TW_ALL_BRACKETS_FINISHED["all brackets games finished"]
+    TW_FALSE_WINNER["Set false winner to the cancelled bracket"]
+    TW_START_GAME["Starts Game"]
+    TW_NEXT_ROUND["next round or ends tournament"]
+    TW_END["set winner and ends tournament"]
+  end
+  %% Game Backend Worker internals
+  subgraph GAME_WORKER
+    GW_END["handles the game"]
+  end
+  %% Tournament Worker logic flow
+  TW_PENDING -- "The only participant registered leaves" --> TW_CANCEL_TOURNAMENT
+  TW_PENDING -- "Creator cancels" --> TW_CANCEL_TOURNAMENT
+  TW_PENDING -- "final participant registers" --> TW_START
+  TW_PREP_ROUND -- "All brackets were cancelled" --> TW_CANCEL_TOURNAMENT
+  TW_START --> TW_PREP_ROUND
+  TW_PREP_ROUND --> TW_TAKE_WINNERS --> TW_PREP_BRACKETS
+  TW_TAKE_WINNERS -- "Not an even number of participants" --> TW_CANCEL_TOURNAMENT
+  TW_PREP_BRACKETS -- "create GameRooms for all brackets" --> TW_GAME_ROOMS
+  TW_GAME_ROOMS --> TW_MONITOR
+  GW_END -- sends tournament_game_finished with results --> TW_MONITOR
+  TW_MONITOR --> TW_START_GAME --> GW_END
+  TW_MONITOR --> TW_ALL_BRACKETS_FINISHED
+  TW_ALL_BRACKETS_FINISHED -- "only one winner left" --> TW_END
+  TW_MONITOR -- "A bracket had no connection to the game within 10 seconds" --> TW_CANCEL_BRACKETS
+  TW_CANCEL_BRACKETS -- "No player connected to any game" --> TW_CANCEL_TOURNAMENT
+  TW_CANCEL_BRACKETS -- "Players connected to other games" --> TW_FALSE_WINNER
+  TW_ALL_BRACKETS_FINISHED -- "winners > 1" --> TW_PREP_ROUND
+  
+
+  %% Styling
+  style TOURNAMENT_WORKER fill:#70a9cc,stroke:#333,stroke-width:2px
+  style GAME_WORKER fill:#cc99ff,stroke:#333,stroke-width:2px
+---
