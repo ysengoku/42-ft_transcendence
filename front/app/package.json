@@ -10,9 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "format": "prettier --check \"**/*.{js,jsx}\"",
-    "test:jest": "jest --runInBand",
-    "test:vitest": "vitest run",
-    "test": "npm run test:jest && npm run test:vitest"
+    "test": "vitest run"
   },
   "devDependencies": {
     "@babel/preset-env": "7.23.9",
@@ -22,8 +20,6 @@
     "eslint-config-google": "0.14.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "29.7.0",
     "jsdom": "^24.0.0",
     "prettier": "3.4.2",
     "vite": "^6.3.5",
