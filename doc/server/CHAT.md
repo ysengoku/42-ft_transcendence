@@ -65,7 +65,7 @@ The `Chat` module manages :
 | `like_message`       | `id`, `chat_id`                                      | `chat_like_update`                                       | Like message                          |
 | `unlike_message`     | `id`, `chat_id`                                      | `chat_like_update`                                       | Unlike message                        |
 | `read_message`       | `id`                                                 | None                                                     | Mark message read                     |
-| `game_invite`        | `username`, `client_id`, `options` (dict, see below) | `game_invite`, `game_invite_canceled` or error           | Pong invite                           |
+| `game_invite`        | `username`, `client_id`, `options` (dict, see below) | `game_invite`, `game_invite_canceled`                    | Pong invite                           |
 | `reply_game_invite`  | `username`, `accept`                                 | `game_accepted`, `game_declined`, `game_invite_canceled` | Reply (accept/decline) to Pong invite |
 | `game_accepted`      | `username`                                           | `game_found`                                             | Pong invite accepted                  |
 | `game_declined`      | `username`                                           | `game_declined`                                          | Pong invite declined                  |
@@ -169,9 +169,9 @@ The `Chat` module manages :
 config:
   layout: dagre
   look: classic
-  theme: neutral
+  theme: base
   themeVariables:
-    lineColor: '#544'
+    lineColor: '#f7230c'
     textColor: '#191919'
     fontSize: 15px
     nodeTextColor: '#000'
@@ -187,9 +187,12 @@ flowchart TD
   %% Backend components
   subgraph BACKEND
     B["EventConsumer (WebSocket)"]
-    C["Validator.py (Validation)"]
+    C["Validation : action & data"]
     D[Chat models, Notification, etc.]
     E[Django Channels Groups]
+    I[DB Update]
+    J[Cron task]
+    K[User set Offline]
   end
 
   %% WebSocket groups
@@ -202,35 +205,37 @@ flowchart TD
   %% WebSocket handshake
   A -- "Open WebSocket (with JWT)" --> B
 
+  %% Crontab/Inactive disconnect
+  J -- "(periodic/offline detection)" --> K
+  K --> I
+  K --> E
+  B --> K
+
   %% Join groups after validation
-  B -- "Authenticate + Validate" --> C
-  C -- "Accepts User" --> E
+  B -- "Authenticates + Accepts User" --> E
   E -- "Add to user_{id}" --> F
   E -- "Add to online_users" --> H
   E -- "Add to each chat_{uuid}" --> G
 
   %% Real-time message flow
-  A -- "WS action: new_message / like_message / etc." --> B
-  B -- "Validate action & data" --> C
-  C -- "Valid?" --> D
-  D -- "DB update (create message etc)" --> D
+  A -- "WS action" --> B
+  B --> C
+  C -- "Valid data" --> D
+  D --> I
+
   D -- "Broadcast to group" --> E
 
   %% Group broadcasts back to clients
-  F -- "push notification/new_friend/etc." --> A
-  G -- "push chat event/new_message/etc." --> A
+  F -- "push notification" --> A
+  G -- "push chat event" --> A
   H -- "push online/offline status" --> A
 
   %% Error/Validation fails
-  C -- "Invalid, close with BAD_DATA" --> A
+  C -- "Invalid data, close WS connection" --> A
 
-  %% Crontab/Inactive disconnect
-  B -- "(periodic/offline detection)" --> D
-  D -- "User set offline, nb_active_connexions=0" --> H
-  H -- "'user_offline' broadcast" --> A
+  
   %% Styling
-  style CLIENT fill:#f9f,stroke:#333,stroke-width:2px
-  style BACKEND fill:#ccf,stroke:#333,stroke-width:2px
-  style GROUPS fill:#efe,stroke:#333,stroke-width:1px
-
+  style CLIENT fill:#83ad5e,stroke:#333,stroke-width:2px
+  style BACKEND fill:#70a9cc,stroke:#333,stroke-width:2px
+  style GROUPS fill:#c589e8,stroke:#333,stroke-width:1px
 ```

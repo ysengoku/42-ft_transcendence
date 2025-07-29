@@ -12,7 +12,7 @@ class Command(BaseCommand):
     help = "Reset all user connection counters to 0"
 
     def handle(self, *args, **options):
-        table_name = Profile._meta.db_table
+        table_name = Profile.get_db_table()
         connection = connections["default"]
 
         if table_name in connection.introspection.table_names():
