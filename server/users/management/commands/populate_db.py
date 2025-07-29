@@ -178,8 +178,6 @@ def put_avatars():
             f.seek(0)
             profile.update_avatar(uploaded)
             profile.save()
-        av = profile.avatar
-        # print("I putted avatar for", profile.user.username, "and it is", av, ":D")
 
     put_one_avatar("rick_roll.webp", rick)
     put_one_avatar("taki.jpg", taki)
