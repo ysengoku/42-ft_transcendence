@@ -3,11 +3,10 @@ import logging
 from datetime import datetime
 
 from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
 
+from common.close_codes import CloseCodes
 from pong.models import GameRoom
 from users.models import Profile
 
@@ -29,10 +28,14 @@ class DuelEvent:
         elif response is False:
             DuelEvent.decline_game_invite(self, data)
 
-    def create_game_room(self, profile1, profile2):
+    def create_game_room(self, profile1, profile2, settings):
+        logger.debug(settings)
         gameroom: GameRoom = GameRoom.objects.create(status=GameRoom.ONGOING)
         gameroom.add_player(profile1)
         gameroom.add_player(profile2)
+        gameroom.settings = settings
+        gameroom.save(update_fields=["settings"])
+        logger.debug(gameroom.settings)
         return gameroom
 
     def data_for_game_found(self, player, game_id):
@@ -111,9 +114,9 @@ class DuelEvent:
                 self.consumer.user.username,
             )
             return
-        game_room = self.create_game_room(sender, self.consumer.user.profile)
+        game_room = self.create_game_room(sender, self.consumer.user.profile, invitation.options)
         invitation.status = GameInvitation.ACCEPTED
-        invitation.save()
+        invitation.save(update_fields=["status"])
         invitation.sync_notification_status()
         DuelEvent.cancel_all_send_game_invites(self.consumer.user.username)
         sender_data = self.data_for_game_found(sender, game_room.id)
@@ -149,7 +152,7 @@ class DuelEvent:
             count = 0
             for invitation in invitations:
                 invitation.status = GameInvitation.DECLINED
-                invitation.save()
+                invitation.save(update_fields=["status"])
                 invitation.sync_notification_status()
                 count += 1
             logger.info(
@@ -198,14 +201,14 @@ class DuelEvent:
         self.consumer.send(text_data=json.dumps(data))
 
     def send_game_invite(self, data):
-        options = data["data"].get("options", {})
+        options = data["data"].get("settings", {})
         client_id = data["data"].get("client_id")
         if options is not None and not Validator.validate_options(options):
-            self.consumer.close()
+            self.consumer.close(CloseCodes.BAD_DATA)
             return
         receiver_username = data["data"].get("username")
         if receiver_username == self.consumer.user.username:
-            logger.warning("Error : user %s wanted to play with themself.", self.consumer.user.username)
+            logger.warning("User %s wanted to play with themself.", self.consumer.user.username)
             self.self_send_game_invite_cancelled("You can't invite yourself to a game !", client_id)
             return
 
@@ -264,7 +267,6 @@ class DuelEvent:
             notification_data["date"] = notification_data["date"].isoformat()
         self.send_ws_message_to_user(receiver, "game_invite", notification_data)
         # Notification for the sender,to find and cancel their invitation if the receiver never replies
-        # TODO: put options (settings) in notification
         Notification.objects.action_send_game_invite(
             receiver=sender,
             invitee=receiver,
@@ -309,7 +311,7 @@ class DuelEvent:
             return
         with transaction.atomic():
             invitation.status = GameInvitation.CANCELLED
-            invitation.save()
+            invitation.save(update_fields=["status"])
             invitation.sync_notification_status()
         logger.info("Cancelled pending invitations from user %s to %s", self.consumer.user.username, target_username)
         notification_data = {
@@ -333,49 +335,7 @@ class DuelEvent:
             count = 0
             for invitation in invitations:
                 invitation.status = GameInvitation.CANCELLED
-                invitation.save()
+                invitation.save(update_fields=["status"])
                 invitation.sync_notification_status()
                 count += 1
-            logger.info("Cancelled %d pending invitations for user %s", count, username)
-
-    @staticmethod
-    def cancel_all_send_and_received_game_invites(username):
-        try:
-            profile = Profile.objects.get(user__username=username)
-        except Profile.DoesNotExist:
-            logger.warning("Profile for user %s does not exists.", username)
-        invitations = GameInvitation.objects.filter(
-            Q(sender=profile) | Q(recipient=profile),
-            status=GameInvitation.PENDING,
-        )
-        if not invitations.exists():
-            logger.info("No pending invitations to cancel for user %s", username)
-            return
-        channel_layer = get_channel_layer()
-        with transaction.atomic():
-            count = 0
-            for invitation in invitations:
-                invitation.status = GameInvitation.CANCELLED
-                sender = invitation.sender
-                receiver = invitation.recipient
-                invitation.save()
-                invitation.sync_notification_status()
-                count += 1
-                target = receiver if sender == profile else sender
-                async_to_sync(channel_layer.group_send)(
-                    f"user_{target.user.id}",
-                    {
-                        "type": "chat_message",
-                        "message": json.dumps(
-                            {
-                                "action": "game_invite_canceled",
-                                "data": {
-                                    "message": "The user deleted their profile",
-                                    "username": username,
-                                    "nickname": receiver.user.nickname,
-                                },
-                            },
-                        ),
-                    },
-                )
             logger.info("Cancelled %d pending invitations for user %s", count, username)
