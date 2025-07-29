@@ -88,7 +88,7 @@ export class DuelPreview extends HTMLElement {
       this.goToDuelMenuButton.addEventListener('click', this.navigateToDuelMenu);
       return;
     }
-    this.innerHTML = this.style() + this.template();
+    this.innerHTML = this.template();
     this.player1 = this.querySelector('#duel-player1');
     this.player2 = this.querySelector('#duel-player2');
 
@@ -144,16 +144,6 @@ export class DuelPreview extends HTMLElement {
       </div>
     </div>
     `;
-  }
-
-  style() {
-    return `
-    <style>
-    .badge {
-      background-color: var(--pm-primary-600);
-    }
-    </style>
-  `;
   }
 }
 

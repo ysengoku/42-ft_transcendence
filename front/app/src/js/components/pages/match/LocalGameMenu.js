@@ -9,14 +9,6 @@ import { auth } from '@auth';
 import { sessionExpiredToast } from '@utils';
 
 export class LocalGameMenu extends HTMLElement {
-  /**
-   * Private state of the component.
-   * @property {Object} #state.options - Contains the game options selected by the user.
-   */
-  #state = {
-    options: null,
-  };
-
   constructor() {
     super();
     this.navigateToGame = this.navigateToGame.bind(this);
@@ -70,8 +62,7 @@ export class LocalGameMenu extends HTMLElement {
 
   navigateToGame(event) {
     event.preventDefault();
-    this.#state.options = this.gameOptionsForm.selectedOptions;
-    const queryParam = this.#state.options;
+    const queryParam = { ...this.gameOptionsForm.selectedOptionsAsObject };
     queryParam.type = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
     router.navigate('/singleplayer-game', queryParam);
   }

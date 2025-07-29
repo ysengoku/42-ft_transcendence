@@ -4,10 +4,10 @@ import logging
 from asgiref.sync import async_to_sync
 from django.db import transaction
 
+from common.close_codes import CloseCodes
 from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from pong.game_protocol import MatchmakingToClient
 from pong.models import GameRoom, GameRoomPlayer
-from common.close_codes import CloseCodes
 
 logger = logging.getLogger("server")
 

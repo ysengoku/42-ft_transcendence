@@ -6,7 +6,7 @@ export class ConfirmationModal extends HTMLElement {
     this.modal = null;
 
     this.handleConfirm = null;
-    this.handleDancel = null;
+    this.handleCancel = null;
 
     this.modal = null;
     this.modalElement = null;
@@ -27,6 +27,10 @@ export class ConfirmationModal extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.clearFocusInModal();
+    if (this.modal) {
+      this.modal.hide();
+    }
     this.confirmButton?.removeEventListener('click', this._handleConfirm);
     this.cancelButton?.removeEventListener('click', this._handleCancel);
     this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
