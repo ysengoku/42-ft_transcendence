@@ -5,23 +5,13 @@ from uuid import UUID
 
 from asgiref.sync import async_to_sync
 
+from common.close_codes import CloseCodes
 from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 
 from .models import Bracket, Participant, Tournament
-
-# TODO: see if BracketSchema is really needed
 from .tournament_worker import TournamentWorkerConsumer
 
 logger = logging.getLogger("server")
-
-# TODO: security checks : multiple crash when bad ws id sent by the console
-# TODO: put all shared macros between files in the same file
-NORMAL_CLOSURE = 3000
-CANCELLED = 3001
-ILLEGAL_CONNECTION = 3002
-ALREADY_IN_GAME = 3003
-EXCLUDED = 3004
-BAD_DATA = 3100
 
 
 class TournamentConsumer(GuardedWebsocketConsumer):
@@ -40,7 +30,7 @@ class TournamentConsumer(GuardedWebsocketConsumer):
         except ValueError:
             logger.warning("Wrong uuid : %s", self.tournament_id)
             self.accept()
-            self.close(ILLEGAL_CONNECTION)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
         try:
@@ -48,18 +38,18 @@ class TournamentConsumer(GuardedWebsocketConsumer):
         except Tournament.DoesNotExist:
             logger.warning("This tournament id does not exist : %s", self.tournament_id)
             self.accept()
-            self.close(BAD_DATA)
+            self.close(CloseCodes.BAD_DATA)
             return
         try:
             participant = tournament.participants.get(profile=self.user.profile)
         except Participant.DoesNotExist:
             self.accept()
-            self.close(ILLEGAL_CONNECTION)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             logger.warning("Closing because this user is not a participant : %s", self.user)
             return
         if participant.excluded:
             self.accept()
-            self.close(EXCLUDED)
+            self.close(CloseCodes.EXCLUDED)
             logger.warning("Closing because this participant was excluded : %s", self.user)
             return
 
@@ -71,7 +61,7 @@ class TournamentConsumer(GuardedWebsocketConsumer):
             bracket = tournament.get_user_current_bracket(self.user.profile, round_number)
             if bracket is None:
                 logger.warning("This bracket does not exist")
-                self.close(BAD_DATA)
+                self.close(CloseCodes.BAD_DATA)
                 return
             bracket_status = bracket.status
             if bracket_status in [Bracket.PENDING, Bracket.ONGOING]:
@@ -108,7 +98,7 @@ class TournamentConsumer(GuardedWebsocketConsumer):
 
     def close_self_ws(self, event):
         self.tournament_id = None
-        self.close(NORMAL_CLOSURE)
+        self.close(CloseCodes.NORMAL_CLOSURE)
 
     def tournament_message(self, event):
         try:

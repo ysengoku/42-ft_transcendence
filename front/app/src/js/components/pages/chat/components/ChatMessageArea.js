@@ -217,7 +217,6 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   renderPendingMessage(data) {
-    console.log('Pending message', data);
     const messageElement = document.createElement('div');
     messageElement.innerHTML = this.pendingMessageTemplate();
     messageElement.classList.add(
