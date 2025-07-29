@@ -79,7 +79,7 @@ export class InviteGameModal extends HTMLElement {
         client_id: clientInstanceId,
       },
     };
-    const settings = this.gameOptionsForm.selectedOptionsObject;
+    const settings = this.gameOptionsForm.selectedOptionsAsObject;
     message.data.settings = settings ? settings : DEFAULT_GAME_OPTIONS;
     socketManager.sendMessage('livechat', message);
     const queryParams = {
