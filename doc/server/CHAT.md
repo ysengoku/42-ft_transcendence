@@ -226,7 +226,7 @@ flowchart TD
 
   %% Crontab/Inactive disconnect
   B -- "(periodic/offline detection)" --> D
-  D -- "User set offline, nb_active_connexions=0" --> H
+  D -- "User set offline" --> H
   H -- "'user_offline' broadcast" --> A
   %% Styling
   style CLIENT fill:#83ad5e,stroke:#333,stroke-width:2px
