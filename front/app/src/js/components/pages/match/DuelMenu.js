@@ -15,8 +15,6 @@ import {
   TOAST_TYPES,
   sessionExpiredToast,
 } from '@utils';
-import { getOptionsFromLocalStorage } from './utils/gameOptions.js';
-import { DEFAULT_GAME_OPTIONS } from '@env';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
@@ -24,12 +22,10 @@ export class DuelMenu extends HTMLElement {
    * Private state of the DuelMenu component.
    * @property {Object} user - The authenticated user.
    * @property {string} opponentUsername - The username of the selected opponent.
-   * @property {Object} options - The game options selected by the user.
    */
   #state = {
     user: null,
     opponentUsername: '',
-    options: {},
   };
 
   /**
@@ -81,8 +77,6 @@ export class DuelMenu extends HTMLElement {
     this.inviteToDuel = this.inviteToDuel.bind(this);
     this.handleMatchmakingRequest = this.handleMatchmakingRequest.bind(this);
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
-
-    this.#state.options = getOptionsFromLocalStorage();
   }
 
   /**
@@ -242,10 +236,8 @@ export class DuelMenu extends HTMLElement {
   }
 
   saveSelectedOptions() {
-    this.#state.options = null;
-    this.#state.options = this.modalBodyContent.selectedOptions;
+    this.modalBodyContent.storeOptionsToLocalStorage();
     this.closeGameOptionsModal();
-    devLog('Game options:', this.#state.options);
   }
 
   /**
@@ -280,44 +272,6 @@ export class DuelMenu extends HTMLElement {
     if (this.modalElement.contains(document.activeElement)) {
       document.activeElement.blur();
     }
-  }
-
-  /**
-   * @description Convert game options to an object to include in the game invitation request.
-   */
-  optionsToObject() {
-    if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
-      return null;
-    }
-    const optionsObj = DEFAULT_GAME_OPTIONS;
-    for (const [key, value] of Object.entries(this.#state.options)) {
-      if (value !== 'any') {
-        optionsObj[key] = value;
-      } else {
-        optionsObj[key] = DEFAULT_GAME_OPTIONS[key];
-      }
-    }
-    return optionsObj;
-  }
-
-  /**
-   * @description Convert game options to query parameters for matchmaking.
-   */
-  optionsToQueryParams() {
-    if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
-      return null;
-    }
-    let queryParams = '';
-    queryParams += `?score_to_win=${this.#state.options.score_to_win}`;
-    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-    queryParams += `game_speed=${this.#state.options.game_speed}`;
-    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-    queryParams += `time_limit=${this.#state.options.time_limit}`;
-    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-    queryParams += `ranked=${this.#state.options.ranked}`;
-    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-    queryParams += `cool_mode=${this.#state.options.cool_mode}`;
-    return queryParams;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -443,8 +397,7 @@ export class DuelMenu extends HTMLElement {
         client_id: clientInstanceId,
       },
     };
-    const settings = this.optionsToObject();
-    message.data.settings = settings ? settings : DEFAULT_GAME_OPTIONS;
+    message.data.settings = this.modalBodyContent.selectedOptionsAsObject;
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
@@ -494,7 +447,7 @@ export class DuelMenu extends HTMLElement {
     if (!canEngage) {
       return;
     }
-    const queryParams = this.optionsToQueryParams();
+    const queryParams = this.modalBodyContent.selectedOptionsAsQueryParams;
     queryParams
       ? router.navigate('/duel', { status: 'matchmaking', params: queryParams })
       : router.navigate('/duel', { status: 'matchmaking' });
