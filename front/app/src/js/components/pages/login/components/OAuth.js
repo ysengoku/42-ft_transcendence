@@ -44,7 +44,7 @@ export class OAuth extends HTMLElement {
       localStorage.setItem('oauth_platform', platform);
       location.href = data.auth_url;
     } else {
-      console.error('OAuth initialization failed:', response.statusText);
+      devErrorLog('OAuth initialization failed:', response.statusText);
       unknowknErrorToast();
     }
   }
