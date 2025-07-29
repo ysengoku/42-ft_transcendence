@@ -135,6 +135,8 @@ _Status values_: `pending`, `ongoing`, `finished`, `cancelled` (for Tournament/B
   }
 }
 ```
+If mermaid does not charge, this is the result with have on mermaid's site :
+<img width="869" height="760" alt="image" src="https://github.com/user-attachments/assets/5161ece8-548f-4024-b8af-cadaeffbee8d" />
 
 ```mermaid
 ---
