@@ -171,9 +171,10 @@ describe('navigate', () => {
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     const pushStateSpy = vi.spyOn(window.history, 'pushState');
     const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+    const emptyQueryParam = new URLSearchParams('');
     await navigate('/test', '', false);
 
-    expect(handleRouteSpy).toHaveBeenCalledWith('');
+    expect(handleRouteSpy).toHaveBeenCalledWith(emptyQueryParam);
     expect(pushStateSpy).toHaveBeenCalledWith({}, '', '/test');
     expect(replaceStateSpy).not.toHaveBeenCalled();
   });
@@ -182,9 +183,10 @@ describe('navigate', () => {
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
     const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    const emptyQueryParam = new URLSearchParams('');
     await navigate('/test', '', true);
 
-    expect(handleRouteSpy).toHaveBeenCalledWith('');
+    expect(handleRouteSpy).toHaveBeenCalledWith(emptyQueryParam);
     expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/test');
     expect(pushStateSpy).not.toHaveBeenCalled();
   });
@@ -194,9 +196,10 @@ describe('navigate', () => {
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
     const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    const emptyQueryParam = new URLSearchParams('');
     await navigate('/test', '', false);
 
-    expect(handleRouteSpy).toHaveBeenCalledWith('');
+    expect(handleRouteSpy).toHaveBeenCalledWith(emptyQueryParam);
     expect(replaceStateSpy).toHaveBeenCalledWith({}, '', '/test');
     expect(pushStateSpy).not.toHaveBeenCalled();
   });

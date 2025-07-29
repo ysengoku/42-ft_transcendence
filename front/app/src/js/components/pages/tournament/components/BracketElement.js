@@ -10,7 +10,6 @@ export class BracketElement extends HTMLElement {
   }
 
   set data(data) {
-    console.log('BracketElement data:', data);
     this.#state.bracket = data;
     this.render();
   }
