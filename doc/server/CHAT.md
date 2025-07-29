@@ -65,7 +65,7 @@ The `Chat` module manages :
 | `like_message`       | `id`, `chat_id`                                      | `chat_like_update`                                       | Like message                          |
 | `unlike_message`     | `id`, `chat_id`                                      | `chat_like_update`                                       | Unlike message                        |
 | `read_message`       | `id`                                                 | None                                                     | Mark message read                     |
-| `game_invite`        | `username`, `client_id`, `options` (dict, see below) | `game_invite`, `game_invite_canceled` or error           | Pong invite                           |
+| `game_invite`        | `username`, `client_id`, `options` (dict, see below) | `game_invite`, `game_invite_canceled`                    | Pong invite                           |
 | `reply_game_invite`  | `username`, `accept`                                 | `game_accepted`, `game_declined`, `game_invite_canceled` | Reply (accept/decline) to Pong invite |
 | `game_accepted`      | `username`                                           | `game_found`                                             | Pong invite accepted                  |
 | `game_declined`      | `username`                                           | `game_declined`                                          | Pong invite declined                  |
