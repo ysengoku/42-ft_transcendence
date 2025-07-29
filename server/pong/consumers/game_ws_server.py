@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING
 
 from asgiref.sync import async_to_sync
 
-from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from common.close_codes import CloseCodes
+from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from pong.game_protocol import GameServerToClient, GameServerToGameWorker
 from pong.models import GameRoom, GameRoomPlayer
 

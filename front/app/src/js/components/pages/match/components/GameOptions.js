@@ -1,7 +1,18 @@
+/**
+ * @module GameOptions
+ * @description Centralize game configuration across different game modes - Multiplayer game, Local game and tournament
+ */
+
 import { DEFAULT_GAME_OPTIONS } from '@env';
 import { getOptionsFromLocalStorage } from '../utils/gameOptions.js';
 
 export class GameOptions extends HTMLElement {
+  /**
+   * Private state of the DuelMenu component.
+   * @property {Object} selectedOptions - Selected options by the user.
+   * @property {Object} defaultOptionValue - Default game options value set in this app
+   * @property {Object} range - Value ranges for score_to_win and time_limit
+   */
   #state = {
     selectedOptions: null,
     defaultOptionValue: null,
@@ -15,6 +26,8 @@ export class GameOptions extends HTMLElement {
 
   constructor() {
     super();
+
+    // Initialize references to DOM elements
     this.duelMenuComponent = null;
     this.optionWrapper = null;
     this.scoreToWinInput = null;
@@ -29,6 +42,7 @@ export class GameOptions extends HTMLElement {
     this.isRankedOptout = null;
     this.coolModeOptout = null;
 
+    // Initialize default options
     this.#state.defaultOptionValue = {
       score_to_win: DEFAULT_GAME_OPTIONS.score_to_win || 5,
       game_speed: DEFAULT_GAME_OPTIONS.game_speed || 'medium',
@@ -37,12 +51,18 @@ export class GameOptions extends HTMLElement {
       cool_mode: DEFAULT_GAME_OPTIONS.cool_mode || false,
     };
 
+    // Bind event handlers
     this.updateOptions = this.updateOptions.bind(this);
     this.updateSelectedValueOnRange = this.updateSelectedValueOnRange.bind(this);
     this.toggleOptoutAllOptions = this.toggleOptoutAllOptions.bind(this);
     this.toggleOptionOptout = this.toggleOptionOptout.bind(this);
   }
 
+  /**
+   * @description Lifecycle method called when the component is connected to the DOM.
+   * It sets stored user's favorite options fetching from Local storage using the key 'gameOptions'.
+   * If nothing found in Local storage, set to default values.
+   */
   connectedCallback() {
     this.#state.selectedOptions = getOptionsFromLocalStorage();
     if (!this.#state.selectedOptions || Object.keys(this.#state.selectedOptions).length === 0) {
@@ -74,39 +94,70 @@ export class GameOptions extends HTMLElement {
     this.modal = null;
   }
 
-  get selectedOptions() {
-    this.storeOptionsToLocalStorage();
-    return this.#state.selectedOptions;
-  }
-
-  get selectedOptionsObject() {
+  /**
+   * @description Convert game options to an object and return it. Used for game invitation and tournament creation.
+   * If the value is set to 'any', replace it with defaul one.
+   * @returns {Object} - If there is no selected options, return default option.
+   */
+  get selectedOptionsAsObject() {
     this.storeOptionsToLocalStorage();
     if (Object.keys(this.#state.selectedOptions).length === 0) {
-      return null;
+      return { ...DEFAULT_GAME_OPTIONS };
     }
     const optionsObj = {};
     for (const [key, value] of Object.entries(this.#state.selectedOptions)) {
-      if (value !== 'any') {
-        optionsObj[key] = value;
-      }
+      optionsObj[key] = value === 'any' ? this.#state.defaultOptionValue[key] : value;
     }
     return optionsObj;
   }
 
+  /**
+   * @description Format selected game options as query parameters and return it. Used for matchmaking.
+   * @returns {string | null}
+   */
+  get selectedOptionsAsQueryParams() {
+    if (!this.#state.selectedOptions || Object.keys(this.#state.selectedOptions).length === 0) {
+      return null;
+    }
+    let queryParams = '';
+    queryParams += `?score_to_win=${this.#state.selectedOptions.score_to_win}`;
+    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+    queryParams += `game_speed=${this.#state.selectedOptions.game_speed}`;
+    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+    queryParams += `time_limit=${this.#state.selectedOptions.time_limit}`;
+    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+    queryParams += `ranked=${this.#state.selectedOptions.ranked}`;
+    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
+    queryParams += `cool_mode=${this.#state.selectedOptions.cool_mode}`;
+    return queryParams;
+  }
+
+  /**
+   * @description Store the current `selectedOptions` state to the browser's local storage.
+   * This ensures user preferences persist across sessions.
+   * @returns {void}
+   */
   storeOptionsToLocalStorage() {
     if (!this.#state.selectedOptions) {
       return;
     }
     localStorage.setItem('gameOptions', JSON.stringify(this.#state.selectedOptions));
+    devLog('Game options stored to Local storage:', this.#state.selectedOptions);
   }
 
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
 
+  /**
+   * @description Render the component's HTML structure and initializes DOM element references and event listeners.
+   * This method is called after the component is connected to the DOM.
+   * @returns {void}
+   */
   render() {
     this.innerHTML = this.style() + this.template();
 
+    // Set references to DOM elements
     this.duelMenuComponent = document.querySelector('duel-menu');
     this.optionWrapper = this.querySelector('.form-group');
     this.scoreToWinInput = this.querySelector('#score-to-win');
@@ -143,6 +194,10 @@ export class GameOptions extends HTMLElement {
     this.coolModeOptout.addEventListener('change', this.toggleOptionOptout);
   }
 
+  /**
+   * @description Check if all options are set to 'any' (opt-out) state.
+   * @returns {boolean}
+   */
   allOptionsOptout() {
     return (
       this.#state.selectedOptions.score_to_win === 'any' &&
@@ -153,6 +208,12 @@ export class GameOptions extends HTMLElement {
     );
   }
 
+  /**
+   * @description - Dynamically update the visibility and values of the game option input fields based on the selectedOptions state.
+   * If all options are opt-out, the entire options wrapper is hidden.
+   * If an option is opt-out, its input is hidden and the opt-out checkbox is checked.
+   * @returns {void}
+   */
   renderOptions() {
     if (this.allOptionsOptout()) {
       this.optionWrapper.classList.add('d-none');
@@ -196,6 +257,12 @@ export class GameOptions extends HTMLElement {
     }
   }
 
+  /**
+   * @description Render a specific game option input field based on its ID and the current `selectedOptions` state.
+   * This includes setting input values and visually adjusting range slider outputs.
+   * @param {string} id - The identifier of the option to render (e.g., 'score_to_win', 'game_speed').
+   * @returns {void}
+   */
   renderOption(id) {
     switch (id) {
       case 'score_to_win':
@@ -242,6 +309,11 @@ export class GameOptions extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Event handling                                                      */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description - Handle input and change events from the game option form elements to update the selectedOptions state.
+   * @param {Event} event - DOM event object ('input' or 'change'), containing the target element that triggered the update.
+   */
   updateOptions(event) {
     event.stopPropagation();
     event.preventDefault();
@@ -259,6 +331,12 @@ export class GameOptions extends HTMLElement {
     }
   }
 
+  /**
+   * @description - Visually update the displayed value and position of the output element associated with a range input (<input type='range'>).
+   * Calculates the horizontal position of the output element based on the input's current value relative to its min and max attributes,
+   * ensuring the output aligns with the slider thumb.
+   * @param {Event} event - DOM 'input' event object, where event.target is the range input element
+   */
   updateSelectedValueOnRange(event) {
     const target = event.target;
     const output = target.nextElementSibling;
@@ -272,6 +350,12 @@ export class GameOptions extends HTMLElement {
     output.style.left = `calc(${newPos}% + (${8 - newPos * 0.15}px))`;
   }
 
+  /**
+   * @description Toggle the visibility of an individual game option's input field and updates its state to 'any' or default.
+   * This is triggered by a change event on an opt-out checkbox.
+   * @param {Event} event - DOM 'change' event object, where `event.target` is the opt-out checkbox.
+   * @returns {void}
+   */
   toggleOptionOptout(event) {
     const target = event.target;
     const optionWrapper = target.closest('.option-input-wrapper');
@@ -285,6 +369,12 @@ export class GameOptions extends HTMLElement {
     }
   }
 
+  /**
+   * @description Toggles the visibility of all game option input fields and sets all options to 'any' or their default values.
+   * This is triggered by a change event on the 'Opt-out all options' checkbox.
+   * @param {Event} event - DOM 'change' event object, where `event.target` is the 'Opt-out all options' checkbox.
+   * @returns {void}
+   */
   toggleOptoutAllOptions(event) {
     if (event.target.checked) {
       this.optionWrapper.classList.add('d-none');
@@ -297,7 +387,7 @@ export class GameOptions extends HTMLElement {
       };
     } else {
       this.optionWrapper.classList.remove('d-none');
-      this.#state.selectedOptions = this.#state.defaultOptionValue;
+      this.#state.selectedOptions = { ...this.#state.defaultOptionValue };
       this.renderOptions();
     }
   }

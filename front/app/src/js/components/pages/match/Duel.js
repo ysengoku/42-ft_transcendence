@@ -195,7 +195,6 @@ export class Duel extends HTMLElement {
       const optionTimeLimit = this.querySelector('#duel-option-time-limit');
       const optionRanked = this.querySelector('#duel-option-ranked');
       const optionCoolMode = this.querySelector('#duel-option-cool-mode');
-      console.log(this.#state.settings);
       this.#state.settings.score_to_win === 'any'
         ? optionScoreToWin.classList.add('d-none')
         : (optionScoreToWin.textContent = `Score to win: ${this.#state.settings.score_to_win}`);
@@ -205,9 +204,9 @@ export class Duel extends HTMLElement {
       this.#state.settings.time_limit === 'any'
         ? optionTimeLimit.classList.add('d-none')
         : (optionTimeLimit.textContent = `Time limit: ${this.#state.settings.time_limit} min`);
-      this.#state.settings.ranked === 'true'
-        ? (optionRanked.textContent = 'Ranked')
-        : optionRanked.classList.add('d-none');
+      this.#state.settings.ranked === 'any'
+        ? optionRanked.classList.add('d-none')
+        : (optionRanked.textContent = this.#state.settings.ranked === 'true' ? 'Ranked' : 'Not ranked');
       this.#state.settings.cool_mode === 'any'
         ? optionCoolMode.classList.add('d-none')
         : (optionCoolMode.textContent =

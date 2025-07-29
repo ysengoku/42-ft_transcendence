@@ -4,6 +4,7 @@ WORKDIR /app
 
 COPY ./app/package*.json ./
 RUN npm install
+RUN npm audit fix
 COPY ./app /app
 
 # Build static files
@@ -16,6 +17,7 @@ WORKDIR /app
 
 COPY ./app/package*.json .
 RUN npm install
+RUN npm audit fix
 
 EXPOSE 5173
 
