@@ -204,9 +204,9 @@ export class Duel extends HTMLElement {
       this.#state.settings.time_limit === 'any'
         ? optionTimeLimit.classList.add('d-none')
         : (optionTimeLimit.textContent = `Time limit: ${this.#state.settings.time_limit} min`);
-      this.#state.settings.ranked === 'true'
-        ? (optionRanked.textContent = 'Ranked')
-        : optionRanked.classList.add('d-none');
+      this.#state.settings.ranked === 'any'
+        ? optionRanked.classList.add('d-none')
+        : (optionRanked.textContent = this.#state.settings.ranked === 'true' ? 'Ranked' : 'Not ranked');
       this.#state.settings.cool_mode === 'any'
         ? optionCoolMode.classList.add('d-none')
         : (optionCoolMode.textContent =
