@@ -4,6 +4,7 @@ import logging
 from asgiref.sync import async_to_sync
 from django.db import DatabaseError, models, transaction
 
+from common.close_codes import CloseCodes
 from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from users.consumers import OnlineStatusConsumer, redis_status_manager
 from users.models import Profile
@@ -22,13 +23,13 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
     def connect(self):
         self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
-            self.close()
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
         try:
             self.user_profile = self.user.profile
         except AttributeError:
             logger.error("User %s has no profile", self.user.username)
-            self.close()
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
         try:
@@ -47,7 +48,7 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                 )
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
-            self.close()
+            self.close(CloseCodes.BAD_DATA)
             return
 
         self.chats = Chat.objects.for_participants(self.user_profile)
@@ -136,7 +137,7 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
             text_data_json.get("data", {})
             entire_data = text_data_json.get("data", {})
             if not Validator.validate_action_data(action, entire_data):
-                self.close()
+                self.close(CloseCodes.BAD_DATA)
                 return
             match action:
                 case "new_message":
@@ -170,11 +171,11 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                     self.join_chat(text_data_json)
                 case _:
                     logger.warning("Unknown action : %s", action)
-                    self.close()
+                    self.close(CloseCodes.BAD_DATA)
 
         except json.JSONDecodeError:
             logger.warning("Invalid JSON message")
-            self.close()
+            self.close(CloseCodes.BAD_DATA)
 
     def handle_online_status(self, event):
         """

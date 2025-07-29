@@ -2,6 +2,7 @@ import { Modal } from 'bootstrap';
 import { router } from '@router';
 import { socketManager } from '@socket';
 import { auth } from '@auth';
+import { DEFAULT_GAME_OPTIONS } from '@env';
 
 export class InviteGameModal extends HTMLElement {
   #state = {
@@ -78,16 +79,15 @@ export class InviteGameModal extends HTMLElement {
         client_id: clientInstanceId,
       },
     };
-    const settings = this.gameOptionsForm.selectedOptionsObject;
-    if (settings) {
-      message.data.settings = settings;
-    }
+    const settings = this.gameOptionsForm.selectedOptionsAsObject;
+    message.data.settings = settings ? settings : DEFAULT_GAME_OPTIONS;
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
       username: this.#state.opponent.username,
       nickname: this.#state.opponent.nickname,
       avatar: this.#state.opponent.avatar,
+      ...message.data.settings,
     };
     this.modalElement.addEventListener(
       'hidden.bs.modal',
