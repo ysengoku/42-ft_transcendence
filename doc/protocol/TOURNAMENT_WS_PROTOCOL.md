@@ -149,7 +149,6 @@ The client receives `user_won` or `player_resigned` actions from `pong WebSocket
 |----------|----------|-------------------------------------------|
 | `name`   | `string` | Nickname or username of the player        |
 | `avatar` | `string` | Avatar URL of the player                  |
-| `elo`    | `string` | New ELO of the player                     |
 | `number` | `int`    | 1 if the user was player 1, 2 if player 2 |
 
 *UI Behavior:*   
