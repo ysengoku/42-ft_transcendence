@@ -121,8 +121,6 @@ export class Tournament extends HTMLElement {
       this.#state.creator.alias = this.#state.tournament.tournament_creator.alias;
     }
 
-    console.log('Tournament data fetched:', this.#state.tournament);
-
     // Find user data in the tournament participants
     this.#state.userDataInTournament = this.#state.tournament.participants.find((participant) => {
       return participant.profile.username.toLowerCase() === this.#state.user.username.toLowerCase();
@@ -156,7 +154,6 @@ export class Tournament extends HTMLElement {
             router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
           }, 3000);
         } else {
-          // TODO: Check this
           showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED);
           setTimeout(() => {
             router.redirect('/home');
@@ -186,8 +183,6 @@ export class Tournament extends HTMLElement {
         this.resolveUIStatus[this.#state.tournament.status]();
         const isUserQualified = this.checkUserStatus();
         if (!isUserQualified) {
-          // showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.ELIMINATED, this.#state.tournament.name);
-          // router.redirect('/home');
           return;
         }
     }
@@ -219,7 +214,6 @@ export class Tournament extends HTMLElement {
   }
 
   checkUserStatus() {
-    console.log('Checking user status in tournament:', this.#state.userDataInTournament);
     switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
         devLog('User is playing a match, redirecting to game page:', gameId);
@@ -265,7 +259,7 @@ export class Tournament extends HTMLElement {
               this.#state.uiStatus = UI_STATUS.WAITING_NEXT_ROUND;
               break;
             case BRACKET_STATUS.CANCELED:
-              this.#state.uiStatus = UI_STATUS.ERROR; // TODO: Consider error handling
+              this.#state.uiStatus = UI_STATUS.ERROR;
               break;
             default:
               devErrorLog('Unknown bracket status:', this.#state.currentUserBracket.status);
