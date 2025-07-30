@@ -69,7 +69,7 @@ const router = (() => {
           this.renderStaticUrlComponent(componentTag, queryParams);
         }
       } else {
-        devErrorLog('Route not found:', path);
+        log.error('Route not found:', path);
         this.renderStaticUrlComponent('page-not-found');
       }
     }
@@ -161,7 +161,7 @@ const router = (() => {
      * @return {void}
      */
     async navigate(path = window.location.pathname, queryParams = '', redirect = false) {
-      devLog('Navigating to:', path);
+      log.info('Navigating to:', path);
       const splitPath = path.split('?');
       if (splitPath[1]) {
         path = splitPath[0];
@@ -204,7 +204,7 @@ const router = (() => {
      * @return {void}
      */
     async redirect(path = window.location.pathname, queryParams = '') {
-      console.trace('Redirecting');
+      log.trace('Redirecting');
       this.navigate(path, queryParams, true);
     }
 

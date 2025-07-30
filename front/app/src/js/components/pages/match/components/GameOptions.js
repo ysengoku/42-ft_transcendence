@@ -142,7 +142,7 @@ export class GameOptions extends HTMLElement {
       return;
     }
     localStorage.setItem('gameOptions', JSON.stringify(this.#state.selectedOptions));
-    devLog('Game options stored to Local storage:', this.#state.selectedOptions);
+    log.info('Game options stored to Local storage:', this.#state.selectedOptions);
   }
 
   /* ------------------------------------------------------------------------ */

@@ -101,7 +101,7 @@ export class FriendsList extends HTMLElement {
       true,
     );
     if (!response.success) {
-      devErrorLog('Failed to fetch friends list:', response);
+      log.error('Failed to fetch friends list:', response);
       const unavailable = document.createElement('li');
       unavailable.innerHTML = this.unavailableTemplate();
       const message = unavailable.querySelector('p');

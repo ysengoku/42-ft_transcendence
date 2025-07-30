@@ -74,7 +74,6 @@ export class ChatList extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
   async render() {
-    // console.time('ChatList render');
     this.innerHTML = this.style() + this.template();
     this.loader = this.querySelector('.chat-loader');
     this.loader.innerHTML = loader();
@@ -97,7 +96,6 @@ export class ChatList extends HTMLElement {
     while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
       await this.loadMoreItems();
     }
-    // console.timeEnd('ChatList render');
 
     if (this.#state.totalItemCount === 0 || (this.#state.totalItemCount > 0 && this.#state.displayedItemCount === 0)) {
       this.renderNoConversationsMessage();

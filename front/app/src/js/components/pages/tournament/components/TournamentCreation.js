@@ -88,7 +88,7 @@ export class TournamentCreation extends HTMLElement {
     if (parsedData.length === 2) {
       this.#requiredParticipantsOptions = parsedData;
     } else {
-      console.warn(
+      log.error(
         'Invalid required participants options in environment variable. Using default values of the component.',
       );
       this.#requiredParticipantsOptions = [4, 8];

@@ -169,7 +169,7 @@ export class Chat extends HTMLElement {
       true,
     );
     if (response.success) {
-      devLog('Chat list response:', response);
+      log.info('Chat list response:', response);
       return response.data;
     }
   }
@@ -184,7 +184,7 @@ export class Chat extends HTMLElement {
       true,
     );
     if (response.success) {
-      devLog('Chat data response:', response);
+      log.info('Chat data response:', response);
       return { data: response.data, status: response.status };
     } else {
       return null;

@@ -280,7 +280,7 @@ export class NotificationsListItem extends HTMLElement {
       if (duelPage) {
         duelPage.cancelInvitation();
       } else {
-        devErrorLog('Duel page not found');
+        log.error('Duel page not found');
       }
       return;
     }
@@ -310,7 +310,7 @@ export class NotificationsListItem extends HTMLElement {
       if (tournamentPage) {
         tournamentPage.showTournamentDetail(null, this.#state.data.tournament_id);
       } else {
-        devErrorLog('Tournament page not found');
+        log.error('Tournament page not found');
       }
     });
   }

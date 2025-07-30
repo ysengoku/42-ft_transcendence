@@ -8,21 +8,21 @@ import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/to
 
 socketManager.addSocket('tournament', {
   new_registration: (data) => {
-    devLog('New tournament registration:', data);
+    log.info('New tournament registration:', data);
     if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPendingContentElement = document.querySelector('tournament-pending');
       tournamentPendingContentElement?.addParticipant(data);
     }
   },
   registration_canceled: (data) => {
-    devLog('Tournament registration canceled:', data);
+    log.info('Tournament registration canceled:', data);
     if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPendingContentElement = document.querySelector('tournament-pending');
       tournamentPendingContentElement?.removeParticipant(data);
     }
   },
   tournament_canceled: (data) => {
-    devLog('Tournament canceled:', data);
+    log.info('Tournament canceled:', data);
     if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPageElement = document.querySelector('tournament-room');
       tournamentPageElement?.handleTournamentCanceled(data);
@@ -31,7 +31,7 @@ socketManager.addSocket('tournament', {
     }
   },
   tournament_start: (data) => {
-    devLog('Tournament starts:', data);
+    log.info('Tournament starts:', data);
     if (
       window.location.pathname.startsWith('/tournament') ||
       window.location.pathname.startsWith('/multiplayer-game')
@@ -49,7 +49,7 @@ socketManager.addSocket('tournament', {
     ) {
       const tournamentPage = document.querySelector('tournament-room');
       if (!tournamentPage) {
-        devErrorLog('Tournament RoundStart Element not found, cannot update UI.');
+        log.error('Tournament RoundStart Element not found, cannot update UI.');
         return;
       }
       tournamentPage.setNextRound(data);
@@ -66,7 +66,7 @@ socketManager.addSocket('tournament', {
     }
     const tournamentPage = document.querySelector('tournament-room');
     if (!tournamentPage) {
-      devErrorLog('Tournament RoundOngoing Element not found, cannot update bracket.');
+      log.error('Tournament RoundOngoing Element not found, cannot update bracket.');
       return;
     }
     tournamentPage.updateMatchResult(data);
