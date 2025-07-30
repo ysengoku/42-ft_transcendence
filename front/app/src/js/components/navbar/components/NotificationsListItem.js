@@ -1,15 +1,38 @@
+/**
+ * @module NotificationsListItem
+ * @description
+ * This module defines a custom notifications list item component for the navbar.
+ * It handles the rendering of individual notifications, including game invitations, tournament announcements, and new friends.
+ * It provides methods to accept or decline game invitations, cancel duel invitations,
+ * participate in tournaments, and navigate to user profiles.
+ */
+
 import { router } from '@router';
 import { socketManager } from '@socket';
 import { getRelativeTime, showToastNotification, TOAST_TYPES } from '@utils';
 import { DUEL_STATUS } from '@components/pages/match/Duel';
 
+/**
+ * @class NotificationsListItem
+ * @extends HTMLElement
+ */
 export class NotificationsListItem extends HTMLElement {
+  /**
+   * Private state of the NotificationsListItem component.
+   * @property {string} username - The username of the logged-in user.
+   * @property {string} action - The type of notification action (game_invite, new_tournament, new_friend).
+   * @property {Object} data - The data associated with the notification.
+   */
   #state = {
     username: '',
     action: '',
     data: null,
   };
 
+  /**
+   * @description
+   * Sets the state of the notification item.
+   */
   message = {
     gameInvitation: (nickname) => `${nickname} challenges you to a duel.`,
     pendingGameInvitation: (nickname) => `You've challenged ${nickname} to a duel.`,
@@ -28,6 +51,12 @@ export class NotificationsListItem extends HTMLElement {
     this.navigateToProfile = this.navigateToProfile.bind(this);
   }
 
+  /**
+   * @description
+   * Sets the state of the notification item and render the component.
+   * @param {Object} data - The data to set in the state.
+   * @returns {void}
+   */
   set state(data) {
     this.#state.action = data.action;
     this.#state.data = data.data;
@@ -35,6 +64,12 @@ export class NotificationsListItem extends HTMLElement {
     this.render();
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is removed from the DOM.
+   * It removes event listeners to prevent memory leaks.
+   * @returns {void}
+   */
   disconnectedCallback() {
     this.acceptButton?.removeEventListener('click', this.handleAcceptDuel);
     this.declineButton?.removeEventListener('click', this.handleDeclineDuel);
@@ -48,6 +83,14 @@ export class NotificationsListItem extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Renders the notifications list item component by setting its inner HTML.
+   * It initializes the avatar image, notification content, and call-to-action buttons based on the notification action.
+   * It also sets up event listeners for the buttons to handle actions like accepting or declining game invitations,
+   * canceling duel invitations, participating in tournaments, and navigating to user profiles
+   * @returns {void}
+   */
   render() {
     this.innerHTML = this.style() + this.template();
 
@@ -109,6 +152,13 @@ export class NotificationsListItem extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Renders the game option tags based on the settings of the game invitation.
+   * It creates tags for score to win, game speed, time limit, ranked status, and cool mode,
+   * and appends them to the notification game options wrapper.
+   * @returns {void}
+   */
   renderGameOptionTags() {
     const optionsWrapper = this.querySelector('.notification-game-options');
     if (!optionsWrapper) {
@@ -136,6 +186,14 @@ export class NotificationsListItem extends HTMLElement {
     optionsWrapper.appendChild(coolMode);
   }
 
+  /**
+   * @description
+   * Replies to a game invite by sending a message to the server.
+   * It constructs a message with the username and whether the invite is accepted or declined.
+   * It also closes the dropdown menu after sending the message.
+   * @param {boolean} accept - Whether to accept the game invite.
+   * @returns {void}
+   */
   replyGameInvite(accept) {
     const message = {
       action: 'reply_game_invite',
@@ -149,6 +207,17 @@ export class NotificationsListItem extends HTMLElement {
     dropdown.classList.remove('show');
   }
 
+  /**
+   * @description
+   * Handles the accept duel action by sending a reply to the game invite.
+   * It checks if the user is already in a duel page.
+   * If so, cancels any staring game or ongoing invitation.
+   * It waits for confirmation from the server before redirecting to the duel lobby.
+   * If the user is not in duel lobby, it redirects there with the game ID and user details.
+   * @param {Event} event - The click event triggered by the accept button.
+   * @returns {void}
+   * @listens click
+   */
   async handleAcceptDuel() {
     const currentPath = window.location.pathname;
     let duelPage;
@@ -187,10 +256,22 @@ export class NotificationsListItem extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Handles the decline duel action by sending a reply to the game invite with a decline status.
+   * @returns {void}
+   * @listens click
+   */
   handleDeclineDuel() {
     this.replyGameInvite(false);
   }
 
+  /**
+   * @description
+   * If the user is inviter, it cancels the duel invitation by sending a message to the server.
+   * @returns {void}
+   * @listens click
+   */
   cancelDuelInvitation() {
     const dropdown = this.closest('.dropdown-menu');
     dropdown.classList.remove('show');
@@ -212,6 +293,14 @@ export class NotificationsListItem extends HTMLElement {
     socketManager.sendMessage('livechat', message);
   }
 
+  /**
+   * @description
+   * Handles the participation in a tournament by navigating to the tournament menu.
+   * It closes the dropdown menu and redirects to the tournament menu page.
+   * It also shows the tournament detail if the tournament page is found.
+   * @returns {void}
+   * @listens click
+   */
   handleParticipateTournament() {
     const dropdown = this.closest('.dropdown-menu');
     dropdown.classList.remove('show');
@@ -226,6 +315,13 @@ export class NotificationsListItem extends HTMLElement {
     });
   }
 
+  /**
+   * @description
+   * Navigates to the user profile page of the notification's data.
+   * It closes the dropdown menu and redirects to the user's profile page.
+   * @returns {void}
+   * @listens click
+   */
   navigateToProfile() {
     const dropdown = this.closest('.dropdown-menu');
     dropdown.classList.remove('show');
