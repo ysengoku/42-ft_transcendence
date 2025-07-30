@@ -3,6 +3,7 @@ import logging
 from django.test import TestCase
 from django.db.utils import IntegrityError
 from unittest.mock import patch
+from django.utils import timezone
 
 from users.models import User, RefreshToken
 
@@ -11,7 +12,7 @@ class RefreshTokenModelTests(TestCase):
     def setUp(self):
         self.user: User = User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
 
-    @patch("users.models.refresh_token.jwt.encode", return_value=b"old_refresh_token")
+    @patch("users.models.refresh_token.jwt.encode", return_value="old_refresh_token")
     def test_create_when_duplicate_token_exists(self, mock_encode):
         old_refresh_token = RefreshToken(user=self.user, token="old_refresh_token")
         old_refresh_token.save()
