@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-globalThis.devErrorLog = vi.fn();
+globalThis.log = {};
+globalThis.log.error = vi.fn();
 
 import {
   getOptionsFromLocalStorage,
@@ -93,9 +94,9 @@ describe('validateOption', () => {
   });
 
   it('returns undefined for unknown type', () => {
-    globalThis.devErrorLog.mockClear();
+    globalThis.log.error.mockClear();
     expect(validateOption('x', { type: 'unknown' })).toBeUndefined();
-    expect(globalThis.devErrorLog).toHaveBeenCalledWith('Unknown validation rule type: unknown');
+    expect(globalThis.log.error).toHaveBeenCalledWith('Unknown validation rule type: unknown');
   });
 });
 
