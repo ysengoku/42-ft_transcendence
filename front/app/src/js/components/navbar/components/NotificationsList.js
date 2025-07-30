@@ -62,12 +62,8 @@ export class NotificationsList extends HTMLElement {
    * Lifecycle method called when the element is added to the DOM.
    * @returns {Promise<void>}
    */
-  async connectedCallback() {
-    const userData = await auth.getUser();
-    if (!userData) {
-      return;
-    }
-    this.#state.username = userData.username;
+  connectedCallback() {
+    this.#state.username = auth.getStoredUser()?.username || '';
     this.render();
   }
 
@@ -120,6 +116,9 @@ export class NotificationsList extends HTMLElement {
    * @listens shown.bs.dropdown
    */
   async renderList(clearList = true) {
+    if (!this.#state.username) {
+      this.#state.username = auth.getStoredUser()?.username || '';
+    }
     if (clearList) {
       this.clearList();
     }
