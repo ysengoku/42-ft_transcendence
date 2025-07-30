@@ -108,7 +108,7 @@ socketManager.addSocket('livechat', {
 ## Error Handling
 	
 - Malformed JSON or missing action → logged and ignored.
-- Unknown action → logged via devErrorLog.
+- Unknown action → logged via log.error.
 
 ## Message Protocol
 

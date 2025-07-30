@@ -23,7 +23,7 @@ if (defaultGameOptionsFromEnv) {
   try {
     defaultGameOptions = JSON.parse(defaultGameOptionsFromEnv);
   } catch (error) {
-    console.warn('Invalid JSON format for VITE_DEFAULT_GAME_OPTIONS:', error);
+    log.error('Invalid JSON format for VITE_DEFAULT_GAME_OPTIONS:', error);
   }
 }
 export const DEFAULT_GAME_OPTIONS = defaultGameOptions;
