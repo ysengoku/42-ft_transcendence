@@ -4,7 +4,6 @@
  * Includes user search and friend list
  */
 
-import { router } from '@router';
 import { isMobile } from '@utils';
 
 export class UserActionsMenu extends HTMLElement {
@@ -50,7 +49,7 @@ export class UserActionsMenu extends HTMLElement {
    * Updates the login status of the user.
    * If the status has not changed, it does nothing.
    * If the user is logged in, it renders the component.
-   * @param {boolean} isLoggedin 
+   * @param {boolean} isLoggedin
    * @returns {void}
    */
   updateLoginStatus(isLoggedin) {

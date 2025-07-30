@@ -131,7 +131,7 @@ export class UserSearch extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Event handling                                                       */
   /* ------------------------------------------------------------------------ */
-  
+
   /**
    * @description
    * Clears the user list when the input is empty or the form is clicked.
