@@ -99,7 +99,6 @@ export class Settings extends HTMLElement {
     this.emailField = this.querySelector('settings-email-update');
     this.passwordField = this.querySelector('settings-password-update');
     this.mfaEnable = this.querySelector('mfa-enable-update');
-    // this.deleteAccountButton = this.querySelector('delete-account-button');
     this.resetButton = this.querySelector('#settings-reset-button');
 
     this.setParams();
@@ -118,7 +117,6 @@ export class Settings extends HTMLElement {
     this.emailField.setParams(this.#state.currentUserData);
     this.passwordField.setParam(this.#state.currentUserData.connection_type);
     this.mfaEnable.setParams(this.#state.currentUserData);
-    // this.deleteAccountButton.setUsername(this.#state.currentUserData.username);
   }
 
   async handleSubmitClick(event) {
@@ -229,7 +227,6 @@ export class Settings extends HTMLElement {
     return `
     <div class="container mt-3 mb-4">
       <div class="row justify-content-center">
-        <delete-account-confirmation-modal></delete-account-confirmation-modal>
         <div class="form-container col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 p-4">
           <form class="w-100">
             <legend class="mt-4 mb-3 border-bottom">Settings</legend>
@@ -252,10 +249,6 @@ export class Settings extends HTMLElement {
               <button type="button" class="btn mx-2" id="settings-reset-button">Reset</button>
               <button type="submit" class="btn btn-wood mx-2">Save changes</button>
             </div>
-
-            <!-- <div class="mt-4 mb-3">
-              <delete-account-button></delete-account-button>
-            </div> -->
           </form>
   
           <avatar-upload-modal></avatar-upload-modal>

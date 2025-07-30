@@ -37,7 +37,7 @@ export class DuelButton extends HTMLElement {
       return;
     }
     if (authStatus.response.game_id) {
-      devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
+      log.info('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
       router.navigate(`multiplayer-game/${authStatus.response.game_id}`);
       return;
     }

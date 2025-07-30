@@ -142,7 +142,7 @@ export class GameOptions extends HTMLElement {
       return;
     }
     localStorage.setItem('gameOptions', JSON.stringify(this.#state.selectedOptions));
-    devLog('Game options stored to Local storage:', this.#state.selectedOptions);
+    log.info('Game options stored to Local storage:', this.#state.selectedOptions);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -532,7 +532,7 @@ export class GameOptions extends HTMLElement {
       display: block;
       flex-shrink: 0;
     }
-    .modal-content {
+    .game-options-modal {
       background-color: transparent;
       color: var(--pm-primary-100) !important;
     }
@@ -616,7 +616,7 @@ export class GameOptions extends HTMLElement {
     .form-switch .form-check-input:checked {
       background-image: url("${knobUrl}") !important;
     }
-    .modal-footer button {
+    .modal-footer .confirm-button {
       color: var(--pm-primary-100) !important;
     }
     </style>
