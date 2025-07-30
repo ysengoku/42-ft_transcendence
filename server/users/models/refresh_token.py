@@ -35,7 +35,7 @@ class RefreshTokenQuerySet(models.QuerySet):
 
         access_token = jwt.encode(payload, settings.ACCESS_TOKEN_SECRET_KEY, algorithm="HS256")
         payload["exp"] = now + timedelta(minutes=15)
-        refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
+        refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256").decode()
 
         refresh_token_instance = self.model(
             user=user,
@@ -92,7 +92,7 @@ class RefreshToken(models.Model):
     token = models.CharField(max_length=255, unique=True)
     is_revoked = models.BooleanField(default=False)
 
-    objects = RefreshTokenQuerySet.as_manager()
+    objects: RefreshTokenQuerySet = RefreshTokenQuerySet.as_manager()
 
     def __str__(self):
         return f"Refresh token of {self.user.username}"
