@@ -1,8 +1,10 @@
+import contextlib
 from datetime import datetime, timedelta
 
 import jwt
 from django.conf import settings
 from django.db import models
+from django.db.utils import IntegrityError
 from django.utils import timezone
 from ninja.errors import AuthenticationError
 
@@ -43,9 +45,9 @@ class RefreshTokenQuerySet(models.QuerySet):
         )
 
         # ensure uniqueness
-        self.filter(token=refresh_token_instance.token).delete()
+        with contextlib.suppress(IntegrityError):
+            refresh_token_instance.save()
 
-        refresh_token_instance.save()
         return access_token, refresh_token_instance
 
     def rotate(self, refresh_token_raw: str) -> tuple:
