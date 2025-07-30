@@ -19,7 +19,7 @@ class RefreshTokenQuerySet(models.QuerySet):
     def set_revoked(self):
         return self.update(is_revoked=True)
 
-    def create(self, user, old_refresh_token_instance: "RefreshToken" = None, now: datetime | None = None) -> tuple:
+    def create(self, user, now: datetime | None = None) -> tuple:
         """
         Creates a new refresh token.
         To avoid collisions, if old refresh token is identical to the new one, deletes the old refresh token.
@@ -35,18 +35,15 @@ class RefreshTokenQuerySet(models.QuerySet):
 
         access_token = jwt.encode(payload, settings.ACCESS_TOKEN_SECRET_KEY, algorithm="HS256")
         payload["exp"] = now + timedelta(minutes=15)
-        refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256").decode()
+        refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
 
         refresh_token_instance = self.model(
             user=user,
             token=refresh_token,
         )
 
-        if not old_refresh_token_instance:
-            old_refresh_token_instance = self.filter(token=refresh_token_instance.token).first()
-
-        if old_refresh_token_instance and old_refresh_token_instance.token == refresh_token_instance.token:
-            old_refresh_token_instance.delete()
+        # ensure uniqueness
+        self.filter(token=refresh_token_instance.token).delete()
 
         refresh_token_instance.save()
         return access_token, refresh_token_instance
@@ -70,7 +67,7 @@ class RefreshTokenQuerySet(models.QuerySet):
         refresh_token_instance.is_revoked = True
         refresh_token_instance.save()
 
-        return self.create(refresh_token_instance.user, refresh_token_instance)
+        return self.create(refresh_token_instance.user)
 
     def _verify_jwt(self, token: str, key: str) -> dict:
         try:
