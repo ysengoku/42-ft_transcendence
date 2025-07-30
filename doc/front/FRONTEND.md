@@ -30,6 +30,12 @@ Custom client-side `router` and a singleton `socketManager` for WebSocket commun
 
 </br>
 
+## SPA Application Flow
+
+![SPA Application Flow](/assets/SPA-runtime-flow.png)
+
+</br>
+
 ## Docker Configuration
 
 Two multistage Docker targets are defined.
@@ -53,9 +59,7 @@ The `app/package.json` defines these key scripts:
 | `preview`     | `vite preview`                             | Serve the production build locally |
 | `lint`        | `eslint .`                                 | Static code analysis               |
 | `format`      | `prettier --check "**/*.{js,jsx}"`         | Enforce code style                 |
-| `test:jest`   | `jest --runInBand`                         | Run DOM-related tests in jsdom     |
-| `test:vitest` | `vitest run`                               | Run pure unit tests                |
-| `test`        | `npm run test:jest && npm run test:vitest` | Run all tests                      |
+| `test`        | `vitest run`                               | Run unit tests                     |
 
 </br>
 
@@ -69,8 +73,8 @@ app/
 │   ├── main.js              # Application entry point
 │   └── js/
 │       ├── components/      # Custom HTML elements used in the UI
-│       │   ├── navbar/      # Contains the navbar component
-│       │   └── pages/       # Page-level custom elements
+│       │   ├── navbar/        # Navbar components
+│       │   └── pages/         # Page-level components
 │       ├── router.js        # Client-side routing logic
 │       ├── sockets/         # WebSocket manager and handlers
 │       ├── api/             # Handles HTTP requests to the backend
@@ -79,7 +83,8 @@ app/
 ├── vite.config.js           # Vite configuration
 ├── Dockerfile 
 ├── package.json             # NPM scripts and dependencies
-└── __tests__/               # Vitest & Jest test files
+├── package-lock.json        # Records exact versions of dependencies for consistent installs
+└── __tests__/               # Vitest test files
 ```
 
 </br>
@@ -109,8 +114,7 @@ Vite handles both the development server and the production build process, minim
 ## Testing
 
 - **Unit Tests**: Vitest covers router logic, socket manager, and utility functions under `__tests__/`.
-- **DOM Tests**: Jest + jsdom verifies component rendering and event handlers.
-- **Coverage Goal**: All critical modules (routing, sockets, utilities) are unit-tested; UI components are covered where logic exists.
+- **Coverage Goal**: All critical modules (routing, sockets, utilities) and utility functions are unit-tested.
 
 </br>
 

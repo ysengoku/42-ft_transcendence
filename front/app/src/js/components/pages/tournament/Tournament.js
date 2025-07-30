@@ -125,9 +125,9 @@ export class Tournament extends HTMLElement {
     this.#state.userDataInTournament = this.#state.tournament.participants.find((participant) => {
       return participant.profile.username.toLowerCase() === this.#state.user.username.toLowerCase();
     });
-    devLog('User data in tournament:', this.#state.userDataInTournament);
+    log.info('User data in tournament:', this.#state.userDataInTournament);
     if (!this.#state.userDataInTournament) {
-      devLog('User is not in this tournament');
+      log.info('User is not in this tournament');
       router.redirect('/tournament-menu');
       return;
     }
@@ -145,7 +145,7 @@ export class Tournament extends HTMLElement {
     switch (this.#state.tournament.status) {
       case TOURNAMENT_STATUS.FINISHED:
         if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER) {
-          devLog('Tournament finished and the user is the champion');
+          log.info('Tournament finished and the user is the champion');
           socketManager.closeSocket('tournament', this.#state.tournamentId);
           requestAnimationFrame(() => {
             showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CHAMPION, this.#state.tournament.name);
@@ -174,9 +174,9 @@ export class Tournament extends HTMLElement {
         this.findCurrentRound();
         this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
         this.findAssignedBracketForUser();
-        devLog("Current user's bracket", this.#state.currentUserBracket);
+        log.info("Current user's bracket", this.#state.currentUserBracket);
         if (!this.#state.currentUserBracket) {
-          devErrorLog('User is not assigned to any bracket in the current round');
+          log.error('User is not assigned to any bracket in the current round');
           router.redirect('/home');
           return;
         }
@@ -187,7 +187,7 @@ export class Tournament extends HTMLElement {
         }
     }
 
-    devLog('UI status set to:', this.#state.uiStatus);
+    log.info('UI status set to:', this.#state.uiStatus);
     this.render();
     socketManager.openSocket('tournament', this.#state.tournamentId);
   }
@@ -197,11 +197,11 @@ export class Tournament extends HTMLElement {
       return round.status === ROUND_STATUS.ONGOING || round.status === ROUND_STATUS.PENDING;
     });
     if (!this.#state.currentRound) {
-      devErrorLog('No ongoing or pending round found in the tournament');
+      log.error('No ongoing or pending round found in the tournament');
       return;
     }
     this.#state.currentRoundNumber = this.#state.tournament.rounds.indexOf(this.#state.currentRound) + 1;
-    devLog('Current round found:', this.#state.currentRound);
+    log.info('Current round found:', this.#state.currentRound);
   }
 
   findAssignedBracketForUser() {
@@ -216,7 +216,7 @@ export class Tournament extends HTMLElement {
   checkUserStatus() {
     switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
-        devLog('User is playing a match, redirecting to game page:', gameId);
+        log.info('User is playing a match, redirecting to game page:', gameId);
         const gameId = this.#state.currentUserBracket.game_id;
         router.redirect(`multiplayer-game/${gameId}`);
         return false;
@@ -230,7 +230,7 @@ export class Tournament extends HTMLElement {
       case PARTICIPANT_STATUS.PENDING:
         return true;
       default:
-        devErrorLog('Unknown participant status');
+        log.error('Unknown participant status');
         return false;
     }
   }
@@ -262,11 +262,11 @@ export class Tournament extends HTMLElement {
               this.#state.uiStatus = UI_STATUS.ERROR;
               break;
             default:
-              devErrorLog('Unknown bracket status:', this.#state.currentUserBracket.status);
+              log.error('Unknown bracket status:', this.#state.currentUserBracket.status);
           }
           break;
         default:
-          devErrorLog(
+          log.error(
             'Cannot resolve UI status. Round status:',
             this.#state.currentRound.status,
             'Current bracket status:',
@@ -317,7 +317,7 @@ export class Tournament extends HTMLElement {
         previous_round: previousRound,
         game_id: this.#state.currentUserBracket.game_id,
       };
-      devLog("User's Game id for the starting round:", this.#state.currentUserBracket.game_id);
+      log.info("User's Game id for the starting round:", this.#state.currentUserBracket.game_id);
       return tournamentRoundStart;
     },
     [UI_STATUS.WAITING_NEXT_ROUND]: () => {
@@ -367,13 +367,13 @@ export class Tournament extends HTMLElement {
       this.tournamentContentWrapper.removeChild(this.tournamentContentWrapper.firstChild);
     }
     let content = null;
-    devLog('Updating content for UI status:', this.#state.uiStatus);
+    log.info('Updating content for UI status:', this.#state.uiStatus);
     content = this.tournamentContent[this.#state.uiStatus]();
 
     if (content) {
       this.tournamentContentWrapper.appendChild(content);
     } else {
-      devErrorLog(`Tournament status not found: ${this.#state.uiStatus}`);
+      log.error(`Tournament status not found: ${this.#state.uiStatus}`);
     }
   }
 
@@ -400,7 +400,7 @@ export class Tournament extends HTMLElement {
     this.#state.tournament.rounds[0] = this.#state.currentRound;
     this.findAssignedBracketForUser();
     if (!this.#state.currentUserBracket) {
-      devErrorLog('User is not assigned to any bracket in the current round');
+      log.error('User is not assigned to any bracket in the current round');
       router.redirect('/tournament-menu');
       return;
     }
@@ -419,7 +419,7 @@ export class Tournament extends HTMLElement {
     }
     const tournamentRoundOngoingElement = this.querySelector('tournament-round-ongoing');
     if (!tournamentRoundOngoingElement) {
-      devErrorLog('Tournament RoundOngoing Element not found, cannot update bracket.');
+      log.error('Tournament RoundOngoing Element not found, cannot update bracket.');
       return;
     }
     tournamentRoundOngoingElement.updateBracket(data);

@@ -65,7 +65,7 @@ export class TournamentRoundOngoing extends HTMLElement {
   updateBracket(matchData) {
     const bracketElement = this.querySelector(`#bracket-${matchData.bracket.game_id}`);
     if (!bracketElement) {
-      devErrorLog('Bracket element not found for game_id:', matchData.bracket.game_id);
+      log.error('Bracket element not found for game_id:', matchData.bracket.game_id);
       return;
     }
     const player1Element = bracketElement.querySelector('.bracket-player-1');
@@ -104,7 +104,7 @@ export class TournamentRoundOngoing extends HTMLElement {
   }
 
   roundFinishedAnimation() {
-    devLog(`Round ${this.#state.roundNumber} finished`);
+    log.info(`Round ${this.#state.roundNumber} finished`);
     this.roundStatusMessage.textContent = 'All Gunslingers have completed their matches. Preparing the next round.';
     return new Promise((resolve) => {
       const scoreElements = this.querySelectorAll('.player-score');

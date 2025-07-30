@@ -41,7 +41,7 @@ export function getOptionsFromLocalStorage() {
     try {
       options = JSON.parse(storedOptions);
     } catch {
-      devErrorLog('Invalid format of Game options');
+      log.error('Invalid format of Game options');
       options = null;
     }
   }
@@ -74,6 +74,6 @@ export function validateOption(raw, rule) {
     case 'number':
       return raw === 'any' || (typeof raw === 'number' && raw >= rule.min && raw <= rule.max);
     default:
-      devErrorLog(`Unknown validation rule type: ${rule.type}`);
+      log.error(`Unknown validation rule type: ${rule.type}`);
   }
 }
