@@ -1,5 +1,16 @@
+/**
+ * @module UserSearch
+ * @description
+ * This module provides a user search component that allows users to search for other users.
+ * It handles user input, fetches user data from the API, and displays the results in a dropdown.
+ */
+
 import { apiRequest, API_ENDPOINTS } from '@api';
 
+/**
+ * @class UserSearch
+ * @extends HTMLElement
+ */
 export class UserSearch extends HTMLElement {
   #state = {
     searchQuery: '',
@@ -20,10 +31,22 @@ export class UserSearch extends HTMLElement {
     this.preventReloadBySubmit = this.preventReloadBySubmit.bind(this);
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is added to the DOM.
+   * It renders the component.
+   * * @returns {void}
+   */
   connectedCallback() {
     this.render();
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is removed from the DOM.
+   * It cleans up event listeners to prevent memory leaks.
+   * @returns {void}
+   */
   disconnectedCallback() {
     this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
     this.form?.removeEventListener('click', this.clearUserList);
@@ -37,6 +60,13 @@ export class UserSearch extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description
+   * Renders the user search component.
+   * It sets the inner HTML of the component and event listeners.
+   * @returns {void}
+   */
   render() {
     this.innerHTML = this.template();
 
@@ -64,6 +94,13 @@ export class UserSearch extends HTMLElement {
     this.dropdownMobile?.addEventListener('scrollend', this.showMoreUsers);
   }
 
+  /**
+   * @description
+   * Renders the user list based on the current state.
+   * It checks if there are users to display and appends them to the list container.
+   * If no users are found, it displays a message indicating that no users were found.
+   * @returns {void}
+   */
   renderUserList() {
     if (this.#state.userList.length === 0) {
       this.renderNoUserFound();
@@ -81,6 +118,10 @@ export class UserSearch extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Renders a message indicating that no users were found.
+   */
   renderNoUserFound() {
     const noUser = document.createElement('li');
     noUser.innerHTML = this.noUserTemplate();
@@ -90,6 +131,14 @@ export class UserSearch extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*     Event handling                                                       */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description
+   * Clears the user list when the input is empty or the form is clicked.
+   * @param {Event} event
+   * @return {void}
+   * @listens click
+   */
   clearUserList(event) {
     event?.stopPropagation();
     if (this.input.value === '') {
@@ -100,6 +149,16 @@ export class UserSearch extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Handles the input event on the search input field.
+   * It debounces the input to prevent excessive API calls.
+   * If the input value changes, it fetches the user data based on the search query.
+   * If the input value is empty, it clears the user list.
+   * @param {Event} event - Input event object
+   * @returns {Promise<void>}
+   * @listens input
+   */
   async handleInput(event) {
     event.stopPropagation();
     event.preventDefault();
@@ -119,6 +178,14 @@ export class UserSearch extends HTMLElement {
     }, 500);
   }
 
+  /**
+   * @description
+   * Handles the dropdown hidden event.
+   * It resets the search query, user list, and total user count.
+   * It also clears the input field and the list container.
+   * @returns {void}
+   * @listens hidden.bs.dropdown
+   */
   handleDropdownHidden() {
     this.#state.searchQuery = '';
     this.#state.userList = [];
@@ -127,6 +194,15 @@ export class UserSearch extends HTMLElement {
     this.input.value = '';
   }
 
+  /**
+   * @description
+   * Handles the scroll event on the user search dropdown.
+   * It checks if the user has scrolled to the bottom of the dropdown and loads more users if available.
+   * It prevents loading more users if the total user count has been reached or if the component is already loading users.
+   * @param {Event} event - Scroll event object
+   * @returns {Promise<void>}
+   * @listens scrollend
+   */
   async showMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
@@ -142,6 +218,14 @@ export class UserSearch extends HTMLElement {
     this.#state.isLoading = false;
   }
 
+  /**
+   * @description
+   * Searches for users based on the current search query.
+   * It makes an API request to fetch users matching the search query.
+   * If the request is successful, it updates the user list and renders the user list.
+   * If the request fails, it displays a message indicating that the user search is temporarily unavailable.
+   * @returns {Promise<void>}
+   */
   async searchUser() {
     const response = await apiRequest(
       'GET',
@@ -168,6 +252,14 @@ export class UserSearch extends HTMLElement {
     this.renderUserList();
   }
 
+  /**
+   * @description
+   * Prevents the form from reloading the page when submitted.
+   * This is necessary to allow the user search to function without a page reload.
+   * @param {Event} event - The submit event object.
+   * @return {void}
+   * @listens submit
+   */
   preventReloadBySubmit(event) {
     event.preventDefault();
   }

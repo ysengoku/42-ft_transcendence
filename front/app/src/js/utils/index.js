@@ -28,8 +28,6 @@ import {
   internalServerErrorAlert,
 } from './alertMessage';
 
-import { sanitizeHtml } from './sanitizeHtml';
-
 export {
   ThemeController,
   createClouds,
@@ -62,5 +60,4 @@ export {
   removeAlert,
   addDissmissAlertListener,
   internalServerErrorAlert,
-  sanitizeHtml,
 };
