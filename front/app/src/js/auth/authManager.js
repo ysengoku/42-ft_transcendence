@@ -90,7 +90,7 @@ const auth = (() => {
       try {
         user = JSON.parse(rawData);
       } catch {
-        devErrorLog('invalid json');
+        log.error('invalid json');
         return null;
       }
       if (
@@ -131,7 +131,7 @@ const auth = (() => {
      * @return { Promise<Object> } Object including success: bool & user data on success or status code on failure
      */
     async fetchAuthStatus(fireEvent = true) {
-      devLog('Fetching user login status...');
+      log.trace('Fetching user authentication status...');
       const CSRFToken = getCSRFTokenfromCookies();
       const request = {
         method: 'GET',
@@ -145,7 +145,7 @@ const auth = (() => {
       switch (response.status) {
         case 200:
           const data = await response.json();
-          devLog('User is logged in: ', data);
+          log.info('User is logged in: ', data);
           this.storeUser(data, fireEvent);
           return { success: true, response: data };
         case 401:
@@ -161,7 +161,7 @@ const auth = (() => {
                 return { success: false, status: 429 };
               case 500:
                 internalServerErrorAlert();
-                break;
+                return { success: false, status: 500 };
               default:
                 unknowknErrorToast();
                 return { success: false, status: refreshTokenResponse.status };
