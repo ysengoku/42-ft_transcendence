@@ -4,25 +4,25 @@ import { ThemeController } from '../src/js/utils/ThemeController.js';
 describe('ThemeController', () => {
   let originalSetAttribute;
 
-	beforeEach(() => {
-	  const localStorageMock = {
-	    getItem: vi.fn(),
-	    setItem: vi.fn(),
-	    removeItem: vi.fn()
-	  };
-	  Object.defineProperty(window, 'localStorage', {
-	    value: localStorageMock,
-	    writable: true,
-	    configurable: true,
-	  });
+  beforeEach(() => {
+    const localStorageMock = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+      writable: true,
+      configurable: true,
+    });
 
-	  originalSetAttribute = document.documentElement.setAttribute;
-	  document.documentElement.setAttribute = vi.fn();
-	});
+    originalSetAttribute = document.documentElement.setAttribute;
+    document.documentElement.setAttribute = vi.fn();
+  });
 
   afterEach(() => {
-  	vi.restoreAllMocks();
-  	document.documentElement.setAttribute = originalSetAttribute;
+    vi.restoreAllMocks();
+    document.documentElement.setAttribute = originalSetAttribute;
   });
 
   it('getTheme returns value from localStorage or "light"', () => {

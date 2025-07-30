@@ -177,7 +177,7 @@ export class TournamentOverview extends HTMLElement {
         }
       }
     }, 30000);
-    devLog('Tournament status polling started');
+    log.info('Tournament status polling started');
   }
 
   async updateStatus() {

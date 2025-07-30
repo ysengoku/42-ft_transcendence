@@ -102,7 +102,7 @@ export class DuelMenu extends HTMLElement {
     }
     this.#state.user = authStatus.response;
     if (authStatus.response.game_id) {
-      devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
+      log.info('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
       router.redirect(`multiplayer-game/${authStatus.response.game_id}`);
       return;
     }
@@ -466,7 +466,6 @@ export class DuelMenu extends HTMLElement {
       queryParams = this.modalBodyContent.selectedOptionsAsQueryParams;
     } else {
       showToastNotification(this.OPTIONS_UNAVAILABLE_MESSAGE, TOAST_TYPES.ERROR);
-      console.log('Game options are not available. Using default settings.');
     }
     queryParams
       ? router.navigate('/duel', { status: 'matchmaking', params: queryParams })

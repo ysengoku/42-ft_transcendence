@@ -8,8 +8,9 @@ vi.mock('@socket', () => ({
   },
 }));
 
-globalThis.devLog = vi.fn();
-globalThis.devErrorLog = vi.fn();
+globalThis.log = {};
+globalThis.log.info = vi.fn();
+globalThis.log.error = vi.fn();
 
 import { __test__ } from '@router';
 const { extractParam, matchDynamicRoute, navigate, router } = __test__;
