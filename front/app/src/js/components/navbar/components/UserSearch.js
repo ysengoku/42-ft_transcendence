@@ -82,11 +82,11 @@ export class UserSearch extends HTMLElement {
       ? (this.form.addEventListener('click', this.clearUserList),
         this.form.addEventListener('submit', this.preventReloadBySubmit),
         (this.input = this.form.querySelector('input')))
-      : devErrorLog('User search form not found');
+      : log.error('User search form not found');
     this.input
       ? (this.input.addEventListener('click', this.clearUserList),
         this.input.addEventListener('input', this.handleInput))
-      : devErrorLog('User search input not found');
+      : log.error('User search input not found');
 
     this.buttonMobile = document.getElementById('dropdown-item-user-search');
     this.dropdownMobile = document.getElementById('dropdown-user-search');
