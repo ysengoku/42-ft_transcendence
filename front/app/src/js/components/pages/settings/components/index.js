@@ -5,11 +5,4 @@ import { AvatarUpload } from './AvatarUpload.js';
 import { AvatarUploadModal } from './AvatarUploadModal.js';
 import { MfaEnableUpdate } from './MfaEnableUpdate.js';
 
-export {
-  UserIdentityUpdate,
-  EmailUpdate,
-  PasswordUpdate,
-  AvatarUpload,
-  AvatarUploadModal,
-  MfaEnableUpdate,
-};
+export { UserIdentityUpdate, EmailUpdate, PasswordUpdate, AvatarUpload, AvatarUploadModal, MfaEnableUpdate };
