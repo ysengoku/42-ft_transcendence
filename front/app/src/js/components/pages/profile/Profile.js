@@ -33,7 +33,7 @@ export class UserProfile extends HTMLElement {
     if (response.success) {
       if (response.status === 200) {
         this.user = response.data;
-        devLog('User data:', this.user);
+        log.info('User data:', this.user);
         this.render();
       }
       return;

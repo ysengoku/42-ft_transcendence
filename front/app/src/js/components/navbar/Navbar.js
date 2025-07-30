@@ -1,8 +1,30 @@
+/**
+ * @module Navbar
+ * @description
+ * It handles user login status, responsive design for mobile and desktop,
+ * and dynamically updates the navbar actions based on user state.
+ */
+
 import { isMobile } from '@utils';
 
+/**
+ * @class Navbar
+ * @extends HTMLElement
+ * @description
+ * This class renders the navbar brand and actions and handles responsive design for mobile and desktop views.
+ * It listens for user status changes and updates the navbar accordingly.
+ * It also handles the rendering of user actions buttons based on the login status.
+ */
 export class Navbar extends HTMLElement {
+  /**
+   * Private state of the DuelMenu component.
+   * @property {Object} - Contains user data and login status.
+   * @property {Object} user - The user data.
+   * @property {boolean} isLoggedin - Indicates if the user is logged in.
+   * @property {boolean} isMobile - Indicates if the view is on a mobile device
+   */
   #state = {
-    user: '',
+    user: null,
     isLoggedin: false,
     isMobile: false,
   };
@@ -14,11 +36,22 @@ export class Navbar extends HTMLElement {
     this.handleResize = this.handleResize.bind(this);
   }
 
+  /**
+   * @description Sets the user state and updates the login status.
+   * @param {Object} data - The user data to set.
+   * @returns {void}
+   */
   set state(data) {
     this.#state.user = data;
     this.#state.isLoggedin = this.#state.user ? true : false;
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is added to the DOM.
+   * It initializes the state, sets up event listeners, and renders the navbar.
+   * @returns {void}
+   */
   connectedCallback() {
     this.#state.isMobile = isMobile();
     document.addEventListener('userStatusChange', this.updateNavbar);
@@ -26,11 +59,22 @@ export class Navbar extends HTMLElement {
     this.render();
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is removed from the DOM.
+   * It removes the event listeners to prevent memory leaks.
+   * @returns {void}
+   */
   disconnectedCallback() {
     document.removeEventListener('userStatusChange', this.updateNavbar);
     window.removeEventListener('resize', this.handleResize);
   }
 
+  /**
+   * @description
+   * Renders the navbar component by setting its inner HTML and initializing child components.
+   * It also updates the login status and renders the navbar actions based on the current state.
+   */
   render() {
     this.innerHTML = this.style() + this.template();
 
@@ -41,6 +85,14 @@ export class Navbar extends HTMLElement {
     this.renderNavbarActions();
   }
 
+  /**
+   * @description
+   * Renders the user actions buttons in the navbar based on the user's login status.
+   * It creates and appends user search, friends, chat, notifications, and dropdown menu components.
+   * If the user is logged in, it displays the appropriate buttons and updates their states.
+   * If the user is not logged in, it only displays the dropdown menu.
+   * @returns {void}
+   */
   renderNavbarActions() {
     const navbarActions = this.querySelector('#navbar-actions-content');
     navbarActions.innerHTML = '';
@@ -65,10 +117,19 @@ export class Navbar extends HTMLElement {
       }
     }
     const dropdownMenu = document.createElement('navbar-dropdown-menu');
-    dropdownMenu.setLoginStatus(this.#state.isLoggedin);
+    dropdownMenu.setLoginStatus(this.#state.isLoggedin, this.#state.user);
     navbarActions.appendChild(dropdownMenu);
   }
 
+  /**
+   * @description
+   * Updates the navbar based on the user status change event.
+   * It updates the login status and user data, re-renders the navbar actions,
+   * and updates the mobile user actions menu if applicable.
+   * @param {Event} event - The user status change event containing user data.
+   * @return {void}
+   * @listens userStatusChange
+   */
   updateNavbar(event) {
     this.#state.isLoggedin = event.detail.user !== null;
     if (this.#state.isLoggedin) {
@@ -81,6 +142,14 @@ export class Navbar extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Handles the resize event to toggle the mobile user actions menu visibility
+   * and updates the state based on the current media size.
+   * If the media size has changed, it updates the `isMobile` state and toggles the visibility of the mobile user actions menu.
+   * @listens resize
+   * @returns {void}
+   */
   handleResize() {
     const mediaSizeChanged = this.#state.isMobile !== isMobile();
     if (!this.#state.isLoggedin || !mediaSizeChanged) {
@@ -92,7 +161,9 @@ export class Navbar extends HTMLElement {
       this.mobileUserActionsMenu.updateLoginStatus(this.#state.isLoggedin);
     } else {
       this.mobileUserActionsMenu.classList.add('d-none');
+      this.mobileUserActionsMenu.updateLoginStatus(this.#state.isLoggedin);
     }
+    this.renderNavbarActions();
   }
 
   template() {
@@ -100,8 +171,7 @@ export class Navbar extends HTMLElement {
     <nav class="navbar navbar-expand fixed-top px-3">
       <user-actions-menu></user-actions-menu>
       <navbar-brand-component></navbar-brand-component>
-      <div class="ms-auto d-flex align-items-center" id="navbar-actions-content">
-      </div>
+      <div class="ms-auto d-flex align-items-center" id="navbar-actions-content"></div>
     </nav>
     `;
   }
