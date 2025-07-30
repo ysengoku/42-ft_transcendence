@@ -74,9 +74,7 @@ export class Register extends HTMLElement {
     const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
 
     if (response.success) {
-      if (response.status === 200) {
-        router.redirect('/home', response.user);
-      }
+      router.redirect('/home', response.user);
       return;
     }
     if (response.status === 429) {
