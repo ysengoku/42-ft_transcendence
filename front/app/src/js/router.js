@@ -277,6 +277,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   addDissmissAlertListener();
   const currentPath = window.location.pathname || '/';
   const queryParams = new URLSearchParams(window.location.search);
+
+  await new Promise((resolve) => setTimeout(resolve, 50));
   router.navigate(currentPath, queryParams);
 });
 
