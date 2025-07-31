@@ -13,7 +13,7 @@ from ninja.errors import HttpError
 from common.schemas import MessageSchema
 from users.models import User
 from users.router.utils import create_json_response_with_tokens
-from users.schemas import SendMfaCode, ResendMfaCode, VerifyMfaCode
+from users.schemas import ResendMfaCode, VerifyMfaCode
 
 mfa_router = Router()
 
