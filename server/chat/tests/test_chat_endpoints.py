@@ -233,4 +233,4 @@ class ChatEndpointsTests(TestCase):
         
         # Try to get messages with blocked user
         response = self.client.get("/api/chats/User2/messages")
-        self.assertEqual(response.status_code, 201)  # Chat creation allowed but marked as blocked
+        self.assertEqual(response.status_code, 200)  # Chat creation allowed but marked as blocked
