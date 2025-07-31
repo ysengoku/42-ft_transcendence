@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 
 import jwt
 from django.conf import settings
-from django.db import models
-from django.db.utils import IntegrityError
+from django.db import models, transaction
+from django.db.utils import DatabaseError
 from django.utils import timezone
 from ninja.errors import AuthenticationError
 
@@ -39,13 +39,13 @@ class RefreshTokenQuerySet(models.QuerySet):
         payload["exp"] = now + timedelta(minutes=15)
         refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
 
-        refresh_token_instance = self.model(
-            user=user,
-            token=refresh_token,
-        )
-
         # ensure uniqueness
-        with contextlib.suppress(IntegrityError):
+        with contextlib.suppress(DatabaseError), transaction.atomic():
+            self.filter(token=refresh_token).delete()
+            refresh_token_instance = self.model(
+                user=user,
+                token=refresh_token,
+            )
             refresh_token_instance.save()
 
         return access_token, refresh_token_instance
