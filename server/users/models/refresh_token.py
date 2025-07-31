@@ -39,13 +39,13 @@ class RefreshTokenQuerySet(models.QuerySet):
         payload["exp"] = now + timedelta(minutes=15)
         refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
 
+        refresh_token_instance = self.model(
+            user=user,
+            token=refresh_token,
+        )
         # ensure uniqueness
         with contextlib.suppress(DatabaseError), transaction.atomic():
             self.filter(token=refresh_token).delete()
-            refresh_token_instance = self.model(
-                user=user,
-                token=refresh_token,
-            )
             refresh_token_instance.save()
 
         return access_token, refresh_token_instance
