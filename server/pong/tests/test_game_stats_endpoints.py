@@ -73,7 +73,8 @@ class GameStatsEndpointsTests(TestCase):
         # Check that we have elo data points
         for elo_point in response_data["items"]:
             self.assertIn("day", elo_point)
-            self.assertIn("elo", elo_point)
+            self.assertIn("daily_elo_change", elo_point)
+            self.assertIn("elo_result", elo_point)
 
     def test_get_daily_elo_pagination(self):
         # Create many matches across many days to test pagination
