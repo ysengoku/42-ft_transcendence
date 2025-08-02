@@ -134,13 +134,3 @@ class GameRoomModelTests(TestCase):
             False,
             ".is_in_tournament() should give False when it's not tied to any Bracket"
         )
-
-    # def test_is_in_tournament_when_it_is_in_tournament(self):
-    #     game_room: GameRoom = GameRoom.objects.create()
-    #     game_room.add_player(self.user1.profile)
-    #     game_room.add_player(self.user2.profile)
-    #     self.assertEqual(
-    #         game_room.is_in_tournament(),
-    #         True,
-    #         "idk how to test it yet lol"
-    #     )
