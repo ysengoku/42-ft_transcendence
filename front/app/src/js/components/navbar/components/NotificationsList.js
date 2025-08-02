@@ -1,14 +1,38 @@
+/**
+ * @module NotificationsList
+ * @description
+ * This module defines a custom notifications list component for the navbar.
+ * It handles the rendering of notifications, toggling between unread and all notifications,
+ * marking notifications as read, and loading more notifications on scroll.
+ */
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
 
+/**
+ * @class NotificationsList
+ * @extends HTMLElement
+ */
 export class NotificationsList extends HTMLElement {
+  /**
+   * Private state of the NotificationsList component.
+   * @property {string} - The current tab being displayed ('all' or 'unread').
+   * @property {boolean} isLoading - Indicates if the notifications are currently being loaded.
+   * @property {string} username - The username of the logged-in user.
+   */
   #state = {
     currentTab: 'all',
     isLoading: false,
     username: '',
   };
 
+  /**
+   * Private state for unread and all notifications.
+   * @property {Array} notifications - The list of unread notifications.
+   * @property {number} totalCount - The total count of unread notifications.
+   * @property {number} listLength - The current length of the unread notifications list.
+   *
+   */
   #unread = {
     notifications: [],
     totalCount: 0,
@@ -33,12 +57,13 @@ export class NotificationsList extends HTMLElement {
     this.resetList = this.resetList.bind(this);
   }
 
-  async connectedCallback() {
-    const userData = await auth.getUser();
-    if (!userData) {
-      return;
-    }
-    this.#state.username = userData.username;
+  /**
+   * @description
+   * Lifecycle method called when the element is added to the DOM.
+   * @returns {Promise<void>}
+   */
+  connectedCallback() {
+    this.#state.username = auth.getStoredUser()?.username || '';
     this.render();
   }
 
@@ -56,6 +81,12 @@ export class NotificationsList extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
 
+  /**
+   * @description
+   * Renders the notifications list component by setting its inner HTML.
+   * It initializes the button and dropdown elements, sets up event listeners for rendering the list,
+   * and handles the dropdown close event.
+   */
   render() {
     this.innerHTML = this.style() + this.template();
 
@@ -75,7 +106,19 @@ export class NotificationsList extends HTMLElement {
     this.markAllAsReadButton?.addEventListener('click', this.markAllAsRead);
   }
 
+  /**
+   * @description
+   * Renders the notifications list by fetching notifications from the API and updating the state.
+   * It handles the case when there are no notifications by rendering a message indicating that.
+   * It also updates the list length in the state.
+   * @param {boolean} clearList - Whether to clear the list before rendering.
+   * @returns {Promise<void>}
+   * @listens shown.bs.dropdown
+   */
   async renderList(clearList = true) {
+    if (!this.#state.username) {
+      this.#state.username = auth.getStoredUser()?.username || '';
+    }
     if (clearList) {
       this.clearList();
     }
@@ -124,6 +167,15 @@ export class NotificationsList extends HTMLElement {
   /*     Event handlers                                                       */
   /* ------------------------------------------------------------------------ */
 
+  /**
+   * @description
+   * Fetches notifications from the API based on the read status, limit, and offset.
+   * It returns the notifications data if the request is successful, or null if it fails.
+   * @param {string} read - The read status of notifications (false (unread) or 'all').
+   * @param {Number} limit - The maximum number of notifications to fetch.
+   * @param {Number} offset - The offset for pagination.
+   * @returns {Promise<Object|null>} - The notifications data or null if the request fails.
+   */
   async fetchNotifications(read, limit, offset) {
     const response = await apiRequest(
       'GET',
@@ -140,6 +192,14 @@ export class NotificationsList extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Toggles between the 'all' and 'unread' notifications tabs.
+   * It updates the current tab state and re-renders the notifications list accordingly.
+   * @param {Event} event - The click event triggered by the tab.
+   * @returns {Promise<void>}
+   * @listens click
+   */
   async toggleTab(event) {
     event.preventDefault();
     event.stopPropagation();
@@ -162,6 +222,16 @@ export class NotificationsList extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Loads more notifications when the user scrolls to the bottom of the dropdown.
+   * It checks if the user has scrolled to the bottom and if there are more notifications to load.
+   * If so, it fetches more notifications and updates the list.
+   * If the total count of notifications is reached, it does not fetch more data.
+   * @param {Event} event - The scroll event triggered by the dropdown.
+   * @returns {Promise<void>}
+   * @listens scrollend
+   */
   async loadMoreNotifications(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
@@ -179,6 +249,15 @@ export class NotificationsList extends HTMLElement {
     this.#state.isLoading = false;
   }
 
+  /**
+   * @description
+   * Marks a notification as read when it is clicked.
+   * It sends a message to the server to mark the notification as read,
+   * removes the click event listener from the notification item, and updates the notification list to reflect the change.
+   * @param {Event} event - The click event triggered by the notification item.
+   * @returns {void}
+   * @listens click
+   */
   readNotification(event) {
     event.stopPropagation();
     event.preventDefault();
@@ -198,6 +277,14 @@ export class NotificationsList extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Marks all notifications as read when the "Mark all as read" button is clicked.
+   * It sends a request to the API to mark all notifications as read and re-renders the notifications list to reflect the change.
+   * @param {Event} event - The click event triggered by the "Mark all as read" button.
+   * @returns {Promise<void>}
+   * @listens click
+   */
   async markAllAsRead(event) {
     event.stopPropagation();
     event.preventDefault();
@@ -211,11 +298,25 @@ export class NotificationsList extends HTMLElement {
     this.#state.isLoading = false;
   }
 
+  /**
+   * @description
+   * Prevents the notifications list from closing when clicked.
+   * This is used to keep the dropdown open when interacting with the notifications list.
+   * @param {Event} event - The click event triggered by the notifications list.
+   * @returns {void}
+   * @listens click
+   */
   preventListClose(event) {
     event.stopPropagation();
     event.preventDefault();
   }
 
+  /**
+   * @description
+   * Clears the notifications list by removing all notification items and resetting the unread and all notifications state.
+   * It also removes the click event listeners from the notification items.
+   * @returns {void}
+   */
   clearList() {
     const listItems = this.querySelectorAll('notifications-list-item');
     listItems.forEach((item) => {
@@ -230,6 +331,13 @@ export class NotificationsList extends HTMLElement {
     this.#all.totalCount = 0;
   }
 
+  /**
+   * @description
+   * Resets the notifications list by clearing the current tab and re-rendering the list.
+   * It also updates the active tab to 'all' and resets the list length.
+   * @returns {void}
+   * @listens hidden.bs.dropdown
+   */
   resetList() {
     this.allTab.classList.add('active');
     this.unreadTab.classList.remove('active');

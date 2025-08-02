@@ -23,24 +23,27 @@ export async function refreshAccessToken(csrfToken) {
    */
   async function retryRefreshTokenRequest(request, delay, maxRetries) {
     let retries = 0;
-    setTimeout(async () => {
-      if (retries < maxRetries) {
-        const response = await fetch(API_ENDPOINTS.REFRESH, request);
-        if (response.ok) {
-          return { success: true, status: 204 };
-        } else if (response.status === 500) {
-          ++retries;
-        } else {
-          return { success: false, status: response.status };
-        }
+    while (retries < maxRetries) {
+      await new Promise((resolve) => setTimeout(resolve, delay * retries));
+      const response = await fetch(API_ENDPOINTS.REFRESH, request);
+      if (response.ok) {
+        log.info('Refresh successful on retry');
+        return { success: true, status: 204 };
+      } else if (response.status === 500) {
+        ++retries;
+        log.error(`Refresh failed on retry with status ${response.status}. Retrying...`);
+      } else {
+        unknowknErrorToast();
+        log.error(`Refresh failed with status ${response.status}`);
+        return { success: false, status: response.status };
       }
-      console.error('Refresh failed');
-      unknowknErrorToast();
-      return { success: false, status: 500 };
-    }, delay);
+    }
+    unknowknErrorToast();
+    log.error(`Refresh failed with status ${response.status}`);
+    return { success: false, status: response.status };
   }
 
-  devLog('Refreshing access token');
+  log.trace('Refreshing access token...');
   if (csrfToken) {
     try {
       const request = {
@@ -54,34 +57,19 @@ export async function refreshAccessToken(csrfToken) {
       const refreshResponse = await fetch(API_ENDPOINTS.REFRESH, request);
       switch (refreshResponse.status) {
         case 204:
-          devLog('Refresh successful');
+          log.info('Refresh successful');
           return { success: true, status: 204 };
         case 500:
           internalServerErrorAlert();
-          devErrorLog('Server error, retrying refresh token request');
-          return retryRefreshTokenRequest(request, 3000, 2);
+          log.error('Server error, retrying refresh token request');
+          return await retryRefreshTokenRequest(request, 2000, 2);
         default:
-          devLog('Refresh failed');
+          log.info('Refresh failed');
           auth.clearStoredUser();
           return { success: false, status: refreshResponse.status };
       }
-      // if (refreshResponse.ok) {
-      //   devLog('Refresh successful');
-      //   return { success: true, status: 204 };
-      // }
-      // if (refreshResponse.status === 429) {
-      // TODO
-      // }
-      // if (refreshResponse.status === 500) {
-      //   internalServerErrorAlert();
-      //   devErrorLog('Server error, retrying refresh token request');
-      //   return retryRefreshTokenRequest(request, 3000, 2);
-      // }
-      // devLog('Refresh failed');
-      // auth.clearStoredUser();
-      // return { success: false, status: refreshResponse.status };
     } catch (error) {
-      devErrorLog(error);
+      log.error(error);
       auth.clearStoredUser();
       return { success: false, status: 0 };
     }

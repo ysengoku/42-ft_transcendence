@@ -232,7 +232,7 @@ export class TournamentMenu extends HTMLElement {
         /* eslint-disable-next-line */
         const resonse = await apiRequest('GET', API_ENDPOINTS.TOURNAMENT(tournamentId), null, false, true);
         if (!resonse.success) {
-          devErrorLog('Failed to fetch tournament details:', resonse);
+          log.error('Failed to fetch tournament details:', resonse);
           return;
         }
         this.selectedTournament = resonse.data;
@@ -319,7 +319,7 @@ export class TournamentMenu extends HTMLElement {
     if (!this.aliasInput.value || this.aliasInput.classList.contains('is-invalid')) {
       return;
     }
-    devLog('Registering for tournament:', this.selectedTournament.id, this.aliasInput.value);
+    log.info('Registering for tournament:', this.selectedTournament.id, this.aliasInput.value);
     const response = await apiRequest(
       'POST',
       /* eslint-disable-next-line new-cap */

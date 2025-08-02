@@ -31,7 +31,6 @@ export class Error extends HTMLElement {
   setQueryParam(param) {
     this.#state.message = param.get('error');
     this.#state.status = param.get('code') || '';
-    console.log(this.#state);
   }
 
   render() {

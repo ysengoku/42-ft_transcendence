@@ -8,6 +8,7 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
+import { DEFAULT_GAME_OPTIONS } from '@env';
 import {
   showAlertMessageForDuration,
   ALERT_TYPE,
@@ -15,8 +16,6 @@ import {
   TOAST_TYPES,
   sessionExpiredToast,
 } from '@utils';
-import { getOptionsFromLocalStorage } from './utils/gameOptions.js';
-import { DEFAULT_GAME_OPTIONS } from '@env';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class DuelMenu extends HTMLElement {
@@ -24,12 +23,10 @@ export class DuelMenu extends HTMLElement {
    * Private state of the DuelMenu component.
    * @property {Object} user - The authenticated user.
    * @property {string} opponentUsername - The username of the selected opponent.
-   * @property {Object} options - The game options selected by the user.
    */
   #state = {
     user: null,
     opponentUsername: '',
-    options: {},
   };
 
   /**
@@ -50,6 +47,8 @@ export class DuelMenu extends HTMLElement {
     isLoading: false,
   };
 
+  OPTIONS_UNAVAILABLE_MESSAGE = 'Game options are momentarily unavailable. Set to default settings.';
+
   constructor() {
     super();
 
@@ -57,7 +56,6 @@ export class DuelMenu extends HTMLElement {
     this.optionsButton = null;
     this.modalElement = null;
     this.gameOptionsModal = null;
-    this.gameOptionComponent = null;
     this.form = null;
     this.searchInput = null;
     this.userList = null;
@@ -81,8 +79,6 @@ export class DuelMenu extends HTMLElement {
     this.inviteToDuel = this.inviteToDuel.bind(this);
     this.handleMatchmakingRequest = this.handleMatchmakingRequest.bind(this);
     this.ignoreEnterKeyPress = this.ignoreEnterKeyPress.bind(this);
-
-    this.#state.options = getOptionsFromLocalStorage();
   }
 
   /**
@@ -106,7 +102,7 @@ export class DuelMenu extends HTMLElement {
     }
     this.#state.user = authStatus.response;
     if (authStatus.response.game_id) {
-      devLog('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
+      log.info('Ongoing duel found. Redirect to game page', authStatus.response.game_id);
       router.redirect(`multiplayer-game/${authStatus.response.game_id}`);
       return;
     }
@@ -148,6 +144,7 @@ export class DuelMenu extends HTMLElement {
     this.opponentOnlineStatus = this.querySelector('.opponent-status-indicator');
 
     this.opponentAvatar.src = anonymousAvatar;
+    this.renderGameOptionsModal();
 
     // Add event listeners
     this.optionsButton.addEventListener('click', this.openGameOptionsModal);
@@ -157,6 +154,24 @@ export class DuelMenu extends HTMLElement {
     this.inviteButton.addEventListener('click', this.inviteToDuel);
     this.requestMatchmakingButton.addEventListener('click', this.handleMatchmakingRequest);
     this.userList.addEventListener('scrollend', this.loadMoreUsers);
+  }
+
+  /**
+   * @description Renders the game options modal.
+   * It creates a modal element, appends it to the body, and initializes the Modal
+   * @returns {void}
+   */
+  renderGameOptionsModal() {
+    const template = document.createElement('template');
+    template.innerHTML = this.gameOptionsModalTemplate();
+    this.modalElement = template.content.querySelector('.modal');
+    document.body.appendChild(this.modalElement);
+    this.gameOptionsModal = new Modal(this.modalElement);
+    if (!this.gameOptionsModal) {
+      showToastNotification(this.OPTIONS_UNAVAILABLE_MESSAGE, TOAST_TYPES.ERROR);
+      return;
+    }
+    this.modalBodyContent = document.querySelector('game-options');
   }
 
   /**
@@ -217,16 +232,6 @@ export class DuelMenu extends HTMLElement {
    * It also sets up event listeners for saving and canceling the options.
    */
   openGameOptionsModal() {
-    const template = document.createElement('template');
-    template.innerHTML = this.gameOptionsModalTemplate();
-    this.modalElement = template.content.querySelector('.modal');
-    document.body.appendChild(this.modalElement);
-    this.gameOptionsModal = new Modal(this.modalElement);
-    if (!this.gameOptionsModal) {
-      showToastNotification('Game options are momentarily unavailable.', TOAST_TYPES.ERROR);
-      return;
-    }
-    this.modalBodyContent = document.querySelector('game-options');
     this.gameOptionsModal.show();
 
     this.modalSaveButton = this.modalElement.querySelector('.confirm-button');
@@ -237,15 +242,11 @@ export class DuelMenu extends HTMLElement {
     this.modalCancelButton.addEventListener('click', this.closeGameOptionsModal);
     this.modalCloseButton.addEventListener('click', this.closeGameOptionsModal);
     this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
-
-    this.gameOptionComponent = this.modalElement.querySelector('game-options');
   }
 
   saveSelectedOptions() {
-    this.#state.options = null;
-    this.#state.options = this.modalBodyContent.selectedOptions;
+    this.modalBodyContent.storeOptionsToLocalStorage();
     this.closeGameOptionsModal();
-    devLog('Game options:', this.#state.options);
   }
 
   /**
@@ -266,9 +267,9 @@ export class DuelMenu extends HTMLElement {
       },
       { once: true },
     );
-    this.modalSaveButton.removeEventListener('click', this.saveSelectedOptions);
-    this.modalCancelButton.removeEventListener('click', this.closeGameOptionsModal);
-    this.modalCloseButton.removeEventListener('click', this.closeGameOptionsModal);
+    this.modalSaveButton?.removeEventListener('click', this.saveSelectedOptions);
+    this.modalCancelButton?.removeEventListener('click', this.closeGameOptionsModal);
+    this.modalCloseButton?.removeEventListener('click', this.closeGameOptionsModal);
     this.gameOptionsModal.hide();
   }
 
@@ -280,42 +281,6 @@ export class DuelMenu extends HTMLElement {
     if (this.modalElement.contains(document.activeElement)) {
       document.activeElement.blur();
     }
-  }
-
-  /**
-   * @description Convert game options to an object to include in the game invitation request.
-   */
-  optionsToObject() {
-    if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
-      return null;
-    }
-    const optionsObj = DEFAULT_GAME_OPTIONS;
-    for (const [key, value] of Object.entries(this.#state.options)) {
-      if (value !== 'any') {
-        optionsObj[key] = value;
-      }
-    }
-    return optionsObj;
-  }
-
-  /**
-   * @description Convert game options to query parameters for matchmaking.
-   */
-  optionsToQueryParams() {
-    if (!this.#state.options || Object.keys(this.#state.options).length === 0) {
-      return null;
-    }
-    let queryParams = '';
-    queryParams += `?score_to_win=${this.#state.options.score_to_win}`;
-    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-    queryParams += `game_speed=${this.#state.options.game_speed}`;
-    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-    queryParams += `time_limit=${this.#state.options.time_limit}`;
-    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-    queryParams += `ranked=${this.#state.options.ranked}`;
-    queryParams.length > 1 ? (queryParams += '&') : (queryParams += '?');
-    queryParams += `cool_mode=${this.#state.options.cool_mode}`;
-    return queryParams;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -441,8 +406,12 @@ export class DuelMenu extends HTMLElement {
         client_id: clientInstanceId,
       },
     };
-    const settings = this.optionsToObject();
-    message.data.settings = settings ? settings : DEFAULT_GAME_OPTIONS;
+    if (this.modalBodyContent) {
+      message.data.settings = this.modalBodyContent.selectedOptionsAsObject;
+    } else {
+      showToastNotification(this.OPTIONS_UNAVAILABLE_MESSAGE, TOAST_TYPES.ERROR);
+      message.data.settings = DEFAULT_GAME_OPTIONS;
+    }
     socketManager.sendMessage('livechat', message);
     const queryParams = {
       status: 'inviting',
@@ -492,7 +461,12 @@ export class DuelMenu extends HTMLElement {
     if (!canEngage) {
       return;
     }
-    const queryParams = this.optionsToQueryParams();
+    let queryParams = null;
+    if (this.modalBodyContent) {
+      queryParams = this.modalBodyContent.selectedOptionsAsQueryParams;
+    } else {
+      showToastNotification(this.OPTIONS_UNAVAILABLE_MESSAGE, TOAST_TYPES.ERROR);
+    }
     queryParams
       ? router.navigate('/duel', { status: 'matchmaking', params: queryParams })
       : router.navigate('/duel', { status: 'matchmaking' });
@@ -582,7 +556,7 @@ export class DuelMenu extends HTMLElement {
       min-width: 0;
     }
     .badge {
-      background-color: var(--pm-primary-500);
+      background-color: var(--pm-primary-600);
     }
     .opponent-avatar {
       width: 120px;
@@ -623,7 +597,7 @@ export class DuelMenu extends HTMLElement {
     return `
     <div class="modal fade mt-2" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog pt-4">
-        <div class="modal-content wood-board">
+        <div class="modal-content game-options-modal wood-board">
           <div class="modal-header border-0">
             <button type="button" class="btn-close btn-close-white" aria-label="Close"></button>
           </div>

@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.security import HttpBearer
 
-from users.consumers import check_inactive_users
+from users.service import check_inactive_users
 
 cronjob_router = Router()
 

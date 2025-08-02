@@ -1,4 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+globalThis.log = {};
+globalThis.log.error = vi.fn();
+
 import {
   getOptionsFromLocalStorage,
   validateStoredOptions,
@@ -90,10 +94,9 @@ describe('validateOption', () => {
   });
 
   it('returns undefined for unknown type', () => {
-    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    globalThis.log.error.mockClear();
     expect(validateOption('x', { type: 'unknown' })).toBeUndefined();
-    expect(spy).toHaveBeenCalledWith('Unknown validation rule type: unknown');
-    spy.mockRestore();
+    expect(globalThis.log.error).toHaveBeenCalledWith('Unknown validation rule type: unknown');
   });
 });
 

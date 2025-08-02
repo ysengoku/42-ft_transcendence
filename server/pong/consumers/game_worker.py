@@ -14,11 +14,11 @@ from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
 from django.utils import timezone
 
+from common.close_codes import CloseCodes
 from pong.game_protocol import (
     GameRoomSettings,
     GameServerToClient,
     GameServerToGameWorker,
-    PongCloseCodes,
     SerializedGameState,
 )
 from pong.models import GameRoom, Match
@@ -710,7 +710,7 @@ class GameWorkerConsumer(AsyncConsumer):
                             type="worker_to_client_close",
                             action="game_cancelled",
                             tournament_id=match.tournament_id,
-                            close_code=PongCloseCodes.CANCELLED,
+                            close_code=CloseCodes.CANCELLED,
                         ),
                     )
                 elif match.is_in_tournament:
@@ -725,7 +725,7 @@ class GameWorkerConsumer(AsyncConsumer):
                             loser=loser.as_dict(),
                             elo_change=0,
                             tournament_id=match.tournament_id,
-                            close_code=PongCloseCodes.CANCELLED,
+                            close_code=CloseCodes.CANCELLED,
                         ),
                     )
                     # If the tournament game is cancelled, there is a winner: player who connected first
@@ -1007,7 +1007,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 winner=winner.as_dict(),
                 loser=loser.as_dict(),
                 elo_change=elo_change if match.ranked else 0,
-                close_code=PongCloseCodes.NORMAL_CLOSURE,
+                close_code=CloseCodes.NORMAL_CLOSURE,
                 tournament_id=match.tournament_id,
             ),
         )
