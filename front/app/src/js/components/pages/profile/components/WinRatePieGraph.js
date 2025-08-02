@@ -2,7 +2,6 @@ import { BREAKPOINT } from '@utils';
 
 export class UserWinRatePieGraph extends HTMLElement {
   #state = {
-    rate: 0,
     wins: 0,
     losses: 0,
   };
@@ -17,7 +16,6 @@ export class UserWinRatePieGraph extends HTMLElement {
   }
 
   render() {
-    // this.#state.rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     this.innerHTML = this.style() + this.template();
 
     const wins = this.querySelector('#wins');
@@ -41,23 +39,23 @@ export class UserWinRatePieGraph extends HTMLElement {
   template() {
     const rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     const r = 100 / (2 * Math.PI); // radius
+    const offset = (40 - r * 2) / 2; // offset to center the pie graph
+    const circlePath = `M20 ${offset}
+      a ${r} ${r} 0 0 1 0 ${r * 2}
+      a ${r} ${r} 0 0 1 0 -${r * 2}`;
     return `
     <div class="pie-graph-wrapper d-flex flex-column justify-content-center align-items-center">
       <div class="pie-graph d-flex flex-column jusify-content-around align-items-center pt-2">
         <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-         <path
-            d="M20 ${(40 - r * 2) / 2}
-              a ${r} ${r} 0 0 1 0 ${r * 2}
-              a ${r} ${r} 0 0 1 0 -${r * 2}"
+          <path
+            d="${circlePath}"
             fill="none"
-            stroke="rgba(146, 79, 9, 0.4)"
+            stroke="rgba(var(--pm-primary-500-rgb), 0.4)"
             stroke-width="6"
             stroke-dasharray="100"
           />
-          <path class="donut"
-            d="M20 ${(40 - r * 2) / 2}
-              a ${r} ${r} 0 0 1 0 ${r * 2}
-              a ${r} ${r} 0 0 1 0 -${r * 2}"
+          <path
+            d="${circlePath}"
             fill="none"
             stroke="var(--pm-primary-600)"
             stroke-width="6"
