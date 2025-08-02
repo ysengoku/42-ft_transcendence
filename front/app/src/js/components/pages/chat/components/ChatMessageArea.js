@@ -83,7 +83,7 @@ export class ChatMessageArea extends HTMLElement {
     this.#state.data = data;
     this.#state.loggedInUsername = loggedInUsername;
     this.render();
-    devLog('ChatMessageArea data:', this.#state.data);
+    log.info('ChatMessageArea data:', this.#state.data);
   }
 
   set sendToggleLikeEvent(callback) {
@@ -217,7 +217,6 @@ export class ChatMessageArea extends HTMLElement {
   }
 
   renderPendingMessage(data) {
-    console.log('Pending message', data);
     const messageElement = document.createElement('div');
     messageElement.innerHTML = this.pendingMessageTemplate();
     messageElement.classList.add(

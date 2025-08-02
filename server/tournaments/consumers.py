@@ -4,33 +4,22 @@ import logging
 from uuid import UUID
 
 from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
+
+from common.close_codes import CloseCodes
+from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 
 from .models import Bracket, Participant, Tournament
-
-# TODO: see if BracketSchema is really needed
-from .tournament_service import TournamentService
-from .tournament_validator import Validator
+from .tournament_worker import TournamentWorkerConsumer
 
 logger = logging.getLogger("server")
 
-# TODO: Verify connexion of both players before the match ?
-# TODO: security checks : multiple crash when bad ws id sent by the console
-# TODO: put all shared macros between files in the same file
-NORMAL_CLOSURE = 3000
-CANCELLED = 3001
-ILLEGAL_CONNECTION = 3002
-ALREADY_IN_GAME = 3003
-EXCLUDED = 3004
-BAD_DATA = 3100
 
-
-class TournamentConsumer(WebsocketConsumer):
+class TournamentConsumer(GuardedWebsocketConsumer):
     tournaments = {}
 
     def connect(self):
         self.user = self.scope.get("user")
-        logger.debug("CONNECTING %s TO TOURNAMENT SOCKET", self.user)
+        logger.debug("Connecting %s to tournament socket", self.user)
         if not self.user or not self.user.is_authenticated:
             logger.warning("TournamentConsumer : Unauthentificated user trying to connect")
             self.close()
@@ -41,53 +30,55 @@ class TournamentConsumer(WebsocketConsumer):
         except ValueError:
             logger.warning("Wrong uuid : %s", self.tournament_id)
             self.accept()
-            self.close(ILLEGAL_CONNECTION)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
         try:
             tournament = Tournament.objects.get(id=self.tournament_id)
         except Tournament.DoesNotExist:
             logger.warning("This tournament id does not exist : %s", self.tournament_id)
-            self.accept()  # TODO: test this
-            self.close(BAD_DATA)
+            self.accept()
+            self.close(CloseCodes.BAD_DATA)
             return
         try:
             participant = tournament.participants.get(profile=self.user.profile)
         except Participant.DoesNotExist:
             self.accept()
-            self.close(ILLEGAL_CONNECTION)
-            logger.warning("CLOSING because this user is not a participant : %s", self.user)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
+            logger.warning("Closing because this user is not a participant : %s", self.user)
             return
         if participant.excluded:
             self.accept()
-            self.close(EXCLUDED)
-            logger.warning("CLOSING because this participant was excluded : %s", self.user)
+            self.close(CloseCodes.EXCLUDED)
+            logger.warning("Closing because this participant was excluded : %s", self.user)
             return
 
         async_to_sync(self.channel_layer.group_add)(f"tournament_user_{self.user.id}", self.channel_name)
         async_to_sync(self.channel_layer.group_add)(f"tournament_{self.tournament_id}", self.channel_name)
-        logger.debug("WILL BE ACCEPTED : %s", self.user)
         self.accept()
         if tournament.status == tournament.ONGOING:
             round_number = tournament.get_current_round_number()
-            try:
-                bracket_status = tournament.get_user_current_bracket(self.user.profile, round_number).status
-            except Bracket.DoesNotExist:
+            bracket = tournament.get_user_current_bracket(self.user.profile, round_number)
+            if bracket is None:
                 logger.warning("This bracket does not exist")
-                self.close(BAD_DATA)
+                self.close(CloseCodes.BAD_DATA)
                 return
+            bracket_status = bracket.status
             if bracket_status in [Bracket.PENDING, Bracket.ONGOING]:
                 current_round = tournament.get_current_round(round_number)
-                TournamentService.receive_start_round_message(tournament.id, self.user.id, round_number, current_round)
+                async_to_sync(TournamentWorkerConsumer.receive_start_round_message)(
+                    tournament.id,
+                    self.user.id,
+                    round_number,
+                    current_round,
+                )
 
     def disconnect(self, close_code):
-        logger.debug("WILL BE DISCONNECTED : %s", self.user)
         if hasattr(self, "tournament_id") and self.tournament_id:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_{self.tournament_id}", self.channel_name)
         # TODO: See how the line about the tournament user is useful
         if hasattr(self, "user") and self.user:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
-        logger.warning("CLOSING FROM DISCONNECT")
         self.close(close_code)
 
     def receive(self, text_data):
@@ -98,9 +89,7 @@ class TournamentConsumer(WebsocketConsumer):
             logger.warning("Tournament: Message without action received")
             return
 
-        entire_data = text_data_json.get("data", {})
-        if not Validator.validate_action_data(action, entire_data):
-            return
+        text_data_json.get("data", {})
 
         match action:
             case _:
@@ -109,17 +98,9 @@ class TournamentConsumer(WebsocketConsumer):
 
     def close_self_ws(self, event):
         self.tournament_id = None
-        logger.warning("CLOSING WITH CLOSE SELF WS")
-        self.close(NORMAL_CLOSURE)
-
-    def tournament_broadcast(self, event):
-        logger.debug("function tournament_broadcast")
-        self.send(text_data=json.dumps({"action": "new_tournament", "data": event["data"]}))
+        self.close(CloseCodes.NORMAL_CLOSURE)
 
     def tournament_message(self, event):
-        logger.debug("function tournament_message")
-        logger.debug("action : %s", event["action"])
-        logger.debug("data : %s", event["data"])
         try:
             self.send(
                 text_data=json.dumps(

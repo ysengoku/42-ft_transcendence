@@ -2,14 +2,14 @@ import json
 import logging
 
 from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
 from django.db import DatabaseError, models, transaction
 
-from users.consumers import OnlineStatusConsumer, redis_status_manager
+from common.close_codes import CloseCodes
+from common.guarded_websocket_consumer import GuardedWebsocketConsumer
 from users.models import Profile
+from users.service import OnlineStatusService
 
 from .chat_events import ChatEvent
-from .chat_utils import ChatUtils
 from .duel_events import DuelEvent
 from .models import Chat, Notification
 from .tournament_events import TournamentEvent
@@ -18,17 +18,17 @@ from .validator import Validator
 logger = logging.getLogger("server")
 
 
-class UserEventsConsumer(WebsocketConsumer):
+class UserEventsConsumer(GuardedWebsocketConsumer):
     def connect(self):
         self.user = self.scope.get("user")
         if not self.user or not self.user.is_authenticated:
-            self.close()
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
         try:
             self.user_profile = self.user.profile
         except AttributeError:
             logger.error("User %s has no profile", self.user.username)
-            self.close()
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
         try:
@@ -39,7 +39,6 @@ class UserEventsConsumer(WebsocketConsumer):
                 self.user_profile.save(update_fields=["nb_active_connexions"])
 
                 self.user_profile.refresh_from_db()
-                redis_status_manager.set_user_online(self.user.id)
                 logger.info(
                     "User %s connected, now has %i active connexions",
                     self.user.username,
@@ -47,7 +46,7 @@ class UserEventsConsumer(WebsocketConsumer):
                 )
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
-            self.close()
+            self.close(CloseCodes.BAD_DATA)
             return
 
         self.chats = Chat.objects.for_participants(self.user_profile)
@@ -101,15 +100,12 @@ class UserEventsConsumer(WebsocketConsumer):
                     self.user.username,
                     self.user_profile.nb_active_connexions,
                 )
-                # Mark offline only if it was last disconnexion
                 if self.user_profile.nb_active_connexions == 0:
                     self.user_profile.is_online = False
                     self.user_profile.save(update_fields=["is_online"])
-                    redis_status_manager.set_user_offline(self.user.id)
-                    OnlineStatusConsumer.notify_online_status(self, "offline")
+                    OnlineStatusService.notify_online_status(self, "offline")
                     logger.info("User %s is now offline (no more active connexions)", self.user.username)
 
-                    # Remove user from the groups only when they have no more active connections
                     async_to_sync(self.channel_layer.group_discard)(
                         "online_users",
                         self.channel_name,
@@ -136,7 +132,7 @@ class UserEventsConsumer(WebsocketConsumer):
             text_data_json.get("data", {})
             entire_data = text_data_json.get("data", {})
             if not Validator.validate_action_data(action, entire_data):
-                self.close()
+                self.close(CloseCodes.BAD_DATA)
                 return
             match action:
                 case "new_message":
@@ -146,9 +142,9 @@ class UserEventsConsumer(WebsocketConsumer):
                 case ("user_offline", "user_online"):
                     self.handle_online_status(text_data_json)
                 case "like_message":
-                    ChatEvent(self).handle_like_message(text_data_json)
+                    ChatEvent(self).handle_toggle_like_message(text_data_json, True)
                 case "unlike_message":
-                    ChatEvent(self).handle_unlike_message(text_data_json)
+                    ChatEvent(self).handle_toggle_like_message(text_data_json, False)
                 case "read_message":
                     ChatEvent(self).handle_read_message(text_data_json)
                 case "game_invite":
@@ -165,16 +161,13 @@ class UserEventsConsumer(WebsocketConsumer):
                     TournamentEvent(self).handle_new_tournament(text_data_json)
                 case "add_new_friend":
                     self.add_new_friend(text_data_json)
-                case "join_chat":
-                    ChatEvent(self)
-                    self.join_chat(text_data_json)
                 case _:
                     logger.warning("Unknown action : %s", action)
-                    self.close()
+                    self.close(CloseCodes.BAD_DATA)
 
         except json.JSONDecodeError:
             logger.warning("Invalid JSON message")
-            self.close()
+            self.close(CloseCodes.BAD_DATA)
 
     def handle_online_status(self, event):
         """
@@ -225,11 +218,9 @@ class UserEventsConsumer(WebsocketConsumer):
         # Verify if not already friend
         if not sender.friends.filter(id=receiver.id).exists():
             sender.friends.add(receiver)
-        # Create notification
         notification = Notification.objects.action_new_friend(receiver, sender)
 
-        notification_data = ChatUtils.get_user_data(sender)
-        # Add id to the notification data
+        notification_data = sender.get_user_data_with_date()
         notification_data["id"] = str(notification.id)
 
         self.send(

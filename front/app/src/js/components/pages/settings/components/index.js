@@ -4,16 +4,5 @@ import { PasswordUpdate } from './PasswordUpdate.js';
 import { AvatarUpload } from './AvatarUpload.js';
 import { AvatarUploadModal } from './AvatarUploadModal.js';
 import { MfaEnableUpdate } from './MfaEnableUpdate.js';
-import { DeleteAccountButton } from './DeleteAccountButton.js';
-import { DeleteAccountConfirmationModal } from './DeleteAccountConfirmationModal.js';
 
-export {
-  UserIdentityUpdate,
-  EmailUpdate,
-  PasswordUpdate,
-  AvatarUpload,
-  AvatarUploadModal,
-  MfaEnableUpdate,
-  DeleteAccountButton,
-  DeleteAccountConfirmationModal,
-};
+export { UserIdentityUpdate, EmailUpdate, PasswordUpdate, AvatarUpload, AvatarUploadModal, MfaEnableUpdate };

@@ -88,7 +88,7 @@ export class TournamentCreation extends HTMLElement {
     if (parsedData.length === 2) {
       this.#requiredParticipantsOptions = parsedData;
     } else {
-      console.warn(
+      log.error(
         'Invalid required participants options in environment variable. Using default values of the component.',
       );
       this.#requiredParticipantsOptions = [4, 8];
@@ -168,8 +168,6 @@ export class TournamentCreation extends HTMLElement {
       this.tournamentNameFeedback.textContent = '';
       this.#state.isTournamentNameValid = true;
     }
-    // this.updateConfirmButtonState();
-    console.log('Tournament name validation:', this.#state.isTournamentNameValid);
   }
 
   validateAliasInput(event, value) {
@@ -185,18 +183,7 @@ export class TournamentCreation extends HTMLElement {
       this.tournamentAliasFeedback.textContent = '';
       this.#state.isAliasValid = true;
     }
-    // this.updateConfirmButtonState();
-    console.log('Alias validation:', this.#state.isAliasValid);
   }
-
-  // updateConfirmButtonState() {
-  //   console.log('Updating confirm button state');
-  //   if (this.#state.isTournamentNameValid && this.#state.isAliasValid) {
-  //     this.confirmButton.disabled = false;
-  //   } else {
-  //     this.confirmButton.disabled = true;
-  //   }
-  // }
 
   async createTournament(event) {
     event.stopPropagation();
@@ -211,7 +198,7 @@ export class TournamentCreation extends HTMLElement {
     if (!this.#state.isAliasValid || !this.#state.isTournamentNameValid) {
       return;
     }
-    this.#state.newTournament.settings = this.gameOptionsForm.selectedOptionsObject;
+    this.#state.newTournament.settings = this.gameOptionsForm.selectedOptionsAsObject;
     if (this.#state.newTournament.settings && this.#state.newTournament.settings.ranked) {
       this.#state.newTournament.settings.ranked = false;
     }

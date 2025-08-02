@@ -39,7 +39,7 @@ export class TournamentButton extends HTMLElement {
       return;
     }
     if (authStatus.success && authStatus.response.tournament_id) {
-      devLog('Ongoing tournament found. Redirect to tournament page', authStatus.response.tournament_id);
+      log.info('Ongoing tournament found. Redirect to tournament page', authStatus.response.tournament_id);
       router.navigate(`tournament/${authStatus.response.tournament_id}`);
       return;
     }

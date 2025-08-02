@@ -9,6 +9,7 @@ import { auth } from '@auth';
 import '@socket';
 import '@css/style.css';
 import { createClouds, createStars } from '@utils';
+import './js/utils/log.js';
 
 const theme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-bs-theme', theme);
@@ -27,7 +28,7 @@ const observer = new MutationObserver(() => {
 observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
 
 document.addEventListener('DOMContentLoaded', async () => {
-  devLog('DOM loaded');
+  log.info('DOM loaded');
   document.documentElement.getAttribute('data-bs-theme') === 'light'
     ? (document.getElementById('stars') ? document.body.removeChild(stars) : null,
       (document.body.style.backgroundImage =
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     navbarElement.state = authStatus.success ? authStatus.response : null;
     navbarContainer.appendChild(navbarElement);
   } else {
-    console.error('Error rendering navbar');
+    log.error('Error rendering navbar');
   }
   const currentPath = window.location.pathname || '/';
   if (
@@ -64,23 +65,3 @@ document.addEventListener('mousedown', () => {
 document.addEventListener('mouseup', () => {
   document.body.style.cursor = "url('/img/gun.png') 4 4, auto";
 });
-
-window.devLog = (...args) => {
-  if (process.env.NODE_ENV === 'development') {
-    const stack = new Error().stack.split('\n')[2].trim();
-    const match = stack.match(/([^\/\\]+:\d+:\d+)/);
-    let location = match ? match[1] : 'unknown';
-    location = location.replace(/\?t=\d+/, '');
-    console.log('%c[DEV LOG]', 'color: green; font-weight: bold;', ...args, ` (${location})`);
-  }
-};
-
-window.devErrorLog = (...args) => {
-  if (process.env.NODE_ENV === 'development') {
-    const stack = new Error().stack.split('\n')[2].trim();
-    const match = stack.match(/([^\/\\]+:\d+:\d+)/);
-    let location = match ? match[1] : 'unknown';
-    location = location.replace(/\?t=\d+/, '');
-    console.log('%c[ERROR]', 'color: red; font-weight: bold;', ...args, ` (${location})`);
-  }
-};
