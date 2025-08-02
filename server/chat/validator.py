@@ -59,7 +59,6 @@ class Validator:
             # TODO : check these ids
             "new_tournament": ["id", "organizer_id"],
             "add_new_friend": ["id"],
-            "join_chat": ["chat_id"],
             "room_created": ["chat_id"],
         }
         # Types verification

@@ -3,7 +3,7 @@ import logging
 import autobahn
 from channels.generic.websocket import WebsocketConsumer
 
-from pong.game_protocol import PongCloseCodes
+from common.close_codes import CloseCodes
 
 logger = logging.getLogger("server")
 
@@ -15,4 +15,4 @@ class GuardedWebsocketConsumer(WebsocketConsumer):
             super().send(*args, **kwargs)
         except autobahn.exception.Disconnected:
             logger.info("[GameRoom.send]: cannot send the message, player has already left")
-            self.close(PongCloseCodes.NORMAL_CLOSURE)
+            self.close(CloseCodes.NORMAL_CLOSURE)

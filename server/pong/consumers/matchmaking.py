@@ -4,8 +4,9 @@ import logging
 from asgiref.sync import async_to_sync
 from django.db import transaction
 
+from common.close_codes import CloseCodes
 from common.guarded_websocket_consumer import GuardedWebsocketConsumer
-from pong.game_protocol import MatchmakingToClient, PongCloseCodes
+from pong.game_protocol import MatchmakingToClient
 from pong.models import GameRoom, GameRoomPlayer
 
 logger = logging.getLogger("server")
@@ -28,12 +29,12 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
         self.accept()
         if not self.user:
             logger.warning("[Matchmaking.connect]: unauthorized user tried to start matchmaking")
-            self.close(PongCloseCodes.ILLEGAL_CONNECTION)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             return
 
         if any(self.user.profile.get_active_game_participation()):
             logger.info("[Matchmaking.connect]: user {%s} is already involved in some game", self.user.profile)
-            self.close(PongCloseCodes.ALREADY_IN_GAME)
+            self.close(CloseCodes.ALREADY_IN_GAME)
             return
 
         self.game_room_settings = GameRoom.handle_game_room_settings_types(
@@ -41,7 +42,7 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
         )
         if self.game_room_settings is None:
             logger.warning("[Matchmaking.connect]: invalid game room settings were given")
-            self.close(PongCloseCodes.BAD_DATA)
+            self.close(CloseCodes.BAD_DATA)
             return
 
         with transaction.atomic():
@@ -95,11 +96,11 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
         found a suitable match.
         `.select_for_update()` ensures no race conditions.
         """
-        if not self.game_room or code == PongCloseCodes.ILLEGAL_CONNECTION:
+        if not self.game_room or code == CloseCodes.ILLEGAL_CONNECTION:
             return
 
         async_to_sync(self.channel_layer.group_discard)(self.matchmaking_group_name, self.channel_name)
-        if code == PongCloseCodes.NORMAL_CLOSURE:
+        if code == CloseCodes.NORMAL_CLOSURE:
             logger.info(
                 "[Matchmaking.disconnect]: connection is closed normally",
             )
@@ -126,7 +127,7 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
         try:
             text_data_json = json.loads(text_data)
         except json.JSONDecodeError:
-            self.close(PongCloseCodes.BAD_DATA)
+            self.close(CloseCodes.BAD_DATA)
             logger.warning(
                 "[Matchmaking.receive]: user {%s} sent invalid json",
                 self.user.profile,
@@ -140,9 +141,9 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
                     self.user.profile,
                     self.game_room,
                 )
-                self.close(PongCloseCodes.CANCELLED)
+                self.close(CloseCodes.CANCELLED)
             case unknown:
-                self.close(PongCloseCodes.BAD_DATA)
+                self.close(CloseCodes.BAD_DATA)
                 logger.warning(
                     "[Matchmaking.receive]: user {%s} sent an unknown action {%s}",
                     self.user.profile,
@@ -170,7 +171,7 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
                 ),
             ),
         )
-        self.close(PongCloseCodes.NORMAL_CLOSURE)
+        self.close(CloseCodes.NORMAL_CLOSURE)
         logger.info("[Matchmaking.game_found]: {%s} vs {%s}", self.user.profile, opponent)
 
     def _with_db_lock_find_valid_game_room(self):

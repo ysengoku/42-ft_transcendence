@@ -73,6 +73,8 @@ class TournamentQuerySet(models.QuerySet):
         if not settings:
             settings = get_default_game_room_settings()
 
+        if settings["ranked"]:
+            settings["ranked"] = False
         tournament = self.model(
             name=tournament_name,
             creator=creator,
@@ -292,3 +294,6 @@ class Bracket(models.Model):
         self.status = self.ONGOING
         self.save()
         return self
+
+    def get_winner(self):
+        return self.winner

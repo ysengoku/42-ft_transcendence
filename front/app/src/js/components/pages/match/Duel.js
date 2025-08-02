@@ -78,7 +78,7 @@ export class Duel extends HTMLElement {
         }
         socketManager.closeSocket('matchmaking');
         socketManager.openSocket('matchmaking', queryParams);
-        devLog('Requesting matchmaking...');
+        log.info('Requesting matchmaking...');
         break;
       case DUEL_STATUS.STARTING:
         this.#state.gameId = param.get('gameId');
@@ -195,7 +195,6 @@ export class Duel extends HTMLElement {
       const optionTimeLimit = this.querySelector('#duel-option-time-limit');
       const optionRanked = this.querySelector('#duel-option-ranked');
       const optionCoolMode = this.querySelector('#duel-option-cool-mode');
-      console.log(this.#state.settings);
       this.#state.settings.score_to_win === 'any'
         ? optionScoreToWin.classList.add('d-none')
         : (optionScoreToWin.textContent = `Score to win: ${this.#state.settings.score_to_win}`);
@@ -205,9 +204,9 @@ export class Duel extends HTMLElement {
       this.#state.settings.time_limit === 'any'
         ? optionTimeLimit.classList.add('d-none')
         : (optionTimeLimit.textContent = `Time limit: ${this.#state.settings.time_limit} min`);
-      this.#state.settings.ranked === 'true'
-        ? (optionRanked.textContent = 'Ranked')
-        : optionRanked.classList.add('d-none');
+      this.#state.settings.ranked === 'any'
+        ? optionRanked.classList.add('d-none')
+        : (optionRanked.textContent = this.#state.settings.ranked === 'true' ? 'Ranked' : 'Not ranked');
       this.#state.settings.cool_mode === 'any'
         ? optionCoolMode.classList.add('d-none')
         : (optionCoolMode.textContent =
@@ -256,7 +255,7 @@ export class Duel extends HTMLElement {
    * @return {void}
    */
   handleGameFound(event) {
-    devLog('Game found:', event.detail);
+    log.info('Game found:', event.detail);
     this.#state.gameId = event.detail.game_room_id;
     const { username, nickname, avatar, elo } = event.detail;
     this.#state.opponent = {
@@ -320,7 +319,7 @@ export class Duel extends HTMLElement {
       showToastNotification(message, TOAST_TYPES.ERROR);
       this.#state.status = DUEL_STATUS.MATCHMAKING_CANCELED;
       this.renderContent();
-      devLog('Matchmaking canceled by server:', event.detail);
+      log.info('Matchmaking canceled by server:', event.detail);
     }
   }
 
@@ -340,7 +339,7 @@ export class Duel extends HTMLElement {
     } else {
       data = input;
     }
-    devLog('Invitation accepted:', data);
+    log.info('Invitation accepted:', data);
     if (this.#state.status === DUEL_STATUS.MATCHMAKING) {
       this.cancelMatchmaking();
       return;
@@ -356,7 +355,7 @@ export class Duel extends HTMLElement {
   }
 
   invitationDeclined(data) {
-    devLog('Invitation declined:', data);
+    log.info('Invitation declined:', data);
     if (data.username !== this.#state.opponent.username) {
       return;
     }
@@ -365,7 +364,7 @@ export class Duel extends HTMLElement {
   }
 
   async invitationCanceled(data) {
-    devLog('Invitation canceled:', data.detail);
+    log.info('Invitation canceled:', data.detail);
     if (!this.#state.status) {
       return;
     }
@@ -380,7 +379,7 @@ export class Duel extends HTMLElement {
   }
 
   cancelInvitation() {
-    devLog('Canceling game invitation');
+    log.info('Canceling game invitation');
     const message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
     socketManager.sendMessage('livechat', message);
     this.#state.status = DUEL_STATUS.INVITATION_CANCELED;
@@ -437,24 +436,24 @@ export class Duel extends HTMLElement {
 
     const userConfirmed = await new Promise((resolve) => {
       confirmationModal.handleConfirm = () => {
-        devLog('User confirmed to leave the page');
+        log.info('User confirmed to leave the page');
         let message = '';
         let wsName = '';
         if (this.#state.status === DUEL_STATUS.MATCHMAKING) {
           message = { action: 'cancel' };
           wsName = 'matchmaking';
-          devLog('Canceling matchmaking', message);
+          log.info('Canceling matchmaking', message);
         } else if (this.#state.status === DUEL_STATUS.INVITING) {
           message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
           wsName = 'livechat';
-          devLog('Canceling game invitation', message);
+          log.info('Canceling game invitation', message);
         }
         socketManager.sendMessage(wsName, message);
         confirmationModal.remove();
         resolve(true);
       };
       confirmationModal.handleCancel = () => {
-        devLog('User canceled leaving the page');
+        log.info('User canceled leaving the page');
         confirmationModal.remove();
         resolve(false);
       };

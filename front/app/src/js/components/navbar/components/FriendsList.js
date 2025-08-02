@@ -1,7 +1,27 @@
+/**
+ * @module FriendsList
+ * @description
+ * This module defines a custom friends list component for the navbar.
+ * It fetches and displays the user's friends list, handles pagination,
+ * and provides a template for rendering the friends list.
+ * It also handles the dropdown visibility and scroll events for loading more friends.
+ */
+
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 
+/**
+ * @class FriendsList
+ * @extends HTMLElement
+ */
 export class FriendsList extends HTMLElement {
+  /**
+   * Private state of the FriendsList component.
+   * @property {string} username - The username of the logged-in user.
+   * @property {Array} friendsList - The list of friends fetched from the API.
+   * @property {number} totalFriendsCount - The total number of friends.
+   * @property {number} listLength - The current length of the friends list displayed.
+   */
   #state = {
     username: '',
     friendsList: [],
@@ -16,16 +36,33 @@ export class FriendsList extends HTMLElement {
     this.showMoreFriends = this.showMoreFriends.bind(this);
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is added to the DOM.
+   * It renders the friends list.
+   */
   connectedCallback() {
     this.render();
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is removed from the DOM.
+   * It removes event listeners to prevent memory leaks.
+   */
   disconnectedCallback() {
     this.button?.removeEventListener('shown.bs.dropdown', this.fetchFriendsData);
     this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownClose);
     this.dropdown?.removeEventListener('scrollend', this.showMoreFriends);
   }
 
+  /**
+   * @description
+   * Renders the friends list component by setting its inner HTML.
+   * It initializes the button and dropdown elements, sets up event listeners for fetching friends data,
+   * and handles the dropdown close event.
+   * @returns {void}
+   */
   render() {
     this.innerHTML = this.template();
 
@@ -41,6 +78,13 @@ export class FriendsList extends HTMLElement {
     this.dropdownMobile?.addEventListener('scrollend', this.showMoreFriends);
   }
 
+  /**
+   * @description
+   * Fetches the friends data from the API and updates the state.
+   * It handles the case when the user is not logged in or when the friends list is empty.
+   * If the API request fails, it displays a message indicating that the friends list is temporarily unavailable.
+   * @returns {Promise<void>}
+   */
   async fetchFriendsData() {
     const userData = await auth.getUser();
     if (!userData) {
@@ -57,7 +101,7 @@ export class FriendsList extends HTMLElement {
       true,
     );
     if (!response.success) {
-      devErrorLog('Failed to fetch friends list:', response);
+      log.error('Failed to fetch friends list:', response);
       const unavailable = document.createElement('li');
       unavailable.innerHTML = this.unavailableTemplate();
       const message = unavailable.querySelector('p');
@@ -73,6 +117,13 @@ export class FriendsList extends HTMLElement {
     this.renderFriendsList();
   }
 
+  /**
+   * @description
+   * Renders the friends list by creating user list items for each friend in the state.
+   * It handles the case when there are no friends found by rendering a message indicating that.
+   * It also updates the list length in the state.
+   * @returns {void}
+   */
   renderFriendsList() {
     if (this.#state.friendsList.length === 0) {
       this.renderNoFriendsFound();
@@ -90,18 +141,38 @@ export class FriendsList extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Renders a message indicating that no friends were found.
+   */
   renderNoFriendsFound() {
     const noFriends = document.createElement('li');
     noFriends.innerHTML = this.unavailableTemplate();
     this.listContainer.appendChild(noFriends);
   }
 
+  /**
+   * @description
+   * Handles the dropdown close event by resetting the friends list state and clearing the list container.
+   * It is called when the dropdown is closed to ensure that the friends list is cleared.
+   * @returns {void}
+   */
   handleDropdownClose() {
     this.#state.friendsList = [];
     this.#state.totalFriendsCount = 0;
     this.listContainer.innerHTML = '';
   }
 
+  /**
+   * @description
+   * Handles the scroll event in the dropdown to load more friends when the user scrolls to the bottom.
+   * It checks if the user has scrolled to the bottom and if there are more friends to load.
+   * If so, it fetches more friends data and updates the list.
+   * If the total friends count is reached, it does not fetch more data.
+   * @param {Event} event - The scroll event triggered by the dropdown.
+   * @returns {Promise<void>}
+   * @listens scrollend
+   */
   async showMoreFriends(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;

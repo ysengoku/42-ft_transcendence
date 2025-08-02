@@ -33,13 +33,13 @@ export async function apiRequest(method, endpoint, data = null, isFileUpload = f
       options.body = JSON.stringify(data);
     }
   }
-  devLog('Sending API request:', method, url);
+  log.info('Sending API request:', method, url);
 
   try {
     const response = await fetch(url, options);
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
-      devLog('API response:', response);
+      log.info('API response:', response);
     }
     if (response.ok) {
       return handlers.success(response);
@@ -78,12 +78,12 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and response data.
    */
   success: async (response) => {
-    devLog('Request successful');
+    log.info('Request successful');
     let responseData = null;
     if (response.status !== 204) {
       responseData = await response.json();
     }
-    devLog('Response data:', responseData);
+    log.info('Response data:', responseData);
     return { success: true, status: response.status, data: responseData };
   },
 
@@ -120,19 +120,8 @@ const handlers = {
         unknowknErrorToast();
         break;
     }
-    // if (refreshResponse.success) {
-    //   return apiRequest(method, endpoint, data, isFileUpload, needToken);
-    // }
-    // if (refreshResponse.status === 401) {
-    //   router.redirect('/login');
-    //   sessionExpiredToast();
-    //   return { success: false, status: 401, msg: API_ERROR_MESSAGE[401] };
-    // }
     auth.clearStoredUser();
     return { success: false, status: refreshResponse.status, msg: message };
-    // router.redirect('/');
-    // unknowknErrorToast();
-    // return { success: false, status: refreshResponse.status };
   },
 
   /**
@@ -164,9 +153,9 @@ const handlers = {
     // Retry request
     setTimeout(async () => {
       const retryResponse = await fetch(url, options);
-      devLog('API response:', retryResponse);
+      log.info('API response:', retryResponse);
       if (retryResponse.ok) {
-        devLog('Request successful');
+        log.info('Request successful');
         let responseData = null;
         if (retryResponse.status !== 204) {
           responseData = await retryResponse.json();
