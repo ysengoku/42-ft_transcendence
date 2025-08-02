@@ -331,7 +331,5 @@ class GameStatsEndpointsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         
         response_data = response.json()
-        # NOTE: API BUG - Match detail endpoint returns different schema than expected by tests
-        # Tests expect detailed schema with winner/loser/elo fields but API may return different format
-        self.assertIn("winner", response_data)  # Basic check that endpoint works
+        self.assertIn("winner", response_data)
         self.assertIn("loser", response_data)
