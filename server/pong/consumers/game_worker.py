@@ -109,7 +109,6 @@ class Player:
     id: str = ""
     connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
     connection_stamp: datetime | Literal[0] = 0
-    # TODO: move time to constants
     reconnection_time: int = 3
     reconnection_timer: asyncio.Task | None = None
     profile_id: int = -1
@@ -628,10 +627,9 @@ class GameWorkerConsumer(AsyncConsumer):
 
         match action:
             case "move_left" | "move_right":
-                # TODO: what if player_id is empty
                 result = match.handle_input(action, player_id, content)
                 if not result:
-                    return  # TODO: handle if it's None
+                    return
                 player, content = result
 
                 await self.channel_layer.group_send(
@@ -697,11 +695,7 @@ class GameWorkerConsumer(AsyncConsumer):
         """
         try:
             logger.info("[GameWorker]: waiting for players to connect to the game {%s}", match)
-            # TODO: remove this later
-            if match.is_in_tournament:
-                await asyncio.sleep(15)
-            else:
-                await asyncio.sleep(5)
+            await asyncio.sleep(5)
             if len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) < PLAYERS_REQUIRED:
                 if not match.is_in_tournament:
                     await self.channel_layer.group_send(
@@ -876,7 +870,6 @@ class GameWorkerConsumer(AsyncConsumer):
         player_id = event["player_id"]
         match.stop_waiting_for_players_timer()
         player = match.add_player(event)
-        # TODO: handle case when the player is None
         await self._send_player_id_and_number_to_player(player, match)
         match.status = MultiplayerPongMatchStatus.ONGOING
         match.game_loop_task = asyncio.create_task(self._match_game_loop_task(match))
@@ -901,7 +894,6 @@ class GameWorkerConsumer(AsyncConsumer):
             return
         player.set_as_connected()
         player.stop_waiting_for_reconnection_timer()
-        # TODO: do better reconnection logic
         await self._send_player_id_and_number_to_player(player, match)
         if not len(match.get_players_based_on_connection(PlayerConnectionState.DISCONNECTED)):
             await self._unpause(match)

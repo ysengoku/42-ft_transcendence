@@ -9,7 +9,6 @@ from django.utils import timezone
 from ninja.errors import AuthenticationError
 
 
-# TODO: tweak access and refresh tokens lifetime
 class RefreshTokenQuerySet(models.QuerySet):
     """
     Manages access and refresh JWT's. Handles PyJWT exceptions and throws AuthenticationError in case of any JWT error.
@@ -32,11 +31,11 @@ class RefreshTokenQuerySet(models.QuerySet):
         payload = {
             "sub": str(user.id),
             "iat": now,
-            "exp": now + timedelta(minutes=5),
+            "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_LIFETIME),
         }
 
         access_token = jwt.encode(payload, settings.ACCESS_TOKEN_SECRET_KEY, algorithm="HS256")
-        payload["exp"] = now + timedelta(minutes=15)
+        payload["exp"] = now + timedelta(minutes=settings.REFRESH_TOKEN_LIFETIME)
         refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
 
         refresh_token_instance = self.model(
