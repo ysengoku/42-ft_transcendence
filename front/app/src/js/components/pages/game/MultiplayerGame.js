@@ -54,7 +54,7 @@ export class MultiplayerGame extends HTMLElement {
       document.removeEventListener('keyup', this.onDocumentKeyUp, true);
     }
     if (this.#pongSocket) {
-      devLog('Closing pongSocket');
+      log.info('Closing pongSocket');
       this.#pongSocket.close();
       this.#pongSocket = null;
     }
@@ -460,7 +460,7 @@ export class MultiplayerGame extends HTMLElement {
     }
 
     this.#pongSocket.addEventListener('open', () => {
-      devLog('Success! :3 ');
+      log.info('Success! :3 ');
     });
 
     let data;
@@ -505,25 +505,25 @@ export class MultiplayerGame extends HTMLElement {
         case 'player_joined':
           ourBumperIndexContainer.ourBumperIndex = data.player_number - 1;
           theirBumper = Math.abs(ourBumperIndexContainer.ourBumperIndex - 1);
-          devLog(data);
+          log.info(data);
           playerIdContainer.playerId = data.player_id;
           camera.position.set(0, 15, -20);
           camera.lookAt(new THREE.Vector3(0, 0, 0));
           break;
         case 'game_started':
-          devLog('Game started', data);
+          log.info('Game started', data);
           this.hideOverlay();
           break;
         case 'game_paused':
-          devLog('Game paused');
+          log.info('Game paused');
           this.showOverlay('pause', data);
           break;
         case 'game_unpaused':
-          devLog('Game unpaused');
+          log.info('Game unpaused');
           this.hideOverlay();
           break;
         case 'game_cancelled':
-          devLog('Game cancelled', data);
+          log.info('Game cancelled', data);
           this.showOverlay('cancel', data);
           if (data.tournament_id) {
             router.redirect(`tournament/${data.tournament_id}`);
@@ -531,7 +531,7 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'player_won':
         case 'player_resigned':
-          devLog('Game_over', data);
+          log.info('Game_over', data);
           this.showOverlay('game_over', data);
           break;
         default:
@@ -540,7 +540,7 @@ export class MultiplayerGame extends HTMLElement {
     });
 
     this.#pongSocket.addEventListener('close', (event) => {
-      devLog('PONG socket was nice! :3', event.code);
+      log.info('PONG socket was nice! :3', event.code);
       this.#pongSocket = null;
       switch (event.code) {
         case 3100:

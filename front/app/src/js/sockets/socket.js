@@ -26,7 +26,7 @@ class WebSocketManager {
     const timestamp = new Date().getTime();
     const randomUUID = crypto.randomUUID();
     this.instanceId = `${timestamp}-${randomUUID}`;
-    devLog(`WebSocketManager created for ${this.name} with instance ID: ${this.instanceId}`);
+    log.info(`WebSocketManager created for ${this.name} with instance ID: ${this.instanceId}`);
   }
 
   connect() {
@@ -36,24 +36,24 @@ class WebSocketManager {
     this.socket = new WebSocket(this.url);
     this.socketOpen = true;
 
-    this.socket.onopen = (event) => devLog('WebSocket opened to ', this.url, event);
+    this.socket.onopen = (event) => log.info('WebSocket opened to ', this.url, event);
     this.socket.onmessage = (event) => this.handleAction(event);
     this.socket.onerror = (event) => console.error('WebSocket error: ', this.name, event);
     this.socket.onclose = (event) => {
-      devLog('WebSocket closed: ', this.name, event, event.code);
+      log.info('WebSocket closed: ', this.name, event, event.code);
       if (event.code >= 3000) {
         const customEvent = new CustomEvent('websocket-close', {
           detail: { name: this.name, code: event.code },
           bubbles: true,
         });
         document.dispatchEvent(customEvent);
-        devLog(`WebSocket (${this.name}) closed intentionally by server with code ${event.code}`);
+        log.info(`WebSocket (${this.name}) closed intentionally by server with code ${event.code}`);
         this.socketOpen = false;
         return;
       }
       if (event.code === 1006 || event.code === 1011) {
         showToastNotification('Connection to server lost.', TOAST_TYPES.ERROR);
-        console.error(`WebSocket (${this.name}) closed. Server error.`);
+        log.error(`WebSocket (${this.name}) closed. Server error.`);
         this.socketOpen = false;
         return;
       }
@@ -65,26 +65,26 @@ class WebSocketManager {
     if (!this.socketOpen) {
       return;
     }
-    devLog(`WebSocket (${this.name}) closed unexpectedly. Attempting to reconnect...`);
+    log.info(`WebSocket (${this.name}) closed unexpectedly. Attempting to reconnect...`);
     this.socket = new WebSocket(this.url);
-    this.socket.onopen = (event) => devLog('WebSocket opened to ', this.url, event);
+    this.socket.onopen = (event) => log.info('WebSocket opened to ', this.url, event);
     this.socket.onmessage = (event) => this.handleAction(event);
     this.socket.onerror = (event) => console.error('WebSocket error (', this.name, ') ', event);
     this.socket.onclose = (event) => {
-      devLog('WebSocket closed (', this.name, ') ', event);
+      log.info('WebSocket closed (', this.name, ') ', event);
       if (event.code >= 3000) {
         const customEvent = new CustomEvent('websocket-close', {
           detail: { name: this.name, code: event.code },
           bubbles: true,
         });
         document.dispatchEvent(customEvent);
-        devLog(`WebSocket (${this.name}) closed intentionally by server with code ${event.code}`);
+        log.info(`WebSocket (${this.name}) closed intentionally by server with code ${event.code}`);
         this.socketOpen = false;
         return;
       }
       if (event.code === 1006 || event.code === 1011) {
         showToastNotification('Connection to server lost.', TOAST_TYPES.ERROR);
-        console.error(`WebSocket (${this.name}) closed. Server error.`);
+        log.error(`WebSocket (${this.name}) closed. Server error.`);
         this.socketOpen = false;
         return;
       }
@@ -107,23 +107,23 @@ class WebSocketManager {
    * @param {MessageEvent} event - The message event received from the WebSocket.
    */
   handleAction(event) {
-    devLog('Message received via WebSocket:', event.data);
+    log.info('Message received via WebSocket:', event.data);
     let message = null;
     try {
       message = JSON.parse(event.data);
     } catch (error) {
-      devErrorLog('Invalid JSON:', error);
+      log.error('Invalid JSON:', error);
       return;
     }
     if (!message.action) {
-      devErrorLog('Missing action field:', message);
+      log.error('Missing action field:', message);
       return;
     }
     const matchedListener = this.listeners[message.action];
     if (matchedListener) {
       message.data ? matchedListener(message.data) : matchedListener(message);
     } else {
-      devErrorLog('No listeners set for this action:', message.action);
+      log.error('No listeners set for this action:', message.action);
       return;
     }
   }
@@ -147,12 +147,12 @@ const socketManager = (() => {
      */
     addSocket(name, listeners) {
       if (this.configs.has(name)) {
-        devErrorLog('Socket type already registered:', name);
+        log.error('Socket type already registered:', name);
         return;
       }
       const path = WS_PATH[name];
       if (!path) {
-        devErrorLog('Unknown socket path:', name);
+        log.error('Unknown socket path:', name);
         return;
       }
       this.configs.set(name, { path, listeners });
@@ -166,11 +166,11 @@ const socketManager = (() => {
     openSocket(name, id = null) {
       const config = this.configs.get(name);
       if (!config) {
-        devErrorLog('Socket not registered:', name);
+        log.error('Socket not registered:', name);
         return;
       }
       if (this.sockets.has(name) && this.sockets.get(name).socketOpen) {
-        devLog('Socket already open:', name);
+        log.info('Socket already open:', name);
         return;
       }
       const path = typeof config.path === 'function' ? config.path(id) : config.path;
@@ -212,14 +212,14 @@ const socketManager = (() => {
     sendMessage(name, message) {
       const socket = this.sockets.get(name);
       if (!socket) {
-        devErrorLog('Socket not found:', name);
+        log.error('Socket not found:', name);
         return;
       }
       if (socket.socket.readyState !== WebSocket.OPEN) {
-        devErrorLog('WebSocket is not open:', name);
+        log.error('WebSocket is not open:', name);
         return;
       }
-      devLog('Sending message via WebSocket:', message);
+      log.info('Sending message via WebSocket:', message);
       socket.socket.send(JSON.stringify(message));
     }
 
@@ -231,7 +231,7 @@ const socketManager = (() => {
     getClientInstanceId(name) {
       const socket = this.sockets.get(name);
       if (!socket) {
-        devErrorLog('Socket not found:', name);
+        log.error('Socket not found:', name);
         return null;
       }
       return socket.instanceId;

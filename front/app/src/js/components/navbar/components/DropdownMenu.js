@@ -1,8 +1,28 @@
+/**
+ * @module DropdownMenu
+ * @description
+ * This module defines a custom dropdown menu component for the navbar.
+ * It handles user login status, theme toggling.
+ * Provides links to user profile and settings, logout button for logged-in user.
+ * If the user is not logged-in, it provides links to login and registration pages.
+ * It also includes a credits accordion for displaying credits information.
+ */
+
 import { auth, handleLogout } from '@auth';
 import { ThemeController } from '@utils';
 import anonymousavatar from '/img/anonymous-avatar.png?url';
 
+/**
+ * @class DropdownMenu
+ * @extends HTMLElement
+ */
 export class DropdownMenu extends HTMLElement {
+  /**
+   * Private state of the DropdownMenu component.
+   * @property {Object} - Contains user data and login status.
+   * @property {boolean} isLoggedIn - Indicates if the user is logged in.
+   * @property {Object} user - The user data.
+   */
   #state = {
     isLoggedIn: false,
     user: null,
@@ -14,13 +34,23 @@ export class DropdownMenu extends HTMLElement {
     this.handleThemeChange = this.handleThemeChange.bind(this);
   }
 
-  async setLoginStatus(value) {
-    this.#state.isLoggedIn = value;
-    this.#state.user = auth.getStoredUser();
-    if (this.#state.isLoggedIn && !this.#state.user) {
-      this.#state.user = await auth.getUser();
-      if (!this.#state.user) {
-        this.#state.isLoggedIn = false;
+  /**
+   * @description
+   * Sets the user state and updates the login status.
+   * @param {boolean} isLoggedIn
+   * @param {Object} user - The user data to set.
+   * @returns {void}
+   */
+  async setLoginStatus(isLoggedIn, user = null) {
+    this.#state.isLoggedIn = isLoggedIn;
+    if (this.#state.isLoggedIn) {
+      if (user) {
+        this.#state.user = user;
+      } else {
+        this.#state.user = await auth.getUser();
+        if (!this.#state.user) {
+          this.#state.isLoggedIn = false;
+        }
       }
     }
     this.render();
@@ -31,6 +61,13 @@ export class DropdownMenu extends HTMLElement {
     this.themeToggleButton?.removeEventListener('click', this.handleThemeChange);
   }
 
+  /**
+   * @description
+   * Renders the dropdown menu component by setting its inner HTML.
+   * It initializes the avatar image, menu list according to the user's login status,
+   * and sets up event listeners for theme toggle and logout button if the user is logged-in.
+   * @returns {void}
+   */
   render() {
     this.innerHTML = this.template();
 
@@ -53,10 +90,22 @@ export class DropdownMenu extends HTMLElement {
     });
   }
 
+  /**
+   * @description
+   * Handles the logout button click event.
+   * It calls the `handleLogout` function to log the user out.
+   * @returns {void}
+   */
   handleLogoutClick() {
     handleLogout();
   }
 
+  /**
+   * @description
+   * Handles the theme toggle button click event.
+   * It toggles the theme using the `ThemeController` and updates the theme label accordingly to reflect the current theme state.
+   * @returns {void}
+   */
   handleThemeChange() {
     const newTheme = ThemeController.toggleTheme();
     const themeLabel = document.getElementById('theme-label');

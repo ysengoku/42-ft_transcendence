@@ -164,6 +164,10 @@ class Profile(models.Model):
     def dialogues(self):
         return self.dialogues_as_user1 | self.dialogues_as_user2
 
+    @classmethod
+    def get_db_table(cls):
+        return cls._meta.db_table
+
     def get_title_and_price(self):  # noqa: PLR0911
         # ruff: noqa: PLR2004
         if self.elo > 2700:
@@ -307,6 +311,11 @@ class Profile(models.Model):
             "is_online": self.is_online,
         }
 
+    def get_user_data_with_date(self):
+        return self.to_username_nickname_avatar_schema() | {
+            "date": timezone.now().isoformat(),
+        }
+
     def get_active_tournament(self) -> None | Tournament:
         """Gets the active tournament where user is still a playing participant."""
         participant: Participant = self.participant_set.filter(
@@ -338,6 +347,7 @@ class Profile(models.Model):
         pending_invitation_as_inviter: GameInvitation | None = self.sent_invites.filter(status="pending").first()
 
         return active_game_room, active_tournament, pending_invitation_as_inviter
+
 
 
 class Friendship(models.Model):

@@ -60,13 +60,6 @@ export const API_ENDPOINTS = {
   USER_SETTINGS: (username) => `${API_BASE_URL}${API_USERS}/${username}/settings`,
 
   /**
-   * DELETE: Delete definitely the user account.
-   * @param {string} username - The username of the user to delete.
-   * @return {string} The full API URL for deleting the user account.
-   * */
-  USER_DELETE: (username) => `${API_BASE_URL}${API_USERS}/${username}/delete`,
-
-  /**
    * GET: Get the current user's friends
    * @param {string} username - The username of the user to retrieve.
    * @param {number} limit - The maximum number of friends to return.
