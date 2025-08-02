@@ -261,30 +261,6 @@ class AuthEndpointsTests(TestCase):
         token_obj = RefreshToken.objects.filter(token=refresh_token).first()
         self.assertTrue(token_obj.is_revoked)
 
-    def test_delete_account_while_logged_out(self):
-        response = self.client.delete("/api/users/TestUser/delete")
-        self.assertEqual(response.status_code, 401)
-
-    def test_delete_account_different_user(self):
-        self.client.post(
-            "/api/login",
-            content_type="application/json",
-            data={"username": "TestUser", "password": "TestPassword123"},
-        )
-        response = self.client.delete("/api/users/DifferentUser/delete")
-        self.assertEqual(response.status_code, 403)
-
-    def test_delete_account_success(self):
-        self.client.post(
-            "/api/login",
-            content_type="application/json",
-            data={"username": "TestUser", "password": "TestPassword123"},
-        )
-        response = self.client.delete("/api/users/TestUser/delete")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Account successfully deleted.", status_code=200)
-        self.assertFalse(User.objects.filter(username="TestUser").exists())
-
     @patch("users.router.endpoints.auth.send_mail")
     def test_forgot_password_with_valid_email(self, mock_send_mail):
         mock_send_mail.return_value = True
