@@ -114,6 +114,7 @@ class UserEventsConsumerTests(TransactionTestCase):
             "data": {
                 "content": "Test UUID validation",
                 "chat_id": "invalid-uuid-format",
+                "timestamp": "dummy-timestamp",
             },
         }
 
@@ -182,6 +183,7 @@ class UserEventsConsumerTests(TransactionTestCase):
             "data": {
                 "content": "Message valide",
                 "chat_id": str(self.chat.id),
+                "timestamp": "2025-08-02",
             },
         }
 
