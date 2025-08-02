@@ -223,18 +223,9 @@ graph TB
 
 ### UI design
 
-- [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=1067-3755&p=f&t=DtKd9eHDPjN8xQfA-0)
+- [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=37-340&t=AJvSNhCCjxhZqsCV-1)
 
 ## 👥 Contributors
-
-<!--
-<a href="https://github.com/ysengoku/42-ft_transcendence/graphs/contributors?anon=1">
-  <img src="https://contrib.rocks/image?repo=ysengoku/42-ft_transcendence" />
-</a>
-
-
-Made with [contrib.rocks](https://contrib.rocks)
--->
 
 <table>
   <tr>
