@@ -1,8 +1,29 @@
+/**
+ * @module UserEloProgressionChart
+ * @description
+ * Renders Elo score data in a line chart format,
+ * allowing users to navigate through their Elo history 7 days at a time.
+ */
+
 import { apiRequest, API_ENDPOINTS } from '@api';
 
+/**
+ * @class UserEloProgressionChart
+ * @extends HTMLElement
+ */
 export class UserEloProgressionChart extends HTMLElement {
+  // Namespace for SVG elements
   SVGNS = 'http://www.w3.org/2000/svg';
 
+  /**
+   * Private state object to hold the component's state.
+   * @property {String} loggedInUsername - The username of the logged-in user.
+   * @property {String} username - The username for which the Elo progression is displayed.
+   * @property {Array} history - The Elo score history data.
+   * @property {Number} totalItemCount - Total number of Elo history items available in database.
+   * @property {Number} currentItemCount - Total number of fetched Elo history items.
+   * @property {Number} currentWeekIndex - Index of the current week being displayed in
+   */
   #state = {
     loggedInUsername: '',
     username: '',
@@ -12,12 +33,28 @@ export class UserEloProgressionChart extends HTMLElement {
     currentWeekIndex: 0,
   };
 
+  /**
+   * Value range for Elo scores to be displayed on the current page of the chart.
+   * The values are adjusted based on the user's Elo score history.
+   * Used to adjust the Y-axis of the chart dynamically based on the data.
+   * Midrange Elo value is calculated as the average of min and max.
+   */
   #valueRange = {
     min: 0,
     max: 3000,
   };
   #eloMidrange = Math.round((this.#valueRange.min + this.#valueRange.max) / 2);
 
+  /**
+   * Y-coordinate settings for the chart.
+   * These values define the vertical space for the chart and are used to calculate the Y position
+   * of the Elo scores based on the value range.
+   * - max: The maximum Y-coordinate for the top of the chart.
+   * - min: The minimum Y-coordinate for the bottom of the chart.
+   * - mid: The Y-coordinate for the midrange Elo value.
+   * The scaleY is calculated based on the difference between max and min Y-coordinates
+   * relative to the difference between max and min Elo values.
+   */
   #yCoordinate = {
     max: 110,
     min: 20,
@@ -52,6 +89,13 @@ export class UserEloProgressionChart extends HTMLElement {
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
 
+  /**
+   * @description
+   * Renders the component by setting its inner HTML with styles and template,
+   * initializes the chart and buttons, and renders the chart with the current state.
+   * If there is no history data, it displays a message indicating that there is no data.
+   * @returns {void}
+   */
   render() {
     this.innerHTML = this.style() + this.template();
 
@@ -70,6 +114,13 @@ export class UserEloProgressionChart extends HTMLElement {
     this.renderChart();
   }
 
+  /**
+   * @description
+   * Parses the Elo history data, generates the SVG elements for the line chart,
+   * and appends them to the chart container.
+   * It creates a polyline for the Elo progression, markers for each data point,
+   * and tooltips that display the Elo value and daily change when hovering over the markers.
+   */
   renderChart() {
     this.parseData();
     this.chart.innerHTML = '';
@@ -150,6 +201,15 @@ export class UserEloProgressionChart extends HTMLElement {
     this.chart.appendChild(svg);
   }
 
+  /**
+   * @description
+   * Creates the main SVG structure for the Elo progression chart.
+   * It includes the Y-axis grid, labels, X-axis grid, and labels.
+   * The Y-axis labels are positioned based on the calculated value range and midrange Elo value.
+   * The SVG is set to a specific width and height, and the viewBox is defined
+   * to ensure proper scaling and aspect ratio.
+   * @returns {SVGElement} - The SVG element containing the chart structure.
+   */
   linechartSVG() {
     const yLabelPosition = {
       min: this.#yCoordinate.max,
@@ -221,6 +281,14 @@ export class UserEloProgressionChart extends HTMLElement {
     return svg;
   }
 
+  /**
+   * @description
+   * Generates a polyline SVG element representing the Elo progression line graph.
+   * where each pair represents a point on the graph.
+   * The polyline is styled with no fill, a primary color stroke, and a specified stroke width.
+   * @param {String} points - A string of coordinates for the polyline, formatted as "x1,y1 x2,y2...".
+   * @returns {SVGElement} - The SVG element representing the line graph.
+   */
   generateLineGraph(points) {
     const polyline = document.createElementNS(this.SVGNS, 'polyline');
     polyline.setAttribute('points', points);
@@ -230,9 +298,17 @@ export class UserEloProgressionChart extends HTMLElement {
     return polyline;
   }
 
+  /**
+   * @description
+   * Parses the Elo history data to prepare it for rendering in the chart.
+   * It chunks the data into 7-day intervals, adjusts the Y-axis based on the Elo scores,
+   * and calculates the X and Y coordinates for each data point.
+   * The parsed data is stored in the `parsedData` property, which is used to render the chart.
+   * @returns {void}
+   */
   parseData() {
-    const cunkedData = this.chunkArray(this.#state.history);
-    const dataToDisplay = cunkedData[this.#state.currentWeekIndex];
+    const chunkedData = this.chunkArray(this.#state.history);
+    const dataToDisplay = chunkedData[this.#state.currentWeekIndex];
     dataToDisplay.reverse();
 
     const count = dataToDisplay.length;
@@ -254,6 +330,12 @@ export class UserEloProgressionChart extends HTMLElement {
     });
   }
 
+  /**
+   * @description
+   * Splits an array into chunks of 7 items each.
+   * @param {*} array 
+   * @returns {Array} - An array of arrays, each containing up to 7 items.
+   */
   chunkArray(array) {
     const result = [];
     for (let i = 0; i < array.length; i += 7) {
@@ -262,6 +344,17 @@ export class UserEloProgressionChart extends HTMLElement {
     return result;
   }
 
+  /**
+   * @description
+   * Adjusts the Y-axis value range based on the Elo scores in the provided data.
+   * It calculates the minimum and maximum Elo scores, rounds them to the nearest 10,
+   * and ensures they are within the defined limits (min 100, max 3000).
+   * The midrange Elo value is calculated as the average of the adjusted min and max values,
+   * and the scaleY is calculated based on the difference between the Y-coordinate limits
+   * and the Elo value range.
+   * @param {*} Array
+   * @returns {void} 
+   */
   adjustYAxis(data) {
     this.#valueRange.min = Math.min(...data.map((item) => item.elo_result));
     this.#valueRange.min = Math.floor(this.#valueRange.min / 10) * 10 - 10;
