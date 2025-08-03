@@ -313,7 +313,6 @@ chunkArray(array) {
 	// Example of generated list
 	// "20,88.625 60,88.625 100,88.625 140,56 180,24.5 220,31.25 260,33.5"
 	```
-
 - Render `<polyline>` setting attibutes:   
 	```html
 	<polyline
@@ -337,7 +336,21 @@ chunkArray(array) {
 	- `stroke-width`:   
 		Thickness of the line in SVG units.
 
+<img
+	src="../../assets/doc-front/linechart-polyline.png"
+	alt="Line chart polyline"
+	height="240px"
+	style="display: block; margin: 0 auto"
+/>
+
 - For each point, draw a marker with `<circle cx="${x}" cy="${y}" r="4" />`.
+
+<img
+	src="../../assets/doc-front/linechart-markers.png"
+	alt="Line chart markers"
+	height="240px"
+	style="display: block; margin: 0 auto"
+/>
 
 ### 👉 Tooltips
 
