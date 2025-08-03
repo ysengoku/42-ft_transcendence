@@ -1,5 +1,15 @@
+/**
+ * @module UserWinRatePieGraph
+ * @description
+ * This module renders a pie graph representing the user's win rate.
+ */
+
 import { BREAKPOINT } from '@utils';
 
+/**
+ * @class UserWinRatePieGraph
+ * @extends HTMLElement
+ */
 export class UserWinRatePieGraph extends HTMLElement {
   #state = {
     wins: 0,
@@ -15,6 +25,14 @@ export class UserWinRatePieGraph extends HTMLElement {
     this.render();
   }
 
+  /**
+   * @description
+   * Renders the component by setting its inner HTML with styles and template.
+   * It updates the text content for wins and losses, and handles the case where there is
+   * no data by displaying a message.
+   * If there are no wins and losses, it hides the pie graph and shows a "No data" message.
+   * @returns {void}
+   */
   render() {
     this.innerHTML = this.style() + this.template();
 
@@ -36,6 +54,13 @@ export class UserWinRatePieGraph extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Generates the HTML template for the pie graph.
+   * It calculates the win rate percentage, constructs the SVG path for the pie graph,
+   * and returns the complete HTML string.
+   * @returns {String} The HTML string for the pie graph template.
+   */
   template() {
     const rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     const r = 100 / (2 * Math.PI); // radius
