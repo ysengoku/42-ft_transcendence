@@ -22,7 +22,7 @@ ignore = [
     "TRY",  # try-catch block rules
 
     #### specific rules
-    "D100",     # ignore missing docs
+    "D100",     # Ignore missing docs
     "D101",     # Missing docstring in public class
     "D102",     # Missing docstring in public method
     "D103",     # Missing docstring in public function
@@ -49,4 +49,5 @@ ignore = [
     "PLR0402",  # Disallows usage of aliases
     "PT009",    # Using assert instead of assertEqual for testing
     "TC001",    # Move types to type annotations block
+    "PLC0415"   # Ignore imports not at the top level
 ]
