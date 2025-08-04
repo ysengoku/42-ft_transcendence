@@ -56,12 +56,12 @@ class ProfileModelTests(TestCase):
             "User should be able to participate in games after finishing a tournament",
         )
 
-    def test_get_active_game_pariticipation_when_invited_someone(self):
+    def test_get_active_game_participation_when_invited_someone(self):
         user2: User = User.objects.create_user("TestUser2", email="user1@gmail.com", password="123")
         game_invitation: GameInvitation = GameInvitation.objects.create(
             sender=self.user.profile,
             recipient=user2.profile,
-            options=get_default_game_room_settings(),
+            settings=get_default_game_room_settings(),
         )
         self.assertIsNotNone(
             next((x for x in self.user.profile.get_active_game_participation() if isinstance(x, GameInvitation)), None),

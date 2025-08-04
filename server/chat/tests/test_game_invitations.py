@@ -90,7 +90,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "username": "targetuser",
                 "client_id": "client_id",
-                "options": "not a dict",
+                "settings": "not a dict",
             },
         }
         await communicator.send_json_to(invalid_data)
@@ -113,7 +113,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "targetuser",
-                "options": {
+                "settings": {
                     GAME_SPEED: "ultrafast",
                 },
             },
@@ -137,7 +137,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "targetuser",
-                "options": {
+                "settings": {
                     RANKED: "true",
                 },
             },
@@ -161,7 +161,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "targetuser",
-                "options": {
+                "settings": {
                     SCORE_TO_WIN: 2,
                 },
             },
@@ -185,7 +185,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "targetuser",
-                "options": {
+                "settings": {
                     TIME_LIMIT: 6,
                 },
             },
@@ -210,7 +210,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "targetuser",
-                "options": {
+                "settings": {
                     TIME_LIMIT: None,
                 },
             },
@@ -235,7 +235,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "targetuser",
-                "options": {
+                "settings": {
                     GAME_SPEED: "slow",
                 },
             },
@@ -260,7 +260,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "target_user",
-                "options": {
+                "settings": {
                     GAME_SPEED: "slow",
                     RANKED: False,
                     SCORE_TO_WIN: 3,
@@ -288,7 +288,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "target_user",
-                "options": {
+                "settings": {
                     GAME_SPEED: "medium",
                     RANKED: True,
                     SCORE_TO_WIN: 10,
@@ -316,7 +316,7 @@ class GameInvitationTests(UserEventsConsumerTests):
             "data": {
                 "client_id": "client_id",
                 "username": "target_user",
-                "options": {
+                "settings": {
                     GAME_SPEED: "fast",
                     RANKED: True,
                     SCORE_TO_WIN: 20,

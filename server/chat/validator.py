@@ -93,34 +93,34 @@ class Validator:
             return False
 
     @staticmethod
-    def check_str_option(options, option, dict_options) -> bool:
+    def check_str_option(settings, option, dict_settings) -> bool:
         if option is None:
             return True
-        if not isinstance(option, str) or option not in dict_options:
-            logger.warning("%s must be one of %s and currently is %s", options, dict_options, option)
+        if not isinstance(option, str) or option not in dict_settings:
+            logger.warning("%s must be one of %s and currently is %s", settings, dict_settings, option)
             return False
         return True
 
     @staticmethod
-    def check_bool_option(options, option) -> bool:
+    def check_bool_option(settings, option) -> bool:
         if option is not None and not isinstance(option, bool):
-            logger.warning("%s must be a boolean", options)
+            logger.warning("%s must be a boolean", settings)
             return False
         return True
 
     @staticmethod
-    def check_int_option(options, option, val_min, val_max) -> bool:
+    def check_int_option(settings, option, val_min, val_max) -> bool:
         if option is None:
             return True
         if not isinstance(option, int) or not (val_min <= option <= val_max):
-            logger.warning("%s must be an int between %d and %d", options, val_min, val_max)
+            logger.warning("%s must be an int between %d and %d", settings, val_min, val_max)
             return False
         return True
 
     @staticmethod
-    def validate_options(options) -> bool:
-        if not isinstance(options, dict):
-            logger.warning("Invalid type for 'options'")
+    def validate_settings(settings) -> bool:
+        if not isinstance(settings, dict):
+            logger.warning("Invalid type for 'settings'")
             return False
         ranked = "ranked"
         game_speed = "game_speed"
@@ -129,9 +129,9 @@ class Validator:
         cool_mode = "cool_mode"
         schema = {ranked, game_speed, score_to_win, time_limit, cool_mode}
         for field in schema:
-            if field not in options:
+            if field not in settings:
                 continue
-            if options.get(field) is None:
+            if settings.get(field) is None:
                 logger.warning("Field [{%s}] is None for action game_invite", field)
                 return False
 
@@ -140,9 +140,9 @@ class Validator:
         min_time, max_time = 1, 5
 
         return (
-            Validator.check_str_option(game_speed, options.get(game_speed), allowed_game_speeds)
-            and Validator.check_bool_option(ranked, options.get(ranked))
-            and Validator.check_bool_option(cool_mode, options.get(cool_mode))
-            and Validator.check_int_option(score_to_win, options.get(score_to_win), min_score, max_score)
-            and Validator.check_int_option(time_limit, options.get(time_limit), min_time, max_time)
+            Validator.check_str_option(game_speed, settings.get(game_speed), allowed_game_speeds)
+            and Validator.check_bool_option(ranked, settings.get(ranked))
+            and Validator.check_bool_option(cool_mode, settings.get(cool_mode))
+            and Validator.check_int_option(score_to_win, settings.get(score_to_win), min_score, max_score)
+            and Validator.check_int_option(time_limit, settings.get(time_limit), min_time, max_time)
         )
