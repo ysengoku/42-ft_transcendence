@@ -29,11 +29,25 @@ export class FriendsList extends HTMLElement {
     listLength: 0,
   };
 
+  /**
+   * @property {number} navbarHeight - The fixed height of the navbar.
+   * @property {number} maxListHeight - The maximum height that a dropdown list can expand to.
+   * @property {number} listBottomPosition - The calculated bottom-most position of the dropdown list when its items are fully rendered
+   */
+  #size = {
+    navbarHeight: 64,
+    maxListHeight: 0,
+    listBottomPosition: 0,
+  };
+
   constructor() {
     super();
-    this.fetchFriendsData = this.fetchFriendsData.bind(this);
+    this.renderListContent = this.renderListContent.bind(this);
     this.handleDropdownClose = this.handleDropdownClose.bind(this);
     this.showMoreFriends = this.showMoreFriends.bind(this);
+
+    this.#size.maxListHeight = window.innerHeight * 0.75;
+    this.#size.listBottomPosition = this.#size.navbarHeight + this.#size.maxListHeight;
   }
 
   /**
@@ -51,7 +65,7 @@ export class FriendsList extends HTMLElement {
    * It removes event listeners to prevent memory leaks.
    */
   disconnectedCallback() {
-    this.button?.removeEventListener('shown.bs.dropdown', this.fetchFriendsData);
+    this.button?.removeEventListener('shown.bs.dropdown', this.renderListContent);
     this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownClose);
     this.dropdown?.removeEventListener('scrollend', this.showMoreFriends);
   }
@@ -63,14 +77,19 @@ export class FriendsList extends HTMLElement {
    * and handles the dropdown close event.
    * @returns {void}
    */
-  render() {
+  async render() {
+    const userData = await auth.getUser();
+    if (!userData) {
+      return false;
+    }
+    this.#state.username = userData.username;
     this.innerHTML = this.template();
 
     this.button = document.getElementById('navbar-friends-button');
     this.dropdown = document.getElementById('friends-list-dropdown');
     this.listContainer = this.querySelector('#friends-list');
 
-    this.button?.addEventListener('shown.bs.dropdown', this.fetchFriendsData);
+    this.button?.addEventListener('shown.bs.dropdown', this.renderListContent);
     this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownClose);
     this.dropdown?.addEventListener('scrollend', this.showMoreFriends);
 
@@ -80,17 +99,28 @@ export class FriendsList extends HTMLElement {
 
   /**
    * @description
+   * Called on dropdown shown, renders the friends list content
+   * @returns {Promise<void>}
+   */
+  async renderListContent() {
+    const fetchData = await this.fetchFriendsData();
+    if (!fetchData) {
+      return;
+    }
+    this.renderFriendsListItems();
+    if (this.#state.listLength < this.#state.totalFriendsCount) {
+      this.fillFriendsList();
+    }
+  }
+
+  /**
+   * @description
    * Fetches the friends data from the API and updates the state.
    * It handles the case when the user is not logged in or when the friends list is empty.
    * If the API request fails, it displays a message indicating that the friends list is temporarily unavailable.
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>} - true on fetch succss, false on failure
    */
   async fetchFriendsData() {
-    const userData = await auth.getUser();
-    if (!userData) {
-      return;
-    }
-    this.#state.username = userData.username;
     this.#state.listLength = this.#state.friendsList.length;
     const response = await apiRequest(
       'GET',
@@ -109,12 +139,13 @@ export class FriendsList extends HTMLElement {
         message.innerText = 'Temporary unavailable';
       }
       this.listContainer.appendChild(unavailable);
+      return false;
     }
     if (response.data) {
       this.#state.totalFriendsCount = response.data.count;
       this.#state.friendsList.push(...response.data.items);
     }
-    this.renderFriendsList();
+    return true;
   }
 
   /**
@@ -122,9 +153,9 @@ export class FriendsList extends HTMLElement {
    * Renders the friends list by creating user list items for each friend in the state.
    * It handles the case when there are no friends found by rendering a message indicating that.
    * It also updates the list length in the state.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  renderFriendsList() {
+  async renderFriendsListItems() {
     if (this.#state.friendsList.length === 0) {
       this.renderNoFriendsFound();
       return;
@@ -143,7 +174,30 @@ export class FriendsList extends HTMLElement {
 
   /**
    * @description
+   * Renders friends list items until the list height becomes larger than max dropdown height
+   * or all elements are rendered
+   * @returns {Promise<void>}
+   */
+  async fillFriendsList() {
+    let lastItem = this.listContainer.lastElementChild;
+    let lastItemRect = lastItem.getBoundingClientRect()['bottom'];
+    console.log(this.#size.listBottomPosition, lastItemRect);
+    while (
+      lastItemRect < this.#size.listBottomPosition &&
+      this.#state.totalFriendsCount !== this.#state.friendsList.length
+    ) {
+      await this.fetchFriendsData();
+      this.renderFriendsListItems();
+      lastItem = this.listContainer.lastElementChild;
+      lastItemRect = lastItem.getBoundingClientRect()['bottom'];
+      console.log(this.#size.listBottomPosition, lastItemRect);
+    }
+  }
+
+  /**
+   * @description
    * Renders a message indicating that no friends were found.
+   * @returns {void}
    */
   renderNoFriendsFound() {
     const noFriends = document.createElement('li');
@@ -183,6 +237,7 @@ export class FriendsList extends HTMLElement {
       return;
     }
     await this.fetchFriendsData();
+    this.renderFriendsListItems();
   }
 
   template() {
