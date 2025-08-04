@@ -279,10 +279,10 @@ def generate_tournaments(users: dict[str, User]) -> None:
     profiles = [u.profile for u in users.values()]
     print("Number of profiles :", len(profiles))
     list_users = list(users.values())
-    for i in range(4):
+    for i in range(3):
         name = f"Tournament {i + 1}"
         generate_random_date()
-        option_for_status = [Tournament.FINISHED, Tournament.CANCELLED, Tournament.ONGOING, Tournament.PENDING]
+        option_for_status = [Tournament.FINISHED, Tournament.CANCELLED, Tournament.PENDING]
         status = option_for_status[i]
         user = choice(list(users.values()))
         user = choice(list_users)
