@@ -113,13 +113,11 @@ INSTALLED_APPS = [
     # ASGI server for working with websockets and Django channels
     "daphne",
     "channels",
-
     # Our apps
     "users",
     "chat",
     "pong",
     "tournaments",
-
     # Default Django applications
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -131,6 +129,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -138,6 +137,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
 ROOT_URLCONF = "server.urls"
 
