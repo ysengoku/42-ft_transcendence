@@ -30,24 +30,17 @@ export class FriendsList extends HTMLElement {
   };
 
   /**
-   * @property {number} navbarHeight - The fixed height of the navbar.
-   * @property {number} maxListHeight - The maximum height that a dropdown list can expand to.
-   * @property {number} listBottomPosition - The calculated bottom-most position of the dropdown list when its items are fully rendered
+   * @property {IntersectionObserver} observer - The IntersectionObserver instance for lazy loading friends.
+   * @property {HTMLElement} loadMoreAnchor - The anchor element for loading more friends.
    */
-  #size = {
-    navbarHeight: 64,
-    maxListHeight: 0,
-    listBottomPosition: 0,
-  };
+  #observer = null;
+  #loadMoreAnchor = null;
 
   constructor() {
     super();
     this.renderListContent = this.renderListContent.bind(this);
     this.handleDropdownClose = this.handleDropdownClose.bind(this);
     this.showMoreFriends = this.showMoreFriends.bind(this);
-
-    this.#size.maxListHeight = window.innerHeight * 0.75;
-    this.#size.listBottomPosition = this.#size.navbarHeight + this.#size.maxListHeight;
   }
 
   /**
@@ -65,9 +58,9 @@ export class FriendsList extends HTMLElement {
    * It removes event listeners to prevent memory leaks.
    */
   disconnectedCallback() {
+    this.cleanObserver();
     this.button?.removeEventListener('shown.bs.dropdown', this.renderListContent);
     this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownClose);
-    this.dropdown?.removeEventListener('scrollend', this.showMoreFriends);
   }
 
   /**
@@ -91,26 +84,24 @@ export class FriendsList extends HTMLElement {
 
     this.button?.addEventListener('shown.bs.dropdown', this.renderListContent);
     this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownClose);
-    this.dropdown?.addEventListener('scrollend', this.showMoreFriends);
 
     this.dropdownMobile = document.getElementById('dropdown-friends-list');
-    this.dropdownMobile?.addEventListener('scrollend', this.showMoreFriends);
   }
 
   /**
    * @description
-   * Called on dropdown shown, renders the friends list content
+   * Calls the API to fetch the friends data and renders the friends list items.
+   * It also sets up the IntersectionObserver for lazy loading more friends.
    * @returns {Promise<void>}
+   * @listens shown.bs.dropdown
    */
   async renderListContent() {
-    const fetchData = await this.fetchFriendsData();
-    if (!fetchData) {
+    const fetchSuccess = await this.fetchFriendsData();
+    if (!fetchSuccess) {
       return;
     }
     this.renderFriendsListItems();
-    if (this.#state.listLength < this.#state.totalFriendsCount) {
-      this.fillFriendsList();
-    }
+    this.setupObserver();
   }
 
   /**
@@ -155,7 +146,7 @@ export class FriendsList extends HTMLElement {
    * It also updates the list length in the state.
    * @returns {Promise<void>}
    */
-  async renderFriendsListItems() {
+  renderFriendsListItems() {
     if (this.#state.friendsList.length === 0) {
       this.renderNoFriendsFound();
       return;
@@ -174,23 +165,50 @@ export class FriendsList extends HTMLElement {
 
   /**
    * @description
-   * Renders friends list items until the list height becomes larger than max dropdown height
-   * or all elements are rendered
-   * @returns {Promise<void>}
+   * Sets up the IntersectionObserver to lazy load more friends when the user scrolls to the bottom of the list.
+   * It creates a load more anchor element and observes it for intersection changes.
+   * When the anchor is intersecting, it fetches more friends data and renders the list items.
+   * It also cleans up the observer when the component is disconnected.
+   * @returns {void}
+   * @listens IntersectionObserver
    */
-  async fillFriendsList() {
-    let lastItem = this.listContainer.lastElementChild;
-    let lastItemRect = lastItem.getBoundingClientRect()['bottom'];
-    console.log(this.#size.listBottomPosition, lastItemRect);
-    while (
-      lastItemRect < this.#size.listBottomPosition &&
-      this.#state.totalFriendsCount !== this.#state.friendsList.length
-    ) {
-      await this.fetchFriendsData();
+  setupObserver() {
+    this.cleanObserver();
+
+    this.#loadMoreAnchor = document.createElement('li');
+    this.#loadMoreAnchor.classList.add('list-group-item', 'dropdown-list-item', 'p-0');
+    this.listContainer.appendChild(this.#loadMoreAnchor);
+
+    this.#observer = new IntersectionObserver(this.showMoreFriends, {
+      root: this.listContainer,
+      rootMargin: '0px 0px 64px 0px',
+      threshold: 0.1,
+    });
+    this.#observer.observe(this.#loadMoreAnchor);
+  }
+
+  async showMoreFriends(entries) {
+    const entry = entries[0];
+    if (entry.isIntersecting && this.#state.totalFriendsCount > this.#state.listLength) {
+      const fetchSuccess = await this.fetchFriendsData();
+      if (!fetchSuccess) {
+        return;
+      }
       this.renderFriendsListItems();
-      lastItem = this.listContainer.lastElementChild;
-      lastItemRect = lastItem.getBoundingClientRect()['bottom'];
-      console.log(this.#size.listBottomPosition, lastItemRect);
+      this.#observer.unobserve(this.#loadMoreAnchor);
+      this.listContainer.appendChild(this.#loadMoreAnchor);
+      this.#observer.observe(this.#loadMoreAnchor);
+    }
+  }
+
+  cleanObserver() {
+    if (this.#observer) {
+      this.#observer.disconnect();
+      this.#observer = null;
+    }
+    if (this.#loadMoreAnchor) {
+      this.listContainer.removeChild(this.#loadMoreAnchor);
+      this.#loadMoreAnchor = null;
     }
   }
 
@@ -212,32 +230,10 @@ export class FriendsList extends HTMLElement {
    * @returns {void}
    */
   handleDropdownClose() {
+    this.cleanObserver();
     this.#state.friendsList = [];
     this.#state.totalFriendsCount = 0;
     this.listContainer.innerHTML = '';
-  }
-
-  /**
-   * @description
-   * Handles the scroll event in the dropdown to load more friends when the user scrolls to the bottom.
-   * It checks if the user has scrolled to the bottom and if there are more friends to load.
-   * If so, it fetches more friends data and updates the list.
-   * If the total friends count is reached, it does not fetch more data.
-   * @param {Event} event - The scroll event triggered by the dropdown.
-   * @returns {Promise<void>}
-   * @listens scrollend
-   */
-  async showMoreFriends(event) {
-    const { scrollTop, scrollHeight, clientHeight } = event.target;
-    const threshold = 5;
-    if (
-      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.totalFriendsCount === this.#state.listLength
-    ) {
-      return;
-    }
-    await this.fetchFriendsData();
-    this.renderFriendsListItems();
   }
 
   template() {
@@ -257,7 +253,7 @@ export class FriendsList extends HTMLElement {
       position: relative;
     }
     li {
-        list-style-type: none;
+      list-style-type: none;
     }
     </style>
     <div class="list-group-item p-3">
