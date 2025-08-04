@@ -113,7 +113,7 @@ class DuelEvent:
                 self.consumer.user.username,
             )
             return
-        game_room = self.create_game_room(sender, self.consumer.user.profile, invitation.options)
+        game_room = self.create_game_room(sender, self.consumer.user.profile, invitation.settings)
         invitation.status = GameInvitation.ACCEPTED
         invitation.save(update_fields=["status"])
         invitation.sync_notification_status()
@@ -200,9 +200,9 @@ class DuelEvent:
         self.consumer.send(text_data=json.dumps(data))
 
     def send_game_invite(self, data):
-        options = data["data"].get("settings", {})
+        settings = data["data"].get("settings", {})
         client_id = data["data"].get("client_id")
-        if options is not None and not Validator.validate_options(options):
+        if settings is not None and not Validator.validate_settings(settings):
             self.consumer.close(CloseCodes.BAD_DATA)
             return
         receiver_username = data["data"].get("username")
@@ -241,7 +241,7 @@ class DuelEvent:
             sender=self.consumer.user_profile,
             recipient=receiver,
             invitee=receiver,
-            options=options,
+            settings=settings,
         )
         self.consumer.user_profile.refresh_from_db()
         self.create_and_send_game_notifications(
@@ -249,15 +249,15 @@ class DuelEvent:
             receiver,
             str(invitation.id),
             client_id,
-            options,
+            settings,
         )
 
-    def create_and_send_game_notifications(self, sender, receiver, invitation_id, client_id, options):
+    def create_and_send_game_notifications(self, sender, receiver, invitation_id, client_id, settings):
         notification = Notification.objects.action_send_game_invite(
             receiver=receiver,
             sender=sender,
             invitee=receiver,
-            notification_data={"game_id": invitation_id, "client_id": str(client_id), "settings": options},
+            notification_data={"game_id": invitation_id, "client_id": str(client_id), "settings": settings},
         )
         notification_data = notification.data.copy()
         notification_data["id"] = str(notification.id)
@@ -270,7 +270,7 @@ class DuelEvent:
             receiver=sender,
             invitee=receiver,
             sender=self.consumer.user_profile,
-            notification_data={"game_id": invitation_id, "client_id": str(client_id), "settings": options},
+            notification_data={"game_id": invitation_id, "client_id": str(client_id), "settings": settings},
         )
 
     def send_ws_message_to_user(self, user, action, notification_data):

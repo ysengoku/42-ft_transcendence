@@ -35,11 +35,10 @@ class JWTAuthMiddleware:
 
     @database_sync_to_async
     def get_user_from_token(self, token):
-        try:
-            payload = RefreshToken.objects.verify_access_token(token)
+        payload = RefreshToken.objects.verify_access_token(token)
+        if payload:
             return User.objects.for_id(payload["sub"]).first()
-        except Exception:
-            return None
+        return None
 
 
 logger = logging.getLogger("server")
@@ -115,6 +114,7 @@ class UserEventsConsumerTests(TransactionTestCase):
             "data": {
                 "content": "Test UUID validation",
                 "chat_id": "invalid-uuid-format",
+                "timestamp": "dummy-timestamp",
             },
         }
 
@@ -183,6 +183,7 @@ class UserEventsConsumerTests(TransactionTestCase):
             "data": {
                 "content": "Message valide",
                 "chat_id": str(self.chat.id),
+                "timestamp": "2025-08-02",
             },
         }
 

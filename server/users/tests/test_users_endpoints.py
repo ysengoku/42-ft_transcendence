@@ -10,12 +10,18 @@ from users.models import User
 
 # ruff: noqa: S106
 class AuthEndpointsTests(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
         logging.disable(logging.CRITICAL)
-        self.user = User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
-
-    def tearDown(self):
+    
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
         logging.disable(logging.NOTSET)
+
+    def setUp(self):
+        self.user = User.objects.create_user("TestUser", email="user0@gmail.com", password="123")
 
     def _get_default_tournament_creation_data(self):
         return {
@@ -98,8 +104,17 @@ class AuthEndpointsTests(TestCase):
 
 
 class UsersEndpointsTests(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
         logging.disable(logging.CRITICAL)
+    
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        logging.disable(logging.NOTSET)
+
+    def setUp(self):
         self.users: dict[User] = {}
         for i in range(5):
             self.users[f"TestUser{i}"] = User.objects.create_user(f"TestUser{i}", email=f"user{i}@gmail.com", password="123")
@@ -109,9 +124,6 @@ class UsersEndpointsTests(TestCase):
             content_type="application/json",
             data={"username": "TestUser0", "password": "123"},
         )
-
-    def tearDown(self):
-        logging.disable(logging.NOTSET)
 
     def test_get_users_while_logged_out(self):
         self.client.delete("/api/logout")

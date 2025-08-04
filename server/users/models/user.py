@@ -211,6 +211,7 @@ class User(AbstractUser):
         return self
 
     def get_oauth_connection(self):
+        from users.models.oauth_connection import OauthConnection
         try:
             return self.oauth_connection
         except OauthConnection.DoesNotExist:
