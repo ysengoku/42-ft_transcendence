@@ -234,3 +234,10 @@ class ForgotPasswordSchema(Schema):
 
 class SendMfaCode(Schema):
     token: str
+
+class ResendMfaCode(Schema):
+    username: str
+
+class VerifyMfaCode(Schema):
+    username: str
+    token: str

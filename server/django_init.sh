@@ -13,7 +13,7 @@ exec "$@" &
 if [ "$NODE_ENV" = "production" ]; then
     python manage.py runworker game &
     python manage.py runworker tournament &
-    echo "Workers were successefully launched!"
+    echo "Workers were launched successefully! 🚀"
 fi
 
 wait -n

@@ -1,86 +1,245 @@
-# OAuth 2.0
+# OAuth 2.0 Authentication Documentation
 
-rfc6749: https://www.rfc-editor.org/rfc/rfc6749
+## Overview
 
-## 42 API
+OAuth 2.0 implementation for third-party authentication using GitHub and 42 School APIs. This system allows users to register and login using their existing accounts from these platforms.
 
-1. **Create an app on 42 Intra**:  
-   Go to [42 Intra OAuth applications](https://profile.intra.42.fr/oauth/applications/new) to get the client ID and secret.
+**Reference:** [RFC 6749 - OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749)
 
-2. **Redirect user to authorization URL**:  
-   The app redirects the user to `https://api.intra.42.fr/oauth/authorize` with the following parameters:  
-   - `client_id`: Provided by 42 Intra  
-   - `redirect_uri`: Chosen by us  
-   - `scope`: `profile`  
-   - `state`: A unique string, stored in the database to prevent CSRF attacks.
+## Supported Platforms
 
-3. **User logs in and authorizes access**:  
-   The user logs into their 42 account and grants the requested permissions.
+### 42 School API
+- **Platform ID:** `42`
+- **Authorization URL:** `https://api.intra.42.fr/oauth/authorize`
+- **Token URL:** `https://api.intra.42.fr/oauth/token`
+- **User Info URL:** `https://api.intra.42.fr/v2/me`
+- **Scopes:** `profile`
 
-4. **42 redirects back to the app**:  
-   After authorization, 42 redirects the user to `redirect_uri` with these query parameters:  
-   - `code`: Authorization code  
-   - `state`: The same unique state string
+### GitHub API
+- **Platform ID:** `github`
+- **Authorization URL:** `https://github.com/login/oauth/authorize`
+- **Token URL:** `https://github.com/login/oauth/access_token`
+- **User Info URL:** `https://api.github.com/user`
+- **Scopes:** `user:email`
 
-5. **Verify state to prevent CSRF**:  
-   The app verifies that the `state` parameter matches what was stored in the database to prevent CSRF attacks.
+## OAuth 2.0 Flow
 
-6. **Exchange the code for tokens**:  
-   The app sends a POST request to `https://api.intra.42.fr/oauth/token` with:  
-   - `client_id`  
-   - `client_secret`  
-   - `code`: The authorization code  
-   - `redirect_uri`: Same as before
+### 1. Authorization Request
+**Frontend initiates OAuth flow:**
+- User clicks "Login with GitHub" or "Login with 42" button
+- Frontend calls `/api/users/oauth/authorize/{platform}`
+- Backend generates unique state and returns authorization URL
+- Frontend redirects user to OAuth provider
 
-7. **Receive access token**:  
-   The API responds with an `access_token`.
+### 2. User Authorization
+- User logs into their GitHub/42 account
+- User grants permissions to the application
+- OAuth provider redirects back to callback URL
 
-8. **Use the access token to retrieve user profile**:  
-   The app sends a GET request to `https://api.intra.42.fr/v2/me` with:  
-   - `Authorization: Bearer {access_token}`
+### 3. Authorization Callback
+- OAuth provider sends authorization code and state
+- Backend validates state and exchanges code for access token
+- Backend retrieves user profile information
+- Backend creates/updates user account and issues JWT tokens
+- User is redirected to dashboard with authentication cookies
 
-9. **Receive user profile data**:  
-   The API responds with the user's profile data.
+## API Endpoints
 
-10. **Process and store user information**:  
-   The app processes the user's profile data and stores it as needed.
+### Initiate OAuth Authorization
+**Endpoint:** `GET /api/users/oauth/authorize/{platform}`
+**Authentication:** None required
+**Platforms:** `github`, `42`
 
-11. **Redirect user to home page**:  
-   After processing, the app redirects the user to the home page.
+### OAuth Callback Handler
+**Endpoint:** `GET /api/users/oauth/callback/{platform}`
+**Authentication:** None required
+**Platforms:** `github`, `42`
 
-## Github API
+**Query Parameters (provided by OAuth provider):**
+- `code`: Authorization code from OAuth provider
+- `state`: State parameter for CSRF protection
+- `error` (optional): Error code if authorization failed
+- `error_description` (optional): Human-readable error description
 
-There are 2 types of github apps: OAuth Apps and GitHub Apps. We will use OAuth Apps.
-Create an app on github to get the client ID and secret.
+**Success Response:**
+- HTTP 302 Redirect to dashboard with JWT cookies set
+- Cookies: `access_token`, `refresh_token`
+- Redirect URL: `{HOME_REDIRECT_URL}` (typically `/dashboard`)
 
-https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/
+**Error Response:**
+- HTTP 302 Redirect to error page with error details
+- Redirect URL: `{ERROR_REDIRECT_URL}?error={error_message}&code={status_code}`
 
-Github OAuth flow works the same way as 42 API, with some other optionnal parameters (for multiple github account for eg.)
+**Error Codes:**
+- `404`: Platform not found or OAuth provider unavailable
+- `408`: State expired (5 minutes timeout)
+- `422`: Invalid request parameters, state mismatch, or OAuth provider error
+- `503`: Failed to create user account or server error
 
-TODO: test the flow with a multiple account. 
+## Implementation Details
 
-# ERROR HANDLING
+### Backend Implementation
 
-the providers send error codes that are catched by the app, and converted in its own code and sent to a custom error page, which is displayed to the user.
+**Key Files:**
+- `server/users/router/endpoints/oauth2.py`: OAuth endpoints
+- `server/users/models/oauth_connection.py`: OAuth connection model and logic
+
+**Database Model (`OauthConnection`):**
+- `state`: Unique state string for CSRF protection (64 chars)
+- `status`: Connection status (`pending` or `connected`)
+- `connection_type`: Platform type (`42`, `github`, `regular`)
+- `oauth_id`: User's ID from OAuth provider
+- `user`: Link to internal User model
+- `date`: Connection creation timestamp
+
+**Core Functions:**
+- `oauth_authorize()`: Generates authorization URL and creates pending connection
+- `oauth_callback()`: Handles OAuth callback and completes authentication
+- `check_api_availability()`: Health check for OAuth providers
+- `get_oauth_config()`: Retrieves platform-specific OAuth configuration
+
+### Frontend Integration
+
+**OAuth Login Flow:**
+1. User clicks OAuth login button (GitHub/42 School)
+2. Frontend calls `/api/users/oauth/authorize/{platform}`
+3. Frontend redirects to received authorization URL
+4. OAuth provider handles user authentication
+5. Provider redirects to callback URL with code/state
+6. Backend processes callback and sets authentication cookies
+7. User is redirected to dashboard if successful, error page if failed
 
 
-# DATA TO BE STORED IN DATABASE
+### OAuth Application Setup
 
-the access_token is hashed with make password ()
+#### GitHub OAuth App Setup
+1. **Create Application:**
+   - Go to: https://github.com/settings/applications/new
+   - **Application name:** "Peacemakers Ponggers"
+   - **Homepage URL:** `https://localhost:1026`
+   - **Callback URL:** `https://localhost:1026/api/users/oauth/callback/github`
 
+2. **Configuration:**
+   - Copy Client ID and Client Secret to environment variables
+   - Ensure callback URL matches exactly
 
-#To receive a github client ID + secret, you need to log in to github and then register your app here: github.com/settings/applications/new
-# When creating the app, the callback URL should be:
-# https://localhost:1026/user/oauth/callback/github/
-GITHUB_CLIENT_ID=xxx
-GITHUB_CLIENT_SECRET=xxx
-#To receive a 42 api client ID + secret, you need to log in to 42intra and then register your app here: profile.intra.42.fr/oauth/applications/new
-# When creating the app, the callback URL should be:
-# https://localhost:1026/user/oauth/callback/42api/
-API42_CLIENT_ID=xxx
-API42_CLIENT_SECRET=xxx
+#### 42 School OAuth App Setup
+1. **Create Application:**
+   - Go to: https://profile.intra.42.fr/oauth/applications/new
+   - **Name:** "Peacemakers Ponggers"
+   - **Redirect URI:** `https://localhost:1026/api/users/oauth/callback/42`
+   - **Scopes:** Check "profile"
 
-## Github API
-Creae an app on github to get the client ID and secret.:
-website adress: 
-github.com/settings/applications/new
+2. **Configuration:**
+   - Copy UID (Client ID) and Secret to environment variables
+   - Ensure redirect URI matches exactly
+
+### Django Settings Configuration
+```python
+OAUTH_CONFIG = {
+    "github": {
+        "client_id": os.getenv("GITHUB_CLIENT_ID"),
+        "client_secret": os.getenv("GITHUB_CLIENT_SECRET"),
+        "auth_uri": "https://github.com/login/oauth/authorize",
+        "token_uri": "https://github.com/login/oauth/access_token",
+        "user_info_uri": "https://api.github.com/user",
+        "redirect_uris": f"{BASE_URL}/api/users/oauth/callback/github",
+        "scopes": ["user:email"],
+    },
+    "42": {
+        "client_id": os.getenv("API42_CLIENT_ID"),
+        "client_secret": os.getenv("API42_CLIENT_SECRET"),
+        "auth_uri": "https://api.intra.42.fr/oauth/authorize",
+        "token_uri": "https://api.intra.42.fr/oauth/token",
+        "user_info_uri": "https://api.intra.42.fr/v2/me",
+        "redirect_uris": f"{BASE_URL}/api/users/oauth/callback/42",
+        "scopes": ["public"],
+    },
+}
+```
+
+## User Data Handling
+
+### User Profile Creation
+When a user authenticates via OAuth for the first time:
+
+1. **User Creation:**
+   - Extract username from OAuth profile (`login` field)
+   - Generate unique username if conflicts exist
+   - Create User and UserProfile records
+   - Link OAuth connection to user account
+
+2. **Profile Picture Handling:**
+   - Download avatar from OAuth provider
+   - Save to user's profile picture field
+   - Fallback to default avatar on download failure
+   - Support for GitHub (`avatar_url`) and 42 School (`image.link`)
+
+3. **Data Storage:**
+   - OAuth ID stored for future authentication
+   - Access tokens are not permanently stored
+   - User profile data synced from OAuth provider
+
+### Returning User Authentication
+For existing users with OAuth connections:
+
+1. **User Lookup:**
+   - Find user by OAuth ID from provider
+   - Verify OAuth connection exists and is valid
+   - Update any changed profile information
+
+2. **Authentication:**
+   - Generate new JWT access and refresh tokens
+   - Set authentication cookies
+   - Redirect to dashboard
+
+## Security Considerations
+
+### CSRF Protection
+- **State Parameter:** Unique 64-character random string generated for each OAuth request
+- **State Validation:** Backend verifies state matches stored value before processing
+- **State Expiry:** States expire after 5 minutes to prevent replay attacks
+- **Database Storage:** States stored in database with creation timestamp
+
+### Token Security
+- **Access Token Handling:** OAuth access tokens used only for profile retrieval, not stored
+- **JWT Tokens:** Application uses its own JWT tokens for session management
+- **Cookie Security:** Authentication cookies set with appropriate security flags
+- **Refresh Tokens:** Stored securely in database for long-term authentication
+
+### Error Handling
+- **Provider Errors:** OAuth provider errors captured and displayed to user
+- **Network Timeouts:** Graceful handling of network timeouts (10-second limits)
+- **API Availability:** Health checks before initiating OAuth flow
+- **Error Redirection:** Errors redirect to custom error page with sanitized messages
+
+### Input Validation
+- **Platform Validation:** Only supported platforms (`github`, `42`) accepted
+- **State Validation:** State format and expiry validated
+- **Code Validation:** Authorization codes validated before token exchange
+- **User Data Validation:** OAuth profile data validated before account creation
+
+## Error Scenarios and Handling
+
+### Common Error Cases
+
+1. **User Denies Authorization:**
+   - OAuth provider sends `error=access_denied`
+   - User redirected to error page with explanation
+   - Option to retry OAuth flow
+
+2. **Invalid OAuth Configuration:**
+   - Incorrect client ID/secret returns `invalid_client`
+   - Misconfigured redirect URI returns `redirect_uri_mismatch`
+   - Error logged for developer investigation
+
+3. **Network/API Issues:**
+   - OAuth provider API unavailable
+   - Network timeouts during token exchange
+   - Graceful error messages displayed to user
+
+4. **Account Conflicts:**
+   - OAuth ID already linked to different account
+   - Username conflicts resolved automatically
+   - Clear error messages for irresolvable conflicts
+

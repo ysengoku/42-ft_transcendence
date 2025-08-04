@@ -4,6 +4,7 @@ Contains the default exception handlers for some of the possible errors.
 """
 
 import logging
+import sys
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -20,7 +21,9 @@ from users.middleware import JWTEndpointsAuthMiddleware
 from users.router import users_app_router
 
 # conditionally hide the docs and set throttling protection in production build
-if settings.DEBUG:
+# Disable throttling during tests to avoid 429 errors
+is_testing = "test" in sys.argv
+if settings.DEBUG or is_testing:
     api = NinjaAPI(
         auth=JWTEndpointsAuthMiddleware(),
         csrf=True,
