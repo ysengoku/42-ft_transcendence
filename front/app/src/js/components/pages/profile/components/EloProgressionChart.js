@@ -333,7 +333,7 @@ export class UserEloProgressionChart extends HTMLElement {
   /**
    * @description
    * Splits an array into chunks of 7 items each.
-   * @param {*} array 
+   * @param {*} array
    * @returns {Array} - An array of arrays, each containing up to 7 items.
    */
   chunkArray(array) {
@@ -353,7 +353,7 @@ export class UserEloProgressionChart extends HTMLElement {
    * and the scaleY is calculated based on the difference between the Y-coordinate limits
    * and the Elo value range.
    * @param {*} Array
-   * @returns {void} 
+   * @returns {void}
    */
   adjustYAxis(data) {
     this.#valueRange.min = Math.min(...data.map((item) => item.elo_result));
