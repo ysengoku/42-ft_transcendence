@@ -334,7 +334,7 @@ class GameInvitation(models.Model):
         choices=INVITE_STATUS,
         default=PENDING,
     )
-    options = models.JSONField(null=True, blank=True)
+    settings = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return f"Game invitation :${self.id}"

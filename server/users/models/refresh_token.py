@@ -3,13 +3,12 @@ from datetime import datetime, timedelta
 
 import jwt
 from django.conf import settings
-from django.db import models
-from django.db.utils import IntegrityError
+from django.db import models, transaction
+from django.db.utils import DatabaseError
 from django.utils import timezone
 from ninja.errors import AuthenticationError
 
 
-# TODO: tweak access and refresh tokens lifetime
 class RefreshTokenQuerySet(models.QuerySet):
     """
     Manages access and refresh JWT's. Handles PyJWT exceptions and throws AuthenticationError in case of any JWT error.
@@ -32,20 +31,20 @@ class RefreshTokenQuerySet(models.QuerySet):
         payload = {
             "sub": str(user.id),
             "iat": now,
-            "exp": now + timedelta(minutes=5),
+            "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_LIFETIME),
         }
 
         access_token = jwt.encode(payload, settings.ACCESS_TOKEN_SECRET_KEY, algorithm="HS256")
-        payload["exp"] = now + timedelta(minutes=15)
+        payload["exp"] = now + timedelta(minutes=settings.REFRESH_TOKEN_LIFETIME)
         refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
 
         refresh_token_instance = self.model(
             user=user,
             token=refresh_token,
         )
-
         # ensure uniqueness
-        with contextlib.suppress(IntegrityError):
+        with contextlib.suppress(DatabaseError), transaction.atomic():
+            self.filter(token=refresh_token).delete()
             refresh_token_instance.save()
 
         return access_token, refresh_token_instance
