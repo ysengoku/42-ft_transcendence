@@ -149,7 +149,7 @@ export class UserActionsMenu extends HTMLElement {
     this.dropdownFriendsList.classList.add('show');
 
     const friendList = document.querySelector('friends-list');
-    await friendList.fetchFriendsData();
+    await friendList.renderListContent();
   }
 
   template() {
@@ -172,7 +172,7 @@ export class UserActionsMenu extends HTMLElement {
     </div>
 
     <!-- Friends list -->
-    <div class="dropdown-menu p-3" id="dropdown-friends-list">
+    <div class="dropdown-menu px-3 pt-0 pb-3" id="dropdown-friends-list">
       <friends-list></friends-list>
     </div>
     `;
