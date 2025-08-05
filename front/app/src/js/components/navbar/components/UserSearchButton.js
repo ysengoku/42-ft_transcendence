@@ -8,7 +8,7 @@ export class UserSearchButton extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.style() + this.template();
+    this.innerHTML = this.template();
   }
 
   template() {
@@ -18,19 +18,9 @@ export class UserSearchButton extends HTMLElement {
           <i class="bi bi-search"></i>
         </button>
 	    </div>
-	    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbar-user-search" id="user-search-dropdown">
+	    <div class="dropdown-menu dropdown-menu-end pt-0" aria-labelledby="navbar-user-search" id="user-search-dropdown">
 		    <user-search></user-search>
 		  </div>
-    `;
-  }
-
-  style() {
-    return `
-      <style>
-      .dropdown-menu {
-        overflow: auto;
-      }
-      </style>
     `;
   }
 }
