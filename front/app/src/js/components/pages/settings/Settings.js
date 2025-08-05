@@ -161,16 +161,19 @@ export class Settings extends HTMLElement {
     if (userIdentity.username) {
       formData.append('username', userIdentity.username);
       this.#state.newUserData.username = userIdentity.username;
+      this.userIdentityField.newUserIdentity.username = '';
       this.#state.changed = true;
     }
     if (userIdentity.nickname) {
       formData.append('nickname', userIdentity.nickname);
       this.#state.newUserData.nickname = userIdentity.nickname;
+      this.userIdentityField.newUserIdentity.nickname = '';
       this.#state.changed = true;
     }
     if (newEmail) {
       formData.append('email', newEmail);
       this.#state.newUserData.email = newEmail;
+      this.emailField.newEmail = '';
       this.#state.changed = true;
     }
     const oldPassword = this.querySelector('#old-password');
