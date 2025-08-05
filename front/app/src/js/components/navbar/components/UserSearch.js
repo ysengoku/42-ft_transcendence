@@ -6,6 +6,7 @@
  */
 
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { isMobile } from '@utils';
 
 /**
  * @class UserSearch
@@ -19,16 +20,26 @@ export class UserSearch extends HTMLElement {
     currentListLength: 0,
     timeout: null,
     isLoading: false,
+    isMobile: false,
   };
+
+ /**
+   * @property {IntersectionObserver} observer - The IntersectionObserver instance for lazy loading user list.
+   * @property {HTMLElement} loadMoreAnchor - The anchor element for loading more users.
+   */
+  #observer = null;
+  #loadMoreAnchor = null;
 
   constructor() {
     super();
+    this.#state.isMobile = isMobile();
 
     this.clearUserList = this.clearUserList.bind(this);
     this.handleInput = this.handleInput.bind(this);
     this.handleDropdownHidden = this.handleDropdownHidden.bind(this);
     this.showMoreUsers = this.showMoreUsers.bind(this);
     this.preventReloadBySubmit = this.preventReloadBySubmit.bind(this);
+    this.handleResize = this.handleResize.bind(this);
   }
 
   /**
@@ -39,6 +50,7 @@ export class UserSearch extends HTMLElement {
    */
   connectedCallback() {
     this.render();
+    window.addEventListener('resize', this.handleResize);
   }
 
   /**
@@ -48,13 +60,14 @@ export class UserSearch extends HTMLElement {
    * @returns {void}
    */
   disconnectedCallback() {
+    this.cleanObserver();
     this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
     this.form?.removeEventListener('click', this.clearUserList);
     this.form?.removeEventListener('submit', this.preventReloadBySubmit);
     this.input?.removeEventListener('click', this.clearUserList);
     this.input?.removeEventListener('input', this.handleInput);
-    this.dropdown?.removeEventListener('scrollend', this.showMoreUsers);
-    this.dropdownMobile?.removeEventListener('scrollend', this.showMoreUsers);
+    this.buttonMobile?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+    window.removeEventListener('resize', this.handleResize);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -68,15 +81,15 @@ export class UserSearch extends HTMLElement {
    * @returns {void}
    */
   render() {
-    this.innerHTML = this.template();
+    this.innerHTML = this.style() + this.template();
 
+    this.listWrapper = this.querySelector('#navbar-user-list-wrapper');
     this.listContainer = this.querySelector('#navbar-user-list');
     this.button = document.getElementById('navbar-user-search');
     this.dropdown = document.getElementById('user-search-dropdown');
     this.form = this.querySelector('form');
 
     this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
-    this.dropdown?.addEventListener('scrollend', this.showMoreUsers);
 
     this.form
       ? (this.form.addEventListener('click', this.clearUserList),
@@ -91,7 +104,6 @@ export class UserSearch extends HTMLElement {
     this.buttonMobile = document.getElementById('dropdown-item-user-search');
     this.dropdownMobile = document.getElementById('dropdown-user-search');
     this.buttonMobile?.addEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
-    this.dropdownMobile?.addEventListener('scrollend', this.showMoreUsers);
   }
 
   /**
@@ -104,6 +116,7 @@ export class UserSearch extends HTMLElement {
   renderUserList() {
     if (this.#state.userList.length === 0) {
       this.renderNoUserFound();
+      this.#state.isLoading = false;
       return;
     }
     for (let i = this.#state.currentListLength; i < this.#state.userList.length; i++) {
@@ -116,6 +129,7 @@ export class UserSearch extends HTMLElement {
       this.listContainer.appendChild(listItem);
       this.#state.currentListLength++;
     }
+    this.#state.isLoading = false;
   }
 
   /**
@@ -141,12 +155,14 @@ export class UserSearch extends HTMLElement {
    */
   clearUserList(event) {
     event?.stopPropagation();
+    this.#state.isLoading = false;
     if (this.input.value === '') {
       this.#state.userList = [];
-      this.totalUserCount = 0;
+      this.#state.totalUsersCount = 0;
       this.#state.currentListLength = 0;
       this.listContainer.innerHTML = '';
     }
+    this.cleanObserver();
   }
 
   /**
@@ -169,53 +185,67 @@ export class UserSearch extends HTMLElement {
       this.#state.totalUsersCount = 0;
       this.#state.currentListLength = 0;
       this.listContainer.innerHTML = '';
-      if (this.#state.searchQuery !== this.input.value && event.target.value !== '') {
-        this.#state.searchQuery = event.target.value;
-        await this.searchUser();
+      this.cleanObserver();
+      const newQuery = this.input.value.trim();
+      if (newQuery !== '' && newQuery !== this.#state.searchQuery) {
+        this.#state.searchQuery = newQuery;
+        const fetchSuccess = await this.searchUser();
+        if (fetchSuccess) {
+          this.renderUserList();
+        }
       } else {
         this.#state.searchQuery = '';
       }
+      this.setupObserver();
     }, 500);
   }
 
   /**
    * @description
    * Handles the dropdown hidden event.
-   * It resets the search query, user list, and total user count.
+   * It clears the intersection observer, resets the search query, user list, and total user count.
    * It also clears the input field and the list container.
    * @returns {void}
    * @listens hidden.bs.dropdown
    */
   handleDropdownHidden() {
+    this.cleanObserver();
+    this.#state.isLoading = false;
     this.#state.searchQuery = '';
     this.#state.userList = [];
-    this.totalUserCount = 0;
+    this.#state.totalUsersCount = 0;
     this.listContainer.innerHTML = '';
     this.input.value = '';
   }
 
   /**
    * @description
-   * Handles the scroll event on the user search dropdown.
-   * It checks if the user has scrolled to the bottom of the dropdown and loads more users if available.
-   * It prevents loading more users if the total user count has been reached or if the component is already loading users.
-   * @param {Event} event - Scroll event object
+   * Handles the IntersectionObserver entries to load more users when the user scrolls to the bottom of the list.
+   * It checks if the total user count is greater than the current list length.
+   * If so, it fetches more users and renders the list items.
+   * If the observer is not intersecting or if the state is already loading, it returns early.
+   * It also resets the observer and anchor element after loading more users.
+   * @param {IntersectionObserverEntry[]} entries - The entries from the IntersectionObserver.
    * @returns {Promise<void>}
-   * @listens scrollend
+   * @listens intersectionobserver
    */
-  async showMoreUsers(event) {
-    const { scrollTop, scrollHeight, clientHeight } = event.target;
-    const threshold = 5;
-    if (
-      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.totalUsersCount === this.#state.currentListLength ||
-      this.#state.isLoading
-    ) {
+  async showMoreUsers(entries) {
+    if (this.#state.totalUsersCount <= this.#state.currentListLength) {
+      this.cleanObserver();
       return;
     }
-    this.#state.isLoading = true;
-    await this.searchUser();
-    this.#state.isLoading = false;
+    const entry = entries[0];
+    if (!entry.isIntersecting || this.#state.isLoading) {
+      return;
+    }
+    const fetchSuccess = await this.searchUser();
+    if (!fetchSuccess) {
+      return;
+    }
+    this.renderUserList();
+    this.#observer.unobserve(this.#loadMoreAnchor);
+    this.listContainer.appendChild(this.#loadMoreAnchor);
+    this.#observer.observe(this.#loadMoreAnchor);
   }
 
   /**
@@ -224,9 +254,14 @@ export class UserSearch extends HTMLElement {
    * It makes an API request to fetch users matching the search query.
    * If the request is successful, it updates the user list and renders the user list.
    * If the request fails, it displays a message indicating that the user search is temporarily unavailable.
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>} - true on fetch success, false on failure
+   * @listens input
    */
   async searchUser() {
+    if (this.#state.isLoading) {
+      return false;
+    }
+    this.#state.isLoading = true;
     const response = await apiRequest(
       'GET',
       /* eslint-disable-next-line new-cap */
@@ -243,13 +278,14 @@ export class UserSearch extends HTMLElement {
         message.textContent = 'Tempoeary unavailable';
       }
       this.listContainer.appendChild(noUser);
-      return;
+      this.#state.isLoading = false;
+      return false;
     }
     if (response.data) {
       this.#state.totalUsersCount = response.data.count;
       this.#state.userList.push(...response.data.items);
     }
-    this.renderUserList();
+    return true;
   }
 
   /**
@@ -264,6 +300,67 @@ export class UserSearch extends HTMLElement {
     event.preventDefault();
   }
 
+  /**
+   * @description
+   * Sets up the IntersectionObserver to lazy load more users when the user scrolls to the bottom of the list.
+   * It creates a load more anchor element and observes it for intersection changes.
+   * When the anchor is intersecting, it fetches more users data and renders the list items.
+   * @returns {void}
+   */
+  setupObserver() {
+    this.cleanObserver();
+
+    this.#loadMoreAnchor = document.createElement('li');
+    this.#loadMoreAnchor.classList.add('list-group-item', 'dropdown-list-item', 'p-0');
+    this.listContainer.appendChild(this.#loadMoreAnchor);
+
+    switch (this.#state.isMobile) {
+      case false:
+        this.#observer = new IntersectionObserver(this.showMoreUsers, {
+          root: this.dropdown,
+          rootMargin: '0px 0px 64px 0px',
+          threshold: 0.1,
+        });
+        break;
+      case true:
+        this.#observer = new IntersectionObserver(this.showMoreUsers, {
+          root: this.dropdownMobile,
+          rootMargin: '0px 0px 64px 0px',
+          threshold: 0.1,
+        });
+        break;
+      default:
+        break;
+    }
+    this.#observer.observe(this.#loadMoreAnchor);
+  }
+
+  cleanObserver() {
+    if (this.#observer) {
+      this.#observer.disconnect();
+      this.#observer = null;
+    }
+    if (this.#loadMoreAnchor) {
+      this.listContainer.removeChild(this.#loadMoreAnchor);
+      this.#loadMoreAnchor = null;
+    }
+  }
+
+  handleResize() {
+    const isMobileWidth = isMobile();
+    if (this.#state.isMobile !== isMobileWidth) {
+      this.#state.isMobile = isMobileWidth;
+      this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+      this.buttonMobile?.removeEventListener('hidden.bs.dropdown', this.handleDropdownHidden);
+      this.form?.removeEventListener('click', this.clearUserList);
+      this.form?.removeEventListener('submit', this.preventReloadBySubmit);
+      this.input?.removeEventListener('click', this.clearUserList);
+      this.input?.removeEventListener('input', this.handleInput);
+      this.cleanObserver();
+      this.render();
+    }
+  }
+
   /* ------------------------------------------------------------------------ */
   /*     Template & style                                                     */
   /* ------------------------------------------------------------------------ */
@@ -275,10 +372,21 @@ export class UserSearch extends HTMLElement {
         <input class="form-control" type="search" placeholder="Find user(s)" aria-label="Search" autocomplete="off" id="user-search-form-input">
       </div>
     </form>
-    <div class="ps-3 pe-4">
-        <ul class="list-group mb-2" id="navbar-user-list"></ul>
+    <div class="ps-3 pe-2">
+      <ul class="list-group mb-2" id="navbar-user-list"></ul>
     </div>
     `;
+  }
+
+  style() {
+  return `
+    <style>
+    #navbar-user-list {
+      overflow-y: auto;
+      max-height: calc(75vh - 5rem);
+    }
+    </style>
+  `;
   }
 
   noUserTemplate() {

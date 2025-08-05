@@ -156,6 +156,7 @@ export class TournamentList extends HTMLElement {
     this.renderList();
   }
 
+  // TODO use intersection observer for pagination
   async loadMoreItems(event) {
     if (this.#state.isLoading) {
       return;
