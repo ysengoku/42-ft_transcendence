@@ -122,6 +122,7 @@ export class ChatUserSearch extends HTMLElement {
     }, 500);
   }
 
+  // TODO use intersection observer for pagination
   async loadMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;

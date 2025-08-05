@@ -133,6 +133,7 @@ export class UserDuelHistory extends HTMLElement {
     }
   }
 
+  // TODO use intersection observer for pagination
   async loadMoreItems(event) {
     if (
       this.#state.isLoading ||
