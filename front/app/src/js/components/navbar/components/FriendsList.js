@@ -168,9 +168,7 @@ export class FriendsList extends HTMLElement {
    * Sets up the IntersectionObserver to lazy load more friends when the user scrolls to the bottom of the list.
    * It creates a load more anchor element and observes it for intersection changes.
    * When the anchor is intersecting, it fetches more friends data and renders the list items.
-   * It also cleans up the observer when the component is disconnected.
    * @returns {void}
-   * @listens IntersectionObserver
    */
   setupObserver() {
     this.cleanObserver();
