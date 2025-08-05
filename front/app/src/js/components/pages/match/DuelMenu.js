@@ -335,6 +335,7 @@ export class DuelMenu extends HTMLElement {
   /**
    * @description Loads more users when the user scrolls to the bottom of the user list.
    */
+  // TODO use intersection observer for pagination
   async loadMoreUsers(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
