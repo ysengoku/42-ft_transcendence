@@ -183,6 +183,9 @@ export class Settings extends HTMLElement {
       formData.append('old_password', oldPassword.value);
       formData.append('password', newPassword.value);
       formData.append('password_repeat', newPasswordRepeat.value);
+      oldPassword.value = '';
+      newPassword.value = '';
+      newPasswordRepeat.value = '';
       this.#state.changed = true;
     }
     const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
@@ -194,6 +197,7 @@ export class Settings extends HTMLElement {
     }
     if (avatarField) {
       formData.append('new_profile_picture', avatarField);
+      this.avatarUploadField.selectedFile = null;
       this.#state.changed = true;
     }
 
