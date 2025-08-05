@@ -222,6 +222,7 @@ export class NotificationsList extends HTMLElement {
     }
   }
 
+  // TODO use intersection observer for pagination
   /**
    * @description
    * Loads more notifications when the user scrolls to the bottom of the dropdown.
