@@ -1,11 +1,14 @@
 export class ThemeController {
+  static #themes = ['light', 'dark'];
+
   static init() {
     const currentTheme = this.getTheme();
-    document.documentElement.setAttribute('data-bs-theme', currentTheme);
+    this.setTheme(currentTheme);
   }
 
   static getTheme() {
-    return localStorage.getItem('theme') || 'light';
+    return this.#themes.includes(localStorage.getItem('theme')) ?
+     localStorage.getItem('theme') : 'light';
   }
 
   static setTheme(theme) {
@@ -14,7 +17,8 @@ export class ThemeController {
   }
 
   static toggleTheme() {
-    const newTheme = this.getTheme() === 'light' ? 'dark' : 'light';
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     this.setTheme(newTheme);
     return newTheme;
   }
