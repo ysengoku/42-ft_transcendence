@@ -19,7 +19,7 @@ from users.utils import merge_err_dicts
 if TYPE_CHECKING:
     from ninja.files import UploadedFile
 
-    from chat.models import GameInvitation
+    from chat.models import GameInvitation, Chat, ChatMessage
     from pong.models import GameRoom
     from tournaments.models import Participant, Tournament
 
@@ -290,6 +290,11 @@ class Profile(models.Model):
             return f"User {user_to_block.user.username} is already blocked."
         self.blocked_users.add(user_to_block)
         self.remove_friend(user_to_block)
+        from chat.models import Chat
+        chat = Chat.objects.for_exact_participants(user_to_block, self).first()
+        if not chat:
+            return None
+        chat.messages.all().update(is_read=True)
         return None
 
     def unblock_user(self, blocked_user_to_remove) -> None | str:
@@ -347,7 +352,6 @@ class Profile(models.Model):
         pending_invitation_as_inviter: GameInvitation | None = self.sent_invites.filter(status="pending").first()
 
         return active_game_room, active_tournament, pending_invitation_as_inviter
-
 
 
 class Friendship(models.Model):
