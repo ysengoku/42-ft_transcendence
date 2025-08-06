@@ -61,9 +61,9 @@ export class TournamentOverview extends HTMLElement {
     await this.fetchTournamentData();
     if (this.#state.tournament) {
       this.render();
+      this.startPolling();
     }
     window.addEventListener('resize', this.handleResize);
-    this.startPolling();
   }
 
   disconnectedCallback() {
