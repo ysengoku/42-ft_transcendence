@@ -19,7 +19,7 @@ export class NotificationsButton extends HTMLElement {
         <span class="notification-badge d-none"></span>
       </button>
     </div>
-    <div class="dropdown-menu dropdown-menu-end px-3" id="notifications-dropdown">
+    <div class="dropdown-menu dropdown-menu-end ps-3 pe-1" id="notifications-dropdown">
       <notifications-list></notifications-list>
     </div>
     `;

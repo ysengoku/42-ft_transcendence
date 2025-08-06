@@ -76,7 +76,7 @@ export class FriendsList extends HTMLElement {
       return false;
     }
     this.#state.username = userData.username;
-    this.innerHTML = this.template();
+    this.innerHTML = this.style() + this.template();
 
     this.button = document.getElementById('navbar-friends-button');
     this.dropdown = document.getElementById('friends-list-dropdown');
@@ -236,10 +236,22 @@ export class FriendsList extends HTMLElement {
 
   template() {
     return `
-    <div class="ps-3 pe-4">
+    <div class="ps-3 pe-0">
       <h6 class="py-4 dropdown-list-header" sticky>Friends</h6>
       <ul class="dropdown-list list-group mb-2" id="friends-list"></ul>
     </div>
+    `;
+  }
+
+  style() {
+    return `
+    <style>
+    #friends-list {
+      max-height: calc(75vh - 5rem);
+      max-width: 480px;
+      overflow-y: auto;
+    }
+    </style>
     `;
   }
 
