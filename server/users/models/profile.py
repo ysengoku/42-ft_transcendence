@@ -19,7 +19,7 @@ from users.utils import merge_err_dicts
 if TYPE_CHECKING:
     from ninja.files import UploadedFile
 
-    from chat.models import GameInvitation, Chat, ChatMessage
+    from chat.models import GameInvitation
     from pong.models import GameRoom
     from tournaments.models import Participant, Tournament
 
