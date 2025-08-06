@@ -39,7 +39,7 @@ describe('ThemeController', () => {
   });
 
   it('toggleTheme toggles theme and returns new value', () => {
-    window.localStorage.getItem.mockReturnValueOnce('light');
+    document.documentElement.getAttribute.mockReturnValueOnce('light');
     ThemeController.setTheme = vi.fn();
     const result = ThemeController.toggleTheme();
     expect(result).toBe('dark');
@@ -49,6 +49,6 @@ describe('ThemeController', () => {
   it('init sets attribute to current theme', () => {
     ThemeController.getTheme = vi.fn(() => 'dark');
     ThemeController.init();
-    expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-bs-theme', 'dark');
+    expect(ThemeController.setTheme).toHaveBeenCalledWith('dark');
   });
 });
