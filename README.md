@@ -21,41 +21,45 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 
 ## Usage 🛠️👷🏻‍♂️
 
-## Features 🛠️👷🏻‍♂️
+## Features
 
-### User management
+### Key Features
+
+- **Real-time Multiplayer**: WebSocket-based game synchronization
+- **Multi-factor Authentication**: Email-based verification system
+- **OAuth 2.0 Integration**: Third-party authentication support
+- **3D Gaming**: Hardware-accelerated 3D graphics with Three.js
+- **Tournament System**: Bracket-based competitive play
+- **Live Chat**: Real-time messaging with notifications
+
+### Other Features
+
+#### User management
 
 - Secure registration with validation and connection using JWT
-- Remote Authentication (OAuth 2.0) with 42 and GitHub profiles
-- Multi-factor authentication with code sent by email
 - User profile page including customizable avatar and Game stat (win/loss rate, duel history, Elo change chart, best/worst opponents)
+- User blocking system
+- Forgotten password reset functionality
 
-### Game
+#### Game
 
-- Local game
-- AI opponent
-- Remote players
+- Local game with AI opponent option
 - Game customization
 - Game worker: Background processing of game logic
-- 3D graphics and rendering
+- Matchmaking and Game invitation for Multiplayer Game
 
+#### UI & Graphics
 
-### Chat and WebSocket communication
-
-- Direct messages one on one
-- User blocking system
-- Game invitation
-- Notifications (new messgaes, new friends, game invitation, tournament related notifications) 
-
-### Other
-
-- Containerized environment using Docker
 - Responsive design
 - Two color themes: Light and Dark
 - Google Chrome Compatibility
 - Hand-made 3D models, animation and art!
-- Forgotten password reset functionality
+
+#### DevOps and CD/CI
+
+- Containerized environment using Docker
 - Workflows and templated for issue/task creation
+
 
 ## Technologies
 
@@ -190,31 +194,25 @@ graph TB
 - **OAuth Providers**: GitHub and 42 School for third-party authentication
 - **Email Service**: Gmail SMTP for MFA verification codes
 
-### Key Features
-
-- **Real-time Multiplayer**: WebSocket-based game synchronization
-- **Multi-factor Authentication**: Email-based verification system
-- **OAuth 2.0 Integration**: Third-party authentication support
-- **3D Gaming**: Hardware-accelerated 3D graphics with Three.js
-- **Tournament System**: Bracket-based competitive play
-- **Live Chat**: Real-time messaging with notifications
 
 ## Documentation 🛠️👷🏻‍♂️
 
 ### Front-end
 
+- [Front-end overview](/doc/front/FRONTEND.md)
 - [Web component](/doc/front/Component.md)
 - [Router](doc/front/Router.md)
-- [WebScoket manager](doc/front/SocketManager.md)
-- [API request](doc/front/ApiRequest.md)
-- [Components](/doc/front/components/)
+- [Auth manager](/doc/front/AUTH_MANAGER.md)
+- [WebScoket manager](/doc/front/SocketManager.md)
+- [Data visualization](/doc/front/DATA_VISUALIZATION.md)
+- [Tournament UI](/doc/front/TOURNAMENT_UI.md)
 
 ### Server
 
 - [Multi-factor authentication](/doc/server/MFA.md)
 - [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
-
-### Database
+- [Live chat](/doc/server/CHAT.md)
+- [Tournament system](/doc/server/TOURNAMENT.md)
 
 ### Protocol
 
