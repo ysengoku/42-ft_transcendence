@@ -16,21 +16,23 @@ import { socketManager } from '@socket';
 export class NotificationsList extends HTMLElement {
   /**
    * Private state of the NotificationsList component.
-   * @property {string} - The current tab being displayed ('all' or 'unread').
+   * @property {'all'|'unread'} - The current tab being displayed ('all' or 'unread').
    * @property {boolean} isLoading - Indicates if the notifications are currently being loaded.
    * @property {string} username - The username of the logged-in user.
+   * @property {{notifications: Array, totalCount: number, listLength: number}} currentTabListData - Reference to the data for selected tab
    */
   #state = {
     currentTab: 'all',
     isLoading: false,
     username: '',
+    currentTabListData: {},
   };
 
   /**
-   * Private state for unread and all notifications.
-   * @property {Array} notifications - The list of unread notifications.
-   * @property {number} totalCount - The total count of unread notifications.
-   * @property {number} listLength - The current length of the unread notifications list.
+   * Private state for unread/all notifications.
+   * @property {Array<Object>} notifications - The list of unread/all notifications.
+   * @property {number} totalCount - The total count of unread/all notifications.
+   * @property {number} listLength - The current length of the unread/all notifications list.
    *
    */
   #unread = {
@@ -45,10 +47,19 @@ export class NotificationsList extends HTMLElement {
     listLength: 0,
   };
 
+  /**
+   * @property {number} pagenationLimit - The limit of items to fetch at one request
+   * @property {IntersectionObserver|null} observer - The IntersectionObserver instance for lazy loading.
+   * @property {HTMLElement|null} loadMoreAnchor - The anchor element for loading more items.
+   */
+  #pagenationLimit = 10;
+  #observer = null;
+  #loadMoreAnchor = null;
+
   constructor() {
     super();
 
-    this.renderList = this.renderList.bind(this);
+    this.renderListContent = this.renderListContent.bind(this);
     this.loadMoreNotifications = this.loadMoreNotifications.bind(this);
     this.toggleTab = this.toggleTab.bind(this);
     this.readNotification = this.readNotification.bind(this);
@@ -68,9 +79,9 @@ export class NotificationsList extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.button?.removeEventListener('shown.bs.dropdown', this.renderList);
+    this.cleanObserver();
+    this.button?.removeEventListener('shown.bs.dropdown', this.renderListContent);
     this.button?.removeEventListener('hidden.bs.dropdown', this.resetList);
-    this.dropdown?.removeEventListener('scrollend', this.loadMoreNotifications);
     this.dropdown?.removeEventListener('click', this.preventListClose);
     this.unreadTab?.removeEventListener('click', this.toggleTab);
     this.allTab?.removeEventListener('click', this.toggleTab);
@@ -97,13 +108,25 @@ export class NotificationsList extends HTMLElement {
     this.unreadTab = this.querySelector('#unread-notifications-tab');
     this.markAllAsReadButton = this.querySelector('#mark-all-as-read');
 
-    this.dropdown?.addEventListener('scrollend', this.loadMoreNotifications);
     this.dropdown?.addEventListener('click', this.preventListClose);
-    this.button?.addEventListener('shown.bs.dropdown', this.renderList);
+    this.button?.addEventListener('shown.bs.dropdown', this.renderListContent);
     this.button?.addEventListener('hidden.bs.dropdown', this.resetList);
     this.allTab?.addEventListener('click', this.toggleTab);
     this.unreadTab?.addEventListener('click', this.toggleTab);
     this.markAllAsReadButton?.addEventListener('click', this.markAllAsRead);
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*     Event handlers                                                       */
+  /* ------------------------------------------------------------------------ */
+
+  async renderListContent() {
+    this.button?.querySelector('.notification-badge')?.classList.add('d-none');
+
+    this.#state.currentTabListData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
+    const fetchedData = await this.fetchNotifications();
+    this.renderList(fetchedData);
+    this.setupObserver();
   }
 
   /**
@@ -115,57 +138,82 @@ export class NotificationsList extends HTMLElement {
    * @returns {Promise<void>}
    * @listens shown.bs.dropdown
    */
-  async renderList(clearList = true) {
-    if (!this.#state.username) {
-      this.#state.username = auth.getStoredUser()?.username || '';
-    }
+  async renderList(fetchedData, clearList = true) {
     if (clearList) {
       this.clearList();
     }
-    this.button?.querySelector('.notification-badge')?.classList.add('d-none');
-
-    const read = this.#state.currentTab === 'unread' ? 'false' : 'all';
-    const listData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
-    const data = await this.fetchNotifications(read, 10, listData.listLength);
-    if (!data) {
+    if (!fetchedData) {
       this.list.innerHTML = this.noNotificationTemplate();
-      const messageElement = this.querySelector('#unavailable-message');
+      const messageElement = this.querySelector('#notifications-unavailable-message');
       if (messageElement) {
         messageElement.innerText = 'Temporary unavailable';
       }
       this.markAllAsReadButton?.classList.add('d-none');
       return;
     }
-    listData.totalCount = data.count;
-    listData.notifications.push(...data.items);
-    if (listData.notifications.length === 0) {
+    this.#state.currentTabListData.totalCount = fetchedData.count;
+    this.#state.currentTabListData.notifications.push(...fetchedData.items);
+    if (this.#state.currentTabListData.notifications.length === 0) {
       this.list.innerHTML = this.noNotificationTemplate();
       this.markAllAsReadButton?.classList.add('d-none');
     }
-    for (let i = listData.listLength; i < listData.notifications.length; i++) {
+    for (
+      let i = this.#state.currentTabListData.listLength;
+      i < this.#state.currentTabListData.notifications.length;
+      i++
+    ) {
       const item = document.createElement('notifications-list-item');
       const data = {
-        action: listData.notifications[i].action,
-        data: listData.notifications[i].data,
+        action: this.#state.currentTabListData.notifications[i].action,
+        data: this.#state.currentTabListData.notifications[i].data,
         username: this.#state.username,
       };
       item.state = data;
       if (i === 0) {
         item.querySelector('.dropdown-list-item').classList.add('border-top-0');
       }
-      if (!listData.notifications[i].is_read) {
+      if (!this.#state.currentTabListData.notifications[i].is_read) {
         item.addEventListener('click', this.readNotification);
-        item.id = `notification-${listData.notifications[i].id}`;
+        item.id = `notification-${this.#state.currentTabListData.notifications[i].id}`;
         item.classList.add('unread');
       }
       this.list.appendChild(item);
-      listData.listLength++;
+      this.#state.currentTabListData.listLength++;
     }
   }
 
-  /* ------------------------------------------------------------------------ */
-  /*     Event handlers                                                       */
-  /* ------------------------------------------------------------------------ */
+  /**
+   * @description
+   * Sets up the IntersectionObserver to lazy load when the user scrolls to the bottom of the list.
+   * It creates a load more anchor element and observes it for intersection changes.
+   * When the anchor is intersecting, it fetches more data and renders the list items.
+   * @returns {void}
+   */
+  setupObserver() {
+    this.cleanObserver();
+
+    this.#loadMoreAnchor = document.createElement('li');
+    this.#loadMoreAnchor.classList.add('list-group-item', 'dropdown-list-item', 'p-0');
+    this.list.appendChild(this.#loadMoreAnchor);
+
+    this.#observer = new IntersectionObserver(this.loadMoreNotifications, {
+      root: this.list,
+      rootMargin: '0px 0px 64px 0px',
+      threshold: 0.1,
+    });
+    this.#observer.observe(this.#loadMoreAnchor);
+  }
+
+  cleanObserver() {
+    if (this.#observer) {
+      this.#observer.disconnect();
+      this.#observer = null;
+    }
+    if (this.#loadMoreAnchor) {
+      this.list.removeChild(this.#loadMoreAnchor);
+      this.#loadMoreAnchor = null;
+    }
+  }
 
   /**
    * @description
@@ -176,11 +224,13 @@ export class NotificationsList extends HTMLElement {
    * @param {Number} offset - The offset for pagination.
    * @returns {Promise<Object|null>} - The notifications data or null if the request fails.
    */
-  async fetchNotifications(read, limit, offset) {
+  async fetchNotifications() {
+    const read = this.#state.currentTab === 'unread' ? 'false' : 'all';
+    const offset = this.#state.currentTabListData.notifications.length;
     const response = await apiRequest(
       'GET',
       /* eslint-disable-next-line new-cap */
-      API_ENDPOINTS.NOTIFICATIONS(read, limit, offset),
+      API_ENDPOINTS.NOTIFICATIONS(read, this.#pagenationLimit, offset),
       null,
       false,
       true,
@@ -216,38 +266,47 @@ export class NotificationsList extends HTMLElement {
         this.allTab.classList.add('active');
         this.unreadTab.classList.remove('active');
       }
+      console.log(this.#state.currentTab);
       this.#state.isLoading = true;
-      await this.renderList();
+      this.#state.currentTabListData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
+      console.log(this.#state.currentTabListData);
+      const fetchedData = await this.fetchNotifications();
+      this.renderList(fetchedData);
       this.#state.isLoading = false;
+      this.#observer.unobserve(this.#loadMoreAnchor);
+      this.list.appendChild(this.#loadMoreAnchor);
+      this.#observer.observe(this.#loadMoreAnchor);
     }
   }
 
-  // TODO use intersection observer for pagination
   /**
    * @description
-   * Loads more notifications when the user scrolls to the bottom of the dropdown.
-   * It checks if the user has scrolled to the bottom and if there are more notifications to load.
-   * If so, it fetches more notifications and updates the list.
-   * If the total count of notifications is reached, it does not fetch more data.
-   * @param {Event} event - The scroll event triggered by the dropdown.
+   * Handles the IntersectionObserver entries to load more items when the user scrolls to the bottom of the list.
+   * It checks if the total count is greater than the current list length.
+   * If so, it fetches more data and appends the list items.
+   * If the observer is not intersecting or if the state is already loading, it returns early.
+   * It also resets the observer and anchor element after loading more users.
+   * @param {IntersectionObserverEntry[]} entries - The entries from the IntersectionObserver.
    * @returns {Promise<void>}
-   * @listens scrollend
+   * @listens intersectionobserver
    */
-  async loadMoreNotifications(event) {
-    const { scrollTop, scrollHeight, clientHeight } = event.target;
-    const threshold = 5;
+
+  async loadMoreNotifications(entries) {
+    const entry = entries[0];
     const totalCount = this.#state.currentTab === 'unread' ? this.#unread.totalCount : this.#all.totalCount;
     const listLength = this.#state.currentTab === 'unread' ? this.#unread.listLength : this.#all.listLength;
-    if (
-      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      totalCount <= listLength ||
-      this.#state.isLoading
-    ) {
+    if (!entry.isIntersecting || totalCount <= listLength || this.#state.isLoading) {
       return;
     }
     this.#state.isLoading = true;
-    await this.renderList(false);
+    const fetchedData = await this.fetchNotifications();
+    if (fetchedData) {
+      this.renderList(fetchedData, false);
+    }
     this.#state.isLoading = false;
+    this.#observer.unobserve(this.#loadMoreAnchor);
+    this.list.appendChild(this.#loadMoreAnchor);
+    this.#observer.observe(this.#loadMoreAnchor);
   }
 
   /**
@@ -343,6 +402,7 @@ export class NotificationsList extends HTMLElement {
     this.allTab.classList.add('active');
     this.unreadTab.classList.remove('active');
     this.#state.currentTab = 'all';
+    this.cleanObserver();
     this.clearList();
   }
 
@@ -389,8 +449,9 @@ export class NotificationsList extends HTMLElement {
       }
     }
     #notifications-list {
-      max-height: 75vh;
+      max-height: calc(75vh - 10rem);
       max-width: 480px;
+      overflow-y: auto;
     }
     .notification-time {
       color: var(--pm-gray-400);
@@ -417,30 +478,12 @@ export class NotificationsList extends HTMLElement {
       border: none;
       position: relative;
     }
-    li {
-     list-style-type: none;
+    #notifications-unavailable-message {
+      min-width: 25vw;
     }
     </style>
     <div class="list-group-item p-3">
-      <p class="text-center m-0" id="unavailable-message">No notification</p>
-    </div>
-    `;
-  }
-
-  showMoreButtonTemplate() {
-    return `
-    <style>
-    #show-more-notifications {
-      border: none;
-      position: relative;
-      border-top: 1px solid var(--bs-border-color);
-    }
-    li {
-      list-style-type: none;
-    }
-    </style>
-    <div class="list-group-item mt-4 p-3" id="show-more-notifications">
-      <p class="text-center m-0">Show more notifications</p>
+      <p class="text-center m-0" id="notifications-unavailable-message">No notification</p>
     </div>
     `;
   }
