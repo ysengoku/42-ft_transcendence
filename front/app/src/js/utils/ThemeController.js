@@ -7,8 +7,8 @@ export class ThemeController {
   }
 
   static getTheme() {
-    return this.#themes.includes(localStorage.getItem('theme')) ?
-     localStorage.getItem('theme') : 'light';
+    const storedTheme = localStorage.getItem('theme');
+    return this.#themes.includes(storedTheme) ? storedTheme : 'light';
   }
 
   static setTheme(theme) {
