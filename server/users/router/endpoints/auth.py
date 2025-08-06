@@ -17,7 +17,7 @@ from common.schemas import MessageSchema, ValidationErrorMessageSchema
 from pong.models import GameRoom
 from users.models import Profile, RefreshToken, User
 from users.router.endpoints.mfa import handle_mfa_code
-from users.router.utils import create_json_response_with_tokens
+from users.router.utils import create_json_response_with_jwt, fill_response_with_jwt
 from users.schemas import (
     ForgotPasswordSchema,
     LoginResponseSchema,
@@ -87,7 +87,7 @@ def login(request: HttpRequest, credentials: LoginSchema):
         raise HttpError(503, "Failed to send MFA code")
 
     response_data = user.profile.to_profile_minimal_schema()
-    return create_json_response_with_tokens(user, response_data)
+    return create_json_response_with_jwt(user, response_data)
 
 
 @auth_router.post(
@@ -106,9 +106,10 @@ def signup(request: HttpRequest, data: SignUpSchema):
         email=data.email,
         password=data.password,
     )
-    response = create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+    response = create_json_response_with_jwt(user, user.profile.to_profile_minimal_schema())
     response.status_code = 201
     return response
+
 
 @auth_router.post(
     "refresh",
@@ -125,8 +126,7 @@ def refresh(request: HttpRequest, response: HttpResponse):
 
     new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
 
-    response.set_cookie("access_token", new_access_token)
-    response.set_cookie("refresh_token", new_refresh_token_instance.token)
+    fill_response_with_jwt(response, new_access_token, new_refresh_token_instance)
     return 204, None
 
 
