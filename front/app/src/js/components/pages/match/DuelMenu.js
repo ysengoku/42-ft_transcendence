@@ -492,7 +492,7 @@ export class DuelMenu extends HTMLElement {
                 <div class="input-group position-relative">
                   <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
                   <input class="form-control" type="search" placeholder="Find user" aria-label="Search" id="search-opponent" autocomplete="off">
-                  <ul class="dropdown-menu position-absolute px-3 w-100" id="duel-user-list"></ul>
+                  <ul class="dropdown-menu position-absolute px-3 w-100 overflow-auto" id="duel-user-list"></ul>
                 </div>
 
                 <div class="d-flex flex-column align-items-center w-100 mb-2 p-3">

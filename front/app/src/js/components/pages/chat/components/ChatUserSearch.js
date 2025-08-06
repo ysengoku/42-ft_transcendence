@@ -176,7 +176,7 @@ export class ChatUserSearch extends HTMLElement {
         <div class="input-group position-relative mt-2">
           <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
           <input class="form-control" type="search" placeholder="Find user(s)" aria-label="Search">
-          <ul class="dropdown-menu position-absolute w-100" id="chat-user-list"></ul>
+          <ul class="dropdown-menu position-absolute w-100 overflow-auto" id="chat-user-list"></ul>
         </div>
       </form>
     </div>
