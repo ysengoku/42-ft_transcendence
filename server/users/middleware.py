@@ -10,6 +10,7 @@ logger = logging.getLogger("server")
 
 ILLEGAL_CONNECTION = 3002
 
+
 class JWTEndpointsAuthMiddleware(APIKeyCookie):
     """
     Middleware for the API endpoints authentication through JWT.
@@ -22,7 +23,10 @@ class JWTEndpointsAuthMiddleware(APIKeyCookie):
         payload = RefreshToken.objects.select_related("profile").verify_access_token(access_token)
 
         user = User.objects.for_id(payload["sub"]).first()
-        user.profile.update_activity()
+        if user is not None:
+            user.profile.update_activity()
+        else:
+            logger.info("No user with this token")
         return user
 
 
