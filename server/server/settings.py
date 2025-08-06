@@ -118,6 +118,8 @@ INSTALLED_APPS = [
     "chat",
     "pong",
     "tournaments",
+    # Security
+    "csp",
     # Default Django applications
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -136,10 +138,25 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "csp.middleware.CSPMiddleware",
 ]
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ["'self'"],
+        "script-src": ["'self'"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "img-src": ["'self'", "data:", "blob:"],
+        "font-src": ["'self'", "data:"],
+        "connect-src": ["'self'"],
+    },
+}
 ROOT_URLCONF = "server.urls"
 
 TEMPLATES = [
