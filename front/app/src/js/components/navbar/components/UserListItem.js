@@ -57,7 +57,7 @@ export class UserListItem extends HTMLElement {
 
   template() {
     return `
-  	<li class="list-group-item dropdown-list-item">
+  	<li class="list-group-item dropdown-list-item pe-5">
       <div class="d-flex flex-row align-items-center">
   		  <div class="d-inline-block position-relative me-2">
   			  <img class="dropdown-list-avatar avatar-m rounded-circle me-3" alt="Avatar">
