@@ -23,7 +23,7 @@ export class UserSearch extends HTMLElement {
     isMobile: false,
   };
 
- /**
+  /**
    * @property {IntersectionObserver} observer - The IntersectionObserver instance for lazy loading user list.
    * @property {HTMLElement} loadMoreAnchor - The anchor element for loading more users.
    */
@@ -379,7 +379,7 @@ export class UserSearch extends HTMLElement {
   }
 
   style() {
-  return `
+    return `
     <style>
     #navbar-user-list {
       overflow-y: auto;
