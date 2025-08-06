@@ -1,7 +1,21 @@
+/**
+ * @module TournamentList
+ * @description Displays a list of tournaments with filtering and lazy loading capabilities.
+ * It allows users to view tournaments that are open for entries, all tournaments.
+ */
+
 import { apiRequest, API_ENDPOINTS } from '@api';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class TournamentList extends HTMLElement {
+  /**
+   * Private state object to hold the component's state.
+   * @property {Array} tournaments - List of tournaments.
+   * @property {'pending'|'all'} filter - Current filter applied to the tournaments.
+   * @property {number} totalTournaments - Total number of tournaments available in database.
+   * @property {number} currentLastItemIndex - Index of the last item rendered in the list.
+   * @property {boolean} isLoading - Indicates if the component is currently loading data.
+   */
   #state = {
     tournaments: [],
     filter: 'pending',
@@ -9,6 +23,13 @@ export class TournamentList extends HTMLElement {
     currentLastItemIndex: 0,
     isLoading: false,
   };
+
+  /**
+   * @property {IntersectionObserver|null} observer - The IntersectionObserver instance for lazy loading.
+   * @property {HTMLElement|null} loadMoreAnchor - The anchor element for loading more items.
+   */
+  #observer = null;
+  #loadMoreAnchor = null;
 
   constructor() {
     super();
@@ -29,11 +50,10 @@ export class TournamentList extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.listWrapper?.removeEventListener('scrollend', this.renderList);
+    this.cleanObserver();
     this.filterButton?.removeEventListener('click', this.filterTournament);
     this.filterOpenButton?.removeEventListener('click', this.filterTournament);
     this.filterAllButton?.removeEventListener('click', this.filterTournament);
-    this.listWrapper?.removeEventListener('scrollend', this.loadMoreItems);
   }
 
   getTournamentById(id) {
@@ -43,7 +63,16 @@ export class TournamentList extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Render                                                              */
   /* ------------------------------------------------------------------------ */
-  render() {
+
+  /**
+   * @description
+   * Renders the component by setting its inner HTML with styles and templates.
+   * It initializes the list wrapper, list, and filter buttons, sets up event listeners,
+   * and calls the method to render the tournament list.
+   * It also sets up the IntersectionObserver for lazy loading.
+   * @returns {Promise<void>}
+   */
+  async render() {
     this.innerHTML = this.style() + this.template();
 
     this.listWrapper = this.querySelector('#tournament-list-wrapper');
@@ -52,14 +81,25 @@ export class TournamentList extends HTMLElement {
     this.filterOpenButton = this.querySelector('#tournament-filter-open');
     this.filterAllButton = this.querySelector('#tournament-filter-all');
 
-    this.listWrapper?.addEventListener('scrollend', this.loadMoreItems);
     this.filterButton?.addEventListener('click', this.filterTournament);
     this.filterOpenButton?.addEventListener('click', this.filterTournament);
     this.filterAllButton?.addEventListener('click', this.filterTournament);
 
-    this.renderList();
+    await this.renderList();
+    this.setupObserver();
   }
 
+  /**
+   * @description
+   * Renders the list of tournaments based on the current state.
+   * It checks if the total tournaments match the current list length,
+   * and if not, it fetches more tournaments from the API.
+   * It then iterates through the tournaments, filtering them based on the current filter,
+   * and appends each tournament as a list item to the list.
+   * If no tournaments are available, it renders a message indicating that.
+   * It also handles the loading state to prevent multiple fetches at the same time.
+   * @returns {Promise<void>}
+   */
   async renderList() {
     if (this.#state.totalTournaments > 0 && this.#state.tournaments.length === this.#state.totalTournaments) {
       return;
@@ -85,6 +125,15 @@ export class TournamentList extends HTMLElement {
     this.#state.isLoading = false;
   }
 
+  /**
+   * @description
+   * Renders a single row for a tournament item.
+   * It creates a list item element, sets its class and inner HTML using the row template,
+   * and populates it with tournament data such as name, organizer, status, and participants.
+   * It also sets the tournament ID as an attribute on the list item.
+   * @returns {HTMLElement} The list item element representing the tournament.
+   * @param {Object} tournament - The tournament data to render.
+   */
   renderRow(tournament) {
     const item = document.createElement('li');
     item.className = 'list-group-item d-flex flex-row justify-content-between mb-2 p-4';
@@ -112,6 +161,10 @@ export class TournamentList extends HTMLElement {
     return item;
   }
 
+  /**
+   * @description
+   * Renders a message indicating that there are no tournaments available.
+   */
   renderNoItem() {
     const message = 'No tournaments available at the moment.';
     const item = document.createElement('li');
@@ -121,9 +174,50 @@ export class TournamentList extends HTMLElement {
     this.list.appendChild(item);
   }
 
+  /**
+   * @description
+   * Sets up the IntersectionObserver to lazy load when the user scrolls to the bottom of the list.
+   * It creates a load more anchor element and observes it for intersection changes.
+   * When the anchor is intersecting, it fetches more data and renders the list items.
+   * @returns {void}
+   */
+  setupObserver() {
+    this.cleanObserver();
+
+    this.#loadMoreAnchor = document.createElement('li');
+    this.#loadMoreAnchor.classList.add('p-0');
+    this.list.appendChild(this.#loadMoreAnchor);
+
+    this.#observer = new IntersectionObserver(this.loadMoreItems, {
+      root: this.list,
+      rootMargin: '0px 0px 64px 0px',
+      threshold: 0.1,
+    });
+    this.#observer.observe(this.#loadMoreAnchor);
+  }
+
+  cleanObserver() {
+    if (this.#observer) {
+      this.#observer.disconnect();
+      this.#observer = null;
+    }
+    if (this.#loadMoreAnchor) {
+      this.list.removeChild(this.#loadMoreAnchor);
+      this.#loadMoreAnchor = null;
+    }
+  }
+
   /* ------------------------------------------------------------------------ */
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description
+   * Fetches the list of tournaments from the API based on the current filter and pagination.
+   * It makes an API request to get tournaments, appending the results to the current list
+   * and updating the total count of tournaments.
+   * @returns {Promise<void>}
+   */
   async fetchTournamentList() {
     const response = await apiRequest(
       'GET',
@@ -140,7 +234,18 @@ export class TournamentList extends HTMLElement {
     this.#state.totalTournaments = response.data.count;
   }
 
-  filterTournament(event) {
+  /**
+   * @description
+   * Filters the tournaments based on the button clicked (either "Open for entries" or "All tournaments").
+   * It prevents the default action of the event, checks if the filter is already applied,
+   * and if not, updates the state with the new filter.
+   * It resets the current last item index and total tournaments, clears the list,
+   * and re-renders the list with the new filter applied.
+   * It also handles the loading state and re-observes the load more anchor for lazy loading.
+   * @param {Event} event - The event triggered by clicking the filter button.
+   * @returns {Promise<void>}
+   */
+  async filterTournament(event) {
     event.preventDefault();
     const target = event.target.closest('button');
     const filter = target?.getAttribute('filter');
@@ -153,25 +258,37 @@ export class TournamentList extends HTMLElement {
     this.#state.totalTournaments = 0;
     this.#state.tournaments = [];
     this.list.innerHTML = '';
-    this.renderList();
+    this.#state.isLoading = true;
+    await this.renderList();
+    this.#state.isLoading = false;
+    this.#observer.unobserve(this.#loadMoreAnchor);
+    this.list.appendChild(this.#loadMoreAnchor);
+    this.#observer.observe(this.#loadMoreAnchor);
   }
 
-  // TODO use intersection observer for pagination
-  async loadMoreItems(event) {
+  /**
+   * @description
+   * Loads more items when the user scrolls to the bottom of the list.
+   * It checks if the component is already loading, if the entry is intersecting, and if there are more tournaments to load.
+   * If all conditions are met, it sets the loading state to true, calls the method to render the list, sets the loading state back to false,
+   * and re-observes the load more anchor for further lazy loading.
+   * @param {*} entries - The entries from the IntersectionObserver.
+   * @returns {Promise<void>}
+   */
+  async loadMoreItems(entries) {
     if (this.#state.isLoading) {
       return;
     }
-    const { scrollTop, scrollHeight, clientHeight } = event.target;
-    const threshold = 10;
-    if (
-      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.totalTournaments <= this.#state.currentLastItemIndex
-    ) {
+    const entry = entries[0];
+    if (!entry.isIntersecting || this.#state.totalTournaments <= this.#state.currentLastItemIndex) {
       return;
     }
     this.#state.isLoading = true;
-    await this.renderList(event);
+    await this.renderList();
     this.#state.isLoading = false;
+    this.#observer.unobserve(this.#loadMoreAnchor);
+    this.list.appendChild(this.#loadMoreAnchor);
+    this.#observer.observe(this.#loadMoreAnchor);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -187,7 +304,7 @@ export class TournamentList extends HTMLElement {
       <button class="dropdown-item text-center" id="tournament-filter-all" filter="all">All tournaments</button>
     </div>
 
-    <div class="overflow-auto" id="tournament-list-wrapper">
+    <div id="tournament-list-wrapper">
       <ul class="list-group" id="tournament-list"></ul>
     </div>
     `;
@@ -196,7 +313,7 @@ export class TournamentList extends HTMLElement {
   style() {
     return `
     <style>
-    #tournament-list-wrapper {
+    #tournament-list {
       max-height: 400px;
       overflow-y: auto;
     }
