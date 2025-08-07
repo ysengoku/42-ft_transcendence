@@ -9,6 +9,7 @@
 
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { setupObserver } from '@utils';
 
 /**
  * @class FriendsList
@@ -33,8 +34,8 @@ export class FriendsList extends HTMLElement {
    * @property {IntersectionObserver} observer - The IntersectionObserver instance for lazy loading friends.
    * @property {HTMLElement} loadMoreAnchor - The anchor element for loading more friends.
    */
-  #observer = null;
-  #loadMoreAnchor = null;
+  observer = null;
+  loadMoreAnchor = null;
 
   constructor() {
     super();
@@ -101,7 +102,9 @@ export class FriendsList extends HTMLElement {
       return;
     }
     this.renderFriendsListItems();
-    this.setupObserver();
+
+    this.cleanObserver();
+    [this.observer, this.loadMoreAnchor] = setupObserver(this.listContainer, this.showMoreFriends);
   }
 
   /**
@@ -163,28 +166,6 @@ export class FriendsList extends HTMLElement {
     }
   }
 
-  /**
-   * @description
-   * Sets up the IntersectionObserver to lazy load more friends when the user scrolls to the bottom of the list.
-   * It creates a load more anchor element and observes it for intersection changes.
-   * When the anchor is intersecting, it fetches more friends data and renders the list items.
-   * @returns {void}
-   */
-  setupObserver() {
-    this.cleanObserver();
-
-    this.#loadMoreAnchor = document.createElement('li');
-    this.#loadMoreAnchor.classList.add('list-group-item', 'dropdown-list-item', 'p-0');
-    this.listContainer.appendChild(this.#loadMoreAnchor);
-
-    this.#observer = new IntersectionObserver(this.showMoreFriends, {
-      root: this.listContainer,
-      rootMargin: '0px 0px 64px 0px',
-      threshold: 0.1,
-    });
-    this.#observer.observe(this.#loadMoreAnchor);
-  }
-
   async showMoreFriends(entries) {
     const entry = entries[0];
     if (entry.isIntersecting && this.#state.totalFriendsCount > this.#state.listLength) {
@@ -193,20 +174,9 @@ export class FriendsList extends HTMLElement {
         return;
       }
       this.renderFriendsListItems();
-      this.#observer.unobserve(this.#loadMoreAnchor);
-      this.listContainer.appendChild(this.#loadMoreAnchor);
-      this.#observer.observe(this.#loadMoreAnchor);
-    }
-  }
-
-  cleanObserver() {
-    if (this.#observer) {
-      this.#observer.disconnect();
-      this.#observer = null;
-    }
-    if (this.#loadMoreAnchor) {
-      this.listContainer.removeChild(this.#loadMoreAnchor);
-      this.#loadMoreAnchor = null;
+      this.observer.unobserve(this.loadMoreAnchor);
+      this.listContainer.appendChild(this.loadMoreAnchor);
+      this.observer.observe(this.loadMoreAnchor);
     }
   }
 
@@ -232,6 +202,17 @@ export class FriendsList extends HTMLElement {
     this.#state.friendsList = [];
     this.#state.totalFriendsCount = 0;
     this.listContainer.innerHTML = '';
+  }
+
+  cleanObserver() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    if (this.loadMoreAnchor) {
+      this.listContainer.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor = null;
+    }
   }
 
   template() {

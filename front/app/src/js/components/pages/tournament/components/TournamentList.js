@@ -5,6 +5,7 @@
  */
 
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { setupObserver } from '@utils';
 import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class TournamentList extends HTMLElement {
@@ -28,8 +29,8 @@ export class TournamentList extends HTMLElement {
    * @property {IntersectionObserver|null} observer - The IntersectionObserver instance for lazy loading.
    * @property {HTMLElement|null} loadMoreAnchor - The anchor element for loading more items.
    */
-  #observer = null;
-  #loadMoreAnchor = null;
+  observer = null;
+  loadMoreAnchor = null;
 
   constructor() {
     super();
@@ -86,7 +87,8 @@ export class TournamentList extends HTMLElement {
     this.filterAllButton?.addEventListener('click', this.filterTournament);
 
     await this.renderList();
-    this.setupObserver();
+    this.cleanObserver();
+    [this.observer, this.loadMoreAnchor] = setupObserver(this.list, this.loadMoreItems);
   }
 
   /**
@@ -174,36 +176,14 @@ export class TournamentList extends HTMLElement {
     this.list.appendChild(item);
   }
 
-  /**
-   * @description
-   * Sets up the IntersectionObserver to lazy load when the user scrolls to the bottom of the list.
-   * It creates a load more anchor element and observes it for intersection changes.
-   * When the anchor is intersecting, it fetches more data and renders the list items.
-   * @returns {void}
-   */
-  setupObserver() {
-    this.cleanObserver();
-
-    this.#loadMoreAnchor = document.createElement('li');
-    this.#loadMoreAnchor.classList.add('p-0');
-    this.list.appendChild(this.#loadMoreAnchor);
-
-    this.#observer = new IntersectionObserver(this.loadMoreItems, {
-      root: this.list,
-      rootMargin: '0px 0px 64px 0px',
-      threshold: 0.1,
-    });
-    this.#observer.observe(this.#loadMoreAnchor);
-  }
-
   cleanObserver() {
-    if (this.#observer) {
-      this.#observer.disconnect();
-      this.#observer = null;
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
     }
-    if (this.#loadMoreAnchor) {
-      this.list.removeChild(this.#loadMoreAnchor);
-      this.#loadMoreAnchor = null;
+    if (this.loadMoreAnchor) {
+      this.list.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor = null;
     }
   }
 
@@ -261,9 +241,9 @@ export class TournamentList extends HTMLElement {
     this.#state.isLoading = true;
     await this.renderList();
     this.#state.isLoading = false;
-    this.#observer.unobserve(this.#loadMoreAnchor);
-    this.list.appendChild(this.#loadMoreAnchor);
-    this.#observer.observe(this.#loadMoreAnchor);
+    this.observer.unobserve(this.loadMoreAnchor);
+    this.list.appendChild(this.loadMoreAnchor);
+    this.observer.observe(this.loadMoreAnchor);
   }
 
   /**
@@ -286,9 +266,9 @@ export class TournamentList extends HTMLElement {
     this.#state.isLoading = true;
     await this.renderList();
     this.#state.isLoading = false;
-    this.#observer.unobserve(this.#loadMoreAnchor);
-    this.list.appendChild(this.#loadMoreAnchor);
-    this.#observer.observe(this.#loadMoreAnchor);
+    this.observer.unobserve(this.loadMoreAnchor);
+    this.list.appendChild(this.loadMoreAnchor);
+    this.observer.observe(this.loadMoreAnchor);
   }
 
   /* ------------------------------------------------------------------------ */
