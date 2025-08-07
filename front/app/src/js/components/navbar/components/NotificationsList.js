@@ -8,6 +8,7 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
+import { setupObserver } from '@utils';
 
 /**
  * @class NotificationsList
@@ -53,8 +54,8 @@ export class NotificationsList extends HTMLElement {
    * @property {HTMLElement|null} loadMoreAnchor - The anchor element for loading more items.
    */
   #pagenationLimit = 10;
-  #observer = null;
-  #loadMoreAnchor = null;
+  observer = null;
+  loadMoreAnchor = null;
 
   constructor() {
     super();
@@ -126,7 +127,9 @@ export class NotificationsList extends HTMLElement {
     this.#state.currentTabListData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
     const fetchedData = await this.fetchNotifications();
     this.renderList(fetchedData);
-    this.setupObserver();
+
+    this.cleanObserver();
+    [this.observer, this.loadMoreAnchor] = setupObserver(this.list, this.loadMoreNotifications);
   }
 
   /**
@@ -182,36 +185,14 @@ export class NotificationsList extends HTMLElement {
     }
   }
 
-  /**
-   * @description
-   * Sets up the IntersectionObserver to lazy load when the user scrolls to the bottom of the list.
-   * It creates a load more anchor element and observes it for intersection changes.
-   * When the anchor is intersecting, it fetches more data and renders the list items.
-   * @returns {void}
-   */
-  setupObserver() {
-    this.cleanObserver();
-
-    this.#loadMoreAnchor = document.createElement('li');
-    this.#loadMoreAnchor.classList.add('list-group-item', 'dropdown-list-item', 'p-0');
-    this.list.appendChild(this.#loadMoreAnchor);
-
-    this.#observer = new IntersectionObserver(this.loadMoreNotifications, {
-      root: this.list,
-      rootMargin: '0px 0px 64px 0px',
-      threshold: 0.1,
-    });
-    this.#observer.observe(this.#loadMoreAnchor);
-  }
-
   cleanObserver() {
-    if (this.#observer) {
-      this.#observer.disconnect();
-      this.#observer = null;
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
     }
-    if (this.#loadMoreAnchor) {
-      this.list.removeChild(this.#loadMoreAnchor);
-      this.#loadMoreAnchor = null;
+    if (this.loadMoreAnchor) {
+      this.list.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor = null;
     }
   }
 
@@ -273,9 +254,9 @@ export class NotificationsList extends HTMLElement {
       const fetchedData = await this.fetchNotifications();
       this.renderList(fetchedData);
       this.#state.isLoading = false;
-      this.#observer.unobserve(this.#loadMoreAnchor);
-      this.list.appendChild(this.#loadMoreAnchor);
-      this.#observer.observe(this.#loadMoreAnchor);
+      this.observer.unobserve(this.loadMoreAnchor);
+      this.list.appendChild(this.loadMoreAnchor);
+      this.observer.observe(this.loadMoreAnchor);
     }
   }
 
@@ -304,9 +285,9 @@ export class NotificationsList extends HTMLElement {
       this.renderList(fetchedData, false);
     }
     this.#state.isLoading = false;
-    this.#observer.unobserve(this.#loadMoreAnchor);
-    this.list.appendChild(this.#loadMoreAnchor);
-    this.#observer.observe(this.#loadMoreAnchor);
+    this.observer.unobserve(this.loadMoreAnchor);
+    this.list.appendChild(this.loadMoreAnchor);
+    this.observer.observe(this.loadMoreAnchor);
   }
 
   /**
