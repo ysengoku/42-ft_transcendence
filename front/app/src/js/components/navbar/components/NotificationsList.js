@@ -247,10 +247,8 @@ export class NotificationsList extends HTMLElement {
         this.allTab.classList.add('active');
         this.unreadTab.classList.remove('active');
       }
-      console.log(this.#state.currentTab);
       this.#state.isLoading = true;
       this.#state.currentTabListData = this.#state.currentTab === 'unread' ? this.#unread : this.#all;
-      console.log(this.#state.currentTabListData);
       const fetchedData = await this.fetchNotifications();
       this.renderList(fetchedData);
       this.#state.isLoading = false;
