@@ -45,7 +45,7 @@ export class ChatList extends HTMLElement {
     this.chatComponent = document.querySelector('chat-page');
 
     this.toggleUserSearchBar = this.toggleUserSearchBar.bind(this);
-    this.handleScrollEnd = this.handleScrollEnd.bind(this);
+    this.handleScroll = this.handleScroll.bind(this);
   }
 
   /**
@@ -67,7 +67,7 @@ export class ChatList extends HTMLElement {
 
   disconnectedCallback() {
     this.searchButton?.removeEventListener('click', this.toggleUserSearchBar);
-    this.listContainer?.removeEventListener('scrollend', this.handleScrollEnd);
+    this.listContainer?.removeEventListener('scroll', this.handleScroll);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -95,7 +95,7 @@ export class ChatList extends HTMLElement {
     if (this.#state.totalItemCount > 0) {
       this.list.innerHTML = '';
       this.renderListItems();
-      this.listContainer.addEventListener('scrollend', this.handleScrollEnd);
+      this.listContainer.addEventListener('scroll', this.handleScroll);
 
       // Load more items if the list items don't reach to the bottom of the component and all items are not rendered
       requestAnimationFrame(async () => {
@@ -232,7 +232,7 @@ export class ChatList extends HTMLElement {
     userSearch?.classList.add('d-none');
   }
 
-  async handleScrollEnd(event) {
+  async handleScroll(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
     if (
