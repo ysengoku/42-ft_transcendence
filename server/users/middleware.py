@@ -22,10 +22,10 @@ class JWTEndpointsAuthMiddleware(APIKeyCookie):
         payload = RefreshToken.objects.select_related("profile").verify_access_token(access_token)
 
         user = User.objects.for_id(payload["sub"]).first()
-        if user is not None:
-            user.profile.update_activity()
-        else:
-            logger.info("No user with this token")
+        if user is None:
+            return None
+
+        user.profile.update_activity()
         return user
 
 
