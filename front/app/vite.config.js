@@ -8,6 +8,9 @@ export default defineConfig({
     },
     historyFallback: true,
   },
+  build: {
+    sourcemap: true,
+  },
   resolve: {
     alias: {
       '@main': path.resolve(__dirname, 'src/main.js'),
