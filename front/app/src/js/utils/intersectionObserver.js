@@ -7,7 +7,7 @@
  */
 export function setupObserver(rootElement, callback, rootMargin = '0px 0px 64px 0px') {
   const anchor = document.createElement('li');
-  anchor.classList.add('list-group-item', 'dropdown-list-item', 'p-0');
+  anchor.classList.add('list-group-item', 'dropdown-list-item', 'p-0', 'border-0');
   rootElement.appendChild(anchor);
 
   const observer = new IntersectionObserver(callback, {
