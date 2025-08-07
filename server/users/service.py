@@ -25,12 +25,10 @@ def check_inactive_users():
     channel_layer = get_channel_layer()
 
     for user in inactive_users:
-        logger.info("User %s is inactive (no activity for 30 minutes and no active connections)", user.user.username)
-
         user.is_online = False
         user.nb_active_connexions = 0
         user.save(update_fields=["is_online", "nb_active_connexions"])
-        logger.info("User set offline")
+        logger.info("User %s is inactive (no activity for 30 minutes) : set offline", user.user.username)
 
         async_to_sync(channel_layer.group_send)(
             "online_users",
