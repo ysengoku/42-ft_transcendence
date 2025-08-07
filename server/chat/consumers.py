@@ -46,7 +46,8 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                 )
         except DatabaseError as e:
             logger.error("Database error during connect: %s", e)
-            self.close(CloseCodes.BAD_DATA)
+            # nothing can be done in case of database error, closing
+            self.close(CloseCodes.NORMAL_CLOSURE)
             return
 
         self.chats = Chat.objects.for_participants(self.user_profile)
