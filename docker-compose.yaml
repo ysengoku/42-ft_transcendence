@@ -1,5 +1,5 @@
 x-front-server-common-variables: &front-server-common-variables
-  NODE_ENV: ${NODE_ENV:-development}  # defines whether the images run in production or developement mode
+  NODE_ENV: ${NODE_ENV:-development}  # defines whether the images run in production or development mode
 
 services:
   front:
@@ -7,9 +7,7 @@ services:
     build:
       context: ./front
       dockerfile: Dockerfile
-      target: ${NODE_ENV:-development}
     volumes:
-      - front_dist_volume:/app/dist
       - ./front/app/src:/app/src
     ports:
       - "5173:5173"
@@ -23,6 +21,8 @@ services:
       - transcendance_network
     environment:
        <<: *front-server-common-variables
+    profiles:
+      - development
 
   server:
     container_name: server
@@ -72,7 +72,6 @@ services:
     depends_on:
       - nginx
       - server
-      - front
     volumes:
       - ./crontab:/app/crontab
       - ./crontab/scripts:/app/scripts
@@ -111,21 +110,21 @@ services:
   nginx:
     container_name: nginx
     build:
-      context: ./nginx
-      dockerfile: Dockerfile
+      context: ./
+      dockerfile: ./nginx/Dockerfile
       target: ${NODE_ENV:-development} # Use the 'dev' stage by default, or 'build' in production
     volumes:
-      - ./front/app:/app/
-      - front_dist_volume:/app/dist:ro
       - media_volume:/app/media/
-      - db_volume:/var/lib/postgresql/data/
     ports:
       - "1026:1026"
     expose:
       - "1026"
     depends_on:
-      - front
-      - server
+      server:
+        condition: service_started
+      front:
+        condition: service_started
+        required: false # `front` container is a part of development profile and is not used in production
     networks:
       - transcendance_network
 
@@ -151,9 +150,6 @@ volumes:
     
   db_volume:
     name: db_volume
-
-  front_dist_volume:
-    name: front_dist_volume
 
   media_volume:
     name: media_volume

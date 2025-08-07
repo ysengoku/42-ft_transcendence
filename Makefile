@@ -31,8 +31,8 @@ up: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up --build
 
 dev: NODE_ENV=development
-dev: up
-
+dev:
+	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE)  --profile development up --build
 prod: NODE_ENV=production
 prod: up
 
