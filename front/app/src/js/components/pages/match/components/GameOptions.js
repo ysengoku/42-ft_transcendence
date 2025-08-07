@@ -74,6 +74,7 @@ export class GameOptions extends HTMLElement {
   }
 
   disconnectedCallback() {
+    console.log('disconnecting');
     this.scoreToWinInput?.removeEventListener('input', this.updateOptions);
     this.scoreToWinInput?.removeEventListener('input', this.updateSelectedValueOnRange);
     this.gameSpeedInputs.forEach((input) => {
@@ -91,7 +92,6 @@ export class GameOptions extends HTMLElement {
     this.coolModeOptout?.removeEventListener('change', this.toggleOptionOptout);
 
     this.innerHTML = '';
-    this.modal = null;
   }
 
   /**
