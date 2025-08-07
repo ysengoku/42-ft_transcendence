@@ -36,6 +36,7 @@ export class UserDuelHistory extends HTMLElement {
     this.filterButtonAll?.removeEventListener('click', this.filterItems);
     this.filterButtonWon?.removeEventListener('click', this.filterItems);
     this.filterButtonLost?.removeEventListener('click', this.filterItems);
+    this.tableContainer?.removeEventListener('scroll', this.loadMoreItems);
     this.tableBody?.removeEventListener('click', this.showDuelDetail);
   }
 
@@ -75,7 +76,7 @@ export class UserDuelHistory extends HTMLElement {
     this.sortByLatestButton = document.querySelector('#game-history-sort-latest');
     this.sortByOldestButton = document.querySelector('#game-history-sort-oldest');
 
-    this.tableContainer.addEventListener('scrollend', this.loadMoreItems);
+    this.tableContainer.addEventListener('scroll', this.loadMoreItems);
     this.#state.items.forEach((item) => {
       const row = this.createRow(item);
       this.tableBody.appendChild(row);
