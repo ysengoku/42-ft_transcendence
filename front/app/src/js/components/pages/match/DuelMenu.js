@@ -8,6 +8,7 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
+import { setupObserver } from '@utils';
 import { DEFAULT_GAME_OPTIONS } from '@env';
 import {
   showAlertMessageForDuration,
@@ -46,6 +47,13 @@ export class DuelMenu extends HTMLElement {
     searchTimeout: null,
     isLoading: false,
   };
+
+  /**
+   * @property {IntersectionObserver} observer - The IntersectionObserver instance for lazy loading friends.
+   * @property {HTMLElement} loadMoreAnchor - The anchor element for loading more friends.
+   */
+  observer = null;
+  loadMoreAnchor = null;
 
   OPTIONS_UNAVAILABLE_MESSAGE = 'Game options are momentarily unavailable. Set to default settings.';
 
@@ -110,16 +118,28 @@ export class DuelMenu extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.cleanObserver();
     this.optionsButton?.removeEventListener('click', this.openGameOptionsModal);
     this.searchInput?.removeEventListener('input', this.handleSearchInput);
     this.searchInput?.removeEventListener('keydown', this.ignoreEnterKeyPress);
-    this.userList?.removeEventListener('scrollend', this.loadMoreUsers);
     document.removeEventListener('click', this.hideUserList);
     this.inviteButton?.removeEventListener('click', this.inviteToDuel);
     this.requestMatchmakingButton?.removeEventListener('click', this.handleMatchmakingRequest);
     this.userList?.querySelectorAll('li').forEach((item) => {
       item.removeEventListener('click', this.selectOpponent);
     });
+    this.modalElement.addEventListener(
+      'hidden.bs.modal',
+      () => {
+        this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
+        document.body.removeChild(this.modalElement);
+        this.gameOptionsModal = null;
+      },
+      { once: true },
+    );
+    this.modalSaveButton?.removeEventListener('click', this.saveSelectedOptions);
+    this.modalCancelButton?.removeEventListener('click', this.closeGameOptionsModal);
+    this.modalCloseButton?.removeEventListener('click', this.closeGameOptionsModal);
     this.closeGameOptionsModal();
   }
 
@@ -153,7 +173,6 @@ export class DuelMenu extends HTMLElement {
     document.addEventListener('click', this.hideUserList);
     this.inviteButton.addEventListener('click', this.inviteToDuel);
     this.requestMatchmakingButton.addEventListener('click', this.handleMatchmakingRequest);
-    this.userList.addEventListener('scrollend', this.loadMoreUsers);
   }
 
   /**
@@ -172,6 +191,103 @@ export class DuelMenu extends HTMLElement {
       return;
     }
     this.modalBodyContent = document.querySelector('game-options');
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling - Game options                                       */
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description Opens the game options modal, allowing users to select game settings.
+   * It creates a modal element, appends it to the body, and initializes the Modal instance.
+   * It also sets up event listeners for saving and canceling the options.
+   */
+  openGameOptionsModal() {
+    this.gameOptionsModal.show();
+
+    this.modalSaveButton = this.modalElement.querySelector('.confirm-button');
+    this.modalCancelButton = this.modalElement.querySelector('.cancel-button');
+    this.modalCloseButton = this.modalElement.querySelector('.btn-close');
+
+    this.modalSaveButton.addEventListener('click', this.saveSelectedOptions);
+    this.modalCancelButton.addEventListener('click', this.closeGameOptionsModal);
+    this.modalCloseButton.addEventListener('click', this.closeGameOptionsModal);
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
+  }
+
+  saveSelectedOptions() {
+    this.modalBodyContent.storeOptionsToLocalStorage();
+    this.closeGameOptionsModal();
+  }
+
+  closeGameOptionsModal() {
+    if (!this.gameOptionsModal) {
+      return;
+    }
+    this.gameOptionsModal.hide();
+  }
+
+  /**
+   * @description Clears the focus from any active element within the modal.
+   * This is useful to prevent focus issues when the modal is closed or when the user interacts with it.
+   */
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+  }
+
+  /* ------------------------------------------------------------------------ */
+  /*      Event handling - Game invitations                                   */
+  /* ------------------------------------------------------------------------ */
+
+  /**
+   * @description Handles the search input for finding users to invite to a duel.
+   */
+  async handleSearchInput(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    clearTimeout(this.#usersearch.searchTimeout);
+    this.#usersearch.searchTimeout = setTimeout(async () => {
+      this.#usersearch.list = [];
+      this.#usersearch.totalUsersCount = 0;
+      this.#usersearch.currentListLength = 0;
+      this.userList.scrollTop = 0;
+      this.cleanObserver();
+      this.userList.innerHTML = '';
+      this.userList.classList.remove('show');
+      if (this.#usersearch.searchQuery !== event.target.value && event.target.value.length > 0) {
+        this.#usersearch.searchQuery = event.target.value;
+        await this.searchUser();
+        this.renderUserList();
+        [this.observer, this.loadMoreAnchor] = setupObserver(this.userList, this.loadMoreUsers);
+      } else {
+        this.#usersearch.searchQuery = '';
+      }
+    }, 500);
+  }
+
+  /**
+   * @description Sends a request to the API to search for users based on the current search query.
+   */
+  async searchUser() {
+    const response = await apiRequest(
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_SEARCH(this.#usersearch.searchQuery, 10, this.#usersearch.currentListLength),
+      null,
+      false,
+      true,
+    );
+    if (response.success && response.data) {
+      if (response.data.count === 0) {
+        this.renderNoUserFound();
+        return;
+      }
+      this.#usersearch.list.push(...response.data.items);
+      this.#usersearch.totalUsersCount = response.data.count;
+      this.renderUserList();
+    }
   }
 
   /**
@@ -212,6 +328,27 @@ export class DuelMenu extends HTMLElement {
   }
 
   /**
+   * @description Loads more users when the user scrolls to the bottom of the user list.
+   */
+  async loadMoreUsers(entries) {
+    const entry = entries[0];
+    if (
+      !entry.isIntersecting ||
+      this.#usersearch.totalUsersCount === this.#usersearch.currentListLength ||
+      this.#usersearch.isLoading
+    ) {
+      return;
+    }
+    this.#usersearch.isLoading = true;
+    await this.searchUser();
+    this.renderUserList();
+    this.observer.unobserve(this.loadMoreAnchor);
+    this.userList.appendChild(this.loadMoreAnchor);
+    this.observer.observe(this.loadMoreAnchor);
+    this.#usersearch.isLoading = false;
+  }
+
+  /**
    * @description Renders a message indicating that no user was found based on the search query.
    * This is displayed when the search results are empty.
    */
@@ -222,133 +359,40 @@ export class DuelMenu extends HTMLElement {
     this.userList.classList.add('show');
   }
 
-  /* ------------------------------------------------------------------------ */
-  /*      Event handling - Game options                                       */
-  /* ------------------------------------------------------------------------ */
-
   /**
-   * @description Opens the game options modal, allowing users to select game settings.
-   * It creates a modal element, appends it to the body, and initializes the Modal instance.
-   * It also sets up event listeners for saving and canceling the options.
+   * @description Hides the user list dropdown when clicking outside of it or the search input.
    */
-  openGameOptionsModal() {
-    this.gameOptionsModal.show();
-
-    this.modalSaveButton = this.modalElement.querySelector('.confirm-button');
-    this.modalCancelButton = this.modalElement.querySelector('.cancel-button');
-    this.modalCloseButton = this.modalElement.querySelector('.btn-close');
-
-    this.modalSaveButton.addEventListener('click', this.saveSelectedOptions);
-    this.modalCancelButton.addEventListener('click', this.closeGameOptionsModal);
-    this.modalCloseButton.addEventListener('click', this.closeGameOptionsModal);
-    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
-  }
-
-  saveSelectedOptions() {
-    this.modalBodyContent.storeOptionsToLocalStorage();
-    this.closeGameOptionsModal();
-  }
-
-  /**
-   * @description Closes the game options modal and cleans up event listeners.
-   * It removes the modal from the DOM and resets the gameOptionsModal reference.
-   * It also ensures that the focus is cleared from any active element within the modal.
-   */
-  closeGameOptionsModal() {
-    if (!this.gameOptionsModal) {
-      return;
-    }
-    this.modalElement.addEventListener(
-      'hidden.bs.modal',
-      () => {
-        this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
-        document.body.removeChild(this.modalElement);
-        this.gameOptionsModal = null;
-      },
-      { once: true },
-    );
-    this.modalSaveButton?.removeEventListener('click', this.saveSelectedOptions);
-    this.modalCancelButton?.removeEventListener('click', this.closeGameOptionsModal);
-    this.modalCloseButton?.removeEventListener('click', this.closeGameOptionsModal);
-    this.gameOptionsModal.hide();
-  }
-
-  /**
-   * @description Clears the focus from any active element within the modal.
-   * This is useful to prevent focus issues when the modal is closed or when the user interacts with it.
-   */
-  clearFocusInModal() {
-    if (this.modalElement.contains(document.activeElement)) {
-      document.activeElement.blur();
-    }
-  }
-
-  /* ------------------------------------------------------------------------ */
-  /*      Event handling - Game invitations                                   */
-  /* ------------------------------------------------------------------------ */
-
-  /**
-   * @description Handles the search input for finding users to invite to a duel.
-   */
-  async handleSearchInput(event) {
-    event.preventDefault();
+  hideUserList(event) {
     event.stopPropagation();
-    clearTimeout(this.#usersearch.searchTimeout);
-    this.#usersearch.searchTimeout = setTimeout(async () => {
-      this.#usersearch.list = [];
-      this.#usersearch.totalUsersCount = 0;
-      this.#usersearch.currentListLength = 0;
-      this.userList.innerHTML = '';
-      this.userList.classList.remove('show');
-      if (this.#usersearch.searchQuery !== event.target.value && event.target.value.length > 0) {
-        this.#usersearch.searchQuery = event.target.value;
-        await this.searchUser();
-      } else {
-        this.#usersearch.searchQuery = '';
-      }
-    }, 500);
-  }
-
-  /**
-   * @description Sends a request to the API to search for users based on the current search query.
-   */
-  async searchUser() {
-    const response = await apiRequest(
-      'GET',
-      /* eslint-disable-next-line new-cap */
-      API_ENDPOINTS.USER_SEARCH(this.#usersearch.searchQuery, 10, this.#usersearch.currentListLength),
-      null,
-      false,
-      true,
-    );
-    if (response.success && response.data) {
-      if (response.data.count === 0) {
-        this.renderNoUserFound();
-        return;
-      }
-      this.#usersearch.list.push(...response.data.items);
-      this.#usersearch.totalUsersCount = response.data.count;
-      this.renderUserList();
-    }
-  }
-
-  /**
-   * @description Loads more users when the user scrolls to the bottom of the user list.
-   */
-  // TODO use intersection observer for pagination
-  async loadMoreUsers(event) {
-    const { scrollTop, scrollHeight, clientHeight } = event.target;
-    const threshold = 5;
-    if (
-      Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#usersearch.totalUsersCount === this.#usersearch.currentListLength ||
-      this.#usersearch.isLoading
-    ) {
+    if (this.userList.contains(event.target) || this.searchInput.contains(event.target)) {
       return;
     }
-    this.#usersearch.isLoading = true;
-    await this.searchUser();
-    this.#usersearch.isLoading = false;
+    this.cleanObserver();
+    this.userList.classList.remove('show');
+    this.userList.scrollTop = 0;
+    this.userList.innerHTML = '';
+    this.#usersearch.list = [];
+    this.#usersearch.totalUsersCount = 0;
+    this.#usersearch.currentListLength = 0;
+    this.#usersearch.searchQuery = '';
+    this.searchInput.value = '';
+  }
+
+  cleanObserver() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    if (this.loadMoreAnchor) {
+      this.userList.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor = null;
+    }
+  }
+
+  ignoreEnterKeyPress(event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+    }
   }
 
   /**
@@ -422,29 +466,6 @@ export class DuelMenu extends HTMLElement {
       ...message.data.settings,
     };
     router.navigate('/duel', queryParams);
-  }
-
-  /**
-   * @description Hides the user list dropdown when clicking outside of it or the search input.
-   */
-  hideUserList(event) {
-    event.stopPropagation();
-    if (this.userList.contains(event.target) || this.searchInput.contains(event.target)) {
-      return;
-    }
-    this.userList.classList.remove('show');
-    this.userList.innerHTML = '';
-    this.#usersearch.list = [];
-    this.#usersearch.totalUsersCount = 0;
-    this.#usersearch.currentListLength = 0;
-    this.#usersearch.searchQuery = '';
-    this.searchInput.value = '';
-  }
-
-  ignoreEnterKeyPress(event) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-    }
   }
 
   /* ------------------------------------------------------------------------ */
