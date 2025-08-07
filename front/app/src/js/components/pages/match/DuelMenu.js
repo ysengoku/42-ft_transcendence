@@ -119,6 +119,8 @@ export class DuelMenu extends HTMLElement {
 
   disconnectedCallback() {
     this.cleanObserver();
+    this.modalBodyContent?.remove();
+    this.modalBodyContent = null;
     this.optionsButton?.removeEventListener('click', this.openGameOptionsModal);
     this.searchInput?.removeEventListener('input', this.handleSearchInput);
     this.searchInput?.removeEventListener('keydown', this.ignoreEnterKeyPress);
@@ -133,6 +135,7 @@ export class DuelMenu extends HTMLElement {
       () => {
         this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
         document.body.removeChild(this.modalElement);
+        this.gameOptionsModal.dispose();
         this.gameOptionsModal = null;
       },
       { once: true },
