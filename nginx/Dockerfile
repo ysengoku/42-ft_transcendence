@@ -12,10 +12,28 @@ RUN mkdir -p /app/dist
 
 EXPOSE 1026
 
+# RUNTIME FOR DEVELOPMENT #
 FROM base AS development
-COPY nginx.dev.conf /etc/nginx/nginx.conf
+COPY ./nginx/nginx.dev.conf /etc/nginx/nginx.conf
 CMD ["nginx", "-g" ,"daemon off;"]
 
+# BUILD FOR PRODUCTION #
+FROM node:22-alpine AS build-frontend
+WORKDIR /app
+
+COPY ../front/app/package*.json ./
+RUN npm install
+
+COPY ../front/app/src ./src
+COPY ../front/app/public ./public
+COPY ../front/app/index.html ./
+COPY ../front/app/babel.config.cjs ./
+COPY ../front/app/vite.config.js ./
+RUN npm run build
+
+# RUNTIME FOR PRODUCTION #
 FROM base AS production
-COPY nginx.prod.conf /etc/nginx/nginx.conf
+
+COPY --from=build-frontend /app/dist /app/dist
+COPY ./nginx/nginx.prod.conf /etc/nginx/nginx.conf
 CMD ["nginx", "-g" ,"daemon off;"]
