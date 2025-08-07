@@ -184,8 +184,8 @@ export class UserSearch extends HTMLElement {
       this.#state.userList = [];
       this.#state.totalUsersCount = 0;
       this.#state.currentListLength = 0;
-      this.listContainer.innerHTML = '';
       this.cleanObserver();
+      this.listContainer.innerHTML = '';
       const newQuery = this.input.value.trim();
       if (newQuery !== '' && newQuery !== this.#state.searchQuery) {
         this.#state.searchQuery = newQuery;
@@ -366,10 +366,10 @@ export class UserSearch extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   template() {
     return `
-    <form class="d-flex mx-3 mt-3 mb-2" role="search" id="user-search-form">
+    <form class="d-flex mx-3 mt-3 mb-2" role="search">
       <div class="input-group mt-2">
         <span class="input-group-text" id="basic-addon1"><i class="bi bi-search"></i></span>
-        <input class="form-control" type="search" placeholder="Find user(s)" aria-label="Search" autocomplete="off" id="user-search-form-input">
+        <input class="form-control" type="search" placeholder="Find user(s)" aria-label="Search" autocomplete="off">
       </div>
     </form>
     <div class="ps-3 pe-2">
