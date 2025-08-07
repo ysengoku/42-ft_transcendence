@@ -7,6 +7,7 @@ from channels.layers import get_channel_layer
 
 from tournaments.models import Tournament
 from users.models import Profile
+from chat.validator import Validator
 
 from .models import Notification, TournamentInvitation
 
@@ -20,7 +21,7 @@ class TournamentEvent:
     @classmethod
     def send_tournament_notification(cls, tournament_id, alias):
         # TODO: Verify tournament_id (is it UUID)
-        if tournament_id is None:
+        if tournament_id is None or not Validator.is_valid_uuid(tournament_id):
             logger.warning("Wrong tournament_id send by the alias %s", alias)
             return
         try:
