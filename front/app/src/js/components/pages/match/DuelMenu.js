@@ -47,6 +47,13 @@ export class DuelMenu extends HTMLElement {
     isLoading: false,
   };
 
+  /**
+   * @property {IntersectionObserver} observer - The IntersectionObserver instance for lazy loading.
+   * @property {HTMLElement} loadMoreAnchor - The anchor element for loading more items.
+   */
+  observer = null;
+  loadMoreAnchor = null;
+
   OPTIONS_UNAVAILABLE_MESSAGE = 'Game options are momentarily unavailable. Set to default settings.';
 
   constructor() {
