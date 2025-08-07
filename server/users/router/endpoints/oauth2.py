@@ -11,6 +11,7 @@ from ninja.errors import HttpError
 
 from common.schemas import MessageSchema
 from users.models import OauthConnection, RefreshToken
+from users.router.utils import fill_response_with_jwt
 from users.schemas import OAuthCallbackParams
 
 oauth2_router = Router()
@@ -137,11 +138,7 @@ def oauth_callback(  # noqa: PLR0911
         error_message, status_code = user_creation_error
         return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
 
-    # when everything is correct, assign JWT
     access_token, refresh_token_instance = RefreshToken.objects.create(user)
-
-    response = HttpResponseRedirect(settings.HOME_REDIRECT_URL)
-    response.set_cookie("access_token", access_token)
-    response.set_cookie("refresh_token", refresh_token_instance.token)
-
-    return response
+    return fill_response_with_jwt(
+        HttpResponseRedirect(settings.HOME_REDIRECT_URL), access_token, refresh_token_instance,
+    )
