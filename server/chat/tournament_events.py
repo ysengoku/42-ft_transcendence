@@ -5,9 +5,9 @@ from datetime import datetime
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
+from chat.validator import Validator
 from tournaments.models import Tournament
 from users.models import Profile
-from chat.validator import Validator
 
 from .models import Notification, TournamentInvitation
 
@@ -20,7 +20,6 @@ class TournamentEvent:
 
     @classmethod
     def send_tournament_notification(cls, tournament_id, alias):
-        # TODO: Verify tournament_id (is it UUID)
         if tournament_id is None or not Validator.is_valid_uuid(tournament_id):
             logger.warning("Wrong tournament_id send by the alias %s", alias)
             return
@@ -88,31 +87,3 @@ class TournamentEvent:
             notif.data["status"] = TournamentInvitation.CLOSED
             notif.is_read = True
             notif.save(update_fields=["data", "is_read"])
-
-    def handle_new_tournament(self, data):
-        # TODO: Verify that this function is, indeed, useless and unused
-        logger.info(data)
-        logger.debug(data)
-        logger.warning(data)
-        logger.critical(data)
-        logger.warning("HOLY SHIT WILL YOU PLEASE PRINT THIS ?")
-        tournament_id = data["data"].get["tournament_id"]
-        tournament_name = data["data"].get["tournament_name"]
-        organizer_id = data["data"].get["organizer_id"]
-
-        organizer = Profile.objects.get(id=organizer_id)
-
-        # send notification to concerned users
-        notification_data = organizer.get_user_data_with_date()
-        notification_data.update(
-            {"id": tournament_id, "tournament_name": tournament_name},
-        )
-
-        self.consumer.send(
-            text_data=json.dumps(
-                {
-                    "action": "new_tournament",
-                    "data": notification_data,
-                },
-            ),
-        )
