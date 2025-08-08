@@ -1,6 +1,7 @@
 import { ThemeController } from './ThemeController';
 import { createClouds, createStars, loader, flyAway, fireConfetti, particleBurst } from './animations';
 import { isMobile, BREAKPOINT } from './viewPort';
+import { setupObserver } from './intersectionObserver';
 
 import { getRelativeTime, getRelativeDateAndTime, formatDateMDY } from './dateFormat';
 import { isEqual } from './isEqual';
@@ -37,6 +38,7 @@ export {
   fireConfetti,
   particleBurst,
   isMobile,
+  setupObserver,
   BREAKPOINT,
   getRelativeTime,
   getRelativeDateAndTime,
