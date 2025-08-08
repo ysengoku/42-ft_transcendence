@@ -642,7 +642,7 @@ export class MultiplayerGame extends HTMLElement {
 
     this.showOverlay('pending');
 
-    // ----- TEST ---------------
+    // --- TEST (should remove before submitting) ---
     // const result = {
     //   winner: {
     //     name: 'Celiastral',
