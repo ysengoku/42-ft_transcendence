@@ -330,7 +330,7 @@ export class NotificationsListItem extends HTMLElement {
 
   template() {
     return `
-	  <li class="list-group-item dropdown-list-item px-2 pt-4">
+	  <li class="list-group-item dropdown-list-item px-2 pt-4 me-4">
 	    <div class="d-flex flex-column">
           <div class="d-flex flex-row justify-content-start align-items-start gap-4">
             <img class="notifications-list-avatar avatar-m rounded-circle" alt="Avatar"">

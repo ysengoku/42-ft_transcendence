@@ -161,16 +161,19 @@ export class Settings extends HTMLElement {
     if (userIdentity.username) {
       formData.append('username', userIdentity.username);
       this.#state.newUserData.username = userIdentity.username;
+      this.userIdentityField.newUserIdentity.username = '';
       this.#state.changed = true;
     }
     if (userIdentity.nickname) {
       formData.append('nickname', userIdentity.nickname);
       this.#state.newUserData.nickname = userIdentity.nickname;
+      this.userIdentityField.newUserIdentity.nickname = '';
       this.#state.changed = true;
     }
     if (newEmail) {
       formData.append('email', newEmail);
       this.#state.newUserData.email = newEmail;
+      this.emailField.newEmail = '';
       this.#state.changed = true;
     }
     const oldPassword = this.querySelector('#old-password');
@@ -180,6 +183,9 @@ export class Settings extends HTMLElement {
       formData.append('old_password', oldPassword.value);
       formData.append('password', newPassword.value);
       formData.append('password_repeat', newPasswordRepeat.value);
+      oldPassword.value = '';
+      newPassword.value = '';
+      newPasswordRepeat.value = '';
       this.#state.changed = true;
     }
     const mfaEnabled = this.querySelector('#mfa-switch-check').checked ? 'true' : 'false';
@@ -191,6 +197,7 @@ export class Settings extends HTMLElement {
     }
     if (avatarField) {
       formData.append('new_profile_picture', avatarField);
+      this.avatarUploadField.selectedFile = null;
       this.#state.changed = true;
     }
 

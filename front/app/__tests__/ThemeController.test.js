@@ -3,6 +3,7 @@ import { ThemeController } from '../src/js/utils/ThemeController.js';
 
 describe('ThemeController', () => {
   let originalSetAttribute;
+  let originalGetAttribute;
 
   beforeEach(() => {
     const localStorageMock = {
@@ -18,11 +19,14 @@ describe('ThemeController', () => {
 
     originalSetAttribute = document.documentElement.setAttribute;
     document.documentElement.setAttribute = vi.fn();
+    originalGetAttribute = document.documentElement.getAttribute;
+    document.documentElement.getAttribute = vi.fn();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     document.documentElement.setAttribute = originalSetAttribute;
+    document.documentElement.getAttribute = originalGetAttribute;
   });
 
   it('getTheme returns value from localStorage or "light"', () => {
@@ -39,7 +43,7 @@ describe('ThemeController', () => {
   });
 
   it('toggleTheme toggles theme and returns new value', () => {
-    window.localStorage.getItem.mockReturnValueOnce('light');
+    document.documentElement.getAttribute.mockReturnValueOnce('light');
     ThemeController.setTheme = vi.fn();
     const result = ThemeController.toggleTheme();
     expect(result).toBe('dark');
@@ -48,7 +52,8 @@ describe('ThemeController', () => {
 
   it('init sets attribute to current theme', () => {
     ThemeController.getTheme = vi.fn(() => 'dark');
+    ThemeController.setTheme = vi.fn();
     ThemeController.init();
-    expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-bs-theme', 'dark');
+    expect(ThemeController.setTheme).toHaveBeenCalledWith('dark');
   });
 });

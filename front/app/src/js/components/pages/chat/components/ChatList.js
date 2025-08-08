@@ -45,7 +45,7 @@ export class ChatList extends HTMLElement {
     this.chatComponent = document.querySelector('chat-page');
 
     this.toggleUserSearchBar = this.toggleUserSearchBar.bind(this);
-    this.handleScrollEnd = this.handleScrollEnd.bind(this);
+    this.handleScroll = this.handleScroll.bind(this);
   }
 
   /**
@@ -67,7 +67,7 @@ export class ChatList extends HTMLElement {
 
   disconnectedCallback() {
     this.searchButton?.removeEventListener('click', this.toggleUserSearchBar);
-    this.listContainer?.removeEventListener('scrollend', this.handleScrollEnd);
+    this.listContainer?.removeEventListener('scroll', this.handleScroll);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -86,15 +86,21 @@ export class ChatList extends HTMLElement {
 
     this.listContainer = this.querySelector('#chat-list-wrapper');
     this.list = this.querySelector('#chat-list');
+
+    // Initialize the bottom position of the component
+    const wrapper = this.querySelector('#chat-list-elelemts-wrapper');
+    const wrapperRect = wrapper.getBoundingClientRect();
+    this.wrapperBottomPosition = wrapperRect['bottom'];
+
     if (this.#state.totalItemCount > 0) {
       this.list.innerHTML = '';
       this.renderListItems();
-      this.listContainer.addEventListener('scrollend', this.handleScrollEnd);
-    }
+      this.listContainer.addEventListener('scroll', this.handleScroll);
 
-    // Load more items if needed to reach the minimum display count
-    while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
-      await this.loadMoreItems();
+      // Load more items if the list items don't reach to the bottom of the component and all items are not rendered
+      requestAnimationFrame(async () => {
+        await this.fillChatListViewport();
+      });
     }
 
     if (this.#state.totalItemCount === 0 || (this.#state.totalItemCount > 0 && this.#state.displayedItemCount === 0)) {
@@ -125,6 +131,21 @@ export class ChatList extends HTMLElement {
       this.list.appendChild(listItem);
       ++this.#state.currentListItemCount;
       ++this.#state.displayedItemCount;
+    }
+  }
+
+  async fillChatListViewport() {
+    let lastItem = this.list.lastElementChild;
+    let itemRect = lastItem.getBoundingClientRect();
+    let itemBottom = itemRect['bottom'];
+    while (itemBottom < this.wrapperBottomPosition) {
+      await this.loadMoreItems();
+      lastItem = this.list.lastElementChild;
+      itemRect = lastItem.getBoundingClientRect();
+      itemBottom = itemRect['bottom'];
+      if (this.#state.currentListItemCount === this.#state.totalItemCount) {
+        break;
+      }
     }
   }
 
@@ -165,26 +186,27 @@ export class ChatList extends HTMLElement {
     this.#state.isLoading = true;
     const data = await this.chatComponent.fetchChatList();
     if (!data) {
+      this.#state.isLoading = false;
       return;
     }
     this.#state.items = data.items;
-    this.#state.items[0].unread_messages_count = 0;
     this.#state.fetchedItemCount = data.items.length;
     this.#state.currentListItemCount = 0;
     this.#state.displayedItemCount = 0;
     this.list.innerHTML = '';
     this.#state.totalItemCount = data.count;
+
+    const currentChatUsername = this.chatComponent.getCurrentChatUsername();
+    const currentChatIndex = this.#state.items.findIndex((item) => item.username === currentChatUsername);
+    if (currentChatIndex > -1) {
+      this.#state.items[currentChatIndex].unread_messages_count = 0;
+    }
+
     this.renderListItems();
     this.#state.isLoading = false;
-    while (this.#state.currentListItemCount < this.#state.totalItemCount && this.#state.displayedItemCount < 10) {
-      await this.loadMoreItems();
-    }
-    const event = new CustomEvent('chatItemSelected', { detail: data.items[0].username, bubbles: true });
-    this.dispatchEvent(event);
-    const selectedItemElement = this.list.querySelector(`#chat-item-${data.items[0].username}`);
-    if (selectedItemElement) {
-      selectedItemElement.classList.add('active');
-    }
+    requestAnimationFrame(async () => {
+      await this.fillChatListViewport();
+    });
   }
 
   renderNoConversationsMessage() {
@@ -210,7 +232,7 @@ export class ChatList extends HTMLElement {
     userSearch?.classList.add('d-none');
   }
 
-  async handleScrollEnd(event) {
+  async handleScroll(event) {
     const { scrollTop, scrollHeight, clientHeight } = event.target;
     const threshold = 5;
     if (
@@ -302,6 +324,7 @@ export class ChatList extends HTMLElement {
     } else {
       this.#state.items[index].unread_messages_count += 1;
     }
+
     if (index === 0) {
       this.#state.items[0].last_message = data;
       const component = document.getElementById(`chat-item-${this.#state.items[0].username}`);
@@ -355,7 +378,7 @@ export class ChatList extends HTMLElement {
 
   template() {
     return `
-	  <div class="d-flex flex-column ms-4 py-4 h-100">
+	  <div class="d-flex flex-column ms-4 py-4 h-100", id="chat-list-elelemts-wrapper">
       <div class="d-flex felx-row justify-content-between align-items-center me-3 gap-3 sticky-top">
         <h5 class="m-0">Conversations</h5>
         <button class="btn new-chat me-3 p-0"><i class="bi bi-pencil-square"></i></button>

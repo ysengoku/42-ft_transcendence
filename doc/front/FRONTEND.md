@@ -32,7 +32,7 @@ Custom client-side `router` and a singleton `socketManager` for WebSocket commun
 
 ## SPA Application Flow
 
-![SPA Application Flow](/assets/SPA-runtime-flow.png)
+![SPA Application Flow](/assets/doc-front/SPA-runtime-flow.png)
 
 </br>
 

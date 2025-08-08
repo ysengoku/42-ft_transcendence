@@ -1,8 +1,17 @@
+/**
+ * @module UserWinRatePieGraph
+ * @description
+ * This module renders a pie graph representing the user's win rate.
+ */
+
 import { BREAKPOINT } from '@utils';
 
+/**
+ * @class UserWinRatePieGraph
+ * @extends HTMLElement
+ */
 export class UserWinRatePieGraph extends HTMLElement {
   #state = {
-    rate: 0,
     wins: 0,
     losses: 0,
   };
@@ -16,8 +25,15 @@ export class UserWinRatePieGraph extends HTMLElement {
     this.render();
   }
 
+  /**
+   * @description
+   * Renders the component by setting its inner HTML with styles and template.
+   * It updates the text content for wins and losses, and handles the case where there is
+   * no data by displaying a message.
+   * If there are no wins and losses, it hides the pie graph and shows a "No data" message.
+   * @returns {void}
+   */
   render() {
-    // this.#state.rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     this.innerHTML = this.style() + this.template();
 
     const wins = this.querySelector('#wins');
@@ -38,26 +54,33 @@ export class UserWinRatePieGraph extends HTMLElement {
     }
   }
 
+  /**
+   * @description
+   * Generates the HTML template for the pie graph.
+   * It calculates the win rate percentage, constructs the SVG path for the pie graph,
+   * and returns the complete HTML string.
+   * @returns {String} The HTML string for the pie graph template.
+   */
   template() {
     const rate = Math.round((this.#state.wins / (this.#state.wins + this.#state.losses)) * 100);
     const r = 100 / (2 * Math.PI); // radius
+    const offset = (40 - r * 2) / 2; // offset to center the pie graph
+    const circlePath = `M20 ${offset}
+      a ${r} ${r} 0 0 1 0 ${r * 2}
+      a ${r} ${r} 0 0 1 0 -${r * 2}`;
     return `
     <div class="pie-graph-wrapper d-flex flex-column justify-content-center align-items-center">
       <div class="pie-graph d-flex flex-column jusify-content-around align-items-center pt-2">
         <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-         <path
-            d="M20 ${(40 - r * 2) / 2}
-              a ${r} ${r} 0 0 1 0 ${r * 2}
-              a ${r} ${r} 0 0 1 0 -${r * 2}"
+          <path
+            d="${circlePath}"
             fill="none"
-            stroke="rgba(146, 79, 9, 0.4)"
+            stroke="rgba(var(--pm-primary-500-rgb), 0.4)"
             stroke-width="6"
             stroke-dasharray="100"
           />
-          <path class="donut"
-            d="M20 ${(40 - r * 2) / 2}
-              a ${r} ${r} 0 0 1 0 ${r * 2}
-              a ${r} ${r} 0 0 1 0 -${r * 2}"
+          <path
+            d="${circlePath}"
             fill="none"
             stroke="var(--pm-primary-600)"
             stroke-width="6"
