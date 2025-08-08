@@ -396,9 +396,9 @@ export class DuelMenu extends HTMLElement {
       this.observer = null;
     }
     if (this.loadMoreAnchor) {
-      this.userList.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor.parentNode?.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor = null;
     }
-    this.loadMoreAnchor = null;
   }
 
   ignoreEnterKeyPress(event) {

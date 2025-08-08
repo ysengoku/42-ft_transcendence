@@ -38,24 +38,25 @@ export function showToastNotification(message, type = TOAST_TYPES.INFO) {
 
   const toastBody = document.querySelector('.toast-body');
   toastBody.textContent = message;
+
   const toast = document.querySelector('.toast');
   const toastBodyWrapper = document.querySelector('.toast-body-wrapper');
   const notificationDropdown = document.getElementById('notifications-dropdown');
+  const notificationList = document.querySelector('notifications-list');
+
   switch (type) {
     case TOAST_TYPES.NOTIFICATION:
       toastBodyWrapper.style.backgroundColor = 'var(--pm-bg-success)';
       toastContainer.onclick = null;
       toastContainer.onclick = () => {
-        console.log('toast clicked');
-        toastBootstrap?.dispose();
-        const notificationList = document.querySelector('notifications-list');
+        if (notificationList) {
+          notificationList.renderListContent();
+        }
         if (notificationDropdown) {
           notificationDropdown.classList.add('show');
           notificationDropdown.setAttribute('data-bs-popper', 'static');
         }
-        if (notificationList) {
-          notificationList.renderListContent();
-        }
+        toastBootstrap?.dispose();
       };
       break;
     case TOAST_TYPES.INFO:
@@ -75,9 +76,10 @@ export function showToastNotification(message, type = TOAST_TYPES.INFO) {
   }
   const toastBootstrap = Toast.getOrCreateInstance(toast);
   toastBootstrap.show();
-  // if (notificationDropdown) {
-  //   notificationDropdown.classList.remove('show');
-  // }
+  if (notificationDropdown) {
+    notificationList?.resetList();
+    notificationDropdown.classList.remove('show');
+  }
 }
 
 export function sessionExpiredToast() {
