@@ -90,6 +90,21 @@ export class AvatarUploadModal extends HTMLElement {
     this.avatarPreview.src = avatarPlaceholder;
   }
 
+  validateImage(file) {
+    if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
+      return { safe: false, message: 'Please select a valid image file.' };
+    }
+    if (file.size > this.#MAX_FILE_SIZE) {
+      const maxSizeMB = this.#MAX_FILE_SIZE / (1024 * 1024);
+      return { safe: false, message: `Selected file is too large. Please choose one smaller than ${maxSizeMB}MB.` };
+    }
+    const safeFileExtension = /\.(jpg|jpeg|png|webp)$/i.test(file.name);
+    if (!safeFileExtension) {
+      return { safe: false, message: 'Please select a valid image file.' };
+    }
+    return { safe: true };
+  }
+
   /**
    * Handle file input change and update avatar preview safely.
    * Validates that the selected file is an image (MIME type check) and
@@ -107,46 +122,41 @@ export class AvatarUploadModal extends HTMLElement {
 
     if (input && input.files && input.files.length > 0) {
       const file = input.files[0];
-      if (file) {
-        if (!file.type.startsWith('image/')) {
-          this.avatarUploadField.classList.add('is-invalid');
-          this.querySelector('#avatar-feedback').textContent = 'Please select a valid image file.';
-          this.selectedFile = null;
-          return;
-        }
-        if (file.size > this.#MAX_FILE_SIZE) {
-          this.avatarUploadField.classList.add('is-invalid');
-          const maxSizeMB = this.#MAX_FILE_SIZE / (1024 * 1024);
-          this.querySelector('#avatar-feedback').textContent =
-            `Selected file is too large. Please choose one smaller than ${maxSizeMB}MB.`;
-          this.selectedFile = null;
-          return;
-        }
-
-        /**
-         * Generate and assign Blob(Binary Large Objects) URL for preview
-         * Blob URL is a temporary reference that points to in-memory file data, created via `URL.createObjectURL`.
-         * It allows safe preview of local files without embedding raw binary or HTML.
-         */
-        this.selectedFile = file;
-        if (this.currentBlobUrl) {
-          URL.revokeObjectURL(this.currentBlobUrl);
-        }
-        const blobUrl = URL.createObjectURL(file);
-        this.currentBlobUrl = blobUrl;
-        this.avatarPreview.src = blobUrl;
-        // Revoke Blob URL on modal hide to free memory
-        this.modalElement.addEventListener(
-          'hide.bs.modal',
-          () => {
-            if (this.currentBlobUrl) {
-              URL.revokeObjectURL(this.currentBlobUrl);
-              this.currentBlobUrl = null;
-            }
-          },
-          { once: true },
-        );
+      if (!file) {
+        return;
       }
+      const validation = this.validateImage(file);
+      if (!validation.safe) {
+        this.avatarUploadField.classList.add('is-invalid');
+        this.querySelector('#avatar-feedback').textContent = validation.message;
+        this.selectedFile = null;
+        this.avatarPreview.src = avatarPlaceholder;
+        return;
+      }
+
+      /**
+       * Generate and assign Blob(Binary Large Objects) URL for preview
+       * Blob URL is a temporary reference that points to in-memory file data, created via `URL.createObjectURL`.
+       * It allows safe preview of local files without embedding raw binary or HTML.
+       */
+      this.selectedFile = file;
+      if (this.currentBlobUrl) {
+        URL.revokeObjectURL(this.currentBlobUrl);
+      }
+      const blobUrl = URL.createObjectURL(file);
+      this.currentBlobUrl = blobUrl;
+      this.avatarPreview.src = blobUrl;
+      // Revoke Blob URL on modal hide to free memory
+      this.modalElement.addEventListener(
+        'hide.bs.modal',
+        () => {
+          if (this.currentBlobUrl) {
+            URL.revokeObjectURL(this.currentBlobUrl);
+            this.currentBlobUrl = null;
+          }
+        },
+        { once: true },
+      );
     }
   }
 
