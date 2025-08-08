@@ -378,6 +378,7 @@ export class DuelMenu extends HTMLElement {
     if (this.userList.contains(event.target) || this.searchInput.contains(event.target)) {
       return;
     }
+    console.log(this.loadMoreAnchor);
     this.cleanObserver();
     this.userList.classList.remove('show');
     this.userList.scrollTop = 0;
@@ -396,8 +397,8 @@ export class DuelMenu extends HTMLElement {
     }
     if (this.loadMoreAnchor) {
       this.userList.removeChild(this.loadMoreAnchor);
-      this.loadMoreAnchor = null;
     }
+    this.loadMoreAnchor = null;
   }
 
   ignoreEnterKeyPress(event) {

@@ -26,7 +26,7 @@ socketManager.addSocket('livechat', {
     document.dispatchEvent(customEvent);
   },
   game_invite: (data) => {
-    showToastNotification(`${data.nickname} challenges you to a duel.`, TOAST_TYPES.INFO);
+    showToastNotification(`${data.nickname} challenges you to a duel.`, TOAST_TYPES.NOTIFICATION);
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
   },
@@ -77,7 +77,7 @@ socketManager.addSocket('livechat', {
   new_tournament: (data) => {
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-    showToastNotification(`${data.alias} is calling all gunslingers to a new tournament.`, TOAST_TYPES.INFO);
+    showToastNotification(`${data.alias} is calling all gunslingers to a new tournament.`, TOAST_TYPES.NOTIFICATION);
     if (window.location.pathname === '/tournament-menu') {
       const element = document.querySelector('tournament-menu');
       element.render();
@@ -86,7 +86,7 @@ socketManager.addSocket('livechat', {
   new_friend: (data) => {
     const notificationButton = document.querySelector('notifications-button');
     notificationButton?.querySelector('.notification-badge')?.classList.remove('d-none');
-    showToastNotification(`${data.nickname} just roped you in as a friend.`, TOAST_TYPES.INFO);
+    showToastNotification(`${data.nickname} just roped you in as a friend.`, TOAST_TYPES.NOTIFICATION);
   },
   user_online: (data) => {
     const customEvent = new CustomEvent('onlineStatus', {
