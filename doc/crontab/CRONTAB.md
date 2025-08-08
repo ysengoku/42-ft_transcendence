@@ -110,7 +110,7 @@ config:
     edgeLabelBackground: '#fff'
 ---
 flowchart TD
-subgraph CRONJOB["CRONJOB"]
+subgraph CRONJOB["CRONTAB"]
 A["Cronjob script"]
 T["Crontask"]
 end
