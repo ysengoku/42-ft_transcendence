@@ -131,7 +131,7 @@ end
 T -- "Triggers every minute" --> A
 A -- "GET /api/cronjob/csrf-token" --> B
 B --> SERVER
-SERVER --> B & D
+SERVER --> B
 A -- "DELETE /api/cronjob/cron/check-inactive-users (Bearer + CSRF)" --> B
 D --> E
 D --> F --> W
