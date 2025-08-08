@@ -95,3 +95,49 @@ The **Crontab** manages:
 5. The script logs the HTTP status code for confirmation.
 
 ---
+
+```mermaid
+---
+config:
+  layout: dagre
+  look: classic
+  theme: base
+  themeVariables:
+    lineColor: '#f7230c'
+    textColor: '#191919'
+    fontSize: 15px
+    nodeTextColor: '#000'
+    edgeLabelBackground: '#fff'
+---
+flowchart TD
+subgraph CRONJOB["CRONJOB"]
+A["Cronjob script"]
+T["Crontask"]
+end
+subgraph SERVER["SERVER"]
+D["check_inactive_users()"]
+E["Updates DB"]
+end
+subgraph FRONT["FRONT"]
+W["Websocket"]
+end
+subgraph DOCKER_NETWORK["DOCKER_NETWORK"]
+CRONJOB
+B["Nginx"]
+F["Sends ws message to online users"]
+SERVER
+FRONT
+end
+T -- "Triggers every minute" --> A
+A -- "GET /api/cronjob/csrf-token" --> B
+B --> SERVER
+SERVER --> B & D
+A -- "DELETE /api/cronjob/cron/check-inactive-users (Bearer + CSRF)" --> B
+D --> E
+D --> F --> W
+
+    style CRONJOB fill:#AA00FF
+    style SERVER fill:#2962FF
+    style FRONT fill:#FF6D00
+    style DOCKER_NETWORK fill:#BBDEFB
+```
