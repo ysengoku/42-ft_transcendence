@@ -137,6 +137,7 @@ D --> E
 D --> F --> W
 
     style CRONJOB fill:#AA00FF
+    style B fill:#00C853
     style SERVER fill:#2962FF
     style FRONT fill:#FF6D00
     style DOCKER_NETWORK fill:#BBDEFB
