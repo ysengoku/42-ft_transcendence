@@ -78,7 +78,7 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and response data.
    */
   success: async (response) => {
-    log.info('Request successful');
+    log.info('Request successful with', response.status);
     let responseData = null;
     if (response.status !== 204) {
       responseData = await response.json();

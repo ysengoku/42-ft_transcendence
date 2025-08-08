@@ -412,8 +412,17 @@ export class ChatMessageArea extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
       this.#state.data.is_blocked_user = false;
       this.#state.renderedMessagesCount = 0;
-      await this.chatListComponent.refreshList();
-      this.chatListComponent.addNewChat(this.#state.data);
+
+      const chatListItem = this.chatListComponent.querySelector(`#chat-item-${this.#state.data.username}`);
+      if (chatListItem) {
+        const chatItemElement = chatListItem.parentElement;
+        chatItemElement.render();
+        const updatedItem = chatItemElement.querySelector('.chat-list-item');
+        updatedItem.classList.remove('blocked');
+        updatedItem.classList.add('active');
+      } else {
+        this.chatListComponent.refreshList();
+      }
       this.render();
     } else {
       showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
