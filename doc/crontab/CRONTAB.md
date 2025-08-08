@@ -131,12 +131,13 @@ end
 T -- "Triggers every minute" --> A
 A -- "GET /api/cronjob/csrf-token" --> B
 B --> SERVER
-SERVER --> B & D
+SERVER --> B
 A -- "DELETE /api/cronjob/cron/check-inactive-users (Bearer + CSRF)" --> B
 D --> E
 D --> F --> W
 
     style CRONJOB fill:#AA00FF
+    style B fill:#00C853
     style SERVER fill:#2962FF
     style FRONT fill:#FF6D00
     style DOCKER_NETWORK fill:#BBDEFB
