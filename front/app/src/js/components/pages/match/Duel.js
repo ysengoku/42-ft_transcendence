@@ -370,7 +370,7 @@ export class Duel extends HTMLElement {
     }
     if (data.detail.client_id && data.detail.client_id === this.#state.clientId && !data.detail.username) {
       const toastMessage = data.message || 'Game invitation has been canceled.';
-      showToastNotification(TOAST_TYPES.ERROR, toastMessage);
+      showToastNotification(toastMessage, TOAST_TYPES.ERROR);
     } else if (data.detail.username !== this.#state.loggedInUser.username) {
       return;
     }
