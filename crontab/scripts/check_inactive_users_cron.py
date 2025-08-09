@@ -36,7 +36,7 @@ if not csrf_token:
 headers = {
     "Authorization": f"Bearer {CRON_SECRET}",
     "X-CSRFToken": csrf_token,
-    "Referer": base_url
+    "Referer": base_url,
 }
 
 response = session.delete(f"{ENDPOINT}", headers=headers, verify=False)
