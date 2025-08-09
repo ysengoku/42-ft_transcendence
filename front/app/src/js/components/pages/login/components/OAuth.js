@@ -41,7 +41,6 @@ export class OAuth extends HTMLElement {
 
     if (response.ok) {
       const data = await response.json();
-      localStorage.setItem('oauth_platform', platform);
       location.href = data.auth_url;
     } else {
       log.error('OAuth initialization failed:', response.statusText);
