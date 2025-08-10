@@ -350,13 +350,26 @@ This document outlines the user interface flow for tournament-related features, 
 
 ---
 
-### Tournament Menu
+### Tournament Menu page
 
 The Tournament Menu serves as the central hub for all tournament activities.
 
 #### 👉 Creating a new tournament
 
 Users can initiate the creation of a new tournament by clicking on a "Create Tournament" button. This action opens the Tournament Creation Form.
+
+<img src="../../assets/ui/tournament-menu-creation.png" alt="Tournament Creation" height="320">
+
+#### 👉 Tournament list
+
+The Tournament List shows tournaments (by default, `Open for entries`(pending)) in a scrollable view. A filter allows switching to `All` to include Ongoing and Finished tournaments.   
+   
+Each list item shows the tournament’s information.   
+On clicking:
+- `Pending`: opens the Registration Form
+- `Ongoing` / `Finished`: opens a summary modal with a link to detailed results
+
+<img src="../../assets/ui/tournament-menu.png" alt="Tournament Menu" width="400">
 
 #### 👉 Viewing tournaments
 
@@ -366,13 +379,18 @@ The main screen of the Tournament Menu displays a list of available tournaments.
 
   Clicking on a pending tournament in the list will open its Registration Form, allowing users to sign up for the tournament.
 
+  <img src="../../assets/ui/tournament-menu-registration.png" alt="Tournament Registration" width="400">
+
 - ##### Ongoing and Finished tournament
 
   For ongoing or finished tournaments, clicking on the tournament entry will display an Modal. This modal provides a quick summary and includes a direct link to a more Detailed Results Page (`/tournament-overview/:id`).
 
+  <img src="../../assets/ui/tournament-menu-ongoing.png" alt="Tournament Menu" width="400">
+  <img src="../../assets/ui/tournament-menu-finished.png" alt="Tournament Menu" width="400">
+
 ---
 
-### Tournament lobby
+### Tournament lobby page
 
 The Tournament Lobby is exclusively accessible to participants of a specific tournament and provides real-time updates on its progress.
 
@@ -385,9 +403,11 @@ The lobby dynamically displays the current status of the tournament, which can i
 - **Round finished**: All matches in the current round have concluded. Display the results
 - **Round starting**: The next round is about to begin. Displays the brackets of the next round.
 
+<img src="../../assets/ui/tournament-lobby.png" alt="Tournament Lobby" width="400">
+
 ---
 
-### Tournament overview
+### Tournament overview page
 
 The Tournament Overview page presents the results of ongoing or finished tournaments.
 
@@ -395,6 +415,8 @@ The Tournament Overview page presents the results of ongoing or finished tournam
 
 - Media wider than Break Point MD (768 by default): Results are displayed in a clear tree structure, making it easy to visualize the progression.
 - Mobile (smaller than Break Point MD): For optimal viewing on smaller screens, results are presented in a table format.
+
+<img src="../../assets/ui/tournament-overview.png" alt="Tournament Result" width="600">
 
 ---
 
