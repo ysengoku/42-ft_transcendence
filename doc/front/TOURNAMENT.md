@@ -345,8 +345,8 @@ This document outlines the user interface flow for tournament-related features, 
 ### Basic UI Components
 
 - [Tournament Menu](#tournament-menu) (`/tournament-menu`): The central hub for tournament creation, registration, and browsing.
-- [Tournament Lobby](#tournament-lobby-id) (`/tournament-room/:id`): Real-time progress and status view for tournament participants.
-- [Tournament Overview](#tournament-overview-id) (`/tournament-overview/:id`): Detailed results view for ongoing or finished tournaments.
+- [Tournament Lobby](#tournament-lobby) (`/tournament-room/:id`): Real-time progress and status view for tournament participants.
+- [Tournament Overview](#tournament-overview) (`/tournament-overview/:id`): Detailed results view for ongoing or finished tournaments.
 
 ---
 
