@@ -99,7 +99,7 @@ flowchart TD
 
 The tournament system is built around four core models: `Tournament`, `Round`, `Bracket`, and `Participant`. Each model captures a different aspect of organizing and running a tournament.
 
-- `Tournament`:
+- 🔸 `Tournament`:
   - Represents a tournament instance  
   - Fields: `id`, `name`, `status`, `required_participants`, `creator`, `winner`, `settings`
 
@@ -116,7 +116,7 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
       -  `settings` (Settings): Game settings chosen by the creator  
     </details>
 
-- `Round`:
+- 🔸 `Round`:
   - Represents a tournament round  
   - Fields: `number`, `status`, `tournament`, `brackets`
 
@@ -129,7 +129,7 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
       -  `brackets` (Array of Bracket): Brackets in this round  
     </details>
 
-- `Bracket`:
+- 🔸 `Bracket`:
   - Represents a match between two participants  
   - Fields: `match_id`, `participant1`, `participant2`, `winner`, `score_p1`, `score_p2`, `status`
 
@@ -145,7 +145,7 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
       -  `status` — Current status (`pending`, `ongoing`, `finished`, `cancelled`)  
     </details>
 
-- `Participant`:
+- 🔸 `Participant`:
   - Represents a user in a tournament  
   - Fields: `profile`, `alias`, `tournament`, `status`, `current_round`, `excluded`
 
@@ -205,7 +205,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
 #### Registration Events
 
-- ##### `new_registration`: Sent when a user registers for the tournament.
+- ##### 🔸 `new_registration`: Sent when a user registers for the tournament.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -220,7 +220,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `registration_canceled`: Sent when a user unregisters from the tournament.
+- ##### 🔸 `registration_canceled`: Sent when a user unregisters from the tournament.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -234,7 +234,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `tournament_canceled`: Sent to participants when the tournament is canceled by its creator.
+- ##### 🔸 `tournament_canceled`: Sent to participants when the tournament is canceled by its creator.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -253,7 +253,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
 #### Tournament Progress
 
-- ##### `tournament_start`: Sent when the tournament begins.
+- ##### 🔸 `tournament_start`: Sent when the tournament begins.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -269,7 +269,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `round_start`: Sent when a new round starts (excluding round 1).
+- ##### 🔸 `round_start`: Sent when a new round starts (excluding round 1).
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -285,7 +285,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `match_result`: Sent when a match finishes and its result becomes available.
+- ##### 🔸 `match_result`: Sent when a match finishes and its result becomes available.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -301,7 +301,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `round_end`: Sent when all matches in a round are completed.
+- ##### 🔸 `round_end`: Sent when all matches in a round are completed.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -319,7 +319,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
 #### Match Completion
 
-- ##### `user_won` / `player_resigned`: Sent from pong WebSocket.
+- ##### 🔸 `user_won` / `player_resigned`: Sent from pong WebSocket.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -348,79 +348,9 @@ This document outlines the user interface flow for tournament-related features, 
 
 ### Basic UI Components
 
-- [Tournament Menu](#tournament-menu) (`/tournament-menu`): The central hub for tournament creation, registration, and browsing.
-- [Tournament Lobby](#tournament-lobby) (`/tournament-room/:id`): Real-time progress and status view for tournament participants.
-- [Tournament Overview](#tournament-overview) (`/tournament-overview/:id`): Detailed results view for ongoing or finished tournaments.
-
----
-
-### Tournament Menu page
-
-The Tournament Menu serves as the central hub for all tournament activities.
-
-#### 👉 Creating a new tournament
-
-Users can initiate the creation of a new tournament by clicking on a "Create Tournament" button. This action opens the Tournament Creation Form.
-
-<img src="../../assets/ui/tournament-menu-creation.png" alt="Tournament Creation" height="320">
-
-#### 👉 Tournament list
-
-The Tournament List shows tournaments (by default, `Open for entries`(pending)) in a scrollable view. A filter allows switching to `All` to include Ongoing and Finished tournaments.   
-   
-Each list item shows the tournament’s information.   
-On clicking:
-- `Pending`: opens the Registration Form
-- `Ongoing` / `Finished`: opens a summary modal with a link to detailed results
-
-<img src="../../assets/ui/tournament-menu.png" alt="Tournament Menu" width="400">
-
-#### 👉 Viewing tournaments
-
-The main screen of the Tournament Menu displays a list of available tournaments.
-
-- ##### Pending tournament
-
-  Clicking on a pending tournament in the list will open its Registration Form, allowing users to sign up for the tournament.
-
-  <img src="../../assets/ui/tournament-menu-registration.png" alt="Tournament Registration" width="400">
-
-- ##### Ongoing and Finished tournament
-
-  For ongoing or finished tournaments, clicking on the tournament entry will display an Modal. This modal provides a quick summary and includes a direct link to a more Detailed Results Page (`/tournament-overview/:id`).
-
-  <img src="../../assets/ui/tournament-menu-ongoing.png" alt="Tournament Menu" width="400">
-  <img src="../../assets/ui/tournament-menu-finished.png" alt="Tournament Menu" width="400">
-
----
-
-### Tournament lobby page
-
-The Tournament Lobby is exclusively accessible to participants of a specific tournament and provides real-time updates on its progress.
-
-#### 👉 Tournament Status updates
-
-The lobby dynamically displays the current status of the tournament, which can include:
-- **Pending**: The tournament is awaiting the required number of participants.
-- **Tournament starting**: The tournament is about to begin, showing the brackets of the first round.
-- **Round ongoing**: Matches in the current round are in progress. Displays the current status of the matches. 
-- **Round finished**: All matches in the current round have concluded. Display the results
-- **Round starting**: The next round is about to begin. Displays the brackets of the next round.
-
-<img src="../../assets/ui/tournament-lobby.png" alt="Tournament Lobby" width="400">
-
----
-
-### Tournament overview page
-
-The Tournament Overview page presents the results of ongoing or finished tournaments.
-
-#### 👉 Displaying results:
-
-- Media wider than Break Point MD (768 by default): Results are displayed in a clear tree structure, making it easy to visualize the progression.
-- Mobile (smaller than Break Point MD): For optimal viewing on smaller screens, results are presented in a table format.
-
-<img src="../../assets/ui/tournament-overview.png" alt="Tournament Result" width="600">
+- [Tournament Menu (`/tournament-menu`)](#tournament-menu-page): The central hub for tournament creation, registration, and browsing.
+- [Tournament Lobby (`/tournament-room/:id`)](#tournament-lobby-page): Real-time progress and status view for tournament participants.
+- [Tournament Overview (`/tournament-overview/:id`)](#tournament-lobby-page): Detailed results view for ongoing or finished tournaments.
 
 ---
 
@@ -488,6 +418,77 @@ flowchart TD
     style I stroke-width:2px,stroke-dasharray: 2
     style P stroke-width:2px,stroke-dasharray: 2
 ```
+---
+
+### Tournament Menu page
+
+The Tournament Menu serves as the central hub for all tournament activities.
+
+#### 🔸 Creating a new tournament
+
+Users can initiate the creation of a new tournament by clicking on a "Create Tournament" button. This action opens the Tournament Creation Form.
+
+<img src="../../assets/ui/tournament-menu-creation.png" alt="Tournament Creation" height="320">
+
+#### 🔸 Tournament list
+
+The Tournament List shows tournaments (by default, `Open for entries`(pending)) in a scrollable view. A filter allows switching to `All` to include Ongoing and Finished tournaments.   
+   
+Each list item shows the tournament’s information.   
+On clicking:
+- `Pending`: opens the Registration Form
+- `Ongoing` / `Finished`: opens a summary modal with a link to detailed results
+
+<img src="../../assets/ui/tournament-menu.png" alt="Tournament Menu" width="400">
+
+#### 🔸 Viewing tournaments
+
+The main screen of the Tournament Menu displays a list of available tournaments.
+
+- ##### Pending tournament
+
+  Clicking on a pending tournament in the list will open its Registration Form, allowing users to sign up for the tournament.
+
+  <img src="../../assets/ui/tournament-menu-registration.png" alt="Tournament Registration" width="400">
+
+- ##### Ongoing and Finished tournament
+
+  For ongoing or finished tournaments, clicking on the tournament entry will display an Modal. This modal provides a quick summary and includes a direct link to a more Detailed Results Page (`/tournament-overview/:id`).
+
+  <img src="../../assets/ui/tournament-menu-ongoing.png" alt="Tournament Menu" width="400">
+  <img src="../../assets/ui/tournament-menu-finished.png" alt="Tournament Menu" width="400">
+
+---
+
+### Tournament lobby page
+
+The Tournament Lobby is exclusively accessible to participants of a specific tournament and provides real-time updates on its progress.
+
+#### 🔸 Tournament Status updates
+
+The lobby dynamically displays the current status of the tournament, which can include:
+- **Pending**: The tournament is awaiting the required number of participants.
+- **Tournament starting**: The tournament is about to begin, showing the brackets of the first round.
+- **Round ongoing**: Matches in the current round are in progress. Displays the current status of the matches. 
+- **Round finished**: All matches in the current round have concluded. Display the results
+- **Round starting**: The next round is about to begin. Displays the brackets of the next round.
+
+<img src="../../assets/ui/tournament-lobby.png" alt="Tournament Lobby" width="400">
+
+---
+
+### Tournament overview page
+
+The Tournament Overview page presents the results of ongoing or finished tournaments.
+
+#### 🔸 Displaying results:
+
+- Media wider than Break Point MD (768 by default): Results are displayed in a clear tree structure, making it easy to visualize the progression.
+- Mobile (smaller than Break Point MD): For optimal viewing on smaller screens, results are presented in a table format.
+
+<img src="../../assets/ui/tournament-overview.png" alt="Tournament Result" width="600">
+
+---
 
 ## Contributors
 
