@@ -249,6 +249,8 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
+---
+
 #### Tournament Progress
 
 - ##### `tournament_start`: Sent when the tournament begins.
@@ -312,6 +314,8 @@ This socket is opened when a user subscribes to a tournament and remains active 
   *If the user is not on the tournament page, show a pop-up alert inviting them to return.*
 
   </details>
+
+---
 
 #### Match Completion
 
@@ -490,9 +494,9 @@ flowchart TD
 <table>
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
-      <a href="https://github.com/emuminov" style="text-decoration: none; color: inherit;">
-        <img src="https://avatars.githubusercontent.com/emuminov" width="48px" alt="emuminov" style="border-radius: 50%;" /><br />
-        <sub><b>emuminov</b></sub>
+      <a href="https://github.com/emuminov" style="text-decoration: none;">
+        <img src="../../assets/profile/emuminov.png" width="48px" alt="emuminov" /><br />
+        <p>emuminov</p>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
@@ -502,9 +506,9 @@ flowchart TD
 
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
-      <a href="https://github.com/melobern" style="text-decoration: none; color: inherit;">
-        <img src="https://avatars.githubusercontent.com/melobern" width="48px" alt="melobern" style="border-radius: 50%;" /><br />
-        <sub><b>melobern</b></sub>
+      <a href="https://github.com/melobern" style="text-decoration: none;">
+        <img src="../../assets/profile/melobern.png" width="48px" alt="melobern" /><br />
+        <p>melobern</p>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
@@ -514,9 +518,9 @@ flowchart TD
 
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
-      <a href="https://github.com/ysengoku" style="text-decoration: none; color: inherit;">
+      <a href="https://github.com/ysengoku" style="text-decoration: none;">
         <img src="../../assets/profile/ysengoku.png" width="48px" alt="Yuko SENGOKU" /><br />
-        <sub><b>ysengoku</b></sub>
+        <p>ysengoku</p>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
