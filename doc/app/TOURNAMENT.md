@@ -99,7 +99,7 @@ flowchart TD
 
 The tournament system is built around four core models: `Tournament`, `Round`, `Bracket`, and `Participant`. Each model captures a different aspect of organizing and running a tournament.
 
-- 🔸 `Tournament`:
+### 🔸 `Tournament`:
   - Represents a tournament instance  
   - Fields: `id`, `name`, `status`, `required_participants`, `creator`, `winner`, `settings`
 
@@ -116,7 +116,7 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
       -  `settings` (Settings): Game settings chosen by the creator  
     </details>
 
-- 🔸 `Round`:
+### 🔸 `Round`:
   - Represents a tournament round  
   - Fields: `number`, `status`, `tournament`, `brackets`
 
@@ -129,7 +129,7 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
       -  `brackets` (Array of Bracket): Brackets in this round  
     </details>
 
-- 🔸 `Bracket`:
+### 🔸 `Bracket`:
   - Represents a match between two participants  
   - Fields: `match_id`, `participant1`, `participant2`, `winner`, `score_p1`, `score_p2`, `status`
 
@@ -145,7 +145,7 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
       -  `status` — Current status (`pending`, `ongoing`, `finished`, `cancelled`)  
     </details>
 
-- 🔸 `Participant`:
+### 🔸 `Participant`:
   - Represents a user in a tournament  
   - Fields: `profile`, `alias`, `tournament`, `status`, `current_round`, `excluded`
 
@@ -203,9 +203,9 @@ This socket is opened when a user subscribes to a tournament and remains active 
 }
 ```
 
-#### Registration Events
+#### 🔸 Registration Events
 
-- ##### 🔸 `new_registration`: Sent when a user registers for the tournament.
+- ##### `new_registration`: Sent when a user registers for the tournament.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -220,7 +220,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### 🔸 `registration_canceled`: Sent when a user unregisters from the tournament.
+- ##### `registration_canceled`: Sent when a user unregisters from the tournament.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -234,7 +234,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### 🔸 `tournament_canceled`: Sent to participants when the tournament is canceled by its creator.
+- ##### `tournament_canceled`: Sent to participants when the tournament is canceled by its creator.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -251,9 +251,9 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
 ---
 
-#### Tournament Progress
+#### 🔸 Tournament Progress
 
-- ##### 🔸 `tournament_start`: Sent when the tournament begins.
+- ##### `tournament_start`: Sent when the tournament begins.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -269,7 +269,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### 🔸 `round_start`: Sent when a new round starts (excluding round 1).
+- ##### `round_start`: Sent when a new round starts (excluding round 1).
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -285,7 +285,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### 🔸 `match_result`: Sent when a match finishes and its result becomes available.
+- ##### `match_result`: Sent when a match finishes and its result becomes available.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -301,7 +301,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### 🔸 `round_end`: Sent when all matches in a round are completed.
+- ##### `round_end`: Sent when all matches in a round are completed.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -317,9 +317,9 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
 ---
 
-#### Match Completion
+#### 🔸 Match Completion
 
-- ##### 🔸 `user_won` / `player_resigned`: Sent from pong WebSocket.
+- ##### `user_won` / `player_resigned`: Sent from pong WebSocket.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -481,7 +481,7 @@ The lobby dynamically displays the current status of the tournament, which can i
 
 The Tournament Overview page presents the results of ongoing or finished tournaments.
 
-#### 🔸 Displaying results:
+#### 🔸 Displaying results
 
 - Media wider than Break Point MD (768 by default): Results are displayed in a clear tree structure, making it easy to visualize the progression.
 - Mobile (smaller than Break Point MD): For optimal viewing on smaller screens, results are presented in a table format.
