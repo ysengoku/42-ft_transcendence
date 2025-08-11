@@ -22,7 +22,8 @@ Bootstrap v5.3 and Bootstrap Icons
 
 ### ✅ 3D & Visualization
 
-three.js and cannon-es for 3D scenes.
+- **Three.js** and **cannon-es** for interactive 3D scenes and physics.
+- **Custom SVG-based Data Visualization Chat** for real-time data rendering without third-party chart libraries.
 
 ### ✅ State & Routing
 
@@ -30,21 +31,34 @@ Custom client-side `router` and a singleton `socketManager` for WebSocket commun
 
 </br>
 
-## SPA Application Flow
+## SPA (Single Page Application) Flow
 
-![SPA Application Flow](/assets/doc-front/SPA-runtime-flow.png)
+The frontend operates entirely as a single-page application.  
+Routing, state management, and view rendering are all handled client-side, with the backend providing only API and WebSocket endpoints.
+
+![SPA Flow](/assets/doc-front/SPA-runtime-flow.png)
 
 </br>
 
-## Docker Configuration
+## Docker Setup for Frontend Development & Deployment
 
-Two multistage Docker targets are defined.
+The frontend can run in **development** mode using a Node container, or be **built for production** and served by the shared Nginx proxy.
 
-**Production:**  
-Installs dependencies, builds the app with `npm run build`, and outputs the static `dist/` directory for deployment.
+### Development
 
-**Development:**   
-Installs dependencies and starts the Vite dev server (`npm run dev`) on port `5173`, exposed to `0.0.0.0` for container access.
+- **Base image:** `node:22-alpine`
+- **Process:** Installs dependencies and starts the Vite dev server (`npm run dev`) on port `5173`, exposed to `0.0.0.0` for container access.
+- **Volume mount:** `./front/app/src:/app/src` so code changes take effect immediately without rebuilding
+
+### Production
+
+- **Build stage:**  
+  - Uses `node:22-alpine` to install dependencies and run `npm run build`  
+  - Outputs the static `dist/` directory
+
+- **Runtime stage:**  
+  - The static `dist/` files are copied into the **Nginx container**.  
+  - This Nginx container is the main entry point for the entire application. It serves the frontend at `/` and also proxies API requests to the backend.
 
 </br>
 
@@ -67,6 +81,7 @@ The `app/package.json` defines these key scripts:
 
 ```
 app/
+├── index.html   
 ├── public/                  # Static assets (images, fonts, 3D models, filters)
 ├── src/
 │   ├── css/style.css
@@ -83,7 +98,7 @@ app/
 ├── vite.config.js           # Vite configuration
 ├── Dockerfile 
 ├── package.json             # NPM scripts and dependencies
-├── package-lock.json        # Records exact versions of dependencies for consistent installs
+├── package-lock.json        # Exact versions of dependencies for consistent installs
 └── __tests__/               # Vitest test files
 ```
 
@@ -121,8 +136,8 @@ Vite handles both the development server and the production build process, minim
 ## Detailed documentations
 
 - [API Request](./API_REQUEST.md)
-- [Auth manager](./AUTH_MANAGER.md)
+- [Auth Manager](./AUTH_MANAGER.md)
 - [Component](./COMPONENT.md)
 - [Router](./ROUTER.md)
 - [Socket Manager](./SOCKET_MANAGER.md)
-- [Tournament UI](./TOURNAMENT_UI.md)
+- [Data visualization](./DATA_VISUALIZATION.md)
