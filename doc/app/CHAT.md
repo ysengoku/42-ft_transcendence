@@ -269,8 +269,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   *Calls `ChatEvent.handle_message` to validate and store the message, then broadcasts to chat participants.*
   </details>
 
-<br />
-
 <a id="protocol-like-message"></a>
 - 💠 `like_message`:
 
@@ -287,8 +285,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   *Server-side processing:*   
   *Calls `ChatEvent.handle_toggle_like_message` to update like status and notify chat participants.*
   </details>
-
-<br />
 
 <a id="protocol-unlike-message"></a>
 - 💠 `unlike_message`
@@ -307,8 +303,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   *Calls `ChatEvent.handle_toggle_like_message` to update like status and notify chat participants.*
   </details>
 
-<br />
-
 <a id="client-server-read-message"></a>
 - 💠 `read_message`
 
@@ -325,6 +319,8 @@ Connection is opened when a user logs in and remains active until the user logs 
   *Server-side processing:*   
   *Calls `ChatEvent.handle_read_message` to mark the message as read in the database.*
   </details>
+
+<br />
 
 #### SERVER --> CLIENT
 
@@ -346,8 +342,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   </details>
 
   [▶︎ See UI behavior](#new_message)   
-
-<br />
 
 - 💠 `like_message`
 
@@ -386,8 +380,6 @@ Connection is opened when a user logs in and remains active until the user logs 
 
   [▶︎ See UI behavior](#new_friend)
 
-<br />
-
 - 💠 `new_tournament`
 
   Sent when a new tournament is created
@@ -403,6 +395,8 @@ Connection is opened when a user logs in and remains active until the user logs 
   </details>
 
   [▶︎ See UI behavior](#new_tournament)
+
+<br />
 
 #### CLIENT --> SERVER
 
@@ -446,8 +440,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   *Calls `DuelEvent.send_game_invite` to send an invitation to the specified user.*
   </details>
 
-<br />
-
 <a id="client-server-cancel-game-invite"></a>
 - 💠 `cancel_game_invite`
 
@@ -463,8 +455,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   *Server-side processing:*   
   *Calls `DuelEvent.cancel_game_invite` to cancel the sent invitation.*
   </details>
-
-<br />
 
 <a id="protocol-reply-game-invite"></a>
 - 💠 `reply_game_invite`
@@ -482,6 +472,8 @@ Connection is opened when a user logs in and remains active until the user logs 
   *Server-side processing:*   
   *Calls `DuelEvent.reply_game_invite` to process the acceptance or decline.*
   </details>
+
+<br />
 
 #### SERVER --> CLIENT
 
@@ -501,8 +493,6 @@ Connection is opened when a user logs in and remains active until the user logs 
 
   [▶︎ See UI behavior]()
 
-<br />
-
 - 💠 `game_invite_canceled`
 
   Sent to the inviter when the server cancels the invitation, or to both the inviter and invitee when the inviter cancels the invitation.
@@ -520,8 +510,6 @@ Connection is opened when a user logs in and remains active until the user logs 
 
   [▶︎ See UI behavior]()
 
-<br />
-
 - 💠 `game_accepted`
 
   Sent to the inviter and the invitee when the invitee accepted the invitation
@@ -538,8 +526,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   </details>
 
   [▶︎ See UI behavior]()
-
-<br />
 
 - 💠 `game_declined`
 
@@ -589,8 +575,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   </details>
 
   [▶︎ See UI behavior]()
-
-<br />
 
 - 💠 `user_offline`
 
