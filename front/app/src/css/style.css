@@ -513,6 +513,9 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
     fill: var(--pm-primary-100);
   }
   color: var(--pm-gray-100);
+  button {
+    color: var(--pm-primary-100);
+  }
 }
 
 .wood-board:before {

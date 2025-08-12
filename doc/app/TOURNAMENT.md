@@ -9,9 +9,12 @@ The Tournament app handles the full lifecycle of tournaments, from creation and 
 - [Core Models](#core-models)
 - [API Endpoints](#api-endpoints)
 - [WebSocket Architecture](#websocket-architecture)
+- [WebSocket protocol](#websocket-protocol)
 - [Validation, Security & Integrity](#validation-security--integrity)
 - [UI Flow](#ui-flow)
 - [Contributors](#contributors)
+
+<br/>
 
 ## Key Features
 
@@ -23,6 +26,8 @@ The Tournament app handles the full lifecycle of tournaments, from creation and 
 	Supports registration, matchmaking, match result submission, and tournament notifications.
 - **Secure APIs**:   
 	Provides REST and WebSocket endpoints with built-in validation and security mechanisms.
+
+<br/>
 
 ## Backend Workflow
 
@@ -95,6 +100,8 @@ flowchart TD
   style GAME_WORKER fill:#cc99ff,stroke:#333,stroke-width:2px
 ```
 
+<br/>
+
 ## Core Models
 
 The tournament system is built around four core models: `Tournament`, `Round`, `Bracket`, and `Participant`. Each model captures a different aspect of organizing and running a tournament.
@@ -160,6 +167,7 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
       -  `excluded` (boolean): Whether the participant is excluded from further matches  
     </details>
 
+<br/>
 
 ## API Endpoints
 
@@ -172,6 +180,7 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
 | `/tournaments/{id}/register`   | POST   | Register by alias                         | alias                  | 204/403/404            |
 | `/tournaments/{id}/unregister` | DELETE | Unregister from tournament (if open)      | -                      | 204/403/404            |
 
+<br/>
 
 ## WebSocket Architecture
 
@@ -187,12 +196,14 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
   - `tournament_user_{id}`: individual user events (connection, defeat, exclusion).
   - `tournament_global`: broadcast site-wide tournament creation.
 
-### Protocol
+<br />
+
+## WebSocket Protocol
 
 The Tournament WebSocket (`/ws/tournament/{id}`) handles real-time updates related to tournament lifecycle, user registrations, and round progress.
 This socket is opened when a user subscribes to a tournament and remains active until the elimination or the tournament ends.
 
-#### Format
+### Message Format
 
 ```json
 {
@@ -203,9 +214,9 @@ This socket is opened when a user subscribes to a tournament and remains active 
 }
 ```
 
-#### 🔸 Registration Events
+### 🔸 Registration Events
 
-- ##### `new_registration`: Sent when a user registers for the tournament.
+- #### `new_registration`: Sent when a user registers for the tournament.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -220,7 +231,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `registration_canceled`: Sent when a user unregisters from the tournament.
+- #### `registration_canceled`: Sent when a user unregisters from the tournament.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -234,7 +245,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `tournament_canceled`: Sent to participants when the tournament is canceled by its creator.
+- #### `tournament_canceled`: Sent to participants when the tournament is canceled by its creator.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -251,9 +262,9 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
 ---
 
-#### 🔸 Tournament Progress
+### 🔸 Tournament Progress
 
-- ##### `tournament_start`: Sent when the tournament begins.
+- #### `tournament_start`: Sent when the tournament begins.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -269,7 +280,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `round_start`: Sent when a new round starts (excluding round 1).
+- #### `round_start`: Sent when a new round starts (excluding round 1).
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -285,7 +296,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `match_result`: Sent when a match finishes and its result becomes available.
+- #### `match_result`: Sent when a match finishes and its result becomes available.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -301,7 +312,7 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
-- ##### `round_end`: Sent when all matches in a round are completed.
+- #### `round_end`: Sent when all matches in a round are completed.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -317,9 +328,9 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
 ---
 
-#### 🔸 Match Completion
+### 🔸 Match Completion
 
-- ##### `user_won` / `player_resigned`: Sent from pong WebSocket.
+- #### `user_won` / `player_resigned`: Sent from pong WebSocket.
 
   <details>
   <summary>View fields and UI behavior</summary>
@@ -335,12 +346,16 @@ This socket is opened when a user subscribes to a tournament and remains active 
 
   </details>
 
+<br/>
+
 ## Validation, Security & Integrity
 
 - **REST/WS input validation**: required fields, types, valid status, alias uniqueness, users per tournament (4 or 8).
 - **Registration constraints**: can't register if already participating or in a game.
 - **Database protection**: atomic transactions during (un)registration, avoids duplicates/race conditions.
 - **Security**: JWT required (header/WS), only legitimate users can perform actions.
+
+<br/>
 
 ## UI Flow
 
@@ -489,6 +504,8 @@ The Tournament Overview page presents the results of ongoing or finished tournam
 <img src="../../assets/ui/tournament-overview.png" alt="Tournament Result" width="600">
 
 ---
+
+<br/>
 
 ## Contributors
 
