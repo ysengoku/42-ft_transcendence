@@ -16,7 +16,7 @@ class OauthConnectionManager(models.Manager):
         return self.filter(status=self.model.PENDING, state=state)
 
     def create_pending_connection(self, state: str, platform: str):
-        OauthConnection.objects.create(
+        return OauthConnection.objects.create(
             state=state,
             connection_type=platform,
             status=OauthConnection.PENDING,
