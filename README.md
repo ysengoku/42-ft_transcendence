@@ -85,7 +85,7 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 [![Django Channels](https://img.shields.io/badge/DJANGO_Channels-ff1709?style=for-the-badge&color=326342)](#)
 [![Cron](https://img.shields.io/badge/Cron_Job-4A4A4A?style=for-the-badge&logo=linux&logoColor=fff)](#)
 
-### Data base
+### Database
 
 [![PostgreSQL](https://img.shields.io/badge/-Postgres-%23316192.svg?logo=postgresql&style=for-the-badge&logoColor=fff)](#)
 [![Redis](https://img.shields.io/badge/-Redis-D82C20.svg?logo=redis&style=for-the-badge&logoColor=fff)](#)
@@ -165,34 +165,33 @@ graph TB
 ```
 
 ### Component Responsibilities
-
 #### Frontend Layer
+**Pure JavaScript SPA** using component-based architecture and custom dispatch framework.
+- **Bootstrap**: HTML/CSS/JavaScript framework that provides with theme management, utility classes and interactive components.
+- **Three.js**: 3D rendering engine responsible for the looks of the game!
 
-- **SPA (Single Page Application)**: Vanilla JavaScript with component-based architecture
-- **WebSocket Client**: Real-time communication for chat, notifications, and game state
-- **3D Game Engine**: Three.js for rendering
+#### Backend Layer
+Asynchronous hybrid server **Daphne** that handles both HTTP and websocket connections.
+- **Django Ninja**: RESTful API with auto-generated swagger schema for documentation.
+- **Django Channels**: Django Channels for real-time features.
 
-#### Infrastructure Layer
-
-- **Nginx**: Load balancing, static file serving, WebSocket proxy
-- **Docker**: Containerized architecture
-
-#### Application Layer
-
-- **Django API**: RESTful API with Django Ninja, JWT authentication
-- **WebSocket Server**: Django Channels for real-time features
-- **Background Tasks**: Crontab for scheduled operations
+#### Load Balancer
+**Nginx** server that stands between the client and **Daphne server**. Responsible for:
+- Load balancing.
+- Static file serving.
+- HTTP and WebSocket proxy.
+- Encryption of the data for protection against man-in-the-middle attacks.
 
 #### Data Layer
-
-- **PostgreSQL**: Primary database for user data, game records, chat history
-- **Redis**: WebSocket session management, pub/sub messaging
+- **PostgreSQL**: Primary database. Used for user data, game records, chat history, notification system and more!
+- **Redis**: pub/sub messaging between different WebSocket connections and worker processes.
 
 #### External Integrations
+- **OAuth Providers**: GitHub and 42 School for third-party authentication.
+- **Email Service**: Gmail SMTP for MFA verification codes.
 
-- **OAuth Providers**: GitHub and 42 School for third-party authentication
-- **Email Service**: Gmail SMTP for MFA verification codes
-
+#### Crontab
+Separate container that periodically sends requests to the Daphne server to perform actions.
 
 ## Documentation 🛠️👷🏻‍♂️
 
