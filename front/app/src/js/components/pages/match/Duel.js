@@ -153,8 +153,6 @@ export class Duel extends HTMLElement {
     if (this.#state.status === DUEL_STATUS.MATCHMAKING) {
       this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
       socketManager.closeSocket(DUEL_STATUS.MATCHMAKING);
-    } else if (this.#state.status === DUEL_STATUS.INVITING) {
-      this.cancelButton?.removeEventListener('click', this.cancelInvitation);
     }
   }
 
@@ -240,7 +238,6 @@ export class Duel extends HTMLElement {
     }
 
     document.addEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
-    document.addEventListener('duelInvitationCanceled', this.invitationCanceled);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -364,14 +361,13 @@ export class Duel extends HTMLElement {
   }
 
   async invitationCanceled(data) {
-    log.info('Invitation canceled:', data.detail);
     if (!this.#state.status) {
       return;
     }
-    if (data.detail.client_id && data.detail.client_id === this.#state.clientId && !data.detail.username) {
+    if (data.client_id && data.client_id === this.#state.clientId && !data.username) {
       const toastMessage = data.message || 'Game invitation has been canceled.';
       showToastNotification(toastMessage, TOAST_TYPES.ERROR);
-    } else if (data.detail.username !== this.#state.loggedInUser.username) {
+    } else if (data.username !== this.#state.loggedInUser.username) {
       return;
     }
     this.#state.status = DUEL_STATUS.INVITATION_CANCELED;
