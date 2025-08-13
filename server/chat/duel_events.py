@@ -15,6 +15,12 @@ from .validator import Validator
 
 logger = logging.getLogger("server")
 
+class CancelMessages:
+    ONGOING_GAME="You are in an ongoing game."
+    NO_INVITE_FROM_YOURSELF="You can't accept invitations from yourself to a game !"
+    INVITE_NOT_FOUND="Invitation not found."
+    NO_PENDING_INVITE="No pending invitations found."
+    INVITE_PENDING="You have one invitation pending."
 
 class DuelEvent:
     def __init__(self, consumer):
@@ -28,13 +34,11 @@ class DuelEvent:
             DuelEvent.decline_game_invite(self, data)
 
     def create_game_room(self, profile1, profile2, settings):
-        logger.debug(settings)
         gameroom: GameRoom = GameRoom.objects.create(status=GameRoom.ONGOING)
         gameroom.add_player(profile1)
         gameroom.add_player(profile2)
         gameroom.settings = settings
         gameroom.save(update_fields=["settings"])
-        logger.debug(gameroom.settings)
         return gameroom
 
     def data_for_game_found(self, player, game_id):
@@ -50,34 +54,10 @@ class DuelEvent:
             },
         }
 
-    def self_or_target_already_in_game(self, target, target_name, client_id):
-        is_in_game: bool = (
-            GameRoom.objects.for_players(self.consumer.user_profile).for_pending_or_ongoing_status().exists()
-        )
-        if is_in_game:
+    def self_already_in_game(self, target, target_name, client_id):
+        if any(self.consumer.user_profile.get_active_game_participation()):
             logger.warning("Error : user %s is in a game : can't join a game right now.", self.consumer.user.username)
-            self.consumer.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "You are in an ongoing game",
-                        "client_id": client_id,
-                    },
-                ),
-            )
-            return True
-        target_is_in_game: bool = GameRoom.objects.for_players(target).for_pending_or_ongoing_status().exists()
-        if target_is_in_game:
-            logger.warning("Error : user %s is in a game : can't join a game right now.", target_name)
-            self.consumer.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "Your partner is in an ongoing game",
-                        "client_id": client_id,
-                    },
-                ),
-            )
+            self.self_send_game_invite_cancelled(CancelMessages.ONGOING_GAME, client_id)
             return True
         return False
 
@@ -87,10 +67,10 @@ class DuelEvent:
         client_id = data["data"].get("client_id")
         if sender == self.consumer.user.profile:
             logger.warning("Error : user %s wanted to accept a game with themself.", self.consumer.user.username)
-            self.self_send_game_invite_cancelled("You can't accept invitations from yourself to a game !", client_id)
+            self.self_send_game_invite_cancelled(CancelMessages.NO_INVITE_FROM_YOURSELF, client_id)
             return
 
-        if self.self_or_target_already_in_game(sender, sender_name, client_id):
+        if self.self_already_in_game(sender, sender_name, client_id):
             return
         try:
             invitation = GameInvitation.objects.get(
@@ -99,12 +79,12 @@ class DuelEvent:
                 status=GameInvitation.PENDING,
             )
         except GameInvitation.DoesNotExist:
-            logger.debug(
+            logger.info(
                 "No pending invitations sent by %s to cancel for user %s",
                 sender.user.username,
                 self.consumer.user.username,
             )
-            self.self_send_game_invite_cancelled("Invitation not found.", client_id)
+            self.self_send_game_invite_cancelled(CancelMessages.INVITE_NOT_FOUND, client_id)
             return
         except GameInvitation.MultipleObjectsReturned:
             logger.warning(
@@ -123,7 +103,6 @@ class DuelEvent:
         async_to_sync(self.consumer.channel_layer.group_send)(f"user_{sender.user.id}", receiver_data)
         async_to_sync(self.consumer.channel_layer.group_send)(f"user_{self.consumer.user.id}", sender_data)
 
-    # TODO : security checks
     def decline_game_invite(self, data):
         sender_name = data["data"].get("username")
         try:
@@ -137,15 +116,8 @@ class DuelEvent:
             status=GameInvitation.PENDING,
         )
         if not invitations.exists():
-            logger.debug("No pending invitations sent by %s to cancel for user %s", sender, self.consumer.user.username)
-            self.consumer.send(
-                text_data=json.dumps(
-                    {
-                        "action": "game_invite_canceled",
-                        "message": "No pending invitations found.",
-                    },
-                ),
-            )
+            logger.info("No pending invitations sent by %s to cancel for user %s", sender, self.consumer.user.username)
+            self.self_send_game_invite_cancelled(CancelMessages.NO_PENDING_INVITE)
             return
         with transaction.atomic():
             count = 0
@@ -192,12 +164,11 @@ class DuelEvent:
 
     def self_send_game_invite_cancelled(self, message, client_id=None):
         data = {
-            "action": "game_invite_canceled",
             "message": message,
         }
         if client_id is not None:
             data["client_id"] = client_id
-        self.consumer.send(text_data=json.dumps(data))
+        self.send_ws_message_to_user(self.consumer.user_profile, "game_invite_canceled", data)
 
     def send_game_invite(self, data):
         settings = data["data"].get("settings", {})
@@ -211,20 +182,18 @@ class DuelEvent:
             self.self_send_game_invite_cancelled("You can't invite yourself to a game !", client_id)
             return
 
-        client_id = data["data"].get("client_id")
-
         try:
             receiver = Profile.objects.get(user__username=receiver_username)
         except Profile.DoesNotExist as e:
             logger.error("Profile does not exist : %s", str(e))
             return
 
-        if self.self_or_target_already_in_game(receiver, receiver_username, client_id):
+        if self.self_already_in_game(receiver, receiver_username, client_id):
             return
 
         if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
             logger.warning("user %s has more than one pending invitation.", self.consumer.user.username)
-            self.self_send_game_invite_cancelled("You have one invitation pending.", client_id)
+            self.self_send_game_invite_cancelled(CancelMessages.INVITE_PENDING, client_id)
             return
         if GameInvitation.objects.filter(
             sender=receiver,
