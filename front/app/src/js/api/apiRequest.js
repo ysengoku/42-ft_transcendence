@@ -198,7 +198,7 @@ const handlers = {
    * @return {Object} An object containing the success status, response status, and error message.
    */
   exception: (error) => {
-    console.error('API request failed:', error);
+    log.error('API request failed:', error);
     unknowknErrorToast();
     return { success: false, status: 0, msg: error };
   },

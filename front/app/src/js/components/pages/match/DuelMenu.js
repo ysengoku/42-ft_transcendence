@@ -9,6 +9,7 @@ import { apiRequest, API_ENDPOINTS } from '@api';
 import { auth } from '@auth';
 import { socketManager } from '@socket';
 import { setupObserver } from '@utils';
+import { getOptionsFromLocalStorage } from './utils/gameOptions.js';
 import { DEFAULT_GAME_OPTIONS } from '@env';
 import {
   showAlertMessageForDuration,
@@ -77,7 +78,7 @@ export class DuelMenu extends HTMLElement {
 
     // Bind event handlers
     this.openGameOptionsModal = this.openGameOptionsModal.bind(this);
-    this.closeGameOptionsModal = this.closeGameOptionsModal.bind(this);
+    this.closeGameOptionsModalWithoutSaving = this.closeGameOptionsModalWithoutSaving.bind(this);
     this.clearFocusInModal = this.clearFocusInModal.bind(this);
     this.saveSelectedOptions = this.saveSelectedOptions.bind(this);
     this.handleSearchInput = this.handleSearchInput.bind(this);
@@ -121,15 +122,6 @@ export class DuelMenu extends HTMLElement {
     this.cleanObserver();
     this.modalBodyContent?.remove();
     this.modalBodyContent = null;
-    this.optionsButton?.removeEventListener('click', this.openGameOptionsModal);
-    this.searchInput?.removeEventListener('input', this.handleSearchInput);
-    this.searchInput?.removeEventListener('keydown', this.ignoreEnterKeyPress);
-    document.removeEventListener('click', this.hideUserList);
-    this.inviteButton?.removeEventListener('click', this.inviteToDuel);
-    this.requestMatchmakingButton?.removeEventListener('click', this.handleMatchmakingRequest);
-    this.userList?.querySelectorAll('li').forEach((item) => {
-      item.removeEventListener('click', this.selectOpponent);
-    });
     this.modalElement.addEventListener(
       'hidden.bs.modal',
       () => {
@@ -140,10 +132,22 @@ export class DuelMenu extends HTMLElement {
       },
       { once: true },
     );
+    this.optionsButton?.removeEventListener('click', this.openGameOptionsModal);
+    this.searchInput?.removeEventListener('input', this.handleSearchInput);
+    this.searchInput?.removeEventListener('keydown', this.ignoreEnterKeyPress);
+    document.removeEventListener('click', this.hideUserList);
+    this.inviteButton?.removeEventListener('click', this.inviteToDuel);
+    this.requestMatchmakingButton?.removeEventListener('click', this.handleMatchmakingRequest);
+    this.userList?.querySelectorAll('li').forEach((item) => {
+      item.removeEventListener('click', this.selectOpponent);
+    });
     this.modalSaveButton?.removeEventListener('click', this.saveSelectedOptions);
-    this.modalCancelButton?.removeEventListener('click', this.closeGameOptionsModal);
-    this.modalCloseButton?.removeEventListener('click', this.closeGameOptionsModal);
-    this.closeGameOptionsModal();
+    this.modalCancelButton?.removeEventListener('click', this.closeGameOptionsModalWithoutSaving);
+    this.modalCloseButton?.removeEventListener('click', this.closeGameOptionsModalWithoutSaving);
+    if (!this.gameOptionsModal) {
+      return;
+    }
+    this.gameOptionsModal.hide();
   }
 
   /* ------------------------------------------------------------------------ */
@@ -213,20 +217,24 @@ export class DuelMenu extends HTMLElement {
     this.modalCloseButton = this.modalElement.querySelector('.btn-close');
 
     this.modalSaveButton.addEventListener('click', this.saveSelectedOptions);
-    this.modalCancelButton.addEventListener('click', this.closeGameOptionsModal);
-    this.modalCloseButton.addEventListener('click', this.closeGameOptionsModal);
+    this.modalCancelButton.addEventListener('click', this.closeGameOptionsModalWithoutSaving);
+    this.modalCloseButton.addEventListener('click', this.closeGameOptionsModalWithoutSaving);
     this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
   }
 
   saveSelectedOptions() {
     this.modalBodyContent.storeOptionsToLocalStorage();
-    this.closeGameOptionsModal();
-  }
-
-  closeGameOptionsModal() {
     if (!this.gameOptionsModal) {
       return;
     }
+    this.gameOptionsModal.hide();
+  }
+
+  closeGameOptionsModalWithoutSaving() {
+    if (!this.gameOptionsModal) {
+      return;
+    }
+    this.modalBodyContent.selectedOptions = getOptionsFromLocalStorage();
     this.gameOptionsModal.hide();
   }
 
@@ -370,6 +378,7 @@ export class DuelMenu extends HTMLElement {
     if (this.userList.contains(event.target) || this.searchInput.contains(event.target)) {
       return;
     }
+    console.log(this.loadMoreAnchor);
     this.cleanObserver();
     this.userList.classList.remove('show');
     this.userList.scrollTop = 0;
@@ -387,7 +396,7 @@ export class DuelMenu extends HTMLElement {
       this.observer = null;
     }
     if (this.loadMoreAnchor) {
-      this.userList.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor.parentNode?.removeChild(this.loadMoreAnchor);
       this.loadMoreAnchor = null;
     }
   }

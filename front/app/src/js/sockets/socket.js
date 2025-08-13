@@ -38,7 +38,7 @@ class WebSocketManager {
 
     this.socket.onopen = (event) => log.info('WebSocket opened to ', this.url, event);
     this.socket.onmessage = (event) => this.handleAction(event);
-    this.socket.onerror = (event) => console.error('WebSocket error: ', this.name, event);
+    this.socket.onerror = (event) => log.error('WebSocket error: ', this.name, event);
     this.socket.onclose = (event) => {
       log.info('WebSocket closed: ', this.name, event, event.code);
       if (event.code >= 3000) {
@@ -69,7 +69,7 @@ class WebSocketManager {
     this.socket = new WebSocket(this.url);
     this.socket.onopen = (event) => log.info('WebSocket opened to ', this.url, event);
     this.socket.onmessage = (event) => this.handleAction(event);
-    this.socket.onerror = (event) => console.error('WebSocket error (', this.name, ') ', event);
+    this.socket.onerror = (event) => log.error('WebSocket error (', this.name, ') ', event);
     this.socket.onclose = (event) => {
       log.info('WebSocket closed (', this.name, ') ', event);
       if (event.code >= 3000) {

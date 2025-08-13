@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Test runner with statistics
 # Usage: ./test_with_stats.sh [module_name] [--fresh-db]

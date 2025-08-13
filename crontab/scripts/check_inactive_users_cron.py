@@ -69,7 +69,11 @@ if not csrf_token:
     exit(1)
 
 # Make DELETE request
-headers = {"Authorization": f"Bearer {CRON_SECRET}", "X-CSRFToken": csrf_token, "Referer": base_url}
+headers = {
+    "Authorization": f"Bearer {CRON_SECRET}",
+    "X-CSRFToken": csrf_token,
+    "Referer": base_url,
+}
 
 response = session.delete(f"{ENDPOINT}", headers=headers, verify=False)
 print(f"Status: {response.status_code}")

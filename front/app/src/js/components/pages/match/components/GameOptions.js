@@ -74,7 +74,6 @@ export class GameOptions extends HTMLElement {
   }
 
   disconnectedCallback() {
-    console.log('disconnecting');
     this.scoreToWinInput?.removeEventListener('input', this.updateOptions);
     this.scoreToWinInput?.removeEventListener('input', this.updateSelectedValueOnRange);
     this.gameSpeedInputs.forEach((input) => {
@@ -92,6 +91,17 @@ export class GameOptions extends HTMLElement {
     this.coolModeOptout?.removeEventListener('change', this.toggleOptionOptout);
 
     this.innerHTML = '';
+  }
+
+  set selectedOptions(options) {
+    this.#state.selectedOptions = null;
+    this.#state.selectedOptions = { ...options };
+    if (!this.#state.selectedOptions || Object.keys(this.#state.selectedOptions).length === 0) {
+      this.#state.selectedOptions = {
+        ...this.#state.defaultOptionValue,
+      };
+    }
+    this.renderOptions();
   }
 
   /**
