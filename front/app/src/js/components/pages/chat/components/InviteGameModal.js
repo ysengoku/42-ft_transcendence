@@ -24,6 +24,10 @@ export class InviteGameModal extends HTMLElement {
     this.closeModal = this.closeModal.bind(this);
   }
 
+  connectedCallback() {
+    this.render();
+  }
+
   disconnectedCallback() {
     this.inviteButton?.removeEventListener('click', this.sendInvitation);
     this.cancelButton?.removeEventListener('click', this.closeModal);
@@ -59,7 +63,6 @@ export class InviteGameModal extends HTMLElement {
       return;
     }
     this.#state.opponent = opponent;
-    this.render();
     this.modal.show();
   }
 

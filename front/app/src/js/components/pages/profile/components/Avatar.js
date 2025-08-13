@@ -19,7 +19,7 @@ export class ProfileAvatar extends HTMLElement {
 
     const image = this.querySelector('img');
     if (image) {
-      const isSafe = /\.(jpg|jpeg|png|webp|svg)$/i.test(this.#state.avatarUrl.split('?')[0]);
+      const isSafe = /\.(jpg|jpeg|png|webp)$/i.test(this.#state.avatarUrl.split('?')[0]);
       image.src = isSafe ? this.#state.avatarUrl : DEFAULT_AVATAR;
       image.onerror = () => {
         image.src = DEFAULT_AVATAR;

@@ -229,31 +229,31 @@ graph TB
   <tr>
     <td align="center">
       <a href="https://github.com/emuminov">
-        <img src="https://avatars.githubusercontent.com/emuminov" width="80px;" alt="emuminov"/><br />
+        <img src="./assets/profile/emuminov.png" width="80px;" alt="emuminov"/><br />
         <sub><b>emuminov</b></sub>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/melobern">
-        <img src="https://avatars.githubusercontent.com/melobern" width="80px;" alt="melobern"/><br />
+        <img src="./assets/profile/melobern.png" width="80px;" alt="melobern"/><br />
         <sub><b>melobern</b></sub>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/faboussard">
-        <img src="https://avatars.githubusercontent.com/faboussard" width="80px;" alt="Fanny_BOUSSARD"/><br />
+        <img src="./assets/profile/faboussard.png" width="80px;" alt="Fanny_BOUSSARD"/><br />
         <sub><b>faboussard</b></sub>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/Celiastral">
-        <img src="https://avatars.githubusercontent.com/Celiastral" width="80px;" alt="Celiastral"/><br />
+        <img src="./assets/profile/Celiastral.png" width="80px;" alt="Celiastral"/><br />
         <sub><b>Celiastral</b></sub>
       </a>
     </td>
     <td align="center">
       <a href="https://github.com/ysengoku">
-        <img src="https://avatars.githubusercontent.com/ysengoku" width="80px;" alt="Yuko SENGOKU"/><br />
+        <img src="./assets/profile/ysengoku.png" width="80px;" alt="Yuko SENGOKU"/><br />
         <sub><b>ysengoku</b></sub>
       </a>
     </td>
