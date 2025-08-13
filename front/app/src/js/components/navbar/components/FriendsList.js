@@ -210,7 +210,7 @@ export class FriendsList extends HTMLElement {
       this.observer = null;
     }
     if (this.loadMoreAnchor) {
-      this.listContainer.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor.parentNode?.removeChild(this.loadMoreAnchor);
       this.loadMoreAnchor = null;
     }
   }

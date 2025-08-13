@@ -2,6 +2,8 @@ import { Toast } from 'bootstrap';
 
 export const TOAST_TYPES = {
   INFO: 'info',
+  NOTIFICATION: 'notif',
+  WARNING: 'warn',
   ERROR: 'error',
 };
 
@@ -36,16 +38,53 @@ export function showToastNotification(message, type = TOAST_TYPES.INFO) {
 
   const toastBody = document.querySelector('.toast-body');
   toastBody.textContent = message;
+
   const toast = document.querySelector('.toast');
   const toastBodyWrapper = document.querySelector('.toast-body-wrapper');
-  toastBodyWrapper.style.backgroundColor = type === TOAST_TYPES.ERROR ? 'var(--pm-bg-danger)' : 'var(--pm-bg-success)';
+  const notificationDropdown = document.getElementById('notifications-dropdown');
+  const notificationList = document.querySelector('notifications-list');
+
+  switch (type) {
+    case TOAST_TYPES.NOTIFICATION:
+      toastBodyWrapper.style.backgroundColor = 'var(--pm-bg-success)';
+      toastContainer.onclick = null;
+      toastContainer.onclick = () => {
+        if (notificationList) {
+          notificationList.renderListContent();
+        }
+        if (notificationDropdown) {
+          notificationDropdown.classList.add('show');
+          notificationDropdown.setAttribute('data-bs-popper', 'static');
+        }
+        toastBootstrap?.dispose();
+      };
+      break;
+    case TOAST_TYPES.INFO:
+      toastBodyWrapper.style.backgroundColor = 'var(--pm-bg-success)';
+      toastContainer.onclick = null;
+      break;
+    case TOAST_TYPES.ERROR:
+      toastBodyWrapper.style.backgroundColor = 'var(--pm-bg-danger)';
+      toastContainer.onclick = null;
+      break;
+    case TOAST_TYPES.WARNING:
+      toastBodyWrapper.style.backgroundColor = 'var(--pm-gray-500)';
+      toastContainer.onclick = null;
+      break;
+    default:
+      break;
+  }
   const toastBootstrap = Toast.getOrCreateInstance(toast);
   toastBootstrap.show();
+  if (notificationDropdown) {
+    notificationList?.resetList();
+    notificationDropdown.classList.remove('show');
+  }
 }
 
 export function sessionExpiredToast() {
   const message = 'Your session has expired. Please log in again.';
-  showToastNotification(message, TOAST_TYPES.ERROR);
+  showToastNotification(message, TOAST_TYPES.WARNING);
 }
 
 export function unknowknErrorToast() {
