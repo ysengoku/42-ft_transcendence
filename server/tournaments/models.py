@@ -105,7 +105,6 @@ class Tournament(models.Model):
     date = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=PENDING)
     creator = models.ForeignKey("users.Profile", on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
     winner = models.ForeignKey(
         Participant,
         null=True,
@@ -119,7 +118,7 @@ class Tournament(models.Model):
     objects: TournamentQuerySet = TournamentQuerySet.as_manager()
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-date"]
 
     def __str__(self):
         return f"{self.name} ({self.status})"
