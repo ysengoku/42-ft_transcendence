@@ -56,6 +56,7 @@ export class Game extends HTMLElement {
     this.#state.gameOptions.ranked = false;
 
     log.info('Game options:', this.#state.gameOptions);
+    log.info('Game type:', this.#state.gameType);
   }
 
   // disconnectedCallback() {
