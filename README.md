@@ -85,7 +85,7 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 [![Django Channels](https://img.shields.io/badge/DJANGO_Channels-ff1709?style=for-the-badge&color=326342)](#)
 [![Cron](https://img.shields.io/badge/Cron_Job-4A4A4A?style=for-the-badge&logo=linux&logoColor=fff)](#)
 
-### Data base
+### Database
 
 [![PostgreSQL](https://img.shields.io/badge/-Postgres-%23316192.svg?logo=postgresql&style=for-the-badge&logoColor=fff)](#)
 [![Redis](https://img.shields.io/badge/-Redis-D82C20.svg?logo=redis&style=for-the-badge&logoColor=fff)](#)
@@ -105,24 +105,26 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 
 ```mermaid
 graph TB
-    subgraph "Client Browser"
-        UI[Frontend SPA<br/>Vanilla JS + Bootstrap]
-        WS_CLIENT[WebSocket Client]
-        GAME_ENGINE[3D Game Engine<br/>Three.js]
+    subgraph CLIENT["Client Browser"]
+        CLIENT_CONTENT[SPA<br/>Vanilla JS + Bootstrap<br/>Three.js]
     end
 
-    subgraph "Load Balancer"
-        NGINX[Nginx<br/>Reverse Proxy<br/>Static Files]
+    subgraph NGINX["Load Balancer"]
+        NGINX_CONTENT[Nginx<br/>Reverse Proxy<br/>Static Files]
     end
 
-    subgraph "Application Server"
-        DJANGO[Django Application<br/>Django Ninja API]
-        WS_SERVER[WebSocket Server<br/>Django Channels]
-        CRON[Crontab<br/>Background Tasks]
+    subgraph DAPHNE["Daphne Server"]
+        DJANGO_API[Django + Django Ninja<br/>HTTP Layer]
+        DJANGO_CHANNELS[Django Channels<br/>Websocket Layer</br>Workers]
     end
 
-    subgraph "Data Layer"
-        POSTGRES[PostgreSQL<br/>Primary Database]
+    subgraph CRON["Crontab"]
+        BACKGROUND_TASKS["Background Tasks"]
+    end
+
+    subgraph DATA_LAYER[Data Layer]
+        direction TB
+        POSTGRES[(PostgreSQL<br/>Primary Database)]
         REDIS[Redis<br/>WebSocket Sessions<br/>Pubsub]
     end
 
@@ -133,24 +135,21 @@ graph TB
     end
 
     %% Client connections
-    UI --> NGINX
-    WS_CLIENT -.->|WebSocket| NGINX
-    GAME_ENGINE --> UI
+    CLIENT --> NGINX
 
     %% Load balancer routing
-    NGINX --> DJANGO
-    NGINX -.->|WebSocket Upgrade| WS_SERVER
+    NGINX --> DAPHNE
+    NGINX -.->|WebSocket Upgrade| DJANGO_CHANNELS
 
-    %% Application layer
-    DJANGO --> POSTGRES
-    DJANGO --> REDIS
-    WS_SERVER --> REDIS
-    CRON --> POSTGRES
+    BACKGROUND_TASKS --Periodic API requests--> DJANGO_API
+
+    %% Daphne server
+    DAPHNE <--> DATA_LAYER
 
     %% External integrations
-    DJANGO --> GITHUB
-    DJANGO --> FORTYTWO
-    DJANGO --> GMAIL
+    DJANGO_API --> GITHUB
+    DJANGO_API --> FORTYTWO
+    DJANGO_API --> GMAIL
 
     %% Styling
     classDef frontend fill:#e1f5fe,color:#01579b
@@ -159,41 +158,40 @@ graph TB
     classDef logs fill:#fce4ec,color:#880e4f
     classDef external fill:#fff3e0,color:#e65100
 
-    class UI,WS_CLIENT,GAME_ENGINE frontend
-    class NGINX,DJANGO,WS_SERVER,CRON backend
+    class CLIENT_CONTENT,WS_CLIENT frontend
+    class NGINX_CONTENT,DJANGO_API,DJANGO_CHANNELS,BACKGROUND_TASKS backend
     class POSTGRES,REDIS database
     class GITHUB,FORTYTWO,GMAIL external
 ```
 
 ### Component Responsibilities
-
 #### Frontend Layer
+**Pure JavaScript SPA** using component-based architecture and custom dispatch framework.
+- **Bootstrap**: HTML/CSS/JavaScript framework that provides with theme management, utility classes and interactive components.
+- **Three.js**: 3D rendering engine responsible for the looks of the game!
 
-- **SPA (Single Page Application)**: Vanilla JavaScript with component-based architecture
-- **WebSocket Client**: Real-time communication for chat, notifications, and game state
-- **3D Game Engine**: Three.js for rendering
+#### Backend Layer
+Asynchronous hybrid server **Daphne** that handles both HTTP and websocket connections.
+- **Django Ninja**: RESTful API with auto-generated swagger schema for documentation.
+- **Django Channels**: Django Channels for real-time features.
 
-#### Infrastructure Layer
-
-- **Nginx**: Load balancing, static file serving, WebSocket proxy
-- **Docker**: Containerized architecture
-
-#### Application Layer
-
-- **Django API**: RESTful API with Django Ninja, JWT authentication
-- **WebSocket Server**: Django Channels for real-time features
-- **Background Tasks**: Crontab for scheduled operations
+#### Load Balancer
+**Nginx** server that stands between the client and **Daphne server**. Responsible for:
+- Load balancing.
+- Static file serving.
+- HTTP and WebSocket proxy.
+- Encryption of the data for protection against man-in-the-middle attacks.
 
 #### Data Layer
-
-- **PostgreSQL**: Primary database for user data, game records, chat history
-- **Redis**: WebSocket session management, pub/sub messaging
+- **PostgreSQL**: Primary database. Used for user data, game records, chat history, notification system and more!
+- **Redis**: pub/sub messaging between different WebSocket connections and worker processes.
 
 #### External Integrations
+- **OAuth Providers**: GitHub and 42 School for third-party authentication.
+- **Email Service**: Gmail SMTP for MFA verification codes.
 
-- **OAuth Providers**: GitHub and 42 School for third-party authentication
-- **Email Service**: Gmail SMTP for MFA verification codes
-
+#### Crontab
+Separate container that periodically sends requests to the Daphne server to perform actions.
 
 ## Documentation 🛠️👷🏻‍♂️
 
