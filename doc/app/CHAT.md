@@ -57,18 +57,38 @@ The Chat App manages core communication features within the application, includi
 - Push resulting events to relevant channel groups
   - (Detailed validation and error handling are described in [**Validation & Security**](#validation--security))
 
+### Notification delivery
+
+- User-scoped events → `user_{id}` group (private push)
+- Chat events → `chat_{uuid}` group (room push)
+- Presence broadcasts → `online_users` group (connected online users only)
+
+### Game invitations
+
+- Deliver real-time game invitations between users and persist them as notifications for all recipients, including those who are offline.
+- Validate sender is not the recipient, validate settings, and ensure neither party is already in a `pending or ongoing GameRoom`.
+- Transactionally create a `GameInvitation` record with status `PENDING` and a `Notification` with action `game_invite`.
+- Send the `game_invite` WebSocket event to the recipient’s `user_{id} group` (private push), and also persist a sender copy so the invite can be canceled or queried later.
+   
+- On `reply_game_invite`:
+  - If **accept**
+    - Re-validate;
+    - Create a `GameRoom`;
+    - Mark the invitation `ACCEPTED`;
+    - Update notifications, and broadcast `game_accepted` to both users.
+  - If **decline**
+    - Mark the invitation `DECLINED`;
+    - Update notifications, and broadcast `game_declined`.
+   
+- Support explicit `cancel_game_invite` by the sender to mark the invitation `CANCELLED` and notify the invitee.
+- Optionally expire stale `PENDING` invitations via a background job and notify sender and recipient when that happens.
+
 ### Presence handling
 
 - Increment / decrement per-connection counter (`nb_active_connexions`) on connect / disconnect
 - Consider user offline when counter == 0; persist offline state to DB/Redis
 - Periodic cron (e.g., every 30 min) to detect inactive sessions and force-offline stale connections
 - Refresh `last_activity` on each meaningful API/WebSocket request
-
-### Notification delivery
-
-- User-scoped events → `user_{id}` group (private push)
-- Chat events → `chat_{uuid}` group (room push)
-- Presence broadcasts → `online_users` group (connected online users only)
 
 <br />
 
@@ -191,8 +211,23 @@ The chat system revolves around three main models: `Chat`, `ChatMessage`, and `N
     - `id` (UUID): Unique notification ID  
     - `receiver` (ForeignKey to Profile): User receiving the notification  
     - `data` (JSON): Arbitrary notification-specific data  
-    - `action` (enum): Type of notification (`game_invite`, `reply_game_invite`, `new_tournament`, `new_friend`,    `message`)  
+    - `action` (enum): Type of notification (`game_invite`, `reply_game_invite`, `new_tournament`, `new_friend`, `message`)  
     - `is_read` (boolean): Whether notification has been read  
+  </details>
+
+### 🔸 `GameInvitation`:
+
+- Represents a real-time game invitation sent from one user to another
+
+  <details>
+    <summary>See Fields details</summary>
+
+    - `id` (UUID): Unique invitation ID  
+    - `sender` (ForeignKey to Profile): User who sent the invitation  
+    - `invitee` (ForeignKey to Profile): Optional field for special invite handling  
+    - `recipient` (ForeignKey to Profile): User receiving the invitation  
+    - `status` (enum): Invitation status (`pending`, `accepted`, `declined`, `cancelled`)  
+    - `settings` (JSON): Game-specific options or configurations for the invitation  
   </details>
 
 <br />
@@ -222,7 +257,7 @@ The chat system revolves around three main models: `Chat`, `ChatMessage`, and `N
 
 Each user establishes a WebSocket connection (one per browser tab), enabling:
   - Joining groups: `user_{id}`, `chat_{uuid}`, `online_users`
-  - Receiving real-time events including messages, likes/unlikes on messages, friend additions, game invitations, notifications for newly created tournaments.
+  - Receiving real-time events including chat messages, likes/unlikes on messages, friend additions, game invitations, notifications for newly created tournaments.
 
 
 ### Channel Groups:
@@ -422,7 +457,7 @@ Connection is opened when a user logs in and remains active until the user logs 
 
 #### CLIENT --> SERVER
 
-<a id="client-server-game-invite"></a>
+<a id="protocol-game-invite"></a>
 - 💠 `game_invite`
 
   Invite a user to duel
@@ -440,22 +475,6 @@ Connection is opened when a user logs in and remains active until the user logs 
   *Calls `DuelEvent.send_game_invite` to send an invitation to the specified user.*
   </details>
 
-<a id="client-server-cancel-game-invite"></a>
-- 💠 `cancel_game_invite`
-
-  Cancel the game invitation sent by the user
-
-  <details>
-  <summary>View fields and Server-side processing</summary>
-
-  | Field       | Type     | Description             |
-  |:------------|:---------|:------------------------|
-  | `username`  | `string` | username of the invitee |
-
-  *Server-side processing:*   
-  *Calls `DuelEvent.cancel_game_invite` to cancel the sent invitation.*
-  </details>
-
 <a id="protocol-reply-game-invite"></a>
 - 💠 `reply_game_invite`
 
@@ -471,6 +490,22 @@ Connection is opened when a user logs in and remains active until the user logs 
 
   *Server-side processing:*   
   *Calls `DuelEvent.reply_game_invite` to process the acceptance or decline.*
+  </details>
+
+<a id="protocol-cancel-game-invite"></a>
+- 💠 `cancel_game_invite`
+
+  Cancel the game invitation sent by the user
+
+  <details>
+  <summary>View fields and Server-side processing</summary>
+
+  | Field       | Type     | Description             |
+  |:------------|:---------|:------------------------|
+  | `username`  | `string` | username of the invitee |
+
+  *Server-side processing:*   
+  *Calls `DuelEvent.cancel_game_invite` to cancel the sent invitation.*
   </details>
 
 <br />
@@ -491,24 +526,7 @@ Connection is opened when a user logs in and remains active until the user logs 
   | `avatar`   | `string`   | avatar url of the inviter |
   </details>
 
-  [▶︎ See UI behavior]()
-
-- 💠 `game_invite_canceled`
-
-  Sent to the inviter when the server cancels the invitation, or to both the inviter and invitee when the inviter cancels the invitation.
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field       | Type               | Description               |
-  |:------------|:-------------------|:--------------------------|
-  | `username`  | `string` \| `null` | username of the inviter   |
-  | `nickname`  | `string` \| `null` | nickname of the inviter   |
-  | `message`   | `string` \| `null` | reason why the server cancels the invitation |
-  | `client_id` | `string`           | id of the websocket instance of the browser tab from which the invitation is sent |
-  </details>
-
-  [▶︎ See UI behavior]()
+  [▶︎ See UI behavior](#game_invite)
 
 - 💠 `game_accepted`
 
@@ -525,7 +543,7 @@ Connection is opened when a user logs in and remains active until the user logs 
   | `avatar`   | `string`   | avatar url of the invitee         |
   </details>
 
-  [▶︎ See UI behavior]()
+  [▶︎ See UI behavior](#game_accepted)
 
 - 💠 `game_declined`
 
@@ -540,7 +558,26 @@ Connection is opened when a user logs in and remains active until the user logs 
   | `nickname` | `string`   | nickname of the invitee           |
   </details>
 
-  [▶︎ See UI behavior]()
+  [▶︎ See UI behavior](#game_declined)
+
+<br />
+
+- 💠 `game_invite_canceled`
+
+  Sent to the inviter when the server cancels the invitation, or to both the inviter and invitee when the inviter cancels the invitation.
+
+  <details>
+  <summary>View fields</summary>
+
+  | Field       | Type               | Description               |
+  |:------------|:-------------------|:--------------------------|
+  | `username`  | `string` \| `null` | username of the inviter   |
+  | `nickname`  | `string` \| `null` | nickname of the inviter   |
+  | `message`   | `string` \| `null` | reason why the server cancels the invitation |
+  | `client_id` | `string`           | id of the websocket instance of the browser tab from which the invitation is sent |
+  </details>
+
+  [▶︎ See UI behavior](#game_invite_canceled)
 
 <br />
 
@@ -603,6 +640,10 @@ Connection is opened when a user logs in and remains active until the user logs 
 - **Backend protections:**
   - JWT auth is mandatory.
   - Resource access checked at every API/WebSocket action.
+  - Use `transaction.atomic()` and `select_for_update()` for invitation acceptance to ensure atomic state changes.
+  - Only the original sender can cancel an invitation.
+  - Rate limiting applied to invitation sending to prevent spam.
+  - All game settings and `client_id` values strictly sanitized and validated.
 
 <br />
 
@@ -760,23 +801,23 @@ Connection is opened when a user logs in and remains active until the user logs 
 #### Basic UI Components
 
 - Main component
-  - `Notification Button` in Navbar:  
+  - `NotificationButton`:  
     Displays the notifications bell icon with an unread badge and toggles the notifications dropdown.
 
-  - `Notifications List`:  
+  - `NotificationsList`:  
     Fetches and renders notifications, supports infinite scroll, and updates according to user actions.
 
-- Child components
-  - `List item - new friend`:  
+- Child components (`NotificationListItem`)
+  - New friend:  
     Renders "new friend" notifications and provides navigation to the friend's profile.
 
-  - `List item - Game invitations`:  
+  - Game invitations:  
     Renders "game invitation" notifications with action buttons to accept or decline.
 
-  - `List item - New tournament`:  
+  - New tournament:  
     Renders "new tournament" notifications with a "Participate" button that navigate to the tournament registration.
 
-- `Notification Toast`:  
+- Notification Toast:  
   Displays toast pop-ups for new notifications.
 
 #### User-triggered Events
@@ -841,14 +882,18 @@ Connection is opened when a user logs in and remains active until the user logs 
 #### Server-triggered Events
 
 <a id="new_friend"></a>
-
 💠 `new_friend`
+
 - Show a notification toast, add an unread badge on the Notification button in Navbar.
+
+<br />
 
 <a id="game_invite"></a>
-
 💠 `game_invite`
+
 - Show a notification toast, add an unread badge on the Notification button in Navbar.
+
+<br />
 
 <a id="new_tournament"></a>
 💠 `new_tournament`
@@ -860,32 +905,102 @@ Connection is opened when a user logs in and remains active until the user logs 
 
 #### Basic UI Components
 
-- Chat interface
-  - Game invitation button
-  - Invitation sending modal
+- In `Chat`
+  - `Invite to Play` button:  
+    Opens a modal to send a game invitation to another user
 
-- Duel menu page
+  - `InviteGameModal`:  
+    Allows selecting game options and sends the invitation
 
-- Duel page (lobby)
+- `DuelMenu`:  
+  Sends a game invitation using user search
+
+- `Duel`:  
+  Displays the current duel status (`INVITING`, `STARTING`, `CANCELED`, `DECLINED`, etc.), opponent information, and a countdown timer when status is `STARTING`
 
 #### User-triggered Events
 
-<a id="client-server-invite-game"></a>
 💠 Invite a user to play
 
 - Clicking the `Invite to play` button opens a modal to send a game invitation.
 - The `InviteGameModal` component manages this modal, including displaying game options and handling user interaction.
   - The modal allows the inviter to select game options; if some or all options are opted out, the default game settings are applied automatically.
-  - Clicking `Send invitation` sends a [`game_invite`](#client-server-game-invite) action via `socketManager`.
-- After sending the invitation, the modal closes, and navigation to the `/duel` route occurs with the invitation details in query parameters.
+  - Clicking `Send invitation` sends a [`game_invite`](#protocol-game-invite) action via `socketManager`.
+- After sending the invitation, the modal closes, and navigation to the **Duel page** (`/duel`) occurs with the invitation details in query parameters.
 
 <p align="center">
   <img src="../../assets/ui/chat-game-invitation.png" alt="Send Game invitation" width="480px" />
 </p>
 
+<p align="center">
+  <img src="../../assets/ui/chat-game-invitation-waiting.png" alt="Pending Game invitation" width="480px" />
+</p>
+
+- Users can invite others also from the Duel Menu page (`/duel-menu`) by using user search form.
+
+<p align="center">
+  <img src="../../assets/ui/duel-menu-game-invitation.png" alt="Send Game invitation" width="480px" />
+</p>
+
+<br />
+
+💠 Accept invitation
+
+- Clicking the `Accept` button in a game invitation notification first checks if the user is already in a duel (`/duel` page, `DUEL_STATUS.STARTING`).  
+  - If in another starting duel, shows an error toast and aborts.  
+  - If in an inviting state, cancels the existing invitation.
+- Waits for the server’s confirmation `game_accepted` event using a `Promise` after sending a [`reply_game_invite`](#protocol-reply-game-invite) action via `socketManager` with `accept = true`.
+- On confirmation, redirects to **Duel page** (`/duel`) with the new game’s details.
+
+<br />
+
+💠 Decline invitation
+
+- Clicking `Decline` button in Game invitation notification sends a [`reply_game_invite`](#protocol-reply-game-invite) action via `socketManager` with `accept = false`.
+- Updates the **Duel page** status to `INVITATION_DECLINED` and renders the relevant content.
+
+<br />
+
+💠 Cancel Game invitation
+
+- The inviter can cancel the invitaion. Clicking `Cancel invitaion` button in Duel page (`/duel`) sends [`cancel_game_invite`](#protocol-cancel-game-invite) action via `socketManager`.
+- Updates the **Duel page** status to `INVITATION_CANCELED` and the renders the relevant content.
+
 #### Server-triggered Events
 
-#### Flow chart
+<a id="game_accepted"></a>
+💠 `game_accepted`
+
+- The `duelInvitationAccepted` custom event is dispatched by `socketManager` with the game information in its detail.
+
+- For the inviter, if the current page is **Duel page**(`/duel`),
+  - Cancels matchmaking if in progress.
+  - Sets game information from the custom event detail.
+  - Updates page state to `STARTING`.
+  - Starts countdown and redirects to the Multiplayer Game page (`/multiplayer-game/{id}`) when timer ends.
+
+- For the invitee,
+  - `duelInvitationAccepted` event listener retrieves the game information from the event detail.
+  - Navigate to **Duel page** with the information as query parameters.
+  - Starts countdown and redirects to the Multiplayer Game page (`/multiplayer-game/{id}`) when timer ends.
+
+<br />
+
+<a id="game_declined"></a>
+💠 `game_declined`
+
+- If the current page is **Duel page** (`/duel`) and the **Duel page** status is `INVITING`, updates the **Duel page** status to `INVITATION_DECLINED` and renders the relevant content.
+- Shows a notification toast to inform the user.
+
+<br />
+
+<a id="game_invite_canceled"></a>
+💠 `game_invite_canceled`
+
+- If the current page is **Duel page** (`/duel`) and the **Duel page** status is `INVITING`, updates the **Duel page** status to `INVITATION_CANCELED` and renders the relevant content.
+- Shows a notification toast to inform the user.
+
+<br />
 
 ### 🔸 Online status
 
