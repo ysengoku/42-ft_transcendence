@@ -54,7 +54,7 @@ class DuelEvent:
             },
         }
 
-    def self_already_in_game(self, target, target_name, client_id):
+    def self_already_in_game(self, client_id):
         if any(self.consumer.user_profile.get_active_game_participation()):
             logger.warning("Error : user %s is in a game : can't join a game right now.", self.consumer.user.username)
             self.self_send_game_invite_cancelled(CancelMessages.ONGOING_GAME, client_id)
@@ -70,7 +70,7 @@ class DuelEvent:
             self.self_send_game_invite_cancelled(CancelMessages.NO_INVITE_FROM_YOURSELF, client_id)
             return
 
-        if self.self_already_in_game(sender, sender_name, client_id):
+        if self.self_already_in_game(client_id):
             return
         try:
             invitation = GameInvitation.objects.get(
@@ -188,7 +188,7 @@ class DuelEvent:
             logger.error("Profile does not exist : %s", str(e))
             return
 
-        if self.self_already_in_game(receiver, receiver_username, client_id):
+        if self.self_already_in_game(client_id):
             return
 
         if GameInvitation.objects.filter(sender=self.consumer.user_profile, status=GameInvitation.PENDING).exists():
