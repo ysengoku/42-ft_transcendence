@@ -1,6 +1,7 @@
 import logging
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
+from datetime import timedelta
 
 import requests
 from django.test import TestCase
@@ -161,9 +162,7 @@ class OAuth2EndpointsTests(TestCase):
     def test_oauth_callback_expired_state(self, mock_get):
         mock_get.return_value.status_code = 200
         oauth_conn = OauthConnection.objects.create_pending_connection("test_state", "github")
-        if oauth_conn:
-            oauth_conn.created_at = oauth_conn.created_at - oauth_conn.__class__.get_validity_duration() - oauth_conn.__class__.timedelta(minutes=1)
-            oauth_conn.save()
+        oauth_conn.date = oauth_conn.date - timedelta(minutes=5)
         
         response = self.client.get("/api/oauth/callback/github?code=test&state=test_state")
         self.assertEqual(response.status_code, 302)

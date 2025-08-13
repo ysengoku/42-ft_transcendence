@@ -52,13 +52,6 @@ env = environ.Env(
     NGINX_PORT=(str, ""),
     ACCESS_TOKEN_SECRET_KEY=(str, ""),
     REFRESH_TOKEN_SECRET_KEY=(str, ""),
-    # value by default is set to 255, but env value overwrites it if present
-    MAX_MESSAGE_LENGTH=(int, 255),
-    MAX_ALIAS_LENGTH=(int, 12),
-    MAX_TOURNAMENT_NAME_LENGTH=(int, 50),
-    # TODO: See if we can avoid setting a default value before -->
-    # TODO: for the docker to work without having the real value
-    # TODO: of SECRET_KEY yet                                  <--
     SECRET_KEY=(str, "default"),
     HOST_IP=(str, ""),
 )
@@ -73,13 +66,10 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("NODE_ENV") != "production"
 CRON_SECRET = env("CRON_SECRET")
 
-MAX_ALIAS_LENGTH = env("MAX_ALIAS_LENGTH")
-MAX_TOURNAMENT_NAME_LENGTH = env("MAX_TOURNAMENT_NAME_LENGTH")
-MAX_MESSAGE_LENGTH = env("MAX_MESSAGE_LENGTH")
-REQUIRED_PARTICIPANTS_OPTIONS = env.list(
-    "REQUIRED_PARTICIPANTS_OPTIONS",
-    default=["4", "8"],
-)
+MAX_MESSAGE_LENGTH=255
+MAX_TOURNAMENT_NAME_LENGTH=50
+MAX_ALIAS_LENGTH=12
+REQUIRED_PARTICIPANTS_OPTIONS=(4, 8)
 
 HOST_IP = env("HOST_IP")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=f"localhost,127.0.0.1,{HOST_IP}").split(",")

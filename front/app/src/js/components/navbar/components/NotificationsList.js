@@ -191,7 +191,7 @@ export class NotificationsList extends HTMLElement {
       this.observer = null;
     }
     if (this.loadMoreAnchor) {
-      this.list.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor.parentNode?.removeChild(this.loadMoreAnchor);
       this.loadMoreAnchor = null;
     }
   }
