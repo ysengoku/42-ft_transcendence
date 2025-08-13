@@ -105,24 +105,26 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 
 ```mermaid
 graph TB
-    subgraph "Client Browser"
-        UI[Frontend SPA<br/>Vanilla JS + Bootstrap]
-        WS_CLIENT[WebSocket Client]
-        GAME_ENGINE[3D Game Engine<br/>Three.js]
+    subgraph CLIENT["Client Browser"]
+        CLIENT_CONTENT[SPA<br/>Vanilla JS + Bootstrap<br/>Three.js]
     end
 
-    subgraph "Load Balancer"
-        NGINX[Nginx<br/>Reverse Proxy<br/>Static Files]
+    subgraph NGINX["Load Balancer"]
+        NGINX_CONTENT[Nginx<br/>Reverse Proxy<br/>Static Files]
     end
 
-    subgraph "Application Server"
-        DJANGO[Django Application<br/>Django Ninja API]
-        WS_SERVER[WebSocket Server<br/>Django Channels]
-        CRON[Crontab<br/>Background Tasks]
+    subgraph DAPHNE["Daphne Server"]
+        DJANGO_API[Django + Django Ninja<br/>HTTP Layer]
+        DJANGO_CHANNELS[Django Channels<br/>Websocket Layer</br>Workers]
     end
 
-    subgraph "Data Layer"
-        POSTGRES[PostgreSQL<br/>Primary Database]
+    subgraph CRON["Crontab"]
+        BACKGROUND_TASKS["Background Tasks"]
+    end
+
+    subgraph DATA_LAYER[Data Layer]
+        direction TB
+        POSTGRES[(PostgreSQL<br/>Primary Database)]
         REDIS[Redis<br/>WebSocket Sessions<br/>Pubsub]
     end
 
@@ -133,24 +135,21 @@ graph TB
     end
 
     %% Client connections
-    UI --> NGINX
-    WS_CLIENT -.->|WebSocket| NGINX
-    GAME_ENGINE --> UI
+    CLIENT --> NGINX
 
     %% Load balancer routing
-    NGINX --> DJANGO
-    NGINX -.->|WebSocket Upgrade| WS_SERVER
+    NGINX --> DAPHNE
+    NGINX -.->|WebSocket Upgrade| DJANGO_CHANNELS
 
-    %% Application layer
-    DJANGO --> POSTGRES
-    DJANGO --> REDIS
-    WS_SERVER --> REDIS
-    CRON --> POSTGRES
+    BACKGROUND_TASKS --Periodic API requests--> DJANGO_API
+
+    %% Daphne server
+    DAPHNE <--> DATA_LAYER
 
     %% External integrations
-    DJANGO --> GITHUB
-    DJANGO --> FORTYTWO
-    DJANGO --> GMAIL
+    DJANGO_API --> GITHUB
+    DJANGO_API --> FORTYTWO
+    DJANGO_API --> GMAIL
 
     %% Styling
     classDef frontend fill:#e1f5fe,color:#01579b
@@ -159,8 +158,8 @@ graph TB
     classDef logs fill:#fce4ec,color:#880e4f
     classDef external fill:#fff3e0,color:#e65100
 
-    class UI,WS_CLIENT,GAME_ENGINE frontend
-    class NGINX,DJANGO,WS_SERVER,CRON backend
+    class CLIENT_CONTENT,WS_CLIENT frontend
+    class NGINX_CONTENT,DJANGO_API,DJANGO_CHANNELS,BACKGROUND_TASKS backend
     class POSTGRES,REDIS database
     class GITHUB,FORTYTWO,GMAIL external
 ```
