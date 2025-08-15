@@ -855,7 +855,7 @@ Connection is opened when a user logs in and remains active until the user logs 
 💠 `new friend` notification element
 
 - Clicking the `See profile` button navigates the user to the friend's profile page (`/profile/{username}`).
-- [`read_notification` action](#client-server-read-notification) is sent via `socketManager` to mark this notification as read.
+- [`read_notification`](#client-server-read-notification) action is sent via `socketManager` to mark this notification as read.
 
   <img src="../../assets/ui/notification-new-friend.png" alt="New friend" width="240px" />
 
@@ -863,7 +863,7 @@ Connection is opened when a user logs in and remains active until the user logs 
 
 💠 `game invitation` notification element
 
-- [`read_notification` action](#client-server-read-notification) is sent via `socketManager` to mark this notification as read.
+- [`read_notification`](#client-server-read-notification) action is sent via `socketManager` to mark this notification as read.
 - Please refer to the [Game Invitations section](#game-invitations) for details.
 
   <img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation" width="240px" />
@@ -874,7 +874,7 @@ Connection is opened when a user logs in and remains active until the user logs 
 
 - Clicking the `Participate` button navigates the user to the Tournament menu page (`/tournament-menu`).
 - When the Tournament menu page loads, the registration form modal is shown.
-- [`read_notification` action](#client-server-read-notification) is sent via `socketManager` to mark this notification as read.
+- [`read_notification`](#client-server-read-notification) action is sent via `socketManager` to mark this notification as read.
 
   <img src="../../assets/ui/notification-new-tournament.png" alt="New tournament" width="240px" />
 
@@ -908,7 +908,6 @@ Connection is opened when a user logs in and remains active until the user logs 
 - In `Chat`
   - `Invite to Play` button:  
     Opens a modal to send a game invitation to another user
-
   - `InviteGameModal`:  
     Allows selecting game options and sends the invitation
 
@@ -1006,9 +1005,35 @@ Connection is opened when a user logs in and remains active until the user logs 
 
 #### Basic UI Components
 
-- Online status indicator in `Chat page` and `Profile page`
+- Online status indicator in:
+  - `Profile` (realtime-update)
+  - `UserSearch` in Navbar
+  - `ChatListItem` (realtime-update)
+  - `ChatMessageArea` (realtime-update)
+  - `ChatUserSearch`
+  - User search result in `DuelMenu` (realtime-update)
+
+#### Client-triggered Events
+
+- On each API request, if server responses include online status information (`is_online`), the client updates the corresponding UI elements to reflect the current status.
 
 #### Server-triggered Events
+
+<a id="user_online"></a>
+💠 `user_online`
+
+- Upon receiving `user_online` event, `socketManager` dispatches an `onlineStatus` custom event  
+  with `detail.online` set to `true`.
+- Components that support real-time updates have listeners for this event and update UI accordingly.
+
+<br/>
+
+<a id="user_offline"></a>
+💠 `user_offline`
+
+- Upon receiving `user_offline` event, `socketManager` dispatches an `onlineStatus` custom event  
+  with `detail.online` set to `false`.
+- Components that support real-time status updates have listeners for this event and update their UI accordingly.
 
 ---
 
