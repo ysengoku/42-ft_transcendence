@@ -143,6 +143,22 @@ export class GameOptions extends HTMLElement {
   }
 
   /**
+   * @description Format selected game options as query parameters and return it. Used for local game.
+   * @returns {string | null}
+   */
+  get selectedOptionsAsQueryParamsForLocalGame() {
+    this.storeOptionsToLocalStorage();
+    const selectedOptions = this.selectedOptionsAsObject;
+    let queryParams = '';
+    queryParams += `score_to_win=${selectedOptions.score_to_win}`;
+    queryParams += `&game_speed=${selectedOptions.game_speed}`;
+    queryParams += `&time_limit=${selectedOptions.time_limit}`;
+    queryParams += `&ranked=${selectedOptions.ranked}`;
+    queryParams += `&cool_mode=${selectedOptions.cool_mode}`;
+    return queryParams;
+  }
+
+  /**
    * @description Store the current `selectedOptions` state to the browser's local storage.
    * This ensures user preferences persist across sessions.
    * @returns {void}
