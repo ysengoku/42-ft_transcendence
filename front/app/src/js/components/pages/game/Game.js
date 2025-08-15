@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import audiourl from '/audio/score_sound.mp3?url';
-import pedro from '/3d_models/pedro.glb?url';
+import pedro from '/3d_models/pull_pedro.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
 import chair from '/3d_models/chair.glb?url';
@@ -57,33 +57,83 @@ export class Game extends HTMLElement {
 
     log.info('Game options:', this.#state.gameOptions);
   }
+  createOnDocumentKeyDown(keyMap, Bumpers, Workers) {
+      return (e) => {
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea') {
+          return; // Do not process key events on input or textarea elements
+        }
+        if (e.defaultPrevented) {
+          return; // Do noplayerglb if the event was already processed
+        }
+        var keyCode = e.code;
+        if (keyCode != 'KeyA' && keyCode != 'KeyD') keyMap[keyCode] = true; 
+        if (keyCode == 'Escape') {
+        if (isPaused == false) {
+          stop();
+          let i = 0;
+          while (i <= 6) Workers[i++].postMessage([-1, -1, 'pause']);
+          isPaused = true;
+        } else {
+          let i = 0;
+          while (i <= 6) Workers[i++].postMessage([-1, -1, 'resume']);
+          isPaused = false;
+          start();
+        }
+      }
+      if (keyCode == 'KeyR') {
+        stop();
+        resetBall(1);
+        let i = 0;
+        while (i <= 6) Workers[i++].terminate();
+        i = 0;
+        Coin.cylinderUpdate.set(-9.25, 3, 0);
+        while (i < 2) {
+          Bumpers[i].widthHalf = 0.5;
+          Bumpers[i].tableGlb.scale.z = 1;
+          Bumpers[i].lenghtHalf = 2.5;
+          Bumpers[i].tableGlb.scale.x = 1;
+          Bumpers[i].controlReverse = false;
+          Bumpers[i].cubeUpdate.set(0, 1, i == 1 ? 9 : -9);
+          Bumpers[i].speed = 0.25;
+          i++;
+        }
+        isPaused = false;
+        loadedFontP1.position.x = 100;
+        loadedFontP2.position.x = 100;
+        keyMap['KeyD'] = false;
+        keyMap['KeyA'] = false;
+        keyMap['ArrowRight'] = false;
+        keyMap['ArrowLeft'] = false;
+        gamePlaying = true;
+        initGame();
+      }
+        // keyMap[keyCode] = true;
+        e.preventDefault();
+      };
+    }
 
-  // disconnectedCallback() {
-  // }
+    createOnDocumentKeyUp(keyMap) {
+      return (e) => {
+        if (e.defaultPrevented) {
+          return; // Do noplayerglb if the event was already processed
+        }
+        var keyCode = e.code;
+        keyMap[keyCode] = false;
+        e.preventDefault();
+      };
+    }
+  disconnectedCallback() {
+    document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
+    if (this.onDocumentKeyDown) {
+      document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+    }
+    if (this.onDocumentKeyUp) {
+      document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+    }
+  }
 
   game() {
-    (() => {
-      let oldPushState = history.pushState;
-      history.pushState = function pushState() {
-        let ret = oldPushState.apply(this, arguments);
-        window.dispatchEvent(new Event('pushstate'));
-        window.dispatchEvent(new Event('locationchange'));
-        return ret;
-      };
-
-      let oldReplaceState = history.replaceState;
-      history.replaceState = function replaceState() {
-        let ret = oldReplaceState.apply(this, arguments);
-        window.dispatchEvent(new Event('replacestate'));
-        window.dispatchEvent(new Event('locationchange'));
-        return ret;
-      };
-
-      window.addEventListener('popstate', () => {
-        window.dispatchEvent(new Event('locationchange'));
-      });
-    })();
-    const gameUrl = window.location.href;
     let gamePlaying = true;
     var keyMap = [];
     const WALL_WIDTH_HALF = 0.5;
@@ -104,7 +154,7 @@ export class Game extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.setClearColor(0x855988, 1);
-    // document.querySelector('#content').appendChild(renderer.domElement);
+    // console.log(document.querySelector('#state').gameOptions.time_limit);
     this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
@@ -155,29 +205,43 @@ export class Game extends HTMLElement {
 
     carboardGlb.rotation.y = Math.PI / 2;
     carboardGlb.position.z = 15;
+    let action = [[null, false], [null,false]];
+    let animations = [];
 
-    //   const playerGlb = (() => {
-    //     const pedro_model = new THREE.Object3D();
-    //     loaderModel.load(
-    //         pedro,
-    //         function(gltf) {
-    //             const model = gltf.scene;
-    //             model.position.y = 0;
-    //             model.position.z = -10;
-    //             model.position.x = 0;
-    //             model.rotation.y = 70;
-    //             mixer = new THREE.AnimationMixer(model);
-    //             pedro_model.add(gltf.scene);
-    //         },
-    //         undefined,
-    //         function(error) {
-    //             console.error(error);
-    //         },
-    //     );
-    //     pedro_model.scale.set(1, 1, 1);
-    //     scene.add(pedro_model);
-    //     return pedro_model;
-    // })();
+    const playerGlb = (() => {
+      const pedro_model = new THREE.Object3D();
+        loaderModel.load(
+          pedro,
+          function(gltf) {
+              const model = gltf.scene;
+              model.position.y = 5;
+              model.position.z = -20;
+              model.position.x = 0;
+              mixer = new THREE.AnimationMixer(model);
+              animations = gltf.animations;
+              action[1][0] = mixer.clipAction( animations[0] , model);
+              action[0][0] = mixer.clipAction( animations[1] , model);
+              // action[0][0].play();
+              action[1][0].play();
+              
+              // action.fadeOut();
+              // model.rotation.z = Math.PI / 2;
+              // model.rotation.x = Math.PI / 2;
+              model.rotation.y = Math.PI / 2;
+              // model.material.opacity = 1;
+              pedro_model.add(gltf.scene);
+          },
+          undefined,
+          function(error) {
+              console.error(error);
+          },
+        );
+      pedro_model.scale.set(0.5, 0.5, 0.5);
+      scene.add(pedro_model);
+      return pedro_model;
+    })();
+
+    // console.log('Game type:', this.#state);
 
     const chairGlb = (() => {
       const chairModel = new THREE.Object3D();
@@ -276,6 +340,7 @@ export class Game extends HTMLElement {
       bulletGlb.receiveShadow = true;
       scene.add(bulletGlb);
 
+      // bulletGlb.visible = false;
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY);
@@ -359,15 +424,6 @@ export class Game extends HTMLElement {
     });
 
     ligths[0].position.set(10, 10, 0);
-    ligths[0].castShadow = true;
-    ligths[0].shadow.mapSize.width = rendererWidth;
-    ligths[0].shadow.mapSize.height = rendererHeight;
-    ligths[0].shadow.camera.left = -10;
-    ligths[0].shadow.camera.right = 10;
-    ligths[0].shadow.camera.top = 10;
-    ligths[0].shadow.camera.bottom = -10;
-    ligths[0].shadow.camera.near = 0.1;
-    ligths[0].shadow.camera.far = 1000;
     ligths[1].position.set(10, 0, 30);
     ligths[2].position.set(0, 10, -30);
     ligths[3].position.set(0, -10, 0);
@@ -389,7 +445,7 @@ export class Game extends HTMLElement {
             model.position.y = 0;
             model.position.z = 0;
             model.position.x = 0;
-            mixer = new THREE.AnimationMixer(model);
+            // mixer = new THREE.AnimationMixer(model);
             tableModel.add(gltf.scene);
             gltf.scene.scale.set(0.5, 0.5, 0.5);
           },
@@ -518,7 +574,7 @@ export class Game extends HTMLElement {
       scene.add(planeMesh);
     })();
 
-    let delta;
+    let delta = 0;
     let ballSubtickZ;
     let ballSubtickX;
     let lastBumperCollided = 0;
@@ -613,18 +669,15 @@ export class Game extends HTMLElement {
     function moveAiBumper(calculatedPos) {
       keyMap['KeyA'] = false;
       keyMap['KeyD'] = false;
-      i++;
       if (
         calculatedBumperPos.x < calculatedPos.x - 0.1 &&
-        calculatedBumperPos.x < calculatedPos.x - 0.2 &&
-        i % 2 == 0
+        calculatedBumperPos.x < calculatedPos.x - 0.2
       ) {
         keyMap['KeyA'] = true;
         calculatedBumperPos.x += bumperP2Subtick;
       } else if (
         calculatedBumperPos.x > calculatedPos.x + 0.1 &&
-        calculatedBumperPos.x > calculatedPos.x + 0.2 &&
-        i % 2 == 0
+        calculatedBumperPos.x > calculatedPos.x + 0.2
       ) {
         keyMap['KeyD'] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
@@ -634,17 +687,17 @@ export class Game extends HTMLElement {
       }
     }
 
-    let choosenDifficulty = 2;
+    let choosenDifficulty = 0;
 
     let isMovementDone = false;
     let ballPredictedPos;
     let isCalculationNeeded = true;
     let difficultyLvl = [
-      [10, 750],
-      [8, 750],
-      [5, 500],
-      [3, 500],
-      [0, 500],
+      [10, 1025],
+      [8, 1025],
+      [5, 1000],
+      [2, 1000],
+      [1, 1000],
     ];
     // 1 && 500 / 5 && 500 / 8 && 750
 
@@ -686,7 +739,7 @@ export class Game extends HTMLElement {
         keyMap['KeyA'] = false;
       }
     }
-
+    let game_state = this.#state.gameOptions;
     var Workers = [];
     function initGame() {
       var blob = new Blob([
@@ -696,7 +749,18 @@ export class Game extends HTMLElement {
           'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
       ]);
       var blobURL = window.URL.createObjectURL(blob);
-
+      console.log('Game wewfwefew:', game_state);
+      let i = !game_state.time_limit ? 0 : game_state.time_limit * 60;
+      let intervalId = setInterval(myCallback, 1000);
+      function myCallback() {
+        if (i-- == 0)
+        {
+          console.log("time's up!");
+          clearInterval(intervalId);
+          stop();
+        }
+        console.log(i--);
+      }
       Workers = [
         new Worker(blobURL),
         new Worker(blobURL),
@@ -800,7 +864,9 @@ export class Game extends HTMLElement {
       Workers[5].postMessage([30000, -1, 'create']);
     }
 
+    var clock = new THREE.Clock();
     function animate() {
+      delta = clock.getDelta();
       step = null;
       let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x);
       let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z);
@@ -871,8 +937,9 @@ export class Game extends HTMLElement {
             (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
           !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
         )
+        {
           Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
-
+        }
         Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
         if (
           Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf ||
@@ -883,19 +950,11 @@ export class Game extends HTMLElement {
         Coin.cylinderUpdate.x += Coin.velocity.x;
         Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
         handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
-        // if (cameraX >= -20)
-        // {
-        //   if (cameraY >= 15)
-        //     camera.position.set(0, cameraY--, cameraX--);
-        //   else
-        //     camera.position.set(0, cameraY, cameraX--);
-        //   camera.lookAt(new THREE.Vector3(0,0,0));
-        // }
         currentSubtick++;
       }
       Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
       Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
-      Coin.CoinGlb.rotation.set(-Math.PI / 2 + Math.PI / 10, Coin.cylinderUpdate.x, -Math.PI / 2);
+      Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -Math.PI / 2);
       Bumpers[0].tableGlb.position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
       Bumpers[1].tableGlb.position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
 
@@ -907,13 +966,24 @@ export class Game extends HTMLElement {
     }
 
     let isPaused = false;
-
+    // let isFaded = false;
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
+    document.addEventListener('keydown', this.onDocumentKeyDown, true);
+    document.addEventListener('keyup', this.onDocumentKeyUp, true);
     let onDocumentKeyDown = function (event) {
       if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = event.code;
-      if (keyCode != 'KeyA' && keyCode != 'KeyD') keyMap[keyCode] = true;
+      if (keyCode != 'KeyA' && keyCode != 'KeyD') keyMap[keyCode] = true;           
+      if (action && !action[0][1])
+      {
+          action[0][1] = true;
+          action[0][0].play();
+          action[1][0].crossFadeTo(action[0][0],0.2);
+          // action[0][0].fadeIn(0.2);
+      }
       if (keyCode == 'Escape') {
         if (isPaused == false) {
           stop();
@@ -951,7 +1021,6 @@ export class Game extends HTMLElement {
         keyMap['KeyA'] = false;
         keyMap['ArrowRight'] = false;
         keyMap['ArrowLeft'] = false;
-
         gamePlaying = true;
         initGame();
       }
@@ -965,19 +1034,8 @@ export class Game extends HTMLElement {
       keyMap[keyCode] = false;
       event.preventDefault();
     };
-    function linkChange() {
-      const currentUrl = window.location.href;
-      if (!(currentUrl == gameUrl)) {
-        gamePlaying = false;
-        canRestart = false;
-        let i = 0;
-        while (i <= 6) Workers[i++].terminate();
-        stop(step);
-      }
-    }
     window.addEventListener('keydown', onDocumentKeyDown, true);
     window.addEventListener('keyup', onDocumentKeyUp, true);
-    window.addEventListener('locationchange', linkChange);
 
     return [camera, renderer, initGame];
   }
