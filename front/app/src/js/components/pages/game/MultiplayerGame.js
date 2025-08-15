@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
-import pedro from '/3d_models/lilguy.glb?url';
+import pedro from '/3d_models/pull_pedro.glb?url';
 import audiourl from '/audio/score_sound.mp3?url';
 import { router } from '@router';
 import { auth } from '@auth';
