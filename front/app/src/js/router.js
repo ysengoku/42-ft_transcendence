@@ -192,7 +192,9 @@ const router = (() => {
 
       const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
       const historyUpdateMethod = shouldReplace ? 'replaceState' : 'pushState';
-      window.history[historyUpdateMethod]({}, '', path);
+      const queryParamsString = queryParamsObject.toString();
+      const fullPath = queryParamsString ? `${path}?${queryParamsString}` : path;
+      window.history[historyUpdateMethod]({}, '', fullPath);
       this.isFristLoad = false;
       this.handleRoute(queryParamsObject);
     }
