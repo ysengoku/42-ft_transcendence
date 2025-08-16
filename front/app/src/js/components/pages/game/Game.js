@@ -25,6 +25,8 @@ export class Game extends HTMLElement {
 
   constructor() {
     super();
+    // this.stop = null;
+    // this.Workers = null;
   }
 
   async connectedCallback() {
@@ -57,7 +59,7 @@ export class Game extends HTMLElement {
 
     log.info('Game options:', this.#state.gameOptions);
   }
-  createOnDocumentKeyDown(keyMap, Bumpers, Workers) {
+  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer) {
       return (e) => {
         const tag = e.target.tagName.toLowerCase();
         if (tag === 'input' || tag === 'textarea') {
@@ -67,48 +69,22 @@ export class Game extends HTMLElement {
           return; // Do noplayerglb if the event was already processed
         }
         var keyCode = e.code;
-        if (keyCode != 'KeyA' && keyCode != 'KeyD') keyMap[keyCode] = true; 
+        let ai = 1; //WARNINNNNNNNNNNNNNNNNGGGGGGGGGGG TO CHANGE FOR THE OPTIONS OF AI
+        if (keyCode != 'KeyA' && keyCode != 'KeyD' && ai == 1) keyMap[keyCode] = true;
+        else if (ai == 0) keyMap[keyCode] = true;
         if (keyCode == 'Escape') {
-        if (isPaused == false) {
-          stop();
-          let i = 0;
-          while (i <= 6) Workers[i++].postMessage([-1, -1, 'pause']);
-          isPaused = true;
-        } else {
-          let i = 0;
-          while (i <= 6) Workers[i++].postMessage([-1, -1, 'resume']);
-          isPaused = false;
-          start();
+          if (gameStateContainer.isPaused == false) {
+            gameStartAndStop[1]();
+            let i = 0;
+            while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
+            gameStateContainer.isPaused = true;
+          } else {
+            let i = 0;
+            while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
+            gameStateContainer.isPaused = false;
+            gameStartAndStop[0]();
+          }
         }
-      }
-      if (keyCode == 'KeyR') {
-        stop();
-        resetBall(1);
-        let i = 0;
-        while (i <= 6) Workers[i++].terminate();
-        i = 0;
-        Coin.cylinderUpdate.set(-9.25, 3, 0);
-        while (i < 2) {
-          Bumpers[i].widthHalf = 0.5;
-          Bumpers[i].tableGlb.scale.z = 1;
-          Bumpers[i].lenghtHalf = 2.5;
-          Bumpers[i].tableGlb.scale.x = 1;
-          Bumpers[i].controlReverse = false;
-          Bumpers[i].cubeUpdate.set(0, 1, i == 1 ? 9 : -9);
-          Bumpers[i].speed = 0.25;
-          i++;
-        }
-        isPaused = false;
-        loadedFontP1.position.x = 100;
-        loadedFontP2.position.x = 100;
-        keyMap['KeyD'] = false;
-        keyMap['KeyA'] = false;
-        keyMap['ArrowRight'] = false;
-        keyMap['ArrowLeft'] = false;
-        gamePlaying = true;
-        initGame();
-      }
-        // keyMap[keyCode] = true;
         e.preventDefault();
       };
     }
@@ -131,6 +107,12 @@ export class Game extends HTMLElement {
     if (this.onDocumentKeyUp) {
       document.removeEventListener('keyup', this.onDocumentKeyUp, true);
     }
+    this.stop();
+    let i = 0;
+    
+    for (i = 0; i <= 5; i++)
+      this.Workers[i].terminate();
+    clearInterval(this.Workers[i]);
   }
 
   game() {
@@ -378,8 +360,7 @@ export class Game extends HTMLElement {
       };
     })(0, 1, 0);
 
-    let loadedFontP2 = null;
-    let loadedFontP1 = null;
+    let loadedFonts = [null, null]
 
     loaderFonts.load(fontWin, function (font) {
       const geometry = new TextGeometry('P l a y e r   2   w i n', {
@@ -389,17 +370,17 @@ export class Game extends HTMLElement {
         curveSegments: 12,
       });
 
-      loadedFontP2 = new THREE.Mesh(geometry, [
+      loadedFonts[1] = new THREE.Mesh(geometry, [
         new THREE.MeshPhongMaterial({ color: 0xad4000 }),
         new THREE.MeshPhongMaterial({ color: 0x5c2301 }),
       ]);
-      loadedFontP2.doubleSided = true;
-      loadedFontP2.position.x = 100;
-      loadedFontP2.position.y = 5;
-      loadedFontP2.position.z = 0;
-      loadedFontP2.scale.x = -1;
+      loadedFonts[1].doubleSided = true;
+      loadedFonts[1].position.x = 100;
+      loadedFonts[1].position.y = 5;
+      loadedFonts[1].position.z = 0;
+      loadedFonts[1].scale.x = -1;
 
-      scene.add(loadedFontP2);
+      scene.add(loadedFonts[1]);
     });
 
     loaderFonts.load(fontWin, function (font) {
@@ -410,17 +391,17 @@ export class Game extends HTMLElement {
         curveSegments: 12,
       });
 
-      loadedFontP1 = new THREE.Mesh(geometry, [
+      loadedFonts[0] = new THREE.Mesh(geometry, [
         new THREE.MeshPhongMaterial({ color: 0xad4000 }),
         new THREE.MeshPhongMaterial({ color: 0x5c2301 }),
       ]);
-      loadedFontP1.doubleSided = true;
-      loadedFontP1.position.x = 100;
-      loadedFontP1.position.y = 5;
-      loadedFontP1.position.z = 0;
-      loadedFontP1.scale.x = -1;
+      loadedFonts[0].doubleSided = true;
+      loadedFonts[0].position.x = 100;
+      loadedFonts[0].position.y = 5;
+      loadedFonts[0].position.z = 0;
+      loadedFonts[0].scale.x = -1;
 
-      scene.add(loadedFontP1);
+      scene.add(loadedFonts[0]);
     });
 
     ligths[0].position.set(10, 10, 0);
@@ -633,14 +614,14 @@ export class Game extends HTMLElement {
     function resetBall(direction) {
       if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE) {
         if (Bumpers[0].score == MAX_SCORE) {
-          loadedFontP1.position.x = 9;
-          loadedFontP2.position.x = 100;
+          loadedFonts[0].position.x = 9;
+          loadedFonts[1].position.x = 100;
           Bumpers[0].score = 0;
           Bumpers[1].score = 0;
         }
         if (Bumpers[1].score == MAX_SCORE) {
-          loadedFontP2.position.x = 9;
-          loadedFontP1.position.x = 100;
+          loadedFonts[1].position.x = 9;
+          loadedFonts[0].position.x = 100;
           Bumpers[0].score = 0;
           Bumpers[1].score = 0;
         }
@@ -740,85 +721,82 @@ export class Game extends HTMLElement {
       }
     }
     let game_state = this.#state.gameOptions;
-    var Workers = [];
-    function initGame() {
-      var blob = new Blob([
-        'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
-          'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
-          'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
-          'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
-      ]);
-      var blobURL = window.URL.createObjectURL(blob);
-      console.log('Game wewfwefew:', game_state);
-      let i = !game_state.time_limit ? 0 : game_state.time_limit * 60;
-      let intervalId = setInterval(myCallback, 1000);
+    // var Workers = [];
+    var blob = new Blob([
+      'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
+        'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
+        'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
+        'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {console.log(window.location.href);pauseTimer.resume();}}',
+    ]);
+    var blobURL = window.URL.createObjectURL(blob);
+    console.log('Game wewfwefew:', game_state);
+    i = !game_state.time_limit ? 10 : game_state.time_limit * 60;
+    let intervalId = setInterval(myCallback, 1000);
       function myCallback() {
         if (i-- == 0)
         {
-          console.log("time's up!");
+          if (Bumpers[0].score > Bumpers[1].score) {
+            loadedFonts[0].position.x = 9;
+            loadedFonts[1].position.x = 100;
+          } else if (Bumpers[1].score > Bumpers[0].score) {
+            loadedFonts[1].position.x = 9;
+            loadedFonts[0].position.x = 100;
+          }
+          Bumpers[0].score = 0;
+          Bumpers[1].score = 0;
+          gamePlaying = false;
           clearInterval(intervalId);
           stop();
         }
-        console.log(i--);
+        console.log(i);
       }
-      Workers = [
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-      ];
-      Workers[0].onmessage = function (e) {
-        Bumpers[e.data[0]].tableGlb.scale.x = 1;
-        Bumpers[e.data[0]].lenghtHalf = 2.5;
-      };
-      Workers[1].onmessage = function (e) {
-        Bumpers[Math.abs(e.data[0] - 1)].tableGlb.scale.x = 1;
-        Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
-        if (
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x <
-          -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-        ) {
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
-        } else if (
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
-          10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-        ) {
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
-        }
-      };
-      Workers[2].onmessage = function (e) {
-        Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
-      };
-      Workers[3].onmessage = function (e) {
-        Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
-      };
-      Workers[4].onmessage = function (e) {
-        Bumpers[e.data[0]].tableGlb.scale.z = 1;
-        Bumpers[e.data[0]].widthHalf = 0.5;
-      };
-      Workers[5].onmessage = function (e) {
-        Coin.cylinderUpdate.set(-9.25, 3, 0);
-      };
-      Workers[6].onmessage = function (e) {
-        if (Bumpers[0].score > Bumpers[1].score) {
-          loadedFontP1.position.x = 9;
-          loadedFontP2.position.x = 100;
-        } else if (Bumpers[1].score > Bumpers[0].score) {
-          loadedFontP2.position.x = 9;
-          loadedFontP1.position.x = 100;
-        }
-        Bumpers[0].score = 0;
-        Bumpers[1].score = 0;
-        gamePlaying = false;
-      };
-      Workers[6].postMessage([GAME_TIME, -1, 'create']);
-      start();
-    }
+    let Workers = [
+      new Worker(blobURL),
+      new Worker(blobURL),
+      new Worker(blobURL),
+      new Worker(blobURL),
+      new Worker(blobURL),
+      new Worker(blobURL),
+      intervalId
+    ];
+    Workers[0].onmessage = function (e) {
+      Bumpers[e.data[0]].tableGlb.scale.x = 1;
+      Bumpers[e.data[0]].lenghtHalf = 2.5;
+    };
+    Workers[1].onmessage = function (e) {
+      Bumpers[Math.abs(e.data[0] - 1)].tableGlb.scale.x = 1;
+      Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
+      if (
+        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x <
+        -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
+      ) {
+        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
+          -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
+      } else if (
+        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
+        10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
+      ) {
+        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
+          10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
+      }
+    };
+    Workers[2].onmessage = function (e) {
+      Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
+    };
+    Workers[3].onmessage = function (e) {
+      Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
+    };
+    Workers[4].onmessage = function (e) {
+      Bumpers[e.data[0]].tableGlb.scale.z = 1;
+      Bumpers[e.data[0]].widthHalf = 0.5;
+    };
+    Workers[5].onmessage = function (e) {
+      Coin.cylinderUpdate.set(-9.25, 3, 0);
+    };
+
+    // functio() {
+    //   start();
+    // }
 
     function manageBuffAndDebuff() {
       let chooseBuff = Math.floor(Math.random() * 5);
@@ -949,7 +927,7 @@ export class Game extends HTMLElement {
         }
         Coin.cylinderUpdate.x += Coin.velocity.x;
         Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
-        handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
+        // handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
         currentSubtick++;
       }
       Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
@@ -964,94 +942,47 @@ export class Game extends HTMLElement {
       renderer.render(scene, camera);
       start();
     }
+    let gameStartAndStop = [start, stop];
 
-    let isPaused = false;
-    // let isFaded = false;
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
-    this.onDocumentKeyUp = this.createOnDocumentKeyUp(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
+    let gameStateContainer = (() => {
+      let isPaused = false;
+      let isGamePlaying = false;
+      return {
+        get isPaused() {
+          return isPaused;
+        },
+        set isPaused(newIsPaused) {
+          isPaused = newIsPaused;
+        },
+        get isGamePlaying() {
+          return isGamePlaying;
+        },
+        set isGamePlaying(newIsGamePlaying) {
+          isGamePlaying = newIsGamePlaying;
+        },
+      };
+    })();
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer);
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(keyMap);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
-    let onDocumentKeyDown = function (event) {
-      if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
-        return; // Do noplayerglb if the event was already processed
-      }
-      var keyCode = event.code;
-      if (keyCode != 'KeyA' && keyCode != 'KeyD') keyMap[keyCode] = true;           
-      if (action && !action[0][1])
-      {
-          action[0][1] = true;
-          action[0][0].play();
-          action[1][0].crossFadeTo(action[0][0],0.2);
-          // action[0][0].fadeIn(0.2);
-      }
-      if (keyCode == 'Escape') {
-        if (isPaused == false) {
-          stop();
-          let i = 0;
-          while (i <= 6) Workers[i++].postMessage([-1, -1, 'pause']);
-          isPaused = true;
-        } else {
-          let i = 0;
-          while (i <= 6) Workers[i++].postMessage([-1, -1, 'resume']);
-          isPaused = false;
-          start();
-        }
-      }
-      if (keyCode == 'KeyR') {
-        stop();
-        resetBall(1);
-        let i = 0;
-        while (i <= 6) Workers[i++].terminate();
-        i = 0;
-        Coin.cylinderUpdate.set(-9.25, 3, 0);
-        while (i < 2) {
-          Bumpers[i].widthHalf = 0.5;
-          Bumpers[i].tableGlb.scale.z = 1;
-          Bumpers[i].lenghtHalf = 2.5;
-          Bumpers[i].tableGlb.scale.x = 1;
-          Bumpers[i].controlReverse = false;
-          Bumpers[i].cubeUpdate.set(0, 1, i == 1 ? 9 : -9);
-          Bumpers[i].speed = 0.25;
-          i++;
-        }
-        isPaused = false;
-        loadedFontP1.position.x = 100;
-        loadedFontP2.position.x = 100;
-        keyMap['KeyD'] = false;
-        keyMap['KeyA'] = false;
-        keyMap['ArrowRight'] = false;
-        keyMap['ArrowLeft'] = false;
-        gamePlaying = true;
-        initGame();
-      }
-      event.preventDefault();
-    };
-    let onDocumentKeyUp = function (event) {
-      if (event.defaultPrevented || (!gamePlaying && !canRestart)) {
-        return; // Do noplayerglb if the event was already processed
-      }
-      var keyCode = event.code;
-      keyMap[keyCode] = false;
-      event.preventDefault();
-    };
-    window.addEventListener('keydown', onDocumentKeyDown, true);
-    window.addEventListener('keyup', onDocumentKeyUp, true);
 
-    return [camera, renderer, initGame];
+
+    return [camera, renderer, start, stop, Workers];
   }
 
   render() {
     this.innerHTML = ``;
 
-    const [camera, renderer, start] = this.game();
+    [this.camera, this.renderer, this.start, this.stop, this.Workers] = this.game();
     window.addEventListener('resize', function () {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      let rendererWidth = renderer.domElement.offsetWidth;
-      let rendererHeight = renderer.domElement.offsetHeight;
-      camera.aspect = rendererWidth / rendererHeight;
-      camera.updateProjectionMatrix();
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      let rendererWidth = this.renderer.domElement.offsetWidth;
+      let rendererHeight = this.renderer.domElement.offsetHeight;
+      this.camera.aspect = rendererWidth / rendererHeight;
+      this.camera.updateProjectionMatrix();
     });
-    start();
+    this.start();
   }
 }
 
