@@ -238,16 +238,16 @@ The chat system revolves around three main models: `Chat`, `ChatMessage`, and `N
 
 | Endpoint                          | Method | Description                                     | Params            | Returns (Code)             |
 | :-------------------------------- | :----- | :---------------------------------------------- | :---------------- | :------------------------- |
-| `/chats/`                         | GET    | Paginated list of user's chats                  | `limit`, `offset` | 200 `[ChatPreviewSchema]`  |
-| `/chats/{username}`               | PUT    | Open or create a chat, returns last 30 messages | -                 | 200/201 `ChatSchema`       |
-| `/chats/{username}/messages`      | GET    | Retrieve chat messages (paginated)              | `limit`, `offset` | 200 `[ChatMessageSchema]`  |
+| `/chats/`                         | GET    | Paginated list of user's chats                  | `limit`, `offset` | 200, 401                   |
+| `/chats/{username}`               | PUT    | Open or create a chat, returns last 30 messages | -                 | 200/201, 401, 404          |
+| `/chats/{username}/messages`      | GET    | Retrieve chat messages (paginated)              | `limit`, `offset` | 200, 401, 404              |
 
 ### Notifications
 
 | Endpoint                          | Method | Description                                     | Params                       | Returns (Code)             |
 | :-------------------------------- | :----- | :---------------------------------------------- | :--------------------------- | :------------------------- |
-| `/notifications/`                 | GET    | Paginated notification list                     | `is_read`, `limit`, `offset` | 200 `[NotificationSchema]` |
-| `/notifications/mark_all_as_read` | POST   | Mark all notifications as read                  | -                            | 200  
+| `/notifications/`                 | GET    | Paginated notification list                     | `is_read`, `limit`, `offset` | 200, 401                   |
+| `/notifications/mark_all_as_read` | POST   | Mark all notifications as read                  | -                            | 200, 401                   | 
 
 <br />
 
