@@ -3,6 +3,24 @@ The user management system is the cornerstone of the project, managing user auth
 
 Every other part of the project is affected by this syste; after all, the ability to correctly identify users and deal with their data is a requirement for any modern app.
 
+## Table of contents
+- [Key features](#key-features)
+    - [JWT Authentication](#jwt-authentication)
+    - [Authentication Endpoints And CSRF Protection](#authentication-endpoints-and-csrf-protection)
+    - [Password Restoration](#password-restoration)
+    - [Multi-Factor Authentication (MFA)](#multi-factor-authentication-mfa)
+    - [OAuth 2.0 Integration](#oauth-20-integration)
+    - [Social Networking Elements](#social-networking-elements)
+    - [User Search And User Profiles](#user-search-and-user-profiles)
+    - [User Settings](#user-settings)
+    - [Presence System](#presence-system)
+- [Implementation Details](#Implementation-details)
+    - [Backend](#backend)
+        - [Core Models](#core-models)
+        - [JWT Authentication Middleware](#jwt-authentication-middleware)
+    - [Frontend](#frontend)
+- [Testing](#testing)
+
 ## Key Features
 ### JWT Authentication
 The primary authentication mechanism is based on [JSON Web Tokens (JWT)](https://en.wikipedia.org/wiki/JSON_Web_Token). On [creating account or logging in](authentication-endpoints-and-csrf-protection), `access_token` and `refresh_token` are issued.
@@ -70,10 +88,11 @@ All of the new settings must conform to the constraints for each of the fields, 
 ### Presence System
 The application tracks and broadcasts user online status in real-time. TODO: link to the CHAT_AND_LIVE_EVENTS.md.
 
-## Backend Implementation Details
+## Implementation Details
+### Backend
 Backend side of the user management system in this project is implemented with `users` Django app (TODO: link to the high level explanation of the tech stack/overall backend overview). This app interacts with all other Django apps in the project, and was the first one that was developed.
 
-### Core Models
+#### Core Models
 The app's functionality is centered around two primary models: `User` and `Profile`, which share a one-to-one relationship.
 
 - `User`: Extending Django's default `AbstractUser`, this model is dedicated to authentication and authorization. It stores essential credentials like `username`, `email`, and `password`, as well as security-related fields for MFA and password resets. It also links to an `OauthConnection` model for users who sign up via third-party services (42 or Github).
@@ -81,13 +100,13 @@ The app's functionality is centered around two primary models: `User` and `Profi
 - `RefreshToken`: Manages the lifecycle of JWTs. It handles the creation of short-lived access tokens and long-lived refresh tokens, as well as their verification, rotation and revocation upon logout.
  There are two middlewares on the server that are responsible for handling requests: the one is for HTTP requests, and another is for WebSocket requests:
 
-### JWT Authentication Middleware
+#### JWT Authentication Middleware
 Middleware is triggered on every request/connection. Authentication middleware identifies the user who made request and restricts access of anonymous users to the system.
 
 - `JWTEndpointsAuthMiddleware`: Secures all HTTP API endpoints (except the ones you need to use to login in the first place) by validating the `access_token` provided in cookies. Populates each `request` with the user data.
 - `JWTWebsocketAuthMiddleware`: Secures all WebSocket endpoints using the `access_token` from cookies, populating the `scope` for real-time services like chat and the actual game.
 
-## Frontend Implementation Details
+## Frontend
 
 ## Testing
 `make tests-users` will initialize the tests related to the users management system.
