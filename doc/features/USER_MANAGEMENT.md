@@ -40,13 +40,13 @@ The way CSRF protection works is that malicious side that attempts CSRF attack c
 - `POST /api/signup`: Creates a new user account with a username, email, and password, if all the fields are valid. For security reasons, there are restrictions placed on passwords, which are specified in `settings.py`. Upon success, it returns JWTs in secure, HTTP-only cookies to start a session. Doesn't require CSRF token and issues a CSRF token.
 
 <p align="center">
-  <img src="../../assets/ui/register.png" alt="Chat User Search" width="480px" />
+  <img src="../../assets/ui/register.png" alt="Register Page" width="480px" />
 </p>
 
 - `POST /api/login`: Authenticates a user with their credentials. If MFA is enabled, it initiates the two-factor flow by sending a code. Otherwise, it returns user data and sets secure HTTP-only JWT cookies. Doesn't require CSRF token and issues a CSRF token.
 
 <p align="center">
-  <img src="../../assets/ui/login.png" alt="Chat User Search" width="480px" />
+  <img src="../../assets/ui/login.png" alt="Login Page" width="480px" />
 </p>
 
 - `DELETE /api/logout`: Securely logs out the user by revoking the refresh token and clearing the JWT cookies from the browser.
@@ -73,7 +73,7 @@ Friendship feature has following endpoints:
 - `POST /api/users/{username}/friends`: Adds a new friend. This action also creates a `new_friend` [notification](./CHAT_AND_LIVE_EVENTS.md) for the added user.
 
 <p align="center">
-  <img src="../../assets/ui/navbar-friendlist.png.png" alt="Chat User Search" width="240px" />
+  <img src="../../assets/ui/navbar-friendlist.png" alt="Friendlist" width="240px" />
 </p>
 
 - `DELETE /api/users/{username}/friends/{friend_to_remove}`: Removes a friend.
@@ -89,7 +89,7 @@ Each of the users have a lot of different data that is associated with them: the
 - `GET /api/users`: Retreives paginated list of users filtered based on query parameters. Users can be searched by their nickname or username.
 
 <p align="center">
-  <img src="../../assets/ui/navbar-usersearch.png" alt="Chat User Search" width="240px" />
+  <img src="../../assets/ui/navbar-usersearch.png" alt="Navbar User Search" width="240px" />
 </p>
 
 - `GET /api/users/{username}`: Retrieves the full public profile for a specified user, including game statistics like win/loss records, elo history, and best/worst enemies.
