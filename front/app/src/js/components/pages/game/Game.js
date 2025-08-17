@@ -57,9 +57,10 @@ export class Game extends HTMLElement {
     this.#state.gameOptions.time_limit = timeLimit === 'any' ? DEFAULT_GAME_OPTIONS.time_limit : timeLimit;
     this.#state.gameOptions.ranked = false;
 
-    log.info('Game options:', this.#state.gameOptions);
+    console.log('Game options:', this.#state.gameType);
   }
-  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer) {
+
+  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback) {
       return (e) => {
         const tag = e.target.tagName.toLowerCase();
         if (tag === 'input' || tag === 'textarea') {
@@ -69,25 +70,27 @@ export class Game extends HTMLElement {
           return; // Do noplayerglb if the event was already processed
         }
         var keyCode = e.code;
-        let ai = 1; //WARNINNNNNNNNNNNNNNNNGGGGGGGGGGG TO CHANGE FOR THE OPTIONS OF AI
-        if (keyCode != 'KeyA' && keyCode != 'KeyD' && ai == 1) keyMap[keyCode] = true;
-        else if (ai == 0) keyMap[keyCode] = true;
+        // let this.gameType = 1; //WARNINNNNNNNNNNNNNNNNGGGGGGGGGGG TO CHANGE FOR THE OPTIONS OF AI
+        if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == "ai") keyMap[keyCode] = true;
+        else if (this.#state.gameType != "ai") keyMap[keyCode] = true;
         if (keyCode == 'Escape') {
           if (gameStateContainer.isPaused == false) {
             gameStartAndStop[1]();
             let i = 0;
-            while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
+            if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
+            clearInterval(Timer.intervalId);
             gameStateContainer.isPaused = true;
           } else {
             let i = 0;
-            while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
+            if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
+            Timer.intervalId = setInterval(myCallback, 1000);
             gameStateContainer.isPaused = false;
             gameStartAndStop[0]();
           }
         }
         e.preventDefault();
       };
-    }
+  }
 
     createOnDocumentKeyUp(keyMap) {
       return (e) => {
@@ -98,7 +101,8 @@ export class Game extends HTMLElement {
         keyMap[keyCode] = false;
         e.preventDefault();
       };
-    }
+  }
+
   disconnectedCallback() {
     document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
     if (this.onDocumentKeyDown) {
@@ -109,25 +113,42 @@ export class Game extends HTMLElement {
     }
     this.stop();
     let i = 0;
-    
-    for (i = 0; i <= 5; i++)
-      this.Workers[i].terminate();
-    clearInterval(this.Workers[i]);
+    if (this.Workers != null)
+    {
+      for (i = 0; i <= 5; i++)
+        this.Workers[i].terminate();
+    }
+    clearInterval(this.TimerId);
   }
 
   game() {
     let gamePlaying = true;
     var keyMap = [];
     const WALL_WIDTH_HALF = 0.5;
-
+    let gameSpeed;
+    switch (this.#state.gameOptions.game_speed)
+    {
+      case "slow":
+        gameSpeed = 0.75;
+        break;
+      case "medium":
+        gameSpeed = 1.0;
+        break;
+      case "fast":
+        gameSpeed = 1.25;
+        break;
+      default:
+        gameSpeed = 1.0;
+        break;
+    }
     const BUMPER_1_BORDER = -10;
     const BUMPER_2_BORDER = -BUMPER_1_BORDER;
     const BALL_DIAMETER = 1;
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
-    let GAME_TIME = 60 * 10000000;
+    let GAME_TIME = this.#state.gameOptions.time_limit;
     let BALL_INITIAL_VELOCITY = 0.25;
-    let MAX_SCORE = 10;
+    let MAX_SCORE = this.#state.gameOptions.score_to_win;
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
     const TEMPORAL_SPEED_DECAY = 0.005;
 
@@ -154,7 +175,7 @@ export class Game extends HTMLElement {
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     let mixer;
-    const normalMaterial = new THREE.MeshNormalMaterial();
+    // const normalMaterial = new THREE.MeshNormalMaterial();
 
     const ligths = [
       new THREE.DirectionalLight(0xffffff),
@@ -247,48 +268,7 @@ export class Game extends HTMLElement {
     })();
     chairGlb.rotation.y = Math.PI / 2;
 
-    const Coin = ((posX, posY, posZ) => {
-      const CoinGlb = (() => {
-        const CoinModel = new THREE.Object3D();
-        loaderModel.load(
-          coin,
-          function (gltf) {
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.z = 0;
-            model.position.x = 0;
-            CoinModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        CoinModel.scale.set(0.45, 0.45, 0.45);
-        scene.add(CoinModel);
-        return CoinModel;
-      })();
-
-      CoinGlb.position.x = posX;
-      CoinGlb.position.y = posY;
-      CoinGlb.position.z = posZ;
-      // CoinGlb.rotation.y = -Math.PI / 2;
-      const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
-      const velocity = new THREE.Vector3(0.01, 0, 0);
-      let lenghtHalf = 0.25;
-
-      return {
-        get lenghtHalf() {
-          return lenghtHalf;
-        },
-        set lenghtHalf(newLenghtHalf) {
-          lenghtHalf = newLenghtHalf;
-        },
-        CoinGlb,
-        cylinderUpdate,
-        velocity,
-      };
-    })(-9.25, 1, 0);
+    // Coin
 
     const Ball = ((posX, posY, posZ) => {
       const bulletGlb = (() => {
@@ -325,7 +305,7 @@ export class Game extends HTMLElement {
       // bulletGlb.visible = false;
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
-      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY);
+      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * gameSpeed);
 
       let hasCollidedWithBumper1 = false;
       let hasCollidedWithBumper2 = false;
@@ -440,8 +420,6 @@ export class Game extends HTMLElement {
       })();
       tableGlb.castShadow = true;
       tableGlb.receiveShadow = true;
-      // tableGlb.position.z = -9;
-      // tableGlb.scale.set(0.5, 0.5, 0.5);
       tableGlb.position.x = posX;
       tableGlb.position.y = posY;
       tableGlb.position.z = posZ;
@@ -455,7 +433,7 @@ export class Game extends HTMLElement {
       let lenghtHalf = 2.5;
       let widthHalf = 0.5;
       let controlReverse = false;
-      let speed = 0.25;
+      let speed = 0.25 * gameSpeed;
       let score = 0;
 
       return {
@@ -632,7 +610,7 @@ export class Game extends HTMLElement {
       Ball.sphereUpdate.x = 0;
       Ball.sphereUpdate.z = 0;
       Ball.velocity.x = 0;
-      Ball.velocity.z = BALL_INITIAL_VELOCITY;
+      Ball.velocity.z = BALL_INITIAL_VELOCITY * gameSpeed;
       Ball.velocity.z *= direction;
     }
 
@@ -688,10 +666,10 @@ export class Game extends HTMLElement {
         let error = difficultyLvl[choosenDifficulty][0] * closeness;
         ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
         let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);
-        let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z);
+        let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
         if (BallPredictedVelocity.z > 0) {
           while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf) {
-            let totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x);
+            let totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x * gameSpeed);
             if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
               ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
               BallPredictedVelocity.x *= -1;
@@ -720,84 +698,143 @@ export class Game extends HTMLElement {
         keyMap['KeyA'] = false;
       }
     }
+
     let game_state = this.#state.gameOptions;
-    // var Workers = [];
-    var blob = new Blob([
+    let Timer = (() => {
+      let timeLeft = (!game_state.time_limit ? 10 : game_state.time_limit * 60);
+      let intervalId = setInterval(myCallback, 1000);
+      return {
+        get timeLeft() {
+          return timeLeft;
+        },
+        set timeLeft(newTimeLeft) {
+          timeLeft = newTimeLeft;
+        },
+        get intervalId() {
+          return intervalId;
+        },
+        set intervalId(newIntervalId) {
+          intervalId = newIntervalId;
+        },
+      };
+    })();
+      
+    function myCallback() {
+      if (Timer.timeLeft-- == 0)
+      {
+        if (Bumpers[0].score > Bumpers[1].score) {
+          loadedFonts[0].position.x = 9;
+          loadedFonts[1].position.x = 100;
+        } else if (Bumpers[1].score > Bumpers[0].score) {
+          loadedFonts[1].position.x = 9;
+          loadedFonts[0].position.x = 100;
+        }
+        Bumpers[0].score = 0;
+        Bumpers[1].score = 0;
+        gamePlaying = false;
+        clearInterval(Timer.intervalId);
+        stop();
+      }
+      console.log(Timer.timeLeft);
+    }
+    let Coin = null;
+    let Workers = null;
+    if (this.#state.gameOptions.cool_mode)
+    {
+      Coin = ((posX, posY, posZ) => {
+        const CoinGlb = (() => {
+          const CoinModel = new THREE.Object3D();
+          loaderModel.load(
+            coin,
+            function (gltf) {
+              const model = gltf.scene;
+              model.position.y = 0;
+              model.position.z = 0;
+              model.position.x = 0;
+              CoinModel.add(gltf.scene);
+            },
+            undefined,
+            function (error) {
+              console.error(error);
+            },
+          );
+          CoinModel.scale.set(0.45, 0.45, 0.45);
+          scene.add(CoinModel);
+          return CoinModel;
+        })();
+
+        CoinGlb.position.x = posX;
+        CoinGlb.position.y = posY;
+        CoinGlb.position.z = posZ;
+        const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
+        const velocity = new THREE.Vector3(0.01 * gameSpeed, 0, 0);
+        let lenghtHalf = 0.25;
+
+        return {
+          get lenghtHalf() {
+            return lenghtHalf;
+          },
+          set lenghtHalf(newLenghtHalf) {
+            lenghtHalf = newLenghtHalf;
+          },
+          CoinGlb,
+          cylinderUpdate,
+          velocity,
+        };
+      })(-9.25, 1, 0);
+    
+      var blob = new Blob([
       'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
         'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
         'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
         'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {console.log(window.location.href);pauseTimer.resume();}}',
-    ]);
-    var blobURL = window.URL.createObjectURL(blob);
-    console.log('Game wewfwefew:', game_state);
-    i = !game_state.time_limit ? 10 : game_state.time_limit * 60;
-    let intervalId = setInterval(myCallback, 1000);
-      function myCallback() {
-        if (i-- == 0)
-        {
-          if (Bumpers[0].score > Bumpers[1].score) {
-            loadedFonts[0].position.x = 9;
-            loadedFonts[1].position.x = 100;
-          } else if (Bumpers[1].score > Bumpers[0].score) {
-            loadedFonts[1].position.x = 9;
-            loadedFonts[0].position.x = 100;
-          }
-          Bumpers[0].score = 0;
-          Bumpers[1].score = 0;
-          gamePlaying = false;
-          clearInterval(intervalId);
-          stop();
+      ]);
+      var blobURL = window.URL.createObjectURL(blob);
+      console.log('Game wewfwefew:', game_state);
+      Workers = [
+        new Worker(blobURL),
+        new Worker(blobURL),
+        new Worker(blobURL),
+        new Worker(blobURL),
+        new Worker(blobURL),
+        new Worker(blobURL),
+      ];
+      Workers[0].onmessage = function (e) {
+        Bumpers[e.data[0]].tableGlb.scale.x = 1;
+        Bumpers[e.data[0]].lenghtHalf = 2.5;
+      };
+      Workers[1].onmessage = function (e) {
+        Bumpers[Math.abs(e.data[0] - 1)].tableGlb.scale.x = 1;
+        Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
+        if (
+          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x <
+          -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
+        ) {
+          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
+            -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
+        } else if (
+          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
+          10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
+        ) {
+          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
+            10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
         }
-        console.log(i);
-      }
-    let Workers = [
-      new Worker(blobURL),
-      new Worker(blobURL),
-      new Worker(blobURL),
-      new Worker(blobURL),
-      new Worker(blobURL),
-      new Worker(blobURL),
-      intervalId
-    ];
-    Workers[0].onmessage = function (e) {
-      Bumpers[e.data[0]].tableGlb.scale.x = 1;
-      Bumpers[e.data[0]].lenghtHalf = 2.5;
-    };
-    Workers[1].onmessage = function (e) {
-      Bumpers[Math.abs(e.data[0] - 1)].tableGlb.scale.x = 1;
-      Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
-      if (
-        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x <
-        -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-      ) {
-        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-          -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
-      } else if (
-        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
-        10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-      ) {
-        Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-          10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
-      }
-    };
-    Workers[2].onmessage = function (e) {
-      Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
-    };
-    Workers[3].onmessage = function (e) {
-      Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
-    };
-    Workers[4].onmessage = function (e) {
-      Bumpers[e.data[0]].tableGlb.scale.z = 1;
-      Bumpers[e.data[0]].widthHalf = 0.5;
-    };
-    Workers[5].onmessage = function (e) {
-      Coin.cylinderUpdate.set(-9.25, 3, 0);
-    };
-
-    // functio() {
-    //   start();
-    // }
-
+      };
+      Workers[2].onmessage = function (e) {
+        Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
+      };
+      Workers[3].onmessage = function (e) {
+        Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
+      };
+      Workers[4].onmessage = function (e) {
+        Bumpers[e.data[0]].tableGlb.scale.z = 1;
+        Bumpers[e.data[0]].widthHalf = 0.5;
+      };
+      Workers[5].onmessage = function (e) {
+        Coin.cylinderUpdate.set(-9.25, 3, 0);
+      };
+    }
+    
     function manageBuffAndDebuff() {
       let chooseBuff = Math.floor(Math.random() * 5);
       switch (chooseBuff) {
@@ -843,11 +880,12 @@ export class Game extends HTMLElement {
     }
 
     var clock = new THREE.Clock();
+    let isGameAi = this.#state.gameType;
     function animate() {
       delta = clock.getDelta();
       step = null;
-      let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x);
-      let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z);
+      let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * gameSpeed);
+      let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
       let currentSubtick = 0;
@@ -887,10 +925,9 @@ export class Game extends HTMLElement {
           Bumpers[1].score++;
           resetBall(1);
         }
-        if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
+        if (Coin != null && isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
           manageBuffAndDebuff();
         }
-
         if (
           ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
             (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
@@ -919,20 +956,27 @@ export class Game extends HTMLElement {
           Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
         }
         Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
-        if (
-          Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf ||
-          Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf
-        ) {
-          Coin.velocity.x *= -1;
+        if (Coin != null)
+        {
+          if (
+            Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf ||
+            Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf
+          ) {
+            Coin.velocity.x *= -1;
+          }
+          Coin.cylinderUpdate.x += Coin.velocity.x;
         }
-        Coin.cylinderUpdate.x += Coin.velocity.x;
         Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
-        // handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
+        if (isGameAi == "ai")
+          handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
         currentSubtick++;
       }
       Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-      Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
-      Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -Math.PI / 2);
+      if (Coin != null)
+      {
+        Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+        Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -Math.PI / 2);
+      }
       Bumpers[0].tableGlb.position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
       Bumpers[1].tableGlb.position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
 
@@ -962,19 +1006,19 @@ export class Game extends HTMLElement {
         },
       };
     })();
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer);
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback);
     this.onDocumentKeyUp = this.createOnDocumentKeyUp(keyMap);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
 
-    return [camera, renderer, start, stop, Workers];
+    return [camera, renderer, start, stop, Workers, Timer.intervalId];
   }
 
   render() {
     this.innerHTML = ``;
 
-    [this.camera, this.renderer, this.start, this.stop, this.Workers] = this.game();
+    [this.camera, this.renderer, this.start, this.stop, this.Workers, this.TimerId] = this.game();
     window.addEventListener('resize', function () {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
       let rendererWidth = this.renderer.domElement.offsetWidth;
