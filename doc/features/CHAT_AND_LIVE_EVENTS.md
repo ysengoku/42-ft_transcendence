@@ -421,9 +421,9 @@ Connection is opened when a user logs in and remains active until the user logs 
 <br />
 
 ## Backend
+Server of the project is able to handle WebSockets thanks to the Django Channels integration (TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses JWT authentication, like [the rest of the consumers in the project](./USER_MANAGEMENT.md#jwt-authentication).
 
 ### WebSocket connection
-
 - Open WebSocket (one connection per browser tab) on login
 - Authenticate token and accept/close connection
 - Join channel groups: `user_{id}`, `chat_{uuid}` (for each chat), `online_users`
@@ -467,86 +467,6 @@ Connection is opened when a user logs in and remains active until the user logs 
 - Consider user offline when counter == 0; persist offline state to DB/Redis
 - Periodic cron (e.g., every 30 min) to detect inactive sessions and force-offline stale connections
 - Refresh `last_activity` on each meaningful API/WebSocket request
-
-<br />
-
-```mermaid
----
-config:
-  layout: dagre
-  look: classic
-  theme: base
-  themeVariables:
-    lineColor: '#f7230c'
-    textColor: '#191919'
-    fontSize: 15px
-    nodeTextColor: '#000'
-    edgeLabelBackground: '#fff'
----
-flowchart TD
-  %% Clients
-  subgraph CLIENT
-  A["User Front-End (Browser Tab)"]
-  end
-
-
-  %% Backend components
-  subgraph BACKEND
-    B["EventConsumer (WebSocket)"]
-    C["Validation : action & data"]
-    D[Chat models, Notification, etc.]
-    E[Django Channels Groups]
-    I[DB Update]
-    J[Cron task]
-    K[User set Offline]
-  end
-
-  %% WebSocket groups
-  subgraph GROUPS
-    F["user_{id}"]
-    G["chat_{uuid}"]
-    H["online_users"]
-  end
-
-  %% WebSocket handshake
-  A -- "Open WebSocket (with JWT)" --> B
-
-  %% Crontab/Inactive disconnect
-  J -- "(periodic/offline detection)" --> K
-  K --> I
-  K --> E
-  B --> K
-
-  %% Join groups after validation
-  B -- "Authenticates + Accepts User" --> E
-  E -- "Add to user_{id}" --> F
-  E -- "Add to online_users" --> H
-  E -- "Add to each chat_{uuid}" --> G
-
-  %% Real-time message flow
-  A -- "WS action" --> B
-  B --> C
-  C -- "Valid data" --> D
-  D --> I
-
-  D -- "Broadcast to group" --> E
-
-  %% Group broadcasts back to clients
-  F -- "push notification" --> A
-  G -- "push chat event" --> A
-  H -- "push online/offline status" --> A
-
-  %% Error/Validation fails
-  C -- "Invalid data, close WS connection" --> A
-
-  
-  %% Styling
-  style CLIENT fill:#83ad5e,stroke:#333,stroke-width:2px
-  style BACKEND fill:#70a9cc,stroke:#333,stroke-width:2px
-  style GROUPS fill:#c589e8,stroke:#333,stroke-width:1px
-```
-
-<br />
 
 ### Core Models
 
