@@ -20,6 +20,7 @@ Every other part of the project is affected by this syste; after all, the abilit
         - [JWT Authentication Middleware](#jwt-authentication-middleware)
     - [Frontend](#frontend)
 - [Testing](#testing)
+- [Contributors](#contributors)
 
 ## Key Features
 ### JWT Authentication
