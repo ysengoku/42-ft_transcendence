@@ -95,8 +95,6 @@ OAuth 2.0 implementation for third-party authentication using GitHub and 42 Scho
 **Core Functions:**
 - `oauth_authorize()`: Generates authorization URL and creates pending connection
 - `oauth_callback()`: Handles OAuth callback and completes authentication
-- `check_api_availability()`: Health check for OAuth providers
-- `get_oauth_config()`: Retrieves platform-specific OAuth configuration
 
 ### Frontend Integration
 
@@ -143,7 +141,7 @@ OAUTH_CONFIG = {
         "auth_uri": "https://github.com/login/oauth/authorize",
         "token_uri": "https://github.com/login/oauth/access_token",
         "user_info_uri": "https://api.github.com/user",
-        "redirect_uris": f"{BASE_URL}/api/users/oauth/callback/github",
+        "redirect_uri": f"{BASE_URL}/api/users/oauth/callback/github",
         "scopes": ["user:email"],
     },
     "42": {
@@ -152,7 +150,7 @@ OAUTH_CONFIG = {
         "auth_uri": "https://api.intra.42.fr/oauth/authorize",
         "token_uri": "https://api.intra.42.fr/oauth/token",
         "user_info_uri": "https://api.intra.42.fr/v2/me",
-        "redirect_uris": f"{BASE_URL}/api/users/oauth/callback/42",
+        "redirect_uri": f"{BASE_URL}/api/users/oauth/callback/42",
         "scopes": ["public"],
     },
 }
@@ -218,6 +216,9 @@ For existing users with OAuth connections:
 - **State Validation:** State format and expiry validated
 - **Code Validation:** Authorization codes validated before token exchange
 - **User Data Validation:** OAuth profile data validated before account creation
+
+## OAuth 2.0 Flow Diagram
+![alt text](oauth2_flow_picture.png)
 
 ## Error Scenarios and Handling
 
