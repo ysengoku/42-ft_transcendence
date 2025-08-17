@@ -14,23 +14,24 @@ from users.models import OauthConnection, RefreshToken
 from users.router.utils import fill_response_with_jwt
 from users.schemas import OAuthCallbackParams
 
+
+def _redirect_error(msg: str, status: int) -> HttpResponseRedirect:
+    """Unified error redirect to frontend with proper encoding."""
+    return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(str(msg))}&code={status}")
+
+
 oauth2_router = Router()
 
 
-def get_oauth_config(platform: str) -> dict:
-    """
-    Retrieves OAuth configuration for the platform.
-    Raises 404 if the platform is unsupported.
-    """
+def _get_oauth_config(platform: str) -> dict:
+    """Retrieves OAuth configuration for the platform."""
     if platform not in settings.OAUTH_CONFIG:
         raise HttpError(404, f"Unsupported platform: {platform}")
     return settings.OAUTH_CONFIG[platform]
 
 
-def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
-    """
-    Quick health check for OAuth provider API using the OAuth endpoint
-    """
+def _check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
+    """Quick health check for OAuth provider API."""
     if platform == OauthConnection.FT:
         try:
             response = requests.get(config["oauth_uri"], timeout=2.0)
@@ -42,6 +43,47 @@ def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
     return True, ""
 
 
+def _validate_scopes(granted_scopes: set, platform: str) -> str | None:
+    """Validate that granted scopes are within allowed limits."""
+    allowed = settings.OAUTH_ALLOWED_SCOPES[platform]
+    if not granted_scopes.issubset(allowed):
+        extra = ", ".join(sorted(granted_scopes - allowed))
+        return f"Unexpected scopes: {extra}"
+    return None
+
+
+def _validate_callback_params(request: HttpRequest, platform: str) -> tuple[str, str] | HttpResponseRedirect:
+    """Validate OAuth callback parameters and state. Returns (code, state) or error redirect."""
+    config = _get_oauth_config(platform)
+
+    is_available, error_msg = _check_api_availability(platform, config)
+    if not is_available:
+        return _redirect_error(error_msg, 503)
+
+    params = request.GET
+    error = params.get("error")
+    error_description = params.get("error_description")
+    code = params.get("code")
+    state = params.get("state")
+
+    if error:
+        return _redirect_error(f"{error}: {error_description}", 422)
+
+    if not code or not state:
+        return _redirect_error("Missing code or state", 422)
+
+    oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
+    if not oauth_connection:
+        return _redirect_error("Invalid state", 422)
+
+    state_error = oauth_connection.check_state_and_validity(platform, state)
+    if state_error:
+        error_message, status_code = state_error
+        return _redirect_error(error_message, status_code)
+
+    return code, state
+
+
 @csrf_exempt
 @oauth2_router.get(
     "/authorize/{platform}",
@@ -49,26 +91,21 @@ def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
     response={200: MessageSchema, frozenset({404, 422}): MessageSchema},
 )
 def oauth_authorize(request: HttpRequest, platform: str):
-    """
-    Starts the OAuth2 authorization process.
-    Returns the authorization URL.
-    Raises 404 if the platform is unsupported (raised from def get_oauth_config).
-    Raises 422 if the platform is not available (raised from def check_api_availability).
-    """
-    config = get_oauth_config(platform)
-    is_available, error_msg = check_api_availability(platform, config)
+    """Starts the OAuth2 authorization process and returns the authorization URL."""
+    config = _get_oauth_config(platform)
+    is_available, error_msg = _check_api_availability(platform, config)
     if not is_available:
         return JsonResponse({"error": error_msg}, status=422)
 
     state = hashlib.sha256(os.urandom(32)).hexdigest()
-
     OauthConnection.objects.create_pending_connection(state, platform)
 
+    allowed_scopes = settings.OAUTH_ALLOWED_SCOPES[platform]
     params = {
         "response_type": "code",
         "client_id": config["client_id"],
-        "redirect_uri": config["redirect_uris"],
-        "scope": " ".join(config["scopes"]),
+        "redirect_uri": config["redirect_uri"],
+        "scope": " ".join(sorted(allowed_scopes)),
         "state": state,
     }
     return JsonResponse({"auth_url": f"{config['auth_uri']}?{urlencode(params)}"})
@@ -85,60 +122,45 @@ def oauth_callback(  # noqa: PLR0911
     platform: str,
     params: OAuthCallbackParams = Query(...),
 ):
-    """
-    Handles the OAuth2 callback.
-    Captures errors directly from the OAuth provider.
-    """
-    config = get_oauth_config(platform)
+    """Handles the OAuth2 callback and creates authenticated user session."""
+    # Validate callback parameters and state
+    validation_result = _validate_callback_params(request, platform)
+    if isinstance(validation_result, HttpResponseRedirect):
+        return validation_result
+    code, state = validation_result
 
-    is_available, error_msg = check_api_availability(platform, config)
-    if not is_available:
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_msg)}&code=404")
-
-    params = request.GET
-    error = params.get("error")
-    error_description = params.get("error_description")
-    code = params.get("code")
-    state = params.get("state")
-
-    if error:
-        error_message = quote(f"{error}: {error_description}")
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
-
-    if not code or not state:
-        error_message = quote("Missing code or state.")
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
-
+    # Get OAuth connection and config
     oauth_connection = OauthConnection.objects.for_state_and_pending_status(state).first()
-    if not oauth_connection:
-        error_message = quote("Invalid state.")
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
+    config = _get_oauth_config(platform)
 
-    state_error = oauth_connection.check_state_and_validity(platform, state)
-    if state_error:
-        error_message, status_code = state_error
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
-
-    access_token, token_error = oauth_connection.request_access_token(config, code)
+    # Exchange code for access token
+    provider_access, token_error = oauth_connection.request_access_token(config, code)
     if token_error:
-        error_message, status_code = token_error
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
+        msg, status = token_error
+        return _redirect_error(msg, status)
 
-    user_info, user_error = oauth_connection.get_user_info(config, access_token)
+    # Validate scopes
+    provider_access_token, granted_scopes = provider_access
+    scope_error = _validate_scopes(granted_scopes, platform)
+    if scope_error:
+        return _redirect_error(scope_error, 422)
+
+    # Get user info from provider
+    user_info, user_error = oauth_connection.get_user_info(config, provider_access_token)
     if user_error:
         error_message, status_code = user_error
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
+        return _redirect_error(error_message, status_code)
 
-    if platform not in [OauthConnection.FT, OauthConnection.GITHUB]:
-        error_message = quote("Unsupported platform")
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={error_message}&code=422")
-
+    # Create or update user
     user, user_creation_error = oauth_connection.create_or_update_user(user_info)
     if user_creation_error:
         error_message, status_code = user_creation_error
-        return HttpResponseRedirect(f"{settings.ERROR_REDIRECT_URL}?error={quote(error_message)}&code={status_code}")
+        return _redirect_error(error_message, status_code)
 
-    access_token, refresh_token_instance = RefreshToken.objects.create(user)
+    # Create JWT tokens and redirect to home
+    app_access_token_jwt, refresh_token_instance = RefreshToken.objects.create(user)
     return fill_response_with_jwt(
-        HttpResponseRedirect(settings.HOME_REDIRECT_URL), access_token, refresh_token_instance,
+        HttpResponseRedirect(settings.HOME_REDIRECT_URL),
+        app_access_token_jwt,
+        refresh_token_instance,
     )
