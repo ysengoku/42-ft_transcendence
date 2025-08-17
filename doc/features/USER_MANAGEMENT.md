@@ -5,7 +5,7 @@ Every other part of the project is affected by this syste; after all, the abilit
 
 ## Key Features
 ### JWT Authentication
-The primary authentication mechanism is based on [JSON Web Tokens (JWT)](https://en.wikipedia.org/wiki/JSON_Web_Token). On [creating account or logging in](authentication-endpoints-csrf-protection), `access_token` and `refresh_token` are issued.
+The primary authentication mechanism is based on [JSON Web Tokens (JWT)](https://en.wikipedia.org/wiki/JSON_Web_Token). On [creating account or logging in](authentication-endpoints-and-csrf-protection), `access_token` and `refresh_token` are issued.
 
 `access_token` is JWT, and contains signature and identity of the user. It's short-lived for security reasons. It has companion cookie (also JWT): `refresh_token`, which is long-lived, may be revoked by the server, and is responsible for refreshing the short-lived `access_token`. Refreshing is not done automatically: the client must call  special endpoint (`POST /api/refresh`), after which new `access_token` is granted, while the current `refresh_token` is rotated (the current one is revoked & the new one is issued).
 
@@ -13,7 +13,7 @@ Both tokens are [HTTP-only](https://owasp.org/www-community/HttpOnly) and [secur
 
 The benefits of the JWT authentication system (with refresh tokens) compared to the traditional session-based system is that it's easier on the database. It's not stateless, as pure JWT authentication, but pure stateless JWT authentication is not suitable for applications such as pong platform. Having refresh tokens is important to security ([video with simple explanation](https://www.youtube.com/watch?v=T0k-3Ze4NLo)).
 
-### Authentication Endpoints & CSRF Protection
+### Authentication Endpoints And CSRF Protection
 Server provides multiple endpoints for the necessary for secure creation, logging in and logging outof users. `signup` and `login` endpoints also issue [CSRF token (cookies-to-header approach)](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Cookie-to-header_token), another security measure of the project.
 
 The way CSRF protection works is that malicious side that attempts CSRF attack cannot read the cookies from another domain (Ponggers, in this case). However, the server expects it to be send in the header on each request. If they don't match, request fails, invalidating the attack. [Additional information.](https://stackoverflow.com/a/49301318)
@@ -44,13 +44,13 @@ Friendship feature has following endpoints:
 - `POST /api/users/{username}/friends`: Adds a new friend. This action also creates a `new_friend` [notification](./CHAT_AND_LIVE_EVENTS.md) for the added user.
 - `DELETE /api/users/{username}/friends/{friend_to_remove}`: Removes a friend.
 
-Blocking user have more effects than befriending them; blocked users are unable to chat or invite people who blocked them. Blocking user immediately hides the chat between two of them, as well hides them from the [search](#user-search-user-profiles).
+Blocking user have more effects than befriending them; blocked users are unable to chat or invite people who blocked them. Blocking user immediately hides the chat between two of them, as well hides them from the [search](#user-search-and-user-profiles).
 Blocking feature has following:
 - `GET /api/users/{username}/blocked_users`: Retrieves the list of users blocked by the authenticated user.
 - `POST /api/users/{username}/blocked_users`: Blocks a user, which also removes them from the friend list if they were friends.
 - `DELETE /api/users/{username}/blocked_users/{blocked_user_to_remove}`: Unblocks a user.
 
-### User Search & User Profiles
+### User Search And User Profiles
 Each of the users have a lot of different data that is associated with them: their username, nickname, elo, winrate, list of games, friendship/block status relative to the user currently viewing the profile... It is diplayed neatly on their profile page, which can be visited by other ([non-blocked](#social-networking-elements)) users.
 - `GET /api/users`: Retreives paginated list of users filtered based on query parameters. Users can be searched by their nickname or username.
 - `GET /api/users/{username}`: Retrieves the full public profile for a specified user, including game statistics like win/loss records, elo history, and best/worst enemies.
