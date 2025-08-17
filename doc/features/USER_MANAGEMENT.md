@@ -38,7 +38,17 @@ Server provides multiple endpoints for the necessary for secure creation, loggin
 The way CSRF protection works is that malicious side that attempts CSRF attack cannot read the cookies from another domain (Ponggers, in this case). However, the server expects it to be send in the header on each request. If they don't match, request fails, invalidating the attack. [Additional information.](https://stackoverflow.com/a/49301318)
 
 - `POST /api/signup`: Creates a new user account with a username, email, and password, if all the fields are valid. For security reasons, there are restrictions placed on passwords, which are specified in `settings.py`. Upon success, it returns JWTs in secure, HTTP-only cookies to start a session. Doesn't require CSRF token and issues a CSRF token.
+
+<p align="center">
+  <img src="../../assets/ui/register.png" alt="Chat User Search" width="480px" />
+</p>
+
 - `POST /api/login`: Authenticates a user with their credentials. If MFA is enabled, it initiates the two-factor flow by sending a code. Otherwise, it returns user data and sets secure HTTP-only JWT cookies. Doesn't require CSRF token and issues a CSRF token.
+
+<p align="center">
+  <img src="../../assets/ui/login.png" alt="Chat User Search" width="480px" />
+</p>
+
 - `DELETE /api/logout`: Securely logs out the user by revoking the refresh token and clearing the JWT cookies from the browser.
 - `POST /api/refresh`: Rotates the refresh token. It takes a valid `refresh_token` cookie and issues a new pair of access and refresh tokens to maintain the session without requiring the user to log in again. Refresh tokens aren't refreshed automatically, so the client has to call to this endpoint periodically.
 
@@ -61,6 +71,11 @@ Friends are special users who are "bookmarked" by the user. There are no special
 Friendship feature has following endpoints:
 - `GET /api/users/{username}/friends`: Fetches a user's list of friends.
 - `POST /api/users/{username}/friends`: Adds a new friend. This action also creates a `new_friend` [notification](./CHAT_AND_LIVE_EVENTS.md) for the added user.
+
+<p align="center">
+  <img src="../../assets/ui/navbar-friendlist.png.png" alt="Chat User Search" width="240px" />
+</p>
+
 - `DELETE /api/users/{username}/friends/{friend_to_remove}`: Removes a friend.
 
 Blocking user have more effects than befriending them; blocked users are unable to chat or invite people who blocked them. Blocking user immediately hides the chat between two of them, as well hides them from the [search](#user-search-and-user-profiles).
@@ -72,6 +87,11 @@ Blocking feature has following:
 ### User Search And User Profiles
 Each of the users have a lot of different data that is associated with them: their username, nickname, elo, winrate, list of games, friendship/block status relative to the user currently viewing the profile... It is diplayed neatly on their profile page, which can be visited by other ([non-blocked](#social-networking-elements)) users.
 - `GET /api/users`: Retreives paginated list of users filtered based on query parameters. Users can be searched by their nickname or username.
+
+<p align="center">
+  <img src="../../assets/ui/navbar-usersearch.png" alt="Chat User Search" width="240px" />
+</p>
+
 - `GET /api/users/{username}`: Retrieves the full public profile for a specified user, including game statistics like win/loss records, elo history, and best/worst enemies.
 - `GET /api/self`: A protected endpoint that returns the profile data for the currently authenticated user, including private information like the number of unread messages and notifications, as well as whther they currently play any game/hold a matchmaking queue or not.
 
