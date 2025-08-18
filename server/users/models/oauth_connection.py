@@ -1,14 +1,20 @@
 import logging
-from contextlib import suppress
 from datetime import timedelta
 from io import BytesIO
 
 import requests
 from django.core.files.base import ContentFile
-from django.db import models
+from django.db import DatabaseError, models
 from django.utils import timezone
 
 logger = logging.getLogger("server")
+
+# OAuth configuration constants
+OAUTH_API_HEALTH_CHECK_TIMEOUT = 2.0  # seconds
+OAUTH_TOKEN_REQUEST_TIMEOUT = 10  # seconds
+OAUTH_USER_INFO_TIMEOUT = 10  # seconds
+OAUTH_AVATAR_DOWNLOAD_TIMEOUT = 5  # seconds
+OAUTH_STATE_EXPIRY_MINUTES = 5  # minutes
 
 
 class OauthConnectionManager(models.Manager):
@@ -50,7 +56,8 @@ class OauthConnection(models.Model):
 
     PENDING = "pending"
     CONNECTED = "connected"
-    STATUS_CHOICES = ((PENDING, "Pending"), (CONNECTED, "Connected"))
+    USED = "used"
+    STATUS_CHOICES = ((PENDING, "Pending"), (CONNECTED, "Connected"), (USED, "Used"))
 
     state = models.CharField(max_length=64, editable=False)
     status = models.CharField(max_length=9, editable=False, choices=STATUS_CHOICES)
@@ -94,7 +101,7 @@ class OauthConnection(models.Model):
         Downloads the avatar image and saves it.
         If an error occurs, no avatar is loaded, and the process is silently ignored.
         """
-        avatar_response = requests.get(avatar_url, timeout=5)
+        avatar_response = requests.get(avatar_url, timeout=OAUTH_AVATAR_DOWNLOAD_TIMEOUT)
         if avatar_response.status_code == 200:  # noqa: PLR2004
             avatar_io = BytesIO(avatar_response.content)
 
@@ -121,8 +128,14 @@ class OauthConnection(models.Model):
                     "OAuth avatar fetch: user_id=%s connection_type=%s url=%s",
                     getattr(user, "id", None), self.connection_type, avatar_url
                 )
-                with suppress(Exception):
+                try:
                     self.save_avatar(avatar_url, user)
+                except (requests.RequestException, ValueError, OSError) as exc:
+                    # Log specific avatar download errors but don't fail OAuth flow
+                    logger.warning(
+                        "OAuth avatar download failed: user_id=%s url=%s error=%s",
+                        getattr(user, "id", None), avatar_url, str(exc)
+                    )
 
         self.save()
         logger.info(
@@ -148,15 +161,27 @@ class OauthConnection(models.Model):
                     "grant_type": "authorization_code",
                 },
                 headers={"Accept": "application/json"},
-                timeout=10,
+                timeout=OAUTH_TOKEN_REQUEST_TIMEOUT,
             )
 
-            token_data = token_response.json()
+            try:
+                token_data = token_response.json()
+            except ValueError:
+                logger.warning(
+                    "OAuth token response invalid JSON: platform=%s status=%s",
+                    self.connection_type, token_response.status_code
+                )
+                return None, ("Authentication failed. Please try again.", 422)
 
             if token_response.status_code != 200 or "access_token" not in token_data:  # noqa: PLR2004
                 provider_error = token_data.get("error", "provider_error")
                 is_app_error = provider_error in ["invalid_request", "invalid_client", "invalid_grant"]
-                error_message = f"Provider error: {provider_error}"
+                # Log specific error but return generic message to prevent information leakage
+                logger.warning(
+                    "OAuth token request failed: platform=%s error=%s status=%s",
+                    self.connection_type, provider_error, token_response.status_code
+                )
+                error_message = "Authentication failed. Please try again."
                 status_code = 401 if is_app_error else 503
                 return None, (error_message, status_code)
 
@@ -169,9 +194,9 @@ class OauthConnection(models.Model):
         except requests.exceptions.Timeout:
             error_message = "The request timed out while retrieving the access token."
             return None, (error_message, 408)
-        except ValueError:
-            error_message = "Invalid JSON response from authorization server"
-            return None, (error_message, 422)
+        except requests.RequestException:
+            logger.warning("OAuth token request network error: platform=%s", self.connection_type)
+            return None, ("Failed to connect to authentication server", 503)
 
     def get_user_info(self, config: dict, access_token: str) -> tuple:
         """
@@ -181,16 +206,28 @@ class OauthConnection(models.Model):
             user_resp = requests.get(
                 config["user_info_uri"],
                 headers={"Authorization": f"Bearer {access_token}"},
-                timeout=10,
+                timeout=OAUTH_USER_INFO_TIMEOUT,
             )
             if user_resp.status_code != 200:  # noqa: PLR2004
                 try:
-                    err = user_resp.json().get("error", "api_error")
+                    provider_error = user_resp.json().get("error", "api_error")
                 except ValueError:
-                    err = "api_error"
-                return None, (err, 401)
+                    provider_error = "api_error"
+                # Log specific error but return generic message to prevent information leakage
+                logger.warning(
+                    "OAuth user info request failed: platform=%s error=%s status=%s",
+                    self.connection_type, provider_error, user_resp.status_code
+                )
+                return None, ("Failed to retrieve user information", 401)
 
-            return user_resp.json(), None
+            try:
+                return user_resp.json(), None
+            except ValueError:
+                logger.warning(
+                    "OAuth user info response invalid JSON: platform=%s status=%s",
+                    self.connection_type, user_resp.status_code
+                )
+                return None, ("Failed to retrieve user information", 422)
 
         except requests.Timeout:
             return None, ("The request timed out while retrieving user information.", 408)
@@ -205,13 +242,32 @@ class OauthConnection(models.Model):
         Returns a tuple (error_message, status_code) if invalid.
         """
         now = timezone.now()
-        if self.date + timedelta(minutes=5) < now:
+        if self.date + timedelta(minutes=OAUTH_STATE_EXPIRY_MINUTES) < now:
             return "Expired state: authentication request timed out", 408
 
         if state != self.state or platform != self.connection_type:
             return "Invalid state or platform", 422
 
+        if self.status == self.USED:
+            return "State already used", 422
+
         return None
+
+    def mark_state_as_used(self) -> None:
+        """
+        Marks the OAuth state as used to prevent replay attacks.
+        Should be called after successful state validation.
+        """
+        try:
+            self.status = self.USED
+            self.save()
+        except DatabaseError as exc:
+            logger.error(
+                "Failed to mark OAuth state as used: state=%s platform=%s error=%s",
+                self.state, self.connection_type, str(exc)
+            )
+            # Re-raise as this is a critical security operation
+            raise
 
     def create_or_update_user(self, user_info: dict) -> tuple:
         """
