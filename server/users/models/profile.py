@@ -290,12 +290,24 @@ class Profile(models.Model):
             return f"User {user_to_block.user.username} is already blocked."
         self.blocked_users.add(user_to_block)
         self.remove_friend(user_to_block)
+        from chat.models import Chat
+
+        chat = Chat.objects.for_exact_participants(user_to_block, self).first()
+        if not chat:
+            return None
+        chat.messages.all().update(is_read=True)
         return None
 
     def unblock_user(self, blocked_user_to_remove) -> None | str:
         if not self.blocked_users.filter(pk=blocked_user_to_remove.pk).exists():
             return f"User {blocked_user_to_remove.user.username} is not in your blocklist."
         self.blocked_users.remove(blocked_user_to_remove)
+        from chat.models import Chat
+
+        chat = Chat.objects.for_exact_participants(blocked_user_to_remove, self).first()
+        if not chat:
+            return None
+        chat.messages.filter(is_really_read=False).update(is_read=False)
         return None
 
     def to_username_nickname_avatar_schema(self):
@@ -347,7 +359,6 @@ class Profile(models.Model):
         pending_invitation_as_inviter: GameInvitation | None = self.sent_invites.filter(status="pending").first()
 
         return active_game_room, active_tournament, pending_invitation_as_inviter
-
 
 
 class Friendship(models.Model):
