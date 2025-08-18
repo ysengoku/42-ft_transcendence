@@ -300,7 +300,17 @@ export class ChatMessageArea extends HTMLElement {
     const messageContent = messageElement.querySelector('.bubble');
     messageContent.id = message.id;
 
-    if (message.sender === this.#state.data.username) {
+    if (message.sender === this.#state.loggedInUsername) {
+      messageElement.classList.add(
+        'right-align-message',
+        'd-flex',
+        'flex-row',
+        'justify-content-end',
+        'align-items-center',
+      );
+      messageContent.classList.add('ms-5');
+      messageElement.querySelector('.chat-message-avatar').remove();
+    } else {
       messageElement.classList.add(
         'left-align-message',
         'd-flex',
@@ -322,16 +332,6 @@ export class ChatMessageArea extends HTMLElement {
         };
         socketManager.sendMessage('livechat', readMessage);
       }
-    } else {
-      messageElement.classList.add(
-        'right-align-message',
-        'd-flex',
-        'flex-row',
-        'justify-content-end',
-        'align-items-center',
-      );
-      messageContent.classList.add('ms-5');
-      messageElement.querySelector('.chat-message-avatar').remove();
     }
     messageElement.querySelector('.message-content').textContent = message.content;
     message.is_liked ? messageContent.classList.add('liked') : messageContent.classList.remove('liked');
