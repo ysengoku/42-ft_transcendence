@@ -132,7 +132,8 @@ class ChatEvent:
         try:
             message = ChatMessage.objects.get(pk=message_id)
             message.is_read = True
-            message.save()
+            message.is_really_read = True
+            message.save(update_fields=["is_read", "is_really_read"])
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist", message_id)
 
