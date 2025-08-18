@@ -62,9 +62,10 @@ export class LocalGameMenu extends HTMLElement {
 
   navigateToGame(event) {
     event.preventDefault();
-    const queryParam = { ...this.gameOptionsForm.selectedOptionsAsObject };
-    queryParam.type = event.target.id === 'local-game-classic' ? 'classic' : 'ai';
-    router.navigate('/singleplayer-game', queryParam);
+    let queryParam = '?type=';
+    queryParam += event.target.id === 'local-game-classic' ? 'classic' : 'ai';
+    queryParam += `&${this.gameOptionsForm.selectedOptionsAsQueryParamsForLocalGame}`;
+    router.navigate(`/singleplayer-game${queryParam}`);
   }
 
   template() {
