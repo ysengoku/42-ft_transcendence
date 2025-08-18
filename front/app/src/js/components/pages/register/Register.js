@@ -9,10 +9,15 @@ export class Register extends HTMLElement {
   }
 
   async connectedCallback() {
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     const authStatus = await auth.fetchAuthStatus();
-    this.isLoggedin = authStatus.success;
-    if (this.isLoggedin) {
-      router.navigate('/home');
+    if (authStatus.success) {
+      router.redirect('/home');
+      return;
+    }
+    if (authStatus.status === 429) {
+      return;
     }
     this.render();
   }
@@ -26,6 +31,7 @@ export class Register extends HTMLElement {
   }
 
   render() {
+    this.innerHTML = '';
     this.innerHTML = this.template();
 
     this.form = this.querySelector('form');
@@ -68,22 +74,15 @@ export class Register extends HTMLElement {
     const response = await apiRequest('POST', API_ENDPOINTS.SIGNUP, userData, false, false);
 
     if (response.success) {
-      console.log('Registration successful:', response);
-      if (response.status === 200) {
-        const userInformation = {
-          username: response.data.username,
-          nickname: response.data.nickname,
-          avatar: response.data.avatar,
-        };
-        auth.storeUser(userInformation);
-        router.navigate(`/home`, response.user);
-      }
-    } else {
-      console.error('Registration failed:', response.msg);
-      this.feedbackField = this.querySelector('#signup-failed-feedback');
-      this.feedbackField.innerHTML = '';
-      showFormErrorFeedback(this.feedbackField, response.msg);
+      router.redirect('/home', response.user);
+      return;
     }
+    if (response.status === 429) {
+      return;
+    }
+    this.feedbackField = this.querySelector('#signup-failed-feedback');
+    this.feedbackField.innerHTML = '';
+    showFormErrorFeedback(this.feedbackField, response.msg);
   }
 
   checkInputFields() {
@@ -91,8 +90,12 @@ export class Register extends HTMLElement {
     isFormValid = isFieldFilled(this.usernameField, this.usernameFeedback, INPUT_FEEDBACK.EMPTY_USERNAME);
     isFormValid = isFieldFilled(this.emailField, this.emailFeedback, INPUT_FEEDBACK.EMPTY_EMAIL) && isFormValid;
     isFormValid =
-      passwordFeedback(this.passwordField, this.passwordRepeatField,
-          this.passwordFeedback, this.passwordRepeatFeedback) && isFormValid;
+      passwordFeedback(
+        this.passwordField,
+        this.passwordRepeatField,
+        this.passwordFeedback,
+        this.passwordRepeatFeedback,
+      ) && isFormValid;
 
     return isFormValid;
   }
@@ -101,7 +104,7 @@ export class Register extends HTMLElement {
     return `
       <div class="container">
         <div class="row justify-content-center py-4">
-          <div class="form-container col-12 col-md-4 p-4"> 
+          <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4"> 
               <div id="signup-failed-feedback"></div>
               <form class="w-100">
                 <legend class="mt-4 mb-5 border-bottom">Sign Up</legend>

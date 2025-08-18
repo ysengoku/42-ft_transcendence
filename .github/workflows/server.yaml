@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - live_chat
   pull_request:
     branches:
       - main
@@ -42,8 +43,8 @@ jobs:
       - name: Check and fix style errors
         working-directory: server/
         run: |
-          ruff check --ignore SIM105 --ignore F401 --ignore LOG015 --ignore ERA001 --ignore PIE790 --ignore T201 --ignore BLE001 --ignore S106 --ignore S105 --fix ./users
-          ruff format .
+          ruff check --fix . #./users
+          ruff format . #./users
           
       - name: Run Django migrations
         working-directory: server/

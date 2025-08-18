@@ -1,10 +1,3 @@
-# Define the paths for volumes and backups
-VOLUME_PATH := ./volumes
-DATABASE_VOLUME_PATH := ./volumes/database
-MEDIA_VOLUME_PATH := ./volumes/media
-STATIC_VOLUME_PATH := ./volumes/static
-
-# Couleurs
 GREEN=\033[0;32m
 YELLOW=\033[0;33m
 RED=\033[0;31m
@@ -12,69 +5,42 @@ MAGENTA=\033[0;35m
 BLUE=\033[0;34m
 RESET=\033[0m
 
-# Define backup directories for each volume type
-# BACKUP_DIR := ./backups
-# DB_BACKUP_DIR := $(BACKUP_DIR)/database
-# MEDIA_BACKUP_DIR := $(BACKUP_DIR)/media
-# STATIC_BACKUP_DIR := $(BACKUP_DIR)/static
-
-# Define the Docker Compose files for development and production
 DOCKER_COMPOSE = docker-compose.yaml
 
-# Define the name of the services
 FRONTEND_SERVICE = front
 BACKEND_SERVICE = server
 DATABASE_SERVICE = database
 NGINX_SERVICE = nginx
 
-# Default to production mode
-NODE_ENV ?= development
+# NODE_ENV is used to determine if the overall build is dev or prod (for the server and nginx containers too)
+NODE_ENV = development
 
-# Create all necessary backup directories
-# create-backup-dirs:
-# 	mkdir -p $(DB_BACKUP_DIR)
-# 	mkdir -p $(MEDIA_BACKUP_DIR)
-# 	mkdir -p $(STATIC_BACKUP_DIR)
-
-# Ensure that the .env file exists
-check-env:
+ensure-env:
 	@if [ ! -f .env ]; then \
 		echo ".env file not found, copying from .env.example"; \
 		cp .env.example .env; \
 	fi
 
+update-ip:
+	./update_ip.sh
 
-# Build Docker images
-build: check-env
+build: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) build
 
-# Start containers with backup option
-up: check-env #  ensure-volumes
-#	$(MAKE) backup-volumes
-	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up -d --build
+up: ensure-env update-ip
+	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up --build
 
-# Development mode
-dev: export NODE_ENV=development
-dev: check-env # ensure-volumes
-#	$(MAKE) backup-volumes
-	NODE_ENV=development docker compose -f $(DOCKER_COMPOSE) up --build
+dev: NODE_ENV=development
+dev:
+	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE)  --profile development up --build
+prod: NODE_ENV=production
+prod: up
 
-# Production mode
-prod: export NODE_ENV=production
-prod: check-env # ensure-volumes
-#	$(MAKE) backup-volumes
-	$(MAKE) up
-
-# Stop containers with backup
 down:
-#	$(MAKE) backup-volumes
 	docker compose -f $(DOCKER_COMPOSE) down
 
-# Restart containers
 restart: down up
 
-# Logs for each service
-# Logs for each service
 logs:
 	@printf "${MAGENTA}--------------------${RESET}\n"
 	docker ps -a
@@ -94,35 +60,68 @@ logs:
 	@docker logs $(NGINX_SERVICE)
 	@printf "${BLUE}--------------------${RESET}\n"
 
-
-# Rebuild containers
-rebuild: check-env
-	docker compose -f $(DOCKER_COMPOSE) up --build -d
-
-# Run Django migrations
 migrate:
 	docker exec $(BACKEND_SERVICE) python ./manage.py makemigrations && docker exec $(BACKEND_SERVICE) python ./manage.py migrate
 
-# Open a bash shell inside the backend container
 bash-backend:
 	docker compose exec -it $(BACKEND_SERVICE) bash
 
-# Open a bash shell inside the frontend container
 bash-frontend:
-	docker compose exec -it $(FRONTEND_SERVICE) bash
+	docker compose exec -it $(FRONTEND_SERVICE) sh
 
 fclean:
 	docker compose down --volumes
 	docker system prune -a
 	docker volume prune -a
 
-# RUN WITH MAKE -i
-update-nginx:
-	docker cp ./nginx/nginx.conf nginx:/etc/nginx/
-	docker exec nginx nginx -s reload
-
 populate-db:
 	docker exec server ./manage.py populate_db
 
+delete-invites:
+	docker exec server ./manage.py delete_pending_invitations
+
+delete-games:
+	docker exec server ./manage.py delete_games
+
 clean-db:
 	docker exec server ./manage.py flush --no-input
+
+test-front:
+	docker exec $(FRONTEND_SERVICE) npm run test
+
+lint-front:
+	docker exec $(FRONTEND_SERVICE) npm run lint
+
+# Run Django tests with statistics
+tests:
+	./test_with_stats.sh
+
+# Run tests by module (fast with --keepdb)
+tests-users:
+	./test_with_stats.sh users
+
+tests-chat:
+	./test_with_stats.sh chat
+
+tests-pong:
+	./test_with_stats.sh pong
+
+tests-tournaments:
+	./test_with_stats.sh tournaments
+
+# Run tests with fresh database (slower but clean)
+tests-fresh:
+	./test_with_stats.sh --fresh-db
+
+tests-users-fresh:
+	./test_with_stats.sh users --fresh-db
+
+tests-chat-fresh:
+	./test_with_stats.sh chat --fresh-db
+
+tests-pong-fresh:
+	./test_with_stats.sh pong --fresh-db
+
+tests-tournaments-fresh:
+	./test_with_stats.sh tournaments --fresh-db
+.PHONY: bash-backend bash-frontend build clean-db delete-games delete-invites dev down ensure-env fclean lint-front logs migrate populate-db prod restart test-front up update-ip

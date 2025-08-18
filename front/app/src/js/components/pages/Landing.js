@@ -11,12 +11,16 @@ export class Landing extends HTMLElement {
   }
 
   async connectedCallback() {
-    this.#state.isLoggedIn = auth.getStoredUser() ? true : false;
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
+    const authStatus = await auth.fetchAuthStatus();
+    this.#state.isLoggedIn = authStatus.success ? true : false;
     this.render();
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = '';
+    this.innerHTML = this.style() + this.template();
   }
 
   template() {
@@ -36,7 +40,7 @@ export class Landing extends HTMLElement {
         height: 240px;
       }
     </style>
-    <div class="signpost d-flex justify-content-center align-items-start">
+    <div class="signpost d-flex justify-content-center align-items-start mb-2">
       <span class="pole"></span>
       <div class="d-flex flex-column justify-content-center align-items-center mt-3" id="landing-buttons">
         <a class="btn btn-wood landing-btn-1 mb-2" href="/login" role="button">Login</a>
@@ -67,7 +71,7 @@ export class Landing extends HTMLElement {
       max-width: 320px;
     }
     .signpost {
-       padding-top: 216px;
+       padding-top: 232px;
     }
     #landing-buttons {
       z-index: 4;
@@ -93,6 +97,16 @@ export class Landing extends HTMLElement {
       right: 20%;
       clip-path: polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%, 0% 50%);
     }
+    .landing-btn-1:hover,
+     .landing-btn-2:hover {
+      color: var(--pm-gray-300);
+    }
+    .landing-btn-1:hover {
+      transform: perspective(240px) rotateY(-45deg);
+    }
+    .landing-btn-2:hover {
+      transform: perspective(240px) rotateY(45deg);
+    }
     .pole {
       display: block;
       position: relative;
@@ -101,18 +115,16 @@ export class Landing extends HTMLElement {
       width: 16px;
       border-radius: 4px;
   
-      --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 50%);
-      --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 20%);
-      --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 60%);
-      --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-600) 88%);
-      background: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
-      /* box-shadow: -1px 4px 1px #8F501A;
-      linear-gradient(78deg,
-      var(--clrs1),
-      var(--clrs2) 20% 70%,
-      var(--clrs3) 90%,
-      var(--clrs4)) 0 0 / 100% .2rem;
-      filter: url('/filters/wood-grain.svg#wave-filter-0'); */
+      --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 50%);
+      --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 40%);
+      --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 60%);
+      --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 90%);
+      background: var(--pm-primary-400)
+        linear-gradient(88deg, 
+          var(--clrs1),
+          var(--clrs2) 40% 60%,
+          var(--clrs3) 90%,
+         var(--clrs4)) 0 0 / 100% 0.2rem;
     }
     </style>
     `;

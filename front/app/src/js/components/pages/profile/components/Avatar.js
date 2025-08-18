@@ -1,3 +1,5 @@
+import { DEFAULT_AVATAR } from '@env';
+
 export class ProfileAvatar extends HTMLElement {
   #state = {
     avatarUrl: '',
@@ -13,14 +15,24 @@ export class ProfileAvatar extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
+
+    const image = this.querySelector('img');
+    if (image) {
+      const isSafe = /\.(jpg|jpeg|png|webp)$/i.test(this.#state.avatarUrl.split('?')[0]);
+      image.src = isSafe ? this.#state.avatarUrl : DEFAULT_AVATAR;
+      image.onerror = () => {
+        image.src = DEFAULT_AVATAR;
+        image.onerror = null;
+      };
+    }
   }
 
   template() {
     return `
     <div class="profile-avatar-container">
       <div class="profile-avatar-frame d-flex justify-content-center align-items-center p-2 w-100">
-        <img src="${this.#state.avatarUrl}" alt="Avatar" class="rounded-circle">
+        <img alt="User's avatar" class="rounded-circle">
       </div>
     </div>
     `;

@@ -1,37 +1,42 @@
+import logging
+
 from channels.db import database_sync_to_async
-from django.contrib.auth import get_user_model
 from ninja.errors import AuthenticationError
+from ninja.security import APIKeyCookie
 
-from users.models.refresh_token import RefreshToken
+from common.close_codes import CloseCodes
+from users.models import RefreshToken, User
 
-User = get_user_model()
+logger = logging.getLogger("server")
 
 
-@database_sync_to_async
-def authenticate_token(token):
+class JWTEndpointsAuthMiddleware(APIKeyCookie):
     """
-    Authenticate a token using the same logic as your API
+    Middleware for the API endpoints authentication through JWT.
+    Populates `request.auth` parameter of API requests with either `User` instance or `None`.
     """
-    try:
-        payload = RefreshToken.objects.verify_access_token(token)
-        return User.objects.select_related("profile", "oauth_connection").filter(id=payload["sub"]).first()
-    except (AuthenticationError, User.DoesNotExist):
-        return None
+
+    param_name = "access_token"
+
+    def authenticate(self, request, access_token: str):
+        payload = RefreshToken.objects.select_related("profile").verify_access_token(access_token)
+
+        user = User.objects.for_id(payload["sub"]).first()
+        if user is None:
+            return None
+
+        user.profile.update_activity()
+        return user
 
 
-class JWTAuthMiddleware:
+class JWTWebsocketAuthMiddleware:
     """
-    Authentication middleware for WebSocket connections using JWT tokens.
-
-    This middleware:
-    1. Extracts the access token from cookies
-    2. Verifies the token using your existing JWT verification logic
-    3. Attaches the authenticated user to the scope if valid
+    Middleware for the websocket authentication through JWT.
+    Populates `scope.user` attribute of websocket consumers with either `User` instance or `None`.
     """
 
     def __init__(self, app):
-        # Store the ASGI application we were passed
-        self.app = app
+        self.app = app  # ASGI app
 
     async def __call__(self, scope, receive, send):
         headers = dict(scope["headers"])
@@ -46,6 +51,18 @@ class JWTAuthMiddleware:
                 break
 
         if token:
-            scope["user"] = await authenticate_token(token)
+            scope["user"] = await self.authenticate_token(token)
+        try:
+            return await self.app(scope, receive, send)
+        except ValueError as e:
+            logger.warning("WS not open for scope user %s : %s", scope["user"], e)
+            await send({"type": "websocket.accept"})
+            await send({"type": "websocket.close", "code": CloseCodes.ILLEGAL_CONNECTION})
 
-        return await self.app(scope, receive, send)
+    @database_sync_to_async
+    def authenticate_token(self, token):
+        try:
+            payload = RefreshToken.objects.verify_access_token(token)
+            return User.objects.select_related("profile", "oauth_connection").filter(id=payload["sub"]).first()
+        except (AuthenticationError, User.DoesNotExist):
+            return None

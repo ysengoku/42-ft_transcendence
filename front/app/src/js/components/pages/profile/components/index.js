@@ -9,7 +9,6 @@ import { UserEnemy } from './Enemy.js';
 import { UserGameHistory } from './GameHistory.js';
 import { UserGameResultModal } from './GameResultModal.js';
 import { UserDuelHistory } from './DuelHistory.js';
-import { UserTournamentHistory } from './TournamentHistory.js';
 
 export {
   OnlineStatusIndicator,
@@ -23,5 +22,4 @@ export {
   UserGameHistory,
   UserGameResultModal,
   UserDuelHistory,
-  UserTournamentHistory,
 };

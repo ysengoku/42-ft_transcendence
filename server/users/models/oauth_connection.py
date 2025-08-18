@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from io import BytesIO
 
 import requests
 from django.core.files.base import ContentFile
 from django.db import models
+from django.utils import timezone
 
 
 class OauthConnectionManager(models.Manager):
@@ -15,7 +16,7 @@ class OauthConnectionManager(models.Manager):
         return self.filter(status=self.model.PENDING, state=state)
 
     def create_pending_connection(self, state: str, platform: str):
-        OauthConnection.objects.create(
+        return OauthConnection.objects.create(
             state=state,
             connection_type=platform,
             status=OauthConnection.PENDING,
@@ -23,6 +24,11 @@ class OauthConnectionManager(models.Manager):
 
 
 class OauthConnection(models.Model):
+    """
+    Represents OAuth connection state of a specific user.
+    Stores all of the data required to connect user using OAuth: type of the platform, id, status and state.
+    """
+
     FT = "42"
     GITHUB = "github"
     REGULAR = "regular"
@@ -48,7 +54,7 @@ class OauthConnection(models.Model):
         on_delete=models.CASCADE,
         related_name="oauth_connection",
     )
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=timezone.now)
 
     objects = OauthConnectionManager()
 
@@ -64,6 +70,7 @@ class OauthConnection(models.Model):
     def get_avatar_url(user_info: dict, connection_type: str) -> str:
         """
         Retrieves the avatar URL based on the connection type (GITHUB or FT).
+        Stores the avatar of the user that they have on either Github or 42 account.
         """
         if connection_type == OauthConnection.GITHUB:
             return user_info.get("avatar_url")
@@ -99,9 +106,10 @@ class OauthConnection(models.Model):
         self.user = user
         self.status = self.CONNECTED
 
-        self.avatar_url = self.get_avatar_url(user_info, self.connection_type)
-        if self.avatar_url:
-            self.save_avatar(self.avatar_url, self.user)
+        if not user.profile.profile_picture:
+            self.avatar_url = self.get_avatar_url(user_info, self.connection_type)
+            if self.avatar_url:
+                self.save_avatar(self.avatar_url, self.user)
 
         self.save()
 
@@ -118,7 +126,7 @@ class OauthConnection(models.Model):
                     "client_id": config["client_id"],
                     "client_secret": config["client_secret"],
                     "code": code,
-                    "redirect_uri": config["redirect_uris"][0],
+                    "redirect_uri": config["redirect_uris"],
                     "grant_type": "authorization_code",
                 },
                 headers={"Accept": "application/json"},
@@ -177,7 +185,7 @@ class OauthConnection(models.Model):
         Returns None if valid.
         Returns a tuple (error_message, status_code) if invalid.
         """
-        now = datetime.now(timezone.utc)
+        now = timezone.now()
         if self.date + timedelta(minutes=5) < now:
             return "Expired state: authentication request timed out", 408
 
@@ -193,6 +201,9 @@ class OauthConnection(models.Model):
         Returns a tuple (None, (error_message, status_code)) on failure.
         """
         from users.models.user import User
+
+        if not user_info or not isinstance(user_info, dict) or "id" not in user_info:
+            return None, ("Invalid user information", 400)
 
         user = User.objects.for_oauth_id(user_info["id"]).first()
         if not user:

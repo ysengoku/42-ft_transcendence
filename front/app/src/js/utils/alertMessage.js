@@ -1,9 +1,3 @@
-export const ERROR_MESSAGES = {
-  SERVER_ERROR: 'An unexpected error occurred. Please wait or try again later.',
-  UNKNOWN_ERROR: 'Something went wrong. Please try again later.',
-  SESSION_EXPIRED: 'Your session has expired. Please log in again.',
-};
-
 /**
  * Alert types based on Bootstrap alert classes.
  */
@@ -13,30 +7,37 @@ export const ALERT_TYPE = {
   LIGHT: 'alert-light',
 };
 
+const HEADER = {
+  'alert-success': 'Mighty fine!',
+  'alert-danger': 'Oops!',
+  'alert-light': '',
+};
+
+const ICON = {
+  'alert-success': 'bi-hand-thumbs-up',
+  'alert-danger': 'bi-x-octagon',
+  'alert-light': 'bi-exclamation-octagon',
+  'alert-tournament': 'bi-fire',
+};
+
 /**
  * Displays an alert message in the specified container.
  * @param {string} type - The type of alert (e.g., 'alert-success', 'alert-danger', 'alert-light').
  * @param {string} message - The message to display in the alert.
  */
 export function showAlertMessage(type, message) {
-  const alertContainer = document.getElementById('error-message-container');
+  const alertContainer = document.getElementById('alert-message-container');
   if (alertContainer) {
     alertContainer.innerHTML = '';
     const alertMessage = document.createElement('div');
-    alertMessage.className = `alert ${type} alert-dismissible fade show mt-2`;
-    alertMessage.role = 'alert';
 
-    const alertContent = document.createElement('div');
-    alertContent.textContent = message;
-
-    const dismissButton = document.createElement('button');
-    dismissButton.type = 'button';
-    dismissButton.className = 'btn-close';
-    dismissButton.setAttribute('data-bs-dismiss', 'alert');
-    dismissButton.setAttribute('aria-label', 'close');
-
-    alertMessage.appendChild(alertContent);
-    alertMessage.appendChild(dismissButton);
+    alertMessage.innerHTML = alertContentTemplate(type);
+    const iconElement = alertMessage.querySelector('#alert-icon');
+    const headerElement = alertMessage.querySelector('#alert-header');
+    const messageElement = alertMessage.querySelector('#alert-message');
+    iconElement.classList.add(ICON[type]);
+    headerElement.textContent = HEADER[type];
+    messageElement.textContent = message;
     alertContainer.appendChild(alertMessage);
   }
 }
@@ -47,7 +48,7 @@ export function showAlertMessage(type, message) {
  * @param {string} message - The message to display in the alert.
  * @param {number} duration - The duration (in milliseconds) to display the alert.
  */
-export function showAlertMessageForDuration(type, message, duration) {
+export function showAlertMessageForDuration(type, message, duration = 3000) {
   showAlertMessage(type, message);
   setTimeout(() => {
     removeAlert();
@@ -58,7 +59,7 @@ export function showAlertMessageForDuration(type, message, duration) {
  * Removes the alert message from the specified container.
  */
 export function removeAlert() {
-  const alertContainer = document.getElementById('error-message-container');
+  const alertContainer = document.getElementById('alert-message-container');
   if (alertContainer) {
     alertContainer.innerHTML = '';
   }
@@ -71,4 +72,22 @@ export function addDissmissAlertListener() {
   document.addEventListener('click', removeAlert);
   window.addEventListener('popstate', removeAlert);
   window.addEventListener('pushstate', removeAlert);
+}
+
+export function internalServerErrorAlert() {
+  const message = 'An unexpected error occurred. Please wait or try again later.';
+  showAlertMessageForDuration(ALERT_TYPE.ERROR, message, 5000);
+}
+
+function alertContentTemplate(type) {
+  return `
+    <div class="alert ${type} alert-dismissible fade show mt-2" role="alert">
+      <div class="d-flex flex-column align-items-center ms-5 p-3">
+        <i id="alert-icon" class="class="bi mb-2" style="font-size: 3rem"></i>
+        <div id="alert-header" class="fs-4 fw-bold mb-2"></div>
+        <div id="alert-message" class="text-center"></div>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  `;
 }
