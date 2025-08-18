@@ -15,15 +15,12 @@ export function getRelativeTime(time) {
   if (diff < 172800000) {
     return 'yesterday';
   }
-  if (diff < 604800000) {
-    return `${Math.floor(diff / 86400000)}days ago`;
+  if (diff < 259200000) {
+    return `${Math.floor(diff / 86400000)} days ago`;
   }
   const formattedDate = new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: false,
   }).format(date);
   return formattedDate;
 }
@@ -31,19 +28,19 @@ export function getRelativeTime(time) {
 export function getRelativeDateAndTime(time) {
   const now = new Date();
   const date = new Date(time);
-  
+
   const today = now.toISOString().split('T')[0];
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split('T')[0];
-  
+
   const targetDate = date.toISOString().split('T')[0];
   const formattedTime = new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: false,
   }).format(date);
-  
+
   if (targetDate === today) {
     return `today, ${formattedTime}`;
   }
@@ -55,5 +52,13 @@ export function getRelativeDateAndTime(time) {
     day: 'numeric',
   }).format(date);
   return `${formattedDate}, ${formattedTime}`;
- }
-  
+}
+
+export function formatDateMDY(dateDtring) {
+  const date = new Date(dateDtring);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+}

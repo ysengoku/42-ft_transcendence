@@ -21,6 +21,7 @@ export class ProfileUserActions extends HTMLElement {
 
   constructor() {
     super();
+    this.sendMessage = this.sendMessage.bind(this);
     this.addFriend = this.addFriend.bind(this);
     this.removeFriend = this.removeFriend.bind(this);
     this.blockUser = this.blockUser.bind(this);
@@ -35,31 +36,32 @@ export class ProfileUserActions extends HTMLElement {
 
   disconnectedCallback() {
     if (this.#state.isMyProfile) {
-      this.editProfileButton.removeEventListener('click', this.handleEditProfile);
+      this.editProfileButton?.removeEventListener('click', this.handleEditProfile);
       return;
     }
     if (!this.#state.data.isBlocked) {
       if (this.#state.data.isFriend) {
-        this.addFriendButton.removeEventListener('click', this.removeFriend);
+        this.addFriendButton?.removeEventListener('click', this.removeFriend);
       } else {
-        this.addFriendButton.removeEventListener('click', this.addFriend);
+        this.addFriendButton?.removeEventListener('click', this.addFriend);
       }
     }
     if (this.#state.data.isBlocked) {
-      this.blockUserButton.removeEventListener('click', this.unblockUser);
+      this.blockUserButton?.removeEventListener('click', this.unblockUser);
     } else {
-      this.blockUserButton.removeEventListener('click', this.blockUser);
+      this.blockUserButton?.removeEventListener('click', this.blockUser);
     }
+    this.sendMessageButton?.removeEventListener('click', this.sendMessage);
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     if (this.#state.isMyProfile) {
       this.editProfileButton = this.querySelector('#edit-profile-button');
       this.editProfileButton.style.display = 'block';
       this.handleEditProfile = () => {
-        router.navigate(`/settings`);
+        router.navigate('/settings');
       };
       this.editProfileButton.addEventListener('click', this.handleEditProfile);
       return;
@@ -68,7 +70,7 @@ export class ProfileUserActions extends HTMLElement {
     if (!this.#state.data.isBlocked) {
       this.sendMessageButton = this.querySelector('#send-message-button');
       this.sendMessageButton.style.display = 'block';
-      // TODO: Handle send message
+      this.sendMessageButton.addEventListener('click', this.sendMessage);
 
       this.addFriendButton = this.querySelector('#add-friend-button');
       this.addFriendButton.style.display = 'block';
@@ -92,79 +94,92 @@ export class ProfileUserActions extends HTMLElement {
     }
   }
 
+  sendMessage() {
+    const enocdedUsername = encodeURIComponent(this.#state.data.shownUsername);
+    router.navigate('/chat', { username: enocdedUsername });
+  }
+
   async addFriend() {
     const request = { username: this.#state.data.shownUsername };
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_FRIENDS(this.#state.data.loggedInUsername),
-        request,
-        false,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_FRIENDS(this.#state.data.loggedInUsername),
+      request,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.data.isFriend = true;
       this.render();
-    } else {
-      console.error('Error adding friend:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.addFriend, 3000);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
   }
 
   async removeFriend() {
     const response = await apiRequest(
-        'DELETE',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_REMOVE_FRIEND(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
-        null,
-        false,
-        true,
+      'DELETE',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_REMOVE_FRIEND(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.data.isFriend = false;
       this.render();
-    } else {
-      console.error('Error removing friend:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.removeFriend, 3000);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
   }
 
   async blockUser() {
     const request = { username: this.#state.data.shownUsername };
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.data.loggedInUsername),
-        request,
-        false,
-        true,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_BLOCKED_USERS(this.#state.data.loggedInUsername),
+      request,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.data.isBlocked = true;
       this.#state.data.isFriend = false;
       this.render();
-    } else {
-      console.error('Error blocking user:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.blockUser, 3000);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
   }
 
   async unblockUser() {
     const response = await apiRequest(
-        'DELETE',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
-        null,
-        false,
-        true,
+      'DELETE',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_UNBLOCK_USER(this.#state.data.loggedInUsername, this.#state.data.shownUsername),
+      null,
+      false,
+      true,
     );
     if (response.success) {
       this.#state.data.isBlocked = false;
       this.render();
-    } else {
-      console.error('Error unblocking:', response);
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, this.#state.isMyProfile.unblockUser, 3000);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, response.msg, 3000);
   }
 
   template() {

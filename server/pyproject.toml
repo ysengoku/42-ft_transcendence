@@ -1,7 +1,7 @@
 [tool.ruff]
 target-version = "py310"
 line-length = 120
-exclude = ["migrations"]
+exclude = ["migrations", "tests"]
 unsafe-fixes = true
 
 [tool.ruff.lint]
@@ -9,6 +9,8 @@ pylint.max-statements = 100
 select = ["ALL"]
 fixable = ["ALL"]
 ignore = [
+    ##### rules to allow again at the end
+    #"S105", # hardcoded password
     #### modules
     "ANN",  # obligatory annotations
     "C90",  # complexity check
@@ -20,7 +22,7 @@ ignore = [
     "TRY",  # try-catch block rules
 
     #### specific rules
-    "D100",     # ignore missing docs
+    "D100",     # Ignore missing docs
     "D101",     # Missing docstring in public class
     "D102",     # Missing docstring in public method
     "D103",     # Missing docstring in public function
@@ -34,13 +36,18 @@ ignore = [
     "D400",     # First line should end with a period
     "D401",     # First line should be in imperative mood
     "D415",     # First line should end with a period, question mark, or exclamation point
-    "E402",     # false positives for local imports
-    "TRY003",   # external messages in exceptions are too verbose
+    "E402",     # False positives for local imports
+    "TRY003",   # External messages in exceptions are too verbose
     "TD002",    # Use of explicit pass is discouraged
     "TD003",    # Comments like 'TODO' or 'FIXME' are too vague
     "FIX002",   # too verbose descriptions of todos
-    "PLR0912",  # limit for conditions inside of one function
+    "PLR0912",  # Limit for conditions inside of one function
     "B008",     # Do not assign a lambda expression, use a def
     "B018",     # Useless expression used as an assignment target
     "D203",     # One blank line required before class docstring (conflicts with D211)
+    "PLR0913",  # Complains when it's too many arguments in a function
+    "PLR0402",  # Disallows usage of aliases
+    "PT009",    # Using assert instead of assertEqual for testing
+    "TC001",    # Move types to type annotations block
+    "PLC0415"   # Ignore imports not at the top level
 ]

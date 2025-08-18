@@ -2,6 +2,7 @@ import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showFormErrorFeedback, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
+import { BREAKPOINT } from '@utils';
 
 export class MfaVerification extends HTMLElement {
   #state = {
@@ -16,16 +17,35 @@ export class MfaVerification extends HTMLElement {
     this.resendMfaCode = this.resendMfaCode.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (authStatus.success) {
+      router.redirect('/home');
+      return;
+    }
+    if (authStatus.status === 429) {
+      return;
+    }
+    if (this.#state.username === '') {
+      router.redirect('/login');
+      return;
+    }
     this.render();
   }
 
+  setQueryParam(queryParams) {
+    this.#state.username = queryParams.get('username') || '';
+  }
+
   disconnectedCallback() {
+    if (!this.otpInputs) {
+      return;
+    }
     this.otpInputs.forEach((input) => {
       input.removeEventListener('input', this.handleInput);
     });
-    this.mfaVerificationForm.removeEventListener('submit', this.handleSubmit);
-    this.resendButton.removeEventListener('click', this.resendMfaCode);
+    this.mfaVerificationForm?.removeEventListener('submit', this.handleSubmit);
+    this.resendButton?.removeEventListener('click', this.resendMfaCode);
   }
 
   render() {
@@ -61,7 +81,7 @@ export class MfaVerification extends HTMLElement {
       inputs[index + 1].focus();
     } else if (currentInput.value.length < 1 && index > 0) {
       inputs[index - 1].focus();
-    };
+    }
   }
 
   fetchInput() {
@@ -81,18 +101,17 @@ export class MfaVerification extends HTMLElement {
   async handleSubmit(event) {
     event.preventDefault();
     await this.handleMfaVerification();
-  };
+  }
 
   async handleMfaVerification() {
     this.#state.username = sessionStorage.getItem('username');
     const otpInput = this.#state.otp;
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.MFA_VERIFICATION(this.#state.username),
-        { token: otpInput },
-        false,
-        false,
+      'POST',
+      API_ENDPOINTS.MFA_VERIFICATION,
+      { username: this.#state.username, token: otpInput },
+      false,
+      false,
     );
     if (response.success) {
       const userInformation = {
@@ -101,28 +120,32 @@ export class MfaVerification extends HTMLElement {
         avatar: response.data.avatar,
       };
       auth.storeUser(userInformation);
-      router.navigate(`/home`, response.user);
+      router.redirect('/home', response.user);
       sessionStorage.removeItem('username');
-    } else {
-      this.feedbackField = this.querySelector('#mfa-failed-feedback');
-      this.feedbackField.innerHTML = '';
-      showFormErrorFeedback(this.feedbackField, response.msg);
+      return;
     }
+    if (response.status === 429) {
+      return;
+    }
+    this.feedbackField = this.querySelector('#mfa-failed-feedback');
+    this.feedbackField.innerHTML = '';
+    showFormErrorFeedback(this.feedbackField, response.msg);
   }
 
   async resendMfaCode() {
     this.#state.username = sessionStorage.getItem('username');
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.MFA_RESEND_CODE(this.#state.username),
-        null,
-        false,
-        true,
+      'POST',
+      API_ENDPOINTS.MFA_RESEND_CODE,
+      { username: this.#state.username },
+      false,
+      true,
     );
     if (response.success) {
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Email resent successfully', 3000);
-    } else {
+      return;
+    }
+    if (response.status !== 429) {
       showFormErrorFeedback(this.feedbackField, response.msg);
     }
   }
@@ -130,7 +153,7 @@ export class MfaVerification extends HTMLElement {
   template() {
     return `
     <div class="row justify-content-center m-4">
-      <div class="form-container col-12 col-md-4 p-4"> 
+      <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4"> 
         <div id="mfa-failed-feedback"></div>
         <div class="container d-flex flex-column justify-content-center align-items-center">
           <form class="text-center w-100" id="mfa-verification-form">
@@ -168,7 +191,7 @@ export class MfaVerification extends HTMLElement {
         width: 2.5rem;
         text-align: center;
       }
-      @media (max-width: 992px) and (min-width: 768px) {
+      @media (max-width: ${BREAKPOINT.LG}px) and (min-width: ${BREAKPOINT.MD}px) {
         .otp-container {
           gap: 0.3rem;
         }

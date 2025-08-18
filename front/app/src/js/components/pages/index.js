@@ -8,14 +8,16 @@ import { Home } from './home/Home.js';
 import { UserProfile } from './profile/Profile.js';
 import { UserNotFound } from './profile/UserNotFound.js';
 import { Settings } from './settings/Settings.js';
-import { AccountDeleted } from './settings/AccountDeleted.js';
 import { Chat } from './chat/Chat.js';
-import { DuelMenu } from './duel/DuelMenu.js';
-import { DuelResult } from './duel/DuelResult.js';
+import { DuelMenu } from './match/DuelMenu.js';
+import { Duel } from './match/Duel.js';
+import { LocalGameMenu } from './match/LocalGameMenu.js';
 import { TournamentMenu } from './tournament/TournamentMenu.js';
-import { TournamentResult } from './tournament/TournamentResult.js';
+import { Tournament } from './tournament/Tournament.js';
+import { TournamentOverview } from './tournament/TournamentOverview.js';
 import { Game } from './game/Game.js';
 import { MultiplayerGame } from './game/MultiplayerGame.js';
+import { Loading } from './Loading.js';
 import { Error } from './Error.js';
 import { NotFoundPage } from './NotFound.js';
 
@@ -30,14 +32,16 @@ export {
   UserProfile,
   UserNotFound,
   Settings,
-  AccountDeleted,
   Chat,
   DuelMenu,
-  DuelResult,
+  Duel,
+  LocalGameMenu,
   TournamentMenu,
-  TournamentResult,
+  Tournament,
+  TournamentOverview,
   Game,
   MultiplayerGame,
+  Loading,
   Error,
   NotFoundPage,
 };

@@ -1,6 +1,4 @@
-FROM nginx:alpine
-
-# Install OpenSSL and generate certificates
+FROM nginx:alpine AS base
 RUN apk add --no-cache openssl && \
     mkdir -p /etc/nginx/ssl && \
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -10,9 +8,32 @@ RUN apk add --no-cache openssl && \
     && chmod 644 /etc/nginx/ssl/transcendance.crt \
     && chmod 644 /etc/nginx/ssl/transcendance.key
 
-COPY nginx.conf /etc/nginx/nginx.conf
-
-# Créer le répertoire pour les fichiers statiques
 RUN mkdir -p /app/dist
 
 EXPOSE 1026
+
+# RUNTIME FOR DEVELOPMENT #
+FROM base AS development
+COPY ./nginx/nginx.dev.conf /etc/nginx/nginx.conf
+CMD ["nginx", "-g" ,"daemon off;"]
+
+# BUILD FOR PRODUCTION #
+FROM node:22-alpine AS build-frontend
+WORKDIR /app
+
+COPY ../front/app/package*.json ./
+RUN npm install
+
+COPY ../front/app/src ./src
+COPY ../front/app/public ./public
+COPY ../front/app/index.html ./
+COPY ../front/app/babel.config.cjs ./
+COPY ../front/app/vite.config.js ./
+RUN npm run build
+
+# RUNTIME FOR PRODUCTION #
+FROM base AS production
+
+COPY --from=build-frontend /app/dist /app/dist
+COPY ./nginx/nginx.prod.conf /etc/nginx/nginx.conf
+CMD ["nginx", "-g" ,"daemon off;"]

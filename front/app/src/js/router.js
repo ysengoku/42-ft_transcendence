@@ -1,30 +1,17 @@
-import { auth } from '@auth';
 import { addDissmissAlertListener } from '@utils';
-import { createClouds, createStars } from '@utils';
-// import { CubeTexture } from 'three/src/Three.Core.js';
 
 /**
  * Router module for handling client-side navigation.
  * @module router
- * @requires module:landing-page
- * @requires module:login-page
- * @requires module:register-form
- * @requires module:user-home
- * @requires module:user-profile
- * @requires module:user-not-found
- * @requires module:user-settings
- * @requires module:duel-menu
- * @requires module:duel
- * @requires module:duel-result
- * @requires module:tournament-menu
- * @requires module:tournament
- * @requires module:chat-page
  */
 const router = (() => {
   class Router {
     constructor() {
       this.routes = new Map();
+      this.pathToReplace = new Set(['/reset-password', '/mfa-verification', '/user-not-found', '/error']);
+      this.isFristLoad = true;
       this.currentComponent = null;
+      this.beforeunloadCallback = null;
     }
 
     /** Add a new route to the router.
@@ -40,24 +27,49 @@ const router = (() => {
     }
 
     /**
+     * Initializes the router by setting up event listeners for clicks and popstate.
+     * @return {void}
+     */
+    init() {
+      window.addEventListener('popstate', this.handlePopstate.bind(this));
+      document.addEventListener('click', (event) => this.handleLinkClick(event));
+    }
+
+    /**
+     * Set a callback function to be called before the page unloads.
+     * @param {function} callback - The callback function to set.
+     * @return {void}
+     */
+    setBeforeunloadCallback(callback) {
+      this.beforeunloadCallback = callback;
+    }
+
+    /**
+     * Remove the beforeunload callback function.
+     * @return {void}
+     */
+    removeBeforeunloadCallback() {
+      this.beforeunloadCallback = null;
+    }
+
+    /**
      * Handles route changes and renders the appropriate component.
      * @param {string} [queryParams=''] - The query parameters included in the URL.
      * @return {void}
      */
-    handleRoute(queryParams = '') {
+    handleRoute(queryParams = new URLSearchParams()) {
       const path = window.location.pathname;
       const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
       if (route) {
         const { componentTag, isDynamic, param } = route;
         if (isDynamic) {
-          // console.log('param: ', param);
           this.renderDynamicUrlComponent(componentTag, param);
         } else {
           this.renderStaticUrlComponent(componentTag, queryParams);
         }
       } else {
-        console.error(`Route not found for: ${path}`);
+        log.error('Route not found:', path);
         this.renderStaticUrlComponent('page-not-found');
       }
     }
@@ -99,7 +111,6 @@ const router = (() => {
           return null;
         }
       }
-      console.log('param: ', param);
       return param;
     }
 
@@ -116,9 +127,6 @@ const router = (() => {
       const component = document.createElement(componentTag);
 
       if (queryParams.size > 0) {
-        for (const [key, value] of queryParams.entries()) {
-          console.log(`${key}: ${value}`);
-        }
         component.setQueryParam(queryParams);
       }
       const contentElement = document.getElementById('content');
@@ -137,7 +145,6 @@ const router = (() => {
       if (this.currentComponent) {
         this.currentComponent.remove();
       }
-      console.log('param: ', param);
       const component = document.createElement(componentTag);
       if (typeof component.setParam === 'function') {
         component.setParam(param);
@@ -150,25 +157,57 @@ const router = (() => {
      * Navigates to the specified path.
      * @param {string} [path=window.location.pathname] - The path to navigate to.
      * @param {string} [queryParams=''] - The query parameters to include in the URL.
+     * @param {boolean} [redirect=false] - Whether to replace the current history entry or push a new one.
      * @return {void}
      */
-    navigate(path = window.location.pathname, queryParams = '') {
-      console.log('Navigating to:', path);
-      if (path === '/user-not-found') {
-        window.history.replaceState({}, '', path);
-      } else {
-        window.history.pushState({}, '', path);
+    async navigate(path = window.location.pathname, queryParams = '', redirect = false) {
+      log.info('Navigating to:', path);
+      const splitPath = path.split('?');
+      if (splitPath[1]) {
+        path = splitPath[0];
+        queryParams = splitPath[1];
       }
-      this.handleRoute(queryParams);
+      if (this.beforeunloadCallback) {
+        const response = await this.beforeunloadCallback();
+        if (!response) {
+          return;
+        }
+      }
+      this.beforeunloadCallback = null;
+
+      let queryParamsObject = new URLSearchParams();
+      if (queryParams) {
+        switch (typeof queryParams) {
+          case 'string':
+            if (queryParams.length <= 0) {
+              break;
+            }
+          case 'object':
+            queryParamsObject = new URLSearchParams(queryParams);
+            break;
+          default:
+            queryParamsObject = queryParams;
+        }
+      }
+
+      const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
+      const historyUpdateMethod = shouldReplace ? 'replaceState' : 'pushState';
+      const queryParamsString = queryParamsObject.toString();
+      const fullPath = queryParamsString ? `${path}?${queryParamsString}` : path;
+      window.history[historyUpdateMethod]({}, '', fullPath);
+      this.isFristLoad = false;
+      this.handleRoute(queryParamsObject);
     }
 
     /**
-     * Initializes the router by setting up event listeners for clicks and popstate.
+     * Redirects to a new path. The old path is replaced by the redirection destination in the history stack.
+     * @param {string} [path=window.location.pathname] - The path to navigate to.
+     * @param {string} [queryParams=''] - The query parameters to include in the URL.
      * @return {void}
      */
-    init() {
-      window.addEventListener('popstate', () => this.handleRoute());
-      document.addEventListener('click', (event) => this.handleLinkClick(event));
+    async redirect(path = window.location.pathname, queryParams = '') {
+      log.trace('Redirecting');
+      this.navigate(path, queryParams, true);
     }
 
     /**
@@ -183,7 +222,28 @@ const router = (() => {
         this.navigate(path);
       }
     }
+
+    /**
+     * Handles the popstate event when the user navigates back or forward.
+     * @return {void}
+     * */
+    async handlePopstate() {
+      if (this.beforeunloadCallback) {
+        const response = await this.beforeunloadCallback();
+        if (!response) {
+          return;
+        }
+        this.beforeunloadCallback = null;
+      }
+      const queryParams = new URLSearchParams(window.location.search);
+      this.handleRoute(queryParams);
+    }
   }
+
+  /**
+   * Initialize the router instance.
+   * @return {Router} The router instance.
+   */
   return new Router();
 })();
 
@@ -203,43 +263,33 @@ router.addRoute('/settings', 'user-settings');
 router.addRoute('/account-deleted', 'account-deleted');
 router.addRoute('/chat', 'chat-page');
 router.addRoute('/duel-menu', 'duel-menu');
-// router.addRoute('/duel/:id', 'duel', true);
-router.addRoute('/duel-result', 'duel-result', true);
+router.addRoute('/duel', 'duel-page');
+router.addRoute('/local-game-menu', 'local-game-menu');
 router.addRoute('/tournament-menu', 'tournament-menu');
-// router.addRoute('/tournament/:id', 'tournament', true);
-router.addRoute('/multiplayer-game', 'multiplayer-game', false, true);
-router.addRoute('/singleplayer-game', 'singleplayer-game', false, true);
+router.addRoute('/tournament/:id', 'tournament-room', true);
+router.addRoute('/tournament-overview/:id', 'tournament-overview', true);
+router.addRoute('/multiplayer-game/:id', 'multiplayer-game', true);
+router.addRoute('/singleplayer-game', 'singleplayer-game');
 router.addRoute('/error', 'error-page');
 
 /**
  * Initialize the router on the initial HTML document load
  */
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('DOM loaded');
-  document.documentElement.getAttribute('data-bs-theme') === 'light' ? (
-    document.getElementById('stars') ? document.body.removeChild(stars) : null,
-    document.body.style.backgroundImage = `linear-gradient(rgba(170,79,236, 0.8) 0%, rgba(236,79,84, 0.8) 50%, rgba(236,79,84, 0.8) 100%)`,
-
-    createClouds()
-  ) : (
-    document.getElementById('cloud') ? document.body.removeChild(cloud) : null,
-    // document.body.style.backgroundImage = `linear-gradient(#080f1c 0%, #0d4261 32%,  #1473ab 100%)`,
-    document.body.style.backgroundImage = `linear-gradient(rgb(23, 18, 40) 0%, rgb(36, 30, 56) 16%, rgb(56, 49, 82) 40%, #6670A2 100%)`,
-    createStars()
-  );
-
-  await auth.fetchAuthStatus();
-  const navbarContainer = document.getElementById('navbar-container');
-  if (navbarContainer) {
-    navbarContainer.innerHTML = '<navbar-component></navbar-component>';
-  } else {
-    console.error('Error rendering navbar');
-  }
   router.init();
   addDissmissAlertListener();
   const currentPath = window.location.pathname || '/';
   const queryParams = new URLSearchParams(window.location.search);
+
+  await new Promise((resolve) => setTimeout(resolve, 50));
   router.navigate(currentPath, queryParams);
 });
 
 export { router };
+
+export const __test__ = {
+  extractParam: router.extractParam.bind(router),
+  matchDynamicRoute: router.matchDynamicRoute.bind(router),
+  navigate: router.navigate.bind(router),
+  router,
+};

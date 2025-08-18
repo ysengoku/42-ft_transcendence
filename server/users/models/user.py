@@ -7,7 +7,6 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
-from django.utils import timezone
 from ninja.files import UploadedFile
 
 from users.models import OauthConnection
@@ -19,6 +18,10 @@ Models related to authentication and authorization.
 
 
 class UserManager(BaseUserManager):
+    """
+    Custom manager for the `User` model.
+    """
+
     def for_id(self, user_id: str):
         return self.filter(id=user_id)
 
@@ -84,6 +87,8 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     """
+    Custom `User` model. Reuses some functionality of default `User` model, but is not related to the built-in
+    authentication mechanism of Django. Instead, it is indeded for use for custom JWT-based authenticaiton system.
     Contains information that is related to authentication and authorization of one single user.
     """
 
@@ -106,7 +111,7 @@ class User(AbstractUser):
 
     def validate_unique(self, *args: list, **kwargs: dict) -> None:
         """
-        Called during full_clean().
+        Called during `.full_clean()`.
         Additional logic for validation of unique fields.
         **kwargs have a default parameter exclude, which excludes certain fields from being validated.
         """
@@ -193,20 +198,17 @@ class User(AbstractUser):
         return self
 
     def get_oauth_connection(self):
+        from users.models.oauth_connection import OauthConnection
+
         try:
             return self.oauth_connection
         except OauthConnection.DoesNotExist:
             return None
 
+    @classmethod
+    def get_db_table(cls):
+        return cls._meta.db_table
+
     def __str__(self):
         connection_type = "Regular" if not self.get_oauth_connection() else self.oauth_connection.connection_type
         return f"{self.username} - {connection_type}"
-
-
-class UserOnlineStatus(models.Model):
-    user = models.OneToOneField("User", on_delete=models.CASCADE, related_name="online_status")
-    is_online = models.BooleanField(default=False)
-    last_seen = models.DateTimeField(default=timezone.now)
-
-    def __str__(self):
-        return f"{self.user.username} - {'Online' if self.is_online else 'Offline'}"
