@@ -4,7 +4,9 @@ import audiourl from '/audio/score_sound.mp3?url';
 import pedro from '/3d_models/pull_pedro.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
+import couch from '/3d_models/sofa.glb?url';
 import chair from '/3d_models/chair.glb?url';
+import dressing from '/3d_models/dressing.glb?url';
 import coin from '/3d_models/coin.glb?url';
 import carboard from '/3d_models/carboard.glb?url';
 import table from '/3d_models/table.glb?url';
@@ -66,7 +68,7 @@ export class Game extends HTMLElement {
         if (tag === 'input' || tag === 'textarea') {
           return; // Do not process key events on input or textarea elements
         }
-        if (e.defaultPrevented) {
+        if (e.defaultPrevented) { 
           return; // Do noplayerglb if the event was already processed
         }
         var keyCode = e.code;
@@ -246,27 +248,27 @@ export class Game extends HTMLElement {
 
     // console.log('Game type:', this.#state);
 
-    const chairGlb = (() => {
-      const chairModel = new THREE.Object3D();
-      loaderModel.load(
-        chair,
-        function (gltf) {
-          const model = gltf.scene;
-          model.position.y = 2;
-          model.position.z = 0;
-          model.position.x = 0;
-          chairModel.add(gltf.scene);
-        },
-        undefined,
-        function (error) {
-          console.error(error);
-        },
-      );
-      chairModel.scale.set(1, 1, 1);
-      scene.add(chairModel);
-      return chairModel;
-    })();
-    chairGlb.rotation.y = Math.PI / 2;
+    // const chairGlb = (() => {
+    //   const chairModel = new THREE.Object3D();
+    //   loaderModel.load(
+    //     chair,
+    //     function (gltf) {
+    //       const model = gltf.scene;
+    //       model.position.y = 2;
+    //       model.position.z = 0;
+    //       model.position.x = 0;
+    //       chairModel.add(gltf.scene);
+    //     },
+    //     undefined,
+    //     function (error) {
+    //       console.error(error);
+    //     },
+    //   );
+    //   chairModel.scale.set(1, 1, 1);
+    //   scene.add(chairModel);
+    //   return chairModel;
+    // })();
+    // chairGlb.rotation.y = Math.PI / 2;
 
     // Coin
 
@@ -418,6 +420,85 @@ export class Game extends HTMLElement {
         scene.add(tableModel);
         return tableModel;
       })();
+      const dressingGlb = (() => {
+        const dressingModel = new THREE.Object3D();
+        loaderModel.load(
+          dressing,
+          function (gltf) {
+            const model = gltf.scene;
+            model.position.y = 0;
+            model.position.z = 0;
+            model.position.x = 0;
+            // mixer = new THREE.AnimationMixer(model);
+            dressingModel.add(gltf.scene);
+            gltf.scene.scale.set(0.5, 0.5, 0.5);
+          },
+          undefined,
+          function (error) {
+            console.error(error);
+          },
+        );
+        scene.add(dressingModel);
+        return dressingModel;
+      })();
+      // const couchGlb = (() => {
+      //   const couchModel = new THREE.Object3D();
+      //   loaderModel.load(
+      //     couch,
+      //     function (gltf) {
+      //       const model = gltf.scene;
+      //       model.position.y = -2.5;
+      //       model.position.z = -7.5;
+      //       model.position.x = 1;
+      //       couchModel.add(gltf.scene);
+      //       gltf.scene.scale.set(1.2, 1, 1.2);
+      //     },
+      //     undefined,
+      //     function (error) {
+      //       console.error(error);
+      //     },
+      //   );
+      //   scene.add(couchModel);
+      //   return couchModel;
+      // })();
+      // const chairGlb = (() => {
+      //   const chairModel = new THREE.Object3D();
+      //   loaderModel.load(
+      //     chair,
+      //     function (gltf) {
+      //       const model = gltf.scene;
+      //       model.position.y = 0;
+      //       model.position.z = 0;
+      //       model.position.x = 0;
+      //       chairModel.add(gltf.scene);
+      //       gltf.scene.scale.set(1.1, 0.9, 1.1);
+      //     },
+      //     undefined,
+      //     function (error) {
+      //       console.error(error);
+      //     },
+      //   );
+      //   scene.add(chairModel);
+      //   return chairModel;
+      // })();
+      // couchGlb.castShadow = true;
+      // couchGlb.receiveShadow = true;
+      // couchGlb.position.x = posX;
+      // couchGlb.position.y = posY;
+      // couchGlb.position.z = posZ;
+      // couchGlb.castShadow = true;
+      // couchGlb.position.z < 0 ? (couchGlb.rotation.x = Math.PI / 2): (couchGlb.rotation.x = -Math.PI / 2);
+      // couchGlb.position.z < 0 ? (couchGlb.rotation.z = Math.PI) : (couchGlb.rotation.z = Math.PI);
+      // couchGlb.position.z < 0 ? couchGlb.rotation.y = -Math.PI / 2 : couchGlb.rotation.y = Math.PI / 2;
+
+      // dressingGlb.castShadow = true;
+      // dressingGlb.receiveShadow = true;
+      // dressingGlb.position.x = posX;
+      // dressingGlb.position.y = posY;
+      // dressingGlb.position.z = posZ;
+      // dressingGlb.castShadow = true;
+      // dressingGlb.position.z < 0 ? (dressingGlb.rotation.x = -Math.PI / 2): (dressingGlb.rotation.z = Math.PI/ 2);
+      // dressingGlb.position.z < 0 ? (dressingGlb.rotation.z = Math.PI) : (dressingGlb.rotation.z = Math.PI);
       tableGlb.castShadow = true;
       tableGlb.receiveShadow = true;
       tableGlb.position.x = posX;
@@ -426,12 +507,24 @@ export class Game extends HTMLElement {
       tableGlb.castShadow = true;
       tableGlb.rotation.x = -Math.PI / 2;
       tableGlb.position.z < 0 ? (tableGlb.rotation.z = Math.PI) : (tableGlb.rotation.z = 0);
+      // tableGlb.scale.x = 2;
+      // chairGlb.castShadow = true;
+      // chairGlb.receiveShadow = true;
+      // chairGlb.position.x = posX;
+      // chairGlb.position.y = posY;
+      // chairGlb.position.z = posZ;
+      // chairGlb.castShadow = true;
+      // chairGlb.rotation.x = -Math.PI / 2;
+      // chairGlb.rotation.y = 0;
+      // chairGlb.position.z < 0 ? (chairGlb.rotation.z = Math.PI) : (chairGlb.rotation.z = 0);
+      // chairGlb.scale.x = 0.5;
       // scene.add(tableGlb);
-
+      
+      let modelsGlb = [tableGlb, dressingGlb];
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
       let lenghtHalf = 2.5;
-      let widthHalf = 0.5;
+      let widthHalf = 1.5;
       let controlReverse = false;
       let speed = 0.25 * gameSpeed;
       let score = 0;
@@ -575,11 +668,9 @@ export class Game extends HTMLElement {
     }
 
     var step = null;
-    let canRestart;
 
     function start() {
       if (!step && gamePlaying) {
-        canRestart = true;
         step = requestAnimationFrame(animate);
       }
     }
@@ -701,7 +792,7 @@ export class Game extends HTMLElement {
 
     let game_state = this.#state.gameOptions;
     let Timer = (() => {
-      let timeLeft = (!game_state.time_limit ? 10 : game_state.time_limit * 60);
+      let timeLeft = (!GAME_TIME ? 10 : GAME_TIME * 60);
       let intervalId = setInterval(myCallback, 1000);
       return {
         get timeLeft() {
@@ -800,10 +891,12 @@ export class Game extends HTMLElement {
         new Worker(blobURL),
       ];
       Workers[0].onmessage = function (e) {
+        console.log("big");
         Bumpers[e.data[0]].tableGlb.scale.x = 1;
         Bumpers[e.data[0]].lenghtHalf = 2.5;
       };
       Workers[1].onmessage = function (e) {
+        console.log("smol")
         Bumpers[Math.abs(e.data[0] - 1)].tableGlb.scale.x = 1;
         Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
         if (
