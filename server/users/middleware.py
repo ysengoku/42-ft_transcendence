@@ -4,11 +4,11 @@ from channels.db import database_sync_to_async
 from ninja.errors import AuthenticationError
 from ninja.security import APIKeyCookie
 
+from common.close_codes import CloseCodes
 from users.models import RefreshToken, User
 
 logger = logging.getLogger("server")
 
-ILLEGAL_CONNECTION = 3002
 
 class JWTEndpointsAuthMiddleware(APIKeyCookie):
     """
@@ -57,7 +57,7 @@ class JWTWebsocketAuthMiddleware:
         except ValueError as e:
             logger.warning("WS not open for scope user %s : %s", scope["user"], e)
             await send({"type": "websocket.accept"})
-            await send({"type": "websocket.close", "code": ILLEGAL_CONNECTION})
+            await send({"type": "websocket.close", "code": CloseCodes.ILLEGAL_CONNECTION})
 
     @database_sync_to_async
     def authenticate_token(self, token):
