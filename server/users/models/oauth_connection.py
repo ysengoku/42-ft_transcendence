@@ -3,6 +3,7 @@ from datetime import timedelta
 from io import BytesIO
 
 import requests
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import DatabaseError, models
 from django.utils import timezone
@@ -111,7 +112,7 @@ class OauthConnection(models.Model):
                 save=True,
             )
             return None
-        return "/img/default_avatar.png"
+        return settings.DEFAULT_USER_AVATAR
 
     def set_connection_as_connected(self, user_info: dict, user) -> None:
         """
