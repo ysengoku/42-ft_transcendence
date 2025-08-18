@@ -378,7 +378,6 @@ export class DuelMenu extends HTMLElement {
     if (this.userList.contains(event.target) || this.searchInput.contains(event.target)) {
       return;
     }
-    console.log(this.loadMoreAnchor);
     this.cleanObserver();
     this.userList.classList.remove('show');
     this.userList.scrollTop = 0;

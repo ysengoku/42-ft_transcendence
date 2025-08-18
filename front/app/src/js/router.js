@@ -57,7 +57,7 @@ const router = (() => {
      * @param {string} [queryParams=''] - The query parameters included in the URL.
      * @return {void}
      */
-    handleRoute(queryParams = '') {
+    handleRoute(queryParams = new URLSearchParams()) {
       const path = window.location.pathname;
       const route = this.routes.get(path) || this.matchDynamicRoute(path);
 
@@ -192,7 +192,9 @@ const router = (() => {
 
       const shouldReplace = redirect || this.isFristLoad || this.pathToReplace.has(path);
       const historyUpdateMethod = shouldReplace ? 'replaceState' : 'pushState';
-      window.history[historyUpdateMethod]({}, '', path);
+      const queryParamsString = queryParamsObject.toString();
+      const fullPath = queryParamsString ? `${path}?${queryParamsString}` : path;
+      window.history[historyUpdateMethod]({}, '', fullPath);
       this.isFristLoad = false;
       this.handleRoute(queryParamsObject);
     }
@@ -233,7 +235,8 @@ const router = (() => {
         }
         this.beforeunloadCallback = null;
       }
-      this.handleRoute();
+      const queryParams = new URLSearchParams(window.location.search);
+      this.handleRoute(queryParams);
     }
   }
 

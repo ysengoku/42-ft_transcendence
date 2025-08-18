@@ -114,6 +114,9 @@ export class ChatMessageArea extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
   render() {
+    this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+    this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
+
     this.innerHTML = this.style() + this.template();
     this.messageInput = this.querySelector('#chat-message-input-wrapper');
     this.loader = this.querySelector('.chat-loader');
@@ -156,12 +159,9 @@ export class ChatMessageArea extends HTMLElement {
       requestAnimationFrame(() => {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       });
-      this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
-      this.chatMessages.addEventListener('click', this.toggleLikeMessage);
-    } else {
-      this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
-      this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
     }
+    this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
+    this.chatMessages.addEventListener('click', this.toggleLikeMessage);
 
     // Toggle input and block button based on block status.
     if (this.#state.data.is_blocked_user) {
@@ -300,7 +300,17 @@ export class ChatMessageArea extends HTMLElement {
     const messageContent = messageElement.querySelector('.bubble');
     messageContent.id = message.id;
 
-    if (message.sender === this.#state.data.username) {
+    if (message.sender === this.#state.loggedInUsername) {
+      messageElement.classList.add(
+        'right-align-message',
+        'd-flex',
+        'flex-row',
+        'justify-content-end',
+        'align-items-center',
+      );
+      messageContent.classList.add('ms-5');
+      messageElement.querySelector('.chat-message-avatar').remove();
+    } else {
       messageElement.classList.add(
         'left-align-message',
         'd-flex',
@@ -322,16 +332,6 @@ export class ChatMessageArea extends HTMLElement {
         };
         socketManager.sendMessage('livechat', readMessage);
       }
-    } else {
-      messageElement.classList.add(
-        'right-align-message',
-        'd-flex',
-        'flex-row',
-        'justify-content-end',
-        'align-items-center',
-      );
-      messageContent.classList.add('ms-5');
-      messageElement.querySelector('.chat-message-avatar').remove();
     }
     messageElement.querySelector('.message-content').textContent = message.content;
     message.is_liked ? messageContent.classList.add('liked') : messageContent.classList.remove('liked');

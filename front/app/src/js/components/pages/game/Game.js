@@ -60,6 +60,7 @@ export class Game extends HTMLElement {
     this.#state.gameOptions.ranked = false;
 
     console.log('Game options:', this.#state.gameType);
+    log.info('Game type:', this.#state.gameType);
   }
 
   createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback) {
