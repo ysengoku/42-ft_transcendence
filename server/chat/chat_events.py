@@ -62,6 +62,7 @@ class ChatEvent:
                 chat_id,
             )
             return
+        self.consumer.user_profile.refresh_from_db()
         new_message = ChatMessage.objects.create(sender=self.consumer.user_profile, content=message, chat=chat)
 
         async_to_sync(self.consumer.channel_layer.group_send)(
