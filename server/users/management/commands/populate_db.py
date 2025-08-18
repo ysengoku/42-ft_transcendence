@@ -206,7 +206,7 @@ def put_avatars():
     set_alias(sad_hampter, "little_rat")
     set_alias(tama, "flower_girl")
     set_alias(martine, "The_Queen")
-    set_alias(marie, "Good_boy")
+    set_alias(marie, "Good_girl")
     set_alias(grandma, "Old_hag")
     set_alias(grandpa, "Old_grumpy")
     set_alias(pedro, "The_original")
@@ -260,7 +260,7 @@ def generate_matches(users: dict[str, User], life_enjoyer: User):
                 )
 
 
-def modified_generate_tournaments(users: dict[str, User]) -> None:
+def generate_tournaments(users: dict[str, User]) -> None:
     dummy_aliases = [
         "RedFalcon",
         "BlueTiger",
@@ -279,10 +279,10 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
     profiles = [u.profile for u in users.values()]
     print("Number of profiles :", len(profiles))
     list_users = list(users.values())
-    for i in range(4):
+    for i in range(3):
         name = f"Tournament {i + 1}"
         generate_random_date()
-        option_for_status = [Tournament.FINISHED, Tournament.CANCELLED, Tournament.ONGOING, Tournament.PENDING]
+        option_for_status = [Tournament.FINISHED, Tournament.CANCELLED, Tournament.PENDING]
         status = option_for_status[i]
         user = choice(list(users.values()))
         user = choice(list_users)
@@ -363,16 +363,20 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
                     if bracket_status == Tournament.FINISHED:
                         s1, s2 = randint(0, 3), randint(0, 3)
                         if s1 == s2:
-                            s1 += 1
-                        bracket.score_p1, bracket.score_p2 = s1, s2
+                            if s1 == 3:
+                                s2 = 2
+                            else:
+                                s1 += 1
+                        bracket.winners_score = max(s2, s1)
+                        bracket.losers_score = min(s2, s1)
                         winner = p1 if s1 > s2 else p2
                         loser = p2 if s1 > s2 else p1
                         bracket.winner = winner
                         bracket.score = f"{s1}-{s2}"
                         bracket.save()
 
-                        winner.status = "playing" if rnd < total_rounds else "winner"
-                        loser.status = "eliminated"
+                        winner.status = Participant.PLAYING if rnd < total_rounds else Participant.WINNER
+                        loser.status = Participant.ELIMINATED
                         loser.current_round = rnd
                         winner.current_round = rnd + (0 if rnd < total_rounds else rnd)
                         winner.save()
@@ -383,8 +387,12 @@ def modified_generate_tournaments(users: dict[str, User]) -> None:
                         if randint(0, 1):
                             s1, s2 = randint(0, 3), randint(0, 3)
                             if s1 == s2:
-                                s2 += 1
-                            bracket.score_p1, bracket.score_p2 = s1, s2
+                                if s1 == 3:
+                                    s2 = 2
+                                else:
+                                    s1 += 1
+                            bracket.winners_score = max(s2, s1)
+                            bracket.losers_score = min(s2, s1)
                             winner = p1 if s1 > s2 else p2
                             loser = p2 if s1 > s2 else p1
                             bracket.winner = winner
@@ -419,7 +427,7 @@ class Command(BaseCommand):
         users, life_enjoyer = generate_users()
 
         generate_matches(users, life_enjoyer)
-        modified_generate_tournaments(users)
+        generate_tournaments(users)
         put_avatars()
 
         # MFA users
