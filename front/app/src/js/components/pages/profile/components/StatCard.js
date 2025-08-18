@@ -17,7 +17,7 @@ export class UserStatCard extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     const title = this.querySelector('#stat-card-title');
     const value = this.querySelector('#stat-card-value');
@@ -27,7 +27,8 @@ export class UserStatCard extends HTMLElement {
 
   template() {
     return `
-    <div class="stat-card d-flex flex-column justify-content-around align-items-center mx-4 my-5 py-4">
+    <div class="stat-card d-flex flex-column justify-content-around align-items-center px-2 py-3">
+      <img src="${sheriff}" alt="sheriff" class="img-fluid" width="40px" height="40px">
       <p class="stat-label m-0" id="stat-card-title"></p>
       <p class="m-0 fs-2" id="stat-card-value"></p>
     </div>
@@ -38,12 +39,9 @@ export class UserStatCard extends HTMLElement {
   style() {
     return `
     <style>
-      .stat-card {
-        width: 120px;
-        height: 120px;
-        background-image: url(${sheriff});
-        background-size: cover;
-        background-position: center;
+    .stat-card {
+      min-width: 128px;
+      background-color: rgba(var(--pm-primary-600-rgb), 0.1);
       }
     </style>
     `;

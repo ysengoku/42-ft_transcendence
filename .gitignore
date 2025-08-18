@@ -175,3 +175,6 @@ node_modules/
 /server/media/
 
 /.vscode/
+copy_files.sh
+.idea
+.idea/

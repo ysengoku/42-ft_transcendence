@@ -1,17 +1,31 @@
+from __future__ import annotations  # noqa: A005
+
+from datetime import timedelta  # noqa: A005
 from pathlib import Path  # noqa: A005
+from typing import TYPE_CHECKING
 
 import magic
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
 from django.db import models
 from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
 from django.db.models.lookups import Exact
-from ninja.files import UploadedFile
+from django.utils import timezone
 
 from users.utils import merge_err_dicts
 
+if TYPE_CHECKING:
+    from ninja.files import UploadedFile
+
+    from chat.models import GameInvitation
+    from pong.models import GameRoom
+    from tournaments.models import Participant, Tournament
+
 
 def calculate_winrate(wins: int, loses: int) -> int | None:
+    """Returns `None` if the user didn't play any games yet, a valid winrate otherwise."""
     total = wins + loses
     if total == 0:
         return None
@@ -30,6 +44,7 @@ class ProfileQuerySet(models.QuerySet):
             is_friend=Exists(curr_user.profile.friends.filter(user__username=username)),
             is_blocked_user=Exists(curr_user.profile.blocked_users.filter(user__username=username)),
             is_blocked_by_user=Exists(curr_user.profile.blocked_users_of.filter(user__username=username)),
+            friends_count=Count("friends", distinct=True),
         )
 
     def with_wins_and_loses_and_total_matches(self):
@@ -38,6 +53,8 @@ class ProfileQuerySet(models.QuerySet):
         """
 
         class Round(Func):
+            """Custom SQL function for calculating the winrate."""
+
             function = "ROUND"
             template = "%(function)s(%(expressions)s, 0)"
 
@@ -69,22 +86,27 @@ class ProfileQuerySet(models.QuerySet):
             .with_wins_and_loses_and_total_matches()
         )
 
-    def with_search(self, search: str):
+    def with_search(self, search: str, curr_user):
         """
         Searches users based on the given context.
+        The context is their username or nickhame.
         """
+        search_qs = (
+            self.prefetch_related("user")
+            .all()
+            .order_by("-is_online", "user__nickname")
+            .exclude(blocked_users=curr_user.profile)
+        )
         if search:
-            return (
-                self.prefetch_related("user")
-                .filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
-                .order_by("-is_online", "user__nickname")
-            )
-        return Profile.objects.prefetch_related("user").all().order_by("-is_online", "user__nickname")
+            search_qs = search_qs.filter(Q(user__nickname__istartswith=search) | Q(user__username__istartswith=search))
+        return search_qs
 
 
 class Profile(models.Model):
     """
-    Contains user information to the application logic itself.
+    The most important model of the application.
+    Contains user specific information related to the application logic itself.
+    Relates to a lot of models, including models from other apps.
     """
 
     user = models.OneToOneField("users.User", default=None, null=True, blank=True, on_delete=models.CASCADE)
@@ -92,15 +114,44 @@ class Profile(models.Model):
     elo = models.IntegerField(default=1000)
     friends = models.ManyToManyField("self", symmetrical=False, through="Friendship", related_name="friends_of")
     blocked_users = models.ManyToManyField("self", symmetrical=False, related_name="blocked_users_of")
-    is_online = models.BooleanField(default=True)
+    is_online = models.BooleanField(default=False)
+    last_activity = models.DateTimeField(auto_now_add=True)
+    nb_active_connexions = models.IntegerField(default=0)
 
     objects = ProfileQuerySet.as_manager()
 
     def __str__(self) -> str:
         return f"Profile of {self.user.username}"
 
+    def update_activity(self):
+        self.last_activity = timezone.now()
+        if not self.is_online:
+            self.is_online = True
+            self.save(update_fields=["is_online", "last_activity"])
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                "online_users",
+                {
+                    "type": "user_status",
+                    "action": "user_online",
+                    "data": {
+                        "username": self.user.username,
+                        "nickname": getattr(self, "nickname", self.user.username),
+                        "status": "online",
+                        "date": timezone.now().isoformat(),
+                    },
+                },
+            )
+        else:
+            self.save(update_fields=["last_activity"])
+
+    @property
+    def is_really_online(self):
+        return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=30)
+
     @property
     def avatar(self) -> str:
+        """Returns either profile picture of the user, or the default avatar, if the user didn't provide one."""
         if self.profile_picture:
             return self.profile_picture.url
         return settings.DEFAULT_USER_AVATAR
@@ -111,7 +162,31 @@ class Profile(models.Model):
 
     @property
     def dialogues(self):
-        self.dialogues_as_user1 | self.dialogues_as_user2
+        return self.dialogues_as_user1 | self.dialogues_as_user2
+
+    @classmethod
+    def get_db_table(cls):
+        return cls._meta.db_table
+
+    def get_title_and_price(self):  # noqa: PLR0911
+        # ruff: noqa: PLR2004
+        if self.elo > 2700:
+            return "Wild West Legend", 1000000
+        if self.elo > 2300:
+            return "Star Criminal", 500000
+        if self.elo > 2000:
+            return "Ace Outlaw", 100000
+        if self.elo > 1700:
+            return "Big Shot", 10000
+        if self.elo > 1400:
+            return "El Bandito", 1000
+        if self.elo > 1100:
+            return "Goon", 100
+        if self.elo > 800:
+            return "Troublemaker", 50
+        if self.elo > 500:
+            return "Petty Criminal", 10
+        return "Damsel", 0
 
     def get_scored_balls(self):
         return (
@@ -122,18 +197,24 @@ class Profile(models.Model):
         )
 
     def get_best_enemy(self):
+        """Best enemy is the user against which the user won the most."""
         best_enemy = self.won_matches.values("loser").annotate(wins=Count("loser")).order_by("-wins").first()
         if not best_enemy or not best_enemy.get("loser", None):
             return None
         return Profile.objects.get(id=best_enemy["loser"])
 
     def get_worst_enemy(self):
+        """Worst enemy is the user against which the user lost the most."""
         worst_enemy = self.lost_matches.values("winner").annotate(losses=Count("winner")).order_by("-losses").first()
         if not worst_enemy or not worst_enemy.get("winner", None):
             return None
         return Profile.objects.get(id=worst_enemy["winner"])
 
     def get_stats_against_player(self, profile):
+        """
+        Gets play statistics of the given user.
+        Wins, loses, elo and winrate are retrieved.
+        """
         res = self.matches.aggregate(
             wins=Count("pk", filter=Q(winner=self) & Q(loser=profile)),
             loses=Count("pk", filter=Q(winner=profile) & Q(loser=self)),
@@ -148,18 +229,14 @@ class Profile(models.Model):
             "winrate": calculate_winrate(res["wins"], res["loses"]),
         }
 
-    def get_elo_data_points(self):
-        return self.matches.annotate(
-            elo_change_signed=Case(When(winner=self, then=F("elo_change")), When(loser=self, then=-F("elo_change"))),
-            elo_result=Case(When(winner=self, then=F("winners_elo")), When(loser=self, then=F("losers_elo"))),
-        ).values("elo_change_signed", "elo_result", "date")
-
     def delete_avatar(self) -> None:
+        """Deletes avatar from both the database, as well as an actual picture from the media volume."""
         self.profile_picture.delete()
         if self.profile_picture and Path.is_file(self.profile_picture.path):
             Path.unlink(self.profile_picture.path)
 
     def update_avatar(self, new_avatar) -> None:
+        """Validates an avatar, and if its valid, deletes an old avatar and sets a new one. Does not saves the model."""
         self.validate_avatar(new_avatar)
         self.delete_avatar()
         self.profile_picture = new_avatar
@@ -190,7 +267,7 @@ class Profile(models.Model):
         if err_dict:
             raise ValidationError(err_dict)
 
-    def add_friend(self, new_friend):
+    def add_friend(self, new_friend) -> None | str:
         if new_friend == self:
             return "Can't add yourself to the friendlist."
         if self.friends.filter(pk=new_friend.pk).exists():
@@ -200,35 +277,88 @@ class Profile(models.Model):
         self.friends.add(new_friend)
         return None
 
-    def remove_friend(self, removed_friend):
+    def remove_friend(self, removed_friend) -> None | str:
         if not self.friends.filter(pk=removed_friend.pk).exists():
             return f"User {removed_friend.user.username} is not in the friendlist."
         self.friends.remove(removed_friend)
         return None
 
-    def block_user(self, user_to_block):
+    def block_user(self, user_to_block) -> None | str:
         if user_to_block == self:
             return "Can't block self."
         if self.blocked_users.filter(pk=user_to_block.pk).exists():
             return f"User {user_to_block.user.username} is already blocked."
         self.blocked_users.add(user_to_block)
         self.remove_friend(user_to_block)
+        from chat.models import Chat
+
+        chat = Chat.objects.for_exact_participants(user_to_block, self).first()
+        if not chat:
+            return None
+        chat.messages.all().update(is_read=True)
         return None
 
-    def unblock_user(self, blocked_user_to_remove):
+    def unblock_user(self, blocked_user_to_remove) -> None | str:
         if not self.blocked_users.filter(pk=blocked_user_to_remove.pk).exists():
             return f"User {blocked_user_to_remove.user.username} is not in your blocklist."
         self.blocked_users.remove(blocked_user_to_remove)
+        from chat.models import Chat
+
+        chat = Chat.objects.for_exact_participants(blocked_user_to_remove, self).first()
+        if not chat:
+            return None
+        chat.messages.filter(is_really_read=False).update(is_read=False)
         return None
 
-    def to_profile_minimal_schema(self):
+    def to_username_nickname_avatar_schema(self):
         return {
             "username": self.user.username,
             "nickname": self.user.nickname,
             "avatar": self.avatar,
+        }
+
+    def to_profile_minimal_schema(self):
+        return self.to_username_nickname_avatar_schema() | {
             "elo": self.elo,
             "is_online": self.is_online,
         }
+
+    def get_user_data_with_date(self):
+        return self.to_username_nickname_avatar_schema() | {
+            "date": timezone.now().isoformat(),
+        }
+
+    def get_active_tournament(self) -> None | Tournament:
+        """Gets the active tournament where user is still a playing participant."""
+        participant: Participant = self.participant_set.filter(
+            ~Q(status__in=["eliminated", "winner"]),
+            tournament__status__in=["pending", "ongoing"],
+            profile=self,
+        ).first()
+        if participant and not participant.excluded:
+            return participant.tournament
+        return None
+
+    def get_active_game_participation(self) -> tuple[GameRoom | None, Tournament | None, GameInvitation | None]:
+        """
+        Gets active game pariticipation.
+        User should not participate in matchmaking, be a participant of a tournament, play pong match currently
+        or have a game invitation for someone.
+        """
+        active_statuses = ["pending", "ongoing"]
+        # active non-tournament game
+        active_game_room: GameRoom | None = self.game_rooms.filter(
+            status__in=active_statuses,
+            bracket__isnull=True,
+        ).first()
+
+        # active tournament presence
+        active_tournament: Tournament | None = self.get_active_tournament()
+
+        # active invitation of someone (as inviter)
+        pending_invitation_as_inviter: GameInvitation | None = self.sent_invites.filter(status="pending").first()
+
+        return active_game_room, active_tournament, pending_invitation_as_inviter
 
 
 class Friendship(models.Model):

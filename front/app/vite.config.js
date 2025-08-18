@@ -8,11 +8,15 @@ export default defineConfig({
     },
     historyFallback: true,
   },
+  build: {
+    sourcemap: true,
+  },
   resolve: {
     alias: {
       '@main': path.resolve(__dirname, 'src/main.js'),
       '@router': path.resolve(__dirname, 'src/js/router.js'),
-      '@socket': path.resolve(__dirname, 'src/js/socket.js'),
+      '@env': path.resolve(__dirname, 'src/js/env.js'),
+      '@socket': path.resolve(__dirname, 'src/js/sockets/index.js'),
       '@api': path.resolve(__dirname, 'src/js/api/index.js'),
       '@components': path.resolve(__dirname, 'src/js/components/'),
       '@auth': path.resolve(__dirname, 'src/js/auth/index.js'),
@@ -20,5 +24,9 @@ export default defineConfig({
       '@mock': path.resolve(__dirname, '__mock__/'),
       '@css': path.resolve(__dirname, 'src/css/'),
     },
+  },
+  vitest: {
+    globals: true,
+    environment: 'jsdom',
   },
 });

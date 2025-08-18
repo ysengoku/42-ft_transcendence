@@ -11,6 +11,7 @@ import { UserActionsMenu } from './components/UserActionsMenu.js';
 import { NotificationsButton } from './components/NotificationsButton.js';
 import { NotificationsList } from './components/NotificationsList.js';
 import { NotificationsListItem } from './components/NotificationsListItem.js';
+import { CreditsAccordion } from './components/CreditsAccordion.js';
 
 export {
   Navbar,
@@ -26,4 +27,5 @@ export {
   NotificationsButton,
   NotificationsList,
   NotificationsListItem,
+  CreditsAccordion,
 };

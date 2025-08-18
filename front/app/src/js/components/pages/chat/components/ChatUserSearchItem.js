@@ -1,5 +1,5 @@
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessage, ALERT_TYPE } from '@utils';
+import { showAlertMessage, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import defaltAvatar from '/img/default_avatar.png?url';
 
 export class ChatUserSearchItem extends HTMLElement {
@@ -9,7 +9,6 @@ export class ChatUserSearchItem extends HTMLElement {
 
   constructor() {
     super();
-
     this.startChat = this.startChat.bind(this);
   }
 
@@ -27,7 +26,7 @@ export class ChatUserSearchItem extends HTMLElement {
   /* ------------------------------------------------------------------------ */
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     const avatar = this.#state.user.avatar ? this.#state.user.avatar : defaltAvatar;
     this.querySelector('.chat-user-search-avatar').src = avatar;
@@ -48,27 +47,35 @@ export class ChatUserSearchItem extends HTMLElement {
     await this.fetchChatRoom();
   }
 
-  async fetchChatRoom() {
+  async fetchChatRoom(username = this.#state.user.username) {
     const response = await apiRequest(
-        'PUT',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.CHAT(this.#state.user.username),
-        null,
-        false,
-        true,
+      'PUT',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.CHAT(username),
+      null,
+      false,
+      true,
     );
     if (response.success) {
-      console.log('Chat room response:', response);
+      if (response.data.is_blocked_by_user) {
+        showAlertMessageForDuration(
+          ALERT_TYPE.ERROR,
+          `Chat with ${response.data.nickname} @${response.data.username} is currently unavailable.`,
+          3000,
+        );
+        this.chatList.hideUserSearchBar();
+        return;
+      }
       if (response.status === 200) {
         this.chatList.restartChat(response.data);
       } else if (response.status === 201) {
         this.chatList.addNewChat(response.data);
       }
     } else {
-      if (response.status !== 401 && response.status !== 500) {
-        console.error(response.msg);
-        showAlertMessage(ALERT_TYPE.ERROR, response.msg);
+      if (response.status === 401 || response.status === 429 || response.status === 500) {
+        return;
       }
+      showAlertMessage(ALERT_TYPE.ERROR, response.msg);
     }
   }
 
@@ -78,15 +85,15 @@ export class ChatUserSearchItem extends HTMLElement {
 
   template() {
     return `
-    <li class="list-group-item ps-3 py-2">
+    <li class="chat-user-search-list-item dropdown-item border-0 ps-3 py-3">
       <div class="d-flex flex-row align-items-center">
         <div class="position-relative d-inline-block me-2">
-          <img class="chat-user-search-avatar rounded-circle me-3" alt="Avatar">
+          <img class="chat-user-search-avatar avatar-s rounded-circle me-3" alt="Avatar">
           <span class="online-status chat-user-search-status-indicator ${this.#state.user.is_online ? 'online' : ''} ms-3"></span>
         </div>
-        <div class="d-flex flex-wrap flex-grow-1 gap-2">
-          <p class="userlist-nickname m-0 fw-bolder"></P>
-          <p class="userlist-username m-0 fs-light"></p>
+        <div class="d-flex flex-wrap flex-grow-1 gap-2 overflow-hidden">
+          <p class="userlist-nickname m-0 fw-bolder flex-wrap"></P>
+          <p class="userlist-username m-0 fs-light flex-nowrap flex-grow-1"></p>
         </div>
       <div>
     </li>
@@ -96,18 +103,18 @@ export class ChatUserSearchItem extends HTMLElement {
   style() {
     return `
     <style>
-    .chat-user-search-avatar {
-      width: 40px;
-      height: 40px;
-      object-fit: cover;
-    }
     .chat-user-search-status-indicator {
       position: absolute;
       bottom: 0;
       right: 24%;
-      border: 1px solid var(--bs-bg-color);
+      border: 1px solid var(--bs-body-bg);
       width: 12px;
       height: 12px;
+    }
+    .userlist-nickname,
+    .userlist-username {
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     </style>
     `;

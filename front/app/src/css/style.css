@@ -2,13 +2,36 @@
 /*     Fonts                                                                  */
 /*----------------------------------------------------------------------------*/
 @font-face {
-  font-family: 'docktrin';
-  src: url(/fonts/docktrin.ttf) format('truetype');
+  font-family: 'van dyke';
+  font-display: swap;
+  src: url(/fonts/VAN_DYKE.ttf) format('truetype');
 }
 
 @font-face {
-  font-family: 'van dyke';
-  src: url(/fonts/VAN_DYKE.ttf) format('truetype');
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/crimson-pro-v24-latin-regular.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/crimson-pro-v24-latin-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/crimson-pro-v24-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'docktrin';
+  src: url(/fonts/docktrin.ttf) format('truetype');
 }
 
 @font-face {
@@ -51,10 +74,48 @@
   --pm-gray-200-rgb: 212, 208, 206;
   --pm-gray-100-rgb: 241, 240, 240;
 
+  --pm-red-700: #4D0302;
+  --pm-red-600: #870907;
+  --pm-red-500: #C61210;
+  --pm-red-400: #FB3C3B;
+  --pm-red-300: #FF6A69;
+  --pm-red-200: #FDC7C6;
+  --pm-red-100: #FEEDED;
+  --pm-red-700-rgb: 77, 3, 2;
+  --pm-red-600-rgb: 135, 9, 7;
+  --pm-red-500-rgb: 198, 18, 16;
+  --pm-red-400-rgb: 251, 60, 59;
+  --pm-red-300-rgb: 255, 106, 105;
+  --pm-red-200-rgb: 253, 199, 198;
+  --pm-red-100-rgb: 254, 237, 237;
+
+  --pm-green-700: #141400;
+  --pm-green-600: #323301;
+  --pm-green-500: #535403;
+  --pm-green-400: #777806;
+  --pm-green-300: #9D9E0A;
+  --pm-green-200: #C4C610;
+  --pm-green-100: #EDEF16;
+  --pm-green-700-rgb: 20, 20, 0;
+  --pm-green-600-rgb: 50, 51, 1;
+  --pm-green-500-rgb: 83, 84, 3;
+  --pm-green-400-rgb: 119, 120, 6;
+  --pm-green-300-rgb: 157, 158, 10;
+  --pm-green-200-rgb: 196, 198, 16;
+  --pm-green-100-rgb: 237, 239, 22;
+
   --bs-light: var(--pm-gray-100);
   --bs-light-rgb: var(--pm-gray-100-rgb);
   --bs-dark: var(--pm-gray-700);
   --bs-dark-rgb: var(--pm-gray-700-rgb);
+
+  --pm-bg-success: var(--pm-green-400);
+  --pm-bg-success-rgb: var(--pm-green-400-rgb);
+  --pm-bg-danger: var(--pm-red-400);
+  --pm-bg-danger-rgb: var(--pm-red-400-rgb);
+
+  --pm-online: #228F0B;
+  --pm-offline: var(--pm-gray-400);
 }
 
 /*--------------------------------------------------------------------------- */
@@ -63,8 +124,15 @@
 
 [data-bs-theme="light"] {
   --bs-body-color: var(--pm-gray-700);
-  --bs-bg-color: var(--pm-primary-100);
+  --bs-body-color-rgb: var(--pm-gray-700-rgb);
+  --bs-bg-color: var(--pm-gray-100);
+  --bs-body-bg: var(--pm-gray-100);
+  --bs-body-bg-rgb: var(--pm-gray-100-rgb);
+  --bs-text-light: var(--pm-gray-600);
   --bs-black-rgb: 34, 32, 31;
+
+  --pm-text-green: var(--pm-green-500);
+  --pm-text-danger: var(--pm-red-500);
 
   #content {
     background: url('/img/bg-day.png') no-repeat center center;
@@ -78,11 +146,18 @@
 
 [data-bs-theme="dark"] {
   --bs-body-color: var(--pm-gray-100);
+  --bs-body-color-rgb: var(--pm-gray-100-rgb);
   --bs-bg-color: var(--pm-gray-700);
+  --bs-body-bg: var(--pm-gray-700);
+  --bs-body-bg-rgb: var(--pm-gray-700-rgb);
+  --bs-text-light: var(--pm-gray-200);
   --bs-black-rgb: 241, 240, 240;
 
+  --pm-text-green: var(--pm-green-200);
+  --pm-text-danger: var(--pm-red-400); 
+
   #content {
-    background: url('/img/bg-night-dark.png') no-repeat center center;
+    background: url('/img/bg-night.png') no-repeat center center;
     background-size: cover;
   }
 
@@ -98,8 +173,8 @@ html,
 body {
   height: auto;
   margin: 0;
-  cursor: url('/img/sample-cursor.png') 4 4, auto;
-  font-family: "Crimson Pro", serif;
+  cursor: url('/img/gun.png') 4 4, auto;
+  font-family: 'Crimson Pro', serif;
 }
 
 body {
@@ -108,16 +183,50 @@ body {
 }
 
 .navbar {
+  height: 64px;
   z-index: 3;
 }
 
-h2, h3, h4, h5, h6, legend {
+.navbar-brand {
+  line-height: 64px;
+}
+
+.navbar-brand:hover {
+  transform: scale(1.05);
+}
+
+h1, h2, h3, h4, h5, h6, legend {
   font-family: 'van dyke', serif;
+}
+
+.btn:not(.btn-wood):hover {
+  transform: scale(1.05);
+}
+
+#alert-message-container {
+  z-index: 1050;
+  font-weight: bold;
+  border: none !important;
+}
+.alert-success {
+  background-color: rgba(var(--pm-bg-success-rgb), 0.9);
+  color: var(--pm-primary-100);
+  border: none !important;
+}
+.alert-danger {
+  background-color: rgba(var(--pm-bg-danger-rgb), 0.9);
+  color: var(--pm-primary-100);
+  border: none !important;
+}
+.alert-light {
+  background-color: var(--pm-gray-500);
+  color: var(--pm-primary-100);
+  border: none !important;
 }
 
 #content {
   max-width: 100%;
-  padding: 0;
+  padding: 64px 0 0 0;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -128,6 +237,11 @@ h2, h3, h4, h5, h6, legend {
 
 .dropdown-menu {
   z-index: 1050 !important; /* Keep dropdown always on top */
+  border-radius: 0;
+}
+.dropdown-menu-end {
+  max-height: 75vh;
+  padding-top: 0;
 }
 
 .modal-backdrop {
@@ -138,19 +252,104 @@ h2, h3, h4, h5, h6, legend {
   font-size: 12px;
 }
 
+.invisible {
+  visibility: hidden;
+}
+
+.avatar-xxs,
+.avatar-xs,
+.avatar-s,
+.avatar-m,
+.avatar-l,
+.avatar-xl {
+  object-fit: cover;
+  aspect-ratio: 1;
+  background-color: var(--pm-gray-500-rgb);
+}
+.avatar-xxs {
+  width: 24px;
+  height: 24px;
+}
+.avatar-xs {
+  width: 36px;
+  height: 36px;
+}
+.avatar-s {
+  width: 40px;
+  height: 40px;
+}
 .avatar-m {
   width: 56px;
   height: 56px;
-  object-fit: cover;
 }
+.avatar-l {
+  width: 88px;
+  height: 88px;
+}
+.avatar-xl {
+  width: 120px;
+  height: 120px;
+}
+
 .online-status {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: grey;
+  background-color: var(--pm-gray-400);
 }
 .online-status.online {
   background-color: green;
+}
+
+.error-wrapper {
+  backdrop-filter: blur(2px);
+  h2 {
+    font-size: 2.5rem;
+  }
+  .image-container {
+    width: 200px;
+    height: auto;
+  }
+  .btn {
+    font-family: 'van dyke', serif;
+  }
+}
+
+.bubble-error {
+  display: inline-block;
+  position: relative;
+  background-color: var(--bs-body-bg);
+  border-radius: 2rem;
+  padding: 2rem;
+  box-sizing: border-box;
+  max-width: 320px;
+}
+
+.bubble-error::after {
+  position: absolute;
+  content: "";
+  top: 25%;
+  right: -32px;
+  border: 8px solid transparent;
+  border-left: 32px solid var(--bs-body-bg);
+  transform: rotate(32deg);
+}
+
+.bi-arrow-up-right {
+  color: var(--pm-bg-success);
+  -webkit-text-stroke: 1px;
+}
+.bi-arrow-down-right {
+  color: var(--pm-red-500);
+  -webkit-text-stroke: 1px;
+}
+
+.game-options-tag {
+  background-color: var(--pm-primary-500);
+  color: var(--pm-primary-100);
+  border-radius: 6px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.9rem;
 }
 
 /*--------------------------------------------------------------------------- */
@@ -172,14 +371,16 @@ h2, h3, h4, h5, h6, legend {
 /*--------------------------------------------------------------------------- */
 /*    Cursor                                                                  */
 /*----------------------------------------------------------------------------*/
-a, button, div [role="button"], input[type="submit"], input[type="button"] {
-  cursor: url('/img/sample-cursor.png') 4 4, auto !important;
+a,
+button,
+.btn:hover,
+.btn-wood:hover,
+div [role="button"],
+input[type="submit"],
+input[type="button"] {
+  cursor: url('/img/gun.png') 4 4, auto !important;
 }
 
-/* html:active,
-body:active {
-  cursor: url('/img/sample-cursor-active.png') 4 4, auto;
-} */
 a:active, button:active, 
 div [role="button"]:active, input[type="submit"]:active, input[type="button"]:active {
   cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
@@ -251,8 +452,19 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   }
 }
 
+@keyframes flyAway {
+  0% {
+    transform: rotate(0deg) scale(1) translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(240deg) scale(0) translate(40px, -40px);
+    opacity: 0;
+  }
+}
+
 /*--------------------------------------------------------------------------- */
-/*    Buttons                                                                 */
+/*    Wood grain                                                              */
 /*----------------------------------------------------------------------------*/
 .btn-wood {
   color: var(--pm-gray-100);
@@ -264,29 +476,162 @@ div [role="button"]:active, input[type="submit"]:active, input[type="button"]:ac
   filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
  }
 
+.btn-wood:not(.landing-btn-1):not(.landing-btn-2):hover {
+  color: var(--pm-gray-300);
+  transform: scale(1.05);
+ }
+
 .btn-wood:before {
-  filter: url('/filters/wood-grain.svg#wave-filter-0');
-  --clrs1: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 50%);
-  --clrs2: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 20%);
-  --clrs3: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 60%);
-  --clrs4: color-mix(in lab, var(--pm-primary-600), var(--pm-primary-700) 98%);
-    position: absolute;
-    content: '';
-    inset: 0;
-    padding: .2em;
-    border: 4px double var(--pm-primary-600);
-    border-radius: .1em .2em / .5em .23em;
-    z-index: -1;
-    transition: .25s ease;
-    background: var(--pm-primary-500)
+  --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 50%);
+  --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 40%);
+  --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 60%);
+  --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 90%);
+  position: absolute;
+  content: '';
+  inset: 0;
+  padding: .2em;
+  border: 4px double var(--pm-primary-600);
+  border-radius: .1em .2em / .5em .23em;
+  z-index: -1;
+  transition: .25s ease;
+  background: var(--pm-primary-400)
     linear-gradient(178deg, 
       var(--clrs1),
-      var(--clrs2) 20% 70%,
+      var(--clrs2) 30% 70%,
       var(--clrs3) 90%,
       var(--clrs4)) 0 0 / 100% .3rem;
+  display: inline-block;
+  overflow: visible;
+  clip-path: url(#wave-clip)
 }
 
-.search-submit-btn {
+.wood-board {
+  padding: .5em 2em;
   border: none;
-  background-color: transparent;
+  filter: drop-shadow(.1em .1em .1em color-mix(in srgb, var(--pm-primary-600), transparent 50%));
+  svg {
+    fill: var(--pm-primary-100);
+  }
+  color: var(--pm-gray-100);
+  button {
+    color: var(--pm-primary-100);
+  }
+}
+
+.wood-board:before {
+  --clrs1: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 50%);
+  --clrs2: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 40%);
+  --clrs3: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 60%);
+  --clrs4: color-mix(in lab, var(--pm-primary-500), var(--pm-primary-700) 90%);
+  position: absolute;
+  content: '';
+  inset: 0;
+  padding: .2em;
+  border: 4px double var(--pm-primary-600);
+  border-radius: .1em .2em / .5em .23em;
+  z-index: -1;
+  transition: .25s ease;
+  background: var(--pm-primary-400)
+    linear-gradient(178deg, 
+      var(--clrs1),
+      var(--clrs2) 30% 70%,
+      var(--clrs3) 90%,
+      var(--clrs4)) 0 0 / 100% .3rem;
+  display: inline-block;
+  overflow: visible;
+}
+
+/*--------------------------------------------------------------------------- */
+/*    CSS Animations                                                          */
+/*----------------------------------------------------------------------------*/
+
+.pongAnimation {
+  width: 64%;
+  height: 64px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  background:
+  linear-gradient(var(--pm-primary-500) 0 0) 0    0/8px 20px,
+  linear-gradient(var(--pm-primary-500) 0 0) 100% 0/8px 20px,
+  radial-gradient(farthest-side,var(--pm-primary-400) 90%,#0000) 0 8px/12px 12px content-box,
+  transparent;
+  background-repeat: no-repeat; 
+  animation: pong 6s infinite linear;
+}
+@keyframes pong{
+  25% {background-position: 0 0,100% 100%,100% calc(100% - 4px)}
+  50% {background-position: 0 100%,100% 100%,0 calc(100% - 4px)}
+  75% {background-position: 0 100%,100% 0,100% 4px}
+}
+
+.fade-in-animation {
+  animation: fade-in 1s;
+  animation-fill-mode: forwards;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in-animation-half {
+  animation: fade-in-half 0.5s;
+  animation-fill-mode: forwards;
+}
+@keyframes fade-in-half {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-out-animation {
+  animation: fade-out 1s;
+  animation-fill-mode: forwards;
+}
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fly-away {
+  animation: flyAway 1.0s ease-out forwards;
+}
+
+/* For particleBurst effect */
+.particle {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.9;
+  animation: fly 0.8s forwards ease-out;
+}
+@keyframes fly {
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.rotating {
+  animation: rotating 1s linear infinite;
+}
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

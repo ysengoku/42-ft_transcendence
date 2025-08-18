@@ -1,9 +1,28 @@
-import { router } from '@router';
+/**
+ * @module FriendsList
+ * @description
+ * This module defines a custom friends list component for the navbar.
+ * It fetches and displays the user's friends list, handles pagination,
+ * and provides a template for rendering the friends list.
+ * It also handles the dropdown visibility and scroll events for loading more friends.
+ */
+
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import { showAlertMessageForDuration, ALERT_TYPE, ERROR_MESSAGES } from '@utils';
+import { setupObserver } from '@utils';
 
+/**
+ * @class FriendsList
+ * @extends HTMLElement
+ */
 export class FriendsList extends HTMLElement {
+  /**
+   * Private state of the FriendsList component.
+   * @property {string} username - The username of the logged-in user.
+   * @property {Array} friendsList - The list of friends fetched from the API.
+   * @property {number} totalFriendsCount - The total number of friends.
+   * @property {number} listLength - The current length of the friends list displayed.
+   */
   #state = {
     username: '',
     friendsList: [],
@@ -11,62 +30,126 @@ export class FriendsList extends HTMLElement {
     listLength: 0,
   };
 
+  /**
+   * @property {IntersectionObserver} observer - The IntersectionObserver instance for lazy loading friends.
+   * @property {HTMLElement} loadMoreAnchor - The anchor element for loading more friends.
+   */
+  observer = null;
+  loadMoreAnchor = null;
+
   constructor() {
     super();
-    this.fetchFriendsData = this.fetchFriendsData.bind(this);
-    this.handleModalClose = this.handleModalClose.bind(this);
-    this.handleShowMoreFriends = this.handleShowMoreFriends.bind(this);
+    this.renderListContent = this.renderListContent.bind(this);
+    this.handleDropdownClose = this.handleDropdownClose.bind(this);
+    this.showMoreFriends = this.showMoreFriends.bind(this);
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is added to the DOM.
+   * It renders the friends list.
+   */
   connectedCallback() {
     this.render();
   }
 
+  /**
+   * @description
+   * Lifecycle method called when the element is removed from the DOM.
+   * It removes event listeners to prevent memory leaks.
+   */
   disconnectedCallback() {
-    this.button?.removeEventListener('shown.bs.dropdown', this.fetchFriendsData);
-    this.button?.removeEventListener('hidden.bs.dropdown', this.handleModalClose);
-    this.showMoreButton?.removeEventListener('click', this.handleShowMoreFriends);
+    this.cleanObserver();
+    this.button?.removeEventListener('shown.bs.dropdown', this.renderListContent);
+    this.button?.removeEventListener('hidden.bs.dropdown', this.handleDropdownClose);
   }
 
-  render() {
-    this.innerHTML = this.template();
+  /**
+   * @description
+   * Renders the friends list component by setting its inner HTML.
+   * It initializes the button and dropdown elements, sets up event listeners for fetching friends data,
+   * and handles the dropdown close event.
+   * @returns {void}
+   */
+  async render() {
+    const userData = await auth.getUser();
+    if (!userData) {
+      return false;
+    }
+    this.#state.username = userData.username;
+    this.innerHTML = this.style() + this.template();
 
     this.button = document.getElementById('navbar-friends-button');
+    this.dropdown = document.getElementById('friends-list-dropdown');
     this.listContainer = this.querySelector('#friends-list');
 
-    this.button?.addEventListener('shown.bs.dropdown', this.fetchFriendsData);
-    this.button?.addEventListener('hidden.bs.dropdown', this.handleModalClose);
+    this.button?.addEventListener('shown.bs.dropdown', this.renderListContent);
+    this.button?.addEventListener('hidden.bs.dropdown', this.handleDropdownClose);
+
+    this.dropdownMobile = document.getElementById('dropdown-friends-list');
   }
 
+  /**
+   * @description
+   * Calls the API to fetch the friends data and renders the friends list items.
+   * It also sets up the IntersectionObserver for lazy loading more friends.
+   * @returns {Promise<void>}
+   * @listens shown.bs.dropdown
+   */
+  async renderListContent() {
+    const fetchSuccess = await this.fetchFriendsData();
+    if (!fetchSuccess) {
+      return;
+    }
+    this.renderFriendsListItems();
+
+    this.cleanObserver();
+    [this.observer, this.loadMoreAnchor] = setupObserver(this.listContainer, this.showMoreFriends);
+  }
+
+  /**
+   * @description
+   * Fetches the friends data from the API and updates the state.
+   * It handles the case when the user is not logged in or when the friends list is empty.
+   * If the API request fails, it displays a message indicating that the friends list is temporarily unavailable.
+   * @returns {Promise<boolean>} - true on fetch succss, false on failure
+   */
   async fetchFriendsData() {
-    this.#state.username = auth.getStoredUser().username;
     this.#state.listLength = this.#state.friendsList.length;
     const response = await apiRequest(
-        'GET',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.USER_FRIENDS_LIST(this.#state.username, 10, this.#state.listLength),
-        null,
-        false,
-        true,
+      'GET',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.USER_FRIENDS_LIST(this.#state.username, 10, this.#state.listLength),
+      null,
+      false,
+      true,
     );
-    if (response.success) {
-      if (response.data) {
-        this.#state.totalFriendsCount = response.data.count;
-        this.#state.friendsList.push(...response.data.items);
+    if (!response.success) {
+      log.error('Failed to fetch friends list:', response);
+      const unavailable = document.createElement('li');
+      unavailable.innerHTML = this.unavailableTemplate();
+      const message = unavailable.querySelector('p');
+      if (message) {
+        message.innerText = 'Temporary unavailable';
       }
-      this.renderFriendsList();
-    } else {
-      if (response.status === 401) {
-        showAlertMessageForDuration(ALERT_TYPE.LIGHT, ERROR_MESSAGES.SESSION_EXPIRED, 5000);
-        router.navigate('/login');
-      } else {
-        showAlertMessageForDuration(ALERT_TYPE.ERROR, ERROR_MESSAGES.UNKNOWN_ERROR, 5000);
-        router.navigate('/');
-      }
+      this.listContainer.appendChild(unavailable);
+      return false;
     }
+    if (response.data) {
+      this.#state.totalFriendsCount = response.data.count;
+      this.#state.friendsList.push(...response.data.items);
+    }
+    return true;
   }
 
-  renderFriendsList() {
+  /**
+   * @description
+   * Renders the friends list by creating user list items for each friend in the state.
+   * It handles the case when there are no friends found by rendering a message indicating that.
+   * It also updates the list length in the state.
+   * @returns {Promise<void>}
+   */
+  renderFriendsListItems() {
     if (this.#state.friendsList.length === 0) {
       this.renderNoFriendsFound();
       return;
@@ -81,49 +164,79 @@ export class FriendsList extends HTMLElement {
       this.listContainer.appendChild(listItem);
       this.#state.listLength++;
     }
-    if (this.#state.totalFriendsCount > this.#state.listLength) {
-      this.renderShowMoreButton();
+  }
+
+  async showMoreFriends(entries) {
+    const entry = entries[0];
+    if (entry.isIntersecting && this.#state.totalFriendsCount > this.#state.listLength) {
+      const fetchSuccess = await this.fetchFriendsData();
+      if (!fetchSuccess) {
+        return;
+      }
+      this.renderFriendsListItems();
+      this.observer.unobserve(this.loadMoreAnchor);
+      this.listContainer.appendChild(this.loadMoreAnchor);
+      this.observer.observe(this.loadMoreAnchor);
     }
   }
 
+  /**
+   * @description
+   * Renders a message indicating that no friends were found.
+   * @returns {void}
+   */
   renderNoFriendsFound() {
     const noFriends = document.createElement('li');
-    noFriends.innerHTML = this.noFriendTemplate();
+    noFriends.innerHTML = this.unavailableTemplate();
     this.listContainer.appendChild(noFriends);
   }
 
-  renderShowMoreButton() {
-    const showMoreButtonContainer = document.createElement('li');
-    showMoreButtonContainer.innerHTML = this.showMoreButtonTemplate();
-    this.listContainer.appendChild(showMoreButtonContainer);
-
-    this.showMoreButton = showMoreButtonContainer.querySelector('#show-more-friends');
-    this.showMoreButton?.addEventListener('click', this.handleShowMoreFriends);
-  }
-
-  handleModalClose() {
+  /**
+   * @description
+   * Handles the dropdown close event by resetting the friends list state and clearing the list container.
+   * It is called when the dropdown is closed to ensure that the friends list is cleared.
+   * @returns {void}
+   */
+  handleDropdownClose() {
+    this.cleanObserver();
     this.#state.friendsList = [];
     this.#state.totalFriendsCount = 0;
     this.listContainer.innerHTML = '';
   }
 
-  async handleShowMoreFriends(event) {
-    event.stopPropagation();
-    await this.fetchFriendsData();
-    this.showMoreButton?.removeEventListener('click', this.handleShowMoreFriends);
-    this.showMoreButton?.remove();
+  cleanObserver() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    if (this.loadMoreAnchor) {
+      this.loadMoreAnchor.parentNode?.removeChild(this.loadMoreAnchor);
+      this.loadMoreAnchor = null;
+    }
   }
 
   template() {
     return `
-    <div class="ps-3 pe-4">
+    <div class="ps-3 pe-0">
       <h6 class="py-4 dropdown-list-header" sticky>Friends</h6>
       <ul class="dropdown-list list-group mb-2" id="friends-list"></ul>
     </div>
     `;
   }
 
-  noFriendTemplate() {
+  style() {
+    return `
+    <style>
+    #friends-list {
+      max-height: calc(75vh - 5rem);
+      max-width: 480px;
+      overflow-y: auto;
+    }
+    </style>
+    `;
+  }
+
+  unavailableTemplate() {
     return `
     <style>
     .list-group-item {
@@ -131,29 +244,11 @@ export class FriendsList extends HTMLElement {
       position: relative;
     }
     li {
-        list-style-type: none;
+      list-style-type: none;
     }
     </style>
     <div class="list-group-item p-3">
       <p class="text-center m-0">No friends found</p>
-    </div>
-    `;
-  }
-
-  showMoreButtonTemplate() {
-    return `
-    <style>
-    #show-more-friends {
-      border: none;
-      position: relative;
-      border-top: 1px solid var(--bs-border-color);
-    }
-    li {
-      list-style-type: none;
-    }
-    </style>
-    <div class="list-group-item mt-4 p-3" id="show-more-friends">
-      <p class="text-center m-0">Show more friends</p>
     </div>
     `;
   }

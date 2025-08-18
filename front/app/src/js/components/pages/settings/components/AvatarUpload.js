@@ -1,6 +1,17 @@
+/**
+ * @module AvatarUpload
+ * @description Component for displaying and initiating avatar upload.
+ * Renders a user avatar with an upload/change button. Opens AvatarUploadModal when clicked.
+ * @security
+ * - Uses `URL.createObjectURL` for temporary preview without injecting HTML.
+ * - Relies on AvatarUploadModal for file validation before setting `src`.
+ */
+
+import { DEFAULT_AVATAR } from '@env';
+
 export class AvatarUpload extends HTMLElement {
   #state = {
-    user: '',
+    user: {},
   };
 
   constructor() {
@@ -9,6 +20,10 @@ export class AvatarUpload extends HTMLElement {
     this.handleClick = this.handleClick.bind(this);
   }
 
+  /**
+   * Updates component state with user data and renders.
+   * @param {Object} user - User object containing `avatar` URL.
+   */
   setAvatar(user) {
     this.#state.user = user;
     this.render();
@@ -19,13 +34,19 @@ export class AvatarUpload extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = this.template() + this.style();
+    this.innerHTML = this.style() + this.template();
 
     this.avatarUploadButton = this.querySelector('#avatar-upload-button');
     this.avatarImage = this.querySelector('#user-avatar-image');
     this.avatarUploadButton.addEventListener('click', this.handleClick);
+
+    this.avatarImage.src = this.#state.user.avatar;
   }
 
+  /**
+   * Open the upload modal and set preview to selected file.
+   * @param {Event} event - Click event on upload button.
+   */
   handleClick(event) {
     event.preventDefault();
     const modal = document.querySelector('avatar-upload-modal');
@@ -38,14 +59,12 @@ export class AvatarUpload extends HTMLElement {
   }
 
   template() {
-    const defaultAvatar = import.meta.env.VITE_DEFAULT_AVATAR; // Need to set in .env file
+    const defaultAvatar = DEFAULT_AVATAR;
     const avatarUploadMessage = this.#state.user.avatar === defaultAvatar ? 'Upload Avatar' : 'Change Avatar';
 
     return `
 		  <div class="d-flex align-items-start pb-4 border-bottom">
-			  <div class="col-7 profile-avatar-container me-3">
-				  <img src="${this.#state.user.avatar}" alt="User Avatar" class="rounded-circle" id="user-avatar-image">
-			  </div>
+				  <img alt="User Avatar" class="avatar-xl rounded-circle me-3" id="user-avatar-image">
 			  <div class="col-5 d-flex flex-column align-items-start mx-3 my-auto py-3">
 				  <b>Avatar</b>
 				  <button class="btn btn-wood my-3" id="avatar-upload-button">${avatarUploadMessage}</button>
@@ -56,21 +75,11 @@ export class AvatarUpload extends HTMLElement {
 
   style() {
     return `
-      <style>
-        .profile-avatar-container {
-          width: 160px;
-          height: 160px;
-        }
-        .profile-avatar-container img {
-          width: 100%;
-          height: 100%;
-          aspect-ratio: 1;
-          object-fit: cover;
-        }
-        .btn-wood {
-          font-size: 1rem;
-        }
-      </style>
+    <style>
+    .btn-wood {
+      font-size: 1rem;
+    }
+    </style>
     `;
   }
 }

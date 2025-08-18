@@ -1,50 +1,65 @@
 import { ThemeController } from './ThemeController';
-import { isMobile } from './viewPort';
-import { getRelativeTime, getRelativeDateAndTime } from './dateFormat';
-import { sanitizeHtml } from './sanitizeHtml';
-import { showFormErrorFeedback } from './formFeedback';
+import { createClouds, createStars, loader, flyAway, fireConfetti, particleBurst } from './animations';
+import { isMobile, BREAKPOINT } from './viewPort';
+import { setupObserver } from './intersectionObserver';
 
-import {
-  createClouds,
-  createStars,
-} from './animations';
+import { getRelativeTime, getRelativeDateAndTime, formatDateMDY } from './dateFormat';
+import { isEqual } from './isEqual';
 
 import {
   INPUT_FEEDBACK,
+  usernameFeedback,
+  nicknameFeedback,
   emailFeedback,
   passwordFeedback,
   isFieldFilled,
   removeInputFeedback,
 } from './inputFeedback';
 
+import { showFormErrorFeedback } from './formFeedback';
+
+import { showToastNotification, TOAST_TYPES, sessionExpiredToast, unknowknErrorToast } from './toastnotification';
+
 import {
   ALERT_TYPE,
-  ERROR_MESSAGES,
   showAlertMessage,
   showAlertMessageForDuration,
   removeAlert,
   addDissmissAlertListener,
+  internalServerErrorAlert,
 } from './alertMessage';
-
 
 export {
   ThemeController,
-  isMobile,
-  getRelativeTime,
-  getRelativeDateAndTime,
-  sanitizeHtml,
-  showFormErrorFeedback,
   createClouds,
   createStars,
+  loader,
+  flyAway,
+  fireConfetti,
+  particleBurst,
+  isMobile,
+  setupObserver,
+  BREAKPOINT,
+  getRelativeTime,
+  getRelativeDateAndTime,
+  formatDateMDY,
+  isEqual,
   INPUT_FEEDBACK,
+  usernameFeedback,
+  nicknameFeedback,
   emailFeedback,
   passwordFeedback,
   isFieldFilled,
   removeInputFeedback,
-  ERROR_MESSAGES,
+  showFormErrorFeedback,
+  showToastNotification,
+  TOAST_TYPES,
+  sessionExpiredToast,
+  unknowknErrorToast,
   ALERT_TYPE,
   showAlertMessage,
   showAlertMessageForDuration,
   removeAlert,
   addDissmissAlertListener,
+  internalServerErrorAlert,
 };
