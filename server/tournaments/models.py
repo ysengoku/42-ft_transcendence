@@ -5,7 +5,7 @@ import uuid
 from typing import Literal
 
 from channels.db import database_sync_to_async
-from django.conf import settings
+from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch, Q
@@ -34,7 +34,7 @@ class Participant(models.Model):
 
     profile = models.ForeignKey("users.Profile", on_delete=models.CASCADE)
     tournament = models.ForeignKey("Tournament", on_delete=models.CASCADE, related_name="participants")
-    alias = models.CharField(max_length=settings.MAX_ALIAS_LENGTH)
+    alias = models.CharField(max_length=255)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=PENDING)
     current_round = models.PositiveIntegerField(default=0)
     excluded = models.BooleanField(default=False)
@@ -75,6 +75,8 @@ class TournamentQuerySet(models.QuerySet):
 
         if settings["ranked"]:
             settings["ranked"] = False
+        if len(alias) > django_settings.MAX_ALIAS_LENGTH:
+            raise ValidationError({"alias": [f"should not be longer than: {django_settings.MAX_ALIAS_LENGTH}"]})
         tournament = self.model(
             name=tournament_name,
             creator=creator,
@@ -125,7 +127,7 @@ class Tournament(models.Model):
 
     def clean(self):
         num = self.required_participants
-        options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
+        options = [int(x) for x in django_settings.REQUIRED_PARTICIPANTS_OPTIONS]
         if num not in options:
             raise ValidationError({"required_participants": [f"Number of participants must be one of: {options}"]})
 
@@ -174,7 +176,8 @@ class Tournament(models.Model):
 
         if self.has_participant(profile):
             return "You are already registered for this tournament."
-
+        if len(alias) > django_settings.MAX_ALIAS_LENGTH:
+            return "Alias is too big! It should not be longer than " + str(django_settings.MAX_ALIAS_LENGTH)
         participant = Participant(
             profile=profile,
             alias=participant_alias,
