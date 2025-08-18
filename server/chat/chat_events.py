@@ -62,6 +62,7 @@ class ChatEvent:
                 chat_id,
             )
             return
+        self.consumer.user_profile.refresh_from_db()
         new_message = ChatMessage.objects.create(sender=self.consumer.user_profile, content=message, chat=chat)
 
         async_to_sync(self.consumer.channel_layer.group_send)(
@@ -132,7 +133,8 @@ class ChatEvent:
         try:
             message = ChatMessage.objects.get(pk=message_id)
             message.is_read = True
-            message.save()
+            message.is_really_read = True
+            message.save(update_fields=["is_read", "is_really_read"])
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist", message_id)
 
