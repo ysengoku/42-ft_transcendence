@@ -1,16 +1,18 @@
 import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { BREAKPOINT } from '@utils';
 import './components/index.js';
 
 export class UserProfile extends HTMLElement {
   #state = {
     loggedInUsername: '',
-    user: null,
   };
 
   constructor() {
     super();
     this.user = null;
+
+    this.updateOnlineStatus = this.updateOnlineStatus.bind(this);
   }
 
   setParam(param) {
@@ -20,7 +22,13 @@ export class UserProfile extends HTMLElement {
       this.innerHTML = notFound.outerHTML;
       return;
     }
+    const loading = document.createElement('loading-animation');
+    this.innerHTML = loading.outerHTML;
     this.fetchUserData(username);
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener('onlineStatus', this.updateOnlineStatus);
   }
 
   async fetchUserData(username) {
@@ -29,18 +37,21 @@ export class UserProfile extends HTMLElement {
     if (response.success) {
       if (response.status === 200) {
         this.user = response.data;
-        console.log('User data:', this.user);
+        log.info('User data:', this.user);
         this.render();
       }
-    } else {
-      if (response.status === 404) {
-        router.navigate('/user-not-found');
-      } else if (response.status === 401) {
-        router.navigate('/login');
-      } else {
-        router.navigate(`/error?code=${response.status}&error=${response.msg}`);
-        console.error('Error ', response.status, ': ', response.msg);
-      }
+      return;
+    }
+    switch (response.status) {
+      case 401:
+        return;
+      case 404:
+        router.redirect('/user-not-found');
+        break;
+      case 429:
+        return;
+      default:
+        router.redirect(`/error?code=${response.status}&error=${response.msg}`);
     }
   }
 
@@ -52,12 +63,14 @@ export class UserProfile extends HTMLElement {
     const storedUser = sessionStorage.getItem('user');
     this.#state.loggedInUsername = JSON.parse(storedUser).username;
 
+    this.innerHTML = '';
     this.innerHTML = this.style() + this.template();
 
-    this.onlineStatusIndicator = document.createElement('profile-online-status');
-    this.onlineStatusIndicator.setAttribute('online', this.user.is_online);
-    this.onlineStatusIndicatorField = this.querySelector('#user-profile-online-status');
-    this.onlineStatusIndicatorField.innerHTML = this.onlineStatusIndicator.outerHTML;
+    this.onlineStatusIndicator = this.querySelector('profile-online-status');
+    if (this.onlineStatusIndicator) {
+      this.onlineStatusIndicator.setStatus(this.user.is_online);
+      document.addEventListener('onlineStatus', this.updateOnlineStatus);
+    }
 
     const profileAvatar = this.querySelector('profile-avatar');
     if (profileAvatar) {
@@ -70,7 +83,8 @@ export class UserProfile extends HTMLElement {
         username: this.user.username,
         nickname: this.user.nickname,
         join_date: this.user.date_joined,
-        titre: this.user.titre,
+        title: this.user.title,
+        price: this.user.price,
       };
     }
 
@@ -87,9 +101,9 @@ export class UserProfile extends HTMLElement {
     const userStatCardElo = document.createElement('user-stat-card');
     userStatCardElo.setParam({ title: 'Elo', value: this.user.elo });
     const userStatCardScoredBalls = document.createElement('user-stat-card');
-    userStatCardScoredBalls.setParam({ title: 'Scored Balls', value: this.user.scored_balls });
+    userStatCardScoredBalls.setParam({ title: 'Total Score', value: this.user.scored_balls });
     const userStatCardTotalMatches = document.createElement('user-stat-card');
-    userStatCardTotalMatches.setParam({ title: 'Total Matches', value: this.user.total_matches });
+    userStatCardTotalMatches.setParam({ title: 'Total Duels', value: this.user.total_matches });
     const userStatCardFriendsCount = document.createElement('user-stat-card');
     userStatCardFriendsCount.setParam({ title: 'Friends', value: this.user.friends_count });
 
@@ -122,23 +136,31 @@ export class UserProfile extends HTMLElement {
 
     const userEloProgressionChart = this.querySelector('user-elo-progression-chart');
     if (userEloProgressionChart) {
-      userEloProgressionChart.data = this.user.elo_history;
+      userEloProgressionChart.setData(this.#state.loggedInUsername, this.user.username, this.user.elo_history);
     }
 
     const gameHistory = this.querySelector('user-game-history');
     if (gameHistory) {
       gameHistory.data = {
+        username: this.user.username,
         matches: this.user.match_history,
-        // tournaments: this.user.tournament_history
       };
     }
+  }
+
+  updateOnlineStatus(event) {
+    if (event.detail.data.username.toLowerCase() !== this.user.username.toLowerCase() || !this.onlineStatusIndicator) {
+      return;
+    }
+    this.user.is_online = event.detail.online;
+    this.onlineStatusIndicator.setStatus(this.user.is_online);
   }
 
   template() {
     return `
     <div class="container-fluid">
-      <game-result-modal></game-result-modal>
-      <div class="row">
+    <div class="row">
+    <game-result-modal></game-result-modal>
 
         <!-- Container Left -->
         <div class="d-flex col-12 col-lg-6 py-4">
@@ -149,7 +171,7 @@ export class UserProfile extends HTMLElement {
             <h1 class="mt-2">WANTED</h1>
             <div class="d-flex flex-row align-items-center">
               <hr class="line flex-grow-1">  
-              <div id="user-profile-online-status"></div>
+              <profile-online-status></profile-online-status>
               <hr class="line flex-grow-1">
             </div>
             </div>
@@ -161,26 +183,18 @@ export class UserProfile extends HTMLElement {
 
             <profile-user-actions></profile-user-actions>
 
-            <!-- Stats section -->
+            <!-- Stat cards -->
+            <div class="stat-cards-wrapper d-flex flex-wrap justify-content-between align-items-start mx-2 my-3 px-1 gap-3">
+              <div class="flex-fill" id="user-stat-card-elo"></div>
+              <div class="flex-fill" id="user-stat-card-friends-count"></div>
+              <div class="flex-fill" id="user-stat-card-scored-balls"></div>
+              <div class="flex-fill" id="user-stat-card-total-matches"></div>           
+            </div>
 
-            <div class="d-flex flex-row justify-content-around flex-grow-1 mb-2 px-3">
-              <!-- Stat cards -->
-              <div class="stat-cards-wrapper d-flex flex-wrap justify-content-center align-items-start me-3">
-    
-                  <div id="user-stat-card-elo"></div>
-                  <div id="user-stat-card-scored-balls"></div>
-       
-                  <div id="user-stat-card-total-matches"></div>
-                  <div id="user-stat-card-friends-count"></div>
-             
-              </div>
-
-              <!-- Enemies -->
-              <div class="d-flex flex-wrap flex-column gap-3">
-                <div class="d-flex flex-column" id="best-enemy"></div>
-                <div class="d-flex flex-column" id="worst-enemy"></div>
-              </div>
-
+            <!-- Enemies -->
+            <div class="d-flex flex-wrap justify-content-between my-2 px-3 gap-3">
+              <div class="flex-fill d-flex flex-column" id="best-enemy"></div>
+              <div class="flex-fill d-flex flex-column" id="worst-enemy"></div>
             </div>
           </div>
         </div>
@@ -196,11 +210,6 @@ export class UserProfile extends HTMLElement {
                 <user-win-rate-pie-graph></user-win-rate-pie-graph>
               </div>               
               <div class="graph-wrapper flex-grow-1 p-2">
-                <div class="d-flex flex-row align-items-center">
-                  <p class="stat-label mx-4">Elo progression</p>
-                  <button class="btn-elo-history" id="btn-elo-history-prev" type="button">< prev</button>
-                  <button disabled class="btn-elo-history" id="btn-elo-history-next" type="button">next ></button>
-                </div>
                 <user-elo-progression-chart></user-elo-progression-chart>
               </div>
             </div>
@@ -211,13 +220,6 @@ export class UserProfile extends HTMLElement {
             </div>
           </div>
         </div>
-
-        <!--
-        <svg><defs><filter id="wave">
-						<feTurbulence baseFrequency="0.02" numOctaves="8" seed="1"></feTurbulence>
-				 	 	<feDisplacementMap in="SourceGraphic" scale="12" />
-				</filter></defs></svg>
-        -->
       </div>
     </div>`;
   }
@@ -226,7 +228,7 @@ export class UserProfile extends HTMLElement {
     return `
     <style>
     .poster {
-      color: #351901;
+      color: var(--pm-primary-700);
       background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(164, 106, 48, 0.9) 100%);
       filter: sepia(20%) contrast(90%) brightness(95%);
       /* filter: url(#wave); */
@@ -244,7 +246,7 @@ export class UserProfile extends HTMLElement {
     }
     h1 {
       display: inline-block;
-      color: #613304;      
+      color: var(--pm-primary-600);      
       font-family: 'docktrin', serif;
       font-size: 6em;
       margin-bottom: -.8em;
@@ -253,7 +255,7 @@ export class UserProfile extends HTMLElement {
     .stat-label {
       font-family: 'van dyke', serif;
       font-size: 1.2em;
-      color: #613304;
+      color: var(--pm-primary-600);
       margin-bottom: .25em;
     }
     hr {
@@ -263,29 +265,40 @@ export class UserProfile extends HTMLElement {
       border: 0;
     }
     .line {
-      border-top: 4px double #613304;;
+      border-top: 4px double var(--pm-primary-600);
       opacity: 0.8;
     }
     .profile-avatar-frame,
-    .stat-cards-wrapper,
     .enemy-container,
     .graph-wrapper {
-      background-color:rgba(97, 51, 4, 0.1);
+      background-color: rgba(var(--pm-primary-600-rgb), 0.1);
     }
     .enemies-container {
       min-height: 224px;
     }
     .btn-elo-history {
-      color: #351904;
+      color: var(--pm-primary-700);
+      font-size: 0.9rem;
       font-weight: bold;
       background: none;
       border: none;
+      padding: 1px 4px;
     }
     .row.no-gutters > [class*='col-'] {
       padding-right: 0;
       padding-left: 0;
     }
-    @media (max-width: 576px) {
+    @media (max-width: ${BREAKPOINT.XL}px) and (min-width: ${BREAKPOINT.LG}px) {
+      .graphs-wrapper {
+        flex-wrap: wrap !important;
+      }
+    }
+    @media (max-width: ${BREAKPOINT.MD}px) {
+      .graphs-wrapper {
+        flex-wrap: wrap !important;
+      }
+    }
+    @media (max-width: ${BREAKPOINT.SM}px) {
       .row {
         margin-right: 0 !important;
         margin-left: 0 !important;

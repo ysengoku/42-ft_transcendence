@@ -1,0 +1,1 @@
+*/1 * * * * /usr/local/bin/python /app/scripts/check_inactive_users_cron.py >> /var/log/cron.log 2>&1

@@ -1,28 +1,31 @@
 import hashlib
+import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from django.conf import settings
-from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
+from django.db import DatabaseError, transaction
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Router
 from ninja.errors import AuthenticationError, HttpError
 
 from common.routers import allow_only_for_self
-from common.schemas import MessageSchema
-from users.models import RefreshToken, User
+from common.schemas import MessageSchema, ValidationErrorMessageSchema
+from pong.models import GameRoom
+from users.models import Profile, RefreshToken, User
 from users.router.endpoints.mfa import handle_mfa_code
-from users.router.utils import _create_json_response_with_tokens
+from users.router.utils import create_json_response_with_jwt, fill_response_with_jwt
 from users.schemas import (
     ForgotPasswordSchema,
     LoginResponseSchema,
     LoginSchema,
     PasswordValidationSchema,
     ProfileMinimalSchema,
+    SelfSchema,
     SignUpSchema,
-    ValidationErrorMessageSchema,
 )
 
 auth_router = Router()
@@ -30,19 +33,32 @@ auth_router = Router()
 TOKEN_EXPIRY = 10
 
 
-@auth_router.get("self", response={200: ProfileMinimalSchema, 401: MessageSchema})
+logger = logging.getLogger("server")
+
+
+@auth_router.get("self", response={200: SelfSchema, 401: MessageSchema})
 def check_self(request: HttpRequest):
     """
     Checks authentication status of the user.
     If the user has valid access token, returns minimal information of user's profile.
     """
+    profile: Profile = request.auth.profile
+    active_games = profile.get_active_game_participation()
+    game_room, tournament, game_invitation = active_games
+    profile.game_id = str(game_room.id) if game_room and game_room.status == GameRoom.ONGOING else None
+    profile.tournament_id = str(tournament.id) if tournament else None
+    profile.is_engaged_in_game = any(x for x in active_games if x is not None)
     return request.auth.profile
 
 
 @auth_router.post(
     "login",
-    response={200: ProfileMinimalSchema | LoginResponseSchema,
-              401: MessageSchema, 429: MessageSchema},
+    response={
+        200: ProfileMinimalSchema | LoginResponseSchema,
+        401: MessageSchema,
+        422: list[ValidationErrorMessageSchema],
+        429: MessageSchema,
+    },
     auth=None,
 )
 @ensure_csrf_cookie
@@ -69,14 +85,14 @@ def login(request: HttpRequest, credentials: LoginSchema):
         )
     if is_mfa_enabled:
         raise HttpError(503, "Failed to send MFA code")
+
     response_data = user.profile.to_profile_minimal_schema()
-    return _create_json_response_with_tokens(user, response_data)
+    return create_json_response_with_jwt(user, response_data)
 
 
 @auth_router.post(
     "signup",
-    response={201: ProfileMinimalSchema,
-              422: list[ValidationErrorMessageSchema]},
+    response={201: ProfileMinimalSchema, 422: list[ValidationErrorMessageSchema]},
     auth=None,
 )
 @ensure_csrf_cookie
@@ -90,9 +106,9 @@ def signup(request: HttpRequest, data: SignUpSchema):
         email=data.email,
         password=data.password,
     )
-    user.save()
-
-    return _create_json_response_with_tokens(user, user.profile.to_profile_minimal_schema())
+    response = create_json_response_with_jwt(user, user.profile.to_profile_minimal_schema())
+    response.status_code = 201
+    return response
 
 
 @auth_router.post(
@@ -108,11 +124,9 @@ def refresh(request: HttpRequest, response: HttpResponse):
     if not old_refresh_token:
         raise AuthenticationError
 
-    new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(
-        old_refresh_token)
+    new_access_token, new_refresh_token_instance = RefreshToken.objects.rotate(old_refresh_token)
 
-    response.set_cookie("access_token", new_access_token)
-    response.set_cookie("refresh_token", new_refresh_token_instance.token)
+    fill_response_with_jwt(response, new_access_token, new_refresh_token_instance)
     return 204, None
 
 
@@ -135,36 +149,18 @@ def logout(request: HttpRequest, response: HttpResponse):
         allow_only_for_self(request, refresh_token_instance.user.username)
 
     refresh_token_qs.set_revoked()
-
+    user = refresh_token_instance.user
+    try:
+        with transaction.atomic():
+            user.profile.refresh_from_db()
+            user.profile.nb_active_connexions = 0
+            user.profile.save(update_fields=["nb_active_connexions"])
+            user.profile.refresh_from_db()
+    except DatabaseError as e:
+        logger.error("Database error during disconnect: %s", e)
     response.delete_cookie("access_token")
     response.delete_cookie("refresh_token")
     return 204, None
-
-
-@auth_router.delete("/users/{username}/delete",
-                    response={200: MessageSchema, frozenset({401, 403, 404}): MessageSchema})
-def delete_account(request, username: str, response: HttpResponse):
-    """
-    Delete definitely the user account and the associated profile, including friends relations and avatar.
-    """
-    user = request.auth
-    if not user:
-        return None
-
-    if user.username != username:
-        raise HttpError(403, "You are not allowed to delete this account.")
-
-    old_refresh_token = request.COOKIES.get("refresh_token")
-    if old_refresh_token:
-        refresh_token_qs = RefreshToken.objects.for_token(old_refresh_token)
-        refresh_token_qs.set_revoked()
-
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
-
-    user.delete()
-
-    return {"msg": "Account successfully deleted."}
 
 
 @auth_router.post("/forgot-password", response={200: MessageSchema}, auth=None)
@@ -178,7 +174,7 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
     token = hashlib.sha256(os.urandom(32)).hexdigest()
     user.forgot_password_token = token
-    user.forgot_password_token_date = datetime.now(timezone.utc)
+    user.forgot_password_token_date = timezone.now()
     user.save()
 
     reset_url = f"{settings.FRONTEND_URL}/reset-password/{token}"
@@ -198,8 +194,7 @@ def request_password_reset(request, data: ForgotPasswordSchema) -> dict[str, any
 
 @auth_router.post(
     "/reset-password/{token}",
-    response={200: MessageSchema, 400: MessageSchema,
-              422: list[ValidationErrorMessageSchema]},
+    response={200: MessageSchema, 400: MessageSchema, 422: list[ValidationErrorMessageSchema]},
     auth=None,
 )
 @csrf_exempt
@@ -209,13 +204,12 @@ def reset_password(request, token: str, data: PasswordValidationSchema) -> dict[
     if not user:
         raise AuthenticationError
 
-    now = datetime.now(timezone.utc)
+    now = timezone.now()
     if user.forgot_password_token_date + timedelta(minutes=TOKEN_EXPIRY) < now:
         user.forgot_password_token = ""
         user.forgot_password_token_date = None
         user.save()
-        raise HttpError(
-            408, "Expired session: authentication request timed out")
+        raise HttpError(408, "Expired session: authentication request timed out")
 
     obj = PasswordValidationSchema(
         username=user.username,

@@ -1,4 +1,5 @@
 import { router } from '@router';
+import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { showAlertMessage, ALERT_TYPE } from '@utils';
 import { emailFeedback, removeInputFeedback } from '@utils';
@@ -15,7 +16,15 @@ export class ForgotPassword extends HTMLElement {
     this.handleRemoveInputFeedback = this.handleRemoveInputFeedback.bind(this);
   }
 
-  connectedCallback() {
+  async connectedCallback() {
+    const authStatus = await auth.fetchAuthStatus();
+    if (authStatus.success) {
+      router.redirect('/home');
+      return;
+    }
+    if (authStatus.status === 429) {
+      return;
+    }
     this.render();
   }
 
@@ -45,8 +54,11 @@ export class ForgotPassword extends HTMLElement {
     }
     this.#state.email = this.emailField.value;
     const response = await apiRequest(
-        'POST', API_ENDPOINTS.FORGOT_PASSWORD, { email: this.#state.email },
-        false, false,
+      'POST',
+      API_ENDPOINTS.FORGOT_PASSWORD,
+      { email: this.#state.email },
+      false,
+      false,
     );
     if (response.success) {
       this.renderEmailSentMessage();
@@ -71,8 +83,11 @@ export class ForgotPassword extends HTMLElement {
   async handleResendRequest(event) {
     event.preventDefault();
     const response = await apiRequest(
-        'POST', API_ENDPOINTS.FORGOT_PASSWORD, { email: this.#state.email },
-        false, false,
+      'POST',
+      API_ENDPOINTS.FORGOT_PASSWORD,
+      { email: this.#state.email },
+      false,
+      false,
     );
     if (response.success) {
       showAlertMessage(ALERT_TYPE.SUCCESS, 'Email resent successfully.');
@@ -90,7 +105,7 @@ export class ForgotPassword extends HTMLElement {
     return `
 	    <div class="container my-3">
         <div class="row justify-content-center py-4">
-          <div class="form-container col-12 col-md-4 p-4">
+          <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4">
       			<form class="w-100">
               <legend class="mt-4 border-bottom">Forgot password?</legend>
               <small>No worries! Just enter your email and we will send you a link to reset your password.</small>
@@ -103,7 +118,7 @@ export class ForgotPassword extends HTMLElement {
                 Reset password
               </button>
               <button class="btn w-100 mt-3" type="button" id="cancel-forgot-password">
-                <i class="bi bi-arrow-left"></i> Go back to Login
+                <i class="bi bi-arrow-left"></i> Back to Login
               </button>
             </form>
           </div>

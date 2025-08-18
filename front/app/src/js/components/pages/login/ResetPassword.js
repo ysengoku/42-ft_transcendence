@@ -18,10 +18,13 @@ export class ResetPassword extends HTMLElement {
     this.#state.token = param.token;
     const authStatus = await auth.fetchAuthStatus();
     if (authStatus.success) {
-      router.navigate('/home');
-    } else {
-      this.render();
+      router.redirect('/home');
+      return;
     }
+    if (authStatus.status === 429) {
+      return;
+    }
+    this.render();
   }
 
   render() {
@@ -50,35 +53,44 @@ export class ResetPassword extends HTMLElement {
 
   async handleResetPassword(event) {
     event.preventDefault();
-    console.log('new password:', this.passwordField.value);
-    if (!passwordFeedback(this.passwordField, this.passwordRepeatField,
-        this.passwordFeedback, this.passwordRepeatFeedback)) {
+    if (
+      !passwordFeedback(
+        this.passwordField,
+        this.passwordRepeatField,
+        this.passwordFeedback,
+        this.passwordRepeatFeedback,
+      )
+    ) {
       return;
     }
     this.#state.newPassword = this.passwordField.value;
     this.#state.newPasswordRepeat = this.passwordRepeatField.value;
     const response = await apiRequest(
-        'POST',
-        /* eslint-disable-next-line new-cap */
-        API_ENDPOINTS.RESET_PASSWORD(this.#state.token),
-        { password: this.#state.newPassword, password_repeat: this.#state.newPasswordRepeat },
-        false, false,
+      'POST',
+      /* eslint-disable-next-line new-cap */
+      API_ENDPOINTS.RESET_PASSWORD(this.#state.token),
+      { password: this.#state.newPassword, password_repeat: this.#state.newPasswordRepeat },
+      false,
+      false,
     );
     if (response.success) {
       const successMessage = 'Password reset successful. You can now login with your new password.';
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, successMessage, 3000);
-      router.navigate('/login');
-    } else {
-      const errorMessage = response.message || 'Password reset failed. Please try again.';
-      showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
+      router.redirect('/login');
+      return;
     }
+    if (response.status === 429) {
+      return;
+    }
+    const errorMessage = response.message || 'Password reset failed. Please try again.';
+    showAlertMessageForDuration(ALERT_TYPE.ERROR, errorMessage, 3000);
   }
 
   template() {
     return `
     <div class="container my-4">
       <div class="row justify-content-center py-4">
-        <div class="form-container col-12 col-md-4 p-4">
+        <div class="form-container col-10 col-md-6 col-lg-5 col-xl-4 p-4">
           <form class="w-100">
             <legend class="my-4 border-bottom">Reset password</legend>
             <div class="mt-5 mb-3">

@@ -1,5 +1,4 @@
 import { router } from '@router';
-import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { isFieldFilled, removeInputFeedback, INPUT_FEEDBACK, showFormErrorFeedback } from '@utils';
 
@@ -50,25 +49,21 @@ export class LoginForm extends HTMLElement {
     }
 
     const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
-    console.log('Login response:', response);
     if (response.success) {
       if (response.status == 200) {
         if (response.data.mfa_required) {
           sessionStorage.setItem('username', response.data.username);
           router.navigate('/mfa-verification', response.data);
         } else {
-          const userInformation = {
-            username: response.data.username,
-            nickname: response.data.nickname,
-            avatar: response.data.avatar,
-          };
-          auth.storeUser(userInformation);
-          router.navigate(`/home`, response.user);
+          router.redirect('/home', response.user);
         }
       }
-    } else {
-      showFormErrorFeedback(document.querySelector('#login-failed-feedback'), response.msg);
+      return;
     }
+    if (response.status === 429) {
+      return;
+    }
+    showFormErrorFeedback(document.querySelector('#login-failed-feedback'), response.msg);
   }
 
   checkInputs() {

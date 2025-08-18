@@ -1,12 +1,14 @@
-from datetime import datetime, timedelta, timezone
+import contextlib
+from datetime import datetime, timedelta
 
 import jwt
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
+from django.db.utils import DatabaseError
+from django.utils import timezone
 from ninja.errors import AuthenticationError
 
 
-# TODO: tweak access and refresh tokens lifetime
 class RefreshTokenQuerySet(models.QuerySet):
     """
     Manages access and refresh JWT's. Handles PyJWT exceptions and throws AuthenticationError in case of any JWT error.
@@ -18,37 +20,40 @@ class RefreshTokenQuerySet(models.QuerySet):
     def set_revoked(self):
         return self.update(is_revoked=True)
 
-    def create(self, user, old_refresh_token_instance=None) -> tuple:
+    def create(self, user, now: datetime | None = None) -> tuple:
         """
         Creates a new refresh token.
         To avoid collisions, if old refresh token is identical to the new one, deletes the old refresh token.
         """
-        now = datetime.now(timezone.utc)
+        if not now:
+            now = timezone.now()
+
         payload = {
             "sub": str(user.id),
             "iat": now,
-            "exp": now + timedelta(minutes=5),
+            "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_LIFETIME),
         }
 
         access_token = jwt.encode(payload, settings.ACCESS_TOKEN_SECRET_KEY, algorithm="HS256")
-        payload["exp"] = now + timedelta(minutes=15)
+        payload["exp"] = now + timedelta(minutes=settings.REFRESH_TOKEN_LIFETIME)
         refresh_token = jwt.encode(payload, settings.REFRESH_TOKEN_SECRET_KEY, algorithm="HS256")
 
         refresh_token_instance = self.model(
             user=user,
             token=refresh_token,
         )
+        # ensure uniqueness
+        with contextlib.suppress(DatabaseError), transaction.atomic():
+            self.filter(token=refresh_token).delete()
+            refresh_token_instance.save()
 
-        if not old_refresh_token_instance:
-            old_refresh_token_instance = self.filter(token=refresh_token_instance.token).first()
-
-        if old_refresh_token_instance and old_refresh_token_instance.token == refresh_token_instance.token:
-            old_refresh_token_instance.delete()
-
-        refresh_token_instance.save()
         return access_token, refresh_token_instance
 
     def rotate(self, refresh_token_raw: str) -> tuple:
+        """
+        Revokes the old refresh tokens and creates a new one for the user.
+        Used in the /refresh endpoint.
+        """
         refresh_token_instance = self.select_related("user").filter(token=refresh_token_raw).first()
         if not refresh_token_instance:
             raise AuthenticationError
@@ -63,7 +68,7 @@ class RefreshTokenQuerySet(models.QuerySet):
         refresh_token_instance.is_revoked = True
         refresh_token_instance.save()
 
-        return self.create(refresh_token_instance.user, refresh_token_instance)
+        return self.create(refresh_token_instance.user)
 
     def _verify_jwt(self, token: str, key: str) -> dict:
         try:
@@ -85,7 +90,7 @@ class RefreshToken(models.Model):
     token = models.CharField(max_length=255, unique=True)
     is_revoked = models.BooleanField(default=False)
 
-    objects = RefreshTokenQuerySet.as_manager()
+    objects: RefreshTokenQuerySet = RefreshTokenQuerySet.as_manager()
 
     def __str__(self):
         return f"Refresh token of {self.user.username}"

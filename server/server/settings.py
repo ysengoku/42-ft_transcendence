@@ -3,6 +3,8 @@ import os
 import sys
 from pathlib import Path
 
+import environ
+
 
 def main():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "server.settings")
@@ -23,30 +25,57 @@ if __name__ == "__main__":
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# TODO: Change the secret key in production
-SECRET_KEY = "your-secret-key"
-
 # Environment variables
+# Init django-environ
+env = environ.Env(
+    NODE_ENV=(str, "development"),
+    CRON_SECRET=(str, ""),
+    REDIS_HOST=(str, "redis"),
+    REDIS_PORT=(int, 6379),
+    POSTGRES_DB=(str, ""),
+    POSTGRES_USER=(str, ""),
+    POSTGRES_PASSWORD=(str, ""),
+    DATABASE_HOST=(str, "database"),
+    DATABASE_PORT=(str, "5432"),
+    EMAIL_BACKEND=(str, "django.core.mail.backends.smtp.EmailBackend"),
+    EMAIL_HOST=(str, "smtp.gmail.com"),
+    EMAIL_PORT=(int, 587),
+    EMAIL_USE_TLS=(bool, True),
+    EMAIL_USE_SSL=(bool, False),
+    EMAIL_HOST_USER=(str, ""),
+    EMAIL_HOST_PASSWORD=(str, ""),
+    DEFAULT_FROM_EMAIL=(str, ""),
+    GITHUB_CLIENT_ID=(str, ""),
+    GITHUB_CLIENT_SECRET=(str, ""),
+    API42_CLIENT_ID=(str, ""),
+    API42_CLIENT_SECRET=(str, ""),
+    NGINX_PORT=(str, ""),
+    ACCESS_TOKEN_SECRET_KEY=(str, ""),
+    REFRESH_TOKEN_SECRET_KEY=(str, ""),
+    SECRET_KEY=(str, "default"),
+    HOST_IP=(str, ""),
+)
 
-DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
-# ruff format request, old line was :
-# DEBUG = os.environ.get("DEBUG", True)
+env.read_env(env_file=str(BASE_DIR / ".env"))
 
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+SERVER_PORT = env("NGINX_PORT")
 
-IN_CONTAINER = int(os.environ.get("IN_CONTAINER", "0"))
-# ruff format request, old line was :
-# IN_CONTAINER = int(os.environ.get("IN_CONTAINER", default=0))
+# TODO: Change the secret key in production
+SECRET_KEY = env("SECRET_KEY")
 
-if not IN_CONTAINER:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        },
-    }
-elif "GITHUB_ACTIONS" in os.environ:
+DEBUG = env("NODE_ENV") != "production"
+CRON_SECRET = env("CRON_SECRET")
+
+MAX_MESSAGE_LENGTH=255
+MAX_TOURNAMENT_NAME_LENGTH=50
+MAX_ALIAS_LENGTH=12
+REQUIRED_PARTICIPANTS_OPTIONS=(4, 8)
+
+HOST_IP = env("HOST_IP")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=f"localhost,127.0.0.1,{HOST_IP}").split(",")
+
+
+if "GITHUB_ACTIONS" in os.environ:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -61,47 +90,63 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.environ.get("POSTGRES_DB"),
-            "USER": os.environ.get("POSTGRES_USER"),
-            "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-            "HOST": os.environ.get("DATABASE_HOST", "database"),
-            "PORT": os.environ.get("DATABASE_PORT", "5432"),
+            "NAME": env("POSTGRES_DB"),
+            "USER": env("POSTGRES_USER"),
+            "PASSWORD": env("POSTGRES_PASSWORD"),
+            "HOST": env("DATABASE_HOST"),
+            "PORT": env("DATABASE_PORT"),
         },
     }
 
 
 INSTALLED_APPS = [
-    # ASGI server for working with websockets
+    # ASGI server for working with websockets and Django channels
     "daphne",
     "channels",
     # Our apps
     "users",
     "chat",
     "pong",
+    "tournaments",
+    # Security
+    "csp",
     # Default Django applications
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    # Profiling
-    "silk",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "silk.middleware.SilkyMiddleware",
+    "csp.middleware.CSPMiddleware",
 ]
 
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ["'self'"],
+        "script-src": ["'self'"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "img-src": ["'self'", "data:", "blob:"],
+        "font-src": ["'self'", "data:"],
+        "connect-src": ["'self'"],
+    },
+}
 ROOT_URLCONF = "server.urls"
 
 TEMPLATES = [
@@ -137,12 +182,9 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
 ]
 
-# ################# #
-# project additions #
-# ################# #
-# CUSTOM USER MODEL
-
+# Custom user model
 AUTH_USER_MODEL = "users.User"
+
 DEFAULT_USER_AVATAR = "/img/default_avatar.png"
 
 # Configuration OAuth 42
@@ -156,30 +198,34 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
-REDIS_HOST = os.environ.get("REDIS_HOST", "redis")
-REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
-# For ruff format : int must be str before being int
-# REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 # For the tests
 if "test" in sys.argv:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels.layers.InMemoryChannelLayer",
-        },
-    }
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 else:
+    REDIS_HOST = env("REDIS_HOST")
+    REDIS_PORT = env("REDIS_PORT")
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
             "CONFIG": {
                 "hosts": [(REDIS_HOST, REDIS_PORT)],
+                "expiry": 3,
+                "channel_capacity": {
+                    "game": 5000,
+                },
             },
         },
     }
 
 
-# Configuration for proxy
-CSRF_TRUSTED_ORIGINS = ["https://localhost:1026", "http://localhost:5173"]
+CSRF_TRUSTED_ORIGINS = [
+    f"https://localhost:{SERVER_PORT}",
+    "http://localhost:5173",
+    f"https://nginx:{SERVER_PORT}",
+    f"https://{HOST_IP}:{SERVER_PORT}",
+]
+CSRF_COOKIE_SECURE = True
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
 
@@ -200,35 +246,38 @@ AUTH_SETTINGS = {
     "check_is_alphanumeric": True,
 }
 
-ACCESS_TOKEN_SECRET_KEY = "secret"
-REFRESH_TOKEN_SECRET_KEY = "refresh_secret"
+ACCESS_TOKEN_LIFETIME = 15
+REFRESH_TOKEN_LIFETIME = 120
+ACCESS_TOKEN_SECRET_KEY = env("ACCESS_TOKEN_SECRET_KEY")
+REFRESH_TOKEN_SECRET_KEY = env("REFRESH_TOKEN_SECRET_KEY")
 
 NINJA_PAGINATION_PER_PAGE = 10
 
 APPEND_SLASH = False
 
 # OAuth
+GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET")
 
-GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
-GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+# OAuth 42
+API42_CLIENT_ID = env("API42_CLIENT_ID")
+API42_CLIENT_SECRET = env("API42_CLIENT_SECRET")
+
+HOME_REDIRECT_URL = f"https://localhost:{SERVER_PORT}/home"
+FRONTEND_URL = f"https://localhost:{SERVER_PORT}"
+ERROR_REDIRECT_URL = f"https://localhost:{SERVER_PORT}/error"
+
+GITHUB_REDIRECT_URI = f"https://localhost:{SERVER_PORT}/api/oauth/callback/github"
+GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"  # noqa: S105
 GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
-GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"
-GITHUB_REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
 GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
 GITHUB_FT_API_URL = "https://api.github.com"
 
-# OAuth 42
-API42_CLIENT_ID = os.getenv("API42_CLIENT_ID")
-API42_CLIENT_SECRET = os.getenv("API42_CLIENT_SECRET")
-FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
-FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"
-FT_API_REDIRECT_URI = os.getenv("FT_API_REDIRECT_URI")
+FT_API_REDIRECT_URI = f"https://localhost:{SERVER_PORT}/api/oauth/callback/42"
+FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"  # noqa: S105
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 FT_API_OAUTH_URL = "https://api.intra.42.fr"
-
-HOME_REDIRECT_URL = "https://localhost:1026/home"
-FRONTEND_URL = "https://localhost:1026"
-ERROR_REDIRECT_URL = "https://localhost:1026/error"
+FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
@@ -237,7 +286,7 @@ OAUTH_CONFIG = {
         "client_secret": GITHUB_CLIENT_SECRET,
         "auth_uri": GITHUB_AUTHORIZE_URL,
         "token_uri": GITHUB_ACCESS_TOKEN_URL,
-        "redirect_uris": [GITHUB_REDIRECT_URI],
+        "redirect_uris": GITHUB_REDIRECT_URI,
         "scopes": ["user"],
         "user_info_uri": GITHUB_USER_PROFILE_URL,
         "oauth_uri": GITHUB_FT_API_URL,
@@ -247,7 +296,7 @@ OAUTH_CONFIG = {
         "client_secret": API42_CLIENT_SECRET,
         "auth_uri": FT_API_AUTHORIZE_URL,
         "token_uri": FT_API_ACCESS_TOKEN_URL,
-        "redirect_uris": [FT_API_REDIRECT_URI],
+        "redirect_uris": FT_API_REDIRECT_URI,
         "scopes": ["public", "profile"],
         "user_info_uri": FT_API_USER_PROFILE_URL,
         "oauth_uri": FT_API_OAUTH_URL,
@@ -255,19 +304,47 @@ OAUTH_CONFIG = {
 }
 
 # email configuration for 2fa and password reset
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend",
-)
-EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-# For ruff format : int must be str before being int
-# EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
-EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
-# replaced with ruff's informations, == "true" is just to say it's a boolean
-# not to assign the value to true
-# EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
-# EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", False)
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+EMAIL_USE_SSL = env("EMAIL_USE_SSL")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "colored": {
+            "()": "colorlog.ColoredFormatter",
+            "format": "%(log_color)s%(levelname)s: %(message)s",
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "bold_red",
+            },
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "colorlog.StreamHandler",
+            "formatter": "colored",
+            "level": "DEBUG",
+        },
+    },
+    "loggers": {
+        "server": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
