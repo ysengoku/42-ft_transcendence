@@ -1,16 +1,14 @@
 # Chat and Live Events
 
-🛠️👷🏻‍♂️
-The Chat App manages core communication features within the application, including messaging, notifications, game invitations, and real-time user presence.
+The Chat and Live Events system manages core communication features within the application, including messaging, notifications, game invitations, and real-time user presence.
 
 ## Table of contents
 
-- [Key features](#key-features)
+- [Features](#key-features)
   - [Real-time Messaging](#real-time-messaging)
   - [Notifications](#notifications)
   - [Game Invitations](#game-invitation)
-  - [Real-time User Presence system](#real-time-presence-system)
-- [Events](#events)
+  - [User Presence system](#user-presence-system)
 - [Implementation details](#implementation-details)
   - [Backend](#backend)
     - [Core models](#core-models)
@@ -23,39 +21,11 @@ The Chat App manages core communication features within the application, includi
 
 <br />
 
-## Key Features
+## Features
 🛠️👷🏻‍♂️
-### Real-time Messaging
-
-- Start or restart conversations using the embedded user search within the chat interface
-- Send and receive messages instantly
-- Toggle likes on messages
-- Mark messages as read
-
-### Notifications
-
-- Notify users when someone adds them as a friend
-- Notify users when new tournaments are created
-
-### Game Invitations
-
-- Send Duel invitations to other users
-- Accept or decline incoming Duel invitations
-
-### Real-time User Presence system
-
-- Periodic background job (cron) to monitor user presence status
-- Upon detecting status change, broadcast real-time notifications to all connected users
-
-<br />
-
-## Events
-
 This section describes how the client and the server interact for each key feature. Detailed field-level specifications are provided in the [API & WebSocket Protocol Reference](#api--websocket-protocol-reference) section.
 
-🛠️👷🏻‍♂️
-
-### Messaging Events
+### Real-time Messaging
 
 #### ■ Start a conversation
 
@@ -64,7 +34,7 @@ A user can start a conversation in three ways:
 - Search for users in the Chat page and select the target
 - Click an existing conversation preview in the left-side chat list of the Chat page
 
-When a target user is selected, the client sends a request to `/chats/{username}` to either create or retrieve the chat room with the target:
+When a target user is selected, the client sends a `PUT /api/chats/{username}` request to either create or retrieve the chat room with the target:
 - If the chat room already exists, the server responds with `200 OK` and returns the existing chat
 - If no chat room exists, the server creates a new one and responds with `201 Created`
 - If the target has blocked the user, the UI prevents discovering or selecting that user, so this case does not occur in the normal flow
@@ -120,37 +90,37 @@ If the chat is currently open on the client side, the message’s CSS class togg
 
 ### Notifications
 
-The server sends following events to the clients 
-- `new_friend`: The user is added to other users' friend list  (See [User Management docs](./USER_MANAGEMENT.md#social-networking-elements) for friend list).
-- `new_tournament`: New tournament is created by other users.
-- `game_invite`: The user is invited to Pong game Duel by other users (See [`game_invite`](#game-invitation))
+The server can push the following notification events to the clients 
+- `new_friend`: Another user has added the user to the friend list  (See [User Management docs](./USER_MANAGEMENT.md#social-networking-elements) for friend list).
+- `new_tournament`: A new tournament has been created by another user.
+- `game_invite`: The user is invited to Pong Duel by another user (See [`game_invite`](#game-invitation))
 
-The notification data are stored in the database.
-Upon reception, the client shows notification toast and adds an unread badge to **Notification button** in Navbar.
-Clicking the button triggers `GET /notifications?is_read=all&limit=10&offset={offset}` and opens Dropdown menu with notification list.
+All notification data are stored in the database.   
+
+When a notification arrives, the client displays a toast and adds an unread badge to the **Notifications** button in the Navbar.
+Clicking the button triggers `GET /api/notifications?is_read=all&limit=10&offset={offset}` and opens dropdown menu with notification list.
 
 <p align="center">
   <img src="../../assets/ui/notification-list.png" alt="Notification list" width="240px" />
 </p>
 
-When a user click on an item of the notification list, 
-- The client sends `read_notification` event to the server, which updates the status of the notification item to read in the database.
+Selecting a notification item in the list, 
+- The client sends `read_notification` event to the server, marking it as read in the database.
 
-- **New friend** notification item allows the user to navigate to the new friend's profile page.   
+- **New friend**: Navigate to the new friend's profile page.   
   <img src="../../assets/ui/notification-new-friend.png" alt="New friend" width="240px" />
 
-- **New tournament** notification item allows the user to navigate to the tournament page and open registration form.
+- **New tournament**: Navigate to the tournament page and open the registration form.   
   <img src="../../assets/ui/notification-new-tournament.png" alt="New tournament" width="240px" />
 
-User can also mark all unread notification as read by clicking **Mark all as read** button, which triggers a `POST /notifications/mark_all_as_read` request.
+User can also mark all unread notification as read by clicking **Mark all as read** button, which triggers a `POST /api/notifications/mark_all_as_read` request.
 
 
 <br />
 
 ### Game invitation
 
-A user can invite other users to Pong game Duel from **Chat page** or other user's profile page
-
+A user can invite others to Pong Duel from either **Chat page** or another user's **Profile page**.
 
 <figure align="center">
   <figcaption>Send invitation from Chat page</figcaption>
@@ -161,12 +131,11 @@ A user can invite other users to Pong game Duel from **Chat page** or other user
   <img src="../../assets/ui/duel-menu-game-invitation.png" alt="Send Game invitation" width="480px" />
 </figure>
 
+When a user sends an invitation, `game_invite` event is sent to the server.
+If the inviter is not engaged in any other game activity (no ongoing/pending game, or another pending invitation), the server forwards an `invite_game` action to the invitee, and the invitee’s client displays a notification toast.
+Otherwise, the server cancels the invitation and replies to the inviter's client with `game_invite_canceled`.
 
-When the user invites other user, `game_invite` event is sent to the server.   
-If the user is not engaged in any other game activity (has a pending or ongoing game, or another pending invitation (as inviter)), `invite_game` action is sent to the invitee, and the client of the invitee shows notification toast.
-Otherwise, the server cancels the invitation and sends `game_invite_canceled` event to the inviter.
-
-The inviter can cancel the invitation from **Duel page** where he is navigated after sending invitation, sending `cancel_game_invite` to the server. On cancel success, the server replies with `game_invite_canceled`.
+The inviter is redirected to **Duel page** after sending the invitation. From there the inviter can cancel the invitation by sending `cancel_game_invite` to the server. On success, the server replies with `game_invite_canceled`.
 
 <p align="center">
   <img src="../../assets/ui/chat-game-invitation-waiting.png" alt="Chat - Like message" width="480px" />
@@ -176,17 +145,20 @@ The invitee can accepts or declines the invitation from **Notification list** in
 
 <img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation" width="240px" />
 
-On **accept** response, after revalidating the data, the server creates a new game room, then broadcasts `game_accepted` event to both users with `game_id` which allows them to navigate to the game page.   
-On **decline** response, the server revalidates the data, then broadcasts `game_declined` event.
+On **accept** response, the server revalidates the data, creates a new game room, then broadcasts a `game_accepted` event to both users, including `game_id` which allows them to navigate to the game page.   
+On **decline** response, the server revalidates the data, then broadcasts a `game_declined` event.
 
 <br />
 
-### Real-time User Presence system
+### User Presence system
 
-A periodic cron (e.g., every 30 min) detects inactive session. It refreshes `last_activity` on each meaningful API request and WebSocket event.   
-When a session of a user is connected, the server broadcasts `user_online`.
-When all sessions of a user are disconnected, the server broadcasts `user_offline`.
-Upon receiving `user_online` or `user_offline`, the client updates online status indicators of the concerned user.
+A dedicated periodic cron job runs to check inactive sessions. Each meaningful API request and WebSocket event refreshes the user's `last_activity` timestamp.   
+If a user has been inactive for more than 30 minutes, the cronjob triggers the backend task to mark the user as offline, then the server broadcasts `user_offline` to all active users.
+
+When a user establishes a session, the server broadcasts `user_online`.  
+When all sessions of a user are disconnected or marked inactive, the server broadcasts `user_offline`.  
+
+Upon receiving these events, the client updates the corresponding user's online status indicators.
 
 <br />
 

@@ -19,7 +19,7 @@ The **Crontab** manages:
 - The business logic function `check_inactive_users()` is invoked :
   - Marks users without recent activity as inactive
   - Updates the database
-  - Sends a ws message to active users, to change the online dot from green to gray.
+  - Sends a ws message to active users.
 
 ---
 
@@ -118,7 +118,7 @@ subgraph SERVER["SERVER"]
 D["check_inactive_users()"]
 E["Updates DB"]
 end
-subgraph FRONT["FRONT"]
+subgraph CLIENT["CLIENT"]
 W["Websocket"]
 end
 subgraph DOCKER_NETWORK["DOCKER_NETWORK"]
@@ -126,7 +126,7 @@ CRONJOB
 B["Nginx"]
 F["Sends ws message to online users"]
 SERVER
-FRONT
+CLIENT
 end
 T -- "Triggers every minute" --> A
 A -- "GET /api/cronjob/csrf-token" --> B
@@ -139,6 +139,6 @@ D --> F --> W
     style CRONJOB fill:#AA00FF
     style B fill:#00C853
     style SERVER fill:#2962FF
-    style FRONT fill:#FF6D00
+    style CLIENT fill:#FF6D00
     style DOCKER_NETWORK fill:#BBDEFB
 ```
