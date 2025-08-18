@@ -27,6 +27,10 @@ export class UserProfile extends HTMLElement {
     this.fetchUserData(username);
   }
 
+  disconnectedCallback() {
+    document.removeEventListener('onlineStatus', this.updateOnlineStatus);
+  }
+
   async fetchUserData(username) {
     /* eslint-disable-next-line new-cap */
     const response = await apiRequest('GET', API_ENDPOINTS.USER_PROFILE(username));
