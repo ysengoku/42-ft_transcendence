@@ -53,25 +53,25 @@ socketManager.addSocket('livechat', {
     showToastNotification(`${nickname} have declined the duel invitation.`, TOAST_TYPES.INFO);
   },
   game_invite_canceled: async (data) => {
-    const customEvent = new CustomEvent('duelInvitationCanceled', {
-      detail: data,
-      bubbles: true,
-    });
-    document.dispatchEvent(customEvent);
     const user = await auth.getUser();
     if (!user) {
       return;
     }
-    let message;
+    let message = '';
     if (data.username && data.username.toLowerCase() === user.username.toLowerCase()) {
       message = 'You have canceled the duel invitation.';
     } else {
-      message = data.nickname
-        ? `${data.nickname} canceled the duel invitation.`
-        : 'Your rival canceled the duel invitation.';
+      message = data.message;
     }
     if (message) {
       showToastNotification(message, TOAST_TYPES.INFO);
+    }
+    if (window.location.pathname === '/duel') {
+      const duelPage = document.querySelector('duel-page');
+      if (duelPage?.status === 'inviting') {
+        duelPage?.invitationCanceled(data);
+        return;
+      }
     }
   },
   new_tournament: (data) => {
