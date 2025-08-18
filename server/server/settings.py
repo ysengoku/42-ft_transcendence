@@ -103,13 +103,13 @@ INSTALLED_APPS = [
     # ASGI server for working with websockets and Django channels
     "daphne",
     "channels",
-
     # Our apps
     "users",
     "chat",
     "pong",
     "tournaments",
-
+    # Security
+    "csp",
     # Default Django applications
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -121,14 +121,32 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "csp.middleware.CSPMiddleware",
 ]
 
+X_FRAME_OPTIONS = "SAMEORIGIN"
+
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ["'self'"],
+        "script-src": ["'self'"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "img-src": ["'self'", "data:", "blob:"],
+        "font-src": ["'self'", "data:"],
+        "connect-src": ["'self'"],
+    },
+}
 ROOT_URLCONF = "server.urls"
 
 TEMPLATES = [
@@ -206,6 +224,7 @@ CSRF_TRUSTED_ORIGINS = [
     f"https://nginx:{SERVER_PORT}",
     f"https://{HOST_IP}:{SERVER_PORT}",
 ]
+CSRF_COOKIE_SECURE = True
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = False
