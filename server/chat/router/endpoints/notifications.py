@@ -36,7 +36,7 @@ def get_notifications(request: HttpRequest, is_read: str = "all"):
     )
 
 
-@notifications_router.post("/mark_all_as_read", response={200: MessageSchema})
+@notifications_router.post("/mark_all_as_read", response={200: MessageSchema, 401: MessageSchema})
 def mark_all_notifications_read(request):
     profile = request.auth.profile
     Notification.objects.mark_all_read(profile)
