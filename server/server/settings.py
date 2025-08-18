@@ -66,10 +66,10 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("NODE_ENV") != "production"
 CRON_SECRET = env("CRON_SECRET")
 
-MAX_MESSAGE_LENGTH=255
-MAX_TOURNAMENT_NAME_LENGTH=50
-MAX_ALIAS_LENGTH=12
-REQUIRED_PARTICIPANTS_OPTIONS=(4, 8)
+MAX_MESSAGE_LENGTH = 255
+MAX_TOURNAMENT_NAME_LENGTH = 50
+MAX_ALIAS_LENGTH = 12
+REQUIRED_PARTICIPANTS_OPTIONS = (4, 8)
 
 HOST_IP = env("HOST_IP")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default=f"localhost,127.0.0.1,{HOST_IP}").split(",")
@@ -137,16 +137,17 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-CONTENT_SECURITY_POLICY = {
-    "DIRECTIVES": {
-        "default-src": ["'self'"],
-        "script-src": ["'self'"],
-        "style-src": ["'self'", "'unsafe-inline'"],
-        "img-src": ["'self'", "data:", "blob:"],
-        "font-src": ["'self'", "data:"],
-        "connect-src": ["'self'"],
-    },
-}
+if not DEBUG:
+    CONTENT_SECURITY_POLICY = {
+        "DIRECTIVES": {
+            "default-src": ["'self'"],
+            "script-src": ["'self'"],
+            "style-src": ["'self'", "'unsafe-inline'"],
+            "img-src": ["'self'", "data:", "blob:"],
+            "font-src": ["'self'", "data:"],
+            "connect-src": ["'self'"],
+        },
+    }
 ROOT_URLCONF = "server.urls"
 
 TEMPLATES = [
