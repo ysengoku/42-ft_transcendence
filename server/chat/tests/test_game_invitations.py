@@ -351,7 +351,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         await communicator.disconnect()
         await target_user.disconnect()
 
-    async def test_send_game_invite_canceled_if_other_is_accepted(self):
+    async def test_send_game_invite_pending_while_other_is_accepted(self):
         john = await self.get_authenticated_communicator(
             username="john",
             password="testpass",
@@ -387,7 +387,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         pending_invitations = await database_sync_to_async(
             lambda: list(GameInvitation.objects.filter(sender=communicator_profile, status="pending")),
         )()
-        assert len(pending_invitations) == 0, f"Communicator still has pending invitations: {pending_invitations}"
+        assert len(pending_invitations) == 1
 
         await communicator.disconnect()
         await john.disconnect()
@@ -435,7 +435,7 @@ class GameInvitationTests(UserEventsConsumerTests):
         await john.disconnect()
         await playing_joe.disconnect()
 
-    async def test_game_invite_not_send_if_target_in_game(self):
+    async def test_game_invite_send_even_if_target_in_game(self):
         john = await self.get_authenticated_communicator(
             username="john",
             password="testpass",
@@ -461,14 +461,14 @@ class GameInvitationTests(UserEventsConsumerTests):
         await john.receive_nothing(timeout=0.1)
         await asyncio.sleep(0.1)
         count = await database_sync_to_async(GameInvitation.objects.count)()
-        assert count == 1
+        assert count == 2
 
         john_user = await database_sync_to_async(get_user_model().objects.get)(username="john")
         john_profile = await database_sync_to_async(Profile.objects.get)(user=john_user)
         accepted_invitations = await database_sync_to_async(
             lambda: list(GameInvitation.objects.filter(sender=john_profile, status="pending")),
         )()
-        assert len(accepted_invitations) == 0, f"The invitation has been sent: {accepted_invitations}"
+        assert len(accepted_invitations) == 1, "The invitation has not been sent"
 
         await communicator.disconnect()
         await john.disconnect()
