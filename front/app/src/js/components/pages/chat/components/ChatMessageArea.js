@@ -114,6 +114,9 @@ export class ChatMessageArea extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
   render() {
+    this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+    this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
+
     this.innerHTML = this.style() + this.template();
     this.messageInput = this.querySelector('#chat-message-input-wrapper');
     this.loader = this.querySelector('.chat-loader');
@@ -156,12 +159,9 @@ export class ChatMessageArea extends HTMLElement {
       requestAnimationFrame(() => {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       });
-      this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
-      this.chatMessages.addEventListener('click', this.toggleLikeMessage);
-    } else {
-      this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
-      this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
     }
+    this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
+    this.chatMessages.addEventListener('click', this.toggleLikeMessage);
 
     // Toggle input and block button based on block status.
     if (this.#state.data.is_blocked_user) {
