@@ -66,6 +66,7 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
             )
 
         self.accept()
+        self.init_rate_limiter(*GuardedWebsocketConsumer.RateLimits.EVENT_CONSUMER)
 
     def disconnect(self, close_code):
         if not hasattr(self, "user_profile"):
@@ -124,51 +125,58 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
     def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
-            action = text_data_json.get("action")
-
-            if not action:
-                logger.warning("Message without action received")
-                return
-
-            text_data_json.get("data", {})
-            entire_data = text_data_json.get("data", {})
-            if not Validator.validate_action_data(action, entire_data):
-                self.close(CloseCodes.BAD_DATA)
-                return
-            match action:
-                case "new_message":
-                    ChatEvent(self).handle_message(text_data_json)
-                case "read_notification":
-                    self.read_notification(text_data_json)
-                case ("user_offline", "user_online"):
-                    self.handle_online_status(text_data_json)
-                case "like_message":
-                    ChatEvent(self).handle_toggle_like_message(text_data_json, True)
-                case "unlike_message":
-                    ChatEvent(self).handle_toggle_like_message(text_data_json, False)
-                case "read_message":
-                    ChatEvent(self).handle_read_message(text_data_json)
-                case "game_invite":
-                    DuelEvent(self).send_game_invite(text_data_json)
-                case "reply_game_invite":
-                    DuelEvent(self).reply_game_invite(text_data_json)
-                case "game_accepted":
-                    DuelEvent(self).accept_game_invite(text_data_json)
-                case "game_declined":
-                    DuelEvent(self).decline_game_invite(text_data_json)
-                case "cancel_game_invite":
-                    DuelEvent(self).cancel_game_invite(text_data_json)
-                case "new_tournament":
-                    TournamentEvent(self).handle_new_tournament(text_data_json)
-                case "add_new_friend":
-                    self.add_new_friend(text_data_json)
-                case _:
-                    logger.warning("Unknown action : %s", action)
-                    self.close(CloseCodes.BAD_DATA)
-
         except json.JSONDecodeError:
             logger.warning("Invalid JSON message")
             self.close(CloseCodes.BAD_DATA)
+        if not self.check_rate_limit():
+            self.close(CloseCodes.BAD_DATA)
+            logger.warning(
+                "[event.receive]: user {%s} has exceeded the rate limit",
+                self.user.profile,
+            )
+        return
+
+        action = text_data_json.get("action")
+        if not action:
+            logger.warning("Message without action received")
+            return
+
+        text_data_json.get("data", {})
+        entire_data = text_data_json.get("data", {})
+        if not Validator.validate_action_data(action, entire_data):
+            self.close(CloseCodes.BAD_DATA)
+            return
+        match action:
+            case "new_message":
+                ChatEvent(self).handle_message(text_data_json)
+            case "read_notification":
+                self.read_notification(text_data_json)
+            case ("user_offline", "user_online"):
+                self.handle_online_status(text_data_json)
+            case "like_message":
+                ChatEvent(self).handle_toggle_like_message(text_data_json, True)
+            case "unlike_message":
+                ChatEvent(self).handle_toggle_like_message(text_data_json, False)
+            case "read_message":
+                ChatEvent(self).handle_read_message(text_data_json)
+            case "game_invite":
+                DuelEvent(self).send_game_invite(text_data_json)
+            case "reply_game_invite":
+                DuelEvent(self).reply_game_invite(text_data_json)
+            case "game_accepted":
+                DuelEvent(self).accept_game_invite(text_data_json)
+            case "game_declined":
+                DuelEvent(self).decline_game_invite(text_data_json)
+            case "cancel_game_invite":
+                DuelEvent(self).cancel_game_invite(text_data_json)
+            case "new_tournament":
+                TournamentEvent(self).handle_new_tournament(text_data_json)
+            case "add_new_friend":
+                self.add_new_friend(text_data_json)
+            case _:
+                logger.warning("Unknown action : %s", action)
+                self.close(CloseCodes.BAD_DATA)
+
 
     def handle_online_status(self, event):
         """
