@@ -39,7 +39,12 @@ export class UserGameResultModal extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.modal?.hide();
+    if (this.modal) {
+      this.modal.hide();
+      Promise.resolve(() => {
+        this.modal.dispose();
+      });
+    }
 
     this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
     this.duelWinner?.removeEventListener('click', this.navigateToProfile);
