@@ -122,16 +122,7 @@ export class DuelMenu extends HTMLElement {
     this.cleanObserver();
     this.modalBodyContent?.remove();
     this.modalBodyContent = null;
-    this.modalElement.addEventListener(
-      'hidden.bs.modal',
-      () => {
-        this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
-        document.body.removeChild(this.modalElement);
-        this.gameOptionsModal.dispose();
-        this.gameOptionsModal = null;
-      },
-      { once: true },
-    );
+
     this.optionsButton?.removeEventListener('click', this.openGameOptionsModal);
     this.searchInput?.removeEventListener('input', this.handleSearchInput);
     this.searchInput?.removeEventListener('keydown', this.ignoreEnterKeyPress);
@@ -144,10 +135,18 @@ export class DuelMenu extends HTMLElement {
     this.modalSaveButton?.removeEventListener('click', this.saveSelectedOptions);
     this.modalCancelButton?.removeEventListener('click', this.closeGameOptionsModalWithoutSaving);
     this.modalCloseButton?.removeEventListener('click', this.closeGameOptionsModalWithoutSaving);
-    if (!this.gameOptionsModal) {
-      return;
+
+    if (this.modalElement) {
+      this.modalElement.removeEventListener('hide.bs.modal', this.clearFocusInModal);
+      document.body.removeChild(this.modalElement);
     }
-    this.gameOptionsModal.hide();
+    if (this.gameOptionsModal) {
+      this.gameOptionsModal.hide();
+      Promise.resolve(() => {
+        this.gameOptionsModal.dispose();
+      });
+      this.gameOptionsModal = null;
+    }
   }
 
   /* ------------------------------------------------------------------------ */
