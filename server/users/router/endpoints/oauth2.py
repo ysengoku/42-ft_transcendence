@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 from urllib.parse import quote, urlencode
 
@@ -16,6 +17,7 @@ from users.schemas import OAuthCallbackParams
 
 oauth2_router = Router()
 
+logger = logging.getLogger("server")
 
 def get_oauth_config(platform: str) -> dict:
     """
@@ -35,19 +37,21 @@ def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
         try:
             response = requests.get(config["oauth_uri"], timeout=2.0)
             if response.status_code != 200:  # noqa: PLR2004
-                return False, "42 API is temporarily unavailable"
+                logging.warning("%s refused with the status code %d", platform, response.status_code)
+                return False, f"{platform} API is temporarily unavailable"
             return True, ""
-        except requests.RequestException:
-            return False, "Could not connect to 42 API"
+        except requests.RequestException as exc:
+            logging.warning("Could not connect to the %s:\n%s", platform, str(exc))
+            return False, f"Could not connect to {platform} API"
     return True, ""
 
 
-@csrf_exempt
 @oauth2_router.get(
     "/authorize/{platform}",
     auth=None,
     response={200: MessageSchema, frozenset({404, 422}): MessageSchema},
 )
+@csrf_exempt
 def oauth_authorize(request: HttpRequest, platform: str):
     """
     Starts the OAuth2 authorization process.
@@ -140,5 +144,7 @@ def oauth_callback(  # noqa: PLR0911
 
     access_token, refresh_token_instance = RefreshToken.objects.create(user)
     return fill_response_with_jwt(
-        HttpResponseRedirect(settings.HOME_REDIRECT_URL), access_token, refresh_token_instance,
+        HttpResponseRedirect(settings.HOME_REDIRECT_URL),
+        access_token,
+        refresh_token_instance,
     )
