@@ -9,10 +9,9 @@ import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
 import coin from '/3d_models/coin.glb?url';
 import carboard from '/3d_models/carboard.glb?url';
+import carboard2 from '/3d_models/carboard2.glb?url';
+import carboard3 from '/3d_models/carboard3.glb?url';
 import table from '/3d_models/table.glb?url';
-import fontWin from '/fonts/Texas_Tango_BOLD_PERSONAL_USE_Regular.json?url';
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { router } from '@router';
 import { auth } from '@auth';
 import { DEFAULT_GAME_OPTIONS } from '@env';
@@ -27,8 +26,6 @@ export class Game extends HTMLElement {
 
   constructor() {
     super();
-    // this.stop = null;
-    // this.Workers = null;
   }
 
   async connectedCallback() {
@@ -63,7 +60,7 @@ export class Game extends HTMLElement {
     log.info('Game type:', this.#state.gameType);
   }
 
-  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback) {
+  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback, action) {
       return (e) => {
         const tag = e.target.tagName.toLowerCase();
         if (tag === 'input' || tag === 'textarea') {
@@ -73,8 +70,15 @@ export class Game extends HTMLElement {
           return; // Do noplayerglb if the event was already processed
         }
         var keyCode = e.code;
-        // let this.gameType = 1; //WARNINNNNNNNNNNNNNNNNGGGGGGGGGGG TO CHANGE FOR THE OPTIONS OF AI
-        if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == "ai") keyMap[keyCode] = true;
+        if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == "ai"){
+          keyMap[keyCode] = true;
+          if (!action[0][1])
+          {
+              action[0][1] = true;
+              action[0][0].play();
+              action[1][0].crossFadeTo(action[0][0],0.2);
+          }
+        }
         else if (this.#state.gameType != "ai") keyMap[keyCode] = true;
         if (keyCode == 'Escape') {
           if (gameStateContainer.isPaused == false) {
@@ -156,11 +160,11 @@ export class Game extends HTMLElement {
     const TEMPORAL_SPEED_DECAY = 0.005;
 
     const audio = new Audio(audiourl);
+    let carboardModelStates = [carboard, carboard2, carboard3];
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     renderer.setClearColor(0x855988, 1);
-    // console.log(document.querySelector('#state').gameOptions.time_limit);
     this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
@@ -168,12 +172,12 @@ export class Game extends HTMLElement {
 
     const scene = new THREE.Scene();
     const loaderModel = new GLTFLoader();
-    const loaderFonts = new FontLoader();
+    // const loaderFonts = new FontLoader();
 
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
     // let cameraX = 0;
     // let cameraY = 30;
-    camera.position.set(0, 15, -20);
+    camera.position.set(-10, 15, -20);
     // camera.position.set(0, 15, -20);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
@@ -188,29 +192,36 @@ export class Game extends HTMLElement {
       new THREE.DirectionalLight(0xffffff),
     ];
 
-    const carboardGlb = (() => {
-      const carboardModel = new THREE.Object3D();
-      loaderModel.load(
-        carboard,
-        function (gltf) {
-          const model = gltf.scene;
-          model.position.y = 0;
-          model.position.z = 0;
-          model.position.x = 0;
-          carboardModel.add(gltf.scene);
-        },
-        undefined,
-        function (error) {
-          console.error(error);
-        },
-      );
-      carboardModel.scale.set(1.2, 1.2, 1.2);
-      scene.add(carboardModel);
-      return carboardModel;
-    })();
+    let carboardModels = [null, null, null];
 
-    carboardGlb.rotation.y = Math.PI / 2;
-    carboardGlb.position.z = 15;
+    for (let i = 0; i <= 2; i++)
+    {
+      const carboardGlb = (() => {
+        const carboardModel = new THREE.Object3D();
+        loaderModel.load(
+          carboardModelStates[i],
+          function (gltf) {
+            const model = gltf.scene;
+            model.position.y = 0;
+            model.position.z = 0;
+            model.position.x = 0;
+            carboardModel.add(gltf.scene);
+          },
+          undefined,
+          function (error) {
+            console.error(error);
+          },
+        );
+        carboardModel.scale.set(1.2, 1.2, 1.2);
+        scene.add(carboardModel);
+        return carboardModel;
+      })();
+      carboardGlb.rotation.y = Math.PI / 2;
+      carboardGlb.position.z = 15;
+      carboardModels[i] = carboardGlb;
+    }
+    carboardModels[1].visible = false;
+    carboardModels[2].visible = false;
     let action = [[null, false], [null,false]];
     let animations = [];
 
@@ -220,21 +231,15 @@ export class Game extends HTMLElement {
           pedro,
           function(gltf) {
               const model = gltf.scene;
-              model.position.y = 5;
+              model.position.y = 0;
               model.position.z = -20;
               model.position.x = 0;
               mixer = new THREE.AnimationMixer(model);
               animations = gltf.animations;
               action[1][0] = mixer.clipAction( animations[0] , model);
               action[0][0] = mixer.clipAction( animations[1] , model);
-              // action[0][0].play();
               action[1][0].play();
-              
-              // action.fadeOut();
-              // model.rotation.z = Math.PI / 2;
-              // model.rotation.x = Math.PI / 2;
               model.rotation.y = Math.PI / 2;
-              // model.material.opacity = 1;
               pedro_model.add(gltf.scene);
           },
           undefined,
@@ -248,30 +253,6 @@ export class Game extends HTMLElement {
     })();
 
     // console.log('Game type:', this.#state);
-
-    // const chairGlb = (() => {
-    //   const chairModel = new THREE.Object3D();
-    //   loaderModel.load(
-    //     chair,
-    //     function (gltf) {
-    //       const model = gltf.scene;
-    //       model.position.y = 2;
-    //       model.position.z = 0;
-    //       model.position.x = 0;
-    //       chairModel.add(gltf.scene);
-    //     },
-    //     undefined,
-    //     function (error) {
-    //       console.error(error);
-    //     },
-    //   );
-    //   chairModel.scale.set(1, 1, 1);
-    //   scene.add(chairModel);
-    //   return chairModel;
-    // })();
-    // chairGlb.rotation.y = Math.PI / 2;
-
-    // Coin
 
     const Ball = ((posX, posY, posZ) => {
       const bulletGlb = (() => {
@@ -343,50 +324,6 @@ export class Game extends HTMLElement {
       };
     })(0, 1, 0);
 
-    let loadedFonts = [null, null]
-
-    loaderFonts.load(fontWin, function (font) {
-      const geometry = new TextGeometry('P l a y e r   2   w i n', {
-        font: font,
-        size: 1,
-        depth: 0.5,
-        curveSegments: 12,
-      });
-
-      loadedFonts[1] = new THREE.Mesh(geometry, [
-        new THREE.MeshPhongMaterial({ color: 0xad4000 }),
-        new THREE.MeshPhongMaterial({ color: 0x5c2301 }),
-      ]);
-      loadedFonts[1].doubleSided = true;
-      loadedFonts[1].position.x = 100;
-      loadedFonts[1].position.y = 5;
-      loadedFonts[1].position.z = 0;
-      loadedFonts[1].scale.x = -1;
-
-      scene.add(loadedFonts[1]);
-    });
-
-    loaderFonts.load(fontWin, function (font) {
-      const geometry = new TextGeometry('P l a y e r   1   w i n', {
-        font: font,
-        size: 1,
-        depth: 0.5,
-        curveSegments: 12,
-      });
-
-      loadedFonts[0] = new THREE.Mesh(geometry, [
-        new THREE.MeshPhongMaterial({ color: 0xad4000 }),
-        new THREE.MeshPhongMaterial({ color: 0x5c2301 }),
-      ]);
-      loadedFonts[0].doubleSided = true;
-      loadedFonts[0].position.x = 100;
-      loadedFonts[0].position.y = 5;
-      loadedFonts[0].position.z = 0;
-      loadedFonts[0].scale.x = -1;
-
-      scene.add(loadedFonts[0]);
-    });
-
     ligths[0].position.set(10, 10, 0);
     ligths[1].position.set(10, 0, 30);
     ligths[2].position.set(0, 10, -30);
@@ -398,7 +335,7 @@ export class Game extends HTMLElement {
       ligths[i].castShadow = true;
       scene.add(ligths[i]);
     }
-
+    const normalMaterial = new THREE.MeshNormalMaterial();
     const BumperFactory = (posX, posY, posZ) => {
       const tableGlb = (() => {
         const tableModel = new THREE.Object3D();
@@ -406,12 +343,11 @@ export class Game extends HTMLElement {
           table,
           function (gltf) {
             const model = gltf.scene;
-            model.position.y = 0;
-            model.position.z = 0;
-            model.position.x = 0;
-            // mixer = new THREE.AnimationMixer(model);
+            model.position.y = 0.45;
+            model.position.z = 1;
+            model.position.x = 0.04;
             tableModel.add(gltf.scene);
-            gltf.scene.scale.set(0.5, 0.5, 0.5);
+            gltf.scene.scale.set(0.48, 0.5, 0.5);
           },
           undefined,
           function (error) {
@@ -430,9 +366,8 @@ export class Game extends HTMLElement {
             model.position.y = 0;
             model.position.z = 0;
             model.position.x = 0;
-            // mixer = new THREE.AnimationMixer(model);
             dressingModel.add(gltf.scene);
-            gltf.scene.scale.set(0.5, 0.5, 0.5);
+            gltf.scene.scale.set(0.7, 0.3031, 0.6788);
           },
           undefined,
           function (error) {
@@ -442,95 +377,90 @@ export class Game extends HTMLElement {
         scene.add(dressingModel);
         return dressingModel;
       })();
-      // const couchGlb = (() => {
-      //   const couchModel = new THREE.Object3D();
-      //   loaderModel.load(
-      //     couch,
-      //     function (gltf) {
-      //       const model = gltf.scene;
-      //       model.position.y = -2.5;
-      //       model.position.z = -7.5;
-      //       model.position.x = 1;
-      //       couchModel.add(gltf.scene);
-      //       gltf.scene.scale.set(1.2, 1, 1.2);
-      //     },
-      //     undefined,
-      //     function (error) {
-      //       console.error(error);
-      //     },
-      //   );
-      //   scene.add(couchModel);
-      //   return couchModel;
-      // })();
-      // const chairGlb = (() => {
-      //   const chairModel = new THREE.Object3D();
-      //   loaderModel.load(
-      //     chair,
-      //     function (gltf) {
-      //       const model = gltf.scene;
-      //       model.position.y = 0;
-      //       model.position.z = 0;
-      //       model.position.x = 0;
-      //       chairModel.add(gltf.scene);
-      //       gltf.scene.scale.set(1.1, 0.9, 1.1);
-      //     },
-      //     undefined,
-      //     function (error) {
-      //       console.error(error);
-      //     },
-      //   );
-      //   scene.add(chairModel);
-      //   return chairModel;
-      // })();
-      // couchGlb.castShadow = true;
-      // couchGlb.receiveShadow = true;
-      // couchGlb.position.x = posX;
-      // couchGlb.position.y = posY;
-      // couchGlb.position.z = posZ;
-      // couchGlb.castShadow = true;
-      // couchGlb.position.z < 0 ? (couchGlb.rotation.x = Math.PI / 2): (couchGlb.rotation.x = -Math.PI / 2);
-      // couchGlb.position.z < 0 ? (couchGlb.rotation.z = Math.PI) : (couchGlb.rotation.z = Math.PI);
-      // couchGlb.position.z < 0 ? couchGlb.rotation.y = -Math.PI / 2 : couchGlb.rotation.y = Math.PI / 2;
+      const couchGlb = (() => {
+        const couchModel = new THREE.Object3D();
+        loaderModel.load(
+          couch,
+          function (gltf) {
+            const model = gltf.scene;
+            model.position.y = -2.0795;
+            model.position.z = -7.8925;
+            model.position.x = 1;
+            couchModel.add(gltf.scene);
+            gltf.scene.scale.set(1.4, 1, 1.23);
+          },
+          undefined,
+          function (error) {
+            console.error(error);
+          },
+        );
+        scene.add(couchModel);
+        return couchModel;
+      })();
+      const chairGlb = (() => {
+        const chairModel = new THREE.Object3D();
+        loaderModel.load(
+          chair,
+          function (gltf) {
+            const model = gltf.scene;
+            model.position.y = 0.42;
+            model.position.z = 0;
+            model.position.x = -0.01;
+            chairModel.add(gltf.scene);
+            gltf.scene.scale.set(1.35, 0.9, 1.2);
+          },
+          undefined,
+          function (error) {
+            console.error(error);
+          },
+        );
+        scene.add(chairModel);
+        return chairModel;
+      })();
 
-      // dressingGlb.castShadow = true;
-      // dressingGlb.receiveShadow = true;
-      // dressingGlb.position.x = posX;
-      // dressingGlb.position.y = posY;
-      // dressingGlb.position.z = posZ;
-      // dressingGlb.castShadow = true;
-      // dressingGlb.position.z < 0 ? (dressingGlb.rotation.x = -Math.PI / 2): (dressingGlb.rotation.z = Math.PI/ 2);
-      // dressingGlb.position.z < 0 ? (dressingGlb.rotation.z = Math.PI) : (dressingGlb.rotation.z = Math.PI);
-      tableGlb.castShadow = true;
-      tableGlb.receiveShadow = true;
-      tableGlb.position.x = posX;
-      tableGlb.position.y = posY;
-      tableGlb.position.z = posZ;
-      tableGlb.castShadow = true;
+      let modelsGlb = [tableGlb, couchGlb, chairGlb, dressingGlb];
+
+      modelsGlb.forEach((element) =>
+      {
+          element.castShadow = true;
+          element.receiveShadow = true;
+          element.position.x = posX;
+          element.position.y = posY;
+          element.position.z = posZ;
+          element.visible = false;
+      })
       tableGlb.rotation.x = -Math.PI / 2;
-      tableGlb.position.z < 0 ? (tableGlb.rotation.z = Math.PI) : (tableGlb.rotation.z = 0);
-      // tableGlb.scale.x = 2;
-      // chairGlb.castShadow = true;
-      // chairGlb.receiveShadow = true;
-      // chairGlb.position.x = posX;
-      // chairGlb.position.y = posY;
-      // chairGlb.position.z = posZ;
-      // chairGlb.castShadow = true;
-      // chairGlb.rotation.x = -Math.PI / 2;
-      // chairGlb.rotation.y = 0;
-      // chairGlb.position.z < 0 ? (chairGlb.rotation.z = Math.PI) : (chairGlb.rotation.z = 0);
-      // chairGlb.scale.x = 0.5;
-      // scene.add(tableGlb);
+      chairGlb.rotation.x = -Math.PI / 2;
+      dressingGlb.rotation.z = -Math.PI / 2;
+      dressingGlb.rotation.y = -Math.PI / 2;
       
-      let modelsGlb = [tableGlb, dressingGlb];
+      if (posZ < 0)
+      {
+        tableGlb.rotation.z = Math.PI;
+        couchGlb.rotation.x = Math.PI / 2;
+        couchGlb.rotation.z = Math.PI;
+        couchGlb.rotation.y = -Math.PI / 2;
+        chairGlb.rotation.z = Math.PI;
+      }
+      else
+      {
+        couchGlb.rotation.x = -Math.PI / 2;
+        couchGlb.rotation.z = Math.PI;
+        couchGlb.rotation.y = Math.PI / 2;
+      }
+      tableGlb.visible = true;
+
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
       let lenghtHalf = 2.5;
-      let widthHalf = 1.5;
+      let modelChoosen = 0;
+      let widthHalf = 0.5;
       let controlReverse = false;
       let speed = 0.25 * gameSpeed;
       let score = 0;
 
       return {
+        modelsGlb,
         tableGlb,
         cubeUpdate,
 
@@ -539,6 +469,12 @@ export class Game extends HTMLElement {
         },
         set speed(newSpeed) {
           speed = newSpeed;
+        },
+        get modelChoosen() {
+          return modelChoosen;
+        },
+        set modelChoosen(newModelChoosen) {
+          modelChoosen = newModelChoosen;
         },
         get score() {
           return score;
@@ -681,21 +617,19 @@ export class Game extends HTMLElement {
         step = null;
       }
     }
+    let scoreSwitch = MAX_SCORE / 3;
     function resetBall(direction) {
-      if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE) {
-        if (Bumpers[0].score == MAX_SCORE) {
-          loadedFonts[0].position.x = 9;
-          loadedFonts[1].position.x = 100;
-          Bumpers[0].score = 0;
-          Bumpers[1].score = 0;
-        }
-        if (Bumpers[1].score == MAX_SCORE) {
-          loadedFonts[1].position.x = 9;
-          loadedFonts[0].position.x = 100;
-          Bumpers[0].score = 0;
-          Bumpers[1].score = 0;
-        }
+      if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE)
         gamePlaying = false;
+      else if (Bumpers[0].score < (scoreSwitch * 2) && Bumpers[0].score >= scoreSwitch)
+      {
+        carboardModels[0]. visible = false;
+        carboardModels[1]. visible = true;
+      }
+      else if (Bumpers[0].score < (scoreSwitch * 3) && Bumpers[0].score >= (scoreSwitch * 2))
+      {
+        carboardModels[1]. visible = false;
+        carboardModels[2]. visible = true;
       }
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
@@ -712,7 +646,7 @@ export class Game extends HTMLElement {
     // -> calculate best position to collide
     // -> move to the best position
 
-    let calculatedBumperPos = Bumpers[1].tableGlb.position;
+    let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
     let i = 0;
@@ -814,13 +748,13 @@ export class Game extends HTMLElement {
     function myCallback() {
       if (Timer.timeLeft-- == 0)
       {
-        if (Bumpers[0].score > Bumpers[1].score) {
-          loadedFonts[0].position.x = 9;
-          loadedFonts[1].position.x = 100;
-        } else if (Bumpers[1].score > Bumpers[0].score) {
-          loadedFonts[1].position.x = 9;
-          loadedFonts[0].position.x = 100;
-        }
+        // if (Bumpers[0].score > Bumpers[1].score) {
+        //   loadedFonts[0].position.x = 9;
+        //   loadedFonts[1].position.x = 100;
+        // } else if (Bumpers[1].score > Bumpers[0].score) {
+        //   loadedFonts[1].position.x = 9;
+        //   loadedFonts[0].position.x = 100;
+        // }
         Bumpers[0].score = 0;
         Bumpers[1].score = 0;
         gamePlaying = false;
@@ -879,7 +813,7 @@ export class Game extends HTMLElement {
       'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
         'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
         'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
-        'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {console.log(window.location.href);pauseTimer.resume();}}',
+        'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
       ]);
       var blobURL = window.URL.createObjectURL(blob);
       console.log('Game wewfwefew:', game_state);
@@ -892,13 +826,15 @@ export class Game extends HTMLElement {
         new Worker(blobURL),
       ];
       Workers[0].onmessage = function (e) {
-        console.log("big");
-        Bumpers[e.data[0]].tableGlb.scale.x = 1;
+        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = false;
+        Bumpers[e.data[0]].modelChoosen = 0;
+        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
         Bumpers[e.data[0]].lenghtHalf = 2.5;
       };
       Workers[1].onmessage = function (e) {
-        console.log("smol")
-        Bumpers[Math.abs(e.data[0] - 1)].tableGlb.scale.x = 1;
+        Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = false;
+        Bumpers[Math.abs(e.data[0] - 1)].modelChoosen = 0;
+        Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = true;
         Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
         if (
           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x <
@@ -921,7 +857,9 @@ export class Game extends HTMLElement {
         Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25;
       };
       Workers[4].onmessage = function (e) {
-        Bumpers[e.data[0]].tableGlb.scale.z = 1;
+        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = false;
+        Bumpers[e.data[0]].modelChoosen = 0;
+        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
         Bumpers[e.data[0]].widthHalf = 0.5;
       };
       Workers[5].onmessage = function (e) {
@@ -933,7 +871,9 @@ export class Game extends HTMLElement {
       let chooseBuff = Math.floor(Math.random() * 5);
       switch (chooseBuff) {
         case 1:
-          Bumpers[lastBumperCollided].tableGlb.scale.x = 2;
+          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
+          Bumpers[lastBumperCollided].modelChoosen = 1;
+          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
           Bumpers[lastBumperCollided].lenghtHalf = 5;
           if (
             Bumpers[lastBumperCollided].cubeUpdate.x <
@@ -951,7 +891,9 @@ export class Game extends HTMLElement {
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           break;
         case 2:
-          Bumpers[Math.abs(lastBumperCollided - 1)].tableGlb.scale.x = 0.5;
+          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen].visible = false;
+          Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen = 2;
+          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen].visible = true;
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
           break;
@@ -964,7 +906,9 @@ export class Game extends HTMLElement {
           Workers[3].postMessage([5000, lastBumperCollided, 'create']);
           break;
         default:
-          Bumpers[lastBumperCollided].tableGlb.scale.z = 3;
+          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
+          Bumpers[lastBumperCollided].modelChoosen = 3;
+          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
           Bumpers[lastBumperCollided].widthHalf = 1.5;
           Workers[4].postMessage([10000, lastBumperCollided, 'create']);
           break;
@@ -1071,8 +1015,18 @@ export class Game extends HTMLElement {
         Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
         Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -Math.PI / 2);
       }
-      Bumpers[0].tableGlb.position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
-      Bumpers[1].tableGlb.position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
+      if (keyMap['KeyC'] == true)
+      {
+        camera.position.set(10, 15, -20);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+      }
+      if (keyMap['KeyC'] == false)
+      {
+        camera.position.set(-10, 15, -20);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+      }
+      Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
+      Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
 
       if (mixer) {
         mixer.update(delta);
@@ -1100,7 +1054,7 @@ export class Game extends HTMLElement {
         },
       };
     })();
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback);
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback, action);
     this.onDocumentKeyUp = this.createOnDocumentKeyUp(keyMap);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
@@ -1111,16 +1065,16 @@ export class Game extends HTMLElement {
 
   render() {
     this.innerHTML = ``;
-
-    [this.camera, this.renderer, this.start, this.stop, this.Workers, this.TimerId] = this.game();
+    let renderer, camera, start;
+    [camera, renderer, start, this.stop, this.Workers, this.TimerId] = this.game();
     window.addEventListener('resize', function () {
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-      let rendererWidth = this.renderer.domElement.offsetWidth;
-      let rendererHeight = this.renderer.domElement.offsetHeight;
-      this.camera.aspect = rendererWidth / rendererHeight;
-      this.camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      let rendererWidth = renderer.domElement.offsetWidth;
+      let rendererHeight = renderer.domElement.offsetHeight;
+      camera.aspect = rendererWidth / rendererHeight;
+      camera.updateProjectionMatrix();
     });
-    this.start();
+    start();
   }
 }
 
