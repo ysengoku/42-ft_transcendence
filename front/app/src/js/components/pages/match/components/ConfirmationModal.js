@@ -30,6 +30,9 @@ export class ConfirmationModal extends HTMLElement {
     this.clearFocusInModal();
     if (this.modal) {
       this.modal.hide();
+      Promise.resolve(() => {
+        this.modal.dispose();
+      });
     }
     this.confirmButton?.removeEventListener('click', this._handleConfirm);
     this.cancelButton?.removeEventListener('click', this._handleCancel);
