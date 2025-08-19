@@ -69,6 +69,8 @@ def update_user_settings(
     Maximum size of the uploaded avatar is 10mb. Anything bigger will return 413 error.
     """
     user = allow_only_for_self(request, username)
+    if username != data.username:
+        raise HttpError(401, f"{username} is not the same username as {data.username}")
 
     try:
         user.update_user(data, new_profile_picture)
