@@ -37,11 +37,11 @@ def check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
         try:
             response = requests.get(config["oauth_uri"], timeout=2.0)
             if response.status_code != 200:  # noqa: PLR2004
-                logging.warning("%s refused with the status code %d", platform, response.status_code)
+                logger.warning("%s refused with the status code %d", platform, response.status_code)
                 return False, f"{platform} API is temporarily unavailable"
             return True, ""
         except requests.RequestException as exc:
-            logging.warning("Could not connect to the %s:\n%s", platform, str(exc))
+            logger.warning("Could not connect to the %s:\n%s", platform, str(exc))
             return False, f"Could not connect to {platform} API"
     return True, ""
 
