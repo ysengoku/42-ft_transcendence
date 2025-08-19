@@ -77,6 +77,9 @@ fclean:
 populate-db:
 	docker exec server ./manage.py populate_db
 
+create-pending-tournament:
+	docker exec server ./manage.py create_pending_tournament
+
 delete-invites:
 	docker exec server ./manage.py delete_pending_invitations
 
