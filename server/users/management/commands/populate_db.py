@@ -275,16 +275,24 @@ def create_pending_tournament() -> None:
         "CosmicWhale",
         "PhantomCat",
     ]
-    taki = Profile.objects.get(user__username="Taki")
-    felix = Profile.objects.get(user__username="Felix")
-    rex = Profile.objects.get(user__username="Rex")
-    sad_hampter = Profile.objects.get(user__username="sad_hampter")
-    tama = Profile.objects.get(user__username="Tama")
-    pedro = Profile.objects.get(user__username="Pedro")
-    menaco = Profile.objects.get(user__username="menaco")
-    rick = Profile.objects.get(user__username="Rick")
+    try:
+        taki = Profile.objects.get(user__username="Taki")
+        felix = Profile.objects.get(user__username="Felix")
+        rex = Profile.objects.get(user__username="Rex")
+        sad_hampter = Profile.objects.get(user__username="sad_hampter")
+        tama = Profile.objects.get(user__username="Tama")
+        pedro = Profile.objects.get(user__username="Pedro")
+        menaco = Profile.objects.get(user__username="menaco")
+        rick = Profile.objects.get(user__username="Rick")
+    except Profile.DoesNotExist as e:
+        print("DB is not populated ! Please populate the db before. Error: ", e)
+        return
     options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
     list_profiles = [taki, felix, rex, tama, sad_hampter, pedro, menaco, rick]
+    for p in list_profiles:
+        if any(p.get_active_game_participation()):
+            print(p.user.username, "is already engaged in a game or a tournament!")
+            return
     print("Number of profiles for the pending tournament:", len(list_profiles))
     name = "The Pending Tournament !"
     generate_random_date()
