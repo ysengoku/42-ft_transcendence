@@ -8,14 +8,7 @@
 import { router } from '@router';
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
-import {
-  usernameFeedback,
-  nicknameFeedback,
-  emailFeedback,
-  showAlertMessage,
-  showAlertMessageForDuration,
-  ALERT_TYPE,
-} from '@utils';
+import { nicknameFeedback, emailFeedback, showAlertMessage, showAlertMessageForDuration, ALERT_TYPE } from '@utils';
 import './components/index.js';
 
 export class Settings extends HTMLElement {
@@ -95,7 +88,7 @@ export class Settings extends HTMLElement {
 
     this.form = this.querySelector('form');
     this.avatarUploadField = this.querySelector('avatar-upload');
-    this.userIdentityField = this.querySelector('settings-user-identity');
+    this.nicknameField = this.querySelector('settings-nickname');
     this.emailField = this.querySelector('settings-email-update');
     this.passwordField = this.querySelector('settings-password-update');
     this.mfaEnable = this.querySelector('mfa-enable-update');
@@ -113,7 +106,7 @@ export class Settings extends HTMLElement {
    */
   setParams() {
     this.avatarUploadField.setAvatar(this.#state.currentUserData);
-    this.userIdentityField.setParams(this.#state.currentUserData);
+    this.nicknameField.setParams(this.#state.currentUserData);
     this.emailField.setParams(this.#state.currentUserData);
     this.passwordField.setParam(this.#state.currentUserData.connection_type);
     this.mfaEnable.setParams(this.#state.currentUserData);
@@ -141,13 +134,11 @@ export class Settings extends HTMLElement {
    * sends it to the server, and updates the state based on the response.
    */
   async handleSubmit() {
-    const userIdentity = this.userIdentityField.newUserIdentity;
+    const newNickname = this.nicknameField.newNickname;
     const newEmail = this.emailField.newEmail;
     let isValid = true;
-    isValid =
-      usernameFeedback(this.userIdentityField.usernameInput, this.userIdentityField.usernameFeedback) && isValid;
-    isValid =
-      nicknameFeedback(this.userIdentityField.nicknameInput, this.userIdentityField.nicknameFeedback) && isValid;
+
+    isValid = nicknameFeedback(this.nicknameField.nicknameInput, this.nicknameField.nicknameFeedback) && isValid;
     if (this.#state.currentUserData.connection_type === 'regular') {
       isValid = emailFeedback(this.emailField.emailInput, this.emailField.emailFeedbackField) && isValid;
       isValid = this.passwordField.checkPasswordInput() && isValid;
@@ -158,16 +149,10 @@ export class Settings extends HTMLElement {
 
     const avatarField = this.avatarUploadField.selectedFile;
     const formData = new FormData();
-    if (userIdentity.username) {
-      formData.append('username', userIdentity.username);
-      this.#state.newUserData.username = userIdentity.username;
-      this.userIdentityField.newUserIdentity.username = '';
-      this.#state.changed = true;
-    }
-    if (userIdentity.nickname) {
-      formData.append('nickname', userIdentity.nickname);
-      this.#state.newUserData.nickname = userIdentity.nickname;
-      this.userIdentityField.newUserIdentity.nickname = '';
+    if (newNickname) {
+      formData.append('nickname', newNickname);
+      this.#state.newUserData.nickname = newNickname;
+      this.nicknameField.newNickname = '';
       this.#state.changed = true;
     }
     if (newEmail) {
@@ -205,6 +190,7 @@ export class Settings extends HTMLElement {
       showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'No changes to save', 2000);
       return;
     }
+    formData.append('username', this.#state.username);
     const response = await apiRequest(
       'POST',
       /* eslint-disable-next-line new-cap */
@@ -213,21 +199,22 @@ export class Settings extends HTMLElement {
       true,
     );
     if (response.success) {
-      this.#state.username = response.data.username;
       this.#state.currentUserData = this.#state.newUserData;
       this.#state.currentUserData.avatar = response.data.avatar;
       auth.updateStoredUser(this.#state.currentUserData);
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Settings updated successfully', 2000);
-    } else {
-      if (response.status === 401 || response.status === 429) {
-        return;
-      }
-      let errorMsg = 'An unexpected error occurred. Please try again later.';
-      if (response.status === 413 || response.status === 422) {
-        errorMsg = response.msg + ' Cannot update.';
-      }
-      showAlertMessage(ALERT_TYPE.ERROR, errorMsg);
+      return;
     }
+    if (response.status === 401 || response.status === 429) {
+      return;
+    }
+    let errorMsg = 'An unexpected error occurred. Please try again later.';
+    if (response.status === 413 || response.status === 422) {
+      errorMsg = response.msg + ' Cannot update.';
+    }
+    this.#state.newUserData = this.#state.currentUserData;
+    this.setParams();
+    showAlertMessage(ALERT_TYPE.ERROR, errorMsg);
   }
 
   template() {
@@ -241,7 +228,7 @@ export class Settings extends HTMLElement {
               <avatar-upload></avatar-upload>
             </div>
             <div>
-              <settings-user-identity></settings-user-identity>
+              <settings-nickname></settings-nickname>
             </div>
             <div>
               <settings-email-update></settings-email-update></div>
