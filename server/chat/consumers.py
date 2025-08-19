@@ -134,7 +134,7 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                 "[event.receive]: user {%s} has exceeded the rate limit",
                 self.user.profile,
             )
-        return
+            return
 
         action = text_data_json.get("action")
         if not action:
