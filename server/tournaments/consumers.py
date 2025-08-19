@@ -49,7 +49,7 @@ class TournamentConsumer(GuardedWebsocketConsumer):
             return
         if participant.excluded:
             self.accept()
-            self.close(CloseCodes.EXCLUDED)
+            self.close(CloseCodes.ILLEGAL_CONNECTION)
             logger.warning("Closing because this participant was excluded : %s", self.user)
             return
 
@@ -82,19 +82,7 @@ class TournamentConsumer(GuardedWebsocketConsumer):
         self.close(close_code)
 
     def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        action = text_data_json.get("action")
-
-        if not action:
-            logger.warning("Tournament: Message without action received")
-            return
-
-        text_data_json.get("data", {})
-
-        match action:
-            case _:
-                logger.debug("Tournament unknown action : %s", action)
-                self.close()
+        self.close(CloseCodes.BAD_DATA)
 
     def close_self_ws(self, event):
         self.tournament_id = None
