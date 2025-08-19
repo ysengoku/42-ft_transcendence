@@ -9,7 +9,7 @@ from ninja.errors import HttpError
 from users.models import Profile, User
 
 
-def allow_only_for_self(request: HttpRequest, username: str):
+def allow_only_for_self(request: HttpRequest, username: str) -> User:
     user: User = request.auth
     if user.username.lower() != username.lower():
         raise HttpError(403, "Forbidden.")
