@@ -24,6 +24,7 @@ class GuardedWebsocketConsumer(WebsocketConsumer):
 
         REGULAR_CONSUMER = (50, 1)
         GAME_CONSUMER = (100, 1)
+        EVENT_CONSUMER = (50, 1)
 
     def send(self, *args, **kwargs):
         """Custom extended `send` method that handles the case when the user is already disconnected."""
