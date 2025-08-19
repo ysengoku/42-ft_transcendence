@@ -152,13 +152,14 @@ On **decline** response, the server revalidates the data, then broadcasts a `gam
 
 ### User Presence system
 
-A dedicated periodic cron job runs to check inactive sessions. Each meaningful API request and WebSocket event refreshes the user's `last_activity` timestamp.   
-If a user has been inactive for more than 30 minutes, the cronjob triggers the backend task to mark the user as offline, then the server broadcasts `user_offline` to all active users.
+User presence is updated based on user activity and inactivity.   
 
-When a user establishes a session, the server broadcasts `user_online`.  
-When all sessions of a user are disconnected or marked inactive, the server broadcasts `user_offline`.  
+Each meaningful API request and WebSocket event checks if a user is considered offline in database. If so, the status changes to **online** and a `user_online` event is boroadcasted to all active users.   
+A user becomes offline immedidately when all sessions are closed, and also via a periodic check. A cronjob runs every minute to mark users as **offline** if their last activity timestamp is older than 30 minutes, boradcasting `user_offline` events. 
 
 Upon receiving these events, the client updates the corresponding user's online status indicators.
+
+For more details about **cronjob**, see [CRONTAB doc](../server/CRONTAB.md).
 
 <br />
 
