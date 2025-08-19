@@ -64,6 +64,7 @@ evil_sherif
 TheBall
 warhawk
 
+
 ### Regular Users with MFA enabled
 
 secure_bob (MFA enabled)
@@ -141,3 +142,31 @@ git_master (GitHub OAuth)
 
 Email: gitmaster@gmail.com
 Password: 123
+
+### Regular Users with avatar
+taki
+felix
+rex
+sad_hampter
+tama
+martine
+marie
+grandma
+grandpa
+pedro
+pedro1
+pedro2
+alice
+darksmelo
+menaco
+rick
+
+### Users that can be put in an automatic pending tournament
+taki
+felix
+rex
+sad_hampter
+tama
+menaco
+rick
+pedro
