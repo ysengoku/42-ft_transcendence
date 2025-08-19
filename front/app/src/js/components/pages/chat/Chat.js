@@ -6,7 +6,7 @@
 import { auth } from '@auth';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
-import { isMobile, particleBurst } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, isMobile, particleBurst } from '@utils';
 import './components/index.js';
 
 /**
@@ -186,9 +186,12 @@ export class Chat extends HTMLElement {
     if (response.success) {
       log.info('Chat data response:', response);
       return { data: response.data, status: response.status };
-    } else {
-      return null;
+    } else if (response.status === 404) {
+      const message = 'This conversation is unavailable for a moment. Please retry later.';
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, message);
+      this.connectedCallback();
     }
+    return null;
   }
 
   /* ------------------------------------------------------------------------ */
@@ -227,7 +230,7 @@ export class Chat extends HTMLElement {
   }
 
   sendMessage(event) {
-    const timestamp = Date.now().toString();
+    const timestamp = `${Date.now().toString()}-${this.#state.loggedInUser.username}${Math.floor(Math.random() * 1e8).toString(36)}`;
     const messageData = {
       action: 'new_message',
       data: {
