@@ -1,39 +1,38 @@
 # CRONTAB
 
-Objective : detect inactive uses and set them offline.
-The **Crontab** manages:
+The Crontab service detects inactive users and updates their status to offline.  
+It manages:
+- Periodic execution of inactive user checks
+- Secure calls to the Django API : trigger the task via a cronjob running in a separate container
+- Handling of CSRF token retrieval and Bearer token authentication for endpoint security
 
-- Periodic execution of inactive user checks.
-- Secure calls to the Django API : trigger the task via a cronjob running in a separate container.
-- Handling of CSRF token retrieval and Bearer token authentication for endpoint security.
+<br />
 
----
+## Architecture \& Execution Flow
 
-## 1. Architecture \& Execution Flow
-
-- The cronjob script runs in a **separate Docker container** from the Django backend.
+- The cronjob script runs in a **separate Docker container** from the Django backend layer.
 - On every scheduled interval (every minute), the cronjob script performs:
   - A GET request to fetch a CSRF token from the `/api/cronjob/csrf-token` endpoint.
   - A DELETE request to the `/api/cronjob/cron/check-inactive-users` endpoint, sending the required headers (`Authorization Bearer` token and `X-CSRFToken`).
-- The Django backend, secured with HTTPS through Nginx, verifies the Bearer token and bypasses CSRF validation on this endpoint using the `@csrf_exempt` decorator.
+- The Django backend layer, secured with HTTPS through Nginx, verifies the Bearer token and bypasses CSRF validation on this endpoint using the `@csrf_exempt` decorator.
 - The business logic function `check_inactive_users()` is invoked :
   - Marks users without recent activity as inactive
   - Updates the database
   - Sends a ws message to active users.
 
----
+<br />
 
-## 2. Docker Container and Configuration
+## Docker Container and Configuration
 
 - The `crontab` service is defined in `docker-compose.yaml` with:
   - Volumes providing the Python script and dependencies (`/app/scripts`).
   - Environment variables critical for operation: `CRON_SECRET`, `CRON_ENDPOINT`, `CRON_CSRF_TOKEN`.
-  - A shared Docker network allowing the cronjob container to reach the Django backend by its Docker service name.
+  - A shared Docker network allowing the cronjob container to reach the Django backend layer by its Docker service name.
 - The cron script uses Python's `requests` library with `verify=False` to accept self-signed certificate.
 
----
+<br />
 
-## 3. Cronjob Script (`check_inactive_users_cron.py`)
+## Cronjob Script (`check_inactive_users_cron.py`)
 
 ### Initialization
 
@@ -54,9 +53,9 @@ The **Crontab** manages:
 - Sends a DELETE request to `/api/cronjob/cron/check-inactive-users`.
 - Outputs the HTTP status code (200 expected upon success).
 
----
+<br />
 
-## 4. Django Endpoint (`trigger_inactive_users_check`)
+## Django Endpoint (`trigger_inactive_users_check`)
 
 - Declared in Django Ninja with the `@csrf_exempt` decorator to avoid CSRF errors.
 - Protected by custom authentication `CronAuth` validating the Bearer token.
@@ -65,36 +64,35 @@ The **Crontab** manages:
   - Updates user online status and active connection counters in the database.
   - Sends notifications of disconnections via Channels.
 
----
+<br />
 
-## 5. Security and Best Practices
+## Security and Best Practices
 
-- **CSRF:** Although the cronjob retrieves a CSRF token, the endpoint disables CSRF protection because security is enforced through the Bearer token.
-- **HTTPS:** The cronjob must call the API over HTTPS to ensure the CSRF cookie is transmitted.
 - **Authentication:** The Bearer token (`CRON_SECRET`) authorizes the cronjob’s access to this endpoint.
+- **HTTPS & CSRF:** All requests go over HTTPS so that the CSRF cookie is transmitted securely. The cronjob retrieves the token, but CSRF validation is disabled on this endpoint since Bearer authentication provides sufficient protection.  
 - **Container Isolation:** Docker networking ensures secure communication between separated containers.
-- **Logs:** The cronjob script logs HTTP status and messages to `/var/log/cron.log` for monitoring.
+- **Monitoring:** The cronjob logs request results to `/var/log/cron.log`.
 
----
+<br />
 
-## 6. Summary of API Endpoints Used
+## Summary of API Endpoints Used
 
 | Endpoint                                 | Method | Authentication | CSRF Validation           | Description                                 |
 | :--------------------------------------- | :----- | :------------- | :------------------------ | :------------------------------------------ |
-| `/api/cronjob/csrf-token`                | GET    | None           | Sets CSRF cookie          | Provides the CSRF token cookie to cron      |
-| `/api/cronjob/cron/check-inactive-users` | DELETE | Bearer Token   | Disabled (`@csrf_exempt`) | Triggers check and update of inactive users |
+| `/api/cronjob/csrf-token`                | GET    | None           | Sets CSRF cookie          | Utility endpoint to provide CSRF token     |
+| `/api/cronjob/cron/check-inactive-users` | DELETE | Bearer Token   | Disabled (`@csrf_exempt`) | Marks inactive users offline and broadcasts updates |
 
----
+<br />
 
-## 7. Simplified Execution Example
+## Simplified Execution Example
 
 1. The cron triggers the `check_inactive_users_cron.py` script.
 2. The script fetches a CSRF token from `/api/cronjob/csrf-token`.
 3. The script sends a DELETE request with Bearer token and CSRF token headers to `/api/cronjob/cron/check-inactive-users`.
-4. The backend authenticates the request, skips CSRF validation, and updates the users accordingly.
+4. The Daphne server authenticates the request, skips CSRF validation, and updates the users accordingly.
 5. The script logs the HTTP status code for confirmation.
 
----
+<br />
 
 ```mermaid
 ---
