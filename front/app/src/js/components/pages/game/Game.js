@@ -16,6 +16,7 @@ import { router } from '@router';
 import { auth } from '@auth';
 import { DEFAULT_GAME_OPTIONS } from '@env';
 import { sessionExpiredToast } from '@utils';
+import './components/index';
 
 /* eslint no-var: "off" */
 export class Game extends HTMLElement {
@@ -41,6 +42,10 @@ export class Game extends HTMLElement {
       return;
     }
     this.render();
+
+    document.querySelector('#content').classList.add('position-relative');
+    this.scoreboard = document.createElement('game-scoreboard');
+    this.appendChild(this.scoreboard);
   }
 
   setQueryParam(param) {
@@ -61,53 +66,51 @@ export class Game extends HTMLElement {
   }
 
   createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback, action) {
-      return (e) => {
-        const tag = e.target.tagName.toLowerCase();
-        if (tag === 'input' || tag === 'textarea') {
-          return; // Do not process key events on input or textarea elements
+    return (e) => {
+      const tag = e.target.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') {
+        return; // Do not process key events on input or textarea elements
+      }
+      if (e.defaultPrevented) {
+        return; // Do noplayerglb if the event was already processed
+      }
+      var keyCode = e.code;
+      if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == 'ai') {
+        keyMap[keyCode] = true;
+        if (!action[0][1]) {
+          action[0][1] = true;
+          action[0][0].play();
+          action[1][0].crossFadeTo(action[0][0], 0.2);
         }
-        if (e.defaultPrevented) { 
-          return; // Do noplayerglb if the event was already processed
+      } else if (this.#state.gameType != 'ai') keyMap[keyCode] = true;
+      if (keyCode == 'Escape') {
+        if (gameStateContainer.isPaused == false) {
+          gameStartAndStop[1]();
+          let i = 0;
+          if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
+          clearInterval(Timer.intervalId);
+          gameStateContainer.isPaused = true;
+        } else {
+          let i = 0;
+          if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
+          Timer.intervalId = setInterval(myCallback, 1000);
+          gameStateContainer.isPaused = false;
+          gameStartAndStop[0]();
         }
-        var keyCode = e.code;
-        if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == "ai"){
-          keyMap[keyCode] = true;
-          if (!action[0][1])
-          {
-              action[0][1] = true;
-              action[0][0].play();
-              action[1][0].crossFadeTo(action[0][0],0.2);
-          }
-        }
-        else if (this.#state.gameType != "ai") keyMap[keyCode] = true;
-        if (keyCode == 'Escape') {
-          if (gameStateContainer.isPaused == false) {
-            gameStartAndStop[1]();
-            let i = 0;
-            if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
-            clearInterval(Timer.intervalId);
-            gameStateContainer.isPaused = true;
-          } else {
-            let i = 0;
-            if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
-            Timer.intervalId = setInterval(myCallback, 1000);
-            gameStateContainer.isPaused = false;
-            gameStartAndStop[0]();
-          }
-        }
-        e.preventDefault();
-      };
+      }
+      e.preventDefault();
+    };
   }
 
-    createOnDocumentKeyUp(keyMap) {
-      return (e) => {
-        if (e.defaultPrevented) {
-          return; // Do noplayerglb if the event was already processed
-        }
-        var keyCode = e.code;
-        keyMap[keyCode] = false;
-        e.preventDefault();
-      };
+  createOnDocumentKeyUp(keyMap) {
+    return (e) => {
+      if (e.defaultPrevented) {
+        return; // Do noplayerglb if the event was already processed
+      }
+      var keyCode = e.code;
+      keyMap[keyCode] = false;
+      e.preventDefault();
+    };
   }
 
   disconnectedCallback() {
@@ -120,10 +123,8 @@ export class Game extends HTMLElement {
     }
     this.stop();
     let i = 0;
-    if (this.Workers != null)
-    {
-      for (i = 0; i <= 5; i++)
-        this.Workers[i].terminate();
+    if (this.Workers != null) {
+      for (i = 0; i <= 5; i++) this.Workers[i].terminate();
     }
     clearInterval(this.TimerId);
   }
@@ -133,15 +134,14 @@ export class Game extends HTMLElement {
     var keyMap = [];
     const WALL_WIDTH_HALF = 0.5;
     let gameSpeed;
-    switch (this.#state.gameOptions.game_speed)
-    {
-      case "slow":
+    switch (this.#state.gameOptions.game_speed) {
+      case 'slow':
         gameSpeed = 0.75;
         break;
-      case "medium":
+      case 'medium':
         gameSpeed = 1.0;
         break;
-      case "fast":
+      case 'fast':
         gameSpeed = 1.25;
         break;
       default:
@@ -194,8 +194,7 @@ export class Game extends HTMLElement {
 
     let carboardModels = [null, null, null];
 
-    for (let i = 0; i <= 2; i++)
-    {
+    for (let i = 0; i <= 2; i++) {
       const carboardGlb = (() => {
         const carboardModel = new THREE.Object3D();
         loaderModel.load(
@@ -222,31 +221,34 @@ export class Game extends HTMLElement {
     }
     carboardModels[1].visible = false;
     carboardModels[2].visible = false;
-    let action = [[null, false], [null,false]];
+    let action = [
+      [null, false],
+      [null, false],
+    ];
     let animations = [];
 
     const playerGlb = (() => {
       const pedro_model = new THREE.Object3D();
-        loaderModel.load(
-          pedro,
-          function(gltf) {
-              const model = gltf.scene;
-              model.position.y = 0;
-              model.position.z = -20;
-              model.position.x = 0;
-              mixer = new THREE.AnimationMixer(model);
-              animations = gltf.animations;
-              action[1][0] = mixer.clipAction( animations[0] , model);
-              action[0][0] = mixer.clipAction( animations[1] , model);
-              action[1][0].play();
-              model.rotation.y = Math.PI / 2;
-              pedro_model.add(gltf.scene);
-          },
-          undefined,
-          function(error) {
-              console.error(error);
-          },
-        );
+      loaderModel.load(
+        pedro,
+        function (gltf) {
+          const model = gltf.scene;
+          model.position.y = 0;
+          model.position.z = -20;
+          model.position.x = 0;
+          mixer = new THREE.AnimationMixer(model);
+          animations = gltf.animations;
+          action[1][0] = mixer.clipAction(animations[0], model);
+          action[0][0] = mixer.clipAction(animations[1], model);
+          action[1][0].play();
+          model.rotation.y = Math.PI / 2;
+          pedro_model.add(gltf.scene);
+        },
+        undefined,
+        function (error) {
+          console.error(error);
+        },
+      );
       pedro_model.scale.set(0.5, 0.5, 0.5);
       scene.add(pedro_model);
       return pedro_model;
@@ -420,30 +422,26 @@ export class Game extends HTMLElement {
 
       let modelsGlb = [tableGlb, couchGlb, chairGlb, dressingGlb];
 
-      modelsGlb.forEach((element) =>
-      {
-          element.castShadow = true;
-          element.receiveShadow = true;
-          element.position.x = posX;
-          element.position.y = posY;
-          element.position.z = posZ;
-          element.visible = false;
-      })
+      modelsGlb.forEach((element) => {
+        element.castShadow = true;
+        element.receiveShadow = true;
+        element.position.x = posX;
+        element.position.y = posY;
+        element.position.z = posZ;
+        element.visible = false;
+      });
       tableGlb.rotation.x = -Math.PI / 2;
       chairGlb.rotation.x = -Math.PI / 2;
       dressingGlb.rotation.z = -Math.PI / 2;
       dressingGlb.rotation.y = -Math.PI / 2;
-      
-      if (posZ < 0)
-      {
+
+      if (posZ < 0) {
         tableGlb.rotation.z = Math.PI;
         couchGlb.rotation.x = Math.PI / 2;
         couchGlb.rotation.z = Math.PI;
         couchGlb.rotation.y = -Math.PI / 2;
         chairGlb.rotation.z = Math.PI;
-      }
-      else
-      {
+      } else {
         couchGlb.rotation.x = -Math.PI / 2;
         couchGlb.rotation.z = Math.PI;
         couchGlb.rotation.y = Math.PI / 2;
@@ -619,17 +617,13 @@ export class Game extends HTMLElement {
     }
     let scoreSwitch = MAX_SCORE / 3;
     function resetBall(direction) {
-      if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE)
-        gamePlaying = false;
-      else if (Bumpers[0].score < (scoreSwitch * 2) && Bumpers[0].score >= scoreSwitch)
-      {
-        carboardModels[0]. visible = false;
-        carboardModels[1]. visible = true;
-      }
-      else if (Bumpers[0].score < (scoreSwitch * 3) && Bumpers[0].score >= (scoreSwitch * 2))
-      {
-        carboardModels[1]. visible = false;
-        carboardModels[2]. visible = true;
+      if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE) gamePlaying = false;
+      else if (Bumpers[0].score < scoreSwitch * 2 && Bumpers[0].score >= scoreSwitch) {
+        carboardModels[0].visible = false;
+        carboardModels[1].visible = true;
+      } else if (Bumpers[0].score < scoreSwitch * 3 && Bumpers[0].score >= scoreSwitch * 2) {
+        carboardModels[1].visible = false;
+        carboardModels[2].visible = true;
       }
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
@@ -654,16 +648,10 @@ export class Game extends HTMLElement {
     function moveAiBumper(calculatedPos) {
       keyMap['KeyA'] = false;
       keyMap['KeyD'] = false;
-      if (
-        calculatedBumperPos.x < calculatedPos.x - 0.1 &&
-        calculatedBumperPos.x < calculatedPos.x - 0.2
-      ) {
+      if (calculatedBumperPos.x < calculatedPos.x - 0.1 && calculatedBumperPos.x < calculatedPos.x - 0.2) {
         keyMap['KeyA'] = true;
         calculatedBumperPos.x += bumperP2Subtick;
-      } else if (
-        calculatedBumperPos.x > calculatedPos.x + 0.1 &&
-        calculatedBumperPos.x > calculatedPos.x + 0.2
-      ) {
+      } else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2) {
         keyMap['KeyD'] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
       } else {
@@ -727,7 +715,7 @@ export class Game extends HTMLElement {
 
     let game_state = this.#state.gameOptions;
     let Timer = (() => {
-      let timeLeft = (!GAME_TIME ? 10 : GAME_TIME * 60);
+      let timeLeft = !GAME_TIME ? 10 : GAME_TIME * 60;
       let intervalId = setInterval(myCallback, 1000);
       return {
         get timeLeft() {
@@ -744,10 +732,9 @@ export class Game extends HTMLElement {
         },
       };
     })();
-      
+
     function myCallback() {
-      if (Timer.timeLeft-- == 0)
-      {
+      if (Timer.timeLeft-- == 0) {
         // if (Bumpers[0].score > Bumpers[1].score) {
         //   loadedFonts[0].position.x = 9;
         //   loadedFonts[1].position.x = 100;
@@ -765,8 +752,7 @@ export class Game extends HTMLElement {
     }
     let Coin = null;
     let Workers = null;
-    if (this.#state.gameOptions.cool_mode)
-    {
+    if (this.#state.gameOptions.cool_mode) {
       Coin = ((posX, posY, posZ) => {
         const CoinGlb = (() => {
           const CoinModel = new THREE.Object3D();
@@ -808,12 +794,12 @@ export class Game extends HTMLElement {
           velocity,
         };
       })(-9.25, 1, 0);
-    
+
       var blob = new Blob([
-      'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
-        'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
-        'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
-        'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
+        'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
+          'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
+          'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
+          'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
       ]);
       var blobURL = window.URL.createObjectURL(blob);
       console.log('Game wewfwefew:', game_state);
@@ -866,7 +852,7 @@ export class Game extends HTMLElement {
         Coin.cylinderUpdate.set(-9.25, 3, 0);
       };
     }
-    
+
     function manageBuffAndDebuff() {
       let chooseBuff = Math.floor(Math.random() * 5);
       switch (chooseBuff) {
@@ -891,9 +877,13 @@ export class Game extends HTMLElement {
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           break;
         case 2:
-          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen].visible = false;
+          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[
+            Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen
+          ].visible = false;
           Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen = 2;
-          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen].visible = true;
+          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[
+            Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen
+          ].visible = true;
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
           break;
@@ -989,13 +979,11 @@ export class Game extends HTMLElement {
           ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
             (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
           !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
-        )
-        {
+        ) {
           Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
         }
         Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
-        if (Coin != null)
-        {
+        if (Coin != null) {
           if (
             Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf ||
             Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf
@@ -1005,28 +993,32 @@ export class Game extends HTMLElement {
           Coin.cylinderUpdate.x += Coin.velocity.x;
         }
         Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
-        if (isGameAi == "ai")
-          handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
+        if (isGameAi == 'ai') handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
         currentSubtick++;
       }
       Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-      if (Coin != null)
-      {
+      if (Coin != null) {
         Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
         Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -Math.PI / 2);
       }
-      if (keyMap['KeyC'] == true)
-      {
+      if (keyMap['KeyC'] == true) {
         camera.position.set(10, 15, -20);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
       }
-      if (keyMap['KeyC'] == false)
-      {
+      if (keyMap['KeyC'] == false) {
         camera.position.set(-10, 15, -20);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
       }
-      Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
-      Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
+      Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(
+        Bumpers[0].cubeUpdate.x,
+        Bumpers[0].cubeUpdate.y,
+        Bumpers[0].cubeUpdate.z,
+      );
+      Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position.set(
+        Bumpers[1].cubeUpdate.x,
+        Bumpers[1].cubeUpdate.y,
+        Bumpers[1].cubeUpdate.z,
+      );
 
       if (mixer) {
         mixer.update(delta);
@@ -1054,11 +1046,18 @@ export class Game extends HTMLElement {
         },
       };
     })();
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback, action);
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(
+      keyMap,
+      Workers,
+      gameStartAndStop,
+      gameStateContainer,
+      Timer,
+      myCallback,
+      action,
+    );
     this.onDocumentKeyUp = this.createOnDocumentKeyUp(keyMap);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
-
 
     return [camera, renderer, start, stop, Workers, Timer.intervalId];
   }

@@ -39,10 +39,14 @@ export class MultiplayerGame extends HTMLElement {
       return;
     }
     const navbar = document.querySelector('.navbar');
-    this.#navbarHeight = navbar.offsetHeight;
+    this.#navbarHeight = navbar ? navbar.offsetHeight : 64;
 
     this.#state.gameId = param.id;
     this.render();
+
+    this.scoreboard = document.createElement('game-scoreboard');
+    // TODO: Should set players' nickname or alias
+    this.appendChild(this.scoreboard);
   }
 
   disconnectedCallback() {
