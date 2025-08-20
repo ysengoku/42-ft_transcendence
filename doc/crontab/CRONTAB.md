@@ -5,17 +5,15 @@ The **Crontab** manages:
 
 - Periodic execution of inactive user checks.
 - Secure calls to the Django API : trigger the task via a cronjob running in a separate container.
-- Handling of CSRF token retrieval and Bearer token authentication for endpoint security.
+- Handling Bearer token authentication for endpoint security.
 
 ---
 
 ## 1. Architecture \& Execution Flow
 
 - The cronjob script runs in a **separate Docker container** from the Django backend.
-- On every scheduled interval (every minute), the cronjob script performs:
-  - A GET request to fetch a CSRF token from the `/api/cronjob/csrf-token` endpoint.
-  - A DELETE request to the `/api/cronjob/cron/check-inactive-users` endpoint, sending the required headers (`Authorization Bearer` token and `X-CSRFToken`).
-- The Django backend, secured with HTTPS through Nginx, verifies the Bearer token and bypasses CSRF validation on this endpoint using the `@csrf_exempt` decorator.
+- On every scheduled interval (every minute), the cronjob script performs A DELETE request to the `/api/cronjob/cron/check-inactive-users` endpoint, sending the required headers (`Authorization Bearer` token).
+- The Django backend verifies the Bearer token and bypasses CSRF validation on this endpoint using the `@csrf_exempt` decorator.
 - The business logic function `check_inactive_users()` is invoked :
   - Marks users without recent activity as inactive
   - Updates the database
@@ -27,7 +25,7 @@ The **Crontab** manages:
 
 - The `crontab` service is defined in `docker-compose.yaml` with:
   - Volumes providing the Python script and dependencies (`/app/scripts`).
-  - Environment variables critical for operation: `CRON_SECRET`, `CRON_ENDPOINT`, `CRON_CSRF_TOKEN`.
+  - An environment variable to secure it: `CRON_SECRET`.
   - A shared Docker network allowing the cronjob container to reach the Django backend by its Docker service name.
 - The cron script uses Python's `requests` library with `verify=False` to accept self-signed certificate.
 
@@ -38,18 +36,12 @@ The **Crontab** manages:
 ### Initialization
 
 - Checks that the script wasn't launched in the last 59 seconds.
-- Reads environment variables from the container environment to set API URLs and authentication secret.
-
-### CSRF Token Retrieval
-
-- Sends a GET request to `/api/cronjob/csrf-token`.
-- Extracts the `csrftoken` cookie from the response, storing it in the session for subsequent use.
+- Reads environment variables from the container environment to set authentication secret.
 
 ### API DELETE Request
 
 - Constructs headers including:
   - `Authorization: Bearer <CRON_SECRET>`
-  - `X-CSRFToken: <token>`
   - `Referer` set based on the base URL.
 - Sends a DELETE request to `/api/cronjob/cron/check-inactive-users`.
 - Outputs the HTTP status code (200 expected upon success).
@@ -69,8 +61,7 @@ The **Crontab** manages:
 
 ## 5. Security and Best Practices
 
-- **CSRF:** Although the cronjob retrieves a CSRF token, the endpoint disables CSRF protection because security is enforced through the Bearer token.
-- **HTTPS:** The cronjob must call the API over HTTPS to ensure the CSRF cookie is transmitted.
+- **CSRF:** The endpoint disables CSRF protection because security is enforced through the Bearer token.
 - **Authentication:** The Bearer token (`CRON_SECRET`) authorizes the cronjob’s access to this endpoint.
 - **Container Isolation:** Docker networking ensures secure communication between separated containers.
 - **Logs:** The cronjob script logs HTTP status and messages to `/var/log/cron.log` for monitoring.
@@ -81,7 +72,6 @@ The **Crontab** manages:
 
 | Endpoint                                 | Method | Authentication | CSRF Validation           | Description                                 |
 | :--------------------------------------- | :----- | :------------- | :------------------------ | :------------------------------------------ |
-| `/api/cronjob/csrf-token`                | GET    | None           | Sets CSRF cookie          | Provides the CSRF token cookie to cron      |
 | `/api/cronjob/cron/check-inactive-users` | DELETE | Bearer Token   | Disabled (`@csrf_exempt`) | Triggers check and update of inactive users |
 
 ---
@@ -95,6 +85,8 @@ The **Crontab** manages:
 5. The script logs the HTTP status code for confirmation.
 
 ---
+
+<!-- OLD ONE -->
 
 ```mermaid
 ---
@@ -132,12 +124,56 @@ T -- "Triggers every minute" --> A
 A -- "GET /api/cronjob/csrf-token" --> B
 B --> SERVER
 SERVER --> B
-A -- "DELETE /api/cronjob/cron/check-inactive-users (Bearer + CSRF)" --> B
+A -- "DELETE /api/cronjob/cron/check-inactive-users (Bearer)" --> B
 D --> E
 D --> F --> W
 
     style CRONJOB fill:#AA00FF
     style B fill:#00C853
+    style SERVER fill:#2962FF
+    style FRONT fill:#FF6D00
+    style DOCKER_NETWORK fill:#BBDEFB
+```
+
+<!-- NEW ONE -->
+
+```mermaid
+---
+config:
+  layout: dagre
+  look: classic
+  theme: base
+  themeVariables:
+    lineColor: '#f7230c'
+    textColor: '#191919'
+    fontSize: 15px
+    nodeTextColor: '#000'
+    edgeLabelBackground: '#fff'
+---
+flowchart TD
+subgraph CRONJOB["CRONTAB"]
+A["Cronjob script"]
+T["Crontask"]
+end
+subgraph SERVER["SERVER"]
+D["check_inactive_users()"]
+E["Updates DB"]
+end
+subgraph FRONT["FRONT"]
+W["Websocket"]
+end
+subgraph DOCKER_NETWORK["DOCKER_NETWORK"]
+CRONJOB
+F["Sends ws message to online users"]
+SERVER
+FRONT
+end
+T -- "Triggers every minute" --> A
+A -- "DELETE /api/cronjob/cron/check-inactive-users (Bearer)" --> SERVER
+D --> E
+D --> F --> W
+
+    style CRONJOB fill:#AA00FF
     style SERVER fill:#2962FF
     style FRONT fill:#FF6D00
     style DOCKER_NETWORK fill:#BBDEFB
