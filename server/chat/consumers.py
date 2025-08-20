@@ -177,7 +177,6 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
                 logger.warning("Unknown action : %s", action)
                 self.close(CloseCodes.BAD_DATA)
 
-
     def handle_online_status(self, event):
         """
         Handle online status updates from other users
