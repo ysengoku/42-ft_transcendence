@@ -85,15 +85,19 @@ Blocking feature has following:
 - `DELETE /api/users/{username}/blocked_users/{blocked_user_to_remove}`: Unblocks a user.
 
 ### User Search And User Profiles
-Each of the users have a lot of different data that is associated with them: their username, nickname, elo, winrate, list of games, friendship/block status relative to the user currently viewing the profile... It is diplayed neatly on their profile page, which can be visited by other ([non-blocked](#social-networking-elements)) users.
-- `GET /api/users`: Retreives paginated list of users filtered based on query parameters. Users can be searched by their nickname or username.
+Each of the users have a lot of different data that is associated with them: their username, nickname, elo, winrate, list of games, friendship/block status relative to the user currently viewing the profile... It is displayed neatly on their profile page, which can be visited by other ([non-blocked](#social-networking-elements)) users.
+<p align="center">
+  <img src="../../assets/ui/profile-page.png.png" alt="Register Page" width="480px" />
+</p>
 
+- `GET /api/users`: Retreives paginated list of users filtered based on query parameters. Users can be searched by their nickname or username.
+- `GET /api/users/{username}`: Retrieves the full public profile for a specified user, including game statistics like win/loss records, elo history, and best/worst enemies.
+- `GET /api/self`: A protected endpoint that returns the profile data for the currently authenticated user, including private information like the number of unread messages and notifications, as well as whether they currently play any game/hold a matchmaking queue or not.
+
+User can search for other users by typing their name or nickname into the search bar.
 <p align="center">
   <img src="../../assets/ui/navbar-usersearch.png" alt="Navbar User Search" width="240px" />
 </p>
-
-- `GET /api/users/{username}`: Retrieves the full public profile for a specified user, including game statistics like win/loss records, elo history, and best/worst enemies.
-- `GET /api/self`: A protected endpoint that returns the profile data for the currently authenticated user, including private information like the number of unread messages and notifications, as well as whther they currently play any game/hold a matchmaking queue or not.
 
 ### User Settings
 Users are able to change their settings:
