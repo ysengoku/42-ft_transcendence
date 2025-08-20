@@ -1,3 +1,5 @@
-import { GameScore } from './GameScore';
+import { GameBuffIcon } from './GameBuffIcon';
+import { GameLifePoints } from './GameLifePoints';
+import { GameTimer } from './GameTimer';
 
-export { GameScore };
+export { GameBuffIcon, GameLifePoints, GameTimer };
