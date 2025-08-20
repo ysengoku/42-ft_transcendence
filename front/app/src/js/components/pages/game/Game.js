@@ -61,7 +61,7 @@ export class Game extends HTMLElement {
     this.#state.gameOptions.time_limit = timeLimit === 'any' ? DEFAULT_GAME_OPTIONS.time_limit : timeLimit;
     this.#state.gameOptions.ranked = false;
 
-    console.log('Game options:', this.#state.gameType);
+    log.info('Game options:', this.#state.gameType);
     log.info('Game type:', this.#state.gameType);
   }
 
