@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import audiourl from '/audio/score_sound.mp3?url';
-import pedro from '/3d_models/pull_pedro.glb?url';
+import pedro from '/3d_models/pleasehelpme.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
 import couch from '/3d_models/sofa.glb?url';
@@ -181,7 +181,7 @@ export class Game extends HTMLElement {
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
     // let cameraX = 0;
     // let cameraY = 30;
-    camera.position.set(-10, 15, -20);
+    camera.position.set(0, 15, -20);
     // camera.position.set(0, 15, -20);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
@@ -229,30 +229,35 @@ export class Game extends HTMLElement {
       [null, false],
       [null, false],
     ];
+    let action = [[null, false], [null,false], [null,false],[null,false],[null,false], [null,false]];
     let animations = [];
 
     const playerGlb = (() => {
       const pedro_model = new THREE.Object3D();
-      loaderModel.load(
-        pedro,
-        function (gltf) {
-          const model = gltf.scene;
-          model.position.y = 0;
-          model.position.z = -20;
-          model.position.x = 0;
-          mixer = new THREE.AnimationMixer(model);
-          animations = gltf.animations;
-          action[1][0] = mixer.clipAction(animations[0], model);
-          action[0][0] = mixer.clipAction(animations[1], model);
-          action[1][0].play();
-          model.rotation.y = Math.PI / 2;
-          pedro_model.add(gltf.scene);
-        },
-        undefined,
-        function (error) {
-          console.error(error);
-        },
-      );
+        loaderModel.load(
+          pedro,
+          function(gltf) {
+              const model = gltf.scene;
+              model.position.y = 0;
+              model.position.z = -20;
+              model.position.x = 0;
+              mixer = new THREE.AnimationMixer(model);
+              animations = gltf.animations;
+              action[0][0] = mixer.clipAction( animations[0] , model);
+              action[1][0] = mixer.clipAction( animations[1] , model);
+              action[2][0] = mixer.clipAction( animations[2] , model);
+              action[3][0] = mixer.clipAction( animations[3] , model);
+              action[4][0] = mixer.clipAction( animations[4] , model);
+              action[5][0] = mixer.clipAction( animations[5] , model);
+              action[1][0].play();
+              model.rotation.y = Math.PI / 2;
+              pedro_model.add(gltf.scene);
+          },
+          undefined,
+          function(error) {
+              console.error(error);
+          },
+        );
       pedro_model.scale.set(0.5, 0.5, 0.5);
       scene.add(pedro_model);
       return pedro_model;
@@ -738,14 +743,8 @@ export class Game extends HTMLElement {
     })();
 
     function myCallback() {
-      if (Timer.timeLeft-- == 0) {
-        // if (Bumpers[0].score > Bumpers[1].score) {
-        //   loadedFonts[0].position.x = 9;
-        //   loadedFonts[1].position.x = 100;
-        // } else if (Bumpers[1].score > Bumpers[0].score) {
-        //   loadedFonts[1].position.x = 9;
-        //   loadedFonts[0].position.x = 100;
-        // }
+      if (Timer.timeLeft-- == 0)
+      {
         Bumpers[0].score = 0;
         Bumpers[1].score = 0;
         gamePlaying = false;
