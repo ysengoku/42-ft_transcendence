@@ -204,13 +204,6 @@ The chat system revolves around three main models: `Chat`, `ChatMessage`, and `N
 - Chat events → `chat_{uuid}` group (room push)
 - Presence broadcasts → `online_users` group (connected online users only)
 
-#### Real-time Presence system
-
-- Increment / decrement per-connection counter (`nb_active_connexions`) on connect / disconnect
-- Consider user offline when counter == 0; persist offline state to DB/Redis
-- Periodic cron (e.g., every 30 min) to detect inactive sessions and force-offline stale connections
-- Refresh `last_activity` on each meaningful API/WebSocket request
-
 #### WebSockets (Django Channels)
 
 Each user establishes a WebSocket connection (one per browser tab), enabling:
@@ -244,30 +237,25 @@ Each user establishes a WebSocket connection (one per browser tab), enabling:
 
 ### Frontend
 🛠️👷🏻‍♂️
-#### Chat
+#### Chat components
 
-##### Basic UI Components
+The chat feature is structured around a central `Chat` component that coordinates several supporting components. Together, they provide user search, conversation management, real-time messaging, and game invitations.
 
-- Main component
-  - `Chat`:   
-    Manages the overall chat functionality and coordinates communication between child components.
+##### ■ `Chat`:   
+The `Chat` component is the entry point of the chat interface containing the list of conversations (`ChatList`), the message area (`ChatMessageArea`) and the game invitation form modal (`InviteGameModal`).   
+It initializes the chat  by fetching the data from the server, determines which conversation to display in the message area, and updates dynamically when new messages arrive or when the user blocks/unblocks others.   
+The layout adapts seamlessly to different screen sizes to ensure a consistent experience across devices.
 
-- Child components
-  - `ChatUsersearch`:   
-    Handles the user search input and displays search results.
+##### ■ `ChatList`:   
+Displays the user’s conversations, including the last message information, unread message counts and online status indicators. When a conversation is selected, its messages are loaded into the message area.
+It also provides a search function, allowing the user to find existing conversations or start new ones.
 
-  - `ChatList`:   
-    Displays the list of chat conversations and manages selection and unread badges.
+##### ■ `ChatMessageArea`:   
+Manages the content of a conversation by displaying messages, user information, and interaction options such as navigating to the profile page, inviting to a Pong Duel, blocking/unblocking the user.   
+This component is a scrollable container that shows messages in chronological order. When a new message arrives, it is loaded dynamically and the view scrolls to the bottom. The messages are considered read once the user scrolls through them.
 
-  - `ChatMessageArea`:   
-    Manages the chat messages UI, including displaying messages, user info, and interaction buttons.   
-    This chat message area is a scrollable container that displays chat messages in chronological order. On a new message, the view scrolls to the bottom. The messages are considered to be read when the user scrolls through them. New messages are loaded when needed.
-
-  - `ChatMessageInput`:   
-    Provides the message input form and handles sending messages.
-
-  - `InviteGameModal`:   
-    Displays the Pong game invitation modal, manages game options selection and sending invitations.
+##### ■ `InviteGameModal`:  
+See [Game invitations components section](#game-invitations-components)
 
 <br />
 
@@ -306,7 +294,7 @@ Each user establishes a WebSocket connection (one per browser tab), enabling:
 - Clears the current list and renders notifications based on the selected tab.
 
 
-#### Game invitations
+#### Game invitations components
 
 ##### Basic UI Components
 
