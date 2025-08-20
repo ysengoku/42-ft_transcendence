@@ -65,8 +65,6 @@ export class GameScore extends HTMLElement {
     if (this.scorePlayer2) {
       this.scorePlayer2.textContent = this.#state.score.player2;
     }
-
-    setTimeout(() => this.updateScore(1, 5), 2000);
   }
 
   template() {
