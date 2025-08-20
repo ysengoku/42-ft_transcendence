@@ -1,550 +1,226 @@
 # Chat and Live Events
 
-The Chat App manages core communication features within the application, including messaging, notifications, game invitations, and real-time user presence.
+The Chat and Live Events system manages core communication features within the application, including messaging, notifications, game invitations, and real-time user presence.
 
 ## Table of contents
 
-- [Key features](#key-features)
-- [API Endpoints](#api-endpoints)
-- [WebSocket protocol](#websocket-protocol)
-- [Backend](#backend)
-- [Frontend Behavior](#frontend-interaction-logic)
+- [Features](#key-features)
+  - [Real-time Messaging](#real-time-messaging)
+  - [Notifications](#notifications)
+  - [Game Invitations](#game-invitation)
+  - [User Presence system](#user-presence-system)
+- [Implementation details](#implementation-details)
+  - [Backend](#backend)
+    - [Core models](#core-models)
+  - [Frontend](#frontend)
+- [API & WebSocket Protocol Reference](#api--websocket-protocol-reference)
+  - [API Endpoints](#api-endpoints)
+  - [WebSocket](#websocket-protocol)
+- [Testing](#testing)
 - [Contributors](#contributors)
 
 <br />
 
-## Key Features
+## Features
+
+This section describes how the client and the server interact for each key feature. Detailed field-level specifications are provided in the [API & WebSocket Protocol Reference](#api--websocket-protocol-reference) section.
 
 ### Real-time Messaging
 
-- Start or restart conversations using the embedded user search within the chat interface
-- Send and receive messages instantly
-- Toggle likes on messages
-- Mark messages as read
+#### ■ Start a conversation
+
+A user can start a conversation in three ways:
+- Click the **Send message** button on the target user's profile page
+- Search for users in the Chat page and select the target
+- Click an existing conversation preview in the left-side chat list of the Chat page
+
+When a target user is selected, the client sends a `PUT /api/chats/{username}` request to either create or retrieve the chat room with the target:
+- If the chat room already exists, the server responds with `200 OK` and returns the existing chat
+- If no chat room exists, the server creates a new one and responds with `201 Created`
+- If the target has blocked the user, the UI prevents discovering or selecting that user, so this case does not occur in the normal flow
+- If the user has blocked the target, the client displays a **blocked state UI** and does not allow starting a conversation
+
+
+On success, the client updates the chat list by moving the conversation to the top and renders the messages in the chat messages area.
+
+<figure align="center">
+  <figcaption>Select an existing chat</figcaption>
+  <img src="../../assets/ui/chat-selected-user.png" alt="Chat - Selected chat" width="480px" />
+</figure>
+<figure align="center">
+  <figcaption>Start a new chat</figcaption>
+  <img src="../../assets/ui/chat-new-conversation.png" alt="Chat - New conversation" width="480px" />
+</figure>
+<figure align="center">
+  <figcaption>Chat with a user blocked by the logged-in user</figcaption>
+  <img src="../../assets/ui/chat-blocked-user.png" alt="Chat - Blocked user" width="480px" />
+</figure>
+
+#### ■ Message sending
+
+A user sends a message by typing into the input box in the main chat area.  
+When the message is submitted, the client sends it to the server via the [`new_message`](#protocol-new-message-client-server) WebSocket event. The message is immediately rendered in the main chat message area as a pending message for instant feedback.  
+
+<p align="center">
+  <img src="../../assets/ui/chat-pending-message.png" alt="Chat - Pending message" width="480px" />
+</p>
+
+On the server side, the message is validated and stored, then broadcast the [`new_message`](#protocol-new-message-server-client) event to both chat participants:  
+- If the user is on the Chat page, the left-side chat list is updated with the latest message, and the message appears instantly in the main chat area if the chat is being viewed.  
+- Otherwise, an unread badge appears on the Navbar chat icon and a notification toast is displayed.
+
+<p align="center">
+  <img src="../../assets/ui/chat-sent-message.png" alt="Chat - Sent message" width="480px" />
+</p>
+
+When a message is displayed in the UI, the client sends a [`read_message`](#protocol-read-message) event to the server, which updates the message's read status in the database.
+
+#### ■ Add or remove a like on a message
+
+A user can toggle a like on any received message by clicking its container in the main chat message area.   
+When a message is clicked, the client identifies the target message by its id attribute, then sends [`like_message`](#protocol-like-message-client-server) or [`unlike_message`](#protocol-unlike-message-client-server) WebSocket event to the server.   
+The server checks that the chat exists and that the message is not authored by the user (to prevent liking one's own message). If valid, the like status is updated and the [`like_message`](#protocol-like-message-server-client) event is broadcast to both chat participants.   
+If the chat is currently open on the client side, the message’s CSS class toggles between liked and unliked to show or hide the heart icon.
+
+<p align="center">
+  <img src="../../assets/ui/chat-like-message.png" alt="Chat - Like message" width="480px" />
+</p>
+
+<br />
 
 ### Notifications
 
-- Notify users when someone adds them as a friend
-- Notify users when new tournaments are created
+The server can push the following notification events to the clients 
+- [`new_friend`](#protocol-new-friend): Another user has added the user to the friend list  (See [User Management docs](./USER_MANAGEMENT.md#social-networking-elements) for friend list).
+- [`new_tournament`](#protocol-new-tournament): A new tournament has been created by another user.
+- [`game_invite`](#protocol-game-invite-server-client): The user is invited to Pong Duel by another user (See [Game invitation section](#game-invitation))
 
-### Game Invitations
+All notification data are stored in the database.   
 
-- Send Duel invitations to other users
-- Accept or decline incoming Duel invitations
+When a notification arrives, the client displays a toast and adds an unread badge to the **Notifications** button in the Navbar.
+Clicking the button triggers `GET /api/notifications?is_read=all&limit=10&offset={offset}` and opens dropdown menu with notification list.
 
-### Real-time Presence
+<p align="center">
+  <img src="../../assets/ui/notification-list.png" alt="Notification list" width="240px" />
+</p>
 
-- Periodic background job (cron) to monitor user presence status
-- Upon detecting status change, broadcast real-time notifications to all connected users
+Selecting a notification item in the list, 
+- The client sends `read_notification` event to the server, marking it as read in the database.
 
-<br />
+- **New friend**: Navigate to the new friend's profile page.   
+  <img src="../../assets/ui/notification-new-friend.png" alt="New friend" width="240px" />
 
-## API Endpoints
+- **New tournament**: Navigate to the tournament page and open the registration form.   
+  <img src="../../assets/ui/notification-new-tournament.png" alt="New tournament" width="240px" />
 
-### Chat
+User can also mark all unread notification as read by clicking **Mark all as read** button, which triggers a `POST /api/notifications/mark_all_as_read` request.
 
-| Endpoint                          | Method | Description                                     | Params            | Returns (Code)             |
-| :-------------------------------- | :----- | :---------------------------------------------- | :---------------- | :------------------------- |
-| `/chats/`                         | GET    | Paginated list of user's chats                  | `limit`, `offset` | 200, 401                   |
-| `/chats/{username}`               | PUT    | Open or create a chat, returns last 30 messages | -                 | 200/201, 401, 404          |
-| `/chats/{username}/messages`      | GET    | Retrieve chat messages (paginated)              | `limit`, `offset` | 200, 401, 404              |
-
-### Notifications
-
-| Endpoint                          | Method | Description                                     | Params                       | Returns (Code)             |
-| :-------------------------------- | :----- | :---------------------------------------------- | :--------------------------- | :------------------------- |
-| `/notifications/`                 | GET    | Paginated notification list                     | `is_read`, `limit`, `offset` | 200, 401                   |
-| `/notifications/mark_all_as_read` | POST   | Mark all notifications as read                  | -                            | 200, 401                   | 
 
 <br />
-
-## WebSocket Protocol
-
-The Live Chat WebSocket (`/ws/events`) manages real-time events within the application, including chat messages, message reactions, friend additions, game invitations, notifications, and user presence updates.
-Connection is opened when a user logs in and remains active until the user logs out, closes the tab, or loses connection.
-
-### Message Format
-
-```json
-{
-  "action":"<action name>",
-  "data":{
-    "<data content>"
-  }
-}
-```
-
-### Chat
-
-#### CLIENT --> SERVER
-
-<a id="client-serverprotocol-new-message"></a>
-- **`new_message`**
-
-  Send a new message to a chat room
-
-  <details><summary>View fields and Server-side processing</summary>
-
-  | Field       | Type     | Description                           |
-  |:------------|:---------|:------------------------------------- |
-  | `chat_id`   | `string` | id of the chat room                   |
-  | `content`   | `string` | message content                       |
-  | `timestamp` | `string` | Timestamp indicating when it was sent |
-
-  *Server-side processing:*   
-  *Calls `ChatEvent.handle_message` to validate and store the message, then broadcasts to chat participants.*
-  </details>
-
-<a id="protocol-like-message"></a>
-- **`like_message`**:
-
-  Like a message
-
-  <details>
-  <summary>View fields and Server-side processing</summary>
-
-  | Field     | Type      | Description             |
-  |:----------|:----------|:------------------------|
-  | `chat_id` | `string`  | id of the chat room     |
-  | `id`      | `string`  | id of the liked message |
-
-  *Server-side processing:*   
-  *Calls `ChatEvent.handle_toggle_like_message` to update like status and notify chat participants.*
-  </details>
-
-<a id="protocol-unlike-message"></a>
-- **`unlike_message`**
-
-  Remove a like from a message
-
-  <details>
-  <summary>View fields and Server-side processing</summary>
-
-  | Field     | Type      | Description                |
-  |:----------|:----------|:---------------------------|
-  | `chat_id` | `string`  | id of the chat room        |
-  | `id`      | `string`  | id of the un-liked message |
-
-  *Server-side processing:*   
-  *Calls `ChatEvent.handle_toggle_like_message` to update like status and notify chat participants.*
-  </details>
-
-<a id="client-server-read-message"></a>
-- **`read_message`**
-
-  Mark a message as read
-
-  <details>
-  <summary>View fields and Server-side processing</summary>
-
-  | Field     | Type      | Description            |
-  |:----------|:----------|:-----------------------|
-  | `chat_id` | `string`  | id of the chat room    |
-  | `id`      | `string`  | id of the read message |
-
-  *Server-side processing:*   
-  *Calls `ChatEvent.handle_read_message` to mark the message as read in the database.*
-  </details>
-
-<br />
-
-#### SERVER --> CLIENT
-
-- **`new_message`**
-
-  Send a new message to the receiver and the sender
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field      | Type       | Description                           |
-  |:-----------|:-----------|:------------------------------------- |
-  | `chat_id`  | `string`   | id of the chat room                   |
-  | `id`       | `string`   | id of the message                     |
-  | `content`  | `string`   | message content                       |
-  | `date`     | `datetime` | date and time the message was sent    |
-  | `sender`   | `string`   | username of the sender                |
-  | `timestamp` | `string`  | Timestamp indicating when it was sent |
-  </details>
-
-  [▶︎ See UI behavior](#new_message)   
-
-- **`like_message`**
-
-  Sent when the receiver toggles a like on message
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field       | Type       | Description                              |
-  |:------------|:-----------|:---------------------------------------- |
-  | `chat_id`   | `string`   | id of the chat room                      |
-  | `id`        | `string`   | id of the message                        |
-  | `is_liked`  | `boolean`  | true if the message is liked, else false |
-  </details>
-
-  [▶︎ See UI behavior](#like_message) 
-
----
-
-### Notifications
-
-#### SERVER --> CLIENT
-
-- **`new_friend`**
-
-  Sent when someone adds the user to his friend list
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field       | Type       | Description                                            |
-  |:------------|:-----------|:------------------------------------------------------ |
-  | `username`  | `string`   | username of the user who added the receiver as friend  |
-  | `nickname`  | `string`   | nickname of the user who added the receiver as friend  |
-  </details>
-
-  [▶︎ See UI behavior](#new_friend)
-
-- **`new_tournament`**
-
-  Sent when a new tournament is created
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field             | Type       | Description                            |
-  |:------------------|:-----------|:---------------------------------------|
-  | `tournament_id`   | `string`   | id of the new tournament               |
-  | `tournament_name` | `string`   | name of the new tournament             |
-  | `creator`         | `string`   | alias of the creator of the tournament |
-  </details>
-
-  [▶︎ See UI behavior](#new_tournament)
-
-<br />
-
-#### CLIENT --> SERVER
-
-<a id="client-server-read-notification"></a>
-- **`read_notification`**
-
-  Sent to the server when th user made an action on the notification (click on button)
-
-  <details>
-  <summary>View fields and Server-side processing</summary>
-
-  | Field  | Type     | Description            |
-  |:-------|:---------|:-----------------------|
-  | `id`   | `string` | id of the notification |
-
-  *Server-side processing:*   
-  *Calls `UserEventsConsumer.read_notification` to mark the notification as read in the database.*
-  </details>
-
----
 
 ### Game invitation
 
-#### CLIENT --> SERVER
+A user can invite others to Pong Duel from either **Chat page** or another user's **Profile page**.
 
-<a id="protocol-game-invite"></a>
-- **`game_invite`**
+<figure align="center">
+  <figcaption>Send invitation from Chat page</figcaption>
+  <img src="../../assets/ui/chat-game-invitation.png" alt="Send Game invitation" width="480px" />
+</figure>
+<figure align="center">
+  <figcaption>Send invitation from Duel Menu page</figcaption>
+  <img src="../../assets/ui/duel-menu-game-invitation.png" alt="Send Game invitation" width="480px" />
+</figure>
 
-  Invite a user to duel
+When a user sends an invitation, [`game_invite`](#protocol-game-invite-client-server) event is sent to the server.
+If the inviter is not engaged in any other game activity (no ongoing/pending game, or another pending invitation), the server forwards an [`game_invite`](#protocol-game-invite-server-client) action to the invitee, and the invitee’s client displays a notification toast.
+Otherwise, the server cancels the invitation and replies to the inviter's client with [`game_invite_canceled`](#protocol-game-invite-canceled).
 
-  <details>
-  <summary>View fields and Server-side processing</summary>
+The inviter is redirected to **Duel page** after sending the invitation. From there the inviter can cancel the invitation by sending [`cancel_game_invite`](#protocol-cancel-game-invite) to the server. On success, the server replies with [`game_invite_canceled`](#protocol-game-invite-canceled).
 
-  | Field       | Type     | Description                                                                       |
-  |:------------|:---------|:--------------------------------------------------------------------------------- |
-  | `username`  | `string` | username of the invitee                                                           |
-  | `options`   | `json`   | game options selected by the inviter                                              |
-  | `client_id` | `string` | id of the websocket instance of the browser tab from which the invitation is sent |
+<p align="center">
+  <img src="../../assets/ui/chat-game-invitation-waiting.png" alt="Chat - Like message" width="480px" />
+</p>
 
-  *Server-side processing:*   
-  *Calls `DuelEvent.send_game_invite` to send an invitation to the specified user.*
-  </details>
+The invitee can accepts or declines the invitation from **Notification list** in Navbar selecting **Accept** or **Decline**. The client sends [`reply_game_invite`](#protocol-reply-game-invite) with the user's response. 
 
-<a id="protocol-reply-game-invite"></a>
-- **`reply_game_invite`**
+<img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation" width="240px" />
 
-  Reply to a game invitation (accept or decline)
-
-  <details>
-  <summary>View fields and Server-side processing</summary>
-
-  | Field       | Type      | Description.                        |
-  |:------------|:----------|:------------------------------------|
-  | `username`  | `string`  | username of the inviter             |
-  | `accept`    | `boolean` | true if accepted, false if declined |
-
-  *Server-side processing:*   
-  *Calls `DuelEvent.reply_game_invite` to process the acceptance or decline.*
-  </details>
-
-<a id="protocol-cancel-game-invite"></a>
-- **`cancel_game_invite`**
-
-  Cancel the game invitation sent by the user
-
-  <details>
-  <summary>View fields and Server-side processing</summary>
-
-  | Field       | Type     | Description             |
-  |:------------|:---------|:------------------------|
-  | `username`  | `string` | username of the invitee |
-
-  *Server-side processing:*   
-  *Calls `DuelEvent.cancel_game_invite` to cancel the sent invitation.*
-  </details>
+On **accept** response, the server revalidates the data, creates a new game room, then broadcasts a [`game_accepted`](#protocol-game-accepted) event to both users, including `game_id` which allows them to navigate to the game page.   
+On **decline** response, the server revalidates the data, then broadcasts a [`game_declined`](#protocol-game-declined) event.
 
 <br />
 
-#### SERVER --> CLIENT
+### User Presence system
 
-- **`game_invite`**
+User presence is updated based on user activity and inactivity.   
 
-  Sent when someone invites the user to duel
+Each meaningful API request and WebSocket event checks if a user is considered offline in database. If so, the status changes to **online** and a [`user_online`](#protocol-user-online) event is boroadcasted to all active users.   
+A user becomes offline immedidately when all sessions are closed, and also via a periodic check. A cronjob runs every minute to mark users as **offline** if their last activity timestamp is older than 30 minutes, boradcasting [`user_offline`](#protocol-user-offline) events. 
 
-  <details>
-  <summary>View fields</summary>
+Upon receiving these events, the client updates the corresponding user's online status indicators.
 
-  | Field      | Type       | Description               |
-  |:-----------|:-----------|:--------------------------|
-  | `username` | `string`   | username of the inviter   |
-  | `nickname` | `string`   | nickname of the inviter   |
-  | `avatar`   | `string`   | avatar url of the inviter |
-  </details>
-
-  [▶︎ See UI behavior](#game_invite)
-
-- **`game_accepted`**
-
-  Sent to the inviter and the invitee when the invitee accepted the invitation
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field      | Type       | Description.                      |
-  |:-----------|:-----------|:----------------------------------|
-  | `game_id`  | `string`   | id of the game room for this duel |
-  | `username` | `string`   | username of the invitee           |
-  | `nickname` | `string`   | nickname of the invitee           |
-  | `avatar`   | `string`   | avatar url of the invitee         |
-  </details>
-
-  [▶︎ See UI behavior](#game_accepted)
-
-- **`game_declined`**
-
-  Sent to the inviter when the invitee declined the invitation
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field      | Type       | Description.                      |
-  |:-----------|:-----------|:----------------------------------|
-  | `username` | `string`   | username of the invitee           |
-  | `nickname` | `string`   | nickname of the invitee           |
-  </details>
-
-  [▶︎ See UI behavior](#game_declined)
+For more details about **cronjob**, see [CRONTAB doc](../server/CRONTAB.md).
 
 <br />
 
-- **`game_invite_canceled`**
+## Implementation details
+🛠️👷🏻‍♂️
+### Backend
 
-  Sent to the inviter when the server cancels the invitation, or to both the inviter and invitee when the inviter cancels the invitation.
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field       | Type               | Description               |
-  |:------------|:-------------------|:--------------------------|
-  | `username`  | `string` \| `null` | username of the inviter   |
-  | `nickname`  | `string` \| `null` | nickname of the inviter   |
-  | `message`   | `string` \| `null` | reason why the server cancels the invitation |
-  | `client_id` | `string`           | id of the websocket instance of the browser tab from which the invitation is sent |
-  </details>
-
-  [▶︎ See UI behavior](#game_invite_canceled)
-
-<br />
-
-##### Game options
-
-```json
-{
-  "score_to_win":	int,
-  "game_speed": string,
-  "ranked": boolean,
-  "time_limit": int,
-  "cool_mode": boolean,
-}
-```
-
----
-
-### Online status 
-
-#### SERVER --> CLIENT
-
-- **`user_online`**
-
-  Sent to all connected users when online status of someone changed from offline to online
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field      | Type     | Description                                      |
-  |:-----------|:---------|:-------------------------------------------------|
-  | `username` | `string` | username of the user whose status becomes online |
-  </details>
-
-  [▶︎ See UI behavior]()
-
-- **`user_offline`**
-
-  Sent to all connected users when online status of someone changed from online to offline
-
-  <details>
-  <summary>View fields</summary>
-
-  | Field      | Type     | Description                                       |
-  |:-----------|:---------|:--------------------------------------------------|
-  | `username` | `string` | username of the user whose status becomes offline |
-  </details>
-
-  [▶︎ See UI behavior]()
-
-<br />
-
-## Backend
 Server of the project is able to handle WebSockets thanks to the Django Channels integration (TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses JWT authentication, like [the rest of the consumers in the project](./USER_MANAGEMENT.md#jwt-authentication).
 
-### WebSocket connection
+#### Core Models
+
+The chat system revolves around three main models: `Chat`, `ChatMessage`, and `Notification`. These models manage conversations between users, message histories, and notification events.
+
+- `Chat`: Represents a chat session. This model itself supports multiple participants, but in the current app implementation, only one-to-one chats are used. All messages exchanged in the chat are associated with it via the `ChatMessage` model. Key fields include `id` (UUID) and `participants` (ManyToMany to `Profile`).
+
+- `ChatMessage`: Represents a single message sent within a chat. It tracks the sender, the content, and the read and like status. Key fields include `id` (UUID), `content` (max length 256), `date`, `sender` (ForeignKey to `Profile`), `chat` (ForeignKey to `Chat`), `is_read`, and `is_liked`.
+
+- `Notification`: Manages an event notification sent to a user. Notifications can indicate game invitations, new tournaments announcement, or friend additions. Key fields include `id` (UUID), `receiver` (ForeignKey to `Profile`), `data` (JSON), `action` (enum: `GAME_INVITE`, `NEW_TOURNAMENT`, `NEW_FRIEND`), and `is_read` (boolean).
+  Each notification stores arbitrary JSON data related to the event:
+  - **GAME_INVITE**: Information about the game invitation, such as `game_id`, `status`, and `invitee` information.
+  - **NEW_TOURNAMENT**: Details of the tournament, including `tournament_id`, `tournament_name`, and  current `status`.
+  - **NEW_FRIEND**: Includes sender's profile information to identify the new friend.
+
+- `GameInvitation`: Represents a game invitation from one user to another. It tracks sender, recipient, optional invitee for special cases, status, and game settings. Key fields include `id` (UUID), `sender` (ForeignKey to `Profile`), `invitee` (optional ForeignKey), `recipient` (ForeignKey to `Profile`), `status` (enum: `pending`, `accepted`, `declined`, `cancelled`), and `settings` (JSON).
+
+<br />
+
+#### WebSocket connection
+
 - Open WebSocket (one connection per browser tab) on login
 - Authenticate token and accept/close connection
 - Join channel groups: `user_{id}`, `chat_{uuid}` (for each chat), `online_users`
 
-### On incoming WebSocket action:
+#### On incoming WebSocket action:
 
 - Validate incoming action
 - Process application logic and persist changes (DB + optional cache)
 - Push resulting events to relevant channel groups
   - (Detailed validation and error handling are described in [**Validation & Security**](#validation--security))
 
-### Notification delivery
+#### Notification delivery
 
 - User-scoped events → `user_{id}` group (private push)
 - Chat events → `chat_{uuid}` group (room push)
 - Presence broadcasts → `online_users` group (connected online users only)
 
-### Game invitations
-
-- Deliver real-time game invitations between users and persist them as notifications for all recipients, including those who are offline.
-- Validate sender is not the recipient, validate settings, and ensure neither party is already in a `pending or ongoing GameRoom`.
-- Transactionally create a `GameInvitation` record with status `PENDING` and a `Notification` with action `game_invite`.
-- Send the `game_invite` WebSocket event to the recipient’s `user_{id} group` (private push), and also persist a sender copy so the invite can be canceled or queried later.
-   
-- On `reply_game_invite`:
-  - If **accept**
-    - Re-validate;
-    - Create a `GameRoom`;
-    - Mark the invitation `ACCEPTED`;
-    - Update notifications, and broadcast `game_accepted` to both users.
-  - If **decline**
-    - Mark the invitation `DECLINED`;
-    - Update notifications, and broadcast `game_declined`.
-   
-- Support explicit `cancel_game_invite` by the sender to mark the invitation `CANCELLED` and notify the invitee.
-- Optionally expire stale `PENDING` invitations via a background job and notify sender and recipient when that happens.
-
-### Presence handling
-
-- Increment / decrement per-connection counter (`nb_active_connexions`) on connect / disconnect
-- Consider user offline when counter == 0; persist offline state to DB/Redis
-- Periodic cron (e.g., every 30 min) to detect inactive sessions and force-offline stale connections
-- Refresh `last_activity` on each meaningful API/WebSocket request
-
-### Core Models
-
-The chat system revolves around three main models: `Chat`, `ChatMessage`, and `Notification`. These models manage conversations between users, message histories, and notification events.
-
-#### 🔸 `Chat`:
-
-- Represents a chat session between multiple users
-
-  <details>
-    <summary>See Fields details</summary>
-
-    -  `id` (UUID): Unique chat identifier  
-    -  `participants` (ManyToMany to Profile): Users participating in the chat 
-  </details>
-
-#### 🔸 `ChatMessage`:
-
-- Represents a message sent in a chat
-
-  <details>
-    <summary>See Fields details</summary>
-
-    - `id` (UUID): Unique message ID
-    - `content` (text): Message content (max length 256)
-    - `date` (DateTime): Timestamp when message was sent
-    - `sender` (ForeignKey to Profile): User who sent the message
-    - `chat` (ForeignKey to Chat): Chat to which the message belongs
-    - `is_read` (boolean): Whether the message has been read
-    - `is_liked` (boolean): Whether the message is liked
-  </details>
-
-#### 🔸 `Notification`:
-
-- Represents notifications sent to users regarding various events
-
-  <details>
-    <summary>See Fields details</summary>
-
-    - `id` (UUID): Unique notification ID  
-    - `receiver` (ForeignKey to Profile): User receiving the notification  
-    - `data` (JSON): Arbitrary notification-specific data  
-    - `action` (enum): Type of notification (`game_invite`, `reply_game_invite`, `new_tournament`, `new_friend`, `message`)  
-    - `is_read` (boolean): Whether notification has been read  
-  </details>
-
-#### 🔸 `GameInvitation`:
-
-- Represents a real-time game invitation sent from one user to another
-
-  <details>
-    <summary>See Fields details</summary>
-
-    - `id` (UUID): Unique invitation ID  
-    - `sender` (ForeignKey to Profile): User who sent the invitation  
-    - `invitee` (ForeignKey to Profile): Optional field for special invite handling  
-    - `recipient` (ForeignKey to Profile): User receiving the invitation  
-    - `status` (enum): Invitation status (`pending`, `accepted`, `declined`, `cancelled`)  
-    - `settings` (JSON): Game-specific options or configurations for the invitation  
-  </details>
-
-<br />
-
-### WebSockets (Django Channels)
+#### WebSockets (Django Channels)
 
 Each user establishes a WebSocket connection (one per browser tab), enabling:
   - Joining groups: `user_{id}`, `chat_{uuid}`, `online_users`
   - Receiving real-time events including chat messages, likes/unlikes on messages, friend additions, game invitations, notifications for newly created tournaments.
 
+##### Channel Groups:
 
-#### Channel Groups:
   - `user_{id}`: Private actions (notifications, friend-related updates)
   - `chat_{uuid}`: One-to-one chat messages between the two participants
   - `online_users`: Presence updates broadcasts
 
 <br />
 
-### Validation & Security
+#### Validation & Security
 
 - **Strict schema validation** for all incoming WebSocket data (fields, types, valid UUIDs).
   - Invalid data immediately triggers WebSocket closure with code `3100 (BAD_DATA)`.
@@ -562,397 +238,336 @@ Each user establishes a WebSocket connection (one per browser tab), enabling:
 
 <br />
 
-## Frontend Interaction Logic
+### Frontend
 
-### Chat
+The frontend is composed of modular components that work to provide real-time chat, notifications, game invitations, and presence updates across the application.
 
-#### Basic UI Components
+#### ■ Chat components
 
-- Main component
-  - `Chat`:   
-    Manages the overall chat functionality and coordinates communication between child components.
+The chat feature is structured around a central `Chat` component that coordinates several supporting components. Together, they provide user search, conversation management, real-time messaging, and game invitations.
 
-- Child components
-  - `ChatUsersearch`:   
-    Handles the user search input and displays search results.
-  - `ChatList`:   
-    Displays the list of chat conversations and manages selection and unread badges.
-  - `ChatMessageArea`:   
-    Manages the chat messages UI, including displaying messages, user info, and interaction buttons.
-  - `ChatMessageInput`:   
-    Provides the message input form and handles sending messages.
-  - `InviteGameModal`:   
-    Displays the Pong game invitation modal, manages game options selection and sending invitations.
+##### `Chat`:   
 
-#### User-triggered Events
+The `Chat` component is the entry point of the chat interface containing the list of conversations (`ChatList`), the message area (`ChatMessageArea`) and the game invitation form modal (`InviteGameModal`).   
+It initializes the chat  by fetching the data from the server, determines which conversation to display in the message area, and updates dynamically when new messages arrive or when the user blocks/unblocks others.   
+The layout adapts seamlessly to different screen sizes to ensure a consistent experience across devices.
 
-■ **User Search form input**
+##### `ChatList`:   
 
-- When the user types in the search input, a debounced API request is sent to `/users/?search=<query>&limit=10&offset=<offset>` to fetch matching users.
-- Search results are displayed in a dropdown list.
-- Infinite scroll is implemented using `IntersectionObserver`; when the user reaches the end of the list, additional results are fetched and appended.
-- Clicking outside the search results or hiding the search clears the list and resets the state.
+Displays the user’s conversations, including the last message information, unread message counts and online status indicators. When a conversation is selected, its messages are loaded into the message area.
+It also provides a search function, allowing the user to find existing conversations or start new ones.
 
-<p align="center">
-  <img src="../../assets/ui/chat-user-search.png" alt="Chat User Search" width="240px" />
-</p>
+##### `ChatMessageArea`:  
+
+Manages the content of a conversation by displaying messages, user information, and interaction options such as navigating to the profile page, inviting to a Pong Duel, blocking/unblocking the user.   
+This component is a scrollable container that shows messages in chronological order. When a new message arrives, it is loaded dynamically and the view scrolls to the bottom. The messages are considered read once the user scrolls through them.
+
+##### `InviteGameModal`:  
+See [Game invitations components section](#game-invitations-components)
 
 <br />
 
-■ **Click on a User Search result item**
+#### ■ Notifications components
 
-- Clicking a user in the search results triggers an API request to `/chats/{username}` to create or retrieve a chat room with that user.
-- If the target user has blocked the current user, an error message is shown.
-- If the chat already exists (`200 OK` response), it is added or moved to the top of the left-side chat list.
-- If a new chat is created (`201 Created` response), it is added to the top of the chat list.
-- The relevant conversation is rendered in the main chat message area.
+The notifications feature revolves around a notification button (`NotificationButton`) in the Navbar that toggles the visibility of the notification list (`NotificationsList`). They provide real-time updates, and actions for different types of notifications.
 
-<p align="center">
-  <img src="../../assets/ui/chat-new-conversation.png" alt="Chat - New conversation" width="480px" />
-</p>
+##### `NotificationButton`:
 
-<br />
+Serves as the entry point to the notification system, showing an unread badge when the user has unread notifications. Clicking the button reveals the notification list.
 
-■ **Click on a Chat List item**
 
-- Clicking a chat list item selects the conversation and visually highlights the item.
-- Unread message badges on the selected chat are hidden.
-- Other chat list items are set to unselected.
-- A custom `chatItemSelected` event is dispatched to notify the parent `Chat` component.
-- The Chat component sends an API request to `chats/{username}` to fetch the chat data, then passes it to the child `ChatMessageArea` component, which renders the messages in the main chat area.
+##### `NotificationsList`:  
 
-<p align="center">
-  <img src="../../assets/ui/chat-selected-user.png" alt="Chat - Selected User" width="480px" />
-</p>
+Displays notifications in a scrollable container and loads additional items are when the user scrolls, providing a seamless infinite-scroll experience.   
+This list supports switching between **All** and **Unread** tabs, updating the content based on the selected tab. Users can also mark all notifications as read with a single action, which updates both the UI and the server state.
+
+##### `NotificationListItem`
+
+Represents a single notification and adapts its content and actions depending on its type (new friend, game invitation, or new tournament).   
+**New friend** notifications link to the friend's profile, **game invitations** allow the user to accept or decline, and **new tournament** notifications include a link to navigate to registration. 
+
+##### `Notification Toast`:  
+
+Provides brief pop-ups for newly received notifications, giving immediate feedback even if the notification list dropdown is closed.
 
 <br />
 
-■ **Send messages**
+#### ■ Game invitations components
 
-- User writes a message in the `<textarea>`, then sends it by clicking the send button or pressing the Enter key.
-- The input enforces a maximum length with a live character counter that turns red near the limit.
-- When the input is valid, a `sendMessage` custom event is dispatched with the message text.
-- The `Chat` component listens for `sendMessage` events:
-  - It builds a message data object, then sends it as [`new_message`](#protocol-new-message) to the server via `socketManager`;
-  - The message is rendered immediately in `ChatMessagesArea` as a pending message for instant user feedback.
-- After sending, the input is cleared.
+Two components are available for selecting game options and sending invitations: On the `Chat` page, by opening the `InviteGameModal`, or on the `DuelMenu` page where the invitation form is embedded directly in the interface.
 
-<p align="center">
-  <img src="../../assets/ui/chat-pending-message.png" alt="Chat - Pending message" width="480px" />
-</p>
+After sending an invitation, the inviter is redirected to the `Duel` page, which shows the opponent's information and updates dynamically once the invitee responds. For the invitee, accepting the invitation from the notification list triggers a redirection to the `Duel` page.
+When the invitation is accepted and the server confirms the creation of a game room, a countdown starts on both clients, then both are redirected to the game. 
 
 <br />
 
-■ **Scroll in the main chat message area**
+#### ■ Real-time presence system components
 
-- The main chat message area (`#chat-messages`) is a scrollable container that displays chat messages in chronological order.
-- When new messages are rendered, the view automatically scrolls to the bottom to show the latest messages, ensuring users always see the newest content.
-- The component listens for the `scrollend` event on the messages container to detect when the user scrolls to the top.
-  - Upon reaching the top, if older messages are available, fetch and prepend older messages from the server via an API call to `/chats/{username}/messages?limit=10&offset=>offset`.
-  - After loading older messages, the scroll position is adjusted.
+The real-time presence system keeps users informed about the online status of other users across the UI. Status indicators update dynamically whenever a user comes online or goes offline.
 
-<br />
+**Online status indicators** appear in the following components to reflect users’ current presence:
+- `Profile` (updates in real time)
+- `UserSearch` in Navbar
+- `ChatListItem` (updates in real time)
+- `ChatMessageArea` (updates in real time)
+- `ChatUserSearch`
+- User search results in `DuelMenu`
 
-■ **Toggle a like on received messages**
-
-- The `click` event handler for toggling likes is attached to the entire message container element.
-- When clicked, the handler identifies which message was clicked by retrieving the `id attribute` from the clicked element.
-- The corresponding message’s `is_liked` state is toggled between `true` and `false`.
-- The callback function `sendToggleLikeEvent` in the parent `Chat` component is called to send a [`like_message`](#protocol-like-message) or [`unlike_message`](#protocol-unlike-message) action to the server via `socketManager`.
+Each indicator updates in real time, ensuring consistent status information wherever users interact.
 
 <br />
 
-■ **Block/unblock a user**
+## API & WebSocket Protocol Reference
 
-- By default, the component displays a `Block user` button. If the current chat user is already blocked, the button changes to `Unblock user`.
-- Clicking the button sends an API request to block or unblock the user:
-  - For **Block user**, a `POST` request is sent to `users/{username}/blocked_users`.
-  - For **Unblock user**, a `DELETE` request is sent to `users/{username}/blocked_users/{blockedUser}`.
-- After a successful block/unblock request, the UI updates accordingly:
-  - The block button text toggles between **Block user** and **Unblock user**.
-  - The message input area is shown or hidden based on the block status.
-  - The chat list updates to reflect the user’s blocked state, including styling changes and the last message text.
+### API Endpoints
 
-<p align="center">
-  <img src="../../assets/ui/chat-blocked-user.png" alt="Chat - Blocked user" width="480px" />
-</p>
+#### Chat
 
-<br />
+| Endpoint                          | Method | Description                                     | Params            | Returns (Code)             |
+| :-------------------------------- | :----- | :---------------------------------------------- | :---------------- | :------------------------- |
+| `/chats/`                         | GET    | Paginated list of user's chats                  | `limit`, `offset` | 200, 401                   |
+| `/chats/{username}`               | PUT    | Open or create a chat, returns last 30 messages | -                 | 200/201, 401, 404          |
+| `/chats/{username}/messages`      | GET    | Retrieve chat messages (paginated)              | `limit`, `offset` | 200, 401, 404              |
 
-■ **Invite a user to play Pong**
+#### Notifications
 
-- Please refer [Game invitation section](#client-server-invite-game)
-
-#### Server-triggered Events
-
-<a id="new_message"></a>
-■ **`new_message`**
-
-- Display new message badge over Chat button in Navbar.  
-- If the user is on Chat page, `socketManager` dispatches `newChatMessage` custom event.   
-  - If `Chat` component’s private state `#state.currentChat`'s `chat_id` matches the event data’s `chat_id`, render the new message immediately.  
-  - Otherwise, show an unread badge and update the message preview on the corresponding chat in the left-side chat list.
-
-<br />
-
-<p align="center">
-  <img src="../../assets/ui/chat-sent-message.png" alt="Chat - Sent message" width="480px" />
-</p>
-
-<a id="like_message"></a>
-■ **`like_message`**
-
-- `socketManager` dispatches `toggleLikeChatMessage` custom event.
-- If `Chat` component’s private state `#state.currentChat`'s `chat_id` matches the event data’s `chat_id`, toggle the message’s component CSS class between `liked` and `unliked` to show/hide a heart icon.   
-
-<p align="center">
-  <img src="../../assets/ui/chat-like-message.png" alt="Chat - Like message" width="480px" />
-</p>
-
-<br />
-
-### Notifications
-
-#### Basic UI Components
-
-- Main component
-  - `NotificationButton`:  
-    Displays the notifications bell icon with an unread badge and toggles the notifications dropdown.
-
-  - `NotificationsList`:  
-    Fetches and renders notifications, supports infinite scroll, and updates according to user actions.
-
-- Child components (`NotificationListItem`)
-  - New friend:  
-    Renders "new friend" notifications and provides navigation to the friend's profile.
-
-  - Game invitations:  
-    Renders "game invitation" notifications with action buttons to accept or decline.
-
-  - New tournament:  
-    Renders "new tournament" notifications with a "Participate" button that navigate to the tournament registration.
-
-- Notification Toast:  
-  Displays toast pop-ups for new notifications.
-
-#### User-triggered Events
-
-■ **Click on the Notification Button in Navbar**
-
-- Clicking the `Notification Button` opens the `Notifications Dropdown` containing `NotificationsList` component.
-- The `NotificationsList` component fetches notifications data from the API endpoint `/notifications?is_read=all&limit=10&offset={offset}`.
-- Notifications are rendered dynamically according their actions (`new_friend`, `game_invite`, `new_tournament`).
-- An `IntersectionObserver` detects when the user scrolls near the end of the list, triggering an API call to fetch and render more data.
-
-<p align="center">
-  <img src="../../assets/ui/notification-list.png" alt="Notification list" width="240px" />
-</p>
-
-<br />
-
-■ **Toggle between** *All notifications* **and** *Unread notifications*
-
-- Clicking `All` or `Unread` button switches the notifications tabs.
-- Updates the current tab state (`all` or `unread`) and notifications with corresponding query parameters:
-  - **All**: `/notifications?is_read=all&limit=10&offset={offset}`
-  - **Unread** `/notifications?is_read=unread&limit=10&offset={offset}`
-- Clears the current list and renders notifications based on the selected tab.
-
-<br />
-
-■ **Mark all notifications as read**
-
-- Clicking the Mark all as read button sends a POST request to the API endpoint `/notifications/mark_all_as_read` to mark all notifications as read.
-- Upon success, the notification list is refreshed to reflect the updated read status.
-
-<br />
-
-■ **`new friend` notification element**
-
-- Clicking the `See profile` button navigates the user to the friend's profile page (`/profile/{username}`).
-- [`read_notification`](#client-server-read-notification) action is sent via `socketManager` to mark this notification as read.
-
-  <img src="../../assets/ui/notification-new-friend.png" alt="New friend" width="240px" />
-
-<br />
-
-■ **`game invitation` notification element**
-
-- [`read_notification`](#client-server-read-notification) action is sent via `socketManager` to mark this notification as read.
-- Please refer to the [Game Invitations section](#game-invitations) for details.
-
-  <img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation" width="240px" />
-
-<br />
-
-■ **`new tournament` notification element**
-
-- Clicking the `Participate` button navigates the user to the Tournament menu page (`/tournament-menu`).
-- When the Tournament menu page loads, the registration form modal is shown.
-- [`read_notification`](#client-server-read-notification) action is sent via `socketManager` to mark this notification as read.
-
-  <img src="../../assets/ui/notification-new-tournament.png" alt="New tournament" width="240px" />
-
-
-#### Server-triggered Events
-
-<a id="new_friend"></a>
-■ **`new_friend`**
-
-- Show a notification toast, add an unread badge on the Notification button in Navbar.
-
-<br />
-
-<a id="game_invite"></a>
-■ **`game_invite`**
-
-- Show a notification toast, add an unread badge on the Notification button in Navbar.
-
-<br />
-
-<a id="new_tournament"></a>
-■ **`new_tournament`**
-
-- Show a notification toast, add an unread badge on the Notification button in Navbar.
-- If the current page is `/tournament-menu`, re-renders the tournament-menu component.
-
-<br />
-
-### Game invitations
-
-#### Basic UI Components
-
-- In `Chat`
-  - `Invite to Play` button:  
-    Opens a modal to send a game invitation to another user
-  - `InviteGameModal`:  
-    Allows selecting game options and sends the invitation
-
-- `DuelMenu`:  
-  Sends a game invitation using user search
-
-- `Duel`:  
-  Displays the current duel status (`INVITING`, `STARTING`, `CANCELED`, `DECLINED`, etc.), opponent information, and a countdown timer when status is `STARTING`
-
-#### User-triggered Events
-
-■ **Invite a user to play**
-
-- Clicking the `Invite to play` button opens a modal to send a game invitation.
-- The `InviteGameModal` component manages this modal, including displaying game options and handling user interaction.
-  - The modal allows the inviter to select game options; if some or all options are opted out, the default game settings are applied automatically.
-  - Clicking `Send invitation` sends a [`game_invite`](#protocol-game-invite) action via `socketManager`.
-- After sending the invitation, the modal closes, and navigation to the **Duel page** (`/duel`) occurs with the invitation details in query parameters.
-
-<p align="center">
-  <img src="../../assets/ui/chat-game-invitation.png" alt="Send Game invitation" width="480px" />
-</p>
-
-<p align="center">
-  <img src="../../assets/ui/chat-game-invitation-waiting.png" alt="Pending Game invitation" width="480px" />
-</p>
-
-- Users can invite others also from the Duel Menu page (`/duel-menu`) by using user search form.
-
-<p align="center">
-  <img src="../../assets/ui/duel-menu-game-invitation.png" alt="Send Game invitation" width="480px" />
-</p>
-
-<br />
-
-■ **Accept invitation**
-
-- Clicking the `Accept` button in a game invitation notification first checks if the user is already in a duel (`/duel` page, `DUEL_STATUS.STARTING`).  
-  - If in another starting duel, shows an error toast and aborts.  
-  - If in an inviting state, cancels the existing invitation.
-- Waits for the server’s confirmation `game_accepted` event using a `Promise` after sending a [`reply_game_invite`](#protocol-reply-game-invite) action via `socketManager` with `accept = true`.
-- On confirmation, redirects to **Duel page** (`/duel`) with the new game’s details.
-
-<br />
-
-■ **Decline invitation**
-
-- Clicking `Decline` button in Game invitation notification sends a [`reply_game_invite`](#protocol-reply-game-invite) action via `socketManager` with `accept = false`.
-- Updates the **Duel page** status to `INVITATION_DECLINED` and renders the relevant content.
-
-<br />
-
-■ **Cancel Game invitation**
-
-- The inviter can cancel the invitaion. Clicking `Cancel invitaion` button in Duel page (`/duel`) sends [`cancel_game_invite`](#protocol-cancel-game-invite) action via `socketManager`.
-- Updates the **Duel page** status to `INVITATION_CANCELED` and the renders the relevant content.
-
-#### Server-triggered Events
-
-<a id="game_accepted"></a>
-■ **`game_accepted`**
-
-- The `duelInvitationAccepted` custom event is dispatched by `socketManager` with the game information in its detail.
-
-- For the inviter, if the current page is **Duel page**(`/duel`),
-  - Cancels matchmaking if in progress.
-  - Sets game information from the custom event detail.
-  - Updates page state to `STARTING`.
-  - Starts countdown and redirects to the Multiplayer Game page (`/multiplayer-game/{id}`) when timer ends.
-
-- For the invitee,
-  - `duelInvitationAccepted` event listener retrieves the game information from the event detail.
-  - Navigate to **Duel page** with the information as query parameters.
-  - Starts countdown and redirects to the Multiplayer Game page (`/multiplayer-game/{id}`) when timer ends.
-
-<br />
-
-<a id="game_declined"></a>
-■ **`game_declined`**
-
-- If the current page is **Duel page** (`/duel`) and the **Duel page** status is `INVITING`, updates the **Duel page** status to `INVITATION_DECLINED` and renders the relevant content.
-- Shows a notification toast to inform the user.
-
-<br />
-
-<a id="game_invite_canceled"></a>
-■ **`game_invite_canceled`**
-
-- If the current page is **Duel page** (`/duel`) and the **Duel page** status is `INVITING`, updates the **Duel page** status to `INVITATION_CANCELED` and renders the relevant content.
-- Shows a notification toast to inform the user.
-
-<br />
-
-### Online status
-
-#### Basic UI Components
-
-- Online status indicator in:
-  - `Profile` (realtime-update)
-  - `UserSearch` in Navbar
-  - `ChatListItem` (realtime-update)
-  - `ChatMessageArea` (realtime-update)
-  - `ChatUserSearch`
-  - User search result in `DuelMenu` (realtime-update)
-
-#### Client-triggered Events
-
-- On each API request, if server responses include online status information (`is_online`), the client updates the corresponding UI elements to reflect the current status.
-
-#### Server-triggered Events
-
-<a id="user_online"></a>
-■ **`user_online`**
-
-- Upon receiving `user_online` event, `socketManager` dispatches an `onlineStatus` custom event  
-  with `detail.online` set to `true`.
-- Components that support real-time updates have listeners for this event and update UI accordingly.
-
-<br/>
-
-<a id="user_offline"></a>
-■ **`user_offline`**
-
-- Upon receiving `user_offline` event, `socketManager` dispatches an `onlineStatus` custom event  
-  with `detail.online` set to `false`.
-- Components that support real-time status updates have listeners for this event and update their UI accordingly.
+| Endpoint                          | Method | Description                                     | Params                       | Returns (Code)             |
+| :-------------------------------- | :----- | :---------------------------------------------- | :--------------------------- | :------------------------- |
+| `/notifications/`                 | GET    | Paginated notification list                     | `is_read`, `limit`, `offset` | 200, 401                   |
+| `/notifications/mark_all_as_read` | POST   | Mark all notifications as read                  | -                            | 200, 401                   | 
 
 ---
+
+### WebSocket Protocol
+
+#### Endpoint
+
+The application establishes a single WebSocket connection at `/ws/events`, which is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.  
+The connection is opened when the user logs in and stays active until logout, tab closure, or network loss.
+
+#### Message Format
+
+```json
+{
+  "action":"<action name>",
+  "data":{
+    "<data content>"
+  }
+}
+```
+
+#### Chat
+
+CLIENT --> SERVER
+
+<a id="protocol-new-message-client-server"></a>
+- **new_message**
+  | Data field  | Type     | Description                           |
+  |:------------|:---------|:------------------------------------- |
+  | `chat_id`   | `string` | id of the chat room                   |
+  | `content`   | `string` | message content                       |
+  | `timestamp` | `string` | Timestamp indicating when it was sent |
+
+<a id="protocol-like-message-client-server"></a>
+- **like_message**:
+  | Data field | Type      | Description             |
+  |:-----------|:----------|:------------------------|
+  | `chat_id`  | `string`  | id of the chat room     |
+  | `id`       | `string`  | id of the liked message |
+
+<a id="protocol-unlike-message-client-server"></a>
+- **unlike_message**
+
+  | Data field | Type      | Description                |
+  |:-----------|:----------|:---------------------------|
+  | `chat_id`  | `string`  | id of the chat room        |
+  | `id`       | `string`  | id of the un-liked message |
+
+<a id="protocol-read-message"></a>
+- **read_message**
+
+  | Data field | Type      | Description            |
+  |:-----------|:----------|:-----------------------|
+  | `chat_id`  | `string`  | id of the chat room    |
+  | `id`       | `string`  | id of the read message |
+
+<br />
+
+SERVER --> CLIENT
+
+<a id="protocol-new-message-server-client"></a>
+- **`new_message`**
+
+  | Data field | Type       | Description                           |
+  |:-----------|:-----------|:------------------------------------- |
+  | `chat_id`  | `string`   | id of the chat room                   |
+  | `id`       | `string`   | id of the message                     |
+  | `content`  | `string`   | message content                       |
+  | `date`     | `datetime` | date and time the message was sent    |
+  | `sender`   | `string`   | username of the sender                |
+  | `timestamp`| `string`   | Timestamp indicating when it was sent | 
+
+<br />
+
+<a id="protocol-like-message-server-client"></a>
+- **`like_message`**
+
+  | Data field  | Type       | Description                              |
+  |:------------|:-----------|:---------------------------------------- |
+  | `chat_id`   | `string`   | id of the chat room                      |
+  | `id`        | `string`   | id of the message                        |
+  | `is_liked`  | `boolean`  | true if the message is liked, else false |
+
+---
+
+#### Notifications
+
+CLIENT --> SERVER
+
+<a id="protocol-read-notification"></a>
+- **`read_notification`**
+
+  | Data field | Type     | Description            |
+  |:-----------|:---------|:-----------------------|
+  | `id`       | `string` | id of the notification |
+
+<br />
+
+SERVER --> CLIENT
+
+<a id="protocol-new-friend"></a>
+- **`new_friend`**
+
+  | Data field  | Type       | Description                                            |
+  |:------------|:-----------|:------------------------------------------------------ |
+  | `username`  | `string`   | username of the user who added the receiver as friend  |
+  | `nickname`  | `string`   | nickname of the user who added the receiver as friend  |
+
+<br />
+
+<a id="protocol-new-tournament"></a>
+- **`new_tournament`**
+
+  | Data field        | Type       | Description                            |
+  |:------------------|:-----------|:---------------------------------------|
+  | `tournament_id`   | `string`   | id of the new tournament               |
+  | `tournament_name` | `string`   | name of the new tournament             |
+  | `creator`         | `string`   | alias of the creator of the tournament |
+
+<br />
+
+---
+
+#### Game invitation
+
+CLIENT --> SERVER
+
+<a id="protocol-game-invite-client-server"></a>
+- **`game_invite`**
+  | Data field  | Type     | Description                                                                       |
+  |:------------|:---------|:--------------------------------------------------------------------------------- |
+  | `username`  | `string` | username of the invitee                                                           |
+  | `options`   | `json`   | game options selected by the inviter                                              |
+  | `client_id` | `string` | id of the websocket instance of the browser tab from which the invitation is sent |
+
+  **Example of `options` JSON:**
+  ```json
+  {
+    "score_to_win": 10,
+    "game_speed": "slow",
+    "ranked": true,
+    "time_limit": 3,
+    "cool_mode": false
+  }
+  ```
+<br />
+
+<a id="protocol-reply-game-invite"></a>
+- **`reply_game_invite`**
+
+  | Data field  | Type      | Description.                        |
+  |:------------|:----------|:------------------------------------|
+  | `username`  | `string`  | username of the inviter             |
+  | `accept`    | `boolean` | true if accepted, false if declined |
+
+<a id="protocol-cancel-game-invite"></a>
+- **`cancel_game_invite`**
+
+  | Data field  | Type     | Description             |
+  |:------------|:---------|:------------------------|
+  | `username`  | `string` | username of the invitee |
+
+<br />
+
+SERVER --> CLIENT
+
+<a id="protocol-game-invite-server-client"></a>
+- **`game_invite`**
+
+  | Data field | Type       | Description               |
+  |:-----------|:-----------|:--------------------------|
+  | `username` | `string`   | username of the inviter   |
+  | `nickname` | `string`   | nickname of the inviter   |
+  | `avatar`   | `string`   | avatar url of the inviter |
+
+<br />
+
+<a id="protocol-game-accepted"></a>
+- **`game_accepted`**
+
+  | Data field | Type       | Description.                      |
+  |:-----------|:-----------|:----------------------------------|
+  | `game_id`  | `string`   | id of the game room for this duel |
+  | `username` | `string`   | username of the invitee           |
+  | `nickname` | `string`   | nickname of the invitee           |
+  | `avatar`   | `string`   | avatar url of the invitee         |
+
+<br />
+
+<a id="protocol-game-declined"></a>
+- **`game_declined`**
+
+  | Data field | Type       | Description.                      |
+  |:-----------|:-----------|:----------------------------------|
+  | `username` | `string`   | username of the invitee           |
+  | `nickname` | `string`   | nickname of the invitee           |
+
+<br />
+
+<a id="protocol-game-invite-canceled"></a>
+- **`game_invite_canceled`**
+
+  | Data field  | Type               | Description                                  |
+  |:------------|:-------------------|:---------------------------------------------|
+  | `username`  | `string` \| `null` | username of the inviter                      |
+  | `nickname`  | `string` \| `null` | nickname of the inviter                      |
+  | `message`   | `string` \| `null` | reason why the server cancels the invitation |
+  | `client_id` | `string`           | id of the websocket instance of the browser tab from which the invitation is sent |
+
+<br />
+
+#### User presence system
+
+SERVER --> CLIENT
+
+<a id="protocol-user-online"></a>
+- **`user_online`**
+  | Data field  | Type     | Description                                      |
+  |:------------|:---------|:-------------------------------------------------|
+  | `username`  | `string` | username of the user whose status becomes online |
+
+<br />
+
+<a id="protocol-user-offline"></a>
+- **`user_offline`**
+  | Data field  | Type     | Description                                       |
+  |:------------|:---------|:--------------------------------------------------|
+  | `username`  | `string` | username of the user whose status becomes offline |
+
+<br />
+
+## Testing
+`make tests-chat` will initialize the tests related to the chat and live events system.
 
 ## Contributors
 
@@ -977,7 +592,7 @@ Each user establishes a WebSocket connection (one per browser tab), enabling:
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Chat HTTP API, WebSocket chat layer, and documentation
+      Chat HTTP API, WebSocket chat layer
     </td>
   </tr>
 
@@ -989,7 +604,7 @@ Each user establishes a WebSocket connection (one per browser tab), enabling:
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Chat UI design, frontend development and documentation
+      Chat UI design, frontend development, documentation
     </td>
   </tr>
 </table>
