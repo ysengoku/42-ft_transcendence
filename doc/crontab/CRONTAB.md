@@ -89,16 +89,17 @@ The **Crontab** manages:
 ```mermaid
 ---
 config:
-  layout: dagre
-  look: classic
-  theme: base
-  themeVariables:
-    lineColor: '#f7230c'
-    textColor: '#191919'
-    fontSize: 15px
-    nodeTextColor: '#000'
-    edgeLabelBackground: '#fff'
+layout: dagre
+look: classic
+theme: base
+themeVariables:
+lineColor: '#f7230c'
+textColor: '#191919'
+fontSize: 15px
+edgeLabelBackground: '#fff'
+
 ---
+
 flowchart TD
 subgraph CRONJOB["CRONTAB"]
 A["Cronjob script"]
@@ -116,14 +117,23 @@ CRONJOB
 F["Sends ws message to online users"]
 SERVER
 FRONT
+NGINX["NGINX"]
+DATABASE["DATABASE"]
+REDIS["REDIS"]
 end
-T -- "Triggers every minute" --> A
+T -- Triggers every minute --> A
 A -- "DELETE /api/cronjob/cron/check-inactive-users" --> SERVER
-D --> E
-D --> F --> W
+D --> E & F
+E --> DATABASE
+F --> W
+DATABASE@{ shape: cyl}
+DATABASE:::Ash
+classDef Ash stroke-width:1px, stroke-dasharray:none, stroke:#999999, fill:#EEEEEE, color:#000000
+style CRONJOB fill:#AA00FF
+style SERVER fill:#2962FF
+style FRONT fill:#FF6D00
+style NGINX fill:#00C853
+style REDIS fill:#D50000
+style DOCKER_NETWORK fill:#BBDEFB
 
-    style CRONJOB fill:#AA00FF
-    style SERVER fill:#2962FF
-    style FRONT fill:#FF6D00
-    style DOCKER_NETWORK fill:#BBDEFB
 ```
