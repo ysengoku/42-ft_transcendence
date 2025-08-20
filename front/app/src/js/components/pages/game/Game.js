@@ -44,8 +44,12 @@ export class Game extends HTMLElement {
     this.render();
 
     document.querySelector('#content').classList.add('position-relative');
-    this.scoreboard = document.createElement('game-scoreboard');
-    this.appendChild(this.scoreboard);
+    this.timerElement = document.createElement('game-timer');
+    this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60); // Initial time limit in second
+    this.appendChild(this.timerElement);
+    this.buffIconElement = document.createElement('game-buff-icon');
+    this.appendChild(this.buffIconElement);
+    this.buffIconElement?.showIcon('long'); // Test
   }
 
   setQueryParam(param) {
