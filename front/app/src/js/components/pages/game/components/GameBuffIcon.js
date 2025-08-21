@@ -46,19 +46,24 @@ export class GameBuffIcon extends HTMLElement {
       }
     }
     this.iconWrapper.classList.remove('d-none');
+    this.iconWrapper.classList.add('pop-in');
+    setTimeout(() => {
+      this.iconWrapper.classList.remove('pop-in');
+    }, 600);
 
     // TEST
-    setTimeout(() => {
-      this.hideIcon();
-    }, 2000);
+    // setTimeout(() => {
+    //   this.hideIcon();
+    // }, 2000);
   }
 
   hideIcon() {
-    this.iconWrapper.classList.add('pop');
+    this.iconWrapper.classList.add('pop-out');
     setTimeout(() => {
       this.iconWrapper.classList.add('d-none');
+      this.iconWrapper.classList.remove('pop-out');
       this.icon.src = '';
-    }, 700);
+    }, 600);
   }
 
   render() {
@@ -81,11 +86,11 @@ export class GameBuffIcon extends HTMLElement {
     #game-buffer-icon-wrapper {
       position: absolute;
       top: calc(${this.#navbarHeight}px + 16px);
-      right: 16px;
+      right: 24px;
     }
     #game-buffer-icon {
-      width: 4rem;
-      height: 4rem;
+      width: 96px;
+      height: 96px;
     }
     </style>
     `;

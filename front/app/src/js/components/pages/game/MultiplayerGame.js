@@ -43,10 +43,6 @@ export class MultiplayerGame extends HTMLElement {
 
     this.#state.gameId = param.id;
     this.render();
-
-    this.scoreboard = document.createElement('game-scoreboard');
-    // TODO: Should set players' nickname or alias
-    this.appendChild(this.scoreboard);
   }
 
   disconnectedCallback() {
