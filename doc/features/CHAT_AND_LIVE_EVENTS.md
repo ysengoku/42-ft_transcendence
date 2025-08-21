@@ -1,9 +1,11 @@
 # Chat and Live Events
+
 The Chat and Live Events system manages core communication features within the application, including messaging, notifications, game invitations, and real-time user presence. All of those systems are interconnected and handled in a live, real-time manner through [WebSocket](https://en.wikipedia.org/wiki/WebSocket) connection to the `/ws/events` endpoint, with the help of a handful HTTP endpoints.
 
 Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protocol, the server can send the data to the target user by itself, without that user requesting it. It's the heart of the chat and live events system: it's what makes them "live".
 
 ## Table of contents
+
 - [Features](#features)
   - [Chat](#chat)
     - [Real-time Messaging](#real-time-messaging)
@@ -25,9 +27,11 @@ Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protoco
 <br />
 
 ## Features
+
 This section describes how the client and the server interact for each key feature. Detailed field-level specifications are provided in the [API & WebSocket Protocol Reference](#api--websocket-protocol-reference) section.
 
 ### Chat
+
 Users can send messages to to each other using convenient UI that is similar to the ones of WhatsApp or Telegram. The core feature of the chat is real-time messaging, but besides that, chat has additional features for better user experience: it takes advantage of the [social features](./USER_MANAGEMENT.md#social-networking-elements) of the app, has a message-liking system, user search UI and visual indication for when the server was acknowledged by the server.
 
 Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the websocket endpoint, and are used for cases when there is no necessity for biderectional communication that WebSockets enable. The rest of the logic is handled through `/ws/events` WebSocket endpoint. The list of HTTP endpoints:
@@ -46,6 +50,7 @@ Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the web
 </figure>
 
 #### Real-time Messaging
+
 The main feature of the chat is real-time messaging; when a user sends a message to a target user, user can start conversation through [profile page of the user](./USER_MANAGEMENT.md#user-search-and-user-profiles) they desire to message, through search bar on the chat page, or by finding an existing conversation in the chat UI.
 
 Whenever user sends a message, the client sends it to the server via the [`new_message`](#protocol-new-message-client-server) WebSocket event. For the sender, the message is considered to be "pending", and is grayed out until the the server confirms that it received it.
@@ -66,6 +71,7 @@ For the receiver the message appears on their chat page without receiver asking 
 The message is considered [read](#protocol-read-message) when it's displayed in the UI.
 
 #### Social Networking Elements
+
 [Users blocked by the current user](./USER_MANAGEMENT.md#social-networking-elements) are unable to message them or find them through [user search feature](./USER_MANAGEMENT.md#user-search-and-user-profiles).
 <figure align="center">
   <figcaption>Chat with a blocked user</figcaption>
@@ -73,6 +79,7 @@ The message is considered [read](#protocol-read-message) when it's displayed in 
 </figure>
 
 #### Adding or Removing Likes on a Message
+
 A user can toggle a like on any received message by clicking on it.   
 When a message is clicked, the client identifies the target message by its id attribute, then sends [`like_message`](#protocol-like-message-client-server) or [`unlike_message`](#protocol-unlike-message-client-server) WebSocket event to the server.
 
@@ -84,9 +91,10 @@ The server then sends [`like_message`](#protocol-like-message-server-client) eve
 <br />
 
 ### Notifications
+
 Notifications are things of interest that server sends to the user without user explicitely requesting for it. Users receive notifications when:
-- [Another user added them to their friend list](#protocol-new-friend). (See [User Management docs](./USER_MANAGEMENT.md#social-networking-elements) for friend list).
-- [A new tournament has been created by another user.](#protocol-new-tournament). (See [Tournaments docs](./TOURNAMENTS.md))
+- [Another user added them to their friend list](#protocol-new-friend). (See [User Management docs](./USER_MANAGEMENT.md#social-networking-elements) for friend list)
+- [A new tournament has been created by another user](#protocol-new-tournament). (See [Tournaments docs](./TOURNAMENTS.md))
 - [The user is invited to Pong Duel by another user](#protocol-game-invite-server-client). (See [Game invitation section](#game-invitation))
 
 When a notification arrives, the client displays a toast and adds an unread badge to the **Notifications** button in the Navbar.
@@ -102,9 +110,11 @@ Just like [chat](#chat), notifications feature uses only a handful of HTTP endpo
 </p>
 
 When user selects a notification item in the list, it has different effects depending on notification. Regardless of type, it will be considered [read](#protocol-read-notification).
-- If the notification type is [new friend](#protocol-new-friend): Navigate to the new friend's profile page.
+
+- If the notification type is [new friend](#protocol-new-friend): Navigate to the new friend's profile page.   
   <img src="../../assets/ui/notification-new-friend.png" alt="New friend" width="240px" />
-- If the notification type is [new tournament](#protocol-new-tournament): Navigate to the tournament page and open the registration form.
+
+- If the notification type is [new tournament](#protocol-new-tournament): Navigate to the tournament page and open the registration form.   
   <img src="../../assets/ui/notification-new-tournament.png" alt="New tournament" width="240px" />
 
 User can also mark all unread notification as read by clicking **Mark all as read** button.
@@ -112,8 +122,9 @@ User can also mark all unread notification as read by clicking **Mark all as rea
 <br />
 
 ### Game invitation
-TODO: do proper links with the game part of the documentation when it's going to be ready.
-Since Peacemakers is a platform for playing pong, an invitation to play pong is an important feature. User can invite others to Pong Duel from either [chat page](#chat) or another [user's profile page](./USER_MANAGEMENT.md#user-search-and-user-profiles).
+
+TODO: do proper links with the game part of the documentation when it's going to be ready.   
+Since Peacemakers is a platform for playing pong, an invitation to play pong is an important feature. User can invite others to Pong Duel from either **[Chat page](#chat)** or **Duel Menu page**.
 
 <figure align="center">
   <figcaption>Send invitation from Chat page</figcaption>
@@ -143,6 +154,7 @@ If invitation is accepted, [both players ](#protocol-game-accepted) get redirect
 <br />
 
 ### User Presence System
+
 Users can be online or offline. Each meaningful API request and WebSocket event in the last 30 minutes makes them [online](#protocol-user-online), which is going to be visible for anyone who sees them in [chat](#chat) or sees their [profile page](./USER_MANAGEMENT.md#user-search-and-user-profiles). Presence is denoted as a green or gray badge, depending on if they are online or offline respectively.
 
 Users are checked periodically for their activity. Inactive users, users who disconnected from all devices or the ones who logged out explicitely, are considered to be [offline](#protocol-user-offline).
@@ -176,36 +188,18 @@ The chat system revolves around three main models: `Chat`, `ChatMessage`, and `N
 
 <br />
 
-#### WebSocket connection
+#### WebSocket (Django Channels)
 
-- Open WebSocket (one connection per browser tab) on login
-- Authenticate token and accept/close connection
-- Join channel groups: `user_{id}`, `chat_{uuid}` (for each chat), `online_users`
+Each browser tab establishes a dedicated WebSocket connection that stays active for the duration of the session. This connection enables real-time subscriptions and event delivery across the application.   
+When a user logs in, the server authenticates the provided token and either accepts or rejects the connection. Once accepted, the client is subscribed to several channel groups that define the scope of events it will receive:
 
-#### On incoming WebSocket action:
+- **`user_{id}`** — user-scoped events such as notifications or friend updates  
+- **`chat_{uuid}`** — one-to-one chat messages between participants  
+- **`online_users`** — global presence broadcasts  
 
-- Validate incoming action
-- Process application logic and persist changes (DB + optional cache)
-- Push resulting events to relevant channel groups
-  - (Detailed validation and error handling are described in [**Validation & Security**](#validation--security))
+Messages sent over the WebSocket are validated on receipt. Valid actions trigger the corresponding business logic, update the database (and optionally the cache), and then produce new events broadcast to the appropriate channel groups. This ensures that all connected clients receive consistent, real-time updates.  
 
-#### Notification delivery
-
-- User-scoped events → `user_{id}` group (private push)
-- Chat events → `chat_{uuid}` group (room push)
-- Presence broadcasts → `online_users` group (connected online users only)
-
-#### WebSockets (Django Channels)
-
-Each user establishes a WebSocket connection (one per browser tab), enabling:
-  - Joining groups: `user_{id}`, `chat_{uuid}`, `online_users`
-  - Receiving real-time events including chat messages, likes/unlikes on messages, friend additions, game invitations, notifications for newly created tournaments.
-
-##### Channel Groups:
-
-  - `user_{id}`: Private actions (notifications, friend-related updates)
-  - `chat_{uuid}`: One-to-one chat messages between the two participants
-  - `online_users`: Presence updates broadcasts
+Further details about validation and error handling are described in [**Validation & Security**](#validation--security).
 
 <br />
 
@@ -307,8 +301,11 @@ Each indicator updates in real time, ensuring consistent status information wher
 <br />
 
 ## API & WebSocket Protocol Reference
+
 ### WebSocket Protocol
+
 #### Endpoint
+
 The application establishes a single WebSocket connection at `/ws/events`, which is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.  
 The connection is opened when the user logs in and stays active until logout, tab closure, or network loss.
 
@@ -534,6 +531,7 @@ SERVER --> CLIENT
 <br />
 
 ## Testing
+
 `make tests-chat` will initialize the tests related to the chat and live events system.
 
 ## Contributors
