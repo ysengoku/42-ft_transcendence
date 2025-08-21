@@ -87,7 +87,7 @@ Blocking feature has following:
 ### User Search And User Profiles
 Each of the users have a lot of different data that is associated with them: their username, nickname, elo, winrate, list of games, friendship/block status relative to the user currently viewing the profile... It is displayed neatly on their profile page, which can be visited by other ([non-blocked](#social-networking-elements)) users.
 <p align="center">
-  <img src="../../assets/ui/profile-page.png.png" alt="Register Page" width="480px" />
+  <img src="../../assets/ui/profile-page.png" alt="Profile Page" width="480px" />
 </p>
 
 - `GET /api/users`: Retreives paginated list of users filtered based on query parameters. Users can be searched by their nickname or username.
