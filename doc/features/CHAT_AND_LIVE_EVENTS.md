@@ -30,7 +30,7 @@ Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protoco
 
 ## Features
 
-This section describes how the client and the server interact for each key feature. Detailed field-level specifications are provided in the [API & WebSocket Protocol Reference](#api--websocket-protocol-reference) section.
+This section describes the features of the events system: how client and server interacts to create . Detailed field-level specifications are provided in the [API & WebSocket Protocol Reference](#api--websocket-protocol-reference) section.
 
 ### Chat
 
@@ -50,6 +50,8 @@ Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the web
   <figcaption>Select an existing chat</figcaption>
   <img src="../../assets/ui/chat-selected-user.png" alt="Chat - Selected chat" width="480px" />
 </figure>
+
+---
 
 #### Real-time Messaging
 
@@ -90,7 +92,7 @@ The server then sends [`like_message`](#protocol-like-message-server-client) eve
   <img src="../../assets/ui/chat-like-message.png" alt="Chat - Like message" width="480px" />
 </p>
 
-<br />
+---
 
 ### Notifications
 
@@ -111,7 +113,7 @@ Just like [chat](#chat), notifications feature uses only a handful of HTTP endpo
   <img src="../../assets/ui/notification-list.png" alt="Notification list" width="240px" />
 </p>
 
-When user selects a notification item in the list, it has different effects depending on notification. Regardless of type, it will be considered [read](#protocol-read-notification).
+When user selects a notification item in the list, it has different effects depending on notification. Regardless of type, it will be considered read with [`read_notification`](#protocol-read-notification) event.
 
 - If the notification type is [new friend](#protocol-new-friend): Navigate to the new friend's profile page.   
   <img src="../../assets/ui/notification-new-friend.png" alt="New friend" width="240px" />
@@ -121,7 +123,7 @@ When user selects a notification item in the list, it has different effects depe
 
 User can also mark all unread notification as read by clicking **Mark all as read** button.
 
-<br />
+---
 
 ### Game invitation
 
@@ -149,13 +151,13 @@ The inviter is redirected to **Duel page** after sending the invitation. From th
 The invitee can accept or decline the invitation from **Notification list** in Navbar selecting [**Accept** or **Decline**](#protocol-reply-game-invite).
 
 <p align="center">
-  <img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation" width="240px" />
+  <img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation notificaiton" width="240px" />
 </p>
 
-If invitation is accepted, [both players ](#protocol-game-accepted) get redirected to a newly created pong game.
+If invitation [is accepted](#protocol-game-accepted), both players will be redirected to a newly created pong game.
 [Otherwise](#protocol-game-declined), nothing happens.
 
-<br />
+---
 
 ### User Presence System
 
@@ -170,46 +172,49 @@ For more details about **cronjob**, see [CRONTAB doc](../server/CRONTAB.md).
   <img src="../../assets/ui/user-presence.png" alt="User Presence Indicator" width="480px" />
 </p>
 
-<br />
+---
 
 ## Implementation details
-🛠️👷🏻‍♂️
+Every time an authenticated user connects to the application, WebSocket connection to `/ws/events` is established, and stays opened for the remainder of the session. This connections is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.
+
+The server and the client exchange messages with each other using [well-defined protocol](#websocket-protocol-reference).
+
 ### Backend
 
-Server of the project is able to handle WebSockets thanks to the Django Channels integration (TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses JWT authentication, like [the rest of the consumers in the project](./USER_MANAGEMENT.md#jwt-authentication).
+Backend side of the chat & events system is implemented with `chat` Django app (TODO: link to the high level explanation of the tech stack/overall backend overview).
+
+Server of the project is able to handle WebSockets thanks to the Django Channels integration (TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses [JWT authentication](./USER_MANAGEMENT.md#jwt-authentication) to identify and autorize users, like the rest of the consumers in the project.
 
 #### Core Models
 
-The chat system revolves around three main models: `Chat`, `ChatMessage`, and `Notification`. These models manage conversations between users, message histories, and notification events.
+The chat & events system revolves around three main models: `Chat`, `ChatMessage`, and `Notification`. These models manage conversations between users, message histories, and notification events.
 
-- `Chat`: Represents a chat session. This model itself supports multiple participants, but in the current app implementation, only one-to-one chats are used. All messages exchanged in the chat are associated with it via the `ChatMessage` model. Key fields include `id` (UUID) and `participants` (ManyToMany to `Profile`).
+- `Chat`: Represents a chat session. This model itself supports multiple participants, but in the current app implementation, only one-to-one chats are used. All messages exchanged in the chat are associated with it via the `ChatMessage` model. Key fields include `id`, and `participants`.
 
-- `ChatMessage`: Represents a single message sent within a chat. It tracks the sender, the content, and the read and like status. Key fields include `id` (UUID), `content` (max length 256), `date`, `sender` (ForeignKey to `Profile`), `chat` (ForeignKey to `Chat`), `is_read`, and `is_liked`.
+- `ChatMessage`: Represents a single message sent within a chat. It tracks the sender, the content, and the read and like status. Key fields include `id`, `content`, `date`, `sender`, `chat`, `is_read`, and `is_liked`.
 
-- `Notification`: Manages an event notification sent to a user. Notifications can indicate game invitations, new tournaments announcement, or friend additions. Key fields include `id` (UUID), `receiver` (ForeignKey to `Profile`), `data` (JSON), `action` (enum: `GAME_INVITE`, `NEW_TOURNAMENT`, `NEW_FRIEND`), and `is_read` (boolean).
+- `Notification`: Manages an event notification sent to a user. Notifications have different types: new messages, game invitations, new tournaments announcement, or friend additions. Key fields include `id`, `receiver`, `action`, `data` (`action` and `data` roughly correspond to the [WebSocket events](#websocket-protocol-reference)) and `is_read`.
   Each notification stores arbitrary JSON data related to the event:
-  - **GAME_INVITE**: Information about the game invitation, such as `game_id`, `status`, and `invitee` information.
-  - **NEW_TOURNAMENT**: Details of the tournament, including `tournament_id`, `tournament_name`, and  current `status`.
-  - **NEW_FRIEND**: Includes sender's profile information to identify the new friend.
+  - `GAME_INVITE`: Information about the game invitation, such as `game_id`, `status`, and `invitee` information.
+  - `NEW_TOURNAMENT` Details of the tournament, including `tournament_id`, `tournament_name`, and  current `status`.
+  - `NEW_FRIEND`: Includes sender's profile information to identify the new friend.
 
-- `GameInvitation`: Represents a game invitation from one user to another. It tracks sender, recipient, optional invitee for special cases, status, and game settings. Key fields include `id` (UUID), `sender` (ForeignKey to `Profile`), `invitee` (optional ForeignKey), `recipient` (ForeignKey to `Profile`), `status` (enum: `pending`, `accepted`, `declined`, `cancelled`), and `settings` (JSON).
+- `GameInvitation`: Represents a game invitation from one user to another. It tracks sender, recipient, optional invitee for special cases, status, and game settings. Key fields include `id`, `sender`, `invitee`, `recipient`, `status` (can be `pending`, `accepted`, `declined`, `cancelled`), and `settings` (settings for the game the inviter wish to play).
 
-<br />
+---
 
-#### WebSocket (Django Channels)
+#### Event Groups
 
-Each browser tab establishes a dedicated WebSocket connection that stays active for the duration of the session. This connection enables real-time subscriptions and event delivery across the application.   
-When a user logs in, the server authenticates the provided token and either accepts or rejects the connection. Once accepted, the client is subscribed to several channel groups that define the scope of events it will receive:
+With Django Channels (TODO: send link to how Django Channels are used in our project and with Redis) one may want to associate certain actions with certain group of users. For example, when one use messages to another, it's undesirable to broadcast this event to every single user. Only those two users should receive relevant messages.
+Once user is authenticated, they are subscribed to several channel groups that define the scope of events it will receive:
 
-- **`user_{id}`** — user-scoped events such as notifications or friend updates  
-- **`chat_{uuid}`** — one-to-one chat messages between participants  
-- **`online_users`** — global presence broadcasts  
+- `user_{id}`: user-scoped events such as notifications, game invitations or friend updates. This is a personal group that contains only one specific user.
+- `chat_{uuid}`: one-to-one chat messages between participants. This group contains two people: the chat participants.
+- `online_users`: global presence broadcasts. This group is global and contains every user.
 
-Messages sent over the WebSocket are validated on receipt. Valid actions trigger the corresponding business logic, update the database (and optionally the cache), and then produce new events broadcast to the appropriate channel groups. This ensures that all connected clients receive consistent, real-time updates.  
+Once user establishes connection to `/ws/events`, they are subscribed to all relevant groups, which includes one `user_{id}`, one `online_users` and many `chat_{uuid}` (one group per chat).
 
-Further details about validation and error handling are described in [**Validation & Security**](#validation--security).
-
-<br />
+---
 
 #### Validation & Security
 
@@ -227,7 +232,7 @@ Further details about validation and error handling are described in [**Validati
   - Rate limiting applied to invitation sending to prevent spam.
   - All game settings and `client_id` values strictly sanitized and validated.
 
-<br />
+---
 
 ### Frontend
 
@@ -311,10 +316,7 @@ Each indicator updates in real time, ensuring consistent status information wher
 
 ## WebSocket Protocol Reference
 
-The application establishes a single WebSocket connection at `/ws/events`, which is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.  
-The connection is opened when the user logs in and stays active until logout, tab closure, or network loss.
-
-### Message Format
+All data exchanges betwen the server and the client use JSON messages that conform to this format:
 
 ```json
 {
@@ -325,12 +327,15 @@ The connection is opened when the user logs in and stays active until logout, ta
 }
 ```
 
+- `action`: what kind of message it is (new message, notification, presence update etc). `action` is always a simple string.
+- `data`: context to the this message (who sent the message, what kind of notification is this, which exactly user went online etc). `data` may contain an arbitrary amount of fields of any types. Exact schema of `data` depends on the `action`.
+
 ### Chat
 
 CLIENT --> SERVER
 
 <a id="protocol-new-message-client-server"></a>
-- **new_message**
+- `new_message`
   | Data field  | Type     | Description                           |
   |:------------|:---------|:------------------------------------- |
   | `chat_id`   | `string` | id of the chat room                   |
@@ -338,14 +343,14 @@ CLIENT --> SERVER
   | `timestamp` | `string` | Timestamp indicating when it was sent |
 
 <a id="protocol-like-message-client-server"></a>
-- **like_message**:
+- `like_message`
   | Data field | Type      | Description             |
   |:-----------|:----------|:------------------------|
   | `chat_id`  | `string`  | id of the chat room     |
   | `id`       | `string`  | id of the liked message |
 
 <a id="protocol-unlike-message-client-server"></a>
-- **unlike_message**
+- `unlike_message`
 
   | Data field | Type      | Description                |
   |:-----------|:----------|:---------------------------|
@@ -353,7 +358,7 @@ CLIENT --> SERVER
   | `id`       | `string`  | id of the un-liked message |
 
 <a id="protocol-read-message"></a>
-- **read_message**
+- `read_message`
 
   | Data field | Type      | Description            |
   |:-----------|:----------|:-----------------------|
@@ -365,7 +370,7 @@ CLIENT --> SERVER
 SERVER --> CLIENT
 
 <a id="protocol-new-message-server-client"></a>
-- **`new_message`**
+- `new_message`
 
   | Data field | Type       | Description                           |
   |:-----------|:-----------|:------------------------------------- |
@@ -379,7 +384,7 @@ SERVER --> CLIENT
 <br />
 
 <a id="protocol-like-message-server-client"></a>
-- **`like_message`**
+- `like_message`
 
   | Data field  | Type       | Description                              |
   |:------------|:-----------|:---------------------------------------- |
@@ -394,7 +399,7 @@ SERVER --> CLIENT
 CLIENT --> SERVER
 
 <a id="protocol-read-notification"></a>
-- **`read_notification`**
+- `read_notification`
 
   | Data field | Type     | Description            |
   |:-----------|:---------|:-----------------------|
@@ -405,7 +410,7 @@ CLIENT --> SERVER
 SERVER --> CLIENT
 
 <a id="protocol-new-friend"></a>
-- **`new_friend`**
+- `new_friend`
 
   | Data field  | Type       | Description                                            |
   |:------------|:-----------|:------------------------------------------------------ |
@@ -415,7 +420,7 @@ SERVER --> CLIENT
 <br />
 
 <a id="protocol-new-tournament"></a>
-- **`new_tournament`**
+- `new_tournament`
 
   | Data field        | Type       | Description                            |
   |:------------------|:-----------|:---------------------------------------|
@@ -432,7 +437,7 @@ SERVER --> CLIENT
 CLIENT --> SERVER
 
 <a id="protocol-game-invite-client-server"></a>
-- **`game_invite`**
+- `game_invite`
   | Data field  | Type     | Description                                                                       |
   |:------------|:---------|:--------------------------------------------------------------------------------- |
   | `username`  | `string` | username of the invitee                                                           |
@@ -452,7 +457,7 @@ CLIENT --> SERVER
 <br />
 
 <a id="protocol-reply-game-invite"></a>
-- **`reply_game_invite`**
+- `reply_game_invite`
 
   | Data field  | Type      | Description.                        |
   |:------------|:----------|:------------------------------------|
@@ -460,7 +465,7 @@ CLIENT --> SERVER
   | `accept`    | `boolean` | true if accepted, false if declined |
 
 <a id="protocol-cancel-game-invite"></a>
-- **`cancel_game_invite`**
+- `cancel_game_invite`
 
   | Data field  | Type     | Description             |
   |:------------|:---------|:------------------------|
@@ -471,7 +476,7 @@ CLIENT --> SERVER
 SERVER --> CLIENT
 
 <a id="protocol-game-invite-server-client"></a>
-- **`game_invite`**
+- `game_invite`
 
   | Data field | Type       | Description               |
   |:-----------|:-----------|:--------------------------|
@@ -482,7 +487,7 @@ SERVER --> CLIENT
 <br />
 
 <a id="protocol-game-accepted"></a>
-- **`game_accepted`**
+- `game_accepted`
 
   | Data field | Type       | Description.                      |
   |:-----------|:-----------|:----------------------------------|
@@ -494,7 +499,7 @@ SERVER --> CLIENT
 <br />
 
 <a id="protocol-game-declined"></a>
-- **`game_declined`**
+- `game_declined`
 
   | Data field | Type       | Description.                      |
   |:-----------|:-----------|:----------------------------------|
@@ -504,7 +509,7 @@ SERVER --> CLIENT
 <br />
 
 <a id="protocol-game-invite-canceled"></a>
-- **`game_invite_canceled`**
+- `game_invite_canceled`
 
   | Data field  | Type               | Description                                  |
   |:------------|:-------------------|:---------------------------------------------|
@@ -520,7 +525,7 @@ SERVER --> CLIENT
 SERVER --> CLIENT
 
 <a id="protocol-user-online"></a>
-- **`user_online`**
+- `user_online`
   | Data field  | Type     | Description                                      |
   |:------------|:---------|:-------------------------------------------------|
   | `username`  | `string` | username of the user whose status becomes online |
@@ -528,7 +533,7 @@ SERVER --> CLIENT
 <br />
 
 <a id="protocol-user-offline"></a>
-- **`user_offline`**
+- `user_offline`
   | Data field  | Type     | Description                                       |
   |:------------|:---------|:--------------------------------------------------|
   | `username`  | `string` | username of the user whose status becomes offline |
