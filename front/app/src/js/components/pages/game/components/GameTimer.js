@@ -28,19 +28,19 @@ export class GameTimer extends HTMLElement {
 
   updateRemainingTime(remainingTime) {
     const minutes = Math.floor(remainingTime / 60);
-    if (this.#state.minutes !== minutes) {
-      this.timerWrapper.classList.add('minutes-changed');
+    if (this.#state.minutes !== minutes && this.minuteElement) {
+      this.minuteElement.classList.add('minutes-changed');
+      setTimeout(() => {
+        this.#state.minutes = minutes;
+        this.minuteElement.textContent = this.#state.minutes;
+      }, 200);
     }
-    this.#state.minutes = minutes;
     this.#state.seconds = (remainingTime % 60).toString().padStart(2, '0');
-    if (this.minuteElement) {
-      this.minuteElement.textContent = this.#state.minutes;
-    }
     if (this.secondElement) {
       this.secondElement.textContent = this.#state.seconds;
     }
     setTimeout(() => {
-      this.timerWrapper.classList.remove('minutes-changed');
+      this.minuteElement?.classList.remove('minutes-changed');
     }, 800);
   }
 
@@ -58,18 +58,23 @@ export class GameTimer extends HTMLElement {
     }
 
     // --- Test ---------------------
-    setTimeout(() => {
-      this.updateRemainingTime(120);
-    }, 2000);
+    // setTimeout(() => {
+    //   this.updateRemainingTime(120);
+    // }, 2000);
     // ------------------------------
   }
 
   template() {
     return `
-    <div id="game-timer-wrapper" class="d-flex flex-row justify-content-center align-items-center p-2">
-      <p id="game-timer-minutes" class="game-timer fs-1 m-0"></p>
-      <p class="fs-2 fw-bold mx-2">:</p>
-      <p id="game-timer-seconds" class="game-timer fs-1 m-0"></p>
+    <div id="game-timer-wrapper" class="d-flex flex-row justify-content-center m-2">
+      <div id="game-timer-board" class="wood-board px-2 py-1">
+        <div id="game-timer-board-inner" class="d-flex flex-row justify-content-center align-items-center px-3 pt-1">
+          <i class="bi bi-stopwatch-fill me-3"></i>
+          <p id="game-timer-minutes" class="game-timer fs-2 m-0"></p>
+          <p class="fs-2 fw-bold mx-2 my-0">:</p>
+          <p id="game-timer-seconds" class="game-timer fs-2 m-0"></p>
+        </div>
+      </div>
     </div>
   `;
   }
@@ -79,12 +84,22 @@ export class GameTimer extends HTMLElement {
     <style>
     #game-timer-wrapper {
       position: absolute;
-      top: ${this.#navbarHeight}px;
+      top: calc(${this.#navbarHeight}px + 8px);
       left: 0;
       right: 0;
     }
-    .game-timer {
+    #game-timer-board {
+      display: inline-flex;
+      width: fit-content;
+      color: var(--pm-primary-100);
       font-family: 'van dyke';
+    }
+    #game-timer-board-inner {
+      opacity: 0.9;
+      background-color: rgba(var(--pm-primary-400-rgb), 0.4);
+      clip-path: url(#wave-clip);
+    }
+    .game-timer {
     }
     .minutes-changed {
       transition-delay: 0s;
