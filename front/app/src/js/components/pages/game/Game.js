@@ -20,6 +20,7 @@ import './components/index';
 
 /* eslint no-var: "off" */
 export class Game extends HTMLElement {
+  #navbarHeight = 64;
   #state = {
     gameOptions: {},
     gameType: '', // 'classic' or 'ai'
@@ -27,6 +28,11 @@ export class Game extends HTMLElement {
 
   constructor() {
     super();
+
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+      this.#navbarHeight = navbar.offsetHeight;
+    }
   }
 
   async connectedCallback() {
@@ -49,7 +55,9 @@ export class Game extends HTMLElement {
     this.appendChild(this.timerElement);
     this.buffIconElement = document.createElement('game-buff-icon');
     this.appendChild(this.buffIconElement);
-    this.buffIconElement?.showIcon('long'); // Test
+    this.buffIconElement?.showIcon('long'); // ----- Test ------
+    this.lifePointElement = document.createElement('game-life-point');
+    this.appendChild(this.lifePointElement);
   }
 
   setQueryParam(param) {
@@ -166,7 +174,7 @@ export class Game extends HTMLElement {
     const audio = new Audio(audiourl);
     let carboardModelStates = [carboard, carboard2, carboard3];
     const renderer = new THREE.WebGLRenderer({ alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
     renderer.setClearColor(0x855988, 1);
     this.appendChild(renderer.domElement);
@@ -229,35 +237,34 @@ export class Game extends HTMLElement {
       [null, false],
       [null, false],
     ];
-    let action = [[null, false], [null,false], [null,false],[null,false],[null,false], [null,false]];
     let animations = [];
 
     const playerGlb = (() => {
       const pedro_model = new THREE.Object3D();
-        loaderModel.load(
-          pedro,
-          function(gltf) {
-              const model = gltf.scene;
-              model.position.y = 0;
-              model.position.z = -20;
-              model.position.x = 0;
-              mixer = new THREE.AnimationMixer(model);
-              animations = gltf.animations;
-              action[0][0] = mixer.clipAction( animations[0] , model);
-              action[1][0] = mixer.clipAction( animations[1] , model);
-              action[2][0] = mixer.clipAction( animations[2] , model);
-              action[3][0] = mixer.clipAction( animations[3] , model);
-              action[4][0] = mixer.clipAction( animations[4] , model);
-              action[5][0] = mixer.clipAction( animations[5] , model);
-              action[1][0].play();
-              model.rotation.y = Math.PI / 2;
-              pedro_model.add(gltf.scene);
-          },
-          undefined,
-          function(error) {
-              console.error(error);
-          },
-        );
+      loaderModel.load(
+        pedro,
+        function (gltf) {
+          const model = gltf.scene;
+          model.position.y = 0;
+          model.position.z = -20;
+          model.position.x = 0;
+          mixer = new THREE.AnimationMixer(model);
+          animations = gltf.animations;
+          action[0][0] = mixer.clipAction(animations[0], model);
+          action[1][0] = mixer.clipAction(animations[1], model);
+          action[2][0] = mixer.clipAction(animations[2], model);
+          action[3][0] = mixer.clipAction(animations[3], model);
+          action[4][0] = mixer.clipAction(animations[4], model);
+          action[5][0] = mixer.clipAction(animations[5], model);
+          action[1][0].play();
+          model.rotation.y = Math.PI / 2;
+          pedro_model.add(gltf.scene);
+        },
+        undefined,
+        function (error) {
+          console.error(error);
+        },
+      );
       pedro_model.scale.set(0.5, 0.5, 0.5);
       scene.add(pedro_model);
       return pedro_model;
@@ -743,8 +750,7 @@ export class Game extends HTMLElement {
     })();
 
     function myCallback() {
-      if (Timer.timeLeft-- == 0)
-      {
+      if (Timer.timeLeft-- == 0) {
         Bumpers[0].score = 0;
         Bumpers[1].score = 0;
         gamePlaying = false;
@@ -1068,9 +1074,10 @@ export class Game extends HTMLElement {
   render() {
     this.innerHTML = ``;
     let renderer, camera, start;
+    const navbarHeight = this.#navbarHeight;
     [camera, renderer, start, this.stop, this.Workers, this.TimerId] = this.game();
     window.addEventListener('resize', function () {
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       let rendererWidth = renderer.domElement.offsetWidth;
       let rendererHeight = renderer.domElement.offsetHeight;
       camera.aspect = rendererWidth / rendererHeight;
