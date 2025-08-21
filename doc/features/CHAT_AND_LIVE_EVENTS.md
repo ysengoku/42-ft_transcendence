@@ -18,9 +18,11 @@ Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protoco
   - [Backend](#backend)
     - [Core models](#core-models)
   - [Frontend](#frontend)
-- [API & WebSocket Protocol Reference](#api--websocket-protocol-reference)
-  - [API Endpoints](#api-endpoints)
-  - [WebSocket](#websocket-protocol)
+    - [Chat Components](#chat-components)
+    - [Notifications Component](#notifications-components)
+    - [Game Invitation Component](#game-invitations-components)
+    - [User Presence System Components](#user-presence-system-components)
+- [WebSocket Protocol Reference](#websocket-protocol-reference)
 - [Testing](#testing)
 - [Contributors](#contributors)
 
@@ -146,7 +148,9 @@ The inviter is redirected to **Duel page** after sending the invitation. From th
 
 The invitee can accept or decline the invitation from **Notification list** in Navbar selecting [**Accept** or **Decline**](#protocol-reply-game-invite).
 
-<img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation" width="240px" />
+<p align="center">
+  <img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation" width="240px" />
+</p>
 
 If invitation is accepted, [both players ](#protocol-game-accepted) get redirected to a newly created pong game.
 [Otherwise](#protocol-game-declined), nothing happens.
@@ -155,12 +159,16 @@ If invitation is accepted, [both players ](#protocol-game-accepted) get redirect
 
 ### User Presence System
 
-Users can be online or offline. Each meaningful API request and WebSocket event in the last 30 minutes makes them [online](#protocol-user-online), which is going to be visible for anyone who sees them in [chat](#chat) or sees their [profile page](./USER_MANAGEMENT.md#user-search-and-user-profiles). Presence is denoted as a green or gray badge, depending on if they are online or offline respectively.
+Users can be online or offline. Each meaningful API request and WebSocket events in the last 30 minutes makes them [online](#protocol-user-online), which is going to be visible for anyone who sees them in [chat](#chat) or sees their [profile page](./USER_MANAGEMENT.md#user-search-and-user-profiles). Presence is denoted as a green or gray badge, depending on if they are online or offline respectively.
 
 Users are checked periodically for their activity. Inactive users, users who disconnected from all devices or the ones who logged out explicitely, are considered to be [offline](#protocol-user-offline).
 
 TODO: move cronjob documentation here.
 For more details about **cronjob**, see [CRONTAB doc](../server/CRONTAB.md).
+
+<p align="center">
+  <img src="../../assets/ui/user-presence.png" alt="User Presence Indicator" width="480px" />
+</p>
 
 <br />
 
@@ -225,7 +233,8 @@ Further details about validation and error handling are described in [**Validati
 
 The frontend is composed of modular components that work to provide real-time chat, notifications, game invitations, and presence updates across the application.
 
-#### ■ Chat components
+---
+#### Chat Components
 
 The chat feature is structured around a central `Chat` component that coordinates several supporting components. Together, they provide user search, conversation management, real-time messaging, and game invitations.
 
@@ -248,9 +257,9 @@ This component is a scrollable container that shows messages in chronological or
 ##### `InviteGameModal`:  
 See [Game invitations components section](#game-invitations-components)
 
-<br />
+---
 
-#### ■ Notifications components
+#### Notifications Components
 
 The notifications feature revolves around a notification button (`NotificationButton`) in the Navbar that toggles the visibility of the notification list (`NotificationsList`). They provide real-time updates, and actions for different types of notifications.
 
@@ -273,18 +282,18 @@ Represents a single notification and adapts its content and actions depending on
 
 Provides brief pop-ups for newly received notifications, giving immediate feedback even if the notification list dropdown is closed.
 
-<br />
+---
 
-#### ■ Game invitations components
+#### Game Invitations Components
 
 Two components are available for selecting game options and sending invitations: On the `Chat` page, by opening the `InviteGameModal`, or on the `DuelMenu` page where the invitation form is embedded directly in the interface.
 
 After sending an invitation, the inviter is redirected to the `Duel` page, which shows the opponent's information and updates dynamically once the invitee responds. For the invitee, accepting the invitation from the notification list triggers a redirection to the `Duel` page.
 When the invitation is accepted and the server confirms the creation of a game room, a countdown starts on both clients, then both are redirected to the game. 
 
-<br />
+---
 
-#### ■ Real-time presence system components
+#### User Presence System Components
 
 The real-time presence system keeps users informed about the online status of other users across the UI. Status indicators update dynamically whenever a user comes online or goes offline.
 
@@ -300,16 +309,12 @@ Each indicator updates in real time, ensuring consistent status information wher
 
 <br />
 
-## API & WebSocket Protocol Reference
-
-### WebSocket Protocol
-
-#### Endpoint
+## WebSocket Protocol Reference
 
 The application establishes a single WebSocket connection at `/ws/events`, which is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.  
 The connection is opened when the user logs in and stays active until logout, tab closure, or network loss.
 
-#### Message Format
+### Message Format
 
 ```json
 {
@@ -320,7 +325,7 @@ The connection is opened when the user logs in and stays active until logout, ta
 }
 ```
 
-#### Chat
+### Chat
 
 CLIENT --> SERVER
 
@@ -384,7 +389,7 @@ SERVER --> CLIENT
 
 ---
 
-#### Notifications
+### Notifications
 
 CLIENT --> SERVER
 
@@ -422,7 +427,7 @@ SERVER --> CLIENT
 
 ---
 
-#### Game invitation
+### Game invitation
 
 CLIENT --> SERVER
 
@@ -510,7 +515,7 @@ SERVER --> CLIENT
 
 <br />
 
-#### User presence system
+### User presence system
 
 SERVER --> CLIENT
 
