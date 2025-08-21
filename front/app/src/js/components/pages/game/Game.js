@@ -49,15 +49,38 @@ export class Game extends HTMLElement {
     }
     this.render();
 
-    document.querySelector('#content').classList.add('position-relative');
+    this.classList.add('position-relative');
     this.timerElement = document.createElement('game-timer');
     this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60); // Initial time limit in second
     this.appendChild(this.timerElement);
     this.buffIconElement = document.createElement('game-buff-icon');
     this.appendChild(this.buffIconElement);
-    this.buffIconElement?.showIcon('long'); // ----- Test ------
     this.lifePointElement = document.createElement('game-life-point');
     this.appendChild(this.lifePointElement);
+
+    // --- Test --------------------------------------------------
+    setTimeout(() => {
+      let remainingTime = this.#state.gameOptions.time_limit * 60;
+      setInterval(() => {
+        remainingTime -= 1;
+        this.timerElement?.updateRemainingTime(remainingTime);
+      }, 1000);
+    }, 1000);
+
+    this.buffIconElement?.showIcon('long');
+    setTimeout(() => {
+      this.buffIconElement?.hideIcon();
+    }, 2000);
+    setTimeout(() => {
+      this.buffIconElement?.showIcon('short');
+    }, 4000);
+
+    setTimeout(() => {
+      setInterval(() => {
+        this.lifePointElement?.decreasePoint(1);
+      }, 500);
+    }, 2000);
+    // -------------------------------------------------------------
   }
 
   setQueryParam(param) {
@@ -126,7 +149,6 @@ export class Game extends HTMLElement {
   }
 
   disconnectedCallback() {
-    document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
     if (this.onDocumentKeyDown) {
       document.removeEventListener('keydown', this.onDocumentKeyDown, true);
     }

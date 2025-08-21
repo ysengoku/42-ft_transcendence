@@ -1,9 +1,10 @@
 export class GameLifePoint extends HTMLElement {
-  #navbarHeight = 64;
-
   #MAX_POINT = 20;
-  #WEAK = 10;
-  #DANGER = 5;
+  #WEAK_LEVEL = 10;
+  #DANGER_LEVEL = 5;
+  #RATE = 100 / this.#MAX_POINT;
+  #ORANGE = getComputedStyle(document.documentElement).getPropertyValue('--pm-primary-400').trim();
+  #RED = getComputedStyle(document.documentElement).getPropertyValue('--pm-red-500').trim();
 
   #state = {
     p1CurrentPoint: this.#MAX_POINT,
@@ -12,11 +13,6 @@ export class GameLifePoint extends HTMLElement {
 
   constructor() {
     super();
-
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-      this.#navbarHeight = navbar.offsetHeight;
-    }
   }
 
   connectedCallback() {
@@ -24,15 +20,28 @@ export class GameLifePoint extends HTMLElement {
   }
 
   decreasePoint(playerNumber) {
+    let lifeBarElement = null;
+    let lifePoint = 0;
     if (playerNumber === 1) {
+      lifeBarElement = this.p1LifeBar;
       this.#state.p1CurrentPoint--;
-      if (this.p1LifeBar) {
-        const newWidth = this.#state.p1CurrentPoint * 5 + 'px';
-        this.p1LifeBar.width = newWidth;
-      }
-    }
-    if (playerNumber === 2) {
+      lifePoint = this.#state.p1CurrentPoint;
+    } else if (playerNumber === 2) {
+      lifeBarElement = this.p2LifeBar;
       this.#state.p2CurrentPoint--;
+      lifePoint = this.#state.p2CurrentPoint;
+    }
+    if (lifePoint < 0 || !lifeBarElement) {
+      return;
+    }
+    log.info(`Player ${playerNumber} lost life point`);
+    const newWidth = lifePoint * this.#RATE + '%';
+    lifeBarElement.style.width = newWidth;
+    if (lifePoint === this.#WEAK_LEVEL) {
+      lifeBarElement.style.backgroundColor = this.#ORANGE;
+    }
+    if (lifePoint === this.#DANGER_LEVEL) {
+      lifeBarElement.style.backgroundColor = this.#RED;
     }
   }
 
@@ -45,14 +54,14 @@ export class GameLifePoint extends HTMLElement {
 
   template() {
     return `
-    <div class="life-bars-wrapper d-flex flex-column justify-content-between align-items-center">
+    <div class="life-bars-wrapper d-flex flex-column justify-content-between align-items-center m-2">
       <div id="p1-life-bar-wrapper" class="life-bar-wrapper wood-board d-flex flex-row px-2 py-1 align-items-center">
         <i class="bi bi-lightning-fill pt-1 me-2"></i>
         <div id="p1-life-bar" class="life-bar"></div>
       </div>
       <div id="p2-life-bar-wrapper" class="life-bar-wrapper wood-board d-flex flex-row px-2 py-1 align-items-center">
         <i class="bi bi-lightning-fill pt-1 me-2"></i>
-        <div class="life-bar"></div>
+        <div id="p2-life-bar" class="life-bar"></div>
       </div>
     </div>
     `;
@@ -63,32 +72,28 @@ export class GameLifePoint extends HTMLElement {
     <style>
     .life-bars-wrapper {
       position: absolute;
-      top: 0;
-      bottom: 0;
+      top: 80px;
+      bottom: 40px;
       left: 0;
       right: 0;
-      margin: 0 auto;
+      margin: auto;
     }
     .life-bar-wrapper {
-      width: 200px;
+      width: 240px;
       height: 24px;
     }
     .life-bar {
       height: 100%;
-      width: 100%;
       background-color: var(--pm-green-400);
       border-radius: 8px;
       transition: width 0.3s;
     }
-    #p1-life-bar-wrapper {
-      margin-top: 12%;
-      
-    }
-    #p2-life-bar-wrapper {
-      margin-bottom: 10%;
-    }
     .bi-lightning-fill {
       color: rgba(var(--pm-primary-100-rgb), 0.6);
+    }
+    #p1-life-bar,
+    #p2-life-bar {
+      width: 100%;
     }
     </style>
     `;

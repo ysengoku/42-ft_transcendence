@@ -5,18 +5,11 @@ import iconSlow from '/img/slow.png?url';
 import iconSwitch from '/img/switch.png?url';
 
 export class GameBuffIcon extends HTMLElement {
-  #navbarHeight = 64;
-
   constructor() {
     super();
 
     this.iconWrapper = null;
     this.icon = null;
-
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-      this.#navbarHeight = navbar.offsetHeight;
-    }
   }
 
   connectedCallback() {
@@ -50,11 +43,6 @@ export class GameBuffIcon extends HTMLElement {
     setTimeout(() => {
       this.iconWrapper.classList.remove('pop-in');
     }, 600);
-
-    // TEST
-    // setTimeout(() => {
-    //   this.hideIcon();
-    // }, 2000);
   }
 
   hideIcon() {
@@ -74,7 +62,7 @@ export class GameBuffIcon extends HTMLElement {
 
   template() {
     return `
-    <div id="game-buffer-icon-wrapper" class="d-flex flex-row justify-content-center align-items-center">
+    <div id="game-buffer-icon-wrapper" class="d-flex flex-row justify-content-center align-items-center m-3">
       <img id="game-buffer-icon" alt="Buffer"/>
     </div>
     `;
@@ -85,8 +73,8 @@ export class GameBuffIcon extends HTMLElement {
     <style>
     #game-buffer-icon-wrapper {
       position: absolute;
-      top: calc(${this.#navbarHeight}px + 16px);
-      right: 24px;
+      top: 0;
+      right: 0;
     }
     #game-buffer-icon {
       width: 96px;
