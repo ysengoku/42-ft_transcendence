@@ -6,7 +6,7 @@ Every other part of the project is affected by this syste; after all, the abilit
 
 ## Table of contents
 
-- [Key features](#key-features)
+- [Features](#features)
     - [JWT Authentication](#jwt-authentication)
     - [Authentication Endpoints And CSRF Protection](#authentication-endpoints-and-csrf-protection)
     - [Password Restoration](#password-restoration)
@@ -24,7 +24,7 @@ Every other part of the project is affected by this syste; after all, the abilit
 - [Testing](#testing)
 - [Contributors](#contributors)
 
-## Key Features
+## Features
 
 ### JWT Authentication
 
