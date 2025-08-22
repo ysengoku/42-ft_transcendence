@@ -162,7 +162,7 @@ The invitee can accept or decline the invitation from **Notification list** in N
 </p>
 
 If invitation [is accepted](#protocol-game-accepted), both players will be redirected to a newly created pong game.
-[Otherwise](#protocol-game-declined), nothing happens.
+Otherwise, the inviter is notified of [the declination](#protocol-game-declined).
 
 ---
 
@@ -245,7 +245,6 @@ Once user establishes connection to `/ws/events`, they are subscribed to all rel
 
 The frontend is composed of modular components that work to provide real-time chat, notifications, game invitations, and presence updates across the application.
 
----
 #### Chat Components
 
 The chat feature is structured around a central `Chat` component that coordinates several supporting components. Together, they provide user search, conversation management, real-time messaging, and game invitations.
@@ -298,10 +297,12 @@ Provides brief pop-ups for newly received notifications, giving immediate feedba
 
 #### Game Invitations Components
 
-Two components are available for selecting game options and sending invitations: On the `Chat` page, by opening the `InviteGameModal`, or on the `DuelMenu` page where the invitation form is embedded directly in the interface.
+Two components are available for selecting game options and sending invitations:
+- On the `Chat` page, by opening the `InviteGameModal`
+- On the `DuelMenu` page where the invitation form is embedded directly in the interface
 
-After sending an invitation, the inviter is redirected to the `Duel` page, which shows the opponent's information and updates dynamically once the invitee responds. For the invitee, accepting the invitation from the notification list triggers a redirection to the `Duel` page.
-When the invitation is accepted and the server confirms the creation of a game room, a countdown starts on both clients, then both are redirected to the game. 
+After sending an invitation, the inviter is redirected to the `Duel` page, which shows the opponent's information and updates dynamically once the invitee responds. For the invitee, accepting the invitation from the notification list triggers a redirection to the `Duel` page.   
+If the invitation is accepted and the server confirms the creation of a game room, a countdown starts on both clients, then both are redirected to the game. Otherwise, the UI of the inviter shows the invitation declination.
 
 ---
 
