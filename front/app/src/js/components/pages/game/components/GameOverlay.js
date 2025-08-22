@@ -1,7 +1,14 @@
 import { router } from '@router';
 
+export const OVERLAY_TYPE = Object.freeze({
+	PENDING: 'pending',
+	PAUSE: 'pause',
+	GAMEOVER: 'game_over',
+	CANCEL: 'cancel',
+});
+
 export class GameOverlay extends HTMLElement {
-  #gameType = 'local'; // 'local' or 'multiplayer'
+  #gameType = ''; // 'local-classic' , 'local-ai', or 'multiplayer'
   #intervalGameId = null;
 
   constructor() {
@@ -22,6 +29,11 @@ export class GameOverlay extends HTMLElement {
 
   connectedCallback() {
     this.render();
+  }
+
+  disconnectedCallback() {
+    this.overlayButton1?.removeEventListener(this.navigateToGameMenu);
+    this.overlayButton2?.removeEventListener(this.navigateToHome);
   }
 
   render() {
@@ -45,7 +57,7 @@ export class GameOverlay extends HTMLElement {
     this.overlayMessageWrapper.classList.remove('d-none');
     this.clearGameInterval();
     switch (action) {
-      case 'pause':
+      case OVERLAY_TYPE.PAUSE:
         let remainingTime = data.remaining_time;
         const overlayMessageContent = this.querySelector('#overlay-message-content');
         overlayMessageContent.textContent = `Player ${data.name} disconnected.`;
@@ -60,36 +72,36 @@ export class GameOverlay extends HTMLElement {
           }
         }, 1000);
         break;
-      case 'game_over':
-        let player1;
-        let player2;
-        const isTournament = data.tournament_id !== null;
+      case OVERLAY_TYPE.GAMEOVER:
+        let player1 = null;
+        let player2 = null;
+        const isTournament = data.tournament_id ? true : false;
         data.winner.number === 1
           ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.inner = false))
           : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.inner = false));
         const player1Element = this.createPlayerResultElement(player1, data.elo_change, isTournament);
         const player2Element = this.createPlayerResultElement(player2, data.elo_change, isTournament);
-        if (isTournament) {
-          this.querySelector('#overlay-button1')?.classList.add('d-none');
-          this.querySelector('#overlay-button2')?.classList.add('d-none');
-        }
         const gameResultElement = this.querySelector('#overlay-game-result');
         gameResultElement.appendChild(player1Element);
         gameResultElement.appendChild(player2Element);
         if (isTournament) {
           setTimeout(() => {
             router.redirect(`tournament/${data.tournament_id}`);
-          }, 1000);
+          }, 1500);
         }
-      case 'cancel':
+
+      case OVERLAY_TYPE.CANCEL:
         this.overlayButton1 = this.querySelector('#overlay-button1');
         this.overlayButton2 = this.querySelector('#overlay-button2');
         if (data.tournament_id) {
-          this.overlayButton1.classList.add('d-none');
-          this.overlayButton2.classList.add('d-none');
+          this.overlayButton1?.classList.add('d-none');
+          this.overlayButton2?.classList.add('d-none');
         } else {
-          this.overlayButton1.addEventListener('click', this.navigateToGameMenu);
-          this.overlayButton2.addEventListener('click', this.navigateToHome);
+          this.overlayButton1?.addEventListener('click', this.navigateToGameMenu);
+          this.overlayButton2?.addEventListener('click', this.navigateToHome);
+          if (this.#gameType !== 'multiplayer') {
+            this.overlayButton1.textContent = 'Go back to Local Game Menu';
+          }
         }
         break;
       default:
@@ -103,7 +115,6 @@ export class GameOverlay extends HTMLElement {
     }
     this.overlay.classList.remove('overlay-dark');
     this.overlayMessageWrapper.classList.add('d-none');
-    // this.overlayMessageWrapper.innerHTML = '';
     this.overlayContent.innerHTML = '';
     this.overlayButton1?.removeEventListener('click', this.navigateToDuelMenu);
     this.overlayButton2?.removeEventListener('click', this.navigateToHome);
@@ -119,10 +130,14 @@ export class GameOverlay extends HTMLElement {
       ? ((result.textContent = 'Winner'), result.classList.add('match-result-winner'))
       : ((result.textContent = 'Loser'), result.classList.add('match-result-loser'));
     const avatar = element.querySelector('img');
-    avatar.src = player.avatar;
-    avatar.alt = player.name;
+    if (player.avatar) {
+      avatar.src = player.avatar;
+      avatar.alt = player.name;
+    } else {
+      avatar.classList.add('d-none');
+    }
     element.querySelector('.overlay-player-name').textContent = player.name;
-    if (player.elo && !isTournament) {
+    if (this.#gameType === 'multiplayer' && player.elo && !isTournament) {
       const eloWrapper = element.querySelector('.overlay-player-elo');
       eloWrapper.querySelector('.game-elo').textContent = player.elo;
       eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi i-arrow-down-right';
@@ -132,17 +147,17 @@ export class GameOverlay extends HTMLElement {
   }
 
   navigateToGameMenu() {
-    this.#gameType === 'local' ? router.navigate('/local-game-menu') : router.redirect('/duel-menu');
+    this.#gameType === 'multiplayer' ? router.redirect('/duel-menu') : router.redirect('/local-game-menu');
   }
 
   navigateToHome() {
-    this.#gameType === 'local' ? router.navigate('/home') : router.redirect('/home');
+    router.redirect('/home');
   }
 
   template() {
     return `
     <div id="overlay" class="position-absolute w-100 h-100">
-      <div id="game-overlay-message-wrapper" class="position-absolute text-center wood-board pt-5 pb-3 -none">
+      <div id="game-overlay-message-wrapper" class="position-absolute text-center wood-board pt-5 pb-3 d-none">
         <div id="game-overlay-content" class="d-flex flex-column align-items-center"></div>
       </div>
     </div>
@@ -187,13 +202,13 @@ export class GameOverlay extends HTMLElement {
   }
 
   overlayContentTemplate = {
-    pending: `
+    [OVERLAY_TYPE.PENDING]: `
       <div class="d-flex flex-column align-items-center mb-3">
         <div id="overlay-message-title" class="fs-3 px-4 pb-3">Waiting for both players to join...</div>
         <div class="pongAnimation"></div>
       </div>
       `,
-    pause: `
+    [OVERLAY_TYPE.PAUSE]: `
       <div id="overlay-message-title" class="fs-2">Game paused</div>
       <div id="overlay-message-content" class="mb-5"></div>
       <div class="d-flex flex-row align-items-center my-3">
@@ -202,7 +217,7 @@ export class GameOverlay extends HTMLElement {
         <div>&nbspseconds</div>
       </div>
       `,
-    game_over: `
+    [OVERLAY_TYPE.GAMEOVER]: `
       <div id="overlay-message-title" class="fs-2 mb-3">Game finished</div>
       <div id="overlay-game-result" class="d-flex flex-row justify-content-center align-items-center ap-3 pb-2"></div>
       <div class="d-flex flex-column mt-4">
@@ -210,7 +225,7 @@ export class GameOverlay extends HTMLElement {
         <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
       </div>
     `,
-    cancel: `
+    [OVERLAY_TYPE.CANCEL]: `
       <div id="overlay-message-title" class="fs-2">Game canceled</div>
       <div id="overlay-message-content" class="mb-3">Player failed to connect.</div>
       <div class="d-flex flex-column mt-5">
