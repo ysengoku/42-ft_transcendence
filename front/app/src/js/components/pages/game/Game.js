@@ -17,6 +17,7 @@ import { auth } from '@auth';
 import { DEFAULT_GAME_OPTIONS } from '@env';
 import { sessionExpiredToast } from '@utils';
 import './components/index';
+import { OVERLAY_TYPE } from './components/index';
 
 /* eslint no-var: "off" */
 export class Game extends HTMLElement {
@@ -57,6 +58,9 @@ export class Game extends HTMLElement {
     this.appendChild(this.buffIconElement);
     this.lifePointElement = document.createElement('game-life-point');
     this.appendChild(this.lifePointElement);
+    this.overlay = document.createElement('game-overlay');
+    this.overlay.gameType = `local-${this.#state.gameType}`;
+    this.appendChild(this.overlay);
 
     // --- Test --------------------------------------------------
     setTimeout(() => {
@@ -80,6 +84,20 @@ export class Game extends HTMLElement {
         this.lifePointElement?.decreasePoint(1);
       }, 500);
     }, 2000);
+
+    setTimeout(() => {
+      const testData = {
+        winner: {
+          name: "AI player",
+          number: 2,
+        },
+        loser: {
+          name: "Player 1",
+          number: 1,
+        },
+      }
+      this.overlay.show(OVERLAY_TYPE.GAMEOVER, testData);
+    }, 5000);
     // -------------------------------------------------------------
   }
 
