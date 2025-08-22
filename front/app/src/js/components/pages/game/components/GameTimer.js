@@ -59,7 +59,7 @@ export class GameTimer extends HTMLElement {
     <div id="game-timer-wrapper" class="d-flex flex-row justify-content-center m-3">
       <div id="game-timer-board" class="wood-board px-2 py-1">
         <div id="game-timer-board-inner" class="d-flex flex-row justify-content-center align-items-center px-3 pt-1">
-          <i class="bi bi-stopwatch-fill pe-3"></i>
+          <i class="bi bi-stopwatch-fill pe-2"></i>
           <p id="game-timer-minutes" class="game-timer fs-2 m-0"></p>
           <p class="fs-2 fw-bold mx-2 my-0">:</p>
           <p id="game-timer-seconds" class="game-timer fs-2 m-0"></p>
@@ -83,7 +83,7 @@ export class GameTimer extends HTMLElement {
       width: fit-content;
       color: var(--pm-primary-100);
       font-family: 'van dyke';
-      width: 168px;
+      width: 10rem;
     }
     #game-timer-board-inner {
       opacity: 0.9;
@@ -92,6 +92,12 @@ export class GameTimer extends HTMLElement {
       width: 100%;
     }
     .game-timer {
+      display: inline-block;
+      min-width: 2ch;
+      text-align: center;
+      }
+    #game-timer-minutes {
+      min-width: 1ch;
     }
     .minutes-changed {
       transition-delay: 0s;
