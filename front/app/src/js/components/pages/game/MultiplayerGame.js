@@ -17,15 +17,7 @@ export class MultiplayerGame extends HTMLElement {
 
   constructor() {
     super();
-
     this.overlay = null;
-    this.overlayMessageWrapper = null;
-    this.overlayButton1 = null;
-    this.overlayButton2 = null;
-    this.intervalGameId = null;
-
-    this.navigateToDuelMenu = this.navigateToDuelMenu.bind(this);
-    this.navigateToHome = this.navigateToHome.bind(this);
   }
 
   async setParam(param) {
@@ -46,7 +38,6 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   disconnectedCallback() {
-    document.querySelector('#content').classList.remove('position-relative', 'overflow-hidden');
     if (this.onDocumentKeyDown) {
       document.removeEventListener('keydown', this.onDocumentKeyDown, true);
     }
@@ -512,19 +503,19 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'game_started':
           log.info('Game started', data);
-          this.hideOverlay();
+          this.overlay.hide();
           break;
         case 'game_paused':
           log.info('Game paused');
-          this.showOverlay('pause', data);
+          this.overlay.show('pause', data);
           break;
         case 'game_unpaused':
           log.info('Game unpaused');
-          this.hideOverlay();
+          this.overlay.hide();
           break;
         case 'game_cancelled':
           log.info('Game cancelled', data);
-          this.showOverlay('cancel', data);
+          this.overlay.show('cancel', data);
           if (data.tournament_id) {
             router.redirect(`tournament/${data.tournament_id}`);
           }
@@ -532,7 +523,7 @@ export class MultiplayerGame extends HTMLElement {
         case 'player_won':
         case 'player_resigned':
           log.info('Game_over', data);
-          this.showOverlay('game_over', data);
+          this.overlay.show('game_over', data);
           break;
         default:
           break;
@@ -622,12 +613,10 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   render() {
-    document.querySelector('#content').classList.add('position-relative');
-    this.innerHTML = this.overlayTemplate();
-    this.overlay = this.querySelector('#overlay');
-    this.overlayMessageWrapper = this.querySelector('#overlay-message-wrapper');
-    this.overlayButton1 = this.querySelector('#overlay-button1');
-    this.overlayButton2 = this.querySelector('#overlay-button2');
+    this.classList.add('position-relative');
+    this.overlay = document.createElement('game-overlay');
+    this.overlay.gameType = 'multiplayer';
+    this.appendChild(this.overlay);
 
     const navbarHeight = this.#navbarHeight;
     const [camera, renderer, animate] = this.game();
@@ -640,245 +629,7 @@ export class MultiplayerGame extends HTMLElement {
     });
     animate();
 
-    this.showOverlay('pending');
-
-    // --- TEST (should remove before submitting) ---
-    // const result = {
-    //   winner: {
-    //     name: 'Celiastral',
-    //     number: 1,
-    //     avatar: '/__mock__/img/sample-pic1.jpg',
-    //     elo: 1200,
-    //     number: 2,
-    //   },
-    //   loser: {
-    //     name: 'Pedro',
-    //     avatar: '/__mock__/img/sample-pic2.png',
-    //     elo: 1100,
-    //     number: 2,
-    //   },
-    //   elo_change: 16,
-    //   tournament_id: null,
-    // };
-    // this.showOverlay('game_over', result);
-
-    // mock data
-    // const data = {
-    //   state: {
-    //     name: 'Alice',
-    //     remaining_time: 10,
-    //   }
-    // }
-    // setTimeout(() => {
-    // this.showOverlay('pause', data.state)
-    // }, 2000);
-    // setTimeout(() => {
-    //   this.hideOverlay();
-    // }, 4000);
-    // setTimeout(() => {
-    // this.showOverlay('cancel');
-    // }, 6000);
-    // --------------------------
-  }
-
-  clearGameInterval() {
-    if (this.intervalGameId) {
-      clearInterval(this.intervalGameId);
-      this.intervalGameId = null;
-    }
-  }
-
-  showOverlay(action, data = null) {
-    this.overlayMessageWrapper.innerHTML = '';
-    const element = document.createElement('div');
-    element.innerHTML = this.overlayContentTemplate[action];
-    this.overlayMessageWrapper.appendChild(element);
-    this.overlay.classList.add('overlay-dark');
-    this.overlayMessageWrapper.classList.remove('d-none');
-    this.clearGameInterval();
-
-    switch (action) {
-      case 'pause':
-        let remainingTime = data.remaining_time;
-        this.overlayMessageContent = this.querySelector('#overlay-message-content');
-        this.overlayMessageTimer = this.querySelector('#overlat-message-timer');
-        this.overlayMessageContent.textContent = `Player ${data.name} disconnected.`;
-        this.overlayMessageTimer.textContent = remainingTime;
-        this.intervalGameId = setInterval(() => {
-          remainingTime -= 1;
-          this.overlayMessageTimer.textContent = remainingTime;
-          if (remainingTime <= 0) {
-            clearInterval(this);
-            this.hideOverlay();
-          }
-        }, 1000);
-        break;
-      case 'game_over':
-        let player1;
-        let player2;
-        const isTournament = data.tournament_id !== null;
-        data.winner.number === 1
-          ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.winner = false))
-          : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.winner = false));
-        const player1Element = this.createPlayerResultElement(player1, data.elo_change, isTournament);
-        const player2Element = this.createPlayerResultElement(player2, data.elo_change, isTournament);
-        if (isTournament) {
-          this.querySelector('#overlay-button1')?.classList.add('d-none');
-          this.querySelector('#overlay-button2')?.classList.add('d-none');
-        }
-        const gameResultElement = this.querySelector('#overlay-game-result');
-        gameResultElement.appendChild(player1Element);
-        gameResultElement.appendChild(player2Element);
-        if (isTournament) {
-          setTimeout(() => {
-            router.redirect(`tournament/${data.tournament_id}`);
-          }, 1000);
-        }
-      case 'cancel':
-        this.overlayButton1 = this.querySelector('#overlay-button1');
-        this.overlayButton2 = this.querySelector('#overlay-button2');
-        if (data.tournament_id) {
-          this.overlayButton1.classList.add('d-none');
-          this.overlayButton2.classList.add('d-none');
-        } else {
-          this.overlayButton1.addEventListener('click', this.navigateToDuelMenu);
-          this.overlayButton2.addEventListener('click', this.navigateToHome);
-        }
-        break;
-      default:
-        break;
-    }
-  }
-
-  hideOverlay() {
-    if (this.intervalGameId) {
-      clearInterval(this.intervalGameId);
-    }
-    this.overlay.classList.remove('overlay-dark');
-    this.overlayMessageWrapper.classList.add('d-none');
-    this.overlayMessageWrapper.innerHTML = '';
-
-    this.overlayButton1?.removeEventListener('click', this.navigateToDuelMenu);
-    this.overlayButton2?.removeEventListener('click', this.navigateToHome);
-    this.overlayButton1 = null;
-    this.overlayButton2 = null;
-  }
-
-  createPlayerResultElement(player, eloChange, isTournament) {
-    const element = document.createElement('div');
-    element.innerHTML = this.playerResultTemplate();
-    const result = element.querySelector('.match-result');
-    player.winner
-      ? ((result.textContent = 'Winner'), result.classList.add('match-result-winner'))
-      : ((result.textContent = 'Loser'), result.classList.add('match-result-loser'));
-    const avatar = element.querySelector('img');
-    avatar.src = player.avatar;
-    avatar.alt = player.name;
-    element.querySelector('.overlay-player-name').textContent = player.name;
-    if (player.elo && !isTournament) {
-      const eloWrapper = element.querySelector('.overlay-player-elo');
-      eloWrapper.querySelector('.game-elo').textContent = player.elo;
-      eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
-      eloWrapper.querySelector('.game-elo-change').textContent = player.winner ? `+${eloChange}` : `-${eloChange}`;
-    }
-    return element;
-  }
-
-  navigateToDuelMenu() {
-    router.redirect('/duel-menu');
-  }
-
-  navigateToHome() {
-    router.redirect('/home');
-  }
-
-  overlayTemplate() {
-    return `
-    <style>
-    #overlay {
-      z-index: 10;
-      top: 0;
-      left: 0;
-    }
-    .overlay-dark {
-      background-color: rgba(var(--pm-gray-700-rgb), 0.8);
-    }
-    #overlay-message-wrapper {
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: rgba(var(--pm-gray-100-rgb), 0.9) !important;
-      background-color: rgba(var(--pm-gray-700-rgb), 0.8);
-      padding-left: 40px;
-      padding-right: 40px;
-    }
-    #overlay-message-title {
-      font-family: 'van dyke';
-    }
-    #overlay-button1,
-    #overlay-button2 {
-      color: rgba(var(--pm-gray-100-rgb), 0.9) !important;
-    }
-    .match-result-winner {
-      color: var(--pm-green-300);
-    }
-    .match-result-loser {
-      color: var(--pm-red-400);
-    }
-    </style>
-    <div id="overlay" class="position-absolute w-100 h-100">
-      <div id="overlay-message-wrapper" class="position-absolute text-center wood-board pt-5 pb-3 d-none"></div>
-    </div>
-    `;
-  }
-
-  overlayContentTemplate = {
-    pending: `
-      <div class="d-flex flex-column align-items-center mb-3">
-        <div id="overlay-message-title" class="fs-3 px-4 pb-3">Waiting for both players to join...</div>
-        <div class="pongAnimation"></div>
-      </div>
-      `,
-    pause: `
-      <div id="overlay-message-title" class="fs-2">Game paused</div>
-      <div id="overlay-message-content" class="mb-5"></div>
-      <div class="d-flex flex-row align-items-center my-3">
-        <div>Game will end in &nbsp</div>
-        <div id="overlat-message-timer" class="fs-4 m-0"></div>
-        <div>&nbspseconds</div>
-      </div>
-      `,
-    game_over: `
-      <div id="overlay-message-title" class="fs-2 mb-3">Game finished</div>
-      <div id="overlay-game-result" class="d-flex flex-row justify-content-center align-items-center gap-3 pb-2"></div>
-      <div class="d-flex flex-column mt-4">
-        <button id="overlay-button1" class="btn fw-bold">Find another duel</button>
-        <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
-      </div>
-    `,
-    cancel: `
-      <div id="overlay-message-title" class="fs-2">Game canceled</div>
-      <div id="overlay-message-content" class="mb-3">Player failed to connect.</div>
-      <div class="d-flex flex-column mt-5">
-        <button id="overlay-button1" class="btn fw-bold">Bring me another rival</button>
-        <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
-      </div>
-    `,
-  };
-
-  playerResultTemplate() {
-    return `
-    <div class="d-flex flex-column justify-content-center align-items-center mx-4 p-3">
-      <div class="match-result fs-5 fw-bold pb-2"></div>
-      <img class="avatar-l rounded-circle mb-2" />
-      <div class="overlay-player-name fs-4"></div>
-      <div class="overlay-player-elo d-flex flex-row ps-2">
-        <p class="game-elo m-0 fw-bold pe-1"></p>
-        <i class="bi"></i>
-        <p class="game-elo-change m-0 ps-2"></p>
-      </div>
-    </div>
-  `;
+    this.overlay?.show('pending');
   }
 }
 
