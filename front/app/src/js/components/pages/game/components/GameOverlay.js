@@ -32,8 +32,8 @@ export class GameOverlay extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.overlayButton1?.removeEventListener(this.navigateToGameMenu);
-    this.overlayButton2?.removeEventListener(this.navigateToHome);
+    this.overlayButton1?.removeEventListener('click', this.navigateToGameMenu);
+    this.overlayButton2?.removeEventListener('click', this.navigateToHome);
   }
 
   render() {
