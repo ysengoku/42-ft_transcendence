@@ -1,4 +1,4 @@
-# Chat and Live Events
+# Chat and Live Events Documentation
 
 The Chat and Live Events system manages core communication features within the application, including messaging, notifications, game invitations, and real-time user presence. All of those systems are interconnected and handled in a live, real-time manner through [WebSocket](https://en.wikipedia.org/wiki/WebSocket) connection to the `/ws/events` endpoint, with the help of a handful HTTP endpoints.
 
@@ -13,24 +13,30 @@ Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protoco
     - [Adding or Removing Likes on a Message](#adding-or-removing-likes-on-a-message)
   - [Notifications](#notifications)
   - [Game Invitations](#game-invitation)
-  - [User Presence system](#user-presence-system)
-- [Implementation details](#implementation-details)
+  - [User Presence System](#user-presence-system)
+- [Implementation Details](#implementation-details)
   - [Backend](#backend)
-    - [Core models](#core-models)
+    - [Core Models](#core-models)
+    - [Event Groups](#event-groups)
+    - [User Presence Internals](#user-presence-internals)
   - [Frontend](#frontend)
     - [Chat Components](#chat-components)
     - [Notifications Component](#notifications-components)
-    - [Game Invitation Component](#game-invitations-components)
+    - [Game Invitations Component](#game-invitations-components)
     - [User Presence System Components](#user-presence-system-components)
 - [WebSocket Protocol Reference](#websocket-protocol-reference)
+    - [Chat Events](#chat-events)
+    - [Notification Events](#notification-events)
+    - [Game Invitation Events](#game-invitation-events)
+    - [User Presence System Events](#user-presence-system-events)
 - [Testing](#testing)
 - [Contributors](#contributors)
 
-<br />
+---
 
 ## Features
 
-This section describes the features of the events system: how client and server interacts to create . Detailed field-level specifications are provided in the [API & WebSocket Protocol Reference](#api--websocket-protocol-reference) section.
+This section describes the features of the events system in high-level. Detailed field-level specifications of how the client and the server talk to each other are provided in the [WebSocket Protocol Reference](#websocket-protocol-reference) section.
 
 ### Chat
 
@@ -52,7 +58,6 @@ Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the web
 </figure>
 
 ---
-
 #### Real-time Messaging
 
 The main feature of the chat is real-time messaging; when a user sends a message to a target user, user can start conversation through [profile page of the user](./USER_MANAGEMENT.md#user-search-and-user-profiles) they desire to message, through search bar on the chat page, or by finding an existing conversation in the chat UI.
@@ -74,6 +79,7 @@ For the receiver the message appears on their chat page without receiver asking 
 
 The message is considered [read](#protocol-read-message) when it's displayed in the UI.
 
+---
 #### Social Networking Elements
 
 [Users blocked by the current user](./USER_MANAGEMENT.md#social-networking-elements) are unable to message them or find them through [user search feature](./USER_MANAGEMENT.md#user-search-and-user-profiles).
@@ -82,6 +88,7 @@ The message is considered [read](#protocol-read-message) when it's displayed in 
   <img src="../../assets/ui/chat-blocked-user.png" alt="Chat - Blocked user" width="480px" />
 </figure>
 
+---
 #### Adding or Removing Likes on a Message
 
 A user can toggle a like on any received message by clicking on it.   
@@ -93,7 +100,6 @@ The server then sends [`like_message`](#protocol-like-message-server-client) eve
 </p>
 
 ---
-
 ### Notifications
 
 Notifications are things of interest that server sends to the user without user explicitely requesting for it. Users receive notifications when:
@@ -124,7 +130,6 @@ When user selects a notification item in the list, it has different effects depe
 User can also mark all unread notification as read by clicking **Mark all as read** button.
 
 ---
-
 ### Game invitation
 
 TODO: do proper links with the game part of the documentation when it's going to be ready.   
@@ -158,7 +163,6 @@ If invitation [is accepted](#protocol-game-accepted), both players will be redir
 [Otherwise](#protocol-game-declined), nothing happens.
 
 ---
-
 ### User Presence System
 
 Users can be online or offline. Each meaningful API request and WebSocket events in the last 30 minutes makes them [online](#protocol-user-online), which is going to be visible for anyone who sees them in [chat](#chat) or sees their [profile page](./USER_MANAGEMENT.md#user-search-and-user-profiles). Presence is denoted as a green or gray badge, depending on if they are online or offline respectively.
@@ -173,18 +177,23 @@ For more details about **cronjob**, see [CRONTAB doc](../server/CRONTAB.md).
 </p>
 
 ---
-
-## Implementation details
+## Implementation Details
 Every time an authenticated user connects to the application, WebSocket connection to `/ws/events` is established, and stays opened for the remainder of the session. This connections is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.
 
 The server and the client exchange messages with each other using [well-defined protocol](#websocket-protocol-reference).
 
 ### Backend
 
-Backend side of the chat & events system is implemented with `chat` Django app (TODO: link to the high level explanation of the tech stack/overall backend overview).
+Backend side of the chat & events system is implemented with `chat` Django app (TODO: link to the high level explanation of the tech stack/overall backend overview). The app follows typical of the Django app structure, with some files differing due to being broken down from the core files in order not to bloat their size too much. Those files are:
+- `chat_events.py`: contains `ChatEvents`, a class dedicated to handling [chat events](#chat-events).
+- `duel_events.py`: contains `DuelEvents`, a class dedicated to handling [game invitation events](#game-invitation-events).
+- `validator.py`: contains `Validator`, a class dedicated to validation of the user events: their sctructure, types, ranges. All live events go through this class.
 
 Server of the project is able to handle WebSockets thanks to the Django Channels integration (TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses [JWT authentication](./USER_MANAGEMENT.md#jwt-authentication) to identify and autorize users, like the rest of the consumers in the project.
 
+This app interacts with `tournaments` app, as events system distributes tournament events too (TODO: add tournaments docs link).
+
+---
 #### Core Models
 
 The chat & events system revolves around three main models: `Chat`, `ChatMessage`, and `Notification`. These models manage conversations between users, message histories, and notification events.
@@ -210,27 +219,19 @@ Once user is authenticated, they are subscribed to several channel groups that d
 
 - `user_{id}`: user-scoped events such as notifications, game invitations or friend updates. This is a personal group that contains only one specific user.
 - `chat_{uuid}`: one-to-one chat messages between participants. This group contains two people: the chat participants.
-- `online_users`: global presence broadcasts. This group is global and contains every user.
+- `online_users`: global presence broadcasts. This group is global and contains every user who is currently online.
 
 Once user establishes connection to `/ws/events`, they are subscribed to all relevant groups, which includes one `user_{id}`, one `online_users` and many `chat_{uuid}` (one group per chat).
 
 ---
 
-#### Validation & Security
+#### User Presence Internals
 
-- **Strict schema validation** for all incoming WebSocket data (fields, types, valid UUIDs).
-  - Invalid data immediately triggers WebSocket closure with code `3100 (BAD_DATA)`.
-  - Reasons for rejection: missing fields, wrong types, invalid UUID, unknown action.
-- **Business logic constraints:**
-  - Cannot self-invite/self-chat or like own messages.
-  - No multiple invites for users already engaged in a game.
-- **Backend protections:**
-  - JWT auth is mandatory.
-  - Resource access checked at every API/WebSocket action.
-  - Use `transaction.atomic()` and `select_for_update()` for invitation acceptance to ensure atomic state changes.
-  - Only the original sender can cancel an invitation.
-  - Rate limiting applied to invitation sending to prevent spam.
-  - All game settings and `client_id` values strictly sanitized and validated.
+User presence feature is implemented through a container with [`cron`](https://en.wikipedia.org/wiki/Cron), which is configured to call to `DELETE /api/cronjob/cron/check-inactive-users` endpoint every minute, using `check_inactive_users.py` script. This endpoint is implemented in [`users` app](./USER_MANAGEMENT.md#presence-system).
+
+This endpoint uses its own alternative authentication method, separated from the rest of the authentication within the application. Callers to the endpoint should have the correct header: `Bearer: <CRON_SECRET>`, where `CRON_SECRET` is an environment variable provided to the container during the build stage, otherwise they will be rejected with `401` status code. This is done for security reasons; only the `cronjob` container should be able to call the endpoint.
+
+(TODO: add a link to infrastructure file that describes our containers and environment)
 
 ---
 
@@ -327,10 +328,10 @@ All data exchanges betwen the server and the client use JSON messages that confo
 }
 ```
 
-- `action`: what kind of message it is (new message, notification, presence update etc). `action` is always a simple string.
-- `data`: context to the this message (who sent the message, what kind of notification is this, which exactly user went online etc). `data` may contain an arbitrary amount of fields of any types. Exact schema of `data` depends on the `action`.
+- `action`: what kind of event it is (new message, notification, presence update etc). `action` is always a simple string.
+- `data`: context to the this event (who sent the message, what kind of notification is this, which exactly user went online etc). `data` may contain an arbitrary amount of fields of any types. Exact schema of `data` depends on the `action`.
 
-### Chat
+### Chat Events
 
 CLIENT --> SERVER
 
@@ -394,7 +395,7 @@ SERVER --> CLIENT
 
 ---
 
-### Notifications
+### Notification Events
 
 CLIENT --> SERVER
 
@@ -432,7 +433,7 @@ SERVER --> CLIENT
 
 ---
 
-### Game invitation
+### Game Invitation Events
 
 CLIENT --> SERVER
 
@@ -520,7 +521,7 @@ SERVER --> CLIENT
 
 <br />
 
-### User presence system
+### User Presence System Events
 
 SERVER --> CLIENT
 

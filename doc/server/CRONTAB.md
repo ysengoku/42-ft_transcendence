@@ -132,5 +132,4 @@ flowchart TD
     style NGINX fill:#00C853
     style REDIS fill:#D50000
     style DOCKER_NETWORK fill:#BBDEFB
-
 ```
