@@ -14,52 +14,54 @@
 </div>
 <br>
 
-Real-time multiplayer PONG Game built as a Single Page Application, developed by five students during 42 school curriculum.
-This project combines authentication, live gameplay, chat, and 3D rendering using modern web technologies.   
-   
+Welcome to the saloon, partner. I hope that you are ready for the epic shootout... **IN PONG**!!
+**Ponggers: Peacemakers Edition** is a pong platform with elements of social networking and (awesome) cowboy-robot bug theme. Here in the Wild West we are outlaws fighting for fun and glory. But mostly fun.
+In this very comptetive game you play for elo, participate in tournaments and meet new friends. Think of it as [chess.com](https://www.chess.com/), but instead of chess we are playing pong on the postapocaliptic desolate waste of the Wild West. Totally easy to imagine, I guess.
+
+It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an awesome & free (and also competetive and hard) programming school. Our team was aiming for a very specific set of features. Some of them were chosen by us (and since we like suffering, we chose a lot of them), and some were mandatory to implement. The features are:
+
+## Features
+- **General**
+  - Dynamic [Single Page Application](https://en.wikipedia.org/wiki/Single-page_application)
+  - Google Chrome as first-class browser
+  - Made primarly with Django, PostgreSQL, vanilla JS and bootstrap
+  - Runs in docker-compose
+  - Responsive UI (but the game can't run on mobile... yet. sowwy!)
+  - Secure and works with HTTPS
+**User Management System**
+  - Authentication system based on [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token)
+  - Sign up, sign in normally...
+  - ...or with [OAuth](https://en.wikipedia.org/wiki/OAuth), using 42 or Github
+  - Have [M2F](https://en.wikipedia.org/wiki/Multi-factor_authentication) for security! Nobody can hack you
+  - Password restoration using Gmail
+  - User profiles with game statistics, hand coded graphs (no libraries!)
+  - User settings, profile picture (express yourself)
+- **Pong Game**
+  - 3D graphics with [Three.js](https://threejs.org/) (**with handmade 3D models!!!** using [Blender](https://en.wikipedia.org/wiki/Blender_(software)))
+  - Game customization with game settings
+  - Optional fun gameplay features that enchance basic pong (don't worry, you can play vanilla pong too)
+  - Ranked games with elo system
+  - Play locally against another player or AI
+  - Multiplayer, ability to play from different computers (convenient!)
+  - Game invitation system, play with your friends
+  - Automatic matchmaking system, play with randoms
+  - Tournament system, play with lots of friends and/or randoms
+**Chat & Live Events**
+  - Friendship system, befriend people you like
+  - Block system, block people you hate (or for fun hehe)
+  - Notification system, be notified of the cool stuff going on
+  - Online presence system, so you can see who is procrastinating playing pong
+  - And last but not least... chat!! Stay in contact with other outlaws. You can send, receive and like messages
+**Misc**
+  - Handdrawn background images, beautiful animations and more. All made with 💖 Love 💖.
+  - Dark & Light color schemes
+  - Find other users through search feature
+
+Hope that you will have and find our project interesting! 
+
 ## Demo video 🛠️👷🏻‍♂️
 
 ## Usage 🛠️👷🏻‍♂️
-
-## Features
-
-### Key Features
-
-- **Real-time Multiplayer**: WebSocket-based game synchronization
-- **Multi-factor Authentication**: Email-based verification system
-- **OAuth 2.0 Integration**: Third-party authentication support
-- **3D Gaming**: Hardware-accelerated 3D graphics with Three.js
-- **Tournament System**: Bracket-based competitive play
-- **Live Chat**: Real-time messaging with notifications
-
-### Other Features
-
-#### User management
-
-- Secure registration with validation and connection using JWT
-- User profile page including customizable avatar and Game stat (win/loss rate, duel history, Elo change chart, best/worst opponents)
-- User blocking system
-- Forgotten password reset functionality
-
-#### Game
-
-- Local game with AI opponent option
-- Game customization
-- Game worker: Background processing of game logic
-- Matchmaking and Game invitation for Multiplayer Game
-
-#### UI & Graphics
-
-- Responsive design
-- Two color themes: Light and Dark
-- Google Chrome Compatibility
-- Hand-made 3D models, animation and art!
-
-#### DevOps and CD/CI
-
-- Containerized environment using Docker
-- Workflows and templated for issue/task creation
-
 
 ## Technologies
 
@@ -102,6 +104,7 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 [![Django Test Framework](https://img.shields.io/badge/Django%20Tests-092E20?logo=django&style=for-the-badge&logoColor=fff)](#)
 
 ## Architecture
+(TODO: link to the high-level overview of the project architecture)
 
 ```mermaid
 graph TB

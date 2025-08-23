@@ -15,7 +15,7 @@ Every other part of the project is affected by this syste; after all, the abilit
     - [Social Networking Elements](#social-networking-elements)
     - [User Search And User Profiles](#user-search-and-user-profiles)
     - [User Settings](#user-settings)
-    - [Presence System](#presence-system)
+    - [User Presence System](#user-presence-system)
 - [Implementation Details](#Implementation-details)
     - [Backend](#backend)
         - [Core Models](#core-models)
@@ -24,6 +24,7 @@ Every other part of the project is affected by this syste; after all, the abilit
 - [Testing](#testing)
 - [Contributors](#contributors)
 
+---
 ## Features
 
 ### JWT Authentication
@@ -36,6 +37,7 @@ Both tokens are [HTTP-only](https://owasp.org/www-community/HttpOnly) and [secur
 
 The benefits of the JWT authentication system (with refresh tokens) compared to the traditional session-based system is that it's easier on the database. It's not stateless, as pure JWT authentication, but pure stateless JWT authentication is not suitable for applications such as pong platform. Having refresh tokens is important to security ([video with simple explanation](https://www.youtube.com/watch?v=T0k-3Ze4NLo)).
 
+---
 ### Authentication Endpoints And CSRF Protection
 
 Server provides multiple endpoints for the necessary for secure creation, logging in and logging outof users. `signup` and `login` endpoints also issue [CSRF token (cookies-to-header approach)](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Cookie-to-header_token), another security measure of the project.
@@ -57,21 +59,25 @@ The way CSRF protection works is that malicious side that attempts CSRF attack c
 - `DELETE /api/logout`: Securely logs out the user by revoking the refresh token and clearing the JWT cookies from the browser.
 - `POST /api/refresh`: Rotates the refresh token. It takes a valid `refresh_token` cookie and issues a new pair of access and refresh tokens to maintain the session without requiring the user to log in again. Refresh tokens aren't refreshed automatically, so the client has to call to this endpoint periodically.
 
+---
 ### Password Restoration
 
 - `POST /api/forgot-password`: Allows users to request a password reset. It takes an email address and sends a password reset link with a unique token.
 - `POST /api/reset-password/{token}`: Allows a user to set a new password using a valid token received via email. The token expires after 10 minutes.
 
+---
 ### Multi-Factor Authentication (MFA)
 
 For enhanced security, users can enable email-based MFA.
 See MFA docs [here](./MFA.md).
 
+---
 ### OAuth 2.0 Integration
 
 Users can register and log in using their GitHub or 42 School accounts.
 See OAuth docs [here](./OAUTH2.md).
 
+---
 ### Social Networking Elements
 
 There are social networking features, like the ability to add friends, block annoying users or [chat with other users](./CHAT_AND_LIVE_EVENTS.md).
@@ -93,6 +99,7 @@ Blocking feature has following:
 - `POST /api/users/{username}/blocked_users`: Blocks a user, which also removes them from the friend list if they were friends.
 - `DELETE /api/users/{username}/blocked_users/{blocked_user_to_remove}`: Unblocks a user.
 
+---
 ### User Search And User Profiles
 
 Each of the users have a lot of different data that is associated with them: their username, nickname, elo, winrate, list of games, friendship/block status relative to the user currently viewing the profile... It is displayed neatly on their profile page, which can be visited by other ([non-blocked](#social-networking-elements)) users.
@@ -109,6 +116,7 @@ User can search for other users by typing their name or nickname into the search
   <img src="../../assets/ui/navbar-usersearch.png" alt="Navbar User Search" width="240px" />
 </p>
 
+---
 ### User Settings
 
 Users are able to change their settings:
@@ -121,9 +129,9 @@ All of the new settings must conform to the constraints for each of the fields, 
 - `GET /api/users/{username}/settings`: Allows an authenticated user to see their current settings, such as their nickname, email, avatar.
 - `POST /api/users/{username}/settings`: Allows an authenticated user to update their own profile information, such as their nickname, email, password, and avatar. Avatar uploads are validated for size (under 10MB) and file type (.png, .jpg, .webp).
 
-### Presence System
+### User Presence System
 
-The application tracks and broadcasts user online status in real-time. TODO: link to the CHAT_AND_LIVE_EVENTS.md.
+This features lives on the intersection between user management & live events systems. [See chat and live events documentation](CHAT_AND_LIVE_EVENTS.md#user-presence-system).
 
 ## Implementation Details
 
@@ -131,6 +139,12 @@ The application tracks and broadcasts user online status in real-time. TODO: lin
 
 Backend side of the user management system in this project is implemented with `users` Django app (TODO: link to the high level explanation of the tech stack/overall backend overview). This app interacts with all other Django apps in the project, and was the first one that was developed.
 
+This app follows typical Django app structure for the project, and includes additional notable files:
+- `signals.py`: contains Django signals handler that allow the creation of `Profile` for each of the `User` models.
+- `middleware.py`: contains middleware for [JWT authentication](#jwt-authentication-middleware).
+- `service.py`: contains `OnlineStatusService`, a class that provides logic used in [user presence system](CHAT_AND_LIVE_EVENTS.md#user-presence-system).
+
+---
 #### Core Models
 
 The app's functionality is centered around two primary models: `User` and `Profile`, which share a one-to-one relationship.
@@ -140,6 +154,7 @@ The app's functionality is centered around two primary models: `User` and `Profi
 - `RefreshToken`: Manages the lifecycle of JWTs. It handles the creation of short-lived access tokens and long-lived refresh tokens, as well as their verification, rotation and revocation upon logout.
  There are two middlewares on the server that are responsible for handling requests: the one is for HTTP requests, and another is for WebSocket requests:
 
+---
 #### JWT Authentication Middleware
 
 Middleware is triggered on every request/connection. Authentication middleware identifies the user who made request and restricts access of anonymous users to the system.
@@ -147,6 +162,7 @@ Middleware is triggered on every request/connection. Authentication middleware i
 - `JWTEndpointsAuthMiddleware`: Secures all HTTP API endpoints (except the ones you need to use to login in the first place) by validating the `access_token` provided in cookies. Populates each `request` with the user data.
 - `JWTWebsocketAuthMiddleware`: Secures all WebSocket endpoints using the `access_token` from cookies, populating the `scope` for real-time services like chat and the actual game.
 
+---
 ## Frontend
 
 ## Testing
