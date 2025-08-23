@@ -35,34 +35,8 @@ def _validate_platform(platform: str) -> None:
         raise HttpError(404, f"Unsupported platform: {platform}")
 
 
-def _get_oauth_config(platform: str) -> dict:
-    """Retrieves OAuth configuration for the platform."""
-    _validate_platform(platform)
-
-    try:
-        oauth_config = getattr(settings, "OAUTH_CONFIG", {})
-        if platform not in oauth_config:
-            logger.error("OAuth configuration missing for platform: %s", platform)
-            raise HttpError(503, "OAuth service temporarily unavailable")
-
-        config = oauth_config[platform]
-
-        required_fields = ["client_id", "client_secret", "auth_uri", "token_uri", "user_info_uri", "redirect_uri"]
-        missing_fields = [field for field in required_fields if not config.get(field)]
-
-        if missing_fields:
-            logger.error("OAuth configuration incomplete for platform %s, missing: %s", platform, missing_fields)
-            raise HttpError(503, "OAuth service temporarily unavailable")
-
-        return config
-
-    except AttributeError as err:
-        logger.error("OAUTH_CONFIG setting not found")
-        raise HttpError(503, "OAuth service temporarily unavailable") from err
-
-
 def _check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
-    """Quick health check for OAuth provider API."""
+    """Quick health check for OAuth provider API (best-effort, no hard fail)."""
     if platform == OauthConnection.FT:
         try:
             response = requests.get(config["oauth_uri"], timeout=OAUTH_API_HEALTH_CHECK_TIMEOUT)
@@ -75,22 +49,14 @@ def _check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
 
 
 def _validate_scopes(granted_scopes: set, platform: str) -> str | None:
-    """Validate that granted scopes are within allowed limits."""
-    try:
-        allowed_scopes_config = getattr(settings, "OAUTH_ALLOWED_SCOPES", {})
-        if platform not in allowed_scopes_config:
-            logger.error("OAuth allowed scopes configuration missing for platform: %s", platform)
-            return "OAuth configuration error"
-
-        allowed = set(allowed_scopes_config[platform])
-        if not granted_scopes.issubset(allowed):
-            extra = ", ".join(sorted(granted_scopes - allowed))
-            return f"Unexpected scopes: {extra}"
-        return None
-
-    except (AttributeError, TypeError):
-        logger.error("OAUTH_ALLOWED_SCOPES setting invalid or missing")
-        return "OAuth configuration error"
+    """
+    Validate granted scopes only if an allowlist is configured for the platform.
+    """
+    allowed = set(getattr(settings, "OAUTH_ALLOWED_SCOPES", {}).get(platform, []))
+    if allowed and not granted_scopes.issubset(allowed):
+        extra = ", ".join(sorted(granted_scopes - allowed))
+        return f"Unexpected scopes: {extra}"
+    return None
 
 
 def _validate_callback_params(
@@ -98,7 +64,8 @@ def _validate_callback_params(
     platform: str,
 ) -> tuple[str, str, OauthConnection] | HttpResponseRedirect:
     """Validate OAuth callback parameters and state. Returns (code, state, oauth_connection) or error redirect."""
-    config = _get_oauth_config(platform)
+    _validate_platform(platform)
+    config = settings.OAUTH_CONFIG[platform]
 
     is_available, error_msg = _check_api_availability(platform, config)
     if not is_available:
@@ -112,7 +79,6 @@ def _validate_callback_params(
 
     if error:
         return _redirect_error(f"{error}: {error_description}", 422)
-
     if not code or not state:
         return _redirect_error("Missing code or state", 422)
 
@@ -138,9 +104,11 @@ def _validate_callback_params(
     response={200: MessageSchema, frozenset({404, 422}): MessageSchema},
 )
 @csrf_exempt
-def oauth_authorize(request: HttpRequest, platform: str) -> HttpResponse | JsonResponse:
+def oauth_authorize(request: HttpRequest, platform: str) -> JsonResponse:
     """Starts the OAuth2 authorization process and returns the authorization URL."""
-    config = _get_oauth_config(platform)
+    _validate_platform(platform)
+    config = settings.OAUTH_CONFIG[platform]
+
     is_available, error_msg = _check_api_availability(platform, config)
     if not is_available:
         return JsonResponse({"error": error_msg}, status=422)
@@ -148,22 +116,17 @@ def oauth_authorize(request: HttpRequest, platform: str) -> HttpResponse | JsonR
     state = hashlib.sha256(os.urandom(32)).hexdigest()
     OauthConnection.objects.create_pending_connection(state, platform)
 
-    try:
-        allowed_scopes_config = getattr(settings, "OAUTH_ALLOWED_SCOPES", {})
-        if platform not in allowed_scopes_config:
-            logger.error("OAuth allowed scopes configuration missing for platform: %s", platform)
-            return JsonResponse({"error": "OAuth service temporarily unavailable"}, status=503)
-        allowed_scopes = allowed_scopes_config[platform]
-    except (AttributeError, TypeError):
-        logger.error("OAUTH_ALLOWED_SCOPES setting invalid or missing")
-        return JsonResponse({"error": "OAuth service temporarily unavailable"}, status=503)
+    allowed_scopes = getattr(settings, "OAUTH_ALLOWED_SCOPES", {}).get(platform, [])
+
     params = {
         "response_type": "code",
         "client_id": config["client_id"],
         "redirect_uri": config["redirect_uri"],
-        "scope": " ".join(sorted(allowed_scopes)),
         "state": state,
     }
+    if allowed_scopes:
+        params["scope"] = " ".join(sorted(set(allowed_scopes)))
+
     return JsonResponse({"auth_url": f"{config['auth_uri']}?{urlencode(params)}"})
 
 
@@ -177,14 +140,14 @@ def oauth_callback(  # noqa: PLR0911
     request: HttpRequest,
     platform: str,
     params: OAuthCallbackParams = Query(...),
-):
+) -> HttpResponse:
     """Handles the OAuth2 callback and creates authenticated user session."""
     validation_result = _validate_callback_params(request, platform)
     if isinstance(validation_result, HttpResponseRedirect):
         return validation_result
     code, state, oauth_connection = validation_result
 
-    config = _get_oauth_config(platform)
+    config = settings.OAUTH_CONFIG[platform]
 
     provider_access, token_error = oauth_connection.request_access_token(config, code)
     if token_error:
