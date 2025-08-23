@@ -48,31 +48,34 @@ Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the web
 - `GET /api/chats/{username}/messages`: Fetches a paginated list of user's messages with `username`.
 - `GET /api/self`: See [User Management docs](./USER_MANAGEMENT.md#user-search-and-user-profiles).
 
-<figure align="center">
-  <figcaption>Start a new chat</figcaption>
+<p align="center">
+  <em>Start a new chat</em><br />
   <img src="../../assets/ui/chat-new-conversation.png" alt="Chat - New conversation" width="480px" />
-</figure>
-<figure align="center">
-  <figcaption>Select an existing chat</figcaption>
-  <img src="../../assets/ui/chat-selected-user.png" alt="Chat - Selected chat" width="480px" />
-</figure>
+</p>
 
----
+<p align="center">
+  <em>Select an existing chat</em><br />
+  <img src="../../assets/ui/chat-selected-user.png" alt="Chat - Selected chat" width="480px" />
+</p>
+
 #### Real-time Messaging
 
 The main feature of the chat is real-time messaging; when a user sends a message to a target user, user can start conversation through [profile page of the user](./USER_MANAGEMENT.md#user-search-and-user-profiles) they desire to message, through search bar on the chat page, or by finding an existing conversation in the chat UI.
 
 Whenever user sends a message, the client sends it to the server via the [`new_message`](#protocol-new-message-client-server) WebSocket event. For the sender, the message is considered to be "pending", and is grayed out until the the server confirms that it received it.
+
 <p align="center">
   <img src="../../assets/ui/chat-pending-message.png" alt="Chat - Pending message" width="480px" />
 </p>
 
 On success, the client updates the chat list by moving the conversation to the top and renders the messages in the chat messages area.
+
 <p align="center">
   <img src="../../assets/ui/chat-sent-message.png" alt="Chat - Sent message" width="480px" />
 </p>
 
 For the receiver the message appears on their chat page without receiver asking for it from their side. Unless the reciever is in the chat with the sends, they also receive a [notification](#notifications) that informs them about a new unread message by putting a badge on the navbar chat icon.
+
 <p align="center">
   <img src="../../assets/ui/notification-new-chat-message.png" alt="Chat - Unread chat notification" width="240px" />
 </p>
@@ -83,10 +86,12 @@ The message is considered [read](#protocol-read-message) when it's displayed in 
 #### Social Networking Elements
 
 [Users blocked by the current user](./USER_MANAGEMENT.md#social-networking-elements) are unable to message them or find them through [user search feature](./USER_MANAGEMENT.md#user-search-and-user-profiles).
-<figure align="center">
-  <figcaption>Chat with a blocked user</figcaption>
+
+<p align="center">
   <img src="../../assets/ui/chat-blocked-user.png" alt="Chat - Blocked user" width="480px" />
-</figure>
+</p>
+
+---
 
 ---
 #### Adding or Removing Likes on a Message
@@ -95,6 +100,7 @@ A user can toggle a like on any received message by clicking on it.
 When a message is clicked, the client identifies the target message by its id attribute, then sends [`like_message`](#protocol-like-message-client-server) or [`unlike_message`](#protocol-unlike-message-client-server) WebSocket event to the server.
 
 The server then sends [`like_message`](#protocol-like-message-server-client) event to both chat participants and UI is updated by displaying animated heart icon over the liked message.
+
 <p align="center">
   <img src="../../assets/ui/chat-like-message.png" alt="Chat - Like message" width="480px" />
 </p>
@@ -135,14 +141,14 @@ User can also mark all unread notification as read by clicking **Mark all as rea
 TODO: do proper links with the game part of the documentation when it's going to be ready.   
 Since Peacemakers is a platform for playing pong, an invitation to play pong is an important feature. User can invite others to Pong Duel from either **[Chat page](#chat)** or **Duel Menu page**.
 
-<figure align="center">
-  <figcaption>Send invitation from Chat page</figcaption>
+<p align="center">
+  <em>Send invitation from Chat page</em><br />
   <img src="../../assets/ui/chat-game-invitation.png" alt="Send Game invitation" width="480px" />
-</figure>
-<figure align="center">
-  <figcaption>Send invitation from Duel Menu page</figcaption>
+</p>
+<p align="center">
+  <em>Send invitation from Duel Menu page</em><br />
   <img src="../../assets/ui/duel-menu-game-invitation.png" alt="Send Game invitation" width="480px" />
-</figure>
+</p>
 
 When a user [sends an invitation](#protocol-game-invite-client-server), and is not engaged in any game activity (like being in matchmaking, tournament , playing a game or has another pending invitation), an invitee receives a [game invite](#protocol-game-invite-server-client), and the invitee's client displays a notification toast.
 Otherwise, [the game invitation is cancelled](#protocol-game-invite-canceled).
@@ -160,7 +166,7 @@ The invitee can accept or decline the invitation from **Notification list** in N
 </p>
 
 If invitation [is accepted](#protocol-game-accepted), both players will be redirected to a newly created pong game.
-[Otherwise](#protocol-game-declined), nothing happens.
+Otherwise, the inviter is notified of [the declination](#protocol-game-declined).
 
 ---
 ### User Presence System
@@ -239,7 +245,6 @@ This endpoint uses its own alternative authentication method, separated from the
 
 The frontend is composed of modular components that work to provide real-time chat, notifications, game invitations, and presence updates across the application.
 
----
 #### Chat Components
 
 The chat feature is structured around a central `Chat` component that coordinates several supporting components. Together, they provide user search, conversation management, real-time messaging, and game invitations.
@@ -292,10 +297,12 @@ Provides brief pop-ups for newly received notifications, giving immediate feedba
 
 #### Game Invitations Components
 
-Two components are available for selecting game options and sending invitations: On the `Chat` page, by opening the `InviteGameModal`, or on the `DuelMenu` page where the invitation form is embedded directly in the interface.
+Two components are available for selecting game options and sending invitations:
+- On the `Chat` page, by opening the `InviteGameModal`
+- On the `DuelMenu` page where the invitation form is embedded directly in the interface
 
-After sending an invitation, the inviter is redirected to the `Duel` page, which shows the opponent's information and updates dynamically once the invitee responds. For the invitee, accepting the invitation from the notification list triggers a redirection to the `Duel` page.
-When the invitation is accepted and the server confirms the creation of a game room, a countdown starts on both clients, then both are redirected to the game. 
+After sending an invitation, the inviter is redirected to the `Duel` page, which shows the opponent's information and updates dynamically once the invitee responds. For the invitee, accepting the invitation from the notification list triggers a redirection to the `Duel` page.   
+If the invitation is accepted and the server confirms the creation of a game room, a countdown starts on both clients, then both are redirected to the game. Otherwise, the UI of the inviter shows the invitation declination.
 
 ---
 
