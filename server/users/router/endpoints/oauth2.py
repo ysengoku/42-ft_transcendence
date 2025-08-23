@@ -5,7 +5,7 @@ from urllib.parse import quote, urlencode
 
 import requests
 from django.conf import settings
-from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from ninja import Query, Router
 from ninja.errors import HttpError
@@ -26,7 +26,6 @@ def _redirect_error(msg: str, status: int) -> HttpResponseRedirect:
 
 oauth2_router = Router()
 
-# Allowed OAuth platforms for security validation
 ALLOWED_OAUTH_PLATFORMS = {OauthConnection.GITHUB, OauthConnection.FT}
 
 
@@ -39,31 +38,27 @@ def _validate_platform(platform: str) -> None:
 def _get_oauth_config(platform: str) -> dict:
     """Retrieves OAuth configuration for the platform."""
     _validate_platform(platform)
-    
+
     try:
-        oauth_config = getattr(settings, 'OAUTH_CONFIG', {})
+        oauth_config = getattr(settings, "OAUTH_CONFIG", {})
         if platform not in oauth_config:
             logger.error("OAuth configuration missing for platform: %s", platform)
             raise HttpError(503, "OAuth service temporarily unavailable")
-        
+
         config = oauth_config[platform]
-        
-        # Validate required configuration fields
-        required_fields = ['client_id', 'client_secret', 'auth_uri', 'token_uri', 'user_info_uri', 'redirect_uri']
+
+        required_fields = ["client_id", "client_secret", "auth_uri", "token_uri", "user_info_uri", "redirect_uri"]
         missing_fields = [field for field in required_fields if not config.get(field)]
-        
+
         if missing_fields:
-            logger.error(
-                "OAuth configuration incomplete for platform %s, missing: %s",
-                platform, missing_fields
-            )
+            logger.error("OAuth configuration incomplete for platform %s, missing: %s", platform, missing_fields)
             raise HttpError(503, "OAuth service temporarily unavailable")
-            
+
         return config
-        
-    except AttributeError:
+
+    except AttributeError as err:
         logger.error("OAUTH_CONFIG setting not found")
-        raise HttpError(503, "OAuth service temporarily unavailable")
+        raise HttpError(503, "OAuth service temporarily unavailable") from err
 
 
 def _check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
@@ -72,33 +67,36 @@ def _check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
         try:
             response = requests.get(config["oauth_uri"], timeout=OAUTH_API_HEALTH_CHECK_TIMEOUT)
             if response.status_code != 200:  # noqa: PLR2004
-                return False, "42 API is temporarily unavailable"
+                return False, "Provider is temporarily unavailable"
             return True, ""
         except requests.RequestException:
-            return False, "Could not connect to 42 API"
+            return False, "Could not connect to provider"
     return True, ""
 
 
 def _validate_scopes(granted_scopes: set, platform: str) -> str | None:
     """Validate that granted scopes are within allowed limits."""
     try:
-        allowed_scopes_config = getattr(settings, 'OAUTH_ALLOWED_SCOPES', {})
+        allowed_scopes_config = getattr(settings, "OAUTH_ALLOWED_SCOPES", {})
         if platform not in allowed_scopes_config:
             logger.error("OAuth allowed scopes configuration missing for platform: %s", platform)
             return "OAuth configuration error"
-            
+
         allowed = set(allowed_scopes_config[platform])
         if not granted_scopes.issubset(allowed):
             extra = ", ".join(sorted(granted_scopes - allowed))
             return f"Unexpected scopes: {extra}"
         return None
-        
+
     except (AttributeError, TypeError):
         logger.error("OAUTH_ALLOWED_SCOPES setting invalid or missing")
         return "OAuth configuration error"
 
 
-def _validate_callback_params(request: HttpRequest, platform: str) -> tuple[str, str, OauthConnection] | HttpResponseRedirect:
+def _validate_callback_params(
+    request: HttpRequest,
+    platform: str,
+) -> tuple[str, str, OauthConnection] | HttpResponseRedirect:
     """Validate OAuth callback parameters and state. Returns (code, state, oauth_connection) or error redirect."""
     config = _get_oauth_config(platform)
 
@@ -126,25 +124,21 @@ def _validate_callback_params(request: HttpRequest, platform: str) -> tuple[str,
     state_error = oauth_connection.check_state_and_validity(platform, state)
     if state_error:
         error_message, status_code = state_error
-        logger.warning(
-            "OAuth state validation failed: state=%s platform=%s error=%s",
-            state, platform, error_message
-        )
+        logger.warning("OAuth state validation failed: state=%s platform=%s error=%s", state, platform, error_message)
         return _redirect_error(error_message, status_code)
 
-    # Mark state as used to prevent replay attacks
     oauth_connection.mark_state_as_used()
 
     return code, state, oauth_connection
 
 
-@csrf_exempt
 @oauth2_router.get(
     "/authorize/{platform}",
     auth=None,
     response={200: MessageSchema, frozenset({404, 422}): MessageSchema},
 )
-def oauth_authorize(request: HttpRequest, platform: str):
+@csrf_exempt
+def oauth_authorize(request: HttpRequest, platform: str) -> HttpResponse | JsonResponse:
     """Starts the OAuth2 authorization process and returns the authorization URL."""
     config = _get_oauth_config(platform)
     is_available, error_msg = _check_api_availability(platform, config)
@@ -155,7 +149,7 @@ def oauth_authorize(request: HttpRequest, platform: str):
     OauthConnection.objects.create_pending_connection(state, platform)
 
     try:
-        allowed_scopes_config = getattr(settings, 'OAUTH_ALLOWED_SCOPES', {})
+        allowed_scopes_config = getattr(settings, "OAUTH_ALLOWED_SCOPES", {})
         if platform not in allowed_scopes_config:
             logger.error("OAuth allowed scopes configuration missing for platform: %s", platform)
             return JsonResponse({"error": "OAuth service temporarily unavailable"}, status=503)
@@ -185,48 +179,45 @@ def oauth_callback(  # noqa: PLR0911
     params: OAuthCallbackParams = Query(...),
 ):
     """Handles the OAuth2 callback and creates authenticated user session."""
-    # Validate callback parameters and state
     validation_result = _validate_callback_params(request, platform)
     if isinstance(validation_result, HttpResponseRedirect):
         return validation_result
     code, state, oauth_connection = validation_result
 
-    # Get OAuth config
     config = _get_oauth_config(platform)
 
-    # Exchange code for access token
     provider_access, token_error = oauth_connection.request_access_token(config, code)
     if token_error:
         msg, status = token_error
         return _redirect_error(msg, status)
 
-    # Validate scopes
     provider_access_token, granted_scopes = provider_access
     scope_error = _validate_scopes(granted_scopes, platform)
     if scope_error:
         logger.warning(
             "OAuth scope validation failed: platform=%s granted=%s error=%s",
-            platform, list(granted_scopes), scope_error
+            platform,
+            list(granted_scopes),
+            scope_error,
         )
         return _redirect_error(scope_error, 422)
 
-    # Get user info from provider
     user_info, user_error = oauth_connection.get_user_info(config, provider_access_token)
     if user_error:
         error_message, status_code = user_error
         return _redirect_error(error_message, status_code)
 
-    # Create or update user
     user, user_creation_error = oauth_connection.create_or_update_user(user_info)
     if user_creation_error:
         error_message, status_code = user_creation_error
         return _redirect_error(error_message, status_code)
 
-    # Create JWT tokens and redirect to home
     app_access_token_jwt, refresh_token_instance = RefreshToken.objects.create(user)
     logger.info(
         "OAuth authentication successful: user_id=%s platform=%s oauth_id=%s",
-        user.id, platform, oauth_connection.oauth_id
+        user.id,
+        platform,
+        oauth_connection.oauth_id,
     )
     return fill_response_with_jwt(
         HttpResponseRedirect(settings.HOME_REDIRECT_URL),

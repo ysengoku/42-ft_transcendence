@@ -127,23 +127,24 @@ class OauthConnection(models.Model):
             if avatar_url:
                 logger.info(
                     "OAuth avatar fetch: user_id=%s connection_type=%s url=%s",
-                    getattr(user, "id", None), self.connection_type, avatar_url
+                    user.id,
+                    self.connection_type,
+                    avatar_url,
                 )
                 try:
                     self.save_avatar(avatar_url, user)
                 except (requests.RequestException, ValueError, OSError) as exc:
-                    # Log specific avatar download errors but don't fail OAuth flow
                     logger.warning(
-                        "OAuth avatar download failed: user_id=%s url=%s error=%s",
-                        getattr(user, "id", None), avatar_url, str(exc)
+                        "OAuth avatar download failed: user_id=%s url=%s error=%s", user.id, avatar_url, str(exc)
                     )
 
         self.save()
         logger.info(
             "OAuth connection set to CONNECTED: user_id=%s connection_type=%s oauth_id=%s",
-            getattr(user, "id", None), self.connection_type, self.oauth_id
+            user.id,
+            self.connection_type,
+            self.oauth_id,
         )
-
 
     def request_access_token(self, config: dict, code: str) -> tuple:
         """
@@ -170,17 +171,19 @@ class OauthConnection(models.Model):
             except ValueError:
                 logger.warning(
                     "OAuth token response invalid JSON: platform=%s status=%s",
-                    self.connection_type, token_response.status_code
+                    self.connection_type,
+                    token_response.status_code,
                 )
                 return None, ("Authentication failed. Please try again.", 422)
 
             if token_response.status_code != 200 or "access_token" not in token_data:  # noqa: PLR2004
                 provider_error = token_data.get("error", "provider_error")
                 is_app_error = provider_error in ["invalid_request", "invalid_client", "invalid_grant"]
-                # Log specific error but return generic message to prevent information leakage
                 logger.warning(
                     "OAuth token request failed: platform=%s error=%s status=%s",
-                    self.connection_type, provider_error, token_response.status_code
+                    self.connection_type,
+                    provider_error,
+                    token_response.status_code,
                 )
                 error_message = "Authentication failed. Please try again."
                 status_code = 401 if is_app_error else 503
@@ -188,7 +191,6 @@ class OauthConnection(models.Model):
 
             access_token = token_data["access_token"]
             scope_string = token_data.get("scope", "")
-            # GitHub uses comma-separated scopes, some providers use spaces
             granted_scopes = set(scope_string.replace(",", " ").split())
             return (access_token, granted_scopes), None
 
@@ -217,7 +219,9 @@ class OauthConnection(models.Model):
                 # Log specific error but return generic message to prevent information leakage
                 logger.warning(
                     "OAuth user info request failed: platform=%s error=%s status=%s",
-                    self.connection_type, provider_error, user_resp.status_code
+                    self.connection_type,
+                    provider_error,
+                    user_resp.status_code,
                 )
                 return None, ("Failed to retrieve user information", 401)
 
@@ -226,7 +230,8 @@ class OauthConnection(models.Model):
             except ValueError:
                 logger.warning(
                     "OAuth user info response invalid JSON: platform=%s status=%s",
-                    self.connection_type, user_resp.status_code
+                    self.connection_type,
+                    user_resp.status_code,
                 )
                 return None, ("Failed to retrieve user information", 422)
 
@@ -234,7 +239,6 @@ class OauthConnection(models.Model):
             return None, ("The request timed out while retrieving user information.", 408)
         except requests.RequestException:
             return None, ("Failed to connect to the server while retrieving user information.", 503)
-
 
     def check_state_and_validity(self, platform: str, state: str) -> tuple:
         """
@@ -265,9 +269,10 @@ class OauthConnection(models.Model):
         except DatabaseError as exc:
             logger.error(
                 "Failed to mark OAuth state as used: state=%s platform=%s error=%s",
-                self.state, self.connection_type, str(exc)
+                self.state,
+                self.connection_type,
+                str(exc),
             )
-            # Re-raise as this is a critical security operation
             raise
 
     def create_or_update_user(self, user_info: dict) -> tuple:

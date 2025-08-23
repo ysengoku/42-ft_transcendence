@@ -273,7 +273,7 @@ OAUTH_CONFIG = {
         "auth_uri": GITHUB_AUTHORIZE_URL,
         "token_uri": GITHUB_ACCESS_TOKEN_URL,
         "redirect_uri": GITHUB_REDIRECT_URI,
-        "scopes": list(OAUTH_ALLOWED_SCOPES["github"]),  # <-- centralisé
+        "scopes": list(OAUTH_ALLOWED_SCOPES["github"]),
         "user_info_uri": GITHUB_USER_PROFILE_URL,
         "oauth_uri": GITHUB_OAUTH_URL,
     },
@@ -283,7 +283,7 @@ OAUTH_CONFIG = {
         "auth_uri": FT_API_AUTHORIZE_URL,
         "token_uri": FT_API_ACCESS_TOKEN_URL,
         "redirect_uri": FT_API_REDIRECT_URI,
-        "scopes": list(OAUTH_ALLOWED_SCOPES["42"]),      # <-- centralisé
+        "scopes": list(OAUTH_ALLOWED_SCOPES["42"]),
         "user_info_uri": FT_API_USER_PROFILE_URL,
         "oauth_uri": FT_API_OAUTH_URL,
     },
