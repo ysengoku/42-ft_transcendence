@@ -1,4 +1,4 @@
-# Tournament App
+# Tournament System
 
 The Tournament app handles the full lifecycle of tournaments, from creation and registration to real-time match updates and result reporting. It integrates with Django Channels for live interactions and provides both REST and WebSocket APIs.
 
