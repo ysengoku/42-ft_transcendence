@@ -152,6 +152,7 @@ class ChatMessage(models.Model):
     sender = models.ForeignKey(Profile, related_name="sent_messages", on_delete=models.CASCADE)
     chat = models.ForeignKey(Chat, related_name="messages", on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
+    is_really_read = models.BooleanField(default=False)
     is_liked = models.BooleanField(default=False)
 
     objects = ChatMessageQuerySet.as_manager()

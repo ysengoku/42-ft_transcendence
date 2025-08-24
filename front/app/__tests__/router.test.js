@@ -168,6 +168,10 @@ describe('navigate', () => {
     vi.restoreAllMocks();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('should use pushState if redirect and first load are false', async () => {
     const handleRouteSpy = vi.spyOn(router, 'handleRoute');
     const pushStateSpy = vi.spyOn(window.history, 'pushState');
@@ -254,6 +258,74 @@ describe('navigate', () => {
     expect(beforeUnloadSpy).toHaveBeenCalled();
     expect(handleRouteSpy).toHaveBeenCalled();
     expect(pushStateSpy).toHaveBeenCalled();
+  });
+
+  it('should parse URL containing query and update history, pass URLSearchParams to handleRoute and include query in pushState', async () => {
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+
+    await router.navigate('/test?type=123&message=test');
+
+    const arg = handleRouteSpy.mock.calls[0][0];
+    expect(arg instanceof URLSearchParams).toBe(true);
+    expect(arg.get('type')).toBe('123');
+    expect(arg.get('message')).toBe('test');
+
+    expect(pushStateSpy).toHaveBeenCalled();
+    const calledUrl = pushStateSpy.mock.calls[0][2];
+    expect(calledUrl.startsWith('/test?')).toBe(true);
+    expect(calledUrl).toContain('type=123');
+    expect(calledUrl).toContain('message=test');
+
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should pass URLSearchParams to handleRoute and include query string in pushState URL when query string provided', async () => {
+    router.isFristLoad = false;
+    router.beforeunloadCallback = null;
+
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+
+    await router.navigate('/test', 'type=123&message=test', false);
+
+    const arg = handleRouteSpy.mock.calls[0][0];
+    expect(arg instanceof URLSearchParams).toBe(true);
+    expect(arg.get('type')).toBe('123');
+    expect(arg.get('message')).toBe('test');
+
+    expect(pushStateSpy).toHaveBeenCalled();
+    const calledUrl = pushStateSpy.mock.calls[0][2];
+    expect(calledUrl.startsWith('/test?')).toBe(true);
+    expect(calledUrl).toContain('type=123');
+    expect(calledUrl).toContain('message=test');
+
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should pass URLSearchParams to handleRoute and include object queryParams in pushState URL', async () => {
+    router.isFristLoad = false;
+    router.beforeunloadCallback = null;
+
+    const handleRouteSpy = vi.spyOn(router, 'handleRoute');
+    const pushStateSpy = vi.spyOn(window.history, 'pushState');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+
+    await router.navigate('/test', { type: '123', option: '2' }, false);
+
+    const arg = handleRouteSpy.mock.calls[0][0];
+    expect(arg.get('type')).toBe('123');
+    expect(arg.get('option')).toBe('2');
+
+    expect(pushStateSpy).toHaveBeenCalled();
+    const calledUrl = pushStateSpy.mock.calls[0][2];
+    expect(calledUrl.startsWith('/test?')).toBe(true);
+    expect(calledUrl).toContain('type=123');
+    expect(calledUrl).toContain('option=2');
+
+    expect(replaceStateSpy).not.toHaveBeenCalled();
   });
 });
 

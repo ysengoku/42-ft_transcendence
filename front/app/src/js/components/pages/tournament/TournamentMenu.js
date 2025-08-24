@@ -86,7 +86,10 @@ export class TournamentMenu extends HTMLElement {
   disconnectedCallback() {
     if (this.modal) {
       document.body.removeChild(this.modalComponent);
-      this.modal.dispose();
+      this.modal.hide();
+      Promise.resolve(() => {
+        this.modal.dispose();
+      });
       this.modalComponent = null;
       this.modal = null;
     }

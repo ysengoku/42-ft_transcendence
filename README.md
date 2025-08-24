@@ -195,6 +195,11 @@ Separate container that periodically sends requests to the Daphne server to perf
 
 ## Documentation 🛠️👷🏻‍♂️
 
+### Features
+
+- [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
+- [Tournament system](/doc/features/TOURNAMENT.md)
+
 ### Front-end
 
 - [Front-end overview](/doc/front/FRONTEND.md)
@@ -209,13 +214,6 @@ Separate container that periodically sends requests to the Daphne server to perf
 
 - [Multi-factor authentication](/doc/server/MFA.md)
 - [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
-- [Live chat](/doc/server/CHAT.md)
-- [Tournament system](/doc/server/TOURNAMENT.md)
-
-### Protocol
-
-- [Live chat modules (Chat, notifications, Game invitation)](/doc/protocol/LIVECHAT_MODULE_WS_PROTOCOL.md)
-- [Tournament state](/doc/protocol/TOURNAMENT_WS_PROTOCOL.md)
 
 ### UI design
 

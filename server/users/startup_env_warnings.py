@@ -27,10 +27,7 @@ def warn_empty_default_envs_at_startup() -> None:
     Log warnings for env vars that have empty defaults and are empty/missing
     in the current environment. Never raises, only logs.
     """
-    try:
-        for key in ENV_WITH_EMPTY_DEFAULTS:
-            val = os.getenv(key)
-            if not val or str(val).strip() == "":
-                logger.warning("Env var %s is missing or empty (default is '').", key)
-    except Exception as e:  # noqa: BLE001
-        logger.warning("Startup env warnings failed: %s", e)
+    for key in ENV_WITH_EMPTY_DEFAULTS:
+        val = os.getenv(key)
+        if not val or str(val).strip() == "":
+            logger.warning("Env var %s is missing or empty (default is '').", key)

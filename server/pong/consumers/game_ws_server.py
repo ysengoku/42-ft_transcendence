@@ -29,6 +29,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
         self.game_room_id: str = self.scope["url_route"]["kwargs"]["game_room_id"]
         self.game_room_group_name = f"game_room_{self.game_room_id}"
         self.accept()
+        self.init_rate_limiter(*GuardedWebsocketConsumer.RateLimits.GAME_CONSUMER)
         if not self.user:
             logger.warning("[GameRoom.connect]: unauthorized user tried to join game room {%s}", self.game_room_id)
             self.close(CloseCodes.ILLEGAL_CONNECTION)
@@ -118,7 +119,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
             )
             return
 
-        # the player has a valid connection, so we return here without notify the worker of disconnect, so we don't
+        # the player has a valid connection, so we return here without notifying the worker of disconnect, so we don't
         # ruin the other valid connection
         if close_code == CloseCodes.ALREADY_IN_GAME:
             return
@@ -148,6 +149,15 @@ class GameServerConsumer(GuardedWebsocketConsumer):
                 self.game_room_id,
             )
             return
+
+        if not self.check_rate_limit():
+            self.close(CloseCodes.BAD_DATA)
+            logger.warning(
+                "[GameRoom.receive]: user {%s} has exceeded the rate limit",
+                self.user.profile,
+            )
+            return
+
 
         match text_data_json:
             case {

@@ -51,6 +51,7 @@ class ChatEvent:
         chat_id = message_data.get("chat_id")
         timestamp = message_data.get("timestamp")
 
+        self.consumer.user.profile.update_activity()
         chat = self.check_if_chat_exists_and_is_in_chat(chat_id)
         if not isinstance(chat, Chat):
             return
@@ -62,6 +63,7 @@ class ChatEvent:
                 chat_id,
             )
             return
+        self.consumer.user_profile.refresh_from_db()
         new_message = ChatMessage.objects.create(sender=self.consumer.user_profile, content=message, chat=chat)
 
         async_to_sync(self.consumer.channel_layer.group_send)(
@@ -106,6 +108,7 @@ class ChatEvent:
 
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist.", message_id)
+        self.consumer.user.profile.update_activity()
 
     def send_like_update(self, chat_id, message_id, is_liked):
         """Notifies users of a liked message."""
@@ -132,7 +135,8 @@ class ChatEvent:
         try:
             message = ChatMessage.objects.get(pk=message_id)
             message.is_read = True
-            message.save()
+            message.is_really_read = True
+            message.save(update_fields=["is_read", "is_really_read"])
         except ObjectDoesNotExist:
             logger.debug("Message %s does not exist", message_id)
 
