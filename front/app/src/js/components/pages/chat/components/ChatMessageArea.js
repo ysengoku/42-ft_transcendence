@@ -77,6 +77,10 @@ export class ChatMessageArea extends HTMLElement {
    */
   setData(data, loggedInUsername) {
     if (data && data.is_blocked_by_user) {
+      const message = 'This conversation is temporaly unavailable.';
+      showAlertMessageForDuration(ALERT_TYPE.ERROR, message);
+      const ChatPage = document.querySelector('chat-page');
+      ChatPage?.connectedCallback();
       return;
     }
     this.#state.renderedMessagesCount = 0;
@@ -114,6 +118,9 @@ export class ChatMessageArea extends HTMLElement {
   /*     Render                                                               */
   /* ------------------------------------------------------------------------ */
   render() {
+    this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
+    this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
+
     this.innerHTML = this.style() + this.template();
     this.messageInput = this.querySelector('#chat-message-input-wrapper');
     this.loader = this.querySelector('.chat-loader');
@@ -156,12 +163,9 @@ export class ChatMessageArea extends HTMLElement {
       requestAnimationFrame(() => {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       });
-      this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
-      this.chatMessages.addEventListener('click', this.toggleLikeMessage);
-    } else {
-      this.chatMessages?.removeEventListener('scrollend', this.loadMoreMessages);
-      this.chatMessages?.removeEventListener('click', this.toggleLikeMessage);
     }
+    this.chatMessages.addEventListener('scrollend', this.loadMoreMessages);
+    this.chatMessages.addEventListener('click', this.toggleLikeMessage);
 
     // Toggle input and block button based on block status.
     if (this.#state.data.is_blocked_user) {
@@ -179,6 +183,8 @@ export class ChatMessageArea extends HTMLElement {
 
   renderMessages() {
     if (this.#state.data.is_blocked_user) {
+      const blockedUserContent = this.querySelector('.blocked-user');
+      blockedUserContent?.classList.remove('d-none');
       return;
     }
     const currentMessageCount = this.#state.data.messages.length;
@@ -273,7 +279,7 @@ export class ChatMessageArea extends HTMLElement {
       id: data.id,
     };
     this.#state.data.messages.unshift(message);
-    if (data.sender === this.#state.loggedInUsername && this.updateMessageStatus(data)) {
+    if (this.updateMessageStatus(data)) {
       return;
     }
     const messageElement = this.messageItem(message);
@@ -300,7 +306,17 @@ export class ChatMessageArea extends HTMLElement {
     const messageContent = messageElement.querySelector('.bubble');
     messageContent.id = message.id;
 
-    if (message.sender === this.#state.data.username) {
+    if (message.sender === this.#state.loggedInUsername) {
+      messageElement.classList.add(
+        'right-align-message',
+        'd-flex',
+        'flex-row',
+        'justify-content-end',
+        'align-items-center',
+      );
+      messageContent.classList.add('ms-5');
+      messageElement.querySelector('.chat-message-avatar').remove();
+    } else {
       messageElement.classList.add(
         'left-align-message',
         'd-flex',
@@ -322,16 +338,6 @@ export class ChatMessageArea extends HTMLElement {
         };
         socketManager.sendMessage('livechat', readMessage);
       }
-    } else {
-      messageElement.classList.add(
-        'right-align-message',
-        'd-flex',
-        'flex-row',
-        'justify-content-end',
-        'align-items-center',
-      );
-      messageContent.classList.add('ms-5');
-      messageElement.querySelector('.chat-message-avatar').remove();
     }
     messageElement.querySelector('.message-content').textContent = message.content;
     message.is_liked ? messageContent.classList.add('liked') : messageContent.classList.remove('liked');
@@ -491,6 +497,9 @@ export class ChatMessageArea extends HTMLElement {
       <div class="no-messages d-flex flex-column justify-content-center align-items-center mt-5 d-none">
         <p class="m-0">Every great partnership starts with a howdy.</p>
         <p class="m-0">Don't be shy now — send your first message.</p>
+      </div>
+      <div class="blocked-user d-flex flex-column justify-content-center align-items-center mt-5 d-none">
+        <p class="m-0">You have blocked this user. Please unblock to send messages.</p>
       </div>
       <div class="flex-grow-1 overflow-auto ps-4 pe-3 pt-4 pb-3" id="chat-messages" lang="en"></div>
 

@@ -237,7 +237,7 @@ export class ChatList extends HTMLElement {
     const threshold = 5;
     if (
       Math.ceil(scrollTop + clientHeight) < scrollHeight - threshold ||
-      this.#state.currentListItemCount === this.#state.totalItemCount
+      this.#state.currentListItemCount >= this.#state.totalItemCount
     ) {
       return;
     }
