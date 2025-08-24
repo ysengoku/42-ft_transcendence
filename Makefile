@@ -22,7 +22,7 @@ ensure-env:
 	fi
 
 update-ip:
-	./update_ip.sh
+	bash update_ip.sh
 
 build: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) build
@@ -30,9 +30,10 @@ build: ensure-env update-ip
 up: ensure-env update-ip
 	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) up --build
 
-dev: NODE_ENV=development
-dev:
-	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE)  --profile development up --build
+prod: NODE_ENV=development
+dev: ensure-env update-ip
+	NODE_ENV=$(NODE_ENV) docker compose -f $(DOCKER_COMPOSE) --profile development up --build
+
 prod: NODE_ENV=production
 prod: up
 
