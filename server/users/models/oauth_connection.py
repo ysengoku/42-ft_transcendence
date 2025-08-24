@@ -186,7 +186,7 @@ class OauthConnection(models.Model):
                     token_response.status_code,
                 )
                 error_message = "Authentication failed. Please try again."
-                status_code = 401 if is_app_error else 503
+                status_code = 503 if is_app_error else 422
                 return None, (error_message, status_code)
 
             access_token = token_data["access_token"]
@@ -216,7 +216,6 @@ class OauthConnection(models.Model):
                     provider_error = user_resp.json().get("error", "api_error")
                 except ValueError:
                     provider_error = "api_error"
-                # Log specific error but return generic message to prevent information leakage
                 logger.warning(
                     "OAuth user info request failed: platform=%s error=%s status=%s",
                     self.connection_type,
