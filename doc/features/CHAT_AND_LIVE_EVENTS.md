@@ -92,8 +92,6 @@ The message is considered [read](#protocol-read-message) when it's displayed in 
 </p>
 
 ---
-
----
 #### Adding or Removing Likes on a Message
 
 A user can toggle a like on any received message by clicking on it.   
