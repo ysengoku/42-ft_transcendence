@@ -21,6 +21,9 @@ Every other part of the project is affected by this system; after all, the abili
         - [Core Models](#core-models)
         - [JWT Authentication Middleware](#jwt-authentication-middleware)
     - [Frontend](#frontend)
+        - [Authentication redirection](#authentication-redirection)
+        - [Authentication and User Settings Components](#authentication-and-user-settings-components)
+        - [User Dashboard and Social Networking Components](#user-dashboard-and-social-networking-conponents)
 - [Testing](#testing)
 - [Contributors](#contributors)
 
@@ -42,7 +45,7 @@ The benefits of the JWT authentication system (with refresh tokens) compared to 
 
 Server provides multiple endpoints for the necessary for secure creation, logging in and logging outof users. `signup` and `login` endpoints also issue [CSRF token (cookies-to-header approach)](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Cookie-to-header_token), another security measure of the project.
 
-The way CSRF protection works is that malicious side that attempts CSRF attack cannot read the cookies from another domain (Ponggers, in this case). However, the server expects it to be send in the header on each request. If they don't match, request fails, invalidating the attack. [Additional information.](https://stackoverflow.com/a/49301318)
+The way CSRF protection works is that malicious side that attempts CSRF attack cannot read the cookies from another domain (Ponggers, in this case). However, the server expects it to be sent in the header on each request. If they don't match, request fails, invalidating the attack. [Additional information.](https://stackoverflow.com/a/49301318)
 
 - `POST /api/signup`: Creates a new user account with a username, email, and password, if all the fields are valid. For security reasons, there are restrictions placed on passwords, which are specified in `settings.py`. Upon success, it returns JWTs in secure, HTTP-only cookies to start a session. Doesn't require CSRF token and issues a CSRF token.
 
@@ -63,19 +66,29 @@ The way CSRF protection works is that malicious side that attempts CSRF attack c
 ### Password Restoration
 
 - `POST /api/forgot-password`: Allows users to request a password reset. It takes an email address and sends a password reset link with a unique token.
+
 - `POST /api/reset-password/{token}`: Allows a user to set a new password using a valid token received via email. The token expires after 10 minutes.
+
+<p align="center">
+  <img src="../../assets/ui/user-management-forgot-password.png" alt="Forgot password" width="240px" />
+  <img src="../../assets/ui/user-management-reset-password.png" alt="Reset password" width="240px" />
+</p>
 
 ---
 ### Multi-Factor Authentication (MFA)
 
 For enhanced security, users can enable email-based MFA.
-See MFA docs [here](./MFA.md).
+See MFA docs [here](../server/MFA.md).
+
+<p align="center">
+  <img src="../../assets/ui/user-management-mfa.png" alt="Reset password" width="240px" />
+</p>
 
 ---
 ### OAuth 2.0 Integration
 
 Users can register and log in using their GitHub or 42 School accounts.
-See OAuth docs [here](./OAUTH2.md).
+See OAuth docs [here](../server/OAUTH2.md).
 
 ---
 ### Social Networking Elements
@@ -109,6 +122,9 @@ Each of the users have a lot of different data that is associated with them: the
 
 - `GET /api/users`: Retreives paginated list of users filtered based on query parameters. Users can be searched by their nickname or username.
 - `GET /api/users/{username}`: Retrieves the full public profile for a specified user, including game statistics like win/loss records, elo history, and best/worst enemies.
+
+<div id="api-self"></div>
+
 - `GET /api/self`: A protected endpoint that returns the profile data for the currently authenticated user, including private information like the number of unread messages and notifications, as well as whether they currently play any game/hold a matchmaking queue or not.
 
 User can search for other users by typing their name or nickname into the search bar.
@@ -129,9 +145,17 @@ All of the new settings must conform to the constraints for each of the fields, 
 - `GET /api/users/{username}/settings`: Allows an authenticated user to see their current settings, such as their nickname, email, avatar.
 - `POST /api/users/{username}/settings`: Allows an authenticated user to update their own profile information, such as their nickname, email, password, and avatar. Avatar uploads are validated for size (under 10MB) and file type (.png, .jpg, .webp).
 
+<p align="center">
+  <img src="../../assets/ui/user-management-settings.png" alt="Profile Page" width="480px" />
+</p>
+
+---
+
 ### User Presence System
 
 This features lives on the intersection between user management & live events systems. [See chat and live events documentation](CHAT_AND_LIVE_EVENTS.md#user-presence-system).
+
+<br />
 
 ## Implementation Details
 
@@ -163,12 +187,63 @@ Middleware is triggered on every request/connection. Authentication middleware i
 - `JWTWebsocketAuthMiddleware`: Secures all WebSocket endpoints using the `access_token` from cookies, populating the `scope` for real-time services like chat and the actual game.
 
 ---
-## Frontend
+
+### Frontend (🛠️👷🏻‍♂️ On working)
+
+#### Authentication redirection
+
+The application checks the authentication status of the current user on each navigation using [`/api/self`](#api-self) or other endpoints.   
+Unauthentiated users attempting to access to pages restricted to authenticated users are redirected to **/login**. Conversely, authenticated users navigating to **/login**, **/register**, or any other authentication-related pages are sent to **/home**.
+
+---
+
+#### Authentication and User Settings components
+
+##### `Register`
+
+New users can create account on `Register` page.
+
+
+##### `Login`
+
+The `Login` page includes a **standard login form (`LoginForm`)** and **`OAuth` login** via 42 profile or GitHub account.  
+When a user logs in through `LoginForm`, the client checks whether both the username/email and the password fields are filled, then sends the request to the server. 
+On success, the user is redirected to **/home** (or to `MfaVerification` if [MFA](../server/MFA.md) is enabled). On failure, an error feedback is displayed.
+
+This component provides also [password reset](#password-restoration) form (`ForgotPassword`). The user can request  a reset by submitting the registered email address. The server then sends an email containing a link to **/reset-password/{token}** (`ResetPassword`).
+
+##### `Settings`
+ 
+##### Logout
+
+`handleLogout()` called from dropdown menu or home
+
+---
+
+#### User Dashboard and Social Networking conponents
+
+##### `Profile`
+
+- User info   
+- User actions:  add friend, send message, block/unblock   
+- Stat:   
+  Elo(current elo & progression),   
+  Friend count,   
+  Best/Worst enemmies,   
+  Game(Total matches, scores, win rate, duel history -- only ranked duels) 
+
+##### `FriendsList`
+
+##### `UserSearch`
+
+---
+<br />
 
 ## Testing
 `make tests-users` will initialize the tests related to the users management system.
 
 ---
+<br />
 
 ## Contributors
 
@@ -181,7 +256,7 @@ Middleware is triggered on every request/connection. Authentication middleware i
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      JWT authentication, auth HTTP API, social networking elements, documentation
+      JWT authentication, auth HTTP API, social networking elements
     </td>
   </tr>
 
@@ -217,7 +292,12 @@ Middleware is triggered on every request/connection. Authentication middleware i
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      UI design with Figma, everything on the frontend side for all of the features, documentation
+      UI design with Figma, everything on the frontend side for all of the features
     </td>
   </tr>
 </table>
+
+---
+<br />
+
+Authored by: [emuminov](https://github.com/emuminov) and [ysengoku](https://github.com/ysengoku)
