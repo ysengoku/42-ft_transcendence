@@ -4,6 +4,7 @@ The main attraction of the whole project is [the pong game](https://en.wikipedia
 
 ## Table of contents
 - [Features](#features)
+  - [Pong Game](#pong-game)
   - [Matchmaking](#matchmaking)
   - [Tournaments](#tournaments)
   - [3D Graphics](#3d-graphics)
@@ -16,9 +17,9 @@ The main attraction of the whole project is [the pong game](https://en.wikipedia
     - [Details of Tournaments](#details-of-tournaments)
   - [Frontend](#frontend)
 - [WebSocket Protocol Reference](#websocket-protocol-reference)
-  - [Mathcmaking Events](#matchmaking-events)
-  - [Tournament Events](#tournament-events)
-  - [Pong Events](#pong-events)
+  - [Mathcmaking Actions](#matchmaking-events)
+  - [Tournament Actions](#tournament-events)
+  - [Pong Actions](#pong-events)
 - [Testing](#testing)
 - [Contributors](#contributors)
 
@@ -26,7 +27,15 @@ The main attraction of the whole project is [the pong game](https://en.wikipedia
 
 ## Features
 
+### Pong Game
+
 ### Matchmaking
+
+
+<p align="center">
+  <em>Send invitation from Chat page</em><br />
+  <img src="../../assets/ui/chat-game-invitation.png" alt="Send Game invitation" width="480px" />
+</p>
 
 ### Tournaments
 
@@ -51,3 +60,16 @@ The game features rich hand-crafted 3D models [sculpted with Blender](https://en
 #### Details of Matchmaking
 
 #### Details of Tournaments
+
+Tournament handling is a complex system that can function independently of the main pong game, as it can serve any kind of games. It's a very modular system in that sense. Hence it's implemented as a separate `tournaments` app.
+
+### Frontend
+
+## WebSocket Protocol Reference
+
+### Mathcmaking Actions
+
+### Tournament Actions
+
+### Pong Actions
+TODO: write them after they are going to be consolidated with Celia
