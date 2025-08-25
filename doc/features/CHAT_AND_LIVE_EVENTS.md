@@ -2,7 +2,7 @@
 
 The Chat and Live Events system manages core communication features within the application, including messaging, notifications, game invitations, and real-time user presence. All of those systems are interconnected and handled in a live, real-time manner through [WebSocket](https://en.wikipedia.org/wiki/WebSocket) connection to the `/ws/events` endpoint, with the help of a handful HTTP endpoints.
 
-Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protocol, the server can send the data to the target user by itself, without that user requesting it. It's the heart of the chat and live events system: it's what makes them "live".
+Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protocol, the server can send the data to the target user by itself, without that user requesting it. It's the heart of the chat and live events system: It's what makes them "live".
 
 ## Table of contents
 
@@ -40,7 +40,7 @@ This section describes the features of the events system in high-level. Detailed
 
 ### Chat
 
-Users can send messages to to each other using convenient UI that is similar to the ones of WhatsApp or Telegram. The core feature of the chat is real-time messaging, but besides that, chat has additional features for better user experience: it takes advantage of the [social features](./USER_MANAGEMENT.md#social-networking-elements) of the app, has a message-liking system, user search UI and visual indication for when the server was acknowledged by the server.
+Users can send messages to to each other using convenient UI that is similar to the ones of Messenger, WhatsApp or Telegram. The core feature of the chat is real-time messaging, but besides that, chat has additional features for better user experience: it takes advantage of the [social features](./USER_MANAGEMENT.md#social-networking-elements) of the app, has a message-liking system, user search UI and visual indication for when the server was acknowledged by the server.
 
 Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the websocket endpoint, and are used for cases when there is no necessity for biderectional communication that WebSockets enable. The rest of the logic is handled through `/ws/events` WebSocket endpoint. The list of HTTP endpoints:
 - `GET /api/chats`: Fetches a paginated list of the user's chats. Used when the user visits the chat page.
@@ -62,7 +62,7 @@ Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the web
 
 The main feature of the chat is real-time messaging; when a user sends a message to a target user, user can start conversation through [profile page of the user](./USER_MANAGEMENT.md#user-search-and-user-profiles) they desire to message, through search bar on the chat page, or by finding an existing conversation in the chat UI.
 
-Whenever user sends a message, the client sends it to the server via the [`new_message`](#protocol-new-message-client-server) WebSocket event. For the sender, the message is considered to be "pending", and is grayed out until the the server confirms that it received it.
+Whenever user sends a message, the client sends it to the server via the [`new_message`](#protocol-new-message-client-server) WebSocket event. For the sender, the message is considered to be "pending", and is grayed out until the the server confirms receipt.
 
 <p align="center">
   <img src="../../assets/ui/chat-pending-message.png" alt="Chat - Pending message" width="480px" />
@@ -74,7 +74,7 @@ On success, the client updates the chat list by moving the conversation to the t
   <img src="../../assets/ui/chat-sent-message.png" alt="Chat - Sent message" width="480px" />
 </p>
 
-For the receiver the message appears on their chat page without receiver asking for it from their side. Unless the reciever is in the chat with the sends, they also receive a [notification](#notifications) that informs them about a new unread message by putting a badge on the navbar chat icon.
+For the receiver the message appears on their chat page without receiver asking for it from their side. Unless the reciever is in the chat with the sends, they also receive a notification that informs them about a new unread message by putting a badge on the navbar chat icon.
 
 <p align="center">
   <img src="../../assets/ui/notification-new-chat-message.png" alt="Chat - Unread chat notification" width="240px" />
@@ -85,10 +85,17 @@ The message is considered [read](#protocol-read-message) when it's displayed in 
 ---
 #### Social Networking Elements
 
-[Users blocked by the current user](./USER_MANAGEMENT.md#social-networking-elements) are unable to message them or find them through [user search feature](./USER_MANAGEMENT.md#user-search-and-user-profiles).
+[User blocking system](./USER_MANAGEMENT.md#social-networking-elements) is integrated into chat feature.   
+When a user is blocked, all messaging between the two users is disabled, and the blocked user can no longer find the blocking user through [user search feature](./USER_MANAGEMENT.md#user-search-and-user-profiles).
+
 
 <p align="center">
+  <em>The current user is blocking the user "sad_hampter"</em><br />
   <img src="../../assets/ui/chat-blocked-user.png" alt="Chat - Blocked user" width="480px" />
+</p>
+<p align="center">
+  <em>The current user is blocked by the user "pedro3"</em><br />
+  <img src="../../assets/ui/chat-blocked-by-user.png" alt="Chat - Blocked user" width="480px" />
 </p>
 
 ---
@@ -97,7 +104,7 @@ The message is considered [read](#protocol-read-message) when it's displayed in 
 A user can toggle a like on any received message by clicking on it.   
 When a message is clicked, the client identifies the target message by its id attribute, then sends [`like_message`](#protocol-like-message-client-server) or [`unlike_message`](#protocol-unlike-message-client-server) WebSocket event to the server.
 
-The server then sends [`like_message`](#protocol-like-message-server-client) event to both chat participants and UI is updated by displaying animated heart icon over the liked message.
+The server then confirms with [`like_message`](#protocol-like-message-server-client) event to both chat participants and UI is updated by displaying animated heart icon over the liked message.
 
 <p align="center">
   <img src="../../assets/ui/chat-like-message.png" alt="Chat - Like message" width="480px" />
@@ -112,7 +119,7 @@ Notifications are things of interest that server sends to the user without user 
 - [The user is invited to Pong Duel by another user](#protocol-game-invite-server-client). (See [Game invitation section](#game-invitation))
 
 When a notification arrives, the client displays a toast and adds an unread badge to the **Notifications** button in the Navbar.
-Clicking the button triggers `GET /api/notifications` and opens dropdown menu with notification list.
+Clicking the button fetches the data and displays a dropdown menu containing a list of notifications.
 
 Just like [chat](#chat), notifications feature uses only a handful of HTTP endpoints, the rest is handled by `/ws/events/` WebSocket endpoint. Those endpoints are:
 - `GET /notifications/`: Fetches a paginated of notifications.
@@ -136,7 +143,7 @@ User can also mark all unread notification as read by clicking **Mark all as rea
 ---
 ### Game invitation
 
-TODO: do proper links with the game part of the documentation when it's going to be ready.   
+🛠️👷🏻‍♂️ TODO: do proper links with the game part of the documentation when it's going to be ready.   
 Since Peacemakers is a platform for playing pong, an invitation to play pong is an important feature. User can invite others to Pong Duel from either **[Chat page](#chat)** or **Duel Menu page**.
 
 <p align="center">
@@ -173,8 +180,7 @@ Users can be online or offline. Each meaningful API request and WebSocket events
 
 Users are checked periodically for their activity. Inactive users, users who disconnected from all devices or the ones who logged out explicitely, are considered to be [offline](#protocol-user-offline).
 
-TODO: move cronjob documentation here.
-For more details about **cronjob**, see [CRONTAB doc](../server/CRONTAB.md).
+🛠️👷🏻‍♂️TODO: move cronjob documentation here.
 
 <p align="center">
   <img src="../../assets/ui/user-presence.png" alt="User Presence Indicator" width="480px" />
@@ -188,14 +194,14 @@ The server and the client exchange messages with each other using [well-defined 
 
 ### Backend
 
-Backend side of the chat & events system is implemented with `chat` Django app (TODO: link to the high level explanation of the tech stack/overall backend overview). The app follows typical of the Django app structure, with some files differing due to being broken down from the core files in order not to bloat their size too much. Those files are:
+Backend side of the chat & events system is implemented with `chat` Django app (🛠️👷🏻‍♂️TODO: link to the high level explanation of the tech stack/overall backend overview). The app follows typical of the Django app structure, with some files differing due to being broken down from the core files in order not to bloat their size too much. Those files are:
 - `chat_events.py`: contains `ChatEvents`, a class dedicated to handling [chat events](#chat-events).
 - `duel_events.py`: contains `DuelEvents`, a class dedicated to handling [game invitation events](#game-invitation-events).
 - `validator.py`: contains `Validator`, a class dedicated to validation of the user events: their sctructure, types, ranges. All live events go through this class.
 
-Server of the project is able to handle WebSockets thanks to the Django Channels integration (TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses [JWT authentication](./USER_MANAGEMENT.md#jwt-authentication) to identify and autorize users, like the rest of the consumers in the project.
+Server of the project is able to handle WebSockets thanks to the Django Channels integration (🛠️👷🏻‍♂️TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses [JWT authentication](./USER_MANAGEMENT.md#jwt-authentication) to identify and autorize users, like the rest of the consumers in the project.
 
-This app interacts with `tournaments` app, as events system distributes tournament events too (TODO: add tournaments docs link).
+This app interacts with `tournaments` app, as events system distributes tournament events too (🛠️👷🏻‍♂️TODO: add tournaments docs link).
 
 ---
 #### Core Models
@@ -218,7 +224,7 @@ The chat & events system revolves around three main models: `Chat`, `ChatMessage
 
 #### Event Groups
 
-With Django Channels (TODO: send link to how Django Channels are used in our project and with Redis) one may want to associate certain actions with certain group of users. For example, when one use messages to another, it's undesirable to broadcast this event to every single user. Only those two users should receive relevant messages.
+With Django Channels (🛠️👷🏻‍♂️TODO: send link to how Django Channels are used in our project and with Redis) one may want to associate certain actions with certain group of users. For example, when one use messages to another, it's undesirable to broadcast this event to every single user. Only those two users should receive relevant messages.
 Once user is authenticated, they are subscribed to several channel groups that define the scope of events it will receive:
 
 - `user_{id}`: user-scoped events such as notifications, game invitations or friend updates. This is a personal group that contains only one specific user.
@@ -235,7 +241,7 @@ User presence feature is implemented through a container with [`cron`](https://e
 
 This endpoint uses its own alternative authentication method, separated from the rest of the authentication within the application. Callers to the endpoint should have the correct header: `Bearer: <CRON_SECRET>`, where `CRON_SECRET` is an environment variable provided to the container during the build stage, otherwise they will be rejected with `401` status code. This is done for security reasons; only the `cronjob` container should be able to call the endpoint.
 
-(TODO: add a link to infrastructure file that describes our containers and environment)
+(🛠️👷🏻‍♂️TODO: add a link to infrastructure file that describes our containers and environment)
 
 ---
 
@@ -561,7 +567,7 @@ SERVER --> CLIENT
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Chat HTTP API, documentation
+      Chat HTTP API
     </td>
   </tr>
 
@@ -585,7 +591,12 @@ SERVER --> CLIENT
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Chat UI design, frontend development, documentation
+      Chat UI design, frontend development
     </td>
   </tr>
 </table>
+
+---
+<br />
+
+Authored by: [emuminov](https://github.com/emuminov) and [ysengoku](https://github.com/ysengoku)

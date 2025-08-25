@@ -14,8 +14,9 @@
 </div>
 <br>
 
-Welcome to the saloon, partner. I hope that you are ready for the epic shootout... **IN PONG**!!
-**Ponggers: Peacemakers Edition** is a pong platform with elements of social networking and (awesome) cowboy-robot bug theme. Here in the Wild West we are outlaws fighting for fun and glory. But mostly fun.
+Welcome to the saloon, partner.   
+I hope that you are ready for the epic shootout... **IN PONG**!!
+**Peacemakers: Ponggers Edition** is a pong platform with elements of social networking and (awesome) cowboy-robot bug theme. Here in the Wild West we are outlaws fighting for fun and glory. But mostly fun.
 In this very comptetive game you play for elo, participate in tournaments and meet new friends. Think of it as [chess.com](https://www.chess.com/), but instead of chess we are playing pong on the postapocaliptic desolate waste of the Wild West. Totally easy to imagine, I guess.
 
 It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an awesome & free (and also competetive and hard) programming school. Our team was aiming for a very specific set of features. Some of them were chosen by us (and since we like suffering, we chose a lot of them), and some were mandatory to implement. The features are:
@@ -59,9 +60,9 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
 
 Hope that you will have and find our project interesting! 
 
-## Demo video 🛠️👷🏻‍♂️
+## Project Walkthrough 🛠️👷🏻‍♂️
 
-## Usage 🛠️👷🏻‍♂️
+## Get Started 🛠️👷🏻‍♂️
 
 ## Technologies
 
@@ -198,20 +199,25 @@ Separate container that periodically sends requests to the Daphne server to perf
 
 ## Documentation 🛠️👷🏻‍♂️
 
+- [Architecture](/doc/ARCHITECTURE.md)
+
 ### Features
 
+- [User Management](/doc/features/USER_MANAGEMENT.md)
+- [Pong Game](/doc/features/PONG.md)
 - [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
 - [Tournament system](/doc/features/TOURNAMENT.md)
 
 ### Front-end
 
 - [Front-end overview](/doc/front/FRONTEND.md)
-- [Web component](/doc/front/Component.md)
-- [Router](doc/front/Router.md)
-- [Auth manager](/doc/front/AUTH_MANAGER.md)
-- [WebScoket manager](/doc/front/SocketManager.md)
-- [Data visualization](/doc/front/DATA_VISUALIZATION.md)
-- [Tournament UI](/doc/front/TOURNAMENT_UI.md)
+- Detailed documentations
+  - [Web component](/doc/front/Component.md)
+  - [Router](doc/front/Router.md)
+  - [Auth manager](/doc/front/AUTH_MANAGER.md)
+  - [WebScoket manager](/doc/front/SocketManager.md)
+  - [Data visualization](/doc/front/DATA_VISUALIZATION.md)
+  - [Tournament UI](/doc/front/TOURNAMENT_UI.md)
 
 ### Server
 
@@ -222,39 +228,66 @@ Separate container that periodically sends requests to the Daphne server to perf
 
 - [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=37-340&t=AJvSNhCCjxhZqsCV-1)
 
-## 👥 Contributors
+## Contributors
 
 <table>
   <tr>
-    <td align="center">
-      <a href="https://github.com/emuminov">
-        <img src="./assets/profile/emuminov.png" width="80px;" alt="emuminov"/><br />
-        <sub><b>emuminov</b></sub>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/emuminov" style="text-decoration: none;">
+        <img src="./assets/profile/emuminov.png" width="48px" alt="emuminov" /><br />
+        <p>emuminov</p>
       </a>
     </td>
-    <td align="center">
-      <a href="https://github.com/melobern">
-        <img src="./assets/profile/melobern.png" width="80px;" alt="melobern"/><br />
-        <sub><b>melobern</b></sub>
-      </a>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
     </td>
-    <td align="center">
-      <a href="https://github.com/faboussard">
-        <img src="./assets/profile/faboussard.png" width="80px;" alt="Fanny_BOUSSARD"/><br />
+  </tr>
+
+  <tr>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/faboussard" style="text-decoration: none;">
+        <img src="./assets/profile/faboussard.png" width="48px;" alt="Fanny_BOUSSARD"/><br />
         <sub><b>faboussard</b></sub>
       </a>
     </td>
-    <td align="center">
-      <a href="https://github.com/Celiastral">
-        <img src="./assets/profile/Celiastral.png" width="80px;" alt="Celiastral"/><br />
-        <sub><b>Celiastral</b></sub>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/melobern" style="text-decoration: none;">
+        <img src="./assets/profile/melobern.png" width="48px" alt="melobern" /><br />
+        <p>melobern</p>
       </a>
     </td>
-    <td align="center">
-      <a href="https://github.com/ysengoku">
-        <img src="./assets/profile/ysengoku.png" width="80px;" alt="Yuko SENGOKU"/><br />
-        <sub><b>ysengoku</b></sub>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/Celiastral" style="text-decoration: none;">
+        <img src="./assets/profile/Celiastral.png" width="48px" alt="melobern" /><br />
+        <p>melobern</p>
       </a>
+    </td>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/ysengoku" style="text-decoration: none;">
+        <img src="./assets/profile/ysengoku.png" width="48px" alt="Yuko SENGOKU" /><br />
+        <p>ysengoku</p>
+      </a>
+    </td>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
     </td>
   </tr>
 </table>
