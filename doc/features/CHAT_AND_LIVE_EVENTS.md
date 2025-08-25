@@ -38,13 +38,13 @@ Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protoco
 
 This section describes the features of the events system in high-level.
 
-All the features in the chat and live events system works through `/ws/events`. The way the system works is by exchanges of special messages via custom protocol (detailed specifications the protocol [are here](#websocket-protocol-reference)). Those special messages are called `action`s, and contain the type of event that happened and the context of this event.
+All the features in the chat and live events system works through `/ws/events/`. The way the system works is by exchanges of special messages via custom protocol (detailed specifications the protocol [are here](#websocket-protocol-reference)). Those special messages are called `action`s, and contain the type of event that happened and the context of this event.
 
 ### Chat
 
 Users can send messages to to each other using convenient UI that is similar to the ones of Messenger, WhatsApp or Telegram. The core feature of the chat is real-time messaging, but besides that, chat has additional features for better user experience: it takes advantage of the [social features](./USER_MANAGEMENT.md#social-networking-elements) of the app, has a message-liking system, user search UI and visual indication for when the server was acknowledged by the server.
 
-Chat feature uses a short list of HTTP endpoints. HTTP endpoints complement the WebSocket endpoint, which does most of the work, and are used for cases when there is no necessity for biderectional communication that WebSockets enable. For example, something like the initial load of chats and chat messages when one goes to the chat page is done through HTTP, but The rest of the logic is handled through [`/ws/events` WebSocket endpoint](#chat-events). The list of HTTP endpoints:
+Chat feature uses a short list of HTTP endpoints. HTTP endpoints complement the WebSocket endpoint, which does most of the work, and are used for cases when there is no necessity for biderectional communication that WebSockets enable. For example, something like the initial load of chats and chat messages when one goes to the chat page is done through HTTP, but The rest of the logic is handled through [`/ws/events/` WebSocket endpoint](#chat-events). The list of HTTP endpoints:
 - `GET /api/chats`: Fetches a paginated list of the user's chats. Used when the user visits the chat page.
 - `PUT /api/chats/{username}`: Opens an existing chat or creates a new one with `username`.
 - `GET /api/chats/{username}/messages`: Fetches a paginated list of user's messages with `username`.
@@ -128,8 +128,8 @@ Clicking the button fetches the data and displays a dropdown menu containing a l
 </p>
 
 Just like [chat](#chat), notifications feature uses only a handful of HTTP endpoints, the rest is handled by `/ws/events/` WebSocket endpoint. Those endpoints are:
-- `GET /notifications/`: Fetches a paginated of notifications.
-- `POST /notifications/mark_all_as_read`: Marks of user's notifications as read.
+- `GET /api/notifications/`: Fetches a paginated of notifications.
+- `POST /api/notifications/mark_all_as_read`: Marks of user's notifications as read.
 - `GET /api/self`: See [User Management docs](./USER_MANAGEMENT.md#user-search-and-user-profiles).
 
 When user selects a notification item in the list, it has different effects depending on notification. Regardless of type, it will be considered read, and the client sends [`read_notification`](#protocol-read-notification) action to the server.
@@ -143,12 +143,12 @@ When user selects a notification item in the list, it has different effects depe
 User can also mark all unread notification as read by clicking **Mark all as read** button, which will tigger `POST /notifications/mark_all_as_read`.
 
 ---
-### Game invitation
+### Game Invitations
 
 🛠️👷🏻‍♂️ TODO: do proper links with the game part of the documentation when it's going to be ready.   
 Since Peacemakers is a platform for playing pong, an invitation to play pong is an important feature. User can invite others to Pong Duel from either **[Chat page](#chat)** or **[Duel Menu page](./PONG.md#matchmaking)**.
 
-<p align="center">
+<p align="center" id="game-invitation-settings">
   <em>Send invitation from Chat page</em><br />
   <img src="../../assets/ui/chat-game-invitation.png" alt="Send Game invitation" width="480px" />
 </p>
@@ -190,7 +190,7 @@ Users are checked periodically for their activity. Inactive users, users who dis
 
 ---
 ## Implementation Details
-Every time an authenticated user connects to the application, WebSocket connection to `/ws/events` is established, and stays opened for the remainder of the session. This connections is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.
+Every time an authenticated user connects to the application, WebSocket connection to `/ws/events/` is established, and stays opened for the remainder of the session. This connections is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.
 
 The server and the client exchange messages (`action`s) with each other using [well-defined protocol](#websocket-protocol-reference).
 
@@ -230,7 +230,7 @@ Once user is authenticated, they are subscribed to several channel groups that d
 - `chat_{uuid}`: one-to-one chat messages between participants. This group contains two people: the chat participants.
 - `online_users`: global presence broadcasts. This group is global and contains every user who is currently online.
 
-Once user establishes connection to `/ws/events`, they are subscribed to all relevant groups, which includes one `user_{id}`, one `online_users` and many `chat_{uuid}` (one group per chat).
+Once user establishes connection to `/ws/events/`, they are subscribed to all relevant groups, which includes one `user_{id}`, one `online_users` and many `chat_{uuid}` (one group per chat).
 
 ---
 #### User Presence Internals
