@@ -270,8 +270,8 @@ Separate container that periodically sends requests to the Daphne server to perf
   <tr>
     <td align="center" style="padding: 8px; vertical-align: middle;">
       <a href="https://github.com/Celiastral" style="text-decoration: none;">
-        <img src="./assets/profile/Celiastral.png" width="48px" alt="melobern" /><br />
-        <p>melobern</p>
+        <img src="./assets/profile/Celiastral.png" width="48px" alt="Celiastral" /><br />
+        <p>celiastral</p>
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
