@@ -2,7 +2,7 @@
 
 The user management system is the cornerstone of the project, managing user authentication, authorization, and profiles. It provides a comprehensive suite of features, including standard email/password registration, Multi-Factor Authentication (MFA), and third-party login via OAuth 2.0.
 
-Every other part of the project is affected by this syste; after all, the ability to correctly identify users and deal with their data is a requirement for any modern app.
+Every other part of the project is affected by this system; after all, the ability to correctly identify users and deal with their data is a requirement for any modern app.
 
 ## Table of contents
 
