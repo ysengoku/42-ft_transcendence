@@ -36,13 +36,15 @@ Thanks to the WebSocket protocol, which is, unlike HTTP, a bidirectional protoco
 
 ## Features
 
-This section describes the features of the events system in high-level. Detailed field-level specifications of how the client and the server talk to each other are provided in the [WebSocket Protocol Reference](#websocket-protocol-reference) section.
+This section describes the features of the events system in high-level.
+
+All the features in the chat and live events system works through `/ws/events`. The way the system works is by exchanges of special messages via custom protocol (detailed specifications the protocol [are here](#websocket-protocol-reference)). Those special messages are called `action`s, and contain the type of event that happened and the context of this event.
 
 ### Chat
 
 Users can send messages to to each other using convenient UI that is similar to the ones of Messenger, WhatsApp or Telegram. The core feature of the chat is real-time messaging, but besides that, chat has additional features for better user experience: it takes advantage of the [social features](./USER_MANAGEMENT.md#social-networking-elements) of the app, has a message-liking system, user search UI and visual indication for when the server was acknowledged by the server.
 
-Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the websocket endpoint, and are used for cases when there is no necessity for biderectional communication that WebSockets enable. The rest of the logic is handled through `/ws/events` WebSocket endpoint. The list of HTTP endpoints:
+Chat feature uses a short list of HTTP endpoints. HTTP endpoints complement the WebSocket endpoint, which does most of the work, and are used for cases when there is no necessity for biderectional communication that WebSockets enable. For example, something like the initial load of chats and chat messages when one goes to the chat page is done through HTTP, but The rest of the logic is handled through [`/ws/events` WebSocket endpoint](#chat-events). The list of HTTP endpoints:
 - `GET /api/chats`: Fetches a paginated list of the user's chats. Used when the user visits the chat page.
 - `PUT /api/chats/{username}`: Opens an existing chat or creates a new one with `username`.
 - `GET /api/chats/{username}/messages`: Fetches a paginated list of user's messages with `username`.
@@ -62,7 +64,7 @@ Chat feature uses a short list of HTTP endpoints. HTTP endpoints support the web
 
 The main feature of the chat is real-time messaging; when a user sends a message to a target user, user can start conversation through [profile page of the user](./USER_MANAGEMENT.md#user-search-and-user-profiles) they desire to message, through search bar on the chat page, or by finding an existing conversation in the chat UI.
 
-Whenever user sends a message, the client sends it to the server via the [`new_message`](#protocol-new-message-client-server) WebSocket event. For the sender, the message is considered to be "pending", and is grayed out until the the server confirms receipt.
+Whenever user sends a message, the client sends it to the server via the [`new_message`](#protocol-new-message-client-server) action. For the sender, the message is considered to be "pending", and is grayed out until the the server confirms receipt.
 
 <p align="center">
   <img src="../../assets/ui/chat-pending-message.png" alt="Chat - Pending message" width="480px" />
@@ -74,13 +76,13 @@ On success, the client updates the chat list by moving the conversation to the t
   <img src="../../assets/ui/chat-sent-message.png" alt="Chat - Sent message" width="480px" />
 </p>
 
-For the receiver the message appears on their chat page without receiver asking for it from their side. Unless the reciever is in the chat with the sends, they also receive a notification that informs them about a new unread message by putting a badge on the navbar chat icon.
+Receiver gets [`new_message`](#protocol-new-message-server-client) action without receiver asking for it from their side, and the new message appears in the relevant chat. Unless the reciever is in the chat with the sender, they also receive a notification that informs them about a new unread message by putting a badge on the navbar chat icon.
 
 <p align="center">
   <img src="../../assets/ui/notification-new-chat-message.png" alt="Chat - Unread chat notification" width="240px" />
 </p>
 
-The message is considered [read](#protocol-read-message) when it's displayed in the UI.
+The message is considered read when it's displayed in the UI, and the client sends [`read_message`](#protocol-read-message) action to the server.
 
 ---
 #### Social Networking Elements
@@ -102,9 +104,9 @@ When a user is blocked, all messaging between the two users is disabled, and the
 #### Adding or Removing Likes on a Message
 
 A user can toggle a like on any received message by clicking on it.   
-When a message is clicked, the client identifies the target message by its id attribute, then sends [`like_message`](#protocol-like-message-client-server) or [`unlike_message`](#protocol-unlike-message-client-server) WebSocket event to the server.
+When a message is clicked, the client identifies the target message by its id attribute, then sends [`like_message`](#protocol-like-message-client-server) or [`unlike_message`](#protocol-unlike-message-client-server) action to the server.
 
-The server then confirms with [`like_message`](#protocol-like-message-server-client) event to both chat participants and UI is updated by displaying animated heart icon over the liked message.
+The server then confirms the like to both participants with [`like_message`](#protocol-like-message-server-client) action, and UI is updated by displaying animated heart icon over the liked message.
 
 <p align="center">
   <img src="../../assets/ui/chat-like-message.png" alt="Chat - Like message" width="480px" />
@@ -114,37 +116,37 @@ The server then confirms with [`like_message`](#protocol-like-message-server-cli
 ### Notifications
 
 Notifications are things of interest that server sends to the user without user explicitely requesting for it. Users receive notifications when:
-- [Another user added them to their friend list](#protocol-new-friend). (See [User Management docs](./USER_MANAGEMENT.md#social-networking-elements) for friend list)
-- [A new tournament has been created by another user](#protocol-new-tournament). (See [Tournaments docs](./TOURNAMENTS.md))
-- [The user is invited to Pong Duel by another user](#protocol-game-invite-server-client). (See [Game invitation section](#game-invitation))
+- Another user added them to their friend list: [`new_friend`](#protocol-new-friend) action. See [User Management docs](./USER_MANAGEMENT.md#social-networking-elements) for friend list.
+- The user is invited to Pong Duel by another user: [`game_invite`](#protocol-game-invite-server-client) action. See [Game invitation section](#game-invitation).
+- A new tournament has been created by another user: [`new_tournament`](#protocol-new-tournament) action. Notication system notifies users of new tournaments, but to see in details how the tournament system works, go to [Tournaments docs](./PONG.md#Tournaments).
 
 When a notification arrives, the client displays a toast and adds an unread badge to the **Notifications** button in the Navbar.
 Clicking the button fetches the data and displays a dropdown menu containing a list of notifications.
+
+<p align="center">
+  <img src="../../assets/ui/notification-list.png" alt="Notification list" width="240px" />
+</p>
 
 Just like [chat](#chat), notifications feature uses only a handful of HTTP endpoints, the rest is handled by `/ws/events/` WebSocket endpoint. Those endpoints are:
 - `GET /notifications/`: Fetches a paginated of notifications.
 - `POST /notifications/mark_all_as_read`: Marks of user's notifications as read.
 - `GET /api/self`: See [User Management docs](./USER_MANAGEMENT.md#user-search-and-user-profiles).
 
-<p align="center">
-  <img src="../../assets/ui/notification-list.png" alt="Notification list" width="240px" />
-</p>
+When user selects a notification item in the list, it has different effects depending on notification. Regardless of type, it will be considered read, and the client sends [`read_notification`](#protocol-read-notification) action to the server.
 
-When user selects a notification item in the list, it has different effects depending on notification. Regardless of type, it will be considered read with [`read_notification`](#protocol-read-notification) event.
-
-- If the notification type is [new friend](#protocol-new-friend): Navigate to the new friend's profile page.   
+- If the notification type is [`new_friend`](#protocol-new-friend): Navigate to the new friend's profile page.   
   <img src="../../assets/ui/notification-new-friend.png" alt="New friend" width="240px" />
 
-- If the notification type is [new tournament](#protocol-new-tournament): Navigate to the tournament page and open the registration form.   
+- If the notification type is [`new_tournament`](#protocol-new-tournament): Navigate to the tournament page and open the registration form.   
   <img src="../../assets/ui/notification-new-tournament.png" alt="New tournament" width="240px" />
 
-User can also mark all unread notification as read by clicking **Mark all as read** button.
+User can also mark all unread notification as read by clicking **Mark all as read** button, which will tigger `POST /notifications/mark_all_as_read`.
 
 ---
 ### Game invitation
 
 🛠️👷🏻‍♂️ TODO: do proper links with the game part of the documentation when it's going to be ready.   
-Since Peacemakers is a platform for playing pong, an invitation to play pong is an important feature. User can invite others to Pong Duel from either **[Chat page](#chat)** or **Duel Menu page**.
+Since Peacemakers is a platform for playing pong, an invitation to play pong is an important feature. User can invite others to Pong Duel from either **[Chat page](#chat)** or **[Duel Menu page](./PONG.md#matchmaking)**.
 
 <p align="center">
   <em>Send invitation from Chat page</em><br />
@@ -155,30 +157,30 @@ Since Peacemakers is a platform for playing pong, an invitation to play pong is 
   <img src="../../assets/ui/duel-menu-game-invitation.png" alt="Send Game invitation" width="480px" />
 </p>
 
-When a user [sends an invitation](#protocol-game-invite-client-server), and is not engaged in any game activity (like being in matchmaking, tournament , playing a game or has another pending invitation), an invitee receives a [game invite](#protocol-game-invite-server-client), and the invitee's client displays a notification toast.
-Otherwise, [the game invitation is cancelled](#protocol-game-invite-canceled).
+When a user sends an invitation, clients sends a [`game_invitation`](#protocol-game-invite-client-server) to the server. If the user is not engaged in any game activity (like being in [matchmaking](./PONG.md#matchmaking), [tournament](#./PONG.md#tournaments), [playing a game](./PONG.md#pong-game) or has another pending invitation), an invitee receives a game invite with [`game_invite`](#protocol-game-invite-server-client) action from the server, and the invitee's client displays a notification toast.
+Otherwise, the game invitation is cancelled, and the inviter receives [`game_invite_canceled`](#protocol-game-invite-canceled) action from the server.
 
-The inviter is redirected to **Duel page** after sending the invitation. From there the inviter [can cancel the invitation](#protocol-cancel-game-invite)
+The inviter is redirected to **Duel page** after sending the invitation. From there the inviter can cancel the invitation, and [`cancel_game_invite`](#protocol-cancel-game-invite) action will be sent to the server.
 
 <p align="center">
   <img src="../../assets/ui/chat-game-invitation-waiting.png" alt="Chat - Game invitation waiting" width="480px" />
 </p>
 
-The invitee can accept or decline the invitation from **Notification list** in Navbar selecting [**Accept** or **Decline**](#protocol-reply-game-invite).
+The invitee can accept or decline the invitation from **Notification list** in Navbar selecting **Accept** or **Decline**, which will send [`reply_game_invite`](#protocol-reply-game-invite) action to the server.
 
 <p align="center">
   <img src="../../assets/ui/notification-game-invitation.png" alt="Game invitation notificaiton" width="240px" />
 </p>
 
-If invitation [is accepted](#protocol-game-accepted), both players will be redirected to a newly created pong game.
-Otherwise, the inviter is notified of [the declination](#protocol-game-declined).
+If invitation is accepted, both players will receive [`game_accepted`](#protocol-game-accepted) action, and will be redirected to [a newly created pong game](./PONG.md#pong-game).
+Otherwise, the inviter is notified of the declination by [`game_declined`](#protocol-game-declined) action.
 
 ---
 ### User Presence System
 
-Users can be online or offline. Each meaningful API request and WebSocket events in the last 30 minutes makes them [online](#protocol-user-online), which is going to be visible for anyone who sees them in [chat](#chat) or sees their [profile page](./USER_MANAGEMENT.md#user-search-and-user-profiles). Presence is denoted as a green or gray badge, depending on if they are online or offline respectively.
+Users can be online or offline. Each meaningful API request and WebSocket events in the last 30 minutes makes them online, which is going to be visible for anyone who sees them in [chat](#chat) or sees their [profile page](./USER_MANAGEMENT.md#user-search-and-user-profiles). Presence is denoted as a green or gray badge, depending on if they are online or offline respectively. When a user becomes online, all users receive [`user_online`](#protocol-user-online) action.
 
-Users are checked periodically for their activity. Inactive users, users who disconnected from all devices or the ones who logged out explicitely, are considered to be [offline](#protocol-user-offline).
+Users are checked periodically for their activity. Inactive users, users who disconnected from all devices or the ones who logged out explicitely, are considered to be offline, and all users receive [`user_offline`](#protocol-user-offline) action.
 
 🛠️👷🏻‍♂️TODO: move cronjob documentation here.
 
@@ -190,7 +192,7 @@ Users are checked periodically for their activity. Inactive users, users who dis
 ## Implementation Details
 Every time an authenticated user connects to the application, WebSocket connection to `/ws/events` is established, and stays opened for the remainder of the session. This connections is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.
 
-The server and the client exchange messages with each other using [well-defined protocol](#websocket-protocol-reference).
+The server and the client exchange messages (`action`s) with each other using [well-defined protocol](#websocket-protocol-reference).
 
 ### Backend
 
@@ -201,12 +203,10 @@ Backend side of the chat & events system is implemented with `chat` Django app (
 
 Server of the project is able to handle WebSockets thanks to the Django Channels integration (🛠️👷🏻‍♂️TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses [JWT authentication](./USER_MANAGEMENT.md#jwt-authentication) to identify and autorize users, like the rest of the consumers in the project.
 
-This app interacts with `tournaments` app, as events system distributes tournament events too (🛠️👷🏻‍♂️TODO: add tournaments docs link).
-
 ---
 #### Core Models
 
-The chat & events system revolves around three main models: `Chat`, `ChatMessage`, and `Notification`. These models manage conversations between users, message histories, and notification events.
+Information about chats, messages, notifications and invites is stored in the database. There are four main models in chat & events system: `Chat`, `ChatMessage`, `Notification` and `GameInvite`.
 
 - `Chat`: Represents a chat session. This model itself supports multiple participants, but in the current app implementation, only one-to-one chats are used. All messages exchanged in the chat are associated with it via the `ChatMessage` model. Key fields include `id`, and `participants`.
 
@@ -221,7 +221,6 @@ The chat & events system revolves around three main models: `Chat`, `ChatMessage
 - `GameInvitation`: Represents a game invitation from one user to another. It tracks sender, recipient, optional invitee for special cases, status, and game settings. Key fields include `id`, `sender`, `invitee`, `recipient`, `status` (can be `pending`, `accepted`, `declined`, `cancelled`), and `settings` (settings for the game the inviter wish to play).
 
 ---
-
 #### Event Groups
 
 With Django Channels (🛠️👷🏻‍♂️TODO: send link to how Django Channels are used in our project and with Redis) one may want to associate certain actions with certain group of users. For example, when one use messages to another, it's undesirable to broadcast this event to every single user. Only those two users should receive relevant messages.
@@ -234,7 +233,6 @@ Once user is authenticated, they are subscribed to several channel groups that d
 Once user establishes connection to `/ws/events`, they are subscribed to all relevant groups, which includes one `user_{id}`, one `online_users` and many `chat_{uuid}` (one group per chat).
 
 ---
-
 #### User Presence Internals
 
 User presence feature is implemented through a container with [`cron`](https://en.wikipedia.org/wiki/Cron), which is configured to call to `DELETE /api/cronjob/cron/check-inactive-users` endpoint every minute, using `check_inactive_users.py` script. This endpoint is implemented in [`users` app](./USER_MANAGEMENT.md#presence-system).
@@ -244,7 +242,6 @@ This endpoint uses its own alternative authentication method, separated from the
 (🛠️👷🏻‍♂️TODO: add a link to infrastructure file that describes our containers and environment)
 
 ---
-
 ### Frontend
 
 The frontend is composed of modular components that work to provide real-time chat, notifications, game invitations, and presence updates across the application.
