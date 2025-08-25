@@ -137,10 +137,10 @@ User can search for other users by typing their name or nickname into the search
 
 Users are able to change their settings:
 1. Password, and they are required to input their old password.
-2. Username, which is their unique identifier.
-3. Nickname, which is a non-unique displayed name of the user.
-4.profile picture.
-5. [MFA status](#multi-factor-authentication-mfa), if they wish to opt-in or opt-out of the feature.
+2. Nickname, which is a non-unique displayed name of the user.
+3. Profile picture.
+4. [MFA status](#multi-factor-authentication-mfa), if they wish to opt-in or opt-out of the feature.
+
 All of the new settings must conform to the constraints for each of the fields, otherwise they are rejected.
 - `GET /api/users/{username}/settings`: Allows an authenticated user to see their current settings, such as their nickname, email, avatar.
 - `POST /api/users/{username}/settings`: Allows an authenticated user to update their own profile information, such as their nickname, email, password, and avatar. Avatar uploads are validated for size (under 10MB) and file type (.png, .jpg, .webp).
