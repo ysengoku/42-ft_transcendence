@@ -85,6 +85,7 @@ Receiver gets [`new_message`](#protocol-new-message-server-client) action withou
 The message is considered read when it's displayed in the UI, and the client sends [`read_message`](#protocol-read-message) action to the server.
 
 ---
+
 #### Social Networking Elements
 
 [User blocking system](./USER_MANAGEMENT.md#social-networking-elements) is integrated into chat feature.   
@@ -101,6 +102,7 @@ When a user is blocked, all messaging between the two users is disabled, and the
 </p>
 
 ---
+
 #### Adding or Removing Likes on a Message
 
 A user can toggle a like on any received message by clicking on it.   
@@ -113,6 +115,7 @@ The server then confirms the like to both participants with [`like_message`](#pr
 </p>
 
 ---
+
 ### Notifications
 
 Notifications are things of interest that server sends to the user without user explicitely requesting for it. Users receive notifications when:
@@ -143,6 +146,7 @@ When user selects a notification item in the list, it has different effects depe
 User can also mark all unread notification as read by clicking **Mark all as read** button, which will tigger `POST /notifications/mark_all_as_read`.
 
 ---
+
 ### Game Invitations
 
 🛠️👷🏻‍♂️ TODO: do proper links with the game part of the documentation when it's going to be ready.   
@@ -176,6 +180,7 @@ If invitation is accepted, both players will receive [`game_accepted`](#protocol
 Otherwise, the inviter is notified of the declination by [`game_declined`](#protocol-game-declined) action.
 
 ---
+
 ### User Presence System
 
 Users can be online or offline. Each meaningful API request and WebSocket events in the last 30 minutes makes them online, which is going to be visible for anyone who sees them in [chat](#chat) or sees their [profile page](./USER_MANAGEMENT.md#user-search-and-user-profiles). Presence is denoted as a green or gray badge, depending on if they are online or offline respectively. When a user becomes online, all users receive [`user_online`](#protocol-user-online) action.
@@ -189,6 +194,7 @@ Users are checked periodically for their activity. Inactive users, users who dis
 </p>
 
 ---
+
 ## Implementation Details
 Every time an authenticated user connects to the application, WebSocket connection to `/ws/events/` is established, and stays opened for the remainder of the session. This connections is responsible for delivering real-time events, including chat messages, reactions, friend additions, game invitations, notifications, and presence updates.
 
@@ -204,6 +210,7 @@ Backend side of the chat & events system is implemented with `chat` Django app (
 Server of the project is able to handle WebSockets thanks to the Django Channels integration (🛠️👷🏻‍♂️TODO: link to the .md file that describes in high level the dependencies of the project). User events are governed by the `UserEventsConsumer`, which is responsible for handling and distributing different events for different groups. It uses [JWT authentication](./USER_MANAGEMENT.md#jwt-authentication) to identify and autorize users, like the rest of the consumers in the project.
 
 ---
+
 #### Core Models
 
 Information about chats, messages, notifications and invites is stored in the database. There are four main models in chat & events system: `Chat`, `ChatMessage`, `Notification` and `GameInvite`.
@@ -221,6 +228,7 @@ Information about chats, messages, notifications and invites is stored in the da
 - `GameInvitation`: Represents a game invitation from one user to another. It tracks sender, recipient, optional invitee for special cases, status, and game settings. Key fields include `id`, `sender`, `invitee`, `recipient`, `status` (can be `pending`, `accepted`, `declined`, `cancelled`), and `settings` (settings for the game the inviter wish to play).
 
 ---
+
 #### Event Groups
 
 With Django Channels (🛠️👷🏻‍♂️TODO: send link to how Django Channels are used in our project and with Redis) one may want to associate certain actions with certain group of users. For example, when one use messages to another, it's undesirable to broadcast this event to every single user. Only those two users should receive relevant messages.
@@ -233,6 +241,7 @@ Once user is authenticated, they are subscribed to several channel groups that d
 Once user establishes connection to `/ws/events/`, they are subscribed to all relevant groups, which includes one `user_{id}`, one `online_users` and many `chat_{uuid}` (one group per chat).
 
 ---
+
 #### User Presence Internals
 
 User presence feature is implemented through a container with [`cron`](https://en.wikipedia.org/wiki/Cron), which is configured to call to `DELETE /api/cronjob/cron/check-inactive-users` endpoint every minute, using `check_inactive_users.py` script. This endpoint is implemented in [`users` app](./USER_MANAGEMENT.md#presence-system).
@@ -242,6 +251,7 @@ This endpoint uses its own alternative authentication method, separated from the
 (🛠️👷🏻‍♂️TODO: add a link to infrastructure file that describes our containers and environment)
 
 ---
+
 ### Frontend
 
 The frontend is composed of modular components that work to provide real-time chat, notifications, game invitations, and presence updates across the application.
