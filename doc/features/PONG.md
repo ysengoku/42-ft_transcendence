@@ -88,7 +88,7 @@ In matchmaking, game settings are specified via URL parameters to the `/ws/match
 ### Match History & Elo System
 The result of each match gets recorded to the database for user's statistics. Each match may result either in win or loss for a player, and also, depending on the [game settings](#game-settings), *elo* gain or loss.
 
-(Elo rating system)[https://en.wikipedia.org/wiki/Elo_rating_system] is a method to calculate relative skill of players. It's a number that starts with `1000` and has the minimum of `100` and maximum of `3000`.
+[Elo rating system](https://en.wikipedia.org/wiki/Elo_rating_system) is a method to calculate relative skill of players. It's a number that starts with `1000` and has the minimum of `100` and maximum of `3000`.
 
 Elo can be gain or lost only in [`ranked` games](#game-settings). In those games, winner gains elo and loser loses elo. The amount of elo gained/lost is the same and depends on the rank of playing participants, using the elo formula.
 

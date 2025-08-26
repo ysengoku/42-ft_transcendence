@@ -1,4 +1,7 @@
-![Peacemakers](./assets/peacemakers-cover.webp)
+<picture>
+  <source srcset="./assets/peacemakers-cover.webp" type="image/webp">
+  <img src="./assets/peacemakers-cover.jpg" alt="Peacemakers">
+</picture>
 
 <div align="center">
   <img src="https://img.shields.io/github/commit-activity/t/ysengoku/42-ft_transcendence?style=flat-square&color=9D9E0A" />
@@ -25,7 +28,7 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
 - **General**
   - Dynamic [Single Page Application](https://en.wikipedia.org/wiki/Single-page_application)
   - Google Chrome as first-class browser
-  - Made primarly with Django, PostgreSQL, vanilla JS and bootstrap
+  - Made primarly with Django, PostgreSQL, vanilla JS and [Bootstrap](https://getbootstrap.com/)
   - Runs in docker-compose
   - Responsive UI (but the game can't run on mobile... yet. sowwy!)
   - Secure and works with HTTPS
@@ -33,7 +36,7 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
   - Authentication system based on [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token)
   - Sign up, sign in normally...
   - ...or with [OAuth](https://en.wikipedia.org/wiki/OAuth), using 42 or Github
-  - Have [M2F](https://en.wikipedia.org/wiki/Multi-factor_authentication) for security! Nobody can hack you
+  - Have [MFA](https://en.wikipedia.org/wiki/Multi-factor_authentication) for security! Nobody can hack you
   - Password restoration using Gmail
   - User profiles with game statistics, hand coded graphs (no libraries!)
   - User settings, profile picture (express yourself)
@@ -58,9 +61,15 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
   - Dark & Light color schemes
   - Find other users through search feature
 
-Hope that you will have and find our project interesting! 
+<p align="center">
+  <img src="./assets/pedro.gif" alt="pedro" width="160px" /><br/>
+  <em>Hope that you will have and find our project interesting!</em>
+</p>
+<br />
 
 ## Project Walkthrough 🛠️👷🏻‍♂️
+
+Add a demo video
 
 ## Get Started 🛠️👷🏻‍♂️
 
@@ -221,7 +230,7 @@ Separate container that periodically sends requests to the Daphne server to perf
 
 ### Server
 
-- [Multi-factor authentication](/doc/server/MFA.md)
+- [Multi-factor Authentication](/doc/server/MFA.md)
 - [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
 
 ### UI design
