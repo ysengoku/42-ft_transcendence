@@ -46,17 +46,30 @@ export class Game extends HTMLElement {
   setQueryParam(param) {
     this.#state.gameType = param.get('type') || 'classic';
 
-    const storedCoolMode = param.get('cool_mode');
-    this.#state.gameOptions.cool_mode = storedCoolMode === 'any' ? DEFAULT_GAME_OPTIONS.cool_mode : storedCoolMode;
+    const coolModeParam = param.get('cool_mode');
+    const isCoolModeValid = (!coolModeParam || coolModeParam === 'any');
+    const coolMode = (coolModeParam && coolModeParam.toLowerCase().trim() === "false");
+    this.#state.gameOptions.cool_mode = isCoolModeValid ? DEFAULT_GAME_OPTIONS.coolMode : coolMode;
+
     const gameSpeed = param.get('game_speed');
-    this.#state.gameOptions.game_speed = gameSpeed === 'any' ? DEFAULT_GAME_OPTIONS.game_speed : gameSpeed;
-    const scoreToWin = param.get('score_to_win');
-    this.#state.gameOptions.score_to_win = scoreToWin === 'any' ? DEFAULT_GAME_OPTIONS.score_to_win : scoreToWin;
-    const timeLimit = param.get('time_limit');
-    this.#state.gameOptions.time_limit = timeLimit === 'any' ? DEFAULT_GAME_OPTIONS.time_limit : timeLimit;
+    const isGameSpeedValid = (!gameSpeed || gameSpeed === 'any' || !["slow", "medium", "fast"].includes(gameSpeed));
+    this.#state.gameOptions.game_speed = isGameSpeedValid ? DEFAULT_GAME_OPTIONS.gameSpeed :
+      gameSpeed;
+
+    const scoreToWinParam = param.get('score_to_win');
+    const scoreToWin = parseInt(scoreToWinParam);
+    const isScoreToWinValid = (!scoreToWin || scoreToWin === 'any' || !(scoreToWin >= 3 && scoreToWin <= 20));
+    this.#state.gameOptions.score_to_win = isScoreToWinValid ? DEFAULT_GAME_OPTIONS.scoreToWin :
+      scoreToWin;
+
+    const timeLimitParam = param.get('time_limit');
+    const timeLimit = parseInt(timeLimitParam)
+    const isTimeLimitValid = (!timeLimit || timeLimit === 'any' || !(timeLimit >= 1 && timeLimit <= 5));
+    this.#state.gameOptions.time_limit = isTimeLimitValid ? DEFAULT_GAME_OPTIONS.timeLimitMinutes :
+      timeLimit;
+
     this.#state.gameOptions.ranked = false;
 
-    console.log('Game options:', this.#state);
     log.info('Game type:', this.#state.gameType);
   }
 
@@ -789,7 +802,6 @@ export class Game extends HTMLElement {
         if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0][0])
         {
           if (Bumpers[1].currentAction != 0){
-            console.log(Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0]);
             Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
             Bumpers[1].gltfStore.action[0][0].reset();
             Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
