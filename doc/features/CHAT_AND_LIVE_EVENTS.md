@@ -351,12 +351,16 @@ CLIENT --> SERVER
   | `content`   | `string` | message content                       |
   | `timestamp` | `string` | Timestamp indicating when it was sent |
 
+<br />
+
 <a id="protocol-like-message-client-server"></a>
 - `like_message`
   | Data field | Type      | Description             |
   |:-----------|:----------|:------------------------|
   | `chat_id`  | `string`  | id of the chat room     |
   | `id`       | `string`  | id of the liked message |
+
+<br />
 
 <a id="protocol-unlike-message-client-server"></a>
 - `unlike_message`
@@ -365,6 +369,8 @@ CLIENT --> SERVER
   |:-----------|:----------|:---------------------------|
   | `chat_id`  | `string`  | id of the chat room        |
   | `id`       | `string`  | id of the un-liked message |
+
+<br />
 
 <a id="protocol-read-message"></a>
 - `read_message`
@@ -472,6 +478,8 @@ CLIENT --> SERVER
   |:------------|:----------|:------------------------------------|
   | `username`  | `string`  | username of the inviter             |
   | `accept`    | `boolean` | true if accepted, false if declined |
+
+<br />
 
 <a id="protocol-cancel-game-invite"></a>
 - `cancel_game_invite`
