@@ -23,7 +23,7 @@ Every other part of the project is affected by this system; after all, the abili
     - [Frontend](#frontend)
         - [Authentication redirection](#authentication-redirection)
         - [Authentication and User Settings Components](#authentication-and-user-settings-components)
-        - [User Dashboard and Social Networking Components](#user-dashboard-and-social-networking-conponents)
+        - [User Dashboard and Social Networking Components](#user-dashboard-and-social-networking-components)
 - [Testing](#testing)
 - [Contributors](#contributors)
 
@@ -119,6 +119,7 @@ Each of the users have a lot of different data that is associated with them: the
 <p align="center">
   <img src="../../assets/ui/profile-page.png" alt="Profile Page" width="480px" />
 </p>
+<div id="api-users"></div>
 
 - `GET /api/users`: Retreives paginated list of users filtered based on query parameters. Users can be searched by their nickname or username.
 - `GET /api/users/{username}`: Retrieves the full public profile for a specified user, including game statistics like win/loss records, elo history, and best/worst enemies.
@@ -186,63 +187,68 @@ Middleware is triggered on every request/connection. Authentication middleware i
 - `JWTEndpointsAuthMiddleware`: Secures all HTTP API endpoints (except the ones you need to use to login in the first place) by validating the `access_token` provided in cookies. Populates each `request` with the user data.
 - `JWTWebsocketAuthMiddleware`: Secures all WebSocket endpoints using the `access_token` from cookies, populating the `scope` for real-time services like chat and the actual game.
 
----
+<br />
 
-### Frontend (🛠️👷🏻‍♂️ On working)
+### Frontend
 
 #### Authentication redirection
 
 The application checks the authentication status of the current user on each navigation using [`/api/self`](#api-self) or other endpoints.   
-Unauthentiated users attempting to access to pages restricted to authenticated users are redirected to **/login**. Conversely, authenticated users navigating to **/login**, **/register**, or any other authentication-related pages are sent to **/home**.
+Unauthenticated users attempting to access pages restricted to authenticated users are redirected to **/login**. Conversely, authenticated users navigating to **/login**, **/register**, or any other authentication-related pages are sent to **/home**.
 
 ---
 
 #### Authentication and User Settings components
 
-##### `Register`
+##### `Register`:
 
-New users can create account on `Register` page.
+The `Register` page handles new account creation. Users provide a unique username, email address, and password, with client-side validation complementing server-side checks. Usernames are permanent and cannot be changed after registration, serving as the primary identifier within the application.   
+On successful registration, the application redirects to `/home`. If the registration is rejected due to server-side checks, an error message is displayed directly in the form.
 
-
-##### `Login`
+##### `Login`:
 
 The `Login` page includes a **standard login form (`LoginForm`)** and **`OAuth` login** via 42 profile or GitHub account.  
 When a user logs in through `LoginForm`, the client checks whether both the username/email and the password fields are filled, then sends the request to the server. 
 On success, the user is redirected to **/home** (or to `MfaVerification` if [MFA](../server/MFA.md) is enabled). On failure, an error feedback is displayed.
 
-This component provides also [password reset](#password-restoration) form (`ForgotPassword`). The user can request  a reset by submitting the registered email address. The server then sends an email containing a link to **/reset-password/{token}** (`ResetPassword`).
+This component also provides [password reset](#password-restoration) form (`ForgotPassword`). The user can request a reset by submitting the registered email address. The server then sends an email containing a link to **/reset-password/{token}** (`ResetPassword`).
 
-##### `Settings`
+##### `Settings`:
+
+The `Settings` page allows users to update profile information, including avatar, nickname, and if the account is not managed through OAuth, email and password. It also provides controls for enabling or disabling MFA for non-OAuth users. Validation rules for nickname, email, and password are consistent with those applied during registration.   
+
+Avatar uploads are handled through a dedicated modal component.   
+Client-side validation checks MIME type, extension, and file size. To prevent spoofing (e.g., non-image files with an image extension), the client also verifies that they can be parsed as actual images. If validated, files are displayed as safe previews using [Blob](https://developer.mozilla.org/en-US/docs/Web/API/Blob) URLs, which avoid direct HTML injection.   
+Final validation is performed server-side to ensure that only valid files are accepted and stored safely.
  
-##### Logout
+##### Logout:
 
-`handleLogout()` called from dropdown menu or home
-
----
-
-#### User Dashboard and Social Networking conponents
-
-##### `Profile`
-
-- User info   
-- User actions:  add friend, send message, block/unblock   
-- Stat:   
-  Elo(current elo & progression),   
-  Friend count,   
-  Best/Worst enemmies,   
-  Game(Total matches, scores, win rate, duel history -- only ranked duels) 
-
-##### `FriendsList`
-
-##### `UserSearch`
+The logout functionality does not rely on a dedicated component. Instead, the handler function `handleLogout()` is triggered when the user clicks the logout button in the **navbar dropdown menu** or on the **home page**. After execution, the user is redirected to the root (`/`).
 
 ---
+
+#### User Dashboard and Social Networking components
+
+##### `Profile`:
+
+The `Profile` page is accessible at `/profile/{username}` and provides a comprehensive view of a user’s information, available actions, and game statistics. The content is dynamically loaded based on the username in the URL by fetching data from [`/api/users/{username}`](#api-users).
+
+Game statistics, such as Elo, win rate, duel history, and best/worst opponents, are rendered through reusable components. Elo progression and win rate are visualized using custom elements (see [Data Visualization documentation](../front/DATA_VISUALIZATION.md) for details) that generate the charts with native HTML and SVG, offering users an intuitive view of their game performance.　　　
+
+If the requested user does not exist or is blocking the current user, the page redirects to `/user-not-found`.
+
+##### `FriendsList` and `UserSearch`
+
+Both the `FriendsList` and `UserSearch` components open via the navbar and display the corresponding items in a dedicated dropdown menu. Items in both lists are rendered using reusable item components that include a link to each user’s [profile](#user-search-and-user-profiles) page. Both components support lazy loading of additional items as the user scrolls. If no items are available or the request fails, a placeholder message is shown.   
+
+`FriendsList` fetches the friend list from the API as soon as the dropdown is opened.
+In contrast, `UserSearch` fetches data dynamically based on the user’s input, using debouncing to minimize API calls.
+
 <br />
 
 ## Testing
 `make tests-users` will initialize the tests related to the users management system.
 
----
 <br />
 
 ## Contributors
