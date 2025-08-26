@@ -7,11 +7,13 @@ import { Modal } from 'bootstrap';
 import avatarPlaceholder from '/img/avatar-placeholder.svg?url';
 
 export class AvatarUploadModal extends HTMLElement {
+  INVALID_IMAGE = 'Please select a valid image file.';
+
   /**
    * Maximum allowed avatar file size in bytes (5 MB).
    * @private
    * @constant {number}
-   */
+  */
   #MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   constructor() {
@@ -95,9 +97,14 @@ export class AvatarUploadModal extends HTMLElement {
     this.avatarPreview.src = avatarPlaceholder;
   }
 
+  /**
+   * Validate the uploaded image file. Checks MIME type, size, and file extension.
+   * @param {File} file - The image file to validate.
+   * @returns {Promise<{safe: boolean, message?: string}>} - Resolves with validation result.
+   */
   validateImage(file) {
     if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
-      return { safe: false, message: 'Please select a valid image file.' };
+      return { safe: false, message: this.INVALID_IMAGE };
     }
     if (file.size > this.#MAX_FILE_SIZE) {
       const maxSizeMB = this.#MAX_FILE_SIZE / (1024 * 1024);
@@ -105,9 +112,33 @@ export class AvatarUploadModal extends HTMLElement {
     }
     const safeFileExtension = /\.(jpg|jpeg|png|webp)$/i.test(file.name);
     if (!safeFileExtension) {
-      return { safe: false, message: 'Please select a valid image file.' };
+      return { safe: false, message: this.INVALID_IMAGE };
     }
     return { safe: true };
+  }
+
+  /**
+   * Validate the content of the uploaded image file.
+   * This is done by attempting to load the file into an Image object.
+   * If the image loads successfully, it is considered valid.
+   * If it fails to load, it is considered invalid.
+   * @param {File} file - The image file to validate.
+   * @returns {Promise<{safe: boolean, message?: string}>} - Resolves with validation result.
+   **/
+  validateImageContent(file) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const blobUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(blobUrl);
+        resolve({ safe: true });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl);
+        resolve({ safe: false, message: this.INVALID_IMAGE });
+      };
+      img.src = blobUrl;
+    });
   }
 
   /**
@@ -122,7 +153,7 @@ export class AvatarUploadModal extends HTMLElement {
    * - Mitigates resource abuse by enforcing defined limit.
    * - Uses safe Blob URLs for preview, avoiding direct HTML injection.
    */
-  readURL(event) {
+  async readURL(event) {
     const input = event.target;
 
     if (input && input.files && input.files.length > 0) {
@@ -131,9 +162,11 @@ export class AvatarUploadModal extends HTMLElement {
         return;
       }
       const validation = this.validateImage(file);
-      if (!validation.safe) {
+      const contentValidation = await this.validateImageContent(file);
+      if (!validation.safe || !contentValidation.safe) {
         this.avatarUploadField.classList.add('is-invalid');
-        this.querySelector('#avatar-feedback').textContent = validation.message;
+        const message = validation.message ? validation.message : contentValidation.message || this.INVALID_IMAGE;
+        this.querySelector('#avatar-feedback').textContent = message;
         this.selectedFile = null;
         this.avatarPreview.src = avatarPlaceholder;
         return;
@@ -171,7 +204,7 @@ export class AvatarUploadModal extends HTMLElement {
   handleConfirm() {
     if (!this.selectedFile) {
       this.avatarUploadField.classList.add('is-invalid');
-      this.querySelector('#avatar-feedback').textContent = 'No file is selected.';
+      this.querySelector('#avatar-feedback').textContent = this.INVALID_IMAGE;
       return;
     }
     if (this.onConfirm) {
