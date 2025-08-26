@@ -512,7 +512,7 @@ export class Game extends HTMLElement {
                 _.action[7][0].setDuration(0.18);
                 _.action[6][0].setDuration(0.18);
                 _.action[5][0].setDuration(0.18);
-                _.action[5][0].play();
+                _.action[2][0].play();
                 pedroModel.add(gltf.scene);
               },
               undefined,
