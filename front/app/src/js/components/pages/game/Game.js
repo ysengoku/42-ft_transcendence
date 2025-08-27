@@ -316,7 +316,6 @@ export class Game extends HTMLElement {
         this.Workers[i] = null;
       }
     }
-    clearTimeout(this.TimerId);
   }
 
   game() {
@@ -1025,7 +1024,7 @@ export class Game extends HTMLElement {
     })();
 
     function myCallback() {
-      if (Timer.timeLeft-- != 0)
+      if (Timer.timeLeft-- != 0 && gameStateContainer.isGamePlaying)
       {
         clearTimeout(Timer.timeoutId);
         timerUI?.updateRemainingTime(Timer.timeLeft);
@@ -1035,6 +1034,7 @@ export class Game extends HTMLElement {
       Bumpers[0].score = 0;
       Bumpers[1].score = 0;
       gameStateContainer.isGamePlaying = false;
+      clearTimeout(Timer.timeoutId);
       stop();
     }
     let Coin = null;
@@ -1357,13 +1357,13 @@ export class Game extends HTMLElement {
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
 
-    return [camera, renderer, start, stop, Workers, Timer.timeoutId, scene];
+    return [camera, renderer, start, stop, Workers, scene];
   }
 
   render() {
     // this.innerHTML = ``;
     let renderer, camera, start;
-    [camera, renderer, start, this.stop, this.Workers, this.TimerId, this.scene] = this.game();
+    [camera, renderer, start, this.stop, this.Workers, this.scene] = this.game();
     // navbarHeight = ;
     window.addEventListener('resize',  () => {
         renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
