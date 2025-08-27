@@ -24,59 +24,72 @@ The Tournament app handles the full lifecycle of tournaments, from creation and 
 <br/>
 
 ## Features
-🛠️👷🏻‍♂️ ON WORKING
+
 ### Tournament Creation and Registration
 
-Users can view available tournaments on the tournament menu page (`/tournament-menu`). It serves as the entry point for browsing, joining or creating tournaments. Each action is handled via the API endpoints and reflected in the UI.   
+Users can view available tournaments on the tournament menu page (`/tournament-menu`). It serves as the entry point for browsing, joining or creating tournaments. Each action is handled via the API requests to dedicated endpoints.     
 
-The tournament list displays all tournaments in reverse chronological order.  
-By default, it shows tournaments **open for entries (pending)**, with an optional filter to include **ongoing** and **finished** ones.
-
-- `GET /api/tournaments/`: List all tournaments (optional `status` filter: `pending`, `ongoing`, `finished`).  
+- `GET /api/tournaments/`: Retrieves paginated list of available tournaments in reverse chronological order. The list is filtered based on tournament status given in query parameters. By default, the page shows **pending tournaments** (open for entries), with an optional filter to show all tournaments, including **ongoing** and **finished** ones.
 
 <p align="center">
   <img src="../../assets/ui/tournament-menu.png" alt="Tournament Menu" width="480px">
 </p>
 
-Users can create a new tournament by specifying its **name**, **required participants**, and **game settings**.  
-The creator is automatically registered as a participant.  
-
-Pending tournaments can be canceled by their creator.
-
-- `POST /api/tournaments/`: Create a new tournament.  
-- `DELETE /api/tournaments/{id}`: Cancel a pending tournament (creator only).  
+- `POST /api/tournaments/`: Creates a new tournament by specifying its **name**, **required participants**, and **game settings**. The creator is automatically registered as a participant.  
+- `DELETE /api/tournaments/{id}`: Cancels a pending tournament if the request is sent from the creator and the status is pending. Otherwise, an error is returned.  
 
 <p align="center">
-  <img src="../../assets/ui/tournament-menu-creation.png" alt="Tournament Creation" width="240px">
+  <img src="../../assets/ui/tournament-menu-creation.png" alt="Tournament Creation" width="320px">
 </p>
 
-Users can join a tournament by registering with a unique alias.  
-Registration can be canceled before the tournament starts.
-
-- `POST /api/tournaments/{id}/register`: Register with alias.  
-- `DELETE /api/tournaments/{id}/unregister`: Unregister (pending only).  
-
-For ongoing or finished tournaments, users can view results from the menu.  
-A summary is displayed in a modal, with a link to the [Tournament Overview](#tournament-overview-page) for details.
+- `POST /api/tournaments/{id}/register`: Registers a participant by specifying a unique alias, which is used only for this tournament.   
+- `DELETE /api/tournaments/{id}/unregister`: Unregisters a participant if the tournament status is pending.     
 
 <p align="center">
   <img src="../../assets/ui/tournament-menu-registration.png" alt="Tournament Registration" 
-width="240px">
+width="320px">
 </p>
 
-### Tournament Progress Management
-
-<p align="center">
-<img src="../../assets/ui/tournament-lobby.png" alt="Tournament Lobby" width="480px">
-</p>
-
-### Tournament Result Viewing
-
-- `GET /api/tournaments/{id}`:  Retrieve specific tournament 
+For ongoing or finished tournaments, users can view results from the menu. A summary is displayed in a modal, with a link to the [Tournament Overview](#tournament-overview-page) for details.
 
 <p align="center">
   <img src="../../assets/ui/tournament-menu-ongoing-finished.png" alt="Tournament Menu" width="480px">
 </p>
+
+---
+
+### Tournament Progress Management
+
+A tournament's progress is managed through a combination of `GET /api/tournaments/{id}` API calls and real-time **WebSocket** communication.   
+
+#### Pending tournament
+
+After registration, a user is redirected to the **tournament page** (`/tournament/{id}`). This is where participants wait until the tournament begins.   
+The server uses real-time actions to keep everyone updated: `new_registration` is sent when a new participant joins, and `registration_canceled` is sent when someone unregisters. If the creator cancels the tournament, the server notifies all participants with a `tournament_canceled` action.
+
+<p align="center">
+  <img src="../../assets/ui/tournament-lobby-pending.png" alt="Tournament Lobby - pending" width="480px">
+</p>
+
+#### Ongoing tournament
+
+Once the tournament is ready to begin, participants receive a `tournament_start` action and are navigated to the game room. After a match, they are brought back to the **tournament page** by a `user_won` or `player_resigned` action from the Game Worker.  
+
+If the current round is still **ongoing**, qualified participants can either wait on the **tournament page**, where the results of other matches are displayed, or they can leave and return later. Eliminated participants are redirected to the **tournament overview page** (`/tournament-overview/{id}`).
+
+<p align="center">
+  <img src="../../assets/ui/tournament-lobby-ongoing.png" alt="Tournament Lobby - ongoing" width="480px">
+</p>
+
+When all matches in a round are complete, the server broadcasts a `round_end` action, followed by a `round_start` action for the next round. This prompts participants to return to the **tournament page** if they have left, allowing the tournament to continue.
+
+🛠️👷🏻‍♂️ In progress
+
+---
+
+### Tournament Result Viewing
+
+- `GET /api/tournaments/{id}`: Retrieves the tournament data specified by the `id`. The results of ongoing or finished tournaments are displayed on the tournament overview page (`/tournament-overview/{id}`). This page is accessible to all users, including those who did not participate in the tournament. 
 
 <p align="center">
   <img src="../../assets/ui/tournament-overview.png" alt="Tournament Result" width="600">
