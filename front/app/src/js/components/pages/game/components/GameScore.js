@@ -81,12 +81,12 @@ export class GameScore extends HTMLElement {
     return `
     <div id="scoreboard-wrapper" class="d-flex flex-row justify-content-center m-3">
       <div id="game-score-board" class="wood-board d-flex flex-row justify-content-center align-items-center px-2 py-1 gap-4">
-        <div class="d-flex flex-column align-items-center justify-content-center gap-2">
+        <div class="d-flex flex-column align-items-center justify-content-center">
           <p id="game-name-player1" class="game-player-name"></p>
           <p id="game-score-player1" class="game-score fs-2"></p>
         </div>
         <div id="game-timer-wrapper"></div>
-        <div class="d-flex flex-column align-items-center justify-content-center gap-2">
+        <div class="d-flex flex-column align-items-center justify-content-center">
           <p id="game-name-player2" class="game-player-name"></p>
           <p id="game-score-player2" class="game-score fs-2"></p>
         </div>
