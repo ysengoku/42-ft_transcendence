@@ -15,11 +15,11 @@ The Tournament app handles the full lifecycle of tournaments, from creation and 
     - [Core Models](#core-models)
     - [Trounament Worker](#tournament-worker) 🛠️👷🏻‍♂️
     - [Channel Groups](#channel-groups) 🛠️👷🏻‍♂️
-  - [Frontend](#frontend) 🛠️👷🏻‍♂️
+  - [Frontend](#frontend)
     - [Tournament Menu Page Components](#tournament-menu-page-components)
-    - [Tournament Page Components](#tournament-page-components)
-    - [Tournament Over View Components](#tournament-overview-page-components)
-    - [UI Flow during Tournament](#ui-flow-during-tournament)
+    - [Tournament Page Components](#tournament-page-components) 🛠️👷🏻‍♂️
+    - [Tournament Over View Components](#tournament-overview-page-components) 🛠️👷🏻‍♂️
+    - [UI Flow during Tournament](#ui-flow-during-tournament) 🛠️👷🏻‍♂️
 - [WebSocket Protocol Reference](#websocket-protocol-reference)
 - [Contributors](#contributors)
 
@@ -212,46 +212,33 @@ flowchart TD
 
 <br/>
 
-### Frontend
-🛠️👷🏻‍♂️ TODO
-This document outlines the user interface flow for tournament-related features, from creation and registration to participation and result viewing.
+  ### Frontend
 
-- [Tournament Menu (`/tournament-menu`)](#tournament-menu-page): The central hub for tournament creation, registration, and browsing.
-- [Tournament Lobby (`/tournament-room/:id`)](#tournament-lobby-page): Real-time progress and status view for tournament participants.
-- [Tournament Overview (`/tournament-overview/:id`)](#tournament-lobby-page): Detailed results view for ongoing or finished tournaments.
+  The user interface for managing tournaments consists of three main pages: the **Tournament Menu** (`/tournament-menu`) for creation, registration, and browsing, the **Tournament Page** (`/tournament-room/{id}`) serving as a dynamic lobby for participants, and the **Tournament Overview Page** (`/tournament-overview/{id}`) showing ongoing or final results.
 
+  #### Tournament Menu Page Components
 
-#### Tournament Menu Page Components
+  The **Tournament Menu** page acts as the entry point to the tournament system. It is managed by the `TournamentMenu` component, which coordinates the display of the tournament list and various modal forms described below.
 
-The Tournament Menu serves as the central hub for all tournament activities.
+  ##### `TournamentList`:
+  Responsible for retrieving and displaying the list of available tournaments. By default, it shows pending tournaments, and also supports toggling the filter to retrieve all tournaments, including ongoing and finished ones. To handle list rendering efficiently, even when it becomes long, the component supports infinite scrolling and pagination, ensuring a smooth browsing experience.   
 
-##### Tournament list
+  ##### Tournament Creation Modal: 
 
-The Tournament List shows tournaments (by default, `Open for entries`(pending)) in a scrollable view. A filter allows switching to `All` to include Ongoing and Finished tournaments.   
-   
-Each list item shows the tournament’s information.   
-On clicking:
-- `Pending`: opens the Registration Form
-- `Ongoing` / `Finished`: opens a summary modal with a link to detailed results
+  Handled by the `TournamentCreation` component, which provides the form for creating a new tournament. It collects and validates user input before passing the data to the parent for submission.
 
-##### Viewing tournaments
+  ##### Registration Form Modal:
+  
+  Opens when a user clicks a **pending tournament** in the list. It allows users to register for the selected tournament.
 
-The main screen of the Tournament Menu displays a list of available tournaments.
-
-- Pending tournaments:
-  Clicking on a pending tournament in the list will open its Registration Form, allowing users to sign up for the tournament.
-
-- Ongoing and Finished tournaments:
-  For ongoing or finished tournaments, clicking on the tournament entry will display an Modal. This modal provides a quick summary and includes a direct link to a more Detailed Results Page (`/tournament-overview/:id`).
-
-##### Creating a new tournament
-
-Users can initiate the creation of a new tournament by clicking on a "Create Tournament" button. This action opens the Tournament Creation Form.
+  ##### Tournament Result Viewing Modal:
+  
+  Opens when a user clicks an **ongoing or finished tournament** in the list. It  displays a read-only summary of the selected tournament and includes a link to the **Tournament Overview** page which shows more detailed results.
 
 ---
 
 #### Tournament Page Components
-
+🛠️👷🏻‍♂️ TODO
 The Tournament Lobby is exclusively accessible to participants of a specific tournament and provides real-time updates on its progress.
 
 ##### Tournament Status updates
