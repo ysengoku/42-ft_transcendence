@@ -34,6 +34,12 @@ export class Game extends HTMLElement {
     if (navbar) {
       this.#navbarHeight = navbar.offsetHeight;
     }
+
+    this.timerElement = null;
+    this.buffIconElement = null;
+    this.scoreElement = null;
+    this.lifePointElement = null;
+    this.overlay = null;
   }
 
   async connectedCallback() {
@@ -51,9 +57,14 @@ export class Game extends HTMLElement {
     this.render();
 
     this.classList.add('position-relative');
+    this.scoreElement = document.createElement('game-scoreboard');
+    if (this.scoreElement && this.#state.gameType === 'ai') {
+      this.scoreElement.setNames('Player1', 'AI playser');
+    }
+    this.appendChild(this.scoreElement);
     this.timerElement = document.createElement('game-timer');
     this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60); // Initial time limit in second
-    this.appendChild(this.timerElement);
+    document.getElementById('game-timer-wrapper')?.appendChild(this.timerElement);
     this.buffIconElement = document.createElement('game-buff-icon');
     this.appendChild(this.buffIconElement);
     this.lifePointElement = document.createElement('game-life-point');
@@ -85,19 +96,19 @@ export class Game extends HTMLElement {
       }, 500);
     }, 2000);
 
-    setTimeout(() => {
-      const testData = {
-        winner: {
-          name: "AI player",
-          number: 2,
-        },
-        loser: {
-          name: "Player 1",
-          number: 1,
-        },
-      }
-      this.overlay.show(OVERLAY_TYPE.GAMEOVER, testData);
-    }, 5000);
+    // setTimeout(() => {
+    //   const testData = {
+    //     winner: {
+    //       name: 'AI player',
+    //       number: 2,
+    //     },
+    //     loser: {
+    //       name: 'Player 1',
+    //       number: 1,
+    //     },
+    //   };
+    //   this.overlay.show(OVERLAY_TYPE.GAMEOVER, testData);
+    // }, 5000);
     // -------------------------------------------------------------
   }
 

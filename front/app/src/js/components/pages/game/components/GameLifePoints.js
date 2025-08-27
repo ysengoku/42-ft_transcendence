@@ -19,16 +19,16 @@ export class GameLifePoint extends HTMLElement {
     this.render();
   }
 
-  decreasePoint(playerNumber) {
+  decreasePoint(playerNumber, unit) {
     let lifeBarElement = null;
     let lifePoint = 0;
     if (playerNumber === 1) {
       lifeBarElement = this.p1LifeBar;
-      this.#state.p1CurrentPoint--;
+      this.#state.p1CurrentPoint -= unit;
       lifePoint = this.#state.p1CurrentPoint;
     } else if (playerNumber === 2) {
       lifeBarElement = this.p2LifeBar;
-      this.#state.p2CurrentPoint--;
+      this.#state.p2CurrentPoint -= unit;
       lifePoint = this.#state.p2CurrentPoint;
     }
     if (lifePoint < 0 || !lifeBarElement) {
@@ -72,7 +72,7 @@ export class GameLifePoint extends HTMLElement {
     <style>
     .life-bars-wrapper {
       position: absolute;
-      top: 80px;
+      top: 96px;
       bottom: 40px;
       left: 0;
       right: 0;

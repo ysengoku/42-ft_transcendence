@@ -1,5 +1,4 @@
 export class GameScore extends HTMLElement {
-  #navbarHeight = 64;
   #state = {
     name: {
       player1: 'Player1',
@@ -18,11 +17,6 @@ export class GameScore extends HTMLElement {
     this.namePlayer2 = null;
     this.scorePlayer1 = null;
     this.scorePlayer2 = null;
-
-    const navbar = document.querySelector('.navbar');
-    if (navbar) {
-      this.#navbarHeight = navbar.offsetHeight;
-    }
   }
 
   connectedCallback() {
@@ -34,15 +28,31 @@ export class GameScore extends HTMLElement {
     this.#state.name.player2 = player2;
   }
 
-  updateScore(playerNumber, score) {
+  updateScore(playerNumber, newScore) {
     if (playerNumber === 1) {
-      this.#state.score.player1 = score;
-      this.scorePlayer1.classList.add('scored');
-      setTimeout(() => {
-        this.scorePlayer1.classList.remove('scored');
-      }, 1000);
+      if (this.#state.score.player1 === newScore) {
+        return;
+      }
+      this.#state.score.player1 = newScore;
+      if (this.scorePlayer1) {
+        this.scorePlayer1.textContent = this.#state.score.player1;
+        this.scorePlayer1.classList.add('scored');
+        setTimeout(() => {
+          this.scorePlayer1.classList.remove('scored');
+        }, 1000);
+      }
     } else if (playerNumber === 2) {
-      this.#state.score.player2 = score;
+      if (this.#state.score.player2 === newScore) {
+        return;
+      }
+      this.#state.score.player2 = newScore;
+      if (this.scorePlayer2) {
+        this.scorePlayer2.textContent = this.#state.score.player2;
+        this.scorePlayer2.classList.add('scored');
+        setTimeout(() => {
+          this.scorePlayer2.classList.remove('scored');
+        }, 1000);
+      }
     }
   }
 
@@ -69,15 +79,17 @@ export class GameScore extends HTMLElement {
 
   template() {
     return `
-    <div id="scoreboard-wrapper" class="d-flex flex-row justify-content-center align-items-end p-3 gap-2">
-      <div class="d-flex flex-column align-items-center">
-        <p id="game-name-player1" class="game-player-name m-0"></p>
-        <p id="game-score-player1" class="game-score fs-1 m-0">5</p>
-      </div>
-      <p class="fs-2 fw-bold mx-2 my-1">:</p>
-      <div class="d-flex flex-column align-items-center">
-        <p id="game-name-player2" class="game-player-name m-0"></p>
-        <p id="game-score-player2" class="game-score fs-1 m-0"></p>
+    <div id="scoreboard-wrapper" class="d-flex flex-row justify-content-center m-3">
+      <div id="game-score-board" class="wood-board d-flex flex-row justify-content-center align-items-center px-2 py-1 gap-4">
+        <div class="d-flex flex-column align-items-center justify-content-center gap-2">
+          <p id="game-name-player1" class="game-player-name"></p>
+          <p id="game-score-player1" class="game-score fs-2"></p>
+        </div>
+        <div id="game-timer-wrapper"></div>
+        <div class="d-flex flex-column align-items-center justify-content-center gap-2">
+          <p id="game-name-player2" class="game-player-name"></p>
+          <p id="game-score-player2" class="game-score fs-2"></p>
+        </div>
       </div>
     </div>
   `;
@@ -88,11 +100,25 @@ export class GameScore extends HTMLElement {
     <style>
     #scoreboard-wrapper {
       position: absolute;
-      top: ${this.#navbarHeight}px;
-      right: 16px;
+      top: 0;
+      left: 0;
+      right: 0;
+    }
+    #game-score-board {
+      display: inline-flex;
+      width: fit-content;
+      color: var(--pm-primary-100);
+      font-family: 'van dyke';
+      width: 24rem;
+    }
+    .game-player-name {
+      font-family: 'Crimson Pro';
+      font-weight: bold;
+      margin-bottom: -.4rem;
     }
     .game-score {
       font-family: 'van dyke';
+      margin-bottom: -.5rem;
     }
     .scored {
       transition-delay: 0s;
