@@ -73,12 +73,12 @@ export class GameBuffIcon extends HTMLElement {
     <style>
     #game-buffer-icon-wrapper {
       position: absolute;
-      top: 0;
-      right: 0;
+      top: 88px;
+      right: 88px;
     }
     #game-buffer-icon {
-      width: 96px;
-      height: 96px;
+      width: 120px;
+      height: 120px;
     }
     </style>
     `;
