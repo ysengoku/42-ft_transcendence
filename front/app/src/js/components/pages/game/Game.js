@@ -54,8 +54,6 @@ export class Game extends HTMLElement {
       router.redirect('/login');
       return;
     }
-    this.render();
-
     this.classList.add('position-relative');
     this.scoreElement = document.createElement('game-scoreboard');
     if (this.scoreElement && this.#state.gameType === 'ai') {
@@ -73,28 +71,30 @@ export class Game extends HTMLElement {
     this.overlay.gameType = `local-${this.#state.gameType}`;
     this.appendChild(this.overlay);
 
+    this.render();
+
     // --- Test --------------------------------------------------
-    setTimeout(() => {
-      let remainingTime = this.#state.gameOptions.time_limit * 60;
-      setInterval(() => {
-        remainingTime -= 1;
-        this.timerElement?.updateRemainingTime(remainingTime);
-      }, 1000);
-    }, 1000);
-
-    this.buffIconElement?.showIcon('long');
-    setTimeout(() => {
-      this.buffIconElement?.hideIcon();
-    }, 2000);
-    setTimeout(() => {
-      this.buffIconElement?.showIcon('short');
-    }, 4000);
-
-    setTimeout(() => {
-      setInterval(() => {
-        this.lifePointElement?.decreasePoint(1, 5);
-      }, 1000);
-    }, 2000);
+    // setTimeout(() => {
+    //   let remainingTime = this.#state.gameOptions.time_limit * 60;
+    //   setInterval(() => {
+    //     remainingTime -= 1;
+    //     this.timerElement?.updateRemainingTime(remainingTime);
+    //   }, 1000);
+    // }, 1000);
+    //
+    // this.buffIconElement?.showIcon('long');
+    // setTimeout(() => {
+    //   this.buffIconElement?.hideIcon();
+    // }, 2000);
+    // setTimeout(() => {
+    //   this.buffIconElement?.showIcon('short');
+    // }, 4000);
+    //
+    // setTimeout(() => {
+    //   setInterval(() => {
+    //     this.lifePointElement?.decreasePoint(1, 5);
+    //   }, 1000);
+    // }, 2000);
 
     // setTimeout(() => {
     //   const testData = {
@@ -1118,9 +1118,10 @@ export class Game extends HTMLElement {
       };
     }
 
-    function manageBuffAndDebuff() {
+    const manageBuffAndDebuff = () => {
       let chooseBuff = Math.floor(Math.random() * 5);
       let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
+      this.buffIconElement?.showIcon('long');
       switch (chooseBuff) {
         case 1:
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
@@ -1140,6 +1141,7 @@ export class Game extends HTMLElement {
             Bumpers[lastBumperCollided].cubeUpdate.x =
               10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
           }
+
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           break;
         case 2:
@@ -1339,7 +1341,7 @@ export class Game extends HTMLElement {
   }
 
   render() {
-    this.innerHTML = ``;
+    // this.innerHTML = ``;
     let renderer, camera, start;
     [camera, renderer, start, this.stop, this.Workers, this.TimerId, this.scene] = this.game();
     window.addEventListener('resize', function () {
