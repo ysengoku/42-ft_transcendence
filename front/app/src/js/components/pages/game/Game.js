@@ -321,8 +321,32 @@ export class Game extends HTMLElement {
 
   game() {
     var keyMap = [];
+    const buffUI = this.buffIconElement;
+    const timerUI = this.timerElement;
+    const scoreUI = this.scoreElement;
+    const lifePointUI = this.lifePointElement;
+
+    const gameStateContainer = (() => {
+      let isPaused = false;
+      let isGamePlaying = true;
+      return {
+        get isPaused() {
+          return isPaused;
+        },
+        set isPaused(newIsPaused) {
+          isPaused = newIsPaused;
+        },
+        get isGamePlaying() {
+          return isGamePlaying;
+        },
+        set isGamePlaying(newIsGamePlaying) {
+          isGamePlaying = newIsGamePlaying;
+        },
+      };
+    })();
+
     const pi = Math.PI;
-    let gamePlaying = true;
+    // let gameStateContainer.isGamePlaying = true;
     const WALL_WIDTH_HALF = 0.5;
     let gameOptionsQuery = this.#state.gameOptions;
     let gameSpeed;
@@ -616,7 +640,7 @@ export class Game extends HTMLElement {
           scene.add(pedroModel);
           return pedroModel;
       })();
-      playerGlb.position.x -= 1;
+      // playerGlb.position.x -= 1;
       if (posZ < 0)
       {
         playerGlb.rotation.y = degreesToRadians(55);
@@ -641,12 +665,12 @@ export class Game extends HTMLElement {
           element.visible = false;
       })
       tableGlb.rotation.x = -pi / 2;
-      modelsGlb[2].visible = true;
+      modelsGlb[0].visible = true;
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
       let lenghtHalf = 2.5;
-      let modelChoosen = 2;
+      let modelChoosen = 0;
       let widthHalf = 0.5;
       let controlReverse = false;
       let speed = 0.25 * gameSpeed;
@@ -809,7 +833,7 @@ export class Game extends HTMLElement {
     var step = null;
 
     function start() {
-      if (!step && gamePlaying) {
+      if (!step && gameStateContainer.isGamePlaying) {
         step = requestAnimationFrame(animate);
       }
     }
@@ -823,8 +847,8 @@ export class Game extends HTMLElement {
     function resetBall(direction) {
       if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE)
       {
-        gamePlaying = false;
-        
+        gameStateContainer.isGamePlaying = false;
+        stop();
         return ;
       }
       else if (Bumpers[0].score < (scoreSwitch * 2) && Bumpers[0].score >= scoreSwitch)
@@ -840,7 +864,9 @@ export class Game extends HTMLElement {
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
       const looserBumper = direction < 0 ? 1 : 0;
+      
       lastBumperCollided = looserBumper;
+      lifePointUI?.decreasePoint(looserBumper, 20 / MAX_SCORE);
       Ball.sphereUpdate.x = Bumpers[looserBumper].playerGlb.position.x;
       Ball.sphereUpdate.z = Bumpers[looserBumper].playerGlb.position.z + (2 * direction);
       Bumpers[looserBumper].gltfStore.action[Bumpers[looserBumper].currentAction][0].fadeOut(0.1);
@@ -1002,12 +1028,13 @@ export class Game extends HTMLElement {
       if (Timer.timeLeft-- != 0)
       {
         clearTimeout(Timer.timeoutId);
+        timerUI?.updateRemainingTime(Timer.timeLeft);
         Timer.timeoutId = setTimeout(myCallback, 1000);
         return ;
       }
       Bumpers[0].score = 0;
       Bumpers[1].score = 0;
-      gamePlaying = false;
+      gameStateContainer.isGamePlaying = false;
       stop();
     }
     let Coin = null;
@@ -1077,6 +1104,7 @@ export class Game extends HTMLElement {
         Bumpers[e.data[0]].modelChoosen = 0;
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
         Bumpers[e.data[0]].lenghtHalf = 2.5;
+        buffUI?.hideIcon();
       };
       Workers[1].onmessage = function (e) {
         Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = false;
@@ -1096,14 +1124,17 @@ export class Game extends HTMLElement {
           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
             10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
         }
+        buffUI?.hideIcon();
       };
       Workers[2].onmessage = function (e) {
         Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
+        buffUI?.hideIcon();
       };
       Workers[3].onmessage = function (e) {
         Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25 * gameSpeed;
         Bumpers[[Math.abs(e.data[0] - 1)]].gltfStore.action[0][0].setDuration(0.18);
         Bumpers[[Math.abs(e.data[0] - 1)]].gltfStore.action[5][0].setDuration(0.18);
+        buffUI?.hideIcon();
       };
       Workers[4].onmessage = function (e) {
         let dirz = Bumpers[e.data[0]].playerGlb.position.z;
@@ -1112,16 +1143,17 @@ export class Game extends HTMLElement {
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
         Bumpers[e.data[0]].widthHalf = 0.5;
         dirz < 0 ? Bumpers[e.data[0]].playerGlb.position.x += 5 : Bumpers[e.data[0]].playerGlb.position.x -= 5;
+        buffUI?.hideIcon();
       };
       Workers[5].onmessage = function (e) {
         Coin.cylinderUpdate.set(-9.25, 3, 0);
       };
     }
-
+    // buffUI?.showIcon('long');
     const manageBuffAndDebuff = () => {
       let chooseBuff = Math.floor(Math.random() * 5);
+      // Math.floor(Math.random() * 5)
       let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
-      this.buffIconElement?.showIcon('long');
       switch (chooseBuff) {
         case 1:
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
@@ -1143,6 +1175,7 @@ export class Game extends HTMLElement {
           }
 
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
+          buffUI?.showIcon('long');
           break;
         case 2:
           Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[
@@ -1154,16 +1187,19 @@ export class Game extends HTMLElement {
           ].visible = true;
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
+          buffUI?.showIcon('short');
           break;
         case 3:
           Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
           Workers[2].postMessage([2000, lastBumperCollided, 'create']);
+          buffUI?.showIcon('switch');
           break;
         case 4:
           Bumpers[Math.abs(lastBumperCollided - 1)].speed = 0.1 * gameSpeed;
           Bumpers[Math.abs(lastBumperCollided - 1)].gltfStore.action[0][0].setDuration(0.2);
           Bumpers[Math.abs(lastBumperCollided - 1)].gltfStore.action[5][0].setDuration(0.2);
           Workers[3].postMessage([5000, lastBumperCollided, 'create']);
+          buffUI?.showIcon('slow');
           break;
         default:
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
@@ -1172,6 +1208,7 @@ export class Game extends HTMLElement {
           Bumpers[lastBumperCollided].widthHalf = 1.5;
           dirz < 0 ? Bumpers[lastBumperCollided].playerGlb.position.x -= 5 : Bumpers[lastBumperCollided].playerGlb.position.x += 5;
           Workers[4].postMessage([10000, lastBumperCollided, 'create']);
+          buffUI?.showIcon('large');
           break;
       }
       Coin.cylinderUpdate.set(-100, 3, 0);
@@ -1220,12 +1257,17 @@ export class Game extends HTMLElement {
         if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
           isMovementDone = true;
           Bumpers[0].score++;
+          console.log(Bumpers[0].score)
           resetBall(-1);
+          if (Bumpers[0].score <= MAX_SCORE)
+            scoreUI?.updateScore(0, Bumpers[0].score);
         } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
-          isMovementDone = false;
-          isCalculationNeeded = true;
+          isMovementDone = true;
           Bumpers[1].score++;
+          console.log(Bumpers[1].score)
           resetBall(1);
+          if (Bumpers[1].score <= MAX_SCORE)
+            scoreUI?.updateScore(1, Bumpers[1].score);
         }
         if (Coin != null && isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
           manageBuffAndDebuff();
@@ -1299,11 +1341,6 @@ export class Game extends HTMLElement {
       }
       Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
       Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
-      // if (keyMap['ArrowLeft'] == false || keyMap['ArrowRight'] == false)
-      // {
-      //   Bumpers[0].playerGlb.quaternion.rotateTowards(new THREE.Quaternion(0,0,0),stepRotation);
-      // }
-      // console.log(Bumpers[0].mixer);
       if (Bumpers[0].gltfStore.mixer && Bumpers[1].gltfStore.mixer) {
         Bumpers[0].gltfStore.mixer.update(delta);
         Bumpers[1].gltfStore.mixer.update(delta);
@@ -1313,24 +1350,7 @@ export class Game extends HTMLElement {
     }
     let gameStartAndStop = [start, stop];
 
-    let gameStateContainer = (() => {
-      let isPaused = false;
-      let isGamePlaying = false;
-      return {
-        get isPaused() {
-          return isPaused;
-        },
-        set isPaused(newIsPaused) {
-          isPaused = newIsPaused;
-        },
-        get isGamePlaying() {
-          return isGamePlaying;
-        },
-        set isGamePlaying(newIsGamePlaying) {
-          isGamePlaying = newIsGamePlaying;
-        },
-      };
-    })();
+
     this.onDocumentKeyDown = this.createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback, Bumpers);
     this.onDocumentKeyUp = this.createOnDocumentKeyUp(keyMap, Bumpers);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
@@ -1344,8 +1364,10 @@ export class Game extends HTMLElement {
     // this.innerHTML = ``;
     let renderer, camera, start;
     [camera, renderer, start, this.stop, this.Workers, this.TimerId, this.scene] = this.game();
-    window.addEventListener('resize', function () {
-      renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
+    // navbarHeight = ;
+    window.addEventListener('resize',  () => {
+        renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
+        renderer.setSize(window.innerWidth, window.innerHeight);
       let rendererWidth = renderer.domElement.offsetWidth;
       let rendererHeight = renderer.domElement.offsetHeight;
       camera.aspect = rendererWidth / rendererHeight;

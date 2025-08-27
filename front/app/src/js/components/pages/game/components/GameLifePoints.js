@@ -19,14 +19,14 @@ export class GameLifePoint extends HTMLElement {
     this.render();
   }
 
-  decreasePoint(playerNumber, unit) {
+  decreasePoint(playerWhoScoreNumber, unit) {
     let lifeBarElement = null;
     let lifePoint = 0;
-    if (playerNumber === 1) {
+    if (playerWhoScoreNumber === 1) {
       lifeBarElement = this.p1LifeBar;
       this.#state.p1CurrentPoint = this.#state.p1CurrentPoint - unit < 0 ? 0 : this.#state.p1CurrentPoint - unit;
       lifePoint = this.#state.p1CurrentPoint;
-    } else if (playerNumber === 2) {
+    } else if (playerWhoScoreNumber === 0) {
       lifeBarElement = this.p2LifeBar;
       this.#state.p2CurrentPoint = this.#state.p2CurrentPoint - unit < 0 ? 0 : this.#state.p2CurrentPoint - unit;
       lifePoint = this.#state.p2CurrentPoint;
@@ -34,13 +34,13 @@ export class GameLifePoint extends HTMLElement {
     if (lifePoint < 0 || !lifeBarElement) {
       return;
     }
-    log.info(`Player ${playerNumber} lost life point`);
+    log.info(`Player ${playerWhoScoreNumber} lost life point`);
     const newWidth = lifePoint * this.#RATE + '%';
     lifeBarElement.style.width = newWidth;
-    if (lifePoint === this.#WEAK_LEVEL) {
+    if (lifePoint <= this.#WEAK_LEVEL && lifePoint >= this.#DANGER_LEVEL) {
       lifeBarElement.style.backgroundColor = this.#ORANGE;
     }
-    if (lifePoint === this.#DANGER_LEVEL) {
+    if (lifePoint <= this.#DANGER_LEVEL) {
       lifeBarElement.style.backgroundColor = this.#RED;
     }
   }
