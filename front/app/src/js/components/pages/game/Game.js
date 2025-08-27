@@ -498,7 +498,7 @@ export class Game extends HTMLElement {
           couchGlb.rotation.x = pi / 2;
           couchGlb.rotation.z = pi;
           couchGlb.rotation.y = -pi / 2;
-          chairGlb.rotation.y = -pi / 2;
+          chairGlb.rotation.z = pi;
         }
         else
         {
@@ -558,7 +558,7 @@ export class Game extends HTMLElement {
       else{
         playerGlb.rotation.y = degreesToRadians(235);
         playerGlb.position.z = posZ + 1;
-        playerGlb.position.x -= 1;
+        // playerGlb.position.x -= 1;
       }
 
 
@@ -1219,16 +1219,16 @@ export class Game extends HTMLElement {
         Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
         Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -pi / 2);
       }
-      if (keyMap['KeyC'] == true)
-      {
-        camera.position.set(10, 15, -20);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-      }
-      if (keyMap['KeyC'] == false)
-      {
-        camera.position.set(-10, 15, -20);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-      }
+      // if (keyMap['KeyC'] == true)
+      // {
+      //   camera.position.set(10, 15, -20);
+      //   camera.lookAt(new THREE.Vector3(0, 0, 0));
+      // }
+      // if (keyMap['KeyC'] == false)
+      // {
+      //   camera.position.set(-10, 15, -20);
+      //   camera.lookAt(new THREE.Vector3(0, 0, 0));
+      // }
       Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
       Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
       // if (keyMap['ArrowLeft'] == false || keyMap['ArrowRight'] == false)
