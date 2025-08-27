@@ -24,11 +24,11 @@ export class GameLifePoint extends HTMLElement {
     let lifePoint = 0;
     if (playerNumber === 1) {
       lifeBarElement = this.p1LifeBar;
-      this.#state.p1CurrentPoint -= unit;
+      this.#state.p1CurrentPoint = this.#state.p1CurrentPoint - unit < 0 ? 0 : this.#state.p1CurrentPoint - unit;
       lifePoint = this.#state.p1CurrentPoint;
     } else if (playerNumber === 2) {
       lifeBarElement = this.p2LifeBar;
-      this.#state.p2CurrentPoint -= unit;
+      this.#state.p2CurrentPoint = this.#state.p2CurrentPoint - unit < 0 ? 0 : this.#state.p2CurrentPoint - unit;
       lifePoint = this.#state.p2CurrentPoint;
     }
     if (lifePoint < 0 || !lifeBarElement) {
