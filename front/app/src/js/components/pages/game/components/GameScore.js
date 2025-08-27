@@ -29,7 +29,7 @@ export class GameScore extends HTMLElement {
   }
 
   updateScore(playerNumber, newScore) {
-    if (playerNumber === 1) {
+    if (playerNumber === 0) {
       if (this.#state.score.player1 === newScore) {
         return;
       }
@@ -41,7 +41,7 @@ export class GameScore extends HTMLElement {
           this.scorePlayer1.classList.remove('scored');
         }, 1000);
       }
-    } else if (playerNumber === 2) {
+    } else if (playerNumber === 1) {
       if (this.#state.score.player2 === newScore) {
         return;
       }
