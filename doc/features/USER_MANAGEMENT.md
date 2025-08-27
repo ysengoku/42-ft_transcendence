@@ -8,7 +8,7 @@ Every other part of the project is affected by this system; after all, the abili
 
 - [Features](#features)
     - [JWT Authentication](#jwt-authentication)
-    - [Authentication Endpoints And CSRF Protection](#authentication-endpoints-and-csrf-protection)
+    - [Authentication And CSRF Protection](#authentication-and-csrf-protection)
     - [Password Restoration](#password-restoration)
     - [Multi-Factor Authentication (MFA)](#multi-factor-authentication-mfa)
     - [OAuth 2.0 Integration](#oauth-20-integration)
@@ -16,12 +16,12 @@ Every other part of the project is affected by this system; after all, the abili
     - [User Search And User Profiles](#user-search-and-user-profiles)
     - [User Settings](#user-settings)
     - [User Presence System](#user-presence-system)
-- [Implementation Details](#Implementation-details)
+- [Implementation Details](#implementation-details)
     - [Backend](#backend)
         - [Core Models](#core-models)
         - [JWT Authentication Middleware](#jwt-authentication-middleware)
     - [Frontend](#frontend)
-        - [Authentication redirection](#authentication-redirection)
+        - [Authentication Redirection](#authentication-redirection)
         - [Authentication and User Settings Components](#authentication-and-user-settings-components)
         - [User Dashboard and Social Networking Components](#user-dashboard-and-social-networking-components)
 - [Testing](#testing)
@@ -32,7 +32,7 @@ Every other part of the project is affected by this system; after all, the abili
 
 ### JWT Authentication
 
-The primary authentication mechanism is based on [JSON Web Tokens (JWT)](https://en.wikipedia.org/wiki/JSON_Web_Token). On [creating account or logging in](authentication-endpoints-and-csrf-protection), `access_token` and `refresh_token` are issued.
+The primary authentication mechanism is based on [JSON Web Tokens (JWT)](https://en.wikipedia.org/wiki/JSON_Web_Token). On [creating account or logging in](authentication-and-csrf-protection), `access_token` and `refresh_token` are issued.
 
 `access_token` is JWT, and contains signature and identity of the user. It's short-lived for security reasons. It has companion cookie (also JWT): `refresh_token`, which is long-lived, may be revoked by the server, and is responsible for refreshing the short-lived `access_token`. Refreshing is not done automatically: the client must call  special endpoint (`POST /api/refresh`), after which new `access_token` is granted, while the current `refresh_token` is rotated (the current one is revoked & the new one is issued).
 
@@ -41,9 +41,9 @@ Both tokens are [HTTP-only](https://owasp.org/www-community/HttpOnly) and [secur
 The benefits of the JWT authentication system (with refresh tokens) compared to the traditional session-based system is that it's easier on the database. It's not stateless, as pure JWT authentication, but pure stateless JWT authentication is not suitable for applications such as pong platform. Having refresh tokens is important to security ([video with simple explanation](https://www.youtube.com/watch?v=T0k-3Ze4NLo)).
 
 ---
-### Authentication Endpoints And CSRF Protection
+### Authentication And CSRF Protection
 
-Server provides multiple endpoints for the necessary for secure creation, logging in and logging outof users. `signup` and `login` endpoints also issue [CSRF token (cookies-to-header approach)](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Cookie-to-header_token), another security measure of the project.
+Server provides multiple endpoints for the necessary for secure creation, logging in and logging out of user accounts. `signup` and `login` endpoints also issue [CSRF token (cookies-to-header approach)](https://en.wikipedia.org/wiki/Cross-site_request_forgery#Cookie-to-header_token), another security measure of the project. The client uses those CSRF tokens to make requests, and any malicious entity won't be able to impersonate users without those tokens.
 
 The way CSRF protection works is that malicious side that attempts CSRF attack cannot read the cookies from another domain (Ponggers, in this case). However, the server expects it to be sent in the header on each request. If they don't match, request fails, invalidating the attack. [Additional information.](https://stackoverflow.com/a/49301318)
 
@@ -65,6 +65,8 @@ The way CSRF protection works is that malicious side that attempts CSRF attack c
 ---
 ### Password Restoration
 
+In case users forgot their password, they will be able to restore their account using the email they provided during [signing up](#authentication-and-csrf-protection). There are two endpoints that are used by the client for that functionality:
+
 - `POST /api/forgot-password`: Allows users to request a password reset. It takes an email address and sends a password reset link with a unique token.
 
 - `POST /api/reset-password/{token}`: Allows a user to set a new password using a valid token received via email. The token expires after 10 minutes.
@@ -73,6 +75,8 @@ The way CSRF protection works is that malicious side that attempts CSRF attack c
   <img src="../../assets/ui/user-management-forgot-password.png" alt="Forgot password" width="240px" />
   <img src="../../assets/ui/user-management-reset-password.png" alt="Reset password" width="240px" />
 </p>
+
+Just like in [MFA feature](#multi-factor-authentication-mfa), the email backend of **Peacemakers** is gmail, but it's possible to easily reconfigure that.
 
 ---
 ### Multi-Factor Authentication (MFA)
@@ -182,7 +186,7 @@ The app's functionality is centered around two primary models: `User` and `Profi
 ---
 #### JWT Authentication Middleware
 
-Middleware is triggered on every request/connection. Authentication middleware identifies the user who made request and restricts access of anonymous users to the system.
+Middleware is triggered on every request/connection. Authentication middleware identifies the user who made request using [JWT cookies](#jwt-authentication) and restricts access of anonymous users to the system.
 
 - `JWTEndpointsAuthMiddleware`: Secures all HTTP API endpoints (except the ones you need to use to login in the first place) by validating the `access_token` provided in cookies. Populates each `request` with the user data.
 - `JWTWebsocketAuthMiddleware`: Secures all WebSocket endpoints using the `access_token` from cookies, populating the `scope` for real-time services like chat and the actual game.
@@ -191,14 +195,16 @@ Middleware is triggered on every request/connection. Authentication middleware i
 
 ### Frontend
 
-#### Authentication redirection
+#### Authentication Redirection
 
 The application checks the authentication status of the current user on each navigation using [`/api/self`](#api-self) or other endpoints.   
 Unauthenticated users attempting to access pages restricted to authenticated users are redirected to **/login**. Conversely, authenticated users navigating to **/login**, **/register**, or any other authentication-related pages are sent to **/home**.
 
 ---
 
-#### Authentication and User Settings components
+#### Authentication and User Settings Components
+
+There are several important client-side components that are handling the user experience for [authentication](#authentication-and-csrf-protection).
 
 ##### `Register`:
 
