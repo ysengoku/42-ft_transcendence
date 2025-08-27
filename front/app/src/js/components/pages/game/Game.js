@@ -92,8 +92,8 @@ export class Game extends HTMLElement {
 
     setTimeout(() => {
       setInterval(() => {
-        this.lifePointElement?.decreasePoint(1);
-      }, 500);
+        this.lifePointElement?.decreasePoint(1, 5);
+      }, 1000);
     }, 2000);
 
     // setTimeout(() => {
