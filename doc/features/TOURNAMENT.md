@@ -7,23 +7,29 @@ The Tournament app handles the full lifecycle of tournaments, from creation and 
 - [Features](#features)
   - [Tournament Creation and Registration](#tournament-creation-and-registration)
   - [Tournament Progress Management](#tournament-progress-management)
-  - [Tournament Result Viewing]()
+    - [Pending Tournament](#pending-tournament)
+    - [Ongoing Tournament](#ongoing-tournament)
+  - [Tournament Result Viewing](#tournament-result-viewing)
 - [Implementation Details](#implementation-details)
   - [Backend](#backend)
-    - [Core Models](#core-models) ✅
-    - [Trounament Worker](#tournament-worker)
-    - [Channel Groups](#channel-groups)
-  - [Frontend](#frontend)
+    - [Core Models](#core-models)
+    - [Trounament Worker](#tournament-worker) 🛠️👷🏻‍♂️
+    - [Channel Groups](#channel-groups) 🛠️👷🏻‍♂️
+  - [Frontend](#frontend) 🛠️👷🏻‍♂️
     - [Tournament Menu Page Components](#tournament-menu-page-components)
     - [Tournament Page Components](#tournament-page-components)
     - [Tournament Over View Components](#tournament-overview-page-components)
     - [UI Flow during Tournament](#ui-flow-during-tournament)
-- [WebSocket Protocol Reference](#websocket-protocol-reference) ✅
-- [Contributors](#contributors) ✅
+- [WebSocket Protocol Reference](#websocket-protocol-reference)
+- [Contributors](#contributors)
 
 <br/>
 
 ## Features
+
+This section describes the features of the tournament system in high-level.
+
+All the features in the tourinament system works by combinasion of dedicated **API endoints** and real-time communications through `/ws/tournament/{id}` with custom protocol (detailed specifications the protocol are [here](#websocket-protocol-reference)). Those special messages are called actions, and contain the type of event that happened and the context of this event.
 
 ### Tournament Creation and Registration
 
@@ -42,7 +48,7 @@ Users can view available tournaments on the tournament menu page (`/tournament-m
   <img src="../../assets/ui/tournament-menu-creation.png" alt="Tournament Creation" width="320px">
 </p>
 
-- `POST /api/tournaments/{id}/register`: Registers a participant by specifying a unique alias, which is used only for this tournament.   
+- `POST /api/tournaments/{id}/register`: Registers a participant by specifying a unique alias, which is used only for this tournament. If the user is already participating in another pending or ongoing tournament, the registration fails and an error is returned.  
 - `DELETE /api/tournaments/{id}/unregister`: Unregisters a participant if the tournament status is pending.     
 
 <p align="center">
@@ -65,7 +71,8 @@ A tournament's progress is managed through a combination of `GET /api/tournament
 #### Pending tournament
 
 After registration, a user is redirected to the **tournament page** (`/tournament/{id}`). This is where participants wait until the tournament begins.   
-The server uses real-time actions to keep everyone updated: `new_registration` is sent when a new participant joins, and `registration_canceled` is sent when someone unregisters. If the creator cancels the tournament, the server notifies all participants with a `tournament_canceled` action.
+The server uses real-time actions to keep everyone updated:   
+[`new_registration`](#protocol-new-registration) is sent when a new participant joins, and [`registration_canceled`](#protocol-registration-canceled) is sent when someone unregisters. If the creator cancels the tournament, the server notifies all participants with a [`tournament_canceled`](#protocol-tournament-canceled) action.
 
 <p align="center">
   <img src="../../assets/ui/tournament-lobby-pending.png" alt="Tournament Lobby - pending" width="480px">
@@ -73,7 +80,7 @@ The server uses real-time actions to keep everyone updated: `new_registration` i
 
 #### Ongoing tournament
 
-Once the tournament is ready to begin, participants receive a `tournament_start` action and are navigated to the game room. After a match, they are brought back to the **tournament page** by a `user_won` or `player_resigned` action from the Game Worker.  
+Once the tournament is ready to begin, participants receive a [`tournament_start`](#protocol-tournament-start) action and are navigated to the game room. After a match, they are brought back to the **tournament page** by a [`user_won` or `player_resigned`](./PONG.md) (🛠️👷🏻‍♂️ TODO: Add link to protocol section) action from the Game Worker.  
 
 If the current round is still **ongoing**, qualified participants can either wait on the **tournament page**, where the results of other matches are displayed, or they can leave and return later. Eliminated participants are redirected to the **tournament overview page** (`/tournament-overview/{id}`).
 
@@ -81,9 +88,9 @@ If the current round is still **ongoing**, qualified participants can either wai
   <img src="../../assets/ui/tournament-lobby-ongoing.png" alt="Tournament Lobby - ongoing" width="480px">
 </p>
 
-When all matches in a round are complete, the server broadcasts a `round_end` action, followed by a `round_start` action for the next round. This prompts participants to return to the **tournament page** if they have left, allowing the tournament to continue.
+When all matches in a round are complete, the server broadcasts a [`round_end`](#protocol-round-end) action, followed by a [`round_start`](#protocol-round-start) action for the next round. This prompts participants to return to the **tournament page** if they have left, allowing the tournament to continue.
 
-🛠️👷🏻‍♂️ In progress
+After [`round_end`](#protocol-round-end) action of the final round, two finalists are redirected to the **tournament overview** page.
 
 ---
 
@@ -96,18 +103,6 @@ When all matches in a round are complete, the server broadcasts a `round_end` ac
 </p>
 
 <br/>
-
-🛠️👷🏻‍♂️🛠️👷🏻‍♂️   
-The Tournament WebSocket (`/ws/tournament/{id}`) handles real-time updates related to tournament lifecycle, user registrations, and round progress.
-This socket is opened when a user subscribes to a tournament and remains active until the elimination or the tournament ends.
-
-Validation, Security & Integrity   
-**REST/WS input validation**: required fields, types, valid status, alias uniqueness, users per tournament (4 or 8).   
-**Registration constraints**: can't register if already participating or in a game.   
-**Database protection**: atomic transactions during (un)registration, avoids duplicates/race conditions.   
-🛠️👷🏻‍♂️🛠️👷🏻‍♂️
-
-
 
 ## Implementation Details
 
@@ -230,10 +225,6 @@ This document outlines the user interface flow for tournament-related features, 
 
 The Tournament Menu serves as the central hub for all tournament activities.
 
-##### Creating a new tournament
-
-Users can initiate the creation of a new tournament by clicking on a "Create Tournament" button. This action opens the Tournament Creation Form.
-
 ##### Tournament list
 
 The Tournament List shows tournaments (by default, `Open for entries`(pending)) in a scrollable view. A filter allows switching to `All` to include Ongoing and Finished tournaments.   
@@ -247,13 +238,15 @@ On clicking:
 
 The main screen of the Tournament Menu displays a list of available tournaments.
 
-- ###### Pending tournament
-
+- Pending tournaments:
   Clicking on a pending tournament in the list will open its Registration Form, allowing users to sign up for the tournament.
 
-- ###### Ongoing and Finished tournament
-
+- Ongoing and Finished tournaments:
   For ongoing or finished tournaments, clicking on the tournament entry will display an Modal. This modal provides a quick summary and includes a direct link to a more Detailed Results Page (`/tournament-overview/:id`).
+
+##### Creating a new tournament
+
+Users can initiate the creation of a new tournament by clicking on a "Create Tournament" button. This action opens the Tournament Creation Form.
 
 ---
 
@@ -369,6 +362,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
 
 ### Registration Events
 
+<a id="protocol-new-registration"></a>
 - `new_registration`: Sent when a user registers for the tournament.
 
   | Data Field | Type       | Description        |
@@ -378,6 +372,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
 
 <br />
 
+<a id="protocol-registration-canceled"></a>
 - `registration_canceled`: Sent when a user unregisters from the tournament.
 
   | Data Field | Type     | Description       |
@@ -386,6 +381,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
 
 <br />
 
+<a id="protocol-tournament-canceled"></a>
 - `tournament_canceled`: Sent to participants when the tournament is canceled by its creator.
 
   | Data Field        | Type     | Description            |
@@ -397,6 +393,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
 
 ### Tournament Progress
 
+<a id="protocol-tournament-start"></a>
 - `tournament_start`: Sent when the tournament begins.
 
   | Data Field        | Type     | Description            |
@@ -407,6 +404,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
 
 <br />
 
+<a id="protocol-round-start"></a>
 - `round_start`: Sent when a new round starts (excluding round 1).
 
   | Data Field        | Type     | Description           |
@@ -417,6 +415,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
 
 <br />
 
+<a id="protocol-match-result"></a>
 - `match_result`: Sent when a match finishes and its result becomes available.
 
   | Data Field      | Type      | Description           |
@@ -427,6 +426,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
 
 <br />
 
+<a id="protocol-round-end"></a>
 - `round_end`: Sent when all matches in a round are completed.
 
   | Data Field      | Type     | Description           |
@@ -437,6 +437,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
 
 ### Match Completion
 
+<a id="protocol-user-won"></a>
 - `user_won` / `player_resigned`: Sent from pong WebSocket.
 
   | Data Field      | Type               | Description                    |
