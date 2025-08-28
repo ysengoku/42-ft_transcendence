@@ -45,7 +45,16 @@ export class TournamentModal extends HTMLElement {
 
   disconnectedCallback() {
     this.confirmButton?.removeEventListener('click', this.handleConfirmButtonClick);
-    this.modalElement?.removeEventListener('hide.bs.modal', this.clearFocusInModal);
+    if (this.modalElement) {
+      this.modalElement.removeEventListener('hide.bs.modal', this.clearFocusInModal);
+      this.modalElement.remove();
+    }
+    if (this.modal) {
+      this.modal.hide();
+      Promise.resolve(() => {
+        this.modal.dispose();
+      });
+    }
   }
 
   render() {

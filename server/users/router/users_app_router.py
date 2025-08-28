@@ -6,7 +6,7 @@ from .endpoints.cronjob import cronjob_router
 from .endpoints.friends import friends_router
 from .endpoints.mfa import mfa_router
 from .endpoints.oauth2 import oauth2_router
-from .endpoints.users import users_router
+from .endpoints.user_profiles import users_router
 
 users_app_router = Router()
 
