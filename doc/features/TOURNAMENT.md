@@ -13,13 +13,13 @@ The Tournament app handles the full lifecycle of tournaments, from creation and 
 - [Implementation Details](#implementation-details)
   - [Backend](#backend)
     - [Core Models](#core-models)
-    - [Trounament Worker](#tournament-worker) 🛠️👷🏻‍♂️
-    - [Channel Groups](#channel-groups) 🛠️👷🏻‍♂️
+    - [Trounament Worker](#tournament-worker)
+    - [Channel Groups](#channel-groups)
   - [Frontend](#frontend)
     - [Tournament Menu Page Components](#tournament-menu-page-components)
-    - [Tournament Page Components](#tournament-page-components) 🛠️👷🏻‍♂️
-    - [Tournament Over View Components](#tournament-overview-page-components) 🛠️👷🏻‍♂️
-    - [UI Flow during Tournament](#ui-flow-during-tournament) 🛠️👷🏻‍♂️
+    - [Tournament Page Components](#tournament-page-components)
+    - [Tournament Over View Components](#tournament-overview-page-components)
+    - [UI Flow during Tournament](#ui-flow-during-tournament)
 - [WebSocket Protocol Reference](#websocket-protocol-reference)
 - [Contributors](#contributors)
 
@@ -108,7 +108,8 @@ After [`round_end`](#protocol-round-end) action of the final round, two finalist
 
 ###  Backend
 
-🛠️👷🏻‍♂️ TODO: Add text
+The backend is responsible for all the core logic and state management of the tournament application.   
+It uses a worker system to handle the complex, multi-stage flow of tournaments, from initial registration to determining a final winner. The Tournament worker specifically orchestrates this flow, communicating with the Game worker to manage individual match sessions. Real-time updates for participants are managed efficiently using a Django Channel layer, which sends messages to specific groups of users.
 
 #### Core Models
 
@@ -201,65 +202,61 @@ flowchart TD
 <br/>
 
 #### Channel Groups
-🛠️👷🏻‍♂️ TODO
-  - Clients connect per tournament, identified via `tournament_{uuid}` group.
-  - Private tournament events (defeat, kick...) use `tournament_user_{id}` group.
-  - New tournaments announced site-wide by `tournament_global`.
 
-  - `tournament_{uuid}`: all tournament participants.
-  - `tournament_user_{id}`: individual user events (connection, defeat, exclusion).
-  - `tournament_global`: broadcast site-wide tournament creation.
+The backend uses a system of channel groups of Django Channels (🛠️👷🏻‍♂️TODO: link to how Django Channels are used in our project and with Redis) to manage and scope real-time events. This ensures that users only receive messages relevant to their context.   
+When users register for a tournament and establishe connection to  `ws/tournament/{id}`, they are subscribed to specific groups that define the events they will receive.
+
+- `tournament_global`: This is a global group used to broadcast site-wide events, such as the creation of a new tournament.
+- `tournament_{id}`: This group is used for events specific to a single tournament, ensuring that all participants receive relevant updates on match progression, round status, or new registrations.
+-`tournament_user_{id}`: This is a private group for an individual user, handling personal events like notifications, defeats, or exclusion from a tournament.
 
 <br/>
 
   ### Frontend
 
-  The user interface for managing tournaments consists of three main pages: the **Tournament Menu** (`/tournament-menu`) for creation, registration, and browsing, the **Tournament Page** (`/tournament-room/{id}`) serving as a dynamic lobby for participants, and the **Tournament Overview Page** (`/tournament-overview/{id}`) showing ongoing or final results.
+  The user interface for managing tournaments consists of three main pages:
+  - **Tournament Menu** (`/tournament-menu`) for creation, registration, and browsing
+  - **Tournament Page** (`/tournament-room/{id}`) serving as a dynamic lobby for participants
+  - **Tournament Overview Page** (`/tournament-overview/{id}`) showing ongoing or final results.
 
   #### Tournament Menu Page Components
 
   The **Tournament Menu** page acts as the entry point to the tournament system. It is managed by the `TournamentMenu` component, which coordinates the display of the tournament list and various modal forms described below.
 
-  ##### `TournamentList`:
-  Responsible for retrieving and displaying the list of available tournaments. By default, it shows pending tournaments, and also supports toggling the filter to retrieve all tournaments, including ongoing and finished ones. To handle list rendering efficiently, even when it becomes long, the component supports infinite scrolling and pagination, ensuring a smooth browsing experience.   
+  ##### Tournament List Component (`TournamentList`):
 
-  ##### Tournament Creation Modal: 
+  Responsible for retrieving and displaying the list of available tournaments. By default, it shows pending tournaments, and also supports toggling the filter to retrieve all tournaments, including ongoing and finished ones. The list items are clickable, allowing users to view tournament details. To handle list rendering efficiently, even when it becomes long, the component supports infinite scrolling and pagination, ensuring a smooth browsing experience.   
 
-  Handled by the `TournamentCreation` component, which provides the form for creating a new tournament. It collects and validates user input before passing the data to the parent for submission.
+  ##### Tournament Creation Form Modal (`TournamentCreation`): 
+
+ Provides the form for creating a new tournament. The modal opens when a user clicks the dedicated button on the Tournament Menu page. User inputs are validated, then passed to the parent component (`TournamentMenu`) which sends the creation request to the server.
 
   ##### Registration Form Modal:
   
-  Opens when a user clicks a **pending tournament** in the list. It allows users to register for the selected tournament.
+  Opens when a user clicks a **pending tournament** in the list. It allows users to register for the selected tournament. User's alias input is validated, then the request is sent to the server.
 
   ##### Tournament Result Viewing Modal:
   
-  Opens when a user clicks an **ongoing or finished tournament** in the list. It  displays a read-only summary of the selected tournament and includes a link to the **Tournament Overview** page which shows more detailed results.
+  Opens by a click on an **ongoing or finished tournament** in the list. It displays a read-only summary of the selected tournament and includes a link to the **Tournament Overview** page which shows more detailed results.
 
 ---
 
 #### Tournament Page Components
-🛠️👷🏻‍♂️ TODO
-The Tournament Lobby is exclusively accessible to participants of a specific tournament and provides real-time updates on its progress.
 
-##### Tournament Status updates
+The Tournament page is exclusively accessible to participants of a specific tournament and serves as a tournament lobby providing real-time updates on its progress.
 
 The lobby dynamically displays the current status of the tournament, which can include:
-- **Pending**: The tournament is awaiting the required number of participants.
+- **Pending**: The tournament is awaiting the required number of participants. It displays registered users and real-time updates for new registrations or unregistrations.
 - **Tournament starting**: The tournament is about to begin, showing the brackets of the first round.
-- **Round ongoing**: Matches in the current round are in progress. Displays the current status of the matches. 
-- **Round finished**: All matches in the current round have concluded. Display the results
-- **Round starting**: The next round is about to begin. Displays the brackets of the next round.
+- **Round ongoing**: Some matches in the current round are still in progress, and real-time status of all matches are displayed.
+- **Round finished**: All matches in the current round have concluded, and the results are displayed.
+- **Round starting**: The next round is about to begin. and its brackets are displayed.
 
 ---
 
 #### Tournament Overview Page Components
 
-The Tournament Overview page presents the results of ongoing or finished tournaments.
-
-##### Displaying results
-
-- Media wider than Break Point MD (768 by default): Results are displayed in a clear tree structure, making it easy to visualize the progression.
-- Mobile (smaller than Break Point MD): For optimal viewing on smaller screens, results are presented in a table format.
+The Tournament Overview page presents the results of ongoing or finished tournaments. The layout is responsive to the screen size. On larger screens, results are displayed in a clear tree structure for easy visualization of the progression. On smaller screens, the results are presented in a table format for optimal viewing.
 
 ---
 
@@ -327,7 +324,6 @@ flowchart TD
     style I stroke-width:2px,stroke-dasharray: 2
     style P stroke-width:2px,stroke-dasharray: 2
 ```
----
 
 <br />
 
