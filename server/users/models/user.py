@@ -166,9 +166,6 @@ class User(AbstractUser):
             self.set_password(data.password)
             data.password = ""
 
-        if data.username == self.username:
-            err_dict = merge_err_dicts(err_dict, {"username": ["New username cannot be the same as the old username."]})
-
         if data.email == self.email:
             err_dict = merge_err_dicts(err_dict, {"email": ["New email cannot be the same as the old email."]})
 
@@ -179,7 +176,7 @@ class User(AbstractUser):
         if data.mfa_enabled is False:
             self.mfa_enabled = False
 
-        exclude = set()
+        exclude = {"username"}
         if not data.email:
             exclude.add("email")
         if not data.username:
