@@ -40,6 +40,7 @@ export class ChatMessageArea extends HTMLElement {
     data: null,
     renderedMessagesCount: 0,
     totalMessagesCount: 0,
+    unreadMessageIds: [],
   };
 
   #sendToggleLikeEvent = null;
@@ -192,6 +193,7 @@ export class ChatMessageArea extends HTMLElement {
       const message = this.messageItem(this.#state.data.messages[i]);
       this.chatMessages.prepend(message);
     }
+    this.markMessagesAsRead();
   }
 
   async loadMoreMessages() {
@@ -283,6 +285,7 @@ export class ChatMessageArea extends HTMLElement {
       return;
     }
     const messageElement = this.messageItem(message);
+    this.markMessagesAsRead();
     messageElement.classList.add('animateIn');
     this.chatMessages.appendChild(messageElement);
     this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
@@ -329,14 +332,7 @@ export class ChatMessageArea extends HTMLElement {
       messageElement.querySelector('.chat-message-avatar').src = this.#state.data.avatar;
       messageContent.classList.add('received-message');
       if (!message.is_read) {
-        const readMessage = {
-          action: 'read_message',
-          data: {
-            chat_id: this.#state.data.chat_id,
-            id: message.id,
-          },
-        };
-        socketManager.sendMessage('livechat', readMessage);
+        this.#state.unreadMessageIds.push(message.id);
       }
     }
     messageElement.querySelector('.message-content').textContent = message.content;
@@ -347,6 +343,25 @@ export class ChatMessageArea extends HTMLElement {
     tooltip.update();
     this.#state.renderedMessagesCount++;
     return messageElement;
+  }
+
+  markMessagesAsRead() {
+    if (this.#state.unreadMessageIds.length === 0) {
+      return;
+    }
+    this.#state.unreadMessageIds.forEach((messageId, idx) => {
+      setTimeout(() => {
+        const readMessage = {
+          action: 'read_message',
+          data: {
+            chat_id: this.#state.data.chat_id,
+            id: messageId,
+          },
+        };
+        socketManager.sendMessage('livechat', readMessage);
+        this.#state.unreadMessageIds.shift();
+      }, 100 * idx);
+    });
   }
 
   /* ------------------------------------------------------------------------ */
