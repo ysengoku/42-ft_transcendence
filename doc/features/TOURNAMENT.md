@@ -455,7 +455,7 @@ All data exchanges betwen the server and the client use JSON messages that confo
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Tournaments HTTP API, WebSocket tournament layer, tournament worker and documentation
+      Tournaments HTTP API, WebSocket tournament layer, tournament worker
     </td>
   </tr>
 
@@ -467,7 +467,9 @@ All data exchanges betwen the server and the client use JSON messages that confo
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Tournament UI design, frontend development and documentation
+      Tournament UI design, frontend development
     </td>
   </tr>
 </table>
+
+Authored by: [melobern](https://github.com/melobern) and [ysengoku](https://github.com/ysengoku)
