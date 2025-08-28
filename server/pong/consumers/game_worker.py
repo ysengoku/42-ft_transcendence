@@ -235,7 +235,8 @@ class BasePong:
         return {
             "bumper_1": {"x": self._bumper_1.x, "z": self._bumper_1.z, "score": self._bumper_1.score},
             "bumper_2": {"x": self._bumper_2.x, "z": self._bumper_2.z, "score": self._bumper_2.score},
-            "ball": {"x": self._ball.x, "z": self._ball.z},
+            "ball": {"x": self._ball.x, "z": self._ball.z, "velocity": self._ball.velocity,
+                "temporal_speed": self._ball.temporal_speed},
             "coin": {"x": self.coin.x, "z": self.coin.z} if self.coin else None,
             "is_someone_scored": self._is_someone_scored,
             "last_bumper_collided": "_bumper_1" if self.last_bumper_collided == self._bumper_1 else "_bumper_2",
@@ -246,7 +247,7 @@ class BasePong:
     def _reset_ball(self, direction: int):
         self._ball.temporal_speed.x, self._ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
         self._ball.x, self._ball.z = STARTING_BALL_POS
-        self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCITY
+        self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCIT
         self._ball.mul(self._game_speed)
         self._ball.velocity.z *= direction
 
