@@ -92,7 +92,7 @@ export class Game extends HTMLElement {
                 Bumpers[0].gltfStore.action[0][0].reset();
                 Bumpers[0].gltfStore.action[0][0].fadeIn(0.1);
                 Bumpers[0].gltfStore.action[0][0].play();
-                Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
+                Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
                 Bumpers[0].currentAction = 0;
             }
 
@@ -103,7 +103,7 @@ export class Game extends HTMLElement {
               Bumpers[0].gltfStore.action[6][0].fadeIn(0.1);
               Bumpers[0].gltfStore.action[6][0].play();
               Bumpers[0].gltfStore.action[6][1] = true;
-              Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
+              Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
               Bumpers[0].currentAction = 6;
             // } 
           }
@@ -295,6 +295,7 @@ export class Game extends HTMLElement {
     const rendererHeight = renderer.domElement.offsetHeight;
 
     const scene = new THREE.Scene();
+    // scene.fog = new THREE.Fog( 0xEDC9AF, 15, 45 );
     const loaderModel = new GLTFLoader();
     // const loaderFonts = new FontLoader();
 
@@ -547,20 +548,23 @@ export class Game extends HTMLElement {
           scene.add(pedroModel);
           return pedroModel;
       })();
-      playerGlb.position.x -= 1;
+      
       if (posZ < 0)
       {
         playerGlb.rotation.y = degreesToRadians(55);
         playerGlb.position.z = posZ - 1.1;
         playerGlb.position.x += 1;
-        tableGlb.rotation.z = Math.PI;
+        // 
+        tableGlb.rotation.z = -pi;
       }
       else{
         playerGlb.rotation.y = degreesToRadians(235);
         playerGlb.position.z = posZ + 1;
+        playerGlb.position.x -= 1;
         // playerGlb.position.x -= 1;
       }
-
+      // playerGlb.position.x -= 7.2;
+      // playerGlb.position.z += 0.7; // TODO : FINISH ANIM FOR COUCH
 
       modelsGlb.forEach((element) =>
       {
@@ -572,12 +576,12 @@ export class Game extends HTMLElement {
           element.visible = false;
       })
       tableGlb.rotation.x = -pi / 2;
-      modelsGlb[2].visible = true;
+      modelsGlb[0].visible = true;
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
       let lenghtHalf = 2.5;
-      let modelChoosen = 2;
+      let modelChoosen = 0;
       let widthHalf = 0.5;
       let controlReverse = false;
       let speed = 0.25 * gameSpeed;
@@ -1013,6 +1017,8 @@ export class Game extends HTMLElement {
         Bumpers[e.data[0]].lenghtHalf = 2.5;
       };
       Workers[1].onmessage = function (e) {
+        let dirz = Bumpers[e.data[0]].playerGlb.position.z;
+        dirz < 0 ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1 : Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
         Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = false;
         Bumpers[Math.abs(e.data[0] - 1)].modelChoosen = 0;
         Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = true;
@@ -1077,6 +1083,8 @@ export class Game extends HTMLElement {
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           break;
         case 2:
+          dirz < 0 ? Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x += 1 : Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
+          // Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
           Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen].visible = false;
           Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen = 2;
           Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen].visible = true;
@@ -1219,16 +1227,16 @@ export class Game extends HTMLElement {
         Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
         Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -pi / 2);
       }
-      // if (keyMap['KeyC'] == true)
-      // {
-      //   camera.position.set(10, 15, -20);
-      //   camera.lookAt(new THREE.Vector3(0, 0, 0));
-      // }
-      // if (keyMap['KeyC'] == false)
-      // {
-      //   camera.position.set(-10, 15, -20);
-      //   camera.lookAt(new THREE.Vector3(0, 0, 0));
-      // }
+      if (keyMap['KeyC'] == true)
+      {
+        camera.position.set(10, 15, -20);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+      }
+      if (keyMap['KeyC'] == false)
+      {
+        camera.position.set(-10, 15, -20);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+      }
       Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(Bumpers[0].cubeUpdate.x, Bumpers[0].cubeUpdate.y, Bumpers[0].cubeUpdate.z);
       Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position.set(Bumpers[1].cubeUpdate.x, Bumpers[1].cubeUpdate.y, Bumpers[1].cubeUpdate.z);
       // if (keyMap['ArrowLeft'] == false || keyMap['ArrowRight'] == false)
