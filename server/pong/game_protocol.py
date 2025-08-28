@@ -24,12 +24,12 @@ class GameRoomSettings(TypedDict):
     game_speed: NotRequired[Literal["slow", "medium", "fast"]]
 
 
+class _Vector2(TypedDict):
+    x: float
+    z: float
+
 class SerializedGameState(TypedDict):
     """State of the particular pong game represented in the JSON format."""
-
-    class _Vector2(TypedDict):
-        x: float
-        z: float
 
     class _Bumper(_Vector2):
         score: int

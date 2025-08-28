@@ -232,7 +232,7 @@ class BasePong:
     def _reset_ball(self, direction: int):
         self._ball.temporal_speed.x, self._ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
         self._ball.x, self._ball.z = STARTING_BALL_POS
-        self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCIT
+        self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCITY
         self._ball.mul(self._game_speed)
         self._ball.velocity.z *= direction
 
@@ -966,7 +966,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 player_id=player_id,
                 player_number=1 if player.bumper.dir_z == 1 else 2,
                 is_paused=match.status == MultiplayerPongMatchStatus.PAUSED,
-                settings=match.settings
+                settings=match.settings,
             ),
         )
 
