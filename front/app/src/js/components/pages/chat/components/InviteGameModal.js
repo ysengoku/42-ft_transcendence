@@ -22,6 +22,7 @@ export class InviteGameModal extends HTMLElement {
 
     this.sendInvitation = this.sendInvitation.bind(this);
     this.closeModal = this.closeModal.bind(this);
+    this.clearFocusInModal = this.clearFocusInModal.bind(this);
   }
 
   connectedCallback() {
@@ -32,7 +33,16 @@ export class InviteGameModal extends HTMLElement {
     this.inviteButton?.removeEventListener('click', this.sendInvitation);
     this.cancelButton?.removeEventListener('click', this.closeModal);
     this.closeButton?.removeEventListener('click', this.closeModal);
-    this.modal?.dispose();
+    if (this.modalElement) {
+      this.modalElement.removeEventListener('hide.bs.modal', this.clearFocusInModal);
+      this.modalElement.remove();
+    }
+    if (this.modal) {
+      this.modal.hide();
+      Promise.resolve(() => {
+        this.modal.dispose();
+      });
+    }
   }
 
   render() {
@@ -54,7 +64,8 @@ export class InviteGameModal extends HTMLElement {
       }
     });
 
-    this.modal = new Modal(this.querySelector('.modal'));
+    this.modal = new Modal(this.modalElement);
+    this.modalElement.addEventListener('hide.bs.modal', this.clearFocusInModal);
   }
 
   async showModal(opponent) {
@@ -71,6 +82,12 @@ export class InviteGameModal extends HTMLElement {
       document.activeElement.blur();
     }
     this.modal.hide();
+  }
+
+  clearFocusInModal() {
+    if (this.modalElement.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
   }
 
   sendInvitation() {

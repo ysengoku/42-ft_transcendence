@@ -8,8 +8,8 @@ logger = logging.getLogger("server")
 
 
 class Command(BaseCommand):
-    help = "Vérifie les utilisateurs inactifs toutes les 5 minutes"
+    help = "Checks if there are inactive users every 5 minutes"
 
     def handle(self, *args, **options):
         check_inactive_users()
-        logger.info("Vérification des utilisateurs inactifs terminée.")
+        logger.info("Manual check of inactive users finished.")
