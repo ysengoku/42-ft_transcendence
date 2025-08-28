@@ -178,3 +178,5 @@ node_modules/
 copy_files.sh
 .idea
 .idea/
+
+CLAUDE.md
