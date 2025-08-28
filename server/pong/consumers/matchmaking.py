@@ -27,6 +27,7 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
         self.user = self.scope.get("user")
         self.game_room: GameRoom | None = None
         self.accept()
+        self.init_rate_limiter()
         if not self.user:
             logger.warning("[Matchmaking.connect]: unauthorized user tried to start matchmaking")
             self.close(CloseCodes.ILLEGAL_CONNECTION)
@@ -132,6 +133,14 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
                 "[Matchmaking.receive]: user {%s} sent invalid json",
                 self.user.profile,
             )
+            return
+
+        if not self.check_rate_limit():
+            logger.warning(
+                "[Matchmaking.receive]: user {%s} has exceeded the rate limit",
+                self.user.profile,
+            )
+            self.close(CloseCodes.BAD_DATA)
             return
 
         match text_data_json:
