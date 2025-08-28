@@ -157,7 +157,18 @@ export class MultiplayerGame extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
     this.appendChild(renderer.domElement);
+    const BUMPER_1_BORDER = -10;
+    const BUMPER_2_BORDER = -BUMPER_1_BORDER;
+    const BALL_DIAMETER = 1;
+    const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
+    const WALL_WIDTH_HALF = 0.5;
+    // const GAME_TIME = gameOptionsQuery.time_limit;
+    const BALL_INITIAL_VELOCITY = 0.25;
+    // const MAX_SCORE = gameOptionsQuery.score_to_win;
+    const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
+    const TEMPORAL_SPEED_DECAY = 0.005;
+    // const SUBTICK = 0.05;
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
 
@@ -246,7 +257,7 @@ export class MultiplayerGame extends HTMLElement {
       sphereMesh.position.z = posZ;
       sphereMesh.castShadow = true;
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
-      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * gameSpeed); 
+      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * 1); 
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       scene.add(sphereMesh);
 
@@ -556,19 +567,37 @@ export class MultiplayerGame extends HTMLElement {
     function animate() {
       requestAnimationFrame(animate);
       let delta = Math.min(clock.getDelta(), 0.1);
-      let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * gameSpeed);
-      let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);//TODO: replace gamespeed
+      let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * 1);
+      let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * 1);//TODO: replace 1
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
 
       let currentSubtick = 0;
       Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
       Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-      let totalSubticks = totalDistanceZ / SUBTICK;
-      ballSubtickX = totalDistanceX / totalSubticks;
-      bumperSubtick = Bumpers[ourBumperIndexContainer.ourBumperIndex].speed / totalSubticks;
+      const totalSubticks = totalDistanceZ / SUBTICK;
+      const ballSubtickX = totalDistanceX / totalSubticks;
+      const bumperSubtick = Bumpers[ourBumperIndexContainer.ourBumperIndex].speed / totalSubticks;
       // bumperP2Subtick = Bumpers[1].speed / totalSubticks;
       while (currentSubtick <= totalSubticks) {
+        if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
+          Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+          Ball.velocity.x *= -1;
+          // Ball.bulletGlb.rotation.x *= -1;
+          // if (lastBumperCollided == 0) isCalculationNeeded = true;
+        }
+        if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
+          Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+          Ball.velocity.x *= -1;
+          // Ball.bulletGlb.rotation.x *= -1;
+          // if (lastBumperCollided == 0) isCalculationNeeded = true;
+        }
+        if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[ourBumperIndexContainer.ourBumperIndex], ballSubtickZ, ballSubtickX)) {
+          // lastBumperCollided = ourBumperIndexContainer.ourBumperIndex;
+          // isMovementDone = false;
+          // isCalculationNeeded = true;
+          calculateNewDir(Bumpers[ourBumperIndexContainer.ourBumperIndex]);
+        }
         if (
           ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
             (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
@@ -610,6 +639,7 @@ export class MultiplayerGame extends HTMLElement {
         )
           Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
             bumperSubtick;
+        currentSubtick++;
       }
 
       if (mixer) {
