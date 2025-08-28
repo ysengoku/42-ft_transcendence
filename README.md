@@ -73,6 +73,8 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
 
 Add a demo video
 
+<br />
+
 ## Get Started
 
 1. Clone the repository:
@@ -137,6 +139,8 @@ Add a demo video
 
 [![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&style=for-the-badge&logoColor=fff)](#)
 [![Django Test Framework](https://img.shields.io/badge/Django%20Tests-092E20?logo=django&style=for-the-badge&logoColor=fff)](#)
+
+<br />
 
 ## Architecture
 (TODO: link to the high-level overview of the project architecture)
@@ -231,6 +235,8 @@ Asynchronous hybrid server **Daphne** that handles both HTTP and websocket conne
 #### Crontab
 Separate container that periodically sends requests to the Daphne server to perform actions.
 
+<br />
+
 ## Documentation 🛠️👷🏻‍♂️
 
 - [Architecture](/doc/ARCHITECTURE.md)
@@ -257,6 +263,8 @@ Separate container that periodically sends requests to the Daphne server to perf
 
 - UI design
   - [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=37-340&t=AJvSNhCCjxhZqsCV-1)
+
+<br />
 
 ## Contributors
 
