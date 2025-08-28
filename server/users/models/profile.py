@@ -125,9 +125,11 @@ class Profile(models.Model):
 
     def update_activity(self):
         self.last_activity = timezone.now()
+        self.save(update_fields=["last_activity"])
+        self.refresh_from_db()
         if not self.is_online:
             self.is_online = True
-            self.save(update_fields=["is_online", "last_activity"])
+            self.save(update_fields=["is_online"])
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 "online_users",
@@ -142,12 +144,10 @@ class Profile(models.Model):
                     },
                 },
             )
-        else:
-            self.save(update_fields=["last_activity"])
 
     @property
     def is_really_online(self):
-        return self.is_online and timezone.now() - self.last_activity < timedelta(minutes=30)
+        return self.is_online and timezone.now() - self.last_activity < timedelta(seconds=1)
 
     @property
     def avatar(self) -> str:
