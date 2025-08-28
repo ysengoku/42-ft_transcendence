@@ -408,6 +408,7 @@ class MultiplayerPongMatch(BasePong):
     status: MultiplayerPongMatchStatus = MultiplayerPongMatchStatus.PENDING
     pause_event: asyncio.Event
     time_limit: int
+    time_limit_reached: bool
     ranked: bool
     _score_to_win: int
     _player_1: Player
@@ -436,6 +437,7 @@ class MultiplayerPongMatch(BasePong):
         self.bracket_id = bracket_id
         self.tournament_id = tournament_id
         self.time_limit = time_limit  # TODO: use this
+        self.time_limit_reached = False
         self.ranked = ranked
         self.pause_event = asyncio.Event()
         self.game_loop_task: asyncio.Task | None = None
@@ -443,6 +445,8 @@ class MultiplayerPongMatch(BasePong):
         self._score_to_win = score_to_win
         self._player_1 = Player(self._bumper_1)
         self._player_2 = Player(self._bumper_2)
+
+        self.start_time = asyncio.get_event_loop().time()
 
     def __str__(self):
         return self.id
@@ -651,6 +655,13 @@ class GameWorkerConsumer(AsyncConsumer):
                 if match.status == MultiplayerPongMatchStatus.PAUSED:
                     await match.pause_event.wait()
                 tick_start_time = asyncio.get_event_loop().time()
+                elapsed_minutes = (tick_start_time - match.start_time) / 60
+                if not match.time_limit_reached and elapsed_minutes >= match.time_limit:
+                    # TODO: handle the increased ball velocity when the scores are equal
+                    # TODO: handle the winning logic when one of the players lead on the score
+                    logger.info("[GameWorker]: match {%s} reached time limit", match.id)
+                    match.time_limit_reached = True
+
                 match.resolve_next_tick()
                 if match.coin and match.choose_buff != 0:
                     asyncio.create_task(
