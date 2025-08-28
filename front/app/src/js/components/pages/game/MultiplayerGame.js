@@ -157,7 +157,7 @@ export class MultiplayerGame extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
     this.appendChild(renderer.domElement);
-
+    const SUBTICK = 0.05;
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
 
@@ -245,37 +245,41 @@ export class MultiplayerGame extends HTMLElement {
       sphereMesh.position.y = posY;
       sphereMesh.position.z = posZ;
       sphereMesh.castShadow = true;
+      const temporalSpeed = new THREE.Vector3(1, 0, 1);
+      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * gameSpeed); 
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       scene.add(sphereMesh);
 
-      let hasCollidedWithBumper1 = false;
-      let hasCollidedWithBumper2 = false;
-      let hasCollidedWithWall = false;
+      // let hasCollidedWithBumper1 = false;
+      // let hasCollidedWithBumper2 = false;
+      // let hasCollidedWithWall = false;
 
       return {
-        get hasCollidedWithBumper1() {
-          return hasCollidedWithBumper1;
-        },
-        set hasCollidedWithBumper1(newHasCollidedWithBumper1) {
-          hasCollidedWithBumper1 = newHasCollidedWithBumper1;
-        },
+        // get hasCollidedWithBumper1() {
+        //   return hasCollidedWithBumper1;
+        // },
+        // set hasCollidedWithBumper1(newHasCollidedWithBumper1) {
+        //   hasCollidedWithBumper1 = newHasCollidedWithBumper1;
+        // },
 
-        get hasCollidedWithBumper2() {
-          return hasCollidedWithBumper2;
-        },
-        set hasCollidedWithBumper2(newHasCollidedWithBumper2) {
-          hasCollidedWithBumper2 = newHasCollidedWithBumper2;
-        },
+        // get hasCollidedWithBumper2() {
+        //   return hasCollidedWithBumper2;
+        // },
+        // set hasCollidedWithBumper2(newHasCollidedWithBumper2) {
+        //   hasCollidedWithBumper2 = newHasCollidedWithBumper2;
+        // },
 
-        get hasCollidedWithWall() {
-          return hasCollidedWithWall;
-        },
-        set hasCollidedWithWall(newHasCollidedWithWall) {
-          hasCollidedWithWall = newHasCollidedWithWall;
-        },
+        // get hasCollidedWithWall() {
+        //   return hasCollidedWithWall;
+        // },
+        // set hasCollidedWithWall(newHasCollidedWithWall) {
+        //   hasCollidedWithWall = newHasCollidedWithWall;
+        // },
 
         sphereMesh,
         sphereUpdate,
+        velocity,
+        temporalSpeed,
       };
     })(0, 1, 0);
 
@@ -396,9 +400,9 @@ export class MultiplayerGame extends HTMLElement {
       let theirBumperPos = theirBumper == 0 ? data.bumper_1.x : data.bumper_2.x;
       data.last_bumper_collided == '_bumper_1' ? (lastBumperCollided = 0) : (lastBumperCollided = 1);
 
-      Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
-      Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
-      Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
+      // Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
+      // Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
+      // Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
 
       Ball.sphereUpdate.z = data.ball.z;
       Ball.sphereUpdate.x = data.ball.x;
@@ -552,51 +556,61 @@ export class MultiplayerGame extends HTMLElement {
     function animate() {
       requestAnimationFrame(animate);
       let delta = Math.min(clock.getDelta(), 0.1);
+      let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * gameSpeed);
+      let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);//TODO: replace gamespeed
+      Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
+      Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
 
-      Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+      let currentSubtick = 0;
       Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+      Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+      let totalSubticks = totalDistanceZ / SUBTICK;
+      ballSubtickX = totalDistanceX / totalSubticks;
+      bumperSubtick = Bumpers[ourBumperIndexContainer.ourBumperIndex].speed / totalSubticks;
+      // bumperP2Subtick = Bumpers[1].speed / totalSubticks;
+      while (currentSubtick <= totalSubticks) {
+        if (
+          ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
+            (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
+          !(
+            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x >
+            10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
+          )
+        )
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x +=
+            bumperSubtick;
+        if (
+          ((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
+            (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
+          !(
+            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x <
+            -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
+          )
+        )
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
+            bumperSubtick;
 
-      if (
-        ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-          (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-        !(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x >
-          10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
+        if (
+          ((keyMap['KeyD'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
+            (keyMap['KeyA'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
+          !(
+            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x >
+            10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
+          )
         )
-      )
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x +=
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
-      if (
-        ((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-          (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-        !(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x <
-          -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x +=
+            bumperSubtick;
+        if (
+          ((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
+            (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
+          !(
+            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x <
+            -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
+          )
         )
-      )
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
-
-      if (
-        ((keyMap['KeyD'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-          (keyMap['KeyA'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-        !(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x >
-          10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-        )
-      )
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x +=
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
-      if (
-        ((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-          (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-        !(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x <
-          -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-        )
-      )
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
+            bumperSubtick;
+      }
 
       if (mixer) {
         mixer.update(delta);
