@@ -13,7 +13,7 @@ export class AvatarUploadModal extends HTMLElement {
    * Maximum allowed avatar file size in bytes (5 MB).
    * @private
    * @constant {number}
-  */
+   */
   #MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   constructor() {

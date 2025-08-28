@@ -143,14 +143,14 @@ export class ChatList extends HTMLElement {
       lastItem = this.list.lastElementChild;
       itemRect = lastItem.getBoundingClientRect();
       itemBottom = itemRect['bottom'];
-      if (this.#state.currentListItemCount === this.#state.totalItemCount) {
+      if (this.#state.currentListItemCount >= this.#state.totalItemCount) {
         break;
       }
     }
   }
 
   async loadMoreItems() {
-    if (this.#state.isLoading) {
+    if (this.#state.isLoading || this.#state.fetchedItemCount >= this.#state.totalItemCount) {
       return;
     }
     this.#state.isLoading = true;
