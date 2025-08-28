@@ -32,7 +32,8 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
   - Runs in docker-compose
   - Responsive UI (but the game can't run on mobile... yet. sowwy!)
   - Secure and works with HTTPS
-**User Management System**
+ 
+- **User Management System**
   - Authentication system based on [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token)
   - Sign up, sign in normally...
   - ...or with [OAuth](https://en.wikipedia.org/wiki/OAuth), using 42 or Github
@@ -40,6 +41,7 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
   - Password restoration using Gmail
   - User profiles with game statistics, hand coded graphs (no libraries!)
   - User settings, profile picture (express yourself)
+
 - **Pong Game**
   - 3D graphics with [Three.js](https://threejs.org/) (**with handmade 3D models!!!** using [Blender](https://en.wikipedia.org/wiki/Blender_(software)))
   - Game customization with game settings
@@ -50,13 +52,13 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
   - Game invitation system, play with your friends
   - Automatic matchmaking system, play with randoms
   - Tournament system, play with lots of friends and/or randoms
-**Chat & Live Events**
+- **Chat & Live Events**
   - Friendship system, befriend people you like
   - Block system, block people you hate (or for fun hehe)
   - Notification system, be notified of the cool stuff going on
   - Online presence system, so you can see who is procrastinating playing pong
   - And last but not least... chat!! Stay in contact with other outlaws. You can send, receive and like messages
-**Misc**
+- **Misc**
   - Handdrawn background images, beautiful animations and more. All made with 💖 Love 💖.
   - Dark & Light color schemes
   - Find other users through search feature
