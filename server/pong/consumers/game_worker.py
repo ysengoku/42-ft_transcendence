@@ -227,21 +227,6 @@ class BasePong:
 
             current_subtick += 1
 
-    def as_dict(self) -> SerializedGameState:
-        """
-        Serializes the game state as Python dict for using it for some other purpose, like rendering or sending
-        through websockets.
-        """
-        return {
-            "bumper_1": {"x": self._bumper_1.x, "z": self._bumper_1.z, "score": self._bumper_1.score},
-            "bumper_2": {"x": self._bumper_2.x, "z": self._bumper_2.z, "score": self._bumper_2.score},
-            "ball": {"x": self._ball.x, "z": self._ball.z, "velocity": self._ball.velocity,
-                "temporal_speed": self._ball.temporal_speed},
-            "coin": {"x": self.coin.x, "z": self.coin.z} if self.coin else None,
-            "is_someone_scored": self._is_someone_scored,
-            "last_bumper_collided": "_bumper_1" if self.last_bumper_collided == self._bumper_1 else "_bumper_2",
-            "current_buff_or_debuff": self.choose_buff,
-        }
 
     ##### Private game logic functions where actual stuff happens. #####
     def _reset_ball(self, direction: int):
@@ -401,6 +386,7 @@ class MultiplayerPongMatch(BasePong):
     """
 
     id: str
+    settings: GameRoomSettings
     tournament_id: None | str
     bracket_id: None | str
     is_in_tournament: bool
@@ -425,6 +411,8 @@ class MultiplayerPongMatch(BasePong):
         bracket_id: None | str,
         tournament_id: None | str,
     ):
+        self.settings = settings
+        print(self.settings)
         cool_mode, game_speed, time_limit, ranked, score_to_win = (
             settings["cool_mode"],
             settings["game_speed"],
@@ -448,6 +436,24 @@ class MultiplayerPongMatch(BasePong):
         self._player_2 = Player(self._bumper_2)
 
         self.start_time = asyncio.get_event_loop().time()
+        
+        # Pre-create the serialized state dictionary to avoid creating it every tick
+        self._serialized_state = {
+            "bumper_1": {"x": 0.0, "z": 0.0, "score": 0},
+            "bumper_2": {"x": 0.0, "z": 0.0, "score": 0},
+            "ball": {
+                "x": 0.0, 
+                "z": 0.0, 
+                "velocity": {"x": 0.0, "z": 0.0},
+                "temporal_speed": {"x": 0.0, "z": 0.0}
+            },
+            "coin": None,
+            "is_someone_scored": False,
+            "last_bumper_collided": "_bumper_1",
+            "current_buff_or_debuff": 0,
+            "remaining_time": 0,
+            "time_limit_reached": False,
+        }
 
     def __str__(self):
         return self.id
@@ -541,6 +547,45 @@ class MultiplayerPongMatch(BasePong):
         if self._player_2.bumper.score >= self._score_to_win:
             return self._player_2, self._player_1
         return None
+
+    def as_dict(self) -> SerializedGameState:
+        """
+        Serializes the game state including timing information.
+        `BasePong` doesn't know about any async/timing information, hence this method.
+        Updates the pre-created dictionary to avoid object creation overhead.
+        """
+        elapsed_seconds = int(asyncio.get_event_loop().time() - self.start_time)
+
+        self._serialized_state["bumper_1"]["x"] = self._bumper_1.x
+        self._serialized_state["bumper_1"]["z"] = self._bumper_1.z
+        self._serialized_state["bumper_1"]["score"] = self._bumper_1.score
+        
+        self._serialized_state["bumper_2"]["x"] = self._bumper_2.x
+        self._serialized_state["bumper_2"]["z"] = self._bumper_2.z
+        self._serialized_state["bumper_2"]["score"] = self._bumper_2.score
+        
+        self._serialized_state["ball"]["x"] = self._ball.x
+        self._serialized_state["ball"]["z"] = self._ball.z
+        self._serialized_state["ball"]["velocity"]["x"] = self._ball.velocity.x
+        self._serialized_state["ball"]["velocity"]["z"] = self._ball.velocity.z
+        self._serialized_state["ball"]["temporal_speed"]["x"] = self._ball.temporal_speed.x
+        self._serialized_state["ball"]["temporal_speed"]["z"] = self._ball.temporal_speed.z
+        
+        if self.coin:
+            if self._serialized_state["coin"] is None:
+                self._serialized_state["coin"] = {"x": -9.25, "z": 0.0}
+            self._serialized_state["coin"]["x"] = self.coin.x
+            self._serialized_state["coin"]["z"] = self.coin.z
+        else:
+            self._serialized_state["coin"] = None
+            
+        self._serialized_state["is_someone_scored"] = self._is_someone_scored
+        self._serialized_state["last_bumper_collided"] = "_bumper_1" if self.last_bumper_collided == self._bumper_1 else "_bumper_2"
+        self._serialized_state["current_buff_or_debuff"] = self.choose_buff
+        self._serialized_state["elapsed_seconds"] = elapsed_seconds
+        self._serialized_state["time_limit_reached"] = self.time_limit_reached
+
+        return self._serialized_state
 
 
 class GameWorkerConsumer(AsyncConsumer):
@@ -921,6 +966,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 player_id=player_id,
                 player_number=1 if player.bumper.dir_z == 1 else 2,
                 is_paused=match.status == MultiplayerPongMatchStatus.PAUSED,
+                settings=match.settings
             ),
         )
 

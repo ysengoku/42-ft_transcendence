@@ -24,7 +24,6 @@ class GameRoomSettings(TypedDict):
     game_speed: NotRequired[Literal["slow", "medium", "fast"]]
 
 
-
 class SerializedGameState(TypedDict):
     """State of the particular pong game represented in the JSON format."""
 
@@ -36,7 +35,8 @@ class SerializedGameState(TypedDict):
         score: int
 
     class _Ball(_Vector2):
-        pass
+        temporal_speed: _Vector2
+        velocity: _Vector2
 
     class _Coin(_Vector2):
         pass
@@ -44,10 +44,12 @@ class SerializedGameState(TypedDict):
     bumper_1: _Bumper
     bumper_2: _Bumper
     ball: _Ball
-    coin: _Coin
+    coin: _Coin | None
     is_someone_scored: bool
     last_bumper_collided: Literal["_bumper_1", "_bumper_2"]
     current_buff_or_debuff: int
+    elapsed_seconds: int
+    time_limit_reached: bool
 
 
 class MatchmakingToClient:
@@ -91,6 +93,7 @@ class GameServerToClient:
         player_id: str
         player_number: Literal[1, 2]
         is_paused: bool
+        settings: GameRoomSettings
 
     class GameCancelled(WorkerToClientClose):
         """Both of the players failed to connect to the game, so it was cancelled."""
