@@ -71,7 +71,30 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
 
 Add a demo video
 
-## Get Started 🛠️👷🏻‍♂️
+## Get Started
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ysengoku/42-ft_transcendence.git
+   cd 42-ft_transcendence
+   ```
+2. Prepare environment:   
+    ```bash
+    cp .env.example .env
+    # Make sure to set the required variables.
+    ```
+3. Run:
+    ```bash
+    make dev   # development - including hot reload and debug log
+    make prod  # production
+    ``` 
+4.  Open in Chrome: `https://localhost:1026`
+
+<br />
+
+**Required:** Docker 20.10+ and Docker Compose 2.4+
+
+<br />
 
 ## Technologies
 
@@ -210,32 +233,28 @@ Separate container that periodically sends requests to the Daphne server to perf
 
 - [Architecture](/doc/ARCHITECTURE.md)
 
-### Features
+- Features
+  - [User Management](/doc/features/USER_MANAGEMENT.md)
+  - [Pong Game](/doc/features/PONG.md)
+  - [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
+  - [Tournament system](/doc/features/TOURNAMENT.md)
 
-- [User Management](/doc/features/USER_MANAGEMENT.md)
-- [Pong Game](/doc/features/PONG.md)
-- [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
-- [Tournament system](/doc/features/TOURNAMENT.md)
+- Front-end
+  - [Front-end overview](/doc/front/FRONTEND.md)
+  - Detailed documentations
+    - [Web component](/doc/front/Component.md)
+    - [Router](doc/front/Router.md)
+    - [API Request](doc/front/API_REQUEST.md)
+    - [Auth manager](/doc/front/AUTH_MANAGER.md)
+    - [WebScoket manager](/doc/front/SocketManager.md)
+    - [Data visualization](/doc/front/DATA_VISUALIZATION.md)
 
-### Front-end
+- Server
+  - [Multi-factor Authentication](/doc/server/MFA.md)
+  - [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
 
-- [Front-end overview](/doc/front/FRONTEND.md)
-- Detailed documentations
-  - [Web component](/doc/front/Component.md)
-  - [Router](doc/front/Router.md)
-  - [Auth manager](/doc/front/AUTH_MANAGER.md)
-  - [WebScoket manager](/doc/front/SocketManager.md)
-  - [Data visualization](/doc/front/DATA_VISUALIZATION.md)
-  - [Tournament UI](/doc/front/TOURNAMENT_UI.md)
-
-### Server
-
-- [Multi-factor Authentication](/doc/server/MFA.md)
-- [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
-
-### UI design
-
-- [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=37-340&t=AJvSNhCCjxhZqsCV-1)
+- UI design
+  - [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=37-340&t=AJvSNhCCjxhZqsCV-1)
 
 ## Contributors
 
@@ -302,4 +321,11 @@ Separate container that periodically sends requests to the Daphne server to perf
 </table>
 
 ## License
+
 This project is for educational purposes only - not licensed for commercial use.
+
+<br />
+
+---
+
+Authored by: [emuminov](https://github.com/emuminov) and [ysengoku](https://github.com/ysengoku)
