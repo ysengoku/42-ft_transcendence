@@ -17,7 +17,6 @@ export class GameBuffIcon extends HTMLElement {
   }
 
   showIcon(type) {
-    console.log(type);
     if (this.icon) {
       switch (type) {
         case 'large':
@@ -63,8 +62,8 @@ export class GameBuffIcon extends HTMLElement {
 
   template() {
     return `
-    <div id="game-buffer-icon-wrapper" class="d-flex flex-row justify-content-center align-items-center m-3">
-      <img id="game-buffer-icon" alt="Buffer"/>
+    <div id="game-buffer-icon-wrapper" class="d-flex flex-row justify-content-center align-items-center m-3 d-none">
+      <img id="game-buffer-icon"alt="Buffer"/>
     </div>
     `;
   }
