@@ -109,7 +109,7 @@ class Player:
     id: str = ""
     connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
     connection_stamp: datetime | Literal[0] = 0
-    reconnection_time: int = 3
+    reconnection_time: int = 30
     reconnection_timer: asyncio.Task | None = None
     profile_id: int = -1
     name: str = ""
@@ -401,6 +401,10 @@ class MultiplayerPongMatch(BasePong):
     _player_1: Player
     _player_2: Player
 
+    start_time: float
+    total_paused_time: float
+    pause_start_time: float
+
     game_speed_dict = {"slow": 0.75, "medium": 1.0, "fast": 1.25}
 
     def __init__(
@@ -436,6 +440,8 @@ class MultiplayerPongMatch(BasePong):
         self._player_2 = Player(self._bumper_2)
 
         self.start_time = asyncio.get_event_loop().time()
+        self.total_paused_time = 0.0
+        self.pause_start_time = 0.0  # Will be set when game is paused
         
         # Pre-create the serialized state dictionary to avoid creating it every tick
         self._serialized_state = {
@@ -553,8 +559,10 @@ class MultiplayerPongMatch(BasePong):
         Serializes the game state including timing information.
         `BasePong` doesn't know about any async/timing information, hence this method.
         Updates the pre-created dictionary to avoid object creation overhead.
+        Note: The state is never sent to the client when the game is paused.
         """
-        elapsed_seconds = int(asyncio.get_event_loop().time() - self.start_time)
+        current_time = asyncio.get_event_loop().time()
+        elapsed_seconds = int(current_time - self.start_time - self.total_paused_time)
 
         self._serialized_state["bumper_1"]["x"] = self._bumper_1.x
         self._serialized_state["bumper_1"]["z"] = self._bumper_1.z
@@ -701,7 +709,9 @@ class GameWorkerConsumer(AsyncConsumer):
                 if match.status == MultiplayerPongMatchStatus.PAUSED:
                     await match.pause_event.wait()
                 tick_start_time = asyncio.get_event_loop().time()
-                elapsed_minutes = (tick_start_time - match.start_time) / 60
+
+                elapsed_seconds = tick_start_time - match.start_time - match.total_paused_time
+                elapsed_minutes = elapsed_seconds / 60
                 if not match.time_limit_reached and elapsed_minutes >= match.time_limit:
                     # TODO: handle the increased ball velocity when the scores are equal
                     # TODO: handle the winning logic when one of the players lead on the score
@@ -991,6 +1001,8 @@ class GameWorkerConsumer(AsyncConsumer):
         match: MultiplayerPongMatch,
         disconnected_player: Player,
     ):
+        match.pause_start_time = asyncio.get_event_loop().time()
+        
         await self.channel_layer.group_send(
             self._to_game_room_group_name(match),
             GameServerToClient.GamePaused(
@@ -1005,6 +1017,14 @@ class GameWorkerConsumer(AsyncConsumer):
         logger.info("[GameWorker]: game {%s} has been paused", match.id)
 
     async def _unpause(self, match: MultiplayerPongMatch):
+        if match.status != MultiplayerPongMatchStatus.PAUSED:
+            logger.warning("[GameWorker]: game {%s} can't be unpaused, as it was not paused")
+            return
+            
+        pause_duration = asyncio.get_event_loop().time() - match.pause_start_time
+        match.total_paused_time += pause_duration
+        match.pause_start_time = 0.0
+        
         await self.channel_layer.group_send(
             self._to_game_room_group_name(match),
             GameServerToClient.GameUnpaused(type="worker_to_client_open", action="game_unpaused"),
