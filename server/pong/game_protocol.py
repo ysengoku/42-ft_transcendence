@@ -149,6 +149,7 @@ class GameServerToClient:
         action: Literal["move_left", "move_right"]
         content: int
         player_number: Literal[1, 2]
+        position_x: float
 
 
 class ClientToGameServer:
