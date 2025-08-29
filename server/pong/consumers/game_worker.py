@@ -27,6 +27,14 @@ from tournaments.models import Bracket
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 #### CONSTANTS ####
+# FRAME RATE
+GAME_TICK_INTERVAL = 1.0 / 30
+
+# PHYSICS PRECISION (scales with frame rate to maintain consistent collision detection)
+SUBTICK_PER_SECOND = 3.0  
+SUBTICK = SUBTICK_PER_SECOND * GAME_TICK_INTERVAL
+
+# GEOMETRIC CONSTANTS
 WALL_LEFT_X = 10
 WALL_RIGHT_X = -WALL_LEFT_X
 WALL_WIDTH_HALF = 0.5
@@ -35,26 +43,36 @@ BUMPER_WIDTH = 1
 BUMPER_WIDTH_HALF = BUMPER_WIDTH / 2
 BUMPER_1_BORDER = -10
 BUMPER_2_BORDER = -BUMPER_1_BORDER
-BUMPER_SPEED = 0.25
 BALL_DIAMETER = 1
 BALL_RADIUS = BALL_DIAMETER / 2
 STARTING_BUMPER_1_POS = 0, -9
 STARTING_COIN_POS = -9.25, 1
-STARTING_COIN_VELOCITY = 0.01, 0
 STARTING_BUMPER_2_POS = 0, 9
 STARTING_BALL_POS = 0, 0
-Z_VELOCITY = 0.25
-STARTING_BALL_VELOCITY = 0, Z_VELOCITY
-SUBTICK = 0.025
 BOUNCING_ANGLE_DEGREES = 55
-BALL_VELOCITY_CAP = 1
-TEMPORAL_SPEED_DEFAULT = 1, 1
-TEMPORAL_SPEED_INCREASE = SUBTICK * 0
-TEMPORAL_SPEED_DECAY = 0.005
-GAME_TICK_INTERVAL = 1.0 / 120
 PLAYERS_REQUIRED = 2
 DEFAULT_COIN_WAIT_TIME = 30
-BASE_BUMPER_SPEED = 0.25
+
+# SPEED PER SECOND OF DIFFERENT ENTITIES (units/second)
+BUMPER_SPEED_PER_SECOND = 15.0
+BALL_Z_VELOCITY_PER_SECOND = 15.0
+COIN_VELOCITY_PER_SECOND = 0.6, 0
+BALL_VELOCITY_CAP_PER_SECOND = 90.0
+TEMPORAL_SPEED_DECAY_PER_SECOND = 0.3
+
+# PER-TICK VALUES (based on frame rate)
+BUMPER_SPEED = BUMPER_SPEED_PER_SECOND * GAME_TICK_INTERVAL
+BASE_BUMPER_SPEED = BUMPER_SPEED
+Z_VELOCITY = BALL_Z_VELOCITY_PER_SECOND * GAME_TICK_INTERVAL
+STARTING_COIN_VELOCITY = (COIN_VELOCITY_PER_SECOND[0] * GAME_TICK_INTERVAL, 
+                         COIN_VELOCITY_PER_SECOND[1] * GAME_TICK_INTERVAL)
+STARTING_BALL_VELOCITY = 0, Z_VELOCITY
+BALL_VELOCITY_CAP = BALL_VELOCITY_CAP_PER_SECOND * GAME_TICK_INTERVAL
+TEMPORAL_SPEED_DECAY = TEMPORAL_SPEED_DECAY_PER_SECOND * GAME_TICK_INTERVAL
+
+# MULTIPLIERS
+TEMPORAL_SPEED_DEFAULT = 1, 1
+TEMPORAL_SPEED_INCREASE = 0 # currently unused
 ###################
 
 
@@ -94,10 +112,10 @@ class Vector2:
 @dataclass(slots=True)
 class Bumper(Vector2):
     dir_z: int
-    width_half: int = 0.5
-    lenght_half: int = 2.5
+    width_half: float = 0.5
+    lenght_half: float = 2.5
     score: int = 0
-    speed: int = BASE_BUMPER_SPEED
+    speed: float = BASE_BUMPER_SPEED
     control_reversed: bool = False
     moves_left: bool = False
     moves_right: bool = False
@@ -416,7 +434,6 @@ class MultiplayerPongMatch(BasePong):
         tournament_id: None | str,
     ):
         self.settings = settings
-        print(self.settings)
         cool_mode, game_speed, time_limit, ranked, score_to_win = (
             settings["cool_mode"],
             settings["game_speed"],
