@@ -146,16 +146,14 @@ describe('AvatarUploadModal component', () => {
         onload: null,
         onerror: null,
       };
-      
       setTimeout(() => {
         if (img.onerror) {
           img.onerror();
         }
       }, 0);
-      
       return img;
     });
-    
+
     global.Image = mockImageError;
 
     const result = await modal.validateImageContent(file);
