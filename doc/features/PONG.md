@@ -1,6 +1,8 @@
 # Pong Game Documentation
 
-The main attraction of the whole project is [the pong game](https://en.wikipedia.org/wiki/Pong). **Peacemakers** is a project built around it: it's a platform for playing pong after all. The project supports the ability to play the game locally, against another player or a computer opponent, but mostly the project was built around playing pong remotely via multiplayer.
+The main attraction of the whole project is [the pong game](https://en.wikipedia.org/wiki/Pong). **Peacemakers** is a project built around it: it's a platform for playing pong after all. The project supports the ability to play the game locally, against another player or a computer opponent, but mostly the project was built around playing pong remotely via multiplayer.   
+
+Besides duels, which are single, self-contained matches, the project also offers a **tournament system**, extending this feature into a series of competitive rounds. The tournament management system is explained in [this document](./TOURNAMENT.md).
 
 ## Table of contents
 - [Features](#features)
@@ -8,7 +10,6 @@ The main attraction of the whole project is [the pong game](https://en.wikipedia
   - [Game Settings](#game-settings)
   - [Matchmaking](#matchmaking)
   - [Match History & Elo System](#match-history-elo-system)
-  - [Tournaments](#tournaments)
   - [Additional Gameplay Features](#additional-gameplay-features)
 - [Implementation Details](#implementation-details)
   - [Backend](#backend)
@@ -18,7 +19,6 @@ The main attraction of the whole project is [the pong game](https://en.wikipedia
   - [Frontend](#frontend)
 - [WebSocket Protocol Reference](#websocket-protocol-reference)
   - [Mathcmaking Actions](#matchmaking-events)
-  - [Tournament Actions](#tournament-events)
   - [Pong Actions](#pong-events)
 - [Testing](#testing)
 - [Contributors](#contributors)
@@ -108,8 +108,6 @@ This feature uses following HTTP endpoints:
 - `GET /api/game-stats/{username}/matches`: Retrieves paginated list of played matches of a given user.
 - `GET /api/game-stats/matches/{game_id}`: Gets stats of one specific match.
 
-### Tournaments
-
 ### Additional Gameplay Features
 
 ## Implementation Details
@@ -150,8 +148,6 @@ SERVER --> CLIENT
   | `nickname`      | `string` | nickname of the opponent              |
   | `avatar`        | `string` | avatar URL of the opponent            |
   | `elo`           | `number` | elo rating of the opponent            |
-
-### Tournament Actions
 
 ### Pong Actions
 TODO: write them after they are going to be consolidated with Celia
