@@ -25,6 +25,7 @@ In this very comptetive game you play for elo, participate in tournaments and me
 It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an awesome & free (and also competetive and hard) programming school. Our team was aiming for a very specific set of features. Some of them were chosen by us (and since we like suffering, we chose a lot of them), and some were mandatory to implement. The features are:
 
 ## Features
+
 - **General**
   - Dynamic [Single Page Application](https://en.wikipedia.org/wiki/Single-page_application)
   - Google Chrome as first-class browser
@@ -52,12 +53,14 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
   - Game invitation system, play with your friends
   - Automatic matchmaking system, play with randoms
   - Tournament system, play with lots of friends and/or randoms
+
 - **Chat & Live Events**
   - Friendship system, befriend people you like
   - Block system, block people you hate (or for fun hehe)
   - Notification system, be notified of the cool stuff going on
   - Online presence system, so you can see who is procrastinating playing pong
   - And last but not least... chat!! Stay in contact with other outlaws. You can send, receive and like messages
+
 - **Misc**
   - Handdrawn background images, beautiful animations and more. All made with 💖 Love 💖.
   - Dark & Light color schemes
@@ -244,8 +247,8 @@ Separate container that periodically sends requests to the Daphne server to perf
 - Features
   - [User Management](/doc/features/USER_MANAGEMENT.md)
   - [Pong Game](/doc/features/PONG.md)
-  - [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
   - [Tournament system](/doc/features/TOURNAMENT.md)
+  - [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
 
 - Front-end
   - [Front-end overview](/doc/front/FRONTEND.md)

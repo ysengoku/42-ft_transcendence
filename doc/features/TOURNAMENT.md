@@ -1,6 +1,6 @@
 # Tournament System Documentation
 
-The Tournament app handles the full lifecycle of tournaments, from creation and registration to real-time match updates and result reporting. It integrates with Django Channels for live interactions and provides both REST and WebSocket APIs.
+Building on [the core Pong gameplay](./PONG.md), the Tournament System handles the full lifecycle of tournaments, from creation and registration to real-time match updates and result reporting. It integrates with Django Channels for live interactions and provides both REST and WebSocket APIs.
 
 ## Table of contents
 
@@ -27,9 +27,9 @@ The Tournament app handles the full lifecycle of tournaments, from creation and 
 
 ## Features
 
-This section describes the features of the tournament system in high-level.
-
-All the features in the tourinament system works by combinasion of dedicated **API endoints** and real-time communications through `/ws/tournament/{id}` with custom protocol (detailed specifications the protocol are [here](#websocket-protocol-reference)). Those special messages are called actions, and contain the type of event that happened and the context of this event.
+The tournament system offers a range of functionalities to manage and play tournaments efficiently.  
+The system operates through a combination of dedicated **API endpoints** and real-time communication via `/ws/tournament/{id}` using a custom protocol (detailed specifications of the protocol are [here](#websocket-protocol-reference)).  
+These special messages are called *actions* and contain the type of event that occurred along with its context.
 
 ### Tournament Creation and Registration
 
@@ -131,7 +131,22 @@ The tournament system is built around four core models: `Tournament`, `Round`, `
 
 #### Tournament Worker
 
-The diagram below illustrates the internal workflow of the Tournament and Game backend workers, showing how tournaments progress from registration to completion, including all possible cancellation paths.
+The backend workflow of the tournament system involves the **Tournament Worker**, a separate process that runs independently from other backend processes and is responsible for managing the tournament lifecycle.
+
+**Pending participants**:   
+The Tournament Worker first waits for enough participants to register. If the creator cancels the tournament or the last participant leaves before registration completes, the tournament is cancelled.
+
+**Starting a tournament**:   
+Once registration is complete, the tournament begins and the worker prepares the first round. For the first round, all participants are organized into brackets. In subsequent rounds, winners from previous rounds are carried forward and the new brackets are prepared accordingly, ensuring that each match is ready to proceed.
+
+**Game rooms and monitoring**:   
+For each bracket, [`GameRoom`](./PONG.md) <-- 🛠️👷🏻‍♂️TODO: add link -- is created and the round is launched. The Tournament Worker monitors the progress of each game, while the actual game handling is performed by the [Game Worker](./PONG.md) 🛠️👷🏻‍♂️TODO: add link
+
+**Handling cancellations**:   
+If a bracket fails to connect within 10 seconds, it is cancelled. When no players remain connected to any game, the tournament itself is cancelled. In cases where some players are connected to other games, a false winner is assigned and the monitoring process continues.
+
+**Round and tournament completion**:   
+Once all bracket matches finish, the worker checks the remaining winners. If only one winner remains, the tournament ends. Otherwise, the remaining winners are carried forward into the next round, and the process repeats until a final winner is determined.   
 
 ```mermaid
 ---
