@@ -6,7 +6,7 @@ beforeEach(() => {
   // Mock URL.createObjectURL and revokeObjectURL
   global.URL.createObjectURL = vi.fn((file) => `blob://mock-${file.name}`);
   global.URL.revokeObjectURL = vi.fn();
-  
+
   // Mock Image constructor for content validation
   global.Image = vi.fn(() => {
     const img = {
@@ -14,14 +14,14 @@ beforeEach(() => {
       onload: null,
       onerror: null,
     };
-    
+
     // Simulate successful image loading for valid images
     setTimeout(() => {
       if (img.onload && img.src.includes('blob://mock-')) {
         img.onload();
       }
     }, 0);
-    
+
     return img;
   });
 });
@@ -113,7 +113,7 @@ describe('AvatarUploadModal component', () => {
     const file = new File([''], 'avatar.png', { type: 'image/png', size: 1024 });
     const event = new Event('change');
     Object.defineProperty(event, 'target', { value: { files: [file] } });
-    
+
     // First call readURL to set up the blob URL and event listener
     await modal.readURL(event);
 
