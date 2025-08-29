@@ -1,4 +1,4 @@
-import { fireConfetti } from '@utils';
+import { fireWork } from '@utils';
 
 export const TOURNAMENT_ALERT_TYPE = {
   ONGOING_TOURNAMENT: 'ONGOING_TOURNAMENT',
@@ -50,11 +50,21 @@ export function showTournamentAlert(
     case TOURNAMENT_ALERT_TYPE.CHAMPION:
       headerElement.textContent = 'Congratulations!';
       messageElement.textContent = TOURNAMENT_ALERT_MESSAGE[type](tournamentName);
+      alertCta.classList.add('d-none');
       alertContainer.appendChild(alertMessage);
-      fireConfetti(alertContainer);
+      const pageContentElement = document.getElementById('content');
+      let fireworkDuration = 2000;
+      if (pageContentElement) {
+        fireworkDuration = fireWork(pageContentElement);
+      }
+      setTimeout(() => {
+        alertContainer.classList.add('fade-out-animation');
+        setTimeout(() => {
+          alertContainer.remove();
+        }, 1000);
+      }, fireworkDuration); 
       return;
     case TOURNAMENT_ALERT_TYPE.ELIMINATED:
-      // alertCta.href = '/home';
       setTimeout(() => {
         alertContainer.classList.add('fade-out-animation');
         setTimeout(() => {
