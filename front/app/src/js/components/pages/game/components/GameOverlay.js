@@ -1,10 +1,10 @@
 import { router } from '@router';
 
 export const OVERLAY_TYPE = Object.freeze({
-	PENDING: 'pending',
-	PAUSE: 'pause',
-	GAMEOVER: 'game_over',
-	CANCEL: 'cancel',
+  PENDING: 'pending',
+  PAUSE: 'pause',
+  GAMEOVER: 'game_over',
+  CANCEL: 'cancel',
 });
 
 export class GameOverlay extends HTMLElement {
@@ -22,7 +22,7 @@ export class GameOverlay extends HTMLElement {
     this.overlayButton1 = null;
     this.overlayButton2 = null;
   }
-  
+
   set gameType(type) {
     this.#gameType = type;
   }
