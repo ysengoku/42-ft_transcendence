@@ -27,6 +27,14 @@ from tournaments.models import Bracket
 logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 #### CONSTANTS ####
+# FRAME RATE
+GAME_TICK_INTERVAL = 1.0 / 30
+
+# PHYSICS PRECISION (scales with frame rate to maintain consistent collision detection)
+SUBTICK_PER_SECOND = 3.0  
+SUBTICK = SUBTICK_PER_SECOND * GAME_TICK_INTERVAL
+
+# GEOMETRIC CONSTANTS
 WALL_LEFT_X = 10
 WALL_RIGHT_X = -WALL_LEFT_X
 WALL_WIDTH_HALF = 0.5
@@ -35,26 +43,36 @@ BUMPER_WIDTH = 1
 BUMPER_WIDTH_HALF = BUMPER_WIDTH / 2
 BUMPER_1_BORDER = -10
 BUMPER_2_BORDER = -BUMPER_1_BORDER
-BUMPER_SPEED = 0.25
 BALL_DIAMETER = 1
 BALL_RADIUS = BALL_DIAMETER / 2
 STARTING_BUMPER_1_POS = 0, -9
 STARTING_COIN_POS = -9.25, 1
-STARTING_COIN_VELOCITY = 0.01, 0
 STARTING_BUMPER_2_POS = 0, 9
 STARTING_BALL_POS = 0, 0
-Z_VELOCITY = 0.25
-STARTING_BALL_VELOCITY = 0, Z_VELOCITY
-SUBTICK = 0.025
 BOUNCING_ANGLE_DEGREES = 55
-BALL_VELOCITY_CAP = 1
-TEMPORAL_SPEED_DEFAULT = 1, 1
-TEMPORAL_SPEED_INCREASE = SUBTICK * 0
-TEMPORAL_SPEED_DECAY = 0.005
-GAME_TICK_INTERVAL = 1.0 / 120
 PLAYERS_REQUIRED = 2
 DEFAULT_COIN_WAIT_TIME = 30
-BASE_BUMPER_SPEED = 0.25
+
+# SPEED PER SECOND OF DIFFERENT ENTITIES (units/second)
+BUMPER_SPEED_PER_SECOND = 15.0
+BALL_Z_VELOCITY_PER_SECOND = 15.0
+COIN_VELOCITY_PER_SECOND = 0.6, 0
+BALL_VELOCITY_CAP_PER_SECOND = 90.0
+TEMPORAL_SPEED_DECAY_PER_SECOND = 0.3
+
+# PER-TICK VALUES (based on frame rate)
+BUMPER_SPEED = BUMPER_SPEED_PER_SECOND * GAME_TICK_INTERVAL
+BASE_BUMPER_SPEED = BUMPER_SPEED
+Z_VELOCITY = BALL_Z_VELOCITY_PER_SECOND * GAME_TICK_INTERVAL
+STARTING_COIN_VELOCITY = (COIN_VELOCITY_PER_SECOND[0] * GAME_TICK_INTERVAL, 
+                         COIN_VELOCITY_PER_SECOND[1] * GAME_TICK_INTERVAL)
+STARTING_BALL_VELOCITY = 0, Z_VELOCITY
+BALL_VELOCITY_CAP = BALL_VELOCITY_CAP_PER_SECOND * GAME_TICK_INTERVAL
+TEMPORAL_SPEED_DECAY = TEMPORAL_SPEED_DECAY_PER_SECOND * GAME_TICK_INTERVAL
+
+# MULTIPLIERS
+TEMPORAL_SPEED_DEFAULT = 1, 1
+TEMPORAL_SPEED_INCREASE = 0 # currently unused
 ###################
 
 
@@ -94,10 +112,10 @@ class Vector2:
 @dataclass(slots=True)
 class Bumper(Vector2):
     dir_z: int
-    width_half: int = 0.5
-    lenght_half: int = 2.5
+    width_half: float = 0.5
+    lenght_half: float = 2.5
     score: int = 0
-    speed: int = BASE_BUMPER_SPEED
+    speed: float = BASE_BUMPER_SPEED
     control_reversed: bool = False
     moves_left: bool = False
     moves_right: bool = False
@@ -109,7 +127,7 @@ class Player:
     id: str = ""
     connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
     connection_stamp: datetime | Literal[0] = 0
-    reconnection_time: int = 3
+    reconnection_time: int = 30
     reconnection_timer: asyncio.Task | None = None
     profile_id: int = -1
     name: str = ""
@@ -401,6 +419,10 @@ class MultiplayerPongMatch(BasePong):
     _player_1: Player
     _player_2: Player
 
+    start_time: float
+    total_paused_time: float
+    pause_start_time: float
+
     game_speed_dict = {"slow": 0.75, "medium": 1.0, "fast": 1.25}
 
     def __init__(
@@ -412,7 +434,6 @@ class MultiplayerPongMatch(BasePong):
         tournament_id: None | str,
     ):
         self.settings = settings
-        print(self.settings)
         cool_mode, game_speed, time_limit, ranked, score_to_win = (
             settings["cool_mode"],
             settings["game_speed"],
@@ -436,6 +457,8 @@ class MultiplayerPongMatch(BasePong):
         self._player_2 = Player(self._bumper_2)
 
         self.start_time = asyncio.get_event_loop().time()
+        self.total_paused_time = 0.0
+        self.pause_start_time = 0.0  # Will be set when game is paused
         
         # Pre-create the serialized state dictionary to avoid creating it every tick
         self._serialized_state = {
@@ -553,8 +576,10 @@ class MultiplayerPongMatch(BasePong):
         Serializes the game state including timing information.
         `BasePong` doesn't know about any async/timing information, hence this method.
         Updates the pre-created dictionary to avoid object creation overhead.
+        Note: The state is never sent to the client when the game is paused.
         """
-        elapsed_seconds = int(asyncio.get_event_loop().time() - self.start_time)
+        current_time = asyncio.get_event_loop().time()
+        elapsed_seconds = int(current_time - self.start_time - self.total_paused_time)
 
         self._serialized_state["bumper_1"]["x"] = self._bumper_1.x
         self._serialized_state["bumper_1"]["z"] = self._bumper_1.z
@@ -701,7 +726,9 @@ class GameWorkerConsumer(AsyncConsumer):
                 if match.status == MultiplayerPongMatchStatus.PAUSED:
                     await match.pause_event.wait()
                 tick_start_time = asyncio.get_event_loop().time()
-                elapsed_minutes = (tick_start_time - match.start_time) / 60
+
+                elapsed_seconds = tick_start_time - match.start_time - match.total_paused_time
+                elapsed_minutes = elapsed_seconds / 60
                 if not match.time_limit_reached and elapsed_minutes >= match.time_limit:
                     # TODO: handle the increased ball velocity when the scores are equal
                     # TODO: handle the winning logic when one of the players lead on the score
@@ -991,6 +1018,8 @@ class GameWorkerConsumer(AsyncConsumer):
         match: MultiplayerPongMatch,
         disconnected_player: Player,
     ):
+        match.pause_start_time = asyncio.get_event_loop().time()
+        
         await self.channel_layer.group_send(
             self._to_game_room_group_name(match),
             GameServerToClient.GamePaused(
@@ -1005,6 +1034,14 @@ class GameWorkerConsumer(AsyncConsumer):
         logger.info("[GameWorker]: game {%s} has been paused", match.id)
 
     async def _unpause(self, match: MultiplayerPongMatch):
+        if match.status != MultiplayerPongMatchStatus.PAUSED:
+            logger.warning("[GameWorker]: game {%s} can't be unpaused, as it was not paused")
+            return
+            
+        pause_duration = asyncio.get_event_loop().time() - match.pause_start_time
+        match.total_paused_time += pause_duration
+        match.pause_start_time = 0.0
+        
         await self.channel_layer.group_send(
             self._to_game_room_group_name(match),
             GameServerToClient.GameUnpaused(type="worker_to_client_open", action="game_unpaused"),
