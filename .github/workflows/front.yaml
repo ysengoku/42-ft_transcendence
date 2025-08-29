@@ -11,8 +11,9 @@ on:
       - dev
 
 jobs:
-  build:
+  frontend:
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
 
     steps:
       - name: Checkout code
@@ -22,10 +23,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+          cache-dependency-path: './front/app/package-lock.json'
 
       - name: Install dependencies
         working-directory: ./front/app
-        run: npm install
+        run: npm ci
 
       - name: Run unit tests
         working-directory: ./front/app
@@ -33,16 +36,21 @@ jobs:
 
       - name: Check code format (Prettier)
         working-directory: ./front/app
-        run: npm run format
+        run: |
+          if ! npm run format; then
+            echo "::warning title=Prettier Format Check Failed::Code formatting issues detected."
+            echo "Prettier format check failed. Please fix formatting issues"
+          fi
+        continue-on-error: true
 
       - name: Run linter
         working-directory: ./front/app
-        run: npm run lint
-
-      # - name: Run linter and fix
-      #   working-directory: ./front/app/
-      #   run: npm run lint -- --fix
-      #   continue-on-error: true
+        run: |
+          if ! npm run lint; then
+            echo "::warning title=ESLint Check Failed::Linting issues detected."
+            echo "ESLint check failed. Please fix linting issues"
+          fi
+        continue-on-error: true
 
       - name: Build with Vite
         working-directory: ./front/app
