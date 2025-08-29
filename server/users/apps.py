@@ -6,6 +6,6 @@ class UsersConfig(AppConfig):
     name = "users"
 
     def ready(self) -> None:
-        from . import signals
-
-        signals
+        from . import signals  # noqa: F401
+        from .startup_env_warnings import warn_empty_default_envs_at_startup
+        warn_empty_default_envs_at_startup()
