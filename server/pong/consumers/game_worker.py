@@ -714,6 +714,7 @@ class GameWorkerConsumer(AsyncConsumer):
                         action=action,
                         player_number=1 if player.bumper.dir_z == 1 else 2,
                         content=content,
+                        position_x=player.bumper.x,
                     ),
                 )
 
