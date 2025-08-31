@@ -259,7 +259,7 @@ class BasePong:
     CollisionInfoBumper = tuple[CollisionType.BUMPER, Bumper]
     CollisionInfoScore = tuple[CollisionType.SCORE, Bumper]
     CollisionInfoCoin = tuple[CollisionType.COIN, None]
-    CollisionInfo =  CollisionInfoWall | CollisionInfoBumper | CollisionInfoScore | CollisionInfoCoin
+    CollisionInfo = CollisionInfoWall | CollisionInfoBumper | CollisionInfoScore | CollisionInfoCoin
 
     def resolve_next_tick(self, delta_time: float, current_time: float):
         """
@@ -301,6 +301,12 @@ class BasePong:
 
         # Handle coin spawning and buff expiration after all movement/collisions
         self._update_coin_and_buffs(current_time)
+
+    def set_ball_to_max_speed(self) -> None:
+        current_speed = (self._ball.velocity.x**2 + self._ball.velocity.z**2) ** 0.5
+        speed_multiplier = BALL_VELOCITY_CAP_PER_SECOND / current_speed
+        self._ball.velocity.x *= speed_multiplier
+        self._ball.velocity.z *= speed_multiplier
 
     ##### Private game logic functions where actual stuff happens. #####
     def _find_next_collision(self, max_time: float) -> tuple[float, CollisionInfo | None]:
@@ -750,7 +756,7 @@ class MultiplayerPongMatch(BasePong):
     waiting_for_players_timer: asyncio.Task | None
     status: MultiplayerPongMatchStatus = MultiplayerPongMatchStatus.PENDING
     pause_event: asyncio.Event
-    time_limit: int
+    time_limit_in_seconds: int
     time_limit_reached: bool
     ranked: bool
     _score_to_win: int
@@ -784,7 +790,7 @@ class MultiplayerPongMatch(BasePong):
         self.is_in_tournament = is_in_tournament
         self.bracket_id = bracket_id
         self.tournament_id = tournament_id
-        self.time_limit = time_limit  # TODO: use this
+        self.time_limit_in_seconds = time_limit * 60 # in seconds for ease of testing
         self.time_limit_reached = False
         self.ranked = ranked
         self.pause_event = asyncio.Event()
@@ -883,7 +889,17 @@ class MultiplayerPongMatch(BasePong):
         self.waiting_for_players_timer = None
 
     def get_result(self) -> tuple[Player, Player] | None:
-        """Returns winner and loser or None, if the game is not decided yet."""
+        """
+        Returns winner and loser or None, if the game is not decided yet.
+        If time limit has been reached, the player who has bigger score is considered to be a winner.
+        """
+        if self.time_limit_reached:
+            if self._player_1.bumper.score > self._player_2.bumper.score:
+                return self._player_1, self._player_2
+            if self._player_2.bumper.score > self._player_1.bumper.score:
+                return self._player_2, self._player_1
+            return None
+
         if self._player_1.bumper.score >= self._score_to_win:
             return self._player_1, self._player_2
         if self._player_2.bumper.score >= self._score_to_win:
@@ -1019,12 +1035,30 @@ class GameWorkerConsumer(AsyncConsumer):
                 tick_start_time = asyncio.get_event_loop().time()
 
                 elapsed_seconds = tick_start_time - match.start_time - match.total_paused_time
-                elapsed_minutes = elapsed_seconds / 60
-                if not match.time_limit_reached and elapsed_minutes >= match.time_limit:
-                    # TODO: handle the increased ball velocity when the scores are equal
-                    # TODO: handle the winning logic when one of the players lead on the score
+                if not match.time_limit_reached and elapsed_seconds >= match.time_limit_in_seconds:
                     logger.info("[GameWorker]: match {%s} reached time limit", match.id)
                     match.time_limit_reached = True
+
+                    result = match.get_result()
+                    # someone scored more than the other
+                    if result:
+                        winner, loser = result
+
+                        match_db = await self._write_result_to_db(winner, loser, match, "finished")
+                        await self._send_player_won_event(
+                            match,
+                            "player_won",
+                            winner,
+                            loser,
+                            match_db.elo_change if not match.is_in_tournament else 0,
+                        )
+                        await self._do_after_match_cleanup(match, False)
+                        logger.info("[GameWorker]: player {%s} won due to time limit in game {%s}", winner.id, match)
+                        break
+
+                    # equal score: set the ball speed to the max!!
+                    match.set_ball_to_max_speed()
+                    logger.info("[GameWorker]: equal scores at time limit - activating sudden death mode")
 
                 match.resolve_next_tick(GAME_TICK_INTERVAL, tick_start_time)
                 if result := match.get_result():
