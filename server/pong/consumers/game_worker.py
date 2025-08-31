@@ -30,10 +30,6 @@ logging.getLogger("asyncio").setLevel(logging.WARNING)
 # FRAME RATE
 GAME_TICK_INTERVAL = 1.0 / 30
 
-# PHYSICS PRECISION (scales with frame rate to maintain consistent collision detection)
-SUBTICK_PER_SECOND = 3.0  
-SUBTICK = SUBTICK_PER_SECOND * GAME_TICK_INTERVAL
-
 # GEOMETRIC CONSTANTS
 WALL_LEFT_X = 10
 WALL_RIGHT_X = -WALL_LEFT_X
@@ -47,33 +43,43 @@ BALL_DIAMETER = 1
 BALL_RADIUS = BALL_DIAMETER / 2
 STARTING_BUMPER_1_POS = 0, -9
 STARTING_COIN_POS = -9.25, 1
+HIDDEN_COIN_SPOT = -100
 STARTING_BUMPER_2_POS = 0, 9
 STARTING_BALL_POS = 0, 0
 BOUNCING_ANGLE_DEGREES = 55
 PLAYERS_REQUIRED = 2
 DEFAULT_COIN_WAIT_TIME = 30
 
-# SPEED PER SECOND OF DIFFERENT ENTITIES (units/second)
+# SPEED VALUES IN UNITS PER SECOND (original working values)
 BUMPER_SPEED_PER_SECOND = 15.0
 BALL_Z_VELOCITY_PER_SECOND = 15.0
-COIN_VELOCITY_PER_SECOND = 0.6, 0
-BALL_VELOCITY_CAP_PER_SECOND = 90.0
-TEMPORAL_SPEED_DECAY_PER_SECOND = 0.3
+COIN_VELOCITY_PER_SECOND = 0.8, 0
+BALL_VELOCITY_CAP_PER_SECOND = 75.0
+TEMPORAL_SPEED_DECAY_PER_SECOND = 0.25
 
-# PER-TICK VALUES (based on frame rate)
-BUMPER_SPEED = BUMPER_SPEED_PER_SECOND * GAME_TICK_INTERVAL
-BASE_BUMPER_SPEED = BUMPER_SPEED
-Z_VELOCITY = BALL_Z_VELOCITY_PER_SECOND * GAME_TICK_INTERVAL
-STARTING_COIN_VELOCITY = (COIN_VELOCITY_PER_SECOND[0] * GAME_TICK_INTERVAL, 
-                         COIN_VELOCITY_PER_SECOND[1] * GAME_TICK_INTERVAL)
-STARTING_BALL_VELOCITY = 0, Z_VELOCITY
-BALL_VELOCITY_CAP = BALL_VELOCITY_CAP_PER_SECOND * GAME_TICK_INTERVAL
-TEMPORAL_SPEED_DECAY = TEMPORAL_SPEED_DECAY_PER_SECOND * GAME_TICK_INTERVAL
+# DIRECT VALUES (units per second - no conversion needed)
+BASE_BUMPER_SPEED = BUMPER_SPEED_PER_SECOND
+STARTING_COIN_VELOCITY = COIN_VELOCITY_PER_SECOND
+STARTING_BALL_VELOCITY = 0, BALL_Z_VELOCITY_PER_SECOND
+BALL_VELOCITY_CAP = BALL_VELOCITY_CAP_PER_SECOND
+TEMPORAL_SPEED_DECAY = TEMPORAL_SPEED_DECAY_PER_SECOND
 
 # MULTIPLIERS
 TEMPORAL_SPEED_DEFAULT = 1, 1
-TEMPORAL_SPEED_INCREASE = 0 # currently unused
+TEMPORAL_SPEED_INCREASE = 0  # currently unused
 ###################
+
+logger.debug(
+    "Game worker has been started:\n"
+    "  GAME_TICK_INTERVAL: %f\n"
+    "  BASE_BUMPER_SPEED: %.6f\n"
+    "  STARTING_COIN_VELOCITY: %s\n"
+    "  STARTING_BALL_VELOCITY: %s",
+    GAME_TICK_INTERVAL,
+    BASE_BUMPER_SPEED,
+    STARTING_COIN_VELOCITY,
+    STARTING_BALL_VELOCITY,
+)
 
 
 class MultiplayerPongMatchStatus(Enum):
@@ -185,19 +191,23 @@ class BasePong:
     _bumper_2: Bumper
     _ball: Ball
 
-    def __init__(self, cool_mode: bool, game_speed: Literal[0.75, 1.0, 1.25]):
+    def __init__(self, cool_mode: bool, game_speed: Literal[0.75, 1.0, 1.25], start_time: float):
         self._game_speed = game_speed
         if cool_mode:
-            self.coin = Coin(
+            self._coin = Coin(
                 *STARTING_COIN_POS,
                 Vector2(*STARTING_COIN_VELOCITY).mul(self._game_speed),
             )
         else:
-            self.coin = None
+            self._coin = None
         self._is_someone_scored = False
         self.last_bumper_collided: Bumper | None = None
         self.choose_buff = 0
-        self.time_to_wait = 0
+
+        self.start_time = start_time
+        self.last_coin_spawn_time = start_time
+        self.active_buff_end_times = {}
+        self.active_buff_targets = {}
         self._bumper_1 = Bumper(
             *STARTING_BUMPER_1_POS,
             dir_z=1,
@@ -210,74 +220,310 @@ class BasePong:
         )
         self._ball = Ball(
             *STARTING_BALL_POS,
-            Vector2(*STARTING_BALL_VELOCITY).mul(self._game_speed),
+            Vector2(*STARTING_BALL_VELOCITY),
             Vector2(*TEMPORAL_SPEED_DEFAULT),
         )
 
-    def resolve_next_tick(self):
+    # tuple of:
+    # - type of entity with which ball collided
+    # - bumper that caused collision or scored, if it was a coin or a wall then it's `None`
+    CollisionInfo = tuple[
+        Literal["wall", "bumper", "coin", "score"],
+        Literal[Bumper | None],
+    ]
+
+    def resolve_next_tick(self, delta_time: float, current_time: float):
         """
-        The most important method of the engine. Advances the game by one tick.
-        Moves the objects in the game by one subtick at a time.
-        This approach is called Conservative Advancement.
+        Calculates movement and collisions for the next tick.
+        Uses continuous collision detection for exact collision times.
         """
+        # at the start of each iteration, this value is reset
         self._is_someone_scored = False
-        total_distance_x = abs((self._ball.temporal_speed.x) * self._ball.velocity.x * self._game_speed)
-        total_distance_z = abs((self._ball.temporal_speed.z) * self._ball.velocity.z * self._game_speed)
-        self._ball.temporal_speed.x = max(TEMPORAL_SPEED_DEFAULT[0], self._ball.temporal_speed.x - TEMPORAL_SPEED_DECAY)
-        self._ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self._ball.temporal_speed.z - TEMPORAL_SPEED_DECAY)
-        current_subtick = 0
-        ball_subtick_z = SUBTICK
-        total_subticks = total_distance_z / ball_subtick_z
-        ball_subtick_x = total_distance_x / total_subticks
-        bumper_1_subtick = self._bumper_1.speed / total_subticks
-        bumper_2_subtick = self._bumper_2.speed / total_subticks
-        self.choose_buff = 0
-        while current_subtick <= total_subticks:
-            self._check_ball_wall_collision()
-            self._check_ball_bumper_collision(ball_subtick_z, ball_subtick_x)
-            if self.coin:
-                self._check_ball_coin_collision(ball_subtick_z, ball_subtick_x)
-            self._check_ball_scored()
-            self._move_bumpers(bumper_1_subtick, bumper_2_subtick)
-            self._move_ball(ball_subtick_z, ball_subtick_x)
-            if self.coin:
-                self._move_coin()
 
-            current_subtick += 1
+        decay_amount = TEMPORAL_SPEED_DECAY * delta_time
+        self._ball.temporal_speed.x = max(TEMPORAL_SPEED_DEFAULT[0], self._ball.temporal_speed.x - decay_amount)
+        self._ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self._ball.temporal_speed.z - decay_amount)
 
+        remaining_time = delta_time
+        max_iterations = 10  # safety limit to prevent infinite loops
+        iteration = 0
+
+        # epsilon is the level of imprecision we are willing to tolerate, it's 0.000001
+        epsilon = 1e-6
+        while remaining_time > epsilon and iteration < max_iterations:
+            iteration += 1
+            collision_time, collision_info = self._find_next_collision(remaining_time)
+
+            if collision_info is None:
+                # no collision, so we just move objects
+                # no further subticks
+                self._move_all_objects(remaining_time)
+                break
+
+            # this is collision :0 move objects and handle it
+            # calculation detection calculates that collision will happen at the `collision_time`
+            # so we move the objects -> collision happens -> we handle collision!
+            # and then the next subtick happens and we move objects again
+            # when there is a collision, there are always subticks btw
+            self._move_all_objects(collision_time)
+            self._handle_collision(collision_info, current_time)
+            remaining_time -= collision_time
+
+        # Handle coin spawning and buff expiration after all movement/collisions
+        self._update_coin_and_buffs(current_time)
 
     ##### Private game logic functions where actual stuff happens. #####
+    def _find_next_collision(self, max_time: float) -> tuple[float, CollisionInfo | None]:
+        """
+        Find the earliest collision within max_time using analytical collision detection.
+        Returns (collision_time, collision_info) or (max_time, None) if no collision.
+        """
+        earliest_time = max_time
+        collision_info = None
+
+        ball_vel_x = self._ball.velocity.x * self._ball.temporal_speed.x * self._game_speed
+        ball_vel_z = self._ball.velocity.z * self._ball.temporal_speed.z * self._game_speed
+
+        # ball vs left wall
+        if ball_vel_x < 0:
+            wall_x = WALL_RIGHT_X + WALL_WIDTH_HALF
+            t = (wall_x + BALL_RADIUS - self._ball.x) / ball_vel_x
+            if 0 < t <= earliest_time:
+                logger.debug(
+                    "COLLISION: left wall - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f",
+                    t,
+                    earliest_time,
+                    self._ball.x,
+                    self._ball.z,
+                )
+                earliest_time = t
+                collision_info = ("wall", None)
+
+        # ball vs right wall
+        if ball_vel_x > 0:
+            wall_x = WALL_LEFT_X - WALL_WIDTH_HALF
+            t = (wall_x - BALL_RADIUS - self._ball.x) / ball_vel_x
+            if 0 < t <= earliest_time:
+                logger.debug(
+                    "COLLISION: right wall - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f",
+                    t,
+                    earliest_time,
+                    self._ball.x,
+                    self._ball.z,
+                )
+                earliest_time = t
+                collision_info = ("wall", None)
+
+        # ball vs bumpers
+        for bumper, name in [(self._bumper_1, "bumper_1"), (self._bumper_2, "bumper_2")]:
+            t = self._calculate_rectangle_collision_time(
+                self._ball.x,
+                self._ball.z,
+                ball_vel_x,
+                ball_vel_z,
+                bumper.x,
+                bumper.z,
+                bumper.lenght_half,
+                bumper.width_half,
+            )
+            if 0 < t <= earliest_time:
+                logger.debug(
+                    "COLLISION: %s - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f, bumper.x=%f",
+                    name,
+                    t,
+                    earliest_time,
+                    self._ball.x,
+                    self._ball.z,
+                    bumper.x,
+                )
+                earliest_time = t
+                collision_info = ("bumper", bumper)
+
+        # ball vs coin
+        if self._coin and self._is_coin_on_screen():
+            t = self._calculate_rectangle_collision_time(
+                self._ball.x,
+                self._ball.z,
+                ball_vel_x,
+                ball_vel_z,
+                self._coin.x,
+                self._coin.z,
+                0.25,
+                0.05,
+            )
+            if 0 < t <= earliest_time:
+                logger.debug(
+                    "COLLISION: coin - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f",
+                    t,
+                    earliest_time,
+                    self._ball.x,
+                    self._ball.z,
+                )
+                earliest_time = t
+                collision_info = ("coin", None)
+
+        # ball vs scoring zones
+        # SCOOOOORE for bumperino uno
+        if ball_vel_z > 0:
+            t = (BUMPER_2_BORDER - self._ball.z) / ball_vel_z
+            if 0 < t <= earliest_time:
+                logger.debug(
+                    "COLLISION: score! - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f, bumper_2.x=%f",
+                    t,
+                    earliest_time,
+                    self._ball.x,
+                    self._ball.z,
+                    self._bumper_2.x,
+                )
+                earliest_time = t
+                collision_info = ("score", self._bumper_1)
+
+        # SCOOOOORE for bumperino dos
+        if ball_vel_z < 0:
+            t = (BUMPER_1_BORDER - self._ball.z) / ball_vel_z
+            if 0 < t <= earliest_time:
+                logger.debug(
+                    "COLLISION: score! - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f, bumper_1.x=%f",
+                    t,
+                    earliest_time,
+                    self._ball.x,
+                    self._ball.z,
+                    self._bumper_1.x,
+                )
+                earliest_time = t
+                collision_info = ("score", self._bumper_2)
+
+        return earliest_time, collision_info
+
+    def _calculate_rectangle_collision_time(
+        self,
+        ball_x,
+        ball_z,
+        vel_x,
+        vel_z,
+        rect_x,
+        rect_z,
+        half_width,
+        half_height,
+    ) -> float:
+        """
+        Used for calculating ball vs bumper/coin collision.
+        Returns infinity if there are no collisions.
+        """
+        # sides of bumper or coin
+        left = rect_x - half_width - BALL_RADIUS
+        right = rect_x + half_width + BALL_RADIUS
+        top = rect_z + half_height + BALL_RADIUS
+        bottom = rect_z - half_height - BALL_RADIUS
+
+        if vel_x == 0:
+            if ball_x < left or ball_x > right:
+                return float("inf")
+            t_x_enter, t_x_exit = 0, float("inf")
+        else:
+            t_x_1 = (left - ball_x) / vel_x
+            t_x_2 = (right - ball_x) / vel_x
+            t_x_enter = min(t_x_1, t_x_2)
+            t_x_exit = max(t_x_1, t_x_2)
+
+        if vel_z == 0:
+            if ball_z < bottom or ball_z > top:
+                return float("inf")
+            t_z_enter, t_z_exit = 0, float("inf")
+        else:
+            t_z_1 = (bottom - ball_z) / vel_z
+            t_z_2 = (top - ball_z) / vel_z
+            t_z_enter = min(t_z_1, t_z_2)
+            t_z_exit = max(t_z_1, t_z_2)
+
+        # collision occurs when both x and z ranges overlap
+        collision_enter = max(t_x_enter, t_z_enter)
+        collision_exit = min(t_x_exit, t_z_exit)
+
+        if collision_enter <= collision_exit and collision_enter > 0:
+            return collision_enter
+
+        return float("inf")
+
+    def _move_all_objects(self, delta_time):
+        """Move all objects by `delta_time`."""
+        # move ball
+        ball_vel_x = self._ball.velocity.x * self._ball.temporal_speed.x * self._game_speed
+        ball_vel_z = self._ball.velocity.z * self._ball.temporal_speed.z * self._game_speed
+        self._ball.x += ball_vel_x * delta_time
+        self._ball.z += ball_vel_z * delta_time
+
+        # move bumpers
+        self._move_bumper(self._bumper_1, delta_time)
+        self._move_bumper(self._bumper_2, delta_time)
+
+        # move coin (with bouncing :3)
+        if self._coin and self._is_coin_on_screen():
+            self._coin.x += self._coin.velocity.x * delta_time
+            self._coin.z += self._coin.velocity.z * delta_time
+            if (self._coin.x < WALL_RIGHT_X + WALL_WIDTH_HALF + 0.25) or (
+                self._coin.x > WALL_LEFT_X - WALL_WIDTH_HALF - 0.25
+            ):
+                self._coin.velocity.x *= -1
+
+    def _move_bumper(self, bumper, delta_time):
+        """Move a bumper with wall collision detection."""
+        if bumper.moves_left and bumper.moves_right:
+            return
+
+        movement = 0
+        if bumper.moves_left:
+            movement = bumper.speed * delta_time
+        elif bumper.moves_right:
+            movement = -bumper.speed * delta_time
+
+        # don't go over walls
+        # when bumper goes overl wall, it sticks to its edge instead
+        new_x = bumper.x + movement
+        left_limit = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenght_half
+        right_limit = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenght_half
+
+        # min() and max() are implemented in C, so they are faster than conditions
+        # it means: `right_limit < new_x < left_limit`
+        bumper.x = max(left_limit, min(right_limit, new_x))
+
+    def _handle_collision(self, collision_info: CollisionInfo, current_time: float):
+        """Handle the collision that just occurred."""
+        collision_type, data = collision_info
+
+        if collision_type == "wall":
+            self._ball.velocity.x *= -1
+
+        elif collision_type == "bumper":
+            bumper = data
+            self.last_bumper_collided = bumper
+            self._calculate_new_ball_dir(bumper)
+
+        elif collision_type == "coin":
+            self._apply_coin_buff(current_time)
+
+        elif collision_type == "score":
+            bumper_that_scored = data
+            if bumper_that_scored == self._bumper_1:
+                self._bumper_1.score += 1
+                self._reset_ball(-1)
+                self._is_someone_scored = True
+            elif bumper_that_scored == self._bumper_2:
+                self._bumper_2.score += 1
+                self._reset_ball(1)
+                self._is_someone_scored = True
+
     def _reset_ball(self, direction: int):
         self._ball.temporal_speed.x, self._ball.temporal_speed.z = TEMPORAL_SPEED_DEFAULT
         self._ball.x, self._ball.z = STARTING_BALL_POS
         self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCITY
-        self._ball.mul(self._game_speed)
         self._ball.velocity.z *= direction
 
-    def _is_collided_with_ball(self, bumper, ball_subtick_z, ball_subtick_x):
+    def _calculate_new_ball_dir(self, bumper):
         """
-        Calculates rectangle-on-rectangle collision between the ball and the bumper which is given as a
-        parameter to this function.
+        After the ball hits one of the bumpers, it moves in the other direction, and
+        its angle changes based on the point of collision between it and bumper.
         """
-        return (
-            (self._ball.x - BALL_RADIUS + ball_subtick_x * self._ball.velocity.x <= bumper.x + bumper.lenght_half)
-            and (self._ball.x + BALL_RADIUS + ball_subtick_x * self._ball.velocity.x >= bumper.x - bumper.lenght_half)
-            and (self._ball.z - BALL_RADIUS + ball_subtick_z * self._ball.velocity.z <= bumper.z + bumper.width_half)
-            and (self._ball.z + BALL_RADIUS + ball_subtick_z * self._ball.velocity.z >= bumper.z - bumper.width_half)
-        )
-
-    def _is_collided_with_coin(self, ball_subtick_z, ball_subtick_x):
-        """
-        Calculates rectangle-on-rectangle collision between the ball and the coin.
-        """
-        return (
-            (self._ball.x - BALL_RADIUS + ball_subtick_x * self._ball.velocity.x <= self.coin.x + 0.25)
-            and (self._ball.x + BALL_RADIUS + ball_subtick_x * self._ball.velocity.x >= self.coin.x - 0.25)
-            and (self._ball.z - BALL_RADIUS + ball_subtick_z * self._ball.velocity.z <= self.coin.z + 0.05)
-            and (self._ball.z + BALL_RADIUS + ball_subtick_z * self._ball.velocity.z >= self.coin.z - 0.05)
-        )
-
-    def _calculate_new_dir(self, bumper):
         collision_pos_x = bumper.x - self._ball.x
         normalized_collision_pos_x = collision_pos_x / (BALL_RADIUS + bumper.lenght_half)
         bounce_angle_radians = math.radians(BOUNCING_ANGLE_DEGREES * normalized_collision_pos_x)
@@ -292,106 +538,126 @@ class BasePong:
         ):
             self._ball.temporal_speed.x += TEMPORAL_SPEED_INCREASE
 
-    def _check_ball_scored(self):
-        if self._ball.z >= BUMPER_2_BORDER:
-            self._bumper_1.score += 1
-            self._reset_ball(-1)
-            self._is_someone_scored = True
-        elif self._ball.z <= BUMPER_1_BORDER:
-            self._bumper_2.score += 1
-            self._reset_ball(1)
-            self._is_someone_scored = True
+    def _apply_coin_buff(self, current_time: float):
+        """Applies one of the buffs to the player who scored the coin. Or debuffs their opponent."""
+        if not self._coin or not self.last_bumper_collided or not self._is_coin_on_screen():
+            return
 
-    def _check_ball_wall_collision(self):
-        if self._ball.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF:
-            self._ball.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF
-            self._ball.velocity.x *= -1
-        if self._ball.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF:
-            self._ball.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF
-            self._ball.velocity.x *= -1
-
-    def _check_ball_bumper_collision(self, ball_subtick_z, ball_subtick_x):
-        if self._ball.velocity.z <= 0 and self._is_collided_with_ball(self._bumper_1, ball_subtick_z, ball_subtick_x):
-            self.last_bumper_collided = self._bumper_1
-            self._calculate_new_dir(self._bumper_1)
-        elif self._ball.velocity.z > 0 and self._is_collided_with_ball(self._bumper_2, ball_subtick_z, ball_subtick_x):
-            self.last_bumper_collided = self._bumper_2
-            self._calculate_new_dir(self._bumper_2)
-
-    def _manage_buff_and_debuff(self):
+        # returns 1-5
         self.choose_buff = random.randrange(1, 6)  # noqa: S311
+
+        control_reverse_enemy_duration = 15
+        speed_decrease_enemy_duration = 15
+        shorten_enemy_duration = 15
+        elongate_player_duration = 15
+        enlarge_player_duration = 15
 
         match self.choose_buff:
             case Buffs.CONTROL_REVERSE_ENEMY:
-                self.last_bumper_collided = (
-                    self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
-                )
-                self.last_bumper_collided.control_reversed = True
-                self.time_to_wait = 2
+                target_bumper = self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
+                target_bumper.control_reversed = True
+                self.active_buff_end_times[self.choose_buff] = current_time + control_reverse_enemy_duration
+                self.active_buff_targets[self.choose_buff] = target_bumper
+                logger.debug("Debuff target: %s", "bumper_1" if target_bumper == self._bumper_1 else "bumper_2")
 
             case Buffs.SPEED_DECREASE_ENEMY:
-                self.last_bumper_collided = (
-                    self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
-                )
-                self.last_bumper_collided.speed = 0.1
-                self.time_to_wait = 5
+                target_bumper = self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
+                target_bumper.speed = BASE_BUMPER_SPEED * 0.1 * self._game_speed
+                self.active_buff_end_times[self.choose_buff] = current_time + speed_decrease_enemy_duration
+                self.active_buff_targets[self.choose_buff] = target_bumper
+                logger.debug("Debuff target: %s", "bumper_1" if target_bumper == self._bumper_1 else "bumper_2")
 
             case Buffs.SHORTEN_ENEMY:
-                self.last_bumper_collided = (
-                    self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
-                )
-                self.last_bumper_collided.lenght_half = 1.25
-                self.time_to_wait = 10
+                target_bumper = self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
+                target_bumper.lenght_half = 1.25
+                self.active_buff_end_times[self.choose_buff] = current_time + shorten_enemy_duration
+                self.active_buff_targets[self.choose_buff] = target_bumper
+                logger.debug("Debuff target: %s", "bumper_1" if target_bumper == self._bumper_1 else "bumper_2")
 
             case Buffs.ELONGATE_PLAYER:
                 self.last_bumper_collided.lenght_half = 5
-                if self.last_bumper_collided.x < -10 + WALL_WIDTH_HALF + self.last_bumper_collided.lenght_half:
-                    self.last_bumper_collided.x = -10 + WALL_WIDTH_HALF + self.last_bumper_collided.lenght_half - 0.1
-                elif self.last_bumper_collided.x > 10 - WALL_WIDTH_HALF - self.last_bumper_collided.lenght_half:
-                    self.last_bumper_collided.x = 10 - WALL_WIDTH_HALF - self.last_bumper_collided.lenght_half + 0.1
-                self.time_to_wait = 10
+                if self.last_bumper_collided.x < WALL_RIGHT_X + WALL_WIDTH_HALF + self.last_bumper_collided.lenght_half:
+                    self.last_bumper_collided.x = (
+                        WALL_RIGHT_X + WALL_WIDTH_HALF + self.last_bumper_collided.lenght_half + 0.1
+                    )
+                elif (
+                    self.last_bumper_collided.x > WALL_LEFT_X - WALL_WIDTH_HALF - self.last_bumper_collided.lenght_half
+                ):
+                    self.last_bumper_collided.x = (
+                        WALL_LEFT_X - WALL_WIDTH_HALF - self.last_bumper_collided.lenght_half - 0.1
+                    )
+                self.active_buff_end_times[self.choose_buff] = current_time + elongate_player_duration
+                self.active_buff_targets[self.choose_buff] = self.last_bumper_collided
+                logger.debug(
+                    "Buff target: %s", "bumper_1" if self.last_bumper_collided == self._bumper_1 else "bumper_2",
+                )
 
             case Buffs.ENLARGE_PLAYER:
                 self.last_bumper_collided.width_half = 1.5
-                self.time_to_wait = 10
+                self.active_buff_end_times[self.choose_buff] = current_time + enlarge_player_duration
+                self.active_buff_targets[self.choose_buff] = self.last_bumper_collided
+                logger.debug(
+                    "Buff target: %s", "bumper_1" if self.last_bumper_collided == self._bumper_1 else "bumper_2",
+                )
 
-        self.coin.x, self.coin.z = -100, 1
+        logger.info("Buff %s was chosen", Buffs(self.choose_buff).name)
+        # hide the coin
+        self._hide_coin()
 
-    def _check_ball_coin_collision(self, ball_subtick_z, ball_subtick_x):
-        if self._is_collided_with_coin(ball_subtick_z, ball_subtick_x):
-            self._manage_buff_and_debuff()
+    def _is_coin_on_screen(self):
+        """Coin can spawn, move and apply its effects only when it's on the screen."""
+        return self._coin.x != HIDDEN_COIN_SPOT
 
-    def _move_bumpers(self, bumper_1_subtick, bumper_2_subtick):
+    def _hide_coin(self):
+        """Moves the coin off screen."""
+        self._coin.x = HIDDEN_COIN_SPOT
+
+    def _update_coin_and_buffs(self, current_time: float):
+        """Handles coin spawning and buff expiration."""
+        # spawn coin every 30 seconds
         if (
-            self._bumper_1.moves_left
-            and not self._bumper_1.x > WALL_LEFT_X - WALL_WIDTH_HALF - self._bumper_1.lenght_half
+            self._coin
+            and current_time - self.last_coin_spawn_time >= DEFAULT_COIN_WAIT_TIME
+            and not self._is_coin_on_screen()
         ):
-            self._bumper_1.x += bumper_1_subtick
-        if (
-            self._bumper_1.moves_right
-            and not self._bumper_1.x < WALL_RIGHT_X + WALL_WIDTH_HALF + self._bumper_1.lenght_half
-        ):
-            self._bumper_1.x -= bumper_1_subtick
+            self._coin.x, self._coin.z = STARTING_COIN_POS
+            self.last_coin_spawn_time = current_time
 
-        if (
-            self._bumper_2.moves_left
-            and not self._bumper_2.x > WALL_LEFT_X - WALL_WIDTH_HALF - self._bumper_2.lenght_half
-        ):
-            self._bumper_2.x += bumper_2_subtick
-        if (
-            self._bumper_2.moves_right
-            and not self._bumper_2.x < WALL_RIGHT_X + WALL_WIDTH_HALF + self._bumper_2.lenght_half
-        ):
-            self._bumper_2.x -= bumper_2_subtick
+        # reset expired buffs
+        expired_buffs = []
+        for buff_id, end_time in self.active_buff_end_times.items():
+            if current_time >= end_time:
+                expired_buffs.append(buff_id)
+                self._reset_buff_effect(buff_id)
 
-    def _move_ball(self, ball_subtick_z, ball_subtick_x):
-        self._ball.z += ball_subtick_z * self._ball.velocity.z
-        self._ball.x += ball_subtick_x * self._ball.velocity.x
+        for buff_id in expired_buffs:
+            del self.active_buff_end_times[buff_id]
+            if buff_id in self.active_buff_targets:
+                del self.active_buff_targets[buff_id]
+            # negative value to indicate that buff ended (not used on the server, but is needed for the client)
+            self.choose_buff = -buff_id
 
-    def _move_coin(self):
-        if (self.coin.x < -10 + WALL_WIDTH_HALF + 0.25) or (self.coin.x > 10 - WALL_WIDTH_HALF - 0.25):
-            self.coin.velocity.x *= -1
-        self.coin.x += self.coin.velocity.x
+    def _reset_buff_effect(self, buff_id: int):
+        """Reset the effect of a specific buff when it expires - only affects the targeted bumper."""
+        affected_bumper = self.active_buff_targets.get(buff_id)
+        if not affected_bumper:
+            return
+
+        match buff_id:
+            case Buffs.CONTROL_REVERSE_ENEMY:
+                affected_bumper.control_reversed = False
+
+            case Buffs.SPEED_DECREASE_ENEMY:
+                affected_bumper.speed = BASE_BUMPER_SPEED * self._game_speed
+
+            case Buffs.SHORTEN_ENEMY:
+                affected_bumper.lenght_half = BUMPER_LENGTH_HALF
+
+            case Buffs.ELONGATE_PLAYER:
+                affected_bumper.lenght_half = BUMPER_LENGTH_HALF
+
+            case Buffs.ENLARGE_PLAYER:
+                affected_bumper.width_half = BUMPER_WIDTH_HALF
 
 
 class MultiplayerPongMatch(BasePong):
@@ -419,7 +685,6 @@ class MultiplayerPongMatch(BasePong):
     _player_1: Player
     _player_2: Player
 
-    start_time: float
     total_paused_time: float
     pause_start_time: float
 
@@ -441,7 +706,8 @@ class MultiplayerPongMatch(BasePong):
             settings["ranked"],
             settings["score_to_win"],
         )
-        super().__init__(cool_mode, self.game_speed_dict[game_speed])
+
+        super().__init__(cool_mode, self.game_speed_dict[game_speed], asyncio.get_event_loop().time())
         self.id = game_id
         self.is_in_tournament = is_in_tournament
         self.bracket_id = bracket_id
@@ -456,20 +722,14 @@ class MultiplayerPongMatch(BasePong):
         self._player_1 = Player(self._bumper_1)
         self._player_2 = Player(self._bumper_2)
 
-        self.start_time = asyncio.get_event_loop().time()
         self.total_paused_time = 0.0
-        self.pause_start_time = 0.0  # Will be set when game is paused
-        
-        # Pre-create the serialized state dictionary to avoid creating it every tick
+        self.pause_start_time = 0.0
+
+        # pre-create the serialized state dictionary to avoid creating it every tick
         self._serialized_state = {
             "bumper_1": {"x": 0.0, "z": 0.0, "score": 0},
             "bumper_2": {"x": 0.0, "z": 0.0, "score": 0},
-            "ball": {
-                "x": 0.0, 
-                "z": 0.0, 
-                "velocity": {"x": 0.0, "z": 0.0},
-                "temporal_speed": {"x": 0.0, "z": 0.0}
-            },
+            "ball": {"x": 0.0, "z": 0.0, "velocity": {"x": 0.0, "z": 0.0}, "temporal_speed": {"x": 0.0, "z": 0.0}},
             "coin": None,
             "is_someone_scored": False,
             "last_bumper_collided": "_bumper_1",
@@ -584,28 +844,29 @@ class MultiplayerPongMatch(BasePong):
         self._serialized_state["bumper_1"]["x"] = self._bumper_1.x
         self._serialized_state["bumper_1"]["z"] = self._bumper_1.z
         self._serialized_state["bumper_1"]["score"] = self._bumper_1.score
-        
+
         self._serialized_state["bumper_2"]["x"] = self._bumper_2.x
         self._serialized_state["bumper_2"]["z"] = self._bumper_2.z
         self._serialized_state["bumper_2"]["score"] = self._bumper_2.score
-        
+
         self._serialized_state["ball"]["x"] = self._ball.x
         self._serialized_state["ball"]["z"] = self._ball.z
         self._serialized_state["ball"]["velocity"]["x"] = self._ball.velocity.x
         self._serialized_state["ball"]["velocity"]["z"] = self._ball.velocity.z
         self._serialized_state["ball"]["temporal_speed"]["x"] = self._ball.temporal_speed.x
         self._serialized_state["ball"]["temporal_speed"]["z"] = self._ball.temporal_speed.z
-        
-        if self.coin:
-            if self._serialized_state["coin"] is None:
-                self._serialized_state["coin"] = {"x": -9.25, "z": 0.0}
-            self._serialized_state["coin"]["x"] = self.coin.x
-            self._serialized_state["coin"]["z"] = self.coin.z
+
+        if self._coin:
+            self._serialized_state["coin"] = {"x": -9.25, "z": 0.0}
+            self._serialized_state["coin"]["x"] = self._coin.x
+            self._serialized_state["coin"]["z"] = self._coin.z
         else:
             self._serialized_state["coin"] = None
-            
+
         self._serialized_state["is_someone_scored"] = self._is_someone_scored
-        self._serialized_state["last_bumper_collided"] = "_bumper_1" if self.last_bumper_collided == self._bumper_1 else "_bumper_2"
+        self._serialized_state["last_bumper_collided"] = (
+            "_bumper_1" if self.last_bumper_collided == self._bumper_1 else "_bumper_2"
+        )
         self._serialized_state["current_buff_or_debuff"] = self.choose_buff
         self._serialized_state["elapsed_seconds"] = elapsed_seconds
         self._serialized_state["time_limit_reached"] = self.time_limit_reached
@@ -736,12 +997,7 @@ class GameWorkerConsumer(AsyncConsumer):
                     logger.info("[GameWorker]: match {%s} reached time limit", match.id)
                     match.time_limit_reached = True
 
-                match.resolve_next_tick()
-                if match.coin and match.choose_buff != 0:
-                    asyncio.create_task(
-                        self._wait_for_end_of_buff(match, match.last_bumper_collided),
-                    )
-                    asyncio.create_task(self._wait_for_end_of_buff(match, None))
+                match.resolve_next_tick(GAME_TICK_INTERVAL, tick_start_time)
                 if result := match.get_result():
                     winner, loser = result
                     match_db = await self._write_result_to_db(winner, loser, match, Bracket.FINISHED)
@@ -830,54 +1086,6 @@ class GameWorkerConsumer(AsyncConsumer):
             logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
         except Exception:  # noqa: BLE001
             logger.critical(traceback.format_exc())
-
-    async def _wait_for_end_of_buff(self, match: MultiplayerPongMatch, last_bumper_collided: str):
-        time_to_wait = match.time_to_wait if last_bumper_collided is not None else DEFAULT_COIN_WAIT_TIME
-        choose_buff = match.choose_buff if last_bumper_collided is not None else Buffs.SPAWN_COIN
-        while time_to_wait > 0:
-            await asyncio.sleep(0.2)
-            time_to_wait -= 0.2
-
-        match choose_buff:
-            case Buffs.CONTROL_REVERSE_ENEMY:
-                match.last_bumper_collided.control_reversed = False
-                match.choose_buff = -choose_buff
-
-            case Buffs.SPEED_DECREASE_ENEMY:
-                match.last_bumper_collided.speed = 0.25
-                match.choose_buff = -choose_buff
-
-            case Buffs.SHORTEN_ENEMY:
-                match.last_bumper_collided.lenght_half = 2.5
-                if match.last_bumper_collided.x < -10 + WALL_WIDTH_HALF + match.last_bumper_collided.lenght_half:
-                    match.last_bumper_collided.x = -10 + WALL_WIDTH_HALF + match.last_bumper_collided.lenght_half - 0.1
-                elif match.last_bumper_collided.x > 10 - WALL_WIDTH_HALF - match.last_bumper_collided.lenght_half:
-                    match.last_bumper_collided.x = 10 - WALL_WIDTH_HALF - match.last_bumper_collided.lenght_half + 0.1
-                match.choose_buff = -choose_buff
-
-            case Buffs.ELONGATE_PLAYER:
-                match.last_bumper_collided.lenght_half = 2.5
-                match.choose_buff = -choose_buff
-
-            case Buffs.ENLARGE_PLAYER:
-                match.last_bumper_collided.width_half = 0.5
-                match.choose_buff = -choose_buff
-
-            case Buffs.SPAWN_COIN:
-                match.coin.x, match.coin.z = STARTING_COIN_POS
-
-            case _:
-                logger.warning("No God")
-
-        match.last_bumper_collided = last_bumper_collided
-        await self.channel_layer.group_send(
-            self._to_game_room_group_name(match.id),
-            GameServerToClient.StateUpdated(
-                type="worker_to_client_open",
-                action="state_updated",
-                state=match.as_dict(),
-            ),
-        )
 
     async def _wait_for_reconnection_task(self, match: MultiplayerPongMatch, player: Player):
         try:
@@ -1020,7 +1228,7 @@ class GameWorkerConsumer(AsyncConsumer):
         disconnected_player: Player,
     ):
         match.pause_start_time = asyncio.get_event_loop().time()
-        
+
         await self.channel_layer.group_send(
             self._to_game_room_group_name(match),
             GameServerToClient.GamePaused(
@@ -1038,11 +1246,11 @@ class GameWorkerConsumer(AsyncConsumer):
         if match.status != MultiplayerPongMatchStatus.PAUSED:
             logger.warning("[GameWorker]: game {%s} can't be unpaused, as it was not paused")
             return
-            
+
         pause_duration = asyncio.get_event_loop().time() - match.pause_start_time
         match.total_paused_time += pause_duration
         match.pause_start_time = 0.0
-        
+
         await self.channel_layer.group_send(
             self._to_game_room_group_name(match),
             GameServerToClient.GameUnpaused(type="worker_to_client_open", action="game_unpaused"),
