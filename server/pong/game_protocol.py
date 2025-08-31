@@ -47,7 +47,7 @@ class SerializedGameState(TypedDict):
     coin: _Coin | None
     is_someone_scored: bool
     last_bumper_collided: Literal["_bumper_1", "_bumper_2"]
-    current_buff_or_debuff: int
+    current_buff_or_debuff: Literal[0, 1, 2, 3, 4, 5]
     elapsed_seconds: int
     time_limit_reached: bool
 
