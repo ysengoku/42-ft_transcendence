@@ -257,9 +257,6 @@ For existing users with OAuth connections:
 - **Code Validation:** Authorization codes validated before token exchange
 - **User Data Validation:** OAuth profile data validated before account creation
 
-## OAuth 2.0 Flow Diagram
-![alt text](oauth2_flow_picture.png)
-
 ## Error Scenarios and Handling
 
 ### Common Error Cases
