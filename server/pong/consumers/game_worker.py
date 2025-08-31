@@ -99,6 +99,13 @@ class Buff(IntEnum):
     SPAWN_COIN = auto()
 
 
+class CollisionType(Enum):
+    WALL = auto()
+    BUMPER = auto()
+    COIN = auto()
+    SCORE = auto()
+
+
 class PlayerConnectionState(Enum):
     NOT_CONNECTED = auto()
     CONNECTED = auto()
@@ -248,10 +255,7 @@ class BasePong:
     # tuple of:
     # - type of entity with which ball collided
     # - bumper that caused collision or scored, if it was a coin or a wall then it's `None`
-    CollisionInfo = tuple[
-        Literal["wall", "bumper", "coin", "score"],
-        Literal[Bumper | None],
-    ]
+    CollisionInfo = tuple[CollisionType, Bumper | None]
 
     def resolve_next_tick(self, delta_time: float, current_time: float):
         """
@@ -319,7 +323,7 @@ class BasePong:
                     self._ball.z,
                 )
                 earliest_time = t
-                collision_info = ("wall", None)
+                collision_info = (CollisionType.WALL, None)
 
         # ball vs right wall
         if ball_vel_x > 0:
@@ -334,7 +338,7 @@ class BasePong:
                     self._ball.z,
                 )
                 earliest_time = t
-                collision_info = ("wall", None)
+                collision_info = (CollisionType.WALL, None)
 
         # ball vs bumpers
         for bumper, name in [(self._bumper_1, "bumper_1"), (self._bumper_2, "bumper_2")]:
@@ -359,7 +363,7 @@ class BasePong:
                     bumper.x,
                 )
                 earliest_time = t
-                collision_info = ("bumper", bumper)
+                collision_info = (CollisionType.BUMPER, bumper)
 
         # ball vs coin
         if self._coin and self._is_coin_on_screen():
@@ -382,7 +386,7 @@ class BasePong:
                     self._ball.z,
                 )
                 earliest_time = t
-                collision_info = ("coin", None)
+                collision_info = (CollisionType.COIN, None)
 
         # ball vs scoring zones
         # SCOOOOORE for bumperino uno
@@ -398,7 +402,7 @@ class BasePong:
                     self._bumper_2.x,
                 )
                 earliest_time = t
-                collision_info = ("score", self._bumper_1)
+                collision_info = (CollisionType.SCORE, self._bumper_1)
 
         # SCOOOOORE for bumperino dos
         if ball_vel_z < 0:
@@ -413,7 +417,7 @@ class BasePong:
                     self._bumper_1.x,
                 )
                 earliest_time = t
-                collision_info = ("score", self._bumper_2)
+                collision_info = (CollisionType.SCORE, self._bumper_2)
 
         return earliest_time, collision_info
 
@@ -513,18 +517,18 @@ class BasePong:
         """Handle the collision that just occurred."""
         collision_type, data = collision_info
 
-        if collision_type == "wall":
+        if collision_type == CollisionType.WALL:
             self._ball.velocity.x *= -1
 
-        elif collision_type == "bumper":
+        elif collision_type == CollisionType.BUMPER:
             bumper = data
             self._last_bumper_collided = bumper
             self._calculate_new_ball_dir(bumper)
 
-        elif collision_type == "coin":
+        elif collision_type == CollisionType.COIN:
             self._apply_coin_buff(current_time)
 
-        elif collision_type == "score":
+        elif collision_type == CollisionType.SCORE:
             bumper_that_scored = data
             if bumper_that_scored == self._bumper_1:
                 self._bumper_1.score += 1
