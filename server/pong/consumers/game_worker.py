@@ -202,7 +202,7 @@ class BasePong:
             self._coin = None
         self._is_someone_scored = False
         self.last_bumper_collided: Bumper | None = None
-        self.choose_buff = 0
+        self._current_buff_or_debuff = 0
 
         self.start_time = start_time
         self.last_coin_spawn_time = start_time
@@ -237,8 +237,9 @@ class BasePong:
         Calculates movement and collisions for the next tick.
         Uses continuous collision detection for exact collision times.
         """
-        # at the start of each iteration, this value is reset
+        # at the start of each iteration, reset those values
         self._is_someone_scored = False
+        self._current_buff_or_debuff = 0 # 0 means no buffs or debuffs
 
         decay_amount = TEMPORAL_SPEED_DECAY * delta_time
         self._ball.temporal_speed.x = max(TEMPORAL_SPEED_DEFAULT[0], self._ball.temporal_speed.x - decay_amount)
@@ -544,7 +545,7 @@ class BasePong:
             return
 
         # returns 1-5
-        self.choose_buff = random.randrange(1, 6)  # noqa: S311
+        self._current_buff_or_debuff = random.randrange(1, 6)  # noqa: S311
 
         control_reverse_enemy_duration = 15
         speed_decrease_enemy_duration = 15
@@ -552,26 +553,26 @@ class BasePong:
         elongate_player_duration = 15
         enlarge_player_duration = 15
 
-        match self.choose_buff:
+        match self._current_buff_or_debuff:
             case Buffs.CONTROL_REVERSE_ENEMY:
                 target_bumper = self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
                 target_bumper.control_reversed = True
-                self.active_buff_end_times[self.choose_buff] = current_time + control_reverse_enemy_duration
-                self.active_buff_targets[self.choose_buff] = target_bumper
+                self.active_buff_end_times[self._current_buff_or_debuff] = current_time + control_reverse_enemy_duration
+                self.active_buff_targets[self._current_buff_or_debuff] = target_bumper
                 logger.debug("Debuff target: %s", "bumper_1" if target_bumper == self._bumper_1 else "bumper_2")
 
             case Buffs.SPEED_DECREASE_ENEMY:
                 target_bumper = self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
                 target_bumper.speed = BASE_BUMPER_SPEED * 0.1 * self._game_speed
-                self.active_buff_end_times[self.choose_buff] = current_time + speed_decrease_enemy_duration
-                self.active_buff_targets[self.choose_buff] = target_bumper
+                self.active_buff_end_times[self._current_buff_or_debuff] = current_time + speed_decrease_enemy_duration
+                self.active_buff_targets[self._current_buff_or_debuff] = target_bumper
                 logger.debug("Debuff target: %s", "bumper_1" if target_bumper == self._bumper_1 else "bumper_2")
 
             case Buffs.SHORTEN_ENEMY:
                 target_bumper = self._bumper_1 if self.last_bumper_collided == self._bumper_2 else self._bumper_2
                 target_bumper.lenght_half = 1.25
-                self.active_buff_end_times[self.choose_buff] = current_time + shorten_enemy_duration
-                self.active_buff_targets[self.choose_buff] = target_bumper
+                self.active_buff_end_times[self._current_buff_or_debuff] = current_time + shorten_enemy_duration
+                self.active_buff_targets[self._current_buff_or_debuff] = target_bumper
                 logger.debug("Debuff target: %s", "bumper_1" if target_bumper == self._bumper_1 else "bumper_2")
 
             case Buffs.ELONGATE_PLAYER:
@@ -586,21 +587,21 @@ class BasePong:
                     self.last_bumper_collided.x = (
                         WALL_LEFT_X - WALL_WIDTH_HALF - self.last_bumper_collided.lenght_half - 0.1
                     )
-                self.active_buff_end_times[self.choose_buff] = current_time + elongate_player_duration
-                self.active_buff_targets[self.choose_buff] = self.last_bumper_collided
+                self.active_buff_end_times[self._current_buff_or_debuff] = current_time + elongate_player_duration
+                self.active_buff_targets[self._current_buff_or_debuff] = self.last_bumper_collided
                 logger.debug(
                     "Buff target: %s", "bumper_1" if self.last_bumper_collided == self._bumper_1 else "bumper_2",
                 )
 
             case Buffs.ENLARGE_PLAYER:
                 self.last_bumper_collided.width_half = 1.5
-                self.active_buff_end_times[self.choose_buff] = current_time + enlarge_player_duration
-                self.active_buff_targets[self.choose_buff] = self.last_bumper_collided
+                self.active_buff_end_times[self._current_buff_or_debuff] = current_time + enlarge_player_duration
+                self.active_buff_targets[self._current_buff_or_debuff] = self.last_bumper_collided
                 logger.debug(
                     "Buff target: %s", "bumper_1" if self.last_bumper_collided == self._bumper_1 else "bumper_2",
                 )
 
-        logger.info("Buff %s was chosen", Buffs(self.choose_buff).name)
+        logger.info("Buff %s was chosen", Buffs(self._current_buff_or_debuff).name)
         # hide the coin
         self._hide_coin()
 
@@ -635,7 +636,7 @@ class BasePong:
             if buff_id in self.active_buff_targets:
                 del self.active_buff_targets[buff_id]
             # negative value to indicate that buff ended (not used on the server, but is needed for the client)
-            self.choose_buff = -buff_id
+            self._current_buff_or_debuff = -buff_id
 
     def _reset_buff_effect(self, buff_id: int):
         """Reset the effect of a specific buff when it expires - only affects the targeted bumper."""
@@ -730,7 +731,7 @@ class MultiplayerPongMatch(BasePong):
             "bumper_1": {"x": 0.0, "z": 0.0, "score": 0},
             "bumper_2": {"x": 0.0, "z": 0.0, "score": 0},
             "ball": {"x": 0.0, "z": 0.0, "velocity": {"x": 0.0, "z": 0.0}, "temporal_speed": {"x": 0.0, "z": 0.0}},
-            "coin": None,
+            "coin": {"x": 0.0, "z": 0.0} if cool_mode else None,
             "is_someone_scored": False,
             "last_bumper_collided": "_bumper_1",
             "current_buff_or_debuff": 0,
@@ -857,7 +858,6 @@ class MultiplayerPongMatch(BasePong):
         self._serialized_state["ball"]["temporal_speed"]["z"] = self._ball.temporal_speed.z
 
         if self._coin:
-            self._serialized_state["coin"] = {"x": -9.25, "z": 0.0}
             self._serialized_state["coin"]["x"] = self._coin.x
             self._serialized_state["coin"]["z"] = self._coin.z
         else:
@@ -867,7 +867,7 @@ class MultiplayerPongMatch(BasePong):
         self._serialized_state["last_bumper_collided"] = (
             "_bumper_1" if self.last_bumper_collided == self._bumper_1 else "_bumper_2"
         )
-        self._serialized_state["current_buff_or_debuff"] = self.choose_buff
+        self._serialized_state["current_buff_or_debuff"] = self._current_buff_or_debuff
         self._serialized_state["elapsed_seconds"] = elapsed_seconds
         self._serialized_state["time_limit_reached"] = self.time_limit_reached
 
