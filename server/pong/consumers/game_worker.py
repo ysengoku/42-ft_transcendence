@@ -255,7 +255,11 @@ class BasePong:
     # tuple of:
     # - type of entity with which ball collided
     # - bumper that caused collision or scored, if it was a coin or a wall then it's `None`
-    CollisionInfo = tuple[CollisionType, Bumper | None]
+    CollisionInfoWall = tuple[CollisionType.WALL, None]
+    CollisionInfoBumper = tuple[CollisionType.BUMPER, Bumper]
+    CollisionInfoScore = tuple[CollisionType.SCORE, Bumper]
+    CollisionInfoCoin = tuple[CollisionType.COIN, None]
+    CollisionInfo =  CollisionInfoWall | CollisionInfoBumper | CollisionInfoScore | CollisionInfoCoin
 
     def resolve_next_tick(self, delta_time: float, current_time: float):
         """
