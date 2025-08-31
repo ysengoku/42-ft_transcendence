@@ -445,7 +445,6 @@ export class MultiplayerGame extends HTMLElement {
       }
       let theirBumperPos = theirBumper == 0 ? data.bumper_1.x : data.bumper_2.x;
       // let myBumperPos = ourBumperIndexContainer.ourBumperIndex == 0 ? data.bumper_1.x : data.bumper_2.x;
-      data.last_bumper_collided == '_bumper_1' ? (lastBumperCollided = 0) : (lastBumperCollided = 1);
 
       //Ball.velocity.x = data.ball.velocity.x;
       //Ball.velocity.z = data.ball.velocity.z;
@@ -464,42 +463,59 @@ export class MultiplayerGame extends HTMLElement {
       // Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x = myBumperPos;
 
       if (data.current_buff_or_debuff != 0) {
+        let targetBumperIndex = 0;
+        const isDebuff = Math.abs(data.current_buff_or_debuff) <= 3;
+        if (data.last_bumper_collided == '_bumper_1') {
+          if (isDebuff)
+            targetBumperIndex = 1;
+          else
+            targetBumperIndex = 0;
+        }
+        else if (data.last_bumper_collided == '_bumper_2') {
+          if (isDebuff)
+            targetBumperIndex = 0;
+          else
+            targetBumperIndex = 1;
+        }
+
+        const targetPlayer = Bumpers[targetBumperIndex];
+        
         switch (data.current_buff_or_debuff) {
           case 1:
-            Bumpers[lastBumperCollided].controlReverse = true;
+            targetPlayer.controlReverse = true;
             break;
           case 2:
-            Bumpers[lastBumperCollided].speed = 0.1;
+            targetPlayer.speed = 0.1;
             break;
           case 3:
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
-            Bumpers[lastBumperCollided].lenghtHalf = 1.25;
+            targetPlayer.cubeMesh.scale.x = 0.5;
+            targetPlayer.lenghtHalf = 1.25;
             break;
           case 4:
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
-            Bumpers[lastBumperCollided].lenghtHalf = 5;
+            targetPlayer.cubeMesh.scale.x = 2;
+            targetPlayer.lenghtHalf = 5;
             break;
           case 5:
-            Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
-            Bumpers[lastBumperCollided].widthHalf = 1.5;
+            targetPlayer.cubeMesh.scale.z = 3;
+            targetPlayer.widthHalf = 1.5;
             break;
           case -1:
-            Bumpers[lastBumperCollided].controlReverse = false;
+            targetPlayer.controlReverse = false;
             break;
           case -2:
-            Bumpers[lastBumperCollided].speed = 0.25;
+            targetPlayer.speed = 0.25;
             break;
           case -3:
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
-            Bumpers[lastBumperCollided].lenghtHalf = 2.5;
+            targetPlayer.cubeMesh.scale.x = 1;
+            targetPlayer.lenghtHalf = 2.5;
             break;
           case -4:
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
-            Bumpers[lastBumperCollided].lenghtHalf = 2.5;
+            targetPlayer.cubeMesh.scale.x = 1;
+            targetPlayer.lenghtHalf = 2.5;
             break;
           case -5:
-            Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
-            Bumpers[lastBumperCollided].widthHalf = 0.5;
+            targetPlayer.cubeMesh.scale.z = 1;
+            targetPlayer.widthHalf = 0.5;
             break;
         }
       }
