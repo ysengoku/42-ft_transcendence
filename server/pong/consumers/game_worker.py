@@ -220,7 +220,7 @@ class BasePong:
         self._last_bumper_collided = None
         self._current_buff_or_debuff = Buff.NO_BUFF
 
-        self._last_coin_spawn_time = start_time
+        self._last_coin_hit_time = start_time
         self._active_buff_end_times = {}
         self._active_buff_targets = {}
 
@@ -647,6 +647,7 @@ class BasePong:
         logger.info("Buff %s was chosen", Buff(self._current_buff_or_debuff).name)
         # hide the coin
         self._hide_coin()
+        self._last_coin_hit_time = current_time
 
     def _is_coin_on_screen(self):
         """Coin can spawn, move and apply its effects only when it's on the screen."""
@@ -661,11 +662,10 @@ class BasePong:
         # spawn coin every 30 seconds
         if (
             self._coin
-            and current_time - self._last_coin_spawn_time >= DEFAULT_COIN_WAIT_TIME
+            and current_time - self._last_coin_hit_time >= DEFAULT_COIN_WAIT_TIME
             and not self._is_coin_on_screen()
         ):
             self._coin.x, self._coin.z = STARTING_COIN_POS
-            self._last_coin_spawn_time = current_time
 
         # reset expired buffs
         expired_buffs = []
