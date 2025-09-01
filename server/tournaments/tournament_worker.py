@@ -48,6 +48,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
                     lambda: current_round.brackets.filter(status=Bracket.ONGOING).exists(),
                 )()
                 if not has_ongoing_brackets:
+                    await TournamentWorkerConsumer.set_round_finished(current_round)
                     await TournamentWorkerConsumer.prepare_round(tournament_id)
             else:
                 logger.info("No player connected to tournament games : cancelling tournament")
@@ -96,6 +97,12 @@ class TournamentWorkerConsumer(AsyncConsumer):
             new_round.status = Round.ONGOING
             new_round.save(update_fields=["status"])
             return False
+
+    @database_sync_to_async
+    def set_round_finished(self, current_round):
+        with transaction.atomic():
+            current_round.status = Round.FINISHED
+            current_round.save(update_fields=["status"])
 
     @staticmethod
     async def prepare_round(tournament_id, event=None):
@@ -157,7 +164,9 @@ class TournamentWorkerConsumer(AsyncConsumer):
         brackets = new_round.brackets.all()
         for bracket in brackets:
             game_room = TournamentWorkerConsumer.create_tournament_game_room(
-                bracket.participant1, bracket.participant2, settings,
+                bracket.participant1,
+                bracket.participant2,
+                settings,
             )
             bracket.game_room = game_room
             bracket.game_id = game_room.id
