@@ -131,14 +131,12 @@ export function flyAway(element, duration = 1000) {
 /**
  * Creates a firework animation by launching particles from random positions on the screen.
  * Each particle moves in a random direction and fades out.
- * @param {HTMLElement} parent 
+ * @param {HTMLElement} parent
  * @returns {number} duration of the animation in ms
  */
 export function fireWork(parent = document.body) {
   // Temporarily darken the background with semi-transparent gray
-  const backgroundColor = getComputedStyle(document.documentElement)
-  .getPropertyValue('--pm-gray-700-rgb')
-  .trim();
+  const backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--pm-gray-700-rgb').trim();
   parent.style.position = 'relative';
   parent.style.backgroundColor = `rgba(${backgroundColor}, 0.8)`;
 
@@ -191,12 +189,14 @@ export function fireWork(parent = document.body) {
       p.animate(
         [
           { transform: 'translate(0,0) scale(1)', opacity: 1 },
-          { transform: `translate(${dx/2}px, ${dy/2}px) scale(1.5)`, opacity: 1 },
-          { transform: `translate(${dx}px, ${dy}px) scale(0.3) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+          { transform: `translate(${dx / 2}px, ${dy / 2}px) scale(1.5)`, opacity: 1 },
+          { transform: `translate(${dx}px, ${dy}px) scale(0.3) rotate(${Math.random() * 720}deg)`, opacity: 0 },
         ],
-        { duration: duration,
+        {
+          duration: duration,
           easing: 'cubic-bezier(0.33,1,0.68,1)', // smooth acceleration & deceleration
-          fill: 'forwards' }
+          fill: 'forwards',
+        },
       ).onfinish = () => p.remove(); // remove particle when finished
     }
   }
@@ -207,7 +207,7 @@ export function fireWork(parent = document.body) {
   const animationDuration = launches * interval + 1000;
   for (let i = 0; i < launches; i++) {
     setTimeout(() => {
-      launch(Math.random() * window.innerWidth, Math.random() * window.innerHeight / 2);
+      launch(Math.random() * window.innerWidth, (Math.random() * window.innerHeight) / 2);
     }, i * interval);
   }
   // Clean up after the animation
