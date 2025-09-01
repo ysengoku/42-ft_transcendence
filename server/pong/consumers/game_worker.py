@@ -818,12 +818,15 @@ class MultiplayerPongMatch(BasePong):
             return None
         bumper = player.bumper
 
+        # negative means not pressed, positive means pressed
+        is_pressed = content > 0
+
         match action:
             case "move_left":
-                bumper.moves_left = content > 0
+                bumper.moves_left = is_pressed
                 return player, content
             case "move_right":
-                bumper.moves_right = content > 0
+                bumper.moves_right = is_pressed
                 return player, content
 
     def add_player(self, player_connected_event: dict) -> Player | None:
