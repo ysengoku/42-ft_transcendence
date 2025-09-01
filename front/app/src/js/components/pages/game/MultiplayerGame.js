@@ -291,7 +291,7 @@ export class MultiplayerGame extends HTMLElement {
       let controlReverse = false;
       let lenghtHalf = 2.5;
       let widthHalf = 0.5;
-      let speed = 0.25;
+      let speed = 15.0;
       let score = 0;
 
       return {
@@ -449,7 +449,7 @@ export class MultiplayerGame extends HTMLElement {
       }
 
       if (movement !== 0) {
-        const newX = myBumper.cubeMesh.position.x + movement;
+        const newX = myBumper.cubeUpdate.x + movement;
         
         // Apply bounds checking - mirror server logic exactly  
         const leftLimit = -10 + 0.5 + myBumper.lenghtHalf;  // WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenght_half
@@ -496,7 +496,7 @@ export class MultiplayerGame extends HTMLElement {
       }
       lastReconciliationTime = currentTime;
       
-      const clientPosX = myBumper.cubeMesh.position.x;
+      const clientPosX = myBumper.cubeUpdate.x;
       const difference = Math.abs(serverPosX - clientPosX);
       
       // Only correct significant differences 
@@ -648,7 +648,7 @@ export class MultiplayerGame extends HTMLElement {
       let myBumperPos = ourBumperIndexContainer.ourBumperIndex == 0 ? data.bumper_1.x : data.bumper_2.x;
       
       // Server reconciliation using StateUpdated (after movement is applied)
-      reconcileWithServer(myBumperPos);
+      // reconcileWithServer(myBumperPos);
 
       // Store server ball state for interpolation
       Ball.serverState = {
@@ -881,16 +881,14 @@ export class MultiplayerGame extends HTMLElement {
         router.redirect('/home');
       }, 1500);
     });
-    let now = 0, then = 0, elapsed = 0;
     // let fpsInterval = 60;
     let ballSubtickZ = 0;
     let fpsInterval = 1000 / 120;
-    function animate() {
+    function animate(ms) {
       requestAnimationFrame(animate);
-      now = Date.now();
-      elapsed = now - then;
-      let delta = Math.min(clock.getDelta(), 0.1);
-      if (elapsed > fpsInterval) {
+      const delta = clock.getDelta()
+      const deltaAnimation = Math.min(delta, 0.1);
+      // if (delta > fpsInterval) {
         // CLIENT-SIDE PREDICTION: Only extrapolate ball position slightly ahead of server state
         if (Ball.serverState && Ball.serverState.timestamp) {
           const timeSinceServerUpdate = (Date.now() - Ball.serverState.timestamp) / 1000; // Convert to seconds
@@ -907,11 +905,49 @@ export class MultiplayerGame extends HTMLElement {
           // If too much time has passed since server update, keep last known position
         }
 
-        // CLIENT-SIDE PREDICTION: Apply movement based on confirmed movement state
-        const deltaTimeSeconds = elapsed / 1000;
         
         // Apply client-side movement using the movement state that mirrors server exactly
-        applyClientMovement(deltaTimeSeconds);
+        // applyClientMovement(deltaTimeSeconds);
+
+        
+        const myBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
+        if (
+          ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
+            (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
+          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
+        ) {
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+          // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+        }
+        if (
+          ((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
+            (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
+          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
+        ) {
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+          // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+        }
+
+        if (
+          ((keyMap['KeyD'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
+            (keyMap['KeyA'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
+          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
+        ) {
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+          // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+        }
+        if (
+          ((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
+            (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
+          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
+        ) {
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+          // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+        }
+
+
+
+
         Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
         Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
         
@@ -925,11 +961,15 @@ export class MultiplayerGame extends HTMLElement {
           Bumpers[theirBumper].cubeUpdate.y,
           Bumpers[theirBumper].cubeUpdate.z,
         );
-        then = now - (elapsed % fpsInterval);
-      }
+        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.set(
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x,
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.y,
+          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.z,
+        );
+      // }
 
       if (mixer) {
-        mixer.update(delta);
+        mixer.update(deltaAnimation);
       }
       renderer.render(scene, camera);
     }
