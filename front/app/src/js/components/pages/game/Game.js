@@ -141,7 +141,10 @@ export class Game extends HTMLElement {
             Bumpers[0].gltfStore.action[0][0].reset();
             Bumpers[0].gltfStore.action[0][0].fadeIn(0.1);
             Bumpers[0].gltfStore.action[0][0].play();
-            Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
+            if (Bumpers[0].modelChoosen == 0)
+              Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
+            else
+              Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
             Bumpers[0].currentAction = 0;
           }
           if (keyCode == 'ArrowRight' && Bumpers[0].currentAction != 5) {
@@ -150,7 +153,10 @@ export class Game extends HTMLElement {
             Bumpers[0].gltfStore.action[5][0].fadeIn(0.1);
             Bumpers[0].gltfStore.action[5][0].play();
             Bumpers[0].gltfStore.action[5][1] = true;
-            Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
+            if (Bumpers[0].modelChoosen == 0)
+              Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
+            else
+              Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
             Bumpers[0].currentAction = 5;
           }
         }
@@ -160,7 +166,11 @@ export class Game extends HTMLElement {
             Bumpers[1].gltfStore.action[0][0].reset();
             Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
             Bumpers[1].gltfStore.action[0][0].play();
-            Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
+            if (Bumpers[1].modelChoosen == 0)
+              Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
+            else
+              Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
+            // Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
             // Bumpers[1].playerGlb.rotation.y = Math.PI / 2;
             // Bumpers[1].gltfStore.action[0][1] = true;
             Bumpers[1].currentAction = 0;
@@ -1094,7 +1104,7 @@ export class Game extends HTMLElement {
     }
     // buffUI?.showIcon('long');
     const manageBuffAndDebuff = () => {
-      let chooseBuff = 2;
+      let chooseBuff = 1;
       // Math.floor(Math.random() * 5)
       let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
       switch (chooseBuff) {
