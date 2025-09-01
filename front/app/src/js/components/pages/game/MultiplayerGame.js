@@ -51,7 +51,13 @@ export class MultiplayerGame extends HTMLElement {
     }
   }
 
-  createOnDocumentKeyDown(bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
+  safeSend(message) {
+    if (this.#pongSocket && this.#pongSocket.readyState === WebSocket.OPEN) {
+      this.#pongSocket.send(message);
+    }
+  }
+
+  createOnDocumentKeyDown(bumpers, playerIdContainer, keyMap, ourBumperIndexContainer, processKeyDown) {
     return (e) => {
       const tag = e.target.tagName.toLowerCase();
       if (tag === 'input' || tag === 'textarea') {
@@ -66,85 +72,69 @@ export class MultiplayerGame extends HTMLElement {
         (keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
-        );
+        if (!keyMap[keyCode]) { // Only send on initial press, not repeat
+          processKeyDown('move_left');
+        }
       }
       if (
         (keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
-        );
+        if (!keyMap[keyCode]) { // Only send on initial press, not repeat
+          processKeyDown('move_right');
+        }
       }
       if (
         (keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
-        );
+        if (!keyMap[keyCode]) { // Only send on initial press, not repeat
+          processKeyDown('move_left');
+        }
       }
       if (
         (keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
-        );
+        if (!keyMap[keyCode]) { // Only send on initial press, not repeat
+          processKeyDown('move_right');
+        }
       }
       keyMap[keyCode] = true;
       e.preventDefault();
     };
   }
 
-  createOnDocumentKeyUp(bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
+  createOnDocumentKeyUp(bumpers, playerIdContainer, keyMap, ourBumperIndexContainer, processKeyUp) {
     return (e) => {
       if (e.defaultPrevented) {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = e.code;
-      const now = -Date.now();
+      // Send keyup events to server to stop continuous movement
       if (
         (keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
-        );
+        processKeyUp('move_left');
       }
       if (
         (keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
-        );
+        processKeyUp('move_right');
       }
       if (
         (keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
-        );
+        processKeyUp('move_left');
       }
       if (
         (keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
       ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
-        );
+        processKeyUp('move_right');
       }
       keyMap[keyCode] = false;
       e.preventDefault();
@@ -266,31 +256,11 @@ export class MultiplayerGame extends HTMLElement {
       // let hasCollidedWithWall = false;
 
       return {
-        // get hasCollidedWithBumper1() {
-        //   return hasCollidedWithBumper1;
-        // },
-        // set hasCollidedWithBumper1(newHasCollidedWithBumper1) {
-        //   hasCollidedWithBumper1 = newHasCollidedWithBumper1;
-        // },
-
-        // get hasCollidedWithBumper2() {
-        //   return hasCollidedWithBumper2;
-        // },
-        // set hasCollidedWithBumper2(newHasCollidedWithBumper2) {
-        //   hasCollidedWithBumper2 = newHasCollidedWithBumper2;
-        // },
-
-        // get hasCollidedWithWall() {
-        //   return hasCollidedWithWall;
-        // },
-        // set hasCollidedWithWall(newHasCollidedWithWall) {
-        //   hasCollidedWithWall = newHasCollidedWithWall;
-        // },
-
         sphereMesh,
         sphereUpdate,
         velocity,
         temporalSpeed,
+        serverState: null, // Will be populated by server updates
       };
     })(0, 1, 0);
 
@@ -317,7 +287,7 @@ export class MultiplayerGame extends HTMLElement {
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
-      const inputQueue = [];
+      const inputQueue = []; // Legacy - will be replaced by global pendingInputs
       let controlReverse = false;
       let lenghtHalf = 2.5;
       let widthHalf = 0.5;
@@ -397,18 +367,243 @@ export class MultiplayerGame extends HTMLElement {
     })();
 
     const clock = new THREE.Clock();
+    // Server reconciliation tracking
+    let lastServerPositionX = null;
+    let lastServerTimestamp = null;
+    
+    // Entity interpolation state for opponent bumper
+    const opponentPositionBuffer = [];
+    const ENTITY_INTERPOLATION_DELAY = 100; // 100ms behind real-time
+    
+    // Client-side bumper state that mirrors server exactly
+    let clientBumperState = {
+      moves_left: false,  // Mirrors server's bumper.moves_left
+      moves_right: false, // Mirrors server's bumper.moves_right
+      speed: 0.25 * (window.gameSettings?.game_speed || 1.0) // Will be set from server data
+    };
+    
+    // Input tracking for proper reconciliation
+    let pendingInputs = [];
+    let inputSequenceNumber = 0;
+    
     this.#pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
     let lastBumperCollided;
 
-    function confirmInputs(data) {
-      const { action, content } = data;
-      for (let [i, input] of Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.entries()) {
-        if (input[0] === action && input[1] <= content) {
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.splice(i, 1);
-          return true;
+    // Client-side prediction that mirrors server movement logic exactly
+    
+    const sendMovementInput = (action, pressed) => {
+      const sequenceNumber = ++inputSequenceNumber;
+      const timestamp = Date.now();
+      
+      // Create input for tracking
+      const input = {
+        sequenceNumber,
+        action,
+        pressed,
+        timestamp
+      };
+      
+      // IMMEDIATELY update client movement state (mirrors server's handle_input)
+      if (action === 'move_left') {
+        clientBumperState.moves_left = pressed;
+      } else if (action === 'move_right') {
+        clientBumperState.moves_right = pressed;
+      }
+      
+      // Store input for reconciliation
+      pendingInputs.push(input);
+      
+      // Send to server with sequence number in content field
+      // Server will echo this back for reconciliation
+      this.safeSend(JSON.stringify({ 
+        action: action, 
+        content: pressed ? sequenceNumber : -sequenceNumber, // Positive=pressed, negative=released
+        player_id: playerIdContainer.playerId 
+      }));
+      
+      return input;
+    };
+    
+    const processKeyDown = (action) => {
+      return sendMovementInput(action, true);
+    };
+    
+    const processKeyUp = (action) => {
+      return sendMovementInput(action, false);
+    };
+    
+    // Client-side movement calculation that mirrors server's _move_bumper exactly
+    const applyClientMovement = (deltaTime) => {
+      const myBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
+      
+      // Mirror server logic exactly: if both pressed = no movement
+      if (clientBumperState.moves_left && clientBumperState.moves_right) {
+        return;
+      }
+
+      let movement = 0;
+      if (clientBumperState.moves_left) {
+        movement = myBumper.speed * deltaTime; // Positive movement (server logic)
+      } else if (clientBumperState.moves_right) {
+        movement = -myBumper.speed * deltaTime; // Negative movement (server logic)  
+      }
+
+      if (movement !== 0) {
+        const newX = myBumper.cubeMesh.position.x + movement;
+        
+        // Apply bounds checking - mirror server logic exactly  
+        const leftLimit = -10 + 0.5 + myBumper.lenghtHalf;  // WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenght_half
+        const rightLimit = 10 - 0.5 - myBumper.lenghtHalf;  // WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenght_half
+        const clampedX = Math.max(leftLimit, Math.min(rightLimit, newX));
+        
+        myBumper.cubeMesh.position.x = clampedX;
+        myBumper.cubeUpdate.x = clampedX;
+      }
+    };
+    
+    // Input confirmation reconciliation - synchronize movement state with server
+    const reconcileInputConfirmation = (action, sequenceNumber) => {
+      const absSequenceNumber = Math.abs(sequenceNumber);
+      const pressed = sequenceNumber > 0;
+      
+      // Remove processed inputs from pending list
+      pendingInputs = pendingInputs.filter(input => input.sequenceNumber > absSequenceNumber);
+      
+      // Synchronize movement state with server confirmation
+      // This handles cases where inputs were lost or arrived out of order
+      if (action === 'move_left') {
+        clientBumperState.moves_left = pressed;
+      } else if (action === 'move_right') {
+        clientBumperState.moves_right = pressed;
+      }
+    };
+    
+    // Position reconciliation using StateUpdated messages
+    let lastReconciliationTime = 0;
+    const RECONCILIATION_INTERVAL = 100; // Reconcile every 100ms
+    
+    const reconcileWithServer = (serverPosX) => {
+      const myBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
+      const currentTime = Date.now();
+      
+      // Store server position for reference
+      lastServerPositionX = serverPosX;
+      lastServerTimestamp = currentTime;
+      
+      // Only reconcile occasionally to avoid fighting with client prediction
+      if (currentTime - lastReconciliationTime < RECONCILIATION_INTERVAL) {
+        return;
+      }
+      lastReconciliationTime = currentTime;
+      
+      const clientPosX = myBumper.cubeMesh.position.x;
+      const difference = Math.abs(serverPosX - clientPosX);
+      
+      // Only correct significant differences 
+      if (difference > 0.15) { // Only correct if >0.15 units off
+        // Very gentle correction - trust client prediction more
+        const correctionFactor = 0.3; // 30% correction per reconciliation
+        const correctedX = clientPosX + (serverPosX - clientPosX) * correctionFactor;
+        
+        myBumper.cubeMesh.position.x = correctedX;
+        myBumper.cubeUpdate.x = correctedX;
+      }
+      
+      // Clean up very old pending inputs
+      pendingInputs = pendingInputs.filter(input => (currentTime - input.timestamp) < 1000);
+    };
+    
+    // Calculate movement for a specific input - mirrors server logic exactly
+    const calculateMovement = (input, deltaTime, bumper) => {
+      let movement = 0;
+      const movesLeft = (input.action === 'move_left') ? input.pressed : movementState.movesLeft;
+      const movesRight = (input.action === 'move_right') ? input.pressed : movementState.movesRight;
+      
+      // Mirror server logic: both pressed = no movement
+      if (movesLeft && movesRight) {
+        return 0;
+      }
+      
+      if (movesLeft) {
+        movement = bumper.speed * deltaTime; // Positive movement (server: moves_left=true)
+      } else if (movesRight) {
+        movement = -bumper.speed * deltaTime; // Negative movement (server: moves_right=true)
+      }
+      
+      return movement;
+    };
+    
+    // Calculate current movement based on current movement state
+    const calculateCurrentMovement = (deltaTime, bumper) => {
+      if (movementState.movesLeft && movementState.movesRight) {
+        return 0;
+      }
+      
+      let movement = 0;
+      if (movementState.movesLeft) {
+        movement = bumper.speed * deltaTime;
+      } else if (movementState.movesRight) {
+        movement = -bumper.speed * deltaTime;
+      }
+      
+      return movement;
+    };
+    
+    // Apply boundary constraints - mirrors server logic
+    const applyBounds = (position, bumperLengthHalf) => {
+      const leftLimit = -10 + 0.5 + bumperLengthHalf;  // WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenght_half
+      const rightLimit = 10 - 0.5 - bumperLengthHalf;   // WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenght_half
+      return Math.max(leftLimit, Math.min(rightLimit, position));
+    };
+    
+    // Entity interpolation for opponent following Gabriel Gambetta's pattern
+    function updateOpponentPositionBuffer(position, timestamp) {
+      opponentPositionBuffer.push({ position, timestamp });
+      
+      // Keep buffer size manageable (max 10 positions, ~300ms of history at 30fps)
+      if (opponentPositionBuffer.length > 10) {
+        opponentPositionBuffer.shift();
+      }
+    }
+    
+    function getInterpolatedOpponentPosition() {
+      if (opponentPositionBuffer.length < 2) {
+        return opponentPositionBuffer.length > 0 ? opponentPositionBuffer[0].position : null;
+      }
+      
+      const renderTime = Date.now() - ENTITY_INTERPOLATION_DELAY;
+      
+      // Find the two positions to interpolate between
+      let fromPosition = null;
+      let toPosition = null;
+      
+      for (let i = 0; i < opponentPositionBuffer.length - 1; i++) {
+        if (opponentPositionBuffer[i].timestamp <= renderTime && opponentPositionBuffer[i + 1].timestamp >= renderTime) {
+          fromPosition = opponentPositionBuffer[i];
+          toPosition = opponentPositionBuffer[i + 1];
+          break;
         }
       }
-      return false;
+      
+      // If we don't have suitable positions, use the closest one
+      if (!fromPosition || !toPosition) {
+        const closestIndex = opponentPositionBuffer.length - 2;
+        if (closestIndex >= 0) {
+          fromPosition = opponentPositionBuffer[closestIndex];
+          toPosition = opponentPositionBuffer[closestIndex + 1];
+        } else {
+          return opponentPositionBuffer[opponentPositionBuffer.length - 1].position;
+        }
+      }
+      
+      // Interpolate between the two positions
+      const timeDiff = toPosition.timestamp - fromPosition.timestamp;
+      if (timeDiff === 0) {
+        return toPosition.position;
+      }
+      
+      const alpha = Math.max(0, Math.min(1, (renderTime - fromPosition.timestamp) / timeDiff));
+      return fromPosition.position + (toPosition.position - fromPosition.position) * alpha;
     }
     const pi = Math.PI;
     function degreesToRadians(degrees) {
@@ -439,28 +634,54 @@ export class MultiplayerGame extends HTMLElement {
       // Ball.bulletGlb.rotation.y = -degreesToRadians(Ball.temporalSpeed.x);
     }
     let theirBumper = 0;
+    
+    // Track if player is currently moving for smoother reconciliation
+    let isPlayerMoving = false;
+    let lastPlayerMovement = 0;
+    
     function updateState(data) {
       if (!data) {
         return;
       }
+      
       let theirBumperPos = theirBumper == 0 ? data.bumper_1.x : data.bumper_2.x;
-      // let myBumperPos = ourBumperIndexContainer.ourBumperIndex == 0 ? data.bumper_1.x : data.bumper_2.x;
+      let myBumperPos = ourBumperIndexContainer.ourBumperIndex == 0 ? data.bumper_1.x : data.bumper_2.x;
+      
+      // Server reconciliation using StateUpdated (after movement is applied)
+      reconcileWithServer(myBumperPos);
 
-      //Ball.velocity.x = data.ball.velocity.x;
-      //Ball.velocity.z = data.ball.velocity.z;
-
-      //Ball.temporalSpeed.x = data.ball.temporalSpeed.x;
-      //Ball.temporalSpeed.z = data.ball.temporalSpeed.z;
-      Ball.sphereUpdate.z = data.ball.z;
+      // Store server ball state for interpolation
+      Ball.serverState = {
+        x: data.ball.x,
+        z: data.ball.z,
+        velocity: { x: data.ball.velocity.x, z: data.ball.velocity.z },
+        temporalSpeed: { x: data.ball.temporal_speed.x, z: data.ball.temporal_speed.z },
+        timestamp: Date.now()
+      };
+      
+      // Update ball velocity for client-side prediction
+      Ball.velocity.x = data.ball.velocity.x;
+      Ball.velocity.z = data.ball.velocity.z;
+      Ball.temporalSpeed.x = data.ball.temporal_speed.x;
+      Ball.temporalSpeed.z = data.ball.temporal_speed.z;
+      
+      // Set ball position to server position (authoritative)
       Ball.sphereUpdate.x = data.ball.x;
+      Ball.sphereUpdate.z = data.ball.z;
 
       // Coin.cylinderUpdate.z = data.coin.z;
       // Coin.cylinderUpdate.x = data.coin.x;
 
       Bumpers[0].score = data.bumper_1.score;
       Bumpers[1].score = data.bumper_2.score;
-      Bumpers[theirBumper].cubeUpdate.x = theirBumperPos;
-      // Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x = myBumperPos;
+      
+      // NEVER update player's own bumper position from server - it's client-authoritative
+      // The server echoes back our input, but we trust our own prediction completely
+      
+      // Proper entity interpolation for opponent bumper following Gabriel Gambetta's pattern
+      updateOpponentPositionBuffer(theirBumperPos, Date.now());
+      
+      // Don't update opponent position here - it will be updated by the interpolation in render loop
 
       if (data.current_buff_or_debuff != 0) {
         let targetBumperIndex = 0;
@@ -600,8 +821,9 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'move_left':
         case 'move_right':
-          if (data.player_number == ourBumperIndexContainer.ourBumperIndex + 1 && !confirmInputs(data)) {
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x = data.position_x;
+          if (data.player_number == ourBumperIndexContainer.ourBumperIndex + 1) {
+            // Use InputConfirmed for movement state reconciliation (not position)
+            reconcileInputConfirmation(data.action, data.content);
           }
           break;
         case 'player_joined':
@@ -669,126 +891,41 @@ export class MultiplayerGame extends HTMLElement {
       elapsed = now - then;
       let delta = Math.min(clock.getDelta(), 0.1);
       if (elapsed > fpsInterval) {
-        let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * 1);
-        let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * 1);//TODO: replace 1
-        Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
-        Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
-
-        let currentSubtick = 0;
-        ballSubtickZ = SUBTICK;
-        const totalSubticks = totalDistanceZ / ballSubtickZ;
-        const ballSubtickX = totalDistanceX / totalSubticks;
-        const bumperSubtick = Bumpers[ourBumperIndexContainer.ourBumperIndex].speed / totalSubticks;
-        // bumperP2Subtick = Bumpers[1].speed / totalSubticks;
-        while (currentSubtick <= totalSubticks) {
-          // if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
-          //   // isMovementDone = true;
-          //   // Bumpers[0].score++;
-          //   // console.log(Bumpers[0].score);
-          //   resetBall(-1);
-          //   // if (Bumpers[0].score <= MAX_SCORE) scoreUI?.updateScore(0, Bumpers[0].score);
-          // } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
-          //   // isMovementDone = true;
-          //   // Bumpers[1].score++;
-          //   // console.log(Bumpers[1].score);
-          //   resetBall(1);
-          //   // if (Bumpers[1].score <= MAX_SCORE) scoreUI?.updateScore(1, Bumpers[1].score);
-          // }
-          if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-            Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
-            Ball.velocity.x *= -1;
-            // Ball.bulletGlb.rotation.x *= -1;
-            // if (lastBumperCollided == 0) isCalculationNeeded = true;
-          }
-          if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-            Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
-            Ball.velocity.x *= -1;
-            // Ball.bulletGlb.rotation.x *= -1;
-            // if (lastBumperCollided == 0) isCalculationNeeded = true;
-          }
-          // if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
-          //   calculateNewDir(Bumpers[0]);
-          //   // console.log("FUCK YOU: 0")
-          // } else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
-          //   calculateNewDir(Bumpers[1]);
-          //   // console.log("FUCK YOU: 1")
-          // }
-
-          if (
-            ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-            (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-            !(
-              Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x >
-              10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-            )
-          )
-          {
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x +=
-            bumperSubtick;
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x +=
-            bumperSubtick;
-          }
-          if (
-            ((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-            (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-            !(
-              Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x <
-              -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-            )
-          )
-          {
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
-            bumperSubtick;
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x -=
-            bumperSubtick;
-          }
+        // CLIENT-SIDE PREDICTION: Only extrapolate ball position slightly ahead of server state
+        if (Ball.serverState && Ball.serverState.timestamp) {
+          const timeSinceServerUpdate = (Date.now() - Ball.serverState.timestamp) / 1000; // Convert to seconds
+          const MAX_PREDICTION_TIME = 0.1; // Only predict 100ms ahead
           
-          if (
-            ((keyMap['KeyD'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-            (keyMap['KeyA'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-            !(
-              Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x >
-              10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-            )
-          )
-          {
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x +=
-            bumperSubtick;
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x +=
-            bumperSubtick;
+          if (timeSinceServerUpdate < MAX_PREDICTION_TIME) {
+            // Extrapolate ball position based on server velocity
+            const gameSpeed = 1.0; // Assuming medium game speed
+            Ball.sphereUpdate.x = Ball.serverState.x + 
+              (Ball.serverState.velocity.x * Ball.serverState.temporalSpeed.x * gameSpeed * timeSinceServerUpdate);
+            Ball.sphereUpdate.z = Ball.serverState.z + 
+              (Ball.serverState.velocity.z * Ball.serverState.temporalSpeed.z * gameSpeed * timeSinceServerUpdate);
           }
-          if (
-            ((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-            (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-            !(
-              Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x <
-              -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-            )
-          )
-          {
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
-            bumperSubtick;
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x -=
-            bumperSubtick;
-          }
-          Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
-          Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
-          currentSubtick++;
+          // If too much time has passed since server update, keep last known position
         }
+
+        // CLIENT-SIDE PREDICTION: Apply movement based on confirmed movement state
+        const deltaTimeSeconds = elapsed / 1000;
+        
+        // Apply client-side movement using the movement state that mirrors server exactly
+        applyClientMovement(deltaTimeSeconds);
         Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
         Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-        // Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.set(
-        // Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x,
-        // Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.y,
-        // Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.z,
-        // );
+        
+        // Opponent bumper position using proper entity interpolation
+        const interpolatedOpponentPos = getInterpolatedOpponentPosition();
+        if (interpolatedOpponentPos !== null) {
+          Bumpers[theirBumper].cubeUpdate.x = interpolatedOpponentPos;
+        }
         Bumpers[theirBumper].cubeMesh.position.set(
           Bumpers[theirBumper].cubeUpdate.x,
           Bumpers[theirBumper].cubeUpdate.y,
           Bumpers[theirBumper].cubeUpdate.z,
         );
         then = now - (elapsed % fpsInterval);
-        console.log(elapsed * fpsInterval);
       }
 
       if (mixer) {
@@ -797,8 +934,8 @@ export class MultiplayerGame extends HTMLElement {
       renderer.render(scene, camera);
     }
 
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
-    this.onDocumentKeyUp = this.createOnDocumentKeyUp(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer, processKeyDown);
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer, processKeyUp);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
