@@ -39,6 +39,8 @@ BUMPER_WIDTH = 1
 BUMPER_WIDTH_HALF = BUMPER_WIDTH / 2
 BUMPER_1_BORDER = -10
 BUMPER_2_BORDER = -BUMPER_1_BORDER
+COIN_LENGTH_HALF = 0.25
+COIN_WIDTH_HALF = 0.05
 BALL_DIAMETER = 1
 BALL_RADIUS = BALL_DIAMETER / 2
 STARTING_BUMPER_1_POS = 0, -9
@@ -275,13 +277,9 @@ class BasePong:
         self._ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self._ball.temporal_speed.z - decay_amount)
 
         remaining_time = delta_time
-        max_iterations = 10  # safety limit to prevent infinite loops
-        iteration = 0
-
         # epsilon is the level of imprecision we are willing to tolerate, it's 0.000001
         epsilon = 1e-6
-        while remaining_time > epsilon and iteration < max_iterations:
-            iteration += 1
+        while remaining_time > epsilon:
             collision_time, collision_info = self._find_next_collision(remaining_time)
 
             if collision_info is None:
@@ -384,8 +382,8 @@ class BasePong:
                 ball_vel_z,
                 self._coin.x,
                 self._coin.z,
-                0.25,
-                0.05,
+                COIN_LENGTH_HALF,
+                COIN_WIDTH_HALF,
             )
             if 0 < t <= earliest_time:
                 logger.debug(
@@ -497,8 +495,8 @@ class BasePong:
         if self._coin and self._is_coin_on_screen():
             self._coin.x += self._coin.velocity.x * delta_time
             self._coin.z += self._coin.velocity.z * delta_time
-            if (self._coin.x < WALL_RIGHT_X + WALL_WIDTH_HALF + 0.25) or (
-                self._coin.x > WALL_LEFT_X - WALL_WIDTH_HALF - 0.25
+            if (self._coin.x < WALL_RIGHT_X + WALL_WIDTH_HALF + COIN_LENGTH_HALF) or (
+                self._coin.x > WALL_LEFT_X - WALL_WIDTH_HALF - COIN_LENGTH_HALF
             ):
                 self._coin.velocity.x *= -1
 
