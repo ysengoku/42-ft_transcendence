@@ -869,9 +869,6 @@ export class MultiplayerGame extends HTMLElement {
           // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
         }
 
-
-
-
         Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
         Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
         
@@ -921,7 +918,7 @@ export class MultiplayerGame extends HTMLElement {
       camera.aspect = rendererWidth / rendererHeight;
       camera.updateProjectionMatrix();
     });
-    animate();
+    animate(0);
 
     this.overlay?.show('pending');
   }
