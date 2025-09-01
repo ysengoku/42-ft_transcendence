@@ -432,35 +432,6 @@ export class MultiplayerGame extends HTMLElement {
       return sendMovementInput(action, false);
     };
     
-    // Client-side movement calculation that mirrors server's _move_bumper exactly
-    const applyClientMovement = (deltaTime) => {
-      const myBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
-      
-      // Mirror server logic exactly: if both pressed = no movement
-      if (clientBumperState.moves_left && clientBumperState.moves_right) {
-        return;
-      }
-
-      let movement = 0;
-      if (clientBumperState.moves_left) {
-        movement = myBumper.speed * deltaTime; // Positive movement (server logic)
-      } else if (clientBumperState.moves_right) {
-        movement = -myBumper.speed * deltaTime; // Negative movement (server logic)  
-      }
-
-      if (movement !== 0) {
-        const newX = myBumper.cubeUpdate.x + movement;
-        
-        // Apply bounds checking - mirror server logic exactly  
-        const leftLimit = -10 + 0.5 + myBumper.lenghtHalf;  // WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenght_half
-        const rightLimit = 10 - 0.5 - myBumper.lenghtHalf;  // WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenght_half
-        const clampedX = Math.max(leftLimit, Math.min(rightLimit, newX));
-        
-        myBumper.cubeMesh.position.x = clampedX;
-        myBumper.cubeUpdate.x = clampedX;
-      }
-    };
-    
     // Input confirmation reconciliation - synchronize movement state with server
     const reconcileInputConfirmation = (action, sequenceNumber) => {
       const absSequenceNumber = Math.abs(sequenceNumber);
@@ -511,49 +482,6 @@ export class MultiplayerGame extends HTMLElement {
       
       // Clean up very old pending inputs
       pendingInputs = pendingInputs.filter(input => (currentTime - input.timestamp) < 1000);
-    };
-    
-    // Calculate movement for a specific input - mirrors server logic exactly
-    const calculateMovement = (input, deltaTime, bumper) => {
-      let movement = 0;
-      const movesLeft = (input.action === 'move_left') ? input.pressed : movementState.movesLeft;
-      const movesRight = (input.action === 'move_right') ? input.pressed : movementState.movesRight;
-      
-      // Mirror server logic: both pressed = no movement
-      if (movesLeft && movesRight) {
-        return 0;
-      }
-      
-      if (movesLeft) {
-        movement = bumper.speed * deltaTime; // Positive movement (server: moves_left=true)
-      } else if (movesRight) {
-        movement = -bumper.speed * deltaTime; // Negative movement (server: moves_right=true)
-      }
-      
-      return movement;
-    };
-    
-    // Calculate current movement based on current movement state
-    const calculateCurrentMovement = (deltaTime, bumper) => {
-      if (movementState.movesLeft && movementState.movesRight) {
-        return 0;
-      }
-      
-      let movement = 0;
-      if (movementState.movesLeft) {
-        movement = bumper.speed * deltaTime;
-      } else if (movementState.movesRight) {
-        movement = -bumper.speed * deltaTime;
-      }
-      
-      return movement;
-    };
-    
-    // Apply boundary constraints - mirrors server logic
-    const applyBounds = (position, bumperLengthHalf) => {
-      const leftLimit = -10 + 0.5 + bumperLengthHalf;  // WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenght_half
-      const rightLimit = 10 - 0.5 - bumperLengthHalf;   // WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenght_half
-      return Math.max(leftLimit, Math.min(rightLimit, position));
     };
     
     // Entity interpolation for opponent following Gabriel Gambetta's pattern
@@ -669,8 +597,10 @@ export class MultiplayerGame extends HTMLElement {
       Ball.sphereUpdate.x = data.ball.x;
       Ball.sphereUpdate.z = data.ball.z;
 
-      Coin.cylinderUpdate.z = data.coin.z;
-      Coin.cylinderUpdate.x = data.coin.x;
+      if (data.coin) {
+        Coin.cylinderUpdate.z = data.coin.z;
+        Coin.cylinderUpdate.x = data.coin.x;
+      }
 
       Bumpers[0].score = data.bumper_1.score;
       Bumpers[1].score = data.bumper_2.score;
@@ -881,7 +811,6 @@ export class MultiplayerGame extends HTMLElement {
         router.redirect('/home');
       }, 1500);
     });
-    // let fpsInterval = 60;
     let ballSubtickZ = 0;
     let fpsInterval = 1000 / 120;
     function animate(ms) {
@@ -905,11 +834,6 @@ export class MultiplayerGame extends HTMLElement {
           // If too much time has passed since server update, keep last known position
         }
 
-        
-        // Apply client-side movement using the movement state that mirrors server exactly
-        // applyClientMovement(deltaTimeSeconds);
-
-        
         const myBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
         if (
           ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
