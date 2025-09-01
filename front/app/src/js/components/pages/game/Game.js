@@ -588,7 +588,7 @@ export class Game extends HTMLElement {
       // playerGlb.position.x -= 1;
       if (posZ < 0) {
         playerGlb.rotation.y = degreesToRadians(55);
-        playerGlb.position.z = posZ - 1.1;
+        playerGlb.position.z = posZ - 1;
         playerGlb.position.x += 1;
         tableGlb.rotation.z = Math.PI;
       } else {
@@ -1035,6 +1035,9 @@ export class Game extends HTMLElement {
         new Worker(blobURL),
       ];
       Workers[0].onmessage = function (e) {
+        let dirz = Bumpers[e.data[0]].playerGlb.position.z;
+        Bumpers[e.data[0]].playerGlb.position.z -= 0.7;
+        dirz < 0 ? (Bumpers[e.data[0]].playerGlb.position.x += 7.2) : (Bumpers[e.data[0]].playerGlb.position.x -= 7.2);
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = false;
         Bumpers[e.data[0]].modelChoosen = 0;
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
@@ -1043,7 +1046,6 @@ export class Game extends HTMLElement {
       };
       Workers[1].onmessage = function (e) {
         let dirz = Bumpers[e.data[0]].playerGlb.position.z;
-        dirz < 0 ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1 : Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
         Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = false;
         Bumpers[Math.abs(e.data[0] - 1)].modelChoosen = 0;
         Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = true;
@@ -1053,14 +1055,18 @@ export class Game extends HTMLElement {
           -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
         ) {
           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
+          -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
+          dirz < 0 ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =  -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1: Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1; 
         } else if (
           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
           10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
         ) {
           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
+          10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
+          // Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
+          dirz < 0 ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =  10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1: Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
         }
+        dirz < 0 ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1 : Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
         buffUI?.hideIcon();
       };
       Workers[2].onmessage = function (e) {
@@ -1088,29 +1094,39 @@ export class Game extends HTMLElement {
     }
     // buffUI?.showIcon('long');
     const manageBuffAndDebuff = () => {
-      let chooseBuff = Math.floor(Math.random() * 5);
+      let chooseBuff = 2;
       // Math.floor(Math.random() * 5)
       let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
       switch (chooseBuff) {
         case 1:
+
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
           Bumpers[lastBumperCollided].modelChoosen = 1;
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
           Bumpers[lastBumperCollided].lenghtHalf = 5;
+          Bumpers[lastBumperCollided].playerGlb.position.z += 0.7;
           if (
             Bumpers[lastBumperCollided].cubeUpdate.x <
             -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
               -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
+            if (dirz < 0)
+              Bumpers[lastBumperCollided].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1;
+            else
+              Bumpers[lastBumperCollided].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1;
           } else if (
             Bumpers[lastBumperCollided].cubeUpdate.x >
             10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
               10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+            if (dirz < 0)
+              Bumpers[lastBumperCollided].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1;
+            else
+              Bumpers[lastBumperCollided].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1;
           }
-
+          dirz < 0 ? Bumpers[lastBumperCollided].playerGlb.position.x -= 7.2: Bumpers[lastBumperCollided].playerGlb.position.x += 7.2;
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.showIcon('long');
           break;
