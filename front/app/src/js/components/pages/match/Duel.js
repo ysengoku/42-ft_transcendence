@@ -96,6 +96,15 @@ export class Duel extends HTMLElement {
           cool_mode: param.get('cool_mode'),
         };
         break;
+      case DUEL_STATUS.INVITATION_DECLINED:
+        this.#state.opponent = {
+          username: param.get('username'),
+          nickname: param.get('nickname'),
+        };
+        break;
+      case DUEL_STATUS.INVITATION_CANCELED:
+      case DUEL_STATUS.MATCHMAKING_CANCELED:
+        break;
       default:
         this.#state.status = '';
         return;
@@ -273,8 +282,7 @@ export class Duel extends HTMLElement {
     router.removeBeforeunloadCallback();
     window.removeEventListener('beforeunload', this.confirmLeavePage);
     socketManager.closeSocket('matchmaking');
-    this.#state.status = DUEL_STATUS.MATCHMAKING_CANCELED;
-    this.renderContent();
+    router.redirect(`/duel?status=${DUEL_STATUS.MATCHMAKING_CANCELED}`);
   }
 
   /**
@@ -314,8 +322,7 @@ export class Duel extends HTMLElement {
           message = 'Matchmaking is momentarily unavailable.';
       }
       showToastNotification(message, TOAST_TYPES.ERROR);
-      this.#state.status = DUEL_STATUS.MATCHMAKING_CANCELED;
-      this.renderContent();
+      router.redirect(`/duel?status=${DUEL_STATUS.MATCHMAKING_CANCELED}`);
       log.info('Matchmaking canceled by server:', event.detail);
     }
   }
@@ -356,8 +363,14 @@ export class Duel extends HTMLElement {
     if (data.username !== this.#state.opponent.username) {
       return;
     }
-    this.#state.status = DUEL_STATUS.INVITATION_DECLINED;
-    this.renderContent();
+    router.removeBeforeunloadCallback();
+    window.removeEventListener('beforeunload', this.confirmLeavePage);
+    const params = new URLSearchParams({
+      status: DUEL_STATUS.INVITATION_DECLINED,
+      username: this.#state.opponent.username,
+      nickname: this.#state.opponent.nickname,
+    }).toString();
+    router.redirect(`/duel?${params}`);
   }
 
   async invitationCanceled(data) {
@@ -378,8 +391,9 @@ export class Duel extends HTMLElement {
     log.info('Canceling game invitation');
     const message = { action: 'cancel_game_invite', data: { username: this.#state.opponent.username } };
     socketManager.sendMessage('livechat', message);
-    this.#state.status = DUEL_STATUS.INVITATION_CANCELED;
-    this.renderContent();
+    router.removeBeforeunloadCallback();
+    window.removeEventListener('beforeunload', this.confirmLeavePage);
+    router.redirect(`/duel?status=${DUEL_STATUS.INVITATION_CANCELED}`);
   }
 
   /* ------------------------------------------------------------------------ */
