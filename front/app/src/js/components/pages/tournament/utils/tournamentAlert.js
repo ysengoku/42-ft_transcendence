@@ -62,7 +62,7 @@ export function showTournamentAlert(
         setTimeout(() => {
           alertContainer.remove();
         }, 1000);
-      }, fireworkDuration); 
+      }, fireworkDuration);
       return;
     case TOURNAMENT_ALERT_TYPE.ELIMINATED:
       setTimeout(() => {
