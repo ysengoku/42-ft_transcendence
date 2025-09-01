@@ -669,8 +669,8 @@ export class MultiplayerGame extends HTMLElement {
       Ball.sphereUpdate.x = data.ball.x;
       Ball.sphereUpdate.z = data.ball.z;
 
-      // Coin.cylinderUpdate.z = data.coin.z;
-      // Coin.cylinderUpdate.x = data.coin.x;
+      Coin.cylinderUpdate.z = data.coin.z;
+      Coin.cylinderUpdate.x = data.coin.x;
 
       Bumpers[0].score = data.bumper_1.score;
       Bumpers[1].score = data.bumper_2.score;
