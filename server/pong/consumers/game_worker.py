@@ -165,7 +165,7 @@ class Player:
     bumper: Bumper
     id: str = ""
     connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
-    connection_stamp: datetime | Literal[0] = 0
+    connection_stamp: float = 0.0
     reconnection_time: int = 30
     reconnection_timer: asyncio.Task | None = None
     profile_id: int = -1
@@ -193,9 +193,9 @@ class Player:
             "player_number": 1 if self.bumper.z == 1 else 2,
         }
 
-    def set_as_connected(self):
+    def set_as_connected(self, connection_timestamp: float):
         self.connection = PlayerConnectionState.CONNECTED
-        self.connection_stamp = timezone.now()
+        self.connection_stamp = connection_timestamp
         return self
 
 
@@ -850,7 +850,7 @@ class MultiplayerPongMatch(BasePong):
         random.shuffle(available_player_slots)
         player = available_player_slots.pop()
         player.id = player_id
-        player.set_as_connected()
+        player.set_as_connected(asyncio.get_event_loop().time())
         player.profile_id = int(player_connected_event["profile_id"])
         player.name = player_connected_event["name"]
         player.avatar = player_connected_event["avatar"]
@@ -1113,6 +1113,8 @@ class GameWorkerConsumer(AsyncConsumer):
         try:
             logger.info("[GameWorker]: waiting for players to connect to the game {%s}", match)
             await asyncio.sleep(5)
+
+            # if we are here, players didn't connect
             if len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) < PLAYERS_REQUIRED:
                 if not match.is_in_tournament:
                     await self.channel_layer.group_send(
@@ -1159,28 +1161,32 @@ class GameWorkerConsumer(AsyncConsumer):
                 logger.info("[GameWorker]: players didn't connect to the game {%s}. Closing", match)
 
         except asyncio.CancelledError:
-            logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
+            logger.info("[GameWorker]: both players reconnected\nwaiting for both timer {%s} has been cancelled", match)
         except Exception:  # noqa: BLE001
             logger.critical(traceback.format_exc())
 
     async def _wait_for_reconnection_task(self, match: MultiplayerPongMatch, player: Player):
+        start_time = asyncio.get_event_loop().time()
+        initial_time = player.reconnection_time
+
         try:
             logger.info(
-                "[GameWorker]: waiting for the player {%s} to connect to the game {%s}",
-                match,
+                "[GameWorker]: waiting for player {%s} to reconnect to game {%s} ({%.1f}s remaining)",
                 player.id,
+                match.id,
+                player.reconnection_time,
             )
-            while player.reconnection_time > 0:
-                await asyncio.sleep(0.2)
-                player.reconnection_time -= 0.2
-                logger.info("[GameWorker]: {%.1f} seconds left for player {%s}", player.reconnection_time, player.id)
+            await asyncio.sleep(player.reconnection_time)
+
+            # if we reach here,  player didn't reconnect
+            player.reconnection_time = 0.0
 
             if match.status == MultiplayerPongMatchStatus.FINISHED:
-                return logger.info(
-                    "[GameWorker]: players didn't reconnect to a finished game {%s}. Closing",
-                    match,
+                logger.info(
+                    "[GameWorker]: reconnection timeout for finished game {%s}",
+                    match.id,
                 )
-                return None
+                return
 
             match.status = MultiplayerPongMatchStatus.FINISHED
             winner = match.get_other_player(player.id)
@@ -1194,14 +1200,22 @@ class GameWorkerConsumer(AsyncConsumer):
             )
             await self._do_after_match_cleanup(match, True)
             logger.info(
-                "[GameWorker]: player {%s} resigned by disconnecting in the game {%s}. Winner is {%s}",
+                "[GameWorker]: player {%s} resigned by timeout in game {%s}. Winner is {%s}",
                 player.id,
-                match,
+                match.id,
                 winner.id,
             )
 
         except asyncio.CancelledError:
-            logger.info("[GameWorker]: task for timer {%s} has been cancelled", match)
+            # player reconnected
+            elapsed = asyncio.get_event_loop().time() - start_time
+            player.reconnection_time = max(0.0, initial_time - elapsed)
+            logger.info(
+                "[GameWorker]: reconnection timer cancelled for player {%s} with {%.1f}s remaining",
+                player.id,
+                player.reconnection_time,
+            )
+            raise
         except Exception:  # noqa: BLE001
             logger.critical(traceback.format_exc())
 
@@ -1261,7 +1275,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 match,
             )
             return
-        player.set_as_connected()
+        player.set_as_connected(asyncio.get_event_loop().time())
         player.stop_waiting_for_reconnection_timer()
         await self._send_player_id_and_number_to_player(player, match)
         if not len(match.get_players_based_on_connection(PlayerConnectionState.DISCONNECTED)):
