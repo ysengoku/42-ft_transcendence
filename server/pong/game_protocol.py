@@ -48,6 +48,8 @@ class SerializedGameState(TypedDict):
     is_someone_scored: bool
     last_bumper_collided: Literal["_bumper_1", "_bumper_2"]
     current_buff_or_debuff: Literal[0, 1, 2, 3, 4, 5]
+    current_buff_or_debuff_remaining_time: float
+    current_buff_or_debuff_target: Literal["_bumper_1", "_bumper_2"] | None
     elapsed_seconds: int
     time_limit_reached: bool
 

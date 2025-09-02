@@ -375,6 +375,15 @@ export class MultiplayerGame extends HTMLElement {
     const opponentPositionBuffer = [];
     const ENTITY_INTERPOLATION_DELAY = 100; // 100ms behind real-time
     
+    const Buff = {
+      NO_BUFF: 0,
+      CONTROL_REVERSE_ENEMY: 1,
+      SPEED_DECREASE_ENEMY: 2,
+      SHORTEN_ENEMY: 3,
+      ELONGATE_PLAYER: 4,
+      ENLARGE_PLAYER: 5
+    };
+
     // Client-side bumper state that mirrors server exactly
     let clientBumperState = {
       moves_left: false,  // Mirrors server's bumper.moves_left
@@ -567,6 +576,21 @@ export class MultiplayerGame extends HTMLElement {
     let isPlayerMoving = false;
     let lastPlayerMovement = 0;
     
+    // Reset all buff effects for all bumpers - needed when NO_BUFF (0) is sent
+    function resetAllBuffEffects() {
+      for (let i = 0; i < Bumpers.length; i++) {
+        const bumper = Bumpers[i];
+        
+        // Reset all possible buff-affected properties to normal values
+        bumper.controlReverse = false;        // CONTROL_REVERSE_ENEMY
+        bumper.speed = 15.0;                  // BASE_BUMPER_SPEED (SPEED_DECREASE_ENEMY) 
+        bumper.cubeMesh.scale.x = 1;          // SHORTEN_ENEMY / ELONGATE_PLAYER
+        bumper.lenghtHalf = 2.5;              // SHORTEN_ENEMY / ELONGATE_PLAYER (BUMPER_LENGTH_HALF)
+        bumper.cubeMesh.scale.z = 1;          // ENLARGE_PLAYER  
+        bumper.widthHalf = 0.5;               // ENLARGE_PLAYER (BUMPER_WIDTH_HALF)
+      }
+    }
+    
     function updateState(data) {
       if (!data) {
         return;
@@ -605,68 +629,32 @@ export class MultiplayerGame extends HTMLElement {
       Bumpers[0].score = data.bumper_1.score;
       Bumpers[1].score = data.bumper_2.score;
       
-      // NEVER update player's own bumper position from server - it's client-authoritative
-      // The server echoes back our input, but we trust our own prediction completely
-      
-      // Proper entity interpolation for opponent bumper following Gabriel Gambetta's pattern
       updateOpponentPositionBuffer(theirBumperPos, Date.now());
       
-      // Don't update opponent position here - it will be updated by the interpolation in render loop
-
-      if (data.current_buff_or_debuff != 0) {
-        let targetBumperIndex = 0;
-        const isDebuff = Math.abs(data.current_buff_or_debuff) <= 3;
-        if (data.last_bumper_collided == '_bumper_1') {
-          if (isDebuff)
-            targetBumperIndex = 1;
-          else
-            targetBumperIndex = 0;
-        }
-        else if (data.last_bumper_collided == '_bumper_2') {
-          if (isDebuff)
-            targetBumperIndex = 0;
-          else
-            targetBumperIndex = 1;
-        }
-
+      if (data.current_buff_or_debuff === Buff.NO_BUFF) {
+        resetAllBuffEffects();
+      } else if (data.current_buff_or_debuff > Buff.NO_BUFF && data.current_buff_or_debuff_target) {
+        const targetBumperIndex = data.current_buff_or_debuff_target === '_bumper_1' ? 0 : 1;
         const targetPlayer = Bumpers[targetBumperIndex];
         
         switch (data.current_buff_or_debuff) {
-          case 1:
+          case Buff.CONTROL_REVERSE_ENEMY:
             targetPlayer.controlReverse = true;
             break;
-          case 2:
-            targetPlayer.speed = 0.1;
+          case Buff.SPEED_DECREASE_ENEMY:  
+            targetPlayer.speed = 15.0 * 0.1;
             break;
-          case 3:
+          case Buff.SHORTEN_ENEMY:
             targetPlayer.cubeMesh.scale.x = 0.5;
             targetPlayer.lenghtHalf = 1.25;
             break;
-          case 4:
+          case Buff.ELONGATE_PLAYER:
             targetPlayer.cubeMesh.scale.x = 2;
             targetPlayer.lenghtHalf = 5;
             break;
-          case 5:
+          case Buff.ENLARGE_PLAYER:
             targetPlayer.cubeMesh.scale.z = 3;
             targetPlayer.widthHalf = 1.5;
-            break;
-          case -1:
-            targetPlayer.controlReverse = false;
-            break;
-          case -2:
-            targetPlayer.speed = 0.25;
-            break;
-          case -3:
-            targetPlayer.cubeMesh.scale.x = 1;
-            targetPlayer.lenghtHalf = 2.5;
-            break;
-          case -4:
-            targetPlayer.cubeMesh.scale.x = 1;
-            targetPlayer.lenghtHalf = 2.5;
-            break;
-          case -5:
-            targetPlayer.cubeMesh.scale.z = 1;
-            targetPlayer.widthHalf = 0.5;
             break;
         }
       }
