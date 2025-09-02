@@ -142,23 +142,25 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   game() {
+    // CONSTANTS
+    const WALL_LEFT_X = 10;
+    const WALL_RIGHT_X = -WALL_LEFT_X;
+    const WALL_WIDTH_HALF = 0.5;
+    const BUMPER_LENGTH_HALF = 2.5;
+    const BUMPER_WIDTH_HALF = 0.5;
+    const BALL_DIAMETER = 1;
+    const BALL_RADIUS = BALL_DIAMETER / 2;
+    const BUMPER_SPEED_PER_SECOND = 15.0;
+    const SUBTICK = 0.025;
+    const BALL_INITIAL_VELOCITY = 0.25;
+    const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
+
     const audio = new Audio(audiourl);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
     this.appendChild(renderer.domElement);
-    const BUMPER_1_BORDER = -10;
-    const BUMPER_2_BORDER = -BUMPER_1_BORDER;
-    const BALL_DIAMETER = 1;
-    const BALL_RADIUS = BALL_DIAMETER / 2;
-    const SUBTICK = 0.025;
-    const WALL_WIDTH_HALF = 0.5;
-    // const GAME_TIME = gameOptionsQuery.time_limit;
-    const BALL_INITIAL_VELOCITY = 0.25;
-    // const MAX_SCORE = gameOptionsQuery.score_to_win;
-    const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
-    const TEMPORAL_SPEED_DECAY = 0.005;
-    // const SUBTICK = 0.05;
+
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
 
@@ -289,9 +291,9 @@ export class MultiplayerGame extends HTMLElement {
       const dirZ = -Math.sign(posZ);
       const inputQueue = []; // Legacy - will be replaced by global pendingInputs
       let controlReverse = false;
-      let lenghtHalf = 2.5;
-      let widthHalf = 0.5;
-      let speed = 15.0;
+      let lenghtHalf = BUMPER_LENGTH_HALF;
+      let widthHalf = BUMPER_WIDTH_HALF;
+      let speed = BUMPER_SPEED_PER_SECOND;
       let score = 0;
 
       return {
@@ -355,7 +357,7 @@ export class MultiplayerGame extends HTMLElement {
       };
     };
     /* eslint-disable-next-line new-cap */
-    const Walls = [WallFactory(10, 2.5, 0), WallFactory(-10, 2.5, 0)];
+    const Walls = [WallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0), WallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0)];
 
     (() => {
       const phongMaterial = new THREE.MeshPhongMaterial();
@@ -572,22 +574,19 @@ export class MultiplayerGame extends HTMLElement {
     }
     let theirBumper = 0;
     
-    // Track if player is currently moving for smoother reconciliation
     let isPlayerMoving = false;
     let lastPlayerMovement = 0;
     
-    // Reset all buff effects for all bumpers - needed when NO_BUFF (0) is sent
     function resetAllBuffEffects() {
       for (let i = 0; i < Bumpers.length; i++) {
         const bumper = Bumpers[i];
         
-        // Reset all possible buff-affected properties to normal values
-        bumper.controlReverse = false;        // CONTROL_REVERSE_ENEMY
-        bumper.speed = 15.0;                  // BASE_BUMPER_SPEED (SPEED_DECREASE_ENEMY) 
-        bumper.cubeMesh.scale.x = 1;          // SHORTEN_ENEMY / ELONGATE_PLAYER
-        bumper.lenghtHalf = 2.5;              // SHORTEN_ENEMY / ELONGATE_PLAYER (BUMPER_LENGTH_HALF)
-        bumper.cubeMesh.scale.z = 1;          // ENLARGE_PLAYER  
-        bumper.widthHalf = 0.5;               // ENLARGE_PLAYER (BUMPER_WIDTH_HALF)
+        bumper.controlReverse = false;
+        bumper.speed = BUMPER_SPEED_PER_SECOND;
+        bumper.cubeMesh.scale.x = 1;
+        bumper.lenghtHalf = BUMPER_LENGTH_HALF;
+        bumper.cubeMesh.scale.z = 1;
+        bumper.widthHalf = BUMPER_WIDTH_HALF;
       }
     }
     
@@ -641,8 +640,8 @@ export class MultiplayerGame extends HTMLElement {
           case Buff.CONTROL_REVERSE_ENEMY:
             targetPlayer.controlReverse = true;
             break;
-          case Buff.SPEED_DECREASE_ENEMY:  
-            targetPlayer.speed = 15.0 * 0.1;
+          case Buff.SPEED_DECREASE_ENEMY:
+            targetPlayer.speed = BUMPER_SPEED_PER_SECOND * 0.1;
             break;
           case Buff.SHORTEN_ENEMY:
             targetPlayer.cubeMesh.scale.x = 0.5;
@@ -826,7 +825,7 @@ export class MultiplayerGame extends HTMLElement {
         if (
           ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
             (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
+          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
         ) {
           Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
           // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
@@ -834,7 +833,7 @@ export class MultiplayerGame extends HTMLElement {
         if (
           ((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
             (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
+          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
         ) {
           Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
           // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
@@ -843,7 +842,7 @@ export class MultiplayerGame extends HTMLElement {
         if (
           ((keyMap['KeyD'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
             (keyMap['KeyA'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
+          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
         ) {
           Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
           // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
@@ -851,7 +850,7 @@ export class MultiplayerGame extends HTMLElement {
         if (
           ((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
             (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
+          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
         ) {
           Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
           // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
