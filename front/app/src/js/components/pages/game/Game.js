@@ -161,7 +161,18 @@ export class Game extends HTMLElement {
           }
         }
         if (Bumpers[1].gltfStore.action) {
-          if (keyCode == 'KeyA' && Bumpers[1].currentAction != 0) {
+          if (keyCode == 'KeyA' && Bumpers[1].currentAction != 5) {
+            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
+            Bumpers[1].gltfStore.action[5][0].reset();
+            Bumpers[1].gltfStore.action[5][0].fadeIn(0.1);
+            Bumpers[1].gltfStore.action[5][0].play();
+            if (Bumpers[1].modelChoosen == 0)
+              Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
+            else
+              Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
+            Bumpers[1].currentAction = 5;
+          }
+          if (keyCode == 'KeyD' && Bumpers[1].currentAction != 0) {
             Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
             Bumpers[1].gltfStore.action[0][0].reset();
             Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
@@ -170,20 +181,7 @@ export class Game extends HTMLElement {
               Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
             else
               Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
-            // Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
-            // Bumpers[1].playerGlb.rotation.y = Math.PI / 2;
-            // Bumpers[1].gltfStore.action[0][1] = true;
             Bumpers[1].currentAction = 0;
-          }
-          if (keyCode == 'KeyD' && Bumpers[1].currentAction != 5) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[5][0].reset();
-            Bumpers[1].gltfStore.action[5][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[5][0].play();
-            // Bumpers[1].playerGlb.rotation.y = Math.PI / 2;
-            Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
-            // Bumpers[1].gltfStore.action[5][1] = true;
-            Bumpers[1].currentAction = 5;
           }
         }
       }
@@ -595,7 +593,6 @@ export class Game extends HTMLElement {
         scene.add(pedroModel);
         return pedroModel;
       })();
-      // playerGlb.position.x -= 1;
       if (posZ < 0) {
         playerGlb.rotation.y = degreesToRadians(55);
         playerGlb.position.z = posZ - 1;
@@ -605,10 +602,7 @@ export class Game extends HTMLElement {
         playerGlb.rotation.y = degreesToRadians(235);
         playerGlb.position.z = posZ + 1;
         playerGlb.position.x -= 1;
-        // playerGlb.position.x -= 1;
       }
-      // playerGlb.position.x -= 7.2;
-      // playerGlb.position.z += 0.7; // TODO : FINISH ANIM FOR COUCH
 
       modelsGlb.forEach((element) =>
       {
@@ -707,7 +701,7 @@ export class Game extends HTMLElement {
             console.error(error);
           },
         );
-        fenceModel.scale.set(1, 0.5, 1);
+        fenceModel.scale.set(0.8, 0.5, 1);
         scene.add(fenceModel);
         return fenceModel;
       })();
@@ -727,10 +721,10 @@ export class Game extends HTMLElement {
     /* eslint-disable new-cap */
     const Walls = [
       WallFactory(9.65, 1.3, 0),
-      WallFactory(9.65, 1.3, 7.5),
-      WallFactory(9.65, 1.3, -7.5),
-      WallFactory(-9.65, 1.3, 7.5),
-      WallFactory(-9.65, 1.3, -7.5),
+      WallFactory(9.65, 1.3, 6),
+      WallFactory(9.65, 1.3, -6),
+      WallFactory(-9.65, 1.3, 6),
+      WallFactory(-9.65, 1.3, -6),
       WallFactory(-9.65, 1.3, 0),
     ];
 
@@ -1046,8 +1040,17 @@ export class Game extends HTMLElement {
       ];
       Workers[0].onmessage = function (e) {
         let dirz = Bumpers[e.data[0]].playerGlb.position.z;
-        Bumpers[e.data[0]].playerGlb.position.z -= 0.7;
-        dirz < 0 ? (Bumpers[e.data[0]].playerGlb.position.x += 7.2) : (Bumpers[e.data[0]].playerGlb.position.x -= 7.2);
+        // Bumpers[e.data[0]].playerGlb.position.z -= 0.7;
+        if (dirz < 0)
+        {
+          Bumpers[e.data[0]].playerGlb.position.x += 7.2;
+          Bumpers[e.data[0]].playerGlb.position.z -= 0.7;
+        }
+        else
+        {
+          Bumpers[e.data[0]].playerGlb.position.x -= 7.2;
+          Bumpers[e.data[0]].playerGlb.position.z += 0.7;
+        }
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = false;
         Bumpers[e.data[0]].modelChoosen = 0;
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
@@ -1066,7 +1069,9 @@ export class Game extends HTMLElement {
         ) {
           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
           -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
-          dirz < 0 ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =  -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1: Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1; 
+          dirz < 0 
+            ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =  -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1
+            : Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1; 
         } else if (
           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
           10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
@@ -1074,9 +1079,20 @@ export class Game extends HTMLElement {
           Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
           10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
           // Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
-          dirz < 0 ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =  10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1: Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
+          dirz < 0 
+            ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =  10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1
+            : Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
         }
-        dirz < 0 ? Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1 : Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
+        if (dirz < 0)
+        {
+          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1;
+          Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.7;
+        }
+        else
+        {
+          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
+          Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.7;
+        }
         buffUI?.hideIcon();
       };
       Workers[2].onmessage = function (e) {
@@ -1095,7 +1111,9 @@ export class Game extends HTMLElement {
         Bumpers[e.data[0]].modelChoosen = 0;
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
         Bumpers[e.data[0]].widthHalf = 0.5;
-        dirz < 0 ? (Bumpers[e.data[0]].playerGlb.position.x += 5) : (Bumpers[e.data[0]].playerGlb.position.x -= 5);
+        dirz < 0 
+        ? (Bumpers[e.data[0]].playerGlb.position.x += 5) 
+        : (Bumpers[e.data[0]].playerGlb.position.x -= 5);
         buffUI?.hideIcon();
       };
       Workers[5].onmessage = function (e) {
@@ -1114,34 +1132,40 @@ export class Game extends HTMLElement {
           Bumpers[lastBumperCollided].modelChoosen = 1;
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
           Bumpers[lastBumperCollided].lenghtHalf = 5;
-          Bumpers[lastBumperCollided].playerGlb.position.z += 0.7;
+          // Bumpers[lastBumperCollided].playerGlb.position.z -= 0.7;
           if (
             Bumpers[lastBumperCollided].cubeUpdate.x <
             -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
               -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
-            if (dirz < 0)
-              Bumpers[lastBumperCollided].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1;
-            else
-              Bumpers[lastBumperCollided].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1;
+            dirz < 0
+              ? Bumpers[lastBumperCollided].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1
+              : Bumpers[lastBumperCollided].playerGlb.position.x = -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1;
           } else if (
             Bumpers[lastBumperCollided].cubeUpdate.x >
             10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
               10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
-            if (dirz < 0)
-              Bumpers[lastBumperCollided].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1;
-            else
-              Bumpers[lastBumperCollided].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1;
+            dirz < 0
+              ? Bumpers[lastBumperCollided].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1
+              : Bumpers[lastBumperCollided].playerGlb.position.x = 10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1;
           }
-          dirz < 0 ? Bumpers[lastBumperCollided].playerGlb.position.x -= 7.2: Bumpers[lastBumperCollided].playerGlb.position.x += 7.2;
+          if (dirz < 0)
+          {
+            Bumpers[lastBumperCollided].playerGlb.position.x -= 7.2;
+            Bumpers[lastBumperCollided].playerGlb.position.z += 0.7;
+          }
+          else
+          {
+            Bumpers[lastBumperCollided].playerGlb.position.x += 7.2;
+            Bumpers[lastBumperCollided].playerGlb.position.z -= 0.7;
+          }
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.showIcon('long');
           break;
         case 2:
-          dirz < 0 ? Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x += 1 : Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
           // Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
           Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen].visible = false;
           Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen = 2;
@@ -1149,6 +1173,16 @@ export class Game extends HTMLElement {
             Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen
           ].visible = true;
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
+          if (dirz < 0) 
+          {
+            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x += 1;
+            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.7;
+          }
+          else
+          {
+            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
+            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.7;
+          }
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.showIcon('short');
           break;
