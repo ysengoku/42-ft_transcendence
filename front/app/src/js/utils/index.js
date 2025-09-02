@@ -1,5 +1,5 @@
 import { ThemeController } from './ThemeController';
-import { createClouds, createStars, loader, flyAway, fireConfetti, particleBurst } from './animations';
+import { createClouds, createStars, loader, flyAway, fireWork, particleBurst } from './animations';
 import { isMobile, BREAKPOINT } from './viewPort';
 import { setupObserver } from './intersectionObserver';
 
@@ -35,7 +35,7 @@ export {
   createStars,
   loader,
   flyAway,
-  fireConfetti,
+  fireWork,
   particleBurst,
   isMobile,
   setupObserver,
