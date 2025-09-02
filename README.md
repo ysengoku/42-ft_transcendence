@@ -1,4 +1,7 @@
-![Peacemakers](./assets/peacemakers-cover.jpg)
+<picture>
+  <source srcset="./assets/peacemakers-cover.webp" type="image/webp">
+  <img src="./assets/peacemakers-cover.jpg" alt="Peacemakers">
+</picture>
 
 <div align="center">
   <img src="https://img.shields.io/github/commit-activity/t/ysengoku/42-ft_transcendence?style=flat-square&color=9D9E0A" />
@@ -14,52 +17,91 @@
 </div>
 <br>
 
-Real-time multiplayer PONG Game built as a Single Page Application, developed by five students during 42 school curriculum.
-This project combines authentication, live gameplay, chat, and 3D rendering using modern web technologies.   
-   
-## Demo video 🛠️👷🏻‍♂️
+Welcome to the saloon, partner.   
+I hope that you are ready for the epic shootout... **IN PONG**!!
+**Peacemakers: Ponggers Edition** is a pong platform with elements of social networking and (awesome) cowboy-robot bug theme. Here in the Wild West we are outlaws fighting for fun and glory. But mostly fun.
+In this very comptetive game you play for elo, participate in tournaments and meet new friends. Think of it as [chess.com](https://www.chess.com/), but instead of chess we are playing pong on the postapocaliptic desolate waste of the Wild West. Totally easy to imagine, I guess.
 
-## Usage 🛠️👷🏻‍♂️
+It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an awesome & free (and also competetive and hard) programming school. Our team was aiming for a very specific set of features. Some of them were chosen by us (and since we like suffering, we chose a lot of them), and some were mandatory to implement. The features are:
 
 ## Features
 
-### Key Features
+- **General**
+  - Dynamic [Single Page Application](https://en.wikipedia.org/wiki/Single-page_application)
+  - Google Chrome as first-class browser
+  - Made primarly with Django, PostgreSQL, vanilla JS and [Bootstrap](https://getbootstrap.com/)
+  - Runs in docker-compose
+  - Responsive UI (but the game can't run on mobile... yet. sowwy!)
+  - Secure and works with HTTPS
+ 
+- **User Management System**
+  - Authentication system based on [JWT](https://en.wikipedia.org/wiki/JSON_Web_Token)
+  - Sign up, sign in normally...
+  - ...or with [OAuth](https://en.wikipedia.org/wiki/OAuth), using 42 or Github
+  - Have [MFA](https://en.wikipedia.org/wiki/Multi-factor_authentication) for security! Nobody can hack you
+  - Password restoration using Gmail
+  - User profiles with game statistics, hand coded graphs (no libraries!)
+  - User settings, profile picture (express yourself)
 
-- **Real-time Multiplayer**: WebSocket-based game synchronization
-- **Multi-factor Authentication**: Email-based verification system
-- **OAuth 2.0 Integration**: Third-party authentication support
-- **3D Gaming**: Hardware-accelerated 3D graphics with Three.js
-- **Tournament System**: Bracket-based competitive play
-- **Live Chat**: Real-time messaging with notifications
+- **Pong Game**
+  - 3D graphics with [Three.js](https://threejs.org/) (**with handmade 3D models!!!** using [Blender](https://en.wikipedia.org/wiki/Blender_(software)))
+  - Game customization with game settings
+  - Optional fun gameplay features that enchance basic pong (don't worry, you can play vanilla pong too)
+  - Ranked games with elo system
+  - Play locally against another player or AI
+  - Multiplayer, ability to play from different computers (convenient!)
+  - Game invitation system, play with your friends
+  - Automatic matchmaking system, play with randoms
+  - Tournament system, play with lots of friends and/or randoms
 
-### Other Features
+- **Chat & Live Events**
+  - Friendship system, befriend people you like
+  - Block system, block people you hate (or for fun hehe)
+  - Notification system, be notified of the cool stuff going on
+  - Online presence system, so you can see who is procrastinating playing pong
+  - And last but not least... chat!! Stay in contact with other outlaws. You can send, receive and like messages
 
-#### User management
+- **Misc**
+  - Handdrawn background images, beautiful animations and more. All made with 💖 Love 💖.
+  - Dark & Light color schemes
+  - Find other users through search feature
 
-- Secure registration with validation and connection using JWT
-- User profile page including customizable avatar and Game stat (win/loss rate, duel history, Elo change chart, best/worst opponents)
-- User blocking system
-- Forgotten password reset functionality
+<p align="center">
+  <img src="./assets/pedro.gif" alt="pedro" width="160px" /><br/>
+  <em>Hope that you will have and find our project interesting!</em>
+</p>
+<br />
 
-#### Game
+## Project Walkthrough 🛠️👷🏻‍♂️
 
-- Local game with AI opponent option
-- Game customization
-- Game worker: Background processing of game logic
-- Matchmaking and Game invitation for Multiplayer Game
+Add a demo video
 
-#### UI & Graphics
+<br />
 
-- Responsive design
-- Two color themes: Light and Dark
-- Google Chrome Compatibility
-- Hand-made 3D models, animation and art!
+## Get Started
 
-#### DevOps and CD/CI
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ysengoku/42-ft_transcendence.git
+   cd 42-ft_transcendence
+   ```
+2. Prepare environment:   
+    ```bash
+    cp .env.example .env
+    # Make sure to set the required variables.
+    ```
+3. Run:
+    ```bash
+    make dev   # development - including hot reload and debug log
+    make prod  # production
+    ``` 
+4.  Open in Chrome: `https://localhost:1026`
 
-- Containerized environment using Docker
-- Workflows and templated for issue/task creation
+<br />
 
+**Required:** Docker 20.10+ and Docker Compose 2.4+
+
+<br />
 
 ## Technologies
 
@@ -101,7 +143,10 @@ This project combines authentication, live gameplay, chat, and 3D rendering usin
 [![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&style=for-the-badge&logoColor=fff)](#)
 [![Django Test Framework](https://img.shields.io/badge/Django%20Tests-092E20?logo=django&style=for-the-badge&logoColor=fff)](#)
 
+<br />
+
 ## Architecture
+(TODO: link to the high-level overview of the project architecture)
 
 ```mermaid
 graph TB
@@ -193,68 +238,107 @@ Asynchronous hybrid server **Daphne** that handles both HTTP and websocket conne
 #### Crontab
 Separate container that periodically sends requests to the Daphne server to perform actions.
 
+<br />
+
 ## Documentation 🛠️👷🏻‍♂️
 
-### Features
+- [Architecture](/doc/ARCHITECTURE.md)
 
-- [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
-- [Tournament system](/doc/features/TOURNAMENT.md)
+- Features
+  - [User Management](/doc/features/USER_MANAGEMENT.md)
+  - [Pong Game](/doc/features/PONG.md)
+  - [Tournament system](/doc/features/TOURNAMENT.md)
+  - [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
 
-### Front-end
+- Front-end
+  - [Front-end overview](/doc/front/FRONTEND.md)
+  - Detailed documentations
+    - [Web component](/doc/front/Component.md)
+    - [Router](doc/front/Router.md)
+    - [API Request](doc/front/API_REQUEST.md)
+    - [Auth manager](/doc/front/AUTH_MANAGER.md)
+    - [WebScoket manager](/doc/front/SocketManager.md)
+    - [Data visualization](/doc/front/DATA_VISUALIZATION.md)
 
-- [Front-end overview](/doc/front/FRONTEND.md)
-- [Web component](/doc/front/Component.md)
-- [Router](doc/front/Router.md)
-- [Auth manager](/doc/front/AUTH_MANAGER.md)
-- [WebScoket manager](/doc/front/SocketManager.md)
-- [Data visualization](/doc/front/DATA_VISUALIZATION.md)
-- [Tournament UI](/doc/front/TOURNAMENT_UI.md)
+- Server
+  - [Multi-factor Authentication](/doc/server/MFA.md)
+  - [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
 
-### Server
+- UI design
+  - [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=37-340&t=AJvSNhCCjxhZqsCV-1)
 
-- [Multi-factor authentication](/doc/server/MFA.md)
-- [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
+<br />
 
-### UI design
-
-- [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=37-340&t=AJvSNhCCjxhZqsCV-1)
-
-## 👥 Contributors
+## Contributors
 
 <table>
   <tr>
-    <td align="center">
-      <a href="https://github.com/emuminov">
-        <img src="./assets/profile/emuminov.png" width="80px;" alt="emuminov"/><br />
-        <sub><b>emuminov</b></sub>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/emuminov" style="text-decoration: none;">
+        <img src="./assets/profile/emuminov.png" width="48px" alt="emuminov" /><br />
+        <p>emuminov</p>
       </a>
     </td>
-    <td align="center">
-      <a href="https://github.com/melobern">
-        <img src="./assets/profile/melobern.png" width="80px;" alt="melobern"/><br />
-        <sub><b>melobern</b></sub>
-      </a>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
     </td>
-    <td align="center">
-      <a href="https://github.com/faboussard">
-        <img src="./assets/profile/faboussard.png" width="80px;" alt="Fanny_BOUSSARD"/><br />
+  </tr>
+
+  <tr>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/faboussard" style="text-decoration: none;">
+        <img src="./assets/profile/faboussard.png" width="48px;" alt="Fanny_BOUSSARD"/><br />
         <sub><b>faboussard</b></sub>
       </a>
     </td>
-    <td align="center">
-      <a href="https://github.com/Celiastral">
-        <img src="./assets/profile/Celiastral.png" width="80px;" alt="Celiastral"/><br />
-        <sub><b>Celiastral</b></sub>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/melobern" style="text-decoration: none;">
+        <img src="./assets/profile/melobern.png" width="48px" alt="melobern" /><br />
+        <p>melobern</p>
       </a>
     </td>
-    <td align="center">
-      <a href="https://github.com/ysengoku">
-        <img src="./assets/profile/ysengoku.png" width="80px;" alt="Yuko SENGOKU"/><br />
-        <sub><b>ysengoku</b></sub>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/Celiastral" style="text-decoration: none;">
+        <img src="./assets/profile/Celiastral.png" width="48px" alt="Celiastral" /><br />
+        <p>celiastral</p>
       </a>
+    </td>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
+    </td>
+  </tr>
+
+  <tr>
+    <td align="center" style="padding: 8px; vertical-align: middle;">
+      <a href="https://github.com/ysengoku" style="text-decoration: none;">
+        <img src="./assets/profile/ysengoku.png" width="48px" alt="Yuko SENGOKU" /><br />
+        <p>ysengoku</p>
+      </a>
+    </td>
+    <td style="padding-left: 16px; vertical-align: middle;">
+      Add presentation here
     </td>
   </tr>
 </table>
 
 ## License
+
 This project is for educational purposes only - not licensed for commercial use.
+
+<br />
+
+---
+
+Authored by: [emuminov](https://github.com/emuminov) and [ysengoku](https://github.com/ysengoku)

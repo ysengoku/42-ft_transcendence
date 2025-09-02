@@ -42,19 +42,6 @@ export class UserListItem extends HTMLElement {
     router.navigate(`/profile/${this.#state.username}`);
   }
 
-  static get observedAttributes() {
-    return ['online'];
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'online') {
-      this.#state.online = newValue === 'true';
-      this.updateOnlineStatus();
-    }
-  }
-
-  updateOnlineStatus() {}
-
   template() {
     return `
   	<li class="list-group-item dropdown-list-item pe-5">
