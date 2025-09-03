@@ -5,14 +5,12 @@ import math
 import random
 import traceback
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum, IntEnum, auto
 from typing import Literal
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
-from django.utils import timezone
 
 from common.close_codes import CloseCodes
 from pong.game_protocol import (
@@ -77,19 +75,6 @@ TEMPORAL_SPEED_DECAY = TEMPORAL_SPEED_DECAY_PER_SECOND
 TEMPORAL_SPEED_DEFAULT = 1, 1
 TEMPORAL_SPEED_INCREASE = 0  # currently unused
 ###################
-
-logger.debug(
-    "Game worker has been started:\n"
-    "  GAME_TICK_INTERVAL: %f\n"
-    "  BASE_BUMPER_SPEED: %.6f\n"
-    "  STARTING_COIN_VELOCITY: %s\n"
-    "  STARTING_BALL_VELOCITY: %s",
-    GAME_TICK_INTERVAL,
-    BASE_BUMPER_SPEED,
-    STARTING_COIN_VELOCITY,
-    STARTING_BALL_VELOCITY,
-)
-
 
 class MultiplayerPongMatchStatus(Enum):
     PENDING = auto()
