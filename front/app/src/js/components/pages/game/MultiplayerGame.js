@@ -430,6 +430,7 @@ export class MultiplayerGame extends HTMLElement {
         action: action, 
         content: pressed ? sequenceNumber : -sequenceNumber, // Positive=pressed, negative=released
         player_id: playerIdContainer.playerId 
+        //timestamp: timestamp
       }));
       
       return input;
@@ -444,10 +445,19 @@ export class MultiplayerGame extends HTMLElement {
     };
     
     // Input confirmation reconciliation - synchronize movement state with server
-    const reconcileInputConfirmation = (action, sequenceNumber) => {
+    const reconcileInputConfirmation = (action, sequenceNumber) => { // timestamp
+
+      // const pressed = Math.sign(sequenceNumber) ;
+      // for (let [i, input] of pendingInputs.entries()) {
+      //   if (input[1] === action && input[0] <= sequenceNumber ) { //&& input[3] <= timestamp && Math.sign(input[2]) == pressed 
+      //     pendingInputs.splice(i, 1);
+      //     return true;
+      //   }
+      // }
+      // return false;
+
       const absSequenceNumber = Math.abs(sequenceNumber);
       const pressed = sequenceNumber > 0;
-      
       // Remove processed inputs from pending list
       pendingInputs = pendingInputs.filter(input => input.sequenceNumber > absSequenceNumber);
       
@@ -738,9 +748,10 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'move_left':
         case 'move_right':
-          if (data.player_number == ourBumperIndexContainer.ourBumperIndex + 1) {
+          if (data.player_number == ourBumperIndexContainer.ourBumperIndex + 1) { // && !reconcileInputConfirmation(data.action, data.content, data.timestamp) 
             // Use InputConfirmed for movement state reconciliation (not position)
             reconcileInputConfirmation(data.action, data.content);
+            // Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x = data.position_x;
           }
           break;
         case 'player_joined':
