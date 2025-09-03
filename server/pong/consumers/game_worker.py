@@ -5,14 +5,12 @@ import math
 import random
 import traceback
 from dataclasses import dataclass
-from datetime import datetime
 from enum import Enum, IntEnum, auto
 from typing import Literal
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncConsumer
 from channels.layers import get_channel_layer
-from django.utils import timezone
 
 from common.close_codes import CloseCodes
 from pong.game_protocol import (
