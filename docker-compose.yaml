@@ -30,8 +30,6 @@ services:
       context: ./server
       dockerfile: Dockerfile
       target: ${NODE_ENV:-development}
-    ports:
-      - "8000:8000"
     expose:
       - "8000"
     env_file:
@@ -91,8 +89,6 @@ services:
     restart: always
     volumes:
       - db_volume:/var/lib/postgresql/data
-    ports: # Not exposed in production, Django connects via postgres://user:password@db:5432/dbname
-      - "5432:5432"
     expose:
       - "5432"
     networks:
@@ -128,8 +124,8 @@ services:
   redis:
     image: redis:alpine
     container_name: redis
-    ports:
-    - "6380:6379"
+    expose:
+      - "6379"
     volumes:
     - redis_data:/data
     networks:
