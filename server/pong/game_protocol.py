@@ -151,7 +151,7 @@ class GameServerToClient:
         action: Literal["move_left", "move_right"]
         content: int
         player_number: Literal[1, 2]
-        """timestamp: float"""
+        timestamp: float
         position_x: float
 
 
@@ -160,14 +160,14 @@ class ClientToGameServer:
         """Player moves to the left."""
 
         content: bool
-        """timestamp: float"""
+        timestamp: float
         player_id: str
 
     class MoveRight(TypedDict):
         """Player moves to the right."""
 
         content: bool
-        """timestamp: float"""
+        timestamp: float
         player_id: str
 
     class Resign(TypedDict):
