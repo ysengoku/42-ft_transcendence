@@ -35,8 +35,8 @@ class UserEventsConsumer(GuardedWebsocketConsumer):
             with transaction.atomic():
                 self.user_profile.refresh_from_db()
                 self.user_profile.nb_active_connexions = models.F("nb_active_connexions") + 1
-                self.user_profile.update_activity()
                 self.user_profile.save(update_fields=["nb_active_connexions"])
+                self.user_profile.update_activity()
 
                 self.user_profile.refresh_from_db()
                 logger.info(
