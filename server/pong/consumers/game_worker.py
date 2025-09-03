@@ -812,7 +812,7 @@ class MultiplayerPongMatch(BasePong):
     def __repr__(self):
         return f"{self.status.name.capitalize()} game {self.id}"
 
-    def handle_input(self, action: str, player_id: str, content: int) -> tuple[Player, int] | None:
+    def handle_input(self, action: str, player_id: str, content: int) -> tuple[Player, int] | None: #, timestamp: float
         if player_id == self._player_1.id:
             player = self._player_1
         elif player_id == self._player_2.id:
@@ -827,10 +827,10 @@ class MultiplayerPongMatch(BasePong):
         match action:
             case "move_left":
                 bumper.moves_left = is_pressed
-                return player, content
+                return player, content #, timestamp
             case "move_right":
                 bumper.moves_right = is_pressed
-                return player, content
+                return player, content #, timestamp
 
     def add_player(self, player_connected_event: dict) -> Player | None:
         """
@@ -1018,13 +1018,14 @@ class GameWorkerConsumer(AsyncConsumer):
         player_id = event["player_id"]
         action = event["action"]
         content = event["content"]
+        """timestamp = event["timestamp"]"""
 
         match action:
             case "move_left" | "move_right":
-                result = match.handle_input(action, player_id, content)
+                result = match.handle_input(action, player_id, content)  #, timestamp
                 if not result:
                     return
-                player, content = result
+                player, content = result #, timestamp
 
                 await self.channel_layer.group_send(
                     self._to_game_room_group_name(match),
@@ -1034,6 +1035,7 @@ class GameWorkerConsumer(AsyncConsumer):
                         player_number=1 if player.bumper.dir_z == 1 else 2,
                         content=content,
                         position_x=player.bumper.x,
+                        #timestamp=timestamp,
                     ),
                 )
 
