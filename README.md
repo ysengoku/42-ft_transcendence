@@ -74,8 +74,9 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
 
 ## Project Walkthrough
 
-🛠️👷🏻‍♂️   
-https://github.com/user-attachments/assets/43665d71-ada1-4417-ace2-9942bdf0bf1c
+🛠️👷🏻‍♂️ Work in progress   
+
+https://github.com/user-attachments/assets/2d065e35-b274-4867-b13e-fa022852612d
 
 <br />
 
