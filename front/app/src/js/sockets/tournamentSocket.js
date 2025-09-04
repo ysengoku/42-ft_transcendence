@@ -55,11 +55,6 @@ socketManager.addSocket('tournament', {
       tournamentPage.setNextRound(data);
     }
   },
-  match_finished: (data) => {
-    // if (window.location.pathname.startsWith('/multiplayer-game')) {
-    //   router.redirect(`tournament/${data.tournament_id}`);
-    // }
-  },
   match_result: async (data) => {
     if (!window.location.pathname.startsWith('/tournament')) {
       return;
