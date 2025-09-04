@@ -111,7 +111,6 @@ export class MultiplayerGame extends HTMLElement {
         return; // Do noplayerglb if the event was already processed
       }
       var keyCode = e.code;
-      // Send keyup events to server to stop continuous movement
       if (
         (keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
         (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
@@ -155,6 +154,10 @@ export class MultiplayerGame extends HTMLElement {
     const BALL_INITIAL_VELOCITY = 0.25;
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
 
+    // CONSTANTS for physics simulation in client side prediction
+    const SERVER_TICK_RATE = 30;
+    const SERVER_TICK_INTERVAL = 1.0 / SERVER_TICK_RATE;
+
     const audio = new Audio(audiourl);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
@@ -171,7 +174,7 @@ export class MultiplayerGame extends HTMLElement {
     // const orbit = new OrbitControls(camera, renderer.domElement);
 
     let mixer;
-    var keyMap = [];
+    var keyMap = {};
     const normalMaterial = new THREE.MeshNormalMaterial();
 
     const ligths = [
@@ -369,6 +372,7 @@ export class MultiplayerGame extends HTMLElement {
     })();
 
     const clock = new THREE.Clock();
+    let accumulator = 0.0;
     // Server reconciliation tracking
     let lastServerPositionX = null;
     let lastServerTimestamp = null;
@@ -429,8 +433,8 @@ export class MultiplayerGame extends HTMLElement {
       this.safeSend(JSON.stringify({ 
         action: action, 
         content: pressed ? sequenceNumber : -sequenceNumber, // Positive=pressed, negative=released
-        player_id: playerIdContainer.playerId 
-        //timestamp: timestamp
+        player_id: playerIdContainer.playerId,
+        timestamp: timestamp,
       }));
       
       return input;
@@ -475,7 +479,7 @@ export class MultiplayerGame extends HTMLElement {
     const RECONCILIATION_INTERVAL = 100; // Reconcile every 100ms
     
     const reconcileWithServer = (serverPosX) => {
-      const myBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
+      const playerBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
       const currentTime = Date.now();
       
       // Store server position for reference
@@ -488,7 +492,7 @@ export class MultiplayerGame extends HTMLElement {
       }
       lastReconciliationTime = currentTime;
       
-      const clientPosX = myBumper.cubeUpdate.x;
+      const clientPosX = playerBumper.cubeUpdate.x;
       const difference = Math.abs(serverPosX - clientPosX);
       
       // Only correct significant differences 
@@ -497,8 +501,8 @@ export class MultiplayerGame extends HTMLElement {
         const correctionFactor = 0.3; // 30% correction per reconciliation
         const correctedX = clientPosX + (serverPosX - clientPosX) * correctionFactor;
         
-        myBumper.cubeMesh.position.x = correctedX;
-        myBumper.cubeUpdate.x = correctedX;
+        playerBumper.cubeMesh.position.x = correctedX;
+        playerBumper.cubeUpdate.x = correctedX;
       }
       
       // Clean up very old pending inputs
@@ -811,9 +815,12 @@ export class MultiplayerGame extends HTMLElement {
     });
     let ballSubtickZ = 0;
     let fpsInterval = 1000 / 120;
+
+    
     function animate(ms) {
       requestAnimationFrame(animate);
-      const delta = clock.getDelta()
+      const delta = clock.getDelta();
+      accumulator += delta;
       const deltaAnimation = Math.min(delta, 0.1);
       // if (delta > fpsInterval) {
         // CLIENT-SIDE PREDICTION: Only extrapolate ball position slightly ahead of server state
@@ -832,39 +839,37 @@ export class MultiplayerGame extends HTMLElement {
           // If too much time has passed since server update, keep last known position
         }
 
-        const myBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
-        if (
-          ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-            (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
-        ) {
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
-          // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
-        }
-        if (
-          ((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-            (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
-        ) {
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
-          // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
-        }
+        const playerBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
+        while (accumulator >= SERVER_TICK_INTERVAL) {
+          if (!((keyMap['ArrowLeft'] && keyMap['ArrowRight']) || (keyMap["KeyA"] && keyMap["KeyD"]) ||
+            (keyMap["ArrowLeft"] && keyMap["KeyD"]) || (keyMap["KeyA"] && keyMap["ArrowRight"])))
+          {
+            let movement = 0;
+            if (
+              ((keyMap['ArrowRight'] == true && playerBumper.controlReverse) ||
+                (keyMap['KeyD'] == true && playerBumper.controlReverse) ||
+                (keyMap['ArrowLeft'] == true && !playerBumper.controlReverse) ||
+                (keyMap['KeyA'] == true && !playerBumper.controlReverse))
+            ) {
+              movement = playerBumper.speed * SERVER_TICK_INTERVAL;
+            }
+            if (
+              ((keyMap['ArrowLeft'] == true && playerBumper.controlReverse) ||
+                (keyMap['KeyA'] == true && playerBumper.controlReverse) ||
+                (keyMap['ArrowRight'] == true && !playerBumper.controlReverse) ||
+                (keyMap['KeyD'] == true && !playerBumper.controlReverse))
+            ) {
+              movement = -playerBumper.speed * SERVER_TICK_INTERVAL;
+            }
+            let newX = playerBumper.cubeUpdate.x + movement;
+            const leftLimit = WALL_RIGHT_X + WALL_WIDTH_HALF + playerBumper.lenghtHalf;
+            const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - playerBumper.lenghtHalf;
+            newX = Math.max(leftLimit, Math.min(rightLimit, newX));
 
-        if (
-          ((keyMap['KeyD'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-            (keyMap['KeyA'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
-        ) {
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
-          // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x += Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
-        }
-        if (
-          ((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-            (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-          !(Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf)
-        ) {
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
-          // Bumpers[ourBumperIndexContainer.ourBumperIndex].playerGlb.position.x -= Bumpers[ourBumperIndexContainer.ourBumperIndex].speed * delta;
+            playerBumper.cubeUpdate.x = newX;
+            // playerBumper.playerGlb.position.x = newX;
+          }
+          accumulator -= SERVER_TICK_INTERVAL;
         }
 
         Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
@@ -880,10 +885,10 @@ export class MultiplayerGame extends HTMLElement {
           Bumpers[theirBumper].cubeUpdate.y,
           Bumpers[theirBumper].cubeUpdate.z,
         );
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.set(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x,
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.y,
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.z,
+        playerBumper.cubeMesh.position.set(
+          playerBumper.cubeUpdate.x,
+          playerBumper.cubeUpdate.y,
+          playerBumper.cubeUpdate.z,
         );
       // }
 

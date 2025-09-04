@@ -76,6 +76,7 @@ TEMPORAL_SPEED_DEFAULT = 1, 1
 TEMPORAL_SPEED_INCREASE = 0  # currently unused
 ###################
 
+
 class MultiplayerPongMatchStatus(Enum):
     PENDING = auto()
     ONGOING = auto()
@@ -510,13 +511,13 @@ class BasePong:
 
     def _move_bumper(self, bumper, delta_time):
         """Move a bumper with wall collision detection."""
-        if bumper.moves_left and bumper.moves_right:
+        if (bumper.moves_left and bumper.moves_right) or (not bumper.moves_left and not bumper.moves_right):
             return
 
         movement = 0
-        if bumper.moves_left:
+        if (bumper.moves_left and not bumper.control_reversed) or (bumper.moves_right and bumper.control_reversed):
             movement = bumper.speed * delta_time
-        elif bumper.moves_right:
+        if (bumper.moves_right and not bumper.control_reversed) or (bumper.moves_left and bumper.control_reversed):
             movement = -bumper.speed * delta_time
 
         # don't go over walls
@@ -537,6 +538,7 @@ class BasePong:
             self._ball.velocity.x *= -1
 
         elif collision_type == CollisionType.BUMPER:
+            logger.debug("HANDLE COLLISION: bumper.x=%d, ball.x=%d, ball.z=%d", data.x, self._ball.x, self._ball.z)
             bumper = data
             self._last_bumper_collided = bumper
             self._calculate_new_ball_dir(bumper)
