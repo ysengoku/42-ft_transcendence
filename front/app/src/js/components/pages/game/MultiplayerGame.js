@@ -475,39 +475,39 @@ export class MultiplayerGame extends HTMLElement {
     };
     
     // Position reconciliation using StateUpdated messages
-    let lastReconciliationTime = 0;
-    const RECONCILIATION_INTERVAL = 100; // Reconcile every 100ms
+    // let lastReconciliationTime = 0;
+    // const RECONCILIATION_INTERVAL = 100; // Reconcile every 100ms
     
-    const reconcileWithServer = (serverPosX) => {
-      const playerBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
-      const currentTime = Date.now();
+    // const reconcileWithServer = (serverPosX) => {
+    //   const playerBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
+    //   const currentTime = Date.now();
       
-      // Store server position for reference
-      lastServerPositionX = serverPosX;
-      lastServerTimestamp = currentTime;
+    //   // Store server position for reference
+    //   lastServerPositionX = serverPosX;
+    //   lastServerTimestamp = currentTime;
       
-      // Only reconcile occasionally to avoid fighting with client prediction
-      if (currentTime - lastReconciliationTime < RECONCILIATION_INTERVAL) {
-        return;
-      }
-      lastReconciliationTime = currentTime;
+    //   // Only reconcile occasionally to avoid fighting with client prediction
+    //   if (currentTime - lastReconciliationTime < RECONCILIATION_INTERVAL) {
+    //     return;
+    //   }
+    //   lastReconciliationTime = currentTime;
       
-      const clientPosX = playerBumper.cubeUpdate.x;
-      const difference = Math.abs(serverPosX - clientPosX);
+    //   const clientPosX = playerBumper.cubeUpdate.x;
+    //   const difference = Math.abs(serverPosX - clientPosX);
       
-      // Only correct significant differences 
-      if (difference > 0.15) { // Only correct if >0.15 units off
-        // Very gentle correction - trust client prediction more
-        const correctionFactor = 0.3; // 30% correction per reconciliation
-        const correctedX = clientPosX + (serverPosX - clientPosX) * correctionFactor;
+    //   // Only correct significant differences 
+    //   if (difference > 0.15) { // Only correct if >0.15 units off
+    //     // Very gentle correction - trust client prediction more
+    //     const correctionFactor = 0.3; // 30% correction per reconciliation
+    //     const correctedX = clientPosX + (serverPosX - clientPosX) * correctionFactor;
         
-        playerBumper.cubeMesh.position.x = correctedX;
-        playerBumper.cubeUpdate.x = correctedX;
-      }
+    //     playerBumper.cubeMesh.position.x = correctedX;
+    //     playerBumper.cubeUpdate.x = correctedX;
+    //   }
       
-      // Clean up very old pending inputs
-      pendingInputs = pendingInputs.filter(input => (currentTime - input.timestamp) < 1000);
-    };
+    //   // Clean up very old pending inputs
+    //   pendingInputs = pendingInputs.filter(input => (currentTime - input.timestamp) < 1000);
+    // };
     
     // Entity interpolation for opponent following Gabriel Gambetta's pattern
     function updateOpponentPositionBuffer(position, timestamp) {
