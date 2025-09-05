@@ -297,7 +297,8 @@ export class Game extends HTMLElement {
     const pi = Math.PI;
     // let gameStateContainer.isGamePlaying = true;
     const WALL_WIDTH_HALF = 0.5;
-    let gameOptionsQuery = this.#state.gameOptions;
+    const gameOptionsQuery = this.#state.gameOptions;
+    const isGameAi = this.#state.gameType;
     let gameSpeed;
     switch (gameOptionsQuery.game_speed) {
       case 'slow':
@@ -793,6 +794,7 @@ export class Game extends HTMLElement {
       }
     }
     let scoreSwitch = MAX_SCORE / 3;
+    let choosenDifficulty = 0;
     function resetBall(direction) {
       const looserBumper = direction < 0 ? 1 : 0;
       lifePointUI?.decreasePoint(looserBumper, 20 / MAX_SCORE);
@@ -809,7 +811,15 @@ export class Game extends HTMLElement {
       }
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
+      // if (isGameAi == 'ai' && choosenDifficulty < 5 && choosenDifficulty >= 0)
+      // {
+      //   looserBumper == 1 
+      //     ? choosenDifficulty++
+      //     : choosenDifficulty > 0
+      //       ? choosenDifficulty--
+      //       : null;
 
+      // }
       lastBumperCollided = looserBumper;
       Ball.sphereUpdate.x = Bumpers[looserBumper].playerGlb.position.x;
       Ball.sphereUpdate.z = Bumpers[looserBumper].playerGlb.position.z + 2 * direction;
@@ -892,7 +902,6 @@ export class Game extends HTMLElement {
       }
     }
 
-    let choosenDifficulty = 0;
 
     let isMovementDone = false;
     let ballPredictedPos;
@@ -907,7 +916,15 @@ export class Game extends HTMLElement {
     // 1 && 500 / 5 && 500 / 8 && 750
 
     function handleAiBehavior(BallPos, BallVelocity) {
+      console.log(choosenDifficulty);
       if (isCalculationNeeded) {
+        const scoreDiff = Bumpers[0].score - Bumpers[1].score;
+        const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
+        const relativeGap = scoreDiff / MAX_SCORE;
+        // Maybe scale more aggressively later in the game?
+        const contextualFactor = relativeGap * (1 + gameProgress)
+        choosenDifficulty = Math.min(4, Math.floor(scoreDiff * contextualFactor**scoreDiff));
+        console.log(choosenDifficulty);
         let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
         let error = difficultyLvl[choosenDifficulty][0] * closeness;
         ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
@@ -1215,7 +1232,7 @@ export class Game extends HTMLElement {
     };
 
     var clock = new THREE.Clock();
-    let isGameAi = this.#state.gameType;
+    
     // const speed = Math.PI;
     function animate() {
       delta = clock.getDelta();
@@ -1256,13 +1273,13 @@ export class Game extends HTMLElement {
         if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
           isMovementDone = true;
           Bumpers[0].score++;
-          console.log(Bumpers[0].score);
+          // console.log(Bumpers[0].score);
           resetBall(-1);
           if (Bumpers[0].score <= MAX_SCORE) scoreUI?.updateScore(0, Bumpers[0].score);
         } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
           isMovementDone = true;
           Bumpers[1].score++;
-          console.log(Bumpers[1].score);
+          // console.log(Bumpers[1].score);
           resetBall(1);
           if (Bumpers[1].score <= MAX_SCORE) scoreUI?.updateScore(1, Bumpers[1].score);
         }
