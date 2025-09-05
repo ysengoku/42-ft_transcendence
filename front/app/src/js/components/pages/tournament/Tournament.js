@@ -185,6 +185,15 @@ export class Tournament extends HTMLElement {
         if (!isUserQualified) {
           return;
         }
+        // if (this.#state.uiStatus === UI_STATUS.WAITING_NEXT_ROUND) {
+        //   this.startPollingForNextRound = setInterval(async () => {
+        //     await this.fetchTournamentData();
+        //     if (this.#state.uiStatus !== UI_STATUS.WAITING_NEXT_ROUND) {
+        //       clearInterval(this.startPollingForNextRound);
+        //     }
+        //   }, 10000);
+        // }
+        // break;
     }
 
     log.info('UI status set to:', this.#state.uiStatus);
