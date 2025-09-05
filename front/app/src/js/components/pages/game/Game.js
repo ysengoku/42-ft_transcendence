@@ -794,7 +794,9 @@ export class Game extends HTMLElement {
       }
     }
     let scoreSwitch = MAX_SCORE / 3;
-    let choosenDifficulty = 0;
+    let choosenDifficulty = 2;
+    let stableDifficulty = 2;
+    let lastSignificantScoreDiff = 0;
     function resetBall(direction) {
       const looserBumper = direction < 0 ? 1 : 0;
       lifePointUI?.decreasePoint(looserBumper, 20 / MAX_SCORE);
@@ -913,17 +915,24 @@ export class Game extends HTMLElement {
       [2, 1000],
       [1, 1000],
     ];
-    // 1 && 500 / 5 && 500 / 8 && 750
 
     function handleAiBehavior(BallPos, BallVelocity) {
       console.log(choosenDifficulty);
       if (isCalculationNeeded) {
         const scoreDiff = Bumpers[0].score - Bumpers[1].score;
         const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
+        const minDifficulty = scoreDiff <= -3 ? 0 : 2;
+        
         const relativeGap = scoreDiff / MAX_SCORE;
-        // Maybe scale more aggressively later in the game?
-        const contextualFactor = relativeGap * (1 + gameProgress)
-        choosenDifficulty = Math.min(4, Math.floor(scoreDiff * contextualFactor**scoreDiff));
+        const contextualFactor = relativeGap * (1 + gameProgress * 0.8) + (1 - gameProgress) * 0.7;
+        const calculatedDifficulty = scoreDiff > 0 ? Math.floor(2 + (scoreDiff - 1) * contextualFactor * 1.5) : Math.max(0, 2 + scoreDiff);
+        const finalDifficulty = Math.max(minDifficulty, Math.min(4, Math.floor(calculatedDifficulty)));
+        if (Math.abs(scoreDiff - lastSignificantScoreDiff) >= 2) {
+          stableDifficulty = finalDifficulty;
+          lastSignificantScoreDiff = scoreDiff;
+        }
+
+        choosenDifficulty = stableDifficulty;
         console.log(choosenDifficulty);
         let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
         let error = difficultyLvl[choosenDifficulty][0] * closeness;
@@ -1277,7 +1286,8 @@ export class Game extends HTMLElement {
           resetBall(-1);
           if (Bumpers[0].score <= MAX_SCORE) scoreUI?.updateScore(0, Bumpers[0].score);
         } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
-          isMovementDone = true;
+          isMovementDone = false;
+          isCalculationNeeded = true;
           Bumpers[1].score++;
           // console.log(Bumpers[1].score);
           resetBall(1);
