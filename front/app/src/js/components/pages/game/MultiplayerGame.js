@@ -8,7 +8,7 @@ import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 
 /* eslint no-var: "off" */
-export class MultiplayerGame extends HTMLElement {
+  export class MultiplayerGame extends HTMLElement {
   #navbarHeight = 64;
   #pongSocket = null;
   #state = {
@@ -57,85 +57,26 @@ export class MultiplayerGame extends HTMLElement {
     }
   }
 
-  createOnDocumentKeyDown(bumpers, playerIdContainer, keyMap, ourBumperIndexContainer, processKeyDown) {
+  createOnDocumentKeyDown(clientState) {
     return (e) => {
-      const tag = e.target.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea') {
-        return; // Do not process key events on input or textarea elements
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        clientState.movesLeft = true;
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        clientState.movesRight = true;
       }
-      if (e.defaultPrevented) {
-        return; // Do noplayerglb if the event was already processed
-      }
-      var keyCode = e.code;
-      const now = Date.now();
-      if (
-        (keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        if (!keyMap[keyCode]) { // Only send on initial press, not repeat
-          processKeyDown('move_left');
-        }
-      }
-      if (
-        (keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        if (!keyMap[keyCode]) { // Only send on initial press, not repeat
-          processKeyDown('move_right');
-        }
-      }
-      if (
-        (keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        if (!keyMap[keyCode]) { // Only send on initial press, not repeat
-          processKeyDown('move_left');
-        }
-      }
-      if (
-        (keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        if (!keyMap[keyCode]) { // Only send on initial press, not repeat
-          processKeyDown('move_right');
-        }
-      }
-      keyMap[keyCode] = true;
+      
       e.preventDefault();
     };
   }
 
-  createOnDocumentKeyUp(bumpers, playerIdContainer, keyMap, ourBumperIndexContainer, processKeyUp) {
+  createOnDocumentKeyUp(clientState) {
     return (e) => {
-      if (e.defaultPrevented) {
-        return; // Do noplayerglb if the event was already processed
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        clientState.movesLeft = false;
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        clientState.movesRight = false;
       }
-      var keyCode = e.code;
-      if (
-        (keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        processKeyUp('move_left');
-      }
-      if (
-        (keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        processKeyUp('move_right');
-      }
-      if (
-        (keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        processKeyUp('move_left');
-      }
-      if (
-        (keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        processKeyUp('move_right');
-      }
-      keyMap[keyCode] = false;
+      
       e.preventDefault();
     };
   }
@@ -174,7 +115,6 @@ export class MultiplayerGame extends HTMLElement {
     // const orbit = new OrbitControls(camera, renderer.domElement);
 
     let mixer;
-    var keyMap = {};
     const normalMaterial = new THREE.MeshNormalMaterial();
 
     const ligths = [
@@ -265,7 +205,6 @@ export class MultiplayerGame extends HTMLElement {
         sphereUpdate,
         velocity,
         temporalSpeed,
-        serverState: null, // Will be populated by server updates
       };
     })(0, 1, 0);
 
@@ -292,7 +231,6 @@ export class MultiplayerGame extends HTMLElement {
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
-      const inputQueue = []; // Legacy - will be replaced by global pendingInputs
       let controlReverse = false;
       let lenghtHalf = BUMPER_LENGTH_HALF;
       let widthHalf = BUMPER_WIDTH_HALF;
@@ -343,7 +281,7 @@ export class MultiplayerGame extends HTMLElement {
     };
 
     /* eslint-disable-next-line new-cap */
-    const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
+      const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
     const WallFactory = (posX, posY, posZ) => {
       const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
@@ -360,7 +298,7 @@ export class MultiplayerGame extends HTMLElement {
       };
     };
     /* eslint-disable-next-line new-cap */
-    const Walls = [WallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0), WallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0)];
+      const Walls = [WallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0), WallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0)];
 
     (() => {
       const phongMaterial = new THREE.MeshPhongMaterial();
@@ -373,14 +311,38 @@ export class MultiplayerGame extends HTMLElement {
 
     const clock = new THREE.Clock();
     let accumulator = 0.0;
-    // Server reconciliation tracking
-    let lastServerPositionX = null;
-    let lastServerTimestamp = null;
-    
-    // Entity interpolation state for opponent bumper
-    const opponentPositionBuffer = [];
-    const ENTITY_INTERPOLATION_DELAY = 100; // 100ms behind real-time
-    
+
+    const ENTITY_INTERPOLATION_DELAY = 50;
+
+    const serverState = {
+      bumper_1: { x: 0, z: -9, score: 0, buff_or_debuff_target: false, move_id: -1, timestamp: -1 },
+      bumper_2: { x: 0, z: 9, score: 0, buff_or_debuff_target: false, move_id: -1, timestamp: -1 },
+      ball: { 
+        x: 0, z: 0, 
+        velocity: { x: 0, z: 0 }, 
+        temporal_speed: { x: 1, z: 1 }
+      },
+      coin: { x: -9.25, z: 1 },
+      current_buff_or_debuff: 0,
+      current_buff_or_debuff_remaining_time: 0.0,
+      is_someone_scored: false,
+      elapsed_seconds: 0,
+      time_limit_reached: false
+    };
+
+    const clientState = {
+      playerId: '',
+      playerNumber: -1,
+      enemyNumber: -1,
+      bumper: null,
+      enemyBumper: null,
+      pendingInputs: [],
+      inputSequenceNumber: 0,
+      opponentPositionBuffer: [],
+      movesLeft: false,
+      movesRight: false,
+    };
+
     const Buff = {
       NO_BUFF: 0,
       CONTROL_REVERSE_ENEMY: 1,
@@ -390,171 +352,113 @@ export class MultiplayerGame extends HTMLElement {
       ENLARGE_PLAYER: 5
     };
 
-    // Client-side bumper state that mirrors server exactly
-    let clientBumperState = {
-      moves_left: false,  // Mirrors server's bumper.moves_left
-      moves_right: false, // Mirrors server's bumper.moves_right
-      speed: 0.25 * (window.gameSettings?.game_speed || 1.0) // Will be set from server data
-    };
-    
-    // Input tracking for proper reconciliation
-    let pendingInputs = [];
-    let inputSequenceNumber = 0;
-    
     this.#pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
-    let lastBumperCollided;
 
-    // Client-side prediction that mirrors server movement logic exactly
-    
-    const sendMovementInput = (action, pressed) => {
-      const sequenceNumber = ++inputSequenceNumber;
-      const timestamp = Date.now();
+    const applyInputToBumper = (input, bumper, deltaTime) => {
+      if (!input.action) return;
       
-      // Create input for tracking
-      const input = {
-        sequenceNumber,
-        action,
-        pressed,
-        timestamp
-      };
-      
-      // IMMEDIATELY update client movement state (mirrors server's handle_input)
-      if (action === 'move_left') {
-        clientBumperState.moves_left = pressed;
-      } else if (action === 'move_right') {
-        clientBumperState.moves_right = pressed;
+      let movement = 0;
+      if ((input.action === 'move_left' && !bumper.controlReverse) || (input.action === 'move_right' && bumper.controlReverse)) {
+        movement = bumper.speed * deltaTime;
+      } else if ((input.action === 'move_right' && !bumper.controlReverse) || (input.action === 'move_left' && bumper.controlReverse)) {
+        movement = -bumper.speed * deltaTime;
       }
       
-      // Store input for reconciliation
-      pendingInputs.push(input);
+      const oldX = bumper.cubeUpdate.x;
+      const newX = bumper.cubeUpdate.x + movement;
+      const leftLimit = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf;
+      const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf;
+      const finalX = Math.max(leftLimit, Math.min(rightLimit, newX));
       
-      // Send to server with sequence number in content field
-      // Server will echo this back for reconciliation
-      this.safeSend(JSON.stringify({ 
-        action: action, 
-        content: pressed ? sequenceNumber : -sequenceNumber, // Positive=pressed, negative=released
-        player_id: playerIdContainer.playerId,
-        timestamp: timestamp,
-      }));
-      
-      return input;
-    };
-    
-    const processKeyDown = (action) => {
-      return sendMovementInput(action, true);
-    };
-    
-    const processKeyUp = (action) => {
-      return sendMovementInput(action, false);
-    };
-    
-    // Input confirmation reconciliation - synchronize movement state with server
-    const reconcileInputConfirmation = (action, sequenceNumber) => { // timestamp
-
-      // const pressed = Math.sign(sequenceNumber) ;
-      // for (let [i, input] of pendingInputs.entries()) {
-      //   if (input[1] === action && input[0] <= sequenceNumber ) { //&& input[3] <= timestamp && Math.sign(input[2]) == pressed 
-      //     pendingInputs.splice(i, 1);
-      //     return true;
-      //   }
-      // }
-      // return false;
-
-      const absSequenceNumber = Math.abs(sequenceNumber);
-      const pressed = sequenceNumber > 0;
-      // Remove processed inputs from pending list
-      pendingInputs = pendingInputs.filter(input => input.sequenceNumber > absSequenceNumber);
-      
-      // Synchronize movement state with server confirmation
-      // This handles cases where inputs were lost or arrived out of order
-      if (action === 'move_left') {
-        clientBumperState.moves_left = pressed;
-      } else if (action === 'move_right') {
-        clientBumperState.moves_right = pressed;
+      if (clientState.movesLeft || clientState.movesRight) {
+        console.log(`[APPLY INPUT] action: ${input.action}, seq: ${input.sequenceNumber}, speed: ${bumper.speed}, deltaTime: ${deltaTime}, movement: ${movement}, oldX: ${oldX}, finalX: ${finalX}`);
       }
+      
+      bumper.cubeUpdate.x = finalX;
     };
-    
-    // Position reconciliation using StateUpdated messages
-    // let lastReconciliationTime = 0;
-    // const RECONCILIATION_INTERVAL = 100; // Reconcile every 100ms
-    
-    // const reconcileWithServer = (serverPosX) => {
-    //   const playerBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
-    //   const currentTime = Date.now();
+
+    const sendCurrentInput = () => {
+      const now = Date.now();
       
-    //   // Store server position for reference
-    //   lastServerPositionX = serverPosX;
-    //   lastServerTimestamp = currentTime;
-      
-    //   // Only reconcile occasionally to avoid fighting with client prediction
-    //   if (currentTime - lastReconciliationTime < RECONCILIATION_INTERVAL) {
-    //     return;
-    //   }
-    //   lastReconciliationTime = currentTime;
-      
-    //   const clientPosX = playerBumper.cubeUpdate.x;
-    //   const difference = Math.abs(serverPosX - clientPosX);
-      
-    //   // Only correct significant differences 
-    //   if (difference > 0.15) { // Only correct if >0.15 units off
-    //     // Very gentle correction - trust client prediction more
-    //     const correctionFactor = 0.3; // 30% correction per reconciliation
-    //     const correctedX = clientPosX + (serverPosX - clientPosX) * correctionFactor;
+      let action = null;
+      if (clientState.movesLeft && !clientState.movesRight) {
+        action = 'move_left';
+      } else if (clientState.movesRight && !clientState.movesLeft) {
+        action = 'move_right';
+      }
+      if (action) {
+        const sequenceNumber = ++clientState.inputSequenceNumber;
+        const input = {
+          sequenceNumber,
+          action,
+          timestamp: now
+        };
         
-    //     playerBumper.cubeMesh.position.x = correctedX;
-    //     playerBumper.cubeUpdate.x = correctedX;
-    //   }
-      
-    //   // Clean up very old pending inputs
-    //   pendingInputs = pendingInputs.filter(input => (currentTime - input.timestamp) < 1000);
-    // };
-    
-    // Entity interpolation for opponent following Gabriel Gambetta's pattern
-    function updateOpponentPositionBuffer(position, timestamp) {
-      opponentPositionBuffer.push({ position, timestamp });
-      
-      // Keep buffer size manageable (max 10 positions, ~300ms of history at 30fps)
-      if (opponentPositionBuffer.length > 10) {
-        opponentPositionBuffer.shift();
+        clientState.pendingInputs.push(input);
+        
+        console.log('Input was sent! Input:')
+        console.log({
+          action: action,
+          move_id: sequenceNumber,
+          player_id: clientState.playerId,
+          timestamp: now
+        })
+        this.safeSend(JSON.stringify({
+          action: action,
+          move_id: sequenceNumber,
+          player_id: clientState.playerId,
+          timestamp: now
+        }));
+      }
+    };
+
+
+    function updateOpponentPositionBuffer() {
+      const position = clientState.enemyNumber == 1 ? serverState.bumper_1.x : serverState.bumper_2.x;
+      const timestamp = Date.now();
+      clientState.opponentPositionBuffer.push({ position, timestamp });
+
+      if (clientState.opponentPositionBuffer.length > 10) {
+        clientState.opponentPositionBuffer.shift();
       }
     }
-    
+
     function getInterpolatedOpponentPosition() {
-      if (opponentPositionBuffer.length < 2) {
-        return opponentPositionBuffer.length > 0 ? opponentPositionBuffer[0].position : null;
+      if (clientState.opponentPositionBuffer.length < 2) {
+        return clientState.opponentPositionBuffer.length > 0 ? clientState.opponentPositionBuffer[0].position : null;
       }
-      
+
       const renderTime = Date.now() - ENTITY_INTERPOLATION_DELAY;
-      
+
       // Find the two positions to interpolate between
       let fromPosition = null;
       let toPosition = null;
-      
-      for (let i = 0; i < opponentPositionBuffer.length - 1; i++) {
-        if (opponentPositionBuffer[i].timestamp <= renderTime && opponentPositionBuffer[i + 1].timestamp >= renderTime) {
-          fromPosition = opponentPositionBuffer[i];
-          toPosition = opponentPositionBuffer[i + 1];
+
+      for (let i = 0; i < clientState.opponentPositionBuffer.length - 1; i++) {
+        if (clientState.opponentPositionBuffer[i].timestamp <= renderTime && clientState.opponentPositionBuffer[i + 1].timestamp >= renderTime) {
+          fromPosition = clientState.opponentPositionBuffer[i];
+          toPosition = clientState.opponentPositionBuffer[i + 1];
           break;
         }
       }
-      
+
       // If we don't have suitable positions, use the closest one
       if (!fromPosition || !toPosition) {
-        const closestIndex = opponentPositionBuffer.length - 2;
+        const closestIndex = clientState.opponentPositionBuffer.length - 2;
         if (closestIndex >= 0) {
-          fromPosition = opponentPositionBuffer[closestIndex];
-          toPosition = opponentPositionBuffer[closestIndex + 1];
+          fromPosition = clientState.opponentPositionBuffer[closestIndex];
+          toPosition = clientState.opponentPositionBuffer[closestIndex + 1];
         } else {
-          return opponentPositionBuffer[opponentPositionBuffer.length - 1].position;
+          return clientState.opponentPositionBuffer[clientState.opponentPositionBuffer.length - 1].position;
         }
       }
-      
+
       // Interpolate between the two positions
       const timeDiff = toPosition.timestamp - fromPosition.timestamp;
       if (timeDiff === 0) {
         return toPosition.position;
       }
-      
+
       const alpha = Math.max(0, Math.min(1, (renderTime - fromPosition.timestamp) / timeDiff));
       return fromPosition.position + (toPosition.position - fromPosition.position) * alpha;
     }
@@ -586,15 +490,10 @@ export class MultiplayerGame extends HTMLElement {
         Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
       // Ball.bulletGlb.rotation.y = -degreesToRadians(Ball.temporalSpeed.x);
     }
-    let theirBumper = 0;
-    
-    let isPlayerMoving = false;
-    let lastPlayerMovement = 0;
-    
     function resetAllBuffEffects() {
       for (let i = 0; i < Bumpers.length; i++) {
         const bumper = Bumpers[i];
-        
+
         bumper.controlReverse = false;
         bumper.speed = BUMPER_SPEED_PER_SECOND;
         bumper.cubeMesh.scale.x = 1;
@@ -603,54 +502,116 @@ export class MultiplayerGame extends HTMLElement {
         bumper.widthHalf = BUMPER_WIDTH_HALF;
       }
     }
-    
-    function updateState(data) {
-      if (!data) {
-        return;
+
+    function updateServerState(data) {
+      if (!data) return;
+      
+      serverState.bumper_1.x = data.bumper_1.x;
+      serverState.bumper_1.z = data.bumper_1.z;
+      serverState.bumper_1.score = data.bumper_1.score;
+      serverState.bumper_1.buff_or_debuff_target = data.bumper_1.buff_or_debuff_target;
+      serverState.bumper_1.move_id = data.bumper_1.move_id;
+      serverState.bumper_1.timestamp = data.bumper_1.timestamp;
+      
+      serverState.bumper_2.x = data.bumper_2.x;
+      serverState.bumper_2.z = data.bumper_2.z;
+      serverState.bumper_2.score = data.bumper_2.score;
+      serverState.bumper_2.buff_or_debuff_target = data.bumper_2.buff_or_debuff_target;
+      serverState.bumper_2.move_id = data.bumper_2.move_id;
+      serverState.bumper_2.timestamp = data.bumper_2.timestamp;
+      
+      serverState.ball.x = data.ball.x;
+      serverState.ball.z = data.ball.z;
+      serverState.ball.velocity.x = data.ball.velocity.x;
+      serverState.ball.velocity.z = data.ball.velocity.z;
+      serverState.ball.temporal_speed.x = data.ball.temporal_speed.x;
+      serverState.ball.temporal_speed.z = data.ball.temporal_speed.z;
+      
+      if (data.coin) {
+        serverState.coin.x = data.coin.x;
+        serverState.coin.z = data.coin.z;
       }
       
-      let theirBumperPos = theirBumper == 0 ? data.bumper_1.x : data.bumper_2.x;
-      let myBumperPos = ourBumperIndexContainer.ourBumperIndex == 0 ? data.bumper_1.x : data.bumper_2.x;
-      
-      // Server reconciliation using StateUpdated (after movement is applied)
-      // reconcileWithServer(myBumperPos);
+      serverState.current_buff_or_debuff = data.current_buff_or_debuff;
+      serverState.current_buff_or_debuff_remaining_time = data.current_buff_or_debuff_remaining_time;
+      serverState.is_someone_scored = data.is_someone_scored;
+      serverState.elapsed_seconds = data.elapsed_seconds;
+      serverState.time_limit_reached = data.time_limit_reached; 
+    }
 
-      // Store server ball state for interpolation
-      Ball.serverState = {
-        x: data.ball.x,
-        z: data.ball.z,
-        velocity: { x: data.ball.velocity.x, z: data.ball.velocity.z },
-        temporalSpeed: { x: data.ball.temporal_speed.x, z: data.ball.temporal_speed.z },
-        timestamp: Date.now()
-      };
+    // Update 3D object positions from server state
+    function updateEntityPositionsFromServer() {
+      // Update ball position
+      Ball.sphereUpdate.x = serverState.ball.x;
+      Ball.sphereUpdate.z = serverState.ball.z;
       
       // Update ball velocity for client-side prediction
-      Ball.velocity.x = data.ball.velocity.x;
-      Ball.velocity.z = data.ball.velocity.z;
-      Ball.temporalSpeed.x = data.ball.temporal_speed.x;
-      Ball.temporalSpeed.z = data.ball.temporal_speed.z;
+      Ball.velocity.x = serverState.ball.velocity.x;
+      Ball.velocity.z = serverState.ball.velocity.z;
+      Ball.temporalSpeed.x = serverState.ball.temporal_speed.x;
+      Ball.temporalSpeed.z = serverState.ball.temporal_speed.z;
       
-      // Set ball position to server position (authoritative)
-      Ball.sphereUpdate.x = data.ball.x;
-      Ball.sphereUpdate.z = data.ball.z;
+      // Update coin position if it exists
+      if (serverState.coin && Coin) {
+        Coin.cylinderUpdate.x = serverState.coin.x;
+        Coin.cylinderUpdate.z = serverState.coin.z;
+      }
+    }
 
-      if (data.coin) {
-        Coin.cylinderUpdate.z = data.coin.z;
-        Coin.cylinderUpdate.x = data.coin.x;
+    // applies position received from the server, then applies not yet processed inputs
+    function reconcileWithServer() {
+      if (!clientState.bumper || clientState.playerNumber <= 0)
+        return;
+
+      const myBumperData = clientState.playerNumber === 1 ? serverState.bumper_1 : serverState.bumper_2;
+      const lastProcessedMoveId = myBumperData.move_id;
+
+      if (clientState.movesLeft || clientState.movesRight) {
+        console.log(`[RECONCILE] Server pos: ${myBumperData.x}, Client pos before: ${clientState.bumper.cubeUpdate.x}, Last processed: ${lastProcessedMoveId}, Pending: ${clientState.pendingInputs.length}`);
+        console.log(clientState.pendingInputs)
       }
 
-      Bumpers[0].score = data.bumper_1.score;
-      Bumpers[1].score = data.bumper_2.score;
-      
-      updateOpponentPositionBuffer(theirBumperPos, Date.now());
-      
-      if (data.current_buff_or_debuff === Buff.NO_BUFF) {
+      // Set to authoritative server position
+      clientState.bumper.cubeUpdate.x = myBumperData.x;
+
+      // Remove processed inputs and re-apply unprocessed ones
+      let removedCount = 0;
+      let reappliedCount = 0;
+      let i = 0;
+      while (i < clientState.pendingInputs.length) {
+        const input = clientState.pendingInputs[i];
+        if (input.sequenceNumber <= lastProcessedMoveId) {
+          clientState.pendingInputs.splice(i, 1);
+          removedCount++;
+        } else {
+          console.log(`[RECONCILE] Re-applying input ${input.sequenceNumber}: ${input.action}`);
+          console.log(clientState.pendingInputs)
+          applyInputToBumper(input, clientState.bumper, SERVER_TICK_INTERVAL);
+          reappliedCount++;
+          i++;
+        }
+      }
+
+      if (clientState.movesLeft || clientState.movesRight) {
+      console.log(`[RECONCILE] Client pos after: ${clientState.bumper.cubeUpdate.x}, Removed: ${removedCount}, Re-applied: ${reappliedCount}`);
+      }
+    }
+    
+    function applyBuffEffects() {
+      if (serverState.current_buff_or_debuff === Buff.NO_BUFF) {
         resetAllBuffEffects();
-      } else if (data.current_buff_or_debuff > Buff.NO_BUFF && data.current_buff_or_debuff_target) {
-        const targetBumperIndex = data.current_buff_or_debuff_target === '_bumper_1' ? 0 : 1;
-        const targetPlayer = Bumpers[targetBumperIndex];
-        
-        switch (data.current_buff_or_debuff) {
+        return;
+      }
+
+      let targetPlayer = null;
+      if (serverState.bumper_1.buff_or_debuff_target) {
+        targetPlayer = Bumpers[0];
+      } else if (serverState.bumper_2.buff_or_debuff_target) {
+        targetPlayer = Bumpers[1];
+      }
+
+      if (targetPlayer) {
+        switch (serverState.current_buff_or_debuff) {
           case Buff.CONTROL_REVERSE_ENEMY:
             targetPlayer.controlReverse = true;
             break;
@@ -678,93 +639,25 @@ export class MultiplayerGame extends HTMLElement {
     });
 
     let data;
-    // let ;
-    let ourBumperIndexContainer = (() => {
-      let ourBumperIndex = 0;
-      return {
-        get ourBumperIndex() {
-          return ourBumperIndex;
-        },
-        set ourBumperIndex(newOurBumperIndex) {
-          ourBumperIndex = newOurBumperIndex;
-        },
-      };
-    })();
-
-
-    function resetBall(direction) {
-      const looserBumper = direction < 0 ? 1 : 0;
-      // lifePointUI?.decreasePoint(looserBumper, 20 / MAX_SCORE);
-      // if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE) {
-      //   gameStateContainer.isGamePlaying = false;
-      //   stop();
-      //   return;
-      // } else if (Bumpers[0].score < scoreSwitch * 2 && Bumpers[0].score >= scoreSwitch) {
-      //   carboardModels[0].visible = false;
-      //   carboardModels[1].visible = true;
-      // } else if (Bumpers[0].score < scoreSwitch * 3 && Bumpers[0].score >= scoreSwitch * 2) {
-      //   carboardModels[1].visible = false;
-      //   carboardModels[2].visible = true;
-      // }
-      Ball.temporalSpeed.x = 1;
-      Ball.temporalSpeed.z = 1;
-
-      lastBumperCollided = looserBumper;
-      Ball.sphereUpdate.x = 0;
-      Ball.sphereUpdate.z = 0;
-      // Bumpers[looserBumper].gltfStore.action[Bumpers[looserBumper].currentAction][0].fadeOut(0.1);
-      // Bumpers[looserBumper].gltfStore.action[1][0].reset();
-      // Bumpers[looserBumper].gltfStore.action[1][0].fadeIn(0.1);
-      // Bumpers[looserBumper].gltfStore.action[1][0].play();
-      // Bumpers[looserBumper].currentAction = 1;
-      // if (Bumpers[looserBumper].currentAction == 1) {
-      //   Bumpers[looserBumper].gltfStore.action[1][0].fadeOut(0.3);
-      //   Bumpers[looserBumper].gltfStore.action[2][0].reset();
-      //   Bumpers[looserBumper].gltfStore.action[2][0].fadeIn(0.3);
-      //   Bumpers[looserBumper].gltfStore.action[2][0].play();
-      //   Bumpers[looserBumper].currentAction = 2;
-      // }
-      // Bumpers[looserBumper].playerGlb.rotation.y = looserBumper == 0 ? 0 : pi;
-      Ball.velocity.x = 0;
-      Ball.velocity.z = BALL_INITIAL_VELOCITY * 1;
-      Ball.velocity.z *= direction;
-    }
-
-
-    let playerIdContainer = (() => {
-      let actualPlayerId = '';
-      return {
-        get playerId() {
-          return actualPlayerId;
-        },
-        set playerId(newPlayerId) {
-          actualPlayerId = newPlayerId;
-        },
-      };
-    })();
     this.#pongSocket.addEventListener('message', (e) => {
       data = JSON.parse(e.data);
       switch (data.action) {
         case 'state_updated':
-          updateState(data.state);
-          // if (data.state.someone_scored)
-          //     audio.cloneNode().play();
-          break;
-        case 'move_left':
-        case 'move_right':
-          if (data.player_number == ourBumperIndexContainer.ourBumperIndex + 1) { // && !reconcileInputConfirmation(data.action, data.content, data.timestamp) 
-            // Use InputConfirmed for movement state reconciliation (not position)
-            reconcileInputConfirmation(data.action, data.content);
-            // Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeUpdate.x = data.position_x;
-          }
+          updateServerState(data.state);
+          updateEntityPositionsFromServer();
+          reconcileWithServer();
+          applyBuffEffects();
+          updateOpponentPositionBuffer();
           break;
         case 'player_joined':
-          ourBumperIndexContainer.ourBumperIndex = data.player_number - 1;
-          theirBumper = Math.abs(ourBumperIndexContainer.ourBumperIndex - 1);
-          log.info(data);
-          playerIdContainer.playerId = data.player_id;
+          clientState.playerId = data.player_id;
+          clientState.playerNumber = data.player_number;
+          clientState.enemyNumber = data.player_number == 1 ? 2 : 1;
+          clientState.bumper = Bumpers[clientState.playerNumber - 1];
+          clientState.enemyBumper = Bumpers[clientState.enemyNumber - 1];
           camera.position.set(0, 15, -20);
           camera.lookAt(new THREE.Vector3(0, 0, 0));
+          log.info(data);
           break;
         case 'game_started':
           log.info('Game started', data);
@@ -813,52 +706,27 @@ export class MultiplayerGame extends HTMLElement {
         router.redirect('/home');
       }, 1500);
     });
-    let ballSubtickZ = 0;
-    let fpsInterval = 1000 / 120;
 
-    
     function animate(ms) {
       requestAnimationFrame(animate);
+      if (!clientState.bumper) {
+        return;
+      }
       const delta = clock.getDelta();
       accumulator += delta;
       const deltaAnimation = Math.min(delta, 0.1);
-      // if (delta > fpsInterval) {
-        // CLIENT-SIDE PREDICTION: Only extrapolate ball position slightly ahead of server state
-        if (Ball.serverState && Ball.serverState.timestamp) {
-          const timeSinceServerUpdate = (Date.now() - Ball.serverState.timestamp) / 1000; // Convert to seconds
-          const MAX_PREDICTION_TIME = 0.1; // Only predict 100ms ahead
-          
-          if (timeSinceServerUpdate < MAX_PREDICTION_TIME) {
-            // Extrapolate ball position based on server velocity
-            const gameSpeed = 1.0; // Assuming medium game speed
-            Ball.sphereUpdate.x = Ball.serverState.x + 
-              (Ball.serverState.velocity.x * Ball.serverState.temporalSpeed.x * gameSpeed * timeSinceServerUpdate);
-            Ball.sphereUpdate.z = Ball.serverState.z + 
-              (Ball.serverState.velocity.z * Ball.serverState.temporalSpeed.z * gameSpeed * timeSinceServerUpdate);
-          }
-          // If too much time has passed since server update, keep last known position
-        }
 
-        const playerBumper = Bumpers[ourBumperIndexContainer.ourBumperIndex];
-        while (accumulator >= SERVER_TICK_INTERVAL) {
-          if (!((keyMap['ArrowLeft'] && keyMap['ArrowRight']) || (keyMap["KeyA"] && keyMap["KeyD"]) ||
-            (keyMap["ArrowLeft"] && keyMap["KeyD"]) || (keyMap["KeyA"] && keyMap["ArrowRight"])))
-          {
-            let movement = 0;
-            if (
-              ((keyMap['ArrowRight'] == true && playerBumper.controlReverse) ||
-                (keyMap['KeyD'] == true && playerBumper.controlReverse) ||
-                (keyMap['ArrowLeft'] == true && !playerBumper.controlReverse) ||
-                (keyMap['KeyA'] == true && !playerBumper.controlReverse))
-            ) {
-              movement = playerBumper.speed * SERVER_TICK_INTERVAL;
-            }
-            if (
-              ((keyMap['ArrowLeft'] == true && playerBumper.controlReverse) ||
-                (keyMap['KeyA'] == true && playerBumper.controlReverse) ||
-                (keyMap['ArrowRight'] == true && !playerBumper.controlReverse) ||
-                (keyMap['KeyD'] == true && !playerBumper.controlReverse))
-            ) {
+      const playerBumper = clientState.bumper;
+      while (accumulator >= SERVER_TICK_INTERVAL) {
+        sendCurrentInput();
+        // do client-side prediction at the same tick rate as the server
+        if (!(clientState.movesLeft && clientState.movesRight))
+        {
+          let movement = 0;
+          if ((clientState.movesLeft && !playerBumper.controlReverse) || (clientState.movesRight && playerBumper.controlReverse)) {
+            movement = playerBumper.speed * SERVER_TICK_INTERVAL;
+          }
+          else if ((clientState.movesRight && !playerBumper.controlReverse) || (clientState.movesLeft && playerBumper.controlReverse)) {
               movement = -playerBumper.speed * SERVER_TICK_INTERVAL;
             }
             let newX = playerBumper.cubeUpdate.x + movement;
@@ -866,31 +734,31 @@ export class MultiplayerGame extends HTMLElement {
             const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - playerBumper.lenghtHalf;
             newX = Math.max(leftLimit, Math.min(rightLimit, newX));
 
+            if (clientState.movesLeft || clientState.movesRight) {
+              console.log(`[CLIENT PREDICTION] speed: ${playerBumper.speed}, interval: ${SERVER_TICK_INTERVAL}, movement: ${movement}, oldX: ${playerBumper.cubeUpdate.x}, newX: ${newX}`)
+            }
             playerBumper.cubeUpdate.x = newX;
-            // playerBumper.playerGlb.position.x = newX;
           }
           accumulator -= SERVER_TICK_INTERVAL;
         }
 
         Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
         Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-        
-        // Opponent bumper position using proper entity interpolation
+
         const interpolatedOpponentPos = getInterpolatedOpponentPosition();
         if (interpolatedOpponentPos !== null) {
-          Bumpers[theirBumper].cubeUpdate.x = interpolatedOpponentPos;
+          clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
         }
-        Bumpers[theirBumper].cubeMesh.position.set(
-          Bumpers[theirBumper].cubeUpdate.x,
-          Bumpers[theirBumper].cubeUpdate.y,
-          Bumpers[theirBumper].cubeUpdate.z,
+        clientState.enemyBumper.cubeMesh.position.set(
+          clientState.enemyBumper.cubeUpdate.x,
+          clientState.enemyBumper.cubeUpdate.y,
+          clientState.enemyBumper.cubeUpdate.z,
         );
         playerBumper.cubeMesh.position.set(
           playerBumper.cubeUpdate.x,
           playerBumper.cubeUpdate.y,
           playerBumper.cubeUpdate.z,
         );
-      // }
 
       if (mixer) {
         mixer.update(deltaAnimation);
@@ -898,8 +766,8 @@ export class MultiplayerGame extends HTMLElement {
       renderer.render(scene, camera);
     }
 
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer, processKeyDown);
-    this.onDocumentKeyUp = this.createOnDocumentKeyUp(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer, processKeyUp);
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(clientState);
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(clientState);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
@@ -926,5 +794,6 @@ export class MultiplayerGame extends HTMLElement {
     this.overlay?.show('pending');
   }
 }
+
 
 customElements.define('multiplayer-game', MultiplayerGame);

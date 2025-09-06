@@ -4,7 +4,8 @@ import logging
 import math
 import random
 import traceback
-from dataclasses import dataclass
+from collections import deque
+from dataclasses import dataclass, field
 from enum import Enum, IntEnum, auto
 from typing import Literal
 
@@ -14,6 +15,7 @@ from channels.layers import get_channel_layer
 
 from common.close_codes import CloseCodes
 from pong.game_protocol import (
+    ClientToGameServer,
     GameRoomSettings,
     GameServerToClient,
     GameServerToGameWorker,
@@ -26,7 +28,8 @@ logger = logging.getLogger("server")
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 #### CONSTANTS ####
 # FRAME RATE
-GAME_TICK_INTERVAL = 1.0 / 30
+GAME_TICKS_PER_SECOND = 30
+GAME_TICK_INTERVAL = 1.0 / GAME_TICKS_PER_SECOND
 
 # GEOMETRIC CONSTANTS
 WALL_LEFT_X = 10
@@ -149,6 +152,10 @@ class Bumper(Vector2):
 @dataclass
 class Player:
     bumper: Bumper
+    moves_queue: deque[ClientToGameServer.PlayerInput] = field(default_factory=deque)
+    last_processed_move: ClientToGameServer.PlayerInput = field(
+        default_factory=lambda: {"timestamp": -1, "move_id": -1},
+    )
     id: str = ""
     connection: PlayerConnectionState = PlayerConnectionState.NOT_CONNECTED
     connection_stamp: float = 0.0
@@ -237,12 +244,25 @@ class BasePong:
 
         # pre-create the base state dictionary to avoid creating it every tick
         self._serialized_state = {
-            "bumper_1": {"x": 0.0, "z": 0.0, "score": 0},
-            "bumper_2": {"x": 0.0, "z": 0.0, "score": 0},
+            "bumper_1": {
+                "x": 0.0,
+                "z": 0.0,
+                "score": 0,
+                "buff_or_debuff_target": False,
+                "timestamp": -1,
+                "move_id": -1,
+            },
+            "bumper_2": {
+                "x": 0.0,
+                "z": 0.0,
+                "score": 0,
+                "buff_or_debuff_target": False,
+                "timestamp": -1,
+                "move_id": -1,
+            },
             "ball": {"x": 0.0, "z": 0.0, "velocity": {"x": 0.0, "z": 0.0}, "temporal_speed": {"x": 0.0, "z": 0.0}},
             "coin": {"x": 0.0, "z": 0.0} if cool_mode else None,
             "is_someone_scored": False,
-            "last_bumper_collided": "_bumper_1",
             "current_buff_or_debuff": int(Buff.NO_BUFF),
             "current_buff_or_debuff_remaining_time": 0.0,
             "current_buff_or_debuff_target": None,
@@ -694,10 +714,16 @@ class BasePong:
         self._serialized_state["bumper_1"]["x"] = self._bumper_1.x
         self._serialized_state["bumper_1"]["z"] = self._bumper_1.z
         self._serialized_state["bumper_1"]["score"] = self._bumper_1.score
+        self._serialized_state["bumper_1"]["buff_or_debuff_target"] = (
+            self._bumper_1 == self._active_buff_or_debuff_target
+        )
 
         self._serialized_state["bumper_2"]["x"] = self._bumper_2.x
         self._serialized_state["bumper_2"]["z"] = self._bumper_2.z
         self._serialized_state["bumper_2"]["score"] = self._bumper_2.score
+        self._serialized_state["bumper_2"]["buff_or_debuff_target"] = (
+            self._bumper_2 == self._active_buff_or_debuff_target
+        )
 
         self._serialized_state["ball"]["x"] = self._ball.x
         self._serialized_state["ball"]["z"] = self._ball.z
@@ -713,17 +739,7 @@ class BasePong:
             self._serialized_state["coin"] = None
 
         self._serialized_state["is_someone_scored"] = self._is_someone_scored
-        self._serialized_state["last_bumper_collided"] = (
-            "_bumper_1" if self._last_bumper_collided == self._bumper_1 else "_bumper_2"
-        )
         self._serialized_state["current_buff_or_debuff"] = self._active_buff_or_debuff
-
-        if self._active_buff_or_debuff_target:
-            self._serialized_state["current_buff_or_debuff_target"] = (
-                "_bumper_1" if self._active_buff_or_debuff_target == self._bumper_1 else "_bumper_2"
-            )
-        else:
-            self._serialized_state["current_buff_or_debuff_target"] = None
 
         return self._serialized_state
 
@@ -733,8 +749,8 @@ class MultiplayerPongMatch(BasePong):
     Adaptated interface for the pong engine for the purposes of being managed by the GameConsumer in concurrent manner
     for the purposes of being sent to the client via websockets.
     Connects the pong enging to actual players, their inputs and state. Manages players, their connection status,
-    as well as the background tasks needed for the proper management of the game loop and connection/reconnection of
-    the players.
+    inputs, as well as the background tasks needed for the proper management of the game loop and
+    connection/reconnection of the players.
     """
 
     id: str
@@ -799,25 +815,49 @@ class MultiplayerPongMatch(BasePong):
     def __repr__(self):
         return f"{self.status.name.capitalize()} game {self.id}"
 
-    def handle_input(self, action: str, player_id: str, content: int, timestamp: float) -> tuple[Player, int] | None:
+    def add_input_to_queue(self, player_input: ClientToGameServer.PlayerInput) -> None:
+        """Adds inputs to the queue for processing."""
+        player_id = player_input["player_id"]
+        player: Player
         if player_id == self._player_1.id:
             player = self._player_1
         elif player_id == self._player_2.id:
             player = self._player_2
         else:
-            return None
-        bumper = player.bumper
+            return
 
-        # negative means not pressed, positive means pressed
-        is_pressed = content > 0
+        # legit client can't send input messages at the rate faster than 30hz
+        if len(player.moves_queue) < GAME_TICKS_PER_SECOND:
+            player.moves_queue.append(player_input)
 
-        match action:
-            case "move_left":
-                bumper.moves_left = is_pressed
-                return player, content, timestamp
-            case "move_right":
-                bumper.moves_right = is_pressed
-                return player, content, timestamp
+    def _process_inputs(self, player: Player):
+        move: ClientToGameServer.PlayerInput
+        if player.moves_queue:
+            move = player.moves_queue.popleft()
+        else:
+            return
+
+        action = move["action"]
+        if action == "move_left":
+            player.bumper.moves_left = True
+        elif action == "move_right":
+            player.bumper.moves_right = True
+
+        player.last_processed_move.update(move)
+
+    def _reset_movement(self, player: Player):
+        player.bumper.moves_left = False
+        player.bumper.moves_right = False
+
+    def resolve_next_tick(self, delta_time: float, current_time: float):
+        """Extends parent's `resolve_next_tick`, but with awarness of of inputs."""
+        self._process_inputs(self._player_1)
+        self._process_inputs(self._player_2)
+
+        super().resolve_next_tick(delta_time, current_time)
+
+        self._reset_movement(self._player_1)
+        self._reset_movement(self._player_2)
 
     def add_player(self, player_connected_event: dict) -> Player | None:
         """
@@ -899,15 +939,21 @@ class MultiplayerPongMatch(BasePong):
             return self._player_2, self._player_1
         return None
 
-    def as_dict_with_timing(self, current_time) -> SerializedGameState:
+    def as_dict_with_multiplayer_data(self, current_time) -> SerializedGameState:
         """
-        Updates parent pong state dict with timing information, since `BasePong` doesn't have an access to
-        async functions.
+        Updates parent pong state dict with multiplayer information:
+        timing information, input handling etc.
         Note: The state is never sent to the client when the game is paused.
         """
         pong_state = super().as_dict()
         pong_state["elapsed_seconds"] = int(current_time - self.start_time - self.total_paused_time)
         pong_state["time_limit_reached"] = self.time_limit_reached
+
+        pong_state["bumper_1"]["move_id"] = self._player_1.last_processed_move["move_id"]
+        pong_state["bumper_1"]["timestamp"] = self._player_1.last_processed_move["timestamp"]
+
+        pong_state["bumper_2"]["move_id"] = self._player_2.last_processed_move["move_id"]
+        pong_state["bumper_2"]["timestamp"] = self._player_2.last_processed_move["timestamp"]
 
         if self._active_buff_or_debuff != Buff.NO_BUFF and self._active_buff_or_debuff_target:
             buff_duration = self._active_buff_or_debuff.get_duration_seconds()  # In seconds
@@ -1002,29 +1048,11 @@ class GameWorkerConsumer(AsyncConsumer):
             logger.warning("[GameWorker]: input was sent for not running game {%s}", game_room_id)
             return
 
-        player_id = event["player_id"]
         action = event["action"]
-        content = event["content"]
-        timestamp = event["timestamp"]
 
         match action:
             case "move_left" | "move_right":
-                result = match.handle_input(action, player_id, content, timestamp)
-                if not result:
-                    return
-                player, content, timestamp = result
-
-                await self.channel_layer.group_send(
-                    self._to_game_room_group_name(match),
-                    GameServerToClient.InputConfirmed(
-                        type="worker_to_client_open",
-                        action=action,
-                        player_number=1 if player.bumper.dir_z == 1 else 2,
-                        content=content,
-                        position_x=player.bumper.x,
-                        timestamp=timestamp,
-                    ),
-                )
+                match.add_input_to_queue(event)
 
     ##### BACKGROUND TASKS #####
     async def _match_game_loop_task(self, match: MultiplayerPongMatch):
@@ -1081,7 +1109,7 @@ class GameWorkerConsumer(AsyncConsumer):
                     GameServerToClient.StateUpdated(
                         type="worker_to_client_open",
                         action="state_updated",
-                        state=match.as_dict_with_timing(tick_start_time),
+                        state=match.as_dict_with_multiplayer_data(tick_start_time),
                     ),
                 )
                 tick_end_time = asyncio.get_event_loop().time()

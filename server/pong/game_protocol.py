@@ -2,6 +2,7 @@
 Contains typed definitions and enumerations required for the exchange of the data between the websocket server,
 the game server and the client for the game of pong.
 """
+
 from typing import Literal, TypedDict
 
 from typing_extensions import NotRequired
@@ -28,11 +29,22 @@ class _Vector2(TypedDict):
     x: float
     z: float
 
+
 class SerializedGameState(TypedDict):
     """State of the particular pong game represented in the JSON format."""
 
     class _Bumper(_Vector2):
+        """
+        `score`: current score of the player.
+        `buff_or_debuff_target`: whether the player is a target of a current buff or debuff.
+        `move_id`: number of the last processed move.
+        `timestamp`: timestamp sent by the client of when this move was applied.
+        """
+
         score: int
+        buff_or_debuff_target: bool
+        move_id: int | Literal[-1]
+        timestamp: int
 
     class _Ball(_Vector2):
         temporal_speed: _Vector2
@@ -46,10 +58,8 @@ class SerializedGameState(TypedDict):
     ball: _Ball
     coin: _Coin | None
     is_someone_scored: bool
-    last_bumper_collided: Literal["_bumper_1", "_bumper_2"]
     current_buff_or_debuff: Literal[0, 1, 2, 3, 4, 5]
     current_buff_or_debuff_remaining_time: float
-    current_buff_or_debuff_target: Literal["_bumper_1", "_bumper_2"] | None
     elapsed_seconds: int
     time_limit_reached: bool
 
@@ -145,30 +155,29 @@ class GameServerToClient:
         elo_change: int
         tournament_id: str | None
 
-    class InputConfirmed(WorkerToClientOpen):
-        """Server confirmation of the input from the player. Required for the client-side prediction."""
-
-        action: Literal["move_left", "move_right"]
-        content: int
-        player_number: Literal[1, 2]
-        timestamp: int
-        position_x: float
-
 
 class ClientToGameServer:
+    """
+    move_id: the ID of the move. Can have -1, which means that the move won't be processed.
+    """
+
     class MoveLeft(TypedDict):
         """Player moves to the left."""
 
-        content: bool
+        action: Literal["move_left"]
         timestamp: int
+        move_id: int | Literal[-1]
         player_id: str
 
     class MoveRight(TypedDict):
         """Player moves to the right."""
 
-        content: bool
+        action: Literal["move_right"]
         timestamp: int
+        move_id: int | Literal[-1]
         player_id: str
+
+    PlayerInput = MoveLeft | MoveRight
 
     class Resign(TypedDict):
         """Player resigns."""
@@ -198,9 +207,9 @@ class GameServerToGameWorker:
         type: Literal["player_inputed"]
         action: Literal["move_left", "move_right"]
         game_room_id: str
-        player_id: str
-        content: int
         timestamp: int
+        move_id: int
+        player_id: str
 
     class PlayerDisconnected(TypedDict):
         """Player is disconnected from the websocket server, and it sends the relevant IDs to the worker."""
