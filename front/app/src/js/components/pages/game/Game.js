@@ -856,6 +856,7 @@ export class Game extends HTMLElement {
 
     function moveAiBumper(calculatedPos) {
       keyMap['KeyA'] = false;
+      // console.log(Bumpers[1].lenghtHalf);
       keyMap['KeyD'] = false;
       if (calculatedBumperPos.x < calculatedPos.x - 0.1 && calculatedBumperPos.x < calculatedPos.x - 0.2) {
         keyMap['KeyA'] = true;
@@ -917,7 +918,7 @@ export class Game extends HTMLElement {
     ];
 
     function handleAiBehavior(BallPos, BallVelocity) {
-      console.log(choosenDifficulty);
+      // console.log(choosenDifficulty);
       if (isCalculationNeeded) {
         const scoreDiff = Bumpers[0].score - Bumpers[1].score;
         const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
@@ -933,9 +934,10 @@ export class Game extends HTMLElement {
         }
 
         choosenDifficulty = stableDifficulty;
-        console.log(choosenDifficulty);
+        // console.log(choosenDifficulty);
         let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
-        let error = difficultyLvl[choosenDifficulty][0] * closeness;
+        let error = (difficultyLvl[choosenDifficulty][0] * closeness) / (Bumpers[1].lenghtHalf / 2.5);
+        // console.log(Bumpers[1].lenghtHalf / 2.5);
         ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
         let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);
         let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
@@ -961,8 +963,16 @@ export class Game extends HTMLElement {
             clearTimeout(timeooutId);
           }
         }, difficultyLvl[choosenDifficulty][1]);
+        const sideHitProbability = Math.min(0.8, (Bumpers[1].lenghtHalf / 2.5) * 0.4);
+        const shouldHitSide = Math.random() < sideHitProbability;
 
-        ballPredictedPos.x += -error + Math.round(Math.random()) * (error - -error);
+        if (shouldHitSide) {
+          const sideOffset = (Math.random() - 0.5) * (Bumpers[1].lenghtHalf / 2.5) * 2;
+          ballPredictedPos.x += sideOffset;
+        } else {
+          ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
+        }
+        // ballPredictedPos.x += -error + Math.round(Math.random()) * (error - -error);
       }
       if (!isMovementDone) moveAiBumper(ballPredictedPos);
       else {
@@ -1148,8 +1158,8 @@ export class Game extends HTMLElement {
     }
     // buffUI?.showIcon('long');
     const manageBuffAndDebuff = () => {
-      let chooseBuff = 1;
-      // Math.floor(Math.random() * 5)
+      let chooseBuff = Math.floor(Math.random() * 5);
+      // 
       let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
       switch (chooseBuff) {
         case 1:
