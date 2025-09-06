@@ -43,6 +43,46 @@ OAuth 2.0 implementation for third-party authentication using GitHub and 42 Scho
 - Backend creates/updates user account and issues JWT tokens
 - User is redirected to dashboard with authentication cookies
 
+<br />
+
+```mermaid
+sequenceDiagram
+    participant User as Resource Owner (User)
+    participant Frontend as Client (Peacemakers Frontend)
+    participant Backend as Peacemakers Backend
+    participant AuthServer as Authorization Server (OAuth Provider)
+    participant ResourceServer as Resource Server (OAuth Provider)
+
+    %% Step 1: User starts login
+    User->>Frontend: Clicks "Login with OAuth"
+
+    %% Step 2-3: Frontend requests authorization URL from backend
+    Frontend->>Backend: Request OAuth authorization URL
+    Backend->>AuthServer: Prepare authorization URL
+    Backend->>Frontend: Return authorization URL
+
+    %% Step 4: User is redirected to OAuth provider
+    User->>AuthServer: Redirected to login & consent page
+
+    %% Step 5: User logs in and grants consent
+    AuthServer->>User: Prompts login & consent
+    User->>AuthServer: Grants authorization
+
+    %% Step 6: Authorization code is sent to backend callback
+    AuthServer->>Backend: Sends authorization code
+
+    %% Step 7: Backend exchanges code for access token
+    Backend->>AuthServer: Exchange code for access token
+    AuthServer->>Backend: Returns access token (and refresh token)
+
+    %% Step 8: Backend fetches user info
+    Backend->>ResourceServer: Request user info with access token
+    ResourceServer->>Backend: Returns user info
+
+    %% Step 9-10: Backend issues app JWT, Frontend continues
+    Backend->>Frontend: Return app JWT / session info
+```
+
 ## API Endpoints
 
 ### Initiate OAuth Authorization
@@ -95,8 +135,6 @@ OAuth 2.0 implementation for third-party authentication using GitHub and 42 Scho
 **Core Functions:**
 - `oauth_authorize()`: Generates authorization URL and creates pending connection
 - `oauth_callback()`: Handles OAuth callback and completes authentication
-- `check_api_availability()`: Health check for OAuth providers
-- `get_oauth_config()`: Retrieves platform-specific OAuth configuration
 
 ### Frontend Integration
 
@@ -143,7 +181,7 @@ OAUTH_CONFIG = {
         "auth_uri": "https://github.com/login/oauth/authorize",
         "token_uri": "https://github.com/login/oauth/access_token",
         "user_info_uri": "https://api.github.com/user",
-        "redirect_uris": f"{BASE_URL}/api/users/oauth/callback/github",
+        "redirect_uri": f"{BASE_URL}/api/users/oauth/callback/github",
         "scopes": ["user:email"],
     },
     "42": {
@@ -152,7 +190,7 @@ OAUTH_CONFIG = {
         "auth_uri": "https://api.intra.42.fr/oauth/authorize",
         "token_uri": "https://api.intra.42.fr/oauth/token",
         "user_info_uri": "https://api.intra.42.fr/v2/me",
-        "redirect_uris": f"{BASE_URL}/api/users/oauth/callback/42",
+        "redirect_uri": f"{BASE_URL}/api/users/oauth/callback/42",
         "scopes": ["public"],
     },
 }

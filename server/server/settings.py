@@ -137,8 +137,6 @@ MIDDLEWARE = [
 
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 if not DEBUG:
@@ -264,6 +262,11 @@ APPEND_SLASH = False
 GITHUB_CLIENT_ID = env("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = env("GITHUB_CLIENT_SECRET")
 
+OAUTH_ALLOWED_SCOPES = {
+    "github": {"read:user", "user:email"},
+    "42": {"public", "profile"},
+}
+
 # OAuth 42
 API42_CLIENT_ID = env("API42_CLIENT_ID")
 API42_CLIENT_SECRET = env("API42_CLIENT_SECRET")
@@ -273,16 +276,16 @@ FRONTEND_URL = f"https://localhost:{SERVER_PORT}"
 ERROR_REDIRECT_URL = f"https://localhost:{SERVER_PORT}/error"
 
 GITHUB_REDIRECT_URI = f"https://localhost:{SERVER_PORT}/api/oauth/callback/github"
-GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token/"  # noqa: S105
-GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize/"
+GITHUB_ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token"  # noqa: S105
+GITHUB_AUTHORIZE_URL = "https://github.com/login/oauth/authorize"
 GITHUB_USER_PROFILE_URL = "https://api.github.com/user"
-GITHUB_FT_API_URL = "https://api.github.com"
+GITHUB_OAUTH_URL = "https://api.github.com"
 
 FT_API_REDIRECT_URI = f"https://localhost:{SERVER_PORT}/api/oauth/callback/42"
-FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token/"  # noqa: S105
+FT_API_ACCESS_TOKEN_URL = "https://api.intra.42.fr/oauth/token"  # noqa: S105
+FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize"
 FT_API_USER_PROFILE_URL = "https://api.intra.42.fr/v2/me"
 FT_API_OAUTH_URL = "https://api.intra.42.fr"
-FT_API_AUTHORIZE_URL = "https://api.intra.42.fr/oauth/authorize/"
 
 # OAUTH Configuration
 OAUTH_CONFIG = {
@@ -291,22 +294,23 @@ OAUTH_CONFIG = {
         "client_secret": GITHUB_CLIENT_SECRET,
         "auth_uri": GITHUB_AUTHORIZE_URL,
         "token_uri": GITHUB_ACCESS_TOKEN_URL,
-        "redirect_uris": GITHUB_REDIRECT_URI,
-        "scopes": ["user"],
+        "redirect_uri": GITHUB_REDIRECT_URI,
+        "scopes": list(OAUTH_ALLOWED_SCOPES["github"]),
         "user_info_uri": GITHUB_USER_PROFILE_URL,
-        "oauth_uri": GITHUB_FT_API_URL,
+        "oauth_uri": GITHUB_OAUTH_URL,
     },
     "42": {
         "client_id": API42_CLIENT_ID,
         "client_secret": API42_CLIENT_SECRET,
         "auth_uri": FT_API_AUTHORIZE_URL,
         "token_uri": FT_API_ACCESS_TOKEN_URL,
-        "redirect_uris": FT_API_REDIRECT_URI,
-        "scopes": ["public", "profile"],
+        "redirect_uri": FT_API_REDIRECT_URI,
+        "scopes": list(OAUTH_ALLOWED_SCOPES["42"]),
         "user_info_uri": FT_API_USER_PROFILE_URL,
         "oauth_uri": FT_API_OAUTH_URL,
     },
 }
+
 
 # email configuration for 2fa and password reset
 EMAIL_BACKEND = env("EMAIL_BACKEND")
