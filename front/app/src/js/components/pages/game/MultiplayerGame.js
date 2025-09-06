@@ -339,6 +339,8 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       pendingInputs: [],
       inputSequenceNumber: 0,
       opponentPositionBuffer: [],
+      playerPositionBuffer: [],
+      ballPositionBuffer: [],
       movesLeft: false,
       movesRight: false,
     };
@@ -370,9 +372,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf;
       const finalX = Math.max(leftLimit, Math.min(rightLimit, newX));
       
-      if (clientState.movesLeft || clientState.movesRight) {
-        console.log(`[APPLY INPUT] action: ${input.action}, seq: ${input.sequenceNumber}, speed: ${bumper.speed}, deltaTime: ${deltaTime}, movement: ${movement}, oldX: ${oldX}, finalX: ${finalX}`);
-      }
       
       bumper.cubeUpdate.x = finalX;
     };
@@ -396,13 +395,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
         
         clientState.pendingInputs.push(input);
         
-        console.log('Input was sent! Input:')
-        console.log({
-          action: action,
-          move_id: sequenceNumber,
-          player_id: clientState.playerId,
-          timestamp: now
-        })
         this.safeSend(JSON.stringify({
           action: action,
           move_id: sequenceNumber,
@@ -423,6 +415,25 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       }
     }
 
+    function updatePlayerPositionBuffer(position) {
+      const timestamp = Date.now();
+      clientState.playerPositionBuffer.push({ position, timestamp });
+
+      if (clientState.playerPositionBuffer.length > 10) {
+        clientState.playerPositionBuffer.shift();
+      }
+    }
+
+    function updateBallPositionBuffer() {
+      const timestamp = Date.now();
+      const position = { x: serverState.ball.x, z: serverState.ball.z };
+      clientState.ballPositionBuffer.push({ position, timestamp });
+
+      if (clientState.ballPositionBuffer.length > 10) {
+        clientState.ballPositionBuffer.shift();
+      }
+    }
+
     function getInterpolatedOpponentPosition() {
       if (clientState.opponentPositionBuffer.length < 2) {
         return clientState.opponentPositionBuffer.length > 0 ? clientState.opponentPositionBuffer[0].position : null;
@@ -430,7 +441,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
 
       const renderTime = Date.now() - ENTITY_INTERPOLATION_DELAY;
 
-      // Find the two positions to interpolate between
       let fromPosition = null;
       let toPosition = null;
 
@@ -442,7 +452,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
         }
       }
 
-      // If we don't have suitable positions, use the closest one
       if (!fromPosition || !toPosition) {
         const closestIndex = clientState.opponentPositionBuffer.length - 2;
         if (closestIndex >= 0) {
@@ -453,7 +462,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
         }
       }
 
-      // Interpolate between the two positions
       const timeDiff = toPosition.timestamp - fromPosition.timestamp;
       if (timeDiff === 0) {
         return toPosition.position;
@@ -462,6 +470,84 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       const alpha = Math.max(0, Math.min(1, (renderTime - fromPosition.timestamp) / timeDiff));
       return fromPosition.position + (toPosition.position - fromPosition.position) * alpha;
     }
+
+    function getInterpolatedPlayerPosition() {
+      if (clientState.playerPositionBuffer.length < 2) {
+        return clientState.playerPositionBuffer.length > 0 ? clientState.playerPositionBuffer[0].position : null;
+      }
+
+      const renderTime = Date.now() - ENTITY_INTERPOLATION_DELAY;
+
+      let fromPosition = null;
+      let toPosition = null;
+
+      for (let i = 0; i < clientState.playerPositionBuffer.length - 1; i++) {
+        if (clientState.playerPositionBuffer[i].timestamp <= renderTime && clientState.playerPositionBuffer[i + 1].timestamp >= renderTime) {
+          fromPosition = clientState.playerPositionBuffer[i];
+          toPosition = clientState.playerPositionBuffer[i + 1];
+          break;
+        }
+      }
+
+      if (!fromPosition || !toPosition) {
+        const closestIndex = clientState.playerPositionBuffer.length - 2;
+        if (closestIndex >= 0) {
+          fromPosition = clientState.playerPositionBuffer[closestIndex];
+          toPosition = clientState.playerPositionBuffer[closestIndex + 1];
+        } else {
+          return clientState.playerPositionBuffer[clientState.playerPositionBuffer.length - 1].position;
+        }
+      }
+
+      const timeDiff = toPosition.timestamp - fromPosition.timestamp;
+      if (timeDiff === 0) {
+        return toPosition.position;
+      }
+
+      const alpha = Math.max(0, Math.min(1, (renderTime - fromPosition.timestamp) / timeDiff));
+      return fromPosition.position + (toPosition.position - fromPosition.position) * alpha;
+    }
+
+    function getInterpolatedBallPosition() {
+      if (clientState.ballPositionBuffer.length < 2) {
+        return clientState.ballPositionBuffer.length > 0 ? clientState.ballPositionBuffer[0].position : null;
+      }
+
+      const renderTime = Date.now() - ENTITY_INTERPOLATION_DELAY;
+
+      let fromPosition = null;
+      let toPosition = null;
+
+      for (let i = 0; i < clientState.ballPositionBuffer.length - 1; i++) {
+        if (clientState.ballPositionBuffer[i].timestamp <= renderTime && clientState.ballPositionBuffer[i + 1].timestamp >= renderTime) {
+          fromPosition = clientState.ballPositionBuffer[i];
+          toPosition = clientState.ballPositionBuffer[i + 1];
+          break;
+        }
+      }
+
+      if (!fromPosition || !toPosition) {
+        const closestIndex = clientState.ballPositionBuffer.length - 2;
+        if (closestIndex >= 0) {
+          fromPosition = clientState.ballPositionBuffer[closestIndex];
+          toPosition = clientState.ballPositionBuffer[closestIndex + 1];
+        } else {
+          return clientState.ballPositionBuffer[clientState.ballPositionBuffer.length - 1].position;
+        }
+      }
+
+      const timeDiff = toPosition.timestamp - fromPosition.timestamp;
+      if (timeDiff === 0) {
+        return toPosition.position;
+      }
+
+      const alpha = Math.max(0, Math.min(1, (renderTime - fromPosition.timestamp) / timeDiff));
+      return {
+        x: fromPosition.position.x + (toPosition.position.x - fromPosition.position.x) * alpha,
+        z: fromPosition.position.z + (toPosition.position.z - fromPosition.position.z) * alpha
+      };
+    }
+
     const pi = Math.PI;
     function degreesToRadians(degrees) {
       return degrees * (pi / 180);
@@ -566,10 +652,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       const myBumperData = clientState.playerNumber === 1 ? serverState.bumper_1 : serverState.bumper_2;
       const lastProcessedMoveId = myBumperData.move_id;
 
-      if (clientState.movesLeft || clientState.movesRight) {
-        console.log(`[RECONCILE] Server pos: ${myBumperData.x}, Client pos before: ${clientState.bumper.cubeUpdate.x}, Last processed: ${lastProcessedMoveId}, Pending: ${clientState.pendingInputs.length}`);
-        console.log(clientState.pendingInputs)
-      }
 
       // Set to authoritative server position
       clientState.bumper.cubeUpdate.x = myBumperData.x;
@@ -584,17 +666,12 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
           clientState.pendingInputs.splice(i, 1);
           removedCount++;
         } else {
-          console.log(`[RECONCILE] Re-applying input ${input.sequenceNumber}: ${input.action}`);
-          console.log(clientState.pendingInputs)
           applyInputToBumper(input, clientState.bumper, SERVER_TICK_INTERVAL);
           reappliedCount++;
           i++;
         }
       }
 
-      if (clientState.movesLeft || clientState.movesRight) {
-      console.log(`[RECONCILE] Client pos after: ${clientState.bumper.cubeUpdate.x}, Removed: ${removedCount}, Re-applied: ${reappliedCount}`);
-      }
     }
     
     function applyBuffEffects() {
@@ -648,6 +725,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
           reconcileWithServer();
           applyBuffEffects();
           updateOpponentPositionBuffer();
+          updateBallPositionBuffer();
           break;
         case 'player_joined':
           clientState.playerId = data.player_id;
@@ -734,16 +812,20 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
             const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - playerBumper.lenghtHalf;
             newX = Math.max(leftLimit, Math.min(rightLimit, newX));
 
-            if (clientState.movesLeft || clientState.movesRight) {
-              console.log(`[CLIENT PREDICTION] speed: ${playerBumper.speed}, interval: ${SERVER_TICK_INTERVAL}, movement: ${movement}, oldX: ${playerBumper.cubeUpdate.x}, newX: ${newX}`)
-            }
             playerBumper.cubeUpdate.x = newX;
+            updatePlayerPositionBuffer(newX);
           }
           accumulator -= SERVER_TICK_INTERVAL;
         }
 
         Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
-        Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+        
+        const interpolatedBallPos = getInterpolatedBallPosition();
+        if (interpolatedBallPos !== null) {
+          Ball.sphereMesh.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
+        } else {
+          Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+        }
 
         const interpolatedOpponentPos = getInterpolatedOpponentPosition();
         if (interpolatedOpponentPos !== null) {
@@ -754,8 +836,11 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
           clientState.enemyBumper.cubeUpdate.y,
           clientState.enemyBumper.cubeUpdate.z,
         );
+        
+        const interpolatedPlayerPos = getInterpolatedPlayerPosition();
+        const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
         playerBumper.cubeMesh.position.set(
-          playerBumper.cubeUpdate.x,
+          playerVisualX,
           playerBumper.cubeUpdate.y,
           playerBumper.cubeUpdate.z,
         );
