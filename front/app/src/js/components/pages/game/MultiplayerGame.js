@@ -485,6 +485,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       const fromPosition = entityKey === ENTITY_KEYS.PLAYER ? fromEntry.position : fromEntry[entityKey];
       const toPosition = entityKey === ENTITY_KEYS.PLAYER ? toEntry.position : toEntry[entityKey];
       
+      // coin can be null
       if (fromPosition === null && toPosition === null) {
         return null;
       }
