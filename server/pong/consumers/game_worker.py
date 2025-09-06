@@ -53,6 +53,9 @@ BOUNCING_ANGLE_DEGREES = 55
 PLAYERS_REQUIRED = 2
 DEFAULT_COIN_WAIT_TIME = 30
 
+# tolerance level for floating point caclulations
+EPSILON = 1e-6
+
 # SPEED VALUES IN UNITS PER SECOND (original working values)
 BUMPER_SPEED_PER_SECOND = 15.0
 BALL_Z_VELOCITY_PER_SECOND = 15.0
@@ -306,9 +309,7 @@ class BasePong:
         self._ball.temporal_speed.z = max(TEMPORAL_SPEED_DEFAULT[1], self._ball.temporal_speed.z - decay_amount)
 
         remaining_time = delta_time
-        # epsilon is the level of imprecision we are willing to tolerate, it's 0.000001
-        epsilon = 1e-6
-        while remaining_time > epsilon:
+        while remaining_time > EPSILON:
             collision_time, collision_info = self._find_next_collision(remaining_time)
 
             if collision_info is None:
@@ -363,7 +364,7 @@ class BasePong:
                 collision_info = (CollisionType.WALL, None)
 
         # ball vs right wall
-        if ball_vel_x > 0:
+        elif ball_vel_x > 0:
             wall_x = WALL_LEFT_X - WALL_WIDTH_HALF
             t = (wall_x - BALL_RADIUS - self._ball.x) / ball_vel_x
             if 0 < t <= earliest_time:
@@ -379,38 +380,45 @@ class BasePong:
 
         # ball vs bumpers
         for bumper, name in [(self._bumper_1, "bumper_1"), (self._bumper_2, "bumper_2")]:
-            t = self._calculate_rectangle_collision_time(
+            bumper_vel_x = self._get_bumper_velocity_x(bumper)
+
+            t = self._calculate_moving_rectangle_collision_time(
                 self._ball.x,
                 self._ball.z,
                 ball_vel_x,
                 ball_vel_z,
                 bumper.x,
                 bumper.z,
+                bumper_vel_x,
+                0,
                 bumper.lenght_half,
                 bumper.width_half,
             )
             if 0 < t <= earliest_time:
                 logger.debug(
-                    "COLLISION: %s - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f, bumper.x=%f",
+                    "COLLISION: %s - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f, bumper.x=%f, bumper_vel=%f",
                     name,
                     t,
                     earliest_time,
                     self._ball.x,
                     self._ball.z,
                     bumper.x,
+                    bumper_vel_x,
                 )
                 earliest_time = t
                 collision_info = (CollisionType.BUMPER, bumper)
 
-        # ball vs coin
+        # ball vs coin (moving object)
         if self._coin and self._is_coin_on_screen():
-            t = self._calculate_rectangle_collision_time(
+            t = self._calculate_moving_rectangle_collision_time(
                 self._ball.x,
                 self._ball.z,
                 ball_vel_x,
                 ball_vel_z,
                 self._coin.x,
                 self._coin.z,
+                self._coin.velocity.x,
+                0,
                 COIN_LENGTH_HALF,
                 COIN_WIDTH_HALF,
             )
@@ -458,52 +466,75 @@ class BasePong:
 
         return earliest_time, collision_info
 
-    def _calculate_rectangle_collision_time(
+    def _get_bumper_velocity_x(self, bumper: Bumper) -> float:
+        """Calculate the current velocity of a bumper."""
+        if (bumper.moves_left and bumper.moves_right) or (not bumper.moves_left and not bumper.moves_right):
+            return 0
+
+        bumper_vel_x = 0
+        if (bumper.moves_left and not bumper.control_reversed) or (bumper.moves_right and bumper.control_reversed):
+            bumper_vel_x = bumper.speed
+        elif (bumper.moves_right and not bumper.control_reversed) or (bumper.moves_left and bumper.control_reversed):
+            bumper_vel_x = -bumper.speed
+
+        return bumper_vel_x
+
+    def _calculate_moving_rectangle_collision_time(
         self,
         ball_x,
         ball_z,
-        vel_x,
-        vel_z,
+        ball_vel_x,
+        ball_vel_z,
         rect_x,
         rect_z,
+        rect_vel_x,
+        rect_vel_z,
         half_width,
         half_height,
     ) -> float:
         """
-        Used for calculating ball vs bumper/coin collision.
-        Returns infinity if there are no collisions.
+        Calculate collision time between ball and moving rectangle (bumper or coin).
+        Uses relative velocity for accurate moving object collision.
         """
-        # sides of bumper or coin
-        left = rect_x - half_width - BALL_RADIUS
-        right = rect_x + half_width + BALL_RADIUS
-        top = rect_z + half_height + BALL_RADIUS
-        bottom = rect_z - half_height - BALL_RADIUS
+        # calculate relative velocity (ball velocity relative to rectangle)
+        rel_vel_x = ball_vel_x - rect_vel_x
+        rel_vel_z = ball_vel_z - rect_vel_z
 
-        if vel_x == 0:
-            if ball_x < left or ball_x > right:
+        # if no relative movement, no collision possible
+        if abs(rel_vel_x) < EPSILON and abs(rel_vel_z) < EPSILON:
+            return float("inf")
+
+        # expand rectangle size: this allows to treat the ball as a point
+        # collision happens when the point enters the expanded rectangle
+        rect_left = rect_x - half_width - BALL_RADIUS
+        rect_right = rect_x + half_width + BALL_RADIUS
+        rect_top = rect_z + half_height + BALL_RADIUS
+        rect_bottom = rect_z - half_height - BALL_RADIUS
+
+        if abs(rel_vel_x) < EPSILON:
+            if ball_x <= rect_left or ball_x >= rect_right:
                 return float("inf")
             t_x_enter, t_x_exit = 0, float("inf")
         else:
-            t_x_1 = (left - ball_x) / vel_x
-            t_x_2 = (right - ball_x) / vel_x
+            t_x_1 = (rect_left - ball_x) / rel_vel_x
+            t_x_2 = (rect_right - ball_x) / rel_vel_x
             t_x_enter = min(t_x_1, t_x_2)
             t_x_exit = max(t_x_1, t_x_2)
 
-        if vel_z == 0:
-            if ball_z < bottom or ball_z > top:
+        if abs(rel_vel_z) < EPSILON:
+            if ball_z <= rect_bottom or ball_z >= rect_top:
                 return float("inf")
             t_z_enter, t_z_exit = 0, float("inf")
         else:
-            t_z_1 = (bottom - ball_z) / vel_z
-            t_z_2 = (top - ball_z) / vel_z
+            t_z_1 = (rect_bottom - ball_z) / rel_vel_z
+            t_z_2 = (rect_top - ball_z) / rel_vel_z
             t_z_enter = min(t_z_1, t_z_2)
             t_z_exit = max(t_z_1, t_z_2)
 
-        # collision occurs when both x and z ranges overlap
         collision_enter = max(t_x_enter, t_z_enter)
         collision_exit = min(t_x_exit, t_z_exit)
 
-        if collision_enter <= collision_exit and collision_enter > 0:
+        if collision_enter <= collision_exit and collision_enter > EPSILON:
             return collision_enter
 
         return float("inf")
@@ -531,14 +562,11 @@ class BasePong:
 
     def _move_bumper(self, bumper, delta_time):
         """Move a bumper with wall collision detection."""
-        if (bumper.moves_left and bumper.moves_right) or (not bumper.moves_left and not bumper.moves_right):
+        bumper_vel_x = self._get_bumper_velocity_x(bumper)
+        if not bumper_vel_x:
             return
 
-        movement = 0
-        if (bumper.moves_left and not bumper.control_reversed) or (bumper.moves_right and bumper.control_reversed):
-            movement = bumper.speed * delta_time
-        if (bumper.moves_right and not bumper.control_reversed) or (bumper.moves_left and bumper.control_reversed):
-            movement = -bumper.speed * delta_time
+        movement = bumper_vel_x * delta_time
 
         # don't go over walls
         # when bumper goes overl wall, it sticks to its edge instead
@@ -555,13 +583,18 @@ class BasePong:
         collision_type, data = collision_info
 
         if collision_type == CollisionType.WALL:
+            if self._ball.x - BALL_RADIUS < WALL_RIGHT_X + WALL_WIDTH_HALF:
+                self._ball.x = WALL_RIGHT_X + WALL_WIDTH_HALF + BALL_RADIUS
+            elif self._ball.x + BALL_RADIUS > WALL_LEFT_X - WALL_WIDTH_HALF:
+                self._ball.x = WALL_LEFT_X - WALL_WIDTH_HALF - BALL_RADIUS
             self._ball.velocity.x *= -1
 
         elif collision_type == CollisionType.BUMPER:
-            logger.debug("HANDLE COLLISION: bumper.x=%d, ball.x=%d, ball.z=%d", data.x, self._ball.x, self._ball.z)
+            logger.debug("HANDLE COLLISION: bumper.x=%f, ball.x=%f, ball.z=%f", data.x, self._ball.x, self._ball.z)
             bumper = data
             self._last_bumper_collided = bumper
-            self._calculate_new_ball_dir(bumper)
+            self._increase_ball_speed_and_calculate_new_ball_dir(bumper)
+            self._resolve_ball_bumper_penetration(bumper)
 
         elif collision_type == CollisionType.COIN:
             self._apply_coin_buff(current_time)
@@ -583,7 +616,7 @@ class BasePong:
         self._ball.velocity.x, self._ball.velocity.z = STARTING_BALL_VELOCITY
         self._ball.velocity.z *= direction
 
-    def _calculate_new_ball_dir(self, bumper):
+    def _increase_ball_speed_and_calculate_new_ball_dir(self, bumper: Bumper):
         """
         After the ball hits one of the bumpers, it moves in the other direction, and
         its angle changes based on the point of collision between it and bumper.
@@ -601,6 +634,47 @@ class BasePong:
             self._ball.z + BALL_RADIUS * self._ball.velocity.z >= bumper.z - bumper.width_half
         ):
             self._ball.temporal_speed.x += TEMPORAL_SPEED_INCREASE
+
+    def _resolve_ball_bumper_penetration(self, bumper: Bumper):
+        """
+        Checks if the ball is penetrating the bumper. If it is, resolves it by correcting its positions, by pushing its
+
+        """
+        ball_left = self._ball.x - BALL_RADIUS
+        ball_right = self._ball.x + BALL_RADIUS
+        ball_bottom = self._ball.z - BALL_RADIUS
+        ball_top = self._ball.z + BALL_RADIUS
+
+        bumper_left = bumper.x - bumper.lenght_half
+        bumper_right = bumper.x + bumper.lenght_half
+        bumper_bottom = bumper.z - bumper.width_half
+        bumper_top = bumper.z + bumper.width_half
+
+        # overlap that is bigger 0 represents how deep penetration is on this axis
+        x_overlap = min(ball_right - bumper_left, bumper_right - ball_left)
+        z_overlap = min(ball_top - bumper_bottom, bumper_top - ball_bottom)
+
+        # epsilon for pushing the ball in order to prevent collision recalculations on the next tick
+        push_epsilon = 0.01
+        if x_overlap > 0 and z_overlap > 0:
+            # OVERLAP: BALL INSIDE OF THE BUMPER
+
+            # for resolving penetration we are choosing the LEAST penetrated axis to avoid adjustments that are
+            # too large visually
+            if x_overlap < z_overlap:
+                # separate along the x axis: push the ball to the left or to the right depending on what is closer
+                if self._ball.x < bumper.x:
+                    # ball is closer to the left side: push to the left
+                    self._ball.x = bumper_left - BALL_RADIUS - push_epsilon
+                else:
+                    # ball is closer to the right side: push to the right
+                    self._ball.x = bumper_right + BALL_RADIUS + push_epsilon
+            else:  # noqa: PLR5501
+                # separate along the z axis, by the same principle
+                if self._ball.z < bumper.z:
+                    self._ball.z = bumper_bottom - BALL_RADIUS - push_epsilon
+                else:
+                    self._ball.z = bumper_top + BALL_RADIUS + push_epsilon
 
     def _apply_coin_buff(self, current_time: float):
         """Applies one of the buffs to the player who scored the coin. Or debuffs their opponent."""
@@ -700,7 +774,6 @@ class BasePong:
         if not self._active_buff_or_debuff_target:
             return
 
-        # Reset all possible buff-affected properties to normal values
         self._active_buff_or_debuff_target.control_reversed = False
         self._active_buff_or_debuff_target.speed = BASE_BUMPER_SPEED * self._game_speed
         self._active_buff_or_debuff_target.lenght_half = BUMPER_LENGTH_HALF
