@@ -6,6 +6,8 @@ The MFA system provides an additional security layer through email-based verific
 
 Reference: https://docs.emnify.com/how-tos/multi-factor-authentication
 
+https://www.codingforentrepreneurs.com/blog/sending-email-in-django-from-gmail
+
 ## Authentication Flow
 
 ### 1. MFA Enablement (Settings)

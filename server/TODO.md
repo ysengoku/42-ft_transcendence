@@ -42,15 +42,13 @@
         - [x] Rotate refresh tokens on refresh.
         - [x] Revoke refresh tokens on logout.
         - [x] Change JWT payload from `username` to `id` to make user identifier non-volatile.
-    - [ ] Add to cookies `HTTP-only`, `Secure`, `SameSite=Strict`.
-    - [ ] Add expiration date to the cookies.
 - [x] Friendship system.
     - [x] Addition and deletion operations for friends.
     - [x] Friends should be sorted by their online status.
 - [x] User blocking system.
     - [x] Addition and deletion operations for blocked user list.
-- [ ] Realtime online status.
-    - [ ] Online status tracking.
+- [x] Realtime online status.
+    - [x] Online status tracking.
 - [x] Elo system.
 - [~] Redo the User model to make it compatible with OAuth.
     - [x] Change the validation for the User in all places.
@@ -68,11 +66,6 @@
 
 ### Chat
 - [x] Add authentication support to the consumers.
-- [ ] It is possible to determine how the connection was closed based on the status code.
-    - `1001` is send automatically on closing or refreshing the browser tab.
-    - `1006` means that the connection was closed due to the network error or by any other abnormal means.
-    - `websocketInstance.close({status_code})` can be sent from the client.
-        - `1000` means `NORMAL_CLOSURE`, that the client intentionally closed the connection.
 - [x] Add notifications endpoint.
 
 ### Multiplayer
@@ -83,15 +76,15 @@
 - [ ] Record the wins and loses with the database.
 
 ## Testing
-- [ ] Add testing for `users` endpoints.
-- [ ] Add testing for `chat` endpoints.
+- [x] Add testing for `users` endpoints.
+- [x] Add testing for `chat` endpoints.
 - [ ] Update the `populate_db` script. As for now, it uses raw models to add friends without creating appropriate notifications. We should extract friend addition logic to a specific function.
 
 ### Things to test/fix
-- [ ] Everywhere where websocket expects valid JSON, check for the decoding errors.
+- [x] Everywhere where websocket expects valid JSON, check for the decoding errors.
 
 ## Docs
-- [ ] Update docsrings for endpoints that provide paginated data, which is reverse ordered.
+- [x] Update docsrings for endpoints that provide paginated data, which is reverse ordered.
 
 ## Reworks
 - [x] `username`'s are not slugified, like `slug_id`
