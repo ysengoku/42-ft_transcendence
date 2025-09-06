@@ -161,9 +161,9 @@ class GameServerConsumer(GuardedWebsocketConsumer):
         match text_data_json:
             case {
                 "action": "move_left" | "move_right" as action,
-                "content": int(content),
-                "timestamp": int(timestamp),
+                "move_id": int(move_id),
                 "player_id": str(player_id),
+                "timestamp": int(timestamp),
             }:
                 text_data_json: ClientToGameServer.MoveLeft | ClientToGameServer.MoveRight
                 async_to_sync(self.channel_layer.send)(
@@ -173,7 +173,7 @@ class GameServerConsumer(GuardedWebsocketConsumer):
                         action=action,
                         game_room_id=self.game_room_id,
                         player_id=player_id,
-                        content=content,
+                        move_id=move_id,
                         timestamp=timestamp,
                     ),
                 )
