@@ -313,6 +313,14 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     let accumulator = 0.0;
 
     const ENTITY_INTERPOLATION_DELAY = 50;
+    
+    // used as keys for interpolation buffer
+    const ENTITY_KEYS = {
+      PLAYER: 'player',
+      OPPONENT: 'opponent', 
+      BALL: 'ball',
+      COIN: 'coin'
+    };
 
     const serverState = {
       bumper_1: { x: 0, z: -9, score: 0, buff_or_debuff_target: false, move_id: -1, timestamp: -1 },
@@ -338,9 +346,8 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       enemyBumper: null,
       pendingInputs: [],
       inputSequenceNumber: 0,
-      opponentPositionBuffer: [],
-      playerPositionBuffer: [],
-      ballPositionBuffer: [],
+      playerInterpolationBuffer: [],
+      esntitiesInterpolationBuffer: [],
       movesLeft: false,
       movesRight: false,
     };
@@ -376,9 +383,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       bumper.cubeUpdate.x = finalX;
     };
 
-    const sendCurrentInput = () => {
-      const now = Date.now();
-      
+    const sendCurrentInput = (timestamp) => {
       let action = null;
       if (clientState.movesLeft && !clientState.movesRight) {
         action = 'move_left';
@@ -390,7 +395,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
         const input = {
           sequenceNumber,
           action,
-          timestamp: now
+          timestamp: timestamp
         };
         
         clientState.pendingInputs.push(input);
@@ -399,154 +404,115 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
           action: action,
           move_id: sequenceNumber,
           player_id: clientState.playerId,
-          timestamp: now
+          timestamp: timestamp
         }));
       }
     };
 
 
-    function updateOpponentPositionBuffer() {
-      const position = clientState.enemyNumber == 1 ? serverState.bumper_1.x : serverState.bumper_2.x;
-      const timestamp = Date.now();
-      clientState.opponentPositionBuffer.push({ position, timestamp });
-
-      if (clientState.opponentPositionBuffer.length > 10) {
-        clientState.opponentPositionBuffer.shift();
-      }
-    }
-
-    function updatePlayerPositionBuffer(position) {
-      const timestamp = Date.now();
-      clientState.playerPositionBuffer.push({ position, timestamp });
-
-      if (clientState.playerPositionBuffer.length > 10) {
-        clientState.playerPositionBuffer.shift();
-      }
-    }
-
-    function updateBallPositionBuffer() {
-      const timestamp = Date.now();
-      const position = { x: serverState.ball.x, z: serverState.ball.z };
-      clientState.ballPositionBuffer.push({ position, timestamp });
-
-      if (clientState.ballPositionBuffer.length > 10) {
-        clientState.ballPositionBuffer.shift();
-      }
-    }
-
-    function getInterpolatedOpponentPosition() {
-      if (clientState.opponentPositionBuffer.length < 2) {
-        return clientState.opponentPositionBuffer.length > 0 ? clientState.opponentPositionBuffer[0].position : null;
-      }
-
-      const renderTime = Date.now() - ENTITY_INTERPOLATION_DELAY;
-
-      let fromPosition = null;
-      let toPosition = null;
-
-      for (let i = 0; i < clientState.opponentPositionBuffer.length - 1; i++) {
-        if (clientState.opponentPositionBuffer[i].timestamp <= renderTime && clientState.opponentPositionBuffer[i + 1].timestamp >= renderTime) {
-          fromPosition = clientState.opponentPositionBuffer[i];
-          toPosition = clientState.opponentPositionBuffer[i + 1];
-          break;
-        }
-      }
-
-      if (!fromPosition || !toPosition) {
-        const closestIndex = clientState.opponentPositionBuffer.length - 2;
-        if (closestIndex >= 0) {
-          fromPosition = clientState.opponentPositionBuffer[closestIndex];
-          toPosition = clientState.opponentPositionBuffer[closestIndex + 1];
-        } else {
-          return clientState.opponentPositionBuffer[clientState.opponentPositionBuffer.length - 1].position;
-        }
-      }
-
-      const timeDiff = toPosition.timestamp - fromPosition.timestamp;
-      if (timeDiff === 0) {
-        return toPosition.position;
-      }
-
-      const alpha = Math.max(0, Math.min(1, (renderTime - fromPosition.timestamp) / timeDiff));
-      return fromPosition.position + (toPosition.position - fromPosition.position) * alpha;
-    }
-
-    function getInterpolatedPlayerPosition() {
-      if (clientState.playerPositionBuffer.length < 2) {
-        return clientState.playerPositionBuffer.length > 0 ? clientState.playerPositionBuffer[0].position : null;
-      }
-
-      const renderTime = Date.now() - ENTITY_INTERPOLATION_DELAY;
-
-      let fromPosition = null;
-      let toPosition = null;
-
-      for (let i = 0; i < clientState.playerPositionBuffer.length - 1; i++) {
-        if (clientState.playerPositionBuffer[i].timestamp <= renderTime && clientState.playerPositionBuffer[i + 1].timestamp >= renderTime) {
-          fromPosition = clientState.playerPositionBuffer[i];
-          toPosition = clientState.playerPositionBuffer[i + 1];
-          break;
-        }
-      }
-
-      if (!fromPosition || !toPosition) {
-        const closestIndex = clientState.playerPositionBuffer.length - 2;
-        if (closestIndex >= 0) {
-          fromPosition = clientState.playerPositionBuffer[closestIndex];
-          toPosition = clientState.playerPositionBuffer[closestIndex + 1];
-        } else {
-          return clientState.playerPositionBuffer[clientState.playerPositionBuffer.length - 1].position;
-        }
-      }
-
-      const timeDiff = toPosition.timestamp - fromPosition.timestamp;
-      if (timeDiff === 0) {
-        return toPosition.position;
-      }
-
-      const alpha = Math.max(0, Math.min(1, (renderTime - fromPosition.timestamp) / timeDiff));
-      return fromPosition.position + (toPosition.position - fromPosition.position) * alpha;
-    }
-
-    function getInterpolatedBallPosition() {
-      if (clientState.ballPositionBuffer.length < 2) {
-        return clientState.ballPositionBuffer.length > 0 ? clientState.ballPositionBuffer[0].position : null;
-      }
-
-      const renderTime = Date.now() - ENTITY_INTERPOLATION_DELAY;
-
-      let fromPosition = null;
-      let toPosition = null;
-
-      for (let i = 0; i < clientState.ballPositionBuffer.length - 1; i++) {
-        if (clientState.ballPositionBuffer[i].timestamp <= renderTime && clientState.ballPositionBuffer[i + 1].timestamp >= renderTime) {
-          fromPosition = clientState.ballPositionBuffer[i];
-          toPosition = clientState.ballPositionBuffer[i + 1];
-          break;
-        }
-      }
-
-      if (!fromPosition || !toPosition) {
-        const closestIndex = clientState.ballPositionBuffer.length - 2;
-        if (closestIndex >= 0) {
-          fromPosition = clientState.ballPositionBuffer[closestIndex];
-          toPosition = clientState.ballPositionBuffer[closestIndex + 1];
-        } else {
-          return clientState.ballPositionBuffer[clientState.ballPositionBuffer.length - 1].position;
-        }
-      }
-
-      const timeDiff = toPosition.timestamp - fromPosition.timestamp;
-      if (timeDiff === 0) {
-        return toPosition.position;
-      }
-
-      const alpha = Math.max(0, Math.min(1, (renderTime - fromPosition.timestamp) / timeDiff));
-      return {
-        x: fromPosition.position.x + (toPosition.position.x - fromPosition.position.x) * alpha,
-        z: fromPosition.position.z + (toPosition.position.z - fromPosition.position.z) * alpha
+    // player and server entities interpolation buffer are updated separately:
+    // server entities when state form server arrives
+    // player entitiy when player moves
+    function updateEntitiesInterpolationBuffer(timestamp) {
+      const opponent = clientState.enemyNumber === 1 ? serverState.bumper_1.x : serverState.bumper_2.x;
+      const ball = { x: serverState.ball.x, z: serverState.ball.z };
+      const coin = serverState.coin ? { x: serverState.coin.x, z: serverState.coin.z } : null;
+      
+      const bufferEntry = {
+        opponent,
+        ball,
+        coin,
+        timestamp
       };
+      
+      clientState.esntitiesInterpolationBuffer.push(bufferEntry);
+
+      if (clientState.esntitiesInterpolationBuffer.length > 10) {
+        clientState.esntitiesInterpolationBuffer.shift();
+      }
     }
+    
+    function updatePlayerBuffer(playerPosition, timestamp) {
+      const bufferEntry = {
+        position: playerPosition,
+        timestamp
+      };
+      
+      clientState.playerInterpolationBuffer.push(bufferEntry);
+
+      if (clientState.playerInterpolationBuffer.length > 10) {
+        clientState.playerInterpolationBuffer.shift();
+      }
+    }
+
+    function getInterpolated(entityKey, renderTime) {
+      let interpolationBuffer;
+      
+      if (entityKey === ENTITY_KEYS.PLAYER) {
+        interpolationBuffer = clientState.playerInterpolationBuffer;
+      } else {
+        interpolationBuffer = clientState.esntitiesInterpolationBuffer;
+      }
+      
+      if (interpolationBuffer.length < 2) {
+        if (interpolationBuffer.length === 0) return null;
+        return entityKey === ENTITY_KEYS.PLAYER ? interpolationBuffer[0].position : interpolationBuffer[0][entityKey];
+      }
+
+      let fromEntry = null;
+      let toEntry = null;
+
+      for (let i = 0; i < interpolationBuffer.length - 1; i++) {
+        if (interpolationBuffer[i].timestamp <= renderTime && interpolationBuffer[i + 1].timestamp >= renderTime) {
+          fromEntry = interpolationBuffer[i];
+          toEntry = interpolationBuffer[i + 1];
+          break;
+        }
+      }
+
+      if (!fromEntry || !toEntry) {
+        const closestIndex = interpolationBuffer.length - 2;
+        if (closestIndex >= 0) {
+          fromEntry = interpolationBuffer[closestIndex];
+          toEntry = interpolationBuffer[closestIndex + 1];
+        } else {
+          return entityKey === ENTITY_KEYS.PLAYER
+            ? interpolationBuffer[interpolationBuffer.length - 1].position
+            : interpolationBuffer[interpolationBuffer.length - 1][entityKey];
+        }
+      }
+
+      const fromPosition = entityKey === ENTITY_KEYS.PLAYER ? fromEntry.position : fromEntry[entityKey];
+      const toPosition = entityKey === ENTITY_KEYS.PLAYER ? toEntry.position : toEntry[entityKey];
+      
+      if (fromPosition === null && toPosition === null) {
+        return null;
+      }
+      if (fromPosition === null) {
+        return toPosition;
+      }
+      if (toPosition === null) {
+        return fromPosition;
+      }
+
+      const timeDiff = toEntry.timestamp - fromEntry.timestamp;
+      if (timeDiff === 0) {
+        return toPosition;
+      }
+
+      const alpha = Math.max(0, Math.min(1, (renderTime - fromEntry.timestamp) / timeDiff));
+      
+      // bumper positions are stored as numbers, ball and coin as objects
+      if (typeof fromPosition === 'number') {
+        return fromPosition + (toPosition - fromPosition) * alpha;
+      } else {
+        return {
+          x: fromPosition.x + (toPosition.x - fromPosition.x) * alpha,
+          z: fromPosition.z + (toPosition.z - fromPosition.z) * alpha
+        };
+      }
+    }
+
 
     const pi = Math.PI;
     function degreesToRadians(degrees) {
@@ -625,19 +591,16 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       serverState.time_limit_reached = data.time_limit_reached; 
     }
 
-    // Update 3D object positions from server state
     function updateEntityPositionsFromServer() {
-      // Update ball position
       Ball.sphereUpdate.x = serverState.ball.x;
       Ball.sphereUpdate.z = serverState.ball.z;
       
-      // Update ball velocity for client-side prediction
+      // update ball velocity for client-side prediction
       Ball.velocity.x = serverState.ball.velocity.x;
       Ball.velocity.z = serverState.ball.velocity.z;
       Ball.temporalSpeed.x = serverState.ball.temporal_speed.x;
       Ball.temporalSpeed.z = serverState.ball.temporal_speed.z;
       
-      // Update coin position if it exists
       if (serverState.coin && Coin) {
         Coin.cylinderUpdate.x = serverState.coin.x;
         Coin.cylinderUpdate.z = serverState.coin.z;
@@ -724,8 +687,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
           updateEntityPositionsFromServer();
           reconcileWithServer();
           applyBuffEffects();
-          updateOpponentPositionBuffer();
-          updateBallPositionBuffer();
+          updateEntitiesInterpolationBuffer(Date.now());
           break;
         case 'player_joined':
           clientState.playerId = data.player_id;
@@ -795,8 +757,9 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       const deltaAnimation = Math.min(delta, 0.1);
 
       const playerBumper = clientState.bumper;
+      const timestamp = Date.now();
       while (accumulator >= SERVER_TICK_INTERVAL) {
-        sendCurrentInput();
+        sendCurrentInput(timestamp);
         // do client-side prediction at the same tick rate as the server
         if (!(clientState.movesLeft && clientState.movesRight))
         {
@@ -813,21 +776,28 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
             newX = Math.max(leftLimit, Math.min(rightLimit, newX));
 
             playerBumper.cubeUpdate.x = newX;
-            updatePlayerPositionBuffer(newX);
+            updatePlayerBuffer(newX, timestamp);
           }
           accumulator -= SERVER_TICK_INTERVAL;
         }
 
-        Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+        const renderTime = timestamp - ENTITY_INTERPOLATION_DELAY;
         
-        const interpolatedBallPos = getInterpolatedBallPosition();
+        const interpolatedBallPos = getInterpolated(ENTITY_KEYS.BALL, renderTime);
         if (interpolatedBallPos !== null) {
           Ball.sphereMesh.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
         } else {
           Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
         }
+        
+        const interpolatedCoinPos = getInterpolated(ENTITY_KEYS.COIN, renderTime);
+        if (interpolatedCoinPos !== null) {
+          Coin.cylinderMesh.position.set(interpolatedCoinPos.x, 1, interpolatedCoinPos.z);
+        } else {
+          Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+        }
 
-        const interpolatedOpponentPos = getInterpolatedOpponentPosition();
+        const interpolatedOpponentPos = getInterpolated(ENTITY_KEYS.OPPONENT, renderTime);
         if (interpolatedOpponentPos !== null) {
           clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
         }
@@ -837,7 +807,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
           clientState.enemyBumper.cubeUpdate.z,
         );
         
-        const interpolatedPlayerPos = getInterpolatedPlayerPosition();
+        const interpolatedPlayerPos = getInterpolated(ENTITY_KEYS.PLAYER, renderTime);
         const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
         playerBumper.cubeMesh.position.set(
           playerVisualX,
