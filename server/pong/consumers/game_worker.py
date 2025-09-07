@@ -654,10 +654,15 @@ class BasePong:
         x_overlap = min(ball_right - bumper_left, bumper_right - ball_left)
         z_overlap = min(ball_top - bumper_bottom, bumper_top - ball_bottom)
 
+        # important to have a proper range! otherwise we might push the ball outside of the wall
+        min_ball_x = WALL_RIGHT_X + WALL_WIDTH_HALF + BALL_RADIUS
+        max_ball_x = WALL_LEFT_X - WALL_WIDTH_HALF - BALL_RADIUS
+
         # epsilon for pushing the ball in order to prevent collision recalculations on the next tick
         push_epsilon = 0.01
+
+        # if both of them are over 0, there is overlap!
         if x_overlap > 0 and z_overlap > 0:
-            # OVERLAP: BALL INSIDE OF THE BUMPER
 
             # for resolving penetration we are choosing the LEAST penetrated axis to avoid adjustments that are
             # too large visually
@@ -665,12 +670,11 @@ class BasePong:
                 # separate along the x axis: push the ball to the left or to the right depending on what is closer
                 if self._ball.x < bumper.x:
                     # ball is closer to the left side: push to the left
-                    self._ball.x = bumper_left - BALL_RADIUS - push_epsilon
+                    self._ball.x = max(bumper_left - BALL_RADIUS - push_epsilon, min_ball_x)
                 else:
                     # ball is closer to the right side: push to the right
-                    self._ball.x = bumper_right + BALL_RADIUS + push_epsilon
-            else:  # noqa: PLR5501
-                # separate along the z axis, by the same principle
+                    self._ball.x = min(bumper_right + BALL_RADIUS + push_epsilon, max_ball_x)
+            else:
                 if self._ball.z < bumper.z:
                     self._ball.z = bumper_bottom - BALL_RADIUS - push_epsilon
                 else:
