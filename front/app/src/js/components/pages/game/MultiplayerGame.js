@@ -182,7 +182,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
         cylinderUpdate,
         velocity,
       };
-    })(-9.25, 1, 0);
+    })(-100.0, 1, 0);
 
     const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
@@ -338,18 +338,19 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       time_limit_reached: false
     };
 
+    // stores information that is either specific to the player, or necessary for the correct rendering
     const clientState = {
       playerId: '',
       playerNumber: -1,
       enemyNumber: -1,
       bumper: null,
+      movesLeft: false,
+      movesRight: false,
       enemyBumper: null,
       pendingInputs: [],
       inputSequenceNumber: 0,
       playerInterpolationBuffer: [],
       esntitiesInterpolationBuffer: [],
-      movesLeft: false,
-      movesRight: false,
     };
 
     const Buff = {
@@ -373,13 +374,11 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
         movement = -bumper.speed * deltaTime;
       }
       
-      const oldX = bumper.cubeUpdate.x;
       const newX = bumper.cubeUpdate.x + movement;
       const leftLimit = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf;
       const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf;
       const finalX = Math.max(leftLimit, Math.min(rightLimit, newX));
-      
-      
+
       bumper.cubeUpdate.x = finalX;
     };
 
@@ -602,7 +601,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       Ball.temporalSpeed.x = serverState.ball.temporal_speed.x;
       Ball.temporalSpeed.z = serverState.ball.temporal_speed.z;
       
-      if (serverState.coin && Coin) {
+      if (serverState.coin) {
         Coin.cylinderUpdate.x = serverState.coin.x;
         Coin.cylinderUpdate.z = serverState.coin.z;
       }
@@ -616,8 +615,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       const myBumperData = clientState.playerNumber === 1 ? serverState.bumper_1 : serverState.bumper_2;
       const lastProcessedMoveId = myBumperData.move_id;
 
-
-      // Set to authoritative server position
       clientState.bumper.cubeUpdate.x = myBumperData.x;
 
       // Remove processed inputs and re-apply unprocessed ones
@@ -748,6 +745,58 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       }, 1500);
     });
 
+    function predictPlayerPosition() {
+      const playerBumper = clientState.bumper;
+      let movement = 0;
+      if ((clientState.movesLeft && !playerBumper.controlReverse) || (clientState.movesRight && playerBumper.controlReverse)) {
+        movement = playerBumper.speed * SERVER_TICK_INTERVAL;
+      }
+      else if ((clientState.movesRight && !playerBumper.controlReverse) || (clientState.movesLeft && playerBumper.controlReverse)) {
+        movement = -playerBumper.speed * SERVER_TICK_INTERVAL;
+      }
+      let newX = playerBumper.cubeUpdate.x + movement;
+      const leftLimit = WALL_RIGHT_X + WALL_WIDTH_HALF + playerBumper.lenghtHalf;
+      const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - playerBumper.lenghtHalf;
+      newX = Math.max(leftLimit, Math.min(rightLimit, newX));
+
+      return newX;
+    }
+
+    function interpolateEntities(renderTime) {
+      const interpolatedBallPos = getInterpolated(ENTITY_KEYS.BALL, renderTime);
+      if (interpolatedBallPos !== null) {
+        Ball.sphereMesh.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
+      } else {
+        Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+      }
+
+      const interpolatedCoinPos = getInterpolated(ENTITY_KEYS.COIN, renderTime);
+      if (interpolatedCoinPos !== null) {
+        Coin.cylinderMesh.position.set(interpolatedCoinPos.x, 1, interpolatedCoinPos.z);
+      } else {
+        Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+      }
+
+      const interpolatedOpponentPos = getInterpolated(ENTITY_KEYS.OPPONENT, renderTime);
+      if (interpolatedOpponentPos !== null) {
+        clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
+      }
+      clientState.enemyBumper.cubeMesh.position.set(
+        clientState.enemyBumper.cubeUpdate.x,
+        clientState.enemyBumper.cubeUpdate.y,
+        clientState.enemyBumper.cubeUpdate.z,
+      );
+
+      const interpolatedPlayerPos = getInterpolated(ENTITY_KEYS.PLAYER, renderTime);
+      const playerBumper = clientState.bumper;
+      const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
+      playerBumper.cubeMesh.position.set(
+        playerVisualX,
+        playerBumper.cubeUpdate.y,
+        playerBumper.cubeUpdate.z,
+      );
+    }
+
     function animate(ms) {
       requestAnimationFrame(animate);
       if (!clientState.bumper) {
@@ -757,64 +806,18 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       accumulator += delta;
       const deltaAnimation = Math.min(delta, 0.1);
 
-      const playerBumper = clientState.bumper;
       const timestamp = Date.now();
       while (accumulator >= SERVER_TICK_INTERVAL) {
         sendCurrentInput(timestamp);
-        // do client-side prediction at the same tick rate as the server
-        if (!(clientState.movesLeft && clientState.movesRight))
-        {
-          let movement = 0;
-          if ((clientState.movesLeft && !playerBumper.controlReverse) || (clientState.movesRight && playerBumper.controlReverse)) {
-            movement = playerBumper.speed * SERVER_TICK_INTERVAL;
-          }
-          else if ((clientState.movesRight && !playerBumper.controlReverse) || (clientState.movesLeft && playerBumper.controlReverse)) {
-              movement = -playerBumper.speed * SERVER_TICK_INTERVAL;
-            }
-            let newX = playerBumper.cubeUpdate.x + movement;
-            const leftLimit = WALL_RIGHT_X + WALL_WIDTH_HALF + playerBumper.lenghtHalf;
-            const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - playerBumper.lenghtHalf;
-            newX = Math.max(leftLimit, Math.min(rightLimit, newX));
+        if (!(clientState.movesLeft && clientState.movesRight)) {
+          const newX = predictPlayerPosition();
+          playerBumper.cubeUpdate.x = newX;
+          updatePlayerBuffer(newX, timestamp);
+        }
+        accumulator -= SERVER_TICK_INTERVAL;
+      }
 
-            playerBumper.cubeUpdate.x = newX;
-            updatePlayerBuffer(newX, timestamp);
-          }
-          accumulator -= SERVER_TICK_INTERVAL;
-        }
-
-        const renderTime = timestamp - ENTITY_INTERPOLATION_DELAY;
-        
-        const interpolatedBallPos = getInterpolated(ENTITY_KEYS.BALL, renderTime);
-        if (interpolatedBallPos !== null) {
-          Ball.sphereMesh.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
-        } else {
-          Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-        }
-        
-        const interpolatedCoinPos = getInterpolated(ENTITY_KEYS.COIN, renderTime);
-        if (interpolatedCoinPos !== null) {
-          Coin.cylinderMesh.position.set(interpolatedCoinPos.x, 1, interpolatedCoinPos.z);
-        } else {
-          Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
-        }
-
-        const interpolatedOpponentPos = getInterpolated(ENTITY_KEYS.OPPONENT, renderTime);
-        if (interpolatedOpponentPos !== null) {
-          clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
-        }
-        clientState.enemyBumper.cubeMesh.position.set(
-          clientState.enemyBumper.cubeUpdate.x,
-          clientState.enemyBumper.cubeUpdate.y,
-          clientState.enemyBumper.cubeUpdate.z,
-        );
-        
-        const interpolatedPlayerPos = getInterpolated(ENTITY_KEYS.PLAYER, renderTime);
-        const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
-        playerBumper.cubeMesh.position.set(
-          playerVisualX,
-          playerBumper.cubeUpdate.y,
-          playerBumper.cubeUpdate.z,
-        );
+      interpolateEntities(timestamp - ENTITY_INTERPOLATION_DELAY);
 
       if (mixer) {
         mixer.update(deltaAnimation);
