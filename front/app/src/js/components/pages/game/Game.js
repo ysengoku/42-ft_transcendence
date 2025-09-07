@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import audiourl from '/audio/score_sound.mp3?url';
 import pedro from '/3d_models/pleasehelpme.glb?url';
+import cactus from '/3d_models/cactus.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
 import couch from '/3d_models/sofa.glb?url';
@@ -394,6 +395,45 @@ export class Game extends HTMLElement {
     carboardModels[2].visible = false;
 
     // console.log('Game type:', this.#state);
+
+
+      const CactusFactory = (posX, posY, posZ) => {
+        const cactusGlb = (() => {
+          const cactusModel = new THREE.Object3D();
+          loaderModel.load(
+            cactus,
+            function (gltf) {
+              const model = gltf.scene;
+              model.position.y = 0;
+              model.position.z = 0;
+              model.position.x = 0;
+              cactusModel.add(gltf.scene);
+            },
+            undefined,
+            function (error) {
+              console.error(error);
+            },
+          );
+          cactusModel.scale.set(1.8, 1.8, 1.8);
+          scene.add(cactusModel);
+          return cactusModel;
+        })();
+
+        cactusGlb.position.x = posX;
+        cactusGlb.position.y = posY;
+        cactusGlb.position.z = posZ;
+        cactusGlb.rotation.y = -pi / 2;
+        cactusGlb.castShadow = true;
+        cactusGlb.receiveShadow = true;
+        scene.add(cactusGlb);
+
+        return {
+          cactusGlb,
+        };
+      };
+    
+    const cacti = [CactusFactory(0,0,-10)];
+
 
     const Ball = ((posX, posY, posZ) => {
       const bulletGlb = (() => {
