@@ -377,7 +377,7 @@ export class Game extends HTMLElement {
             console.error(error);
           },
         );
-        carboardModel.scale.set(1.2, 1.2, 1.2);
+        carboardModel.scale.set(1.8, 1.8, 1.8);
         scene.add(carboardModel);
         return carboardModel;
       })();
