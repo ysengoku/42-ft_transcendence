@@ -918,7 +918,7 @@ export class Game extends HTMLElement {
     ];
 
     function handleAiBehavior(BallPos, BallVelocity) {
-      // console.log(choosenDifficulty);
+      console.log(choosenDifficulty);
       if (isCalculationNeeded) {
         const scoreDiff = Bumpers[0].score - Bumpers[1].score;
         const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
@@ -926,17 +926,20 @@ export class Game extends HTMLElement {
         
         const relativeGap = scoreDiff / MAX_SCORE;
         const contextualFactor = relativeGap * (1 + gameProgress * 0.8) + (1 - gameProgress) * 0.7;
-        const calculatedDifficulty = scoreDiff > 0 ? Math.floor(2 + (scoreDiff - 1) * contextualFactor * 1.5) : Math.max(0, 2 + scoreDiff);
+        const calculatedDifficulty = scoreDiff > 0 
+          ? Math.floor(2 + (scoreDiff - 1) * contextualFactor * 1.5) 
+          : Math.max(0, 2 + scoreDiff);
         const finalDifficulty = Math.max(minDifficulty, Math.min(4, Math.floor(calculatedDifficulty)));
-        if (Math.abs(scoreDiff - lastSignificantScoreDiff) >= 2) {
+        if (Math.abs(scoreDiff - lastSignificantScoreDiff) >= Math.max(1, Math.floor(MAX_SCORE / 5))) {
           stableDifficulty = finalDifficulty;
           lastSignificantScoreDiff = scoreDiff;
         }
 
         choosenDifficulty = stableDifficulty;
         // console.log(choosenDifficulty);
+        let errorScale = 2.5 / Bumpers[1].lenghtHalf;
         let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
-        let error = (difficultyLvl[choosenDifficulty][0] * closeness) / (Bumpers[1].lenghtHalf / 2.5);
+        let error = (difficultyLvl[choosenDifficulty][0] * closeness) * errorScale;
         // console.log(Bumpers[1].lenghtHalf / 2.5);
         ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
         let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);
@@ -963,12 +966,10 @@ export class Game extends HTMLElement {
             clearTimeout(timeooutId);
           }
         }, difficultyLvl[choosenDifficulty][1]);
-        const sideHitProbability = Math.min(0.8, (Bumpers[1].lenghtHalf / 2.5) * 0.4);
-        const shouldHitSide = Math.random() < sideHitProbability;
-
-        if (shouldHitSide) {
-          const sideOffset = (Math.random() - 0.5) * (Bumpers[1].lenghtHalf / 2.5) * 2;
-          ballPredictedPos.x += sideOffset;
+        if (Bumpers[1].lenghtHalf < 2.0) {
+          ballPredictedPos.x += (Math.random() - 0.5) * error * 0.6;
+        } else if (Bumpers[1].lenghtHalf > 3.0) {
+          ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
         } else {
           ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
         }
