@@ -807,6 +807,8 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       const deltaAnimation = Math.min(delta, 0.1);
 
       const timestamp = Date.now();
+
+      // client-side prediction code: it simulates movement at the same tick rate as the server
       while (accumulator >= SERVER_TICK_INTERVAL) {
         sendCurrentInput(timestamp);
         if (!(clientState.movesLeft && clientState.movesRight)) {
