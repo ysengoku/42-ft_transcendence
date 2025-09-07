@@ -936,11 +936,9 @@ export class Game extends HTMLElement {
         }
 
         choosenDifficulty = stableDifficulty;
-        // console.log(choosenDifficulty);
         let errorScale = 2.5 / Bumpers[1].lenghtHalf;
         let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
         let error = (difficultyLvl[choosenDifficulty][0] * closeness) * errorScale;
-        // console.log(Bumpers[1].lenghtHalf / 2.5);
         ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
         let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);
         let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
@@ -973,7 +971,6 @@ export class Game extends HTMLElement {
         } else {
           ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
         }
-        // ballPredictedPos.x += -error + Math.round(Math.random()) * (error - -error);
       }
       if (!isMovementDone) moveAiBumper(ballPredictedPos);
       else {
