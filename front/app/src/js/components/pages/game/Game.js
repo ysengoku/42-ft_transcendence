@@ -336,6 +336,7 @@ export class Game extends HTMLElement {
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.setClearColor(0x855988, 1);
     this.appendChild(renderer.domElement);
 
@@ -354,15 +355,30 @@ export class Game extends HTMLElement {
     // camera.position.set(0, 15, -20);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-    const normalMaterial = new THREE.MeshNormalMaterial();
 
-    const ligths = [
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-    ];
+    function degreesToRadians(degrees) {
+      return degrees * (pi / 180);
+    }
+
+    const normalMaterial = new THREE.MeshNormalMaterial();
+    const sunLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
+    sunLight.position.set(25, 35, -50);
+    sunLight.target.position.set(0, 0, 0);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 4096;
+    sunLight.shadow.mapSize.height = 4096;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 150;
+    sunLight.shadow.camera.left = -80;
+    sunLight.shadow.camera.right = 80;
+    sunLight.shadow.camera.top = 80;
+    sunLight.shadow.camera.bottom = -40;
+    
+    const ambientLight = new THREE.AmbientLight(0x87ceeb, 0.3);
+
+    const fillLight = new THREE.DirectionalLight(0xb3d9ff, 0.4);
+    fillLight.position.set(30, 20, -10);
+    fillLight.castShadow = false;
 
     let carboardModels = [null, null, null];
 
@@ -372,6 +388,9 @@ export class Game extends HTMLElement {
         loaderModel.load(
           carboardModelStates[i],
           function (gltf) {
+            gltf.scene.traverse( function( node ) {
+              if ( node.isMesh ) { node.castShadow = true; }
+            } );
             const model = gltf.scene;
             model.position.y = 0;
             model.position.z = 0;
@@ -383,7 +402,7 @@ export class Game extends HTMLElement {
             console.error(error);
           },
         );
-        carboardModel.scale.set(1.2, 1.2, 1.2);
+        carboardModel.scale.set(1.6, 1.6, 2.2);
         scene.add(carboardModel);
         return carboardModel;
       })();
@@ -394,15 +413,15 @@ export class Game extends HTMLElement {
     carboardModels[1].visible = false;
     carboardModels[2].visible = false;
 
-    // console.log('Game type:', this.#state);
-
-
       const CactusFactory = (posX, posY, posZ) => {
         const cactusGlb = (() => {
           const cactusModel = new THREE.Object3D();
           loaderModel.load(
             cactus,
             function (gltf) {
+              gltf.scene.traverse( function( node ) {
+                  if ( node.isMesh ) { node.castShadow = true; }
+              } );
               const model = gltf.scene;
               model.position.y = 0;
               model.position.z = 0;
@@ -422,7 +441,7 @@ export class Game extends HTMLElement {
         cactusGlb.position.x = posX;
         cactusGlb.position.y = posY;
         cactusGlb.position.z = posZ;
-        cactusGlb.rotation.y = -pi / 2;
+        cactusGlb.rotation.y = degreesToRadians(Math.random() * 360);
         cactusGlb.castShadow = true;
         cactusGlb.receiveShadow = true;
         scene.add(cactusGlb);
@@ -431,8 +450,32 @@ export class Game extends HTMLElement {
           cactusGlb,
         };
       };
+    const cacti = []
+
+    const getSafeCactusPosition = () => {
+      let x, z;
+      do {
+        x = (Math.random() - 0.5) * 120; 
+        z = (Math.random() - 0.5) * 120;
+      } while (
+        (x > -11.65 && x < 11.65 && z > -18 && z < 18)
+      );
+      return { x, z };
+    };
     
-    const cacti = [CactusFactory(0,0,-10)];
+    for (let index = 0; index < 30; index++)
+    {
+      const pos1 = getSafeCactusPosition();
+      const pos2 = getSafeCactusPosition(); 
+      const pos3 = getSafeCactusPosition();
+      const pos4 = getSafeCactusPosition();
+      
+      cacti[index] = CactusFactory(pos1.x, 0, pos1.z);
+      cacti[++index] = CactusFactory(pos2.x, 0, pos2.z);
+      cacti[++index] = CactusFactory(pos3.x, 0, pos3.z);
+      cacti[++index] = CactusFactory(pos4.x, 0, pos4.z);
+    }
+    // const cacti = [CactusFactory(-15,0,-5), CactusFactory(15,0,-5)];
 
 
     const Ball = ((posX, posY, posZ) => {
@@ -441,6 +484,9 @@ export class Game extends HTMLElement {
         loaderModel.load(
           bullet,
           function (gltf) {
+            gltf.scene.traverse( function( node ) {
+              if ( node.isMesh ) { node.castShadow = true; }
+            } );
             const model = gltf.scene;
             model.position.y = posY;
             model.position.z = posZ;
@@ -479,17 +525,10 @@ export class Game extends HTMLElement {
       };
     })(0, 1, 0);
 
-    ligths[0].position.set(10, 10, 0);
-    ligths[1].position.set(10, 0, 30);
-    ligths[2].position.set(0, 10, -30);
-    ligths[3].position.set(0, -10, 0);
-    ligths[4].position.set(0, 0, 0);
-    ligths[0].lookAt(0, 0, 0);
-    scene.add(ligths[0]);
-    for (let i = 0; i < 5; i++) {
-      ligths[i].castShadow = true;
-      scene.add(ligths[i]);
-    }
+    scene.add(sunLight);
+    scene.add(sunLight.target);
+    scene.add(ambientLight);
+    scene.add(fillLight);
 
     // const normalMaterial = new THREE.MeshNormalMaterial();
     const BumperFactory = (posX, posY, posZ) => {
@@ -512,6 +551,9 @@ export class Game extends HTMLElement {
         loaderModel.load(
           table,
           function (gltf) {
+            gltf.scene.traverse( function( node ) {
+              if ( node.isMesh ) { node.castShadow = true; }
+            } );
             const model = gltf.scene;
             model.position.y = 0.45;
             model.position.z = 0;
@@ -534,6 +576,9 @@ export class Game extends HTMLElement {
           loaderModel.load(
             dressing,
             function (gltf) {
+              gltf.scene.traverse( function( node ) {
+                if ( node.isMesh ) { node.castShadow = true; }
+              } );
               const model = gltf.scene;
               model.position.y = 0;
               model.position.z = 0;
@@ -554,6 +599,9 @@ export class Game extends HTMLElement {
           loaderModel.load(
             couch,
             function (gltf) {
+              gltf.scene.traverse( function( node ) {
+                if ( node.isMesh ) { node.castShadow = true; }
+              } );
               const model = gltf.scene;
               model.position.y = -2.0795;
               model.position.z = -7.8925;
@@ -574,6 +622,9 @@ export class Game extends HTMLElement {
           loaderModel.load(
             chair,
             function (gltf) {
+              gltf.scene.traverse( function( node ) {
+                if ( node.isMesh ) { node.castShadow = true; }
+              } );
               const model = gltf.scene;
               model.position.y = 0.42;
               model.position.z = -0.1;
@@ -612,6 +663,9 @@ export class Game extends HTMLElement {
         loaderModel.load(
           pedro,
           function (gltf) {
+            gltf.scene.traverse( function( node ) {
+              if ( node.isMesh ) { node.castShadow = true; }
+            } );
             const model = gltf.scene;
             model.position.y = 0;
             model.position.x = posX;
@@ -736,6 +790,9 @@ export class Game extends HTMLElement {
         loaderModel.load(
           fence,
           function (gltf) {
+            gltf.scene.traverse( function( node ) {
+              if ( node.isMesh ) { node.castShadow = true; }
+            } );
             const model = gltf.scene;
             model.position.y = 0;
             model.position.z = 0;
@@ -775,12 +832,12 @@ export class Game extends HTMLElement {
     ];
 
     (() => {
-      const phongMaterial = new THREE.MeshBasicMaterial({ color: 0xffcdac6d });
-      const planeGeometry = new THREE.PlaneGeometry(250, 250);
+      const phongMaterial = new THREE.MeshPhongMaterial({ color: 0xffcdac6d, depthWrite: true });
+      const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
       const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
       planeMesh.rotateX(-pi / 2);
       planeMesh.receiveShadow = true;
-      planeMesh.castShadow = true;
+      // planeMesh.castShadow = true;
       scene.add(planeMesh);
     })();
 
@@ -789,9 +846,7 @@ export class Game extends HTMLElement {
     let ballSubtickX;
     let lastBumperCollided = 0;
 
-    function degreesToRadians(degrees) {
-      return degrees * (pi / 180);
-    }
+
 
     function isCoinCollidedWithBall(coin, ballSubtickZ, ballSubtickX) {
       return (
@@ -1033,6 +1088,9 @@ export class Game extends HTMLElement {
           loaderModel.load(
             coin,
             function (gltf) {
+              gltf.scene.traverse( function( node ) {
+                if ( node.isMesh ) { node.castShadow = true; }
+              } );
               const model = gltf.scene;
               model.position.y = 0;
               model.position.z = 0;
