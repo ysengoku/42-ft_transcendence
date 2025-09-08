@@ -410,7 +410,7 @@ export class Game extends HTMLElement {
       const CactusFactory = (posX, posY, posZ) => {
         const cactusGlb = (() => {
           const cactusModel = new THREE.Object3D();
-          loaderModel.load(
+          this.loaderModel.load(
             cactus,
             function (gltf) {
               gltf.scene.traverse( function( node ) {
