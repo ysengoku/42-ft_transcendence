@@ -4,12 +4,13 @@ import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.
 import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
 import audiourl from '/audio/score_sound.mp3?url';
 import pedro from '/3d_models/pleasehelpme.glb?url';
-import cactus from '/3d_models/cactus.glb?url';
+import cactus from '/3d_models/cactus1.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
 import couch from '/3d_models/sofa.glb?url';
 import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
+import ground_texture from '/img/ground_texture.png?url';
 import coin from '/3d_models/coin.glb?url';
 import carboard from '/3d_models/carboard.glb?url';
 import carboard2 from '/3d_models/carboard2.glb?url';
@@ -332,14 +333,14 @@ export class Game extends HTMLElement {
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor(0x855988, 1);
+    renderer.setClearColor(0x8e4f5e, 1);
     this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
 
     const scene = new THREE.Scene();
-    // scene.fog = new THREE.Fog( 0xEDC9AF, 15, 45 );
+    scene.fog = new THREE.FogExp2(0x8e4f5e, 0.008);
     await this.initLoaders(renderer);
 
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
@@ -363,10 +364,10 @@ export class Game extends HTMLElement {
     sunLight.shadow.mapSize.height = 4096;
     sunLight.shadow.camera.near = 0.5;
     sunLight.shadow.camera.far = 150;
-    sunLight.shadow.camera.left = -80;
-    sunLight.shadow.camera.right = 80;
-    sunLight.shadow.camera.top = 80;
-    sunLight.shadow.camera.bottom = -40;
+    sunLight.shadow.camera.left = -100;
+    sunLight.shadow.camera.right = 100;
+    sunLight.shadow.camera.top = 100;
+    sunLight.shadow.camera.bottom = -60;
     
     const ambientLight = new THREE.AmbientLight(0x87ceeb, 0.3);
 
@@ -446,30 +447,50 @@ export class Game extends HTMLElement {
       };
     const cacti = []
 
+    const placedCacti = [];
+    const minDistance = 8;
+    
     const getSafeCactusPosition = () => {
       let x, z;
+      let attempts = 0;
       do {
-        x = (Math.random() - 0.5) * 120; 
-        z = (Math.random() - 0.5) * 120;
+        x = (Math.random() - 0.5) * 160; 
+        z = (Math.random() - 0.5) * 140;
+        attempts++;
+        if (attempts > 50) break;
       } while (
-        (x > -11.65 && x < 11.65 && z > -18 && z < 18)
+        (x > -11.65 && x < 11.65 && z > -18 && z < 18) ||
+        placedCacti.some(cactus => 
+          Math.sqrt((x - cactus.x) ** 2 + (z - cactus.z) ** 2) < minDistance
+        )
       );
       return { x, z };
     };
     
-    for (let index = 0; index < 30; index++)
+    for (let index = 0; index < 60; index++)
     {
       const pos1 = getSafeCactusPosition();
-      const pos2 = getSafeCactusPosition(); 
-      const pos3 = getSafeCactusPosition();
-      const pos4 = getSafeCactusPosition();
-      
+      placedCacti.push(pos1);
       cacti[index] = CactusFactory(pos1.x, 0, pos1.z);
-      cacti[++index] = CactusFactory(pos2.x, 0, pos2.z);
-      cacti[++index] = CactusFactory(pos3.x, 0, pos3.z);
-      cacti[++index] = CactusFactory(pos4.x, 0, pos4.z);
+      
+      if (index < 59) {
+        const pos2 = getSafeCactusPosition();
+        placedCacti.push(pos2);
+        cacti[++index] = CactusFactory(pos2.x, 0, pos2.z);
+      }
+      
+      if (index < 59) {
+        const pos3 = getSafeCactusPosition();
+        placedCacti.push(pos3);
+        cacti[++index] = CactusFactory(pos3.x, 0, pos3.z);
+      }
+      
+      if (index < 59) {
+        const pos4 = getSafeCactusPosition();
+        placedCacti.push(pos4);
+        cacti[++index] = CactusFactory(pos4.x, 0, pos4.z);
+      }
     }
-    // const cacti = [CactusFactory(-15,0,-5), CactusFactory(15,0,-5)];
 
 
     const Ball = ((posX, posY, posZ) => {
@@ -505,7 +526,6 @@ export class Game extends HTMLElement {
       const sphere = new THREE.Mesh(sphereGeometry, normalMaterial);
       scene.add(sphere);
 
-      // bulletGlb.visible = false;
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * gameSpeed);
@@ -519,12 +539,36 @@ export class Game extends HTMLElement {
       };
     })(0, 1, 0);
 
+    const createHill = (posX, posZ, width, height) => {
+      const baseGeometry = new THREE.CylinderGeometry(width * 1.5, width * 2, height * 0.3, 8);
+      const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
+      const base = new THREE.Mesh(baseGeometry, baseMaterial);
+      base.position.set(posX, -height * 0.1, posZ);
+      base.receiveShadow = true;
+      scene.add(base);
+      
+      const hillGeometry = new THREE.CylinderGeometry(width * 0.8, width, height, 8);
+      const hillMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
+      const hill = new THREE.Mesh(hillGeometry, hillMaterial);
+      hill.position.set(posX, height * 0.3, posZ);
+      hill.scale.y = 0.6;
+      hill.receiveShadow = true;
+      scene.add(hill);
+      
+      return hill;
+    };
+
+    createHill(-180, 250, 60, 25);
+    createHill(150, 280, 70, 30);
+    createHill(-100, 300, 50, 20);
+    createHill(280, 200, 80, 35);
+    createHill(-250, 220, 65, 22);
+
     scene.add(sunLight);
     scene.add(sunLight.target);
     scene.add(ambientLight);
     scene.add(fillLight);
 
-    // const normalMaterial = new THREE.MeshNormalMaterial();
     const BumperFactory = (posX, posY, posZ) => {
       var _ = {};
       let modelsGlb;
@@ -826,12 +870,20 @@ export class Game extends HTMLElement {
     ];
 
     (() => {
-      const phongMaterial = new THREE.MeshPhongMaterial({ color: 0xffcdac6d, depthWrite: true });
+      const textureLoader = new THREE.TextureLoader();
+      const groundTexture = textureLoader.load(ground_texture);
+      groundTexture.wrapS = THREE.RepeatWrapping;
+      groundTexture.wrapT = THREE.RepeatWrapping;
+      groundTexture.repeat.set(100, 100);
+      const phongMaterial = new THREE.MeshPhongMaterial({ 
+        map: groundTexture,
+        color: 0xd4a574,
+        depthWrite: true 
+      });
       const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
       const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
       planeMesh.rotateX(-pi / 2);
       planeMesh.receiveShadow = true;
-      // planeMesh.castShadow = true;
       scene.add(planeMesh);
     })();
 
