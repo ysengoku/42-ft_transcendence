@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
 import audiourl from '/audio/score_sound.mp3?url';
 import pedro from '/3d_models/pleasehelpme.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
@@ -21,6 +23,7 @@ import { OVERLAY_TYPE } from './components/index';
 
 /* eslint no-var: "off" */
 export class Game extends HTMLElement {
+  #ktx2Loader = null;
   #navbarHeight = 64;
   #state = {
     gameOptions: {},
@@ -71,7 +74,7 @@ export class Game extends HTMLElement {
     this.overlay.gameType = `local-${this.#state.gameType}`;
     this.appendChild(this.overlay);
 
-    this.render();
+    await this.render();
   }
 
   setQueryParam(param) {
@@ -239,28 +242,20 @@ export class Game extends HTMLElement {
     };
   }
 
-  disconnectedCallback() {
-    if (this.onDocumentKeyDown) {
-      document.removeEventListener('keydown', this.onDocumentKeyDown, true);
-    }
-    if (this.onDocumentKeyUp) {
-      document.removeEventListener('keyup', this.onDocumentKeyUp, true);
-    }
-    while (this.scene.children.length > 0) this.scene.remove(this.scene.children[0]);
-    this.scene = null;
-    this.stop();
-    let i = 0;
-    if (this.Workers != null) {
-      for (i = 0; i <= 5; i++) {
-        this.Workers[i].terminate();
-        console.log(this.Workers[i]);
-        delete this.Workers[i];
-        this.Workers[i] = null;
-      }
-    }
+
+  async initLoaders(renderer) {
+    this.#ktx2Loader = new KTX2Loader()
+      .setTranscoderPath('/libs/basis/')
+      .detectSupport(renderer);
+
+    await MeshoptDecoder.ready;
+
+    this.loaderModel = new GLTFLoader();
+    this.loaderModel.setKTX2Loader(this.#ktx2Loader);
+    this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
   }
 
-  game() {
+  async game() {
     var keyMap = [];
     const buffUI = this.buffIconElement;
     const timerUI = this.timerElement;
@@ -329,8 +324,7 @@ export class Game extends HTMLElement {
 
     const scene = new THREE.Scene();
     // scene.fog = new THREE.Fog( 0xEDC9AF, 15, 45 );
-    const loaderModel = new GLTFLoader();
-    // const loaderFonts = new FontLoader();
+    await this.initLoaders(renderer);
 
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
     // let cameraX = 0;
@@ -354,7 +348,7 @@ export class Game extends HTMLElement {
     for (let i = 0; i <= 2; i++) {
       const carboardGlb = (() => {
         const carboardModel = new THREE.Object3D();
-        loaderModel.load(
+        this.loaderModel.load(
           carboardModelStates[i],
           function (gltf) {
             const model = gltf.scene;
@@ -384,7 +378,7 @@ export class Game extends HTMLElement {
     const Ball = ((posX, posY, posZ) => {
       const bulletGlb = (() => {
         const bulletModel = new THREE.Object3D();
-        loaderModel.load(
+        this.loaderModel.load(
           bullet,
           function (gltf) {
             const model = gltf.scene;
@@ -455,7 +449,7 @@ export class Game extends HTMLElement {
 
       const tableGlb = (() => {
         const tableModel = new THREE.Object3D();
-        loaderModel.load(
+        this.loaderModel.load(
           table,
           function (gltf) {
             const model = gltf.scene;
@@ -477,7 +471,7 @@ export class Game extends HTMLElement {
       if (gameOptionsQuery.cool_mode == true) {
         const dressingGlb = (() => {
           const dressingModel = new THREE.Object3D();
-          loaderModel.load(
+          this.loaderModel.load(
             dressing,
             function (gltf) {
               const model = gltf.scene;
@@ -497,7 +491,7 @@ export class Game extends HTMLElement {
         })();
         const couchGlb = (() => {
           const couchModel = new THREE.Object3D();
-          loaderModel.load(
+          this.loaderModel.load(
             couch,
             function (gltf) {
               const model = gltf.scene;
@@ -517,7 +511,7 @@ export class Game extends HTMLElement {
         })();
         const chairGlb = (() => {
           const chairModel = new THREE.Object3D();
-          loaderModel.load(
+          this.loaderModel.load(
             chair,
             function (gltf) {
               const model = gltf.scene;
@@ -555,7 +549,7 @@ export class Game extends HTMLElement {
 
       const playerGlb = (() => {
         const pedroModel = new THREE.Object3D();
-        loaderModel.load(
+        this.loaderModel.load(
           pedro,
           function (gltf) {
             const model = gltf.scene;
@@ -683,7 +677,7 @@ export class Game extends HTMLElement {
     const WallFactory = (posX, posY, posZ) => {
       const fenceGlb = (() => {
         const fenceModel = new THREE.Object3D();
-        loaderModel.load(
+        this.loaderModel.load(
           fence,
           function (gltf) {
             const model = gltf.scene;
@@ -980,7 +974,7 @@ export class Game extends HTMLElement {
       Coin = ((posX, posY, posZ) => {
         const CoinGlb = (() => {
           const CoinModel = new THREE.Object3D();
-          loaderModel.load(
+          this.loaderModel.load(
             coin,
             function (gltf) {
               const model = gltf.scene;
@@ -1280,7 +1274,7 @@ export class Game extends HTMLElement {
         Bumpers[1].cubeUpdate.y,
         Bumpers[1].cubeUpdate.z,
       );
-      if (Bumpers[0].gltfStore.mixer && Bumpers[1].gltfStore.mixer) {
+      if (Bumpers[0].gltfStore?.mixer && Bumpers[1].gltfStore?.mixer) {
         Bumpers[0].gltfStore.mixer.update(delta);
         Bumpers[1].gltfStore.mixer.update(delta);
       }
@@ -1305,10 +1299,34 @@ export class Game extends HTMLElement {
     return [camera, renderer, start, stop, Workers, scene];
   }
 
-  render() {
+  disconnectedCallback() {
+    if (this.onDocumentKeyDown) {
+      document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+    }
+    if (this.onDocumentKeyUp) {
+      document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+    }
+    while (this.scene.children.length > 0) this.scene.remove(this.scene.children[0]);
+    this.scene = null;
+    this.stop();
+    let i = 0;
+    if (this.Workers != null) {
+      for (i = 0; i <= 5; i++) {
+        this.Workers[i].terminate();
+        console.log(this.Workers[i]);
+        delete this.Workers[i];
+        this.Workers[i] = null;
+      }
+    }
+    if (this.#ktx2Loader) {
+        this.#ktx2Loader.dispose();
+    }
+  }
+
+  async render() {
     // this.innerHTML = ``;
     let renderer, camera, start;
-    [camera, renderer, start, this.stop, this.Workers, this.scene] = this.game();
+    [camera, renderer, start, this.stop, this.Workers, this.scene] = await this.game();
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
