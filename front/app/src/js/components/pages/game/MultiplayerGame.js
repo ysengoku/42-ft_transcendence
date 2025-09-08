@@ -813,7 +813,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
         sendCurrentInput(timestamp);
         if (!(clientState.movesLeft && clientState.movesRight)) {
           const newX = predictPlayerPosition();
-          playerBumper.cubeUpdate.x = newX;
+          clientState.bumper.cubeUpdate.x = newX;
           updatePlayerBuffer(newX, timestamp);
         }
         accumulator -= SERVER_TICK_INTERVAL;
