@@ -88,7 +88,7 @@ export class DuelPreview extends HTMLElement {
       this.goToDuelMenuButton.addEventListener('click', this.navigateToDuelMenu);
       return;
     }
-    this.innerHTML = this.template();
+    this.innerHTML = this.style() + this.template();
     this.player1 = this.querySelector('#duel-player1');
     this.player2 = this.querySelector('#duel-player2');
 
@@ -118,19 +118,28 @@ export class DuelPreview extends HTMLElement {
   template() {
     return `
     <div class="d-flex flex-row justify-content-center align-items-center gap-3">
-      <div id="duel-player1"></div>
+      <div id="duel-player1" class="duel-player-profile"></div>
       <p class="fs-1 fw-bolder">VS</p>
-      <div id="duel-player2"></div>
+      <div id="duel-player2" class="duel-player-profile"></div>
     </div>
   `;
+  }
+
+  style() {
+    return `
+    <style>
+    .duel-player-profile {
+      max-width: 40%;
+    }
+    </style>`;
   }
 
   userProfileTemplate() {
     return `
     <div class="d-flex flex-column justify-content-center align-items-center my-4 p-4" id="duel-player1">
       <img class="player-avatar avatar-xl img-fluid rounded-circle" alt="palyer">
-      <p class="player-nickname m-0 mt-1 fs-4 fw-bold"></p>
-      <p class="player-username m-0"></p>
+      <p class="player-nickname m-0 mt-1 fs-4 fw-bold text-break"></p>
+      <p class="player-username m-0 text-break"></p>
     </div>`;
   }
 

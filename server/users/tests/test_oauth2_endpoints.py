@@ -330,3 +330,36 @@ class OAuth2EndpointsTests(TestCase):
             "error=Invalid%20state" in response2.url or 
             "error=Invalid%20user%20information" in response2.url
         )
+
+    @patch("users.router.endpoints.oauth2.requests.get")
+    @patch("users.router.endpoints.oauth2.requests.post") 
+    def test_oauth_state_reuse_prevention(self, mock_post, mock_get):
+        """Test that OAuth state cannot be reused after successful authentication"""
+        # Mock successful OAuth responses
+        mock_post.return_value = self.mock_token_success
+        mock_user_info = MagicMock()
+        mock_user_info.status_code = 200
+        mock_user_info.json.return_value = self.mock_github_user
+        mock_get.side_effect = [self.mock_api_success, mock_user_info, self.mock_api_success]
+        
+        # Create valid OAuth connection
+        state = "reuse_test_state"
+        oauth_conn = OauthConnection.objects.create_pending_connection(state, "github")
+        
+        # First request should succeed and mark state as used
+        response1 = self.client.get(f"/api/oauth/callback/github?code=test&state={state}")
+        self.assertEqual(response1.status_code, 302)
+        
+        # Verify state was marked as used
+        oauth_conn.refresh_from_db()
+        self.assertEqual(oauth_conn.status, OauthConnection.USED)
+        
+        # Second request with same state should fail (state cannot be reused)
+        response2 = self.client.get(f"/api/oauth/callback/github?code=test2&state={state}")
+        self.assertEqual(response2.status_code, 302)
+        # Should fail with either "Invalid state" or "State already used" - both prevent reuse
+        self.assertTrue(
+            "error=Invalid%20state" in response2.url or 
+            "error=State%20already%20used" in response2.url
+        )
+        self.assertIn("code=422", response2.url)

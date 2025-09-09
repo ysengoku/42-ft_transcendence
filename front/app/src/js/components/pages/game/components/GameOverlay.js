@@ -1,10 +1,11 @@
 import { router } from '@router';
+import anonymousavatar from '/img/anonymous-avatar.png?url';
 
 export const OVERLAY_TYPE = Object.freeze({
-	PENDING: 'pending',
-	PAUSE: 'pause',
-	GAMEOVER: 'game_over',
-	CANCEL: 'cancel',
+  PENDING: 'pending',
+  PAUSE: 'pause',
+  GAMEOVER: 'game_over',
+  CANCEL: 'cancel',
 });
 
 export class GameOverlay extends HTMLElement {
@@ -22,7 +23,7 @@ export class GameOverlay extends HTMLElement {
     this.overlayButton1 = null;
     this.overlayButton2 = null;
   }
-  
+
   set gameType(type) {
     this.#gameType = type;
   }
@@ -51,6 +52,19 @@ export class GameOverlay extends HTMLElement {
     }
   }
 
+  hideOverlay() {
+    if (this.#intervalGameId) {
+      clearInterval(this.#intervalGameId);
+    }
+    this.overlay.classList.remove('overlay-dark');
+    this.overlayMessageWrapper.classList.add('d-none');
+    this.overlayContent.innerHTML = '';
+    this.overlayButton1?.removeEventListener('click', this.navigateToDuelMenu);
+    this.overlayButton2?.removeEventListener('click', this.navigateToHome);
+    this.overlayButton1 = null;
+    this.overlayButton2 = null;
+  }
+
   show(action, data = null) {
     this.overlayContent.innerHTML = this.overlayContentTemplate[action];
     this.overlay.classList.add('overlay-dark');
@@ -77,8 +91,8 @@ export class GameOverlay extends HTMLElement {
         let player2 = null;
         const isTournament = data.tournament_id ? true : false;
         data.winner.number === 1
-          ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.inner = false))
-          : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.inner = false));
+          ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.winner = false))
+          : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.winner = false));
         const player1Element = this.createPlayerResultElement(player1, data.elo_change, isTournament);
         const player2Element = this.createPlayerResultElement(player2, data.elo_change, isTournament);
         const gameResultElement = this.querySelector('#overlay-game-result');
@@ -109,18 +123,6 @@ export class GameOverlay extends HTMLElement {
     }
   }
 
-  hide() {
-    if (this.#intervalGameId) {
-      clearInterval(this.#intervalGameId);
-    }
-    this.overlay.classList.remove('overlay-dark');
-    this.overlayMessageWrapper.classList.add('d-none');
-    this.overlayContent.innerHTML = '';
-    this.overlayButton1?.removeEventListener('click', this.navigateToDuelMenu);
-    this.overlayButton2?.removeEventListener('click', this.navigateToHome);
-    this.overlayButton1 = null;
-    this.overlayButton2 = null;
-  }
 
   createPlayerResultElement(player, eloChange, isTournament) {
     const element = document.createElement('div');
@@ -134,9 +136,13 @@ export class GameOverlay extends HTMLElement {
       avatar.src = player.avatar;
       avatar.alt = player.name;
     } else {
-      avatar.classList.add('d-none');
+      avatar.src = anonymousavatar;
     }
-    element.querySelector('.overlay-player-name').textContent = player.name;
+    if (player.name && player.name.length > 0) {
+      element.querySelector('.overlay-player-name').textContent = player.name;
+    } else {
+      element.querySelector('.overlay-player-name').textContent = 'Anonymous player';
+    }
     if (this.#gameType === 'multiplayer' && player.elo && !isTournament) {
       const eloWrapper = element.querySelector('.overlay-player-elo');
       eloWrapper.querySelector('.game-elo').textContent = player.elo;
