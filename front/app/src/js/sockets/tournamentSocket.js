@@ -43,10 +43,10 @@ socketManager.addSocket('tournament', {
     }
   },
   round_start: (data) => {
-    if (
-      window.location.pathname.startsWith('/tournament') ||
-      window.location.pathname.startsWith('/multiplayer-game')
-    ) {
+    if (window.location.pathname.startsWith('/multiplayer-game')) {
+      router.redirect('/tournament/' + data.tournament_id);
+    }
+    if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPage = document.querySelector('tournament-room');
       if (!tournamentPage) {
         log.error('Tournament RoundStart Element not found, cannot update UI.');
