@@ -7,6 +7,9 @@ import pedro from '/3d_models/pull_pedro.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
+import { DEFAULT_GAME_OPTIONS } from '@env';
+import './components/index';
+import { OVERLAY_TYPE } from './components/index';
 
 /* eslint no-var: "off" */
   export class MultiplayerGame extends HTMLElement {
@@ -14,11 +17,16 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     #navbarHeight = 64;
     #pongSocket = null;
     #state = {
-    gameId: '',
-  };
+      gameOptions: {},
+      gameType: '', // 'classic' or 'ai'
+    };
 
   constructor() {
     super();
+    this.timerElement = null;
+    this.buffIconElement = null;
+    this.scoreElement = null;
+    this.lifePointElement = null;
     this.overlay = null;
   }
 
@@ -27,6 +35,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     if (!user) {
       return;
     }
+    console.log(user.username);
     if (!param.id) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
@@ -35,6 +44,18 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     const navbar = document.querySelector('.navbar');
     this.#navbarHeight = navbar ? navbar.offsetHeight : 64;
 
+    this.scoreElement = document.createElement('game-scoreboard');
+    if (this.scoreElement) {
+      this.scoreElement.setNames('You', 'Opponent');
+    }
+    this.appendChild(this.scoreElement);
+    this.timerElement = document.createElement('game-timer');
+    this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60); // Initial time limit in second
+    document.getElementById('game-timer-wrapper')?.appendChild(this.timerElement);
+    this.buffIconElement = document.createElement('game-buff-icon');
+    this.appendChild(this.buffIconElement);
+    this.lifePointElement = document.createElement('game-life-point');
+    this.appendChild(this.lifePointElement);
     this.#state.gameId = param.id;
     await this.render();
   }
@@ -114,6 +135,10 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     const SERVER_TICK_RATE = 30;
     const SERVER_TICK_INTERVAL = 1.0 / SERVER_TICK_RATE;
 
+    const buffUI = this.buffIconElement;
+    const timerUI = this.timerElement;
+    const scoreUI = this.scoreElement;
+    const lifePointUI = this.lifePointElement;
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
@@ -570,9 +595,13 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       }
     }
 
+    function decreaseLifeIfScored(data) {
+
+    }
+
     function updateServerState(data) {
       if (!data) return;
-      
+      decreaseLifeIfScored(data);
       serverState.bumper_1.x = data.bumper_1.x;
       serverState.bumper_1.z = data.bumper_1.z;
       serverState.bumper_1.score = data.bumper_1.score;
