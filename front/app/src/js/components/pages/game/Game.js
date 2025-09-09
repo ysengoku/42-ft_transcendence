@@ -282,7 +282,8 @@ export class Game extends HTMLElement {
 
     const pi = Math.PI;
     const WALL_WIDTH_HALF = 0.5;
-    let gameOptionsQuery = this.#state.gameOptions;
+    const gameOptionsQuery = this.#state.gameOptions;
+    const isGameAi = this.#state.gameType;
     let gameSpeed;
     switch (gameOptionsQuery.game_speed) {
       case 'slow':
@@ -919,6 +920,9 @@ export class Game extends HTMLElement {
       }
     }
     let scoreSwitch = MAX_SCORE / 3;
+    let choosenDifficulty = 2;
+    let stableDifficulty = 2;
+    let lastSignificantScoreDiff = 0;
     function resetBall(direction) {
       const looserBumper = direction < 0 ? 1 : 0;
       lifePointUI?.decreasePoint(looserBumper, 20 / MAX_SCORE);
@@ -935,7 +939,15 @@ export class Game extends HTMLElement {
       }
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
+      // if (isGameAi == 'ai' && choosenDifficulty < 5 && choosenDifficulty >= 0)
+      // {
+      //   looserBumper == 1
+      //     ? choosenDifficulty++
+      //     : choosenDifficulty > 0
+      //       ? choosenDifficulty--
+      //       : null;
 
+      // }
       lastBumperCollided = looserBumper;
       Ball.sphereUpdate.x = Bumpers[looserBumper].playerGlb.position.x;
       Ball.sphereUpdate.z = Bumpers[looserBumper].playerGlb.position.z + 2 * direction;
@@ -969,6 +981,7 @@ export class Game extends HTMLElement {
 
     function moveAiBumper(calculatedPos) {
       keyMap['KeyA'] = false;
+      // console.log(Bumpers[1].lenghtHalf);
       keyMap['KeyD'] = false;
       if (calculatedBumperPos.x < calculatedPos.x - 0.1 && calculatedBumperPos.x < calculatedPos.x - 0.2) {
         keyMap['KeyA'] = true;
@@ -978,7 +991,9 @@ export class Game extends HTMLElement {
             Bumpers[1].gltfStore.action[0][0].reset();
             Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
             Bumpers[1].gltfStore.action[0][0].play();
-            Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
+            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
+            else Bumpers[1].playerGlb.rotation.y = degreesToRadians(-90);
+            // Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
             Bumpers[1].currentAction = 0;
           }
         }
@@ -991,7 +1006,9 @@ export class Game extends HTMLElement {
             Bumpers[1].gltfStore.action[6][0].reset();
             Bumpers[1].gltfStore.action[6][0].fadeIn(0.1);
             Bumpers[1].gltfStore.action[6][0].play();
-            Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
+            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
+            else Bumpers[1].playerGlb.rotation.y = degreesToRadians(-90);
+            // Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
             Bumpers[1].currentAction = 6;
           }
         }
@@ -1014,8 +1031,6 @@ export class Game extends HTMLElement {
       }
     }
 
-    let choosenDifficulty = 4;
-
     let isMovementDone = false;
     let ballPredictedPos;
     let isCalculationNeeded = true;
@@ -1026,12 +1041,28 @@ export class Game extends HTMLElement {
       [2, 1000],
       [1, 1000],
     ];
-    // 1 && 500 / 5 && 500 / 8 && 750
 
     function handleAiBehavior(BallPos, BallVelocity) {
+      console.log(choosenDifficulty);
       if (isCalculationNeeded) {
+        const scoreDiff = Bumpers[0].score - Bumpers[1].score;
+        const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
+        const minDifficulty = scoreDiff <= -3 ? 0 : 2;
+
+        const relativeGap = scoreDiff / MAX_SCORE;
+        const contextualFactor = relativeGap * (1 + gameProgress * 0.8) + (1 - gameProgress) * 0.7;
+        const calculatedDifficulty =
+          scoreDiff > 0 ? Math.floor(2 + (scoreDiff - 1) * contextualFactor * 1.5) : Math.max(0, 2 + scoreDiff);
+        const finalDifficulty = Math.max(minDifficulty, Math.min(4, Math.floor(calculatedDifficulty)));
+        if (Math.abs(scoreDiff - lastSignificantScoreDiff) >= Math.max(1, Math.floor(MAX_SCORE / 5))) {
+          stableDifficulty = finalDifficulty;
+          lastSignificantScoreDiff = scoreDiff;
+        }
+
+        choosenDifficulty = stableDifficulty;
+        let errorScale = 2.5 / Bumpers[1].lenghtHalf;
         let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
-        let error = difficultyLvl[choosenDifficulty][0] * closeness;
+        let error = difficultyLvl[choosenDifficulty][0] * closeness * errorScale;
         ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
         let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);
         let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
@@ -1057,8 +1088,13 @@ export class Game extends HTMLElement {
             clearTimeout(timeooutId);
           }
         }, difficultyLvl[choosenDifficulty][1]);
-
-        ballPredictedPos.x += -error + Math.round(Math.random()) * (error - -error);
+        if (Bumpers[1].lenghtHalf < 2.0) {
+          ballPredictedPos.x += (Math.random() - 0.5) * error * 0.6;
+        } else if (Bumpers[1].lenghtHalf > 3.0) {
+          ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
+        } else {
+          ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
+        }
       }
       if (!isMovementDone) moveAiBumper(ballPredictedPos);
       else {
@@ -1211,10 +1247,10 @@ export class Game extends HTMLElement {
         }
         if (dirz < 0) {
           Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1;
-          Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.7;
+          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z += 0.4;
         } else {
           Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
-          Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.7;
+          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z -= 0.4;
         }
         buffUI?.hideIcon();
       };
@@ -1242,7 +1278,7 @@ export class Game extends HTMLElement {
       };
     }
     const manageBuffAndDebuff = () => {
-      let chooseBuff = Math.floor(Math.random() * 5);
+      let chooseBuff = 2;
       let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
       switch (chooseBuff) {
         case 1:
@@ -1294,10 +1330,10 @@ export class Game extends HTMLElement {
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
           if (dirz < 0) {
             Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x += 1;
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.7;
+            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.4;
           } else {
             Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.7;
+            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.4;
           }
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.showIcon('short');
@@ -1331,7 +1367,6 @@ export class Game extends HTMLElement {
     };
 
     var clock = new THREE.Clock();
-    let isGameAi = this.#state.gameType;
     function animate() {
       delta = clock.getDelta();
       step = null;
@@ -1371,13 +1406,14 @@ export class Game extends HTMLElement {
         if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
           isMovementDone = true;
           Bumpers[0].score++;
-          console.log(Bumpers[0].score);
+          // console.log(Bumpers[0].score);
           resetBall(-1);
           if (Bumpers[0].score <= MAX_SCORE) scoreUI?.updateScore(0, Bumpers[0].score);
         } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
-          isMovementDone = true;
+          isMovementDone = false;
+          isCalculationNeeded = true;
           Bumpers[1].score++;
-          console.log(Bumpers[1].score);
+          // console.log(Bumpers[1].score);
           resetBall(1);
           if (Bumpers[1].score <= MAX_SCORE) scoreUI?.updateScore(1, Bumpers[1].score);
         }
