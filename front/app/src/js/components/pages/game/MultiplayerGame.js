@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
 import pedro from '/3d_models/pull_pedro.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
@@ -8,6 +10,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
 
 /* eslint no-var: "off" */
   export class MultiplayerGame extends HTMLElement {
+  #ktx2Loader = null;
   #navbarHeight = 64;
   #pongSocket = null;
   #state = {
@@ -48,6 +51,9 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       this.#pongSocket.close();
       this.#pongSocket = null;
     }
+    if (this.#ktx2Loader) {
+      this.#ktx2Loader.dispose();
+    }
   }
 
   safeSend(message) {
@@ -80,7 +86,17 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     };
   }
 
-  game() {
+  async initLoaders(renderer) {
+    this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
+
+    await MeshoptDecoder.ready;
+
+    this.loaderModel = new GLTFLoader();
+    this.loaderModel.setKTX2Loader(this.#ktx2Loader);
+    this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+  }
+
+  async game() {
     // CONSTANTS
     const WALL_LEFT_X = 10;
     const WALL_RIGHT_X = -WALL_LEFT_X;
@@ -122,9 +138,10 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       new THREE.DirectionalLight(0xffffff),
     ];
 
+    await this.initLoaders(renderer);
     const playerglb = (() => {
       const pedroModel = new THREE.Object3D();
-      loader.load(
+      this.loaderModel.load(
         pedro,
         function (gltf) {
           const model = gltf.scene;
@@ -833,14 +850,14 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     return [camera, renderer, animate];
   }
 
-  render() {
+  async render() {
     this.classList.add('position-relative');
     this.overlay = document.createElement('game-overlay');
     this.overlay.gameType = 'multiplayer';
     this.appendChild(this.overlay);
 
     const navbarHeight = this.#navbarHeight;
-    const [camera, renderer, animate] = this.game();
+    const [camera, renderer, animate] = await this.game();
     window.addEventListener('resize', function () {
       renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
