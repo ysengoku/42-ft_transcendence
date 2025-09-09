@@ -52,6 +52,19 @@ export class GameOverlay extends HTMLElement {
     }
   }
 
+  hideOverlay() {
+    if (this.#intervalGameId) {
+      clearInterval(this.#intervalGameId);
+    }
+    this.overlay.classList.remove('overlay-dark');
+    this.overlayMessageWrapper.classList.add('d-none');
+    this.overlayContent.innerHTML = '';
+    this.overlayButton1?.removeEventListener('click', this.navigateToDuelMenu);
+    this.overlayButton2?.removeEventListener('click', this.navigateToHome);
+    this.overlayButton1 = null;
+    this.overlayButton2 = null;
+  }
+
   show(action, data = null) {
     this.overlayContent.innerHTML = this.overlayContentTemplate[action];
     this.overlay.classList.add('overlay-dark');
@@ -110,18 +123,6 @@ export class GameOverlay extends HTMLElement {
     }
   }
 
-  hide() {
-    if (this.#intervalGameId) {
-      clearInterval(this.#intervalGameId);
-    }
-    this.overlay.classList.remove('overlay-dark');
-    this.overlayMessageWrapper.classList.add('d-none');
-    this.overlayContent.innerHTML = '';
-    this.overlayButton1?.removeEventListener('click', this.navigateToDuelMenu);
-    this.overlayButton2?.removeEventListener('click', this.navigateToHome);
-    this.overlayButton1 = null;
-    this.overlayButton2 = null;
-  }
 
   createPlayerResultElement(player, eloChange, isTournament) {
     const element = document.createElement('div');
