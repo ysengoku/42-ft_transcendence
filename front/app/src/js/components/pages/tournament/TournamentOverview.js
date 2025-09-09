@@ -109,11 +109,11 @@ export class TournamentOverview extends HTMLElement {
       this.#state.updating = false;
       return;
     }
-    
+
     if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
       this.stopPolling();
     }
-    
+
     setTimeout(() => {
       this.updateIcon?.classList.remove('rotating');
       if (this.updateButtonText) {
@@ -168,21 +168,15 @@ export class TournamentOverview extends HTMLElement {
   }
 
   startPolling() {
-    // すでにpollingが動いている場合は停止
     this.stopPolling();
-    
-    // ONGOINGステータスの場合のみpollingを開始
     if (this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING) {
       return;
     }
-    
     this.#pollingInterval = setInterval(async () => {
-      // polling中にトーナメントが終了していないかチェック
       if (this.#state.tournament?.status !== TOURNAMENT_STATUS.ONGOING) {
         this.stopPolling();
         return;
       }
-      
       await this.fetchTournamentData();
       if (this.#state.tournament) {
         if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
@@ -211,8 +205,8 @@ export class TournamentOverview extends HTMLElement {
       } else {
         this.renderBracketUpdates();
       }
-      
-       if (this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING && !this.#pollingInterval) {
+
+      if (this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING && !this.#pollingInterval) {
         this.startPolling();
       }
     }
