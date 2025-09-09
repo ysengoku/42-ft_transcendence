@@ -61,7 +61,7 @@ export class Game extends HTMLElement {
     this.classList.add('position-relative');
     this.scoreElement = document.createElement('game-scoreboard');
     if (this.scoreElement && this.#state.gameType === 'ai') {
-      this.scoreElement.setNames('Player1', 'AI playser');
+      this.scoreElement.setNames('Player1', 'AI player');
     }
     this.appendChild(this.scoreElement);
     this.timerElement = document.createElement('game-timer');
