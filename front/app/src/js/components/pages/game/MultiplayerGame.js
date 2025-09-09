@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import pedro from '/3d_models/pull_pedro.glb?url';
-import audiourl from '/audio/score_sound.mp3?url';
 import { router } from '@router';
 import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
@@ -99,7 +98,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     const SERVER_TICK_RATE = 30;
     const SERVER_TICK_INTERVAL = 1.0 / SERVER_TICK_RATE;
 
-    const audio = new Audio(audiourl);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;

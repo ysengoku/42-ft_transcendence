@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
-import audiourl from '/audio/score_sound.mp3?url';
 import pedro from '/3d_models/pleasehelpme.glb?url';
 import cactus from '/3d_models/cactus1.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
@@ -310,7 +309,6 @@ export class Game extends HTMLElement {
     const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
     const TEMPORAL_SPEED_DECAY = 0.005;
 
-    const audio = new Audio(audiourl);
     const carboardModelStates = [carboard, carboard2, carboard3];
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
