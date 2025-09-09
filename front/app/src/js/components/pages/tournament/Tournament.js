@@ -12,7 +12,7 @@ import { auth } from '@auth';
 import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
-import anonymousAvatar from '/img/anonymous-avatar.png?url';
+// import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class Tournament extends HTMLElement {
   /**
@@ -33,7 +33,7 @@ export class Tournament extends HTMLElement {
     tournament: null,
     creator: {
       username: '',
-      avatar: anonymousAvatar,
+      // avatar: anonymousAvatar,
       alias: 'anonymous gunslinger',
     },
     userDataInTournament: null,
@@ -117,7 +117,7 @@ export class Tournament extends HTMLElement {
     this.#state.tournament = response.data;
     if (this.#state.tournament.tournament_creator) {
       this.#state.creator.username = this.#state.tournament.tournament_creator.profile.username;
-      this.#state.creator.avatar = this.#state.tournament.tournament_creator.profile.avatar;
+      // this.#state.creator.avatar = this.#state.tournament.tournament_creator.profile.avatar;
       this.#state.creator.alias = this.#state.tournament.tournament_creator.alias;
     }
 
@@ -152,7 +152,7 @@ export class Tournament extends HTMLElement {
           });
           setTimeout(() => {
             router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
-          }, 3000);
+          }, 7000);
         } else {
           showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED);
           setTimeout(() => {
