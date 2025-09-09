@@ -1,17 +1,19 @@
 import * as THREE from 'three';
 import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
+import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
 import pedro from '/3d_models/pull_pedro.glb?url';
-import audiourl from '/audio/score_sound.mp3?url';
 import { router } from '@router';
 import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 
 /* eslint no-var: "off" */
-export class MultiplayerGame extends HTMLElement {
-  #navbarHeight = 64;
-  #pongSocket = null;
-  #state = {
+  export class MultiplayerGame extends HTMLElement {
+    #ktx2Loader = null;
+    #navbarHeight = 64;
+    #pongSocket = null;
+    #state = {
     gameId: '',
   };
 
@@ -34,7 +36,7 @@ export class MultiplayerGame extends HTMLElement {
     this.#navbarHeight = navbar ? navbar.offsetHeight : 64;
 
     this.#state.gameId = param.id;
-    this.render();
+    await this.render();
   }
 
   disconnectedCallback() {
@@ -49,110 +51,69 @@ export class MultiplayerGame extends HTMLElement {
       this.#pongSocket.close();
       this.#pongSocket = null;
     }
+    if (this.#ktx2Loader) {
+      this.#ktx2Loader.dispose();
+    }
   }
 
-  createOnDocumentKeyDown(bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
+  safeSend(message) {
+    if (this.#pongSocket && this.#pongSocket.readyState === WebSocket.OPEN) {
+      this.#pongSocket.send(message);
+    }
+  }
+
+  createOnDocumentKeyDown(clientState) {
     return (e) => {
-      const tag = e.target.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea') {
-        return; // Do not process key events on input or textarea elements
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        clientState.movesLeft = true;
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        clientState.movesRight = true;
       }
-      if (e.defaultPrevented) {
-        return; // Do noplayerglb if the event was already processed
-      }
-      var keyCode = e.code;
-      const now = Date.now();
-      if (
-        (keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
-        );
-      }
-      if (
-        (keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
-        );
-      }
-      if (
-        (keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
-        );
-      }
-      if (
-        (keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
-        );
-      }
-      keyMap[keyCode] = true;
+      
       e.preventDefault();
     };
   }
 
-  createOnDocumentKeyUp(bumpers, playerIdContainer, keyMap, ourBumperIndexContainer) {
+  createOnDocumentKeyUp(clientState) {
     return (e) => {
-      if (e.defaultPrevented) {
-        return; // Do noplayerglb if the event was already processed
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        clientState.movesLeft = false;
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        clientState.movesRight = false;
       }
-      var keyCode = e.code;
-      const now = -Date.now();
-      if (
-        (keyCode == 'ArrowLeft' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'ArrowRight' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_left', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
-        );
-      }
-      if (
-        (keyCode == 'ArrowRight' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'ArrowLeft' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
-        );
-      }
-      if (
-        (keyCode == 'KeyA' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'KeyD' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_left', content: now, player_id: playerIdContainer.playerId }),
-        );
-      }
-      if (
-        (keyCode == 'KeyD' && !bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-        (keyCode == 'KeyA' && bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)
-      ) {
-        bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.push(['move_right', now]);
-        this.#pongSocket.send(
-          JSON.stringify({ action: 'move_right', content: now, player_id: playerIdContainer.playerId }),
-        );
-      }
-      keyMap[keyCode] = false;
+      
       e.preventDefault();
     };
   }
 
-  game() {
-    const audio = new Audio(audiourl);
+  async initLoaders(renderer) {
+    this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
+
+    await MeshoptDecoder.ready;
+
+    this.loaderModel = new GLTFLoader();
+    this.loaderModel.setKTX2Loader(this.#ktx2Loader);
+    this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+  }
+
+  async game() {
+    // CONSTANTS
+    const WALL_LEFT_X = 10;
+    const WALL_RIGHT_X = -WALL_LEFT_X;
+    const WALL_WIDTH_HALF = 0.5;
+    const BUMPER_LENGTH_HALF = 2.5;
+    const BUMPER_WIDTH_HALF = 0.5;
+    const BALL_DIAMETER = 1;
+    const BALL_RADIUS = BALL_DIAMETER / 2;
+    const BUMPER_SPEED_PER_SECOND = 15.0;
+    const SUBTICK = 0.025;
+    const BALL_INITIAL_VELOCITY = 0.25;
+    const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
+
+    // CONSTANTS for physics simulation in client side prediction
+    const SERVER_TICK_RATE = 30;
+    const SERVER_TICK_INTERVAL = 1.0 / SERVER_TICK_RATE;
+
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
@@ -162,13 +123,13 @@ export class MultiplayerGame extends HTMLElement {
     const rendererHeight = renderer.domElement.offsetHeight;
 
     const scene = new THREE.Scene();
-    const loader = new GLTFLoader();
+    await this.initLoaders(renderer);
+    // const loader = new GLTFLoader();
 
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
     // const orbit = new OrbitControls(camera, renderer.domElement);
 
     let mixer;
-    var keyMap = [];
     const normalMaterial = new THREE.MeshNormalMaterial();
 
     const ligths = [
@@ -180,7 +141,7 @@ export class MultiplayerGame extends HTMLElement {
 
     const playerglb = (() => {
       const pedroModel = new THREE.Object3D();
-      loader.load(
+      this.loaderModel.load(
         pedro,
         function (gltf) {
           const model = gltf.scene;
@@ -236,7 +197,7 @@ export class MultiplayerGame extends HTMLElement {
         cylinderUpdate,
         velocity,
       };
-    })(-9.25, 1, 0);
+    })(-100.0, 1, 0);
 
     const Ball = ((posX, posY, posZ) => {
       const sphereGeometry = new THREE.SphereGeometry(0.5);
@@ -245,37 +206,20 @@ export class MultiplayerGame extends HTMLElement {
       sphereMesh.position.y = posY;
       sphereMesh.position.z = posZ;
       sphereMesh.castShadow = true;
+      const temporalSpeed = new THREE.Vector3(1, 0, 1);
+      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * 1); 
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       scene.add(sphereMesh);
 
-      let hasCollidedWithBumper1 = false;
-      let hasCollidedWithBumper2 = false;
-      let hasCollidedWithWall = false;
+      // let hasCollidedWithBumper1 = false;
+      // let hasCollidedWithBumper2 = false;
+      // let hasCollidedWithWall = false;
 
       return {
-        get hasCollidedWithBumper1() {
-          return hasCollidedWithBumper1;
-        },
-        set hasCollidedWithBumper1(newHasCollidedWithBumper1) {
-          hasCollidedWithBumper1 = newHasCollidedWithBumper1;
-        },
-
-        get hasCollidedWithBumper2() {
-          return hasCollidedWithBumper2;
-        },
-        set hasCollidedWithBumper2(newHasCollidedWithBumper2) {
-          hasCollidedWithBumper2 = newHasCollidedWithBumper2;
-        },
-
-        get hasCollidedWithWall() {
-          return hasCollidedWithWall;
-        },
-        set hasCollidedWithWall(newHasCollidedWithWall) {
-          hasCollidedWithWall = newHasCollidedWithWall;
-        },
-
         sphereMesh,
         sphereUpdate,
+        velocity,
+        temporalSpeed,
       };
     })(0, 1, 0);
 
@@ -302,10 +246,10 @@ export class MultiplayerGame extends HTMLElement {
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
-      const inputQueue = [];
       let controlReverse = false;
-      let lenghtHalf = 2.5;
-      let speed = 0.25;
+      let lenghtHalf = BUMPER_LENGTH_HALF;
+      let widthHalf = BUMPER_WIDTH_HALF;
+      let speed = BUMPER_SPEED_PER_SECOND;
       let score = 0;
 
       return {
@@ -327,6 +271,12 @@ export class MultiplayerGame extends HTMLElement {
         get inputQueue() {
           return inputQueue;
         },
+        get widthHalf() {
+          return widthHalf;
+        },
+        set widthHalf(newWidthHalf) {
+          widthHalf = newWidthHalf;
+        },
         get lenghtHalf() {
           return lenghtHalf;
         },
@@ -346,7 +296,7 @@ export class MultiplayerGame extends HTMLElement {
     };
 
     /* eslint-disable-next-line new-cap */
-    const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
+      const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
     const WallFactory = (posX, posY, posZ) => {
       const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
@@ -363,7 +313,7 @@ export class MultiplayerGame extends HTMLElement {
       };
     };
     /* eslint-disable-next-line new-cap */
-    const Walls = [WallFactory(10, 2.5, 0), WallFactory(-10, 2.5, 0)];
+      const Walls = [WallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0), WallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0)];
 
     (() => {
       const phongMaterial = new THREE.MeshPhongMaterial();
@@ -375,76 +325,363 @@ export class MultiplayerGame extends HTMLElement {
     })();
 
     const clock = new THREE.Clock();
-    this.#pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
-    let lastBumperCollided;
+    let accumulator = 0.0;
 
-    function confirmInputs(data) {
-      const { action, content } = data;
-      for (let [i, input] of Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.entries()) {
-        if (input[0] === action && input[1] <= content) {
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].inputQueue.splice(i, 1);
-          return true;
-        }
+    const ENTITY_INTERPOLATION_DELAY = 50;
+    
+    // used as keys for interpolation buffer
+    const ENTITY_KEYS = {
+      PLAYER: 'player',
+      OPPONENT: 'opponent', 
+      BALL: 'ball',
+      COIN: 'coin'
+    };
+
+    const serverState = {
+      bumper_1: { x: 0, z: -9, score: 0, buff_or_debuff_target: false, move_id: -1, timestamp: -1 },
+      bumper_2: { x: 0, z: 9, score: 0, buff_or_debuff_target: false, move_id: -1, timestamp: -1 },
+      ball: { 
+        x: 0, z: 0, 
+        velocity: { x: 0, z: 0 }, 
+        temporal_speed: { x: 1, z: 1 }
+      },
+      coin: { x: -9.25, z: 1 },
+      current_buff_or_debuff: 0,
+      current_buff_or_debuff_remaining_time: 0.0,
+      is_someone_scored: false,
+      elapsed_seconds: 0,
+      time_limit_reached: false
+    };
+
+    // stores information that is either specific to the player, or necessary for the correct rendering
+    const clientState = {
+      playerId: '',
+      playerNumber: -1,
+      enemyNumber: -1,
+      bumper: null,
+      movesLeft: false,
+      movesRight: false,
+      enemyBumper: null,
+      pendingInputs: [],
+      inputSequenceNumber: 0,
+      playerInterpolationBuffer: [],
+      esntitiesInterpolationBuffer: [],
+    };
+
+    const Buff = {
+      NO_BUFF: 0,
+      CONTROL_REVERSE_ENEMY: 1,
+      SPEED_DECREASE_ENEMY: 2,
+      SHORTEN_ENEMY: 3,
+      ELONGATE_PLAYER: 4,
+      ENLARGE_PLAYER: 5
+    };
+
+    this.#pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
+
+    const applyInputToBumper = (input, bumper, deltaTime) => {
+      if (!input.action) return;
+      
+      let movement = 0;
+      if ((input.action === 'move_left' && !bumper.controlReverse) || (input.action === 'move_right' && bumper.controlReverse)) {
+        movement = bumper.speed * deltaTime;
+      } else if ((input.action === 'move_right' && !bumper.controlReverse) || (input.action === 'move_left' && bumper.controlReverse)) {
+        movement = -bumper.speed * deltaTime;
       }
-      return false;
+      
+      const newX = bumper.cubeUpdate.x + movement;
+      const leftLimit = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf;
+      const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf;
+      const finalX = Math.max(leftLimit, Math.min(rightLimit, newX));
+
+      bumper.cubeUpdate.x = finalX;
+    };
+
+    const sendCurrentInput = (timestamp) => {
+      let action = null;
+      if (clientState.movesLeft && !clientState.movesRight) {
+        action = 'move_left';
+      } else if (clientState.movesRight && !clientState.movesLeft) {
+        action = 'move_right';
+      }
+      if (action) {
+        const sequenceNumber = ++clientState.inputSequenceNumber;
+        const input = {
+          sequenceNumber,
+          action,
+          timestamp: timestamp
+        };
+        
+        clientState.pendingInputs.push(input);
+        
+        this.safeSend(JSON.stringify({
+          action: action,
+          move_id: sequenceNumber,
+          player_id: clientState.playerId,
+          timestamp: timestamp
+        }));
+      }
+    };
+
+
+    // player and server entities interpolation buffer are updated separately:
+    // server entities when state form server arrives
+    // player entitiy when player moves
+    function updateEntitiesInterpolationBuffer(timestamp) {
+      const opponent = clientState.enemyNumber === 1 ? serverState.bumper_1.x : serverState.bumper_2.x;
+      const ball = { x: serverState.ball.x, z: serverState.ball.z };
+      const coin = serverState.coin ? { x: serverState.coin.x, z: serverState.coin.z } : null;
+      
+      const bufferEntry = {
+        opponent,
+        ball,
+        coin,
+        timestamp
+      };
+      
+      clientState.esntitiesInterpolationBuffer.push(bufferEntry);
+
+      if (clientState.esntitiesInterpolationBuffer.length > 10) {
+        clientState.esntitiesInterpolationBuffer.shift();
+      }
+    }
+    
+    function updatePlayerBuffer(playerPosition, timestamp) {
+      const bufferEntry = {
+        position: playerPosition,
+        timestamp
+      };
+      
+      clientState.playerInterpolationBuffer.push(bufferEntry);
+
+      if (clientState.playerInterpolationBuffer.length > 10) {
+        clientState.playerInterpolationBuffer.shift();
+      }
     }
 
-    function updateState(data) {
-      if (!data) {
+    function getInterpolated(entityKey, renderTime) {
+      let interpolationBuffer;
+      
+      if (entityKey === ENTITY_KEYS.PLAYER) {
+        interpolationBuffer = clientState.playerInterpolationBuffer;
+      } else {
+        interpolationBuffer = clientState.esntitiesInterpolationBuffer;
+      }
+      
+      if (interpolationBuffer.length < 2) {
+        if (interpolationBuffer.length === 0) return null;
+        return entityKey === ENTITY_KEYS.PLAYER ? interpolationBuffer[0].position : interpolationBuffer[0][entityKey];
+      }
+
+      let fromEntry = null;
+      let toEntry = null;
+
+      for (let i = 0; i < interpolationBuffer.length - 1; i++) {
+        if (interpolationBuffer[i].timestamp <= renderTime && interpolationBuffer[i + 1].timestamp >= renderTime) {
+          fromEntry = interpolationBuffer[i];
+          toEntry = interpolationBuffer[i + 1];
+          break;
+        }
+      }
+
+      if (!fromEntry || !toEntry) {
+        const closestIndex = interpolationBuffer.length - 2;
+        if (closestIndex >= 0) {
+          fromEntry = interpolationBuffer[closestIndex];
+          toEntry = interpolationBuffer[closestIndex + 1];
+        } else {
+          return entityKey === ENTITY_KEYS.PLAYER
+            ? interpolationBuffer[interpolationBuffer.length - 1].position
+            : interpolationBuffer[interpolationBuffer.length - 1][entityKey];
+        }
+      }
+
+      const fromPosition = entityKey === ENTITY_KEYS.PLAYER ? fromEntry.position : fromEntry[entityKey];
+      const toPosition = entityKey === ENTITY_KEYS.PLAYER ? toEntry.position : toEntry[entityKey];
+      
+      // coin can be null
+      if (fromPosition === null && toPosition === null) {
+        return null;
+      }
+      if (fromPosition === null) {
+        return toPosition;
+      }
+      if (toPosition === null) {
+        return fromPosition;
+      }
+
+      const timeDiff = toEntry.timestamp - fromEntry.timestamp;
+      if (timeDiff === 0) {
+        return toPosition;
+      }
+
+      const alpha = Math.max(0, Math.min(1, (renderTime - fromEntry.timestamp) / timeDiff));
+      
+      // bumper positions are stored as numbers, ball and coin as objects
+      if (typeof fromPosition === 'number') {
+        return fromPosition + (toPosition - fromPosition) * alpha;
+      } else {
+        return {
+          x: fromPosition.x + (toPosition.x - fromPosition.x) * alpha,
+          z: fromPosition.z + (toPosition.z - fromPosition.z) * alpha
+        };
+      }
+    }
+
+
+    const pi = Math.PI;
+    function degreesToRadians(degrees) {
+      return degrees * (pi / 180);
+    }
+
+    function isCollidedWithBall(bumper, ballSubtickZ, ballSubtickX) {
+      // console.log("FUCK YOU: collide")
+      return (
+        Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lenghtHalf &&
+        Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lenghtHalf &&
+        Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
+        Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
+      );
+    }
+
+    function calculateNewDir(bumper) {
+      let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
+      let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lenghtHalf);
+      let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
+      Ball.velocity.z = Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dirZ;
+      Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dirZ;
+      if (
+        Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
+        Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
+      )
+        Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
+      // Ball.bulletGlb.rotation.y = -degreesToRadians(Ball.temporalSpeed.x);
+    }
+    function resetAllBuffEffects() {
+      for (let i = 0; i < Bumpers.length; i++) {
+        const bumper = Bumpers[i];
+
+        bumper.controlReverse = false;
+        bumper.speed = BUMPER_SPEED_PER_SECOND;
+        bumper.cubeMesh.scale.x = 1;
+        bumper.lenghtHalf = BUMPER_LENGTH_HALF;
+        bumper.cubeMesh.scale.z = 1;
+        bumper.widthHalf = BUMPER_WIDTH_HALF;
+      }
+    }
+
+    function updateServerState(data) {
+      if (!data) return;
+      
+      serverState.bumper_1.x = data.bumper_1.x;
+      serverState.bumper_1.z = data.bumper_1.z;
+      serverState.bumper_1.score = data.bumper_1.score;
+      serverState.bumper_1.buff_or_debuff_target = data.bumper_1.buff_or_debuff_target;
+      serverState.bumper_1.move_id = data.bumper_1.move_id;
+      serverState.bumper_1.timestamp = data.bumper_1.timestamp;
+      
+      serverState.bumper_2.x = data.bumper_2.x;
+      serverState.bumper_2.z = data.bumper_2.z;
+      serverState.bumper_2.score = data.bumper_2.score;
+      serverState.bumper_2.buff_or_debuff_target = data.bumper_2.buff_or_debuff_target;
+      serverState.bumper_2.move_id = data.bumper_2.move_id;
+      serverState.bumper_2.timestamp = data.bumper_2.timestamp;
+      
+      serverState.ball.x = data.ball.x;
+      serverState.ball.z = data.ball.z;
+      serverState.ball.velocity.x = data.ball.velocity.x;
+      serverState.ball.velocity.z = data.ball.velocity.z;
+      serverState.ball.temporal_speed.x = data.ball.temporal_speed.x;
+      serverState.ball.temporal_speed.z = data.ball.temporal_speed.z;
+      
+      if (data.coin) {
+        serverState.coin.x = data.coin.x;
+        serverState.coin.z = data.coin.z;
+      }
+      
+      serverState.current_buff_or_debuff = data.current_buff_or_debuff;
+      serverState.current_buff_or_debuff_remaining_time = data.current_buff_or_debuff_remaining_time;
+      serverState.is_someone_scored = data.is_someone_scored;
+      serverState.elapsed_seconds = data.elapsed_seconds;
+      serverState.time_limit_reached = data.time_limit_reached; 
+    }
+
+    function updateEntityPositionsFromServer() {
+      Ball.sphereUpdate.x = serverState.ball.x;
+      Ball.sphereUpdate.z = serverState.ball.z;
+      
+      // update ball velocity for client-side prediction
+      Ball.velocity.x = serverState.ball.velocity.x;
+      Ball.velocity.z = serverState.ball.velocity.z;
+      Ball.temporalSpeed.x = serverState.ball.temporal_speed.x;
+      Ball.temporalSpeed.z = serverState.ball.temporal_speed.z;
+      
+      if (serverState.coin) {
+        Coin.cylinderUpdate.x = serverState.coin.x;
+        Coin.cylinderUpdate.z = serverState.coin.z;
+      }
+    }
+
+    // applies position received from the server, then applies not yet processed inputs
+    function reconcileWithServer() {
+      if (!clientState.bumper || clientState.playerNumber <= 0)
+        return;
+
+      const myBumperData = clientState.playerNumber === 1 ? serverState.bumper_1 : serverState.bumper_2;
+      const lastProcessedMoveId = myBumperData.move_id;
+
+      clientState.bumper.cubeUpdate.x = myBumperData.x;
+
+      // Remove processed inputs and re-apply unprocessed ones
+      let removedCount = 0;
+      let reappliedCount = 0;
+      let i = 0;
+      while (i < clientState.pendingInputs.length) {
+        const input = clientState.pendingInputs[i];
+        if (input.sequenceNumber <= lastProcessedMoveId) {
+          clientState.pendingInputs.splice(i, 1);
+          removedCount++;
+        } else {
+          applyInputToBumper(input, clientState.bumper, SERVER_TICK_INTERVAL);
+          reappliedCount++;
+          i++;
+        }
+      }
+
+    }
+    
+    function applyBuffEffects() {
+      if (serverState.current_buff_or_debuff === Buff.NO_BUFF) {
+        resetAllBuffEffects();
         return;
       }
-      let theirBumperPos = theirBumper == 0 ? data.bumper_1.x : data.bumper_2.x;
-      data.last_bumper_collided == '_bumper_1' ? (lastBumperCollided = 0) : (lastBumperCollided = 1);
 
-      Ball.hasCollidedWithBumper1 = data.ball.has_collided_with_bumper_1;
-      Ball.hasCollidedWithBumper2 = data.ball.has_collided_with_bumper_2;
-      Ball.hasCollidedWithWall = data.ball.has_collided_with_wall;
+      let targetPlayer = null;
+      if (serverState.bumper_1.buff_or_debuff_target) {
+        targetPlayer = Bumpers[0];
+      } else if (serverState.bumper_2.buff_or_debuff_target) {
+        targetPlayer = Bumpers[1];
+      }
 
-      Ball.sphereUpdate.z = data.ball.z;
-      Ball.sphereUpdate.x = data.ball.x;
-
-      Coin.cylinderUpdate.z = data.coin.z;
-      Coin.cylinderUpdate.x = data.coin.x;
-
-      Bumpers[0].score = data.bumper_1.score;
-      Bumpers[1].score = data.bumper_2.score;
-      Bumpers[theirBumper].cubeMesh.position.x = theirBumperPos;
-
-      if (data.current_buff_or_debuff != 0) {
-        switch (data.current_buff_or_debuff) {
-          case 1:
-            Bumpers[lastBumperCollided].controlReverse = true;
+      if (targetPlayer) {
+        switch (serverState.current_buff_or_debuff) {
+          case Buff.CONTROL_REVERSE_ENEMY:
+            targetPlayer.controlReverse = true;
             break;
-          case 2:
-            Bumpers[lastBumperCollided].speed = 0.1;
+          case Buff.SPEED_DECREASE_ENEMY:
+            targetPlayer.speed = BUMPER_SPEED_PER_SECOND * 0.1;
             break;
-          case 3:
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 0.5;
-            Bumpers[lastBumperCollided].lenghtHalf = 1.25;
+          case Buff.SHORTEN_ENEMY:
+            targetPlayer.cubeMesh.scale.x = 0.5;
+            targetPlayer.lenghtHalf = 1.25;
             break;
-          case 4:
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 2;
-            Bumpers[lastBumperCollided].lenghtHalf = 5;
+          case Buff.ELONGATE_PLAYER:
+            targetPlayer.cubeMesh.scale.x = 2;
+            targetPlayer.lenghtHalf = 5;
             break;
-          case 5:
-            Bumpers[lastBumperCollided].cubeMesh.scale.z = 3;
-            break;
-          case -1:
-            Bumpers[lastBumperCollided].controlReverse = false;
-            break;
-          case -2:
-            Bumpers[lastBumperCollided].speed = 0.25;
-            break;
-          case -3:
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
-            Bumpers[lastBumperCollided].lenghtHalf = 2.5;
-            break;
-          case -4:
-            Bumpers[lastBumperCollided].cubeMesh.scale.x = 1;
-            Bumpers[lastBumperCollided].lenghtHalf = 2.5;
-            break;
-          case -5:
-            Bumpers[lastBumperCollided].cubeMesh.scale.z = 1;
+          case Buff.ENLARGE_PLAYER:
+            targetPlayer.cubeMesh.scale.z = 3;
+            targetPlayer.widthHalf = 1.5;
             break;
         }
       }
@@ -455,55 +692,29 @@ export class MultiplayerGame extends HTMLElement {
     });
 
     let data;
-    // let ;
-    let ourBumperIndexContainer = (() => {
-      let ourBumperIndex = 0;
-      return {
-        get ourBumperIndex() {
-          return ourBumperIndex;
-        },
-        set ourBumperIndex(newOurBumperIndex) {
-          ourBumperIndex = newOurBumperIndex;
-        },
-      };
-    })();
-    let theirBumper = 0;
-    let playerIdContainer = (() => {
-      let actualPlayerId = '';
-      return {
-        get playerId() {
-          return actualPlayerId;
-        },
-        set playerId(newPlayerId) {
-          actualPlayerId = newPlayerId;
-        },
-      };
-    })();
     this.#pongSocket.addEventListener('message', (e) => {
       data = JSON.parse(e.data);
       switch (data.action) {
         case 'state_updated':
-          updateState(data.state);
-          // if (data.state.someone_scored)
-          //     audio.cloneNode().play();
-          break;
-        case 'move_left':
-        case 'move_right':
-          if (data.player_number == ourBumperIndexContainer.ourBumperIndex + 1 && !confirmInputs(data)) {
-            Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x = data.position_x;
-          }
+          updateServerState(data.state);
+          updateEntityPositionsFromServer();
+          reconcileWithServer();
+          applyBuffEffects();
+          updateEntitiesInterpolationBuffer(Date.now());
           break;
         case 'player_joined':
-          ourBumperIndexContainer.ourBumperIndex = data.player_number - 1;
-          theirBumper = Math.abs(ourBumperIndexContainer.ourBumperIndex - 1);
-          log.info(data);
-          playerIdContainer.playerId = data.player_id;
+          clientState.playerId = data.player_id;
+          clientState.playerNumber = data.player_number;
+          clientState.enemyNumber = data.player_number == 1 ? 2 : 1;
+          clientState.bumper = Bumpers[clientState.playerNumber - 1];
+          clientState.enemyBumper = Bumpers[clientState.enemyNumber - 1];
           camera.position.set(0, 15, -20);
           camera.lookAt(new THREE.Vector3(0, 0, 0));
+          log.info(data);
           break;
         case 'game_started':
           log.info('Game started', data);
-          this.overlay.hide();
+          this.overlay.hideOverlay();
           break;
         case 'game_paused':
           log.info('Game paused');
@@ -511,7 +722,7 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'game_unpaused':
           log.info('Game unpaused');
-          this.overlay.hide();
+          this.overlay.hideOverlay();
           break;
         case 'game_cancelled':
           log.info('Game cancelled', data);
@@ -549,77 +760,104 @@ export class MultiplayerGame extends HTMLElement {
       }, 1500);
     });
 
-    function animate() {
+    function predictPlayerPosition() {
+      const playerBumper = clientState.bumper;
+      let movement = 0;
+      if ((clientState.movesLeft && !playerBumper.controlReverse) || (clientState.movesRight && playerBumper.controlReverse)) {
+        movement = playerBumper.speed * SERVER_TICK_INTERVAL;
+      }
+      else if ((clientState.movesRight && !playerBumper.controlReverse) || (clientState.movesLeft && playerBumper.controlReverse)) {
+        movement = -playerBumper.speed * SERVER_TICK_INTERVAL;
+      }
+      let newX = playerBumper.cubeUpdate.x + movement;
+      const leftLimit = WALL_RIGHT_X + WALL_WIDTH_HALF + playerBumper.lenghtHalf;
+      const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - playerBumper.lenghtHalf;
+      newX = Math.max(leftLimit, Math.min(rightLimit, newX));
+
+      return newX;
+    }
+
+    function interpolateEntities(renderTime) {
+      const interpolatedBallPos = getInterpolated(ENTITY_KEYS.BALL, renderTime);
+      if (interpolatedBallPos !== null) {
+        Ball.sphereMesh.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
+      } else {
+        Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+      }
+
+      const interpolatedCoinPos = getInterpolated(ENTITY_KEYS.COIN, renderTime);
+      if (interpolatedCoinPos !== null) {
+        Coin.cylinderMesh.position.set(interpolatedCoinPos.x, 1, interpolatedCoinPos.z);
+      } else {
+        Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+      }
+
+      const interpolatedOpponentPos = getInterpolated(ENTITY_KEYS.OPPONENT, renderTime);
+      if (interpolatedOpponentPos !== null) {
+        clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
+      }
+      clientState.enemyBumper.cubeMesh.position.set(
+        clientState.enemyBumper.cubeUpdate.x,
+        clientState.enemyBumper.cubeUpdate.y,
+        clientState.enemyBumper.cubeUpdate.z,
+      );
+
+      const interpolatedPlayerPos = getInterpolated(ENTITY_KEYS.PLAYER, renderTime);
+      const playerBumper = clientState.bumper;
+      const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
+      playerBumper.cubeMesh.position.set(
+        playerVisualX,
+        playerBumper.cubeUpdate.y,
+        playerBumper.cubeUpdate.z,
+      );
+    }
+
+    function animate(ms) {
       requestAnimationFrame(animate);
-      let delta = Math.min(clock.getDelta(), 0.1);
+      if (!clientState.bumper) {
+        return;
+      }
+      const delta = clock.getDelta();
+      accumulator += delta;
+      const deltaAnimation = Math.min(delta, 0.1);
 
-      Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-      Coin.cylinderMesh.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+      const timestamp = Date.now();
 
-      if (
-        ((keyMap['ArrowRight'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-          (keyMap['ArrowLeft'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-        !(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x >
-          10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-        )
-      )
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x +=
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
-      if (
-        ((keyMap['ArrowLeft'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-          (keyMap['ArrowRight'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-        !(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x <
-          -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-        )
-      )
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
+      // client-side prediction code: it simulates movement at the same tick rate as the server
+      while (accumulator >= SERVER_TICK_INTERVAL) {
+        sendCurrentInput(timestamp);
+        if (!(clientState.movesLeft && clientState.movesRight)) {
+          const newX = predictPlayerPosition();
+          clientState.bumper.cubeUpdate.x = newX;
+          updatePlayerBuffer(newX, timestamp);
+        }
+        accumulator -= SERVER_TICK_INTERVAL;
+      }
 
-      if (
-        ((keyMap['KeyD'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-          (keyMap['KeyA'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-        !(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x >
-          10 - 0.5 - Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-        )
-      )
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x +=
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
-      if (
-        ((keyMap['KeyA'] == true && Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse) ||
-          (keyMap['KeyD'] == true && !Bumpers[ourBumperIndexContainer.ourBumperIndex].controlReverse)) &&
-        !(
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x <
-          -10 + 0.5 + Bumpers[ourBumperIndexContainer.ourBumperIndex].lenghtHalf
-        )
-      )
-        Bumpers[ourBumperIndexContainer.ourBumperIndex].cubeMesh.position.x -=
-          Bumpers[ourBumperIndexContainer.ourBumperIndex].speed;
+      interpolateEntities(timestamp - ENTITY_INTERPOLATION_DELAY);
 
       if (mixer) {
-        mixer.update(delta);
+        mixer.update(deltaAnimation);
       }
       renderer.render(scene, camera);
     }
 
-    this.onDocumentKeyDown = this.createOnDocumentKeyDown(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
-    this.onDocumentKeyUp = this.createOnDocumentKeyUp(Bumpers, playerIdContainer, keyMap, ourBumperIndexContainer);
+    this.onDocumentKeyDown = this.createOnDocumentKeyDown(clientState);
+    this.onDocumentKeyUp = this.createOnDocumentKeyUp(clientState);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
     return [camera, renderer, animate];
   }
 
-  render() {
+  async render() {
     this.classList.add('position-relative');
     this.overlay = document.createElement('game-overlay');
     this.overlay.gameType = 'multiplayer';
     this.appendChild(this.overlay);
 
     const navbarHeight = this.#navbarHeight;
-    const [camera, renderer, animate] = this.game();
+    const [camera, renderer, animate] = await this.game();
     window.addEventListener('resize', function () {
       renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
       const rendererWidth = renderer.domElement.offsetWidth;
@@ -627,10 +865,11 @@ export class MultiplayerGame extends HTMLElement {
       camera.aspect = rendererWidth / rendererHeight;
       camera.updateProjectionMatrix();
     });
-    animate();
+    animate(0);
 
     this.overlay?.show('pending');
   }
 }
+
 
 customElements.define('multiplayer-game', MultiplayerGame);
