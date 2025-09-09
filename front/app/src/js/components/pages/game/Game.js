@@ -991,7 +991,9 @@ export class Game extends HTMLElement {
             Bumpers[1].gltfStore.action[0][0].reset();
             Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
             Bumpers[1].gltfStore.action[0][0].play();
-            Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
+            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
+            else Bumpers[1].playerGlb.rotation.y = degreesToRadians(-90);
+            // Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
             Bumpers[1].currentAction = 0;
           }
         }
@@ -1004,7 +1006,9 @@ export class Game extends HTMLElement {
             Bumpers[1].gltfStore.action[6][0].reset();
             Bumpers[1].gltfStore.action[6][0].fadeIn(0.1);
             Bumpers[1].gltfStore.action[6][0].play();
-            Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
+            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
+            else Bumpers[1].playerGlb.rotation.y = degreesToRadians(-90);
+            // Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
             Bumpers[1].currentAction = 6;
           }
         }
@@ -1243,10 +1247,10 @@ export class Game extends HTMLElement {
         }
         if (dirz < 0) {
           Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1;
-          Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.7;
+          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z += 0.4;
         } else {
           Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
-          Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.7;
+          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z -= 0.4;
         }
         buffUI?.hideIcon();
       };
@@ -1274,7 +1278,7 @@ export class Game extends HTMLElement {
       };
     }
     const manageBuffAndDebuff = () => {
-      let chooseBuff = Math.floor(Math.random() * 5);
+      let chooseBuff = 2;
       let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
       switch (chooseBuff) {
         case 1:
@@ -1326,10 +1330,10 @@ export class Game extends HTMLElement {
           Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
           if (dirz < 0) {
             Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x += 1;
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.7;
+            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.4;
           } else {
             Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.7;
+            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.4;
           }
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.showIcon('short');
@@ -1363,7 +1367,6 @@ export class Game extends HTMLElement {
     };
 
     var clock = new THREE.Clock();
-    let isGameAi = this.#state.gameType;
     function animate() {
       delta = clock.getDelta();
       step = null;
