@@ -10,10 +10,10 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
 
 /* eslint no-var: "off" */
   export class MultiplayerGame extends HTMLElement {
-  #ktx2Loader = null;
-  #navbarHeight = 64;
-  #pongSocket = null;
-  #state = {
+    #ktx2Loader = null;
+    #navbarHeight = 64;
+    #pongSocket = null;
+    #state = {
     gameId: '',
   };
 
@@ -36,7 +36,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     this.#navbarHeight = navbar ? navbar.offsetHeight : 64;
 
     this.#state.gameId = param.id;
-    this.render();
+    await this.render();
   }
 
   disconnectedCallback() {
@@ -123,7 +123,8 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
     const rendererHeight = renderer.domElement.offsetHeight;
 
     const scene = new THREE.Scene();
-    const loader = new GLTFLoader();
+    await this.initLoaders(renderer);
+    // const loader = new GLTFLoader();
 
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
     // const orbit = new OrbitControls(camera, renderer.domElement);
@@ -138,7 +139,6 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
       new THREE.DirectionalLight(0xffffff),
     ];
 
-    await this.initLoaders(renderer);
     const playerglb = (() => {
       const pedroModel = new THREE.Object3D();
       this.loaderModel.load(
@@ -714,7 +714,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
           break;
         case 'game_started':
           log.info('Game started', data);
-          this.overlay.hide();
+          this.overlay.hideOverlay();
           break;
         case 'game_paused':
           log.info('Game paused');
@@ -722,7 +722,7 @@ import { showToastNotification, TOAST_TYPES } from '@utils';
           break;
         case 'game_unpaused':
           log.info('Game unpaused');
-          this.overlay.hide();
+          this.overlay.hideOverlay();
           break;
         case 'game_cancelled':
           log.info('Game cancelled', data);
