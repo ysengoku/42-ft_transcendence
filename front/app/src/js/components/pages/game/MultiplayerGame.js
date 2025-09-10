@@ -7,19 +7,19 @@ import pedro from '/3d_models/pull_pedro.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
-import { DEFAULT_GAME_OPTIONS } from '@env';
 import './components/index';
 import { OVERLAY_TYPE } from './components/index';
 
 /* eslint no-var: "off" */
-  export class MultiplayerGame extends HTMLElement {
-    #ktx2Loader = null;
-    #navbarHeight = 64;
-    #pongSocket = null;
-    #state = {
-      gameOptions: {},
-      gameType: '', // 'classic' or 'ai'
-    };
+export class MultiplayerGame extends HTMLElement {
+  #navbarHeight = 64;
+  #ktx2Loader = null;
+  #pongSocket = null;
+  #state = {
+    userPlayerName: 'You',
+    opponentPlayerName: 'Opponent',
+    gameOptions: {},
+  };
 
   constructor() {
     super();
@@ -45,19 +45,21 @@ import { OVERLAY_TYPE } from './components/index';
     this.#navbarHeight = navbar ? navbar.offsetHeight : 64;
 
     this.scoreElement = document.createElement('game-scoreboard');
-    if (this.scoreElement) {
-      this.scoreElement.setNames('You', 'Opponent');
-    }
     this.appendChild(this.scoreElement);
     this.timerElement = document.createElement('game-timer');
-    this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60); // Initial time limit in second
     document.getElementById('game-timer-wrapper')?.appendChild(this.timerElement);
     this.buffIconElement = document.createElement('game-buff-icon');
     this.appendChild(this.buffIconElement);
     this.lifePointElement = document.createElement('game-life-point');
     this.appendChild(this.lifePointElement);
+
     this.#state.gameId = param.id;
     await this.render();
+  }
+
+  setQueryParam(query) {
+    this.#state.userPlayerName = query.get('userPlayerName') || 'You';
+    this.#state.opponentPlayerName = query.get('opponentPlayerName') || 'Opponent';
   }
 
   disconnectedCallback() {
@@ -90,7 +92,7 @@ import { OVERLAY_TYPE } from './components/index';
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         clientState.movesRight = true;
       }
-      
+
       e.preventDefault();
     };
   }
@@ -102,7 +104,7 @@ import { OVERLAY_TYPE } from './components/index';
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         clientState.movesRight = false;
       }
-      
+
       e.preventDefault();
     };
   }
@@ -135,10 +137,6 @@ import { OVERLAY_TYPE } from './components/index';
     const SERVER_TICK_RATE = 30;
     const SERVER_TICK_INTERVAL = 1.0 / SERVER_TICK_RATE;
 
-    const buffUI = this.buffIconElement;
-    const timerUI = this.timerElement;
-    const scoreUI = this.scoreElement;
-    const lifePointUI = this.lifePointElement;
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
     renderer.shadowMap.enabled = true;
@@ -232,7 +230,7 @@ import { OVERLAY_TYPE } from './components/index';
       sphereMesh.position.z = posZ;
       sphereMesh.castShadow = true;
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
-      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * 1); 
+      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * 1);
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       scene.add(sphereMesh);
 
@@ -321,7 +319,7 @@ import { OVERLAY_TYPE } from './components/index';
     };
 
     /* eslint-disable-next-line new-cap */
-      const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
+    const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
     const WallFactory = (posX, posY, posZ) => {
       const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
@@ -338,7 +336,7 @@ import { OVERLAY_TYPE } from './components/index';
       };
     };
     /* eslint-disable-next-line new-cap */
-      const Walls = [WallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0), WallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0)];
+    const Walls = [WallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0), WallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0)];
 
     (() => {
       const phongMaterial = new THREE.MeshPhongMaterial();
@@ -353,29 +351,30 @@ import { OVERLAY_TYPE } from './components/index';
     let accumulator = 0.0;
 
     const ENTITY_INTERPOLATION_DELAY = 50;
-    
+
     // used as keys for interpolation buffer
     const ENTITY_KEYS = {
       PLAYER: 'player',
-      OPPONENT: 'opponent', 
+      OPPONENT: 'opponent',
       BALL: 'ball',
-      COIN: 'coin'
+      COIN: 'coin',
     };
 
     const serverState = {
       bumper_1: { x: 0, z: -9, score: 0, buff_or_debuff_target: false, move_id: -1, timestamp: -1 },
       bumper_2: { x: 0, z: 9, score: 0, buff_or_debuff_target: false, move_id: -1, timestamp: -1 },
-      ball: { 
-        x: 0, z: 0, 
-        velocity: { x: 0, z: 0 }, 
-        temporal_speed: { x: 1, z: 1 }
+      ball: {
+        x: 0,
+        z: 0,
+        velocity: { x: 0, z: 0 },
+        temporal_speed: { x: 1, z: 1 },
       },
       coin: { x: -9.25, z: 1 },
       current_buff_or_debuff: 0,
       current_buff_or_debuff_remaining_time: 0.0,
       is_someone_scored: false,
       elapsed_seconds: 0,
-      time_limit_reached: false
+      time_limit_reached: false,
     };
 
     // stores information that is either specific to the player, or necessary for the correct rendering
@@ -399,21 +398,27 @@ import { OVERLAY_TYPE } from './components/index';
       SPEED_DECREASE_ENEMY: 2,
       SHORTEN_ENEMY: 3,
       ELONGATE_PLAYER: 4,
-      ENLARGE_PLAYER: 5
+      ENLARGE_PLAYER: 5,
     };
 
     this.#pongSocket = new WebSocket('wss://' + window.location.host + '/ws/pong/' + this.#state.gameId + '/');
 
     const applyInputToBumper = (input, bumper, deltaTime) => {
       if (!input.action) return;
-      
+
       let movement = 0;
-      if ((input.action === 'move_left' && !bumper.controlReverse) || (input.action === 'move_right' && bumper.controlReverse)) {
+      if (
+        (input.action === 'move_left' && !bumper.controlReverse) ||
+        (input.action === 'move_right' && bumper.controlReverse)
+      ) {
         movement = bumper.speed * deltaTime;
-      } else if ((input.action === 'move_right' && !bumper.controlReverse) || (input.action === 'move_left' && bumper.controlReverse)) {
+      } else if (
+        (input.action === 'move_right' && !bumper.controlReverse) ||
+        (input.action === 'move_left' && bumper.controlReverse)
+      ) {
         movement = -bumper.speed * deltaTime;
       }
-      
+
       const newX = bumper.cubeUpdate.x + movement;
       const leftLimit = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf;
       const rightLimit = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf;
@@ -434,20 +439,21 @@ import { OVERLAY_TYPE } from './components/index';
         const input = {
           sequenceNumber,
           action,
-          timestamp: timestamp
+          timestamp: timestamp,
         };
-        
+
         clientState.pendingInputs.push(input);
-        
-        this.safeSend(JSON.stringify({
-          action: action,
-          move_id: sequenceNumber,
-          player_id: clientState.playerId,
-          timestamp: timestamp
-        }));
+
+        this.safeSend(
+          JSON.stringify({
+            action: action,
+            move_id: sequenceNumber,
+            player_id: clientState.playerId,
+            timestamp: timestamp,
+          }),
+        );
       }
     };
-
 
     // player and server entities interpolation buffer are updated separately:
     // server entities when state form server arrives
@@ -456,27 +462,27 @@ import { OVERLAY_TYPE } from './components/index';
       const opponent = clientState.enemyNumber === 1 ? serverState.bumper_1.x : serverState.bumper_2.x;
       const ball = { x: serverState.ball.x, z: serverState.ball.z };
       const coin = serverState.coin ? { x: serverState.coin.x, z: serverState.coin.z } : null;
-      
+
       const bufferEntry = {
         opponent,
         ball,
         coin,
-        timestamp
+        timestamp,
       };
-      
+
       clientState.esntitiesInterpolationBuffer.push(bufferEntry);
 
       if (clientState.esntitiesInterpolationBuffer.length > 10) {
         clientState.esntitiesInterpolationBuffer.shift();
       }
     }
-    
+
     function updatePlayerBuffer(playerPosition, timestamp) {
       const bufferEntry = {
         position: playerPosition,
-        timestamp
+        timestamp,
       };
-      
+
       clientState.playerInterpolationBuffer.push(bufferEntry);
 
       if (clientState.playerInterpolationBuffer.length > 10) {
@@ -486,13 +492,13 @@ import { OVERLAY_TYPE } from './components/index';
 
     function getInterpolated(entityKey, renderTime) {
       let interpolationBuffer;
-      
+
       if (entityKey === ENTITY_KEYS.PLAYER) {
         interpolationBuffer = clientState.playerInterpolationBuffer;
       } else {
         interpolationBuffer = clientState.esntitiesInterpolationBuffer;
       }
-      
+
       if (interpolationBuffer.length < 2) {
         if (interpolationBuffer.length === 0) return null;
         return entityKey === ENTITY_KEYS.PLAYER ? interpolationBuffer[0].position : interpolationBuffer[0][entityKey];
@@ -523,7 +529,7 @@ import { OVERLAY_TYPE } from './components/index';
 
       const fromPosition = entityKey === ENTITY_KEYS.PLAYER ? fromEntry.position : fromEntry[entityKey];
       const toPosition = entityKey === ENTITY_KEYS.PLAYER ? toEntry.position : toEntry[entityKey];
-      
+
       // coin can be null
       if (fromPosition === null && toPosition === null) {
         return null;
@@ -541,18 +547,17 @@ import { OVERLAY_TYPE } from './components/index';
       }
 
       const alpha = Math.max(0, Math.min(1, (renderTime - fromEntry.timestamp) / timeDiff));
-      
+
       // bumper positions are stored as numbers, ball and coin as objects
       if (typeof fromPosition === 'number') {
         return fromPosition + (toPosition - fromPosition) * alpha;
       } else {
         return {
           x: fromPosition.x + (toPosition.x - fromPosition.x) * alpha,
-          z: fromPosition.z + (toPosition.z - fromPosition.z) * alpha
+          z: fromPosition.z + (toPosition.z - fromPosition.z) * alpha,
         };
       }
     }
-
 
     const pi = Math.PI;
     function degreesToRadians(degrees) {
@@ -595,11 +600,9 @@ import { OVERLAY_TYPE } from './components/index';
       }
     }
 
-    function decreaseLifeIfScored(data) {
+    function decreaseLifeIfScored(data) {}
 
-    }
-
-    function updateServerState(data) {
+    const updateServerState = (data) => {
       if (!data) return;
       decreaseLifeIfScored(data);
       serverState.bumper_1.x = data.bumper_1.x;
@@ -608,43 +611,46 @@ import { OVERLAY_TYPE } from './components/index';
       serverState.bumper_1.buff_or_debuff_target = data.bumper_1.buff_or_debuff_target;
       serverState.bumper_1.move_id = data.bumper_1.move_id;
       serverState.bumper_1.timestamp = data.bumper_1.timestamp;
-      
+
       serverState.bumper_2.x = data.bumper_2.x;
       serverState.bumper_2.z = data.bumper_2.z;
       serverState.bumper_2.score = data.bumper_2.score;
       serverState.bumper_2.buff_or_debuff_target = data.bumper_2.buff_or_debuff_target;
       serverState.bumper_2.move_id = data.bumper_2.move_id;
       serverState.bumper_2.timestamp = data.bumper_2.timestamp;
-      
+
+      this.scoreElement?.updateScore(0, data.bumper_1.score);
+      this.scoreElement?.updateScore(1, data.bumper_2.score);
+
       serverState.ball.x = data.ball.x;
       serverState.ball.z = data.ball.z;
       serverState.ball.velocity.x = data.ball.velocity.x;
       serverState.ball.velocity.z = data.ball.velocity.z;
       serverState.ball.temporal_speed.x = data.ball.temporal_speed.x;
       serverState.ball.temporal_speed.z = data.ball.temporal_speed.z;
-      
+
       if (data.coin) {
         serverState.coin.x = data.coin.x;
         serverState.coin.z = data.coin.z;
       }
-      
+
       serverState.current_buff_or_debuff = data.current_buff_or_debuff;
       serverState.current_buff_or_debuff_remaining_time = data.current_buff_or_debuff_remaining_time;
       serverState.is_someone_scored = data.is_someone_scored;
       serverState.elapsed_seconds = data.elapsed_seconds;
-      serverState.time_limit_reached = data.time_limit_reached; 
-    }
+      serverState.time_limit_reached = data.time_limit_reached;
+    };
 
     function updateEntityPositionsFromServer() {
       Ball.sphereUpdate.x = serverState.ball.x;
       Ball.sphereUpdate.z = serverState.ball.z;
-      
+
       // update ball velocity for client-side prediction
       Ball.velocity.x = serverState.ball.velocity.x;
       Ball.velocity.z = serverState.ball.velocity.z;
       Ball.temporalSpeed.x = serverState.ball.temporal_speed.x;
       Ball.temporalSpeed.z = serverState.ball.temporal_speed.z;
-      
+
       if (serverState.coin) {
         Coin.cylinderUpdate.x = serverState.coin.x;
         Coin.cylinderUpdate.z = serverState.coin.z;
@@ -653,8 +659,7 @@ import { OVERLAY_TYPE } from './components/index';
 
     // applies position received from the server, then applies not yet processed inputs
     function reconcileWithServer() {
-      if (!clientState.bumper || clientState.playerNumber <= 0)
-        return;
+      if (!clientState.bumper || clientState.playerNumber <= 0) return;
 
       const myBumperData = clientState.playerNumber === 1 ? serverState.bumper_1 : serverState.bumper_2;
       const lastProcessedMoveId = myBumperData.move_id;
@@ -676,9 +681,8 @@ import { OVERLAY_TYPE } from './components/index';
           i++;
         }
       }
-
     }
-    
+
     function applyBuffEffects() {
       if (serverState.current_buff_or_debuff === Buff.NO_BUFF) {
         resetAllBuffEffects();
@@ -725,13 +729,16 @@ import { OVERLAY_TYPE } from './components/index';
       data = JSON.parse(e.data);
       switch (data.action) {
         case 'state_updated':
+          // log.info('State updated', data);
           updateServerState(data.state);
           updateEntityPositionsFromServer();
           reconcileWithServer();
           applyBuffEffects();
           updateEntitiesInterpolationBuffer(Date.now());
+          // this.scoreElement?.setScores(data.state.bumper_1.score, data.state.bumper_2.score);
           break;
         case 'player_joined':
+          log.info('Player joined', data);
           clientState.playerId = data.player_id;
           clientState.playerNumber = data.player_number;
           clientState.enemyNumber = data.player_number == 1 ? 2 : 1;
@@ -739,23 +746,27 @@ import { OVERLAY_TYPE } from './components/index';
           clientState.enemyBumper = Bumpers[clientState.enemyNumber - 1];
           camera.position.set(0, 15, -20);
           camera.lookAt(new THREE.Vector3(0, 0, 0));
-          log.info(data);
+          clientState.playerNumber === 1
+            ? this.scoreElement?.setNames(this.#state.userPlayerName, this.#state.opponentPlayerName)
+            : this.scoreElement?.setNames(this.#state.opponentPlayerName, this.#state.userPlayerName);
+          this.timerElement?.setInitialTimeLimit(data.settings.time_limit * 60);
+          this.timerElement?.render();
           break;
         case 'game_started':
           log.info('Game started', data);
           this.overlay.hide();
           break;
         case 'game_paused':
-          log.info('Game paused');
-          this.overlay.show('pause', data);
+          log.info('Game paused', data);
+          this.overlay.show(OVERLAY_TYPE.PAUSE, data);
           break;
         case 'game_unpaused':
-          log.info('Game unpaused');
+          log.info('Game unpaused', data);
           this.overlay.hide();
           break;
         case 'game_cancelled':
           log.info('Game cancelled', data);
-          this.overlay.show('cancel', data);
+          this.overlay.show(OVERLAY_TYPE.CANCEL, data);
           if (data.tournament_id) {
             router.redirect(`tournament/${data.tournament_id}`);
           }
@@ -763,7 +774,7 @@ import { OVERLAY_TYPE } from './components/index';
         case 'player_won':
         case 'player_resigned':
           log.info('Game_over', data);
-          this.overlay.show('game_over', data);
+          this.overlay.show(OVERLAY_TYPE.GAMEOVER, data);
           break;
         default:
           break;
@@ -792,10 +803,15 @@ import { OVERLAY_TYPE } from './components/index';
     function predictPlayerPosition() {
       const playerBumper = clientState.bumper;
       let movement = 0;
-      if ((clientState.movesLeft && !playerBumper.controlReverse) || (clientState.movesRight && playerBumper.controlReverse)) {
+      if (
+        (clientState.movesLeft && !playerBumper.controlReverse) ||
+        (clientState.movesRight && playerBumper.controlReverse)
+      ) {
         movement = playerBumper.speed * SERVER_TICK_INTERVAL;
-      }
-      else if ((clientState.movesRight && !playerBumper.controlReverse) || (clientState.movesLeft && playerBumper.controlReverse)) {
+      } else if (
+        (clientState.movesRight && !playerBumper.controlReverse) ||
+        (clientState.movesLeft && playerBumper.controlReverse)
+      ) {
         movement = -playerBumper.speed * SERVER_TICK_INTERVAL;
       }
       let newX = playerBumper.cubeUpdate.x + movement;
@@ -834,11 +850,7 @@ import { OVERLAY_TYPE } from './components/index';
       const interpolatedPlayerPos = getInterpolated(ENTITY_KEYS.PLAYER, renderTime);
       const playerBumper = clientState.bumper;
       const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
-      playerBumper.cubeMesh.position.set(
-        playerVisualX,
-        playerBumper.cubeUpdate.y,
-        playerBumper.cubeUpdate.z,
-      );
+      playerBumper.cubeMesh.position.set(playerVisualX, playerBumper.cubeUpdate.y, playerBumper.cubeUpdate.z);
     }
 
     function animate(ms) {
@@ -899,6 +911,5 @@ import { OVERLAY_TYPE } from './components/index';
     this.overlay?.show('pending');
   }
 }
-
 
 customElements.define('multiplayer-game', MultiplayerGame);

@@ -1,7 +1,7 @@
 /**
  * Socket registration for tournament with events handlers.
  */
-
+import { router } from '@router';
 import { socketManager } from '@socket';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';

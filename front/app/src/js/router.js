@@ -64,7 +64,7 @@ const router = (() => {
       if (route) {
         const { componentTag, isDynamic, param } = route;
         if (isDynamic) {
-          this.renderDynamicUrlComponent(componentTag, param);
+          this.renderDynamicUrlComponent(componentTag, param, queryParams);
         } else {
           this.renderStaticUrlComponent(componentTag, queryParams);
         }
@@ -141,13 +141,16 @@ const router = (() => {
      * @param {Object} param - The parameters extracted from the URL.
      * @return {void}
      */
-    renderDynamicUrlComponent(componentTag, param) {
+    renderDynamicUrlComponent(componentTag, param, queryParams = '') {
       if (this.currentComponent) {
         this.currentComponent.remove();
       }
       const component = document.createElement(componentTag);
       if (typeof component.setParam === 'function') {
         component.setParam(param);
+      }
+      if (queryParams.size > 0 && typeof component.setQueryParam === 'function') {
+        component.setQueryParam(queryParams);
       }
       document.getElementById('content').appendChild(component);
       this.currentComponent = component;

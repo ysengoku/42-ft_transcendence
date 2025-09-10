@@ -235,7 +235,17 @@ export class Tournament extends HTMLElement {
     switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
         const gameId = this.#state.currentUserBracket.game_id;
-        router.redirect(`multiplayer-game/${gameId}`);
+        const userAlias = this.#state.userDataInTournament.alias;
+        const opponentAlias =
+          this.#state.currentUserBracket.participant1.alias === userAlias
+            ? this.#state.currentUserBracket.participant2.alias
+            : this.#state.currentUserBracket.participant1.alias;
+        console.log(userAlias, opponentAlias, this.#state, this.#state.currentUserBracket);
+        const queryParams = new URLSearchParams({
+          userPlayerName: userAlias,
+          opponentPlayerName: opponentAlias,
+        }).toString();
+        router.redirect(`multiplayer-game/${gameId}?${queryParams}`);
         log.info('User is playing a match, redirecting to game page:', gameId);
         return false;
       case PARTICIPANT_STATUS.ELIMINATED:
@@ -334,6 +344,11 @@ export class Tournament extends HTMLElement {
         round: this.#state.currentRound,
         previous_round: previousRound,
         game_id: this.#state.currentUserBracket.game_id,
+        userAlias: this.#state.userDataInTournament.alias,
+        opponentAlias:
+          this.#state.currentUserBracket.participant1.alias === this.#state.userDataInTournament.alias
+            ? this.#state.currentUserBracket.participant2.alias
+            : this.#state.currentUserBracket.participant1.alias,
       };
       log.info("User's Game id for the starting round:", this.#state.currentUserBracket.game_id);
       return tournamentRoundStart;
@@ -352,6 +367,11 @@ export class Tournament extends HTMLElement {
         round_number: this.#state.currentRoundNumber,
         round: this.#state.currentRound,
         game_id: this.#state.currentUserBracket.game_id,
+        userAlias: this.#state.userDataInTournament.alias,
+        opponentAlias:
+          this.#state.currentUserBracket.participant1.alias === this.#state.userDataInTournament.alias
+            ? this.#state.currentUserBracket.participant2.alias
+            : this.#state.currentUserBracket.participant1.alias,
       };
       return tournamentBracketOngoing;
     },

@@ -26,6 +26,12 @@ export class GameScore extends HTMLElement {
   setNames(player1, player2) {
     this.#state.name.player1 = player1;
     this.#state.name.player2 = player2;
+    if (this.namePlayer1) {
+      this.namePlayer1.textContent = this.#state.name.player1;
+    }
+    if (this.namePlayer2) {
+      this.namePlayer2.textContent = this.#state.name.player2;
+    }
   }
 
   updateScore(playerNumber, newScore) {
