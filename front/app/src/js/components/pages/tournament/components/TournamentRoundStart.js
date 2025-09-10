@@ -5,6 +5,8 @@ export class TournamentRoundStart extends HTMLElement {
     nextRoundNumber: 1,
     nextRound: null,
     gameId: '',
+    userAlias: 'You',
+    opponentAlias: 'Opponent',
     isFirstRound: true,
   };
 
@@ -22,6 +24,8 @@ export class TournamentRoundStart extends HTMLElement {
     this.#state.nextRoundNumber = data.round_number;
     this.#state.nextRound = data.round;
     this.#state.gameId = data.game_id;
+    this.#state.userAlias = data.userAlias || 'You';
+    this.#state.opponentAlias = data.opponentAlias || 'Opponent';
     this.#state.isFirstRound = this.#state.nextRoundNumber === 1;
   }
 
@@ -69,12 +73,16 @@ export class TournamentRoundStart extends HTMLElement {
 
   countDownTimer() {
     let timeLeft = this.#countdown;
+    const queryParams = new URLSearchParams({
+      userPlayerName: this.#state.userAlias,
+      opponentPlayerName: this.#state.opponentAlias,
+    }).toString();
     const countdown = setInterval(() => {
       this.timer.textContent = `Starting in ${timeLeft} seconds...`;
       timeLeft -= 1;
       if (timeLeft < 0) {
         clearInterval(countdown);
-        router.redirect(`multiplayer-game/${this.#state.gameId}`);
+        router.redirect(`multiplayer-game/${this.#state.gameId}?${queryParams}`);
       }
     }, 1000);
   }

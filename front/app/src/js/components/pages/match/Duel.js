@@ -411,6 +411,10 @@ export class Duel extends HTMLElement {
     this.timer.classList.remove('d-none');
     let timeLeft = this.#countdown;
     this.timer.textContent = `Starting in ${timeLeft} seconds...`;
+    const queryParams = new URLSearchParams({
+      userPlayerName: this.#state.loggedInUser.nickname,
+      opponentPlayerName: this.#state.opponent.nickname,
+    }).toString();
     const countdown = setInterval(() => {
       timeLeft -= 1;
       this.timer.textContent = `Starting in ${timeLeft} seconds...`;
@@ -419,7 +423,7 @@ export class Duel extends HTMLElement {
         router.removeBeforeunloadCallback();
         window.removeEventListener('beforeunload', this.confirmLeavePage);
         socketManager.closeSocket('matchmaking');
-        router.redirect(`/multiplayer-game/${this.#state.gameId}`);
+        router.redirect(`/multiplayer-game/${this.#state.gameId}?${queryParams}`);
       }
     }, 1000);
   }
