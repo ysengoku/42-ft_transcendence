@@ -21,6 +21,7 @@ import { DEFAULT_GAME_OPTIONS } from '@env';
 import { sessionExpiredToast } from '@utils';
 import './components/index';
 import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
+import { DEFAULT_AVATAR } from '@env';
 
 /* eslint no-var: "off" */
 export class Game extends HTMLElement {
@@ -29,6 +30,7 @@ export class Game extends HTMLElement {
   #state = {
     gameOptions: {},
     gameType: '', // 'classic' or 'ai'
+    user: null,
   };
 
   constructor() {
@@ -58,21 +60,22 @@ export class Game extends HTMLElement {
       router.redirect('/login');
       return;
     }
+    this.#state.user = authStatus.response;
     this.classList.add('position-relative');
     this.scoreElement = document.createElement('game-scoreboard');
     if (this.scoreElement && this.#state.gameType === 'ai') {
-      this.scoreElement.setNames('Player1', 'AI player');
+      this.scoreElement.setNames('You', 'AI player');
     }
     this.appendChild(this.scoreElement);
     this.timerElement = document.createElement('game-timer');
-    this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60); // Initial time limit in second
+    this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60);
     document.getElementById('game-timer-wrapper')?.appendChild(this.timerElement);
     this.buffIconElement = document.createElement('game-buff-icon');
     this.appendChild(this.buffIconElement);
     this.lifePointElement = document.createElement('game-life-point');
     this.appendChild(this.lifePointElement);
     this.overlay = document.createElement('game-overlay');
-    this.overlay.gameType = `local-${this.#state.gameType}`;
+    this.overlay.gameType = 'local';
     this.appendChild(this.overlay);
 
     await this.render();
@@ -260,6 +263,7 @@ export class Game extends HTMLElement {
     const timerUI = this.timerElement;
     const scoreUI = this.scoreElement;
     const lifePointUI = this.lifePointElement;
+    const overlayUI = this.overlay;
 
     const gameStateContainer = (() => {
       let isPaused = false;
@@ -919,6 +923,31 @@ export class Game extends HTMLElement {
         step = null;
       }
     }
+
+    const showGameOverOverlay = () => {
+      const winner = {
+        number: Bumpers[0].score === MAX_SCORE ? 1 : 2,
+        name: Bumpers[0].score === MAX_SCORE ? 'Player 1' : 'Player 2',
+        avatar: DEFAULT_AVATAR,
+      };
+      const loser = {
+        number: Bumpers[0].score === MAX_SCORE ? 2 : 1,
+        name: Bumpers[0].score === MAX_SCORE ? 'Player 2' : 'Player 1',
+        avatar: DEFAULT_AVATAR,
+      };
+      if (this.#state.gameType === 'ai') {
+        winner.name = winner.number === 1 ? 'You' : 'AI Player';
+        loser.name = loser.number === 1 ? 'You' : 'AI Player';
+        winner.number === 1 ? (winner.avatar = this.#state.user.avatar) : (loser.avatar = this.#state.user.avatar);
+      }
+      const resultData = {
+        winner: winner,
+        loser: loser,
+        isLocal: true,
+      };
+      overlayUI.show(OVERLAY_TYPE.GAMEOVER, resultData);
+    };
+
     let scoreSwitch = MAX_SCORE / 3;
     let choosenDifficulty = 2;
     let stableDifficulty = 2;
@@ -928,6 +957,7 @@ export class Game extends HTMLElement {
       lifePointUI?.decreasePoint(looserBumper, 20 / MAX_SCORE);
       if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE) {
         gameStateContainer.isGamePlaying = false;
+        showGameOverOverlay();
         stop();
         return;
       } else if (Bumpers[0].score < scoreSwitch * 2 && Bumpers[0].score >= scoreSwitch) {

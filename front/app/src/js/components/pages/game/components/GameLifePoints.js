@@ -20,7 +20,6 @@ export class GameLifePoint extends HTMLElement {
   }
 
   updatePoint(playerWhoScoreNumber, newPoint) {
-    console.log('updatePoint', playerWhoScoreNumber, newPoint);
     let lifeBarElement = null;
     let lifePoint = 0;
     if (playerWhoScoreNumber === 1) {
