@@ -72,9 +72,11 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
 </p>
 <br />
 
-## Project Walkthrough 🛠️👷🏻‍♂️
+## Project Walkthrough
 
-Add a demo video
+🛠️👷🏻‍♂️ Work in progress   
+
+https://github.com/user-attachments/assets/2d065e35-b274-4867-b13e-fa022852612d
 
 <br />
 
@@ -146,7 +148,8 @@ Add a demo video
 <br />
 
 ## Architecture
-(TODO: link to the high-level overview of the project architecture)
+
+Check out our [architecture documentation](./doc/ARCHITECTURE.md) for detailed description how the project is structured and works.
 
 ```mermaid
 graph TB
@@ -154,7 +157,7 @@ graph TB
         CLIENT_CONTENT[SPA<br/>Vanilla JS + Bootstrap<br/>Three.js]
     end
 
-    subgraph NGINX["Load Balancer"]
+    subgraph NGINX["Reverse Proxy"]
         NGINX_CONTENT[Nginx<br/>Reverse Proxy<br/>Static Files]
     end
 
@@ -209,60 +212,58 @@ graph TB
     class GITHUB,FORTYTWO,GMAIL external
 ```
 
-### Component Responsibilities
-#### Frontend Layer
+### Frontend Layer
 **Pure JavaScript SPA** using component-based architecture and custom dispatch framework.
 - **Bootstrap**: HTML/CSS/JavaScript framework that provides with theme management, utility classes and interactive components.
 - **Three.js**: 3D rendering engine responsible for the looks of the game!
 
-#### Backend Layer
+### Backend Layer
 Asynchronous hybrid server **Daphne** that handles both HTTP and websocket connections.
 - **Django Ninja**: RESTful API with auto-generated swagger schema for documentation.
 - **Django Channels**: Django Channels for real-time features.
 
-#### Load Balancer
+### Reverse Proxy
 **Nginx** server that stands between the client and **Daphne server**. Responsible for:
-- Load balancing.
+- Security policies & encryption of data.
 - Static file serving.
-- HTTP and WebSocket proxy.
-- Encryption of the data for protection against man-in-the-middle attacks.
+- Potentially for load balancing, as we can add more servers to the mix.
 
-#### Data Layer
+### Data Layer
 - **PostgreSQL**: Primary database. Used for user data, game records, chat history, notification system and more!
 - **Redis**: pub/sub messaging between different WebSocket connections and worker processes.
 
-#### External Integrations
+### External Integrations
 - **OAuth Providers**: GitHub and 42 School for third-party authentication.
 - **Email Service**: Gmail SMTP for MFA verification codes.
 
-#### Crontab
+### Crontab
 Separate container that periodically sends requests to the Daphne server to perform actions.
 
 <br />
 
 ## Documentation 🛠️👷🏻‍♂️
 
-- [Architecture](/doc/ARCHITECTURE.md)
+- [Architecture](./doc/ARCHITECTURE.md)
 
 - Features
-  - [User Management](/doc/features/USER_MANAGEMENT.md)
-  - [Pong Game](/doc/features/PONG.md)
-  - [Tournament system](/doc/features/TOURNAMENT.md)
-  - [Chat and Live Events](/doc/features/CHAT_AND_LIVE_EVENTS.md)
+  - [User Management System](./doc/features/USER_MANAGEMENT.md)
+  - [Pong Game](./doc/features/PONG.md)
+  - [Tournament system](/.doc/features/TOURNAMENT.md)
+  - [Chat and Live Events](./doc/features/CHAT_AND_LIVE_EVENTS.md)
 
 - Front-end
-  - [Front-end overview](/doc/front/FRONTEND.md)
+  - [Front-end overview](./doc/front/FRONTEND.md)
   - Detailed documentations
-    - [Web component](/doc/front/Component.md)
-    - [Router](doc/front/Router.md)
-    - [API Request](doc/front/API_REQUEST.md)
-    - [Auth manager](/doc/front/AUTH_MANAGER.md)
-    - [WebScoket manager](/doc/front/SocketManager.md)
-    - [Data visualization](/doc/front/DATA_VISUALIZATION.md)
+    - [Web component](./doc/front/Component.md)
+    - [Router](.doc/front/Router.md)
+    - [API Request](.doc/front/API_REQUEST.md)
+    - [Auth manager](./doc/front/AUTH_MANAGER.md)
+    - [WebScoket manager](./doc/front/SocketManager.md)
+    - [Data visualization](./doc/front/DATA_VISUALIZATION.md)
 
 - Server
-  - [Multi-factor Authentication](/doc/server/MFA.md)
-  - [Remote Authentication (OAuth 2.0)](/doc/server/OAUTH2.md)
+  - [Multi-factor Authentication](./doc/server/MFA.md)
+  - [Remote Authentication (OAuth 2.0)](./doc/server/OAUTH2.md)
 
 - UI design
   - [Wireframe and Mock-up design](https://www.figma.com/design/bIKKWAFQjcnPiEDc63jWa1/ft_transcendence?node-id=37-340&t=AJvSNhCCjxhZqsCV-1)

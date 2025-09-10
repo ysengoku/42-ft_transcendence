@@ -743,7 +743,7 @@ import { OVERLAY_TYPE } from './components/index';
           break;
         case 'game_started':
           log.info('Game started', data);
-          this.overlay.hideOverlay();
+          this.overlay.hide();
           break;
         case 'game_paused':
           log.info('Game paused');
@@ -751,7 +751,7 @@ import { OVERLAY_TYPE } from './components/index';
           break;
         case 'game_unpaused':
           log.info('Game unpaused');
-          this.overlay.hideOverlay();
+          this.overlay.hide();
           break;
         case 'game_cancelled':
           log.info('Game cancelled', data);
