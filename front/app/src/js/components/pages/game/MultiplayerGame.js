@@ -8,7 +8,7 @@ import { router } from '@router';
 import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import './components/index';
-import { OVERLAY_TYPE } from './components/index';
+import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
 
 /* eslint no-var: "off" */
 export class MultiplayerGame extends HTMLElement {
@@ -35,7 +35,6 @@ export class MultiplayerGame extends HTMLElement {
     if (!user) {
       return;
     }
-    console.log(user.username);
     if (!param.id) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
@@ -600,11 +599,26 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
-    function decreaseLifeIfScored(data) {}
+    const decreaseLifePointUI = (data) => {
+      const playerMissed = data.bumper_1.score > serverState.bumper_1.score ? 2 : 1;
+      const newScore = playerMissed === 1 ? data.bumper_2.score : data.bumper_1.score;
+      this.lifePointElement?.updatePoint(playerMissed - 1, 20 - (20 / this.#state.gameOptions.score_to_win) * newScore);
+    };
 
-    const updateServerState = (data) => {
-      if (!data) return;
-      decreaseLifeIfScored(data);
+    const updateScoreUI = (data) => {
+      data.bumper_1.score > serverState.bumper_1.score
+        ? this.scoreElement?.updateScore(0, data.bumper_1.score)
+        : this.scoreElement?.updateScore(1, data.bumper_2.score);
+    };
+
+    function updateServerState(data) {
+      if (!data) {
+        return;
+      }
+      if (data.is_someone_scored) {
+        updateScoreUI(data);
+        decreaseLifePointUI(data);
+      }
       serverState.bumper_1.x = data.bumper_1.x;
       serverState.bumper_1.z = data.bumper_1.z;
       serverState.bumper_1.score = data.bumper_1.score;
@@ -618,9 +632,6 @@ export class MultiplayerGame extends HTMLElement {
       serverState.bumper_2.buff_or_debuff_target = data.bumper_2.buff_or_debuff_target;
       serverState.bumper_2.move_id = data.bumper_2.move_id;
       serverState.bumper_2.timestamp = data.bumper_2.timestamp;
-
-      this.scoreElement?.updateScore(0, data.bumper_1.score);
-      this.scoreElement?.updateScore(1, data.bumper_2.score);
 
       serverState.ball.x = data.ball.x;
       serverState.ball.z = data.ball.z;
@@ -639,7 +650,7 @@ export class MultiplayerGame extends HTMLElement {
       serverState.is_someone_scored = data.is_someone_scored;
       serverState.elapsed_seconds = data.elapsed_seconds;
       serverState.time_limit_reached = data.time_limit_reached;
-    };
+    }
 
     function updateEntityPositionsFromServer() {
       Ball.sphereUpdate.x = serverState.ball.x;
@@ -683,42 +694,61 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
-    function applyBuffEffects() {
+    const applyBuffEffects = () => {
       if (serverState.current_buff_or_debuff === Buff.NO_BUFF) {
         resetAllBuffEffects();
+        this.buffIconElement?.hide();
         return;
       }
 
       let targetPlayer = null;
+      let showBuffIcon = false;
       if (serverState.bumper_1.buff_or_debuff_target) {
         targetPlayer = Bumpers[0];
+        showBuffIcon = clientState.playerNumber === 1 ? true : false;
       } else if (serverState.bumper_2.buff_or_debuff_target) {
         targetPlayer = Bumpers[1];
+        showBuffIcon = clientState.playerNumber === 2 ? true : false;
       }
 
       if (targetPlayer) {
         switch (serverState.current_buff_or_debuff) {
           case Buff.CONTROL_REVERSE_ENEMY:
             targetPlayer.controlReverse = true;
+            if (showBuffIcon) {
+              this.buffIconElement?.show(BUFF_TYPE.SWITCH);
+            }
             break;
           case Buff.SPEED_DECREASE_ENEMY:
             targetPlayer.speed = BUMPER_SPEED_PER_SECOND * 0.1;
+            if (showBuffIcon) {
+              this.buffIconElement?.show(BUFF_TYPE.SLOW);
+            }
             break;
           case Buff.SHORTEN_ENEMY:
             targetPlayer.cubeMesh.scale.x = 0.5;
             targetPlayer.lenghtHalf = 1.25;
+            if (showBuffIcon) {
+              this.buffIconElement?.show(BUFF_TYPE.SHORT);
+            }
             break;
           case Buff.ELONGATE_PLAYER:
             targetPlayer.cubeMesh.scale.x = 2;
             targetPlayer.lenghtHalf = 5;
+            if (showBuffIcon) {
+              this.buffIconElement?.show(BUFF_TYPE.LONG);
+            }
             break;
           case Buff.ENLARGE_PLAYER:
             targetPlayer.cubeMesh.scale.z = 3;
             targetPlayer.widthHalf = 1.5;
+            if (showBuffIcon) {
+              this.buffIconElement?.show(BUFF_TYPE.LARGE);
+            }
             break;
         }
       }
-    }
+    };
 
     this.#pongSocket.addEventListener('open', () => {
       log.info('Success! :3 ');
@@ -735,7 +765,6 @@ export class MultiplayerGame extends HTMLElement {
           reconcileWithServer();
           applyBuffEffects();
           updateEntitiesInterpolationBuffer(Date.now());
-          // this.scoreElement?.setScores(data.state.bumper_1.score, data.state.bumper_2.score);
           break;
         case 'player_joined':
           log.info('Player joined', data);
@@ -751,6 +780,7 @@ export class MultiplayerGame extends HTMLElement {
             : this.scoreElement?.setNames(this.#state.opponentPlayerName, this.#state.userPlayerName);
           this.timerElement?.setInitialTimeLimit(data.settings.time_limit * 60);
           this.timerElement?.render();
+          this.#state.gameOptions = data.settings;
           break;
         case 'game_started':
           log.info('Game started', data);
