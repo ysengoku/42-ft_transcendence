@@ -240,7 +240,6 @@ export class Tournament extends HTMLElement {
           this.#state.currentUserBracket.participant1.alias === userAlias
             ? this.#state.currentUserBracket.participant2.alias
             : this.#state.currentUserBracket.participant1.alias;
-        console.log(userAlias, opponentAlias, this.#state, this.#state.currentUserBracket);
         const queryParams = new URLSearchParams({
           userPlayerName: userAlias,
           opponentPlayerName: opponentAlias,

@@ -611,14 +611,21 @@ export class MultiplayerGame extends HTMLElement {
         : this.scoreElement?.updateScore(1, data.bumper_2.score);
     };
 
+    const updateTimerUI = (elapsedSeconds) => {
+      if (serverState.elapsed_seconds === elapsedSeconds) {
+        return;
+      }
+      this.timerElement?.updateRemainingTime(this.#state.gameOptions.time_limit * 60 - elapsedSeconds);
+    };
+
     function updateServerState(data) {
       if (!data) {
         return;
       }
-      if (data.is_someone_scored) {
-        updateScoreUI(data);
-        decreaseLifePointUI(data);
-      }
+      // if (data.is_someone_scored) {
+      //   updateScoreUI(data);
+      //   decreaseLifePointUI(data);
+      // }
       serverState.bumper_1.x = data.bumper_1.x;
       serverState.bumper_1.z = data.bumper_1.z;
       serverState.bumper_1.score = data.bumper_1.score;
@@ -759,7 +766,11 @@ export class MultiplayerGame extends HTMLElement {
       data = JSON.parse(e.data);
       switch (data.action) {
         case 'state_updated':
-          // log.info('State updated', data);
+          updateTimerUI(data.state.elapsed_seconds);
+          if (data.state.is_someone_scored) {
+            updateScoreUI(data.state);
+            decreaseLifePointUI(data.state);
+          }
           updateServerState(data.state);
           updateEntityPositionsFromServer();
           reconcileWithServer();

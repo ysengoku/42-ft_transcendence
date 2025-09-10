@@ -9,7 +9,7 @@ export const OVERLAY_TYPE = Object.freeze({
 });
 
 export class GameOverlay extends HTMLElement {
-  #gameType = ''; // 'local-classic' , 'local-ai', or 'multiplayer'
+  #gameType = ''; // 'local' or 'multiplayer'
   #intervalGameId = null;
 
   constructor() {
@@ -90,11 +90,12 @@ export class GameOverlay extends HTMLElement {
         let player1 = null;
         let player2 = null;
         const isTournament = data.tournament_id ? true : false;
+        const showElo = isTournament || data.isLocal ? false : true;
         data.winner.number === 1
           ? ((player1 = data.winner), (player1.winner = true), (player2 = data.loser), (player2.winner = false))
           : ((player2 = data.winner), (player2.winner = true), (player1 = data.loser), (player1.winner = false));
-        const player1Element = this.createPlayerResultElement(player1, data.elo_change, isTournament);
-        const player2Element = this.createPlayerResultElement(player2, data.elo_change, isTournament);
+        const player1Element = this.createPlayerResultElement(player1, data.elo_change, showElo);
+        const player2Element = this.createPlayerResultElement(player2, data.elo_change, showElo);
         const gameResultElement = this.querySelector('#overlay-game-result');
         gameResultElement.appendChild(player1Element);
         gameResultElement.appendChild(player2Element);
@@ -103,7 +104,6 @@ export class GameOverlay extends HTMLElement {
             router.redirect(`tournament/${data.tournament_id}`);
           }, 1500);
         }
-
       case OVERLAY_TYPE.CANCEL:
         this.overlayButton1 = this.querySelector('#overlay-button1');
         this.overlayButton2 = this.querySelector('#overlay-button2');
@@ -123,7 +123,7 @@ export class GameOverlay extends HTMLElement {
     }
   }
 
-  createPlayerResultElement(player, eloChange, isTournament) {
+  createPlayerResultElement(player, eloChange, showElo) {
     const element = document.createElement('div');
     element.innerHTML = this.playerResultTemplate();
     const result = element.querySelector('.match-result');
@@ -142,7 +142,7 @@ export class GameOverlay extends HTMLElement {
     } else {
       element.querySelector('.overlay-player-name').textContent = 'Anonymous player';
     }
-    if (this.#gameType === 'multiplayer' && player.elo && !isTournament) {
+    if (this.#gameType === 'multiplayer' && player.elo && showElo) {
       const eloWrapper = element.querySelector('.overlay-player-elo');
       eloWrapper.querySelector('.game-elo').textContent = player.elo;
       eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi i-arrow-down-right';
