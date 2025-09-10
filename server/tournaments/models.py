@@ -143,7 +143,7 @@ class Tournament(models.Model):
         try:
             current_round = self.rounds.get(number=round_number)
         except Round.DoesNotExist:
-            logger.warning("This round does not exist, recreating it for the tournament to continue")
+            logger.warning("[TournamentWorker] This round does not exist, recreating it for the tournament to continue")
             current_round = self.rounds.create(number=round_number)
         return current_round
 
@@ -151,14 +151,14 @@ class Tournament(models.Model):
         current_round = self.get_current_round(round_number)
         participant = current_round.tournament.participants.filter(profile=profile).first()
         if not participant:
-            logger.warning("Profile is not a participant in this tournament")
+            logger.warning("[TournamentWorker] Profile is not a participant in this tournament")
             return None
 
         bracket = current_round.brackets.filter(
             models.Q(participant1=participant) | models.Q(participant2=participant),
         ).first()
         if not bracket:
-            logger.warning("This user is not in any brackets of the current round")
+            logger.warning("[TournamentWorker] This user is not in any brackets of the current round")
             return None
         return bracket
 
@@ -247,7 +247,7 @@ class BracketQuerySet(models.QuerySet):
                 profile__id=winner_profile_id,
             )
         except Participant.MultipleObjectsReturned as e:
-            logger.info("Draw game : setting participant 1 as winner")
+            logger.info("[TournamentWorker] Draw game : setting participant 1 as winner")
             winner_participant = await database_sync_to_async(Participant.objects.get)(
             brackets_p1__id=bracket_id,
         )
