@@ -20,7 +20,7 @@ import { auth } from '@auth';
 import { DEFAULT_GAME_OPTIONS } from '@env';
 import { sessionExpiredToast } from '@utils';
 import './components/index';
-import { OVERLAY_TYPE } from './components/index';
+import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
 
 /* eslint no-var: "off" */
 export class Game extends HTMLElement {
@@ -1214,7 +1214,7 @@ export class Game extends HTMLElement {
         Bumpers[e.data[0]].modelChoosen = 0;
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
         Bumpers[e.data[0]].lenghtHalf = 2.5;
-        buffUI?.hideIcon();
+        buffUI?.hide();
       };
       Workers[1].onmessage = function (e) {
         let dirz = Bumpers[e.data[0]].playerGlb.position.z;
@@ -1252,17 +1252,17 @@ export class Game extends HTMLElement {
           Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
           Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z -= 0.4;
         }
-        buffUI?.hideIcon();
+        buffUI?.hide();
       };
       Workers[2].onmessage = function (e) {
         Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
-        buffUI?.hideIcon();
+        buffUI?.hide();
       };
       Workers[3].onmessage = function (e) {
         Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25 * gameSpeed;
         Bumpers[[Math.abs(e.data[0] - 1)]].gltfStore.action[0][0].setDuration(0.18);
         Bumpers[[Math.abs(e.data[0] - 1)]].gltfStore.action[5][0].setDuration(0.18);
-        buffUI?.hideIcon();
+        buffUI?.hide();
       };
       Workers[4].onmessage = function (e) {
         let dirz = Bumpers[e.data[0]].playerGlb.position.z;
@@ -1271,7 +1271,7 @@ export class Game extends HTMLElement {
         Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
         Bumpers[e.data[0]].widthHalf = 0.5;
         dirz < 0 ? (Bumpers[e.data[0]].playerGlb.position.x += 5) : (Bumpers[e.data[0]].playerGlb.position.x -= 5);
-        buffUI?.hideIcon();
+        buffUI?.hide();
       };
       Workers[5].onmessage = function (e) {
         Coin.cylinderUpdate.set(-9.25, 3, 0);
@@ -1317,7 +1317,7 @@ export class Game extends HTMLElement {
             Bumpers[lastBumperCollided].playerGlb.position.z -= 0.7;
           }
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
-          buffUI?.showIcon('long');
+          buffUI?.show(BUFF_TYPE.LONG);
           break;
         case 2:
           Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[
@@ -1336,19 +1336,19 @@ export class Game extends HTMLElement {
             Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.4;
           }
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
-          buffUI?.showIcon('short');
+          buffUI?.show(BUFF_TYPE.SHORT);
           break;
         case 3:
           Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
           Workers[2].postMessage([2000, lastBumperCollided, 'create']);
-          buffUI?.showIcon('switch');
+          buffUI?.show(BUFF_TYPE.SWITCH);
           break;
         case 4:
           Bumpers[Math.abs(lastBumperCollided - 1)].speed = 0.1 * gameSpeed;
           Bumpers[Math.abs(lastBumperCollided - 1)].gltfStore.action[0][0].setDuration(0.2);
           Bumpers[Math.abs(lastBumperCollided - 1)].gltfStore.action[5][0].setDuration(0.2);
           Workers[3].postMessage([5000, lastBumperCollided, 'create']);
-          buffUI?.showIcon('slow');
+          buffUI?.show(BUFF_TYPE.SLOW);
           break;
         default:
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
@@ -1359,7 +1359,7 @@ export class Game extends HTMLElement {
             ? (Bumpers[lastBumperCollided].playerGlb.position.x -= 5)
             : (Bumpers[lastBumperCollided].playerGlb.position.x += 5);
           Workers[4].postMessage([10000, lastBumperCollided, 'create']);
-          buffUI?.showIcon('large');
+          buffUI?.show(BUFF_TYPE.LARGE);
           break;
       }
       Coin.cylinderUpdate.set(-100, 3, 0);
