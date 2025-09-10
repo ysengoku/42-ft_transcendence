@@ -88,7 +88,7 @@ export class Tournament extends HTMLElement {
     if (
       this.#state.tournament &&
       (this.#state.tournament.status === TOURNAMENT_STATUS.PENDING ||
-      this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING)
+        this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING)
     ) {
       socketManager.openSocket('tournament', this.#state.tournamentId);
     }
@@ -397,7 +397,10 @@ export class Tournament extends HTMLElement {
 
   startRoundProgressPolling() {
     this.stopRoundProgressPolling();
-    if (this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING || this.#state.uiStatus !== UI_STATUS.WAITING_NEXT_ROUND) {
+    if (
+      this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING ||
+      this.#state.uiStatus !== UI_STATUS.WAITING_NEXT_ROUND
+    ) {
       return;
     }
     this.#pollingIntervalForNextRound = setInterval(async () => {
