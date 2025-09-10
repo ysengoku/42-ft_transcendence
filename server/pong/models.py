@@ -49,17 +49,38 @@ class MatchQuerySet(models.QuerySet):
         loser_elo -= elo_change
         return winner_elo, loser_elo, elo_change
 
-    async def async_resolve(
+    def resolve(
         self,
-        winner_id: int,
-        loser_id: int,
+        winner_profile_or_id: Profile | int,
+        loser_profile_or_id: Profile | int,
         winners_score: int,
         losers_score: int,
-        ranked: bool,
-    ) -> tuple["Match", Profile, Profile]:
-        """Works like Match.objects.resolve(), but only with id's and in async context."""
-        winner: Profile = await database_sync_to_async(Profile.objects.get)(id=winner_id)
-        loser: Profile = await database_sync_to_async(Profile.objects.get)(id=loser_id)
+        ranked: bool = True,
+        date: datetime | None = None,
+    ) -> tuple["Match", Profile, Profile] | None:
+        """
+        Resolves all elo calculations, updates profiles of players,
+        creates a new match record and saves everything into the database.
+        Accepts either model instances directly or their ID's.
+        Returns resolved match, winner and loser model instances.
+        """
+        if date is None:
+            date = timezone.now()
+
+        if isinstance(winner_profile_or_id, int):
+            winner: Profile = Profile.objects.filter(id=winner_profile_or_id).first()
+            if not winner:
+                return
+        else:
+            winner: Profile = winner_profile_or_id
+
+        if isinstance(loser_profile_or_id, int):
+            loser: Profile = Profile.objects.filter(id=loser_profile_or_id).first()
+            if not loser:
+                return
+        else:
+            loser: Profile = loser_profile_or_id
+
         if ranked:
             winners_elo, losers_elo, elo_change = self.calculate_elo_change_for_players(winner.elo, loser.elo)
         else:
@@ -74,48 +95,6 @@ class MatchQuerySet(models.QuerySet):
             elo_change=elo_change,
             winners_elo=winners_elo,
             losers_elo=losers_elo,
-        )
-        await database_sync_to_async(resolved_match.save)()
-        await database_sync_to_async(winner.save)()
-        await database_sync_to_async(loser.save)()
-        return resolved_match, winner, loser
-
-    def resolve(
-        self,
-        winner_profile_or_id: Profile | int,
-        loser_profile_or_id: Profile | int,
-        winners_score: int,
-        losers_score: int,
-        date: datetime = timezone.now(),
-    ) -> tuple["Match", Profile, Profile]:
-        """
-        Resolves all elo calculations, updates profiles of players,
-        creates a new match record and saves everything into the database.
-        Accepts either model instances directly or their ID's.
-        Returns resolved match, winner and loser model instances.
-        """
-        winner: Profile = (
-            Profile.objects.get(id=winner_profile_or_id)
-            if isinstance(winner_profile_or_id, int)
-            else winner_profile_or_id
-        )
-
-        loser: Profile = (
-            Profile.objects.get(id=loser_profile_or_id) if isinstance(loser_profile_or_id, int) else loser_profile_or_id
-        )
-
-        winner_elo, loser_elo, elo_change = self.calculate_elo_change_for_players(winner.elo, loser.elo)
-        winner.elo = winner_elo
-        loser.elo = loser_elo
-        resolved_match = Match(
-            winner=winner,
-            loser=loser,
-            winners_score=winners_score,
-            losers_score=losers_score,
-            elo_change=elo_change,
-            winners_elo=winner.elo,
-            losers_elo=loser.elo,
-            date=date,
         )
         resolved_match.save()
         winner.save()
