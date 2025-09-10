@@ -9,10 +9,9 @@ import { router } from '@router';
 import { apiRequest, API_ENDPOINTS } from '@api';
 import { socketManager } from '@socket';
 import { auth } from '@auth';
-import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast } from '@utils';
+import { showAlertMessageForDuration, ALERT_TYPE, sessionExpiredToast, isEqual } from '@utils';
 import { UI_STATUS, TOURNAMENT_STATUS, ROUND_STATUS, BRACKET_STATUS, PARTICIPANT_STATUS } from './tournamentStatus';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
-// import anonymousAvatar from '/img/anonymous-avatar.png?url';
 
 export class Tournament extends HTMLElement {
   /**
@@ -33,7 +32,6 @@ export class Tournament extends HTMLElement {
     tournament: null,
     creator: {
       username: '',
-      // avatar: anonymousAvatar,
       alias: 'anonymous gunslinger',
     },
     userDataInTournament: null,
@@ -42,7 +40,10 @@ export class Tournament extends HTMLElement {
     currentUserBracket: null,
     currentRoundFinished: false,
     nextRound: null,
+    loading: false,
   };
+
+  #pollingIntervalForNextRound = null;
 
   constructor() {
     super();
@@ -84,10 +85,18 @@ export class Tournament extends HTMLElement {
     }
     this.#state.tournamentId = param.id;
     await this.fetchTournamentData();
+    if (
+      this.#state.tournament &&
+      (this.#state.tournament.status === TOURNAMENT_STATUS.PENDING ||
+        this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING)
+    ) {
+      socketManager.openSocket('tournament', this.#state.tournamentId);
+    }
   }
 
   disconnectedCallback() {
-    document.removeEventListener('tournament-round-finished-ui-ready', this.setCurrentRoundFinished);
+    document.removeEventListener('round-finished-ui-ready', this.setCurrentRoundFinished);
+    this.stopRoundProgressPolling();
   }
 
   /**
@@ -99,6 +108,10 @@ export class Tournament extends HTMLElement {
    * @returns {Promise<void>} - A promise that resolves when the tournament data is fetched and the UI is updated.
    */
   async fetchTournamentData() {
+    if (this.#state.loading) {
+      return;
+    }
+    this.#state.loading = true;
     const response = await apiRequest(
       'GET',
       /* eslint-disable-next-line new-cap */
@@ -112,16 +125,19 @@ export class Tournament extends HTMLElement {
         const notFound = document.createElement('page-not-found');
         this.innerHTML = notFound.outerHTML;
       }
+      this.#state.loading = false;
+      return;
+    }
+    if (this.#state.tournament && isEqual(this.#state.tournament, response.data)) {
+      this.#state.loading = false;
       return;
     }
     this.#state.tournament = response.data;
     if (this.#state.tournament.tournament_creator) {
       this.#state.creator.username = this.#state.tournament.tournament_creator.profile.username;
-      // this.#state.creator.avatar = this.#state.tournament.tournament_creator.profile.avatar;
       this.#state.creator.alias = this.#state.tournament.tournament_creator.alias;
     }
 
-    // Find user data in the tournament participants
     this.#state.userDataInTournament = this.#state.tournament.participants.find((participant) => {
       return participant.profile.username.toLowerCase() === this.#state.user.username.toLowerCase();
     });
@@ -142,8 +158,10 @@ export class Tournament extends HTMLElement {
       return;
     }
 
+    log.info('Tournament status:', this.#state.tournament.status);
     switch (this.#state.tournament.status) {
       case TOURNAMENT_STATUS.FINISHED:
+        this.innerHTML = '';
         if (this.#state.userDataInTournament.status === PARTICIPANT_STATUS.WINNER) {
           log.info('Tournament finished and the user is the champion');
           socketManager.closeSocket('tournament', this.#state.tournamentId);
@@ -154,10 +172,7 @@ export class Tournament extends HTMLElement {
             router.redirect(`/tournament-overview/${this.#state.tournamentId}`);
           }, 7000);
         } else {
-          showTournamentAlert(this.#state.tournamentId, TOURNAMENT_ALERT_TYPE.CANCELED);
-          setTimeout(() => {
-            router.redirect('/home');
-          }, 3000);
+          router.redirect('/home');
         }
         return;
       case TOURNAMENT_STATUS.CANCELED:
@@ -170,14 +185,13 @@ export class Tournament extends HTMLElement {
       case TOURNAMENT_STATUS.PENDING:
         this.resolveUIStatus[this.#state.tournament.status]();
         break;
-      default:
+      case TOURNAMENT_STATUS.ONGOING:
         this.findCurrentRound();
         this.#state.currentRound = this.#state.tournament.rounds[this.#state.currentRoundNumber - 1];
         this.findAssignedBracketForUser();
         log.info("Current user's bracket", this.#state.currentUserBracket);
         if (!this.#state.currentUserBracket) {
-          log.error('User is not assigned to any bracket in the current round');
-          router.redirect('/home');
+          log.info('User is not assigned to any bracket in the current round. Start polling to check assignment.');
           return;
         }
         this.resolveUIStatus[this.#state.tournament.status]();
@@ -185,11 +199,15 @@ export class Tournament extends HTMLElement {
         if (!isUserQualified) {
           return;
         }
+        this.startRoundProgressPolling();
+        break;
+      default:
+        log.error('Unknown tournament status:', this.#state.tournament.status);
     }
 
     log.info('UI status set to:', this.#state.uiStatus);
     this.render();
-    socketManager.openSocket('tournament', this.#state.tournamentId);
+    this.#state.loading = false;
   }
 
   findCurrentRound() {
@@ -216,9 +234,9 @@ export class Tournament extends HTMLElement {
   checkUserStatus() {
     switch (this.#state.userDataInTournament.status) {
       case PARTICIPANT_STATUS.PLAYING:
-        log.info('User is playing a match, redirecting to game page:', gameId);
         const gameId = this.#state.currentUserBracket.game_id;
         router.redirect(`multiplayer-game/${gameId}`);
+        log.info('User is playing a match, redirecting to game page:', gameId);
         return false;
       case PARTICIPANT_STATUS.ELIMINATED:
         showAlertMessageForDuration(ALERT_TYPE.LIGHT, 'You have been eliminated from the tournament.');
@@ -374,6 +392,29 @@ export class Tournament extends HTMLElement {
       this.tournamentContentWrapper.appendChild(content);
     } else {
       log.error(`Tournament status not found: ${this.#state.uiStatus}`);
+    }
+  }
+
+  startRoundProgressPolling() {
+    this.stopRoundProgressPolling();
+    if (
+      this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING ||
+      this.#state.uiStatus !== UI_STATUS.WAITING_NEXT_ROUND
+    ) {
+      return;
+    }
+    this.#pollingIntervalForNextRound = setInterval(async () => {
+      await this.fetchTournamentData();
+      if (this.#state.uiStatus !== UI_STATUS.WAITING_NEXT_ROUND) {
+        this.stopRoundProgressPolling();
+      }
+    }, 15000);
+  }
+
+  stopRoundProgressPolling() {
+    if (this.#pollingIntervalForNextRound) {
+      clearInterval(this.#pollingIntervalForNextRound);
+      this.#pollingIntervalForNextRound = null;
     }
   }
 
@@ -570,3 +611,118 @@ export class Tournament extends HTMLElement {
 }
 
 customElements.define('tournament-room', Tournament);
+
+// "rounds": [
+//     {
+//         "number": 1,
+//         "brackets": [
+//             {
+//                 "game_id": "347c0d95-5752-43b4-8c89-c81a3d405d5c",
+//                 "participant1": {
+//                     "profile": {
+//                         "username": "menaco",
+//                     "status": "qualified"
+//                 },
+//                 "participant2": {
+//                     "profile": {
+//                         "username": "Rex",
+//                     "status": "eliminated"
+//                 },
+//                 "winner": {
+//                     "profile": {
+//                         "username": "menaco",
+//                     "status": "qualified"
+//                 },
+//                 "status": "cancelled",
+//             },
+//             {
+//                 "game_id": "d48a5944-55ef-4408-b952-c84377ed53fc",
+//                 "participant1": {
+//                     "profile": {
+//                         "username": "Pedro",
+//                     "status": "qualified"
+//                 },
+//                 "participant2": {
+//                     "profile": {
+//                         "username": "Tama",
+//                     "status": "eliminated"
+//                 },
+//                 "winner": {
+//                     "profile": {
+//                         "username": "Pedro",
+//                     "status": "qualified"
+//                 },
+//                 "status": "finished",
+//             }
+//         ],
+//         "status": "finished"
+//     },
+//     {
+//         "number": 2,
+//         "brackets": [],
+//         "status": "pending"
+//     },
+//     {
+//         "number": 3,
+//         "brackets": [],
+//         "status": "pending"
+//     }
+// ],
+// "participants": [
+//     {
+//         "profile": {
+//             "username": "menaco",
+//             "nickname": "PrettyFrog",
+//             "avatar": "/media/avatars/menaco.jpg",
+//             "elo": 1579,
+//             "is_online": false
+//         },
+//         "alias": "NightHawk",
+//         "status": "qualified"
+//     },
+//     {
+//         "profile": {
+//             "username": "Rex",
+//             "nickname": "Good_boy",
+//             "avatar": "/media/avatars/rex.jpg",
+//             "elo": 2300,
+//             "is_online": false
+//         },
+//         "alias": "SilverWolf",
+//         "status": "eliminated"
+//     },
+//     {
+//         "profile": {
+//             "username": "Tama",
+//             "nickname": "flower_girl",
+//             "avatar": "/media/avatars/tama.jpg",
+//             "elo": 2877,
+//             "is_online": false
+//         },
+//         "alias": "flower_girl",
+//         "status": "eliminated"
+//     },
+//     {
+//         "profile": {
+//             "username": "Pedro",
+//             "nickname": "The_original",
+//             "avatar": "/media/avatars/pedro.jpg",
+//             "elo": 147,
+//             "is_online": true
+//         },
+//         "alias": "The_original",
+//         "status": "qualified"
+//     }
+// ],
+// "status": "ongoing",
+// "required_participants": 4,
+// "date": "2025-09-09T18:14:49.859Z",
+// "participants_count": 4,
+// "settings": {
+//     "game_speed": "medium",
+//     "score_to_win": 3,
+//     "time_limit": 1,
+//     "ranked": false,
+//     "cool_mode": true
+// },
+// "winner": null

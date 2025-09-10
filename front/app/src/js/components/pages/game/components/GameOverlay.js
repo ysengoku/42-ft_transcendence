@@ -52,7 +52,7 @@ export class GameOverlay extends HTMLElement {
     }
   }
 
-  hideOverlay() {
+  hide() {
     if (this.#intervalGameId) {
       clearInterval(this.#intervalGameId);
     }
@@ -82,7 +82,7 @@ export class GameOverlay extends HTMLElement {
           overlayMessageTimer.textContent = remainingTime;
           if (remainingTime <= 0) {
             clearInterval(this.#intervalGameId);
-            this.hideOverlay();
+            this.hide();
           }
         }, 1000);
         break;
@@ -122,7 +122,6 @@ export class GameOverlay extends HTMLElement {
         break;
     }
   }
-
 
   createPlayerResultElement(player, eloChange, isTournament) {
     const element = document.createElement('div');
