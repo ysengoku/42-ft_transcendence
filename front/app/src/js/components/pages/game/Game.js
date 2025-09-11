@@ -44,6 +44,11 @@ export class Game extends HTMLElement {
     this.scoreElement = null;
     this.lifePointElement = null;
     this.overlay = null;
+
+    this.modelRotation = [
+      [this.degreesToRadians(235), this.degreesToRadians(-90)],
+      [this.degreesToRadians(55), this.degreesToRadians(90)],
+    ];
   }
 
   async connectedCallback() {
@@ -105,6 +110,25 @@ export class Game extends HTMLElement {
     log.info('Game type:', this.#state.gameType);
   }
 
+  degreesToRadians(degrees) {
+    return degrees * (Math.PI / 180);
+  }
+
+  handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
+    const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 1;
+
+    if (currentAction != nextAction) {
+      ourBumper.gltfStore.action[currentAction].fadeOut(fadeTime);
+      ourBumper.gltfStore.action[nextAction].reset();
+      ourBumper.gltfStore.action[nextAction].fadeIn(fadeTime);
+      ourBumper.gltfStore.action[nextAction].play();
+      ourBumper.currentAction = nextAction;
+
+      if (ourBumper.modelChoosen == 0) ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][0];
+      else ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][1];
+    }
+  }
+
   createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback, Bumpers) {
     return (e) => {
       const tag = e.target.tagName.toLowerCase();
@@ -117,66 +141,30 @@ export class Game extends HTMLElement {
       var keyCode = e.code;
       if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == 'ai') {
         keyMap[keyCode] = true;
-        if (Bumpers[0].gltfStore.action) {
-          if (keyCode == 'ArrowLeft' && Bumpers[0].currentAction != 0 && Bumpers[0].currentAction != 1) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[0].reset();
-            Bumpers[0].gltfStore.action[0].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[0].play();
-            if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
-            else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
-            Bumpers[0].currentAction = 0;
+        if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
+          if (keyCode == 'ArrowLeft') {
+            this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
           }
-        }
-        if (keyCode == 'ArrowRight' && Bumpers[0].currentAction != 6 && Bumpers[0].currentAction != 1) {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.1);
-          Bumpers[0].gltfStore.action[6].reset();
-          Bumpers[0].gltfStore.action[6].fadeIn(0.1);
-          Bumpers[0].gltfStore.action[6].play();
-          if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
-          else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
-          Bumpers[0].currentAction = 6;
+          if (keyCode == 'ArrowRight') {
+            this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
+          }
         }
       } else if (this.#state.gameType != 'ai') {
         keyMap[keyCode] = true;
-        if (Bumpers[0].gltfStore.action) {
-          if (keyCode == 'ArrowLeft' && Bumpers[0].currentAction != 0) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[0].reset();
-            Bumpers[0].gltfStore.action[0].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[0].play();
-            if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
-            else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
-            Bumpers[0].currentAction = 0;
+        if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
+          if (keyCode == 'ArrowLeft') {
+            this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
           }
-          if (keyCode == 'ArrowRight' && Bumpers[0].currentAction != 5) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[5].reset();
-            Bumpers[0].gltfStore.action[5].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[5].play();
-            if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
-            else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
-            Bumpers[0].currentAction = 5;
+          if (keyCode == 'ArrowRight') {
+            this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
           }
         }
-        if (Bumpers[1].gltfStore.action) {
-          if (keyCode == 'KeyA' && Bumpers[1].currentAction != 5) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[5].reset();
-            Bumpers[1].gltfStore.action[5].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[5].play();
-            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
-            else Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
-            Bumpers[1].currentAction = 5;
+        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[5]) {
+          if (keyCode == 'KeyA') {
+            this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 5, 0.1);
           }
-          if (keyCode == 'KeyD' && Bumpers[1].currentAction != 0) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[0].reset();
-            Bumpers[1].gltfStore.action[0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[0].play();
-            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
-            else Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
-            Bumpers[1].currentAction = 0;
+          if (keyCode == 'KeyD') {
+            this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
           }
         }
       }
@@ -206,36 +194,20 @@ export class Game extends HTMLElement {
       }
       var keyCode = e.code;
       keyMap[keyCode] = false;
-      if (Bumpers[0].gltfStore.action) {
+      if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[2]) {
         if (keyCode == 'ArrowRight') {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.5);
-          Bumpers[0].gltfStore.action[2].reset();
-          Bumpers[0].gltfStore.action[2].fadeIn(0.5);
-          Bumpers[0].gltfStore.action[2].play();
-          Bumpers[0].currentAction = 2;
+          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
         }
         if (keyCode == 'ArrowLeft') {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.5);
-          Bumpers[0].gltfStore.action[2].reset();
-          Bumpers[0].gltfStore.action[2].fadeIn(0.5);
-          Bumpers[0].gltfStore.action[2].play();
-          Bumpers[0].currentAction = 2;
+          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
         }
       }
-      if (Bumpers[1].gltfStore.action) {
+      if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[2]) {
         if (keyCode == 'KeyA') {
-          Bumpers[1].gltfStore.action[Bumpers[1].currentAction].fadeOut(0.5);
-          Bumpers[1].gltfStore.action[2].reset();
-          Bumpers[1].gltfStore.action[2].fadeIn(0.5);
-          Bumpers[1].gltfStore.action[2].play();
-          Bumpers[1].currentAction = 2;
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
         }
         if (keyCode == 'KeyD') {
-          Bumpers[1].gltfStore.action[Bumpers[1].currentAction].fadeOut(0.5);
-          Bumpers[1].gltfStore.action[2].reset();
-          Bumpers[1].gltfStore.action[2].fadeIn(0.5);
-          Bumpers[1].gltfStore.action[2].play();
-          Bumpers[1].currentAction = 2;
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
         }
       }
       e.preventDefault();
@@ -297,8 +269,11 @@ export class Game extends HTMLElement {
         gameSpeed = 1.0;
         break;
     }
+    const degreesToRadians = this.degreesToRadians;
     const BUMPER_1_BORDER = -10;
     const BUMPER_2_BORDER = -BUMPER_1_BORDER;
+    const WALL_LEFT_X = 10;
+    const WALL_RIGHT_X = -WALL_LEFT_X;
     const BALL_DIAMETER = 1;
     const BALL_RADIUS = BALL_DIAMETER / 2;
     const SUBTICK = 0.05;
@@ -326,10 +301,6 @@ export class Game extends HTMLElement {
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
     camera.position.set(0, 12, -20);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-    function degreesToRadians(degrees) {
-      return degrees * (pi / 180);
-    }
 
     const modelCreate = (posX, posY, posZ, scaleX, scaleY, scaleZ, modelName) => {
       const modelGenerated = new THREE.Object3D();
@@ -377,7 +348,6 @@ export class Game extends HTMLElement {
     fillLight.castShadow = false;
 
     let carboardModels = [null, null, null];
-
     for (let i = 0; i <= 2; i++) {
       const carboardGlb = modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, carboardModelStates[i]);
       carboardGlb.rotation.y = pi / 2;
@@ -393,8 +363,8 @@ export class Game extends HTMLElement {
         cactusGlb,
       };
     };
-    const cacti = [];
 
+    const cacti = [];
     const placedCacti = [];
     const minDistance = 8;
 
@@ -440,17 +410,11 @@ export class Game extends HTMLElement {
     const Ball = ((posX, posY, posZ) => {
       const bulletGlb = modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
       bulletGlb.rotateX(pi / 2);
-      // const normalMaterial = new THREE.MeshNormalMaterial();
-      // const sphereGeometry = new THREE.SphereGeometry(0.5);
-      // const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
-      // sphereMesh.position.set(posX, posY, posZ);
-      // scene.add(sphereMesh);
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * gameSpeed);
 
       return {
-        // sphereMesh,
         bulletGlb,
         sphereUpdate,
         velocity,
@@ -717,6 +681,25 @@ export class Game extends HTMLElement {
         step = requestAnimationFrame(animate);
       }
     }
+
+    function startWithAi() {
+      if (!step && gameStateContainer.isGamePlaying) {
+        step = requestAnimationFrame(animate);
+      }
+    }
+
+    function startWithBuff() {
+      if (!step && gameStateContainer.isGamePlaying) {
+        step = requestAnimationFrame(animate);
+      }
+    }
+
+    function startWithAiAndBuff() {
+      if (!step && gameStateContainer.isGamePlaying) {
+        step = requestAnimationFrame(animate);
+      }
+    }
+
     function stop() {
       if (step) {
         cancelAnimationFrame(step);
@@ -772,27 +755,8 @@ export class Game extends HTMLElement {
     let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
-    const modelRotation = [
-      [degreesToRadians(235), degreesToRadians(-90)],
-      [degreesToRadians(55), degreesToRadians(90)],
-    ];
 
-    function handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
-      const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 0;
-
-      if (currentAction != nextAction) {
-        ourBumper.gltfStore.action[currentAction].fadeOut(fadeTime);
-        ourBumper.gltfStore.action[nextAction].reset();
-        ourBumper.gltfStore.action[nextAction].fadeIn(fadeTime);
-        ourBumper.gltfStore.action[nextAction].play();
-        ourBumper.currentAction = nextAction;
-
-        if (ourBumper.modelChoosen == 0) ourBumper.playerGlb.rotation.y = modelRotation[ourBumperIndex][0];
-        else ourBumper.playerGlb.rotation.y = modelRotation[ourBumperIndex][1];
-      }
-    }
-
-    function moveAiBumper(calculatedPos) {
+    const moveAiBumper = (calculatedPos) => {
       keyMap['KeyA'] = false;
       keyMap['KeyD'] = false;
 
@@ -801,21 +765,21 @@ export class Game extends HTMLElement {
         calculatedBumperPos.x += bumperP2Subtick;
 
         if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0]) {
-          handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
         }
       } else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2) {
         keyMap['KeyD'] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
 
         if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[6]) {
-          handleAnimations(Bumpers[1], Bumpers[1].currentAction, 6, 0.1);
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 6, 0.1);
         }
       } else {
         if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[6]) {
-          handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
         }
       }
-    }
+    };
 
     let isMovementDone = false;
     let isCalculationNeeded = true;
@@ -876,12 +840,12 @@ export class Game extends HTMLElement {
           while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf) {
             const totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x * gameSpeed);
 
-            if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-              ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+            if (ballPredictedPos.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF) {
+              ballPredictedPos.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF;
               BallPredictedVelocity.x *= -1;
             }
-            if (ballPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-              ballPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+            if (ballPredictedPos.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF) {
+              ballPredictedPos.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF;
               BallPredictedVelocity.x *= -1;
             }
 
@@ -1142,6 +1106,85 @@ export class Game extends HTMLElement {
       Workers[5].postMessage([30000, -1, 'create']);
     };
 
+    function checkWallCollision() {
+      if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
+        Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+        Ball.velocity.x *= -1;
+        Ball.bulletGlb.rotation.x *= -1;
+        // if (lastBumperCollided == 0) isCalculationNeeded = true;
+      }
+      if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
+        Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+        Ball.velocity.x *= -1;
+        Ball.bulletGlb.rotation.x *= -1;
+        // if (lastBumperCollided == 0) isCalculationNeeded = true;
+      }
+    }
+
+    function checkBumperCollision() {
+      if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
+        lastBumperCollided = 0;
+        isMovementDone = false;
+        isCalculationNeeded = true;
+        calculateNewDir(Bumpers[0]);
+      } else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
+        lastBumperCollided = 1;
+        isMovementDone = true;
+        calculateNewDir(Bumpers[1]);
+      }
+    }
+
+    function checkBallScored() {
+      if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
+        isMovementDone = true;
+        Bumpers[0].score++;
+        resetBall(-1);
+        if (Bumpers[0].score <= MAX_SCORE) scoreUI?.updateScore(0, Bumpers[0].score);
+      } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
+        isMovementDone = false;
+        isCalculationNeeded = true;
+        Bumpers[1].score++;
+        resetBall(1);
+        if (Bumpers[1].score <= MAX_SCORE) scoreUI?.updateScore(1, Bumpers[1].score);
+      }
+    }
+
+    function manageBumperMovements() {
+      if (
+        ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
+          (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
+        !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
+      ) {
+        Bumpers[0].cubeUpdate.x += bumperP1Subtick;
+        Bumpers[0].playerGlb.position.x += bumperP1Subtick;
+      }
+      if (
+        ((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) ||
+          (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) &&
+        !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
+      ) {
+        Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
+        Bumpers[0].playerGlb.position.x -= bumperP1Subtick;
+      }
+
+      if (
+        ((keyMap['KeyD'] == true && Bumpers[1].controlReverse) ||
+          (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) &&
+        !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
+      ) {
+        Bumpers[1].cubeUpdate.x += bumperP2Subtick;
+        Bumpers[1].playerGlb.position.x += bumperP2Subtick;
+      }
+      if (
+        ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
+          (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
+        !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
+      ) {
+        Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
+        Bumpers[1].playerGlb.position.x -= bumperP2Subtick;
+      }
+    }
+
     var clock = new THREE.Clock();
     function animate() {
       delta = clock.getDelta();
@@ -1157,78 +1200,15 @@ export class Game extends HTMLElement {
       bumperP1Subtick = Bumpers[0].speed / totalSubticks;
       bumperP2Subtick = Bumpers[1].speed / totalSubticks;
       while (currentSubtick <= totalSubticks) {
-        if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-          Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
-          Ball.velocity.x *= -1;
-          Ball.bulletGlb.rotation.x *= -1;
-          // if (lastBumperCollided == 0) isCalculationNeeded = true;
-        }
-        if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-          Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
-          Ball.velocity.x *= -1;
-          Ball.bulletGlb.rotation.x *= -1;
-          // if (lastBumperCollided == 0) isCalculationNeeded = true;
-        }
-        if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
-          lastBumperCollided = 0;
-          isMovementDone = false;
-          isCalculationNeeded = true;
-          calculateNewDir(Bumpers[0]);
-        } else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
-          lastBumperCollided = 1;
-          isMovementDone = true;
-          calculateNewDir(Bumpers[1]);
-        }
-        if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
-          isMovementDone = true;
-          Bumpers[0].score++;
-          // console.log(Bumpers[0].score);
-          resetBall(-1);
-          if (Bumpers[0].score <= MAX_SCORE) scoreUI?.updateScore(0, Bumpers[0].score);
-        } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
-          isMovementDone = false;
-          isCalculationNeeded = true;
-          Bumpers[1].score++;
-          // console.log(Bumpers[1].score);
-          resetBall(1);
-          if (Bumpers[1].score <= MAX_SCORE) scoreUI?.updateScore(1, Bumpers[1].score);
-        }
+        checkWallCollision();
+        checkBumperCollision();
+        checkBallScored();
+        manageBumperMovements();
+
         if (Coin != null && isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
           manageBuffAndDebuff();
         }
-        if (
-          ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
-            (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
-          !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
-        ) {
-          Bumpers[0].cubeUpdate.x += bumperP1Subtick;
-          Bumpers[0].playerGlb.position.x += bumperP1Subtick;
-        }
-        if (
-          ((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) ||
-            (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) &&
-          !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
-        ) {
-          Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
-          Bumpers[0].playerGlb.position.x -= bumperP1Subtick;
-        }
 
-        if (
-          ((keyMap['KeyD'] == true && Bumpers[1].controlReverse) ||
-            (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) &&
-          !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
-        ) {
-          Bumpers[1].cubeUpdate.x += bumperP2Subtick;
-          Bumpers[1].playerGlb.position.x += bumperP2Subtick;
-        }
-        if (
-          ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
-            (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
-          !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
-        ) {
-          Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
-          Bumpers[1].playerGlb.position.x -= bumperP2Subtick;
-        }
         Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
         if (Coin != null) {
           if (
@@ -1257,6 +1237,7 @@ export class Game extends HTMLElement {
         camera.position.set(-10, 15, -20);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
       }
+      console.log(Bumpers[0].cubeUpdate.x);
       Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(
         Bumpers[0].cubeUpdate.x,
         Bumpers[0].cubeUpdate.y,
