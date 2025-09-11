@@ -351,7 +351,7 @@ class BasePong:
         if ball_vel_x < 0:
             wall_x = WALL_RIGHT_X + WALL_WIDTH_HALF
             t = (wall_x + BALL_RADIUS - self._ball.x) / ball_vel_x
-            if 0 < t <= earliest_time:
+            if -EPSILON <= t <= earliest_time:
                 logger.debug(
                     "COLLISION: left wall - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f",
                     t,
@@ -366,7 +366,7 @@ class BasePong:
         elif ball_vel_x > 0:
             wall_x = WALL_LEFT_X - WALL_WIDTH_HALF
             t = (wall_x - BALL_RADIUS - self._ball.x) / ball_vel_x
-            if 0 < t <= earliest_time:
+            if -EPSILON <= t <= earliest_time:
                 logger.debug(
                     "COLLISION: right wall - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f",
                     t,
@@ -393,7 +393,7 @@ class BasePong:
                 bumper.lenght_half,
                 bumper.width_half,
             )
-            if 0 < t <= earliest_time:
+            if -EPSILON <= t <= earliest_time:
                 logger.debug(
                     "COLLISION: %s - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f, bumper.x=%f, bumper_vel=%f",
                     name,
@@ -421,7 +421,7 @@ class BasePong:
                 COIN_LENGTH_HALF,
                 COIN_WIDTH_HALF,
             )
-            if 0 < t <= earliest_time:
+            if -EPSILON <= t <= earliest_time:
                 logger.debug(
                     "COLLISION: coin - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f",
                     t,
@@ -436,7 +436,7 @@ class BasePong:
         # SCOOOOORE for bumperino uno
         if ball_vel_z > 0:
             t = (BUMPER_2_BORDER - self._ball.z) / ball_vel_z
-            if 0 < t <= earliest_time:
+            if -EPSILON <= t <= earliest_time:
                 logger.debug(
                     "COLLISION: score! - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f, bumper_2.x=%f",
                     t,
@@ -451,7 +451,7 @@ class BasePong:
         # SCOOOOORE for bumperino dos
         if ball_vel_z < 0:
             t = (BUMPER_1_BORDER - self._ball.z) / ball_vel_z
-            if 0 < t <= earliest_time:
+            if -EPSILON <= t <= earliest_time:
                 logger.debug(
                     "COLLISION: score! - t=%f, earliest_time=%f, ball.x=%f, ball.z=%f, bumper_1.x=%f",
                     t,
@@ -636,8 +636,8 @@ class BasePong:
 
     def _resolve_ball_bumper_penetration(self, bumper: Bumper):
         """
-        Checks if the ball is penetrating the bumper. If it is, resolves it by correcting its positions, by pushing its
-
+        Checks if the ball is penetrating the bumper. If it is, resolves it by correcting its positions, by pushing it
+        outside.
         """
         ball_left = self._ball.x - BALL_RADIUS
         ball_right = self._ball.x + BALL_RADIUS
@@ -678,6 +678,9 @@ class BasePong:
                     self._ball.z = bumper_bottom - BALL_RADIUS - push_epsilon
                 else:
                     self._ball.z = bumper_top + BALL_RADIUS + push_epsilon
+                self._ball.x = max(min_ball_x, min(self._ball.x, max_ball_x))
+            logger.debug("PENETRATION RESOLVED: x_overlap=%f, z_overlap=%f, ball.x=%f, ball.z=%f, bumper.x=%f,"
+                         " bumper.z=%f", x_overlap, z_overlap, self._ball.x, self._ball.z, bumper.x, bumper.z)
 
     def _apply_coin_buff(self, current_time: float):
         """Applies one of the buffs to the player who scored the coin. Or debuffs their opponent."""
