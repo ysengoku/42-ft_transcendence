@@ -709,47 +709,47 @@ export class MultiplayerGame extends HTMLElement {
       }
 
       let targetPlayer = null;
-      let showBuffIcon = false;
+      let isUserAffected = false;
       if (serverState.bumper_1.buff_or_debuff_target) {
         targetPlayer = Bumpers[0];
-        showBuffIcon = clientState.playerNumber === 1 ? true : false;
+        isUserAffected = clientState.playerNumber === 1 ? true : false;
       } else if (serverState.bumper_2.buff_or_debuff_target) {
         targetPlayer = Bumpers[1];
-        showBuffIcon = clientState.playerNumber === 2 ? true : false;
+        isUserAffected = clientState.playerNumber === 2 ? true : false;
       }
 
       if (targetPlayer) {
         switch (serverState.current_buff_or_debuff) {
           case Buff.CONTROL_REVERSE_ENEMY:
             targetPlayer.controlReverse = true;
-            if (showBuffIcon) {
-              this.buffIconElement?.show(BUFF_TYPE.SWITCH);
-            }
+            isUserAffected
+              ? this.buffIconElement?.show(BUFF_TYPE.SWITCH)
+              : this.buffIconElement?.show(BUFF_TYPE.SWITCH, true);
             break;
           case Buff.SPEED_DECREASE_ENEMY:
             targetPlayer.speed = BUMPER_SPEED_PER_SECOND * 0.1;
-            if (showBuffIcon) {
-              this.buffIconElement?.show(BUFF_TYPE.SLOW);
-            }
+            isUserAffected
+              ? this.buffIconElement?.show(BUFF_TYPE.SLOW)
+              : this.buffIconElement?.show(BUFF_TYPE.SLOW, true);
             break;
           case Buff.SHORTEN_ENEMY:
             targetPlayer.cubeMesh.scale.x = 0.5;
             targetPlayer.lenghtHalf = 1.25;
-            if (showBuffIcon) {
+            if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.SHORT);
             }
             break;
           case Buff.ELONGATE_PLAYER:
             targetPlayer.cubeMesh.scale.x = 2;
             targetPlayer.lenghtHalf = 5;
-            if (showBuffIcon) {
+            if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.LONG);
             }
             break;
           case Buff.ENLARGE_PLAYER:
             targetPlayer.cubeMesh.scale.z = 3;
             targetPlayer.widthHalf = 1.5;
-            if (showBuffIcon) {
+            if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.LARGE);
             }
             break;

@@ -145,7 +145,7 @@ export class GameOverlay extends HTMLElement {
     if (this.#gameType === 'multiplayer' && player.elo && showElo) {
       const eloWrapper = element.querySelector('.overlay-player-elo');
       eloWrapper.querySelector('.game-elo').textContent = player.elo;
-      eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi i-arrow-down-right';
+      eloWrapper.querySelector('i').className = player.winner ? 'bi bi-arrow-up-right' : 'bi bi-arrow-down-right';
       eloWrapper.querySelector('.game-elo-change').textContent = player.winner ? `+${eloChange}` : `-${eloChange}`;
     }
     return element;

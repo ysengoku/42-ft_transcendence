@@ -28,7 +28,7 @@ export class GameBuffIcon extends HTMLElement {
     this.render();
   }
 
-  show(type) {
+  show(type, isForOpponent = false) {
     if (this.#state.shown) {
       return;
     }
@@ -54,6 +54,7 @@ export class GameBuffIcon extends HTMLElement {
       }
     }
     this.iconWrapper.classList.remove('d-none');
+    isForOpponent ? this.iconText.classList.remove('d-none') : this.iconText.classList.add('d-none');
     this.iconWrapper.classList.add('pop-in');
     setTimeout(() => {
       this.iconWrapper.classList.remove('pop-in');
@@ -75,12 +76,14 @@ export class GameBuffIcon extends HTMLElement {
     this.innerHTML = this.style() + this.template();
     this.iconWrapper = this.querySelector('#game-buffer-icon-wrapper');
     this.icon = this.querySelector('#game-buffer-icon');
+    this.iconText = this.querySelector('#game-buffer-icon-text');
   }
 
   template() {
     return `
-    <div id="game-buffer-icon-wrapper" class="d-flex flex-row justify-content-center align-items-center m-3 d-none">
+    <div id="game-buffer-icon-wrapper" class="d-flex flex-column justify-content-center align-items-center m-3 d-none">
       <img id="game-buffer-icon"alt="Buffer"/>
+      <p id="game-buffer-icon-text" class="fs-6 fw-bold d-none">Opponent Debuffed</p>
     </div>
     `;
   }
@@ -97,6 +100,8 @@ export class GameBuffIcon extends HTMLElement {
       width: 120px;
       height: 120px;
     }
+    #game-buffer-icon-text {
+      color: var(--pm-primary-100);
     </style>
     `;
   }
