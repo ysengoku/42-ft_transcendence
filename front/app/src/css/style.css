@@ -383,7 +383,7 @@ input[type="button"] {
 
 a:active, button:active, 
 div [role="button"]:active, input[type="submit"]:active, input[type="button"]:active {
-  cursor: url('/img/sample-cursor-active.png') 4 4, auto !important;
+  cursor: url('/img/cursor-active.png') 4 4, auto !important;
 }
 
 /*--------------------------------------------------------------------------- */
