@@ -45,16 +45,6 @@ class Participant(models.Model):
     def __str__(self):
         return f"{self.alias} ({self.tournament.name})"
 
-    async def async_set_eliminated(self):
-        self.status = self.ELIMINATED
-        await database_sync_to_async(self.save)()
-        return self
-
-    async def async_set_qualified(self):
-        self.status = self.QUALIFIED
-        await database_sync_to_async(self.save)()
-        return self
-
     def set_qualified(self):
         self.status = self.QUALIFIED
         self.save()
