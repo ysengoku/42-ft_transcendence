@@ -312,6 +312,8 @@ class TournamentWorkerConsumer(AsyncConsumer):
             bracket.participant1.save(update_fields=["excluded", "status"])
             bracket.participant2.save(update_fields=["excluded", "status"])
             bracket.save(update_fields=["status", "winner"])
+            gameroom = GameRoom.objects.get(id=bracket.game_id)
+            gameroom.set_closed()
         p1_id = bracket.participant1.profile.user.id
         p2_id = bracket.participant2.profile.user.id
         return p1_id, p2_id

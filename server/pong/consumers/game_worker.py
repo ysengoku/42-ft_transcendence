@@ -1150,6 +1150,9 @@ class GameWorkerConsumer(AsyncConsumer):
                     # someone scored more than the other
                     if result:
                         winner, loser = result
+                        logger.info("[GameWorker]: match {%s} has result : %s", match.id, result)
+                        logger.info("[GameWorker]: match {%s} has winner : %s",  match.id, winner)
+                        logger.info("[GameWorker]: match {%s} has loser : %s",  match.id, loser)
 
                         match_db = await self._write_result_to_db(winner, loser, match, "finished")
                         await self._send_player_won_event(
