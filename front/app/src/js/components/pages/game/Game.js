@@ -119,21 +119,20 @@ export class Game extends HTMLElement {
         keyMap[keyCode] = true;
         if (Bumpers[0].gltfStore.action) {
           if (keyCode == 'ArrowLeft' && Bumpers[0].currentAction != 0 && Bumpers[0].currentAction != 1) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[0][0].reset();
-            Bumpers[0].gltfStore.action[0][0].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[0][0].play();
+            Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.1);
+            Bumpers[0].gltfStore.action[0].reset();
+            Bumpers[0].gltfStore.action[0].fadeIn(0.1);
+            Bumpers[0].gltfStore.action[0].play();
             if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
             else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
             Bumpers[0].currentAction = 0;
           }
         }
         if (keyCode == 'ArrowRight' && Bumpers[0].currentAction != 6 && Bumpers[0].currentAction != 1) {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.1);
-          Bumpers[0].gltfStore.action[6][0].reset();
-          Bumpers[0].gltfStore.action[6][0].fadeIn(0.1);
-          Bumpers[0].gltfStore.action[6][0].play();
-          Bumpers[0].gltfStore.action[6][1] = true;
+          Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.1);
+          Bumpers[0].gltfStore.action[6].reset();
+          Bumpers[0].gltfStore.action[6].fadeIn(0.1);
+          Bumpers[0].gltfStore.action[6].play();
           if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
           else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
           Bumpers[0].currentAction = 6;
@@ -142,20 +141,19 @@ export class Game extends HTMLElement {
         keyMap[keyCode] = true;
         if (Bumpers[0].gltfStore.action) {
           if (keyCode == 'ArrowLeft' && Bumpers[0].currentAction != 0) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[0][0].reset();
-            Bumpers[0].gltfStore.action[0][0].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[0][0].play();
+            Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.1);
+            Bumpers[0].gltfStore.action[0].reset();
+            Bumpers[0].gltfStore.action[0].fadeIn(0.1);
+            Bumpers[0].gltfStore.action[0].play();
             if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
             else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
             Bumpers[0].currentAction = 0;
           }
           if (keyCode == 'ArrowRight' && Bumpers[0].currentAction != 5) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[5][0].reset();
-            Bumpers[0].gltfStore.action[5][0].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[5][0].play();
-            Bumpers[0].gltfStore.action[5][1] = true;
+            Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.1);
+            Bumpers[0].gltfStore.action[5].reset();
+            Bumpers[0].gltfStore.action[5].fadeIn(0.1);
+            Bumpers[0].gltfStore.action[5].play();
             if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
             else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
             Bumpers[0].currentAction = 5;
@@ -163,19 +161,19 @@ export class Game extends HTMLElement {
         }
         if (Bumpers[1].gltfStore.action) {
           if (keyCode == 'KeyA' && Bumpers[1].currentAction != 5) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[5][0].reset();
-            Bumpers[1].gltfStore.action[5][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[5][0].play();
+            Bumpers[1].gltfStore.action[Bumpers[1].currentAction].fadeOut(0.1);
+            Bumpers[1].gltfStore.action[5].reset();
+            Bumpers[1].gltfStore.action[5].fadeIn(0.1);
+            Bumpers[1].gltfStore.action[5].play();
             if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
             else Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
             Bumpers[1].currentAction = 5;
           }
           if (keyCode == 'KeyD' && Bumpers[1].currentAction != 0) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[0][0].reset();
-            Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[0][0].play();
+            Bumpers[1].gltfStore.action[Bumpers[1].currentAction].fadeOut(0.1);
+            Bumpers[1].gltfStore.action[0].reset();
+            Bumpers[1].gltfStore.action[0].fadeIn(0.1);
+            Bumpers[1].gltfStore.action[0].play();
             if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
             else Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
             Bumpers[1].currentAction = 0;
@@ -210,33 +208,33 @@ export class Game extends HTMLElement {
       keyMap[keyCode] = false;
       if (Bumpers[0].gltfStore.action) {
         if (keyCode == 'ArrowRight') {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.5);
-          Bumpers[0].gltfStore.action[2][0].reset();
-          Bumpers[0].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[0].gltfStore.action[2][0].play();
+          Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.5);
+          Bumpers[0].gltfStore.action[2].reset();
+          Bumpers[0].gltfStore.action[2].fadeIn(0.5);
+          Bumpers[0].gltfStore.action[2].play();
           Bumpers[0].currentAction = 2;
         }
         if (keyCode == 'ArrowLeft') {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.5);
-          Bumpers[0].gltfStore.action[2][0].reset();
-          Bumpers[0].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[0].gltfStore.action[2][0].play();
+          Bumpers[0].gltfStore.action[Bumpers[0].currentAction].fadeOut(0.5);
+          Bumpers[0].gltfStore.action[2].reset();
+          Bumpers[0].gltfStore.action[2].fadeIn(0.5);
+          Bumpers[0].gltfStore.action[2].play();
           Bumpers[0].currentAction = 2;
         }
       }
       if (Bumpers[1].gltfStore.action) {
         if (keyCode == 'KeyA') {
-          Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.5);
-          Bumpers[1].gltfStore.action[2][0].reset();
-          Bumpers[1].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[1].gltfStore.action[2][0].play();
+          Bumpers[1].gltfStore.action[Bumpers[1].currentAction].fadeOut(0.5);
+          Bumpers[1].gltfStore.action[2].reset();
+          Bumpers[1].gltfStore.action[2].fadeIn(0.5);
+          Bumpers[1].gltfStore.action[2].play();
           Bumpers[1].currentAction = 2;
         }
         if (keyCode == 'KeyD') {
-          Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.5);
-          Bumpers[1].gltfStore.action[2][0].reset();
-          Bumpers[1].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[1].gltfStore.action[2][0].play();
+          Bumpers[1].gltfStore.action[Bumpers[1].currentAction].fadeOut(0.5);
+          Bumpers[1].gltfStore.action[2].reset();
+          Bumpers[1].gltfStore.action[2].fadeIn(0.5);
+          Bumpers[1].gltfStore.action[2].play();
           Bumpers[1].currentAction = 2;
         }
       }
@@ -333,6 +331,32 @@ export class Game extends HTMLElement {
       return degrees * (pi / 180);
     }
 
+    const modelCreate = (posX, posY, posZ, scaleX, scaleY, scaleZ, modelName) => {
+      const modelGenerated = new THREE.Object3D();
+      this.loaderModel.load(
+        modelName,
+        function (gltf) {
+          const model = gltf.scene;
+          model.traverse(function (node) {
+            if (node.isMesh) {
+              node.castShadow = true;
+            }
+          });
+          model.position.x = posX;
+          model.position.y = posY;
+          model.position.z = posZ;
+          modelGenerated.add(gltf.scene);
+          gltf.scene.scale.set(scaleX, scaleY, scaleZ);
+        },
+        undefined,
+        function (error) {
+          console.error(error);
+        },
+      );
+      scene.add(modelGenerated);
+      return modelGenerated;
+    };
+
     const sunLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
     sunLight.position.set(25, 35, -50);
     sunLight.target.position.set(0, 0, 0);
@@ -355,73 +379,16 @@ export class Game extends HTMLElement {
     let carboardModels = [null, null, null];
 
     for (let i = 0; i <= 2; i++) {
-      const carboardGlb = (() => {
-        const carboardModel = new THREE.Object3D();
-        this.loaderModel.load(
-          carboardModelStates[i],
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.z = 0;
-            model.position.x = 0;
-            carboardModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        carboardModel.scale.set(1.6, 1.6, 2.2);
-        scene.add(carboardModel);
-        return carboardModel;
-      })();
+      const carboardGlb = modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, carboardModelStates[i]);
       carboardGlb.rotation.y = pi / 2;
-      carboardGlb.position.z = 15;
       carboardModels[i] = carboardGlb;
     }
     carboardModels[1].visible = false;
     carboardModels[2].visible = false;
 
     const CactusFactory = (posX, posY, posZ) => {
-      const cactusGlb = (() => {
-        const cactusModel = new THREE.Object3D();
-        this.loaderModel.load(
-          cactus,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.z = 0;
-            model.position.x = 0;
-            cactusModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        cactusModel.scale.set(1.8, 1.8, 1.8);
-        scene.add(cactusModel);
-        return cactusModel;
-      })();
-
-      cactusGlb.position.x = posX;
-      cactusGlb.position.y = posY;
-      cactusGlb.position.z = posZ;
-      cactusGlb.rotation.y = degreesToRadians(Math.random() * 360);
-      cactusGlb.castShadow = true;
-      cactusGlb.receiveShadow = true;
-      scene.add(cactusGlb);
-
+      const cactusGlb = modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
+      cactusGlb.rotateY(degreesToRadians(Math.random() * 360));
       return {
         cactusGlb,
       };
@@ -440,7 +407,7 @@ export class Game extends HTMLElement {
         attempts++;
         if (attempts > 50) break;
       } while (
-        (x > -11.65 && x < 11.65 && z > -18 && z < 18) ||
+        (x > -13.65 && x < 13.65 && z > -15 && z < 15) ||
         placedCacti.some((cactus) => Math.sqrt((x - cactus.x) ** 2 + (z - cactus.z) ** 2) < minDistance)
       );
       return { x, z };
@@ -471,47 +438,25 @@ export class Game extends HTMLElement {
     }
 
     const Ball = ((posX, posY, posZ) => {
-      const bulletGlb = (() => {
-        const bulletModel = new THREE.Object3D();
-        this.loaderModel.load(
-          bullet,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = posY;
-            model.position.z = posZ;
-            model.position.x = posX;
-            model.rotation.x = pi / 2;
-            bulletModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        bulletModel.scale.set(1, 1, 1);
-        scene.add(bulletModel);
-        return bulletModel;
-      })();
-      bulletGlb.castShadow = true;
-      bulletGlb.receiveShadow = true;
-      scene.add(bulletGlb);
-
+      const bulletGlb = modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
+      bulletGlb.rotateX(pi / 2);
+      // const normalMaterial = new THREE.MeshNormalMaterial();
+      // const sphereGeometry = new THREE.SphereGeometry(0.5);
+      // const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
+      // sphereMesh.position.set(posX, posY, posZ);
+      // scene.add(sphereMesh);
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * gameSpeed);
 
       return {
+        // sphereMesh,
         bulletGlb,
         sphereUpdate,
         velocity,
         temporalSpeed,
       };
-    })(0, 1, 0);
+    })(0, 0, 0);
 
     const createHill = (posX, posZ, width, height) => {
       const baseGeometry = new THREE.CylinderGeometry(width * 1.5, width * 2, height * 0.3, 8);
@@ -525,7 +470,6 @@ export class Game extends HTMLElement {
       const hillMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
       const hill = new THREE.Mesh(hillGeometry, hillMaterial);
       hill.position.set(posX, height * 0.3, posZ);
-      hill.scale.y = 0.6;
       hill.receiveShadow = true;
       scene.add(hill);
 
@@ -547,118 +491,13 @@ export class Game extends HTMLElement {
       var _ = {};
       let modelsGlb;
       let animations = [];
-      _.action = [
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-      ];
+      _.action = [null, null, null, null, null, null, null, null];
 
-      const tableGlb = (() => {
-        const tableModel = new THREE.Object3D();
-        this.loaderModel.load(
-          table,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0.45;
-            model.position.z = 0;
-            model.position.x = 0.04;
-            tableModel.add(gltf.scene);
-            gltf.scene.scale.set(0.48, 0.5, 0.5);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        scene.add(tableModel);
-        return tableModel;
-      })();
+      const tableGlb = modelCreate(0.04, 0.45, 0, 0.48, 0.5, 0.5, table);
       if (gameOptionsQuery.cool_mode == true) {
-        const dressingGlb = (() => {
-          const dressingModel = new THREE.Object3D();
-          this.loaderModel.load(
-            dressing,
-            function (gltf) {
-              gltf.scene.traverse(function (node) {
-                if (node.isMesh) {
-                  node.castShadow = true;
-                }
-              });
-              const model = gltf.scene;
-              model.position.y = 0;
-              model.position.z = 0;
-              model.position.x = 0.3;
-              dressingModel.add(gltf.scene);
-              gltf.scene.scale.set(0.7, 0.3031, 0.6788);
-            },
-            undefined,
-            function (error) {
-              console.error(error);
-            },
-          );
-          scene.add(dressingModel);
-          return dressingModel;
-        })();
-        const couchGlb = (() => {
-          const couchModel = new THREE.Object3D();
-          this.loaderModel.load(
-            couch,
-            function (gltf) {
-              gltf.scene.traverse(function (node) {
-                if (node.isMesh) {
-                  node.castShadow = true;
-                }
-              });
-              const model = gltf.scene;
-              model.position.y = -2.0795;
-              model.position.z = -7.8925;
-              model.position.x = 0.5;
-              couchModel.add(gltf.scene);
-              gltf.scene.scale.set(1.4, 1, 1.23);
-            },
-            undefined,
-            function (error) {
-              console.error(error);
-            },
-          );
-          scene.add(couchModel);
-          return couchModel;
-        })();
-        const chairGlb = (() => {
-          const chairModel = new THREE.Object3D();
-          this.loaderModel.load(
-            chair,
-            function (gltf) {
-              gltf.scene.traverse(function (node) {
-                if (node.isMesh) {
-                  node.castShadow = true;
-                }
-              });
-              const model = gltf.scene;
-              model.position.y = 0.42;
-              model.position.z = -0.1;
-              model.position.x = -0.01;
-              chairModel.add(gltf.scene);
-              gltf.scene.scale.set(1.35, 0.9, 1.2);
-            },
-            undefined,
-            function (error) {
-              console.error(error);
-            },
-          );
-          scene.add(chairModel);
-          return chairModel;
-        })();
+        const dressingGlb = modelCreate(0.3, 0, 0, 0.7, 0.3031, 0.6788, dressing);
+        const couchGlb = modelCreate(0.5, -2.0795, -7.8925, 1.4, 1, 1.23, couch);
+        const chairGlb = modelCreate(-0.1, 0.42, -0.1, 1.35, 0.9, 1.2, chair);
         if (posZ < 0) {
           couchGlb.rotation.x = pi / 2;
           couchGlb.rotation.z = pi;
@@ -691,16 +530,15 @@ export class Game extends HTMLElement {
             _.mixer = new THREE.AnimationMixer(model);
             animations = gltf.animations;
             for (let i = 0; i <= 7; i++) {
-              _.action[i][0] = _.mixer.clipAction(animations[i], model);
-              _.action[i][1] = false;
+              _.action[i] = _.mixer.clipAction(animations[i], model);
             }
-            _.action[1][0].setLoop(THREE.LoopOnce, 1);
-            _.action[1][0].setDuration(0.4);
-            _.action[0][0].setDuration(0.18);
-            _.action[7][0].setDuration(0.18);
-            _.action[6][0].setDuration(0.18);
-            _.action[5][0].setDuration(0.18);
-            _.action[2][0].play();
+            _.action[1].setLoop(THREE.LoopOnce, 1);
+            _.action[1].setDuration(0.4);
+            _.action[0].setDuration(0.18);
+            _.action[7].setDuration(0.18);
+            _.action[6].setDuration(0.18);
+            _.action[5].setDuration(0.18);
+            _.action[2].play();
             pedroModel.add(gltf.scene);
           },
           undefined,
@@ -799,56 +637,22 @@ export class Game extends HTMLElement {
       };
     };
 
-    /* eslint-disable new-cap */
     const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
 
     const WallFactory = (posX, posY, posZ) => {
-      const fenceGlb = (() => {
-        const fenceModel = new THREE.Object3D();
-        this.loaderModel.load(
-          fence,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.z = 0;
-            model.position.x = 0;
-            fenceModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        fenceModel.scale.set(0.8, 0.5, 1);
-        scene.add(fenceModel);
-        return fenceModel;
-      })();
-
-      fenceGlb.position.x = posX;
-      fenceGlb.position.y = posY;
-      fenceGlb.position.z = posZ;
-      fenceGlb.rotation.y = -pi / 2;
-      fenceGlb.castShadow = true;
-      fenceGlb.receiveShadow = true;
-      scene.add(fenceGlb);
-
+      const fenceGlb = modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
+      fenceGlb.rotateY(-pi / 2);
       return {
         fenceGlb,
       };
     };
-    /* eslint-disable new-cap */
     const Walls = [
-      WallFactory(9.65, 1.3, 0),
-      WallFactory(9.65, 1.3, 6),
-      WallFactory(9.65, 1.3, -6),
-      WallFactory(-9.65, 1.3, 6),
-      WallFactory(-9.65, 1.3, -6),
-      WallFactory(-9.65, 1.3, 0),
+      WallFactory(0, 1.3, 9.65),
+      WallFactory(6, 1.3, 9.65),
+      WallFactory(-6, 1.3, 9.65),
+      WallFactory(6, 1.3, -9.65),
+      WallFactory(-6, 1.3, -9.65),
+      WallFactory(0, 1.3, -9.65),
     ];
 
     (() => {
@@ -920,9 +724,7 @@ export class Game extends HTMLElement {
       }
     }
     let scoreSwitch = MAX_SCORE / 3;
-    let choosenDifficulty = 2;
-    let stableDifficulty = 2;
-    let lastSignificantScoreDiff = 0;
+
     function resetBall(direction) {
       const looserBumper = direction < 0 ? 1 : 0;
       lifePointUI?.decreasePoint(looserBumper, 20 / MAX_SCORE);
@@ -939,28 +741,20 @@ export class Game extends HTMLElement {
       }
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
-      // if (isGameAi == 'ai' && choosenDifficulty < 5 && choosenDifficulty >= 0)
-      // {
-      //   looserBumper == 1
-      //     ? choosenDifficulty++
-      //     : choosenDifficulty > 0
-      //       ? choosenDifficulty--
-      //       : null;
 
-      // }
       lastBumperCollided = looserBumper;
       Ball.sphereUpdate.x = Bumpers[looserBumper].playerGlb.position.x;
       Ball.sphereUpdate.z = Bumpers[looserBumper].playerGlb.position.z + 2 * direction;
-      Bumpers[looserBumper].gltfStore.action[Bumpers[looserBumper].currentAction][0].fadeOut(0.1);
-      Bumpers[looserBumper].gltfStore.action[1][0].reset();
-      Bumpers[looserBumper].gltfStore.action[1][0].fadeIn(0.1);
-      Bumpers[looserBumper].gltfStore.action[1][0].play();
+      Bumpers[looserBumper].gltfStore.action[Bumpers[looserBumper].currentAction].fadeOut(0.1);
+      Bumpers[looserBumper].gltfStore.action[1].reset();
+      Bumpers[looserBumper].gltfStore.action[1].fadeIn(0.1);
+      Bumpers[looserBumper].gltfStore.action[1].play();
       Bumpers[looserBumper].currentAction = 1;
       if (Bumpers[looserBumper].currentAction == 1) {
-        Bumpers[looserBumper].gltfStore.action[1][0].fadeOut(0.3);
-        Bumpers[looserBumper].gltfStore.action[2][0].reset();
-        Bumpers[looserBumper].gltfStore.action[2][0].fadeIn(0.3);
-        Bumpers[looserBumper].gltfStore.action[2][0].play();
+        Bumpers[looserBumper].gltfStore.action[1].fadeOut(0.3);
+        Bumpers[looserBumper].gltfStore.action[2].reset();
+        Bumpers[looserBumper].gltfStore.action[2].fadeIn(0.3);
+        Bumpers[looserBumper].gltfStore.action[2].play();
         Bumpers[looserBumper].currentAction = 2;
       }
       Bumpers[looserBumper].playerGlb.rotation.y = looserBumper == 0 ? 0 : pi;
@@ -978,63 +772,61 @@ export class Game extends HTMLElement {
     let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
+    const modelRotation = [
+      [degreesToRadians(235), degreesToRadians(-90)],
+      [degreesToRadians(55), degreesToRadians(90)],
+    ];
+
+    function handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
+      const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 0;
+
+      if (currentAction != nextAction) {
+        ourBumper.gltfStore.action[currentAction].fadeOut(fadeTime);
+        ourBumper.gltfStore.action[nextAction].reset();
+        ourBumper.gltfStore.action[nextAction].fadeIn(fadeTime);
+        ourBumper.gltfStore.action[nextAction].play();
+        ourBumper.currentAction = nextAction;
+
+        if (ourBumper.modelChoosen == 0) ourBumper.playerGlb.rotation.y = modelRotation[ourBumperIndex][0];
+        else ourBumper.playerGlb.rotation.y = modelRotation[ourBumperIndex][1];
+      }
+    }
 
     function moveAiBumper(calculatedPos) {
       keyMap['KeyA'] = false;
-      // console.log(Bumpers[1].lenghtHalf);
       keyMap['KeyD'] = false;
+
       if (calculatedBumperPos.x < calculatedPos.x - 0.1 && calculatedBumperPos.x < calculatedPos.x - 0.2) {
         keyMap['KeyA'] = true;
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0][0]) {
-          if (Bumpers[1].currentAction != 0) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[0][0].reset();
-            Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[0][0].play();
-            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
-            else Bumpers[1].playerGlb.rotation.y = degreesToRadians(-90);
-            // Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
-            Bumpers[1].currentAction = 0;
-          }
-        }
         calculatedBumperPos.x += bumperP2Subtick;
+
+        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0]) {
+          handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
+        }
       } else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2) {
         keyMap['KeyD'] = true;
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[6][0]) {
-          if (Bumpers[1].currentAction != 6) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[6][0].reset();
-            Bumpers[1].gltfStore.action[6][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[6][0].play();
-            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
-            else Bumpers[1].playerGlb.rotation.y = degreesToRadians(-90);
-            // Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
-            Bumpers[1].currentAction = 6;
-          }
-        }
         calculatedBumperPos.x -= bumperP2Subtick;
+
+        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[6]) {
+          handleAnimations(Bumpers[1], Bumpers[1].currentAction, 6, 0.1);
+        }
       } else {
-        keyMap['KeyA'] = false;
-        keyMap['KeyD'] = false;
-        if (
-          Bumpers[1].gltfStore.action &&
-          Bumpers[1].gltfStore.action[0][0] &&
-          Bumpers[1].gltfStore.action[6][0] &&
-          Bumpers[1].currentAction != 2
-        ) {
-          Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.5);
-          Bumpers[1].gltfStore.action[2][0].reset();
-          Bumpers[1].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[1].gltfStore.action[2][0].play();
-          Bumpers[1].currentAction = 2;
+        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[6]) {
+          handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
         }
       }
     }
 
     let isMovementDone = false;
-    let ballPredictedPos;
     let isCalculationNeeded = true;
-    let difficultyLvl = [
+
+    const ballPredictedPos = new THREE.Vector3(0, 0, 0);
+    const BallPredictedVelocity = new THREE.Vector3(0, 0, 0);
+
+    let lastSignificantScoreDiff = 0;
+    let choosenDifficulty = 2;
+    let stableDifficulty = 2;
+    const difficultyLvl = [
       [10, 1025],
       [8, 1025],
       [5, 1000],
@@ -1042,33 +834,48 @@ export class Game extends HTMLElement {
       [1, 1000],
     ];
 
+    function calculateDifficultyLevel() {
+      const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
+      const scoreDiff = Bumpers[0].score - Bumpers[1].score;
+      const minDifficulty = scoreDiff <= -3 ? 0 : 2;
+      const relativeGap = scoreDiff / MAX_SCORE;
+
+      const contextualFactor = relativeGap * (1 + gameProgress * 0.8) + (1 - gameProgress) * 0.7;
+      const calculatedDifficulty =
+        scoreDiff > 0 ? Math.floor(2 + (scoreDiff - 1) * contextualFactor * 1.5) : Math.max(0, 2 + scoreDiff);
+      const finalDifficulty = Math.max(minDifficulty, Math.min(4, Math.floor(calculatedDifficulty)));
+
+      if (Math.abs(scoreDiff - lastSignificantScoreDiff) >= Math.max(1, Math.floor(MAX_SCORE / 5))) {
+        stableDifficulty = finalDifficulty;
+        lastSignificantScoreDiff = scoreDiff;
+      }
+      choosenDifficulty = stableDifficulty;
+    }
+
+    function calculateErrorMargin(BallPosZ) {
+      const errorScale = 2.5 / Bumpers[1].lenghtHalf;
+      const closenessToBall = (BallPosZ - calculatedBumperPos.z) / 18;
+      const errorMargin = difficultyLvl[choosenDifficulty][0] * closenessToBall * errorScale;
+      return errorMargin;
+    }
+
     function handleAiBehavior(BallPos, BallVelocity) {
-      console.log(choosenDifficulty);
       if (isCalculationNeeded) {
-        const scoreDiff = Bumpers[0].score - Bumpers[1].score;
-        const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
-        const minDifficulty = scoreDiff <= -3 ? 0 : 2;
+        BallPredictedVelocity.x = BallVelocity.x;
+        BallPredictedVelocity.y = BallVelocity.y;
+        BallPredictedVelocity.z = BallVelocity.z;
 
-        const relativeGap = scoreDiff / MAX_SCORE;
-        const contextualFactor = relativeGap * (1 + gameProgress * 0.8) + (1 - gameProgress) * 0.7;
-        const calculatedDifficulty =
-          scoreDiff > 0 ? Math.floor(2 + (scoreDiff - 1) * contextualFactor * 1.5) : Math.max(0, 2 + scoreDiff);
-        const finalDifficulty = Math.max(minDifficulty, Math.min(4, Math.floor(calculatedDifficulty)));
-        if (Math.abs(scoreDiff - lastSignificantScoreDiff) >= Math.max(1, Math.floor(MAX_SCORE / 5))) {
-          stableDifficulty = finalDifficulty;
-          lastSignificantScoreDiff = scoreDiff;
-        }
+        ballPredictedPos.x = BallPos.x;
+        ballPredictedPos.y = BallPos.y;
+        ballPredictedPos.z = BallPos.z;
+        calculateDifficultyLevel();
+        const errorMargin = calculateErrorMargin(BallPos.z);
 
-        choosenDifficulty = stableDifficulty;
-        let errorScale = 2.5 / Bumpers[1].lenghtHalf;
-        let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
-        let error = difficultyLvl[choosenDifficulty][0] * closeness * errorScale;
-        ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
-        let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);
-        let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
         if (BallPredictedVelocity.z > 0) {
+          const totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
           while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf) {
-            let totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x * gameSpeed);
+            const totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x * gameSpeed);
+
             if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
               ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
               BallPredictedVelocity.x *= -1;
@@ -1077,24 +884,27 @@ export class Game extends HTMLElement {
               ballPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
               BallPredictedVelocity.x *= -1;
             }
+
             ballPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
             ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
           }
         }
+
+        if (Bumpers[1].lenghtHalf < 2.0) {
+          ballPredictedPos.x += (Math.random() - 0.5) * errorMargin * 0.6;
+        } else if (Bumpers[1].lenghtHalf > 3.0) {
+          ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
+        } else {
+          ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
+        }
+
         isCalculationNeeded = false;
-        let timeooutId = setTimeout(() => {
+        const timeooutId = setTimeout(() => {
           if (BallVelocity.z > 0) {
             isCalculationNeeded = true;
             clearTimeout(timeooutId);
           }
         }, difficultyLvl[choosenDifficulty][1]);
-        if (Bumpers[1].lenghtHalf < 2.0) {
-          ballPredictedPos.x += (Math.random() - 0.5) * error * 0.6;
-        } else if (Bumpers[1].lenghtHalf > 3.0) {
-          ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
-        } else {
-          ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
-        }
       }
       if (!isMovementDone) moveAiBumper(ballPredictedPos);
       else {
@@ -1140,32 +950,7 @@ export class Game extends HTMLElement {
 
     if (gameOptionsQuery.cool_mode == true) {
       Coin = ((posX, posY, posZ) => {
-        const CoinGlb = (() => {
-          const CoinModel = new THREE.Object3D();
-          this.loaderModel.load(
-            coin,
-            function (gltf) {
-              gltf.scene.traverse(function (node) {
-                if (node.isMesh) {
-                  node.castShadow = true;
-                }
-              });
-              const model = gltf.scene;
-              model.position.y = 0;
-              model.position.z = 0;
-              model.position.x = 0;
-              CoinModel.add(gltf.scene);
-            },
-            undefined,
-            function (error) {
-              console.error(error);
-            },
-          );
-          CoinModel.scale.set(0.45, 0.45, 0.45);
-          scene.add(CoinModel);
-          return CoinModel;
-        })();
-
+        const CoinGlb = modelCreate(0, 0, 0, 0.45, 0.45, 0.45, coin);
         CoinGlb.position.x = posX;
         CoinGlb.position.y = posY;
         CoinGlb.position.z = posZ;
@@ -1202,55 +987,43 @@ export class Game extends HTMLElement {
         new Worker(blobURL),
       ];
       Workers[0].onmessage = function (e) {
-        let dirz = Bumpers[e.data[0]].playerGlb.position.z;
+        const bumperAffected = e.data[0];
+        let dirz = Bumpers[bumperAffected].playerGlb.position.z;
         if (dirz < 0) {
-          Bumpers[e.data[0]].playerGlb.position.x += 7.2;
-          Bumpers[e.data[0]].playerGlb.position.z -= 0.7;
+          Bumpers[bumperAffected].playerGlb.position.x += 7.2;
+          Bumpers[bumperAffected].playerGlb.position.z -= 0.7;
         } else {
-          Bumpers[e.data[0]].playerGlb.position.x -= 7.2;
-          Bumpers[e.data[0]].playerGlb.position.z += 0.7;
+          Bumpers[bumperAffected].playerGlb.position.x -= 7.2;
+          Bumpers[bumperAffected].playerGlb.position.z += 0.7;
         }
-        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = false;
-        Bumpers[e.data[0]].modelChoosen = 0;
-        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
-        Bumpers[e.data[0]].lenghtHalf = 2.5;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
+        Bumpers[bumperAffected].modelChoosen = 0;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
+        Bumpers[bumperAffected].lenghtHalf = 2.5;
         buffUI?.hideIcon();
       };
       Workers[1].onmessage = function (e) {
-        let dirz = Bumpers[e.data[0]].playerGlb.position.z;
-        Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = false;
-        Bumpers[Math.abs(e.data[0] - 1)].modelChoosen = 0;
-        Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = true;
-        Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
-        if (
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x <
-          -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-        ) {
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
-          dirz < 0
-            ? (Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =
-                -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1)
-            : (Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =
-                -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1);
-        } else if (
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
-          10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-        ) {
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
-          dirz < 0
-            ? (Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =
-                10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1)
-            : (Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =
-                10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1);
+        const bumperAffected = Math.abs(e.data[0] - 1);
+        let dirz = Bumpers[bumperAffected].playerGlb.position.z;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
+        Bumpers[bumperAffected].modelChoosen = 0;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
+        Bumpers[bumperAffected].lenghtHalf = 2.5;
+        if (Bumpers[bumperAffected].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf) {
+          Bumpers[bumperAffected].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
+          Bumpers[bumperAffected].playerGlb.position.x =
+            -10 + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
+        } else if (Bumpers[bumperAffected].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf) {
+          Bumpers[bumperAffected].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
+          Bumpers[bumperAffected].playerGlb.position.x =
+            10 - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
         }
         if (dirz < 0) {
-          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1;
-          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z += 0.4;
+          Bumpers[bumperAffected].playerGlb.position.x += 1;
+          Bumpers[bumperAffected].playerGlb.position.z -= 0.4;
         } else {
-          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
-          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z -= 0.4;
+          Bumpers[bumperAffected].playerGlb.position.x -= 1;
+          Bumpers[bumperAffected].playerGlb.position.z += 0.4; // TODO CHECK
         }
         buffUI?.hideIcon();
       };
@@ -1259,18 +1032,22 @@ export class Game extends HTMLElement {
         buffUI?.hideIcon();
       };
       Workers[3].onmessage = function (e) {
-        Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25 * gameSpeed;
-        Bumpers[[Math.abs(e.data[0] - 1)]].gltfStore.action[0][0].setDuration(0.18);
-        Bumpers[[Math.abs(e.data[0] - 1)]].gltfStore.action[5][0].setDuration(0.18);
+        const bumperAffected = Math.abs(e.data[0] - 1);
+        Bumpers[bumperAffected].speed = 0.25 * gameSpeed;
+        Bumpers[bumperAffected].gltfStore.action[0].setDuration(0.18);
+        Bumpers[bumperAffected].gltfStore.action[5].setDuration(0.18);
         buffUI?.hideIcon();
       };
       Workers[4].onmessage = function (e) {
-        let dirz = Bumpers[e.data[0]].playerGlb.position.z;
-        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = false;
-        Bumpers[e.data[0]].modelChoosen = 0;
-        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
-        Bumpers[e.data[0]].widthHalf = 0.5;
-        dirz < 0 ? (Bumpers[e.data[0]].playerGlb.position.x += 5) : (Bumpers[e.data[0]].playerGlb.position.x -= 5);
+        const bumperAffected = e.data[0];
+        let dirz = Bumpers[bumperAffected].playerGlb.position.z;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
+        Bumpers[bumperAffected].modelChoosen = 0;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
+        Bumpers[bumperAffected].widthHalf = 0.5;
+        dirz < 0
+          ? (Bumpers[bumperAffected].playerGlb.position.x += 5)
+          : (Bumpers[bumperAffected].playerGlb.position.x -= 5);
         buffUI?.hideIcon();
       };
       Workers[5].onmessage = function (e) {
@@ -1280,6 +1057,7 @@ export class Game extends HTMLElement {
     const manageBuffAndDebuff = () => {
       let chooseBuff = 2;
       let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
+      const reversedLastBumperCollided = Math.abs(lastBumperCollided - 1);
       switch (chooseBuff) {
         case 1:
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
@@ -1320,33 +1098,31 @@ export class Game extends HTMLElement {
           buffUI?.showIcon('long');
           break;
         case 2:
-          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[
-            Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen
-          ].visible = false;
-          Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen = 2;
-          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[
-            Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen
-          ].visible = true;
-          Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
+          Bumpers[reversedLastBumperCollided].modelsGlb[Bumpers[reversedLastBumperCollided].modelChoosen].visible =
+            false;
+          Bumpers[reversedLastBumperCollided].modelChoosen = 2;
+          Bumpers[reversedLastBumperCollided].modelsGlb[Bumpers[reversedLastBumperCollided].modelChoosen].visible =
+            true;
+          Bumpers[reversedLastBumperCollided].lenghtHalf = 1.25;
           if (dirz < 0) {
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x += 1;
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.4;
+            Bumpers[reversedLastBumperCollided].playerGlb.position.x += 1;
+            Bumpers[reversedLastBumperCollided].playerGlb.position.z -= 0.4;
           } else {
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.4;
+            Bumpers[reversedLastBumperCollided].playerGlb.position.x -= 1;
+            Bumpers[reversedLastBumperCollided].playerGlb.position.z += 0.4;
           }
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.showIcon('short');
           break;
         case 3:
-          Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
+          Bumpers[reversedLastBumperCollided].controlReverse = true;
           Workers[2].postMessage([2000, lastBumperCollided, 'create']);
           buffUI?.showIcon('switch');
           break;
         case 4:
-          Bumpers[Math.abs(lastBumperCollided - 1)].speed = 0.1 * gameSpeed;
-          Bumpers[Math.abs(lastBumperCollided - 1)].gltfStore.action[0][0].setDuration(0.2);
-          Bumpers[Math.abs(lastBumperCollided - 1)].gltfStore.action[5][0].setDuration(0.2);
+          Bumpers[reversedLastBumperCollided].speed = 0.1 * gameSpeed;
+          Bumpers[reversedLastBumperCollided].gltfStore.action[0].setDuration(0.2);
+          Bumpers[reversedLastBumperCollided].gltfStore.action[5].setDuration(0.2);
           Workers[3].postMessage([5000, lastBumperCollided, 'create']);
           buffUI?.showIcon('slow');
           break;
@@ -1370,13 +1146,13 @@ export class Game extends HTMLElement {
     function animate() {
       delta = clock.getDelta();
       step = null;
-      let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * gameSpeed);
-      let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
+      const totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * gameSpeed);
+      const totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
       let currentSubtick = 0;
       ballSubtickZ = SUBTICK;
-      let totalSubticks = totalDistanceZ / ballSubtickZ;
+      const totalSubticks = totalDistanceZ / ballSubtickZ;
       ballSubtickX = totalDistanceX / totalSubticks;
       bumperP1Subtick = Bumpers[0].speed / totalSubticks;
       bumperP2Subtick = Bumpers[1].speed / totalSubticks;
@@ -1385,13 +1161,13 @@ export class Game extends HTMLElement {
           Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
           Ball.velocity.x *= -1;
           Ball.bulletGlb.rotation.x *= -1;
-          if (lastBumperCollided == 0) isCalculationNeeded = true;
+          // if (lastBumperCollided == 0) isCalculationNeeded = true;
         }
         if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
           Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
           Ball.velocity.x *= -1;
           Ball.bulletGlb.rotation.x *= -1;
-          if (lastBumperCollided == 0) isCalculationNeeded = true;
+          // if (lastBumperCollided == 0) isCalculationNeeded = true;
         }
         if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
           lastBumperCollided = 0;
@@ -1467,6 +1243,7 @@ export class Game extends HTMLElement {
         if (isGameAi == 'ai') handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
         currentSubtick++;
       }
+      // Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
       Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
       if (Coin != null) {
         Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
