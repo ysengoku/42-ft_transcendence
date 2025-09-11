@@ -5,6 +5,8 @@ export class TournamentBracketOngoing extends HTMLElement {
     roundNumber: 1,
     round: null,
     gameId: '',
+    userAlias: 'You',
+    opponentAlias: 'Opponent',
   };
 
   constructor() {
@@ -19,13 +21,19 @@ export class TournamentBracketOngoing extends HTMLElement {
     this.#state.roundNumber = data.round_number;
     this.#state.round = data.round;
     this.#state.gameId = data.game_id;
+    this.#state.userAlias = data.userAlias || 'You';
+    this.#state.opponentAlias = data.opponentAlias || 'Opponent';
   }
 
   connectedCallback() {
     this.render();
+    const queryParams = new URLSearchParams({
+      userPlayerName: this.#state.userAlias,
+      opponentPlayerName: this.#state.opponentAlias,
+    }).toString();
     requestAnimationFrame(() => {
       setTimeout(() => {
-        router.redirect(`multiplayer-game/${this.#state.gameId}`);
+        router.redirect(`multiplayer-game/${this.#state.gameId}?${queryParams}`);
       }, 1500);
     });
   }

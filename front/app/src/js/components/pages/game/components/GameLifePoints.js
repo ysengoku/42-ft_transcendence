@@ -19,16 +19,16 @@ export class GameLifePoint extends HTMLElement {
     this.render();
   }
 
-  decreasePoint(playerWhoScoreNumber, unit) {
+  updatePoint(playerWhoScoreNumber, newPoint) {
     let lifeBarElement = null;
     let lifePoint = 0;
     if (playerWhoScoreNumber === 1) {
       lifeBarElement = this.p1LifeBar;
-      this.#state.p1CurrentPoint = this.#state.p1CurrentPoint - unit < 0 ? 0 : this.#state.p1CurrentPoint - unit;
+      this.#state.p1CurrentPoint = newPoint < 0 ? 0 : newPoint;
       lifePoint = this.#state.p1CurrentPoint;
     } else if (playerWhoScoreNumber === 0) {
       lifeBarElement = this.p2LifeBar;
-      this.#state.p2CurrentPoint = this.#state.p2CurrentPoint - unit < 0 ? 0 : this.#state.p2CurrentPoint - unit;
+      this.#state.p2CurrentPoint = newPoint < 0 ? 0 : newPoint;
       lifePoint = this.#state.p2CurrentPoint;
     }
     if (lifePoint < 0 || !lifeBarElement) {
@@ -43,6 +43,18 @@ export class GameLifePoint extends HTMLElement {
     if (lifePoint <= this.#DANGER_LEVEL) {
       lifeBarElement.style.backgroundColor = this.#RED;
     }
+  }
+
+  decreasePoint(playerWhoScoreNumber, unit) {
+    let lifePoint = 0;
+    if (playerWhoScoreNumber === 1) {
+      this.#state.p1CurrentPoint = this.#state.p1CurrentPoint - unit < 0 ? 0 : this.#state.p1CurrentPoint - unit;
+      lifePoint = this.#state.p1CurrentPoint;
+    } else if (playerWhoScoreNumber === 0) {
+      this.#state.p2CurrentPoint = this.#state.p2CurrentPoint - unit < 0 ? 0 : this.#state.p2CurrentPoint - unit;
+      lifePoint = this.#state.p2CurrentPoint;
+    }
+    this.updatePoint(playerWhoScoreNumber, lifePoint);
   }
 
   render() {

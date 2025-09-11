@@ -1,7 +1,7 @@
 /**
  * Socket registration for tournament with events handlers.
  */
-
+import { router } from '@router';
 import { socketManager } from '@socket';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import { showTournamentAlert, TOURNAMENT_ALERT_TYPE } from '@components/pages/tournament/utils/tournamentAlert';
@@ -43,10 +43,10 @@ socketManager.addSocket('tournament', {
     }
   },
   round_start: (data) => {
-    if (
-      window.location.pathname.startsWith('/tournament') ||
-      window.location.pathname.startsWith('/multiplayer-game')
-    ) {
+    if (window.location.pathname.startsWith('/multiplayer-game')) {
+      router.redirect('/tournament/' + data.tournament_id);
+    }
+    if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPage = document.querySelector('tournament-room');
       if (!tournamentPage) {
         log.error('Tournament RoundStart Element not found, cannot update UI.');
@@ -54,11 +54,6 @@ socketManager.addSocket('tournament', {
       }
       tournamentPage.setNextRound(data);
     }
-  },
-  match_finished: (data) => {
-    // if (window.location.pathname.startsWith('/multiplayer-game')) {
-    //   router.redirect(`tournament/${data.tournament_id}`);
-    // }
   },
   match_result: async (data) => {
     if (!window.location.pathname.startsWith('/tournament')) {

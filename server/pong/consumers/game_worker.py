@@ -269,7 +269,6 @@ class BasePong:
             "current_buff_or_debuff": int(Buff.NO_BUFF),
             "current_buff_or_debuff_remaining_time": 0.0,
             "current_buff_or_debuff_target": None,
-            "remaining_time": 0,
             "time_limit_reached": False,
         }
         self._bumper_1 = Bumper(
@@ -1150,20 +1149,19 @@ class GameWorkerConsumer(AsyncConsumer):
                     # someone scored more than the other
                     if result:
                         winner, loser = result
-                        logger.info("[GameWorker]: match {%s} has result : %s", match.id, result)
-                        logger.info("[GameWorker]: match {%s} has winner : %s",  match.id, winner)
-                        logger.info("[GameWorker]: match {%s} has loser : %s",  match.id, loser)
-
+                        logger.info("[GameWorker]: player {%s} won due to time limit in game {%s}", winner.id, match)
                         match_db = await self._write_result_to_db(winner, loser, match, "finished")
+                        if not match_db:
+                            logger.warning("[GameWorker]: match couldn't be recorded to the database")
                         await self._send_player_won_event(
                             match,
                             "player_won",
                             winner,
                             loser,
-                            match_db.elo_change if not match.is_in_tournament else 0,
+                            match_db.elo_change if match_db and not match.is_in_tournament else 0,
                         )
+
                         await self._do_after_match_cleanup(match, False)
-                        logger.info("[GameWorker]: player {%s} won due to time limit in game {%s}", winner.id, match)
                         break
 
                     # equal score: set the ball speed to the max!!
@@ -1174,12 +1172,14 @@ class GameWorkerConsumer(AsyncConsumer):
                 if result := match.get_result():
                     winner, loser = result
                     match_db = await self._write_result_to_db(winner, loser, match, Bracket.FINISHED)
+                    if not match_db:
+                        logger.warning("[GameWorker]: match couldn't be recorded to the database")
                     await self._send_player_won_event(
                         match,
                         "player_won",
                         winner,
                         loser,
-                        match_db.elo_change if not match.is_in_tournament else 0,
+                        match_db.elo_change if match_db and not match.is_in_tournament else 0,
                     )
                     await self._do_after_match_cleanup(match, False)
                     logger.info("[GameWorker]: player {%s} has won the game {%s}", winner.id, match)
@@ -1239,7 +1239,14 @@ class GameWorkerConsumer(AsyncConsumer):
                         ),
                     )
                     # If the tournament game is cancelled, there is a winner: player who connected first
-                    await Bracket.objects.async_update_finished_bracket(
+                    # await Bracket.objects.async_update_finished_bracket(
+                    #     match.bracket_id,
+                    #     winner.profile_id,
+                    #     0,
+                    #     0,
+                    #     Bracket.FINISHED,
+                    # )
+                    await database_sync_to_async(Bracket.objects.update_finished_bracket)(
                         match.bracket_id,
                         winner.profile_id,
                         0,
@@ -1288,12 +1295,14 @@ class GameWorkerConsumer(AsyncConsumer):
             match.status = MultiplayerPongMatchStatus.FINISHED
             winner = match.get_other_player(player.id)
             match_db = await self._write_result_to_db(winner, player, match, "finished")
+            if not match_db:
+                logger.warning("[GameWorker]: match couldn't be recorded to the database")
             await self._send_player_won_event(
                 match,
                 "player_resigned",
                 winner,
                 player,
-                match_db.elo_change if not match.is_in_tournament else 0,
+                match_db.elo_change if match_db and not match.is_in_tournament else 0,
             )
             await self._do_after_match_cleanup(match, True)
             logger.info(
@@ -1453,20 +1462,25 @@ class GameWorkerConsumer(AsyncConsumer):
         loser: Player,
         match: MultiplayerPongMatch,
         status: Literal["finished", "cancelled"],
-    ) -> Match | Bracket:
+    ) -> Match | Bracket | None:
         if not match.is_in_tournament:
-            match_db, winner_db, loser_db = await Match.objects.async_resolve(
+            
+            match_result = await database_sync_to_async(Match.objects.resolve)(
                 winner.profile_id,
                 loser.profile_id,
                 winner.bumper.score,
                 loser.bumper.score,
                 match.ranked,
             )
+            if not match_result:
+                return
+
+            match_db, winner_db, loser_db = match_result
             winner.elo = winner_db.elo
             loser.elo = loser_db.elo
             return match_db
 
-        return await Bracket.objects.async_update_finished_bracket(
+        return await database_sync_to_async(Bracket.objects.update_finished_bracket)(
             match.bracket_id,
             winner.profile_id,
             winner.bumper.score,

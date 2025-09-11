@@ -69,13 +69,11 @@ export class TournamentOverview extends HTMLElement {
   disconnectedCallback() {
     window.removeEventListener('resize', this.handleResize);
     this.updateButton?.removeEventListener('click', this.fetchTournamentData);
-    if (this.#pollingInterval) {
-      clearInterval(this.#pollingInterval);
-    }
+    this.stopPolling();
   }
 
   async fetchTournamentData() {
-    if (this.updating) {
+    if (this.#state.updating) {
       return;
     }
     this.#state.updating = true;
@@ -97,6 +95,7 @@ export class TournamentOverview extends HTMLElement {
         const notFound = document.createElement('page-not-found');
         this.innerHTML = notFound.outerHTML;
       }
+      this.#state.updating = false;
       return;
     }
     this.#state.tournament = response.data;
@@ -107,14 +106,19 @@ export class TournamentOverview extends HTMLElement {
     ) {
       const notFound = document.createElement('page-not-found');
       this.innerHTML = notFound.outerHTML;
+      this.#state.updating = false;
       return;
     }
+
     if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
-      clearInterval(this.#pollingInterval);
+      this.stopPolling();
     }
+
     setTimeout(() => {
-      this.updateIcon.classList.remove('rotating');
-      this.updateButtonText.textContent = ' Update the status';
+      this.updateIcon?.classList.remove('rotating');
+      if (this.updateButtonText) {
+        this.updateButtonText.textContent = ' Update the status';
+      }
     }, 800);
     this.#state.updating = false;
   }
@@ -164,10 +168,15 @@ export class TournamentOverview extends HTMLElement {
   }
 
   startPolling() {
+    this.stopPolling();
     if (this.#state.tournament.status !== TOURNAMENT_STATUS.ONGOING) {
       return;
     }
     this.#pollingInterval = setInterval(async () => {
+      if (this.#state.tournament?.status !== TOURNAMENT_STATUS.ONGOING) {
+        this.stopPolling();
+        return;
+      }
       await this.fetchTournamentData();
       if (this.#state.tournament) {
         if (this.#state.tournament.status === TOURNAMENT_STATUS.FINISHED) {
@@ -180,6 +189,14 @@ export class TournamentOverview extends HTMLElement {
     log.info('Tournament status polling started');
   }
 
+  stopPolling() {
+    if (this.#pollingInterval) {
+      clearInterval(this.#pollingInterval);
+      this.#pollingInterval = null;
+      log.info('Tournament status polling stopped');
+    }
+  }
+
   async updateStatus() {
     await this.fetchTournamentData();
     if (this.#state.tournament) {
@@ -187,6 +204,10 @@ export class TournamentOverview extends HTMLElement {
         this.render();
       } else {
         this.renderBracketUpdates();
+      }
+
+      if (this.#state.tournament.status === TOURNAMENT_STATUS.ONGOING && !this.#pollingInterval) {
+        this.startPolling();
       }
     }
   }

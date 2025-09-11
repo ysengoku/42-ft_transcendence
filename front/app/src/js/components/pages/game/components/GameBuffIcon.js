@@ -4,7 +4,19 @@ import iconShort from '/img/short.png?url';
 import iconSlow from '/img/slow.png?url';
 import iconSwitch from '/img/switch.png?url';
 
+export const BUFF_TYPE = {
+  LARGE: 'large',
+  LONG: 'long',
+  SHORT: 'short',
+  SLOW: 'slow',
+  SWITCH: 'switch',
+};
+
 export class GameBuffIcon extends HTMLElement {
+  #state = {
+    shown: false,
+  };
+
   constructor() {
     super();
 
@@ -16,22 +28,25 @@ export class GameBuffIcon extends HTMLElement {
     this.render();
   }
 
-  showIcon(type) {
+  show(type) {
+    if (this.#state.shown) {
+      return;
+    }
     if (this.icon) {
       switch (type) {
-        case 'large':
+        case BUFF_TYPE.LARGE:
           this.icon.src = iconLarge;
           break;
-        case 'long':
+        case BUFF_TYPE.LONG:
           this.icon.src = iconLong;
           break;
-        case 'short':
+        case BUFF_TYPE.SHORT:
           this.icon.src = iconShort;
           break;
-        case 'slow':
+        case BUFF_TYPE.SLOW:
           this.icon.src = iconSlow;
           break;
-        case 'switch':
+        case BUFF_TYPE.SWITCH:
           this.icon.src = iconSwitch;
           break;
         default:
@@ -43,14 +58,16 @@ export class GameBuffIcon extends HTMLElement {
     setTimeout(() => {
       this.iconWrapper.classList.remove('pop-in');
     }, 600);
+    this.#state.shown = true;
   }
 
-  hideIcon() {
+  hide() {
     this.iconWrapper.classList.add('pop-out');
     setTimeout(() => {
       this.iconWrapper.classList.add('d-none');
       this.iconWrapper.classList.remove('pop-out');
       this.icon.src = '';
+      this.#state.shown = false;
     }, 600);
   }
 
