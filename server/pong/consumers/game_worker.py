@@ -1241,14 +1241,6 @@ class GameWorkerConsumer(AsyncConsumer):
                             close_code=CloseCodes.CANCELLED,
                         ),
                     )
-                    # If the tournament game is cancelled, there is a winner: player who connected first
-                    # await Bracket.objects.async_update_finished_bracket(
-                    #     match.bracket_id,
-                    #     winner.profile_id,
-                    #     0,
-                    #     0,
-                    #     Bracket.FINISHED,
-                    # )
                     await database_sync_to_async(Bracket.objects.update_finished_bracket)(
                         match.bracket_id,
                         winner.profile_id,
