@@ -13,7 +13,7 @@ Building on [the core Pong gameplay](./PONG.md), the Tournament System handles t
 - [Implementation Details](#implementation-details)
   - [Backend](#backend)
     - [Core Models](#core-models)
-    - [Torunament Worker](#tournament-worker)
+    - [Tournament Worker](#tournament-worker)
     - [Channel Groups](#channel-groups)
   - [Frontend](#frontend)
     - [Tournament Menu Page Components](#tournament-menu-page-components)
