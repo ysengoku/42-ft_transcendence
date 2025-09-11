@@ -252,20 +252,15 @@ class BracketQuerySet(models.QuerySet):
         if not bracket:
             return
 
-        winner_participant: Participant = Participant.objects.filter(
-            Q(brackets_p1__id=bracket_id) | Q(brackets_p2__id=bracket_id),
-            profile__id=winner_profile_id,
-        ).first()
-        if not winner_participant:
-            return
-
-        participant1: Participant = bracket.participant1
-        participant2: Participant = bracket.participant2
-        if participant1 == winner_participant:
-            participant2.set_eliminated()
+        if winner_profile_id == bracket.participant1.profile.id:
+            winner_participant: Participant = bracket.participant1
+            loser_participant: Participant = bracket.participant2
         else:
-            participant1.set_eliminated()
+            winner_participant: Participant = bracket.participant2
+            loser_participant: Participant = bracket.participant1
+
         winner_participant.set_qualified()
+        loser_participant.set_eliminated()
         bracket.winners_score = winners_score
         bracket.losers_score = losers_score
         bracket.winner = winner_participant

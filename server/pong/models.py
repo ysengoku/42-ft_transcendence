@@ -4,7 +4,7 @@ from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
 from django.db.models.functions import TruncDate
 from django.utils import timezone
@@ -87,18 +87,20 @@ class MatchQuerySet(models.QuerySet):
             winners_elo, losers_elo, elo_change = winner.elo, loser.elo, 0
         winner.elo = winners_elo
         loser.elo = losers_elo
-        resolved_match: Match = Match(
-            winner=winner,
-            loser=loser,
-            winners_score=winners_score,
-            losers_score=losers_score,
-            elo_change=elo_change,
-            winners_elo=winners_elo,
-            losers_elo=losers_elo,
-        )
-        resolved_match.save()
-        winner.save()
-        loser.save()
+
+        with transaction.atomic():
+            resolved_match: Match = Match(
+                winner=winner,
+                loser=loser,
+                winners_score=winners_score,
+                losers_score=losers_score,
+                elo_change=elo_change,
+                winners_elo=winners_elo,
+                losers_elo=losers_elo,
+            )
+            resolved_match.save()
+            Profile.objects.bulk_update([winner, loser], ["elo"])
+
         return resolved_match, winner, loser
 
     def get_elo_points_by_day(self, profile: Profile):
