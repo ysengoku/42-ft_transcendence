@@ -14,7 +14,7 @@ const TOURNAMENT_ALERT_MESSAGE = {
   TOURNAMENT_STARTS: 'The tournament is starting soon.',
   ROUND_END: 'The current round of the tournament finished.',
   ELIMINATED: 'You have been eliminated from the tournament.',
-  CHAMPION: (name) => `You are the champion of ${name}.`,
+  CHAMPION: (name) => `You are the champion of ${name}!`,
   FINISHED: 'The tournament is finished',
   CANCELED: 'The tournament has been canceled.',
 };

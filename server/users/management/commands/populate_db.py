@@ -238,7 +238,7 @@ def generate_matches(users: dict[str, User], life_enjoyer: User):
                 loser.profile,
                 randint(4, 7),
                 randint(0, 3),
-                dates[i],
+                date=dates[i],
             )
 
             # life_enjoyer can't stop winning
@@ -248,7 +248,7 @@ def generate_matches(users: dict[str, User], life_enjoyer: User):
                     loser.profile,
                     randint(4, 7),
                     randint(0, 3),
-                    dates[i],
+                    date=dates[i],
                 )
             if not randint(0, 11):
                 Match.objects.resolve(
@@ -256,7 +256,7 @@ def generate_matches(users: dict[str, User], life_enjoyer: User):
                     winner.profile,
                     randint(4, 7),
                     randint(0, 3),
-                    dates[i],
+                    date=dates[i],
                 )
 
 
