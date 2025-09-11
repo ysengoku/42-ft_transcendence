@@ -15,10 +15,8 @@
   "devDependencies": {
     "@babel/preset-env": "7.23.9",
     "@eslint/eslintrc": "^3.3.1",
-    "babel-jest": "29.7.0",
     "eslint": "^9.27.0",
     "eslint-config-google": "0.14.0",
-    "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
     "jsdom": "^24.0.0",
     "prettier": "3.4.2",
@@ -28,9 +26,9 @@
   "dependencies": {
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "three": "^0.172.0",
     "cannon-es": "^0.20.0",
     "dat.gui": "^0.7.9",
-    "three": "^0.172.0",
     "three-orbitcontrols": "^2.110.3"
   }
 }
