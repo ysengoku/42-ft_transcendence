@@ -241,16 +241,10 @@ class BracketQuerySet(models.QuerySet):
         Meant to be used by the game server.
         """
         bracket: Bracket = await database_sync_to_async(self.get)(id=bracket_id)
-        try:
-            winner_participant: Participant = await database_sync_to_async(Participant.objects.get)(
+        winner_participant: Participant = await database_sync_to_async(Participant.objects.get)(
                 Q(brackets_p1__id=bracket_id) | Q(brackets_p2__id=bracket_id),
                 profile__id=winner_profile_id,
-            )
-        except Participant.MultipleObjectsReturned as e:
-            logger.info("[TournamentWorker] Draw game : setting participant 1 as winner")
-            winner_participant = await database_sync_to_async(Participant.objects.get)(
-            brackets_p1__id=bracket_id,
-        )
+            ).first()
 
         participant1: Participant = await database_sync_to_async(Participant.objects.get)(
             brackets_p1__id=bracket_id,

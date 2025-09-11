@@ -315,9 +315,11 @@ def create_pending_tournament() -> None:
     tournament = Tournament.objects.validate_and_create(
         creator=chosen_profile,
         tournament_name=name,
-        required_participants=required,
+        # required_participants=required,
+        required_participants=8,
         alias=chosen_profile.user.nickname,
-        settings={"game_speed": "medium", "score_to_win": 3, "time_limit": 1, "ranked": False, "cool_mode": True},
+        # settings={"game_speed": "medium", "score_to_win": 3, "time_limit": 1, "ranked": False, "cool_mode": True},
+        settings={"game_speed": "slow", "score_to_win": 20, "time_limit": 1, "ranked": False, "cool_mode": True},
     )
     tournament.status = status
     tournament.save(update_fields=["status"])
