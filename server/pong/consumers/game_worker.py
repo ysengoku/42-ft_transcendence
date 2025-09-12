@@ -1463,7 +1463,7 @@ class GameWorkerConsumer(AsyncConsumer):
         status: Literal["finished", "cancelled"],
     ) -> Match | Bracket | None:
         if not match.is_in_tournament:
-            
+
             match_result = await database_sync_to_async(Match.objects.resolve)(
                 winner.profile_id,
                 loser.profile_id,
@@ -1472,7 +1472,7 @@ class GameWorkerConsumer(AsyncConsumer):
                 match.ranked,
             )
             if not match_result:
-                return
+                return None
 
             match_db, winner_db, loser_db = match_result
             winner.elo = winner_db.elo

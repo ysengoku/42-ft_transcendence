@@ -49,6 +49,6 @@ ignore = [
     "PLR0402",  # Disallows usage of aliases
     "PT009",    # Using assert instead of assertEqual for testing
     "TC001",    # Move types to type annotations block
-    "PLC0415"   # Ignore imports not at the top level
+    "PLC0415",   # Ignore imports not at the top level
     "PLR5501"   # Ignore possible conversion of else to elif
 ]
