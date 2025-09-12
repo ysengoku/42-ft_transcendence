@@ -62,6 +62,7 @@ BALL_Z_VELOCITY_PER_SECOND = 15.0
 COIN_VELOCITY_PER_SECOND = -3.0, 0.0
 BALL_VELOCITY_CAP_PER_SECOND = 75.0
 TEMPORAL_SPEED_DECAY_PER_SECOND = 0.25
+SPEED_DECREASE_ENEMY_FACTOR = 0.75
 
 # DIRECT VALUES (units per second - no conversion needed)
 BASE_BUMPER_SPEED = BUMPER_SPEED_PER_SECOND
@@ -76,10 +77,10 @@ TEMPORAL_SPEED_INCREASE = 0.0  # currently unused
 
 # TIME VALUES
 WAITING_FOR_PLAYERS_TIME = 30
-CONTROL_REVERSE_ENEMY_DURATION = 15
-SPEED_DECREASE_ENEMY_DURATION = 15
-SHORTEN_ENEMY_DURATION = 15
-ELONGATE_PLAYER_DURATION = 15
+CONTROL_REVERSE_ENEMY_DURATION = 10
+SPEED_DECREASE_ENEMY_DURATION = 8
+SHORTEN_ENEMY_DURATION = 5
+ELONGATE_PLAYER_DURATION = 5
 ENLARGE_PLAYER_DURATION = 15
 COIN_SPAWN_TIME = 30
 ###################
@@ -711,7 +712,7 @@ class BasePong:
 
             case Buff.SPEED_DECREASE_ENEMY:
                 target_bumper = self._bumper_1 if self._last_bumper_collided == self._bumper_2 else self._bumper_2
-                target_bumper.speed = BASE_BUMPER_SPEED * 0.1 * self._game_speed
+                target_bumper.speed = BASE_BUMPER_SPEED * SPEED_DECREASE_ENEMY_FACTOR * self._game_speed
                 self._active_buff_or_debuff_target = target_bumper
                 logger.debug("Debuff target: %s", "bumper_1" if target_bumper == self._bumper_1 else "bumper_2")
 
