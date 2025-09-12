@@ -139,26 +139,18 @@ export class Game extends HTMLElement {
         return;
       }
       const keyCode = e.code;
+      if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
+        if (keyCode == 'ArrowLeft') {
+          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
+        }
+        if (keyCode == 'ArrowRight') {
+          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
+        }
+      }
       if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == 'ai') {
         keyMap[keyCode] = true;
-        if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
-          if (keyCode == 'ArrowLeft') {
-            this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
-          }
-          if (keyCode == 'ArrowRight') {
-            this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
-          }
-        }
       } else if (this.#state.gameType != 'ai') {
         keyMap[keyCode] = true;
-        if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
-          if (keyCode == 'ArrowLeft') {
-            this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
-          }
-          if (keyCode == 'ArrowRight') {
-            this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
-          }
-        }
         if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[5]) {
           if (keyCode == 'KeyA') {
             this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 5, 0.1);
@@ -936,10 +928,33 @@ export class Game extends HTMLElement {
       })(-9.25, 1, 0);
 
       const blob = new Blob([
-        'let remaining; let Timer = function(callback, delay) { let timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
-          'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
-          'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
-          'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
+        'let remaining;' +
+          'let Timer = function(callback, delay) {' +
+          'let timerId, start = delay;' +
+          'remaining = delay;' +
+          'this.pause = function() {' +
+          'clearTimeout(timerId);timerId = null;' +
+          'remaining -= Date.now() - start;' +
+          '};' +
+          'this.resume = function() {' +
+          'if (timerId) {' +
+          'return;' +
+          '}' +
+          'start = Date.now();' +
+          'timerId = setTimeout(callback, remaining);' +
+          '};' +
+          'this.resume();' +
+          '};' +
+          'let pauseTimer = null;' +
+          'onmessage = function(e) {' +
+          'if (e.data[2] == "pause" && pauseTimer != null) {' +
+          'pauseTimer.pause();' +
+          '}' +
+          'else if (e.data[2] == "create"){' +
+          'pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])' +
+          '} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {' +
+          'pauseTimer.resume();' +
+          '}}',
       ]);
       const blobURL = window.URL.createObjectURL(blob);
       Workers = [
