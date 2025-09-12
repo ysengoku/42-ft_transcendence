@@ -64,7 +64,6 @@ env.read_env(env_file=str(BASE_DIR / ".env"))
 
 SERVER_PORT = env("NGINX_PORT")
 
-# TODO: Change the secret key in production
 SECRET_KEY = env("SECRET_KEY")
 
 DEBUG = env("NODE_ENV") != "production"

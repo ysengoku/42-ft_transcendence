@@ -76,7 +76,6 @@ class TournamentConsumer(GuardedWebsocketConsumer):
     def disconnect(self, close_code):
         if hasattr(self, "tournament_id") and self.tournament_id:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_{self.tournament_id}", self.channel_name)
-        # TODO: See how the line about the tournament user is useful
         if hasattr(self, "user") and self.user:
             async_to_sync(self.channel_layer.group_discard)(f"tournament_user_{self.user.id}", self.channel_name)
         self.close(close_code)
