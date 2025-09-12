@@ -4,11 +4,10 @@ import logging
 import uuid
 from typing import Literal
 
-from channels.db import database_sync_to_async
 from django.conf import settings as django_settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch, Q
+from django.db.models import Prefetch
 from django.utils import timezone
 
 from pong.game_protocol import GameRoomSettings
@@ -240,7 +239,7 @@ class BracketQuerySet(models.QuerySet):
              "participant2__profile").filter(id=bracket_id)
         bracket = bracket.first()
         if not bracket:
-            return
+            return None
 
         if winner_profile_id == bracket.participant1.profile.id:
             winner_participant: Participant = bracket.participant1

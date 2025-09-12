@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime
 from urllib.parse import parse_qs
 
-from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models, transaction
 from django.db.models import Case, Count, F, OuterRef, Q, Subquery, Sum, Value, When
@@ -70,14 +69,14 @@ class MatchQuerySet(models.QuerySet):
         if isinstance(winner_profile_or_id, int):
             winner: Profile = Profile.objects.filter(id=winner_profile_or_id).first()
             if not winner:
-                return
+                return None
         else:
             winner: Profile = winner_profile_or_id
 
         if isinstance(loser_profile_or_id, int):
             loser: Profile = Profile.objects.filter(id=loser_profile_or_id).first()
             if not loser:
-                return
+                return None
         else:
             loser: Profile = loser_profile_or_id
 

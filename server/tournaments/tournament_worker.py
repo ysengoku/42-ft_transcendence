@@ -22,7 +22,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
     async def check_brackets_later_task(tournament_id, round_number):
         if tournament_id is None or round_number is None:
             return
-        time_to_wait = 10
+        time_to_wait = 30
         await asyncio.sleep(time_to_wait)
         try:
             tournament = await database_sync_to_async(Tournament.objects.get)(id=tournament_id)
