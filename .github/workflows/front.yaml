@@ -23,12 +23,9 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           #cache: 'npm'
           #cache-dependency-path: './front/app/package-lock.json'
-
-      - name: Upgrade npm
-        run: npm install -g npm@10
 
       - name: Check versions
         run: |
@@ -36,12 +33,9 @@ jobs:
           npm -v
 
       - name: Install dependencies
-        working-directory: ./front/app
-        run: npm install
-
-      - name: Rebuild Rollup native binaries
-        working-directory: ./front/app
-        run: npm rebuild @rollup/rollup-linux-x64-gnu || true
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Run unit tests
         working-directory: ./front/app
