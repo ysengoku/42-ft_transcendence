@@ -172,7 +172,7 @@ export class Game extends HTMLElement {
     }
   }
 
-  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback, Bumpers) {
+  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, TimerCallBack, Bumpers) {
     return (e) => {
       const tag = e.target.tagName.toLowerCase();
       if (tag === 'input' || tag === 'textarea') {
@@ -213,7 +213,7 @@ export class Game extends HTMLElement {
         } else {
           let i = 0;
           if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
-          Timer.timeoutId = setTimeout(myCallback, 1000);
+          Timer.timeoutId = setTimeout(TimerCallBack, 1000);
           gameStateContainer.isPaused = false;
           gameStartAndStop[0]();
         }
@@ -593,7 +593,47 @@ export class Game extends HTMLElement {
 
   async game() {
     try {
+      const gameOptionsQuery = this.#state.gameOptions;
+      const isGameAi = this.#state.gameType;
+
+      const BUMPER_1_BORDER = -10;
+      const BUMPER_2_BORDER = -BUMPER_1_BORDER;
+
+      const WALL_LEFT_X = 10;
+      const WALL_RIGHT_X = -WALL_LEFT_X;
+      const WALL_WIDTH_HALF = 0.5;
+
+      const BALL_DIAMETER = 1;
+      const BALL_RADIUS = BALL_DIAMETER / 2;
+      const BALL_INITIAL_VELOCITY = 0.25;
+
+      const SUBTICK = 0.05;
+      const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
+      const TEMPORAL_SPEED_DECAY = 0.005;
+
+      const GAME_TIME = gameOptionsQuery.time_limit;
+      const MAX_SCORE = gameOptionsQuery.score_to_win;
+      let GAME_SPEED;
+      switch (gameOptionsQuery.game_speed) {
+        case 'slow':
+          GAME_SPEED = 0.75;
+          break;
+        case 'medium':
+          GAME_SPEED = 1.0;
+          break;
+        case 'fast':
+          GAME_SPEED = 1.25;
+          break;
+        default:
+          GAME_SPEED = 1.0;
+          break;
+      }
+
+      const degreesToRadians = this.degreesToRadians;
+      const pi = Math.PI;
+
       let keyMap = [];
+
       const buffUI = this.buffIconElement;
       const timerUI = this.timerElement;
       const scoreUI = this.scoreElement;
@@ -618,40 +658,6 @@ export class Game extends HTMLElement {
         };
       })();
 
-      const pi = Math.PI;
-      const WALL_WIDTH_HALF = 0.5;
-      const gameOptionsQuery = this.#state.gameOptions;
-      const isGameAi = this.#state.gameType;
-      let gameSpeed;
-      switch (gameOptionsQuery.game_speed) {
-        case 'slow':
-          gameSpeed = 0.75;
-          break;
-        case 'medium':
-          gameSpeed = 1.0;
-          break;
-        case 'fast':
-          gameSpeed = 1.25;
-          break;
-        default:
-          gameSpeed = 1.0;
-          break;
-      }
-      const degreesToRadians = this.degreesToRadians;
-      const BUMPER_1_BORDER = -10;
-      const BUMPER_2_BORDER = -BUMPER_1_BORDER;
-      const WALL_LEFT_X = 10;
-      const WALL_RIGHT_X = -WALL_LEFT_X;
-      const BALL_DIAMETER = 1;
-      const BALL_RADIUS = BALL_DIAMETER / 2;
-      const SUBTICK = 0.05;
-      const GAME_TIME = gameOptionsQuery.time_limit;
-      const BALL_INITIAL_VELOCITY = 0.25;
-      const MAX_SCORE = gameOptionsQuery.score_to_win;
-      const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
-      const TEMPORAL_SPEED_DECAY = 0.005;
-
-      const carboardModelStates = [carboard, carboard2, carboard3];
       const renderer = await this.createRenderer();
       if (!renderer) {
         return;
@@ -661,7 +667,6 @@ export class Game extends HTMLElement {
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.setClearColor(0x8e4f5e, 1);
       this.appendChild(renderer.domElement);
-
       const rendererWidth = renderer.domElement.offsetWidth;
       const rendererHeight = renderer.domElement.offsetHeight;
 
@@ -672,12 +677,6 @@ export class Game extends HTMLElement {
       const camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
       camera.position.set(0, 12, -20);
       camera.lookAt(new THREE.Vector3(0, 0, 0));
-
-      const modelCreate = async (posX, posY, posZ, scaleX, scaleY, scaleZ, modelName) => {
-        const modelGenerated = await this.createModelLoader(modelName, posX, posY, posZ, scaleX, scaleY, scaleZ);
-        scene.add(modelGenerated);
-        return modelGenerated;
-      };
 
       const sunLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
       sunLight.position.set(25, 35, -50);
@@ -698,7 +697,20 @@ export class Game extends HTMLElement {
       fillLight.position.set(30, 20, -10);
       fillLight.castShadow = false;
 
+      scene.add(sunLight);
+      scene.add(sunLight.target);
+      scene.add(ambientLight);
+      scene.add(fillLight);
+
+      const modelCreate = async (posX, posY, posZ, scaleX, scaleY, scaleZ, modelName) => {
+        const modelGenerated = await this.createModelLoader(modelName, posX, posY, posZ, scaleX, scaleY, scaleZ);
+        scene.add(modelGenerated);
+        return modelGenerated;
+      };
+
       let carboardModels = [];
+      const carboardModelStates = [carboard, carboard2, carboard3];
+
       for (let i = 0; i <= 2; i++) {
         const carboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, carboardModelStates[i]);
         carboardGlb.rotateY(pi / 2);
@@ -707,6 +719,10 @@ export class Game extends HTMLElement {
       carboardModels[1].visible = false;
       carboardModels[2].visible = false;
 
+      const cacti = [];
+      const placedCacti = [];
+      const minDistance = 8;
+
       const CactusFactory = async (posX, posY, posZ) => {
         const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
         cactusGlb.rotateY(degreesToRadians(Math.random() * 360));
@@ -714,10 +730,6 @@ export class Game extends HTMLElement {
           cactusGlb,
         };
       };
-
-      const cacti = [];
-      const placedCacti = [];
-      const minDistance = 8;
 
       const getSafeCactusPosition = () => {
         let x, z;
@@ -748,21 +760,6 @@ export class Game extends HTMLElement {
         cacti[index] = cactus;
       });
 
-      const Ball = await (async (posX, posY, posZ) => {
-        const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
-        bulletGlb.rotateX(pi / 2);
-        const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
-        const temporalSpeed = new THREE.Vector3(1, 0, 1);
-        const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * gameSpeed);
-
-        return {
-          bulletGlb,
-          sphereUpdate,
-          velocity,
-          temporalSpeed,
-        };
-      })(0, 0, 0);
-
       const createHill = (posX, posZ, width, height) => {
         const baseGeometry = new THREE.CylinderGeometry(width * 1.5, width * 2, height * 0.3, 8);
         const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
@@ -787,10 +784,54 @@ export class Game extends HTMLElement {
       createHill(280, 200, 80, 35);
       createHill(-250, 220, 65, 22);
 
-      scene.add(sunLight);
-      scene.add(sunLight.target);
-      scene.add(ambientLight);
-      scene.add(fillLight);
+      const WallFactory = async (posX, posY, posZ) => {
+        const fenceGlb = await modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
+        fenceGlb.rotateY(-pi / 2);
+        return {
+          fenceGlb,
+        };
+      };
+      const Walls = await Promise.all([
+        WallFactory(0, 1.3, 9.65),
+        WallFactory(6, 1.3, 9.65),
+        WallFactory(-6, 1.3, 9.65),
+        WallFactory(6, 1.3, -9.65),
+        WallFactory(-6, 1.3, -9.65),
+        WallFactory(0, 1.3, -9.65),
+      ]);
+
+      (() => {
+        const textureLoader = new THREE.TextureLoader();
+        const groundTexture = textureLoader.load(ground_texture);
+        groundTexture.wrapS = THREE.RepeatWrapping;
+        groundTexture.wrapT = THREE.RepeatWrapping;
+        groundTexture.repeat.set(100, 100);
+        const phongMaterial = new THREE.MeshPhongMaterial({
+          map: groundTexture,
+          color: 0xd4a574,
+          depthWrite: true,
+        });
+        const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
+        const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
+        planeMesh.rotateX(-pi / 2);
+        planeMesh.receiveShadow = true;
+        scene.add(planeMesh);
+      })();
+
+      const Ball = await (async (posX, posY, posZ) => {
+        const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
+        bulletGlb.rotateX(pi / 2);
+        const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
+        const temporalSpeed = new THREE.Vector3(1, 0, 1);
+        const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * GAME_SPEED);
+
+        return {
+          bulletGlb,
+          sphereUpdate,
+          velocity,
+          temporalSpeed,
+        };
+      })(0, 0, 0);
 
       const BumperFactory = async (posX, posY, posZ) => {
         let _ = {};
@@ -883,7 +924,7 @@ export class Game extends HTMLElement {
         let modelChoosen = 0;
         let widthHalf = 0.5;
         let controlReverse = false;
-        let speed = 0.25 * gameSpeed;
+        let speed = 0.25 * GAME_SPEED;
         let score = 0;
         let currentAction = 2;
 
@@ -943,40 +984,6 @@ export class Game extends HTMLElement {
       };
 
       const Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
-
-      const WallFactory = async (posX, posY, posZ) => {
-        const fenceGlb = await modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
-        fenceGlb.rotateY(-pi / 2);
-        return {
-          fenceGlb,
-        };
-      };
-      const Walls = await Promise.all([
-        WallFactory(0, 1.3, 9.65),
-        WallFactory(6, 1.3, 9.65),
-        WallFactory(-6, 1.3, 9.65),
-        WallFactory(6, 1.3, -9.65),
-        WallFactory(-6, 1.3, -9.65),
-        WallFactory(0, 1.3, -9.65),
-      ]);
-
-      (() => {
-        const textureLoader = new THREE.TextureLoader();
-        const groundTexture = textureLoader.load(ground_texture);
-        groundTexture.wrapS = THREE.RepeatWrapping;
-        groundTexture.wrapT = THREE.RepeatWrapping;
-        groundTexture.repeat.set(100, 100);
-        const phongMaterial = new THREE.MeshPhongMaterial({
-          map: groundTexture,
-          color: 0xd4a574,
-          depthWrite: true,
-        });
-        const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
-        const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
-        planeMesh.rotateX(-pi / 2);
-        planeMesh.receiveShadow = true;
-        scene.add(planeMesh);
-      })();
 
       let delta = 0;
       let ballSubtickZ;
@@ -1079,7 +1086,7 @@ export class Game extends HTMLElement {
         }
         Bumpers[looserBumper].playerGlb.rotation.y = looserBumper == 0 ? 0 : pi;
         Ball.velocity.x = 0;
-        Ball.velocity.z = BALL_INITIAL_VELOCITY * gameSpeed * direction;
+        Ball.velocity.z = BALL_INITIAL_VELOCITY * GAME_SPEED * direction;
       };
 
       // AI FUNC:
@@ -1091,6 +1098,23 @@ export class Game extends HTMLElement {
       let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
       let bumperP1Subtick = 0;
       let bumperP2Subtick = 0;
+
+      let isMovementDone = false;
+      let isCalculationNeeded = true;
+
+      const ballPredictedPos = new THREE.Vector3(0, 0, 0);
+      const BallPredictedVelocity = new THREE.Vector3(0, 0, 0);
+
+      let lastSignificantScoreDiff = 0;
+      let choosenDifficulty = 2;
+      let stableDifficulty = 2;
+      const difficultyLvl = [
+        [10, 1025],
+        [8, 1025],
+        [5, 1000],
+        [2, 1000],
+        [1, 1000],
+      ];
 
       const moveAiBumper = (calculatedPos) => {
         keyMap['KeyA'] = false;
@@ -1116,23 +1140,6 @@ export class Game extends HTMLElement {
           }
         }
       };
-
-      let isMovementDone = false;
-      let isCalculationNeeded = true;
-
-      const ballPredictedPos = new THREE.Vector3(0, 0, 0);
-      const BallPredictedVelocity = new THREE.Vector3(0, 0, 0);
-
-      let lastSignificantScoreDiff = 0;
-      let choosenDifficulty = 2;
-      let stableDifficulty = 2;
-      const difficultyLvl = [
-        [10, 1025],
-        [8, 1025],
-        [5, 1000],
-        [2, 1000],
-        [1, 1000],
-      ];
 
       function calculateDifficultyLevel() {
         const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
@@ -1172,9 +1179,9 @@ export class Game extends HTMLElement {
           const errorMargin = calculateErrorMargin(BallPos.z);
 
           if (BallPredictedVelocity.z > 0) {
-            const totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
+            const totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * GAME_SPEED);
             while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf) {
-              const totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x * gameSpeed);
+              const totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x * GAME_SPEED);
 
               if (ballPredictedPos.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF) {
                 ballPredictedPos.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF;
@@ -1215,7 +1222,7 @@ export class Game extends HTMLElement {
 
       let Timer = (() => {
         let timeLeft = !GAME_TIME ? 180 : GAME_TIME * 60;
-        let timeoutId = setTimeout(myCallback, 1000);
+        let timeoutId = setTimeout(TimerCallBack, 1000);
         return {
           get timeLeft() {
             return timeLeft;
@@ -1232,11 +1239,11 @@ export class Game extends HTMLElement {
         };
       })();
 
-      function myCallback() {
+      function TimerCallBack() {
         if (Timer.timeLeft-- != 0 && gameStateContainer.isGamePlaying) {
           clearTimeout(Timer.timeoutId);
           timerUI?.updateRemainingTime(Timer.timeLeft);
-          Timer.timeoutId = setTimeout(myCallback, 1000);
+          Timer.timeoutId = setTimeout(TimerCallBack, 1000);
           return;
         }
         Bumpers[0].score = 0;
@@ -1255,7 +1262,7 @@ export class Game extends HTMLElement {
           CoinGlb.position.y = posY;
           CoinGlb.position.z = posZ;
           const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
-          const velocity = new THREE.Vector3(0.01 * gameSpeed, 0, 0);
+          const velocity = new THREE.Vector3(0.01 * GAME_SPEED, 0, 0);
           let lenghtHalf = 0.25;
 
           return {
@@ -1332,14 +1339,22 @@ export class Game extends HTMLElement {
           Bumpers[bumperAffected].modelChoosen = 0;
           Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
           Bumpers[bumperAffected].lenghtHalf = 2.5;
-          if (Bumpers[bumperAffected].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf) {
-            Bumpers[bumperAffected].cubeUpdate.x = -10 + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
+          if (
+            Bumpers[bumperAffected].cubeUpdate.x <
+            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf
+          ) {
+            Bumpers[bumperAffected].cubeUpdate.x =
+              WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
             Bumpers[bumperAffected].playerGlb.position.x =
-              -10 + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
-          } else if (Bumpers[bumperAffected].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf) {
-            Bumpers[bumperAffected].cubeUpdate.x = 10 - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
+              WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
+          } else if (
+            Bumpers[bumperAffected].cubeUpdate.x >
+            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf
+          ) {
+            Bumpers[bumperAffected].cubeUpdate.x =
+              WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
             Bumpers[bumperAffected].playerGlb.position.x =
-              10 - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
+              WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
           }
           if (dirz < 0) {
             Bumpers[bumperAffected].playerGlb.position.x += 1;
@@ -1356,7 +1371,7 @@ export class Game extends HTMLElement {
         };
         Workers[3].onmessage = function (e) {
           const bumperAffected = Math.abs(e.data[0] - 1);
-          Bumpers[bumperAffected].speed = 0.25 * gameSpeed;
+          Bumpers[bumperAffected].speed = 0.25 * GAME_SPEED;
           Bumpers[bumperAffected].gltfStore.action[0].setDuration(0.18);
           Bumpers[bumperAffected].gltfStore.action[5].setDuration(0.18);
           buffUI?.hideIcon();
@@ -1389,26 +1404,26 @@ export class Game extends HTMLElement {
             Bumpers[lastBumperCollided].lenghtHalf = 5;
             if (
               Bumpers[lastBumperCollided].cubeUpdate.x <
-              -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
+              WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
             ) {
               Bumpers[lastBumperCollided].cubeUpdate.x =
-                -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
+                WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
               dirz < 0
                 ? (Bumpers[lastBumperCollided].playerGlb.position.x =
-                    -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1)
+                    WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1)
                 : (Bumpers[lastBumperCollided].playerGlb.position.x =
-                    -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1);
+                    WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1);
             } else if (
               Bumpers[lastBumperCollided].cubeUpdate.x >
-              10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
+              WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
             ) {
               Bumpers[lastBumperCollided].cubeUpdate.x =
-                10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+                WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
               dirz < 0
                 ? (Bumpers[lastBumperCollided].playerGlb.position.x =
-                    10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1)
+                    WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1)
                 : (Bumpers[lastBumperCollided].playerGlb.position.x =
-                    10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1);
+                    WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1);
             }
             if (dirz < 0) {
               Bumpers[lastBumperCollided].playerGlb.position.x -= 7.2;
@@ -1443,7 +1458,7 @@ export class Game extends HTMLElement {
             buffUI?.showIcon('switch');
             break;
           case 4:
-            Bumpers[reversedLastBumperCollided].speed = 0.1 * gameSpeed;
+            Bumpers[reversedLastBumperCollided].speed = 0.1 * GAME_SPEED;
             Bumpers[reversedLastBumperCollided].gltfStore.action[0].setDuration(0.2);
             Bumpers[reversedLastBumperCollided].gltfStore.action[5].setDuration(0.2);
             Workers[3].postMessage([5000, lastBumperCollided, 'create']);
@@ -1466,14 +1481,14 @@ export class Game extends HTMLElement {
       };
 
       function checkWallCollision() {
-        if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-          Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
+        if (Ball.sphereUpdate.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF) {
+          Ball.sphereUpdate.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF;
           Ball.velocity.x *= -1;
           Ball.bulletGlb.rotation.x *= -1;
           // if (lastBumperCollided == 0) isCalculationNeeded = true;
         }
-        if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-          Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
+        if (Ball.sphereUpdate.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF) {
+          Ball.sphereUpdate.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF;
           Ball.velocity.x *= -1;
           Ball.bulletGlb.rotation.x *= -1;
           // if (lastBumperCollided == 0) isCalculationNeeded = true;
@@ -1512,7 +1527,7 @@ export class Game extends HTMLElement {
         if (
           ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
             (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
-          !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
+          !(Bumpers[0].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
         ) {
           Bumpers[0].cubeUpdate.x += bumperP1Subtick;
           Bumpers[0].playerGlb.position.x += bumperP1Subtick;
@@ -1520,7 +1535,7 @@ export class Game extends HTMLElement {
         if (
           ((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) ||
             (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) &&
-          !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
+          !(Bumpers[0].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
         ) {
           Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
           Bumpers[0].playerGlb.position.x -= bumperP1Subtick;
@@ -1529,7 +1544,7 @@ export class Game extends HTMLElement {
         if (
           ((keyMap['KeyD'] == true && Bumpers[1].controlReverse) ||
             (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) &&
-          !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
+          !(Bumpers[1].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
         ) {
           Bumpers[1].cubeUpdate.x += bumperP2Subtick;
           Bumpers[1].playerGlb.position.x += bumperP2Subtick;
@@ -1537,7 +1552,7 @@ export class Game extends HTMLElement {
         if (
           ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
             (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
-          !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
+          !(Bumpers[1].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
         ) {
           Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
           Bumpers[1].playerGlb.position.x -= bumperP2Subtick;
@@ -1548,8 +1563,8 @@ export class Game extends HTMLElement {
       function animate() {
         delta = clock.getDelta();
         step = null;
-        const totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * gameSpeed);
-        const totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
+        const totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * GAME_SPEED);
+        const totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * GAME_SPEED);
         Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
         Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
         let currentSubtick = 0;
@@ -1568,8 +1583,8 @@ export class Game extends HTMLElement {
             Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
             Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -pi / 2);
             if (
-              Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf ||
-              Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf
+              Coin.cylinderUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Coin.lenghtHalf ||
+              Coin.cylinderUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Coin.lenghtHalf
             ) {
               Coin.velocity.x *= -1;
             }
@@ -1581,7 +1596,6 @@ export class Game extends HTMLElement {
           if (isGameAi == 'ai') handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
           currentSubtick++;
         }
-        // Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
         Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
 
         Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(
@@ -1594,6 +1608,7 @@ export class Game extends HTMLElement {
           Bumpers[1].cubeUpdate.y,
           Bumpers[1].cubeUpdate.z,
         );
+
         if (Bumpers[0].gltfStore?.mixer && Bumpers[1].gltfStore?.mixer) {
           Bumpers[0].gltfStore.mixer.update(delta);
           Bumpers[1].gltfStore.mixer.update(delta);
@@ -1609,7 +1624,7 @@ export class Game extends HTMLElement {
         gameStartAndStop,
         gameStateContainer,
         Timer,
-        myCallback,
+        TimerCallBack,
         Bumpers,
       );
       this.onDocumentKeyUp = this.createOnDocumentKeyUp(keyMap, Bumpers);
