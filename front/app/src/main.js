@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 document.addEventListener('mousedown', () => {
-  document.body.style.cursor = "url('/img/sample-cursor-active.png') 8 8, auto";
+  document.body.style.cursor = "url('/img/cursor-active.png') 8 8, auto";
 });
 
 document.addEventListener('mouseup', () => {
