@@ -32,26 +32,26 @@ GAME_TICKS_PER_SECOND = 30
 GAME_TICK_INTERVAL = 1.0 / GAME_TICKS_PER_SECOND
 
 # GEOMETRIC CONSTANTS
-WALL_LEFT_X = 10
+WALL_LEFT_X = 10.0
 WALL_RIGHT_X = -WALL_LEFT_X
 WALL_WIDTH_HALF = 0.5
 BUMPER_LENGTH_HALF = 2.5
-BUMPER_WIDTH = 1
+BUMPER_WIDTH = 1.0
 BUMPER_WIDTH_HALF = BUMPER_WIDTH / 2
-BUMPER_1_BORDER = -10
+BUMPER_1_BORDER = -10.0
 BUMPER_2_BORDER = -BUMPER_1_BORDER
-COIN_LENGTH_HALF = 0.25
+COIN_LENGTH = 0.5
+COIN_LENGTH_HALF = COIN_LENGTH / 2
 COIN_WIDTH_HALF = 0.05
-BALL_DIAMETER = 1
+BALL_DIAMETER = 1.0
 BALL_RADIUS = BALL_DIAMETER / 2
-STARTING_BUMPER_1_POS = 0, -9
-STARTING_COIN_POS = -9.25, 1
-HIDDEN_COIN_SPOT = -100
-STARTING_BUMPER_2_POS = 0, 9
-STARTING_BALL_POS = 0, 0
+STARTING_BUMPER_1_POS = 0.0, -9.0
+STARTING_BUMPER_2_POS = 0.0, 9.0
+STARTING_COIN_POS = -9.0, 1.0
+HIDDEN_COIN_SPOT = -100.0
+STARTING_BALL_POS = 0.0, 0.0
 BOUNCING_ANGLE_DEGREES = 55
 PLAYERS_REQUIRED = 2
-DEFAULT_COIN_WAIT_TIME = 30
 
 # tolerance level for floating point caclulations
 EPSILON = 1e-6
@@ -59,16 +59,9 @@ EPSILON = 1e-6
 # SPEED VALUES IN UNITS PER SECOND (original working values)
 BUMPER_SPEED_PER_SECOND = 15.0
 BALL_Z_VELOCITY_PER_SECOND = 15.0
-COIN_VELOCITY_PER_SECOND = 3.0, 0
+COIN_VELOCITY_PER_SECOND = -3.0, 0.0
 BALL_VELOCITY_CAP_PER_SECOND = 75.0
 TEMPORAL_SPEED_DECAY_PER_SECOND = 0.25
-
-# BUFF DURATIONS IN SECONDS
-CONTROL_REVERSE_ENEMY_DURATION = 15
-SPEED_DECREASE_ENEMY_DURATION = 15
-SHORTEN_ENEMY_DURATION = 15
-ELONGATE_PLAYER_DURATION = 15
-ENLARGE_PLAYER_DURATION = 15
 
 # DIRECT VALUES (units per second - no conversion needed)
 BASE_BUMPER_SPEED = BUMPER_SPEED_PER_SECOND
@@ -78,8 +71,17 @@ BALL_VELOCITY_CAP = BALL_VELOCITY_CAP_PER_SECOND
 TEMPORAL_SPEED_DECAY = TEMPORAL_SPEED_DECAY_PER_SECOND
 
 # MULTIPLIERS
-TEMPORAL_SPEED_DEFAULT = 1, 1
-TEMPORAL_SPEED_INCREASE = 0  # currently unused
+TEMPORAL_SPEED_DEFAULT = 1.0, 1.0
+TEMPORAL_SPEED_INCREASE = 0.0  # currently unused
+
+# TIME VALUES
+WAITING_FOR_PLAYERS_TIME = 30
+CONTROL_REVERSE_ENEMY_DURATION = 15
+SPEED_DECREASE_ENEMY_DURATION = 15
+SHORTEN_ENEMY_DURATION = 15
+ELONGATE_PLAYER_DURATION = 15
+ENLARGE_PLAYER_DURATION = 15
+COIN_SPAWN_TIME = 5
 ###################
 
 
@@ -97,7 +99,6 @@ class Buff(IntEnum):
     SHORTEN_ENEMY = auto()
     ELONGATE_PLAYER = auto()
     ENLARGE_PLAYER = auto()
-    SPAWN_COIN = auto()
 
     def get_duration_seconds(self) -> float:
         """Get the duration in seconds for this buff type."""
@@ -552,11 +553,14 @@ class BasePong:
 
         # move coin (with bouncing :3)
         if self._coin and self._is_coin_on_screen():
-            self._coin.x += self._coin.velocity.x * delta_time
-            self._coin.z += self._coin.velocity.z * delta_time
-            if (self._coin.x < WALL_RIGHT_X + WALL_WIDTH_HALF + COIN_LENGTH_HALF) or (
-                self._coin.x > WALL_LEFT_X - WALL_WIDTH_HALF - COIN_LENGTH_HALF
-            ):
+            movement = self._coin.velocity.x * delta_time
+            new_x = self._coin.x + movement
+
+            left_limit = WALL_LEFT_X - WALL_WIDTH_HALF - COIN_LENGTH
+            right_limit = WALL_RIGHT_X + WALL_WIDTH_HALF + COIN_LENGTH
+
+            self._coin.x = max(right_limit, min(left_limit, new_x))
+            if (self._coin.x == right_limit) or (self._coin.x == left_limit):
                 self._coin.velocity.x *= -1
 
     def _move_bumper(self, bumper, delta_time):
@@ -570,12 +574,12 @@ class BasePong:
         # don't go over walls
         # when bumper goes overl wall, it sticks to its edge instead
         new_x = bumper.x + movement
-        left_limit = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenght_half
-        right_limit = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenght_half
+        left_limit = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenght_half
+        right_limit = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenght_half
 
         # min() and max() are implemented in C, so they are faster than conditions
-        # it means: `right_limit < new_x < left_limit`
-        bumper.x = max(left_limit, min(right_limit, new_x))
+        # it means: `left_limit < new_x < right_limit`
+        bumper.x = max(right_limit, min(left_limit, new_x))
 
     def _handle_collision(self, collision_info: CollisionInfo, current_time: float):
         """Handle the collision that just occurred."""
@@ -759,7 +763,7 @@ class BasePong:
         # spawn coin every 30 seconds
         if (
             self._coin
-            and current_time - self._last_coin_hit_time >= DEFAULT_COIN_WAIT_TIME
+            and current_time - self._last_coin_hit_time >= COIN_SPAWN_TIME
             and not self._is_coin_on_screen()
         ):
             self._coin.x, self._coin.z = STARTING_COIN_POS
@@ -1212,7 +1216,7 @@ class GameWorkerConsumer(AsyncConsumer):
         """
         try:
             logger.info("[GameWorker]: waiting for players to connect to the game {%s}", match)
-            await asyncio.sleep(5)
+            await asyncio.sleep(WAITING_FOR_PLAYERS_TIME)
 
             # if we are here, players didn't connect
             if len(match.get_players_based_on_connection(PlayerConnectionState.CONNECTED)) < PLAYERS_REQUIRED:
@@ -1435,7 +1439,7 @@ class GameWorkerConsumer(AsyncConsumer):
 
     async def _unpause(self, match: MultiplayerPongMatch):
         if match.status != MultiplayerPongMatchStatus.PAUSED:
-            logger.warning("[GameWorker]: game {%s} can't be unpaused, as it was not paused")
+            logger.warning("[GameWorker]: game {%s} can't be unpaused, as it was not paused", match.id)
             return
 
         pause_duration = asyncio.get_event_loop().time() - match.pause_start_time
