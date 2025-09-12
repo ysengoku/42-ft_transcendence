@@ -32,9 +32,16 @@ jobs:
           node -v
           npm -v
 
+      - name: Check versions
+        run: |
+          node -v
+          npm -v
+
       - name: Install dependencies
         working-directory: ./front/app
-        run: npm ci
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Run unit tests
         working-directory: ./front/app
