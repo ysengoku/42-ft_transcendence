@@ -560,7 +560,7 @@ class BasePong:
             right_limit = WALL_RIGHT_X + WALL_WIDTH_HALF + COIN_LENGTH
 
             self._coin.x = max(right_limit, min(left_limit, new_x))
-            if (self._coin.x == right_limit) or (self._coin.x == left_limit):
+            if self._coin.x in (left_limit, right_limit):
                 self._coin.velocity.x *= -1
 
     def _move_bumper(self, bumper, delta_time):
@@ -666,7 +666,6 @@ class BasePong:
 
         # if both of them are over 0, there is overlap!
         if x_overlap > 0 and z_overlap > 0:
-
             # for resolving penetration we are choosing the LEAST penetrated axis to avoid adjustments that are
             # too large visually
             if x_overlap < z_overlap:
@@ -683,8 +682,15 @@ class BasePong:
                 else:
                     self._ball.z = bumper_top + BALL_RADIUS + push_epsilon
                 self._ball.x = max(min_ball_x, min(self._ball.x, max_ball_x))
-            logger.debug("PENETRATION RESOLVED: x_overlap=%f, z_overlap=%f, ball.x=%f, ball.z=%f, bumper.x=%f,"
-                         " bumper.z=%f", x_overlap, z_overlap, self._ball.x, self._ball.z, bumper.x, bumper.z)
+            logger.debug(
+                "PENETRATION RESOLVED: x_overlap=%f, z_overlap=%f, ball.x=%f, ball.z=%f, bumper.x=%f, bumper.z=%f",
+                x_overlap,
+                z_overlap,
+                self._ball.x,
+                self._ball.z,
+                bumper.x,
+                bumper.z,
+            )
 
     def _apply_coin_buff(self, current_time: float):
         """Applies one of the buffs to the player who scored the coin. Or debuffs their opponent."""
@@ -761,11 +767,7 @@ class BasePong:
     def _update_coin_and_buffs(self, current_time: float):
         """Handles coin spawning and buff expiration."""
         # spawn coin every 30 seconds
-        if (
-            self._coin
-            and current_time - self._last_coin_hit_time >= COIN_SPAWN_TIME
-            and not self._is_coin_on_screen()
-        ):
+        if self._coin and current_time - self._last_coin_hit_time >= COIN_SPAWN_TIME and not self._is_coin_on_screen():
             self._coin.x, self._coin.z = STARTING_COIN_POS
 
         # reset expired buff (only one active at a time)
@@ -1463,7 +1465,6 @@ class GameWorkerConsumer(AsyncConsumer):
         status: Literal["finished", "cancelled"],
     ) -> Match | Bracket | None:
         if not match.is_in_tournament:
-
             match_result = await database_sync_to_async(Match.objects.resolve)(
                 winner.profile_id,
                 loser.profile_id,
