@@ -66,7 +66,7 @@ export class Game extends HTMLElement {
     this.classList.add('position-relative');
     this.scoreElement = document.createElement('game-scoreboard');
     if (this.scoreElement && this.#state.gameType === 'ai') {
-      this.scoreElement.setNames('Player1', 'AI playser');
+      this.scoreElement.setNames('Player1', 'AI player');
     }
     this.appendChild(this.scoreElement);
     this.timerElement = document.createElement('game-timer');
@@ -138,7 +138,7 @@ export class Game extends HTMLElement {
       if (e.defaultPrevented) {
         return;
       }
-      var keyCode = e.code;
+      const keyCode = e.code;
       if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == 'ai') {
         keyMap[keyCode] = true;
         if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
@@ -192,7 +192,7 @@ export class Game extends HTMLElement {
       if (e.defaultPrevented) {
         return;
       }
-      var keyCode = e.code;
+      const keyCode = e.code;
       keyMap[keyCode] = false;
       if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[2]) {
         if (keyCode == 'ArrowRight') {
@@ -225,7 +225,7 @@ export class Game extends HTMLElement {
   }
 
   async game() {
-    var keyMap = [];
+    let keyMap = [];
     const buffUI = this.buffIconElement;
     const timerUI = this.timerElement;
     const scoreUI = this.scoreElement;
@@ -298,7 +298,7 @@ export class Game extends HTMLElement {
     scene.fog = new THREE.FogExp2(0x8e4f5e, 0.008);
     await this.initLoaders(renderer);
 
-    var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
     camera.position.set(0, 12, -20);
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
@@ -452,7 +452,7 @@ export class Game extends HTMLElement {
     scene.add(fillLight);
 
     const BumperFactory = (posX, posY, posZ) => {
-      var _ = {};
+      let _ = {};
       let modelsGlb;
       let animations = [];
       _.action = [null, null, null, null, null, null, null, null];
@@ -674,7 +674,7 @@ export class Game extends HTMLElement {
       Ball.bulletGlb.rotation.y = -degreesToRadians(Ball.temporalSpeed.x);
     }
 
-    var step = null;
+    let step = null;
 
     function start() {
       if (!step && gameStateContainer.isGamePlaying) {
@@ -935,13 +935,13 @@ export class Game extends HTMLElement {
         };
       })(-9.25, 1, 0);
 
-      var blob = new Blob([
-        'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
+      const blob = new Blob([
+        'let remaining; let Timer = function(callback, delay) { let timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
           'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
           'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
           'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
       ]);
-      var blobURL = window.URL.createObjectURL(blob);
+      const blobURL = window.URL.createObjectURL(blob);
       Workers = [
         new Worker(blobURL),
         new Worker(blobURL),
@@ -1185,7 +1185,7 @@ export class Game extends HTMLElement {
       }
     }
 
-    var clock = new THREE.Clock();
+    const clock = new THREE.Clock();
     function animate() {
       delta = clock.getDelta();
       step = null;
@@ -1233,7 +1233,6 @@ export class Game extends HTMLElement {
         camera.position.set(-10, 15, -20);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
       }
-      console.log(Bumpers[0].cubeUpdate.x);
       Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(
         Bumpers[0].cubeUpdate.x,
         Bumpers[0].cubeUpdate.y,
