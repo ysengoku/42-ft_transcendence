@@ -31,7 +31,7 @@ Besides duels, which are single, self-contained matches, the project also offers
 
 The heart of the **Peacemakers** platform is [the legendary Pong game](https://en.wikipedia.org/wiki/Pong) itself. Our version differs in couple of major ways: it is [customizable](#game-settings), features [additional gameplay features](#additional-gameplay-features) and while it is available from the browser, it is rendered in 3D, using rich hand-crafted 3D models [sculpted with Blender](https://en.wikipedia.org/wiki/Blender_(software)) by our lead game designer/game developer. (TODO: link to Celia's profile). 
 
-(TODO: screeonshots of the game)
+(TODO: screennshots of the game)
 
 (TODO: screenshots of models made in blender)
 

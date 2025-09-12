@@ -56,7 +56,6 @@ class Validator:
             "unlike_message": ["id", "chat_id"],
             "read_message": ["id"],
             "read_notification": ["id"],
-            # TODO : check these ids
             "new_tournament": ["id", "organizer_id"],
             "add_new_friend": ["id"],
             "room_created": ["chat_id"],
