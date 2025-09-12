@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - dev
+  workflow_dispatch:
 
 jobs:
   frontend:
@@ -23,8 +24,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
-          cache-dependency-path: './front/app/package-lock.json'
+          #cache: 'npm'
+          #cache-dependency-path: './front/app/package-lock.json'
+
+      - name: Upgrade npm
+        run: npm install -g npm@10
+
+      - name: Check versions
+        run: |
+          node -v
+          npm -v
 
       - name: Install dependencies
         working-directory: ./front/app
