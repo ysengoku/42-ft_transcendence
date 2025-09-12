@@ -1204,13 +1204,10 @@ export class Game extends HTMLElement {
         checkBumperCollision();
         checkBallScored();
         manageBumperMovements();
-
-        if (Coin != null && isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
-          manageBuffAndDebuff();
-        }
-
-        Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
         if (Coin != null) {
+          if (isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) manageBuffAndDebuff();
+          Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
+          Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -pi / 2);
           if (
             Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf ||
             Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf
@@ -1219,16 +1216,15 @@ export class Game extends HTMLElement {
           }
           Coin.cylinderUpdate.x += Coin.velocity.x;
         }
+        Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
         Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
+
         if (isGameAi == 'ai') handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
         currentSubtick++;
       }
       // Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
       Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-      if (Coin != null) {
-        Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
-        Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -pi / 2);
-      }
+
       if (keyMap['KeyC'] == true) {
         camera.position.set(10, 15, -20);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
