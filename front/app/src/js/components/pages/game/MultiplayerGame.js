@@ -127,6 +127,7 @@ export class MultiplayerGame extends HTMLElement {
     const BUMPER_WIDTH_HALF = 0.5;
     const BUMPER_SPEED_PER_SECOND = 15.0;
     const BALL_INITIAL_VELOCITY = 0.25;
+    const SPEED_DECREASE_ENEMY_FACTOR = 0.5;
 
     // CONSTANTS for physics simulation in client side prediction
     const SERVER_TICK_RATE = 30;
@@ -679,7 +680,7 @@ export class MultiplayerGame extends HTMLElement {
               : this.buffIconElement?.show(BUFF_TYPE.SWITCH, true);
             break;
           case Buff.SPEED_DECREASE_ENEMY:
-            targetPlayer.speed = BUMPER_SPEED_PER_SECOND * 0.1;
+            targetPlayer.speed = BUMPER_SPEED_PER_SECOND * SPEED_DECREASE_ENEMY_FACTOR;
             isUserAffected
               ? this.buffIconElement?.show(BUFF_TYPE.SLOW)
               : this.buffIconElement?.show(BUFF_TYPE.SLOW, true);
