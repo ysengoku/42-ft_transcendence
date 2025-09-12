@@ -125,12 +125,8 @@ export class MultiplayerGame extends HTMLElement {
     const WALL_WIDTH_HALF = 0.5;
     const BUMPER_LENGTH_HALF = 2.5;
     const BUMPER_WIDTH_HALF = 0.5;
-    const BALL_DIAMETER = 1;
-    const BALL_RADIUS = BALL_DIAMETER / 2;
     const BUMPER_SPEED_PER_SECOND = 15.0;
-    const SUBTICK = 0.025;
     const BALL_INITIAL_VELOCITY = 0.25;
-    const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
 
     // CONSTANTS for physics simulation in client side prediction
     const SERVER_TICK_RATE = 30;
@@ -558,34 +554,6 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
-    const pi = Math.PI;
-    function degreesToRadians(degrees) {
-      return degrees * (pi / 180);
-    }
-
-    function isCollidedWithBall(bumper, ballSubtickZ, ballSubtickX) {
-      // console.log("FUCK YOU: collide")
-      return (
-        Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lenghtHalf &&
-        Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lenghtHalf &&
-        Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
-        Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
-      );
-    }
-
-    function calculateNewDir(bumper) {
-      let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
-      let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lenghtHalf);
-      let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
-      Ball.velocity.z = Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dirZ;
-      Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dirZ;
-      if (
-        Ball.sphereUpdate.z - BALL_RADIUS * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
-        Ball.sphereUpdate.z + BALL_RADIUS * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
-      )
-        Ball.temporalSpeed.x += TEMPORAL_SPEED_INCREASE;
-      // Ball.bulletGlb.rotation.y = -degreesToRadians(Ball.temporalSpeed.x);
-    }
     function resetAllBuffEffects() {
       for (let i = 0; i < Bumpers.length; i++) {
         const bumper = Bumpers[i];
@@ -657,22 +625,6 @@ export class MultiplayerGame extends HTMLElement {
       serverState.is_someone_scored = data.is_someone_scored;
       serverState.elapsed_seconds = data.elapsed_seconds;
       serverState.time_limit_reached = data.time_limit_reached;
-    }
-
-    function updateEntityPositionsFromServer() {
-      Ball.sphereUpdate.x = serverState.ball.x;
-      Ball.sphereUpdate.z = serverState.ball.z;
-
-      // update ball velocity for client-side prediction
-      Ball.velocity.x = serverState.ball.velocity.x;
-      Ball.velocity.z = serverState.ball.velocity.z;
-      Ball.temporalSpeed.x = serverState.ball.temporal_speed.x;
-      Ball.temporalSpeed.z = serverState.ball.temporal_speed.z;
-
-      if (serverState.coin) {
-        Coin.cylinderUpdate.x = serverState.coin.x;
-        Coin.cylinderUpdate.z = serverState.coin.z;
-      }
     }
 
     // applies position received from the server, then applies not yet processed inputs
@@ -772,7 +724,6 @@ export class MultiplayerGame extends HTMLElement {
             decreaseLifePointUI(data.state);
           }
           updateServerState(data.state);
-          updateEntityPositionsFromServer();
           reconcileWithServer();
           applyBuffEffects();
           updateEntitiesInterpolationBuffer(Date.now());
