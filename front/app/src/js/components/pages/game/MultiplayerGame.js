@@ -555,7 +555,7 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
-    function resetAllBuffEffects() {
+    const resetAllBuffEffects = () => {
       for (let i = 0; i < Bumpers.length; i++) {
         const bumper = Bumpers[i];
 
@@ -744,8 +744,15 @@ export class MultiplayerGame extends HTMLElement {
           this.timerElement?.setInitialTimeLimit(data.settings.time_limit * 60);
           this.timerElement?.render();
           this.#state.gameOptions = data.settings;
+          const gameSpeed = {
+            slow: 0.75,
+            medium: 1.0,
+            fast: 1.25,
+          };
+          this.#state.gameOptions.game_speed = gameSpeed[this.#state.gameOptions.game_speed];
           clientState.bumper.speed *= this.#state.gameOptions.game_speed;
           clientState.enemyBumper.speed *= this.#state.gameOptions.game_speed;
+          console.log(clientState.bumper.speed)
           break;
         case 'game_started':
           log.info('Game started', data);
