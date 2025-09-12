@@ -127,7 +127,7 @@ export class MultiplayerGame extends HTMLElement {
     const BUMPER_WIDTH_HALF = 0.5;
     const BUMPER_SPEED_PER_SECOND = 15.0;
     const BALL_INITIAL_VELOCITY = 0.25;
-    const SPEED_DECREASE_ENEMY_FACTOR = 0.5;
+    const SPEED_DECREASE_ENEMY_FACTOR = 0.75;
 
     // CONSTANTS for physics simulation in client side prediction
     const SERVER_TICK_RATE = 30;
@@ -560,7 +560,7 @@ export class MultiplayerGame extends HTMLElement {
         const bumper = Bumpers[i];
 
         bumper.controlReverse = false;
-        bumper.speed = BUMPER_SPEED_PER_SECOND;
+        bumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
         bumper.cubeMesh.scale.x = 1;
         bumper.lenghtHalf = BUMPER_LENGTH_HALF;
         bumper.cubeMesh.scale.z = 1;
@@ -680,7 +680,7 @@ export class MultiplayerGame extends HTMLElement {
               : this.buffIconElement?.show(BUFF_TYPE.SWITCH, true);
             break;
           case Buff.SPEED_DECREASE_ENEMY:
-            targetPlayer.speed = BUMPER_SPEED_PER_SECOND * SPEED_DECREASE_ENEMY_FACTOR;
+            targetPlayer.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed * SPEED_DECREASE_ENEMY_FACTOR;
             isUserAffected
               ? this.buffIconElement?.show(BUFF_TYPE.SLOW)
               : this.buffIconElement?.show(BUFF_TYPE.SLOW, true);
@@ -744,6 +744,8 @@ export class MultiplayerGame extends HTMLElement {
           this.timerElement?.setInitialTimeLimit(data.settings.time_limit * 60);
           this.timerElement?.render();
           this.#state.gameOptions = data.settings;
+          clientState.bumper.speed *= this.#state.gameOptions.game_speed;
+          clientState.enemyBumper.speed *= this.#state.gameOptions.game_speed;
           break;
         case 'game_started':
           log.info('Game started', data);
