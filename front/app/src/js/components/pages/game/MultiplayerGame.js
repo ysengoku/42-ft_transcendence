@@ -127,7 +127,7 @@ export class MultiplayerGame extends HTMLElement {
     const BUMPER_WIDTH_HALF = 0.5;
     const BUMPER_SPEED_PER_SECOND = 15.0;
     const BALL_INITIAL_VELOCITY = 0.25;
-    const SPEED_DECREASE_ENEMY_FACTOR = 0.75;
+    const SPEED_DECREASE_ENEMY_FACTOR = 0.5;
 
     // CONSTANTS for physics simulation in client side prediction
     const SERVER_TICK_RATE = 30;
@@ -566,7 +566,7 @@ export class MultiplayerGame extends HTMLElement {
         bumper.cubeMesh.scale.z = 1;
         bumper.widthHalf = BUMPER_WIDTH_HALF;
       }
-    }
+    };
 
     const decreaseLifePointUI = (data) => {
       const playerMissed = data.bumper_1.score > serverState.bumper_1.score ? 2 : 1;
@@ -680,7 +680,8 @@ export class MultiplayerGame extends HTMLElement {
               : this.buffIconElement?.show(BUFF_TYPE.SWITCH, true);
             break;
           case Buff.SPEED_DECREASE_ENEMY:
-            targetPlayer.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed * SPEED_DECREASE_ENEMY_FACTOR;
+            targetPlayer.speed =
+              BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed * SPEED_DECREASE_ENEMY_FACTOR;
             isUserAffected
               ? this.buffIconElement?.show(BUFF_TYPE.SLOW)
               : this.buffIconElement?.show(BUFF_TYPE.SLOW, true);
@@ -752,7 +753,7 @@ export class MultiplayerGame extends HTMLElement {
           this.#state.gameOptions.game_speed = gameSpeed[this.#state.gameOptions.game_speed];
           clientState.bumper.speed *= this.#state.gameOptions.game_speed;
           clientState.enemyBumper.speed *= this.#state.gameOptions.game_speed;
-          console.log(clientState.bumper.speed)
+          console.log(clientState.bumper.speed);
           break;
         case 'game_started':
           log.info('Game started', data);
