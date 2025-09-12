@@ -33,6 +33,7 @@ jobs:
           npm -v
 
       - name: Install dependencies
+        working-directory: ./front/app
         run: |
           rm -rf node_modules package-lock.json
           npm install
