@@ -266,7 +266,7 @@ OAUTH_ALLOWED_SCOPES = {
     "42": {"public", "profile"},
 }
 
-# OAuth 42
+# OAuth
 API42_CLIENT_ID = env("API42_CLIENT_ID")
 API42_CLIENT_SECRET = env("API42_CLIENT_SECRET")
 

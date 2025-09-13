@@ -7,6 +7,8 @@ import requests
 from django.test import TestCase
 
 from users.models import OauthConnection, User
+from django.conf import settings
+
 
 
 class OAuth2EndpointsTests(TestCase):
@@ -21,9 +23,6 @@ class OAuth2EndpointsTests(TestCase):
         logging.disable(logging.NOTSET)
     
     def setUp(self):
-        # Clear any existing OAuth connections to avoid conflicts
-        OauthConnection.objects.all().delete()
-        
         # Common mock responses to reduce setup time
         self.mock_api_success = MagicMock()
         self.mock_api_success.status_code = 200
@@ -50,13 +49,13 @@ class OAuth2EndpointsTests(TestCase):
         response = self.client.get("/api/oauth/authorize/unsupported")
         self.assertEqual(response.status_code, 404)
 
-    @patch("users.router.endpoints.oauth2.requests.get")
-    def test_oauth_authorize_github_success(self, mock_get):
-        mock_get.return_value.status_code = 200
-        response = self.client.get("/api/oauth/authorize/github")
-        self.assertEqual(response.status_code, 200)
-        response_data = response.json()
-        self.assertIn("auth_url", response_data)
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_authorize_github_success(self, mock_head):
+        mock_head.return_value.status_code = 200
+        resp = self.client.get("/api/oauth/authorize/github")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("auth_url", resp.json())
+
         
         # Parse the auth URL to verify parameters
         parsed_url = urlparse(response_data["auth_url"])
@@ -79,30 +78,83 @@ class OAuth2EndpointsTests(TestCase):
         # Verify OAuth connection was created
         self.assertTrue(OauthConnection.objects.filter(status=OauthConnection.PENDING).exists())
 
-    @patch("users.router.endpoints.oauth2.requests.get")
-    def test_oauth_authorize_42_api_unavailable(self, mock_get):
-        mock_get.return_value.status_code = 500
-        response = self.client.get("/api/oauth/authorize/42")
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_authorize_github_health_fail_head_500_redirects_503(self, mock_head):
+        # Simule: provider renvoie 500 au HEAD
+        mock_head.return_value.status_code = 500
+
+        resp = self.client.get("/api/oauth/authorize/github", follow=False)
+
+        # Notre backend doit rediriger vers /error avec code=503
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(settings.ERROR_REDIRECT_URL, resp["Location"])
+        self.assertIn("code=503", resp["Location"])
+
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_authorize_42_health_fail_head_500_redirects_503(self, mock_head):
+        mock_head.return_value.status_code = 500
+
+        resp = self.client.get("/api/oauth/authorize/42", follow=False)
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(settings.ERROR_REDIRECT_URL, resp["Location"])
+        self.assertIn("code=503", resp["Location"])
 
     @patch("users.router.endpoints.oauth2.requests.get")
-    def test_oauth_authorize_42_connection_error(self, mock_get):
-        mock_get.side_effect = requests.RequestException("Connection error")
-        response = self.client.get("/api/oauth/authorize/42")
-        # API returns 422 for validation errors
-        self.assertEqual(response.status_code, 422)
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_authorize_github_head_405_then_get_500_redirects_503(self, mock_head, mock_get):
+        # HEAD non supporté → fallback GET
+        mock_head.return_value.status_code = 405
+        mock_get.return_value.status_code = 500
+
+        resp = self.client.get("/api/oauth/authorize/github", follow=False)
+
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("code=503", resp["Location"])
+
+    @patch("users.router.endpoints.oauth2.requests.get")
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_authorize_github_head_405_then_get_200_returns_auth_url(self, mock_head, mock_get):
+        # HEAD 405 (non supporté) mais GET OK → health-check OK
+        mock_head.return_value.status_code = 405
+        mock_get.return_value.status_code = 200
+
+        resp = self.client.get("/api/oauth/authorize/github")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("auth_url", resp.json())
+
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_authorize_42_head_301_redirect_tolerated_returns_auth_url(self, mock_head):
+        # Les redirections sont tolérées par le health-check
+        mock_head.return_value.status_code = 301
+
+        resp = self.client.get("/api/oauth/authorize/42")
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("auth_url", resp.json())
+
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_authorize_42_connection_error(self, mock_head):
+        mock_head.side_effect = requests.RequestException("Connection error")
+        resp = self.client.get("/api/oauth/authorize/42", follow=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(settings.ERROR_REDIRECT_URL, resp["Location"])
+        self.assertIn("code=503", resp["Location"])
+
 
     def test_oauth_callback_unsupported_platform(self):
         response = self.client.get("/api/oauth/callback/unsupported?code=test&state=test")
         self.assertEqual(response.status_code, 404)
-
-    def test_oauth_callback_with_oauth_error(self):
-        # Test OAuth server error response
+    
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_callback_with_oauth_error(self, mock_head):
+        mock_head.return_value.status_code = 200  # 👈 bypass health-check
         response = self.client.get("/api/oauth/callback/github?error=access_denied&error_description=User%20denied%20access")
         self.assertEqual(response.status_code, 302)
         self.assertIn("error=access_denied%3A%20User%20denied%20access", response.url)
         self.assertIn("code=422", response.url)
+
         
     def test_oauth_callback_with_different_error_types(self):
         # Test various OAuth error types
