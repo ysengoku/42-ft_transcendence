@@ -240,7 +240,7 @@ class Profile(models.Model):
 
     def rename_avatar(self, new_avatar) -> InMemoryUploadedFile:
         ext = Path(new_avatar.name).suffix
-        base_name = str(self.pk) if self.pk else uuid4().hex
+        base_name = uuid4().hex
         new_name = f"{base_name}_avatar{ext}"
         new_avatar.seek(0)
         avatar_content = io.BytesIO(new_avatar.read())
