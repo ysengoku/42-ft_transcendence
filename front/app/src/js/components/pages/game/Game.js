@@ -167,8 +167,6 @@ export class Game extends HTMLElement {
     } catch (error) {
       this.handleError('GAME_INIT_FAILED', error);
     }
-
-    await this.render();
   }
 
   /**
@@ -357,9 +355,9 @@ export class Game extends HTMLElement {
 
   /**
    * Create and configure the WebGL renderer
-   * @returns {Promise<THREE.WebGLRenderer>} Configured renderer instance
+   * @returns {THREE.WebGLRenderer} Configured renderer instance
    */
-  async createRenderer() {
+  createRenderer() {
     try {
       // Test WebGL support before creating renderer
       const canvas = document.createElement('canvas');
@@ -645,7 +643,8 @@ export class Game extends HTMLElement {
     const scoreUI = this.scoreElement;
     const lifePointUI = this.lifePointElement;
 
-    const renderer = await this.createRenderer();
+    const renderer = this.createRenderer();
+    console.log('1')
     if (!renderer) {
       throw new Error('Failed to create WebGL renderer');
     }
