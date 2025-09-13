@@ -79,9 +79,14 @@ const handlers = {
    */
   success: async (response) => {
     log.info('Request successful with', response.status);
-    let responseData = null;
+    let responseData = {};
     if (response.status !== 204) {
-      responseData = await response.json();
+      try {
+        responseData = await response.json();
+      } catch(error) {
+        log.error('Failed to parse JSON response:', error);
+        responseData = {};
+      }
     }
     log.info('Response data:', responseData);
     return { success: true, status: response.status, data: responseData };
@@ -156,9 +161,14 @@ const handlers = {
       log.info('API response:', retryResponse);
       if (retryResponse.ok) {
         log.info('Request successful');
-        let responseData = null;
+        let responseData = {};
         if (retryResponse.status !== 204) {
-          responseData = await retryResponse.json();
+          try {
+            responseData = await retryResponse.json();
+          } catch(error) {
+            log.error('Failed to parse JSON response:', error);
+            responseData = {};
+          }
         }
         return { success: true, status: response.status, data: responseData };
       }
@@ -175,7 +185,13 @@ const handlers = {
    * @return {Promise<Object>} An object containing the success status, response status, and error message.
    */
   failure: async (response) => {
-    const errorData = await response.json();
+    let errorData = {};
+    try {
+      errorData = await response.json();
+    } catch(error) {
+      log.error('Failed to parse JSON response:', error);
+      errorData = {};
+    }
     let errorMsg = API_ERROR_MESSAGE.default;
     if (Array.isArray(errorData)) {
       const foundErrorMsg = errorData.find((item) => item.msg);
