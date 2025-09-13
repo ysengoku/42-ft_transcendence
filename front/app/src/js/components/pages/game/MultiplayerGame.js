@@ -3,31 +3,71 @@ import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
-import pedro from '/3d_models/pull_pedro.glb?url';
+import pedro from '/3d_models/pleasehelpme.glb?url';
+import cactus from '/3d_models/cactus1.glb?url';
+import bullet from '/3d_models/bullet.glb?url';
+import fence from '/3d_models/fence.glb?url';
+import couch from '/3d_models/sofa.glb?url';
+import chair from '/3d_models/chair.glb?url';
+import dressing from '/3d_models/dressing.glb?url';
+import ground_texture from '/img/ground_texture.png?url';
+import coin from '/3d_models/coin.glb?url';
+import carboard from '/3d_models/carboard.glb?url';
+import carboard2 from '/3d_models/carboard2.glb?url';
+import carboard3 from '/3d_models/carboard3.glb?url';
+import table from '/3d_models/table.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
+import { sessionExpiredToast } from '@utils';
 import './components/index';
 import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
+import { DEFAULT_AVATAR } from '@env';
 
 /* eslint no-var: "off" */
+
+/**
+ * MultiplayerGame Component - 3D Multiplayer Pong Game Implementation
+ *
+ * This class implements a 3D multiplayer pong game using Three.js with the following features:
+ * - Real-time multiplayer with WebSocket connections
+ * - Client-side prediction and server reconciliation
+ * - Advanced 3D models and animations for players and environment
+ * - Physics-based ball movement and collision detection
+ * - Power-ups and buffs system
+ * - Responsive UI with timer, scoreboard, and life points
+ * - Rich desert environment with cacti, hills, and atmospheric effects
+ */
 export class MultiplayerGame extends HTMLElement {
-  #navbarHeight = 64;
-  #ktx2Loader = null;
-  #pongSocket = null;
+  // Private fields for game configuration and state
+  #navbarHeight = 64; // Height of the navigation bar
+  #ktx2Loader = null; // KTX2 texture loader for optimized textures
+  #pongSocket = null; // WebSocket connection for multiplayer
+  #animationId = null; // Animation frame request ID
+  #resizeHandler = null; // Window resize event handler
+  #blobURL = null; // Blob URL for web workers
   #state = {
     userPlayerName: 'You',
     opponentPlayerName: 'Opponent',
     gameOptions: {},
+    user: null,
   };
 
   constructor() {
     super();
-    this.timerElement = null;
-    this.buffIconElement = null;
-    this.scoreElement = null;
-    this.lifePointElement = null;
-    this.overlay = null;
+
+    // Initialize UI element references
+    this.timerElement = null; // Game timer display
+    this.buffIconElement = null; // Power-up indicator
+    this.scoreElement = null; // Scoreboard component
+    this.lifePointElement = null; // Life points display
+    this.overlay = null; // Game overlay for messages
+
+    // Predefined rotation angles for player models
+    this.modelRotation = [
+      [this.degreesToRadians(235), this.degreesToRadians(-90)], // Player 1 rotations
+      [this.degreesToRadians(55), this.degreesToRadians(90)], // Player 2 rotations
+    ];
   }
 
   async setParam(param) {
@@ -61,20 +101,138 @@ export class MultiplayerGame extends HTMLElement {
     this.#state.opponentPlayerName = query.get('opponentPlayerName') || 'Opponent';
   }
 
+  /**
+   * Called when the element is removed from the DOM
+   * Handles cleanup of resources and event listeners
+   */
   disconnectedCallback() {
+    this.cleanup();
+  }
+
+  /**
+   * Comprehensive cleanup of all game resources
+   */
+  cleanup() {
+    // Cancel animation frame
+    if (this.#animationId) {
+      cancelAnimationFrame(this.#animationId);
+      this.#animationId = null;
+    }
+
+    // Remove event listeners
     if (this.onDocumentKeyDown) {
       document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+      this.onDocumentKeyDown = null;
     }
     if (this.onDocumentKeyUp) {
       document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+      this.onDocumentKeyUp = null;
     }
+    if (this.#resizeHandler) {
+      window.removeEventListener('resize', this.#resizeHandler);
+      this.#resizeHandler = null;
+    }
+
+    // Close WebSocket connection
     if (this.#pongSocket) {
-      log.info('Closing pongSocket');
+      console.log('Closing pongSocket');
       this.#pongSocket.close();
       this.#pongSocket = null;
     }
+
+    // Clean up blob URL
+    if (this.#blobURL) {
+      URL.revokeObjectURL(this.#blobURL);
+      this.#blobURL = null;
+    }
+
+    // Dispose Three.js objects properly
+    this.disposeThreeJS();
+
+    // Clean up loaders
     if (this.#ktx2Loader) {
       this.#ktx2Loader.dispose();
+      this.#ktx2Loader = null;
+    }
+    if (this.loaderModel) {
+      this.loaderModel = null;
+    }
+  }
+
+  /**
+   * Dispose of all Three.js resources to prevent memory leaks
+   */
+  disposeThreeJS() {
+    if (!this.scene) return;
+
+    // Dispose all scene objects recursively
+    this.scene.traverse((object) => {
+      if (object.geometry) {
+        object.geometry.dispose();
+      }
+      if (object.material) {
+        if (Array.isArray(object.material)) {
+          object.material.forEach((material) => this.disposeMaterial(material));
+        } else {
+          this.disposeMaterial(object.material);
+        }
+      }
+    });
+
+    // Clear scene
+    while (this.scene.children.length > 0) {
+      this.scene.remove(this.scene.children[0]);
+    }
+    this.scene = null;
+  }
+
+  /**
+   * Dispose of a Three.js material and its textures
+   */
+  disposeMaterial(material) {
+    if (!material) return;
+
+    // Dispose textures
+    Object.keys(material).forEach((key) => {
+      const value = material[key];
+      if (value && typeof value.dispose === 'function') {
+        value.dispose();
+      }
+    });
+
+    material.dispose();
+  }
+
+  /**
+   * Handle smooth animation transitions for player models (exactly matching Game.js)
+   * @param {Object} ourBumper - Player object
+   * @param {number} currentAction - Current animation index
+   * @param {number} nextAction - Next animation index
+   * @param {number} fadeTime - Transition duration
+   */
+  handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
+    const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 1;
+
+    // Change actions with smooth transitions (exactly like Game.js)
+    if (currentAction != nextAction && ourBumper.gltfStore?.action) {
+      if (ourBumper.gltfStore.action[currentAction]) {
+        ourBumper.gltfStore.action[currentAction].fadeOut(fadeTime);
+      }
+      if (ourBumper.gltfStore.action[nextAction]) {
+        ourBumper.gltfStore.action[nextAction].reset();
+        ourBumper.gltfStore.action[nextAction].fadeIn(fadeTime);
+        ourBumper.gltfStore.action[nextAction].play();
+      }
+      ourBumper.currentAction = nextAction;
+
+      // Update model rotation based on current model and player position (exactly like Game.js)
+      if (ourBumper.playerGlb && this.modelRotation) {
+        if (ourBumper.modelChoosen == 0) {
+          ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][0];
+        } else {
+          ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][1];
+        }
+      }
     }
   }
 
@@ -84,123 +242,569 @@ export class MultiplayerGame extends HTMLElement {
     }
   }
 
+  /**
+   * Convert degrees to radians
+   * @param {number} degrees - Angle in degrees
+   * @returns {number} Angle in radians
+   */
+  degreesToRadians(degrees) {
+    return degrees * (Math.PI / 180);
+  }
+
+  /**
+   * Create and configure the WebGL renderer with error handling
+   * @returns {THREE.WebGLRenderer} Configured renderer instance
+   */
+  async createRenderer() {
+    try {
+      // Test WebGL support before creating renderer
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+
+      if (!gl) {
+        throw new Error('WebGL not supported');
+      }
+
+      // Create renderer with optimized settings
+      const renderer = new THREE.WebGLRenderer({
+        alpha: true, // Enable transparency
+        antialias: true, // Smooth edges
+        powerPreference: 'high-performance', // Use dedicated GPU if available
+      });
+
+      // Handle WebGL context loss/restore events
+      renderer.domElement.addEventListener('webglcontextlost', (event) => {
+        event.preventDefault();
+        this.handleError('WEBGL_CONTEXT_LOST');
+      });
+
+      renderer.domElement.addEventListener('webglcontextrestored', () => {
+        window.location.reload(); // Reload page to restore context
+      });
+
+      return renderer;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Handle various game errors with appropriate user feedback
+   * @param {string} errorType - Type of error that occurred
+   * @param {Error} error - Optional error object
+   */
+  handleError(errorType, error = null) {
+    console.error(`Game Error [${errorType}]:`, error);
+
+    // Hide game UI when error occurs
+    this.hideGameUI();
+
+    // Define user-friendly error messages
+    const errorMessages = {
+      WEBGL_NOT_SUPPORTED: {
+        title: 'Graphics Error',
+        message: "Your device doesn't support WebGL. Please update your browser or graphics drivers.",
+      },
+      WEBGL_CONTEXT_LOST: {
+        title: 'Graphics Context Lost',
+        message: 'The graphics context was lost. The page will reload automatically.',
+      },
+      MODEL_LOADING_FAILED: {
+        title: 'Loading Error',
+        message: 'Failed to load 3D models. Please check your internet connection.',
+      },
+      GAME_INIT_FAILED: {
+        title: 'Game Failed to Load',
+        message: 'The game encountered an error while loading. Please try refreshing the page.',
+      },
+    };
+
+    const config = errorMessages[errorType] || {
+      title: 'Unknown Error',
+      message: 'An unexpected error occurred. Please refresh the page.',
+    };
+
+    // Show error overlay with reload option
+    this.overlay?.show(OVERLAY_TYPE.ERROR, {
+      ...config,
+      actions: [
+        {
+          label: 'Reload',
+          onClick: () => window.location.reload(),
+        },
+      ],
+    });
+
+    // Auto-reload for context loss after 3 seconds
+    if (errorType === 'WEBGL_CONTEXT_LOST') {
+      setTimeout(() => window.location.reload(), 3000);
+    }
+  }
+
+  /**
+   * Hide all game UI elements (used during errors or game end)
+   */
+  hideGameUI() {
+    console.log('Hiding game UI');
+
+    const elements = [
+      { element: this.scoreElement, name: 'scoreElement' },
+      { element: this.timerElement, name: 'timerElement' },
+      { element: this.buffIconElement, name: 'buffIconElement' },
+      { element: this.lifePointElement, name: 'lifePointElement' },
+    ];
+
+    elements.forEach(({ element, name }) => {
+      if (element) {
+        element.style.display = 'none';
+        console.log(`Hidden ${name}`);
+      }
+    });
+  }
+
+  /**
+   * Show all game UI elements
+   */
+  showGameUI() {
+    console.log('Showing game UI');
+
+    const elements = [
+      { element: this.scoreElement, name: 'scoreElement' },
+      { element: this.timerElement, name: 'timerElement' },
+      { element: this.buffIconElement, name: 'buffIconElement' },
+      { element: this.lifePointElement, name: 'lifePointElement' },
+    ];
+
+    elements.forEach(({ element, name }) => {
+      if (element) {
+        element.style.display = '';
+        console.log(`Shown ${name}`);
+      }
+    });
+  }
+
+  /**
+   * Load and configure a 3D model with fallback handling
+   * @param {string} modelName - Path to the model file
+   * @param {number} posX - X position
+   * @param {number} posY - Y position
+   * @param {number} posZ - Z position
+   * @param {number} scaleX - X scale
+   * @param {number} scaleY - Y scale
+   * @param {number} scaleZ - Z scale
+   * @returns {THREE.Object3D} Loaded model or fallback
+   */
+  async createModelLoader(modelName, posX, posY, posZ, scaleX, scaleY, scaleZ) {
+    try {
+      // Load GLTF model with progress tracking
+      const gltf = await new Promise((resolve, reject) => {
+        this.loaderModel.load(
+          modelName,
+          resolve,
+          (progress) => {
+            console.log(`Loading ${modelName}:`, (progress.loaded / progress.total) * 100 + '%');
+          },
+          reject,
+        );
+      });
+
+      // Validate loaded model
+      if (!gltf?.scene) {
+        throw new Error(`Invalid GLTF file: ${modelName}`);
+      }
+
+      const model = gltf.scene;
+      // Configure shadows for all meshes
+      model.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      });
+
+      // Create container and apply transformations
+      const modelGenerated = new THREE.Object3D();
+      model.position.set(posX, posY, posZ);
+      model.scale.set(scaleX, scaleY, scaleZ);
+      modelGenerated.add(model);
+
+      return modelGenerated;
+    } catch (error) {
+      console.warn(`Failed to load model ${modelName}, using fallback:`, error.message);
+      return this.createFallbackModel(posX, posY, posZ, scaleX, scaleY, scaleZ);
+    }
+  }
+
+  /**
+   * Create a simple fallback model when GLTF loading fails
+   * @param {number} posX - X position
+   * @param {number} posY - Y position
+   * @param {number} posZ - Z position
+   * @param {number} scaleX - X scale
+   * @param {number} scaleY - Y scale
+   * @param {number} scaleZ - Z scale
+   * @returns {THREE.Object3D} Basic cube model
+   */
+  createFallbackModel(posX, posY, posZ, scaleX, scaleY, scaleZ) {
+    // Create a simple gray cube as fallback
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshPhongMaterial({ color: 0x888888 });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    // Apply transformations and shadow settings
+    mesh.position.set(posX, posY, posZ);
+    mesh.scale.set(scaleX, scaleY, scaleZ);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    const container = new THREE.Object3D();
+    container.add(mesh);
+    return container;
+  }
+
+  /**
+   * Create keydown event handler for multiplayer game controls
+   * @param {Object} clientState - Client state object
+   * @returns {Function} Event handler function
+   */
   createOnDocumentKeyDown(clientState) {
     return (e) => {
+      const tag = e.target.tagName.toLowerCase();
+      // Ignore key events on form elements
+      if (tag === 'input' || tag === 'textarea') {
+        return;
+      }
+      if (e.defaultPrevented) {
+        return;
+      }
+
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         clientState.movesLeft = true;
+        // Handle animations for player models
+        if (clientState.bumper?.gltfStore?.action && clientState.bumper?.gltfStore?.action[0]) {
+          this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 0, 0.1);
+        }
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         clientState.movesRight = true;
+        // Handle animations for player models
+        if (clientState.bumper?.gltfStore?.action && clientState.bumper?.gltfStore?.action[5]) {
+          this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 5, 0.1);
+        }
       }
 
       e.preventDefault();
     };
   }
 
+  /**
+   * Create keyup event handler for multiplayer game controls
+   * @param {Object} clientState - Client state object
+   * @returns {Function} Event handler function
+   */
   createOnDocumentKeyUp(clientState) {
     return (e) => {
+      if (e.defaultPrevented) {
+        return;
+      }
+
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
         clientState.movesLeft = false;
+        // Return to idle animation
+        if (clientState.bumper?.gltfStore?.action && clientState.bumper?.gltfStore?.action[2]) {
+          this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 2, 0.5);
+        }
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
         clientState.movesRight = false;
+        // Return to idle animation
+        if (clientState.bumper?.gltfStore?.action && clientState.bumper?.gltfStore?.action[2]) {
+          this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 2, 0.5);
+        }
       }
 
       e.preventDefault();
     };
   }
 
+  /**
+   * Initialize 3D model loaders with optimization support
+   * @param {THREE.WebGLRenderer} renderer - WebGL renderer instance
+   */
   async initLoaders(renderer) {
-    this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
+    try {
+      // Set up KTX2 loader for compressed textures
+      this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
 
-    await MeshoptDecoder.ready;
+      // Wait for MeshOpt decoder to be ready
+      await MeshoptDecoder.ready;
 
-    this.loaderModel = new GLTFLoader();
-    this.loaderModel.setKTX2Loader(this.#ktx2Loader);
-    this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+      // Configure GLTF loader with optimizations
+      this.loaderModel = new GLTFLoader();
+      this.loaderModel.setKTX2Loader(this.#ktx2Loader);
+      this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+    } catch (error) {
+      throw new Error(`Failed to initialize 3D loaders: ${error.message}`);
+    }
   }
 
+  /**
+   * Main multiplayer game logic and 3D scene initialization
+   * Sets up the advanced 3D scene, physics, networking, and game loop
+   * @returns {Array} Game components [camera, renderer, animate]
+   */
   async game() {
-    // CONSTANTS
-    const WALL_LEFT_X = 10;
-    const WALL_RIGHT_X = -WALL_LEFT_X;
-    const WALL_WIDTH_HALF = 0.5;
-    const BUMPER_LENGTH_HALF = 2.5;
-    const BUMPER_WIDTH_HALF = 0.5;
-    const BUMPER_SPEED_PER_SECOND = 15.0;
-    const BALL_INITIAL_VELOCITY = 0.25;
-    const SPEED_DECREASE_ENEMY_FACTOR = 0.5;
+    // MULTIPLAYER GAME CONSTANTS
+    const WALL_LEFT_X = 10; // Left wall position
+    const WALL_RIGHT_X = -WALL_LEFT_X; // Right wall position
+    const WALL_WIDTH_HALF = 0.5; // Half wall thickness
+    const BUMPER_LENGTH_HALF = 2.5; // Half bumper length
+    const BUMPER_WIDTH_HALF = 0.5; // Half bumper width
+    const BUMPER_SPEED_PER_SECOND = 15.0; // Bumper movement speed
+    const BALL_INITIAL_VELOCITY = 0.25; // Initial ball velocity
+    const SPEED_DECREASE_ENEMY_FACTOR = 0.5; // Speed reduction factor for debuffs
 
-    // CONSTANTS for physics simulation in client side prediction
+    // Network simulation constants
     const SERVER_TICK_RATE = 30;
     const SERVER_TICK_INTERVAL = 1.0 / SERVER_TICK_RATE;
 
-    const renderer = new THREE.WebGLRenderer();
+    // Initialize advanced WebGL renderer
+    const renderer = await this.createRenderer();
+    if (!renderer) {
+      throw new Error('Failed to create WebGL renderer');
+    }
+
+    // Configure renderer settings
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = true; // Enable shadow rendering
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadows for better quality
+    renderer.setClearColor(0x8e4f5e, 1); // Set background color
     this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
 
+    // Scene setup with atmospheric effects
     const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x8e4f5e, 0.008); // Add distance fog for depth
+
     await this.initLoaders(renderer);
     // const loader = new GLTFLoader();
 
+    // Camera configuration for optimal multiplayer game view
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
-    // const orbit = new OrbitControls(camera, renderer.domElement);
 
     let mixer;
     const normalMaterial = new THREE.MeshNormalMaterial();
 
-    const ligths = [
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-      new THREE.DirectionalLight(0xffffff),
-    ];
+    // Advanced lighting setup for realistic rendering
+    // Main sun light (key light)
+    const sunLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
+    sunLight.position.set(25, 35, -50);
+    sunLight.target.position.set(0, 0, 0);
+    sunLight.castShadow = true;
+    // High resolution shadow map for quality
+    sunLight.shadow.mapSize.width = 4096;
+    sunLight.shadow.mapSize.height = 4096;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 150;
+    sunLight.shadow.camera.left = -100;
+    sunLight.shadow.camera.right = 100;
+    sunLight.shadow.camera.top = 100;
+    sunLight.shadow.camera.bottom = -60;
 
-    const playerglb = (() => {
-      const pedroModel = new THREE.Object3D();
-      this.loaderModel.load(
-        pedro,
-        function (gltf) {
-          const model = gltf.scene;
-          model.position.y = 7;
-          model.position.z = 0;
-          model.position.x = 0;
-          mixer = new THREE.AnimationMixer(model);
-          const idleAction = mixer
-            .clipAction(THREE.AnimationUtils.subclip(gltf.animations[0], 'idle', 0, 221))
-            .setDuration(6)
-            .play();
-          const idleAction2 = mixer
-            .clipAction(THREE.AnimationUtils.subclip(gltf.animations[1], 'idle', 0, 221))
-            .setDuration(6)
-            .play();
-          idleAction.play();
-          idleAction2.play();
-          pedroModel.add(gltf.scene);
-        },
-        undefined,
-        function (error) {
-          console.error(error);
-        },
+    // Ambient light for general illumination
+    const ambientLight = new THREE.AmbientLight(0x87ceeb, 0.3);
+
+    // Fill light to soften shadows
+    const fillLight = new THREE.DirectionalLight(0xb3d9ff, 0.4);
+    fillLight.position.set(30, 20, -10);
+    fillLight.castShadow = false;
+
+    // Add all lights to scene
+    scene.add(sunLight);
+    scene.add(sunLight.target);
+    scene.add(ambientLight);
+    scene.add(fillLight);
+
+    // Math constants
+    const pi = Math.PI;
+    const degreesToRadians = this.degreesToRadians;
+
+    // Helper function for model creation and scene addition
+    const modelCreate = async (posX, posY, posZ, scaleX, scaleY, scaleZ, modelName) => {
+      const modelGenerated = await this.createModelLoader(modelName, posX, posY, posZ, scaleX, scaleY, scaleZ);
+      scene.add(modelGenerated);
+      return modelGenerated;
+    };
+
+    // Environment setup - Background elements for immersive experience
+
+    // Create desert landscape with cacti
+    const cacti = [];
+    const placedCacti = []; // Track positions to avoid overlap
+    const minDistance = 8; // Minimum distance between cacti
+
+    // Factory function for creating randomly rotated cacti
+    const CactusFactory = async (posX, posY, posZ) => {
+      try {
+        const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
+        cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
+        return { cactusGlb };
+      } catch (error) {
+        console.warn('Failed to load cactus, using fallback');
+        return { cactusGlb: this.createFallbackModel(posZ, posY, posX, 1.8, 1.8, 1.8) };
+      }
+    };
+
+    // Generate safe positions for cacti (avoiding play area and other cacti)
+    const getSafeCactusPosition = () => {
+      let x, z;
+      let attempts = 0;
+      do {
+        x = (Math.random() - 0.5) * 160;
+        z = (Math.random() - 0.5) * 140;
+        attempts++;
+        if (attempts > 50) break; // Prevent infinite loops
+      } while (
+        // Avoid the playing field area
+        (x > -13.65 && x < 13.65 && z > -15 && z < 15) ||
+        // Maintain minimum distance from other cacti
+        placedCacti.some((cactus) => Math.sqrt((x - cactus.x) ** 2 + (z - cactus.z) ** 2) < minDistance)
       );
-      pedroModel.scale.set(0.1, 0.1, 0.1);
-      scene.add(pedroModel);
-      return pedroModel;
+      return { x, z };
+    };
+
+    // Create desert landscape with fewer cacti for multiplayer performance
+    const cactusPromises = [];
+    for (let index = 0; index < 30; index++) {
+      // Reduced from 60 for better multiplayer performance
+      const pos = getSafeCactusPosition();
+      placedCacti.push(pos);
+      cactusPromises.push(CactusFactory(pos.x, 0, pos.z));
+    }
+
+    // Load all cacti in parallel
+    try {
+      const loadedCacti = await Promise.all(cactusPromises);
+      loadedCacti.forEach((cactus, index) => {
+        cacti[index] = cactus;
+      });
+    } catch (error) {
+      console.warn('Some cacti failed to load:', error);
+    }
+
+    // Create layered hills for background depth
+    const createHill = (posX, posZ, width, height) => {
+      // Create hill base (wider, shorter)
+      const baseGeometry = new THREE.CylinderGeometry(width * 1.5, width * 2, height * 0.3, 8);
+      const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
+      const base = new THREE.Mesh(baseGeometry, baseMaterial);
+      base.position.set(posX, -height * 0.1, posZ);
+      base.receiveShadow = true;
+      scene.add(base);
+
+      // Create hill top (narrower, taller)
+      const hillGeometry = new THREE.CylinderGeometry(width * 0.8, width, height, 8);
+      const hillMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
+      const hill = new THREE.Mesh(hillGeometry, hillMaterial);
+      hill.position.set(posX, height * 0.3, posZ);
+      hill.receiveShadow = true;
+      scene.add(hill);
+
+      return hill;
+    };
+
+    // Place hills at various positions for scenic background
+    createHill(-180, 250, 60, 25);
+    createHill(150, 280, 70, 30);
+    createHill(-100, 300, 50, 20);
+    createHill(280, 200, 80, 35);
+    createHill(-250, 220, 65, 22);
+
+    // Create textured ground plane
+    (() => {
+      const textureLoader = new THREE.TextureLoader();
+      const groundTexture = textureLoader.load(ground_texture);
+      // Set texture to repeat for large ground area
+      groundTexture.wrapS = THREE.RepeatWrapping;
+      groundTexture.wrapT = THREE.RepeatWrapping;
+      groundTexture.repeat.set(100, 100);
+
+      const phongMaterial = new THREE.MeshPhongMaterial({
+        map: groundTexture,
+        color: 0xd4a574, // Desert sand color
+        depthWrite: true,
+      });
+
+      // Large ground plane to fill the visible area
+      const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
+      const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
+      planeMesh.rotateX(-pi / 2); // Rotate to be horizontal
+      planeMesh.receiveShadow = true;
+      scene.add(planeMesh);
     })();
 
-    const Coin = ((posX, posY, posZ) => {
-      const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
-      const cylinderMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
+    // Enhanced player model with better positioning
+    // const playerglb = (() => {
+    //   const pedroModel = new THREE.Object3D();
+    //   this.loaderModel.load(
+    //     pedro,
+    //     function (gltf) {
+    //       const model = gltf.scene;
+    //       model.position.y = 7;
+    //       model.position.z = 0;
+    //       model.position.x = 0;
 
-      cylinderMesh.position.x = posX;
-      cylinderMesh.position.y = posY;
-      cylinderMesh.position.z = posZ;
-      cylinderMesh.rotation.z = -Math.PI / 2;
-      cylinderMesh.rotation.y = -Math.PI / 2;
-      cylinderMesh.castShadow = true;
-      scene.add(cylinderMesh);
+    //       // Configure shadows for the model
+    //       model.traverse((node) => {
+    //         if (node.isMesh) {
+    //           node.castShadow = true;
+    //           node.receiveShadow = true;
+    //         }
+    //       });
+
+    //       mixer = new THREE.AnimationMixer(model);
+    //       const idleAction = mixer
+    //         .clipAction(THREE.AnimationUtils.subclip(gltf.animations[0], 'idle', 0, 221))
+    //         .setDuration(6)
+    //         .play();
+    //       const idleAction2 = mixer
+    //         .clipAction(THREE.AnimationUtils.subclip(gltf.animations[1], 'idle', 0, 221))
+    //         .setDuration(6)
+    //         .play();
+    //       idleAction.play();
+    //       idleAction2.play();
+    //       pedroModel.add(gltf.scene);
+    //     },
+    //     undefined,
+    //     function (error) {
+    //       console.error('Failed to load player model:', error);
+    //     },
+    //   );
+    //   pedroModel.scale.set(0.1, 0.1, 0.1);
+    //   scene.add(pedroModel);
+    //   return pedroModel;
+    // })();
+
+    // Enhanced coin with 3D model (with fallback to geometry)
+    const Coin = await (async (posX, posY, posZ) => {
+      let CoinMesh;
+      try {
+        // Try to load 3D coin model
+        const CoinGlb = await modelCreate(0, 0, 0, 0.45, 0.45, 0.45, coin);
+        CoinGlb.position.set(posX, posY, posZ);
+        CoinMesh = CoinGlb;
+      } catch (error) {
+        console.warn('Failed to load coin model, using fallback geometry');
+        // Fallback to basic geometry
+        const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
+        CoinMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
+        CoinMesh.position.set(posX, posY, posZ);
+        CoinMesh.rotation.z = -Math.PI / 2;
+        CoinMesh.rotation.y = -Math.PI / 2;
+        CoinMesh.castShadow = true;
+        scene.add(CoinMesh);
+      }
+
       const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
       const velocity = new THREE.Vector3(0.01, 0, 0);
       let lenghtHalf = 0.25;
@@ -212,68 +816,170 @@ export class MultiplayerGame extends HTMLElement {
         set lenghtHalf(newLenghtHalf) {
           lenghtHalf = newLenghtHalf;
         },
-        cylinderMesh,
+        cylinderMesh: CoinMesh,
         cylinderUpdate,
         velocity,
       };
     })(-100.0, 1, 0);
 
-    const Ball = ((posX, posY, posZ) => {
-      const sphereGeometry = new THREE.SphereGeometry(0.5);
-      const sphereMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
-      sphereMesh.position.x = posX;
-      sphereMesh.position.y = posY;
-      sphereMesh.position.z = posZ;
-      sphereMesh.castShadow = true;
+    // Enhanced ball with 3D model (with fallback to geometry)
+    const Ball = await (async (posX, posY, posZ) => {
+      let BallMesh;
+      try {
+        // Try to load 3D bullet model for the ball
+        const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
+        bulletGlb.rotateX(pi / 2);
+        BallMesh = bulletGlb;
+      } catch (error) {
+        console.warn('Failed to load ball model, using fallback geometry');
+        // Fallback to basic sphere
+        const sphereGeometry = new THREE.SphereGeometry(0.5);
+        BallMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
+        BallMesh.position.set(posX, posY, posZ);
+        BallMesh.castShadow = true;
+        scene.add(BallMesh);
+      }
+
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * 1);
       const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
-      scene.add(sphereMesh);
-
-      // let hasCollidedWithBumper1 = false;
-      // let hasCollidedWithBumper2 = false;
-      // let hasCollidedWithWall = false;
 
       return {
-        sphereMesh,
+        bulletGlb: BallMesh, // Keep original property name for compatibility
+        sphereMesh: BallMesh,
         sphereUpdate,
         velocity,
         temporalSpeed,
       };
     })(0, 1, 0);
 
-    // camera.position.set(10, 15, -22);
-    // orbit.update();
+    // Create boundary fences around the playing field
+    const WallFactory = async (posX, posY, posZ) => {
+      try {
+        const fenceGlb = await modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
+        fenceGlb.rotateY(-pi / 2); // Rotate to face inward
+        return { fenceGlb };
+      } catch (error) {
+        console.warn('Failed to load fence, using fallback');
+        return { fenceGlb: this.createFallbackModel(posX, posY, posZ, 0.8, 0.5, 1) };
+      }
+    };
 
-    ligths[0].position.set(0, 10, 30);
-    ligths[1].position.set(10, 0, 30);
-    ligths[2].position.set(0, 10, -30);
-    ligths[3].position.set(0, -10, 0);
-    for (let i = 0; i < 4; i++) {
-      scene.add(ligths[i]);
-    }
+    // Place fences along both goal lines
+    await Promise.all([
+      WallFactory(0, 1.3, 9.65), // Top center
+      WallFactory(6, 1.3, 9.65), // Top right
+      WallFactory(-6, 1.3, 9.65), // Top left
+      WallFactory(6, 1.3, -9.65), // Bottom right
+      WallFactory(-6, 1.3, -9.65), // Bottom left
+      WallFactory(0, 1.3, -9.65), // Bottom center
+    ]);
 
-    const BumperFactory = (posX, posY, posZ) => {
-      const cubeGeometry = new THREE.BoxGeometry(5, 1, 1);
-      const cubeMesh = new THREE.Mesh(cubeGeometry, normalMaterial);
+    // Enhanced Bumper Factory with multiple furniture models (exactly like Game.js)
+    const gameOptions = this.#state.gameOptions;
+    console.log(gameOptions.cool_mode);
+    const BumperFactory = async (posX, posY, posZ) => {
+      let _ = {};
+      let modelsGlb;
+      let animations = [];
+      _.action = [null, null, null, null, null, null, null, null];
 
-      cubeMesh.position.x = posX;
-      cubeMesh.position.y = posY;
-      cubeMesh.position.z = posZ;
-      cubeMesh.castShadow = true;
-      scene.add(cubeMesh);
+      const tableGlb = await modelCreate(0.04, 0.45, 0, 0.48, 0.5, 0.5, table);
+      if (gameOptions.cool_mode == true) {
+        const dressingGlb = await modelCreate(0.3, 0, 0, 0.7, 0.3031, 0.6788, dressing);
+        const couchGlb = await modelCreate(0.5, -2.0795, -7.8925, 1.4, 1, 1.23, couch);
+        const chairGlb = await modelCreate(-0.1, 0.42, -0.1, 1.35, 0.9, 1.2, chair);
+        if (posZ < 0) {
+          couchGlb.rotation.x = pi / 2;
+          couchGlb.rotation.y = -pi / 2;
+          chairGlb.rotation.z = pi;
+        } else {
+          couchGlb.rotation.x = -pi / 2;
+          couchGlb.rotation.y = pi / 2;
+        }
+        couchGlb.rotation.z = pi;
+        chairGlb.rotation.x = -pi / 2;
+        dressingGlb.rotation.z = -pi / 2;
+        dressingGlb.rotation.y = -pi / 2;
+        modelsGlb = [tableGlb, couchGlb, chairGlb, dressingGlb];
+      } else modelsGlb = [tableGlb];
+
+      // Create player model with animation
+      const playerGlb = (() => {
+        const pedroModel = new THREE.Object3D();
+        this.loaderModel.load(
+          pedro,
+          function (gltf) {
+            gltf.scene.traverse(function (node) {
+              if (node.isMesh) {
+                node.castShadow = true;
+              }
+            });
+            const model = gltf.scene;
+            model.position.y = 0;
+            model.position.x = posX;
+            _.mixer = new THREE.AnimationMixer(model);
+            animations = gltf.animations;
+            for (let i = 0; i <= 7; i++) {
+              _.action[i] = _.mixer.clipAction(animations[i], model);
+            }
+            _.action[1].setLoop(THREE.LoopOnce, 1);
+            _.action[1].setDuration(0.4);
+            _.action[0].setDuration(0.18);
+            _.action[7].setDuration(0.18);
+            _.action[6].setDuration(0.18);
+            _.action[5].setDuration(0.18);
+            _.action[2].play();
+            pedroModel.add(gltf.scene);
+          },
+          undefined,
+          function (error) {
+            console.error(error);
+          },
+        );
+        pedroModel.scale.set(0.5, 0.5, 0.5);
+        scene.add(pedroModel);
+        return pedroModel;
+      })();
+      if (posZ < 0) {
+        playerGlb.rotation.y = degreesToRadians(55);
+        playerGlb.position.z = posZ - 1;
+        playerGlb.position.x += 1;
+        tableGlb.rotation.z = Math.PI;
+      } else {
+        playerGlb.rotation.y = degreesToRadians(235);
+        playerGlb.position.z = posZ + 1;
+        playerGlb.position.x -= 1;
+      }
+
+      modelsGlb.forEach((element) => {
+        element.castShadow = true;
+        element.receiveShadow = true;
+        element.position.x = posX;
+        element.position.y = posY;
+        element.position.z = posZ;
+        element.visible = false;
+      });
+      tableGlb.rotation.x = -pi / 2;
+      modelsGlb[0].visible = true;
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
-      let controlReverse = false;
       let lenghtHalf = BUMPER_LENGTH_HALF;
+      let modelChoosen = 0;
       let widthHalf = BUMPER_WIDTH_HALF;
+      let controlReverse = false;
       let speed = BUMPER_SPEED_PER_SECOND;
       let score = 0;
+      let currentAction = 2;
 
       return {
-        cubeMesh,
+        modelsGlb,
+        tableGlb,
         cubeUpdate,
+        playerGlb,
+        gltfStore: _,
+        cubeMesh: tableGlb, // For compatibility with existing code
 
         get speed() {
           return speed;
@@ -281,26 +987,23 @@ export class MultiplayerGame extends HTMLElement {
         set speed(newSpeed) {
           speed = newSpeed;
         },
+        get modelChoosen() {
+          return modelChoosen;
+        },
+        set modelChoosen(newModelChoosen) {
+          modelChoosen = newModelChoosen;
+        },
+        get currentAction() {
+          return currentAction;
+        },
+        set currentAction(newCurrentAction) {
+          currentAction = newCurrentAction;
+        },
         get score() {
           return score;
         },
         set score(newScore) {
           score = newScore;
-        },
-        get inputQueue() {
-          return inputQueue;
-        },
-        get widthHalf() {
-          return widthHalf;
-        },
-        set widthHalf(newWidthHalf) {
-          widthHalf = newWidthHalf;
-        },
-        get lenghtHalf() {
-          return lenghtHalf;
-        },
-        set lenghtHalf(newLenghtHalf) {
-          lenghtHalf = newLenghtHalf;
         },
         get controlReverse() {
           return controlReverse;
@@ -308,23 +1011,36 @@ export class MultiplayerGame extends HTMLElement {
         set controlReverse(newControlReverse) {
           controlReverse = newControlReverse;
         },
+        get lenghtHalf() {
+          return lenghtHalf;
+        },
+        set lenghtHalf(newLenghtHalf) {
+          lenghtHalf = newLenghtHalf;
+        },
+        get widthHalf() {
+          return widthHalf;
+        },
+        set widthHalf(newWidthHalf) {
+          widthHalf = newWidthHalf;
+        },
         get dirZ() {
           return dirZ;
         },
       };
     };
 
-    /* eslint-disable-next-line new-cap */
-    const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
+    // Create enhanced bumpers with 3D models
+    const Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
 
-    const WallFactory = (posX, posY, posZ) => {
+    // Create invisible collision walls (visual fences already created above)
+    const InvisibleWallFactory = (posX, posY, posZ) => {
       const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
-      const wallMesh = new THREE.Mesh(wallGeometry, normalMaterial);
+      const wallMaterial = new THREE.MeshBasicMaterial({ visible: false }); // Invisible collision walls
+      const wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
       wallMesh.position.x = posX;
       wallMesh.position.y = posY;
       wallMesh.position.z = posZ;
       wallMesh.rotation.y = -Math.PI / 2;
-      wallMesh.castShadow = true;
       scene.add(wallMesh);
 
       return {
@@ -332,16 +1048,12 @@ export class MultiplayerGame extends HTMLElement {
       };
     };
     /* eslint-disable-next-line new-cap */
-    const Walls = [WallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0), WallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0)];
+    const Walls = [
+      InvisibleWallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0),
+      InvisibleWallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0),
+    ];
 
-    (() => {
-      const phongMaterial = new THREE.MeshPhongMaterial();
-      const planeGeometry = new THREE.PlaneGeometry(25, 25);
-      const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
-      planeMesh.rotateX(-Math.PI / 2);
-      planeMesh.receiveShadow = true;
-      scene.add(planeMesh);
-    })();
+    // Enhanced playing field - already created above with textured ground
 
     const clock = new THREE.Clock();
     let accumulator = 0.0;
@@ -687,21 +1399,31 @@ export class MultiplayerGame extends HTMLElement {
               : this.buffIconElement?.show(BUFF_TYPE.SLOW, true);
             break;
           case Buff.SHORTEN_ENEMY:
-            targetPlayer.cubeMesh.scale.x = 0.5;
+            // targetPlayer.cubeMesh.scale.x = 0.5;
+            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
+            targetPlayer.modelChoosen = 2;
+            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
+            // targetPlayer.modelChoosen = 2;
             targetPlayer.lenghtHalf = 1.25;
             if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.SHORT);
             }
             break;
           case Buff.ELONGATE_PLAYER:
-            targetPlayer.cubeMesh.scale.x = 2;
+            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
+            targetPlayer.modelChoosen = 1;
+            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
+            // targetPlayer.cubeMesh.scale.x = 2;
             targetPlayer.lenghtHalf = 5;
             if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.LONG);
             }
             break;
           case Buff.ENLARGE_PLAYER:
-            targetPlayer.cubeMesh.scale.z = 3;
+            // targetPlayer.cubeMesh.scale.z = 3;
+            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
+            targetPlayer.modelChoosen = 3;
+            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
             targetPlayer.widthHalf = 1.5;
             if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.LARGE);
@@ -745,18 +1467,24 @@ export class MultiplayerGame extends HTMLElement {
           this.timerElement?.setInitialTimeLimit(data.settings.time_limit * 60);
           this.timerElement?.render();
           this.#state.gameOptions = data.settings;
+          console.log(this.#state.gameOptions);
           const gameSpeed = {
             slow: 0.75,
             medium: 1.0,
             fast: 1.25,
           };
           this.#state.gameOptions.game_speed = gameSpeed[this.#state.gameOptions.game_speed];
-          clientState.bumper.speed *= this.#state.gameOptions.game_speed;
-          clientState.enemyBumper.speed *= this.#state.gameOptions.game_speed;
+          // Update bumper speeds with game speed multiplier
+          if (clientState.bumper) {
+            clientState.bumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
+          }
+          if (clientState.enemyBumper) {
+            clientState.enemyBumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
+          }
           console.log(clientState.bumper.speed);
           break;
         case 'game_started':
-          log.info('Game started', data);
+          console.log('Game started', data);
           this.overlay.hide();
           break;
         case 'game_paused':
@@ -828,9 +1556,20 @@ export class MultiplayerGame extends HTMLElement {
     function interpolateEntities(renderTime) {
       const interpolatedBallPos = getInterpolated(ENTITY_KEYS.BALL, renderTime);
       if (interpolatedBallPos !== null) {
-        Ball.sphereMesh.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
+        // Update both possible ball mesh references
+        if (Ball.bulletGlb) {
+          Ball.bulletGlb.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
+        }
+        if (Ball.sphereMesh) {
+          Ball.sphereMesh.position.set(interpolatedBallPos.x, 1, interpolatedBallPos.z);
+        }
       } else {
-        Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+        if (Ball.bulletGlb) {
+          Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+        }
+        if (Ball.sphereMesh) {
+          Ball.sphereMesh.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
+        }
       }
 
       const interpolatedCoinPos = getInterpolated(ENTITY_KEYS.COIN, renderTime);
@@ -844,16 +1583,42 @@ export class MultiplayerGame extends HTMLElement {
       if (interpolatedOpponentPos !== null) {
         clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
       }
-      clientState.enemyBumper.cubeMesh.position.set(
-        clientState.enemyBumper.cubeUpdate.x,
-        clientState.enemyBumper.cubeUpdate.y,
-        clientState.enemyBumper.cubeUpdate.z,
-      );
+      // Update enemy bumper position (both table and player models)
+      if (
+        clientState.enemyBumper.modelsGlb &&
+        clientState.enemyBumper.modelsGlb[clientState.enemyBumper.modelChoosen || 0]
+      ) {
+        clientState.enemyBumper.modelsGlb[clientState.enemyBumper.modelChoosen || 0].position.set(
+          clientState.enemyBumper.cubeUpdate.x,
+          clientState.enemyBumper.cubeUpdate.y,
+          clientState.enemyBumper.cubeUpdate.z,
+        );
+      }
+      // Fallback to cubeMesh for compatibility
+      if (clientState.enemyBumper.cubeMesh) {
+        clientState.enemyBumper.cubeMesh.position.set(
+          clientState.enemyBumper.cubeUpdate.x,
+          clientState.enemyBumper.cubeUpdate.y,
+          clientState.enemyBumper.cubeUpdate.z,
+        );
+      }
 
+      // Update player bumper position
       const interpolatedPlayerPos = getInterpolated(ENTITY_KEYS.PLAYER, renderTime);
       const playerBumper = clientState.bumper;
       const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
-      playerBumper.cubeMesh.position.set(playerVisualX, playerBumper.cubeUpdate.y, playerBumper.cubeUpdate.z);
+
+      if (playerBumper.modelsGlb && playerBumper.modelsGlb[playerBumper.modelChoosen || 0]) {
+        playerBumper.modelsGlb[playerBumper.modelChoosen || 0].position.set(
+          playerVisualX,
+          playerBumper.cubeUpdate.y,
+          playerBumper.cubeUpdate.z,
+        );
+      }
+      // Fallback to cubeMesh for compatibility
+      if (playerBumper.cubeMesh) {
+        playerBumper.cubeMesh.position.set(playerVisualX, playerBumper.cubeUpdate.y, playerBumper.cubeUpdate.z);
+      }
     }
 
     function animate(ms) {
@@ -873,6 +1638,17 @@ export class MultiplayerGame extends HTMLElement {
         if (!(clientState.movesLeft && clientState.movesRight)) {
           const newX = predictPlayerPosition();
           clientState.bumper.cubeUpdate.x = newX;
+          // Update all visible models position
+          if (clientState.bumper.modelsGlb && clientState.bumper.modelsGlb[clientState.bumper.modelChoosen || 0]) {
+            clientState.bumper.modelsGlb[clientState.bumper.modelChoosen || 0].position.x = newX;
+          }
+          // Adjust player model position relative to bumper
+          let dirZ = clientState.bumper.playerGlb.position.z;
+          if (dirZ < 0) {
+            clientState.bumper.playerGlb.position.x = newX + 1;
+          } else {
+            clientState.bumper.playerGlb.position.x = newX - 1;
+          }
           updatePlayerBuffer(newX, timestamp);
         }
         accumulator -= SERVER_TICK_INTERVAL;
@@ -880,8 +1656,15 @@ export class MultiplayerGame extends HTMLElement {
 
       interpolateEntities(timestamp - ENTITY_INTERPOLATION_DELAY);
 
+      // Update all mixers for both bumpers
       if (mixer) {
         mixer.update(deltaAnimation);
+      }
+      if (Bumpers[0]?.gltfStore?.mixer) {
+        Bumpers[0].gltfStore.mixer.update(deltaAnimation);
+      }
+      if (Bumpers[1]?.gltfStore?.mixer) {
+        Bumpers[1].gltfStore.mixer.update(deltaAnimation);
       }
       renderer.render(scene, camera);
     }
@@ -891,27 +1674,46 @@ export class MultiplayerGame extends HTMLElement {
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
-    return [camera, renderer, animate];
+    return [camera, renderer, animate, scene];
   }
 
+  /**
+   * Initialize and render the multiplayer game
+   * Sets up UI, 3D scene, and starts the game loop
+   */
   async render() {
-    this.classList.add('position-relative');
-    this.overlay = document.createElement('game-overlay');
-    this.overlay.gameType = 'multiplayer';
-    this.appendChild(this.overlay);
+    try {
+      this.classList.add('position-relative');
+      this.overlay = document.createElement('game-overlay');
+      this.overlay.gameType = 'multiplayer';
+      this.appendChild(this.overlay);
 
-    const navbarHeight = this.#navbarHeight;
-    const [camera, renderer, animate] = await this.game();
-    window.addEventListener('resize', function () {
-      renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
-      const rendererWidth = renderer.domElement.offsetWidth;
-      const rendererHeight = renderer.domElement.offsetHeight;
-      camera.aspect = rendererWidth / rendererHeight;
-      camera.updateProjectionMatrix();
-    });
-    animate(0);
+      const navbarHeight = this.#navbarHeight;
+      const [camera, renderer, animate, scene] = await this.game();
 
-    this.overlay?.show('pending');
+      // Store scene for cleanup
+      this.scene = scene;
+
+      // Store resize handler for proper cleanup
+      this.#resizeHandler = () => {
+        renderer.setSize(window.innerWidth, window.innerHeight - navbarHeight);
+        const rendererWidth = renderer.domElement.offsetWidth;
+        const rendererHeight = renderer.domElement.offsetHeight;
+        camera.aspect = rendererWidth / rendererHeight;
+        camera.updateProjectionMatrix();
+      };
+
+      window.addEventListener('resize', this.#resizeHandler);
+      animate(0);
+
+      this.overlay?.show('pending');
+    } catch (error) {
+      if (error.message.includes('WebGL')) {
+        this.handleError('WEBGL_NOT_SUPPORTED', error);
+      } else {
+        this.handleError('GAME_INIT_FAILED', error);
+      }
+    }
   }
 }
 
