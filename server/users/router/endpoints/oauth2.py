@@ -36,16 +36,26 @@ def _validate_platform(platform: str) -> None:
 
 
 def _check_api_availability(platform: str, config: dict) -> tuple[bool, str]:
-    """Quick health check for OAuth provider API (best-effort, no hard fail)."""
-    if platform == OauthConnection.FT:
-        try:
-            response = requests.get(config["oauth_uri"], timeout=OAUTH_API_HEALTH_CHECK_TIMEOUT)
-            if response.status_code != 200:  # noqa: PLR2004
-                return False, "Provider is temporarily unavailable"
+    """
+    Best-effort health check on the provider API.
+    We first ping 'oauth_uri' with HEAD, then GET as a fallback.
+    We tolerate redirects, what counts is that the provider is reachable.
+    """
+    url = config.get("oauth_uri")
+    if not url:
+        return True, ""
+
+    try:
+        resp = requests.head(url, timeout=OAUTH_API_HEALTH_CHECK_TIMEOUT, allow_redirects=True)
+        if resp.status_code in (200, 204, 301, 302, 307, 308):
             return True, ""
-        except requests.RequestException:
-            return False, "Could not connect to provider"
-    return True, ""
+        if resp.status_code == 405:  # noqa: PLR2004
+            resp = requests.get(url, timeout=OAUTH_API_HEALTH_CHECK_TIMEOUT, allow_redirects=True)
+            if resp.status_code in (200, 204):
+                return True, ""
+        return False, "Provider is temporarily unavailable"
+    except requests.RequestException:
+        return False, "Could not connect to provider"
 
 
 def _validate_scopes(granted_scopes: set, platform: str) -> str | None:
@@ -111,7 +121,7 @@ def oauth_authorize(request: HttpRequest, platform: str) -> JsonResponse:
 
     is_available, error_msg = _check_api_availability(platform, config)
     if not is_available:
-        return JsonResponse({"error": error_msg}, status=422)
+        return _redirect_error(error_msg, 503)
 
     state = hashlib.sha256(os.urandom(32)).hexdigest()
     OauthConnection.objects.create_pending_connection(state, platform)
