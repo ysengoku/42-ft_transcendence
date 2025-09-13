@@ -29,6 +29,46 @@ def generate_random_date(start: datetime = (timezone.now() - timedelta(days=22))
     return start + timedelta(seconds=randrange(delta_in_seconds))
 
 
+def generate_spaced_dates_for_user(
+    num_matches: int,
+    start_date: datetime,
+    end_date: datetime,
+    min_interval_minutes: int = 30,
+) -> list[datetime]:
+    """
+    Generate evenly distributed dates for a user's matches that have a minimum interval between them.
+    `num_matches` are the amount of matches that are spread evenly between `start_date` and `end_date`.
+    """
+    total_span = end_date - start_date
+    total_minutes = total_span.total_seconds() / 60
+    min_required_minutes = (num_matches - 1) * min_interval_minutes
+
+    if min_required_minutes >= total_minutes:
+        raise ValueError("Not enough time budget to space matches properly!")
+
+    # divide total time range into segments (one per match)
+    segment_duration = total_minutes / num_matches
+    dates = []
+    for i in range(num_matches):
+        segment_start = start_date + timedelta(minutes=i * segment_duration)
+        segment_end = start_date + timedelta(minutes=(i + 1) * segment_duration)
+
+        segment_minutes = (segment_end - segment_start).total_seconds() / 60
+        random_offset = randrange(int(segment_minutes))
+        match_time = segment_start + timedelta(minutes=random_offset)
+
+        dates.append(match_time)
+
+    dates.sort()
+
+    for i in range(1, len(dates)):
+        time_gap = (dates[i] - dates[i - 1]).total_seconds() / 60
+        if time_gap < min_interval_minutes:
+            dates[i] = dates[i - 1] + timedelta(minutes=min_interval_minutes)
+
+    return dates
+
+
 def calc_win_chance_based_on_elo(elo1: int, elo2: int):
     return round(1 / (1 + 10 ** ((elo2 - elo1) / 400)) * 100)
 
@@ -218,46 +258,71 @@ def put_avatars():
     set_alias(rick, "Roll")
 
 
-def generate_matches(users: dict[str, User], life_enjoyer: User):
-    # generate random sorted dates in advance to preserve the sequentiality of the played matches
-    dates = sorted([generate_random_date() for _ in range(100)])
-
-    # resolves matches based on chance proportional to their elo
+def generate_matches(
+    users: dict[str, User],
+    life_enjoyer: User,
+    start_date: datetime,
+    end_date: datetime,
+    min_matches_per_day: int,
+):
+    """Generate matches with proper date spacing - each user has matches at least 30 minutes apart."""
     users_lst = list(users.values())
-    for i in range(len(dates)):
-        for user in users_lst:
+
+    print(f"Generating matches for {len(users_lst)} users...")
+
+    # track all generated matches to avoid conflicts
+    max_matches_per_day = min_matches_per_day * 2
+    days_delta = (end_date - start_date).days
+    for user in users_lst:
+        num_matches = randint(min_matches_per_day * days_delta, max_matches_per_day * days_delta)
+        user_dates = generate_spaced_dates_for_user(num_matches, start_date, end_date, min_interval_minutes=30)
+
+        print(f"{user.username}: {len(user_dates)} matches")
+
+        for match_date in user_dates:
             opponent = choice_except(users_lst, user)
-            if randint(0, 100) >= calc_win_chance_based_on_elo(user.profile.elo, opponent.profile.elo):
+            if not opponent:
+                continue
+
+            # determine winner based on chance driven by elo
+            win_chance = calc_win_chance_based_on_elo(user.profile.elo, opponent.profile.elo)
+            if randint(0, 100) >= win_chance:
                 winner = opponent
                 loser = user
             else:
                 winner = user
                 loser = opponent
+
             Match.objects.resolve(
                 winner.profile,
                 loser.profile,
-                randint(4, 7),
+                randint(4, 10),
                 randint(0, 3),
-                date=dates[i],
+                date=match_date,
             )
 
-            # life_enjoyer can't stop winning
-            if not randint(0, 8):
-                Match.objects.resolve(
-                    life_enjoyer.profile,
-                    loser.profile,
-                    randint(4, 7),
-                    randint(0, 3),
-                    date=dates[i],
-                )
-            if not randint(0, 11):
-                Match.objects.resolve(
-                    life_enjoyer.profile,
-                    winner.profile,
-                    randint(4, 7),
-                    randint(0, 3),
-                    date=dates[i],
-                )
+    # can't stop winning
+    life_enjoyer_matches = 130
+    life_enjoyer_dates = generate_spaced_dates_for_user(
+        life_enjoyer_matches,
+        start_date,
+        end_date,
+        min_interval_minutes=30,
+    )
+
+    print(f"LifeEnjoyer: {len(life_enjoyer_dates)} matches")
+
+    for match_date in life_enjoyer_dates:
+        loser = choice(users_lst)
+
+        Match.objects.resolve(
+            life_enjoyer.profile,
+            loser.profile,
+            randint(3, 15),
+            randint(0, 2),
+            date=match_date,
+        )
+
 
 
 def create_pending_tournament() -> None:
@@ -508,7 +573,13 @@ class Command(BaseCommand):
 
         users, life_enjoyer = generate_users()
 
-        generate_matches(users, life_enjoyer)
+        generate_matches(
+            users,
+            life_enjoyer,
+            start_date=timezone.now() - timedelta(days=22),
+            end_date=timezone.now(),
+            min_matches_per_day=3,
+        )
         generate_tournaments(users)
         create_pending_tournament()
         put_avatars()
