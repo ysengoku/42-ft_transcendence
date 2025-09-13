@@ -143,7 +143,6 @@ export class Game extends HTMLElement {
    */
   async connectedCallback() {
     try {
-      // Check user authentication status
       const authStatus = await auth.fetchAuthStatus();
       if (!authStatus.success) {
         if (authStatus.status === 429) {
@@ -156,14 +155,13 @@ export class Game extends HTMLElement {
         return;
       }
 
-      // Configure element styling
+      this.#state.user = authStatus.response;
       this.classList.add('position-relative');
       this.style.overflow = 'hidden'; // Prevent scrollbars
       this.style.position = 'relative'; // Allow overlay positioning
 
       console.log('Game options before UI init:', this.#state.gameOptions);
 
-      // Initialize UI and start the game
       this.initializeUIElements();
       await this.render();
     } catch (error) {
@@ -256,16 +254,7 @@ export class Game extends HTMLElement {
    */
   createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, TimerCallBack, Bumpers) {
     return (e) => {
-      const tag = e.target.tagName.toLowerCase();
-      // Ignore key events on form elements
-      if (tag === 'input' || tag === 'textarea') {
-        return;
-      }
-      if (e.defaultPrevented) {
-        return;
-      }
       const keyCode = e.code;
-
       // Handle Player 1 animations (Arrow keys)
       if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
         if (keyCode == 'ArrowLeft') {
@@ -296,14 +285,12 @@ export class Game extends HTMLElement {
       // Handle pause/resume with Escape key
       if (keyCode == 'Escape') {
         if (gameStateContainer.isPaused == false) {
-          // Pause the game
           gameStartAndStop[1]();
           let i = 0;
           if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
           clearTimeout(Timer.timeoutId);
           gameStateContainer.isPaused = true;
         } else {
-          // Resume the game
           let i = 0;
           if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
           Timer.timeoutId = setTimeout(TimerCallBack, 1000);
@@ -323,9 +310,6 @@ export class Game extends HTMLElement {
    */
   createOnDocumentKeyUp(keyMap, Bumpers) {
     return (e) => {
-      if (e.defaultPrevented) {
-        return;
-      }
       const keyCode = e.code;
       keyMap[keyCode] = false;
       // Return Player 1 to idle animation when keys are released
@@ -373,7 +357,7 @@ export class Game extends HTMLElement {
 
   /**
    * Create and configure the WebGL renderer
-   * @returns {THREE.WebGLRenderer} Configured renderer instance
+   * @returns {Promise<THREE.WebGLRenderer>} Configured renderer instance
    */
   async createRenderer() {
     try {
@@ -585,7 +569,7 @@ export class Game extends HTMLElement {
   /**
    * Main game logic and initialization
    * Sets up the 3D scene, physics, controls, and game loop
-   * @returns {Array} Game components [camera, renderer, start, stop, workers, scene]
+   * @returns {Promise<Array>} Game components [camera, renderer, start, stop, workers, scene]
    */
   async game() {
     // Extract game configuration
@@ -632,14 +616,10 @@ export class Game extends HTMLElement {
         break;
     }
 
-    // Utility functions and constants
     const degreesToRadians = this.degreesToRadians;
     const pi = Math.PI;
-
-    // Input handling
     let keyMap = []; // Tracks which keys are currently pressed
-
-    // Game state management with getter/setter pattern    const overlayUI = this.overlay;
+    const overlayUI = this.overlay;
 
     const gameStateContainer = (() => {
       let isPaused = false;
@@ -660,13 +640,11 @@ export class Game extends HTMLElement {
       };
     })();
 
-    // UI element references for game updates
     const buffUI = this.buffIconElement;
     const timerUI = this.timerElement;
     const scoreUI = this.scoreElement;
     const lifePointUI = this.lifePointElement;
 
-    // Initialize WebGL renderer
     const renderer = await this.createRenderer();
     if (!renderer) {
       throw new Error('Failed to create WebGL renderer');
@@ -1102,14 +1080,18 @@ export class Game extends HTMLElement {
     }
 
     const showGameOverOverlay = () => {
+      if (Bumpers[0].score === Bumpers[1].score) {
+        const playerOneShouldWin = Math.round(Math.random());
+        playerOneShouldWin ? (Bumpers[0].score = Infinity) : (Bumpers[1].score = Infinity);
+      }
       const winner = {
-        number: Bumpers[0].score === MAX_SCORE ? 1 : 2,
-        name: Bumpers[0].score === MAX_SCORE ? 'Player 1' : 'Player 2',
+        number: Bumpers[0].score > Bumpers[1].score ? 1 : 2,
+        name: Bumpers[0].score > Bumpers[1].score ? 'Player 1' : 'Player 2',
         avatar: DEFAULT_AVATAR,
       };
       const loser = {
-        number: Bumpers[0].score === MAX_SCORE ? 2 : 1,
-        name: Bumpers[0].score === MAX_SCORE ? 'Player 2' : 'Player 1',
+        number: Bumpers[0].score > Bumpers[1].score ? 2 : 1,
+        name: Bumpers[0].score > Bumpers[1].score ? 'Player 2' : 'Player 1',
         avatar: DEFAULT_AVATAR,
       };
       if (this.#state.gameType === 'ai') {
@@ -1310,8 +1292,7 @@ export class Game extends HTMLElement {
         Timer.timeoutId = setTimeout(TimerCallBack, 1000);
         return;
       }
-      Bumpers[0].score = 0;
-      Bumpers[1].score = 0;
+      showGameOverOverlay();
       gameStateContainer.isGamePlaying = false;
       clearTimeout(Timer.timeoutId);
       gameLoop.stop();
@@ -1737,11 +1718,6 @@ export class Game extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.cleanup();
-  }
-
-  cleanup() {
-    // Cancel animation frame
     if (this.#animationId) {
       cancelAnimationFrame(this.#animationId);
       this.#animationId = null;
@@ -1775,10 +1751,8 @@ export class Game extends HTMLElement {
       this.#blobURL = null;
     }
 
-    // Dispose Three.js objects properly
     this.disposeThreeJS();
 
-    // Clean up loaders
     if (this.#ktx2Loader) {
       this.#ktx2Loader.dispose();
       this.#ktx2Loader = null;
@@ -1787,7 +1761,6 @@ export class Game extends HTMLElement {
       this.loaderModel = null;
     }
 
-    // Stop game loop
     if (this.stop) {
       this.stop();
     }
