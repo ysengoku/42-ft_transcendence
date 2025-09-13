@@ -753,7 +753,6 @@ export class MultiplayerGame extends HTMLElement {
           this.#state.gameOptions.game_speed = gameSpeed[this.#state.gameOptions.game_speed];
           clientState.bumper.speed *= this.#state.gameOptions.game_speed;
           clientState.enemyBumper.speed *= this.#state.gameOptions.game_speed;
-          console.log(clientState.bumper.speed);
           break;
         case 'game_started':
           log.info('Game started', data);
