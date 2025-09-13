@@ -1,14 +1,17 @@
 from __future__ import annotations  # noqa: A005
 
+import io
 from datetime import timedelta  # noqa: A005
 from pathlib import Path  # noqa: A005
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import magic
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig, ValidationError
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
 from django.db.models import Case, Count, Exists, ExpressionWrapper, F, Func, IntegerField, Q, Sum, Value, When
 from django.db.models.lookups import Exact
@@ -235,11 +238,27 @@ class Profile(models.Model):
         if self.profile_picture and Path.is_file(self.profile_picture.path):
             Path.unlink(self.profile_picture.path)
 
+    def rename_avatar(self, new_avatar) -> InMemoryUploadedFile:
+        ext = Path(new_avatar.name).suffix
+        base_name = str(self.pk) if self.pk else uuid4().hex
+        new_name = f"{base_name}_avatar{ext}"
+        new_avatar.seek(0)
+        avatar_content = io.BytesIO(new_avatar.read())
+        return InMemoryUploadedFile(
+            file=avatar_content,
+            field_name="profile_picture",
+            name=new_name,
+            content_type=new_avatar.content_type,
+            size=new_avatar.size,
+            charset=new_avatar.charset,
+        )
+
     def update_avatar(self, new_avatar) -> None:
         """Validates an avatar, and if its valid, deletes an old avatar and sets a new one. Does not saves the model."""
         self.validate_avatar(new_avatar)
         self.delete_avatar()
-        self.profile_picture = new_avatar
+        renamed_avatar = self.rename_avatar(new_avatar)
+        self.profile_picture = renamed_avatar
 
     def validate_avatar(self, file: UploadedFile) -> None:
         """
