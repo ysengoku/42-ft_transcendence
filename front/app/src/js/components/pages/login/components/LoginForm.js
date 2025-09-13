@@ -51,7 +51,7 @@ export class LoginForm extends HTMLElement {
     const response = await apiRequest('POST', API_ENDPOINTS.LOGIN, { username, password }, false, false);
     if (response.success) {
       if (response.status == 200) {
-        if (response.data.mfa_required) {
+        if (response.data && response.data.mfa_required) {
           sessionStorage.setItem('username', response.data.username);
           router.navigate('/mfa-verification', response.data);
         } else {
