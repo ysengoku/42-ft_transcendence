@@ -82,7 +82,8 @@ export class UserEloProgressionChart extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.previousButton?.remove;
+    this.previousButton?.removeEventListener('click', this.renderPrevious);
+    this.nextButton?.removeEventListener('click', this.renderNext);
   }
 
   /* ------------------------------------------------------------------------ */
@@ -110,6 +111,10 @@ export class UserEloProgressionChart extends HTMLElement {
       this.chart.classList.add('d-flex', 'justify-content-center', 'align-items-center');
       this.previousButton.classList.add('invisible');
       return;
+    }
+    if (this.#state.history.length < 7) {
+      this.previousButton.classList.add('invisible');
+      this.previousButton.setAttribute('disabled', true);
     }
     this.renderChart();
   }
@@ -372,8 +377,11 @@ export class UserEloProgressionChart extends HTMLElement {
   /*      Event handlers                                                      */
   /* ------------------------------------------------------------------------ */
   async renderPrevious() {
+    if (this.#state.currentItemCount < 7) {
+      return;
+    }
     if (
-      (this.#state.totalItemCount === 0 && this.#state.currentItemCount !== 0) ||
+      (this.#state.totalItemCount === 0 && this.#state.currentItemCount === 7) ||
       this.#state.totalItemCount > this.#state.currentItemCount
     ) {
       const response = await this.fetchHistory();
@@ -416,7 +424,10 @@ export class UserEloProgressionChart extends HTMLElement {
       false,
       true,
     );
-    if (response.success) {
+    if (response.success && response.data && response.data.items) {
+      if (response.data.items.length === 0) {
+        return false;;
+      }
       this.#state.totalItemCount = response.data.count;
       this.#state.history.push(...response.data.items);
       this.#state.currentItemCount += response.data.items.length;
