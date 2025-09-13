@@ -144,7 +144,13 @@ const auth = (() => {
       const response = await fetch(API_ENDPOINTS.SELF, request);
       switch (response.status) {
         case 200:
-          const data = await response.json();
+          let data = {};
+          try {
+            data = await response.json();
+          } catch(error) {
+            log.error('Failed to parse JSON response:', error);
+            data = {};
+          }
           log.info('User is logged in: ', data);
           this.storeUser(data, fireEvent);
           return { success: true, response: data };
