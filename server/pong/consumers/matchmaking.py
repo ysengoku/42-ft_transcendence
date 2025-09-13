@@ -120,7 +120,7 @@ class MatchmakingConsumer(GuardedWebsocketConsumer):
                 room_to_clean,
                 self.user.profile,
             )
-            if self.game_room.players.count() < 1:
+            if room_to_clean.players.count() < 1:
                 room_to_clean.set_closed()
                 logger.info("[Matchmaking.disconnect]: game room {%s} closed", room_to_clean)
 
