@@ -24,178 +24,289 @@ import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
 import { DEFAULT_AVATAR } from '@env';
 
 /* eslint no-var: "off" */
+
+/**
+ * Game Component - 3D Pong Game Implementation
+ *
+ * This class implements a 3D pong game using Three.js with the following features:
+ * - Single player (vs AI) and local multiplayer modes
+ * - 3D models and animations for players and environment
+ * - Physics-based ball movement and collision detection
+ * - Power-ups and buffs in cool mode
+ * - Responsive UI with timer, scoreboard, and life points
+ */
 export class Game extends HTMLElement {
-  #ktx2Loader = null;
-  #navbarHeight = 64;
+  // Private fields for game configuration and state
+  #ktx2Loader = null; // KTX2 texture loader for optimized textures
+  #navbarHeight = 64; // Height of the navigation bar
   #state = {
-    gameOptions: {},
-    gameType: '', // 'classic' or 'ai'
+    gameOptions: {}, // Game settings (speed, score limit, etc.)
+    gameType: '', // Game mode: 'classic' or 'ai'
     user: null,
   };
+  #animationId = null; // Animation frame request ID
+  #resizeHandler = null; // Window resize event handler
+  #blobURL = null; // Blob URL for web workers
 
   constructor() {
     super();
 
+    // Calculate navbar height for proper canvas sizing
     const navbar = document.querySelector('.navbar');
     if (navbar) {
       this.#navbarHeight = navbar.offsetHeight;
     }
 
-    this.timerElement = null;
-    this.buffIconElement = null;
-    this.scoreElement = null;
-    this.lifePointElement = null;
-    this.overlay = null;
+    // Initialize UI element references
+    this.timerElement = null; // Game timer display
+    this.buffIconElement = null; // Power-up indicator
+    this.scoreElement = null; // Scoreboard component
+    this.lifePointElement = null; // Life points display
+    this.overlay = null; // Game overlay for messages
+
+    // Predefined rotation angles for player models
+    this.modelRotation = [
+      [this.degreesToRadians(235), this.degreesToRadians(-90)], // Player 1 rotations
+      [this.degreesToRadians(55), this.degreesToRadians(90)], // Player 2 rotations
+    ];
   }
 
+  /**
+   * Initialize all UI elements for the game
+   * Creates scoreboard, timer, buff icons, life points, and overlay
+   */
+  initializeUIElements() {
+    console.log('Initializing UI elements (optimized)');
+
+    // Create scoreboard with appropriate player names
+    this.createUIElement('scoreElement', 'game-scoreboard', (element) => {
+      if (this.#state.gameType === 'ai') {
+        element.setNames('Player1', 'AI player');
+      }
+    });
+
+    // Create game timer with configured time limit
+    if (!this.timerElement) {
+      this.timerElement = document.createElement('game-timer');
+      const timeLimit = (this.#state.gameOptions.time_limit || 3) * 60; // Convert minutes to seconds
+      this.timerElement.setInitialTimeLimit(timeLimit);
+
+      const timerWrapper = document.getElementById('game-timer-wrapper');
+      if (timerWrapper) {
+        timerWrapper.appendChild(this.timerElement);
+        console.log('Timer appended to wrapper');
+      } else {
+        console.warn('Timer wrapper not found, skipping timer creation');
+      }
+    }
+
+    this.createUIElement('buffIconElement', 'game-buff-icon');
+    this.createUIElement('lifePointElement', 'game-life-point');
+
+    this.createUIElement('overlay', 'game-overlay', (element) => {
+      element.gameType = `local-${this.#state.gameType}`;
+    });
+  }
+
+  /**
+   * Helper method to create UI elements with optional configuration
+   * @param {string} propName - Property name to store the element
+   * @param {string} tagName - HTML tag name to create
+   * @param {Function} configCallback - Optional configuration function
+   * @param {HTMLElement} parent - Parent element (defaults to this)
+   */
+  createUIElement(propName, tagName, configCallback = null, parent = this) {
+    if (!this[propName]) {
+      this[propName] = document.createElement(tagName);
+
+      // Apply configuration if provided
+      if (configCallback) {
+        configCallback(this[propName]);
+      }
+
+      // Append to specified parent or default to game element
+      if (parent && parent !== this) {
+        if (!parent.querySelector(tagName)) {
+          parent.appendChild(this[propName]);
+        }
+      } else {
+        this.appendChild(this[propName]);
+      }
+
+      console.log(`Created ${propName}`);
+    }
+  }
+
+  /**
+   * Called when the element is added to the DOM
+   * Handles authentication, initialization, and rendering
+   */
   async connectedCallback() {
-    const authStatus = await auth.fetchAuthStatus();
-    if (!authStatus.success) {
-      if (authStatus.status === 429) {
+    try {
+      // Check user authentication status
+      const authStatus = await auth.fetchAuthStatus();
+      if (!authStatus.success) {
+        if (authStatus.status === 429) {
+          return; // Rate limited
+        }
+        if (authStatus.status === 401) {
+          sessionExpiredToast();
+        }
+        router.redirect('/login');
         return;
       }
-      if (authStatus.status === 401) {
-        sessionExpiredToast();
-      }
-      router.redirect('/login');
-      return;
+
+      // Configure element styling
+      this.classList.add('position-relative');
+      this.style.overflow = 'hidden'; // Prevent scrollbars
+      this.style.position = 'relative'; // Allow overlay positioning
+
+      console.log('Game options before UI init:', this.#state.gameOptions);
+
+      // Initialize UI and start the game
+      this.initializeUIElements();
+      await this.render();
+    } catch (error) {
+      this.handleError('GAME_INIT_FAILED', error);
     }
-    this.#state.user = authStatus.response;
-    this.classList.add('position-relative');
-    this.scoreElement = document.createElement('game-scoreboard');
-    if (this.scoreElement && this.#state.gameType === 'ai') {
-      this.scoreElement.setNames('You', 'AI player');
-    }
-    this.appendChild(this.scoreElement);
-    this.timerElement = document.createElement('game-timer');
-    this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60);
-    document.getElementById('game-timer-wrapper')?.appendChild(this.timerElement);
-    this.buffIconElement = document.createElement('game-buff-icon');
-    this.appendChild(this.buffIconElement);
-    this.lifePointElement = document.createElement('game-life-point');
-    this.appendChild(this.lifePointElement);
-    this.overlay = document.createElement('game-overlay');
-    this.overlay.gameType = 'local';
-    this.appendChild(this.overlay);
 
     await this.render();
   }
 
+  /**
+   * Parse URL parameters and configure game options
+   * @param {URLSearchParams} param - URL search parameters
+   */
   setQueryParam(param) {
+    // Extract game type from URL parameters
     this.#state.gameType = param.get('type') || 'classic';
 
+    // Parse cool mode setting (enables power-ups and special effects)
     const coolModeParam = param.get('cool_mode');
     const isCoolModeValid = !coolModeParam || coolModeParam === 'any';
     const coolMode = coolModeParam && coolModeParam.toLowerCase().trim() !== 'false';
     this.#state.gameOptions.cool_mode = isCoolModeValid ? DEFAULT_GAME_OPTIONS.coolMode : coolMode;
 
+    // Parse game speed setting (slow, medium, fast)
     const gameSpeed = param.get('game_speed');
     const isGameSpeedValid = !gameSpeed || gameSpeed === 'any' || !['slow', 'medium', 'fast'].includes(gameSpeed);
     this.#state.gameOptions.game_speed = isGameSpeedValid ? DEFAULT_GAME_OPTIONS.gameSpeed : gameSpeed;
 
+    // Parse score limit (3-20 points)
     const scoreToWinParam = param.get('score_to_win');
     const scoreToWin = parseInt(scoreToWinParam);
     const isScoreToWinValid = !scoreToWin || scoreToWin === 'any' || !(scoreToWin >= 3 && scoreToWin <= 20);
     this.#state.gameOptions.score_to_win = isScoreToWinValid ? DEFAULT_GAME_OPTIONS.scoreToWin : scoreToWin;
 
+    // Parse time limit (1-5 minutes)
     const timeLimitParam = param.get('time_limit');
     const timeLimit = parseInt(timeLimitParam);
     const isTimeLimitValid = !timeLimit || timeLimit === 'any' || !(timeLimit >= 1 && timeLimit <= 5);
     this.#state.gameOptions.time_limit = isTimeLimitValid ? DEFAULT_GAME_OPTIONS.timeLimitMinutes : timeLimit;
 
+    // Disable ranked mode for local games
     this.#state.gameOptions.ranked = false;
 
-    log.info('Game type:', this.#state.gameType);
+    console.log('Game type:', this.#state.gameType);
   }
 
-  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, myCallback, Bumpers) {
+  /**
+   * Convert degrees to radians
+   * @param {number} degrees - Angle in degrees
+   * @returns {number} Angle in radians
+   */
+  degreesToRadians(degrees) {
+    return degrees * (Math.PI / 180);
+  }
+
+  /**
+   * Handle smooth animation transitions for player models
+   * @param {Object} ourBumper - Player object
+   * @param {number} currentAction - Current animation index
+   * @param {number} nextAction - Next animation index
+   * @param {number} fadeTime - Transition duration
+   */
+  handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
+    const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 1;
+
+    // Smoothly transition between animations
+    if (currentAction != nextAction) {
+      ourBumper.gltfStore.action[currentAction].fadeOut(fadeTime);
+      ourBumper.gltfStore.action[nextAction].reset();
+      ourBumper.gltfStore.action[nextAction].fadeIn(fadeTime);
+      ourBumper.gltfStore.action[nextAction].play();
+      ourBumper.currentAction = nextAction;
+
+      // Update model rotation based on current model and player position
+      if (ourBumper.modelChoosen == 0) ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][0];
+      else ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][1];
+    }
+  }
+
+  /**
+   * Create keydown event handler for game controls
+   * @param {Object} keyMap - Key state tracking object
+   * @param {Array} Workers - Web workers for power-up timers
+   * @param {Array} gameStartAndStop - Game loop control functions
+   * @param {Object} gameStateContainer - Game state object
+   * @param {Object} Timer - Timer object
+   * @param {Function} TimerCallBack - Timer callback function
+   * @param {Array} Bumpers - Player objects
+   * @returns {Function} Event handler function
+   */
+  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, TimerCallBack, Bumpers) {
     return (e) => {
       const tag = e.target.tagName.toLowerCase();
+      // Ignore key events on form elements
       if (tag === 'input' || tag === 'textarea') {
-        return; // Do not process key events on input or textarea elements
+        return;
       }
       if (e.defaultPrevented) {
         return;
       }
-      var keyCode = e.code;
+      const keyCode = e.code;
+
+      // Handle Player 1 animations (Arrow keys)
+      if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
+        if (keyCode == 'ArrowLeft') {
+          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
+        }
+        if (keyCode == 'ArrowRight') {
+          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
+        }
+      }
+      // Handle key mapping based on game mode
       if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == 'ai') {
+        // In AI mode, only Player 1 controls are active
         keyMap[keyCode] = true;
-        if (Bumpers[0].gltfStore.action) {
-          if (keyCode == 'ArrowLeft' && Bumpers[0].currentAction != 0 && Bumpers[0].currentAction != 1) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[0][0].reset();
-            Bumpers[0].gltfStore.action[0][0].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[0][0].play();
-            if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
-            else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
-            Bumpers[0].currentAction = 0;
-          }
-        }
-        if (keyCode == 'ArrowRight' && Bumpers[0].currentAction != 6 && Bumpers[0].currentAction != 1) {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.1);
-          Bumpers[0].gltfStore.action[6][0].reset();
-          Bumpers[0].gltfStore.action[6][0].fadeIn(0.1);
-          Bumpers[0].gltfStore.action[6][0].play();
-          Bumpers[0].gltfStore.action[6][1] = true;
-          if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
-          else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
-          Bumpers[0].currentAction = 6;
-        }
       } else if (this.#state.gameType != 'ai') {
+        // In local multiplayer, both players can control
         keyMap[keyCode] = true;
-        if (Bumpers[0].gltfStore.action) {
-          if (keyCode == 'ArrowLeft' && Bumpers[0].currentAction != 0) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[0][0].reset();
-            Bumpers[0].gltfStore.action[0][0].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[0][0].play();
-            if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
-            else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
-            Bumpers[0].currentAction = 0;
+
+        // Handle Player 2 animations (WASD keys)
+        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[5]) {
+          if (keyCode == 'KeyA') {
+            this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 5, 0.1);
           }
-          if (keyCode == 'ArrowRight' && Bumpers[0].currentAction != 5) {
-            Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.1);
-            Bumpers[0].gltfStore.action[5][0].reset();
-            Bumpers[0].gltfStore.action[5][0].fadeIn(0.1);
-            Bumpers[0].gltfStore.action[5][0].play();
-            Bumpers[0].gltfStore.action[5][1] = true;
-            if (Bumpers[0].modelChoosen == 0) Bumpers[0].playerGlb.rotation.y = 55 * (Math.PI / 180);
-            else Bumpers[0].playerGlb.rotation.y = 90 * (Math.PI / 180);
-            Bumpers[0].currentAction = 5;
-          }
-        }
-        if (Bumpers[1].gltfStore.action) {
-          if (keyCode == 'KeyA' && Bumpers[1].currentAction != 5) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[5][0].reset();
-            Bumpers[1].gltfStore.action[5][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[5][0].play();
-            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
-            else Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
-            Bumpers[1].currentAction = 5;
-          }
-          if (keyCode == 'KeyD' && Bumpers[1].currentAction != 0) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[0][0].reset();
-            Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[0][0].play();
-            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = 235 * (Math.PI / 180);
-            else Bumpers[1].playerGlb.rotation.y = -90 * (Math.PI / 180);
-            Bumpers[1].currentAction = 0;
+          if (keyCode == 'KeyD') {
+            this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
           }
         }
       }
+      // Handle pause/resume with Escape key
       if (keyCode == 'Escape') {
         if (gameStateContainer.isPaused == false) {
+          // Pause the game
           gameStartAndStop[1]();
           let i = 0;
           if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
           clearTimeout(Timer.timeoutId);
           gameStateContainer.isPaused = true;
         } else {
+          // Resume the game
           let i = 0;
           if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
-          Timer.timeoutId = setTimeout(myCallback, 1000);
+          Timer.timeoutId = setTimeout(TimerCallBack, 1000);
           gameStateContainer.isPaused = false;
           gameStartAndStop[0]();
         }
@@ -204,66 +315,331 @@ export class Game extends HTMLElement {
     };
   }
 
+  /**
+   * Create keyup event handler for game controls
+   * @param {Object} keyMap - Key state tracking object
+   * @param {Array} Bumpers - Player objects
+   * @returns {Function} Event handler function
+   */
   createOnDocumentKeyUp(keyMap, Bumpers) {
     return (e) => {
       if (e.defaultPrevented) {
         return;
       }
-      var keyCode = e.code;
+      const keyCode = e.code;
       keyMap[keyCode] = false;
-      if (Bumpers[0].gltfStore.action) {
+      // Return Player 1 to idle animation when keys are released
+      if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[2]) {
         if (keyCode == 'ArrowRight') {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.5);
-          Bumpers[0].gltfStore.action[2][0].reset();
-          Bumpers[0].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[0].gltfStore.action[2][0].play();
-          Bumpers[0].currentAction = 2;
+          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
         }
         if (keyCode == 'ArrowLeft') {
-          Bumpers[0].gltfStore.action[Bumpers[0].currentAction][0].fadeOut(0.5);
-          Bumpers[0].gltfStore.action[2][0].reset();
-          Bumpers[0].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[0].gltfStore.action[2][0].play();
-          Bumpers[0].currentAction = 2;
+          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
         }
       }
-      if (Bumpers[1].gltfStore.action) {
+      // Return Player 2 to idle animation when keys are released
+      if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[2]) {
         if (keyCode == 'KeyA') {
-          Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.5);
-          Bumpers[1].gltfStore.action[2][0].reset();
-          Bumpers[1].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[1].gltfStore.action[2][0].play();
-          Bumpers[1].currentAction = 2;
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
         }
         if (keyCode == 'KeyD') {
-          Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.5);
-          Bumpers[1].gltfStore.action[2][0].reset();
-          Bumpers[1].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[1].gltfStore.action[2][0].play();
-          Bumpers[1].currentAction = 2;
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
         }
       }
       e.preventDefault();
     };
   }
 
+  /**
+   * Initialize 3D model loaders with optimization support
+   * @param {THREE.WebGLRenderer} renderer - WebGL renderer instance
+   */
   async initLoaders(renderer) {
-    this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
+    try {
+      // Set up KTX2 loader for compressed textures
+      this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
 
-    await MeshoptDecoder.ready;
+      // Wait for MeshOpt decoder to be ready
+      await MeshoptDecoder.ready;
 
-    this.loaderModel = new GLTFLoader();
-    this.loaderModel.setKTX2Loader(this.#ktx2Loader);
-    this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+      // Configure GLTF loader with optimizations
+      this.loaderModel = new GLTFLoader();
+      this.loaderModel.setKTX2Loader(this.#ktx2Loader);
+      this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+    } catch (error) {
+      throw new Error(`Failed to initialize 3D loaders: ${error.message}`);
+    }
   }
 
+  /**
+   * Create and configure the WebGL renderer
+   * @returns {THREE.WebGLRenderer} Configured renderer instance
+   */
+  async createRenderer() {
+    try {
+      // Test WebGL support before creating renderer
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+
+      if (!gl) {
+        throw new Error('WebGL not supported');
+      }
+
+      // Create renderer with optimized settings
+      const renderer = new THREE.WebGLRenderer({
+        alpha: true, // Enable transparency
+        antialias: true, // Smooth edges
+        powerPreference: 'high-performance', // Use dedicated GPU if available
+      });
+
+      // Handle WebGL context loss/restore events
+      renderer.domElement.addEventListener('webglcontextlost', (event) => {
+        event.preventDefault();
+        this.handleError('WEBGL_CONTEXT_LOST');
+      });
+
+      renderer.domElement.addEventListener('webglcontextrestored', () => {
+        window.location.reload(); // Reload page to restore context
+      });
+
+      return renderer;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Handle various game errors with appropriate user feedback
+   * @param {string} errorType - Type of error that occurred
+   * @param {Error} error - Optional error object
+   */
+  handleError(errorType, error = null) {
+    console.error(`Game Error [${errorType}]:`, error);
+
+    // Hide game UI when error occurs
+    this.hideGameUI();
+
+    // Define user-friendly error messages
+    const errorMessages = {
+      WEBGL_NOT_SUPPORTED: {
+        title: 'Graphics Error',
+        message: "Your device doesn't support WebGL. Please update your browser or graphics drivers.",
+      },
+      WEBGL_CONTEXT_LOST: {
+        title: 'Graphics Context Lost',
+        message: 'The graphics context was lost. The page will reload automatically.',
+      },
+      MODEL_LOADING_FAILED: {
+        title: 'Loading Error',
+        message: 'Failed to load 3D models. Please check your internet connection.',
+      },
+      GAME_INIT_FAILED: {
+        title: 'Game Failed to Load',
+        message: 'The game encountered an error while loading. Please try refreshing the page.',
+      },
+    };
+
+    const config = errorMessages[errorType] || {
+      title: 'Unknown Error',
+      message: 'An unexpected error occurred. Please refresh the page.',
+    };
+
+    // Show error overlay with reload option
+    this.overlay?.show(OVERLAY_TYPE.ERROR, {
+      ...config,
+      actions: [
+        {
+          label: 'Reload',
+          onClick: () => window.location.reload(),
+        },
+      ],
+    });
+
+    // Auto-reload for context loss after 3 seconds
+    if (errorType === 'WEBGL_CONTEXT_LOST') {
+      setTimeout(() => window.location.reload(), 3000);
+    }
+  }
+
+  /**
+   * Load and configure a 3D model with fallback handling
+   * @param {string} modelName - Path to the model file
+   * @param {number} posX - X position
+   * @param {number} posY - Y position
+   * @param {number} posZ - Z position
+   * @param {number} scaleX - X scale
+   * @param {number} scaleY - Y scale
+   * @param {number} scaleZ - Z scale
+   * @returns {THREE.Object3D} Loaded model or fallback
+   */
+  async createModelLoader(modelName, posX, posY, posZ, scaleX, scaleY, scaleZ) {
+    try {
+      // Load GLTF model with progress tracking
+      const gltf = await new Promise((resolve, reject) => {
+        this.loaderModel.load(
+          modelName,
+          resolve,
+          (progress) => {
+            console.log(`Loading ${modelName}:`, (progress.loaded / progress.total) * 100 + '%');
+          },
+          reject,
+        );
+      });
+
+      // Validate loaded model
+      if (!gltf?.scene) {
+        throw new Error(`Invalid GLTF file: ${modelName}`);
+      }
+
+      const model = gltf.scene;
+      // Configure shadows for all meshes
+      model.traverse((node) => {
+        if (node.isMesh) {
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      });
+
+      // Create container and apply transformations
+      const modelGenerated = new THREE.Object3D();
+      model.position.set(posX, posY, posZ);
+      model.scale.set(scaleX, scaleY, scaleZ);
+      modelGenerated.add(model);
+
+      return modelGenerated;
+    } catch (error) {
+      console.warn(`Failed to load model ${modelName}, using fallback:`, error.message);
+      return this.createFallbackModel(posX, posY, posZ, scaleX, scaleY, scaleZ);
+    }
+  }
+
+  /**
+   * Create a simple fallback model when GLTF loading fails
+   * @param {number} posX - X position
+   * @param {number} posY - Y position
+   * @param {number} posZ - Z position
+   * @param {number} scaleX - X scale
+   * @param {number} scaleY - Y scale
+   * @param {number} scaleZ - Z scale
+   * @returns {THREE.Object3D} Basic cube model
+   */
+  createFallbackModel(posX, posY, posZ, scaleX, scaleY, scaleZ) {
+    // Create a simple gray cube as fallback
+    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshPhongMaterial({ color: 0x888888 });
+    const mesh = new THREE.Mesh(geometry, material);
+
+    // Apply transformations and shadow settings
+    mesh.position.set(posX, posY, posZ);
+    mesh.scale.set(scaleX, scaleY, scaleZ);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
+    const container = new THREE.Object3D();
+    container.add(mesh);
+    return container;
+  }
+
+  /**
+   * Hide all game UI elements (used during errors or game end)
+   */
+  hideGameUI() {
+    console.log('Hiding game UI');
+
+    const elements = [
+      { element: this.scoreElement, name: 'scoreElement' },
+      { element: this.timerElement, name: 'timerElement' },
+      { element: this.buffIconElement, name: 'buffIconElement' },
+      { element: this.lifePointElement, name: 'lifePointElement' },
+    ];
+
+    elements.forEach(({ element, name }) => {
+      if (element) {
+        element.style.display = 'none';
+        console.log(`Hidden ${name}`);
+      }
+    });
+  }
+
+  /**
+   * Show all game UI elements
+   */
+  showGameUI() {
+    console.log('Showing game UI');
+
+    const elements = [
+      { element: this.scoreElement, name: 'scoreElement' },
+      { element: this.timerElement, name: 'timerElement' },
+      { element: this.buffIconElement, name: 'buffIconElement' },
+      { element: this.lifePointElement, name: 'lifePointElement' },
+    ];
+
+    elements.forEach(({ element, name }) => {
+      if (element) {
+        element.style.display = '';
+        console.log(`Shown ${name}`);
+      }
+    });
+  }
+
+  /**
+   * Main game logic and initialization
+   * Sets up the 3D scene, physics, controls, and game loop
+   * @returns {Array} Game components [camera, renderer, start, stop, workers, scene]
+   */
   async game() {
-    var keyMap = [];
-    const buffUI = this.buffIconElement;
-    const timerUI = this.timerElement;
-    const scoreUI = this.scoreElement;
-    const lifePointUI = this.lifePointElement;
-    const overlayUI = this.overlay;
+    // Extract game configuration
+    const gameOptionsQuery = this.#state.gameOptions;
+    const isGameAi = this.#state.gameType;
+
+    // GAME CONSTANTS
+    // Game boundaries and collision detection
+    const BUMPER_1_BORDER = -10; // Player 1 goal line
+    const BUMPER_2_BORDER = -BUMPER_1_BORDER; // Player 2 goal line
+
+    const WALL_LEFT_X = 10; // Left wall position
+    const WALL_RIGHT_X = -WALL_LEFT_X; // Right wall position
+    const WALL_WIDTH_HALF = 0.5; // Half wall thickness
+
+    // Ball physics constants
+    const BALL_DIAMETER = 1;
+    const BALL_RADIUS = BALL_DIAMETER / 2;
+    const BALL_INITIAL_VELOCITY = 0.25;
+
+    // Physics simulation parameters
+    const SUBTICK = 0.05; // Physics timestep
+    const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
+    const TEMPORAL_SPEED_DECAY = 0.005; // Speed decay per frame
+
+    // Game configuration from options
+    const GAME_TIME = gameOptionsQuery.time_limit;
+    const MAX_SCORE = gameOptionsQuery.score_to_win;
+
+    // Set game speed multiplier based on user preference
+    let GAME_SPEED;
+    switch (gameOptionsQuery.game_speed) {
+      case 'slow':
+        GAME_SPEED = 0.75;
+        break;
+      case 'medium':
+        GAME_SPEED = 1.0;
+        break;
+      case 'fast':
+        GAME_SPEED = 1.25;
+        break;
+      default:
+        GAME_SPEED = 1.0;
+        break;
+    }
+
+    // Utility functions and constants
+    const degreesToRadians = this.degreesToRadians;
+    const pi = Math.PI;
+
+    // Input handling
+    let keyMap = []; // Tracks which keys are currently pressed
+
+    // Game state management with getter/setter pattern    const overlayUI = this.overlay;
 
     const gameStateContainer = (() => {
       let isPaused = false;
@@ -284,63 +660,45 @@ export class Game extends HTMLElement {
       };
     })();
 
-    const pi = Math.PI;
-    const WALL_WIDTH_HALF = 0.5;
-    const gameOptionsQuery = this.#state.gameOptions;
-    const isGameAi = this.#state.gameType;
-    let gameSpeed;
-    switch (gameOptionsQuery.game_speed) {
-      case 'slow':
-        gameSpeed = 0.75;
-        break;
-      case 'medium':
-        gameSpeed = 1.0;
-        break;
-      case 'fast':
-        gameSpeed = 1.25;
-        break;
-      default:
-        gameSpeed = 1.0;
-        break;
-    }
-    const BUMPER_1_BORDER = -10;
-    const BUMPER_2_BORDER = -BUMPER_1_BORDER;
-    const BALL_DIAMETER = 1;
-    const BALL_RADIUS = BALL_DIAMETER / 2;
-    const SUBTICK = 0.05;
-    const GAME_TIME = gameOptionsQuery.time_limit;
-    const BALL_INITIAL_VELOCITY = 0.25;
-    const MAX_SCORE = gameOptionsQuery.score_to_win;
-    const TEMPORAL_SPEED_INCREASE = SUBTICK * 0;
-    const TEMPORAL_SPEED_DECAY = 0.005;
+    // UI element references for game updates
+    const buffUI = this.buffIconElement;
+    const timerUI = this.timerElement;
+    const scoreUI = this.scoreElement;
+    const lifePointUI = this.lifePointElement;
 
-    const carboardModelStates = [carboard, carboard2, carboard3];
-    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    // Initialize WebGL renderer
+    const renderer = await this.createRenderer();
+    if (!renderer) {
+      throw new Error('Failed to create WebGL renderer');
+    }
+    await this.initLoaders(renderer);
+
+    // Configure renderer settings
     renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setClearColor(0x8e4f5e, 1);
+    renderer.shadowMap.enabled = true; // Enable shadow rendering
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadows for better quality
+    renderer.setClearColor(0x8e4f5e, 1); // Set background color
     this.appendChild(renderer.domElement);
 
     const rendererWidth = renderer.domElement.offsetWidth;
     const rendererHeight = renderer.domElement.offsetHeight;
 
+    // Scene setup with atmospheric effects
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x8e4f5e, 0.008);
-    await this.initLoaders(renderer);
+    scene.fog = new THREE.FogExp2(0x8e4f5e, 0.008); // Add distance fog for depth
 
-    var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
-    camera.position.set(0, 12, -20);
+    // Camera configuration for optimal game view
+    const camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
+    camera.position.set(0, 12, -20); // Position above and behind the playing field
     camera.lookAt(new THREE.Vector3(0, 0, 0));
 
-    function degreesToRadians(degrees) {
-      return degrees * (pi / 180);
-    }
-
+    // Lighting setup for realistic rendering
+    // Main sun light (key light)
     const sunLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
     sunLight.position.set(25, 35, -50);
     sunLight.target.position.set(0, 0, 0);
     sunLight.castShadow = true;
+    // High resolution shadow map for quality
     sunLight.shadow.mapSize.width = 4096;
     sunLight.shadow.mapSize.height = 4096;
     sunLight.shadow.camera.near = 0.5;
@@ -350,91 +708,57 @@ export class Game extends HTMLElement {
     sunLight.shadow.camera.top = 100;
     sunLight.shadow.camera.bottom = -60;
 
+    // Ambient light for general illumination
     const ambientLight = new THREE.AmbientLight(0x87ceeb, 0.3);
 
+    // Fill light to soften shadows
     const fillLight = new THREE.DirectionalLight(0xb3d9ff, 0.4);
     fillLight.position.set(30, 20, -10);
     fillLight.castShadow = false;
 
-    let carboardModels = [null, null, null];
+    // Add all lights to scene
+    scene.add(sunLight);
+    scene.add(sunLight.target);
+    scene.add(ambientLight);
+    scene.add(fillLight);
+
+    // Helper function for model creation and scene addition
+    const modelCreate = async (posX, posY, posZ, scaleX, scaleY, scaleZ, modelName) => {
+      const modelGenerated = await this.createModelLoader(modelName, posX, posY, posZ, scaleX, scaleY, scaleZ);
+      scene.add(modelGenerated);
+      return modelGenerated;
+    };
+
+    // Environment setup - Background elements
+
+    // Cardboard signs that change based on score progression
+    let carboardModels = [];
+    const carboardModelStates = [carboard, carboard2, carboard3];
 
     for (let i = 0; i <= 2; i++) {
-      const carboardGlb = (() => {
-        const carboardModel = new THREE.Object3D();
-        this.loaderModel.load(
-          carboardModelStates[i],
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.z = 0;
-            model.position.x = 0;
-            carboardModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        carboardModel.scale.set(1.6, 1.6, 2.2);
-        scene.add(carboardModel);
-        return carboardModel;
-      })();
-      carboardGlb.rotation.y = pi / 2;
-      carboardGlb.position.z = 15;
+      const carboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, carboardModelStates[i]);
+      carboardGlb.rotateY(pi / 2);
       carboardModels[i] = carboardGlb;
     }
+    // Initially show only the first cardboard sign
     carboardModels[1].visible = false;
     carboardModels[2].visible = false;
 
-    const CactusFactory = (posX, posY, posZ) => {
-      const cactusGlb = (() => {
-        const cactusModel = new THREE.Object3D();
-        this.loaderModel.load(
-          cactus,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.z = 0;
-            model.position.x = 0;
-            cactusModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        cactusModel.scale.set(1.8, 1.8, 1.8);
-        scene.add(cactusModel);
-        return cactusModel;
-      })();
+    // Desert environment - Cactus placement system
+    const cacti = [];
+    const placedCacti = []; // Track positions to avoid overlap
+    const minDistance = 8; // Minimum distance between cacti
 
-      cactusGlb.position.x = posX;
-      cactusGlb.position.y = posY;
-      cactusGlb.position.z = posZ;
-      cactusGlb.rotation.y = degreesToRadians(Math.random() * 360);
-      cactusGlb.castShadow = true;
-      cactusGlb.receiveShadow = true;
-      scene.add(cactusGlb);
-
+    // Factory function for creating randomly rotated cacti
+    const CactusFactory = async (posX, posY, posZ) => {
+      const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
+      cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
       return {
         cactusGlb,
       };
     };
-    const cacti = [];
 
-    const placedCacti = [];
-    const minDistance = 8;
-
+    // Generate safe positions for cacti (avoiding play area and other cacti)
     const getSafeCactusPosition = () => {
       let x, z;
       let attempts = 0;
@@ -442,82 +766,33 @@ export class Game extends HTMLElement {
         x = (Math.random() - 0.5) * 160;
         z = (Math.random() - 0.5) * 140;
         attempts++;
-        if (attempts > 50) break;
+        if (attempts > 50) break; // Prevent infinite loops
       } while (
-        (x > -11.65 && x < 11.65 && z > -18 && z < 18) ||
+        // Avoid the playing field area
+        (x > -13.65 && x < 13.65 && z > -15 && z < 15) ||
+        // Maintain minimum distance from other cacti
         placedCacti.some((cactus) => Math.sqrt((x - cactus.x) ** 2 + (z - cactus.z) ** 2) < minDistance)
       );
       return { x, z };
     };
 
+    // Create desert landscape with 60 cacti
+    const cactusPromises = [];
     for (let index = 0; index < 60; index++) {
-      const pos1 = getSafeCactusPosition();
-      placedCacti.push(pos1);
-      cacti[index] = CactusFactory(pos1.x, 0, pos1.z);
-
-      if (index < 59) {
-        const pos2 = getSafeCactusPosition();
-        placedCacti.push(pos2);
-        cacti[++index] = CactusFactory(pos2.x, 0, pos2.z);
-      }
-
-      if (index < 59) {
-        const pos3 = getSafeCactusPosition();
-        placedCacti.push(pos3);
-        cacti[++index] = CactusFactory(pos3.x, 0, pos3.z);
-      }
-
-      if (index < 59) {
-        const pos4 = getSafeCactusPosition();
-        placedCacti.push(pos4);
-        cacti[++index] = CactusFactory(pos4.x, 0, pos4.z);
-      }
+      const pos = getSafeCactusPosition();
+      placedCacti.push(pos);
+      cactusPromises.push(CactusFactory(pos.x, 0, pos.z));
     }
 
-    const Ball = ((posX, posY, posZ) => {
-      const bulletGlb = (() => {
-        const bulletModel = new THREE.Object3D();
-        this.loaderModel.load(
-          bullet,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = posY;
-            model.position.z = posZ;
-            model.position.x = posX;
-            model.rotation.x = pi / 2;
-            bulletModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        bulletModel.scale.set(1, 1, 1);
-        scene.add(bulletModel);
-        return bulletModel;
-      })();
-      bulletGlb.castShadow = true;
-      bulletGlb.receiveShadow = true;
-      scene.add(bulletGlb);
+    // Load all cacti in parallel for better performance
+    const loadedCacti = await Promise.all(cactusPromises);
+    loadedCacti.forEach((cactus, index) => {
+      cacti[index] = cactus;
+    });
 
-      const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
-      const temporalSpeed = new THREE.Vector3(1, 0, 1);
-      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * gameSpeed);
-
-      return {
-        bulletGlb,
-        sphereUpdate,
-        velocity,
-        temporalSpeed,
-      };
-    })(0, 1, 0);
-
+    // Create layered hills for background depth
     const createHill = (posX, posZ, width, height) => {
+      // Create hill base (wider, shorter)
       const baseGeometry = new THREE.CylinderGeometry(width * 1.5, width * 2, height * 0.3, 8);
       const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
       const base = new THREE.Mesh(baseGeometry, baseMaterial);
@@ -525,160 +800,111 @@ export class Game extends HTMLElement {
       base.receiveShadow = true;
       scene.add(base);
 
+      // Create hill top (narrower, taller)
       const hillGeometry = new THREE.CylinderGeometry(width * 0.8, width, height, 8);
       const hillMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
       const hill = new THREE.Mesh(hillGeometry, hillMaterial);
       hill.position.set(posX, height * 0.3, posZ);
-      hill.scale.y = 0.6;
       hill.receiveShadow = true;
       scene.add(hill);
 
       return hill;
     };
 
+    // Place hills at various positions for scenic background
     createHill(-180, 250, 60, 25);
     createHill(150, 280, 70, 30);
     createHill(-100, 300, 50, 20);
     createHill(280, 200, 80, 35);
     createHill(-250, 220, 65, 22);
 
-    scene.add(sunLight);
-    scene.add(sunLight.target);
-    scene.add(ambientLight);
-    scene.add(fillLight);
+    // Create boundary fences around the playing field
+    const WallFactory = async (posX, posY, posZ) => {
+      const fenceGlb = await modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
+      fenceGlb.rotateY(-pi / 2); // Rotate to face inward
+      return {
+        fenceGlb,
+      };
+    };
+    // Place fences along both goal lines
+    await Promise.all([
+      WallFactory(0, 1.3, 9.65), // Top center
+      WallFactory(6, 1.3, 9.65), // Top right
+      WallFactory(-6, 1.3, 9.65), // Top left
+      WallFactory(6, 1.3, -9.65), // Bottom right
+      WallFactory(-6, 1.3, -9.65), // Bottom left
+      WallFactory(0, 1.3, -9.65), // Bottom center
+    ]);
 
-    const BumperFactory = (posX, posY, posZ) => {
-      var _ = {};
+    // Create textured ground plane
+    (() => {
+      const textureLoader = new THREE.TextureLoader();
+      const groundTexture = textureLoader.load(ground_texture);
+      // Set texture to repeat for large ground area
+      groundTexture.wrapS = THREE.RepeatWrapping;
+      groundTexture.wrapT = THREE.RepeatWrapping;
+      groundTexture.repeat.set(100, 100);
+
+      const phongMaterial = new THREE.MeshPhongMaterial({
+        map: groundTexture,
+        color: 0xd4a574, // Desert sand color
+        depthWrite: true,
+      });
+
+      // Large ground plane to fill the visible area
+      const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
+      const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
+      planeMesh.rotateX(-pi / 2); // Rotate to be horizontal
+      planeMesh.receiveShadow = true;
+      scene.add(planeMesh);
+    })();
+
+    // MOVING OBJECTS AND GAME ENTITIES
+
+    // Ball creation
+    const Ball = await (async (posX, posY, posZ) => {
+      const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
+      bulletGlb.rotateX(pi / 2);
+      const sphereUpdate = new THREE.Vector3(posX, posY, posZ);
+      const temporalSpeed = new THREE.Vector3(1, 0, 1);
+      const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * GAME_SPEED);
+
+      return {
+        bulletGlb,
+        sphereUpdate,
+        velocity,
+        temporalSpeed,
+      };
+    })(0, 0, 0);
+
+    // Player / Bumper creation
+    const BumperFactory = async (posX, posY, posZ) => {
+      let _ = {};
       let modelsGlb;
       let animations = [];
-      _.action = [
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-        [null, false],
-      ];
+      _.action = [null, null, null, null, null, null, null, null];
 
-      const tableGlb = (() => {
-        const tableModel = new THREE.Object3D();
-        this.loaderModel.load(
-          table,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0.45;
-            model.position.z = 0;
-            model.position.x = 0.04;
-            tableModel.add(gltf.scene);
-            gltf.scene.scale.set(0.48, 0.5, 0.5);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        scene.add(tableModel);
-        return tableModel;
-      })();
+      const tableGlb = await modelCreate(0.04, 0.45, 0, 0.48, 0.5, 0.5, table);
       if (gameOptionsQuery.cool_mode == true) {
-        const dressingGlb = (() => {
-          const dressingModel = new THREE.Object3D();
-          this.loaderModel.load(
-            dressing,
-            function (gltf) {
-              gltf.scene.traverse(function (node) {
-                if (node.isMesh) {
-                  node.castShadow = true;
-                }
-              });
-              const model = gltf.scene;
-              model.position.y = 0;
-              model.position.z = 0;
-              model.position.x = 0.3;
-              dressingModel.add(gltf.scene);
-              gltf.scene.scale.set(0.7, 0.3031, 0.6788);
-            },
-            undefined,
-            function (error) {
-              console.error(error);
-            },
-          );
-          scene.add(dressingModel);
-          return dressingModel;
-        })();
-        const couchGlb = (() => {
-          const couchModel = new THREE.Object3D();
-          this.loaderModel.load(
-            couch,
-            function (gltf) {
-              gltf.scene.traverse(function (node) {
-                if (node.isMesh) {
-                  node.castShadow = true;
-                }
-              });
-              const model = gltf.scene;
-              model.position.y = -2.0795;
-              model.position.z = -7.8925;
-              model.position.x = 0.5;
-              couchModel.add(gltf.scene);
-              gltf.scene.scale.set(1.4, 1, 1.23);
-            },
-            undefined,
-            function (error) {
-              console.error(error);
-            },
-          );
-          scene.add(couchModel);
-          return couchModel;
-        })();
-        const chairGlb = (() => {
-          const chairModel = new THREE.Object3D();
-          this.loaderModel.load(
-            chair,
-            function (gltf) {
-              gltf.scene.traverse(function (node) {
-                if (node.isMesh) {
-                  node.castShadow = true;
-                }
-              });
-              const model = gltf.scene;
-              model.position.y = 0.42;
-              model.position.z = -0.1;
-              model.position.x = -0.01;
-              chairModel.add(gltf.scene);
-              gltf.scene.scale.set(1.35, 0.9, 1.2);
-            },
-            undefined,
-            function (error) {
-              console.error(error);
-            },
-          );
-          scene.add(chairModel);
-          return chairModel;
-        })();
+        const dressingGlb = await modelCreate(0.3, 0, 0, 0.7, 0.3031, 0.6788, dressing);
+        const couchGlb = await modelCreate(0.5, -2.0795, -7.8925, 1.4, 1, 1.23, couch);
+        const chairGlb = await modelCreate(-0.1, 0.42, -0.1, 1.35, 0.9, 1.2, chair);
         if (posZ < 0) {
           couchGlb.rotation.x = pi / 2;
-          couchGlb.rotation.z = pi;
           couchGlb.rotation.y = -pi / 2;
           chairGlb.rotation.z = pi;
         } else {
           couchGlb.rotation.x = -pi / 2;
-          couchGlb.rotation.z = pi;
           couchGlb.rotation.y = pi / 2;
         }
+        couchGlb.rotation.z = pi;
         chairGlb.rotation.x = -pi / 2;
         dressingGlb.rotation.z = -pi / 2;
         dressingGlb.rotation.y = -pi / 2;
         modelsGlb = [tableGlb, couchGlb, chairGlb, dressingGlb];
       } else modelsGlb = [tableGlb];
 
+      // Create player model with animation
       const playerGlb = (() => {
         const pedroModel = new THREE.Object3D();
         this.loaderModel.load(
@@ -695,16 +921,15 @@ export class Game extends HTMLElement {
             _.mixer = new THREE.AnimationMixer(model);
             animations = gltf.animations;
             for (let i = 0; i <= 7; i++) {
-              _.action[i][0] = _.mixer.clipAction(animations[i], model);
-              _.action[i][1] = false;
+              _.action[i] = _.mixer.clipAction(animations[i], model);
             }
-            _.action[1][0].setLoop(THREE.LoopOnce, 1);
-            _.action[1][0].setDuration(0.4);
-            _.action[0][0].setDuration(0.18);
-            _.action[7][0].setDuration(0.18);
-            _.action[6][0].setDuration(0.18);
-            _.action[5][0].setDuration(0.18);
-            _.action[2][0].play();
+            _.action[1].setLoop(THREE.LoopOnce, 1);
+            _.action[1].setDuration(0.4);
+            _.action[0].setDuration(0.18);
+            _.action[7].setDuration(0.18);
+            _.action[6].setDuration(0.18);
+            _.action[5].setDuration(0.18);
+            _.action[2].play();
             pedroModel.add(gltf.scene);
           },
           undefined,
@@ -744,7 +969,7 @@ export class Game extends HTMLElement {
       let modelChoosen = 0;
       let widthHalf = 0.5;
       let controlReverse = false;
-      let speed = 0.25 * gameSpeed;
+      let speed = 0.25 * GAME_SPEED;
       let score = 0;
       let currentAction = 2;
 
@@ -803,77 +1028,10 @@ export class Game extends HTMLElement {
       };
     };
 
-    /* eslint-disable new-cap */
-    const Bumpers = [BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)];
+    const Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
 
-    const WallFactory = (posX, posY, posZ) => {
-      const fenceGlb = (() => {
-        const fenceModel = new THREE.Object3D();
-        this.loaderModel.load(
-          fence,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.z = 0;
-            model.position.x = 0;
-            fenceModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        fenceModel.scale.set(0.8, 0.5, 1);
-        scene.add(fenceModel);
-        return fenceModel;
-      })();
+    // Collisions checks
 
-      fenceGlb.position.x = posX;
-      fenceGlb.position.y = posY;
-      fenceGlb.position.z = posZ;
-      fenceGlb.rotation.y = -pi / 2;
-      fenceGlb.castShadow = true;
-      fenceGlb.receiveShadow = true;
-      scene.add(fenceGlb);
-
-      return {
-        fenceGlb,
-      };
-    };
-    /* eslint-disable new-cap */
-    const Walls = [
-      WallFactory(9.65, 1.3, 0),
-      WallFactory(9.65, 1.3, 6),
-      WallFactory(9.65, 1.3, -6),
-      WallFactory(-9.65, 1.3, 6),
-      WallFactory(-9.65, 1.3, -6),
-      WallFactory(-9.65, 1.3, 0),
-    ];
-
-    (() => {
-      const textureLoader = new THREE.TextureLoader();
-      const groundTexture = textureLoader.load(ground_texture);
-      groundTexture.wrapS = THREE.RepeatWrapping;
-      groundTexture.wrapT = THREE.RepeatWrapping;
-      groundTexture.repeat.set(100, 100);
-      const phongMaterial = new THREE.MeshPhongMaterial({
-        map: groundTexture,
-        color: 0xd4a574,
-        depthWrite: true,
-      });
-      const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
-      const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
-      planeMesh.rotateX(-pi / 2);
-      planeMesh.receiveShadow = true;
-      scene.add(planeMesh);
-    })();
-
-    let delta = 0;
     let ballSubtickZ;
     let ballSubtickX;
     let lastBumperCollided = 0;
@@ -910,18 +1068,37 @@ export class Game extends HTMLElement {
       Ball.bulletGlb.rotation.y = -degreesToRadians(Ball.temporalSpeed.x);
     }
 
-    var step = null;
-
-    function start() {
-      if (!step && gameStateContainer.isGamePlaying) {
-        step = requestAnimationFrame(animate);
+    function checkWallCollision() {
+      let collided = false;
+      if (Ball.sphereUpdate.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF) {
+        Ball.sphereUpdate.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF;
+        Ball.velocity.x *= -1;
+        Ball.bulletGlb.rotation.x *= -1;
+        collided = true;
+      } else if (Ball.sphereUpdate.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF) {
+        Ball.sphereUpdate.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF;
+        Ball.velocity.x *= -1;
+        Ball.bulletGlb.rotation.x *= -1;
+        collided = true;
       }
+      return collided;
     }
-    function stop() {
-      if (step) {
-        cancelAnimationFrame(step);
-        step = null;
+
+    function checkBumperCollision() {
+      let collided = false;
+      if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
+        lastBumperCollided = 0;
+        isMovementDone = false;
+        isCalculationNeeded = true;
+        calculateNewDir(Bumpers[0]);
+        collided = true;
+      } else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
+        lastBumperCollided = 1;
+        isMovementDone = true;
+        calculateNewDir(Bumpers[1]);
+        collided = true;
       }
+      return collided;
     }
 
     const showGameOverOverlay = () => {
@@ -949,16 +1126,15 @@ export class Game extends HTMLElement {
     };
 
     let scoreSwitch = MAX_SCORE / 3;
-    let choosenDifficulty = 2;
-    let stableDifficulty = 2;
-    let lastSignificantScoreDiff = 0;
-    function resetBall(direction) {
+
+    const resetBall = (direction) => {
       const looserBumper = direction < 0 ? 1 : 0;
+
       lifePointUI?.decreasePoint(looserBumper, 20 / MAX_SCORE);
       if (Bumpers[0].score == MAX_SCORE || Bumpers[1].score == MAX_SCORE) {
         gameStateContainer.isGamePlaying = false;
         showGameOverOverlay();
-        stop();
+        gameLoop.stop();
         return;
       } else if (Bumpers[0].score < scoreSwitch * 2 && Bumpers[0].score >= scoreSwitch) {
         carboardModels[0].visible = false;
@@ -969,102 +1145,34 @@ export class Game extends HTMLElement {
       }
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
-      // if (isGameAi == 'ai' && choosenDifficulty < 5 && choosenDifficulty >= 0)
-      // {
-      //   looserBumper == 1
-      //     ? choosenDifficulty++
-      //     : choosenDifficulty > 0
-      //       ? choosenDifficulty--
-      //       : null;
 
-      // }
       lastBumperCollided = looserBumper;
       Ball.sphereUpdate.x = Bumpers[looserBumper].playerGlb.position.x;
       Ball.sphereUpdate.z = Bumpers[looserBumper].playerGlb.position.z + 2 * direction;
-      Bumpers[looserBumper].gltfStore.action[Bumpers[looserBumper].currentAction][0].fadeOut(0.1);
-      Bumpers[looserBumper].gltfStore.action[1][0].reset();
-      Bumpers[looserBumper].gltfStore.action[1][0].fadeIn(0.1);
-      Bumpers[looserBumper].gltfStore.action[1][0].play();
-      Bumpers[looserBumper].currentAction = 1;
+      this.handleAnimations(Bumpers[looserBumper], Bumpers[looserBumper].currentAction, 1, 0.1);
       if (Bumpers[looserBumper].currentAction == 1) {
-        Bumpers[looserBumper].gltfStore.action[1][0].fadeOut(0.3);
-        Bumpers[looserBumper].gltfStore.action[2][0].reset();
-        Bumpers[looserBumper].gltfStore.action[2][0].fadeIn(0.3);
-        Bumpers[looserBumper].gltfStore.action[2][0].play();
-        Bumpers[looserBumper].currentAction = 2;
+        this.handleAnimations(Bumpers[looserBumper], Bumpers[looserBumper].currentAction, 2, 0.3);
       }
       Bumpers[looserBumper].playerGlb.rotation.y = looserBumper == 0 ? 0 : pi;
       Ball.velocity.x = 0;
-      Ball.velocity.z = BALL_INITIAL_VELOCITY * gameSpeed;
-      Ball.velocity.z *= direction;
-    }
+      Ball.velocity.z = BALL_INITIAL_VELOCITY * GAME_SPEED * direction;
+    };
 
-    // AI FUNC:
-    // -> get sphere velocity and pos
-    // -> calculate potential bounce on walls based on the pos and velocity
-    // -> calculate best position to collide
-    // -> move to the best position
-
+    //Ai related variables
     let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
 
-    function moveAiBumper(calculatedPos) {
-      keyMap['KeyA'] = false;
-      // console.log(Bumpers[1].lenghtHalf);
-      keyMap['KeyD'] = false;
-      if (calculatedBumperPos.x < calculatedPos.x - 0.1 && calculatedBumperPos.x < calculatedPos.x - 0.2) {
-        keyMap['KeyA'] = true;
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0][0]) {
-          if (Bumpers[1].currentAction != 0) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[0][0].reset();
-            Bumpers[1].gltfStore.action[0][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[0][0].play();
-            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
-            else Bumpers[1].playerGlb.rotation.y = degreesToRadians(-90);
-            // Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
-            Bumpers[1].currentAction = 0;
-          }
-        }
-        calculatedBumperPos.x += bumperP2Subtick;
-      } else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2) {
-        keyMap['KeyD'] = true;
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[6][0]) {
-          if (Bumpers[1].currentAction != 6) {
-            Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.1);
-            Bumpers[1].gltfStore.action[6][0].reset();
-            Bumpers[1].gltfStore.action[6][0].fadeIn(0.1);
-            Bumpers[1].gltfStore.action[6][0].play();
-            if (Bumpers[1].modelChoosen == 0) Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
-            else Bumpers[1].playerGlb.rotation.y = degreesToRadians(-90);
-            // Bumpers[1].playerGlb.rotation.y = degreesToRadians(235);
-            Bumpers[1].currentAction = 6;
-          }
-        }
-        calculatedBumperPos.x -= bumperP2Subtick;
-      } else {
-        keyMap['KeyA'] = false;
-        keyMap['KeyD'] = false;
-        if (
-          Bumpers[1].gltfStore.action &&
-          Bumpers[1].gltfStore.action[0][0] &&
-          Bumpers[1].gltfStore.action[6][0] &&
-          Bumpers[1].currentAction != 2
-        ) {
-          Bumpers[1].gltfStore.action[Bumpers[1].currentAction][0].fadeOut(0.5);
-          Bumpers[1].gltfStore.action[2][0].reset();
-          Bumpers[1].gltfStore.action[2][0].fadeIn(0.5);
-          Bumpers[1].gltfStore.action[2][0].play();
-          Bumpers[1].currentAction = 2;
-        }
-      }
-    }
-
     let isMovementDone = false;
-    let ballPredictedPos;
     let isCalculationNeeded = true;
-    let difficultyLvl = [
+
+    const ballPredictedPos = new THREE.Vector3(0, 0, 0);
+    const BallPredictedVelocity = new THREE.Vector3(0, 0, 0);
+
+    let lastSignificantScoreDiff = 0;
+    let choosenDifficulty = 2;
+    let stableDifficulty = 2;
+    const difficultyLvl = [
       [10, 1025],
       [8, 1025],
       [5, 1000],
@@ -1072,59 +1180,101 @@ export class Game extends HTMLElement {
       [1, 1000],
     ];
 
+    //Handling Ai
+    const moveAiBumper = (calculatedPos) => {
+      keyMap['KeyA'] = false;
+      keyMap['KeyD'] = false;
+
+      if (calculatedBumperPos.x < calculatedPos.x - 0.1 && calculatedBumperPos.x < calculatedPos.x - 0.2) {
+        keyMap['KeyA'] = true;
+        calculatedBumperPos.x += bumperP2Subtick;
+
+        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0]) {
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
+        }
+      } else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2) {
+        keyMap['KeyD'] = true;
+        calculatedBumperPos.x -= bumperP2Subtick;
+
+        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[6]) {
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 6, 0.1);
+        }
+      } else {
+        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[6]) {
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
+        }
+      }
+    };
+
+    function calculateDifficultyLevel() {
+      const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
+      const scoreDiff = Bumpers[0].score - Bumpers[1].score;
+      const minDifficulty = scoreDiff <= -3 ? 0 : 2;
+      const relativeGap = scoreDiff / MAX_SCORE;
+
+      const contextualFactor = relativeGap * (1 + gameProgress * 0.8) + (1 - gameProgress) * 0.7;
+      const calculatedDifficulty =
+        scoreDiff > 0 ? Math.floor(2 + (scoreDiff - 1) * contextualFactor * 1.5) : Math.max(0, 2 + scoreDiff);
+      const finalDifficulty = Math.max(minDifficulty, Math.min(4, Math.floor(calculatedDifficulty)));
+
+      if (Math.abs(scoreDiff - lastSignificantScoreDiff) >= Math.max(1, Math.floor(MAX_SCORE / 5))) {
+        stableDifficulty = finalDifficulty;
+        lastSignificantScoreDiff = scoreDiff;
+      }
+      choosenDifficulty = stableDifficulty;
+    }
+
+    function calculateErrorMargin(BallPosZ) {
+      const errorScale = 2.5 / Bumpers[1].lenghtHalf;
+      const closenessToBall = (BallPosZ - calculatedBumperPos.z) / 18;
+      const errorMargin = difficultyLvl[choosenDifficulty][0] * closenessToBall * errorScale;
+      return errorMargin;
+    }
+
     function handleAiBehavior(BallPos, BallVelocity) {
-      console.log(choosenDifficulty);
       if (isCalculationNeeded) {
-        const scoreDiff = Bumpers[0].score - Bumpers[1].score;
-        const gameProgress = Math.max(Bumpers[0].score, Bumpers[1].score) / MAX_SCORE;
-        const minDifficulty = scoreDiff <= -3 ? 0 : 2;
+        BallPredictedVelocity.x = BallVelocity.x;
+        BallPredictedVelocity.y = BallVelocity.y;
+        BallPredictedVelocity.z = BallVelocity.z;
 
-        const relativeGap = scoreDiff / MAX_SCORE;
-        const contextualFactor = relativeGap * (1 + gameProgress * 0.8) + (1 - gameProgress) * 0.7;
-        const calculatedDifficulty =
-          scoreDiff > 0 ? Math.floor(2 + (scoreDiff - 1) * contextualFactor * 1.5) : Math.max(0, 2 + scoreDiff);
-        const finalDifficulty = Math.max(minDifficulty, Math.min(4, Math.floor(calculatedDifficulty)));
-        if (Math.abs(scoreDiff - lastSignificantScoreDiff) >= Math.max(1, Math.floor(MAX_SCORE / 5))) {
-          stableDifficulty = finalDifficulty;
-          lastSignificantScoreDiff = scoreDiff;
-        }
+        ballPredictedPos.x = BallPos.x;
+        ballPredictedPos.y = BallPos.y;
+        ballPredictedPos.z = BallPos.z;
+        calculateDifficultyLevel();
+        const errorMargin = calculateErrorMargin(BallPos.z);
 
-        choosenDifficulty = stableDifficulty;
-        let errorScale = 2.5 / Bumpers[1].lenghtHalf;
-        let closeness = (BallPos.z - calculatedBumperPos.z) / 18;
-        let error = difficultyLvl[choosenDifficulty][0] * closeness * errorScale;
-        ballPredictedPos = new THREE.Vector3(BallPos.x, BallPos.y, BallPos.z);
-        let BallPredictedVelocity = new THREE.Vector3(BallVelocity.x, BallVelocity.y, BallVelocity.z);
-        let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
-        if (BallPredictedVelocity.z > 0) {
-          while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf) {
-            let totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x * gameSpeed);
-            if (ballPredictedPos.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-              ballPredictedPos.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
-              BallPredictedVelocity.x *= -1;
-            }
-            if (ballPredictedPos.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-              ballPredictedPos.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
-              BallPredictedVelocity.x *= -1;
-            }
-            ballPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
-            ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
+        const totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * GAME_SPEED);
+        while (ballPredictedPos.z <= BUMPER_2_BORDER - Bumpers[1].widthHalf) {
+          const totalDistanceX = Math.abs(Ball.temporalSpeed.x * BallPredictedVelocity.x * GAME_SPEED);
+
+          if (ballPredictedPos.x <= WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF) {
+            ballPredictedPos.x = WALL_RIGHT_X + BALL_RADIUS + WALL_WIDTH_HALF;
+            BallPredictedVelocity.x *= -1;
           }
+          if (ballPredictedPos.x >= WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF) {
+            ballPredictedPos.x = WALL_LEFT_X - BALL_RADIUS - WALL_WIDTH_HALF;
+            BallPredictedVelocity.x *= -1;
+          }
+
+          ballPredictedPos.z += totalDistanceZ * BallPredictedVelocity.z;
+          ballPredictedPos.x += totalDistanceX * BallPredictedVelocity.x;
         }
+
+        if (Bumpers[1].lenghtHalf < 2.0) {
+          ballPredictedPos.x += (Math.random() - 0.5) * errorMargin * 0.6;
+        } else if (Bumpers[1].lenghtHalf > 3.0) {
+          ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
+        } else {
+          ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
+        }
+
         isCalculationNeeded = false;
-        let timeooutId = setTimeout(() => {
+        const timeooutId = setTimeout(() => {
           if (BallVelocity.z > 0) {
             isCalculationNeeded = true;
             clearTimeout(timeooutId);
           }
         }, difficultyLvl[choosenDifficulty][1]);
-        if (Bumpers[1].lenghtHalf < 2.0) {
-          ballPredictedPos.x += (Math.random() - 0.5) * error * 0.6;
-        } else if (Bumpers[1].lenghtHalf > 3.0) {
-          ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
-        } else {
-          ballPredictedPos.x += -error + Math.round(Math.random()) * (error * 2);
-        }
       }
       if (!isMovementDone) moveAiBumper(ballPredictedPos);
       else {
@@ -1133,9 +1283,10 @@ export class Game extends HTMLElement {
       }
     }
 
+    // Timer related
     let Timer = (() => {
       let timeLeft = !GAME_TIME ? 180 : GAME_TIME * 60;
-      let timeoutId = setTimeout(myCallback, 1000);
+      let timeoutId = setTimeout(TimerCallBack, 1000);
       return {
         get timeLeft() {
           return timeLeft;
@@ -1152,55 +1303,141 @@ export class Game extends HTMLElement {
       };
     })();
 
-    function myCallback() {
+    function TimerCallBack() {
       if (Timer.timeLeft-- != 0 && gameStateContainer.isGamePlaying) {
         clearTimeout(Timer.timeoutId);
         timerUI?.updateRemainingTime(Timer.timeLeft);
-        Timer.timeoutId = setTimeout(myCallback, 1000);
+        Timer.timeoutId = setTimeout(TimerCallBack, 1000);
         return;
       }
       Bumpers[0].score = 0;
       Bumpers[1].score = 0;
       gameStateContainer.isGamePlaying = false;
       clearTimeout(Timer.timeoutId);
-      stop();
+      gameLoop.stop();
     }
     let Coin = null;
     let Workers = null;
 
     if (gameOptionsQuery.cool_mode == true) {
-      Coin = ((posX, posY, posZ) => {
-        const CoinGlb = (() => {
-          const CoinModel = new THREE.Object3D();
-          this.loaderModel.load(
-            coin,
-            function (gltf) {
-              gltf.scene.traverse(function (node) {
-                if (node.isMesh) {
-                  node.castShadow = true;
-                }
-              });
-              const model = gltf.scene;
-              model.position.y = 0;
-              model.position.z = 0;
-              model.position.x = 0;
-              CoinModel.add(gltf.scene);
-            },
-            undefined,
-            function (error) {
-              console.error(error);
-            },
-          );
-          CoinModel.scale.set(0.45, 0.45, 0.45);
-          scene.add(CoinModel);
-          return CoinModel;
-        })();
+      const workerScript = `
+        let remaining;
+        let Timer = function(callback, delay) {
+          let timerId, start = delay;
+          remaining = delay;
+          this.pause = function() {
+            clearTimeout(timerId);
+            timerId = null;
+            remaining -= Date.now() - start;
+          };
+          this.resume = function() {
+            if (timerId) return;
+            start = Date.now();
+            timerId = setTimeout(callback, remaining);
+          };
+          this.resume();
+        };
+        let pauseTimer = null;
+        onmessage = function(e) {
+          if (e.data[2] == "pause" && pauseTimer != null) {
+            pauseTimer.pause();
+          } else if (e.data[2] == "create") {
+            pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0]);
+          } else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {
+            pauseTimer.resume();
+          }
+        };
+      `;
 
+      const blob = new Blob([workerScript], { type: 'application/javascript' });
+      this.#blobURL = URL.createObjectURL(blob);
+
+      // Buff timer workers
+      Workers = Array.from({ length: 6 }, () => new Worker(this.#blobURL));
+      Workers[0].onmessage = function (e) {
+        const bumperAffected = e.data[0];
+        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
+        if (dirZ < 0) {
+          Bumpers[bumperAffected].playerGlb.position.x += 7.2;
+          Bumpers[bumperAffected].playerGlb.position.z -= 0.7;
+        } else {
+          Bumpers[bumperAffected].playerGlb.position.x -= 7.2;
+          Bumpers[bumperAffected].playerGlb.position.z += 0.7;
+        }
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
+        Bumpers[bumperAffected].modelChoosen = 0;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
+        Bumpers[bumperAffected].lenghtHalf = 2.5;
+        buffUI?.hide();
+      };
+      Workers[1].onmessage = function (e) {
+        const bumperAffected = Math.abs(e.data[0] - 1);
+        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
+        Bumpers[bumperAffected].modelChoosen = 0;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
+        Bumpers[bumperAffected].lenghtHalf = 2.5;
+        if (
+          Bumpers[bumperAffected].cubeUpdate.x <
+          WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf
+        ) {
+          Bumpers[bumperAffected].cubeUpdate.x =
+            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
+          Bumpers[bumperAffected].playerGlb.position.x =
+            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
+        } else if (
+          Bumpers[bumperAffected].cubeUpdate.x >
+          WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf
+        ) {
+          Bumpers[bumperAffected].cubeUpdate.x =
+            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
+          Bumpers[bumperAffected].playerGlb.position.x =
+            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
+        }
+        if (dirZ < 0) {
+          Bumpers[bumperAffected].playerGlb.position.x += 1;
+          Bumpers[bumperAffected].playerGlb.position.z -= 0.4;
+        } else {
+          Bumpers[bumperAffected].playerGlb.position.x -= 1;
+          Bumpers[bumperAffected].playerGlb.position.z += 0.4;
+        }
+        buffUI?.hide();
+      };
+      Workers[2].onmessage = function (e) {
+        Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
+        buffUI?.hide();
+      };
+      Workers[3].onmessage = function (e) {
+        const bumperAffected = Math.abs(e.data[0] - 1);
+        Bumpers[bumperAffected].speed = 0.25 * GAME_SPEED;
+        Bumpers[bumperAffected].gltfStore.action[0].setDuration(0.18);
+        Bumpers[bumperAffected].gltfStore.action[5].setDuration(0.18);
+        buffUI?.hide();
+      };
+      Workers[4].onmessage = function (e) {
+        const bumperAffected = e.data[0];
+        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
+        Bumpers[bumperAffected].modelChoosen = 0;
+        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
+        Bumpers[bumperAffected].widthHalf = 0.5;
+        dirZ < 0
+          ? (Bumpers[bumperAffected].playerGlb.position.x += 5)
+          : (Bumpers[bumperAffected].playerGlb.position.x -= 5);
+        buffUI?.hide();
+      };
+      Workers[5].onmessage = function () {
+        Coin.cylinderUpdate.set(-9.25, 3, 0);
+      };
+
+      // Create coin
+      Coin = await (async (posX, posY, posZ) => {
+        const CoinGlb = await modelCreate(0, 0, 0, 0.45, 0.45, 0.45, coin);
         CoinGlb.position.x = posX;
         CoinGlb.position.y = posY;
         CoinGlb.position.z = posZ;
         const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
-        const velocity = new THREE.Vector3(0.01 * gameSpeed, 0, 0);
+        const velocity = new THREE.Vector3(0.01 * GAME_SPEED, 0, 0);
         let lenghtHalf = 0.25;
 
         return {
@@ -1215,101 +1452,13 @@ export class Game extends HTMLElement {
           velocity,
         };
       })(-9.25, 1, 0);
-
-      var blob = new Blob([
-        'let remaining; var Timer = function(callback, delay) { var timerId, start = delay; remaining = delay; this.pause = function() {clearTimeout(timerId);timerId = null;' +
-          'remaining -= Date.now() - start;};this.resume = function() {if (timerId) {return;} start = Date.now();timerId = setTimeout(callback, remaining);};' +
-          'this.resume();}; let pauseTimer = null; onmessage = function(e) {if (e.data[2] == "pause" && pauseTimer != null) {pauseTimer.pause();}' +
-          'else if (e.data[2] == "create"){pauseTimer = new Timer(function(){postMessage([e.data[1]])}, e.data[0])} else if (e.data[2] == "resume" && pauseTimer != null && remaining > 0) {pauseTimer.resume();}}',
-      ]);
-      var blobURL = window.URL.createObjectURL(blob);
-      Workers = [
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-        new Worker(blobURL),
-      ];
-      Workers[0].onmessage = function (e) {
-        let dirz = Bumpers[e.data[0]].playerGlb.position.z;
-        if (dirz < 0) {
-          Bumpers[e.data[0]].playerGlb.position.x += 7.2;
-          Bumpers[e.data[0]].playerGlb.position.z -= 0.7;
-        } else {
-          Bumpers[e.data[0]].playerGlb.position.x -= 7.2;
-          Bumpers[e.data[0]].playerGlb.position.z += 0.7;
-        }
-        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = false;
-        Bumpers[e.data[0]].modelChoosen = 0;
-        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
-        Bumpers[e.data[0]].lenghtHalf = 2.5;
-        buffUI?.hide();
-      };
-      Workers[1].onmessage = function (e) {
-        let dirz = Bumpers[e.data[0]].playerGlb.position.z;
-        Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = false;
-        Bumpers[Math.abs(e.data[0] - 1)].modelChoosen = 0;
-        Bumpers[Math.abs(e.data[0] - 1)].modelsGlb[Bumpers[Math.abs(e.data[0] - 1)].modelChoosen].visible = true;
-        Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf = 2.5;
-        if (
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x <
-          -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-        ) {
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1;
-          dirz < 0
-            ? (Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =
-                -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1)
-            : (Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =
-                -10 + WALL_WIDTH_HALF + Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf - 0.1);
-        } else if (
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x >
-          10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf
-        ) {
-          Bumpers[Math.abs(e.data[0] - 1)].cubeUpdate.x =
-            10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1;
-          dirz < 0
-            ? (Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =
-                10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1)
-            : (Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x =
-                10 - WALL_WIDTH_HALF - Bumpers[Math.abs(e.data[0] - 1)].lenghtHalf + 0.1);
-        }
-        if (dirz < 0) {
-          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x -= 1;
-          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z += 0.4;
-        } else {
-          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.x += 1;
-          Bumpers[Math.abs(e.data[0] - 1)].playerGlb.position.z -= 0.4;
-        }
-        buffUI?.hide();
-      };
-      Workers[2].onmessage = function (e) {
-        Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
-        buffUI?.hide();
-      };
-      Workers[3].onmessage = function (e) {
-        Bumpers[[Math.abs(e.data[0] - 1)]].speed = 0.25 * gameSpeed;
-        Bumpers[[Math.abs(e.data[0] - 1)]].gltfStore.action[0][0].setDuration(0.18);
-        Bumpers[[Math.abs(e.data[0] - 1)]].gltfStore.action[5][0].setDuration(0.18);
-        buffUI?.hide();
-      };
-      Workers[4].onmessage = function (e) {
-        let dirz = Bumpers[e.data[0]].playerGlb.position.z;
-        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = false;
-        Bumpers[e.data[0]].modelChoosen = 0;
-        Bumpers[e.data[0]].modelsGlb[Bumpers[e.data[0]].modelChoosen].visible = true;
-        Bumpers[e.data[0]].widthHalf = 0.5;
-        dirz < 0 ? (Bumpers[e.data[0]].playerGlb.position.x += 5) : (Bumpers[e.data[0]].playerGlb.position.x -= 5);
-        buffUI?.hide();
-      };
-      Workers[5].onmessage = function (e) {
-        Coin.cylinderUpdate.set(-9.25, 3, 0);
-      };
     }
+
+    // Buff management
     const manageBuffAndDebuff = () => {
-      let chooseBuff = 2;
-      let dirz = Bumpers[lastBumperCollided].playerGlb.position.z;
+      let chooseBuff = Math.floor(Math.random() * 5);
+      let dirZ = Bumpers[lastBumperCollided].playerGlb.position.z;
+      const reversedLastBumperCollided = Math.abs(lastBumperCollided - 1);
       switch (chooseBuff) {
         case 1:
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
@@ -1318,28 +1467,28 @@ export class Game extends HTMLElement {
           Bumpers[lastBumperCollided].lenghtHalf = 5;
           if (
             Bumpers[lastBumperCollided].cubeUpdate.x <
-            -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
+            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
-              -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
-            dirz < 0
+              WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
+            dirZ < 0
               ? (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1)
+                  WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1)
               : (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  -10 + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1);
+                  WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1);
           } else if (
             Bumpers[lastBumperCollided].cubeUpdate.x >
-            10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
+            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
-              10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
-            dirz < 0
+              WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+            dirZ < 0
               ? (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1)
+                  WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1)
               : (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  10 - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1);
+                  WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1);
           }
-          if (dirz < 0) {
+          if (dirZ < 0) {
             Bumpers[lastBumperCollided].playerGlb.position.x -= 7.2;
             Bumpers[lastBumperCollided].playerGlb.position.z += 0.7;
           } else {
@@ -1350,33 +1499,31 @@ export class Game extends HTMLElement {
           buffUI?.show(BUFF_TYPE.LONG);
           break;
         case 2:
-          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[
-            Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen
-          ].visible = false;
-          Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen = 2;
-          Bumpers[Math.abs(lastBumperCollided - 1)].modelsGlb[
-            Bumpers[Math.abs(lastBumperCollided - 1)].modelChoosen
-          ].visible = true;
-          Bumpers[Math.abs(lastBumperCollided - 1)].lenghtHalf = 1.25;
-          if (dirz < 0) {
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x += 1;
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z -= 0.4;
+          Bumpers[reversedLastBumperCollided].modelsGlb[Bumpers[reversedLastBumperCollided].modelChoosen].visible =
+            false;
+          Bumpers[reversedLastBumperCollided].modelChoosen = 2;
+          Bumpers[reversedLastBumperCollided].modelsGlb[Bumpers[reversedLastBumperCollided].modelChoosen].visible =
+            true;
+          Bumpers[reversedLastBumperCollided].lenghtHalf = 1.25;
+          if (dirZ < 0) {
+            Bumpers[reversedLastBumperCollided].playerGlb.position.x += 1;
+            Bumpers[reversedLastBumperCollided].playerGlb.position.z -= 0.4;
           } else {
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.x -= 1;
-            Bumpers[Math.abs(lastBumperCollided - 1)].playerGlb.position.z += 0.4;
+            Bumpers[reversedLastBumperCollided].playerGlb.position.x -= 1;
+            Bumpers[reversedLastBumperCollided].playerGlb.position.z += 0.4;
           }
           Workers[1].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SHORT);
           break;
         case 3:
-          Bumpers[Math.abs(lastBumperCollided - 1)].controlReverse = true;
+          Bumpers[reversedLastBumperCollided].controlReverse = true;
           Workers[2].postMessage([2000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SWITCH);
           break;
         case 4:
-          Bumpers[Math.abs(lastBumperCollided - 1)].speed = 0.1 * gameSpeed;
-          Bumpers[Math.abs(lastBumperCollided - 1)].gltfStore.action[0][0].setDuration(0.2);
-          Bumpers[Math.abs(lastBumperCollided - 1)].gltfStore.action[5][0].setDuration(0.2);
+          Bumpers[reversedLastBumperCollided].speed = 0.1 * GAME_SPEED;
+          Bumpers[reversedLastBumperCollided].gltfStore.action[0].setDuration(0.2);
+          Bumpers[reversedLastBumperCollided].gltfStore.action[5].setDuration(0.2);
           Workers[3].postMessage([5000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SLOW);
           break;
@@ -1385,7 +1532,7 @@ export class Game extends HTMLElement {
           Bumpers[lastBumperCollided].modelChoosen = 3;
           Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
           Bumpers[lastBumperCollided].widthHalf = 1.5;
-          dirz < 0
+          dirZ < 0
             ? (Bumpers[lastBumperCollided].playerGlb.position.x -= 5)
             : (Bumpers[lastBumperCollided].playerGlb.position.x += 5);
           Workers[4].postMessage([10000, lastBumperCollided, 'create']);
@@ -1396,138 +1543,182 @@ export class Game extends HTMLElement {
       Workers[5].postMessage([30000, -1, 'create']);
     };
 
-    var clock = new THREE.Clock();
-    function animate() {
+    function checkBallScored() {
+      let scored = false;
+      if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
+        isMovementDone = true;
+        Bumpers[0].score++;
+        resetBall(-1);
+        if (Bumpers[0].score <= MAX_SCORE) scoreUI?.updateScore(0, Bumpers[0].score);
+        scored = true;
+      } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
+        isMovementDone = false;
+        isCalculationNeeded = true;
+        Bumpers[1].score++;
+        resetBall(1);
+        if (Bumpers[1].score <= MAX_SCORE) scoreUI?.updateScore(1, Bumpers[1].score);
+        scored = true;
+      }
+      return scored;
+    }
+
+    // Move if no collisions
+    function manageBumperMovements() {
+      if (
+        ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
+          (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
+        !(Bumpers[0].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
+      ) {
+        Bumpers[0].cubeUpdate.x += bumperP1Subtick;
+        Bumpers[0].playerGlb.position.x += bumperP1Subtick;
+      }
+      if (
+        ((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) ||
+          (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) &&
+        !(Bumpers[0].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
+      ) {
+        Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
+        Bumpers[0].playerGlb.position.x -= bumperP1Subtick;
+      }
+
+      if (
+        ((keyMap['KeyD'] == true && Bumpers[1].controlReverse) ||
+          (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) &&
+        !(Bumpers[1].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
+      ) {
+        Bumpers[1].cubeUpdate.x += bumperP2Subtick;
+        Bumpers[1].playerGlb.position.x += bumperP2Subtick;
+      }
+      if (
+        ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
+          (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
+        !(Bumpers[1].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
+      ) {
+        Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
+        Bumpers[1].playerGlb.position.x -= bumperP2Subtick;
+      }
+    }
+
+    const gameLoop = {
+      start: () => {
+        if (!this.#animationId && gameStateContainer.isGamePlaying) {
+          this.#animationId = requestAnimationFrame(animate);
+        }
+      },
+      stop: () => {
+        if (this.#animationId) {
+          cancelAnimationFrame(this.#animationId);
+          this.#animationId = null;
+        }
+      },
+    };
+
+    const clock = new THREE.Clock();
+    let delta = 0;
+    let frameCache = {
+      totalDistanceX: 0,
+      totalDistanceZ: 0,
+      totalSubticks: 0,
+    };
+
+    const animate = () => {
+      this.#animationId = null;
+
+      if (!gameStateContainer.isGamePlaying) return;
+
       delta = clock.getDelta();
-      step = null;
-      let totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * gameSpeed);
-      let totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * gameSpeed);
+
+      // Cache expensive calculations
+      frameCache.totalDistanceX = Math.abs(Ball.temporalSpeed.x * Ball.velocity.x * GAME_SPEED);
+      frameCache.totalDistanceZ = Math.abs(Ball.temporalSpeed.z * Ball.velocity.z * GAME_SPEED);
+      frameCache.totalSubticks = frameCache.totalDistanceZ / SUBTICK;
+
+      // Update temporal speeds once per frame
       Ball.temporalSpeed.x = Math.max(1, Ball.temporalSpeed.x - TEMPORAL_SPEED_DECAY);
       Ball.temporalSpeed.z = Math.max(1, Ball.temporalSpeed.z - TEMPORAL_SPEED_DECAY);
-      let currentSubtick = 0;
+
+      // Calculate subtick values once
       ballSubtickZ = SUBTICK;
-      let totalSubticks = totalDistanceZ / ballSubtickZ;
-      ballSubtickX = totalDistanceX / totalSubticks;
-      bumperP1Subtick = Bumpers[0].speed / totalSubticks;
-      bumperP2Subtick = Bumpers[1].speed / totalSubticks;
-      while (currentSubtick <= totalSubticks) {
-        if (Ball.sphereUpdate.x <= -10 + BALL_RADIUS + WALL_WIDTH_HALF) {
-          Ball.sphereUpdate.x = -10 + BALL_RADIUS + WALL_WIDTH_HALF;
-          Ball.velocity.x *= -1;
-          Ball.bulletGlb.rotation.x *= -1;
-          if (lastBumperCollided == 0) isCalculationNeeded = true;
-        }
-        if (Ball.sphereUpdate.x >= 10 - BALL_RADIUS - WALL_WIDTH_HALF) {
-          Ball.sphereUpdate.x = 10 - BALL_RADIUS - WALL_WIDTH_HALF;
-          Ball.velocity.x *= -1;
-          Ball.bulletGlb.rotation.x *= -1;
-          if (lastBumperCollided == 0) isCalculationNeeded = true;
-        }
-        if (Ball.velocity.z <= 0 && isCollidedWithBall(Bumpers[0], ballSubtickZ, ballSubtickX)) {
-          lastBumperCollided = 0;
-          isMovementDone = false;
-          isCalculationNeeded = true;
-          calculateNewDir(Bumpers[0]);
-        } else if (Ball.velocity.z > 0 && isCollidedWithBall(Bumpers[1], ballSubtickZ, ballSubtickX)) {
-          lastBumperCollided = 1;
-          isMovementDone = true;
-          calculateNewDir(Bumpers[1]);
-        }
-        if (Ball.sphereUpdate.z >= BUMPER_2_BORDER) {
-          isMovementDone = true;
-          Bumpers[0].score++;
-          // console.log(Bumpers[0].score);
-          resetBall(-1);
-          if (Bumpers[0].score <= MAX_SCORE) scoreUI?.updateScore(0, Bumpers[0].score);
-        } else if (Ball.sphereUpdate.z <= BUMPER_1_BORDER) {
-          isMovementDone = false;
-          isCalculationNeeded = true;
-          Bumpers[1].score++;
-          // console.log(Bumpers[1].score);
-          resetBall(1);
-          if (Bumpers[1].score <= MAX_SCORE) scoreUI?.updateScore(1, Bumpers[1].score);
-        }
-        if (Coin != null && isCoinCollidedWithBall(Coin, ballSubtickZ, ballSubtickX)) {
-          manageBuffAndDebuff();
-        }
-        if (
-          ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
-            (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
-          !(Bumpers[0].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
-        ) {
-          Bumpers[0].cubeUpdate.x += bumperP1Subtick;
-          Bumpers[0].playerGlb.position.x += bumperP1Subtick;
-        }
-        if (
-          ((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) ||
-            (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) &&
-          !(Bumpers[0].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
-        ) {
-          Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
-          Bumpers[0].playerGlb.position.x -= bumperP1Subtick;
+      ballSubtickX = frameCache.totalDistanceX / frameCache.totalSubticks;
+      bumperP1Subtick = Bumpers[0].speed / frameCache.totalSubticks;
+      bumperP2Subtick = Bumpers[1].speed / frameCache.totalSubticks;
+
+      // Optimized physics loop - reduced iterations
+      const maxSubticks = Math.min(frameCache.totalSubticks, 10); // Cap iterations to prevent frame drops
+      for (let subtick = 0; subtick <= maxSubticks; subtick++) {
+        // Batch collision checks for better performance
+        const collisions = {
+          wall: checkWallCollision(),
+          bumper: checkBumperCollision(),
+          scored: checkBallScored(),
+        };
+
+        if (collisions.scored) break; // Early exit on score
+
+        manageBumperMovements();
+
+        // Update coin if exists (reduced calculations)
+        if (Coin?.CoinGlb) {
+          updateCoin(Coin, ballSubtickZ, ballSubtickX);
         }
 
-        if (
-          ((keyMap['KeyD'] == true && Bumpers[1].controlReverse) ||
-            (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) &&
-          !(Bumpers[1].cubeUpdate.x > 10 - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
-        ) {
-          Bumpers[1].cubeUpdate.x += bumperP2Subtick;
-          Bumpers[1].playerGlb.position.x += bumperP2Subtick;
-        }
-        if (
-          ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
-            (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
-          !(Bumpers[1].cubeUpdate.x < -10 + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
-        ) {
-          Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
-          Bumpers[1].playerGlb.position.x -= bumperP2Subtick;
-        }
+        // Update ball position
         Ball.sphereUpdate.z += ballSubtickZ * Ball.velocity.z;
-        if (Coin != null) {
-          if (
-            Coin.cylinderUpdate.x < -10 + WALL_WIDTH_HALF + Coin.lenghtHalf ||
-            Coin.cylinderUpdate.x > 10 - WALL_WIDTH_HALF - Coin.lenghtHalf
-          ) {
-            Coin.velocity.x *= -1;
-          }
-          Coin.cylinderUpdate.x += Coin.velocity.x;
-        }
         Ball.sphereUpdate.x += ballSubtickX * Ball.velocity.x;
-        if (isGameAi == 'ai') handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
-        currentSubtick++;
+
+        // AI behavior (only when needed)
+        if (isGameAi === 'ai' && Ball.velocity.z > 0) {
+          handleAiBehavior(Ball.sphereUpdate, Ball.velocity);
+        }
       }
+
+      // Update visual positions (once per frame)
+      updateVisualPositions();
+
+      // Update animations
+      if (Bumpers[0].gltfStore?.mixer && Bumpers[1].gltfStore?.mixer) {
+        Bumpers[0].gltfStore.mixer.update(delta);
+        Bumpers[1].gltfStore.mixer.update(delta);
+      }
+
+      renderer.render(scene, camera);
+      gameLoop.start();
+    };
+
+    function updateCoin(coin, ballSubtickZ, ballSubtickX) {
+      if (isCoinCollidedWithBall(coin, ballSubtickZ, ballSubtickX)) {
+        manageBuffAndDebuff();
+      }
+
+      // Check boundaries
+      if (
+        coin.cylinderUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + coin.lenghtHalf ||
+        coin.cylinderUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - coin.lenghtHalf
+      ) {
+        coin.velocity.x *= -1;
+      }
+
+      coin.cylinderUpdate.x += coin.velocity.x;
+      coin.CoinGlb.position.set(coin.cylinderUpdate.x, 1, coin.cylinderUpdate.z);
+      coin.CoinGlb.rotation.set(0, coin.cylinderUpdate.x, -pi / 2);
+    }
+
+    function updateVisualPositions() {
       Ball.bulletGlb.position.set(Ball.sphereUpdate.x, 1, Ball.sphereUpdate.z);
-      if (Coin != null) {
-        Coin.CoinGlb.position.set(Coin.cylinderUpdate.x, 1, Coin.cylinderUpdate.z);
-        Coin.CoinGlb.rotation.set(0, Coin.cylinderUpdate.x, -pi / 2);
-      }
-      if (keyMap['KeyC'] == true) {
-        camera.position.set(10, 15, -20);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-      }
-      if (keyMap['KeyC'] == false) {
-        camera.position.set(-10, 15, -20);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-      }
+
       Bumpers[0].modelsGlb[Bumpers[0].modelChoosen].position.set(
         Bumpers[0].cubeUpdate.x,
         Bumpers[0].cubeUpdate.y,
         Bumpers[0].cubeUpdate.z,
       );
+
       Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position.set(
         Bumpers[1].cubeUpdate.x,
         Bumpers[1].cubeUpdate.y,
         Bumpers[1].cubeUpdate.z,
       );
-      if (Bumpers[0].gltfStore?.mixer && Bumpers[1].gltfStore?.mixer) {
-        Bumpers[0].gltfStore.mixer.update(delta);
-        Bumpers[1].gltfStore.mixer.update(delta);
-      }
-      renderer.render(scene, camera);
-      start();
     }
-    let gameStartAndStop = [start, stop];
+    let gameStartAndStop = [gameLoop.start, gameLoop.stop];
 
     this.onDocumentKeyDown = this.createOnDocumentKeyDown(
       keyMap,
@@ -1535,50 +1726,141 @@ export class Game extends HTMLElement {
       gameStartAndStop,
       gameStateContainer,
       Timer,
-      myCallback,
+      TimerCallBack,
       Bumpers,
     );
     this.onDocumentKeyUp = this.createOnDocumentKeyUp(keyMap, Bumpers);
     document.addEventListener('keydown', this.onDocumentKeyDown, true);
     document.addEventListener('keyup', this.onDocumentKeyUp, true);
 
-    return [camera, renderer, start, stop, Workers, scene];
+    return [camera, renderer, gameLoop.start, gameLoop.stop, Workers, scene];
   }
 
   disconnectedCallback() {
+    this.cleanup();
+  }
+
+  cleanup() {
+    // Cancel animation frame
+    if (this.#animationId) {
+      cancelAnimationFrame(this.#animationId);
+      this.#animationId = null;
+    }
+
+    // Remove event listeners
     if (this.onDocumentKeyDown) {
       document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+      this.onDocumentKeyDown = null;
     }
     if (this.onDocumentKeyUp) {
       document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+      this.onDocumentKeyUp = null;
     }
-    while (this.scene.children.length > 0) this.scene.remove(this.scene.children[0]);
-    this.scene = null;
-    this.stop();
-    let i = 0;
-    if (this.Workers != null) {
-      for (i = 0; i <= 5; i++) {
-        this.Workers[i].terminate();
-        delete this.Workers[i];
-        this.Workers[i] = null;
-      }
+    if (this.#resizeHandler) {
+      window.removeEventListener('resize', this.#resizeHandler);
+      this.#resizeHandler = null;
     }
+
+    // Clean up Workers and blob URL
+    if (this.Workers) {
+      this.Workers.forEach((worker) => {
+        if (worker) {
+          worker.terminate();
+        }
+      });
+      this.Workers = null;
+    }
+    if (this.#blobURL) {
+      URL.revokeObjectURL(this.#blobURL);
+      this.#blobURL = null;
+    }
+
+    // Dispose Three.js objects properly
+    this.disposeThreeJS();
+
+    // Clean up loaders
     if (this.#ktx2Loader) {
       this.#ktx2Loader.dispose();
+      this.#ktx2Loader = null;
+    }
+    if (this.loaderModel) {
+      this.loaderModel = null;
+    }
+
+    // Stop game loop
+    if (this.stop) {
+      this.stop();
     }
   }
 
-  async render() {
-    let renderer, camera, start;
-    [camera, renderer, start, this.stop, this.Workers, this.scene] = await this.game();
-    window.addEventListener('resize', () => {
-      renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
-      const rendererWidth = renderer.domElement.offsetWidth;
-      const rendererHeight = renderer.domElement.offsetHeight;
-      camera.aspect = rendererWidth / rendererHeight;
-      camera.updateProjectionMatrix();
+  disposeThreeJS() {
+    if (!this.scene) return;
+
+    // Dispose all scene objects recursively
+    this.scene.traverse((object) => {
+      if (object.geometry) {
+        object.geometry.dispose();
+      }
+      if (object.material) {
+        if (Array.isArray(object.material)) {
+          object.material.forEach((material) => this.disposeMaterial(material));
+        } else {
+          this.disposeMaterial(object.material);
+        }
+      }
     });
-    start();
+
+    // Clear scene
+    while (this.scene.children.length > 0) {
+      this.scene.remove(this.scene.children[0]);
+    }
+    this.scene = null;
+  }
+
+  disposeMaterial(material) {
+    if (!material) return;
+
+    // Dispose textures
+    Object.keys(material).forEach((key) => {
+      const value = material[key];
+      if (value && typeof value.dispose === 'function') {
+        value.dispose();
+      }
+    });
+
+    material.dispose();
+  }
+
+  async render() {
+    try {
+      const [camera, renderer, start, stop, workers, scene] = await this.game();
+
+      if (!renderer || !camera || !start) {
+        throw new Error('Game components failed to initialize');
+      }
+
+      this.stop = stop;
+      this.Workers = workers;
+      this.scene = scene;
+
+      // Store resize handler for proper cleanup
+      this.#resizeHandler = () => {
+        renderer.setSize(window.innerWidth, window.innerHeight - this.#navbarHeight);
+        const rendererWidth = renderer.domElement.offsetWidth;
+        const rendererHeight = renderer.domElement.offsetHeight;
+        camera.aspect = rendererWidth / rendererHeight;
+        camera.updateProjectionMatrix();
+      };
+
+      window.addEventListener('resize', this.#resizeHandler);
+      start();
+    } catch (error) {
+      if (error.message.includes('WebGL')) {
+        this.handleError('WEBGL_NOT_SUPPORTED', error);
+      } else {
+        this.handleError('GAME_INIT_FAILED', error);
+      }
+    }
   }
 }
 

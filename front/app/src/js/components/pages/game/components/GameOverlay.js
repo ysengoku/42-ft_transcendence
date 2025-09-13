@@ -6,6 +6,7 @@ export const OVERLAY_TYPE = Object.freeze({
   PAUSE: 'pause',
   GAMEOVER: 'game_over',
   CANCEL: 'cancel',
+  ERROR: 'error',
 });
 
 export class GameOverlay extends HTMLElement {
@@ -63,6 +64,10 @@ export class GameOverlay extends HTMLElement {
     this.overlayButton2?.removeEventListener('click', this.navigateToHome);
     this.overlayButton1 = null;
     this.overlayButton2 = null;
+    // Reset any inline styles that might affect positioning
+    this.overlayMessageWrapper.style.transform = '';
+    this.overlayMessageWrapper.style.top = '';
+    this.overlayMessageWrapper.style.left = '';
   }
 
   show(action, data = null) {
@@ -70,6 +75,20 @@ export class GameOverlay extends HTMLElement {
     this.overlay.classList.add('overlay-dark');
     this.overlayMessageWrapper.classList.remove('d-none');
     this.clearGameInterval();
+
+    // Force the overlay to use fixed positioning (defensive)
+    this.overlay.style.position = 'fixed';
+    this.overlay.style.top = '0';
+    this.overlay.style.left = '0';
+    this.overlay.style.width = '100vw';
+    this.overlay.style.height = '100vh';
+    this.overlay.style.zIndex = '9999';
+
+    this.overlayMessageWrapper.style.position = 'fixed';
+    this.overlayMessageWrapper.style.top = '50%';
+    this.overlayMessageWrapper.style.left = '50%';
+    this.overlayMessageWrapper.style.transform = 'translate(-50%, -50%)';
+    this.overlayMessageWrapper.style.zIndex = '10000';
     switch (action) {
       case OVERLAY_TYPE.PAUSE:
         let remainingTime = data.remaining_time;
@@ -118,11 +137,83 @@ export class GameOverlay extends HTMLElement {
           }
         }
         break;
+      case OVERLAY_TYPE.ERROR:
+        const titleElement = this.querySelector('#overlay-message-title');
+        const contentElement = this.querySelector('#overlay-message-content');
+        const buttonsContainer = this.querySelector('#error-buttons');
+
+        titleElement.textContent = data.title || 'Error';
+        contentElement.textContent = data.message || 'An error occurred';
+
+        // Clear existing buttons to prevent stacking
+        buttonsContainer.innerHTML = '';
+
+        // Add buttons based on data
+        if (data.showRetry) {
+          const retryButton = document.createElement('button');
+          retryButton.className = 'btn btn-outline-light fw-bold mb-2';
+          retryButton.textContent = 'Retry';
+          retryButton.onclick = () => this.handleRetry(retryButton, data.onRetry || (() => window.location.reload()));
+          buttonsContainer.appendChild(retryButton);
+        }
+
+        if (data.actions) {
+          data.actions.forEach((action) => {
+            const button = document.createElement('button');
+            button.className = 'btn btn-outline-light fw-bold mb-2';
+            button.textContent = action.label;
+            button.onclick = () => this.handleRetry(button, action.onClick);
+            buttonsContainer.appendChild(button);
+          });
+        }
+
+        // Always add a close button that goes back to home
+        const closeButton = document.createElement('button');
+        closeButton.className = 'btn btn-secondary fw-bold';
+        closeButton.textContent = 'Back to Saloon';
+        closeButton.onclick = () => {
+          this.hideOverlay();
+          // Restore the game UI before leaving (in case user navigates back)
+          const gameComponent = this.closest('singleplayer-game');
+          if (gameComponent && gameComponent.showGameUI) {
+            gameComponent.showGameUI();
+          }
+          router.redirect('/home');
+        };
+        buttonsContainer.appendChild(closeButton);
+        break;
       default:
         break;
     }
   }
 
+  handleRetry(button, retryAction) {
+    const originalText = button.textContent;
+    button.textContent = 'Loading...';
+    button.disabled = true;
+    button.classList.add('btn-secondary');
+    button.classList.remove('btn-outline-light');
+
+    try {
+      const result = retryAction();
+      // If retry returns a promise, handle it properly
+      if (result instanceof Promise) {
+        result.catch(() => {
+          // Reset button state if retry fails
+          button.textContent = originalText;
+          button.disabled = false;
+          button.classList.remove('btn-secondary');
+          button.classList.add('btn-outline-light');
+        });
+      }
+    } catch (error) {
+      // Reset button state if retry fails immediately
+      button.textContent = originalText;
+      button.disabled = false;
+      button.classList.remove('btn-secondary');
+      button.classList.add('btn-outline-light');
+    }
+  }
   createPlayerResultElement(player, eloChange, showElo) {
     const element = document.createElement('div');
     element.innerHTML = this.playerResultTemplate();
@@ -173,21 +264,30 @@ export class GameOverlay extends HTMLElement {
     return `
     <style>
     #overlay {
-      z-index: 10;
-      top: 0;
-      left: 0;
+      z-index: 9999 !important;
+      top: 0 !important;
+      left: 0 !important;
+      position: fixed !important;
+      width: 100vw !important;
+      height: 100vh !important;
     }
     .overlay-dark {
       background-color: rgba(var(--pm-gray-700-rgb), 0.8);
     }
     #game-overlay-message-wrapper {
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
       color: rgba(var(--pm-gray-100-rgb), 0.9) !important;
       background-color: rgba(var(--pm-gray-700-rgb), 0.8);
       padding-left: 40px;
       padding-right: 40px;
+      min-height: 200px;
+      max-width: 500px;
+      width: 90vw;
+      box-sizing: border-box;
+      z-index: 10000 !important;
     }
     #overlay-message-title {
       font-family: 'van dyke';
@@ -236,6 +336,12 @@ export class GameOverlay extends HTMLElement {
       <div class="d-flex flex-column mt-5">
         <button id="overlay-button1" class="btn fw-bold">Bring me another rival</button>
         <button id="overlay-button2" class="btn fw-bold">Back to Saloon</button>
+      </div>
+    `,
+    [OVERLAY_TYPE.ERROR]: `
+      <div id="overlay-message-title" class="fs-2 text-danger mb-3"></div>
+      <div id="overlay-message-content" class="mb-4"></div>
+      <div class="d-flex flex-column mt-3" id="error-buttons">
       </div>
     `,
   };
