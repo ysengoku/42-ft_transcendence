@@ -591,10 +591,6 @@ export class MultiplayerGame extends HTMLElement {
       if (!data) {
         return;
       }
-      // if (data.is_someone_scored) {
-      //   updateScoreUI(data);
-      //   decreaseLifePointUI(data);
-      // }
       serverState.bumper_1.x = data.bumper_1.x;
       serverState.bumper_1.z = data.bumper_1.z;
       serverState.bumper_1.score = data.bumper_1.score;

@@ -83,7 +83,7 @@ const handlers = {
     if (response.status !== 204) {
       try {
         responseData = await response.json();
-      } catch(error) {
+      } catch (error) {
         log.error('Failed to parse JSON response:', error);
         responseData = {};
       }
@@ -165,7 +165,7 @@ const handlers = {
         if (retryResponse.status !== 204) {
           try {
             responseData = await retryResponse.json();
-          } catch(error) {
+          } catch (error) {
             log.error('Failed to parse JSON response:', error);
             responseData = {};
           }
@@ -188,7 +188,7 @@ const handlers = {
     let errorData = {};
     try {
       errorData = await response.json();
-    } catch(error) {
+    } catch (error) {
       log.error('Failed to parse JSON response:', error);
       errorData = {};
     }

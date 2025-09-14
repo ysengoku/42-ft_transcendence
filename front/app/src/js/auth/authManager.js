@@ -147,7 +147,7 @@ const auth = (() => {
           let data = {};
           try {
             data = await response.json();
-          } catch(error) {
+          } catch (error) {
             log.error('Failed to parse JSON response:', error);
             data = {};
           }
