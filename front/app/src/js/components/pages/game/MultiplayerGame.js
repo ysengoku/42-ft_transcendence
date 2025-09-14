@@ -779,7 +779,7 @@ export class MultiplayerGame extends HTMLElement {
             bumper_2: {
               score: data.winner.player_number === 2 ? data.winner.score : data.loser.score,
             },
-          }
+          };
           updateScoreUI(scoringData);
           decreaseLifePointUI(scoringData);
           this.overlay.show(OVERLAY_TYPE.GAMEOVER, data);
