@@ -1,91 +1,103 @@
+# users/tests/test_oauth2_endpoints.py
 import logging
+from datetime import timedelta
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
-from datetime import timedelta
 
 import requests
+from django.conf import settings
 from django.test import TestCase
+from django.utils import timezone
 
 from users.models import OauthConnection, User
-from django.conf import settings
 
 
+# ---------- Base helpers / setup ----------
 
-class OAuth2EndpointsTests(TestCase):
+class BaseOAuthTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         logging.disable(logging.CRITICAL)
-    
+
     @classmethod
     def tearDownClass(cls):
-        super().tearDownClass()
         logging.disable(logging.NOTSET)
-    
+        super().tearDownClass()
+
     def setUp(self):
-        # Common mock responses to reduce setup time
-        self.mock_api_success = MagicMock()
-        self.mock_api_success.status_code = 200
-        
-        self.mock_token_success = MagicMock()
-        self.mock_token_success.status_code = 200
+        # Mocks communs
+        self.mock_api_success = MagicMock(status_code=200)
+
+        self.mock_token_success = MagicMock(status_code=200)
         self.mock_token_success.json.return_value = {"access_token": "test_token"}
-        
+
         self.mock_github_user = {
             "id": 12345,
-            "login": "testuser", 
+            "login": "testuser",
             "email": "test@example.com",
-            "avatar_url": "https://example.com/avatar.png"
+            "avatar_url": "https://example.com/avatar.png",
         }
-        
+
         self.mock_42_user = {
             "id": 54321,
             "login": "testuser42",
             "email": "test42@example.com",
-            "image": {"versions": {"medium": "https://example.com/avatar.png"}}
+            "image": {"versions": {"medium": "https://example.com/avatar.png"}},
         }
 
+    # Helper: parse auth_url et renvoyer state
+    def _extract_state_from_auth_url(self, auth_url: str) -> str:
+        qs = parse_qs(urlparse(auth_url).query)
+        return qs["state"][0]
+
+
+# ---------- /authorize tests (health-check & URL) ----------
+
+class OAuthAuthorizeTests(BaseOAuthTests):
     def test_oauth_authorize_unsupported_platform(self):
-        response = self.client.get("/api/oauth/authorize/unsupported")
-        self.assertEqual(response.status_code, 404)
+        resp = self.client.get("/api/oauth/authorize/unsupported")
+        self.assertEqual(resp.status_code, 404)
 
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_oauth_authorize_github_success(self, mock_head):
         mock_head.return_value.status_code = 200
+
         resp = self.client.get("/api/oauth/authorize/github")
         self.assertEqual(resp.status_code, 200)
-        self.assertIn("auth_url", resp.json())
 
-        
-        # Parse the auth URL to verify parameters
-        parsed_url = urlparse(response_data["auth_url"])
-        query_params = parse_qs(parsed_url.query)
-        self.assertEqual(query_params["response_type"][0], "code")
-        self.assertIn("client_id", query_params)
-        self.assertIn("state", query_params)
-        
-        # Verify OAuth connection was created
-        self.assertTrue(OauthConnection.objects.filter(status=OauthConnection.PENDING).exists())
+        data = resp.json()
+        self.assertIn("auth_url", data)
 
-    @patch("users.router.endpoints.oauth2.requests.get")
-    def test_oauth_authorize_42_success(self, mock_get):
-        mock_get.return_value.status_code = 200
-        response = self.client.get("/api/oauth/authorize/42")
-        self.assertEqual(response.status_code, 200)
-        response_data = response.json()
-        self.assertIn("auth_url", response_data)
-        
-        # Verify OAuth connection was created
-        self.assertTrue(OauthConnection.objects.filter(status=OauthConnection.PENDING).exists())
+        # Vérifie paramètres + enregistrement PENDING précis
+        state = self._extract_state_from_auth_url(data["auth_url"])
+        parsed = parse_qs(urlparse(data["auth_url"]).query)
+        self.assertEqual(parsed["response_type"][0], "code")
+        self.assertIn("client_id", parsed)
+        self.assertIn("state", parsed)
+
+        conn = OauthConnection.objects.get(state=state)
+        self.assertEqual(conn.status, OauthConnection.PENDING)
+        self.assertEqual(conn.platform, "github")
+
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_authorize_42_success(self, mock_head):
+        mock_head.return_value.status_code = 200
+
+        resp = self.client.get("/api/oauth/authorize/42")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("auth_url", data)
+
+        state = self._extract_state_from_auth_url(data["auth_url"])
+        conn = OauthConnection.objects.get(state=state)
+        self.assertEqual(conn.status, OauthConnection.PENDING)
+        self.assertEqual(conn.platform, "42")
 
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_authorize_github_health_fail_head_500_redirects_503(self, mock_head):
-        # Simule: provider renvoie 500 au HEAD
         mock_head.return_value.status_code = 500
-
         resp = self.client.get("/api/oauth/authorize/github", follow=False)
-
-        # Notre backend doit rediriger vers /error avec code=503
         self.assertEqual(resp.status_code, 302)
         self.assertIn(settings.ERROR_REDIRECT_URL, resp["Location"])
         self.assertIn("code=503", resp["Location"])
@@ -93,9 +105,7 @@ class OAuth2EndpointsTests(TestCase):
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_authorize_42_health_fail_head_500_redirects_503(self, mock_head):
         mock_head.return_value.status_code = 500
-
         resp = self.client.get("/api/oauth/authorize/42", follow=False)
-
         self.assertEqual(resp.status_code, 302)
         self.assertIn(settings.ERROR_REDIRECT_URL, resp["Location"])
         self.assertIn("code=503", resp["Location"])
@@ -103,34 +113,25 @@ class OAuth2EndpointsTests(TestCase):
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_authorize_github_head_405_then_get_500_redirects_503(self, mock_head, mock_get):
-        # HEAD non supporté → fallback GET
         mock_head.return_value.status_code = 405
         mock_get.return_value.status_code = 500
-
         resp = self.client.get("/api/oauth/authorize/github", follow=False)
-
         self.assertEqual(resp.status_code, 302)
         self.assertIn("code=503", resp["Location"])
 
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_authorize_github_head_405_then_get_200_returns_auth_url(self, mock_head, mock_get):
-        # HEAD 405 (non supporté) mais GET OK → health-check OK
         mock_head.return_value.status_code = 405
         mock_get.return_value.status_code = 200
-
         resp = self.client.get("/api/oauth/authorize/github")
-
         self.assertEqual(resp.status_code, 200)
         self.assertIn("auth_url", resp.json())
 
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_authorize_42_head_301_redirect_tolerated_returns_auth_url(self, mock_head):
-        # Les redirections sont tolérées par le health-check
         mock_head.return_value.status_code = 301
-
         resp = self.client.get("/api/oauth/authorize/42")
-
         self.assertEqual(resp.status_code, 200)
         self.assertIn("auth_url", resp.json())
 
@@ -143,275 +144,252 @@ class OAuth2EndpointsTests(TestCase):
         self.assertIn("code=503", resp["Location"])
 
 
+# ---------- /callback validation tests (params & state) ----------
+
+class OAuthCallbackValidationTests(BaseOAuthTests):
     def test_oauth_callback_unsupported_platform(self):
-        response = self.client.get("/api/oauth/callback/unsupported?code=test&state=test")
-        self.assertEqual(response.status_code, 404)
-    
+        resp = self.client.get("/api/oauth/callback/unsupported?code=test&state=test")
+        self.assertEqual(resp.status_code, 404)
+
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_oauth_callback_with_oauth_error(self, mock_head):
-        mock_head.return_value.status_code = 200  # 👈 bypass health-check
-        response = self.client.get("/api/oauth/callback/github?error=access_denied&error_description=User%20denied%20access")
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("error=access_denied%3A%20User%20denied%20access", response.url)
-        self.assertIn("code=422", response.url)
+        mock_head.return_value.status_code = 200
+        resp = self.client.get(
+            "/api/oauth/callback/github?error=access_denied&error_description=User%20denied%20access"
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("error=access_denied%3A%20User%20denied%20access", resp.url)
+        self.assertIn("code=422", resp.url)
 
-        
-    def test_oauth_callback_with_different_error_types(self):
-        # Test various OAuth error types
-        error_cases = [
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_callback_with_different_error_types(self, mock_head):
+        mock_head.return_value.status_code = 200
+        cases = [
             ("invalid_request", "Request was invalid"),
             ("unauthorized_client", "Client not authorized"),
             ("access_denied", "User denied access"),
             ("unsupported_response_type", "Response type not supported"),
             ("invalid_scope", "Scope is invalid"),
             ("server_error", "Server encountered an error"),
-            ("temporarily_unavailable", "Service temporarily unavailable")
+            ("temporarily_unavailable", "Service temporarily unavailable"),
         ]
-        
-        for error_type, error_desc in error_cases:
+        for error_type, desc in cases:
             with self.subTest(error=error_type):
-                response = self.client.get(
-                    f"/api/oauth/callback/github?error={error_type}&error_description={error_desc.replace(' ', '%20')}"
+                resp = self.client.get(
+                    f"/api/oauth/callback/github?error={error_type}&error_description={desc.replace(' ', '%20')}"
                 )
-                self.assertEqual(response.status_code, 302)
-                self.assertIn(f"error={error_type}", response.url)
-                self.assertIn("code=422", response.url)
+                self.assertEqual(resp.status_code, 302)
+                self.assertIn(f"error={error_type}", resp.url)
+                self.assertIn("code=422", resp.url)
 
-    def test_oauth_callback_missing_parameters(self):
-        # Test missing code or state parameters
-        test_cases = [
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_callback_missing_parameters(self, mock_head):
+        mock_head.return_value.status_code = 200
+        cases = [
             ("/api/oauth/callback/github?state=test", "missing code"),
             ("/api/oauth/callback/github?code=test", "missing state"),
             ("/api/oauth/callback/github", "missing both"),
             ("/api/oauth/callback/github?code=&state=test", "empty code"),
-            ("/api/oauth/callback/github?code=test&state=", "empty state")
+            ("/api/oauth/callback/github?code=test&state=", "empty state"),
         ]
-        
-        for url, description in test_cases:
-            with self.subTest(case=description):
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, 302)
-                self.assertIn("error=Missing%20code%20or%20state", response.url)
-                self.assertIn("code=422", response.url)
+        for url, desc in cases:
+            with self.subTest(case=desc):
+                resp = self.client.get(url)
+                self.assertEqual(resp.status_code, 302)
+                self.assertIn("error=Missing%20code%20or%20state", resp.url)
+                self.assertIn("code=422", resp.url)
 
-    def test_oauth_callback_invalid_state(self):
-        # Test with completely invalid state (not in database)
-        response = self.client.get("/api/oauth/callback/github?code=test&state=invalid_state_not_in_db")
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("error=Invalid%20state", response.url)
-        self.assertIn("code=422", response.url)
-        
-    def test_oauth_callback_state_platform_mismatch(self):
-        # Test state valid but for different platform
-        github_state = OauthConnection.objects.create_pending_connection("github_state", "github")
-        
-        # Try to use GitHub state with 42 platform
-        response = self.client.get("/api/oauth/callback/42?code=test&state=github_state")
-        self.assertEqual(response.status_code, 302)
-        # Should redirect with error due to platform mismatch
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_callback_invalid_state(self, mock_head):
+        mock_head.return_value.status_code = 200
+        resp = self.client.get("/api/oauth/callback/github?code=test&state=invalid_state_not_in_db")
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("error=Invalid%20state", resp.url)
+        self.assertIn("code=422", resp.url)
 
-    @patch("users.router.endpoints.oauth2.requests.get")
-    def test_oauth_callback_expired_state(self, mock_get):
-        mock_get.return_value.status_code = 200
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_callback_state_platform_mismatch(self, mock_head):
+        mock_head.return_value.status_code = 200
+        OauthConnection.objects.create_pending_connection("github_state", "github")
+        resp = self.client.get("/api/oauth/callback/42?code=test&state=github_state")
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("code=422", resp.url)
+
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_callback_expired_state(self, mock_head):
+        mock_head.return_value.status_code = 200
         oauth_conn = OauthConnection.objects.create_pending_connection("test_state", "github")
-        oauth_conn.date = oauth_conn.date - timedelta(minutes=5)
-        
-        response = self.client.get("/api/oauth/callback/github?code=test&state=test_state")
-        self.assertEqual(response.status_code, 302)
-        
-                
-    def test_oauth_callback_network_timeout_simulation(self):
-        # Test network timeout scenarios
+        oauth_conn.date = timezone.now() - timedelta(minutes=5)
+        oauth_conn.save(update_fields=["date"])  # important
+
+        resp = self.client.get("/api/oauth/callback/github?code=test&state=test_state")
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("code=422", resp.url)
+
+
+# ---------- /callback flow tests (token/user info/success, race, reuse) ----------
+
+class OAuthCallbackFlowTests(BaseOAuthTests):
+    @patch("users.router.endpoints.oauth2.requests.head")
+    def test_oauth_callback_network_timeout_simulation(self, mock_head):
+        mock_head.return_value.status_code = 200
         with patch("users.router.endpoints.oauth2.requests.post") as mock_post, \
              patch("users.router.endpoints.oauth2.requests.get") as mock_get:
-                
-            # Simulate timeout on token request
             mock_get.return_value.status_code = 200
             mock_post.side_effect = requests.Timeout("Request timed out")
-            
             OauthConnection.objects.create_pending_connection("timeout_state", "github")
-            
-            response = self.client.get("/api/oauth/callback/github?code=test&state=timeout_state")
-            self.assertEqual(response.status_code, 302)
-            self.assertIn("error=", response.url)
 
+            resp = self.client.get("/api/oauth/callback/github?code=test&state=timeout_state")
+            self.assertEqual(resp.status_code, 302)
+            self.assertIn("error=", resp.url)
+
+    @patch("users.router.endpoints.oauth2.requests.head")
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_callback_token_request_various_failures(self, mock_post, mock_get):
-        # Test different token request failure scenarios
-        mock_get.return_value.status_code = 200
-        
-        token_error_cases = [
+    def test_oauth_callback_token_request_various_failures(self, mock_post, mock_get, mock_head):
+        mock_head.return_value.status_code = 200
+        mock_get.return_value.status_code = 200  # API reachable
+
+        cases = [
             (400, {"error": "invalid_request", "error_description": "Invalid request"}),
             (401, {"error": "invalid_client", "error_description": "Client authentication failed"}),
             (400, {"error": "invalid_grant", "error_description": "Invalid authorization grant"}),
             (400, {"error": "unauthorized_client", "error_description": "Client not authorized"}),
             (400, {"error": "unsupported_grant_type", "error_description": "Grant type not supported"}),
-            (500, {"error": "server_error", "error_description": "Internal server error"})
+            (500, {"error": "server_error", "error_description": "Internal server error"}),
         ]
-        
-        for status_code, error_response in token_error_cases:
+        for status_code, error_response in cases:
             with self.subTest(error=error_response["error"]):
-                # Reset mocks
                 mock_post.reset_mock()
                 mock_post.return_value.status_code = status_code
                 mock_post.return_value.json.return_value = error_response
-                
-                # Create valid OAuth connection for each test
+
                 state = f"test_state_{error_response['error']}"
                 OauthConnection.objects.create_pending_connection(state, "github")
-                
-                response = self.client.get(f"/api/oauth/callback/github?code=test&state={state}")
-                self.assertEqual(response.status_code, 302)
-                self.assertIn("error=", response.url)
 
+                resp = self.client.get(f"/api/oauth/callback/github?code=test&state={state}")
+                self.assertEqual(resp.status_code, 302)
+                self.assertIn("error=", resp.url)
+
+    @patch("users.router.endpoints.oauth2.requests.head")
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_callback_user_info_various_failures(self, mock_post, mock_get):
-        # Test different user info request failure scenarios
+    def test_oauth_callback_user_info_various_failures(self, mock_post, mock_get, mock_head):
+        mock_head.return_value.status_code = 200
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {"access_token": "test_token"}
-        
-        user_info_error_cases = [
-            (401, "Unauthorized - invalid token"),
-            (403, "Forbidden - insufficient scope"),
-            (404, "Not found - user endpoint"),
-            (429, "Rate limited"),
-            (500, "Internal server error"),
-            (502, "Bad gateway"),
-            (503, "Service unavailable")
-        ]
-        
-        for status_code, description in user_info_error_cases:
-            with self.subTest(status=status_code, desc=description):
-                # API check succeeds, user info fails
-                mock_api_check = MagicMock()
-                mock_api_check.status_code = 200
-                
-                mock_user_info = MagicMock()
-                mock_user_info.status_code = status_code
-                mock_get.side_effect = [mock_api_check, mock_user_info]
-                
+
+        cases = [401, 403, 404, 429, 500, 502, 503]
+        for status_code in cases:
+            with self.subTest(status=status_code):
+                mock_user_info = MagicMock(status_code=status_code)
+                mock_get.side_effect = [mock_user_info]  # call to user info
                 state = f"test_state_{status_code}"
                 OauthConnection.objects.create_pending_connection(state, "github")
-                
-                response = self.client.get(f"/api/oauth/callback/github?code=test&state={state}")
-                self.assertEqual(response.status_code, 302)
-                self.assertIn("error=", response.url)
 
+                resp = self.client.get(f"/api/oauth/callback/github?code=test&state={state}")
+                self.assertEqual(resp.status_code, 302)
+                self.assertIn("error=", resp.url)
+
+    @patch("users.router.endpoints.oauth2.requests.head")
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_callback_github_success_new_user(self, mock_post, mock_get):
+    def test_oauth_callback_github_success_new_user(self, mock_post, mock_get, mock_head):
+        mock_head.return_value.status_code = 200
         mock_post.return_value = self.mock_token_success
-        
-        mock_user_info = MagicMock()
-        mock_user_info.status_code = 200
+
+        mock_user_info = MagicMock(status_code=200)
         mock_user_info.json.return_value = self.mock_github_user
-        mock_get.side_effect = [self.mock_api_success, mock_user_info]
-        
-        OauthConnection.objects.create_pending_connection("test_state", "github")
-        
-        response = self.client.get("/api/oauth/callback/github?code=test&state=test_state")
-        self.assertEqual(response.status_code, 302)
-        
-                
+        mock_get.side_effect = [mock_user_info]
 
+        OauthConnection.objects.create_pending_connection("test_state", "github")
+        resp = self.client.get("/api/oauth/callback/github?code=test&state=test_state", follow=False)
+        self.assertEqual(resp.status_code, 302)
+        # redirigé vers HOME avec cookies (le détail de l'URL n'est pas asser­té ici)
+
+    @patch("users.router.endpoints.oauth2.requests.head")
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_callback_42_success_new_user(self, mock_post, mock_get):
+    def test_oauth_callback_42_success_new_user(self, mock_post, mock_get, mock_head):
+        mock_head.return_value.status_code = 200
         mock_post.return_value = self.mock_token_success
-        
-        mock_user_info = MagicMock()
-        mock_user_info.status_code = 200
+
+        mock_user_info = MagicMock(status_code=200)
         mock_user_info.json.return_value = self.mock_42_user
-        mock_get.side_effect = [self.mock_api_success, mock_user_info]
-        
-        OauthConnection.objects.create_pending_connection("test_state", "42")
-        
-        response = self.client.get("/api/oauth/callback/42?code=test&state=test_state")
-        self.assertEqual(response.status_code, 302)
+        mock_get.side_effect = [mock_user_info]
 
+        OauthConnection.objects.create_pending_connection("test_state", "42")
+        resp = self.client.get("/api/oauth/callback/42?code=test&state=test_state", follow=False)
+        self.assertEqual(resp.status_code, 302)
+
+    @patch("users.router.endpoints.oauth2.requests.head")
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_callback_existing_user(self, mock_post, mock_get):
+    def test_oauth_callback_existing_user(self, mock_post, mock_get, mock_head):
+        mock_head.return_value.status_code = 200
         existing_user = User.objects.create_user("testuser", email="test@example.com", password="test123")
-        
+
         mock_post.return_value = self.mock_token_success
-        
-        mock_user_info = MagicMock()
-        mock_user_info.status_code = 200
+        mock_user_info = MagicMock(status_code=200)
+        # Renvoie le même login/email que l'user existant pour simuler le match
         mock_user_info.json.return_value = self.mock_github_user
-        mock_get.side_effect = [self.mock_api_success, mock_user_info]
-        
+        mock_get.side_effect = [mock_user_info]
+
         OauthConnection.objects.create_pending_connection("test_state", "github")
-        
-        response = self.client.get("/api/oauth/callback/github?code=test&state=test_state")
-        self.assertEqual(response.status_code, 302)
-        
-                
-    @patch("users.models.oauth_connection.requests.get")
-    @patch("users.router.endpoints.oauth2.requests.get") 
-    @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_callback_concurrent_requests_same_state(self, mock_post, mock_get, mock_avatar_get):
-        # Mock successful OAuth responses
+        resp = self.client.get("/api/oauth/callback/github?code=test&state=test_state", follow=False)
+        self.assertEqual(resp.status_code, 302)
+
+    @patch("users.models.oauth_connection.requests.get")                 # avatar download
+    @patch("users.router.endpoints.oauth2.requests.head")
+    @patch("users.router.endpoints.oauth2.requests.get")                 # user info
+    @patch("users.router.endpoints.oauth2.requests.post")                # token
+    def test_oauth_callback_concurrent_requests_same_state(self, mock_post, mock_get, mock_head, mock_avatar_get):
+        mock_head.return_value.status_code = 200
         mock_post.return_value = self.mock_token_success
-        mock_user_info = MagicMock()
-        mock_user_info.status_code = 200
+
+        mock_user_info = MagicMock(status_code=200)
         mock_user_info.json.return_value = self.mock_github_user
         mock_get.return_value = mock_user_info
-        
-        # Mock avatar download
-        mock_avatar_response = MagicMock()
-        mock_avatar_response.status_code = 200
-        mock_avatar_response.content = b"fake_avatar_data"
+
+        mock_avatar_response = MagicMock(status_code=200, content=b"fake_avatar_data")
         mock_avatar_get.return_value = mock_avatar_response
-        
-        # Test concurrent requests with same state (race condition)
+
         state = "concurrent_test_state"
         OauthConnection.objects.create_pending_connection(state, "github")
-        
-        # First request should process successfully
-        response1 = self.client.get(f"/api/oauth/callback/github?code=test1&state={state}")
-        self.assertEqual(response1.status_code, 302)
-        
-        # Second request with same state should fail (state consumed)
-        response2 = self.client.get(f"/api/oauth/callback/github?code=test2&state={state}")
-        self.assertEqual(response2.status_code, 302)
-        # Should fail due to either invalid state or invalid user information
-        self.assertTrue(
-            "error=Invalid%20state" in response2.url or 
-            "error=Invalid%20user%20information" in response2.url
-        )
 
+        # 1er call : succès
+        r1 = self.client.get(f"/api/oauth/callback/github?code=test1&state={state}", follow=False)
+        self.assertEqual(r1.status_code, 302)
+
+        # 2e call même state : doit échouer (state déjà consommé)
+        r2 = self.client.get(f"/api/oauth/callback/github?code=test2&state={state}", follow=False)
+        self.assertEqual(r2.status_code, 302)
+        self.assertIn("code=422", r2["Location"])
+
+    @patch("users.router.endpoints.oauth2.requests.head")
     @patch("users.router.endpoints.oauth2.requests.get")
-    @patch("users.router.endpoints.oauth2.requests.post") 
-    def test_oauth_state_reuse_prevention(self, mock_post, mock_get):
-        """Test that OAuth state cannot be reused after successful authentication"""
-        # Mock successful OAuth responses
+    @patch("users.router.endpoints.oauth2.requests.post")
+    def test_oauth_state_reuse_prevention(self, mock_post, mock_get, mock_head):
+        """OAuth state cannot be reused after successful authentication"""
+        mock_head.return_value.status_code = 200
         mock_post.return_value = self.mock_token_success
-        mock_user_info = MagicMock()
-        mock_user_info.status_code = 200
+
+        mock_user_info = MagicMock(status_code=200)
         mock_user_info.json.return_value = self.mock_github_user
-        mock_get.side_effect = [self.mock_api_success, mock_user_info, self.mock_api_success]
-        
-        # Create valid OAuth connection
+        # 1er call: user info OK ; 2e call: peu importe, ça échoue déjà sur l'état
+        mock_get.side_effect = [mock_user_info]
+
         state = "reuse_test_state"
         oauth_conn = OauthConnection.objects.create_pending_connection(state, "github")
-        
-        # First request should succeed and mark state as used
-        response1 = self.client.get(f"/api/oauth/callback/github?code=test&state={state}")
-        self.assertEqual(response1.status_code, 302)
-        
-        # Verify state was marked as used
+
+        # 1er call → succès, état doit passer à USED
+        r1 = self.client.get(f"/api/oauth/callback/github?code=test&state={state}", follow=False)
+        self.assertEqual(r1.status_code, 302)
+
         oauth_conn.refresh_from_db()
         self.assertEqual(oauth_conn.status, OauthConnection.USED)
-        
-        # Second request with same state should fail (state cannot be reused)
-        response2 = self.client.get(f"/api/oauth/callback/github?code=test2&state={state}")
-        self.assertEqual(response2.status_code, 302)
-        # Should fail with either "Invalid state" or "State already used" - both prevent reuse
-        self.assertTrue(
-            "error=Invalid%20state" in response2.url or 
-            "error=State%20already%20used" in response2.url
-        )
-        self.assertIn("code=422", response2.url)
+
+        # 2e call même state → doit échouer (422)
+        r2 = self.client.get(f"/api/oauth/callback/github?code=test2&state={state}", follow=False)
+        self.assertEqual(r2.status_code, 302)
+        self.assertIn("code=422", r2["Location"])
