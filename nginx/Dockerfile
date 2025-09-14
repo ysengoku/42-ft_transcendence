@@ -27,7 +27,6 @@ RUN npm install
 COPY ../front/app/src ./src
 COPY ../front/app/public ./public
 COPY ../front/app/index.html ./
-COPY ../front/app/babel.config.cjs ./
 COPY ../front/app/vite.config.js ./
 RUN npm run build
 
