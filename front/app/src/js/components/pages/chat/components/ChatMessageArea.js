@@ -635,10 +635,6 @@ export class ChatMessageArea extends HTMLElement {
       }
       .pending-message {
         opacity: 0.4
-        /*
-        color: rgba(var(--pm-gray-100-rgb), 0.6) !important;
-        background-color: rgba(var(--pm-primary-600-rgb), 0.4) !important;
-        */
       }
 	  </style>
     `;
