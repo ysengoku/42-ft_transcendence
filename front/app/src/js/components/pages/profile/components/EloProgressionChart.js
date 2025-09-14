@@ -6,6 +6,7 @@
  */
 
 import { apiRequest, API_ENDPOINTS } from '@api';
+import { showToastNotification, TOAST_TYPES } from '@utils';
 
 /**
  * @class UserEloProgressionChart
@@ -426,7 +427,8 @@ export class UserEloProgressionChart extends HTMLElement {
     );
     if (response.success && response.data && response.data.items) {
       if (response.data.items.length === 0) {
-        return false;;
+        showToastNotification('No more available data found', TOAST_TYPES.WARNING);
+        return false;
       }
       this.#state.totalItemCount = response.data.count;
       this.#state.history.push(...response.data.items);
