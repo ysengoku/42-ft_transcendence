@@ -96,6 +96,7 @@ class MatchQuerySet(models.QuerySet):
                 elo_change=elo_change,
                 winners_elo=winners_elo,
                 losers_elo=losers_elo,
+                date=date,
             )
             resolved_match.save()
             Profile.objects.bulk_update([winner, loser], ["elo"])
