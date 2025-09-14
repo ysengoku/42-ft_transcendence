@@ -322,12 +322,12 @@ export class GameOptions extends HTMLElement {
         }
         break;
       case 'ranked':
-        this.#state.selectedOptions.ranked ? (this.isRankedInput.checked = false) : (this.isRankedInput.checked = true);
+        this.#state.selectedOptions.ranked ? (this.isRankedInput.checked = true) : (this.isRankedInput.checked = false);
         break;
       case 'cool_mode':
         this.#state.selectedOptions.cool_mode
-          ? (this.coolModeInput.checked = false)
-          : (this.coolModeInput.checked = true);
+          ? (this.coolModeInput.checked = true)
+          : (this.coolModeInput.checked = false);
         break;
     }
   }
@@ -351,9 +351,9 @@ export class GameOptions extends HTMLElement {
     } else if (target.id === 'time-limit') {
       this.#state.selectedOptions.time_limit = parseInt(target.value);
     } else if (target.id === 'is-ranked') {
-      this.#state.selectedOptions.ranked = !target.checked;
+      this.#state.selectedOptions.ranked = target.checked;
     } else if (target.id === 'cool-mode') {
-      this.#state.selectedOptions.cool_mode = !target.checked;
+      this.#state.selectedOptions.cool_mode = target.checked;
     }
   }
 
@@ -513,11 +513,11 @@ export class GameOptions extends HTMLElement {
           </div>
         </div>
         <div class="option-input d-flex align-items-center gap-2">
-          <p class="pe-2 m-0 fs-6 fw-lighter">Enable</p>
+          <p class="pe-2 m-0 fs-6 fw-lighter">Disable</p>
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" role="switch" id="is-ranked">
           </div>
-          <p class="ps-2 m-0 fs-6 fw-lighter">Disable</p>
+          <p class="ps-2 m-0 fs-6 fw-lighter">Enable</p>
         </div>
       </div>
 
@@ -533,11 +533,11 @@ export class GameOptions extends HTMLElement {
           </div>
         </div>
         <div class="option-input d-flex align-items-center gap-2">
-          <p class="pe-2 m-0 fs-6 fw-lighter">Enable</p>
+          <p class="pe-2 m-0 fs-6 fw-lighter">Disable</p>
           <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" id="cool-mode" checked>
+            <input class="form-check-input" type="checkbox" role="switch" id="cool-mode">
           </div>
-          <p class="ps-2 m-0 fs-6 fw-lighter">Disable</p>
+          <p class="ps-2 m-0 fs-6 fw-lighter">Enable</p>
         </div>
       </div>
     </div>
