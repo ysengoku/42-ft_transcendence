@@ -190,34 +190,40 @@ export class Duel extends HTMLElement {
    * @return {void}
    */
   renderContent() {
+    if (!this.content || !this.header || !this.contentElement) {
+      log.error('DOM elements not found');
+      return;
+    }
     this.content.innerHTML = '';
     this.header.textContent = this.headerTemplate();
     this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
     this.content.appendChild(this.contentElement);
 
     if (this.#state.status === DUEL_STATUS.MATCHMAKING || this.#state.status === DUEL_STATUS.INVITING) {
+      if (!this.optionTagsWrapper) {
+        log.error('Option tags wrapper element not found');
+        return;
+      }
       this.optionTagsWrapper.innerHTML = this.gameOptionTagsTemplate();
-      const optionScoreToWin = this.querySelector('#duel-option-score-to-win');
-      const optionGameSpeed = this.querySelector('#duel-option-game-speed');
-      const optionTimeLimit = this.querySelector('#duel-option-time-limit');
-      const optionRanked = this.querySelector('#duel-option-ranked');
-      const optionCoolMode = this.querySelector('#duel-option-cool-mode');
-      this.#state.settings.score_to_win === 'any'
-        ? optionScoreToWin.classList.add('d-none')
-        : (optionScoreToWin.textContent = `Score to win: ${this.#state.settings.score_to_win}`);
-      this.#state.settings.game_speed === 'any'
-        ? optionGameSpeed.classList.add('d-none')
-        : (optionGameSpeed.textContent = `Game speed: ${this.#state.settings.game_speed}`);
-      this.#state.settings.time_limit === 'any'
-        ? optionTimeLimit.classList.add('d-none')
-        : (optionTimeLimit.textContent = `Time limit: ${this.#state.settings.time_limit} min`);
-      this.#state.settings.ranked === 'any'
-        ? optionRanked.classList.add('d-none')
-        : (optionRanked.textContent = this.#state.settings.ranked === 'true' ? 'Ranked' : 'Not ranked');
-      this.#state.settings.cool_mode === 'any'
-        ? optionCoolMode.classList.add('d-none')
-        : (optionCoolMode.textContent =
-            this.#state.settings.cool_mode === 'true' ? 'Buffs: enabled' : 'Buffs: disabled');
+      this.optionTagsWrapper.classList.remove('d-none');
+      this.cancelButton?.classList.remove('d-none');
+
+      const setOptionTag = (selector, value, format = (v) => v) => {
+        const element = this.querySelector(selector);
+        if (!element)  {
+          return;
+        }
+        if (!value || value === 'any') {
+          element.classList.add('d-none');
+        } else {
+          element.textContent = format(value);
+        }
+      };
+      setOptionTag('#duel-option-score-to-win', this.#state.settings.score_to_win, (v) => `Score to win: ${v}`);
+      setOptionTag('#duel-option-game-speed', this.#state.settings.game_speed, (v) => `Game speed: ${v}`);
+      setOptionTag('#duel-option-time-limit', this.#state.settings.time_limit, (v) => `Time limit: ${v} min`);
+      setOptionTag('#duel-option-ranked', this.#state.settings.ranked, (v) => (v === 'true' ? 'Ranked' : 'Not ranked'));
+      setOptionTag('#duel-option-cool-mode', this.#state.settings.cool_mode, (v) => (v === 'true' ? 'Buffs: enabled' : 'Buffs: disabled'));
     }
 
     switch (this.#state.status) {
@@ -245,7 +251,6 @@ export class Duel extends HTMLElement {
         window.removeEventListener('beforeunload', this.confirmLeavePage);
         break;
     }
-
     document.addEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
   }
 
@@ -401,11 +406,18 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   startDuel() {
     this.#state.status = DUEL_STATUS.STARTING;
+    if (!this.animation || !this.cancelButton || !this.timer || !this.header ||   !this.contentElement) {
+      requestAnimationFrame(() => {
+        this.startDuel();
+      });
+      return;
+    }
+
     this.animation.classList.add('d-none');
     this.cancelButton.classList.add('d-none');
     this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
     this.cancelButton?.removeEventListener('click', this.cancelInvitation);
-
+  
     this.header.textContent = this.headerTemplate();
     this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
     this.timer.classList.remove('d-none');
