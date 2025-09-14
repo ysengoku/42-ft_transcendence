@@ -48,7 +48,6 @@ export class TournamentMenu extends HTMLElement {
     // Bind event handlers
     this.showTournamentCreationForm = this.showTournamentCreationForm.bind(this);
     this.showTournamentDetail = this.showTournamentDetail.bind(this);
-    this.hideModal = this.hideModal.bind(this);
     this.handleCloseModal = this.handleCloseModal.bind(this);
     this.validateAliasInput = this.validateAliasInput.bind(this);
     this.confirmRegister = this.confirmRegister.bind(this);
@@ -84,20 +83,20 @@ export class TournamentMenu extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this.createTournamentButton?.removeEventListener('click', this.showTournamentCreationForm);
+    this.list?.removeEventListener('register-tournament', this.showTournamentDetail);
+    this.modalComponent?.removeEventListener('hide.bs.modal', this.handleCloseModal);
     if (this.modal) {
       this.modal.hide();
       Promise.resolve().then(() => {
-        this.modal.dispose();
+        this.modal?.dispose();
       });
-      document.body.removeChild(this.modalComponent);
+      if (this.modalComponent && document.body.contains(this.modalComponent)) {
+        document.body.removeChild(this.modalComponent);
+      }
       this.modalComponent = null;
       this.modal = null;
     }
-    this.createTournamentButton?.removeEventListener('click', this.showTournamentCreationForm);
-    this.list?.removeEventListener('register-tournament', this.showTournamentDetail);
-    this.noOpenTournaments?.removeEventListener('click', this.showTournamentCreationForm);
-    document.removeEventListener('hide-modal', this.hideModal);
-    this.modalComponent?.removeEventListener('hide.bs.modal', this.handleCloseModal);
     if (this.selectedTournament && this.selectedTournament.status !== 'pending') {
       this.confirmButton?.removeEventListener('click', this.navigateToOverview);
     }
@@ -123,11 +122,6 @@ export class TournamentMenu extends HTMLElement {
     this.list = this.querySelector('tournament-list');
     this.createTournamentButton.addEventListener('click', this.showTournamentCreationForm);
     this.list.addEventListener('click', this.showTournamentDetail);
-
-    window.requestAnimationFrame(() => {
-      this.noOpenTournaments = document.getElementById('no-open-tournaments');
-      this.noOpenTournaments?.addEventListener('click', this.showTournamentCreationForm);
-    });
   }
 
   /* ------------------------------------------------------------------------ */
@@ -144,7 +138,6 @@ export class TournamentMenu extends HTMLElement {
     this.cancelButton = this.modalFooter.querySelector('.cancel-button');
     this.confirmButton = this.modalFooter.querySelector('.confirm-button');
 
-    document.addEventListener('hide-modal', this.hideModal);
     this.modalComponent.addEventListener('hide.bs.modal', this.handleCloseModal);
   }
 
@@ -282,7 +275,7 @@ export class TournamentMenu extends HTMLElement {
     };
     const response = await apiRequest('POST', API_ENDPOINTS.NEW_TOURNAMENT, data, false, true);
     if (response.success) {
-      document.dispatchEvent(new CustomEvent('hide-modal', { bubbles: true }));
+      this.modal?.hide();
       showAlertMessageForDuration(ALERT_TYPE.SUCCESS, 'Tournament created successfully!');
       const tournamentId = response.data.id;
       this.connectToTournamentRoom(tournamentId);
@@ -300,12 +293,11 @@ export class TournamentMenu extends HTMLElement {
           message = 'You have an ongoing game activity. Cannot create a new tournament.';
         }
         showAlertMessageForDuration(ALERT_TYPE.ERROR, message);
-        this.hideModal();
+        this.modal?.hide();
         break;
       case 422:
         this.alert.textContent = response.msg;
         this.alert.classList.remove('d-none');
-        // this.confirmButton.disabled = true;
         break;
       default:
         break;
@@ -351,11 +343,11 @@ export class TournamentMenu extends HTMLElement {
       case 404:
         message = response.msg;
         showAlertMessageForDuration(ALERT_TYPE.ERROR, message);
-        this.hideModal();
+        this.modal?.hide();
         this.render();
         return;
       case 429:
-        this.hideModal();
+        this.modal?.hide();
         return;
       default:
         break;
@@ -400,9 +392,9 @@ export class TournamentMenu extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   /*      Other Even handlers                                                 */
   /* ------------------------------------------------------------------------ */
-  hideModal() {
-    this.modal.hide();
-  }
+  // hideModal() {
+  //   this.modal?.hide();
+  // }
 
   handleCloseModal() {
     if (this.modalComponent?.contains(document.activeElement)) {
@@ -429,7 +421,7 @@ export class TournamentMenu extends HTMLElement {
       },
       { once: true },
     );
-    this.modal.hide();
+    this.modal?.hide();
   }
 
   navigateToOverview() {
@@ -440,7 +432,7 @@ export class TournamentMenu extends HTMLElement {
       },
       { once: true },
     );
-    this.modal.hide();
+    this.modal?.hide();
   }
 
   redirectToLoginPage() {
@@ -451,7 +443,7 @@ export class TournamentMenu extends HTMLElement {
       },
       { once: true },
     );
-    this.modal.hide();
+    this.modal?.hide();
   }
 
   /* ------------------------------------------------------------------------ */
