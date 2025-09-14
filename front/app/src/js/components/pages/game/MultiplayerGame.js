@@ -772,6 +772,16 @@ export class MultiplayerGame extends HTMLElement {
         case 'player_won':
         case 'player_resigned':
           log.info('Game_over', data);
+          const scoringData = {
+            bumper_1: {
+              score: data.winner.player_number === 1 ? data.winner.score : data.loser.score,
+            },
+            bumper_2: {
+              score: data.winner.player_number === 2 ? data.winner.score : data.loser.score,
+            },
+          }
+          updateScoreUI(scoringData);
+          decreaseLifePointUI(scoringData);
           this.overlay.show(OVERLAY_TYPE.GAMEOVER, data);
           break;
         default:

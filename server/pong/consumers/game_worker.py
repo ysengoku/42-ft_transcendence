@@ -182,13 +182,15 @@ class Player:
             return {
                 "alias": self.name,
                 "avatar": self.avatar,
-                "player_number": 1 if self.bumper.z == 1 else 2,
+                "player_number": 1 if self.bumper.dir_z == 1 else 2,
+                "score": self.bumper.score,
             }
         return {
             "name": self.name,
             "avatar": self.avatar,
             "elo": self.elo,
-            "player_number": 1 if self.bumper.z == 1 else 2,
+            "player_number": 1 if self.bumper.dir_z == 1 else 2,
+            "score": self.bumper.score,
         }
 
     def set_as_connected(self, connection_timestamp: float):
