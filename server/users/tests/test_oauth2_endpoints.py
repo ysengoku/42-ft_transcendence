@@ -78,7 +78,7 @@ class OAuthAuthorizeTests(BaseOAuthTests):
 
         conn = OauthConnection.objects.get(state=state)
         self.assertEqual(conn.status, OauthConnection.PENDING)
-        self.assertEqual(conn.platform, "github")
+        self.assertEqual(conn.connection_type, "github")
 
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_oauth_authorize_42_success(self, mock_head):
@@ -92,7 +92,7 @@ class OAuthAuthorizeTests(BaseOAuthTests):
         state = self._extract_state_from_auth_url(data["auth_url"])
         conn = OauthConnection.objects.get(state=state)
         self.assertEqual(conn.status, OauthConnection.PENDING)
-        self.assertEqual(conn.platform, "42")
+        self.assertEqual(conn.connection_type, "42")
 
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_authorize_github_health_fail_head_500_redirects_503(self, mock_head):
@@ -224,7 +224,7 @@ class OAuthCallbackValidationTests(BaseOAuthTests):
 
         resp = self.client.get("/api/oauth/callback/github?code=test&state=test_state")
         self.assertEqual(resp.status_code, 302)
-        self.assertIn("code=422", resp.url)
+        self.assertIn("code=408", resp.url)
 
 
 # ---------- /callback flow tests (token/user info/success, race, reuse) ----------
@@ -300,7 +300,12 @@ class OAuthCallbackFlowTests(BaseOAuthTests):
 
         mock_user_info = MagicMock(status_code=200)
         mock_user_info.json.return_value = self.mock_github_user
-        mock_get.side_effect = [mock_user_info]
+
+        mock_avatar_response = MagicMock(status_code=200)
+        mock_avatar_response.content = b"fake_image"
+
+        mock_get.side_effect = [self.mock_api_success, mock_user_info, mock_avatar_response]
+
 
         OauthConnection.objects.create_pending_connection("test_state", "github")
         resp = self.client.get("/api/oauth/callback/github?code=test&state=test_state", follow=False)
@@ -322,20 +327,23 @@ class OAuthCallbackFlowTests(BaseOAuthTests):
         resp = self.client.get("/api/oauth/callback/42?code=test&state=test_state", follow=False)
         self.assertEqual(resp.status_code, 302)
 
-    @patch("users.router.endpoints.oauth2.requests.head")
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_callback_existing_user(self, mock_post, mock_get, mock_head):
-        mock_head.return_value.status_code = 200
+    def test_oauth_callback_existing_user(self, mock_post, mock_get):
         existing_user = User.objects.create_user("testuser", email="test@example.com", password="test123")
 
         mock_post.return_value = self.mock_token_success
+
         mock_user_info = MagicMock(status_code=200)
-        # Renvoie le même login/email que l'user existant pour simuler le match
         mock_user_info.json.return_value = self.mock_github_user
-        mock_get.side_effect = [mock_user_info]
+
+        mock_avatar_response = MagicMock(status_code=200)
+        mock_avatar_response.content = b"fake_avatar_data"
+
+        mock_get.side_effect = [self.mock_api_success, mock_user_info, mock_avatar_response]
 
         OauthConnection.objects.create_pending_connection("test_state", "github")
+
         resp = self.client.get("/api/oauth/callback/github?code=test&state=test_state", follow=False)
         self.assertEqual(resp.status_code, 302)
 
@@ -366,30 +374,34 @@ class OAuthCallbackFlowTests(BaseOAuthTests):
         self.assertEqual(r2.status_code, 302)
         self.assertIn("code=422", r2["Location"])
 
-    @patch("users.router.endpoints.oauth2.requests.head")
     @patch("users.router.endpoints.oauth2.requests.get")
     @patch("users.router.endpoints.oauth2.requests.post")
-    def test_oauth_state_reuse_prevention(self, mock_post, mock_get, mock_head):
-        """OAuth state cannot be reused after successful authentication"""
-        mock_head.return_value.status_code = 200
+    def test_oauth_state_reuse_prevention(self, mock_post, mock_get):
+        """Test that OAuth state cannot be reused after successful authentication"""
         mock_post.return_value = self.mock_token_success
 
         mock_user_info = MagicMock(status_code=200)
         mock_user_info.json.return_value = self.mock_github_user
-        # 1er call: user info OK ; 2e call: peu importe, ça échoue déjà sur l'état
-        mock_get.side_effect = [mock_user_info]
+
+        mock_avatar_response = MagicMock(status_code=200)
+        mock_avatar_response.content = b"fake_avatar_data"
+
+        # 1er call: API health, 2e: user_info, 3e: avatar
+        # 2ème requête avec même state → devrait échouer
+        mock_get.side_effect = [self.mock_api_success, mock_user_info, mock_avatar_response,
+                                self.mock_api_success, mock_user_info, mock_avatar_response]
 
         state = "reuse_test_state"
         oauth_conn = OauthConnection.objects.create_pending_connection(state, "github")
 
-        # 1er call → succès, état doit passer à USED
+        # Premier callback → OK
         r1 = self.client.get(f"/api/oauth/callback/github?code=test&state={state}", follow=False)
         self.assertEqual(r1.status_code, 302)
-
         oauth_conn.refresh_from_db()
         self.assertEqual(oauth_conn.status, OauthConnection.USED)
 
-        # 2e call même state → doit échouer (422)
+        # Deuxième callback avec même state → doit échouer
         r2 = self.client.get(f"/api/oauth/callback/github?code=test2&state={state}", follow=False)
         self.assertEqual(r2.status_code, 302)
-        self.assertIn("code=422", r2["Location"])
+        self.assertTrue("error=Invalid%20state" in r2.url or "error=State%20already%20used" in r2.url)
+        self.assertIn("code=422", r2.url)
