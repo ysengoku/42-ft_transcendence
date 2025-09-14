@@ -276,11 +276,9 @@ class TournamentWorkerConsumer(AsyncConsumer):
         await TournamentWorkerConsumer.trigger_action(tournament.id, "close_self_ws")
 
     @staticmethod
-    async def new_registration(tournament_id, alias, avatar, is_last):
+    async def new_registration(tournament_id, alias, avatar):
         data = {"alias": alias, "avatar": avatar}
         await TournamentWorkerConsumer.send_group_message(tournament_id, "new_registration", data)
-        if is_last:
-            await TournamentWorkerConsumer.send_group_message(tournament_id, "tournament_start", data)
 
     @database_sync_to_async
     def cancel_tournament_transaction(self, tournament):

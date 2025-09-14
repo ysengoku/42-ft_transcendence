@@ -231,7 +231,6 @@ export class UserProfile extends HTMLElement {
       color: var(--pm-primary-700);
       background: radial-gradient(circle, rgba(250, 235, 215, 1) 0%, rgba(164, 106, 48, 0.9) 100%);
       filter: sepia(20%) contrast(90%) brightness(95%);
-      /* filter: url(#wave); */
       box-shadow: inset 0 0 40px rgba(24, 15, 1, 0.3);
     }
     .online-status-indicator {

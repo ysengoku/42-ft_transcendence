@@ -166,12 +166,12 @@ def register_for_tournament(request, tournament_id: UUID, alias: str):
             tournament.save(update_fields=["status"])
 
             transaction.on_commit(
-                lambda: async_to_sync(TournamentWorkerConsumer.new_registration)(tournament_id, alias, avatar, True),
+                lambda: async_to_sync(TournamentWorkerConsumer.new_registration)(tournament_id, alias, avatar),
             )
             transaction.on_commit(lambda: async_to_sync(TournamentWorkerConsumer.prepare_round)(tournament_id))
             TournamentEvent.close_tournament_invitations(tournament_id)
         else:
-            async_to_sync(TournamentWorkerConsumer.new_registration)(tournament_id, alias, avatar, False)
+            async_to_sync(TournamentWorkerConsumer.new_registration)(tournament_id, alias, avatar)
 
     return 204, None
 
