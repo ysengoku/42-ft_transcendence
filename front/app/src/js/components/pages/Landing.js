@@ -124,7 +124,7 @@ export class Landing extends HTMLElement {
           var(--clrs1),
           var(--clrs2) 40% 60%,
           var(--clrs3) 90%,
-         var(--clrs4)) 0 0 / 100% 0.2rem;
+          var(--clrs4)) 0 0 / 100% 0.2rem;
     }
     </style>
     `;
