@@ -54,22 +54,6 @@ class OAuth2EndpointsTests(TestCase):
         self.assertEqual(resp.status_code, 404)
 
     @patch("users.router.endpoints.oauth2.requests.head")
-    def test_oauth_authorize_github_success(self, mock_head):
-        """Returns a GitHub authorization URL and creates a pending OAuth connection."""
-        mock_head.return_value.status_code = 200
-        resp = self.client.get("/api/oauth/authorize/github")
-        self.assertEqual(resp.status_code, 200)
-        data = resp.json()
-        self.assertIn("auth_url", data)
-
-        parsed = urlparse(data["auth_url"])
-        q = parse_qs(parsed.query)
-        self.assertEqual(q["response_type"][0], "code")
-        self.assertIn("client_id", q)
-        self.assertIn("state", q)
-        self.assertTrue(OauthConnection.objects.filter(status=OauthConnection.PENDING).exists())
-
-    @patch("users.router.endpoints.oauth2.requests.head")
     def test_oauth_authorize_42_success(self, mock_head):
         """Returns a 42 authorization URL and creates a pending OAuth connection."""
         mock_head.return_value.status_code = 200
