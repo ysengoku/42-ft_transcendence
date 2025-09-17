@@ -56,7 +56,7 @@ env = environ.Env(
     MAX_ALIAS_LENGTH=(int, 12),
     MAX_TOURNAMENT_NAME_LENGTH=(int, 50),
     MAX_MESSAGE_LENGTH=(int, 255),
-    REQUIRED_PARTICIPANTS_OPTIONS = (tuple, (4, 8)),
+    REQUIRED_PARTICIPANTS_OPTIONS=(tuple, (4, 8)),
     HOST_IP=(str, ""),
 )
 
@@ -266,7 +266,7 @@ OAUTH_ALLOWED_SCOPES = {
     "42": {"public", "profile"},
 }
 
-# OAuth 42
+# OAuth
 API42_CLIENT_ID = env("API42_CLIENT_ID")
 API42_CLIENT_SECRET = env("API42_CLIENT_SECRET")
 

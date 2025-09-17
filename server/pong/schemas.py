@@ -47,6 +47,7 @@ class ProfileMatchPreviewSchema(Schema):
             return f"{obj.winners_score} - {obj.losers_score}"
         return f"{obj.losers_score} - {obj.winners_score}"
 
+
 class FullMatchStatsSchema(Schema):
     winner: ProfileMinimalSchema
     loser: ProfileMinimalSchema
