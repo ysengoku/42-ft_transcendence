@@ -53,24 +53,6 @@ class OAuth2EndpointsTests(TestCase):
         resp = self.client.get("/api/oauth/authorize/unsupported")
         self.assertEqual(resp.status_code, 404)
 
-<<<<<<< HEAD
-    @patch("users.router.endpoints.oauth2.requests.get")
-    def test_oauth_authorize_github_success(self, mock_get):
-        mock_get.return_value.status_code = 200
-        response = self.client.get("/api/oauth/authorize/github")
-        self.assertEqual(response.status_code, 200)
-        response_data = response.json()
-        self.assertIn("auth_url", response_data)
-        
-        # Parse the auth URL to verify parameters
-        # parsed_url = urlparse(response_data["auth_url"])
-        # query_params = parse_qs(parsed_url.query)
-        # self.assertEqual(query_params["response_type"][0], "code")
-        # self.assertIn("client_id", query_params)
-        # self.assertIn("state", query_params)
-        
-        # Verify OAuth connection was created
-=======
     @patch("users.router.endpoints.oauth2.requests.head")
     def test_oauth_authorize_github_success(self, mock_head):
         """Returns a GitHub authorization URL and creates a pending OAuth connection."""
@@ -85,7 +67,6 @@ class OAuth2EndpointsTests(TestCase):
         self.assertEqual(q["response_type"][0], "code")
         self.assertIn("client_id", q)
         self.assertIn("state", q)
->>>>>>> oauth_fix_api_availability
         self.assertTrue(OauthConnection.objects.filter(status=OauthConnection.PENDING).exists())
 
     @patch("users.router.endpoints.oauth2.requests.head")
