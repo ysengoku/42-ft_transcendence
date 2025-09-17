@@ -15,12 +15,14 @@ from .validator import Validator
 
 logger = logging.getLogger("server")
 
+
 class CancelMessages:
-    ONGOING_GAME="You are in an ongoing game."
-    NO_INVITE_FROM_YOURSELF="You can't accept invitations from yourself to a game !"
-    INVITE_NOT_FOUND="Invitation not found."
-    NO_PENDING_INVITE="No pending invitations found."
-    INVITE_PENDING="You have one invitation pending."
+    ONGOING_GAME = "You are in an ongoing game."
+    NO_INVITE_FROM_YOURSELF = "You can't accept invitations from yourself to a game !"
+    INVITE_NOT_FOUND = "Invitation not found."
+    NO_PENDING_INVITE = "No pending invitations found."
+    INVITE_PENDING = "You have one invitation pending."
+
 
 class DuelEvent:
     def __init__(self, consumer):

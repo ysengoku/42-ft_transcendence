@@ -234,9 +234,7 @@ class BracketQuerySet(models.QuerySet):
         Method for updated a Bracket with the data of a finished game.
         Meant to be used by the game server.
         """
-        bracket: Bracket = self.select_related(
-            "participant1__profile",
-             "participant2__profile").filter(id=bracket_id)
+        bracket: Bracket = self.select_related("participant1__profile", "participant2__profile").filter(id=bracket_id)
         bracket = bracket.first()
         if not bracket:
             return None

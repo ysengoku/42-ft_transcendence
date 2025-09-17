@@ -40,8 +40,7 @@ def get_or_create_chat(request, username: str):
     if other_profile == profile:
         raise HttpError(422, "Cannot get chat with yourself.")
     chat, created = Chat.objects.get_or_create(profile, other_profile)
-    chat = Chat.objects.filter(
-        pk=chat.pk).with_other_user_profile_info(profile).first()
+    chat = Chat.objects.filter(pk=chat.pk).with_other_user_profile_info(profile).first()
     if created:
         channel_layer = get_channel_layer()
         for user_profile in [profile, other_profile]:
