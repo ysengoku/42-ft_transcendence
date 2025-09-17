@@ -374,7 +374,7 @@ h1, h2, h3, h4, h5, h6, legend {
 
 /* For Firefox */
 * {
-  scrollbar-width: thin;              /* auto, thin, none */
+  scrollbar-width: thin;
   scrollbar-color: var(--pm-gray-600) transparent; /* thumb track */
 }
 
