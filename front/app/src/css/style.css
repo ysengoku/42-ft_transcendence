@@ -338,10 +338,12 @@ h1, h2, h3, h4, h5, h6, legend {
 .bi-arrow-up-right {
   color: var(--pm-bg-success);
   -webkit-text-stroke: 1px;
+  text-shadow: 0 0 1px currentColor; /* For Firefox */
 }
 .bi-arrow-down-right {
   color: var(--pm-red-500);
   -webkit-text-stroke: 1px;
+  text-shadow: 0 0 1px currentColor; /* For Firefox */
 }
 
 .game-options-tag {
@@ -355,6 +357,8 @@ h1, h2, h3, h4, h5, h6, legend {
 /*--------------------------------------------------------------------------- */
 /*     Scroll bar                                                             */
 /*----------------------------------------------------------------------------*/
+
+/* For WebKit (Chrome/Safari/Edge) */
 *::-webkit-scrollbar {
   width: 4px;
 }
@@ -367,6 +371,13 @@ h1, h2, h3, h4, h5, h6, legend {
 *::-webkit-scrollbar-track {
   background-color: transparent;
 }
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pm-gray-600) transparent; /* thumb track */
+}
+
 
 /*--------------------------------------------------------------------------- */
 /*    Cursor                                                                  */

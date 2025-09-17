@@ -579,7 +579,7 @@ export class GameOptions extends HTMLElement {
     .form-range {
       width: 100%;
       -webkit-appearance :none;
-      -moz-appearance :none;
+      -moz-appearance :none; /* For Firefox */
       appearance :none;
       background: none;
     }
@@ -595,12 +595,16 @@ export class GameOptions extends HTMLElement {
       border: none !important;
       drop-shadow: none !important;
     }
+    /* For Firefox */
     .form-range::-moz-range-track {
-      background-color: var(--pm-primary-500);
+      background-color: var(--pm-gray-400) !important;
     }
     .form-range::-moz-range-thumb {
       background-color: var(--pm-primary-500);
-      border: none;
+      box-shadow: none !important;
+    }
+    .form-range:focus::-moz-range-thumb {
+      background-color: var(--pm-primary-500);
     }
     .btn-outline-duel-speedOptions {
       border: 1px solid var(--pm-gray-500);

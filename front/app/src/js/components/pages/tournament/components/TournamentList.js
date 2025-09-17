@@ -306,8 +306,8 @@ export class TournamentList extends HTMLElement {
       overflow: hidden;
       text-overflow: ellipsis;
       word-break: break-all;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
+      display: -webkit-box; /* Compatible for Firefox */
+      -webkit-line-clamp: 1; /* Compatible for Firefox by combining with display: -webkit-box; */
       -webkit-box-orient: vertical;
     }
     .tournament-status {
