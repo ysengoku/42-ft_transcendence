@@ -60,7 +60,8 @@ export function showTournamentAlert(
       setTimeout(() => {
         alertContainer.classList.add('fade-out-animation');
         setTimeout(() => {
-          alertContainer.remove();
+          alertContainer.innerHTML = '';
+          alertContainer.classList.remove('fade-out-animation');
         }, 1000);
       }, fireworkDuration);
       return;
@@ -68,7 +69,8 @@ export function showTournamentAlert(
       setTimeout(() => {
         alertContainer.classList.add('fade-out-animation');
         setTimeout(() => {
-          alertContainer.remove();
+          alertContainer.innerHTML = '';
+          alertContainer.classList.remove('fade-out-animation');
         }, 1000);
       }, 2000);
       alertCta.classList.add('d-none');
