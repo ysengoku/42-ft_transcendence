@@ -14,7 +14,9 @@ This approach centralizes the management of user authentication state, ensuring 
 
 The `auth` singleton provides the following core functionalities:
 
-### 👉 `async fetchAuthStatus(fireEvent = true)`
+### fetchAuthStatus
+
+`async fetchAuthStatus(fireEvent = true)`   
 
 Communicates with the server to determine the user's current login status.
 
@@ -35,8 +37,10 @@ Communicates with the server to determine the user's current login status.
 
 ---
 
-### 👉 `storeUser(data, fireEvent)`
-, 
+### storeUser
+
+`storeUser(data, fireEvent)`   
+
 Stores essential user information (username, nickname, avatar, unread message/notification counts) in `sessionStorage`.
 
 | Parameter   | Type      | Default | Description                                               |
@@ -52,7 +56,9 @@ Stores essential user information (username, nickname, avatar, unread message/no
 
 ---
 
-### 👉 `updateStoredUser(user)`
+### updateStoredUser
+
+`updateStoredUser(user)`   
 
 Updates specific user profile information (username, nickname, avatar) in `sessionStorage` while preserving unread message/notification counts.   
 This method is used when the user has updated information in `Settings` page.
@@ -63,7 +69,9 @@ This method is used when the user has updated information in `Settings` page.
 
 ---
 
-### 👉 `clearStoredUser()`
+### clearStoredUser
+
+`clearStoredUser()`   
 
 Clears all user-related data from `sessionStorage` and `localStorage`
 
@@ -76,7 +84,9 @@ Clears all user-related data from `sessionStorage` and `localStorage`
 
 ---
 
-### 👉 `getStoredUser()`
+### getStoredUser
+
+`getStoredUser()`   
 
 Retrieves the user object from `sessionStorage`.
 
@@ -88,7 +98,9 @@ Retrieves the user object from `sessionStorage`.
 
 ---
 
-### 👉 `async getUser()`
+### getUser
+
+`async getUser()`   
 
 Fetches the current user's authentication status from the server and stores it locally.
 
@@ -100,7 +112,9 @@ Fetches the current user's authentication status from the server and stores it l
 
 ---
 
-### 👉 `async canEngageInGame(showAlert = true)`
+### canEngageInGame
+
+`async canEngageInGame(showAlert = true)`   
 
 Checks if the user is authenticated and is not currently engaged in a game or tournament, allowing them to start a new activity.
 
@@ -175,7 +189,7 @@ config:
 ---
 flowchart TD
     A(["User chooses login method"]);
-    Q(["Authenticated"]);
+    Q(["Authentication success"]);
     R(["Authentication failed"]);
 
     A -- Regular Login --> B(["Input in LoginForm"]);
@@ -186,8 +200,8 @@ flowchart TD
     D -- Success --> E("MFA Required?");
     E -- No --> Q;
     E -- Yes --> F("MFA");
-    F --- Success ---> Q;
-    F --- Failure ---> R;
+    F ----- Success ----> Q;
+    F ----- Failure ----> R;
 
     A -- OAuth Login --> H("Redirect to OAuth platform");
 
