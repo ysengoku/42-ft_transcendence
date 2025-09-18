@@ -275,6 +275,15 @@ def create_pending_tournament() -> None:
         "CosmicWhale",
         "PhantomCat",
     ]
+    tournament_names = [
+        "Wild West Showdown",
+        "Dusty Trail Tournament",
+        "Lone Star Clash",
+        "Outlaw’s Duel",
+        "Cactus Creek Cup",
+        "Rodeo Rumble",
+        "O.K. Corral Cup",
+    ]
     try:
         taki = Profile.objects.get(user__username="Taki")
         felix = Profile.objects.get(user__username="Felix")
@@ -294,7 +303,7 @@ def create_pending_tournament() -> None:
             print(p.user.username, "is already engaged in a game or a tournament!")
             return
     print("Number of profiles for the pending tournament:", len(list_profiles))
-    name = "The Pending Tournament !"
+    name = choice(tournament_names)
     generate_random_date()
     status = Tournament.PENDING
     chosen_profile = choice(list_profiles)
@@ -362,15 +371,25 @@ def generate_tournaments(users: dict[str, User]) -> None:
         "CosmicWhale",
         "PhantomCat",
     ]
+    tournament_names = [
+        "Wild West Showdown",
+        "Dusty Trail Tournament",
+        "Lone Star Clash",
+        "Outlaw’s Duel",
+        "Cactus Creek Cup",
+        "Rodeo Rumble",
+        "O.K. Corral Cup",
+    ]
     options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
     profiles = [u.profile for u in users.values()]
     print("Number of profiles :", len(profiles))
     list_users = list(users.values())
     for i in range(2):
-        name = f"Tournament {i + 1}"
+        name = choice(tournament_names)
         generate_random_date()
-        option_for_status = [Tournament.FINISHED, Tournament.CANCELLED]
-        status = option_for_status[i]
+        # option_for_status = [Tournament.FINISHED, Tournament.CANCELLED]
+        # status = option_for_status[i]
+        status = Tournament.FINISHED
         user = choice(list_users)
         list_users.remove(user)
 
@@ -407,7 +426,6 @@ def generate_tournaments(users: dict[str, User]) -> None:
             profiles.remove(p)
             participant_objs.append(part)
         print("There are", len(participant_objs), "participants in this tournament (len(participant_objs))")
-        # ongoing/finished の場合はラウンド生成・状態更新
         if status is Tournament.FINISHED:
             total_rounds = 2 if required == 3 else 3
             # required has been lowed to avoir adding a participant since the creator is added at the beginning
