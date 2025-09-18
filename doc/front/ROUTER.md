@@ -21,35 +21,58 @@ config:
   theme: redux
 ---
 flowchart TD
-    A(["User navigates or clicks link"]) --> B("**navigate()** <br/> **redirect()** <br/> **handleLinkClick()**")
-    B --> C("**handleRoute()**")
-    C -- No matched route found --> D(["Render <br/> 'page-not-found' component"])
-    C -- Route found ---> E["Is route dynamic?"]
-    E -- Yes --> F("**extractParam()**")
-    F --> G("**renderDynamicUrlComponent()**")
-    G --- H("Call **setParam()**")
-		H --> Z(["Append component <br/> to **#content**"])
-    E -- No --> I("**renderStaticUrlComponent()**")
-		I --> J["Has query parameters?"]
-		J -- Yes --> K("Call **setQueryParam()**")
-		K --> Z
-		J -- No --> Z
+    A(["User navigates or clicks link"])
+    B("**navigate()** <br/> **redirect()** <br/> **handleLinkClick()**")
+    C("**handleRoute()**")
+    D(["Render <br/> 'page-not-found' component"])
+    E["Is route dynamic?"]
+
+    F("**extractParam()**")
+    G("**renderDynamicUrlComponent()**")
+    H["Has query parameters?"]
+    I("**setQueryParam()**")
+    J("**setParam()**")
+
+    K("**renderStaticUrlComponent()**")
+    L["Has query parameters?"]
+    M("**setQueryParam()**")
+
+    Z(["Append component <br/> to **#content**"])
+
+    A --> B
+    B --> C
+    C -- No matched route found --> D
+    C -- Route found ---> E
+    E -- Yes --> F
+    F --> G
+    G --> H
+    H -- Yes --> I
+    I --> J
+    H -- No --> J
+		J --> Z
+    E -- No --> K
+    K --> L
+    L -- Yes --> M
+    M ---> Z
+		L -- No --> Z
 
     E@{ shape: text}
-    J@{ shape: text}
+    H@{ shape: text}
+    L@{ shape: text}
      B:::Ash
      C:::Ash
      F:::Ash
      G:::Ash
-		 H:::Ash
      I:::Ash
-		 K:::Ash
+     J:::Ash
+     K:::Ash
+		 M:::Ash
     classDef Ash stroke-width:1px, stroke-dasharray:none, stroke:#999999, fill:#EEEEEE, color:#000000
 ```
 
 ## Methods
 
-### 👉 addRoute
+### addRoute
 
 `addRoute(path, componentTag, isDynamic = false)`   
 Adds a new route to the router.
@@ -71,7 +94,7 @@ router.addRoute('/profile/:id', 'user-profile', true);
 
 ---
 
-### 👉 init
+### init
 
 `init()`   
 Initializes the router by setting up the necessary event listeners.
@@ -85,7 +108,7 @@ Initializes the router by setting up the necessary event listeners.
 
 ---
 
-### 👉 navigate
+### navigate
 
 `navigate(path = window.location.pathname, queryParams = '', redirect = false)`   
 Performs navigation by updating the browser history and rendering the corresponding component.
@@ -103,7 +126,7 @@ Performs navigation by updating the browser history and rendering the correspond
 
 </br>
 
-### 👉 redirect
+### redirect
 
 `redirect(path = window.location.pathname, queryParams = '')`   
 Redirects to the specified path, replacing the current history entry.
@@ -119,7 +142,7 @@ Internally calls navigate(path, queryParams, true).
 
 </br>
 
-### 👉 handleLinkClick
+### handleLinkClick
 
 `handleLinkClick(event)`   
 Handles click events on internal links to enable seamless navigation without a full page reload.
@@ -136,7 +159,7 @@ Handles click events on internal links to enable seamless navigation without a f
 
 ---
 
-### 👉 handleRoute
+### handleRoute
 
 `handleRoute(queryParams = '')`   
 Handles route changes and renders the correct component based on the current URL.
@@ -149,7 +172,7 @@ Handles route changes and renders the correct component based on the current URL
 
 ---
 
-### 👉 matchDynamicRoute
+### matchDynamicRoute
 
 `matchDynamicRoute(path)`  
 Attempts to match a dynamic route by checking registered dynamic routes.
@@ -167,7 +190,7 @@ Returns an object containing the following if a match is found, else `null`.
 
 </br>
 
-### 👉 extractParam
+### extractParam
 
 `extractParam(routePath, path)`   
 Extracts parameters from the URL based on a defined dynamic route.
@@ -185,7 +208,7 @@ Returns an object with key-value pairs of extracted parameters, or null if not m
 
 ---
 
-### 👉 renderStaticUrlComponent
+### renderStaticUrlComponent
 
 `renderStaticUrlComponent(componentTag, queryParams = '')`   
 Renders a static URL component.
@@ -203,7 +226,7 @@ Renders a static URL component.
 
 </br>
 
-### 👉 renderDynamicUrlComponent
+### renderDynamicUrlComponent
 
 `renderDynamicUrlComponent(componentTag, param)`   
 Renders a dynamic component using extracted parameters.
@@ -223,33 +246,21 @@ Renders a dynamic component using extracted parameters.
 
 ## Initialization
 
-When the DOM is fully loaded (DOMContentLoaded event), the app performs the following steps:
+When the DOM is fully loaded (`DOMContentLoaded` event), the app performs the following steps:
 
-### ✅ Theme-Based Styling
+- **Theme-Based Styling**: Sets the background image based on the data-bs-theme attribute:
+    - Light theme: warm gradient with clouds
+    - Dark theme: night gradient with stars
 
-Sets the background image based on the data-bs-theme attribute:
-- Light theme: warm gradient with clouds
-- Dark theme: night gradient with stars
+- **Authentication**: Calls `auth.fetchAuthStatus()` to determine the user's session state.
 
-### ✅ Authentication
+- **Navbar rendering**: Appends a `<navbar-component>` inside the `#navbar-container` emlement based on auth status.
 
-Calls `auth.fetchAuthStatus()` to determine the user's session state.
+- **Router initialization**: Initializes the router by calling `router.init()`, which sets up history and link event listeners.
 
-### ✅ Navbar rendering
+- **Alert Dismissal**: Activates alert dismissal functionality by calling `addDissmissAlertListener()`.
 
-Appends a `<navbar-component>` inside the `#navbar-container` emlement based on auth status.
-
-### ✅ Router initialization
-
-Initializes the router by calling `router.init()`, which sets up history and link event listeners.
-
-### ✅ Alert Dismissal
-
-Activates alert dismissal functionality by calling `addDissmissAlertListener()`.
-
-### ✅ Initial navigation
-
-Retrieves the current URL path and query parameters and calls `router.navigate()` to render the correct component.
+- **Initial navigation**: Retrieves the current URL path and query parameters and calls `router.navigate()` to render the correct component.
 
 </br>
 
