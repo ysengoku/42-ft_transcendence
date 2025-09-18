@@ -28,7 +28,7 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
 
 - **General**
   - Dynamic [Single Page Application](https://en.wikipedia.org/wiki/Single-page_application)
-  - Google Chrome as first-class browser
+  - Google Chrome as first-class browser, Firefox in good company
   - Made primarly with Django, PostgreSQL, vanilla JS and [Bootstrap](https://getbootstrap.com/)
   - Runs in docker-compose
   - Responsive UI (but the game can't run on mobile... yet. sowwy!)
@@ -97,7 +97,9 @@ https://github.com/user-attachments/assets/2d065e35-b274-4867-b13e-fa022852612d
     make dev   # development - including hot reload and debug log
     make prod  # production
     ``` 
-4.  Open in Chrome: `https://localhost:1026`
+4.  Open in Chrome or Firefox:
+- On the same machine: `https://localhost:1026`
+- From another device in the same local network: `https://<your-local-ip>:1026`
 
 <br />
 
@@ -241,7 +243,7 @@ Separate container that periodically sends requests to the Daphne server to perf
 
 <br />
 
-## Documentation 🛠️👷🏻‍♂️
+## Documentation
 
 - [Architecture](./doc/ARCHITECTURE.md)
 
