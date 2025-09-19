@@ -45,7 +45,6 @@ export class MultiplayerGame extends HTMLElement {
   #pongSocket = null; // WebSocket connection for multiplayer
   #animationId = null; // Animation frame request ID
   #resizeHandler = null; // Window resize event handler
-  #blobURL = null; // Blob URL for web workers
   #state = {
     userPlayerName: 'You',
     opponentPlayerName: 'Opponent',
@@ -140,12 +139,6 @@ export class MultiplayerGame extends HTMLElement {
       this.#pongSocket = null;
     }
 
-    // Clean up blob URL
-    if (this.#blobURL) {
-      URL.revokeObjectURL(this.#blobURL);
-      this.#blobURL = null;
-    }
-
     // Dispose Three.js objects properly
     this.disposeThreeJS();
 
@@ -212,6 +205,7 @@ export class MultiplayerGame extends HTMLElement {
    */
   handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
     const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 1;
+    console.log(ourBumperIndex);
 
     // Change actions with smooth transitions (exactly like Game.js)
     if (currentAction != nextAction && ourBumper.gltfStore?.action) {
@@ -479,17 +473,15 @@ export class MultiplayerGame extends HTMLElement {
       }
 
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-        clientState.movesLeft = true;
+        if (clientState.bumper?.dirZ > 0) clientState.movesLeft = true;
+        else clientState.movesRight = true;
         // Handle animations for player models
-        if (clientState.bumper?.gltfStore?.action && clientState.bumper?.gltfStore?.action[0]) {
-          this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 0, 0.1);
-        }
+        this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 0, 0.1);
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-        clientState.movesRight = true;
+        if (clientState.bumper?.dirZ > 0) clientState.movesRight = true;
+        else clientState.movesLeft = true;
         // Handle animations for player models
-        if (clientState.bumper?.gltfStore?.action && clientState.bumper?.gltfStore?.action[5]) {
-          this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 5, 0.1);
-        }
+        this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 5, 0.1);
       }
 
       e.preventDefault();
@@ -508,17 +500,15 @@ export class MultiplayerGame extends HTMLElement {
       }
 
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-        clientState.movesLeft = false;
+        if (clientState.bumper?.dirZ > 0) clientState.movesLeft = false;
+        else clientState.movesRight = false;
         // Return to idle animation
-        if (clientState.bumper?.gltfStore?.action && clientState.bumper?.gltfStore?.action[2]) {
-          this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 2, 0.5);
-        }
+        this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 2, 0.5);
       } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-        clientState.movesRight = false;
+        if (clientState.bumper?.dirZ > 0) clientState.movesRight = false;
+        else clientState.movesLeft = false;
         // Return to idle animation
-        if (clientState.bumper?.gltfStore?.action && clientState.bumper?.gltfStore?.action[2]) {
-          this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 2, 0.5);
-        }
+        this.handleAnimations(clientState.bumper, clientState.bumper.currentAction, 2, 0.5);
       }
 
       e.preventDefault();
@@ -561,6 +551,8 @@ export class MultiplayerGame extends HTMLElement {
     const BUMPER_SPEED_PER_SECOND = 15.0; // Bumper movement speed
     const BALL_INITIAL_VELOCITY = 0.25; // Initial ball velocity
     const SPEED_DECREASE_ENEMY_FACTOR = 0.5; // Speed reduction factor for debuffs
+    const handleAnimations = this.handleAnimations.bind(this);
+    const modelRotation = this.modelRotation;
 
     // Network simulation constants
     const SERVER_TICK_RATE = 30;
@@ -635,6 +627,9 @@ export class MultiplayerGame extends HTMLElement {
       scene.add(modelGenerated);
       return modelGenerated;
     };
+
+    let carboardModels = [];
+    const carboardModelStates = [carboard, carboard2, carboard3];
 
     // Environment setup - Background elements for immersive experience
 
@@ -719,6 +714,11 @@ export class MultiplayerGame extends HTMLElement {
     createHill(-100, 300, 50, 20);
     createHill(280, 200, 80, 35);
     createHill(-250, 220, 65, 22);
+    createHill(-180, -250, 60, 25);
+    createHill(150, -280, 70, 30);
+    createHill(-100, -300, 50, 20);
+    createHill(280, -200, 80, 35);
+    createHill(-250, -220, 65, 22);
 
     // Create textured ground plane
     (() => {
@@ -742,48 +742,6 @@ export class MultiplayerGame extends HTMLElement {
       planeMesh.receiveShadow = true;
       scene.add(planeMesh);
     })();
-
-    // Enhanced player model with better positioning
-    // const playerglb = (() => {
-    //   const pedroModel = new THREE.Object3D();
-    //   this.loaderModel.load(
-    //     pedro,
-    //     function (gltf) {
-    //       const model = gltf.scene;
-    //       model.position.y = 7;
-    //       model.position.z = 0;
-    //       model.position.x = 0;
-
-    //       // Configure shadows for the model
-    //       model.traverse((node) => {
-    //         if (node.isMesh) {
-    //           node.castShadow = true;
-    //           node.receiveShadow = true;
-    //         }
-    //       });
-
-    //       mixer = new THREE.AnimationMixer(model);
-    //       const idleAction = mixer
-    //         .clipAction(THREE.AnimationUtils.subclip(gltf.animations[0], 'idle', 0, 221))
-    //         .setDuration(6)
-    //         .play();
-    //       const idleAction2 = mixer
-    //         .clipAction(THREE.AnimationUtils.subclip(gltf.animations[1], 'idle', 0, 221))
-    //         .setDuration(6)
-    //         .play();
-    //       idleAction.play();
-    //       idleAction2.play();
-    //       pedroModel.add(gltf.scene);
-    //     },
-    //     undefined,
-    //     function (error) {
-    //       console.error('Failed to load player model:', error);
-    //     },
-    //   );
-    //   pedroModel.scale.set(0.1, 0.1, 0.1);
-    //   scene.add(pedroModel);
-    //   return pedroModel;
-    // })();
 
     // Enhanced coin with 3D model (with fallback to geometry)
     const Coin = await (async (posX, posY, posZ) => {
@@ -851,7 +809,7 @@ export class MultiplayerGame extends HTMLElement {
         velocity,
         temporalSpeed,
       };
-    })(0, 1, 0);
+    })(0, 0, 0);
 
     // Create boundary fences around the playing field
     const WallFactory = async (posX, posY, posZ) => {
@@ -876,16 +834,18 @@ export class MultiplayerGame extends HTMLElement {
     ]);
 
     // Enhanced Bumper Factory with multiple furniture models (exactly like Game.js)
-    const gameOptions = this.#state.gameOptions;
-    console.log(gameOptions.cool_mode);
+    // This will be called after game options are received
     const BumperFactory = async (posX, posY, posZ) => {
+      const isGameCool = this.#state.gameOptions.cool_mode;
+      console.log('Cool mode enabled:', isGameCool);
+
       let _ = {};
       let modelsGlb;
       let animations = [];
       _.action = [null, null, null, null, null, null, null, null];
 
       const tableGlb = await modelCreate(0.04, 0.45, 0, 0.48, 0.5, 0.5, table);
-      if (gameOptions.cool_mode == true) {
+      if (isGameCool == true) {
         const dressingGlb = await modelCreate(0.3, 0, 0, 0.7, 0.3031, 0.6788, dressing);
         const couchGlb = await modelCreate(0.5, -2.0795, -7.8925, 1.4, 1, 1.23, couch);
         const chairGlb = await modelCreate(-0.1, 0.42, -0.1, 1.35, 0.9, 1.2, chair);
@@ -1029,29 +989,8 @@ export class MultiplayerGame extends HTMLElement {
       };
     };
 
-    // Create enhanced bumpers with 3D models
-    const Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
-
-    // Create invisible collision walls (visual fences already created above)
-    const InvisibleWallFactory = (posX, posY, posZ) => {
-      const wallGeometry = new THREE.BoxGeometry(20, 5, 1);
-      const wallMaterial = new THREE.MeshBasicMaterial({ visible: false }); // Invisible collision walls
-      const wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
-      wallMesh.position.x = posX;
-      wallMesh.position.y = posY;
-      wallMesh.position.z = posZ;
-      wallMesh.rotation.y = -Math.PI / 2;
-      scene.add(wallMesh);
-
-      return {
-        wallMesh,
-      };
-    };
-    /* eslint-disable-next-line new-cap */
-    const Walls = [
-      InvisibleWallFactory(WALL_LEFT_X, BUMPER_LENGTH_HALF, 0),
-      InvisibleWallFactory(WALL_RIGHT_X, BUMPER_LENGTH_HALF, 0),
-    ];
+    // Bumpers will be created after game options are received
+    let Bumpers = null;
 
     // Enhanced playing field - already created above with textured ground
 
@@ -1077,7 +1016,7 @@ export class MultiplayerGame extends HTMLElement {
         velocity: { x: 0, z: 0 },
         temporal_speed: { x: 1, z: 1 },
       },
-      coin: { x: -9.25, z: 1 },
+      coin: { x: -100, z: 1 },
       current_buff_or_debuff: 0,
       current_buff_or_debuff_remaining_time: 0.0,
       is_someone_scored: false,
@@ -1268,6 +1207,7 @@ export class MultiplayerGame extends HTMLElement {
     }
 
     const resetAllBuffEffects = () => {
+      if (!Bumpers) return;
       for (let i = 0; i < Bumpers.length; i++) {
         const bumper = Bumpers[i];
 
@@ -1367,6 +1307,8 @@ export class MultiplayerGame extends HTMLElement {
     }
 
     const applyBuffEffects = () => {
+      if (!Bumpers) return;
+
       if (serverState.current_buff_or_debuff === Buff.NO_BUFF) {
         resetAllBuffEffects();
         this.buffIconElement?.hide();
@@ -1438,7 +1380,7 @@ export class MultiplayerGame extends HTMLElement {
     });
 
     let data;
-    this.#pongSocket.addEventListener('message', (e) => {
+    this.#pongSocket.addEventListener('message', async (e) => {
       data = JSON.parse(e.data);
       switch (data.action) {
         case 'state_updated':
@@ -1457,23 +1399,52 @@ export class MultiplayerGame extends HTMLElement {
           clientState.playerId = data.player_id;
           clientState.playerNumber = data.player_number;
           clientState.enemyNumber = data.player_number == 1 ? 2 : 1;
-          clientState.bumper = Bumpers[clientState.playerNumber - 1];
-          clientState.enemyBumper = Bumpers[clientState.enemyNumber - 1];
-          camera.position.set(0, 15, -20);
-          camera.lookAt(new THREE.Vector3(0, 0, 0));
-          clientState.playerNumber === 1
-            ? this.scoreElement?.setNames(this.#state.userPlayerName, this.#state.opponentPlayerName)
-            : this.scoreElement?.setNames(this.#state.opponentPlayerName, this.#state.userPlayerName);
-          this.timerElement?.setInitialTimeLimit(data.settings.time_limit * 60);
-          this.timerElement?.render();
+
+          // Set game options first
           this.#state.gameOptions = data.settings;
-          console.log(this.#state.gameOptions);
           const gameSpeed = {
             slow: 0.75,
             medium: 1.0,
             fast: 1.25,
           };
           this.#state.gameOptions.game_speed = gameSpeed[this.#state.gameOptions.game_speed];
+
+          // Now create bumpers with the correct game options
+          if (!Bumpers) {
+            Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
+          }
+
+          clientState.bumper = Bumpers[clientState.playerNumber - 1];
+          clientState.enemyBumper = Bumpers[clientState.enemyNumber - 1];
+
+          // Set camera position based on player position
+          if (Bumpers[clientState.playerNumber - 1].dirZ < 0) {
+            camera.position.set(0, 12, 20);
+          } else {
+            camera.position.set(0, 12, -20);
+          }
+          camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+          // Create cardboard models if not already created
+          if (carboardModels.length === 0) {
+            const carboardRotationY = Bumpers[clientState.playerNumber - 1].dirZ < 0 ? -(pi / 2) : pi / 2;
+
+            for (let i = 0; i <= 2; i++) {
+              const carboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, carboardModelStates[i]);
+              carboardGlb.rotateY(carboardRotationY);
+              carboardModels.push(carboardGlb);
+            }
+            // Initially show only the first cardboard sign
+            carboardModels[1].visible = false;
+            carboardModels[2].visible = false;
+          }
+
+          clientState.playerNumber === 1
+            ? this.scoreElement?.setNames(this.#state.userPlayerName, this.#state.opponentPlayerName)
+            : this.scoreElement?.setNames(this.#state.opponentPlayerName, this.#state.userPlayerName);
+          this.timerElement?.setInitialTimeLimit(this.#state.gameOptions.time_limit * 60);
+          this.timerElement?.render();
+
           // Update bumper speeds with game speed multiplier
           if (clientState.bumper) {
             clientState.bumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
@@ -1580,8 +1551,16 @@ export class MultiplayerGame extends HTMLElement {
       }
 
       const interpolatedOpponentPos = getInterpolated(ENTITY_KEYS.OPPONENT, renderTime);
-      if (interpolatedOpponentPos !== null) {
+      if (interpolatedOpponentPos !== null && clientState.enemyBumper.playerGlb) {
+        if (clientState.enemyBumper.cubeUpdate.x - interpolatedOpponentPos < 0) {
+          handleAnimations(clientState.enemyBumper, clientState.enemyBumper.currentAction, 0, 0.1);
+        } else if (clientState.enemyBumper.cubeUpdate.x - interpolatedOpponentPos == 0) {
+          handleAnimations(clientState.enemyBumper, clientState.enemyBumper.currentAction, 2, 0.5);
+        } else {
+          handleAnimations(clientState.enemyBumper, clientState.enemyBumper.currentAction, 5, 0.1);
+        }
         clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
+        clientState.enemyBumper.playerGlb.position.x = interpolatedOpponentPos;
       }
       // Update enemy bumper position (both table and player models)
       if (
@@ -1607,6 +1586,11 @@ export class MultiplayerGame extends HTMLElement {
       const interpolatedPlayerPos = getInterpolated(ENTITY_KEYS.PLAYER, renderTime);
       const playerBumper = clientState.bumper;
       const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
+      if (playerBumper.playerGlb.position.z < 0) {
+        clientState.bumper.playerGlb.position.x = playerVisualX + 1;
+      } else {
+        clientState.bumper.playerGlb.position.x = playerVisualX - 1;
+      }
 
       if (playerBumper.modelsGlb && playerBumper.modelsGlb[playerBumper.modelChoosen || 0]) {
         playerBumper.modelsGlb[playerBumper.modelChoosen || 0].position.set(
@@ -1638,17 +1622,6 @@ export class MultiplayerGame extends HTMLElement {
         if (!(clientState.movesLeft && clientState.movesRight)) {
           const newX = predictPlayerPosition();
           clientState.bumper.cubeUpdate.x = newX;
-          // Update all visible models position
-          if (clientState.bumper.modelsGlb && clientState.bumper.modelsGlb[clientState.bumper.modelChoosen || 0]) {
-            clientState.bumper.modelsGlb[clientState.bumper.modelChoosen || 0].position.x = newX;
-          }
-          // Adjust player model position relative to bumper
-          let dirZ = clientState.bumper.playerGlb.position.z;
-          if (dirZ < 0) {
-            clientState.bumper.playerGlb.position.x = newX + 1;
-          } else {
-            clientState.bumper.playerGlb.position.x = newX - 1;
-          }
           updatePlayerBuffer(newX, timestamp);
         }
         accumulator -= SERVER_TICK_INTERVAL;
@@ -1660,10 +1633,10 @@ export class MultiplayerGame extends HTMLElement {
       if (mixer) {
         mixer.update(deltaAnimation);
       }
-      if (Bumpers[0]?.gltfStore?.mixer) {
+      if (Bumpers && Bumpers[0]?.gltfStore?.mixer) {
         Bumpers[0].gltfStore.mixer.update(deltaAnimation);
       }
-      if (Bumpers[1]?.gltfStore?.mixer) {
+      if (Bumpers && Bumpers[1]?.gltfStore?.mixer) {
         Bumpers[1].gltfStore.mixer.update(deltaAnimation);
       }
       renderer.render(scene, camera);
