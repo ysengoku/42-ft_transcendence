@@ -5,11 +5,11 @@ It provides a client-side routing system for single-page applications (SPA), map
 
 ## Overview
 
-- Maps URL paths to components.
+- Maps URL paths to corresponding components.
 - Supports both static (e.g., `/home`) and dynamic routes (e.g., `/profile/:id`).
-- Dynamically renders components.
+- Dynamically renders components based on the current route.
 - Updates browser history using `pushState` and `replaceState`.
-- Supports browser back/forward navigation.
+- Supports browser back/forward navigation by listening to the `popstate` event.
 
 ## Router Flow: From Navigation to Component Rendering
 
@@ -22,7 +22,9 @@ config:
 ---
 flowchart TD
     A(["User navigates or clicks link"])
+    A2(["User presses Back/Forward button"])
     B("**navigate()** <br/> **redirect()** <br/> **handleLinkClick()**")
+    B2("**handlePopstate()**")
     C("**handleRoute()**")
     D(["Render <br/> 'page-not-found' component"])
     E["Is route dynamic?"]
@@ -40,7 +42,9 @@ flowchart TD
     Z(["Append component <br/> to **#content**"])
 
     A --> B
+    A2 --> B2
     B --> C
+    B2 --> C
     C -- No matched route found --> D
     C -- Route found ---> E
     E -- Yes --> F
@@ -60,6 +64,7 @@ flowchart TD
     H@{ shape: text}
     L@{ shape: text}
      B:::Ash
+     B2:::Ash
      C:::Ash
      F:::Ash
      G:::Ash
