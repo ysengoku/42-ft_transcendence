@@ -367,7 +367,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
         elif bracket.winner == bracket.participant1.profile:
             await TournamentWorkerConsumer.disconnect_user(p2_id)
         else:
-            await TournamentWorkerConsumer.disconnect_user(p2_id)
+            await TournamentWorkerConsumer.disconnect_user(p1_id)
 
     @staticmethod
     async def send_match_result(tournament_id, bracket):
