@@ -48,7 +48,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
                     lambda: current_round.brackets.filter(status=Bracket.ONGOING).exists(),
                 )()
                 if not has_ongoing_brackets:
-                    await TournamentWorkerConsumer.set_round_finished(current_round)
+                    await current_round.set_finished()
                     await TournamentWorkerConsumer.prepare_round(tournament_id)
             else:
                 logger.info("No player connected to tournament games : cancelling tournament")
@@ -89,20 +89,6 @@ class TournamentWorkerConsumer(AsyncConsumer):
             },
         )
 
-    @database_sync_to_async
-    def set_round_ongoing(self, new_round):
-        with transaction.atomic():
-            if new_round.status == Round.ONGOING:
-                return True
-            new_round.status = Round.ONGOING
-            new_round.save(update_fields=["status"])
-            return False
-
-    @database_sync_to_async
-    def set_round_finished(self, current_round):
-        with transaction.atomic():
-            current_round.status = Round.FINISHED
-            current_round.save(update_fields=["status"])
 
     @staticmethod
     async def prepare_round(tournament_id, event=None):
@@ -132,7 +118,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
             await TournamentWorkerConsumer.end_tournament(tournament, participants)
             return
         new_round = await database_sync_to_async(lambda: tournament.get_current_round(round_number))()
-        round_already_prepared = await TournamentWorkerConsumer.set_round_ongoing(new_round)
+        round_already_prepared = await new_round.set_ongoing()
         if round_already_prepared:
             await TournamentWorkerConsumer.send_start_round_message(tournament_id, round_number, new_round)
             return
@@ -176,13 +162,14 @@ class TournamentWorkerConsumer(AsyncConsumer):
                 bracket.winner = bracket.participant1 if bracket.participant2.excluded else bracket.participant2
                 bracket.save(update_fields=["status", "winner"])
 
-    def create_tournament_game_room(self, p2, settings):
+    @staticmethod
+    def create_tournament_game_room(p1, p2, settings):
         gameroom: GameRoom = GameRoom.objects.create(status=GameRoom.ONGOING)
-        gameroom.add_player(self.profile)
+        gameroom.add_player(p1.profile)
         gameroom.add_player(p2.profile)
         gameroom.settings = settings
         gameroom.save(update_fields=["settings"])
-        if self.excluded or p2.excluded:
+        if p1.excluded or p2.excluded:
             gameroom.status = GameRoom.CLOSED
             gameroom.save(update_fields=["status"])
         return gameroom
@@ -280,11 +267,6 @@ class TournamentWorkerConsumer(AsyncConsumer):
         data = {"alias": alias, "avatar": avatar}
         await TournamentWorkerConsumer.send_group_message(tournament_id, "new_registration", data)
 
-    @database_sync_to_async
-    def cancel_tournament_transaction(self, tournament):
-        with transaction.atomic():
-            tournament.status = Tournament.CANCELLED
-            tournament.save(update_fields=["status"])
 
     @staticmethod
     async def tournament_canceled(tournament_id, data=None):
@@ -294,7 +276,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
         except Tournament.DoesNotExist:
             logger.warning("This tournament does not exist")
             return
-        await TournamentWorkerConsumer.cancel_tournament_transaction(tournament)
+        await tournament.cancel_tournament()
         data = {"tournament_id": str(tournament_id), "tournament_name": tournament_name}
         await TournamentWorkerConsumer.send_group_message(tournament_id, "tournament_canceled", data)
 
@@ -359,8 +341,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
         )()
         if not has_ongoing_or_pending_bracket:
             logger.info("Round finished for tournament : %s", tournament.name)
-            last_round.status = Round.FINISHED
-            await database_sync_to_async(last_round.save)(update_fields=["status"])
+            await last_round.set_finished()
             data = {"tournament_id": str(self)}
             await TournamentWorkerConsumer.send_group_message(self, "round_end", data)
             await TournamentWorkerConsumer.prepare_round(self)
@@ -386,7 +367,7 @@ class TournamentWorkerConsumer(AsyncConsumer):
         elif bracket.winner == bracket.participant1.profile:
             await TournamentWorkerConsumer.disconnect_user(p2_id)
         else:
-            await TournamentWorkerConsumer.disconnect_user(p2_id)
+            await TournamentWorkerConsumer.disconnect_user(p1_id)
 
     @staticmethod
     async def send_match_result(tournament_id, bracket):
