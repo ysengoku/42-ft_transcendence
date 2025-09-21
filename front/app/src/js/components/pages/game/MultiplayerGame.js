@@ -19,12 +19,29 @@ import table from '/3d_models/table.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
-import { sessionExpiredToast } from '@utils';
 import './components/index';
 import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
-import { DEFAULT_AVATAR } from '@env';
 
 /* eslint no-var: "off" */
+
+/**
+ * Standardized error logging utility
+ */
+const GameLogger = {
+  error: (context, message, error = null) => {
+    console.error(`[MultiplayerGame:${context}] ERROR: ${message}`, error || '');
+  },
+  warn: (context, message) => {
+    console.warn(`[MultiplayerGame:${context}] WARNING: ${message}`);
+  },
+  info: (context, message) => {
+    console.log(`[MultiplayerGame:${context}] INFO: ${message}`);
+  },
+  debug: (context, message) => {
+    console.log(`[MultiplayerGame:${context}] DEBUG: ${message}`);
+  },
+};
+
 
 /**
  * MultiplayerGame Component - 3D Multiplayer Pong Game Implementation
@@ -52,8 +69,25 @@ export class MultiplayerGame extends HTMLElement {
     user: null,
   };
 
+  /**
+   * Convert degrees to radians
+   * @param {number} degrees - Angle in degrees
+   * @returns {number} Angle in radians
+   */
+  degreesToRadians(degrees) {
+    return degrees * (Math.PI / 180);
+  }
+
   constructor() {
     super();
+
+    // Predefined rotation angles for player models
+    this.modelRotation = [
+      // Player 1 rotations: [table, couch, chair, dressing]
+      [this.degreesToRadians(235), this.degreesToRadians(-90), this.degreesToRadians(235), this.degreesToRadians(-90)],
+      // Player 2 rotations: [table, couch, chair, dressing]  
+      [this.degreesToRadians(55), this.degreesToRadians(90), this.degreesToRadians(55), this.degreesToRadians(90)],
+    ];
 
     // Initialize UI element references
     this.timerElement = null; // Game timer display
@@ -61,12 +95,6 @@ export class MultiplayerGame extends HTMLElement {
     this.scoreElement = null; // Scoreboard component
     this.lifePointElement = null; // Life points display
     this.overlay = null; // Game overlay for messages
-
-    // Predefined rotation angles for player models
-    this.modelRotation = [
-      [this.degreesToRadians(235), this.degreesToRadians(-90)], // Player 1 rotations
-      [this.degreesToRadians(55), this.degreesToRadians(90)], // Player 2 rotations
-    ];
   }
 
   async setParam(param) {
@@ -82,14 +110,21 @@ export class MultiplayerGame extends HTMLElement {
     const navbar = document.querySelector('.navbar');
     this.#navbarHeight = navbar ? navbar.offsetHeight : 64;
 
-    this.scoreElement = document.createElement('game-scoreboard');
-    this.appendChild(this.scoreElement);
-    this.timerElement = document.createElement('game-timer');
-    document.getElementById('game-timer-wrapper')?.appendChild(this.timerElement);
-    this.buffIconElement = document.createElement('game-buff-icon');
-    this.appendChild(this.buffIconElement);
-    this.lifePointElement = document.createElement('game-life-point');
-    this.appendChild(this.lifePointElement);
+    // Initialize UI elements using helper method
+    this.createUIElement('scoreElement', 'game-scoreboard');
+
+    // Create game timer with error handling
+    const timerWrapper = document.getElementById('game-timer-wrapper');
+    if (timerWrapper) {
+      this.createUIElement('timerElement', 'game-timer', null, timerWrapper);
+      GameLogger.debug('UIInit', 'Timer appended to wrapper');
+    } else {
+      GameLogger.warn('UIInit', 'Timer wrapper not found, creating timer in game element');
+      this.createUIElement('timerElement', 'game-timer');
+    }
+
+    this.createUIElement('buffIconElement', 'game-buff-icon');
+    this.createUIElement('lifePointElement', 'game-life-point');
 
     this.#state.gameId = param.id;
     await this.render();
@@ -109,140 +144,328 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   /**
+   * Shared material system for memory optimization
+   * Reuses materials to reduce GPU memory usage
+   */
+  initSharedMaterials() {
+    this.sharedMaterials = {
+      // Common materials used throughout the scene
+      hillMaterial: new THREE.MeshPhongMaterial({ color: 0x3a251a }),
+      cactusBaseMaterial: new THREE.MeshPhongMaterial({ color: 0x228B22 }),
+      shadowMaterial: new THREE.ShadowMaterial({ opacity: 0.3 }),
+      
+      // Get or create shared material
+      get: (type, options = {}) => {
+        const key = `${type}_${JSON.stringify(options)}`;
+        if (!this.sharedMaterials[key]) {
+          switch (type) {
+            case 'phong':
+              this.sharedMaterials[key] = new THREE.MeshPhongMaterial(options);
+              break;
+            case 'basic':
+              this.sharedMaterials[key] = new THREE.MeshBasicMaterial(options);
+              break;
+            case 'lambert':
+              this.sharedMaterials[key] = new THREE.MeshLambertMaterial(options);
+              break;
+            default:
+              this.sharedMaterials[key] = new THREE.MeshPhongMaterial(options);
+          }
+        }
+        return this.sharedMaterials[key];
+      },
+      
+      // Dispose all shared materials
+      dispose: () => {
+        Object.values(this.sharedMaterials).forEach(material => {
+          if (material && material.dispose) {
+            material.dispose();
+          }
+        });
+        this.sharedMaterials = null;
+      }
+    };
+    
+    GameLogger.info('MaterialSystem', 'Shared material system initialized');
+  }
+
+  /**
+   * Performance optimization system for 3D rendering
+   * Manages object visibility and frustum culling
+   */
+  initRenderOptimizations(camera, scene) {
+    this.renderOptimizer = {
+      frustum: new THREE.Frustum(),
+      cameraMatrix: new THREE.Matrix4(),
+      staticObjects: [], // Objects that don't move (cacti, hills, walls)
+      dynamicObjects: [], // Objects that move (players, ball, coin)
+      lastCullCheck: 0,
+      cullInterval: 100, // Check visibility every 100ms instead of every frame
+      
+      // Helper function to extract all meshes from an object
+      extractMeshes: (object) => {
+        const meshes = [];
+        object.traverse((child) => {
+          if (child.isMesh && child.geometry) {
+            meshes.push(child);
+          }
+        });
+        return meshes;
+      },
+
+      // Register static objects for culling
+      registerStatic: (object, type = 'static') => {
+        const meshes = this.renderOptimizer.extractMeshes(object);
+        meshes.forEach(mesh => {
+          this.renderOptimizer.staticObjects.push({ object: mesh, type, lastVisible: true });
+        });
+      },
+      
+      // Register dynamic objects for culling  
+      registerDynamic: (object, type = 'dynamic') => {
+        const meshes = this.renderOptimizer.extractMeshes(object);
+        meshes.forEach(mesh => {
+          this.renderOptimizer.dynamicObjects.push({ object: mesh, type, lastVisible: true });
+        });
+      },
+      
+      // Perform frustum culling
+      updateVisibility: (camera, forceUpdate = false) => {
+        const now = performance.now();
+        if (!forceUpdate && now - this.renderOptimizer.lastCullCheck < this.renderOptimizer.cullInterval) {
+          return;
+        }
+        
+        this.renderOptimizer.lastCullCheck = now;
+        this.renderOptimizer.cameraMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+        this.renderOptimizer.frustum.setFromProjectionMatrix(this.renderOptimizer.cameraMatrix);
+        
+        // Cull static objects (less frequently)
+        this.renderOptimizer.staticObjects.forEach(item => {
+          const wasVisible = item.lastVisible;
+          const isVisible = this.renderOptimizer.frustum.intersectsObject(item.object);
+          
+          if (wasVisible !== isVisible) {
+            item.object.visible = isVisible;
+            item.lastVisible = isVisible;
+          }
+        });
+        
+        // Always check dynamic objects (they move frequently)
+        this.renderOptimizer.dynamicObjects.forEach(item => {
+          item.object.visible = this.renderOptimizer.frustum.intersectsObject(item.object);
+        });
+      },
+      
+      // Get performance stats
+      getStats: () => {
+        const staticVisible = this.renderOptimizer.staticObjects.filter(item => item.lastVisible).length;
+        const staticTotal = this.renderOptimizer.staticObjects.length;
+        const dynamicVisible = this.renderOptimizer.dynamicObjects.filter(item => item.object.visible).length;
+        const dynamicTotal = this.renderOptimizer.dynamicObjects.length;
+        
+        return {
+          staticVisible,
+          staticTotal, 
+          dynamicVisible,
+          dynamicTotal,
+          totalVisible: staticVisible + dynamicVisible,
+          totalObjects: staticTotal + dynamicTotal
+        };
+      }
+    };
+    
+    GameLogger.info('RenderOptimizer', 'Frustum culling system initialized');
+  }
+
+  /**
    * Comprehensive cleanup of all game resources
    */
   cleanup() {
-    // Cancel animation frame
-    if (this.#animationId) {
-      cancelAnimationFrame(this.#animationId);
-      this.#animationId = null;
+    GameLogger.info('Cleanup', 'Starting comprehensive multiplayer cleanup...');
+
+    try {
+      // Cancel animation frame
+      if (this.#animationId) {
+        cancelAnimationFrame(this.#animationId);
+        this.#animationId = null;
+        GameLogger.debug('Cleanup', 'Animation frame cancelled');
+      }
+
+      // Remove event listeners
+      if (this.onDocumentKeyDown) {
+        document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+        this.onDocumentKeyDown = null;
+        GameLogger.debug('Cleanup', 'Keydown listener removed');
+      }
+      if (this.onDocumentKeyUp) {
+        document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+        this.onDocumentKeyUp = null;
+        GameLogger.debug('Cleanup', 'Keyup listener removed');
+      }
+      if (this.#resizeHandler) {
+        window.removeEventListener('resize', this.#resizeHandler);
+        this.#resizeHandler = null;
+        GameLogger.debug('Cleanup', 'Resize listener removed');
+      }
+
+      // Close WebSocket connection
+      if (this.#pongSocket) {
+        GameLogger.info('Network', 'Closing WebSocket connection');
+        this.#pongSocket.close();
+        this.#pongSocket = null;
+        GameLogger.debug('Cleanup', 'WebSocket connection closed');
+      }
+
+      // Clean up UI elements
+      this.cleanupUIElements();
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during initial cleanup phase', error);
     }
 
-    // Remove event listeners
-    if (this.onDocumentKeyDown) {
-      document.removeEventListener('keydown', this.onDocumentKeyDown, true);
-      this.onDocumentKeyDown = null;
-    }
-    if (this.onDocumentKeyUp) {
-      document.removeEventListener('keyup', this.onDocumentKeyUp, true);
-      this.onDocumentKeyUp = null;
-    }
-    if (this.#resizeHandler) {
-      window.removeEventListener('resize', this.#resizeHandler);
-      this.#resizeHandler = null;
-    }
+    try {
+      // Dispose Three.js objects properly
+      this.disposeThreeJS();
 
-    // Close WebSocket connection
-    if (this.#pongSocket) {
-      console.log('Closing pongSocket');
-      this.#pongSocket.close();
-      this.#pongSocket = null;
-    }
+      // Dispose shared materials
+      if (this.sharedMaterials) {
+        this.sharedMaterials.dispose();
+        GameLogger.debug('Cleanup', 'Shared materials disposed');
+      }
 
-    // Dispose Three.js objects properly
-    this.disposeThreeJS();
+      // Clean up loaders
+      if (this.#ktx2Loader) {
+        this.#ktx2Loader.dispose();
+        this.#ktx2Loader = null;
+        GameLogger.debug('Cleanup', 'KTX2 loader disposed');
+      }
+      if (this.loaderModel) {
+        this.loaderModel = null;
+        GameLogger.debug('Cleanup', 'Model loader cleared');
+      }
 
-    // Clean up loaders
-    if (this.#ktx2Loader) {
-      this.#ktx2Loader.dispose();
-      this.#ktx2Loader = null;
-    }
-    if (this.loaderModel) {
-      this.loaderModel = null;
+      GameLogger.info('Cleanup', 'Multiplayer cleanup completed successfully');
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during final cleanup phase', error);
     }
   }
 
   /**
-   * Dispose of all Three.js resources to prevent memory leaks
+   * Comprehensive Three.js object disposal to prevent memory leaks
    */
   disposeThreeJS() {
-    if (!this.scene) return;
-
-    // Dispose all scene objects recursively
-    this.scene.traverse((object) => {
-      if (object.geometry) {
-        object.geometry.dispose();
+    try {
+      GameLogger.info('Cleanup', 'Starting Three.js object disposal...');
+      
+      // Dispose all registered objects in render optimizer
+      if (this.renderOptimizer) {
+        [...this.renderOptimizer.staticObjects, ...this.renderOptimizer.dynamicObjects].forEach(item => {
+          this.disposeObject3D(item.object);
+        });
+        
+        // Clear optimizer arrays
+        this.renderOptimizer.staticObjects = [];
+        this.renderOptimizer.dynamicObjects = [];
+        this.renderOptimizer = null;
+        GameLogger.debug('Cleanup', 'Render optimizer disposed');
       }
-      if (object.material) {
-        if (Array.isArray(object.material)) {
-          object.material.forEach((material) => this.disposeMaterial(material));
-        } else {
-          this.disposeMaterial(object.material);
-        }
+      
+      // Dispose scene objects if scene exists
+      if (this.scene) {
+        this.scene.traverse((object) => {
+          this.disposeObject3D(object);
+        });
+        
+        this.scene.clear();
+        this.scene = null;
+        GameLogger.debug('Cleanup', 'Scene disposed');
       }
-    });
-
-    // Clear scene
-    while (this.scene.children.length > 0) {
-      this.scene.remove(this.scene.children[0]);
+      
+      // Dispose renderer
+      if (this.renderer) {
+        this.renderer.dispose();
+        this.renderer.forceContextLoss();
+        this.renderer.domElement.remove();
+        this.renderer = null;
+        GameLogger.debug('Cleanup', 'Renderer disposed');
+      }
+      
+      GameLogger.info('Cleanup', 'Three.js disposal completed');
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during Three.js disposal', error);
     }
-    this.scene = null;
   }
 
   /**
-   * Dispose of a Three.js material and its textures
+   * Dispose individual Three.js object and its resources
+   * @param {THREE.Object3D} object - Object to dispose
+   */
+  disposeObject3D(object) {
+    if (!object) return;
+    
+    // Dispose geometry
+    if (object.geometry) {
+      object.geometry.dispose();
+    }
+    
+    // Dispose material(s)
+    if (object.material) {
+      if (Array.isArray(object.material)) {
+        object.material.forEach(material => this.disposeMaterial(material));
+      } else {
+        this.disposeMaterial(object.material);
+      }
+    }
+    
+    // Dispose textures
+    if (object.material?.map) object.material.map.dispose();
+    if (object.material?.normalMap) object.material.normalMap.dispose();
+    if (object.material?.bumpMap) object.material.bumpMap.dispose();
+    if (object.material?.envMap) object.material.envMap.dispose();
+  }
+
+  /**
+   * Dispose Three.js material and its textures
+   * @param {THREE.Material} material - Material to dispose
    */
   disposeMaterial(material) {
     if (!material) return;
-
-    // Dispose textures
-    Object.keys(material).forEach((key) => {
+    
+    // Dispose all textures in material
+    Object.keys(material).forEach(key => {
       const value = material[key];
-      if (value && typeof value.dispose === 'function') {
+      if (value && value.isTexture) {
         value.dispose();
       }
     });
-
+    
     material.dispose();
   }
 
   /**
-   * Handle smooth animation transitions for player models (exactly matching Game.js)
-   * @param {Object} ourBumper - Player object
-   * @param {number} currentAction - Current animation index
-   * @param {number} nextAction - Next animation index
-   * @param {number} fadeTime - Transition duration
+   * Clean up UI elements to prevent memory leaks
    */
-  handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
-    const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 1;
-    console.log(ourBumperIndex);
+  cleanupUIElements() {
+    const uiElements = ['scoreElement', 'timerElement', 'buffIconElement', 'lifePointElement', 'overlay'];
 
-    // Change actions with smooth transitions (exactly like Game.js)
-    if (currentAction != nextAction && ourBumper.gltfStore?.action) {
-      if (ourBumper.gltfStore.action[currentAction]) {
-        ourBumper.gltfStore.action[currentAction].fadeOut(fadeTime);
-      }
-      if (ourBumper.gltfStore.action[nextAction]) {
-        ourBumper.gltfStore.action[nextAction].reset();
-        ourBumper.gltfStore.action[nextAction].fadeIn(fadeTime);
-        ourBumper.gltfStore.action[nextAction].play();
-      }
-      ourBumper.currentAction = nextAction;
-
-      // Update model rotation based on current model and player position (exactly like Game.js)
-      if (ourBumper.playerGlb && this.modelRotation) {
-        if (ourBumper.modelChoosen == 0) {
-          ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][0];
-        } else {
-          ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][1];
+    uiElements.forEach((elementName) => {
+      if (this[elementName]) {
+        if (this[elementName].parentNode) {
+          this[elementName].parentNode.removeChild(this[elementName]);
         }
+        this[elementName] = null;
+        GameLogger.debug('Cleanup', `${elementName} cleaned up`);
       }
-    }
+    });
   }
+
+
+
 
   safeSend(message) {
     if (this.#pongSocket && this.#pongSocket.readyState === WebSocket.OPEN) {
       this.#pongSocket.send(message);
     }
-  }
-
-  /**
-   * Convert degrees to radians
-   * @param {number} degrees - Angle in degrees
-   * @returns {number} Angle in radians
-   */
-  degreesToRadians(degrees) {
-    return degrees * (Math.PI / 180);
   }
 
   /**
@@ -335,47 +558,7 @@ export class MultiplayerGame extends HTMLElement {
     }
   }
 
-  /**
-   * Hide all game UI elements (used during errors or game end)
-   */
-  hideGameUI() {
-    console.log('Hiding game UI');
 
-    const elements = [
-      { element: this.scoreElement, name: 'scoreElement' },
-      { element: this.timerElement, name: 'timerElement' },
-      { element: this.buffIconElement, name: 'buffIconElement' },
-      { element: this.lifePointElement, name: 'lifePointElement' },
-    ];
-
-    elements.forEach(({ element, name }) => {
-      if (element) {
-        element.style.display = 'none';
-        console.log(`Hidden ${name}`);
-      }
-    });
-  }
-
-  /**
-   * Show all game UI elements
-   */
-  showGameUI() {
-    console.log('Showing game UI');
-
-    const elements = [
-      { element: this.scoreElement, name: 'scoreElement' },
-      { element: this.timerElement, name: 'timerElement' },
-      { element: this.buffIconElement, name: 'buffIconElement' },
-      { element: this.lifePointElement, name: 'lifePointElement' },
-    ];
-
-    elements.forEach(({ element, name }) => {
-      if (element) {
-        element.style.display = '';
-        console.log(`Shown ${name}`);
-      }
-    });
-  }
 
   /**
    * Load and configure a 3D model with fallback handling
@@ -396,7 +579,10 @@ export class MultiplayerGame extends HTMLElement {
           modelName,
           resolve,
           (progress) => {
-            console.log(`Loading ${modelName}:`, (progress.loaded / progress.total) * 100 + '%');
+            GameLogger.debug(
+              'ModelLoader',
+              `Loading ${modelName}: ${((progress.loaded / progress.total) * 100).toFixed(1)}%`,
+            );
           },
           reject,
         );
@@ -422,9 +608,10 @@ export class MultiplayerGame extends HTMLElement {
       model.scale.set(scaleX, scaleY, scaleZ);
       modelGenerated.add(model);
 
+      GameLogger.info('ModelLoader', `Successfully loaded model: ${modelName}`);
       return modelGenerated;
     } catch (error) {
-      console.warn(`Failed to load model ${modelName}, using fallback:`, error.message);
+      GameLogger.warn('ModelLoader', `Failed to load model ${modelName}, using fallback`, error);
       return this.createFallbackModel(posX, posY, posZ, scaleX, scaleY, scaleZ);
     }
   }
@@ -454,6 +641,170 @@ export class MultiplayerGame extends HTMLElement {
     const container = new THREE.Object3D();
     container.add(mesh);
     return container;
+  }
+
+  /**
+   * Create optimized fallback player model when pedro model fails to load
+   * @param {number} posX - X position for the player
+   * @param {number} posZ - Z position for the player
+   * @returns {THREE.Object3D} Simple geometric player representation
+   */
+  createFallbackPlayerModel(posX, posZ) {
+    GameLogger.warn('PlayerModel', 'Creating fallback player model');
+
+    // Create a capsule-like player representation
+    const playerModel = new THREE.Object3D();
+
+    // Body (cylinder)
+    const bodyGeometry = new THREE.CylinderGeometry(1, 1, 8, 8);
+    const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x4a4a4a });
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    body.position.set(0, 0.75, 0);
+    body.castShadow = true;
+    body.receiveShadow = true;
+
+    // Assemble the player model
+    playerModel.add(body);
+
+    // Apply scaling and positioning
+    playerModel.scale.set(0.5, 0.5, 0.5);
+    playerModel.position.set(posX, 0, posZ);
+
+    // Set rotation based on position (same logic as pedro model)
+    if (posZ < 0) {
+      playerModel.rotation.y = this.degreesToRadians(55);
+      playerModel.position.z = posZ - 1;
+      playerModel.position.x += 1;
+    } else {
+      playerModel.rotation.y = this.degreesToRadians(235);
+      playerModel.position.z = posZ + 1;
+      playerModel.position.x -= 1;
+    }
+
+    return playerModel;
+  }
+
+  /**
+   * Load pedro player model with optimized fallback protection
+   * @param {number} posX - X position for the player
+   * @param {number} posZ - Z position for the player
+   * @param {THREE.Scene} scene - Scene to add the model to
+   * @returns {Promise<Object>} Player model object with animation support
+   */
+  async loadPedroModelWithFallback(posX, posZ, scene) {
+    const gltfStore = { mixer: null, action: new Array(8).fill(null) };
+    let playerGlb;
+
+    try {
+      GameLogger.info('PlayerModel', 'Loading pedro model...');
+
+      // Load with 8-second timeout
+      const gltf = await Promise.race([
+        new Promise((resolve, reject) => this.loaderModel.load(pedro, resolve, undefined, reject)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)),
+      ]);
+
+      if (gltf?.scene && gltf?.animations?.length > 0) {
+        GameLogger.info('PlayerModel', 'Pedro model loaded successfully');
+
+        // Setup pedro model
+        playerGlb = new THREE.Object3D();
+        const model = gltf.scene;
+
+        // Configure shadows
+        model.traverse((node) => node.isMesh && (node.castShadow = true));
+
+        // Setup animations
+        gltfStore.mixer = new THREE.AnimationMixer(model);
+        gltf.animations.forEach((anim, i) => {
+          if (i < 8) {
+            try {
+              gltfStore.action[i] = gltfStore.mixer.clipAction(anim, model);
+              // Configure specific durations
+              if (i === 1) {
+                gltfStore.action[i].setLoop(THREE.LoopOnce, 1);
+                gltfStore.action[i].setDuration(0.4);
+              } else if ([0, 5, 6, 7].includes(i)) {
+                gltfStore.action[i].setDuration(0.18);
+              }
+            } catch (error) {
+              GameLogger.warn('PlayerModel', `Animation ${i} setup failed`, error);
+            }
+          }
+        });
+
+        // Start idle animation
+        if (gltfStore.action[2]) gltfStore.action[2].play();
+
+        model.position.set(posX, 0, 0);
+        model.scale.set(0.5, 0.5, 0.5);
+        playerGlb.add(model);
+      } else {
+        throw new Error('Invalid model data');
+      }
+    } catch (error) {
+      GameLogger.warn('PlayerModel', 'Using fallback model', error);
+      playerGlb = this.createFallbackPlayerModel(posX, posZ);
+    }
+
+    // Position player based on side
+    if (posZ < 0) {
+      playerGlb.rotation.y = this.degreesToRadians(55);
+      playerGlb.position.z = posZ - 1;
+      playerGlb.position.x += 1;
+    } else {
+      playerGlb.rotation.y = this.degreesToRadians(235);
+      playerGlb.position.z = posZ + 1;
+      playerGlb.position.x -= 1;
+    }
+
+    scene.add(playerGlb);
+    return { playerGlb, gltfStore, currentAction: 2 };
+  }
+
+  /**
+   * Handle optimized animation transitions for player models
+   * @param {Object} ourBumper - Player object
+   * @param {number} currentAction - Current animation index
+   * @param {number} nextAction - Next animation index
+   * @param {number} fadeTime - Transition duration
+   */
+  handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
+    if (!ourBumper?.playerGlb || currentAction === nextAction) return;
+
+    const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 1;
+
+    // Handle animations if pedro model is loaded
+    if (this.isAnimationSystemReady(ourBumper)) {
+      try {
+        const { action } = ourBumper.gltfStore;
+        if (action[currentAction]) action[currentAction].fadeOut(fadeTime);
+        if (action[nextAction]) {
+          action[nextAction].reset().fadeIn(fadeTime).play();
+        }
+      } catch (error) {
+        GameLogger.warn('Animation', `Animation transition failed: ${error.message}`);
+      }
+    }
+
+    // Update action state and rotation
+    ourBumper.currentAction = nextAction;
+    if (this.modelRotation) {
+      try {
+        ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][ourBumper.modelChoosen || 0];
+      } catch (error) {
+        GameLogger.warn('Animation', 'Rotation update failed');
+      }
+    }
+  }
+
+  /**
+   * Check if animation system is ready and pedro model loaded
+   * @param {Object} bumper - Player object to check
+   * @returns {boolean} True if animations are available
+   */
+  isAnimationSystemReady(bumper) {
+    return !!(bumper?.gltfStore?.mixer && bumper.gltfStore.action);
   }
 
   /**
@@ -516,22 +867,100 @@ export class MultiplayerGame extends HTMLElement {
   }
 
   /**
+   * Helper method to create UI elements with optional configuration
+   * @param {string} propName - Property name to store the element
+   * @param {string} tagName - HTML tag name to create
+   * @param {Function} configCallback - Optional configuration function
+   * @param {HTMLElement} parent - Parent element (defaults to this)
+   */
+  createUIElement(propName, tagName, configCallback = null, parent = this) {
+    if (!this[propName]) {
+      this[propName] = document.createElement(tagName);
+
+      // Apply configuration if provided
+      if (configCallback) {
+        configCallback(this[propName]);
+      }
+
+      // Append to specified parent or default to game element
+      if (parent && parent !== this) {
+        if (!parent.querySelector(tagName)) {
+          parent.appendChild(this[propName]);
+        }
+      } else {
+        this.appendChild(this[propName]);
+      }
+
+      GameLogger.debug('UIInit', `Created ${propName}`);
+    }
+  }
+
+  /**
+   * Hide all game UI elements (used during errors or game end)
+   */
+  hideGameUI() {
+    GameLogger.info('UI', 'Hiding game UI');
+
+    const elements = [
+      { element: this.scoreElement, name: 'scoreElement' },
+      { element: this.timerElement, name: 'timerElement' },
+      { element: this.buffIconElement, name: 'buffIconElement' },
+      { element: this.lifePointElement, name: 'lifePointElement' },
+    ];
+
+    elements.forEach(({ element, name }) => {
+      if (element) {
+        element.style.display = 'none';
+        GameLogger.debug('UI', `Hidden ${name}`);
+      }
+    });
+  }
+
+  /**
+   * Show all game UI elements
+   */
+  showGameUI() {
+    GameLogger.info('UI', 'Showing game UI');
+
+    const elements = [
+      { element: this.scoreElement, name: 'scoreElement' },
+      { element: this.timerElement, name: 'timerElement' },
+      { element: this.buffIconElement, name: 'buffIconElement' },
+      { element: this.lifePointElement, name: 'lifePointElement' },
+    ];
+
+    elements.forEach(({ element, name }) => {
+      if (element) {
+        element.style.display = '';
+        GameLogger.debug('UI', `Shown ${name}`);
+      }
+    });
+  }
+
+  /**
    * Initialize 3D model loaders with optimization support
    * @param {THREE.WebGLRenderer} renderer - WebGL renderer instance
    */
   async initLoaders(renderer) {
     try {
+      GameLogger.info('LoaderInit', 'Initializing 3D model loaders...');
+
       // Set up KTX2 loader for compressed textures
       this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
+      GameLogger.debug('LoaderInit', 'KTX2 loader configured');
 
       // Wait for MeshOpt decoder to be ready
       await MeshoptDecoder.ready;
+      GameLogger.debug('LoaderInit', 'MeshOpt decoder ready');
 
       // Configure GLTF loader with optimizations
       this.loaderModel = new GLTFLoader();
       this.loaderModel.setKTX2Loader(this.#ktx2Loader);
       this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+
+      GameLogger.info('LoaderInit', 'All 3D loaders initialized successfully');
     } catch (error) {
+      GameLogger.error('LoaderInit', 'Failed to initialize 3D loaders', error);
       throw new Error(`Failed to initialize 3D loaders: ${error.message}`);
     }
   }
@@ -552,7 +981,6 @@ export class MultiplayerGame extends HTMLElement {
     const BALL_INITIAL_VELOCITY = 0.25; // Initial ball velocity
     const SPEED_DECREASE_ENEMY_FACTOR = 0.5; // Speed reduction factor for debuffs
     const handleAnimations = this.handleAnimations.bind(this);
-    const modelRotation = this.modelRotation;
 
     // Network simulation constants
     const SERVER_TICK_RATE = 30;
@@ -841,8 +1269,6 @@ export class MultiplayerGame extends HTMLElement {
 
       let _ = {};
       let modelsGlb;
-      let animations = [];
-      _.action = [null, null, null, null, null, null, null, null];
 
       const tableGlb = await modelCreate(0.04, 0.45, 0, 0.48, 0.5, 0.5, table);
       if (isGameCool == true) {
@@ -865,51 +1291,14 @@ export class MultiplayerGame extends HTMLElement {
       } else modelsGlb = [tableGlb];
 
       // Create player model with animation
-      const playerGlb = (() => {
-        const pedroModel = new THREE.Object3D();
-        this.loaderModel.load(
-          pedro,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.x = posX;
-            _.mixer = new THREE.AnimationMixer(model);
-            animations = gltf.animations;
-            for (let i = 0; i <= 7; i++) {
-              _.action[i] = _.mixer.clipAction(animations[i], model);
-            }
-            _.action[1].setLoop(THREE.LoopOnce, 1);
-            _.action[1].setDuration(0.4);
-            _.action[0].setDuration(0.18);
-            _.action[7].setDuration(0.18);
-            _.action[6].setDuration(0.18);
-            _.action[5].setDuration(0.18);
-            _.action[2].play();
-            pedroModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        pedroModel.scale.set(0.5, 0.5, 0.5);
-        scene.add(pedroModel);
-        return pedroModel;
-      })();
+      const playerModelData = await this.loadPedroModelWithFallback(posX, posZ, scene);
+      const playerGlb = playerModelData.playerGlb;
+
+      // Update gltfStore with loaded data
+      _ = playerModelData.gltfStore;
+
       if (posZ < 0) {
-        playerGlb.rotation.y = degreesToRadians(55);
-        playerGlb.position.z = posZ - 1;
-        playerGlb.position.x += 1;
-        tableGlb.rotation.z = Math.PI;
-      } else {
-        playerGlb.rotation.y = degreesToRadians(235);
-        playerGlb.position.z = posZ + 1;
-        playerGlb.position.x -= 1;
+        tableGlb.rotation.z = pi;
       }
 
       modelsGlb.forEach((element) => {
@@ -1035,8 +1424,8 @@ export class MultiplayerGame extends HTMLElement {
       enemyBumper: null,
       pendingInputs: [],
       inputSequenceNumber: 0,
-      playerInterpolationBuffer: [],
-      esntitiesInterpolationBuffer: [],
+      playerInterpolationBuffer: [], // Simple array for player positions
+      esntitiesInterpolationBuffer: [], // Circular buffer for entities
     };
 
     const Buff = {
@@ -1086,19 +1475,17 @@ export class MultiplayerGame extends HTMLElement {
         const input = {
           sequenceNumber,
           action,
-          timestamp: timestamp,
+          timestamp: timestamp
         };
-
+        
         clientState.pendingInputs.push(input);
-
-        this.safeSend(
-          JSON.stringify({
-            action: action,
-            move_id: sequenceNumber,
-            player_id: clientState.playerId,
-            timestamp: timestamp,
-          }),
-        );
+        
+        this.safeSend(JSON.stringify({
+          action: action,
+          move_id: sequenceNumber,
+          player_id: clientState.playerId,
+          timestamp: timestamp
+        }));
       }
     };
 
@@ -1109,14 +1496,14 @@ export class MultiplayerGame extends HTMLElement {
       const opponent = clientState.enemyNumber === 1 ? serverState.bumper_1.x : serverState.bumper_2.x;
       const ball = { x: serverState.ball.x, z: serverState.ball.z };
       const coin = serverState.coin ? { x: serverState.coin.x, z: serverState.coin.z } : null;
-
+      
       const bufferEntry = {
         opponent,
         ball,
         coin,
-        timestamp,
+        timestamp
       };
-
+      
       clientState.esntitiesInterpolationBuffer.push(bufferEntry);
 
       if (clientState.esntitiesInterpolationBuffer.length > 10) {
@@ -1127,9 +1514,9 @@ export class MultiplayerGame extends HTMLElement {
     function updatePlayerBuffer(playerPosition, timestamp) {
       const bufferEntry = {
         position: playerPosition,
-        timestamp,
+        timestamp
       };
-
+      
       clientState.playerInterpolationBuffer.push(bufferEntry);
 
       if (clientState.playerInterpolationBuffer.length > 10) {
@@ -1139,13 +1526,13 @@ export class MultiplayerGame extends HTMLElement {
 
     function getInterpolated(entityKey, renderTime) {
       let interpolationBuffer;
-
+      
       if (entityKey === ENTITY_KEYS.PLAYER) {
         interpolationBuffer = clientState.playerInterpolationBuffer;
       } else {
         interpolationBuffer = clientState.esntitiesInterpolationBuffer;
       }
-
+      
       if (interpolationBuffer.length < 2) {
         if (interpolationBuffer.length === 0) return null;
         return entityKey === ENTITY_KEYS.PLAYER ? interpolationBuffer[0].position : interpolationBuffer[0][entityKey];
@@ -1176,7 +1563,7 @@ export class MultiplayerGame extends HTMLElement {
 
       const fromPosition = entityKey === ENTITY_KEYS.PLAYER ? fromEntry.position : fromEntry[entityKey];
       const toPosition = entityKey === ENTITY_KEYS.PLAYER ? toEntry.position : toEntry[entityKey];
-
+      
       // coin can be null
       if (fromPosition === null && toPosition === null) {
         return null;
@@ -1194,31 +1581,18 @@ export class MultiplayerGame extends HTMLElement {
       }
 
       const alpha = Math.max(0, Math.min(1, (renderTime - fromEntry.timestamp) / timeDiff));
-
+      
       // bumper positions are stored as numbers, ball and coin as objects
       if (typeof fromPosition === 'number') {
         return fromPosition + (toPosition - fromPosition) * alpha;
       } else {
         return {
           x: fromPosition.x + (toPosition.x - fromPosition.x) * alpha,
-          z: fromPosition.z + (toPosition.z - fromPosition.z) * alpha,
+          z: fromPosition.z + (toPosition.z - fromPosition.z) * alpha
         };
       }
     }
 
-    const resetAllBuffEffects = () => {
-      if (!Bumpers) return;
-      for (let i = 0; i < Bumpers.length; i++) {
-        const bumper = Bumpers[i];
-
-        bumper.controlReverse = false;
-        bumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
-        bumper.cubeMesh.scale.x = 1;
-        bumper.lenghtHalf = BUMPER_LENGTH_HALF;
-        bumper.cubeMesh.scale.z = 1;
-        bumper.widthHalf = BUMPER_WIDTH_HALF;
-      }
-    };
 
     const decreaseLifePointUI = (data) => {
       const playerMissed = data.bumper_1.score > serverState.bumper_1.score ? 2 : 1;
@@ -1306,6 +1680,61 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
+    // Safe model switching with bounds checking to prevent crashes
+    const safeModelSwitch = (targetPlayer, newModelIndex) => {
+      if (targetPlayer.modelChoosen == newModelIndex)
+        return;
+
+      if (!targetPlayer.modelsGlb || newModelIndex >= targetPlayer.modelsGlb.length) {
+        GameLogger.warn('ModelSwitch', `Model index ${newModelIndex} out of bounds (array length: ${targetPlayer.modelsGlb?.length}), falling back to index 0`);
+        newModelIndex = 0; // Fallback to table model
+      }
+      
+      // Hide current model
+      if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
+        targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
+      }
+      
+      // Switch to new model
+      targetPlayer.modelChoosen = newModelIndex;
+      
+      // Show new model
+      if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
+        targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
+      }
+    };
+
+    // Reset all buff effects when buffs expire
+    const resetAllBuffEffects = () => {
+      if (!Bumpers) return;
+      for (let i = 0; i < Bumpers.length; i++) {
+        const bumper = Bumpers[i];
+
+        // Reset control and speed effects
+        bumper.controlReverse = false;
+        bumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
+        
+        // Reset size effects
+        bumper.lenghtHalf = BUMPER_LENGTH_HALF;
+        bumper.widthHalf = BUMPER_WIDTH_HALF;
+        
+        // Reset model back to table (index 0) with safe switching
+        safeModelSwitch(bumper, 0);
+        
+        // Reset position if it was modified by buffs
+        if (bumper.playerGlb && bumper.cubeUpdate) {
+          if (bumper.dirZ < 0){
+            bumper.playerGlb.position.z = bumper.cubeUpdate.z + 1;
+            bumper.playerGlb.position.x = bumper.cubeUpdate.x - 1;
+          }
+          else {
+            bumper.playerGlb.position.z = bumper.cubeUpdate.z - 1;
+            bumper.playerGlb.position.x = bumper.cubeUpdate.x + 1;
+          }
+        }
+      }
+    };
+
     const applyBuffEffects = () => {
       if (!Bumpers) return;
 
@@ -1314,7 +1743,6 @@ export class MultiplayerGame extends HTMLElement {
         this.buffIconElement?.hide();
         return;
       }
-
       let targetPlayer = null;
       let isUserAffected = false;
       if (serverState.bumper_1.buff_or_debuff_target) {
@@ -1341,31 +1769,21 @@ export class MultiplayerGame extends HTMLElement {
               : this.buffIconElement?.show(BUFF_TYPE.SLOW, true);
             break;
           case Buff.SHORTEN_ENEMY:
-            // targetPlayer.cubeMesh.scale.x = 0.5;
-            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
-            targetPlayer.modelChoosen = 2;
-            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
-            // targetPlayer.modelChoosen = 2;
+            safeModelSwitch(targetPlayer, 2); // Switch to chair model (index 2)
             targetPlayer.lenghtHalf = 1.25;
             if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.SHORT);
             }
             break;
           case Buff.ELONGATE_PLAYER:
-            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
-            targetPlayer.modelChoosen = 1;
-            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
-            // targetPlayer.cubeMesh.scale.x = 2;
+            safeModelSwitch(targetPlayer, 1); // Switch to couch model (index 1)
             targetPlayer.lenghtHalf = 5;
             if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.LONG);
             }
             break;
           case Buff.ENLARGE_PLAYER:
-            // targetPlayer.cubeMesh.scale.z = 3;
-            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
-            targetPlayer.modelChoosen = 3;
-            targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
+            safeModelSwitch(targetPlayer, 3); // Switch to dressing model (index 3)
             targetPlayer.widthHalf = 1.5;
             if (isUserAffected) {
               this.buffIconElement?.show(BUFF_TYPE.LARGE);
@@ -1376,7 +1794,7 @@ export class MultiplayerGame extends HTMLElement {
     };
 
     this.#pongSocket.addEventListener('open', () => {
-      log.info('Success! :3 ');
+      GameLogger.info('Success! :3 ');
     });
 
     let data;
@@ -1395,7 +1813,7 @@ export class MultiplayerGame extends HTMLElement {
           updateEntitiesInterpolationBuffer(Date.now());
           break;
         case 'player_joined':
-          log.info('Player joined', data);
+          GameLogger.info('Player joined', data);
           clientState.playerId = data.player_id;
           clientState.playerNumber = data.player_number;
           clientState.enemyNumber = data.player_number == 1 ? 2 : 1;
@@ -1459,15 +1877,15 @@ export class MultiplayerGame extends HTMLElement {
           this.overlay.hide();
           break;
         case 'game_paused':
-          log.info('Game paused', data);
+          GameLogger.info('Game paused', data);
           this.overlay.show(OVERLAY_TYPE.PAUSE, data);
           break;
         case 'game_unpaused':
-          log.info('Game unpaused', data);
+          GameLogger.info('Game unpaused', data);
           this.overlay.hide();
           break;
         case 'game_cancelled':
-          log.info('Game cancelled', data);
+          GameLogger.info('Game cancelled', data);
           this.overlay.show(OVERLAY_TYPE.CANCEL, data);
           if (data.tournament_id) {
             router.redirect(`tournament/${data.tournament_id}`);
@@ -1475,7 +1893,7 @@ export class MultiplayerGame extends HTMLElement {
           break;
         case 'player_won':
         case 'player_resigned':
-          log.info('Game_over', data);
+          GameLogger.info('Game_over', data);
           this.overlay.show(OVERLAY_TYPE.GAMEOVER, data);
           break;
         default:
@@ -1484,7 +1902,7 @@ export class MultiplayerGame extends HTMLElement {
     });
 
     this.#pongSocket.addEventListener('close', (event) => {
-      log.info('PONG socket was nice! :3', event.code);
+      GameLogger.info('PONG socket was nice! :3', event.code);
       this.#pongSocket = null;
       switch (event.code) {
         case 3100:
@@ -1524,6 +1942,50 @@ export class MultiplayerGame extends HTMLElement {
       return newX;
     }
 
+    function updatePlayerModelPos(bumper, playerVisualX, playerVisualZ){
+      const isDebuffActive = serverState.current_buff_or_debuff !== Buff.NO_BUFF && 
+                            (serverState.bumper_1.buff_or_debuff_target || serverState.bumper_2.buff_or_debuff_target);
+
+      // if ()
+      //   console.log("oui");
+      // if (bumper === clientState.bumper)
+      //   console.log("non");
+      if (bumper.playerGlb.position.z < 0) {
+        bumper.playerGlb.position.x = playerVisualX + 1;
+      } else {
+        bumper.playerGlb.position.x = playerVisualX - 1;
+      }
+      console.log(serverState.bumper_1.buff_or_debuff_target);
+      console.log(serverState.bumper_2.buff_or_debuff_target);
+      if (isDebuffActive){
+        if (serverState.bumper_2.buff_or_debuff_target && bumper == Bumpers[1]){
+          if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY){
+            bumper.playerGlb.position.x += 1;
+            bumper.playerGlb.position.z = playerVisualZ + 0.4;
+          }
+          else if (serverState.current_buff_or_debuff == Buff.ELONGATE_PLAYER){
+            bumper.playerGlb.position.x += 7.2;
+            bumper.playerGlb.position.z = playerVisualZ + 0.7;
+          }
+          else if (serverState.current_buff_or_debuff == Buff.ENLARGE_PLAYER)
+            bumper.playerGlb.position.x += 5;
+        }
+        else if (serverState.bumper_1.buff_or_debuff_target && bumper == Bumpers[0])
+        {
+          if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY){
+            bumper.playerGlb.position.x -= 1;
+            bumper.playerGlb.position.z = playerVisualZ - 0.4;
+          }
+          else if (serverState.current_buff_or_debuff == Buff.ELONGATE_PLAYER){
+            bumper.playerGlb.position.x -= 7.2;
+            bumper.playerGlb.position.z = playerVisualZ - 0.7;
+          }
+          else if (serverState.current_buff_or_debuff == Buff.ENLARGE_PLAYER)
+            bumper.playerGlb.position.x -= 5;
+        }
+      }
+    }
+    
     function interpolateEntities(renderTime) {
       const interpolatedBallPos = getInterpolated(ENTITY_KEYS.BALL, renderTime);
       if (interpolatedBallPos !== null) {
@@ -1560,7 +2022,8 @@ export class MultiplayerGame extends HTMLElement {
           handleAnimations(clientState.enemyBumper, clientState.enemyBumper.currentAction, 5, 0.1);
         }
         clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
-        clientState.enemyBumper.playerGlb.position.x = interpolatedOpponentPos;
+        updatePlayerModelPos(clientState.enemyBumper, interpolatedOpponentPos, clientState.enemyBumper.cubeUpdate.z);
+        // clientState.enemyBumper.playerGlb.position.x = interpolatedOpponentPos;
       }
       // Update enemy bumper position (both table and player models)
       if (
@@ -1582,15 +2045,34 @@ export class MultiplayerGame extends HTMLElement {
         );
       }
 
-      // Update player bumper position
+      // Update player bumper position (with debuff-aware positioning)
       const interpolatedPlayerPos = getInterpolated(ENTITY_KEYS.PLAYER, renderTime);
       const playerBumper = clientState.bumper;
       const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
-      if (playerBumper.playerGlb.position.z < 0) {
-        clientState.bumper.playerGlb.position.x = playerVisualX + 1;
-      } else {
-        clientState.bumper.playerGlb.position.x = playerVisualX - 1;
-      }
+      const playerVisualZ = playerBumper.cubeUpdate.z;
+      
+      // Don't overwrite debuff-specific positioning during active buffs
+      // const isDebuffActive = serverState.current_buff_or_debuff !== Buff.NO_BUFF && 
+      //                       (serverState.bumper_1.buff_or_debuff_target || serverState.bumper_2.buff_or_debuff_target);
+      
+      // if (!isDebuffActive) {
+      //   // Standard positioning when no debuffs are active
+      //   if (playerBumper.playerGlb.position.z < 0) {
+      //     clientState.bumper.playerGlb.position.x = playerVisualX + 1;
+      //   } else {
+      //     clientState.bumper.playerGlb.position.x = playerVisualX - 1;
+      //   }
+      // } else {
+      //   // During debuffs, only update the cubeUpdate position, let debuff handle playerGlb positioning
+      //   // if (playerBumper.playerGlb.position.z < 0) {
+      //   //   clientState.bumper.playerGlb.position.x = playerVisualX + 1;
+      //   // } else {
+      //   //   clientState.bumper.playerGlb.position.x = playerVisualX - 1;
+      //   // }
+      
+      // }
+      updatePlayerModelPos(playerBumper, playerVisualX, playerVisualZ);
+      // playerBumper.cubeUpdate.x = playerVisualX;
 
       if (playerBumper.modelsGlb && playerBumper.modelsGlb[playerBumper.modelChoosen || 0]) {
         playerBumper.modelsGlb[playerBumper.modelChoosen || 0].position.set(
@@ -1605,7 +2087,7 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
 
-    function animate(ms) {
+    function animate() {
       requestAnimationFrame(animate);
       if (!clientState.bumper) {
         return;
@@ -1656,13 +2138,17 @@ export class MultiplayerGame extends HTMLElement {
    */
   async render() {
     try {
+      GameLogger.info('Initialization', 'Starting multiplayer game render...');
+
       this.classList.add('position-relative');
       this.overlay = document.createElement('game-overlay');
       this.overlay.gameType = 'multiplayer';
       this.appendChild(this.overlay);
+      GameLogger.debug('Initialization', 'Game overlay created');
 
       const navbarHeight = this.#navbarHeight;
       const [camera, renderer, animate, scene] = await this.game();
+      GameLogger.debug('Initialization', 'Game components initialized');
 
       // Store scene for cleanup
       this.scene = scene;
@@ -1677,10 +2163,12 @@ export class MultiplayerGame extends HTMLElement {
       };
 
       window.addEventListener('resize', this.#resizeHandler);
-      animate(0);
+      animate();
 
       this.overlay?.show('pending');
+      GameLogger.info('Initialization', 'Multiplayer game render completed successfully');
     } catch (error) {
+      GameLogger.error('Initialization', 'Multiplayer game render failed', error);
       if (error.message.includes('WebGL')) {
         this.handleError('WEBGL_NOT_SUPPORTED', error);
       } else {

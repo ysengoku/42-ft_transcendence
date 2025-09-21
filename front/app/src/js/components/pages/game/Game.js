@@ -26,6 +26,24 @@ import { DEFAULT_AVATAR } from '@env';
 /* eslint no-var: "off" */
 
 /**
+ * Standardized error logging utility
+ */
+const GameLogger = {
+  error: (context, message, error = null) => {
+    console.error(`[Game:${context}] ERROR: ${message}`, error || '');
+  },
+  warn: (context, message) => {
+    console.warn(`[Game:${context}] WARNING: ${message}`);
+  },
+  info: (context, message) => {
+    console.log(`[Game:${context}] INFO: ${message}`);
+  },
+  debug: (context, message) => {
+    console.log(`[Game:${context}] DEBUG: ${message}`);
+  },
+};
+
+/**
  * Game Component - 3D Pong Game Implementation
  *
  * This class implements a 3D pong game using Three.js with the following features:
@@ -66,8 +84,10 @@ export class Game extends HTMLElement {
 
     // Predefined rotation angles for player models
     this.modelRotation = [
-      [this.degreesToRadians(235), this.degreesToRadians(-90)], // Player 1 rotations
-      [this.degreesToRadians(55), this.degreesToRadians(90)], // Player 2 rotations
+      // Player 1 rotations: [table, couch, chair, dressing]
+      [this.degreesToRadians(235), this.degreesToRadians(-90), this.degreesToRadians(235), this.degreesToRadians(-90)],
+      // Player 2 rotations: [table, couch, chair, dressing]  
+      [this.degreesToRadians(55), this.degreesToRadians(90), this.degreesToRadians(55), this.degreesToRadians(90)],
     ];
   }
 
@@ -76,7 +96,7 @@ export class Game extends HTMLElement {
    * Creates scoreboard, timer, buff icons, life points, and overlay
    */
   initializeUIElements() {
-    console.log('Initializing UI elements (optimized)');
+    GameLogger.info('UIInit', 'Initializing UI elements');
 
     // Create scoreboard with appropriate player names
     this.createUIElement('scoreElement', 'game-scoreboard', (element) => {
@@ -94,9 +114,9 @@ export class Game extends HTMLElement {
       const timerWrapper = document.getElementById('game-timer-wrapper');
       if (timerWrapper) {
         timerWrapper.appendChild(this.timerElement);
-        console.log('Timer appended to wrapper');
+        GameLogger.debug('UIInit', 'Timer appended to wrapper');
       } else {
-        console.warn('Timer wrapper not found, skipping timer creation');
+        GameLogger.warn('UIInit', 'Timer wrapper not found, skipping timer creation');
       }
     }
 
@@ -133,7 +153,7 @@ export class Game extends HTMLElement {
         this.appendChild(this[propName]);
       }
 
-      console.log(`Created ${propName}`);
+      GameLogger.debug('UIInit', `Created ${propName}`);
     }
   }
 
@@ -143,13 +163,17 @@ export class Game extends HTMLElement {
    */
   async connectedCallback() {
     try {
+      GameLogger.info('Initialization', 'Starting game initialization...');
+
       // Check user authentication status
       const authStatus = await auth.fetchAuthStatus();
       if (!authStatus.success) {
         if (authStatus.status === 429) {
+          GameLogger.warn('Initialization', 'Rate limited during auth check');
           return; // Rate limited
         }
         if (authStatus.status === 401) {
+          GameLogger.warn('Initialization', 'Session expired, redirecting to login');
           sessionExpiredToast();
         }
         router.redirect('/login');
@@ -161,16 +185,17 @@ export class Game extends HTMLElement {
       this.style.overflow = 'hidden'; // Prevent scrollbars
       this.style.position = 'relative'; // Allow overlay positioning
 
-      console.log('Game options before UI init:', this.#state.gameOptions);
+      GameLogger.debug('Initialization', `Game options: ${JSON.stringify(this.#state.gameOptions)}`);
 
       // Initialize UI and start the game
       this.initializeUIElements();
       await this.render();
+
+      GameLogger.info('Initialization', 'Game initialization completed successfully');
     } catch (error) {
+      GameLogger.error('Initialization', 'Game initialization failed', error);
       this.handleError('GAME_INIT_FAILED', error);
     }
-
-    await this.render();
   }
 
   /**
@@ -207,7 +232,7 @@ export class Game extends HTMLElement {
     // Disable ranked mode for local games
     this.#state.gameOptions.ranked = false;
 
-    console.log('Game type:', this.#state.gameType);
+    GameLogger.debug('Config', `Game type: ${this.#state.gameType}`);
   }
 
   /**
@@ -220,33 +245,131 @@ export class Game extends HTMLElement {
   }
 
   /**
-   * Handle smooth animation transitions for player models
+   * Handle optimized animation transitions for player models
    * @param {Object} ourBumper - Player object
    * @param {number} currentAction - Current animation index
    * @param {number} nextAction - Next animation index
    * @param {number} fadeTime - Transition duration
    */
   handleAnimations(ourBumper, currentAction, nextAction, fadeTime) {
+    if (!ourBumper?.playerGlb || currentAction === nextAction) return;
+
     const ourBumperIndex = ourBumper.dirZ < 1 ? 0 : 1;
 
-    // Smoothly transition between animations
-    if (currentAction != nextAction) {
-      ourBumper.gltfStore.action[currentAction].fadeOut(fadeTime);
-      ourBumper.gltfStore.action[nextAction].reset();
-      ourBumper.gltfStore.action[nextAction].fadeIn(fadeTime);
-      ourBumper.gltfStore.action[nextAction].play();
-      ourBumper.currentAction = nextAction;
-
-      // Update model rotation based on current model and player position
-      if (ourBumper.modelChoosen == 0) ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][0];
-      else ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][1];
+    // Handle animations if pedro model is loaded
+    if (this.isAnimationSystemReady(ourBumper)) {
+      try {
+        const { action } = ourBumper.gltfStore;
+        if (action[currentAction]) action[currentAction].fadeOut(fadeTime);
+        if (action[nextAction]) {
+          action[nextAction].reset().fadeIn(fadeTime).play();
+        }
+      } catch (error) {
+        GameLogger.warn('Animation', `Animation transition failed: ${error.message}`);
+      }
     }
+
+    // Update action state and rotation
+    ourBumper.currentAction = nextAction;
+    if (this.modelRotation) {
+      try {
+        ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][ourBumper.modelChoosen || 0];
+      } catch (error) {
+        GameLogger.warn('Animation', 'Rotation update failed');
+      }
+    }
+  }
+
+  /**
+   * Check if animation system is ready and pedro model loaded
+   * @param {Object} bumper - Player object to check
+   * @returns {boolean} True if animations are available
+   */
+  isAnimationSystemReady(bumper) {
+    return !!(bumper?.gltfStore?.mixer && bumper.gltfStore.action);
+  }
+
+  /**
+   * Load pedro player model with optimized fallback protection
+   * @param {number} posX - X position for the player
+   * @param {number} posZ - Z position for the player
+   * @param {THREE.Scene} scene - Scene to add the model to
+   * @returns {Promise<Object>} Player model object with animation support
+   */
+  async loadPedroModelWithFallback(posX, posZ, scene) {
+    const gltfStore = { mixer: null, action: new Array(8).fill(null) };
+    let playerGlb;
+
+    try {
+      GameLogger.info('PlayerModel', 'Loading pedro model...');
+
+      // Load with 8-second timeout
+      const gltf = await Promise.race([
+        new Promise((resolve, reject) => this.loaderModel.load(pedro, resolve, undefined, reject)),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 8000)),
+      ]);
+
+      if (gltf?.scene && gltf?.animations?.length > 0) {
+        GameLogger.info('PlayerModel', 'Pedro model loaded successfully');
+
+        // Setup pedro model
+        playerGlb = new THREE.Object3D();
+        const model = gltf.scene;
+
+        // Configure shadows
+        model.traverse((node) => node.isMesh && (node.castShadow = true));
+
+        // Setup animations
+        gltfStore.mixer = new THREE.AnimationMixer(model);
+        gltf.animations.forEach((anim, i) => {
+          if (i < 8) {
+            try {
+              gltfStore.action[i] = gltfStore.mixer.clipAction(anim, model);
+              // Configure specific durations
+              if (i === 1) {
+                gltfStore.action[i].setLoop(THREE.LoopOnce, 1);
+                gltfStore.action[i].setDuration(0.4);
+              } else if ([0, 5, 6, 7].includes(i)) {
+                gltfStore.action[i].setDuration(0.18);
+              }
+            } catch (error) {
+              GameLogger.warn('PlayerModel', `Animation ${i} setup failed`, error);
+            }
+          }
+        });
+
+        // Start idle animation
+        if (gltfStore.action[2]) gltfStore.action[2].play();
+
+        model.position.set(posX, 0, 0);
+        model.scale.set(0.5, 0.5, 0.5);
+        playerGlb.add(model);
+      } else {
+        throw new Error('Invalid model data');
+      }
+    } catch (error) {
+      GameLogger.warn('PlayerModel', 'Using fallback model', error);
+      playerGlb = this.createFallbackPlayerModel(posX, posZ);
+    }
+
+    // Position player based on side
+    if (posZ < 0) {
+      playerGlb.rotation.y = this.degreesToRadians(55);
+      playerGlb.position.z = posZ - 1;
+      playerGlb.position.x += 1;
+    } else {
+      playerGlb.rotation.y = this.degreesToRadians(235);
+      playerGlb.position.z = posZ + 1;
+      playerGlb.position.x -= 1;
+    }
+
+    scene.add(playerGlb);
+    return { playerGlb, gltfStore, currentAction: 2 };
   }
 
   /**
    * Create keydown event handler for game controls
    * @param {Object} keyMap - Key state tracking object
-   * @param {Array} Workers - Web workers for power-up timers
    * @param {Array} gameStartAndStop - Game loop control functions
    * @param {Object} gameStateContainer - Game state object
    * @param {Object} Timer - Timer object
@@ -254,7 +377,7 @@ export class Game extends HTMLElement {
    * @param {Array} Bumpers - Player objects
    * @returns {Function} Event handler function
    */
-  createOnDocumentKeyDown(keyMap, Workers, gameStartAndStop, gameStateContainer, Timer, TimerCallBack, Bumpers) {
+  createOnDocumentKeyDown(keyMap, gameStartAndStop, gameStateContainer, Timer, TimerCallBack, Bumpers) {
     return (e) => {
       const tag = e.target.tagName.toLowerCase();
       // Ignore key events on form elements
@@ -267,13 +390,11 @@ export class Game extends HTMLElement {
       const keyCode = e.code;
 
       // Handle Player 1 animations (Arrow keys)
-      if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[0] && Bumpers[0].gltfStore.action[5]) {
-        if (keyCode == 'ArrowLeft') {
-          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
-        }
-        if (keyCode == 'ArrowRight') {
-          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
-        }
+      if (keyCode == 'ArrowLeft') {
+        this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 0, 0.1);
+      }
+      if (keyCode == 'ArrowRight') {
+        this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 5, 0.1);
       }
       // Handle key mapping based on game mode
       if (keyCode != 'KeyA' && keyCode != 'KeyD' && this.#state.gameType == 'ai') {
@@ -284,13 +405,11 @@ export class Game extends HTMLElement {
         keyMap[keyCode] = true;
 
         // Handle Player 2 animations (WASD keys)
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[5]) {
-          if (keyCode == 'KeyA') {
-            this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 5, 0.1);
-          }
-          if (keyCode == 'KeyD') {
-            this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
-          }
+        if (keyCode == 'KeyA') {
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 5, 0.1);
+        }
+        if (keyCode == 'KeyD') {
+          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
         }
       }
       // Handle pause/resume with Escape key
@@ -298,14 +417,24 @@ export class Game extends HTMLElement {
         if (gameStateContainer.isPaused == false) {
           // Pause the game
           gameStartAndStop[1]();
-          let i = 0;
-          if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'pause']);
+          if (this.Workers) {
+            this.Workers.forEach((worker) => {
+              if (worker) {
+                worker.postMessage([-1, -1, 'pause']);
+              }
+            });
+          }
           clearTimeout(Timer.timeoutId);
           gameStateContainer.isPaused = true;
         } else {
           // Resume the game
-          let i = 0;
-          if (Workers != null) while (i <= 5) Workers[i++].postMessage([-1, -1, 'resume']);
+          if (this.Workers) {
+            this.Workers.forEach((worker) => {
+              if (worker) {
+                worker.postMessage([-1, -1, 'resume']);
+              }
+            });
+          }
           Timer.timeoutId = setTimeout(TimerCallBack, 1000);
           gameStateContainer.isPaused = false;
           gameStartAndStop[0]();
@@ -329,22 +458,18 @@ export class Game extends HTMLElement {
       const keyCode = e.code;
       keyMap[keyCode] = false;
       // Return Player 1 to idle animation when keys are released
-      if (Bumpers[0].gltfStore.action && Bumpers[0].gltfStore.action[2]) {
-        if (keyCode == 'ArrowRight') {
-          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
-        }
-        if (keyCode == 'ArrowLeft') {
-          this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
-        }
+      if (keyCode == 'ArrowRight') {
+        this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
+      }
+      if (keyCode == 'ArrowLeft') {
+        this.handleAnimations(Bumpers[0], Bumpers[0].currentAction, 2, 0.5);
       }
       // Return Player 2 to idle animation when keys are released
-      if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[2]) {
-        if (keyCode == 'KeyA') {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
-        }
-        if (keyCode == 'KeyD') {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
-        }
+      if (keyCode == 'KeyA') {
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
+      }
+      if (keyCode == 'KeyD') {
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
       }
       e.preventDefault();
     };
@@ -356,17 +481,24 @@ export class Game extends HTMLElement {
    */
   async initLoaders(renderer) {
     try {
+      GameLogger.info('LoaderInit', 'Initializing 3D model loaders...');
+
       // Set up KTX2 loader for compressed textures
       this.#ktx2Loader = new KTX2Loader().setTranscoderPath('/libs/basis/').detectSupport(renderer);
+      GameLogger.debug('LoaderInit', 'KTX2 loader configured');
 
       // Wait for MeshOpt decoder to be ready
       await MeshoptDecoder.ready;
+      GameLogger.debug('LoaderInit', 'MeshOpt decoder ready');
 
       // Configure GLTF loader with optimizations
       this.loaderModel = new GLTFLoader();
       this.loaderModel.setKTX2Loader(this.#ktx2Loader);
       this.loaderModel.setMeshoptDecoder(MeshoptDecoder);
+
+      GameLogger.info('LoaderInit', 'All 3D loaders initialized successfully');
     } catch (error) {
+      GameLogger.error('LoaderInit', 'Failed to initialize 3D loaders', error);
       throw new Error(`Failed to initialize 3D loaders: ${error.message}`);
     }
   }
@@ -480,7 +612,10 @@ export class Game extends HTMLElement {
           modelName,
           resolve,
           (progress) => {
-            console.log(`Loading ${modelName}:`, (progress.loaded / progress.total) * 100 + '%');
+            GameLogger.debug(
+              'ModelLoader',
+              `Loading ${modelName}: ${((progress.loaded / progress.total) * 100).toFixed(1)}%`,
+            );
           },
           reject,
         );
@@ -506,9 +641,10 @@ export class Game extends HTMLElement {
       model.scale.set(scaleX, scaleY, scaleZ);
       modelGenerated.add(model);
 
+      GameLogger.info('ModelLoader', `Successfully loaded model: ${modelName}`);
       return modelGenerated;
     } catch (error) {
-      console.warn(`Failed to load model ${modelName}, using fallback:`, error.message);
+      GameLogger.warn('ModelLoader', `Failed to load model ${modelName}, using fallback`, error);
       return this.createFallbackModel(posX, posY, posZ, scaleX, scaleY, scaleZ);
     }
   }
@@ -541,10 +677,51 @@ export class Game extends HTMLElement {
   }
 
   /**
+   * Create a fallback player model when pedro model fails to load
+   * @param {number} posX - X position for the player
+   * @param {number} posZ - Z position for the player
+   * @returns {THREE.Object3D} Simple geometric player representation
+   */
+  createFallbackPlayerModel(posX, posZ) {
+    GameLogger.warn('PlayerModel', 'Creating fallback player model');
+
+    // Create a capsule-like player representation
+    const playerModel = new THREE.Object3D();
+
+    // Body (cylinder)
+    const bodyGeometry = new THREE.CylinderGeometry(1, 1, 8, 8);
+    const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x4a4a4a });
+    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+    body.position.set(0, 0.75, 0);
+    body.castShadow = true;
+    body.receiveShadow = true;
+
+    // Assemble the player model
+    playerModel.add(body);
+
+    // Apply scaling and positioning
+    playerModel.scale.set(0.5, 0.5, 0.5);
+    playerModel.position.set(posX, 0, posZ);
+
+    // Set rotation based on position (same logic as pedro model)
+    if (posZ < 0) {
+      playerModel.rotation.y = this.degreesToRadians(55);
+      playerModel.position.z = posZ - 1;
+      playerModel.position.x += 1;
+    } else {
+      playerModel.rotation.y = this.degreesToRadians(235);
+      playerModel.position.z = posZ + 1;
+      playerModel.position.x -= 1;
+    }
+
+    return playerModel;
+  }
+
+  /**
    * Hide all game UI elements (used during errors or game end)
    */
   hideGameUI() {
-    console.log('Hiding game UI');
+    GameLogger.info('UI', 'Hiding game UI');
 
     const elements = [
       { element: this.scoreElement, name: 'scoreElement' },
@@ -556,7 +733,7 @@ export class Game extends HTMLElement {
     elements.forEach(({ element, name }) => {
       if (element) {
         element.style.display = 'none';
-        console.log(`Hidden ${name}`);
+        GameLogger.debug('UI', `Hidden ${name}`);
       }
     });
   }
@@ -565,7 +742,7 @@ export class Game extends HTMLElement {
    * Show all game UI elements
    */
   showGameUI() {
-    console.log('Showing game UI');
+    GameLogger.info('UI', 'Showing game UI');
 
     const elements = [
       { element: this.scoreElement, name: 'scoreElement' },
@@ -577,7 +754,7 @@ export class Game extends HTMLElement {
     elements.forEach(({ element, name }) => {
       if (element) {
         element.style.display = '';
-        console.log(`Shown ${name}`);
+        GameLogger.debug('UI', `Shown ${name}`);
       }
     });
   }
@@ -596,6 +773,9 @@ export class Game extends HTMLElement {
     // Game boundaries and collision detection
     const BUMPER_1_BORDER = -10; // Player 1 goal line
     const BUMPER_2_BORDER = -BUMPER_1_BORDER; // Player 2 goal line
+    const BUMPER_LENGTH_HALF = 2.5; // Half bumper length
+    const BUMPER_WIDTH_HALF = 0.5; // Half bumper width
+    const BUMPER_SPEED = 0.25
 
     const WALL_LEFT_X = 10; // Left wall position
     const WALL_RIGHT_X = -WALL_LEFT_X; // Right wall position
@@ -614,6 +794,7 @@ export class Game extends HTMLElement {
     // Game configuration from options
     const GAME_TIME = gameOptionsQuery.time_limit;
     const MAX_SCORE = gameOptionsQuery.score_to_win;
+    const overlayUI = this.overlay;
 
     // Set game speed multiplier based on user preference
     let GAME_SPEED;
@@ -639,7 +820,7 @@ export class Game extends HTMLElement {
     // Input handling
     let keyMap = []; // Tracks which keys are currently pressed
 
-    // Game state management with getter/setter pattern    const overlayUI = this.overlay;
+    // Game state management with getter/setter pattern
 
     const gameStateContainer = (() => {
       let isPaused = false;
@@ -729,6 +910,30 @@ export class Game extends HTMLElement {
       return modelGenerated;
     };
 
+    const safeModelSwitch = (targetPlayer, newModelIndex) => {
+      if (targetPlayer.modelChoosen == newModelIndex)
+        return;
+
+      if (!targetPlayer.modelsGlb || newModelIndex >= targetPlayer.modelsGlb.length) {
+        GameLogger.warn('ModelSwitch', `Model index ${newModelIndex} out of bounds (array length: ${targetPlayer.modelsGlb?.length}), falling back to index 0`);
+        newModelIndex = 0; // Fallback to table model
+      }
+      
+      // Hide current model
+      if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
+        targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
+      }
+      
+      // Switch to new model
+      targetPlayer.modelChoosen = newModelIndex;
+      
+      // Show new model
+      if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
+        targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
+      }
+    };
+
+
     // Environment setup - Background elements
 
     // Cardboard signs that change based on score progression
@@ -784,29 +989,41 @@ export class Game extends HTMLElement {
       cactusPromises.push(CactusFactory(pos.x, 0, pos.z));
     }
 
+    // Initialize performance optimization systems early
+    this.initSharedMaterials();
+    this.initRenderOptimizations(camera, scene);
+
     // Load all cacti in parallel for better performance
     const loadedCacti = await Promise.all(cactusPromises);
     loadedCacti.forEach((cactus, index) => {
       cacti[index] = cactus;
+      // Register cacti for frustum culling
+      if (this.renderOptimizer && cactus.cactusGlb) {
+        this.renderOptimizer.registerStatic(cactus.cactusGlb, 'cactus');
+      }
     });
 
-    // Create layered hills for background depth
+    // Create layered hills for background depth with shared materials
     const createHill = (posX, posZ, width, height) => {
-      // Create hill base (wider, shorter)
+      // Create hill base (wider, shorter) using shared material
       const baseGeometry = new THREE.CylinderGeometry(width * 1.5, width * 2, height * 0.3, 8);
-      const baseMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
-      const base = new THREE.Mesh(baseGeometry, baseMaterial);
+      const base = new THREE.Mesh(baseGeometry, this.sharedMaterials.hillMaterial);
       base.position.set(posX, -height * 0.1, posZ);
       base.receiveShadow = true;
       scene.add(base);
 
-      // Create hill top (narrower, taller)
+      // Create hill top (narrower, taller) using shared material
       const hillGeometry = new THREE.CylinderGeometry(width * 0.8, width, height, 8);
-      const hillMaterial = new THREE.MeshPhongMaterial({ color: 0x3a251a });
-      const hill = new THREE.Mesh(hillGeometry, hillMaterial);
+      const hill = new THREE.Mesh(hillGeometry, this.sharedMaterials.hillMaterial);
       hill.position.set(posX, height * 0.3, posZ);
       hill.receiveShadow = true;
       scene.add(hill);
+
+      // Register static objects for frustum culling
+      if (this.renderOptimizer) {
+        this.renderOptimizer.registerStatic(base, 'hill_base');
+        this.renderOptimizer.registerStatic(hill, 'hill_top');
+      }
 
       return hill;
     };
@@ -857,6 +1074,11 @@ export class Game extends HTMLElement {
       planeMesh.rotateX(-pi / 2); // Rotate to be horizontal
       planeMesh.receiveShadow = true;
       scene.add(planeMesh);
+
+      // Register ground for frustum culling
+      if (this.renderOptimizer) {
+        this.renderOptimizer.registerStatic(planeMesh, 'ground');
+      }
     })();
 
     // MOVING OBJECTS AND GAME ENTITIES
@@ -881,8 +1103,6 @@ export class Game extends HTMLElement {
     const BumperFactory = async (posX, posY, posZ) => {
       let _ = {};
       let modelsGlb;
-      let animations = [];
-      _.action = [null, null, null, null, null, null, null, null];
 
       const tableGlb = await modelCreate(0.04, 0.45, 0, 0.48, 0.5, 0.5, table);
       if (gameOptionsQuery.cool_mode == true) {
@@ -904,52 +1124,16 @@ export class Game extends HTMLElement {
         modelsGlb = [tableGlb, couchGlb, chairGlb, dressingGlb];
       } else modelsGlb = [tableGlb];
 
-      // Create player model with animation
-      const playerGlb = (() => {
-        const pedroModel = new THREE.Object3D();
-        this.loaderModel.load(
-          pedro,
-          function (gltf) {
-            gltf.scene.traverse(function (node) {
-              if (node.isMesh) {
-                node.castShadow = true;
-              }
-            });
-            const model = gltf.scene;
-            model.position.y = 0;
-            model.position.x = posX;
-            _.mixer = new THREE.AnimationMixer(model);
-            animations = gltf.animations;
-            for (let i = 0; i <= 7; i++) {
-              _.action[i] = _.mixer.clipAction(animations[i], model);
-            }
-            _.action[1].setLoop(THREE.LoopOnce, 1);
-            _.action[1].setDuration(0.4);
-            _.action[0].setDuration(0.18);
-            _.action[7].setDuration(0.18);
-            _.action[6].setDuration(0.18);
-            _.action[5].setDuration(0.18);
-            _.action[2].play();
-            pedroModel.add(gltf.scene);
-          },
-          undefined,
-          function (error) {
-            console.error(error);
-          },
-        );
-        pedroModel.scale.set(0.5, 0.5, 0.5);
-        scene.add(pedroModel);
-        return pedroModel;
-      })();
+      // Create player model with robust loading and fallback protection
+      const playerModelData = await this.loadPedroModelWithFallback(posX, posZ, scene);
+      const playerGlb = playerModelData.playerGlb;
+
+      // Update gltfStore with loaded data
+      _ = playerModelData.gltfStore;
+
+      // Apply table rotation based on player position
       if (posZ < 0) {
-        playerGlb.rotation.y = degreesToRadians(55);
-        playerGlb.position.z = posZ - 1;
-        playerGlb.position.x += 1;
         tableGlb.rotation.z = Math.PI;
-      } else {
-        playerGlb.rotation.y = degreesToRadians(235);
-        playerGlb.position.z = posZ + 1;
-        playerGlb.position.x -= 1;
       }
 
       modelsGlb.forEach((element) => {
@@ -965,13 +1149,13 @@ export class Game extends HTMLElement {
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
-      let lenghtHalf = 2.5;
+      let lenghtHalf = BUMPER_LENGTH_HALF;
       let modelChoosen = 0;
-      let widthHalf = 0.5;
+      let widthHalf = BUMPER_WIDTH_HALF;
       let controlReverse = false;
-      let speed = 0.25 * GAME_SPEED;
+      let speed = BUMPER_SPEED * GAME_SPEED;
       let score = 0;
-      let currentAction = 2;
+      let currentAction = playerModelData.currentAction;
 
       return {
         modelsGlb,
@@ -1029,6 +1213,32 @@ export class Game extends HTMLElement {
     };
 
     const Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
+
+    // Register dynamic objects for optimized rendering
+    if (this.renderOptimizer) {
+      // Register ball as dynamic object
+      this.renderOptimizer.registerDynamic(Ball.bulletGlb, 'ball');
+
+      // Register player models as dynamic objects
+      if (Bumpers[0].playerGlb) {
+        this.renderOptimizer.registerDynamic(Bumpers[0].playerGlb, 'player1');
+      }
+      if (Bumpers[1].playerGlb) {
+        this.renderOptimizer.registerDynamic(Bumpers[1].playerGlb, 'player2');
+      }
+
+      // Register player furniture as static (they don't move much)
+      Bumpers.forEach((bumper, index) => {
+        bumper.modelsGlb.forEach((model, modelIndex) => {
+          this.renderOptimizer.registerStatic(model, `furniture_p${index}_${modelIndex}`);
+        });
+      });
+
+      GameLogger.info(
+        'RenderOptimizer',
+        `Registered ${this.renderOptimizer.getStats().totalObjects} objects for culling`,
+      );
+    }
 
     // Collisions checks
 
@@ -1189,20 +1399,13 @@ export class Game extends HTMLElement {
         keyMap['KeyA'] = true;
         calculatedBumperPos.x += bumperP2Subtick;
 
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0]) {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
-        }
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 0, 0.1);
       } else if (calculatedBumperPos.x > calculatedPos.x + 0.1 && calculatedBumperPos.x > calculatedPos.x + 0.2) {
         keyMap['KeyD'] = true;
         calculatedBumperPos.x -= bumperP2Subtick;
-
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[6]) {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 6, 0.1);
-        }
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 6, 0.1);
       } else {
-        if (Bumpers[1].gltfStore.action && Bumpers[1].gltfStore.action[0] && Bumpers[1].gltfStore.action[6]) {
-          this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
-        }
+        this.handleAnimations(Bumpers[1], Bumpers[1].currentAction, 2, 0.5);
       }
     };
 
@@ -1262,17 +1465,15 @@ export class Game extends HTMLElement {
 
         if (Bumpers[1].lenghtHalf < 2.0) {
           ballPredictedPos.x += (Math.random() - 0.5) * errorMargin * 0.6;
-        } else if (Bumpers[1].lenghtHalf > 3.0) {
-          ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
         } else {
           ballPredictedPos.x += -errorMargin + Math.round(Math.random()) * (errorMargin * 2);
         }
 
         isCalculationNeeded = false;
-        const timeooutId = setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           if (BallVelocity.z > 0) {
             isCalculationNeeded = true;
-            clearTimeout(timeooutId);
+            clearTimeout(timeoutId);
           }
         }, difficultyLvl[choosenDifficulty][1]);
       }
@@ -1353,80 +1554,54 @@ export class Game extends HTMLElement {
       this.#blobURL = URL.createObjectURL(blob);
 
       // Buff timer workers
-      Workers = Array.from({ length: 6 }, () => new Worker(this.#blobURL));
+      Workers = Array.from({ length: 2 }, () => new Worker(this.#blobURL));
       Workers[0].onmessage = function (e) {
-        const bumperAffected = e.data[0];
-        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
-        if (dirZ < 0) {
-          Bumpers[bumperAffected].playerGlb.position.x += 7.2;
-          Bumpers[bumperAffected].playerGlb.position.z -= 0.7;
-        } else {
-          Bumpers[bumperAffected].playerGlb.position.x -= 7.2;
-          Bumpers[bumperAffected].playerGlb.position.z += 0.7;
-        }
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
-        Bumpers[bumperAffected].modelChoosen = 0;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
-        Bumpers[bumperAffected].lenghtHalf = 2.5;
-        buffUI?.hide();
-      };
-      Workers[1].onmessage = function (e) {
-        const bumperAffected = Math.abs(e.data[0] - 1);
-        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
-        Bumpers[bumperAffected].modelChoosen = 0;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
-        Bumpers[bumperAffected].lenghtHalf = 2.5;
-        if (
-          Bumpers[bumperAffected].cubeUpdate.x <
-          WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf
-        ) {
-          Bumpers[bumperAffected].cubeUpdate.x =
-            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
-          Bumpers[bumperAffected].playerGlb.position.x =
-            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[bumperAffected].lenghtHalf - 0.1;
-        } else if (
-          Bumpers[bumperAffected].cubeUpdate.x >
-          WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf
-        ) {
-          Bumpers[bumperAffected].cubeUpdate.x =
-            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
-          Bumpers[bumperAffected].playerGlb.position.x =
-            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[bumperAffected].lenghtHalf + 0.1;
-        }
-        if (dirZ < 0) {
-          Bumpers[bumperAffected].playerGlb.position.x += 1;
-          Bumpers[bumperAffected].playerGlb.position.z -= 0.4;
-        } else {
-          Bumpers[bumperAffected].playerGlb.position.x -= 1;
-          Bumpers[bumperAffected].playerGlb.position.z += 0.4;
+        for (let i = 0; i < Bumpers.length; i++) {
+          const bumper = Bumpers[i];
+
+          // Reset control and speed effects
+          bumper.controlReverse = false;
+          bumper.speed = BUMPER_SPEED * GAME_SPEED;
+          
+          // Reset size effects
+          bumper.lenghtHalf = BUMPER_LENGTH_HALF;
+          bumper.widthHalf = BUMPER_WIDTH_HALF;
+          if (
+            bumper.cubeUpdate.x <
+            WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf
+          ) {
+            bumper.cubeUpdate.x =
+              WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf - 0.1;
+            bumper.playerGlb.position.x =
+              WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf - 0.1;
+          } else if (
+            bumper.cubeUpdate.x >
+            WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf
+          ) {
+            bumper.cubeUpdate.x =
+              WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf + 0.1;
+            bumper.playerGlb.position.x =
+              WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf + 0.1;
+          }
+          
+          // Reset model back to table (index 0) with safe switching
+          safeModelSwitch(bumper, 0);
+        
+          // Reset position if it was modified by buffs
+          if (bumper.playerGlb && bumper.cubeUpdate) {
+            if (bumper.dirZ < 0){
+              bumper.playerGlb.position.z = bumper.cubeUpdate.z + 1;
+              bumper.playerGlb.position.x = bumper.cubeUpdate.x - 1;
+            }
+            else {
+              bumper.playerGlb.position.z = bumper.cubeUpdate.z - 1;
+              bumper.playerGlb.position.x = bumper.cubeUpdate.x + 1;
+            }
+          }
         }
         buffUI?.hide();
       };
-      Workers[2].onmessage = function (e) {
-        Bumpers[Math.abs(e.data[0] - 1)].controlReverse = false;
-        buffUI?.hide();
-      };
-      Workers[3].onmessage = function (e) {
-        const bumperAffected = Math.abs(e.data[0] - 1);
-        Bumpers[bumperAffected].speed = 0.25 * GAME_SPEED;
-        Bumpers[bumperAffected].gltfStore.action[0].setDuration(0.18);
-        Bumpers[bumperAffected].gltfStore.action[5].setDuration(0.18);
-        buffUI?.hide();
-      };
-      Workers[4].onmessage = function (e) {
-        const bumperAffected = e.data[0];
-        let dirZ = Bumpers[bumperAffected].playerGlb.position.z;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = false;
-        Bumpers[bumperAffected].modelChoosen = 0;
-        Bumpers[bumperAffected].modelsGlb[Bumpers[bumperAffected].modelChoosen].visible = true;
-        Bumpers[bumperAffected].widthHalf = 0.5;
-        dirZ < 0
-          ? (Bumpers[bumperAffected].playerGlb.position.x += 5)
-          : (Bumpers[bumperAffected].playerGlb.position.x -= 5);
-        buffUI?.hide();
-      };
-      Workers[5].onmessage = function () {
+      Workers[1].onmessage = function () {
         Coin.cylinderUpdate.set(-9.25, 3, 0);
       };
 
@@ -1461,9 +1636,7 @@ export class Game extends HTMLElement {
       const reversedLastBumperCollided = Math.abs(lastBumperCollided - 1);
       switch (chooseBuff) {
         case 1:
-          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
-          Bumpers[lastBumperCollided].modelChoosen = 1;
-          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
+          safeModelSwitch(Bumpers[lastBumperCollided], 1);
           Bumpers[lastBumperCollided].lenghtHalf = 5;
           if (
             Bumpers[lastBumperCollided].cubeUpdate.x <
@@ -1471,39 +1644,25 @@ export class Game extends HTMLElement {
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
               WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
-            dirZ < 0
-              ? (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 + 1)
-              : (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1 - 1);
           } else if (
             Bumpers[lastBumperCollided].cubeUpdate.x >
             WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
               WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
-            dirZ < 0
-              ? (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 + 1)
-              : (Bumpers[lastBumperCollided].playerGlb.position.x =
-                  WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1 - 1);
           }
           if (dirZ < 0) {
-            Bumpers[lastBumperCollided].playerGlb.position.x -= 7.2;
+            Bumpers[lastBumperCollided].playerGlb.position.x = Bumpers[lastBumperCollided].cubeUpdate.x + 1 - 7.2;
             Bumpers[lastBumperCollided].playerGlb.position.z += 0.7;
           } else {
-            Bumpers[lastBumperCollided].playerGlb.position.x += 7.2;
+            Bumpers[lastBumperCollided].playerGlb.position.x = Bumpers[lastBumperCollided].cubeUpdate.x - 1 + 7.2;
             Bumpers[lastBumperCollided].playerGlb.position.z -= 0.7;
           }
           Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.LONG);
           break;
         case 2:
-          Bumpers[reversedLastBumperCollided].modelsGlb[Bumpers[reversedLastBumperCollided].modelChoosen].visible =
-            false;
-          Bumpers[reversedLastBumperCollided].modelChoosen = 2;
-          Bumpers[reversedLastBumperCollided].modelsGlb[Bumpers[reversedLastBumperCollided].modelChoosen].visible =
-            true;
+          safeModelSwitch(Bumpers[reversedLastBumperCollided], 2);
           Bumpers[reversedLastBumperCollided].lenghtHalf = 1.25;
           if (dirZ < 0) {
             Bumpers[reversedLastBumperCollided].playerGlb.position.x += 1;
@@ -1512,35 +1671,33 @@ export class Game extends HTMLElement {
             Bumpers[reversedLastBumperCollided].playerGlb.position.x -= 1;
             Bumpers[reversedLastBumperCollided].playerGlb.position.z += 0.4;
           }
-          Workers[1].postMessage([10000, lastBumperCollided, 'create']);
+          Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SHORT);
           break;
         case 3:
           Bumpers[reversedLastBumperCollided].controlReverse = true;
-          Workers[2].postMessage([2000, lastBumperCollided, 'create']);
+          Workers[0].postMessage([2000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SWITCH);
           break;
         case 4:
           Bumpers[reversedLastBumperCollided].speed = 0.1 * GAME_SPEED;
           Bumpers[reversedLastBumperCollided].gltfStore.action[0].setDuration(0.2);
           Bumpers[reversedLastBumperCollided].gltfStore.action[5].setDuration(0.2);
-          Workers[3].postMessage([5000, lastBumperCollided, 'create']);
+          Workers[0].postMessage([5000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.SLOW);
           break;
         default:
-          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = false;
-          Bumpers[lastBumperCollided].modelChoosen = 3;
-          Bumpers[lastBumperCollided].modelsGlb[Bumpers[lastBumperCollided].modelChoosen].visible = true;
+          safeModelSwitch(Bumpers[lastBumperCollided], 3);
           Bumpers[lastBumperCollided].widthHalf = 1.5;
           dirZ < 0
             ? (Bumpers[lastBumperCollided].playerGlb.position.x -= 5)
             : (Bumpers[lastBumperCollided].playerGlb.position.x += 5);
-          Workers[4].postMessage([10000, lastBumperCollided, 'create']);
+          Workers[0].postMessage([10000, lastBumperCollided, 'create']);
           buffUI?.show(BUFF_TYPE.LARGE);
           break;
       }
       Coin.cylinderUpdate.set(-100, 3, 0);
-      Workers[5].postMessage([30000, -1, 'create']);
+      Workers[1].postMessage([30000, -1, 'create']);
     };
 
     function checkBallScored() {
@@ -1675,13 +1832,28 @@ export class Game extends HTMLElement {
       // Update visual positions (once per frame)
       updateVisualPositions();
 
-      // Update animations
-      if (Bumpers[0].gltfStore?.mixer && Bumpers[1].gltfStore?.mixer) {
-        Bumpers[0].gltfStore.mixer.update(delta);
-        Bumpers[1].gltfStore.mixer.update(delta);
+      // Update animations with comprehensive safety checks (only if models moved)
+      try {
+        if (this.isAnimationSystemReady(Bumpers[0])) {
+          Bumpers[0].gltfStore.mixer.update(delta);
+        }
+        if (this.isAnimationSystemReady(Bumpers[1])) {
+          Bumpers[1].gltfStore.mixer.update(delta);
+        }
+      } catch (error) {
+        GameLogger.warn('Animation', 'Error updating animation mixers', error);
       }
 
-      renderer.render(scene, camera);
+      // Performance optimization: Update object visibility with frustum culling
+      if (this.renderOptimizer) {
+        this.renderOptimizer.updateVisibility(camera);
+      }
+
+      // Optimized render call - only render if game is actively playing
+      if (gameStateContainer.isGamePlaying) {
+        renderer.render(scene, camera);
+      }
+
       gameLoop.start();
     };
 
@@ -1722,7 +1894,6 @@ export class Game extends HTMLElement {
 
     this.onDocumentKeyDown = this.createOnDocumentKeyDown(
       keyMap,
-      Workers,
       gameStartAndStop,
       gameStateContainer,
       Timer,
@@ -1740,57 +1911,333 @@ export class Game extends HTMLElement {
     this.cleanup();
   }
 
-  cleanup() {
-    // Cancel animation frame
-    if (this.#animationId) {
-      cancelAnimationFrame(this.#animationId);
-      this.#animationId = null;
-    }
+  /**
+   * Shared material system for memory optimization
+   * Reuses materials to reduce GPU memory usage
+   */
+  initSharedMaterials() {
+    this.sharedMaterials = {
+      // Common materials used throughout the scene
+      hillMaterial: new THREE.MeshPhongMaterial({ color: 0x3a251a }),
+      cactusBaseMaterial: new THREE.MeshPhongMaterial({ color: 0x228b22 }),
+      shadowMaterial: new THREE.ShadowMaterial({ opacity: 0.3 }),
 
-    // Remove event listeners
-    if (this.onDocumentKeyDown) {
-      document.removeEventListener('keydown', this.onDocumentKeyDown, true);
-      this.onDocumentKeyDown = null;
-    }
-    if (this.onDocumentKeyUp) {
-      document.removeEventListener('keyup', this.onDocumentKeyUp, true);
-      this.onDocumentKeyUp = null;
-    }
-    if (this.#resizeHandler) {
-      window.removeEventListener('resize', this.#resizeHandler);
-      this.#resizeHandler = null;
-    }
-
-    // Clean up Workers and blob URL
-    if (this.Workers) {
-      this.Workers.forEach((worker) => {
-        if (worker) {
-          worker.terminate();
+      // Get or create shared material
+      get: (type, options = {}) => {
+        const key = `${type}_${JSON.stringify(options)}`;
+        if (!this.sharedMaterials[key]) {
+          switch (type) {
+            case 'phong':
+              this.sharedMaterials[key] = new THREE.MeshPhongMaterial(options);
+              break;
+            case 'basic':
+              this.sharedMaterials[key] = new THREE.MeshBasicMaterial(options);
+              break;
+            case 'lambert':
+              this.sharedMaterials[key] = new THREE.MeshLambertMaterial(options);
+              break;
+            default:
+              this.sharedMaterials[key] = new THREE.MeshPhongMaterial(options);
+          }
         }
-      });
-      this.Workers = null;
-    }
-    if (this.#blobURL) {
-      URL.revokeObjectURL(this.#blobURL);
-      this.#blobURL = null;
+        return this.sharedMaterials[key];
+      },
+
+      // Dispose all shared materials
+      dispose: () => {
+        Object.values(this.sharedMaterials).forEach((material) => {
+          if (material && material.dispose) {
+            material.dispose();
+          }
+        });
+        this.sharedMaterials = null;
+      },
+    };
+
+    GameLogger.info('MaterialSystem', 'Shared material system initialized');
+  }
+
+  /**
+   * Performance optimization system for 3D rendering
+   * Manages object visibility and frustum culling
+   */
+  initRenderOptimizations(camera, scene) {
+    this.renderOptimizer = {
+      frustum: new THREE.Frustum(),
+      cameraMatrix: new THREE.Matrix4(),
+      staticObjects: [], // Objects that don't move (cacti, hills, walls)
+      dynamicObjects: [], // Objects that move (players, ball, coin)
+      lastCullCheck: 0,
+      cullInterval: 100, // Check visibility every 100ms instead of every frame
+
+      // Helper function to extract all meshes from an object
+      extractMeshes: (object) => {
+        const meshes = [];
+        object.traverse((child) => {
+          if (child.isMesh && child.geometry) {
+            meshes.push(child);
+          }
+        });
+        return meshes;
+      },
+
+      // Register static objects for culling
+      registerStatic: (object, type = 'static') => {
+        const meshes = this.renderOptimizer.extractMeshes(object);
+        meshes.forEach(mesh => {
+          this.renderOptimizer.staticObjects.push({ object: mesh, type, lastVisible: true });
+        });
+      },
+
+      // Register dynamic objects for culling
+      registerDynamic: (object, type = 'dynamic') => {
+        const meshes = this.renderOptimizer.extractMeshes(object);
+        meshes.forEach(mesh => {
+          this.renderOptimizer.dynamicObjects.push({ object: mesh, type, lastVisible: true });
+        });
+      },
+
+      // Perform frustum culling
+      updateVisibility: (camera, forceUpdate = false) => {
+        const now = performance.now();
+        if (!forceUpdate && now - this.renderOptimizer.lastCullCheck < this.renderOptimizer.cullInterval) {
+          return;
+        }
+
+        this.renderOptimizer.lastCullCheck = now;
+        this.renderOptimizer.cameraMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+        this.renderOptimizer.frustum.setFromProjectionMatrix(this.renderOptimizer.cameraMatrix);
+
+        // Cull static objects (less frequently)
+        this.renderOptimizer.staticObjects.forEach((item) => {
+          // console.log(item.object.isMesh);
+          const wasVisible = item.lastVisible;
+
+          const isVisible = this.renderOptimizer.frustum.intersectsObject(item.object);
+
+          if (wasVisible !== isVisible) {
+            item.object.visible = isVisible;
+            item.lastVisible = isVisible;
+          }
+        });
+
+        // Always check dynamic objects (they move frequently)
+        this.renderOptimizer.dynamicObjects.forEach((item) => {
+          item.object.visible = this.renderOptimizer.frustum.intersectsObject(item.object);
+        });
+      },
+
+      // Get performance stats
+      getStats: () => {
+        const staticVisible = this.renderOptimizer.staticObjects.filter((item) => item.lastVisible).length;
+        const staticTotal = this.renderOptimizer.staticObjects.length;
+        const dynamicVisible = this.renderOptimizer.dynamicObjects.filter((item) => item.object.visible).length;
+        const dynamicTotal = this.renderOptimizer.dynamicObjects.length;
+
+        return {
+          staticVisible,
+          staticTotal,
+          dynamicVisible,
+          dynamicTotal,
+          totalVisible: staticVisible + dynamicVisible,
+          totalObjects: staticTotal + dynamicTotal,
+        };
+      },
+    };
+
+    GameLogger.info('RenderOptimizer', 'Frustum culling system initialized');
+  }
+
+  cleanup() {
+    GameLogger.info('Cleanup', 'Starting comprehensive cleanup...');
+
+    try {
+      // Cancel animation frame
+      if (this.#animationId) {
+        cancelAnimationFrame(this.#animationId);
+        this.#animationId = null;
+        GameLogger.debug('Cleanup', 'Animation frame cancelled');
+      }
+
+      // Remove event listeners
+      if (this.onDocumentKeyDown) {
+        document.removeEventListener('keydown', this.onDocumentKeyDown, true);
+        this.onDocumentKeyDown = null;
+        GameLogger.debug('Cleanup', 'Keydown listener removed');
+      }
+      if (this.onDocumentKeyUp) {
+        document.removeEventListener('keyup', this.onDocumentKeyUp, true);
+        this.onDocumentKeyUp = null;
+        GameLogger.debug('Cleanup', 'Keyup listener removed');
+      }
+      if (this.#resizeHandler) {
+        window.removeEventListener('resize', this.#resizeHandler);
+        this.#resizeHandler = null;
+        GameLogger.debug('Cleanup', 'Resize listener removed');
+      }
+
+      // Clean up UI elements
+      this.cleanupUIElements();
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during initial cleanup phase', error);
     }
 
-    // Dispose Three.js objects properly
-    this.disposeThreeJS();
+    try {
+      // Clean up Workers and blob URL
+      if (this.Workers) {
+        this.Workers.forEach((worker) => {
+          if (worker) {
+            worker.terminate();
+          }
+        });
+        this.Workers = null;
+        GameLogger.debug('Cleanup', 'Workers terminated');
+      }
+      if (this.#blobURL) {
+        URL.revokeObjectURL(this.#blobURL);
+        this.#blobURL = null;
+        GameLogger.debug('Cleanup', 'Blob URL revoked');
+      }
 
-    // Clean up loaders
-    if (this.#ktx2Loader) {
-      this.#ktx2Loader.dispose();
-      this.#ktx2Loader = null;
+      // Stop game loop first to prevent conflicts
+      if (this.stop) {
+        this.stop();
+        GameLogger.debug('Cleanup', 'Game loop stopped');
+      }
+
+      // Dispose Three.js objects properly
+      this.disposeThreeJS();
+
+      // Dispose shared materials
+      if (this.sharedMaterials) {
+        this.sharedMaterials.dispose();
+        GameLogger.debug('Cleanup', 'Shared materials disposed');
+      }
+
+      // Clean up loaders
+      if (this.#ktx2Loader) {
+        this.#ktx2Loader.dispose();
+        this.#ktx2Loader = null;
+        GameLogger.debug('Cleanup', 'KTX2 loader disposed');
+      }
+      if (this.loaderModel) {
+        this.loaderModel = null;
+        GameLogger.debug('Cleanup', 'Model loader cleared');
+      }
+
+      GameLogger.info('Cleanup', 'Single-player cleanup completed successfully');
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during final cleanup phase', error);
     }
-    if (this.loaderModel) {
-      this.loaderModel = null;
+  }
+
+  /**
+   * Comprehensive Three.js object disposal to prevent memory leaks
+   */
+  disposeThreeJS() {
+    try {
+      GameLogger.info('Cleanup', 'Starting Three.js object disposal...');
+
+      // Dispose all registered objects in render optimizer
+      if (this.renderOptimizer) {
+        [...this.renderOptimizer.staticObjects, ...this.renderOptimizer.dynamicObjects].forEach((item) => {
+          this.disposeObject3D(item.object);
+        });
+
+        // Clear optimizer arrays
+        this.renderOptimizer.staticObjects = [];
+        this.renderOptimizer.dynamicObjects = [];
+        this.renderOptimizer = null;
+        GameLogger.debug('Cleanup', 'Render optimizer disposed');
+      }
+
+      // Dispose scene objects if scene exists
+      if (this.scene) {
+        this.scene.traverse((object) => {
+          this.disposeObject3D(object);
+        });
+
+        this.scene.clear();
+        this.scene = null;
+        GameLogger.debug('Cleanup', 'Scene disposed');
+      }
+
+      // Dispose renderer
+      if (this.renderer) {
+        this.renderer.dispose();
+        this.renderer.forceContextLoss();
+        this.renderer.domElement.remove();
+        this.renderer = null;
+        GameLogger.debug('Cleanup', 'Renderer disposed');
+      }
+
+      GameLogger.info('Cleanup', 'Three.js disposal completed');
+    } catch (error) {
+      GameLogger.error('Cleanup', 'Error during Three.js disposal', error);
+    }
+  }
+
+  /**
+   * Dispose individual Three.js object and its resources
+   * @param {THREE.Object3D} object - Object to dispose
+   */
+  disposeObject3D(object) {
+    if (!object) return;
+
+    // Dispose geometry
+    if (object.geometry) {
+      object.geometry.dispose();
     }
 
-    // Stop game loop
-    if (this.stop) {
-      this.stop();
+    // Dispose material(s)
+    if (object.material) {
+      if (Array.isArray(object.material)) {
+        object.material.forEach((material) => this.disposeMaterial(material));
+      } else {
+        this.disposeMaterial(object.material);
+      }
     }
+
+    // Dispose textures
+    if (object.material?.map) object.material.map.dispose();
+    if (object.material?.normalMap) object.material.normalMap.dispose();
+    if (object.material?.bumpMap) object.material.bumpMap.dispose();
+    if (object.material?.envMap) object.material.envMap.dispose();
+  }
+
+  /**
+   * Dispose Three.js material and its textures
+   * @param {THREE.Material} material - Material to dispose
+   */
+  disposeMaterial(material) {
+    if (!material) return;
+
+    // Dispose all textures in material
+    Object.keys(material).forEach((key) => {
+      const value = material[key];
+      if (value && value.isTexture) {
+        value.dispose();
+      }
+    });
+
+    material.dispose();
+  }
+
+  /**
+   * Clean up UI elements to prevent memory leaks
+   */
+  cleanupUIElements() {
+    const uiElements = ['scoreElement', 'timerElement', 'buffIconElement', 'lifePointElement', 'overlay'];
+
+    uiElements.forEach((elementName) => {
+      if (this[elementName]) {
+        if (this[elementName].parentNode) {
+          this[elementName].parentNode.removeChild(this[elementName]);
+        }
+        this[elementName] = null;
+        GameLogger.debug('Cleanup', `${elementName} cleaned up`);
+      }
+    });
   }
 
   disposeThreeJS() {
