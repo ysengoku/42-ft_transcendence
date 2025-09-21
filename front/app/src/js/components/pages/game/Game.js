@@ -24,6 +24,7 @@ import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
 import { DEFAULT_AVATAR } from '@env';
 
 /* eslint no-var: "off" */
+/* eslint-disable new-cap */
 
 /**
  * Standardized error logging utility
@@ -86,7 +87,7 @@ export class Game extends HTMLElement {
     this.modelRotation = [
       // Player 1 rotations: [table, couch, chair, dressing]
       [this.degreesToRadians(235), this.degreesToRadians(-90), this.degreesToRadians(235), this.degreesToRadians(-90)],
-      // Player 2 rotations: [table, couch, chair, dressing]  
+      // Player 2 rotations: [table, couch, chair, dressing]
       [this.degreesToRadians(55), this.degreesToRadians(90), this.degreesToRadians(55), this.degreesToRadians(90)],
     ];
   }
@@ -275,7 +276,7 @@ export class Game extends HTMLElement {
       try {
         ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][ourBumper.modelChoosen || 0];
       } catch (error) {
-        GameLogger.warn('Animation', 'Rotation update failed');
+        GameLogger.warn('Animation', `Rotation update failed: ${error.message}`);
       }
     }
   }
@@ -818,7 +819,7 @@ export class Game extends HTMLElement {
     const pi = Math.PI;
 
     // Input handling
-    let keyMap = []; // Tracks which keys are currently pressed
+    const keyMap = []; // Tracks which keys are currently pressed
 
     // Game state management with getter/setter pattern
 
@@ -911,33 +912,34 @@ export class Game extends HTMLElement {
     };
 
     const safeModelSwitch = (targetPlayer, newModelIndex) => {
-      if (targetPlayer.modelChoosen == newModelIndex)
-        return;
+      if (targetPlayer.modelChoosen == newModelIndex) return;
 
       if (!targetPlayer.modelsGlb || newModelIndex >= targetPlayer.modelsGlb.length) {
-        GameLogger.warn('ModelSwitch', `Model index ${newModelIndex} out of bounds (array length: ${targetPlayer.modelsGlb?.length}), falling back to index 0`);
+        GameLogger.warn(
+          'ModelSwitch',
+          `Model index ${newModelIndex} out of bounds (array length: ${targetPlayer.modelsGlb?.length}), falling back to index 0`,
+        );
         newModelIndex = 0; // Fallback to table model
       }
-      
+
       // Hide current model
       if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
         targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
       }
-      
+
       // Switch to new model
       targetPlayer.modelChoosen = newModelIndex;
-      
+
       // Show new model
       if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
         targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
       }
     };
 
-
     // Environment setup - Background elements
 
     // Cardboard signs that change based on score progression
-    let cardboardModels = [];
+    const cardboardModels = [];
     const cardboardModelStates = [cardboard, cardboard2, cardboard3];
 
     for (let i = 0; i <= 2; i++) {
@@ -962,14 +964,15 @@ export class Game extends HTMLElement {
         cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
         return { cactusGlb };
       } catch (error) {
-        GameLogger.warn('CactusFactory', 'Failed to load cactus, using fallback');
+        GameLogger.warn('CactusFactory', `Failed to load cactus, using fallback: ${error.message}`);
         return { cactusGlb: this.createFallbackModel(posZ, posY, posX, 1.8, 1.8, 1.8) };
       }
     };
 
     // Generate safe positions for cacti (avoiding play area and other cacti)
     const getSafeCactusPosition = () => {
-      let x, z;
+      let x;
+      let z;
       let attempts = 0;
       do {
         x = (Math.random() - 0.5) * 160;
@@ -1272,7 +1275,7 @@ export class Game extends HTMLElement {
      * Accounts for ball movement prediction and dynamic bumper sizing
      * @param {Object} bumper - Player bumper object with position and size data
      * @param {number} ballSubtickZ - Ball's predicted Z movement
-     * @param {number} ballSubtickX - Ball's predicted X movement  
+     * @param {number} ballSubtickX - Ball's predicted X movement
      * @returns {boolean} True if collision will occur
      */
     function isCollidedWithBall(bumper, ballSubtickZ, ballSubtickX) {
@@ -1285,9 +1288,9 @@ export class Game extends HTMLElement {
     }
 
     function calculateNewDir(bumper) {
-      let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
-      let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lengthHalf);
-      let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
+      const collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
+      const normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lengthHalf);
+      const bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
       Ball.velocity.z = Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dirZ;
       Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dirZ;
       if (
@@ -1355,7 +1358,7 @@ export class Game extends HTMLElement {
       overlayUI.show(OVERLAY_TYPE.GAMEOVER, resultData);
     };
 
-    let scoreSwitch = MAX_SCORE / 3;
+    const scoreSwitch = MAX_SCORE / 3;
 
     const resetBall = (direction) => {
       const looserBumper = direction < 0 ? 1 : 0;
@@ -1389,7 +1392,7 @@ export class Game extends HTMLElement {
     };
 
     // AI related variables
-    let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
+    const calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
 
@@ -1505,7 +1508,7 @@ export class Game extends HTMLElement {
     }
 
     // Timer related
-    let Timer = (() => {
+    const Timer = (() => {
       let timeLeft = !GAME_TIME ? 180 : GAME_TIME * 60;
       let timeoutId = setTimeout(TimerCallBack, 1000);
       return {
@@ -1582,38 +1585,27 @@ export class Game extends HTMLElement {
           // Reset control and speed effects
           bumper.controlReverse = false;
           bumper.speed = BUMPER_SPEED * GAME_SPEED;
-          
+
           // Reset size effects
           bumper.lengthHalf = BUMPER_LENGTH_HALF;
           bumper.widthHalf = BUMPER_WIDTH_HALF;
-          if (
-            bumper.cubeUpdate.x <
-            WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf
-          ) {
-            bumper.cubeUpdate.x =
-              WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf - 0.1;
-            bumper.playerGlb.position.x =
-              WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf - 0.1;
-          } else if (
-            bumper.cubeUpdate.x >
-            WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf
-          ) {
-            bumper.cubeUpdate.x =
-              WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf + 0.1;
-            bumper.playerGlb.position.x =
-              WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf + 0.1;
+          if (bumper.cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf) {
+            bumper.cubeUpdate.x = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf - 0.1;
+            bumper.playerGlb.position.x = WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf - 0.1;
+          } else if (bumper.cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf) {
+            bumper.cubeUpdate.x = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf + 0.1;
+            bumper.playerGlb.position.x = WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf + 0.1;
           }
-          
+
           // Reset model back to table (index 0) with safe switching
           safeModelSwitch(bumper, 0);
-        
+
           // Reset position if it was modified by buffs
           if (bumper.playerGlb && bumper.cubeUpdate) {
-            if (bumper.dirZ < 0){
+            if (bumper.dirZ < 0) {
               bumper.playerGlb.position.z = bumper.cubeUpdate.z + 1;
               bumper.playerGlb.position.x = bumper.cubeUpdate.x - 1;
-            }
-            else {
+            } else {
               bumper.playerGlb.position.z = bumper.cubeUpdate.z - 1;
               bumper.playerGlb.position.x = bumper.cubeUpdate.x + 1;
             }
@@ -1651,8 +1643,8 @@ export class Game extends HTMLElement {
 
     // Buff management
     const manageBuffAndDebuff = () => {
-      let chooseBuff = Math.floor(Math.random() * 5);
-      let dirZ = Bumpers[lastBumperCollided].playerGlb.position.z;
+      const chooseBuff = Math.floor(Math.random() * 5);
+      const dirZ = Bumpers[lastBumperCollided].playerGlb.position.z;
       const reversedLastBumperCollided = Math.abs(lastBumperCollided - 1);
       switch (chooseBuff) {
         case 1:
@@ -1792,7 +1784,7 @@ export class Game extends HTMLElement {
 
     const clock = new THREE.Clock();
     let delta = 0;
-    let frameCache = {
+    const frameCache = {
       totalDistanceX: 0,
       totalDistanceZ: 0,
       totalSubticks: 0,
@@ -1910,7 +1902,7 @@ export class Game extends HTMLElement {
         Bumpers[1].cubeUpdate.z,
       );
     }
-    let gameStartAndStop = [gameLoop.start, gameLoop.stop];
+    const gameStartAndStop = [gameLoop.start, gameLoop.stop];
 
     this.onDocumentKeyDown = this.createOnDocumentKeyDown(
       keyMap,
@@ -1949,7 +1941,7 @@ export class Game extends HTMLElement {
           const materialFactories = {
             phong: () => new THREE.MeshPhongMaterial(options),
             basic: () => new THREE.MeshBasicMaterial(options),
-            lambert: () => new THREE.MeshLambertMaterial(options)
+            lambert: () => new THREE.MeshLambertMaterial(options),
           };
           this.sharedMaterials[key] = (materialFactories[type] || materialFactories.phong)();
         }
@@ -1997,7 +1989,7 @@ export class Game extends HTMLElement {
       // Register static objects for culling
       registerStatic: (object, type = 'static') => {
         const meshes = this.renderOptimizer.extractMeshes(object);
-        meshes.forEach(mesh => {
+        meshes.forEach((mesh) => {
           this.renderOptimizer.staticObjects.push({ object: mesh, type, lastVisible: true });
         });
       },
@@ -2005,7 +1997,7 @@ export class Game extends HTMLElement {
       // Register dynamic objects for culling
       registerDynamic: (object, type = 'dynamic') => {
         const meshes = this.renderOptimizer.extractMeshes(object);
-        meshes.forEach(mesh => {
+        meshes.forEach((mesh) => {
           this.renderOptimizer.dynamicObjects.push({ object: mesh, type, lastVisible: true });
         });
       },
@@ -2023,7 +2015,7 @@ export class Game extends HTMLElement {
 
         // Cull static objects (less frequently)
         this.renderOptimizer.staticObjects.forEach((item) => {
-            const wasVisible = item.lastVisible;
+          const wasVisible = item.lastVisible;
 
           const isVisible = this.renderOptimizer.frustum.intersectsObject(item.object);
 

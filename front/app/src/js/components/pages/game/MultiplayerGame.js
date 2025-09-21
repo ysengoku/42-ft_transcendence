@@ -9,7 +9,7 @@ import fence from '/3d_models/fence.glb?url';
 import couch from '/3d_models/sofa.glb?url';
 import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
-import ground_texture from '/img/ground_texture.png?url';
+import groundTextureImg from '/img/ground_texture.png?url';
 import coin from '/3d_models/coin.glb?url';
 import cardboard from '/3d_models/carboard.glb?url';
 import cardboard2 from '/3d_models/carboard2.glb?url';
@@ -150,7 +150,7 @@ export class MultiplayerGame extends HTMLElement {
     this.sharedMaterials = {
       // Common materials used throughout the scene
       hillMaterial: new THREE.MeshPhongMaterial({ color: 0x3a251a }),
-      cactusBaseMaterial: new THREE.MeshPhongMaterial({ color: 0x228B22 }),
+      cactusBaseMaterial: new THREE.MeshPhongMaterial({ color: 0x228b22 }),
       shadowMaterial: new THREE.ShadowMaterial({ opacity: 0.3 }),
 
       // Get or create shared material (optimized factory pattern)
@@ -169,7 +169,7 @@ export class MultiplayerGame extends HTMLElement {
 
       // Dispose all shared materials
       dispose: () => {
-        Object.values(this.sharedMaterials).forEach(material => {
+        Object.values(this.sharedMaterials).forEach((material) => {
           if (material && material.dispose) {
             material.dispose();
           }
@@ -208,7 +208,7 @@ export class MultiplayerGame extends HTMLElement {
       // Register static objects for culling
       registerStatic: (object, type = 'static') => {
         const meshes = this.renderOptimizer.extractMeshes(object);
-        meshes.forEach(mesh => {
+        meshes.forEach((mesh) => {
           this.renderOptimizer.staticObjects.push({ object: mesh, type, lastVisible: true });
         });
       },
@@ -216,7 +216,7 @@ export class MultiplayerGame extends HTMLElement {
       // Register dynamic objects for culling
       registerDynamic: (object, type = 'dynamic') => {
         const meshes = this.renderOptimizer.extractMeshes(object);
-        meshes.forEach(mesh => {
+        meshes.forEach((mesh) => {
           this.renderOptimizer.dynamicObjects.push({ object: mesh, type, lastVisible: true });
         });
       },
@@ -231,9 +231,9 @@ export class MultiplayerGame extends HTMLElement {
         this.renderOptimizer.lastCullCheck = now;
         this.renderOptimizer.cameraMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
         this.renderOptimizer.frustum.setFromProjectionMatrix(this.renderOptimizer.cameraMatrix);
-        
+
         // Cull static objects (less frequently)
-        this.renderOptimizer.staticObjects.forEach(item => {
+        this.renderOptimizer.staticObjects.forEach((item) => {
           const wasVisible = item.lastVisible;
           const isVisible = this.renderOptimizer.frustum.intersectsObject(item.object);
 
@@ -244,16 +244,16 @@ export class MultiplayerGame extends HTMLElement {
         });
 
         // Always check dynamic objects (they move frequently)
-        this.renderOptimizer.dynamicObjects.forEach(item => {
+        this.renderOptimizer.dynamicObjects.forEach((item) => {
           item.object.visible = this.renderOptimizer.frustum.intersectsObject(item.object);
         });
       },
 
       // Get performance stats
       getStats: () => {
-        const staticVisible = this.renderOptimizer.staticObjects.filter(item => item.lastVisible).length;
+        const staticVisible = this.renderOptimizer.staticObjects.filter((item) => item.lastVisible).length;
         const staticTotal = this.renderOptimizer.staticObjects.length;
-        const dynamicVisible = this.renderOptimizer.dynamicObjects.filter(item => item.object.visible).length;
+        const dynamicVisible = this.renderOptimizer.dynamicObjects.filter((item) => item.object.visible).length;
         const dynamicTotal = this.renderOptimizer.dynamicObjects.length;
 
         return {
@@ -351,7 +351,7 @@ export class MultiplayerGame extends HTMLElement {
 
       // Dispose all registered objects in render optimizer
       if (this.renderOptimizer) {
-        [...this.renderOptimizer.staticObjects, ...this.renderOptimizer.dynamicObjects].forEach(item => {
+        [...this.renderOptimizer.staticObjects, ...this.renderOptimizer.dynamicObjects].forEach((item) => {
           this.disposeObject3D(item.object);
         });
 
@@ -403,7 +403,7 @@ export class MultiplayerGame extends HTMLElement {
     // Dispose material(s)
     if (object.material) {
       if (Array.isArray(object.material)) {
-        object.material.forEach(material => this.disposeMaterial(material));
+        object.material.forEach((material) => this.disposeMaterial(material));
       } else {
         this.disposeMaterial(object.material);
       }
@@ -424,7 +424,7 @@ export class MultiplayerGame extends HTMLElement {
     if (!material) return;
 
     // Dispose all textures in material
-    Object.keys(material).forEach(key => {
+    Object.keys(material).forEach((key) => {
       const value = material[key];
       if (value && value.isTexture) {
         value.dispose();
@@ -780,7 +780,7 @@ export class MultiplayerGame extends HTMLElement {
       try {
         ourBumper.playerGlb.rotation.y = this.modelRotation[ourBumperIndex][ourBumper.modelChoosen || 0];
       } catch (error) {
-        GameLogger.warn('Animation', 'Rotation update failed');
+        GameLogger.warn('Animation', 'Rotation update failed', error);
       }
     }
   }
@@ -1043,7 +1043,7 @@ export class MultiplayerGame extends HTMLElement {
       return modelGenerated;
     };
 
-    let cardboardModels = [];
+    const cardboardModels = [];
     const cardboardModelStates = [cardboard, cardboard2, cardboard3];
 
     // Environment setup - Background elements for immersive experience
@@ -1060,14 +1060,15 @@ export class MultiplayerGame extends HTMLElement {
         cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
         return { cactusGlb };
       } catch (error) {
-        console.warn('Failed to load cactus, using fallback');
+        console.warn('Failed to load cactus, using fallback', error);
         return { cactusGlb: this.createFallbackModel(posZ, posY, posX, 1.8, 1.8, 1.8) };
       }
     };
 
     // Generate safe positions for cacti (avoiding play area and other cacti)
     const getSafeCactusPosition = () => {
-      let x, z;
+      let x;
+      let z;
       let attempts = 0;
       do {
         x = (Math.random() - 0.5) * 160;
@@ -1138,7 +1139,7 @@ export class MultiplayerGame extends HTMLElement {
     // Create textured ground plane
     (() => {
       const textureLoader = new THREE.TextureLoader();
-      const groundTexture = textureLoader.load(ground_texture);
+      const groundTexture = textureLoader.load(groundTextureImg);
       // Set texture to repeat for large ground area
       groundTexture.wrapS = THREE.RepeatWrapping;
       groundTexture.wrapT = THREE.RepeatWrapping;
@@ -1167,7 +1168,7 @@ export class MultiplayerGame extends HTMLElement {
         CoinGlb.position.set(posX, posY, posZ);
         CoinMesh = CoinGlb;
       } catch (error) {
-        console.warn('Failed to load coin model, using fallback geometry');
+        console.warn('Failed to load coin model, using fallback geometry', error);
         // Fallback to basic geometry
         const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
         CoinMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
@@ -1204,7 +1205,7 @@ export class MultiplayerGame extends HTMLElement {
         bulletGlb.rotateX(pi / 2);
         BallMesh = bulletGlb;
       } catch (error) {
-        console.warn('Failed to load ball model, using fallback geometry');
+        console.warn('Failed to load ball model, using fallback geometry', error);
         // Fallback to basic sphere
         const sphereGeometry = new THREE.SphereGeometry(0.5);
         BallMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
@@ -1233,7 +1234,7 @@ export class MultiplayerGame extends HTMLElement {
         fenceGlb.rotateY(-pi / 2); // Rotate to face inward
         return { fenceGlb };
       } catch (error) {
-        console.warn('Failed to load fence, using fallback');
+        console.warn('Failed to load fence, using fallback', error);
         return { fenceGlb: this.createFallbackModel(posX, posY, posZ, 0.8, 0.5, 1) };
       }
     };
@@ -1465,14 +1466,14 @@ export class MultiplayerGame extends HTMLElement {
         };
 
         clientState.pendingInputs.push(input);
-        
+
         this.safeSend(
           JSON.stringify({
             action: action,
             move_id: sequenceNumber,
             player_id: clientState.playerId,
-            timestamp: timestamp
-          })
+            timestamp: timestamp,
+          }),
         );
       }
     };
@@ -1676,10 +1677,13 @@ export class MultiplayerGame extends HTMLElement {
       if (targetPlayer.modelChoosen == newModelIndex) return;
 
       if (!targetPlayer.modelsGlb || newModelIndex >= targetPlayer.modelsGlb.length) {
-        GameLogger.warn('ModelSwitch', `Model index ${newModelIndex} out of bounds (array length: ${targetPlayer.modelsGlb?.length}), falling back to index 0`);
+        GameLogger.warn(
+          'ModelSwitch',
+          `Model index ${newModelIndex} out of bounds (array length: ${targetPlayer.modelsGlb?.length}), falling back to index 0`,
+        );
         newModelIndex = 0; // Fallback to table model
       }
-      
+
       // Hide current model
       if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
         targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
@@ -1703,7 +1707,7 @@ export class MultiplayerGame extends HTMLElement {
         // Reset control and speed effects
         bumper.controlReverse = false;
         bumper.speed = BUMPER_SPEED_PER_SECOND * this.#state.gameOptions.game_speed;
-        
+
         // Reset size effects
         bumper.lenghtHalf = BUMPER_LENGTH_HALF;
         bumper.widthHalf = BUMPER_WIDTH_HALF;
@@ -1939,8 +1943,9 @@ export class MultiplayerGame extends HTMLElement {
      * @param {number} playerVisualZ - Target Z position
      */
     function updatePlayerModelPos(bumper, playerVisualX, playerVisualZ) {
-      const isDebuffActive = serverState.current_buff_or_debuff !== Buff.NO_BUFF && 
-      (serverState.bumper_1.buff_or_debuff_target || serverState.bumper_2.buff_or_debuff_target);
+      const isDebuffActive =
+        serverState.current_buff_or_debuff !== Buff.NO_BUFF &&
+        (serverState.bumper_1.buff_or_debuff_target || serverState.bumper_2.buff_or_debuff_target);
 
       if (bumper.playerGlb.position.z < 0) {
         bumper.playerGlb.position.x = playerVisualX + 1;
@@ -1952,26 +1957,18 @@ export class MultiplayerGame extends HTMLElement {
           if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY) {
             bumper.playerGlb.position.x += 1;
             bumper.playerGlb.position.z = playerVisualZ + 0.4;
-          }
-          else if (serverState.current_buff_or_debuff == Buff.ELONGATE_PLAYER){
+          } else if (serverState.current_buff_or_debuff == Buff.ELONGATE_PLAYER) {
             bumper.playerGlb.position.x += 7.2;
             bumper.playerGlb.position.z = playerVisualZ + 0.7;
-          }
-          else if (serverState.current_buff_or_debuff == Buff.ENLARGE_PLAYER)
-            bumper.playerGlb.position.x += 5;
-        }
-        else if (serverState.bumper_1.buff_or_debuff_target && bumper == Bumpers[0])
-        {
+          } else if (serverState.current_buff_or_debuff == Buff.ENLARGE_PLAYER) bumper.playerGlb.position.x += 5;
+        } else if (serverState.bumper_1.buff_or_debuff_target && bumper == Bumpers[0]) {
           if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY) {
             bumper.playerGlb.position.x -= 1;
             bumper.playerGlb.position.z = playerVisualZ - 0.4;
-          }
-          else if (serverState.current_buff_or_debuff == Buff.ELONGATE_PLAYER){
+          } else if (serverState.current_buff_or_debuff == Buff.ELONGATE_PLAYER) {
             bumper.playerGlb.position.x -= 7.2;
             bumper.playerGlb.position.z = playerVisualZ - 0.7;
-          }
-          else if (serverState.current_buff_or_debuff == Buff.ENLARGE_PLAYER)
-            bumper.playerGlb.position.x -= 5;
+          } else if (serverState.current_buff_or_debuff == Buff.ENLARGE_PLAYER) bumper.playerGlb.position.x -= 5;
         }
       }
     }
