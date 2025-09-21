@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
-import pedro from '/3d_models/pleasehelpme.glb?url';
+import pedro from '/img/ground_texture.png?url';
 import cactus from '/3d_models/cactus1.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
@@ -11,9 +11,9 @@ import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
 import ground_texture from '/img/ground_texture.png?url';
 import coin from '/3d_models/coin.glb?url';
-import carboard from '/3d_models/carboard.glb?url';
-import carboard2 from '/3d_models/carboard2.glb?url';
-import carboard3 from '/3d_models/carboard3.glb?url';
+import cardboard from '/3d_models/carboard.glb?url';
+import cardboard2 from '/3d_models/carboard2.glb?url';
+import cardboard3 from '/3d_models/carboard3.glb?url';
 import table from '/3d_models/table.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
@@ -775,7 +775,7 @@ export class Game extends HTMLElement {
     const BUMPER_2_BORDER = -BUMPER_1_BORDER; // Player 2 goal line
     const BUMPER_LENGTH_HALF = 2.5; // Half bumper length
     const BUMPER_WIDTH_HALF = 0.5; // Half bumper width
-    const BUMPER_SPEED = 0.25
+    const BUMPER_SPEED = 0.25;
 
     const WALL_LEFT_X = 10; // Left wall position
     const WALL_RIGHT_X = -WALL_LEFT_X; // Right wall position
@@ -937,17 +937,17 @@ export class Game extends HTMLElement {
     // Environment setup - Background elements
 
     // Cardboard signs that change based on score progression
-    let carboardModels = [];
-    const carboardModelStates = [carboard, carboard2, carboard3];
+    let cardboardModels = [];
+    const cardboardModelStates = [cardboard, cardboard2, cardboard3];
 
     for (let i = 0; i <= 2; i++) {
-      const carboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, carboardModelStates[i]);
-      carboardGlb.rotateY(pi / 2);
-      carboardModels[i] = carboardGlb;
+      const cardboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, cardboardModelStates[i]);
+      cardboardGlb.rotateY(pi / 2);
+      cardboardModels[i] = cardboardGlb;
     }
     // Initially show only the first cardboard sign
-    carboardModels[1].visible = false;
-    carboardModels[2].visible = false;
+    cardboardModels[1].visible = false;
+    cardboardModels[2].visible = false;
 
     // Desert environment - Cactus placement system
     const cacti = [];
@@ -955,12 +955,16 @@ export class Game extends HTMLElement {
     const minDistance = 8; // Minimum distance between cacti
 
     // Factory function for creating randomly rotated cacti
+    // Factory function for creating randomly rotated cacti with error handling
     const CactusFactory = async (posX, posY, posZ) => {
-      const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
-      cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
-      return {
-        cactusGlb,
-      };
+      try {
+        const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
+        cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
+        return { cactusGlb };
+      } catch (error) {
+        GameLogger.warn('CactusFactory', 'Failed to load cactus, using fallback');
+        return { cactusGlb: this.createFallbackModel(posZ, posY, posX, 1.8, 1.8, 1.8) };
+      }
     };
 
     // Generate safe positions for cacti (avoiding play area and other cacti)
@@ -1149,7 +1153,7 @@ export class Game extends HTMLElement {
 
       const cubeUpdate = new THREE.Vector3(posX, posY, posZ);
       const dirZ = -Math.sign(posZ);
-      let lenghtHalf = BUMPER_LENGTH_HALF;
+      let lengthHalf = BUMPER_LENGTH_HALF;
       let modelChoosen = 0;
       let widthHalf = BUMPER_WIDTH_HALF;
       let controlReverse = false;
@@ -1194,11 +1198,11 @@ export class Game extends HTMLElement {
         set controlReverse(newControlReverse) {
           controlReverse = newControlReverse;
         },
-        get lenghtHalf() {
-          return lenghtHalf;
+        get lengthHalf() {
+          return lengthHalf;
         },
-        set lenghtHalf(newLenghtHalf) {
-          lenghtHalf = newLenghtHalf;
+        set lengthHalf(newLengthHalf) {
+          lengthHalf = newLengthHalf;
         },
         get widthHalf() {
           return widthHalf;
@@ -1246,6 +1250,14 @@ export class Game extends HTMLElement {
     let ballSubtickX;
     let lastBumperCollided = 0;
 
+    /**
+     * Collision detection between ball and power-up coin
+     * Uses AABB (Axis-Aligned Bounding Box) collision detection
+     * @param {Object} coin - The coin object with position data
+     * @param {number} ballSubtickZ - Ball's Z-axis movement in this subtick
+     * @param {number} ballSubtickX - Ball's X-axis movement in this subtick
+     * @returns {boolean} True if collision detected
+     */
     function isCoinCollidedWithBall(coin, ballSubtickZ, ballSubtickX) {
       return (
         Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= coin.cylinderUpdate.x + 0.25 &&
@@ -1255,10 +1267,18 @@ export class Game extends HTMLElement {
       );
     }
 
+    /**
+     * Advanced collision detection between ball and player bumper
+     * Accounts for ball movement prediction and dynamic bumper sizing
+     * @param {Object} bumper - Player bumper object with position and size data
+     * @param {number} ballSubtickZ - Ball's predicted Z movement
+     * @param {number} ballSubtickX - Ball's predicted X movement  
+     * @returns {boolean} True if collision will occur
+     */
     function isCollidedWithBall(bumper, ballSubtickZ, ballSubtickX) {
       return (
-        Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lenghtHalf &&
-        Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lenghtHalf &&
+        Ball.sphereUpdate.x - BALL_RADIUS + ballSubtickX * Ball.velocity.x <= bumper.cubeUpdate.x + bumper.lengthHalf &&
+        Ball.sphereUpdate.x + BALL_RADIUS + ballSubtickX * Ball.velocity.x >= bumper.cubeUpdate.x - bumper.lengthHalf &&
         Ball.sphereUpdate.z - BALL_RADIUS + ballSubtickZ * Ball.velocity.z <= bumper.cubeUpdate.z + bumper.widthHalf &&
         Ball.sphereUpdate.z + BALL_RADIUS + ballSubtickZ * Ball.velocity.z >= bumper.cubeUpdate.z - bumper.widthHalf
       );
@@ -1266,7 +1286,7 @@ export class Game extends HTMLElement {
 
     function calculateNewDir(bumper) {
       let collisionPosX = bumper.cubeUpdate.x - Ball.sphereUpdate.x;
-      let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lenghtHalf);
+      let normalizedCollisionPosX = collisionPosX / (BALL_RADIUS + bumper.lengthHalf);
       let bounceAngleRadians = degreesToRadians(55 * normalizedCollisionPosX);
       Ball.velocity.z = Math.min(1, Math.abs(Ball.velocity.z * 1.025 * Ball.temporalSpeed.z)) * bumper.dirZ;
       Ball.velocity.x = Ball.velocity.z * -Math.tan(bounceAngleRadians) * bumper.dirZ;
@@ -1347,11 +1367,11 @@ export class Game extends HTMLElement {
         gameLoop.stop();
         return;
       } else if (Bumpers[0].score < scoreSwitch * 2 && Bumpers[0].score >= scoreSwitch) {
-        carboardModels[0].visible = false;
-        carboardModels[1].visible = true;
+        cardboardModels[0].visible = false;
+        cardboardModels[1].visible = true;
       } else if (Bumpers[0].score < scoreSwitch * 3 && Bumpers[0].score >= scoreSwitch * 2) {
-        carboardModels[1].visible = false;
-        carboardModels[2].visible = true;
+        cardboardModels[1].visible = false;
+        cardboardModels[2].visible = true;
       }
       Ball.temporalSpeed.x = 1;
       Ball.temporalSpeed.z = 1;
@@ -1368,7 +1388,7 @@ export class Game extends HTMLElement {
       Ball.velocity.z = BALL_INITIAL_VELOCITY * GAME_SPEED * direction;
     };
 
-    //Ai related variables
+    // AI related variables
     let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
@@ -1390,7 +1410,7 @@ export class Game extends HTMLElement {
       [1, 1000],
     ];
 
-    //Handling Ai
+    // Handling AI
     const moveAiBumper = (calculatedPos) => {
       keyMap['KeyA'] = false;
       keyMap['KeyD'] = false;
@@ -1428,7 +1448,7 @@ export class Game extends HTMLElement {
     }
 
     function calculateErrorMargin(BallPosZ) {
-      const errorScale = 2.5 / Bumpers[1].lenghtHalf;
+      const errorScale = 2.5 / Bumpers[1].lengthHalf;
       const closenessToBall = (BallPosZ - calculatedBumperPos.z) / 18;
       const errorMargin = difficultyLvl[choosenDifficulty][0] * closenessToBall * errorScale;
       return errorMargin;
@@ -1564,24 +1584,24 @@ export class Game extends HTMLElement {
           bumper.speed = BUMPER_SPEED * GAME_SPEED;
           
           // Reset size effects
-          bumper.lenghtHalf = BUMPER_LENGTH_HALF;
+          bumper.lengthHalf = BUMPER_LENGTH_HALF;
           bumper.widthHalf = BUMPER_WIDTH_HALF;
           if (
             bumper.cubeUpdate.x <
-            WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf
+            WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf
           ) {
             bumper.cubeUpdate.x =
-              WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf - 0.1;
+              WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf - 0.1;
             bumper.playerGlb.position.x =
-              WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lenghtHalf - 0.1;
+              WALL_RIGHT_X + WALL_WIDTH_HALF + bumper.lengthHalf - 0.1;
           } else if (
             bumper.cubeUpdate.x >
-            WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf
+            WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf
           ) {
             bumper.cubeUpdate.x =
-              WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf + 0.1;
+              WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf + 0.1;
             bumper.playerGlb.position.x =
-              WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lenghtHalf + 0.1;
+              WALL_LEFT_X - WALL_WIDTH_HALF - bumper.lengthHalf + 0.1;
           }
           
           // Reset model back to table (index 0) with safe switching
@@ -1613,14 +1633,14 @@ export class Game extends HTMLElement {
         CoinGlb.position.z = posZ;
         const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
         const velocity = new THREE.Vector3(0.01 * GAME_SPEED, 0, 0);
-        let lenghtHalf = 0.25;
+        let lengthHalf = 0.25;
 
         return {
-          get lenghtHalf() {
-            return lenghtHalf;
+          get lengthHalf() {
+            return lengthHalf;
           },
-          set lenghtHalf(newLenghtHalf) {
-            lenghtHalf = newLenghtHalf;
+          set lengthHalf(newLengthHalf) {
+            lengthHalf = newLengthHalf;
           },
           CoinGlb,
           cylinderUpdate,
@@ -1637,19 +1657,19 @@ export class Game extends HTMLElement {
       switch (chooseBuff) {
         case 1:
           safeModelSwitch(Bumpers[lastBumperCollided], 1);
-          Bumpers[lastBumperCollided].lenghtHalf = 5;
+          Bumpers[lastBumperCollided].lengthHalf = 5;
           if (
             Bumpers[lastBumperCollided].cubeUpdate.x <
-            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf
+            WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lengthHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
-              WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lenghtHalf - 0.1;
+              WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[lastBumperCollided].lengthHalf - 0.1;
           } else if (
             Bumpers[lastBumperCollided].cubeUpdate.x >
-            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf
+            WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lengthHalf
           ) {
             Bumpers[lastBumperCollided].cubeUpdate.x =
-              WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lenghtHalf + 0.1;
+              WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[lastBumperCollided].lengthHalf + 0.1;
           }
           if (dirZ < 0) {
             Bumpers[lastBumperCollided].playerGlb.position.x = Bumpers[lastBumperCollided].cubeUpdate.x + 1 - 7.2;
@@ -1663,7 +1683,7 @@ export class Game extends HTMLElement {
           break;
         case 2:
           safeModelSwitch(Bumpers[reversedLastBumperCollided], 2);
-          Bumpers[reversedLastBumperCollided].lenghtHalf = 1.25;
+          Bumpers[reversedLastBumperCollided].lengthHalf = 1.25;
           if (dirZ < 0) {
             Bumpers[reversedLastBumperCollided].playerGlb.position.x += 1;
             Bumpers[reversedLastBumperCollided].playerGlb.position.z -= 0.4;
@@ -1724,7 +1744,7 @@ export class Game extends HTMLElement {
       if (
         ((keyMap['ArrowRight'] == true && Bumpers[0].controlReverse) ||
           (keyMap['ArrowLeft'] == true && !Bumpers[0].controlReverse)) &&
-        !(Bumpers[0].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[0].lenghtHalf)
+        !(Bumpers[0].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[0].lengthHalf)
       ) {
         Bumpers[0].cubeUpdate.x += bumperP1Subtick;
         Bumpers[0].playerGlb.position.x += bumperP1Subtick;
@@ -1732,7 +1752,7 @@ export class Game extends HTMLElement {
       if (
         ((keyMap['ArrowLeft'] == true && Bumpers[0].controlReverse) ||
           (keyMap['ArrowRight'] == true && !Bumpers[0].controlReverse)) &&
-        !(Bumpers[0].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[0].lenghtHalf)
+        !(Bumpers[0].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[0].lengthHalf)
       ) {
         Bumpers[0].cubeUpdate.x -= bumperP1Subtick;
         Bumpers[0].playerGlb.position.x -= bumperP1Subtick;
@@ -1741,7 +1761,7 @@ export class Game extends HTMLElement {
       if (
         ((keyMap['KeyD'] == true && Bumpers[1].controlReverse) ||
           (keyMap['KeyA'] == true && !Bumpers[1].controlReverse)) &&
-        !(Bumpers[1].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[1].lenghtHalf)
+        !(Bumpers[1].cubeUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - Bumpers[1].lengthHalf)
       ) {
         Bumpers[1].cubeUpdate.x += bumperP2Subtick;
         Bumpers[1].playerGlb.position.x += bumperP2Subtick;
@@ -1749,7 +1769,7 @@ export class Game extends HTMLElement {
       if (
         ((keyMap['KeyA'] == true && Bumpers[1].controlReverse) ||
           (keyMap['KeyD'] == true && !Bumpers[1].controlReverse)) &&
-        !(Bumpers[1].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[1].lenghtHalf)
+        !(Bumpers[1].cubeUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + Bumpers[1].lengthHalf)
       ) {
         Bumpers[1].cubeUpdate.x -= bumperP2Subtick;
         Bumpers[1].playerGlb.position.x -= bumperP2Subtick;
@@ -1864,8 +1884,8 @@ export class Game extends HTMLElement {
 
       // Check boundaries
       if (
-        coin.cylinderUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + coin.lenghtHalf ||
-        coin.cylinderUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - coin.lenghtHalf
+        coin.cylinderUpdate.x < WALL_RIGHT_X + WALL_WIDTH_HALF + coin.lengthHalf ||
+        coin.cylinderUpdate.x > WALL_LEFT_X - WALL_WIDTH_HALF - coin.lengthHalf
       ) {
         coin.velocity.x *= -1;
       }
@@ -1922,23 +1942,16 @@ export class Game extends HTMLElement {
       cactusBaseMaterial: new THREE.MeshPhongMaterial({ color: 0x228b22 }),
       shadowMaterial: new THREE.ShadowMaterial({ opacity: 0.3 }),
 
-      // Get or create shared material
+      // Get or create shared material (optimized factory pattern)
       get: (type, options = {}) => {
         const key = `${type}_${JSON.stringify(options)}`;
         if (!this.sharedMaterials[key]) {
-          switch (type) {
-            case 'phong':
-              this.sharedMaterials[key] = new THREE.MeshPhongMaterial(options);
-              break;
-            case 'basic':
-              this.sharedMaterials[key] = new THREE.MeshBasicMaterial(options);
-              break;
-            case 'lambert':
-              this.sharedMaterials[key] = new THREE.MeshLambertMaterial(options);
-              break;
-            default:
-              this.sharedMaterials[key] = new THREE.MeshPhongMaterial(options);
-          }
+          const materialFactories = {
+            phong: () => new THREE.MeshPhongMaterial(options),
+            basic: () => new THREE.MeshBasicMaterial(options),
+            lambert: () => new THREE.MeshLambertMaterial(options)
+          };
+          this.sharedMaterials[key] = (materialFactories[type] || materialFactories.phong)();
         }
         return this.sharedMaterials[key];
       },
@@ -2010,8 +2023,7 @@ export class Game extends HTMLElement {
 
         // Cull static objects (less frequently)
         this.renderOptimizer.staticObjects.forEach((item) => {
-          // console.log(item.object.isMesh);
-          const wasVisible = item.lastVisible;
+            const wasVisible = item.lastVisible;
 
           const isVisible = this.renderOptimizer.frustum.intersectsObject(item.object);
 

@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-// import { OrbitControls } from '/node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
@@ -12,9 +11,9 @@ import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
 import ground_texture from '/img/ground_texture.png?url';
 import coin from '/3d_models/coin.glb?url';
-import carboard from '/3d_models/carboard.glb?url';
-import carboard2 from '/3d_models/carboard2.glb?url';
-import carboard3 from '/3d_models/carboard3.glb?url';
+import cardboard from '/3d_models/carboard.glb?url';
+import cardboard2 from '/3d_models/carboard2.glb?url';
+import cardboard3 from '/3d_models/carboard3.glb?url';
 import table from '/3d_models/table.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
@@ -154,23 +153,16 @@ export class MultiplayerGame extends HTMLElement {
       cactusBaseMaterial: new THREE.MeshPhongMaterial({ color: 0x228B22 }),
       shadowMaterial: new THREE.ShadowMaterial({ opacity: 0.3 }),
       
-      // Get or create shared material
+      // Get or create shared material (optimized factory pattern)
       get: (type, options = {}) => {
         const key = `${type}_${JSON.stringify(options)}`;
         if (!this.sharedMaterials[key]) {
-          switch (type) {
-            case 'phong':
-              this.sharedMaterials[key] = new THREE.MeshPhongMaterial(options);
-              break;
-            case 'basic':
-              this.sharedMaterials[key] = new THREE.MeshBasicMaterial(options);
-              break;
-            case 'lambert':
-              this.sharedMaterials[key] = new THREE.MeshLambertMaterial(options);
-              break;
-            default:
-              this.sharedMaterials[key] = new THREE.MeshPhongMaterial(options);
-          }
+          const materialFactories = {
+            phong: () => new THREE.MeshPhongMaterial(options),
+            basic: () => new THREE.MeshBasicMaterial(options),
+            lambert: () => new THREE.MeshLambertMaterial(options)
+          };
+          this.sharedMaterials[key] = (materialFactories[type] || materialFactories.phong)();
         }
         return this.sharedMaterials[key];
       },
@@ -1056,8 +1048,8 @@ export class MultiplayerGame extends HTMLElement {
       return modelGenerated;
     };
 
-    let carboardModels = [];
-    const carboardModelStates = [carboard, carboard2, carboard3];
+    let cardboardModels = [];
+    const cardboardModelStates = [cardboard, cardboard2, cardboard3];
 
     // Environment setup - Background elements for immersive experience
 
@@ -1265,7 +1257,6 @@ export class MultiplayerGame extends HTMLElement {
     // This will be called after game options are received
     const BumperFactory = async (posX, posY, posZ) => {
       const isGameCool = this.#state.gameOptions.cool_mode;
-      console.log('Cool mode enabled:', isGameCool);
 
       let _ = {};
       let modelsGlb;
@@ -1844,17 +1835,17 @@ export class MultiplayerGame extends HTMLElement {
           camera.lookAt(new THREE.Vector3(0, 0, 0));
 
           // Create cardboard models if not already created
-          if (carboardModels.length === 0) {
-            const carboardRotationY = Bumpers[clientState.playerNumber - 1].dirZ < 0 ? -(pi / 2) : pi / 2;
+          if (cardboardModels.length === 0) {
+            const cardboardRotationY = Bumpers[clientState.playerNumber - 1].dirZ < 0 ? -(pi / 2) : pi / 2;
 
             for (let i = 0; i <= 2; i++) {
-              const carboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, carboardModelStates[i]);
-              carboardGlb.rotateY(carboardRotationY);
-              carboardModels.push(carboardGlb);
+              const cardboardGlb = await modelCreate(-15, 0, 0, 1.6, 1.6, 2.2, cardboardModelStates[i]);
+              cardboardGlb.rotateY(cardboardRotationY);
+              cardboardModels.push(cardboardGlb);
             }
             // Initially show only the first cardboard sign
-            carboardModels[1].visible = false;
-            carboardModels[2].visible = false;
+            cardboardModels[1].visible = false;
+            cardboardModels[2].visible = false;
           }
 
           clientState.playerNumber === 1
@@ -1942,21 +1933,22 @@ export class MultiplayerGame extends HTMLElement {
       return newX;
     }
 
+    /**
+     * Updates player model position accounting for active buffs/debuffs
+     * Handles visual positioning offsets for different buff states
+     * @param {Object} bumper - Player bumper object
+     * @param {number} playerVisualX - Target X position
+     * @param {number} playerVisualZ - Target Z position
+     */
     function updatePlayerModelPos(bumper, playerVisualX, playerVisualZ){
       const isDebuffActive = serverState.current_buff_or_debuff !== Buff.NO_BUFF && 
                             (serverState.bumper_1.buff_or_debuff_target || serverState.bumper_2.buff_or_debuff_target);
 
-      // if ()
-      //   console.log("oui");
-      // if (bumper === clientState.bumper)
-      //   console.log("non");
       if (bumper.playerGlb.position.z < 0) {
         bumper.playerGlb.position.x = playerVisualX + 1;
       } else {
         bumper.playerGlb.position.x = playerVisualX - 1;
       }
-      console.log(serverState.bumper_1.buff_or_debuff_target);
-      console.log(serverState.bumper_2.buff_or_debuff_target);
       if (isDebuffActive){
         if (serverState.bumper_2.buff_or_debuff_target && bumper == Bumpers[1]){
           if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY){
@@ -1986,6 +1978,11 @@ export class MultiplayerGame extends HTMLElement {
       }
     }
     
+    /**
+     * Interpolates entity positions for smooth multiplayer rendering
+     * Uses client-side prediction with server reconciliation
+     * @param {number} renderTime - Current render timestamp
+     */
     function interpolateEntities(renderTime) {
       const interpolatedBallPos = getInterpolated(ENTITY_KEYS.BALL, renderTime);
       if (interpolatedBallPos !== null) {
@@ -2023,7 +2020,6 @@ export class MultiplayerGame extends HTMLElement {
         }
         clientState.enemyBumper.cubeUpdate.x = interpolatedOpponentPos;
         updatePlayerModelPos(clientState.enemyBumper, interpolatedOpponentPos, clientState.enemyBumper.cubeUpdate.z);
-        // clientState.enemyBumper.playerGlb.position.x = interpolatedOpponentPos;
       }
       // Update enemy bumper position (both table and player models)
       if (
@@ -2052,27 +2048,8 @@ export class MultiplayerGame extends HTMLElement {
       const playerVisualZ = playerBumper.cubeUpdate.z;
       
       // Don't overwrite debuff-specific positioning during active buffs
-      // const isDebuffActive = serverState.current_buff_or_debuff !== Buff.NO_BUFF && 
-      //                       (serverState.bumper_1.buff_or_debuff_target || serverState.bumper_2.buff_or_debuff_target);
-      
-      // if (!isDebuffActive) {
-      //   // Standard positioning when no debuffs are active
-      //   if (playerBumper.playerGlb.position.z < 0) {
-      //     clientState.bumper.playerGlb.position.x = playerVisualX + 1;
-      //   } else {
-      //     clientState.bumper.playerGlb.position.x = playerVisualX - 1;
-      //   }
-      // } else {
-      //   // During debuffs, only update the cubeUpdate position, let debuff handle playerGlb positioning
-      //   // if (playerBumper.playerGlb.position.z < 0) {
-      //   //   clientState.bumper.playerGlb.position.x = playerVisualX + 1;
-      //   // } else {
-      //   //   clientState.bumper.playerGlb.position.x = playerVisualX - 1;
-      //   // }
-      
-      // }
+
       updatePlayerModelPos(playerBumper, playerVisualX, playerVisualZ);
-      // playerBumper.cubeUpdate.x = playerVisualX;
 
       if (playerBumper.modelsGlb && playerBumper.modelsGlb[playerBumper.modelChoosen || 0]) {
         playerBumper.modelsGlb[playerBumper.modelChoosen || 0].position.set(
