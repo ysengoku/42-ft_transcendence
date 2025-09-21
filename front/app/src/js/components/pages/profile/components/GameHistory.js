@@ -110,6 +110,11 @@ export class UserGameHistory extends HTMLElement {
         background: var(--pm-primary-700);
         border-radius: 4px;
       }
+      /* For Firefox */
+      .table-container {
+        scrollbar-width: thin;
+        scrollbar-color: var(--pm-primary-700) var(--pm-gray-400);
+      }
       td {
         font-size: 1rem;
       }

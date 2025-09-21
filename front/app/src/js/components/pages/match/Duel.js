@@ -44,11 +44,11 @@ export class Duel extends HTMLElement {
 
   // Countdown time in seconds before the duel starts
   #countdown = 3;
+  #countdownInterval = null;
 
   constructor() {
     super();
     this.#state.clientId = socketManager.getClientInstanceId('livechat');
-    this.handleGameFound = this.handleGameFound.bind(this);
     this.cancelMatchmaking = this.cancelMatchmaking.bind(this);
     this.handleMatchmakingCancellationByServer = this.handleMatchmakingCancellationByServer.bind(this);
     this.handleInvitationAccepted = this.handleInvitationAccepted.bind(this);
@@ -67,7 +67,6 @@ export class Duel extends HTMLElement {
     this.#state.status = param.get('status');
     switch (this.#state.status) {
       case DUEL_STATUS.MATCHMAKING:
-        document.addEventListener('gameFound', this.handleGameFound);
         document.addEventListener('websocket-close', this.handleMatchmakingCancellationByServer);
         const queryParams = param.get('params') || null;
         if (queryParams) {
@@ -148,12 +147,14 @@ export class Duel extends HTMLElement {
     }
     router.setBeforeunloadCallback(this.confirmLeavePage.bind(this));
     window.addEventListener('beforeunload', this.confirmLeavePage);
-
     this.render();
   }
 
   disconnectedCallback() {
-    document.removeEventListener('gameFound', this.handleGameFound);
+    if (this.#countdownInterval) {
+      clearInterval(this.#countdownInterval);
+      this.#countdownInterval = null;
+    }
     document.removeEventListener('websocket-close', this.handleMatchmakingCancellationByServer);
     document.removeEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
     document.removeEventListener('duelInvitationCanceled', this.invitationCanceled);
@@ -190,34 +191,42 @@ export class Duel extends HTMLElement {
    * @return {void}
    */
   renderContent() {
+    if (!this.content || !this.header || !this.contentElement) {
+      log.error('DOM elements not found');
+      return;
+    }
     this.content.innerHTML = '';
     this.header.textContent = this.headerTemplate();
     this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
     this.content.appendChild(this.contentElement);
 
     if (this.#state.status === DUEL_STATUS.MATCHMAKING || this.#state.status === DUEL_STATUS.INVITING) {
+      if (!this.optionTagsWrapper) {
+        log.error('Option tags wrapper element not found');
+        return;
+      }
       this.optionTagsWrapper.innerHTML = this.gameOptionTagsTemplate();
-      const optionScoreToWin = this.querySelector('#duel-option-score-to-win');
-      const optionGameSpeed = this.querySelector('#duel-option-game-speed');
-      const optionTimeLimit = this.querySelector('#duel-option-time-limit');
-      const optionRanked = this.querySelector('#duel-option-ranked');
-      const optionCoolMode = this.querySelector('#duel-option-cool-mode');
-      this.#state.settings.score_to_win === 'any'
-        ? optionScoreToWin.classList.add('d-none')
-        : (optionScoreToWin.textContent = `Score to win: ${this.#state.settings.score_to_win}`);
-      this.#state.settings.game_speed === 'any'
-        ? optionGameSpeed.classList.add('d-none')
-        : (optionGameSpeed.textContent = `Game speed: ${this.#state.settings.game_speed}`);
-      this.#state.settings.time_limit === 'any'
-        ? optionTimeLimit.classList.add('d-none')
-        : (optionTimeLimit.textContent = `Time limit: ${this.#state.settings.time_limit} min`);
-      this.#state.settings.ranked === 'any'
-        ? optionRanked.classList.add('d-none')
-        : (optionRanked.textContent = this.#state.settings.ranked === 'true' ? 'Ranked' : 'Not ranked');
-      this.#state.settings.cool_mode === 'any'
-        ? optionCoolMode.classList.add('d-none')
-        : (optionCoolMode.textContent =
-            this.#state.settings.cool_mode === 'true' ? 'Buffs: enabled' : 'Buffs: disabled');
+      this.optionTagsWrapper.classList.remove('d-none');
+      this.cancelButton?.classList.remove('d-none');
+
+      const setOptionTag = (selector, value, format = (v) => v) => {
+        const element = this.querySelector(selector);
+        if (!element) {
+          return;
+        }
+        if (!value || value === 'any') {
+          element.classList.add('d-none');
+        } else {
+          element.textContent = format(value);
+        }
+      };
+      setOptionTag('#duel-option-score-to-win', this.#state.settings.score_to_win, (v) => `Score to win: ${v}`);
+      setOptionTag('#duel-option-game-speed', this.#state.settings.game_speed, (v) => `Game speed: ${v}`);
+      setOptionTag('#duel-option-time-limit', this.#state.settings.time_limit, (v) => `Time limit: ${v} min`);
+      setOptionTag('#duel-option-ranked', this.#state.settings.ranked, (v) => (v === 'true' ? 'Ranked' : 'Not ranked'));
+      setOptionTag('#duel-option-cool-mode', this.#state.settings.cool_mode, (v) =>
+        v === 'true' ? 'Buffs: enabled' : 'Buffs: disabled',
+      );
     }
 
     switch (this.#state.status) {
@@ -245,7 +254,6 @@ export class Duel extends HTMLElement {
         window.removeEventListener('beforeunload', this.confirmLeavePage);
         break;
     }
-
     document.addEventListener('duelInvitationAccepted', this.handleInvitationAccepted);
   }
 
@@ -257,20 +265,47 @@ export class Duel extends HTMLElement {
    * Handles the event when a game is found during matchmaking.
    * It updates the internal state with the game ID and opponent's information,
    * and starts the duel process.
-   * @param {CustomEvent} event - The event containing the game room details.
+   * If the necessary DOM elements are not yet available, it sets up a MutationObserver
+   * to wait for them to be ready before starting the duel.
+   * @param {Object} data - The data received from the matchmaking event.
    * @return {void}
    */
-  handleGameFound(event) {
-    log.info('Game found:', event.detail);
-    this.#state.gameId = event.detail.game_room_id;
-    const { username, nickname, avatar, elo } = event.detail;
+  handleGameFound(data) {
+    log.info('Game found:', data);
+    this.#state.gameId = data.game_room_id;
+    const { username, nickname, avatar, elo } = data;
     this.#state.opponent = {
       username,
       nickname,
       avatar,
       elo,
     };
-    this.startDuel();
+
+    const elementsReady = this.animation && this.cancelButton && this.timer && this.header && this.contentElement;
+    if (elementsReady) {
+      this.startDuel();
+      return;
+    }
+
+    log.info('DOM elements not ready. Starting MutationObserver to wait for elements to be ready.');
+    let timeOutInstance = null;
+    const observer = new MutationObserver(() => {
+      const elementsReadyNow = this.animation && this.cancelButton && this.timer && this.header && this.contentElement;
+      if (elementsReadyNow) {
+        log.info('DOM elements are now ready. Starting duel.');
+        observer.disconnect();
+        clearTimeout(timeOutInstance);
+        this.startDuel();
+      }
+    });
+    observer.observe(this, { childList: true, subtree: true });
+
+    timeOutInstance = setTimeout(() => {
+      if (observer) {
+        log.error('Timeout reached. Stopping MutationObserver.');
+        observer.disconnect();
+      }
+    }, 5000);
   }
 
   /**
@@ -401,25 +436,31 @@ export class Duel extends HTMLElement {
   /* ------------------------------------------------------------------------ */
   startDuel() {
     this.#state.status = DUEL_STATUS.STARTING;
-    this.animation.classList.add('d-none');
-    this.cancelButton.classList.add('d-none');
+
+    this.animation?.classList.add('d-none');
+    this.cancelButton?.classList.add('d-none');
     this.cancelButton?.removeEventListener('click', this.cancelMatchmaking);
     this.cancelButton?.removeEventListener('click', this.cancelInvitation);
 
-    this.header.textContent = this.headerTemplate();
-    this.contentElement.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
-    this.timer.classList.remove('d-none');
+    if (this.header) {
+      this.header.textContent = this.headerTemplate();
+    }
+    this.contentElement?.setData(this.#state.status, this.#state.loggedInUser, this.#state.opponent);
     let timeLeft = this.#countdown;
-    this.timer.textContent = `Starting in ${timeLeft} seconds...`;
+    if (this.timer) {
+      this.timer.classList.remove('d-none');
+      this.timer.textContent = `Starting in ${timeLeft} seconds...`;
+    }
     const queryParams = new URLSearchParams({
       userPlayerName: this.#state.loggedInUser.nickname,
       opponentPlayerName: this.#state.opponent.nickname,
     }).toString();
-    const countdown = setInterval(() => {
+    this.#countdownInterval = setInterval(() => {
       timeLeft -= 1;
       this.timer.textContent = `Starting in ${timeLeft} seconds...`;
       if (timeLeft <= 0) {
-        clearInterval(countdown);
+        clearInterval(this.#countdownInterval);
+        this.#countdownInterval = null;
         router.removeBeforeunloadCallback();
         window.removeEventListener('beforeunload', this.confirmLeavePage);
         socketManager.closeSocket('matchmaking');

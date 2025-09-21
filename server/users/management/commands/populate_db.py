@@ -346,35 +346,35 @@ def generate_matches():
     print("=" * 50)
 
 
+TOURNAMENT_ALIASES = [
+    "RedFalcon", "BlueTiger", "SilverWolf", "GoldenEagle",
+    "ShadowFox", "RedDragon", "EmeraldLion", "NightHawk",
+    "MysticBear", "StormRider", "CosmicWhale", "PhantomCat",
+    "DustCoyote", "PrairieWolf", "IronMustang", "CanyonHawk",
+    "LoneBison", "DesertCrow"
+]
+
+TOURNAMENT_NAMES = [
+    "Wild West Showdown", "Dusty Trail Tournament", "Lone Star Clash",
+    "Cactus Creek Cup", "Rodeo Rumble", "O.K. Corral Cup",
+    "Frontier Frenzy", "Gold Rush Games", "High Noon Shootout",
+    "Pioneer’s Prize"
+]
+
+
 def create_pending_tournament() -> None:
-    dummy_aliases = [
-        "RedFalcon",
-        "BlueTiger",
-        "SilverWolf",
-        "GoldenEagle",
-        "ShadowFox",
-        "RedDragon",
-        "EmeraldLion",
-        "NightHawk",
-        "MysticBear",
-        "StormRider",
-        "CosmicWhale",
-        "PhantomCat",
-    ]
+    dummy_aliases = TOURNAMENT_ALIASES.copy()
+
     target_usernames = ["Taki", "Felix", "Rex", "sad_hampter", "Tama", "Pedro", "menaco", "Rick"]
     list_profiles = [simulated_users[username].profile for username in target_usernames if username in simulated_users]
 
     if not list_profiles:
-        print("No valid profiles found for pending tournament! Please generate Taki first.")
+        print("No valid profiles found for pending tournament! Please generate users first.")
         return
 
     options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
-    for p in list_profiles:
-        if any(p.get_active_game_participation()):
-            print(f"{p.user.username} is already engaged in a game or a tournament!")
-            return
     print("Number of profiles for the pending tournament:", len(list_profiles))
-    name = "The Pending Tournament!"
+    name = choice(TOURNAMENT_NAMES)
     generate_random_date()
     status = Tournament.PENDING
     chosen_profile = choice(list_profiles)
@@ -419,28 +419,13 @@ def create_pending_tournament() -> None:
 
     print("=" * 50)
 
-
 def generate_tournaments() -> None:
-    dummy_aliases = [
-        "RedFalcon",
-        "BlueTiger",
-        "SilverWolf",
-        "GoldenEagle",
-        "ShadowFox",
-        "RedDragon",
-        "EmeraldLion",
-        "NightHawk",
-        "MysticBear",
-        "StormRider",
-        "CosmicWhale",
-        "PhantomCat",
-    ]
     options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
     simulated_users_lst = list(simulated_users.values())
     profiles = [sim_user.profile for sim_user in simulated_users_lst]
     list_users = [sim_user.user for sim_user in simulated_users_lst]
     for i in range(2):
-        name = f"Tournament {i + 1}"
+        name = choice(TOURNAMENT_NAMES)
         generate_random_date()
         option_for_status = [Tournament.FINISHED, Tournament.CANCELLED]
         status = option_for_status[i]
@@ -449,7 +434,7 @@ def generate_tournaments() -> None:
 
         required = choice(options)
 
-        print(f"{name}\n  Requires: {required} participants\n  Status: {status}\n\n  Creator: {user.username}")
+        print(f"{name}\n  Requires: {required} participants\n  Status: {status}\n  Creator: {user.username}")
         tournament = Tournament.objects.validate_and_create(
             creator=user.profile,
             tournament_name=name,
@@ -460,7 +445,7 @@ def generate_tournaments() -> None:
         tournament.status = status
         tournament.save(update_fields=["status"])
 
-        available_aliases = dummy_aliases.copy()
+        available_aliases = TOURNAMENT_ALIASES.copy()
 
         required -= 2 if status is Tournament.CANCELLED else 1
         if user.profile in profiles:
@@ -479,7 +464,7 @@ def generate_tournaments() -> None:
             )
             profiles.remove(p)
             participant_objs.append(part)
-        print("There are", len(participant_objs), "participants in this tournament")
+        print("  There are", len(participant_objs), "participants in this tournament")
         if status is Tournament.FINISHED:
             total_rounds = 2 if required == 3 else 3
             # required has been lowed to avoir adding a participant since the creator is added at the beginning
@@ -1209,6 +1194,110 @@ def generate_chats_and_notifications() -> None:
 
     print("Chat dialogues and notifications created successfully!")
     print("=" * 50)
+
+def generate_finished_tournaments(users: dict[str, User], n_tournaments: int = 5) -> None:
+    options = [int(x) for x in settings.REQUIRED_PARTICIPANTS_OPTIONS]
+    list_users = list(users.values())
+
+    for _ in range(n_tournaments):
+        name = choice(TOURNAMENT_NAMES)
+        aliases = TOURNAMENT_ALIASES.copy()
+        generate_random_date()
+        status = Tournament.FINISHED
+        creator = choice(list_users)
+        list_users.remove(creator)
+
+        # Prepare the list of profiles for this tournament
+        profiles_in_tournament = [u.profile for u in users.values()]
+
+        required = choice(options)
+
+        creator_alias = choice(aliases)
+        aliases.remove(creator_alias)
+        tournament = Tournament.objects.validate_and_create(
+            creator=creator.profile,
+            tournament_name=name,
+            required_participants=required,
+            alias=creator_alias,
+            settings={"game_speed": "medium", "score_to_win": 5, "time_limit": 1, "ranked": False, "cool_mode": True},
+        )
+        tournament.status = status
+        tournament.save(update_fields=["status"])
+
+        required -= 1
+        participant_objs = [tournament.participants.get(profile=creator.profile)]
+
+        remaining_profiles = profiles_in_tournament.copy()
+        if creator.profile in remaining_profiles:
+            remaining_profiles.remove(creator.profile)
+        participants = sample(remaining_profiles, k=required)
+
+        for p in participants:
+            alias = aliases.pop(randint(0, len(aliases) - 1))
+            part = Participant.objects.create(
+                profile=p,
+                tournament=tournament,
+                alias=alias,
+                current_round=0,
+            )
+            participant_objs.append(part)
+
+        # Generate rounds and brackets
+        total_rounds = (len(participant_objs)).bit_length() - 1
+        current = participant_objs.copy()
+
+        for rnd in range(1, total_rounds + 1):
+            for part in current:
+                part.status = Participant.PLAYING
+                part.current_round = rnd
+                part.save()
+
+            rnd_obj = Round.objects.create(
+                tournament=tournament,
+                number=rnd,
+                status=Tournament.FINISHED,
+            )
+
+            next_round = []
+            for j in range(0, len(current), 2):
+                p1 = current[j]
+                p2 = current[j + 1]
+                bracket = Bracket.objects.create(
+                    round=rnd_obj,
+                    participant1=p1,
+                    participant2=p2,
+                    status=Bracket.FINISHED,
+                )
+
+                s1, s2 = randint(0, 5), randint(0, 5)
+                if s1 == s2:
+                    s1 += 1
+                bracket.winners_score = max(s2, s1)
+                bracket.losers_score = min(s2, s1)
+                winner = p1 if s1 > s2 else p2
+                loser = p2 if s1 > s2 else p1
+                bracket.winner = winner
+                bracket.score = f"{s1}-{s2}"
+                bracket.save()
+
+                # Update participant status
+                winner.status = Participant.WINNER if rnd == total_rounds else Participant.PLAYING
+                loser.status = Participant.ELIMINATED
+                winner.current_round = rnd + (0 if rnd < total_rounds else rnd)
+                loser.current_round = rnd
+                winner.save()
+                loser.save()
+
+                next_round.append(winner)
+            current = next_round
+
+        final = Round.objects.get(tournament=tournament,number=total_rounds)
+        finished_brackets = final.brackets.filter(status=Tournament.FINISHED)
+        if finished_brackets.exists():
+            champ = finished_brackets.order_by("?").first().winner
+            tournament.winner = champ
+            tournament.save()
+
 
 class Command(BaseCommand):
     help = "Populates db with dummy data"

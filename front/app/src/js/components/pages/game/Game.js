@@ -9,7 +9,7 @@ import fence from '/3d_models/fence.glb?url';
 import couch from '/3d_models/sofa.glb?url';
 import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
-import ground_texture from '/img/ground_texture.png?url';
+import groundtexture from '/img/ground_texture.png?url';
 import coin from '/3d_models/coin.glb?url';
 import carboard from '/3d_models/carboard.glb?url';
 import carboard2 from '/3d_models/carboard2.glb?url';
@@ -24,6 +24,7 @@ import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
 import { DEFAULT_AVATAR } from '@env';
 
 /* eslint no-var: "off" */
+/* eslint-disable new-cap */
 
 /**
  * Game Component - 3D Pong Game Implementation
@@ -76,7 +77,7 @@ export class Game extends HTMLElement {
    * Creates scoreboard, timer, buff icons, life points, and overlay
    */
   initializeUIElements() {
-    console.log('Initializing UI elements (optimized)');
+    log.info('Initializing UI elements (optimized)');
 
     // Create scoreboard with appropriate player names
     this.createUIElement('scoreElement', 'game-scoreboard', (element) => {
@@ -94,9 +95,9 @@ export class Game extends HTMLElement {
       const timerWrapper = document.getElementById('game-timer-wrapper');
       if (timerWrapper) {
         timerWrapper.appendChild(this.timerElement);
-        console.log('Timer appended to wrapper');
+        log.info('Timer appended to wrapper');
       } else {
-        console.warn('Timer wrapper not found, skipping timer creation');
+        log.error('Timer wrapper not found, skipping timer creation');
       }
     }
 
@@ -133,7 +134,7 @@ export class Game extends HTMLElement {
         this.appendChild(this[propName]);
       }
 
-      console.log(`Created ${propName}`);
+      log.info(`Created ${propName}`);
     }
   }
 
@@ -160,7 +161,7 @@ export class Game extends HTMLElement {
       this.style.overflow = 'hidden'; // Prevent scrollbars
       this.style.position = 'relative'; // Allow overlay positioning
 
-      console.log('Game options before UI init:', this.#state.gameOptions);
+      log.info('Game options before UI init:', this.#state.gameOptions);
 
       this.initializeUIElements();
       await this.render();
@@ -203,7 +204,7 @@ export class Game extends HTMLElement {
     // Disable ranked mode for local games
     this.#state.gameOptions.ranked = false;
 
-    console.log('Game type:', this.#state.gameType);
+    log.info('Game type:', this.#state.gameType);
   }
 
   /**
@@ -396,7 +397,7 @@ export class Game extends HTMLElement {
    * @param {Error} error - Optional error object
    */
   handleError(errorType, error = null) {
-    console.error(`Game Error [${errorType}]:`, error);
+    log.error(`Game Error [${errorType}]:`, error);
 
     // Hide game UI when error occurs
     this.hideGameUI();
@@ -462,7 +463,7 @@ export class Game extends HTMLElement {
           modelName,
           resolve,
           (progress) => {
-            console.log(`Loading ${modelName}:`, (progress.loaded / progress.total) * 100 + '%');
+            log.info(`Loading ${modelName}:`, (progress.loaded / progress.total) * 100 + '%');
           },
           reject,
         );
@@ -490,7 +491,7 @@ export class Game extends HTMLElement {
 
       return modelGenerated;
     } catch (error) {
-      console.warn(`Failed to load model ${modelName}, using fallback:`, error.message);
+      log.error(`Failed to load model ${modelName}, using fallback:`, error.message);
       return this.createFallbackModel(posX, posY, posZ, scaleX, scaleY, scaleZ);
     }
   }
@@ -526,7 +527,7 @@ export class Game extends HTMLElement {
    * Hide all game UI elements (used during errors or game end)
    */
   hideGameUI() {
-    console.log('Hiding game UI');
+    log.info('Hiding game UI');
 
     const elements = [
       { element: this.scoreElement, name: 'scoreElement' },
@@ -538,7 +539,7 @@ export class Game extends HTMLElement {
     elements.forEach(({ element, name }) => {
       if (element) {
         element.style.display = 'none';
-        console.log(`Hidden ${name}`);
+        log.info(`Hidden ${name}`);
       }
     });
   }
@@ -547,7 +548,7 @@ export class Game extends HTMLElement {
    * Show all game UI elements
    */
   showGameUI() {
-    console.log('Showing game UI');
+    log.info('Showing game UI');
 
     const elements = [
       { element: this.scoreElement, name: 'scoreElement' },
@@ -559,7 +560,7 @@ export class Game extends HTMLElement {
     elements.forEach(({ element, name }) => {
       if (element) {
         element.style.display = '';
-        console.log(`Shown ${name}`);
+        log.info(`Shown ${name}`);
       }
     });
   }
@@ -644,7 +645,7 @@ export class Game extends HTMLElement {
     const lifePointUI = this.lifePointElement;
 
     const renderer = this.createRenderer();
-    console.log('1')
+    // console.log('1');
     if (!renderer) {
       throw new Error('Failed to create WebGL renderer');
     }
@@ -737,7 +738,8 @@ export class Game extends HTMLElement {
 
     // Generate safe positions for cacti (avoiding play area and other cacti)
     const getSafeCactusPosition = () => {
-      let x, z;
+      let x;
+      let z;
       let attempts = 0;
       do {
         x = (Math.random() - 0.5) * 160;
@@ -816,7 +818,7 @@ export class Game extends HTMLElement {
     // Create textured ground plane
     (() => {
       const textureLoader = new THREE.TextureLoader();
-      const groundTexture = textureLoader.load(ground_texture);
+      const groundTexture = textureLoader.load(groundtexture);
       // Set texture to repeat for large ground area
       groundTexture.wrapS = THREE.RepeatWrapping;
       groundTexture.wrapT = THREE.RepeatWrapping;
@@ -911,7 +913,7 @@ export class Game extends HTMLElement {
           },
           undefined,
           function (error) {
-            console.error(error);
+            log.error(error);
           },
         );
         pedroModel.scale.set(0.5, 0.5, 0.5);
@@ -1139,7 +1141,7 @@ export class Game extends HTMLElement {
       Ball.velocity.z = BALL_INITIAL_VELOCITY * GAME_SPEED * direction;
     };
 
-    //Ai related variables
+    // Ai related variables
     let calculatedBumperPos = Bumpers[1].modelsGlb[Bumpers[1].modelChoosen].position;
     let bumperP1Subtick = 0;
     let bumperP2Subtick = 0;
@@ -1161,7 +1163,7 @@ export class Game extends HTMLElement {
       [1, 1000],
     ];
 
-    //Handling Ai
+    // Handling Ai
     const moveAiBumper = (calculatedPos) => {
       keyMap['KeyA'] = false;
       keyMap['KeyD'] = false;

@@ -147,6 +147,7 @@ class GameServerToClient:
             name: str
             avatar: str
             elo: int
+            score: int
             player_number: Literal[1, 2]
 
         action: Literal["player_won", "player_resigned"]

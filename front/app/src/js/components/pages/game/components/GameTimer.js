@@ -71,23 +71,7 @@ export class GameTimer extends HTMLElement {
 
   style() {
     return `
-    <style>
-    /*
-    #game-timer-wrapper {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      }
-    #game-timer-board {
-      display: inline-flex;
-      width: fit-content;
-      color: var(--pm-primary-100);
-      font-family: 'van dyke';
-      width: 10rem;
-    }
-    */
-   
+    <style>  
     #game-timer-board-inner {
       opacity: 0.9;
       background-color: rgba(var(--pm-primary-400-rgb), 0.4);

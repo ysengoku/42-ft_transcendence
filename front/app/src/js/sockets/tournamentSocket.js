@@ -48,11 +48,7 @@ socketManager.addSocket('tournament', {
     }
     if (window.location.pathname.startsWith('/tournament')) {
       const tournamentPage = document.querySelector('tournament-room');
-      if (!tournamentPage) {
-        log.error('Tournament RoundStart Element not found, cannot update UI.');
-        return;
-      }
-      tournamentPage.setNextRound(data);
+      tournamentPage?.setNextRound(data);
     }
   },
   match_result: async (data) => {
@@ -60,11 +56,7 @@ socketManager.addSocket('tournament', {
       return;
     }
     const tournamentPage = document.querySelector('tournament-room');
-    if (!tournamentPage) {
-      log.error('Tournament RoundOngoing Element not found, cannot update bracket.');
-      return;
-    }
-    tournamentPage.updateMatchResult(data);
+    tournamentPage?.updateMatchResult(data);
   },
   round_end: (data) => {
     if (

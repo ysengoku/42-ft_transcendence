@@ -1,6 +1,6 @@
 # Web Components
 Each page is implemented as a custom element extending the HTMLElement class. Although many pages exist, they share a similar structure and behavior with minor differences in methods and content.
-In this SPA, the `router` renders each component into the <main> element.
+In this SPA, the `router` renders each component into the `<main>` element.
 
 ## Overview
 The SPA is built using web components to encapsulate each page's logic and presentation.

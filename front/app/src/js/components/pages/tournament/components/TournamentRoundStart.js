@@ -109,7 +109,6 @@ export class TournamentRoundStart extends HTMLElement {
       border-radius: .4rem;
       margin-bottom: .2rem;
     }
-
     </style>
     `;
   }

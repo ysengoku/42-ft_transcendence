@@ -135,7 +135,10 @@ class OauthConnection(models.Model):
                     self.save_avatar(avatar_url, user)
                 except (requests.RequestException, ValueError, OSError) as exc:
                     logger.warning(
-                        "OAuth avatar download failed: user_id=%s url=%s error=%s", user.id, avatar_url, str(exc),
+                        "OAuth avatar download failed: user_id=%s url=%s error=%s",
+                        user.id,
+                        avatar_url,
+                        str(exc),
                     )
 
         self.save()
