@@ -212,6 +212,7 @@ export class GameOverlay extends HTMLElement {
       button.disabled = false;
       button.classList.remove('btn-secondary');
       button.classList.add('btn-outline-light');
+      log.error(error);
     }
   }
   createPlayerResultElement(player, eloChange, showElo) {

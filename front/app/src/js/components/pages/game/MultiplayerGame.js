@@ -22,6 +22,7 @@ import './components/index';
 import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
 
 /* eslint no-var: "off" */
+/* eslint-disable new-cap */
 
 /**
  * Standardized error logging utility
@@ -40,7 +41,6 @@ const GameLogger = {
     console.log(`[MultiplayerGame:${context}] DEBUG: ${message}`);
   },
 };
-
 
 /**
  * MultiplayerGame Component - 3D Multiplayer Pong Game Implementation
@@ -84,7 +84,7 @@ export class MultiplayerGame extends HTMLElement {
     this.modelRotation = [
       // Player 1 rotations: [table, couch, chair, dressing]
       [this.degreesToRadians(235), this.degreesToRadians(-90), this.degreesToRadians(235), this.degreesToRadians(-90)],
-      // Player 2 rotations: [table, couch, chair, dressing]  
+      // Player 2 rotations: [table, couch, chair, dressing]
       [this.degreesToRadians(55), this.degreesToRadians(90), this.degreesToRadians(55), this.degreesToRadians(90)],
     ];
 
@@ -152,7 +152,7 @@ export class MultiplayerGame extends HTMLElement {
       hillMaterial: new THREE.MeshPhongMaterial({ color: 0x3a251a }),
       cactusBaseMaterial: new THREE.MeshPhongMaterial({ color: 0x228B22 }),
       shadowMaterial: new THREE.ShadowMaterial({ opacity: 0.3 }),
-      
+
       // Get or create shared material (optimized factory pattern)
       get: (type, options = {}) => {
         const key = `${type}_${JSON.stringify(options)}`;
@@ -160,13 +160,13 @@ export class MultiplayerGame extends HTMLElement {
           const materialFactories = {
             phong: () => new THREE.MeshPhongMaterial(options),
             basic: () => new THREE.MeshBasicMaterial(options),
-            lambert: () => new THREE.MeshLambertMaterial(options)
+            lambert: () => new THREE.MeshLambertMaterial(options),
           };
           this.sharedMaterials[key] = (materialFactories[type] || materialFactories.phong)();
         }
         return this.sharedMaterials[key];
       },
-      
+
       // Dispose all shared materials
       dispose: () => {
         Object.values(this.sharedMaterials).forEach(material => {
@@ -175,9 +175,9 @@ export class MultiplayerGame extends HTMLElement {
           }
         });
         this.sharedMaterials = null;
-      }
+      },
     };
-    
+
     GameLogger.info('MaterialSystem', 'Shared material system initialized');
   }
 
@@ -193,7 +193,7 @@ export class MultiplayerGame extends HTMLElement {
       dynamicObjects: [], // Objects that move (players, ball, coin)
       lastCullCheck: 0,
       cullInterval: 100, // Check visibility every 100ms instead of every frame
-      
+
       // Helper function to extract all meshes from an object
       extractMeshes: (object) => {
         const meshes = [];
@@ -212,22 +212,22 @@ export class MultiplayerGame extends HTMLElement {
           this.renderOptimizer.staticObjects.push({ object: mesh, type, lastVisible: true });
         });
       },
-      
-      // Register dynamic objects for culling  
+
+      // Register dynamic objects for culling
       registerDynamic: (object, type = 'dynamic') => {
         const meshes = this.renderOptimizer.extractMeshes(object);
         meshes.forEach(mesh => {
           this.renderOptimizer.dynamicObjects.push({ object: mesh, type, lastVisible: true });
         });
       },
-      
+
       // Perform frustum culling
       updateVisibility: (camera, forceUpdate = false) => {
         const now = performance.now();
         if (!forceUpdate && now - this.renderOptimizer.lastCullCheck < this.renderOptimizer.cullInterval) {
           return;
         }
-        
+
         this.renderOptimizer.lastCullCheck = now;
         this.renderOptimizer.cameraMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
         this.renderOptimizer.frustum.setFromProjectionMatrix(this.renderOptimizer.cameraMatrix);
@@ -236,37 +236,37 @@ export class MultiplayerGame extends HTMLElement {
         this.renderOptimizer.staticObjects.forEach(item => {
           const wasVisible = item.lastVisible;
           const isVisible = this.renderOptimizer.frustum.intersectsObject(item.object);
-          
+
           if (wasVisible !== isVisible) {
             item.object.visible = isVisible;
             item.lastVisible = isVisible;
           }
         });
-        
+
         // Always check dynamic objects (they move frequently)
         this.renderOptimizer.dynamicObjects.forEach(item => {
           item.object.visible = this.renderOptimizer.frustum.intersectsObject(item.object);
         });
       },
-      
+
       // Get performance stats
       getStats: () => {
         const staticVisible = this.renderOptimizer.staticObjects.filter(item => item.lastVisible).length;
         const staticTotal = this.renderOptimizer.staticObjects.length;
         const dynamicVisible = this.renderOptimizer.dynamicObjects.filter(item => item.object.visible).length;
         const dynamicTotal = this.renderOptimizer.dynamicObjects.length;
-        
+
         return {
           staticVisible,
-          staticTotal, 
+          staticTotal,
           dynamicVisible,
           dynamicTotal,
           totalVisible: staticVisible + dynamicVisible,
-          totalObjects: staticTotal + dynamicTotal
+          totalObjects: staticTotal + dynamicTotal,
         };
-      }
+      },
     };
-    
+
     GameLogger.info('RenderOptimizer', 'Frustum culling system initialized');
   }
 
@@ -348,31 +348,31 @@ export class MultiplayerGame extends HTMLElement {
   disposeThreeJS() {
     try {
       GameLogger.info('Cleanup', 'Starting Three.js object disposal...');
-      
+
       // Dispose all registered objects in render optimizer
       if (this.renderOptimizer) {
         [...this.renderOptimizer.staticObjects, ...this.renderOptimizer.dynamicObjects].forEach(item => {
           this.disposeObject3D(item.object);
         });
-        
+
         // Clear optimizer arrays
         this.renderOptimizer.staticObjects = [];
         this.renderOptimizer.dynamicObjects = [];
         this.renderOptimizer = null;
         GameLogger.debug('Cleanup', 'Render optimizer disposed');
       }
-      
+
       // Dispose scene objects if scene exists
       if (this.scene) {
         this.scene.traverse((object) => {
           this.disposeObject3D(object);
         });
-        
+
         this.scene.clear();
         this.scene = null;
         GameLogger.debug('Cleanup', 'Scene disposed');
       }
-      
+
       // Dispose renderer
       if (this.renderer) {
         this.renderer.dispose();
@@ -381,7 +381,7 @@ export class MultiplayerGame extends HTMLElement {
         this.renderer = null;
         GameLogger.debug('Cleanup', 'Renderer disposed');
       }
-      
+
       GameLogger.info('Cleanup', 'Three.js disposal completed');
     } catch (error) {
       GameLogger.error('Cleanup', 'Error during Three.js disposal', error);
@@ -394,12 +394,12 @@ export class MultiplayerGame extends HTMLElement {
    */
   disposeObject3D(object) {
     if (!object) return;
-    
+
     // Dispose geometry
     if (object.geometry) {
       object.geometry.dispose();
     }
-    
+
     // Dispose material(s)
     if (object.material) {
       if (Array.isArray(object.material)) {
@@ -408,7 +408,7 @@ export class MultiplayerGame extends HTMLElement {
         this.disposeMaterial(object.material);
       }
     }
-    
+
     // Dispose textures
     if (object.material?.map) object.material.map.dispose();
     if (object.material?.normalMap) object.material.normalMap.dispose();
@@ -422,7 +422,7 @@ export class MultiplayerGame extends HTMLElement {
    */
   disposeMaterial(material) {
     if (!material) return;
-    
+
     // Dispose all textures in material
     Object.keys(material).forEach(key => {
       const value = material[key];
@@ -430,7 +430,7 @@ export class MultiplayerGame extends HTMLElement {
         value.dispose();
       }
     });
-    
+
     material.dispose();
   }
 
@@ -450,9 +450,6 @@ export class MultiplayerGame extends HTMLElement {
       }
     });
   }
-
-
-
 
   safeSend(message) {
     if (this.#pongSocket && this.#pongSocket.readyState === WebSocket.OPEN) {
@@ -549,8 +546,6 @@ export class MultiplayerGame extends HTMLElement {
       setTimeout(() => window.location.reload(), 3000);
     }
   }
-
-
 
   /**
    * Load and configure a 3D model with fallback handling
@@ -1466,17 +1461,19 @@ export class MultiplayerGame extends HTMLElement {
         const input = {
           sequenceNumber,
           action,
-          timestamp: timestamp
+          timestamp: timestamp,
         };
-        
+
         clientState.pendingInputs.push(input);
         
-        this.safeSend(JSON.stringify({
-          action: action,
-          move_id: sequenceNumber,
-          player_id: clientState.playerId,
-          timestamp: timestamp
-        }));
+        this.safeSend(
+          JSON.stringify({
+            action: action,
+            move_id: sequenceNumber,
+            player_id: clientState.playerId,
+            timestamp: timestamp
+          })
+        );
       }
     };
 
@@ -1487,14 +1484,14 @@ export class MultiplayerGame extends HTMLElement {
       const opponent = clientState.enemyNumber === 1 ? serverState.bumper_1.x : serverState.bumper_2.x;
       const ball = { x: serverState.ball.x, z: serverState.ball.z };
       const coin = serverState.coin ? { x: serverState.coin.x, z: serverState.coin.z } : null;
-      
+
       const bufferEntry = {
         opponent,
         ball,
         coin,
-        timestamp
+        timestamp,
       };
-      
+
       clientState.esntitiesInterpolationBuffer.push(bufferEntry);
 
       if (clientState.esntitiesInterpolationBuffer.length > 10) {
@@ -1505,9 +1502,9 @@ export class MultiplayerGame extends HTMLElement {
     function updatePlayerBuffer(playerPosition, timestamp) {
       const bufferEntry = {
         position: playerPosition,
-        timestamp
+        timestamp,
       };
-      
+
       clientState.playerInterpolationBuffer.push(bufferEntry);
 
       if (clientState.playerInterpolationBuffer.length > 10) {
@@ -1517,13 +1514,13 @@ export class MultiplayerGame extends HTMLElement {
 
     function getInterpolated(entityKey, renderTime) {
       let interpolationBuffer;
-      
+
       if (entityKey === ENTITY_KEYS.PLAYER) {
         interpolationBuffer = clientState.playerInterpolationBuffer;
       } else {
         interpolationBuffer = clientState.esntitiesInterpolationBuffer;
       }
-      
+
       if (interpolationBuffer.length < 2) {
         if (interpolationBuffer.length === 0) return null;
         return entityKey === ENTITY_KEYS.PLAYER ? interpolationBuffer[0].position : interpolationBuffer[0][entityKey];
@@ -1554,7 +1551,7 @@ export class MultiplayerGame extends HTMLElement {
 
       const fromPosition = entityKey === ENTITY_KEYS.PLAYER ? fromEntry.position : fromEntry[entityKey];
       const toPosition = entityKey === ENTITY_KEYS.PLAYER ? toEntry.position : toEntry[entityKey];
-      
+
       // coin can be null
       if (fromPosition === null && toPosition === null) {
         return null;
@@ -1572,23 +1569,26 @@ export class MultiplayerGame extends HTMLElement {
       }
 
       const alpha = Math.max(0, Math.min(1, (renderTime - fromEntry.timestamp) / timeDiff));
-      
+
       // bumper positions are stored as numbers, ball and coin as objects
       if (typeof fromPosition === 'number') {
         return fromPosition + (toPosition - fromPosition) * alpha;
       } else {
         return {
           x: fromPosition.x + (toPosition.x - fromPosition.x) * alpha,
-          z: fromPosition.z + (toPosition.z - fromPosition.z) * alpha
+          z: fromPosition.z + (toPosition.z - fromPosition.z) * alpha,
         };
       }
     }
 
-
     const decreaseLifePointUI = (data) => {
       const playerMissed = data.bumper_1.score > serverState.bumper_1.score ? 2 : 1;
+      const playerNumberToDecrease = clientState.playerNumber === 1 ? playerMissed - 1 : playerMissed === 1 ? 1 : 0;
       const newScore = playerMissed === 1 ? data.bumper_2.score : data.bumper_1.score;
-      this.lifePointElement?.updatePoint(playerMissed - 1, 20 - (20 / this.#state.gameOptions.score_to_win) * newScore);
+      this.lifePointElement?.updatePoint(
+        playerNumberToDecrease,
+        20 - (20 / this.#state.gameOptions.score_to_win) * newScore,
+      );
     };
 
     const updateScoreUI = (data) => {
@@ -1673,8 +1673,7 @@ export class MultiplayerGame extends HTMLElement {
 
     // Safe model switching with bounds checking to prevent crashes
     const safeModelSwitch = (targetPlayer, newModelIndex) => {
-      if (targetPlayer.modelChoosen == newModelIndex)
-        return;
+      if (targetPlayer.modelChoosen == newModelIndex) return;
 
       if (!targetPlayer.modelsGlb || newModelIndex >= targetPlayer.modelsGlb.length) {
         GameLogger.warn('ModelSwitch', `Model index ${newModelIndex} out of bounds (array length: ${targetPlayer.modelsGlb?.length}), falling back to index 0`);
@@ -1685,10 +1684,10 @@ export class MultiplayerGame extends HTMLElement {
       if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
         targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = false;
       }
-      
+
       // Switch to new model
       targetPlayer.modelChoosen = newModelIndex;
-      
+
       // Show new model
       if (targetPlayer.modelsGlb[targetPlayer.modelChoosen]) {
         targetPlayer.modelsGlb[targetPlayer.modelChoosen].visible = true;
@@ -1708,17 +1707,16 @@ export class MultiplayerGame extends HTMLElement {
         // Reset size effects
         bumper.lenghtHalf = BUMPER_LENGTH_HALF;
         bumper.widthHalf = BUMPER_WIDTH_HALF;
-        
+
         // Reset model back to table (index 0) with safe switching
         safeModelSwitch(bumper, 0);
-        
+
         // Reset position if it was modified by buffs
         if (bumper.playerGlb && bumper.cubeUpdate) {
-          if (bumper.dirZ < 0){
+          if (bumper.dirZ < 0) {
             bumper.playerGlb.position.z = bumper.cubeUpdate.z + 1;
             bumper.playerGlb.position.x = bumper.cubeUpdate.x - 1;
-          }
-          else {
+          } else {
             bumper.playerGlb.position.z = bumper.cubeUpdate.z - 1;
             bumper.playerGlb.position.x = bumper.cubeUpdate.x + 1;
           }
@@ -1940,18 +1938,18 @@ export class MultiplayerGame extends HTMLElement {
      * @param {number} playerVisualX - Target X position
      * @param {number} playerVisualZ - Target Z position
      */
-    function updatePlayerModelPos(bumper, playerVisualX, playerVisualZ){
+    function updatePlayerModelPos(bumper, playerVisualX, playerVisualZ) {
       const isDebuffActive = serverState.current_buff_or_debuff !== Buff.NO_BUFF && 
-                            (serverState.bumper_1.buff_or_debuff_target || serverState.bumper_2.buff_or_debuff_target);
+      (serverState.bumper_1.buff_or_debuff_target || serverState.bumper_2.buff_or_debuff_target);
 
       if (bumper.playerGlb.position.z < 0) {
         bumper.playerGlb.position.x = playerVisualX + 1;
       } else {
         bumper.playerGlb.position.x = playerVisualX - 1;
       }
-      if (isDebuffActive){
-        if (serverState.bumper_2.buff_or_debuff_target && bumper == Bumpers[1]){
-          if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY){
+      if (isDebuffActive) {
+        if (serverState.bumper_2.buff_or_debuff_target && bumper == Bumpers[1]) {
+          if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY) {
             bumper.playerGlb.position.x += 1;
             bumper.playerGlb.position.z = playerVisualZ + 0.4;
           }
@@ -1964,7 +1962,7 @@ export class MultiplayerGame extends HTMLElement {
         }
         else if (serverState.bumper_1.buff_or_debuff_target && bumper == Bumpers[0])
         {
-          if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY){
+          if (serverState.current_buff_or_debuff == Buff.SHORTEN_ENEMY) {
             bumper.playerGlb.position.x -= 1;
             bumper.playerGlb.position.z = playerVisualZ - 0.4;
           }
@@ -1977,7 +1975,7 @@ export class MultiplayerGame extends HTMLElement {
         }
       }
     }
-    
+
     /**
      * Interpolates entity positions for smooth multiplayer rendering
      * Uses client-side prediction with server reconciliation
@@ -2046,7 +2044,7 @@ export class MultiplayerGame extends HTMLElement {
       const playerBumper = clientState.bumper;
       const playerVisualX = interpolatedPlayerPos !== null ? interpolatedPlayerPos : playerBumper.cubeUpdate.x;
       const playerVisualZ = playerBumper.cubeUpdate.z;
-      
+
       // Don't overwrite debuff-specific positioning during active buffs
 
       updatePlayerModelPos(playerBumper, playerVisualX, playerVisualZ);
