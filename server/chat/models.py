@@ -169,14 +169,27 @@ class ChatMessage(models.Model):
 
 
 class NotificationQuerySet(models.QuerySet):
+    def populate(
+        self,
+        receiver: Profile,
+        sender: Profile,
+        notification_action: str,
+        notification_data: dict | None = None,  # noqa: B006
+        date: datetime = None,
+        is_read: bool = False,
+    ):
+        notification_data = notification_data or {}
+        data = sender.to_username_nickname_avatar_schema() | notification_data
+        data["date"] = date or timezone.now()
+        return self.model(receiver=receiver, data=data, action=notification_action, is_read=is_read)
+
     def _create(
         self,
         receiver: Profile,
         sender: Profile,
         notification_action: str,
-        notification_data={},  # noqa: B006
+        notification_data: dict | None = None,  # noqa: B006
         date: datetime = None,
-        invitee: Profile = None,
     ):
         """
         `notification_data` is a data specific to the notification of the `notification_action`.
@@ -186,6 +199,7 @@ class NotificationQuerySet(models.QuerySet):
         Notification.SENT_GAME_INVITE:    `game_id`
         Notification.NEW_TOURNAMENT: `tournament_id`, `tournament_name`
         """
+        notification_data = notification_data or {}
         data = sender.to_username_nickname_avatar_schema() | notification_data
         data["date"] = date or timezone.now()
 
@@ -300,7 +314,7 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False)
     is_replied = False
 
-    objects = NotificationQuerySet.as_manager()
+    objects: NotificationQuerySet = NotificationQuerySet.as_manager()
 
     class Meta:
         ordering = ["-data__date"]
