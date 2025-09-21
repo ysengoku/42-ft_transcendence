@@ -72,11 +72,9 @@ It is a collaborative project of students from [42 Lyon](https://42lyon.fr/), an
 </p>
 <br />
 
-## Project Walkthrough
+## Project Walkthrough  
 
-🛠️👷🏻‍♂️ Work in progress   
-
-https://github.com/user-attachments/assets/2d065e35-b274-4867-b13e-fa022852612d
+https://github.com/user-attachments/assets/03d67b91-a39e-428a-ad39-6dcc6a32af07
 
 <br />
 
