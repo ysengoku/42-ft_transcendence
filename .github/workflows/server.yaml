@@ -58,6 +58,14 @@ jobs:
           python manage.py makemigrations
           python manage.py migrate
 
+      - name: Check active connections on test DB
+        run: |
+            psql -c "SELECT pid, usename, application_name, client_addr, state, query FROM pg_stat_activity WHERE datname = 'test_test_db';"
+  
+      - name: Terminate active connections
+        run: |
+            psql -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'test_test_db' AND pid <> pg_backend_pid();"
+
       - name: Run Django unit tests
         working-directory: server/
         env:
