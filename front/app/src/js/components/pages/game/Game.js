@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
-import pedro from '/img/ground_texture.png?url';
+import pedro from '/3d_models/pleasehelpme.glb?url';
 import cactus from '/3d_models/cactus1.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
 import couch from '/3d_models/sofa.glb?url';
 import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
-import ground_texture from '/img/ground_texture.png?url';
+import groundtexture from '/img/ground_texture.png?url';
 import coin from '/3d_models/coin.glb?url';
 import cardboard from '/3d_models/carboard.glb?url';
 import cardboard2 from '/3d_models/carboard2.glb?url';
@@ -1060,7 +1060,7 @@ export class Game extends HTMLElement {
     // Create textured ground plane
     (() => {
       const textureLoader = new THREE.TextureLoader();
-      const groundTexture = textureLoader.load(ground_texture);
+      const groundTexture = textureLoader.load(groundtexture);
       // Set texture to repeat for large ground area
       groundTexture.wrapS = THREE.RepeatWrapping;
       groundTexture.wrapT = THREE.RepeatWrapping;
