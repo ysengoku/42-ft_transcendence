@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from '/node_modules/three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from '/node_modules/three/examples/jsm/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from '/node_modules/three/examples/jsm/libs/meshopt_decoder.module.js';
-import pedro from '/3d_models/pleasehelpme.glb?url';
-import cactus from '/3d_models/cactus1.glb?url';
+import pedro from '/3d_models/pedro.glb?url';
+import cactus from '/3d_models/cactus.glb?url';
 import bullet from '/3d_models/bullet.glb?url';
 import fence from '/3d_models/fence.glb?url';
 import couch from '/3d_models/sofa.glb?url';
@@ -11,9 +11,9 @@ import chair from '/3d_models/chair.glb?url';
 import dressing from '/3d_models/dressing.glb?url';
 import groundtexture from '/img/ground_texture.png?url';
 import coin from '/3d_models/coin.glb?url';
-import cardboard from '/3d_models/carboard.glb?url';
-import cardboard2 from '/3d_models/carboard2.glb?url';
-import cardboard3 from '/3d_models/carboard3.glb?url';
+import cardboard from '/3d_models/cardboard.glb?url';
+import cardboard2 from '/3d_models/cardboard2.glb?url';
+import cardboard3 from '/3d_models/cardboard3.glb?url';
 import table from '/3d_models/table.glb?url';
 import { router } from '@router';
 import { auth } from '@auth';
@@ -678,6 +678,58 @@ export class Game extends HTMLElement {
   }
 
   /**
+   * Load texture with fallback protection
+   * @param {string} texturePath - Path to the texture file
+   * @param {number} fallbackColor - Fallback color as hex (default: brown for ground)
+   * @returns {THREE.Texture|THREE.MeshPhongMaterial} Loaded texture or fallback material
+   */
+  async createTextureLoader(texturePath, fallbackColor) {
+    try {
+      // Load texture with progress tracking
+      const texture = await new Promise((resolve, reject) => {
+        const loader = new THREE.TextureLoader();
+        loader.load(
+          texturePath,
+          resolve,
+          (progress) => {
+            GameLogger.debug(
+              'TextureLoader',
+              `Loading ${texturePath}: ${((progress.loaded / progress.total) * 100).toFixed(1)}%`,
+            );
+          },
+          reject,
+        );
+      });
+
+      // Validate loaded texture
+      if (!texture) {
+        throw new Error(`Invalid texture file: ${texturePath}`);
+      }
+
+      // Configure texture settings
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(100, 100); // Tile the texture
+
+      GameLogger.info('TextureLoader', `Successfully loaded texture: ${texturePath}`);
+      return texture;
+    } catch (error) {
+      GameLogger.warn('TextureLoader', `Failed to load texture ${texturePath}, using fallback color`, error);
+      return this.createFallbackTexture(fallbackColor);
+    }
+  }
+
+  /**
+   * Create a fallback texture when texture loading fails
+   * @param {number} fallbackColor - Fallback color as hex
+   * @returns {THREE.MeshPhongMaterial} Solid color material
+   */
+  createFallbackTexture(fallbackColor) {
+    GameLogger.warn('TextureLoader', `Creating fallback texture with color: #${fallbackColor.toString(16)}`);
+    return new THREE.MeshPhongMaterial({ color: fallbackColor });
+  }
+
+  /**
    * Create a fallback player model when pedro model fails to load
    * @param {number} posX - X position for the player
    * @param {number} posZ - Z position for the player
@@ -904,6 +956,43 @@ export class Game extends HTMLElement {
     scene.add(ambientLight);
     scene.add(fillLight);
 
+    // Create ground plane with protected texture loading
+    const createGroundPlane = async () => {
+      // Load ground texture with fallback protection
+      const groundMaterial = await this.createTextureLoader(groundtexture, 0xAF7A43); // Brown fallback color
+      
+      // Create ground geometry
+      const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
+      
+      // Create ground mesh with either texture or fallback material
+      let ground;
+      if (groundMaterial.isTexture) {
+        // If texture loaded successfully, create material with texture
+        const material = new THREE.MeshPhongMaterial({ map: groundMaterial,
+          color: 0xd4a574, // Desert sand color
+          depthWrite: true,});
+        ground = new THREE.Mesh(groundGeometry, material);
+      } else {
+        // If fallback material, use it directly
+        ground = new THREE.Mesh(groundGeometry, groundMaterial);
+      }
+      
+      // Configure ground properties
+      ground.rotateX(-pi / 2); // Rotate to be horizontal
+      ground.receiveShadow = true; // Allow shadows to be cast on ground
+      
+      scene.add(ground);
+      // Register ground for frustum culling
+      if (this.renderOptimizer) {
+        this.renderOptimizer.registerStatic(ground, 'ground');
+      }
+      GameLogger.info('Ground', 'Ground plane created successfully');
+      return ground;
+    };
+
+    // Create the ground plane
+    await createGroundPlane();
+
     // Helper function for model creation and scene addition
     const modelCreate = async (posX, posY, posZ, scaleX, scaleY, scaleZ, modelName) => {
       const modelGenerated = await this.createModelLoader(modelName, posX, posY, posZ, scaleX, scaleY, scaleZ);
@@ -1059,34 +1148,6 @@ export class Game extends HTMLElement {
       WallFactory(-6, 1.3, -9.65), // Bottom left
       WallFactory(0, 1.3, -9.65), // Bottom center
     ]);
-
-    // Create textured ground plane
-    (() => {
-      const textureLoader = new THREE.TextureLoader();
-      const groundTexture = textureLoader.load(groundtexture);
-      // Set texture to repeat for large ground area
-      groundTexture.wrapS = THREE.RepeatWrapping;
-      groundTexture.wrapT = THREE.RepeatWrapping;
-      groundTexture.repeat.set(100, 100);
-
-      const phongMaterial = new THREE.MeshPhongMaterial({
-        map: groundTexture,
-        color: 0xd4a574, // Desert sand color
-        depthWrite: true,
-      });
-
-      // Large ground plane to fill the visible area
-      const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
-      const planeMesh = new THREE.Mesh(planeGeometry, phongMaterial);
-      planeMesh.rotateX(-pi / 2); // Rotate to be horizontal
-      planeMesh.receiveShadow = true;
-      scene.add(planeMesh);
-
-      // Register ground for frustum culling
-      if (this.renderOptimizer) {
-        this.renderOptimizer.registerStatic(planeMesh, 'ground');
-      }
-    })();
 
     // MOVING OBJECTS AND GAME ENTITIES
 
