@@ -281,7 +281,8 @@ Separate container that periodically sends requests to the Daphne server to perf
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Add presentation here
+      <b>Lead developer & DevOps:</b><br />
+      Desgined the project architecture and led development of the backend and multiplayer gameplay. Managed the project's infrastructure and deployment pipelines. Also responsible for writing the technical documentation.
     </td>
   </tr>
 
@@ -293,7 +294,8 @@ Separate container that periodically sends requests to the Daphne server to perf
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Add presentation here
+      <b>Backend Developer & DevOps:</b><br />
+      Developed the OAuth and multi-factor authentication systems and built the project's foundational infrastructure.
     </td>
   </tr>
 
@@ -305,7 +307,8 @@ Separate container that periodically sends requests to the Daphne server to perf
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Add presentation here
+      <b>Backend Developer:</b><br />
+      Developed the backend for the live chat module and tournament systems. Improved security measures.
     </td>
   </tr>
 
@@ -317,7 +320,8 @@ Separate container that periodically sends requests to the Daphne server to perf
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Add presentation here
+      <b>Game designer, developer & graphic artist:</b><br />
+      Designed and developed the local, AI opponent, and multiplayer gameplay systems. Provided the unique visual style by creating custom 3D models and graphic assets.
     </td>
   </tr>
 
@@ -329,7 +333,8 @@ Separate container that periodically sends requests to the Daphne server to perf
       </a>
     </td>
     <td style="padding-left: 16px; vertical-align: middle;">
-      Add presentation here
+      <b>Frontend developer & UI designer:</b><br />
+      Led the UI design and development of the frontend. Ensured the team stayed on track by organizing their collaboration and workflow. Also responsible for writing the technical documentation.
     </td>
   </tr>
 </table>
