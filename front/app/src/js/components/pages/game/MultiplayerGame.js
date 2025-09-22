@@ -20,7 +20,6 @@ import { auth } from '@auth';
 import { showToastNotification, TOAST_TYPES } from '@utils';
 import './components/index';
 import { OVERLAY_TYPE, BUFF_TYPE } from './components/index';
-import { Game } from './Game';
 
 /* eslint no-var: "off" */
 /* eslint-disable new-cap */
@@ -852,7 +851,7 @@ export class MultiplayerGame extends HTMLElement {
    * @returns {boolean} True if animations are available
    */
   isAnimationSystemReady(bumper) {
-    return (bumper?.gltfStore?.mixer && bumper.gltfStore.action);
+    return bumper?.gltfStore?.mixer && bumper.gltfStore.action;
   }
 
   /**
@@ -1435,7 +1434,6 @@ export class MultiplayerGame extends HTMLElement {
       this.renderOptimizer.registerDynamic(Coin.cylinderMesh, 'coin');
     }
 
-
     // Enhanced playing field - already created above with textured ground
 
     const clock = new THREE.Clock();
@@ -1659,7 +1657,7 @@ export class MultiplayerGame extends HTMLElement {
         );
       }
       if (data.bumper_2.score != serverState.bumper_2.score) {
-        const playerNumberToUpdate = clientState.playerNumber === 2 ? 0 : 1;
+        const playerNumberToUpdate = clientState.playerNumber === 2 ? 1 : 0;
         this.lifePointElement?.updatePoint(
           playerNumberToUpdate,
           20 - (20 / this.#state.gameOptions.score_to_win) * data.bumper_2.score,
@@ -1902,9 +1900,9 @@ export class MultiplayerGame extends HTMLElement {
           if (!Bumpers) {
             Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
           }
-          if (this.renderOptimizer){
+          if (this.renderOptimizer) {
             if (Bumpers[0].playerGlb) {
-            this.renderOptimizer.registerDynamic(Bumpers[0].playerGlb, 'player1');
+              this.renderOptimizer.registerDynamic(Bumpers[0].playerGlb, 'player1');
             }
             if (Bumpers[1].playerGlb) {
               this.renderOptimizer.registerDynamic(Bumpers[1].playerGlb, 'player2');

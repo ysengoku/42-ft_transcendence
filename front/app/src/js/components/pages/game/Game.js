@@ -296,7 +296,7 @@ export class Game extends HTMLElement {
    * @returns {boolean} True if animations are available
    */
   isAnimationSystemReady(bumper) {
-    return (bumper?.gltfStore?.mixer && bumper.gltfStore.action);
+    return bumper?.gltfStore?.mixer && bumper.gltfStore.action;
   }
 
   /**
@@ -1062,7 +1062,6 @@ export class Game extends HTMLElement {
       const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
       cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
       return { cactusGlb };
-
     };
 
     // Generate safe positions for cacti (avoiding play area and other cacti)
@@ -1699,9 +1698,9 @@ export class Game extends HTMLElement {
         const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
         const velocity = new THREE.Vector3(0.01 * GAME_SPEED, 0, 0);
         let lengthHalf = 0.25;
-        if (this.renderOptimizer)
+        if (this.renderOptimizer) {
           this.renderOptimizer.registerDynamic(CoinGlb, 'coin');
-
+        }
         return {
           get lengthHalf() {
             return lengthHalf;
