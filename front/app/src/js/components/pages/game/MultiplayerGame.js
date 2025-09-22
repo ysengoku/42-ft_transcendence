@@ -852,7 +852,7 @@ export class MultiplayerGame extends HTMLElement {
    * @returns {boolean} True if animations are available
    */
   isAnimationSystemReady(bumper) {
-    return !!(bumper?.gltfStore?.mixer && bumper.gltfStore.action);
+    return (bumper?.gltfStore?.mixer && bumper.gltfStore.action);
   }
 
   /**
@@ -1029,6 +1029,7 @@ export class MultiplayerGame extends HTMLElement {
     const BALL_INITIAL_VELOCITY = 0.25; // Initial ball velocity
     const SPEED_DECREASE_ENEMY_FACTOR = 0.5; // Speed reduction factor for debuffs
     const handleAnimations = this.handleAnimations.bind(this);
+    const renderOptimizer = this.renderOptimizer;
 
     // Network simulation constants
     const SERVER_TICK_RATE = 30;
@@ -1059,11 +1060,12 @@ export class MultiplayerGame extends HTMLElement {
 
     // Camera configuration for optimal multiplayer game view
     var camera = new THREE.PerspectiveCamera(70, rendererWidth / rendererHeight, 0.1, 1000);
+    this.initRenderOptimizations(camera, scene);
 
     let mixer;
-    const normalMaterial = new THREE.MeshNormalMaterial();
 
     // Advanced lighting setup for realistic rendering
+
     // Main sun light (key light)
     const sunLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
     sunLight.position.set(25, 35, -50);
@@ -1116,14 +1118,9 @@ export class MultiplayerGame extends HTMLElement {
 
     // Factory function for creating randomly rotated cacti
     const CactusFactory = async (posX, posY, posZ) => {
-      try {
-        const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
-        cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
-        return { cactusGlb };
-      } catch (error) {
-        GameLogger.warn('CactusFactory', `Failed to load cactus, using fallback: ${error}`);
-        return { cactusGlb: this.createFallbackModel(posZ, posY, posX, 1.8, 1.8, 1.8) };
-      }
+      const cactusGlb = await modelCreate(posZ, posY, posX, 1.8, 1.8, 1.8, cactus);
+      cactusGlb.rotateY(degreesToRadians(Math.random() * 360)); // Random rotation
+      return { cactusGlb };
     };
 
     // Generate safe positions for cacti (avoiding play area and other cacti)
@@ -1159,6 +1156,9 @@ export class MultiplayerGame extends HTMLElement {
       const loadedCacti = await Promise.all(cactusPromises);
       loadedCacti.forEach((cactus, index) => {
         cacti[index] = cactus;
+        if (this.renderOptimizer && cactus.cactusGlb) {
+          this.renderOptimizer.registerStatic(cactus.cactusGlb, 'cactus');
+        }
       });
     } catch (error) {
       GameLogger.warn('CactusFactory', `Some cacti failed to load: ${error}`);
@@ -1181,6 +1181,12 @@ export class MultiplayerGame extends HTMLElement {
       hill.position.set(posX, height * 0.3, posZ);
       hill.receiveShadow = true;
       scene.add(hill);
+
+      // Register static objects for frustum culling
+      if (this.renderOptimizer) {
+        this.renderOptimizer.registerStatic(base, 'hill_base');
+        this.renderOptimizer.registerStatic(hill, 'hill_top');
+      }
 
       return hill;
     };
@@ -1238,23 +1244,9 @@ export class MultiplayerGame extends HTMLElement {
 
     // Enhanced coin with 3D model (with fallback to geometry)
     const Coin = await (async (posX, posY, posZ) => {
-      let CoinMesh;
-      try {
-        // Try to load 3D coin model
-        const CoinGlb = await modelCreate(0, 0, 0, 0.45, 0.45, 0.45, coin);
-        CoinGlb.position.set(posX, posY, posZ);
-        CoinMesh = CoinGlb;
-      } catch (error) {
-        GameLogger.warn('CoinFactory', `Failed to load coin model, using fallback geometry: ${error}`);
-        // Fallback to basic geometry
-        const cylinderGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1);
-        CoinMesh = new THREE.Mesh(cylinderGeometry, normalMaterial);
-        CoinMesh.position.set(posX, posY, posZ);
-        CoinMesh.rotation.z = -Math.PI / 2;
-        CoinMesh.rotation.y = -Math.PI / 2;
-        CoinMesh.castShadow = true;
-        scene.add(CoinMesh);
-      }
+      // Try to load 3D coin model
+      const CoinGlb = await modelCreate(0, 0, 0, 0.45, 0.45, 0.45, coin);
+      CoinGlb.position.set(posX, posY, posZ);
 
       const cylinderUpdate = new THREE.Vector3(posX, posY, posZ);
       const velocity = new THREE.Vector3(0.01 * this.#state.gameOptions.game_speed, 0, 0);
@@ -1267,7 +1259,7 @@ export class MultiplayerGame extends HTMLElement {
         set lenghtHalf(newLenghtHalf) {
           lenghtHalf = newLenghtHalf;
         },
-        cylinderMesh: CoinMesh,
+        cylinderMesh: CoinGlb,
         cylinderUpdate,
         velocity,
       };
@@ -1276,20 +1268,10 @@ export class MultiplayerGame extends HTMLElement {
     // Enhanced ball with 3D model (with fallback to geometry)
     const Ball = await (async (posX, posY, posZ) => {
       let BallMesh;
-      try {
-        // Try to load 3D bullet model for the ball
-        const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
-        bulletGlb.rotateX(pi / 2);
-        BallMesh = bulletGlb;
-      } catch (error) {
-        GameLogger.warn('BallFactory', `Failed to load ball model, using fallback geometry: ${error}`);
-        // Fallback to basic sphere
-        const sphereGeometry = new THREE.SphereGeometry(0.5);
-        BallMesh = new THREE.Mesh(sphereGeometry, normalMaterial);
-        BallMesh.position.set(posX, posY, posZ);
-        BallMesh.castShadow = true;
-        scene.add(BallMesh);
-      }
+      // Try to load 3D bullet model for the ball
+      const bulletGlb = await modelCreate(posX, posY, posZ, 1, 1, 1, bullet);
+      bulletGlb.rotateX(pi / 2);
+      BallMesh = bulletGlb;
 
       const temporalSpeed = new THREE.Vector3(1, 0, 1);
       const velocity = new THREE.Vector3(0, 0, BALL_INITIAL_VELOCITY * this.#state.gameOptions.game_speed);
@@ -1306,14 +1288,13 @@ export class MultiplayerGame extends HTMLElement {
 
     // Create boundary fences around the playing field
     const WallFactory = async (posX, posY, posZ) => {
-      try {
-        const fenceGlb = await modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
-        fenceGlb.rotateY(-pi / 2); // Rotate to face inward
-        return { fenceGlb };
-      } catch (error) {
-        GameLogger.warn('WallFactory', `Failed to load fence model, using fallback: ${error}`);
-        return { fenceGlb: this.createFallbackModel(posX, posY, posZ, 0.8, 0.5, 1) };
+      const fenceGlb = await modelCreate(posX, posY, posZ, 0.8, 0.5, 1, fence);
+      fenceGlb.rotateY(-pi / 2); // Rotate to face inward
+
+      if (this.renderOptimizer && fenceGlb) {
+        this.renderOptimizer.registerStatic(fenceGlb, 'wall');
       }
+      return { fenceGlb };
     };
 
     // Place fences along both goal lines
@@ -1444,6 +1425,16 @@ export class MultiplayerGame extends HTMLElement {
 
     // Bumpers will be created after game options are received
     let Bumpers = null;
+
+    // Register dynamic objects for optimized rendering
+    if (this.renderOptimizer) {
+      // Register ball as dynamic object
+      this.renderOptimizer.registerDynamic(Ball.bulletGlb, 'ball');
+
+      // Register coin as dynamic object
+      this.renderOptimizer.registerDynamic(Coin.cylinderMesh, 'coin');
+    }
+
 
     // Enhanced playing field - already created above with textured ground
 
@@ -1911,7 +1902,19 @@ export class MultiplayerGame extends HTMLElement {
           if (!Bumpers) {
             Bumpers = await Promise.all([BumperFactory(0, 1, -9), BumperFactory(0, 1, 9)]);
           }
-
+          if (this.renderOptimizer){
+            if (Bumpers[0].playerGlb) {
+            this.renderOptimizer.registerDynamic(Bumpers[0].playerGlb, 'player1');
+            }
+            if (Bumpers[1].playerGlb) {
+              this.renderOptimizer.registerDynamic(Bumpers[1].playerGlb, 'player2');
+            }
+            Bumpers.forEach((bumper, index) => {
+              bumper.modelsGlb.forEach((model, modelIndex) => {
+                this.renderOptimizer.registerDynamic(model, `furniture_p${index}_${modelIndex}`);
+              });
+            });
+          }
           clientState.bumper = Bumpers[clientState.playerNumber - 1];
           clientState.enemyBumper = Bumpers[clientState.enemyNumber - 1];
 
@@ -2179,6 +2182,10 @@ export class MultiplayerGame extends HTMLElement {
       }
       if (Bumpers && Bumpers[1]?.gltfStore?.mixer) {
         Bumpers[1].gltfStore.mixer.update(deltaAnimation);
+      }
+      // Performance optimization: Update object visibility with frustum culling
+      if (renderOptimizer) {
+        renderOptimizer.updateVisibility(camera);
       }
       renderer.render(scene, camera);
     }
