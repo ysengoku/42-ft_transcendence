@@ -15,7 +15,7 @@ from users.models import OauthConnection, Profile, User
 
 # start date of the simulation
 NOW = timezone.now()
-START_DATE = NOW - timedelta(days=80)
+START_DATE = NOW - timedelta(days=150)
 END_DATE = NOW
 
 
@@ -271,7 +271,8 @@ def generate_matches():
     matches_to_create = []
 
     user_match_counts = {user.username: 0 for user in simulated_users_lst}
-    while current_date <= END_DATE:
+    end_date = END_DATE - timedelta(days=1)
+    while current_date < end_date:
         daily_matches = randint(num_users, num_users * 2)
 
         print(f"  Date {current_date.strftime('%Y-%m-%d')}: {daily_matches} matches")
@@ -1173,7 +1174,6 @@ def generate_chats_and_notifications() -> None:
 
             for i, message in enumerate(messages):
                 sender = profile1 if i % 2 == 0 else profile2
-                receiver = profile2 if i % 2 == 0 else profile1
 
                 # Calculate message time based on position in conversation
                 message_time = conversation_start + (conversation_end - conversation_start) * (i / len(messages))
@@ -1184,15 +1184,6 @@ def generate_chats_and_notifications() -> None:
                 if randint(0, 10) >= 9:
                     msg.is_liked = True
                 messages_to_create.append(msg)
-
-                notification = Notification.objects.populate(
-                    receiver=receiver,
-                    sender=sender,
-                    notification_action=Notification.MESSAGE,
-                    notification_data={"message": message[:50]},  # truncate long messages
-                    date=message_time,
-                )
-                notifications_to_create.append(notification)
 
             conversation_index += 1
 
