@@ -682,7 +682,6 @@ export class MultiplayerGame extends HTMLElement {
     return new THREE.MeshPhongMaterial({ color: fallbackColor });
   }
 
-
   /**
    * Create optimized fallback player model when pedro model fails to load
    * @param {number} posX - X position for the player
@@ -1192,28 +1191,30 @@ export class MultiplayerGame extends HTMLElement {
     // Create ground plane with protected texture loading
     const createGroundPlane = async () => {
       // Load ground texture with fallback protection
-      const groundMaterial = await this.createTextureLoader(groundtexture, 0xAF7A43); // Brown fallback color
-      
+      const groundMaterial = await this.createTextureLoader(groundtexture, 0xaf7a43); // Brown fallback color
+
       // Create ground geometry
       const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
-      
+
       // Create ground mesh with either texture or fallback material
       let ground;
       if (groundMaterial.isTexture) {
         // If texture loaded successfully, create material with texture
-        const material = new THREE.MeshPhongMaterial({ map: groundMaterial,
+        const material = new THREE.MeshPhongMaterial({
+          map: groundMaterial,
           color: 0xd4a574, // Desert sand color
-          depthWrite: true,});
+          depthWrite: true,
+        });
         ground = new THREE.Mesh(groundGeometry, material);
       } else {
         // If fallback material, use it directly
         ground = new THREE.Mesh(groundGeometry, groundMaterial);
       }
-      
+
       // Configure ground properties
       ground.rotateX(-pi / 2); // Rotate to be horizontal
       ground.receiveShadow = true; // Allow shadows to be cast on ground
-      
+
       scene.add(ground);
       // Register ground for frustum culling
       if (this.renderOptimizer) {

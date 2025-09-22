@@ -180,6 +180,7 @@ export class Game extends HTMLElement {
         router.redirect('/login');
         return;
       }
+      this.#state.user = authStatus.response;
 
       // Configure element styling
       this.classList.add('position-relative');
@@ -959,28 +960,30 @@ export class Game extends HTMLElement {
     // Create ground plane with protected texture loading
     const createGroundPlane = async () => {
       // Load ground texture with fallback protection
-      const groundMaterial = await this.createTextureLoader(groundtexture, 0xAF7A43); // Brown fallback color
-      
+      const groundMaterial = await this.createTextureLoader(groundtexture, 0xaf7a43); // Brown fallback color
+
       // Create ground geometry
       const groundGeometry = new THREE.PlaneGeometry(2000, 2000);
-      
+
       // Create ground mesh with either texture or fallback material
       let ground;
       if (groundMaterial.isTexture) {
         // If texture loaded successfully, create material with texture
-        const material = new THREE.MeshPhongMaterial({ map: groundMaterial,
+        const material = new THREE.MeshPhongMaterial({
+          map: groundMaterial,
           color: 0xd4a574, // Desert sand color
-          depthWrite: true,});
+          depthWrite: true,
+        });
         ground = new THREE.Mesh(groundGeometry, material);
       } else {
         // If fallback material, use it directly
         ground = new THREE.Mesh(groundGeometry, groundMaterial);
       }
-      
+
       // Configure ground properties
       ground.rotateX(-pi / 2); // Rotate to be horizontal
       ground.receiveShadow = true; // Allow shadows to be cast on ground
-      
+
       scene.add(ground);
       // Register ground for frustum culling
       if (this.renderOptimizer) {
@@ -1409,7 +1412,9 @@ export class Game extends HTMLElement {
       if (this.#state.gameType === 'ai') {
         winner.name = winner.number === 1 ? 'You' : 'AI Player';
         loser.name = loser.number === 1 ? 'You' : 'AI Player';
-        winner.number === 1 ? (winner.avatar = this.#state.user.avatar) : (loser.avatar = this.#state.user.avatar);
+        if (this.#state.user && this.#state.user.avatar) {
+          winner.number === 1 ? (winner.avatar = this.#state.user.avatar) : (loser.avatar = this.#state.user.avatar);
+        }
       }
       const resultData = {
         winner: winner,
